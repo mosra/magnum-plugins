@@ -4,3 +4,7 @@ include_directories(${CORRADE_INCLUDE_DIR} ${MAGNUM_INCLUDE_DIR})
 
 add_subdirectory(ColladaImporter)
 add_subdirectory(TGAImporter)
+
+if(BUILD_TESTS)
+    enable_testing()
+endif()
