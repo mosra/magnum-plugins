@@ -15,12 +15,9 @@
 
 #include "ColladaImporter.h"
 
-#include <QtCore/QDebug>
 #include <QtCore/QVector>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
-
-#include "Utility/Debug.h"
 
 #include "IndexedMesh.h"
 
@@ -68,17 +65,28 @@ bool ColladaImporter::open(istream& in) {
     }
 
     QString tmp;
+    QStringList listTmp;
 
     /* Geometry count */
     query.setQuery(namespaceDeclaration + "count(//library_geometries/geometry)");
     query.evaluateTo(&tmp);
     GLuint geometryCount = ColladaType<GLuint>::fromString(tmp);
 
-    d = new Document(geometryCount);
+    /* Materials */
+    query.setQuery(namespaceDeclaration + "//library_materials/material/@id/string()");
+    query.evaluateTo(&listTmp);
+
+    d = new Document(geometryCount, listTmp.size());
     d->query = query;
 
-    Debug() << QString("ColladaImporter: file contains\n    %1 geometries")
-        .arg(geometryCount).toStdString();
+    /* Add all materials to material map */
+    for(size_t i = 0; i != static_cast<size_t>(listTmp.size()); ++i)
+        d->materialMap[listTmp[i].toStdString()] = i;
+
+    Debug() << QString("ColladaImporter: file contains\n"
+                       "    %0 geometries\n"
+                       "    %1 materials")
+        .arg(geometryCount).arg(listTmp.size()).toStdString();
 
     return true;
 }
@@ -186,17 +194,86 @@ shared_ptr<Object> ColladaImporter::object(size_t id) {
 
     SizeBasedCall<IndexBuilder>(uniqueData.size())(mesh, uniqueIndices);
 
+    /* Material ID */
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@material/string()").arg(id+1));
+    d->query.evaluateTo(&tmp);
+
+    shared_ptr<AbstractMaterial> mat(material(d->materialMap[tmp.mid(1).trimmed().toStdString()]));
+    if(!mat)
+        return nullptr;
+
+    d->geometries[id] = shared_ptr<Object>(new MeshObject(mesh, mat));
+
+    return d->geometries[id];
+}
+
+shared_ptr<AbstractMaterial> ColladaImporter::ColladaImporter::material(size_t id) {
+    /* Return nullptr if no such material exists, or return existing, if already parsed */
+    if(!d || id >= d->materials.size()) return nullptr;
+    if(d->materials[id]) return d->materials[id];
+
+    QString tmp;
+
+    /* Get effect ID */
+    QString effect;
+    d->query.setQuery((namespaceDeclaration + "//material[%0]/instance_effect/@url/string()").arg(id+1));
+    d->query.evaluateTo(&effect);
+    effect = effect.mid(1).trimmed();
+
+    /* Find out which profile it is */
+    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/*[substring(name(), 1, 8) = 'profile_']/name()").arg(effect));
+    d->query.evaluateTo(&tmp);
+
+    /** @todo Support other profiles */
+
+    if(tmp.trimmed() != "profile_COMMON") {
+        Error() << "ColladaImporter:" << tmp.trimmed().toStdString() << "effect profile not supported";
+        return nullptr;
+    }
+
+    /* Get shader type */
+    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/*/name()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+
+    /** @todo Other (blinn, goraund) profiles */
+    if(tmp != "phong") {
+        Error() << "ColladaImporter:" << tmp.toStdString() << "shader not supported";
+        return nullptr;
+    }
+
+    /* Ambient color */
+    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    Vector3 ambientColor = parseVector<Vector3>(tmp);
+
+    /* Diffuse color */
+    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    Vector3 diffuseColor = parseVector<Vector3>(tmp);
+
+    /* Specular color */
+    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    Vector3 specularColor = parseVector<Vector3>(tmp);
+
+    /* Shininess */
+    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/shininess/color/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    GLfloat shininess = ColladaType<GLfloat>::fromString(tmp);
+
+    /** @todo Emission, IOR */
+
     /** @todo fixme */
     shared_ptr<PhongShader> shader(new PhongShader());
     shared_ptr<PointLight> light(new PointLight(
         Vector3(), Vector3(1.0f, 1.0f, 1.0f), Vector3(1.0f, 1.0f, 1.0f)));
     light->translate(-3, 10, 10);
-    shared_ptr<Material> material (new Material(shader,
-        Vector3(), Vector3(1.0f, 1.0f, 0.9f), Vector3(1.0f, 1.0f, 1.0f),
-        128.0f, light));
-    d->geometries[id] = shared_ptr<Object>(new MeshObject(mesh, material));
+    d->materials[id] = shared_ptr<Material>(new Material(shader,
+        ambientColor, diffuseColor, specularColor, shininess,
+        light));
 
-    return d->geometries[id];
+    return d->materials[id];
 }
 
 template<class T> vector<T> ColladaImporter::parseSource(const QString& id) {
@@ -208,7 +285,7 @@ template<class T> vector<T> ColladaImporter::parseSource(const QString& id) {
     d->query.evaluateTo(&tmp);
     GLuint count = ColladaType<GLuint>::fromString(tmp);
 
-    /* Size of each item */
+    /* Assert that size of each item is size of T */
     d->query.setQuery((namespaceDeclaration + "//source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
     d->query.evaluateTo(&tmp);
     GLuint size = ColladaType<GLuint>::fromString(tmp);
@@ -227,17 +304,22 @@ template<class T> vector<T> ColladaImporter::parseSource(const QString& id) {
 
     output.reserve(count);
     int from = 0;
+    for(size_t i = 0; i != count; ++i)
+        output.push_back(parseVector<T>(tmp, &from, size));
+
+    return output;
+}
+
+template<class T> T ColladaImporter::parseVector(const QString& data, int* from, size_t size) {
+    T output;
+
     int to;
-    for(size_t i = 0; i != count; ++i) {
-        T item;
-        for(size_t j = 0; j != size; ++j) {
-            to = tmp.indexOf(' ', from);
-            while(to == from)
-                to = tmp.indexOf(' ', ++from);
-            item.set(j, ColladaType<typename T::Type>::fromString(tmp.mid(from, to-from)));
-            from = to+1;
-        }
-        output.push_back(item);
+    for(size_t j = 0; j != size; ++j) {
+        to = data.indexOf(' ', *from);
+        while(to == *from)
+            to = data.indexOf(' ', ++*from);
+        output.set(j, ColladaType<typename T::Type>::fromString(data.mid(*from, to-*from)));
+        *from = to+1;
     }
 
     return output;

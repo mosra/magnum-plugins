@@ -21,6 +21,7 @@
 
 #include "AbstractImporter.h"
 
+#include <unordered_map>
 #include <QtCore/QCoreApplication>
 #include <QtXmlPatterns/QXmlQuery>
 
@@ -42,11 +43,19 @@ class ColladaImporter: public AbstractImporter {
         size_t objectCount() const { return d ? d->geometries.size() : 0; }
         std::shared_ptr<Object> object(size_t id);
 
+        size_t materialCount() const { return d ? d->materials.size() : 0; }
+        std::shared_ptr<AbstractMaterial> material(size_t id);
+
     private:
         struct Document {
-            inline Document(size_t geometryCount): geometries(geometryCount) {}
+            inline Document(size_t geometryCount, size_t materialCount): geometries(geometryCount), materials(materialCount) {}
 
+            /* Geometries and materials */
             std::vector<std::shared_ptr<Object>> geometries;
+            std::vector<std::shared_ptr<AbstractMaterial>> materials;
+
+            std::unordered_map<std::string, size_t> materialMap;
+
             QXmlQuery query;
         };
 
@@ -71,8 +80,23 @@ class ColladaImporter: public AbstractImporter {
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id);
 
+        /** @brief Parse vector of numbers */
+        template<class T> inline static T parseVector(const QString& data, size_t size = T::Size) {
+            int from = 0;
+            return parseVector<T>(data, &from, size);
+        }
+
+        /**
+         * @brief Parse vector of numbers from array
+         * @param data      Data array
+         * @param from      Starting position
+         *
+         * Returns parsed vector and moves @c from to position of next vector.
+         */
+        template<class T> static T parseVector(const QString& data, int* from, size_t size = T::Size);
+
         /** @brief Parse array of numbers */
-        template<class T> std::vector<T> parseArray(const QString& data, size_t count);
+        template<class T> static std::vector<T> parseArray(const QString& data, size_t count);
 
         /**
          * @brief Builder for index array based on index count
