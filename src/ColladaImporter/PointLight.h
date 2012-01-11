@@ -1,5 +1,5 @@
-#ifndef Magnum_PointLight_h
-#define Magnum_PointLight_h
+#ifndef Magnum_Plugins_ColladaImporter_PointLight_h
+#define Magnum_Plugins_ColladaImporter_PointLight_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
