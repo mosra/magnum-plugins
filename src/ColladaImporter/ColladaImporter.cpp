@@ -26,6 +26,7 @@
 #include "Material.h"
 #include "PointLight.h"
 #include "ColladaType.h"
+#include "Utility.h"
 #include "SizeTraits.h"
 
 using namespace std;
@@ -115,7 +116,7 @@ shared_ptr<Object> ColladaImporter::object(size_t id) {
     /* Get vertex count per polygon */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/vcount/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
-    vector<GLuint> vertexCountPerFace = parseArray<GLuint>(tmp, polygonCount);
+    vector<GLuint> vertexCountPerFace = Utility::parseArray<GLuint>(tmp, polygonCount);
 
     GLuint vertexCount = 0;
     for(GLuint count: vertexCountPerFace) {
@@ -135,7 +136,7 @@ shared_ptr<Object> ColladaImporter::object(size_t id) {
     /* Get mesh indices */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/p/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
-    vector<GLuint> indices = parseArray<GLuint>(tmp, vertexCount*stride);
+    vector<GLuint> indices = Utility::parseArray<GLuint>(tmp, vertexCount*stride);
 
     /* Get mesh vertices offset in indices */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@offset/string()")
@@ -245,17 +246,17 @@ shared_ptr<AbstractMaterial> ColladaImporter::ColladaImporter::material(size_t i
     /* Ambient color */
     d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Vector3 ambientColor = parseVector<Vector3>(tmp);
+    Vector3 ambientColor = Utility::parseVector<Vector3>(tmp);
 
     /* Diffuse color */
     d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Vector3 diffuseColor = parseVector<Vector3>(tmp);
+    Vector3 diffuseColor = Utility::parseVector<Vector3>(tmp);
 
     /* Specular color */
     d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Vector3 specularColor = parseVector<Vector3>(tmp);
+    Vector3 specularColor = Utility::parseVector<Vector3>(tmp);
 
     /* Shininess */
     d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/shininess/color/string()").arg(effect));
@@ -305,39 +306,7 @@ template<class T> vector<T> ColladaImporter::parseSource(const QString& id) {
     output.reserve(count);
     int from = 0;
     for(size_t i = 0; i != count; ++i)
-        output.push_back(parseVector<T>(tmp, &from, size));
-
-    return output;
-}
-
-template<class T> T ColladaImporter::parseVector(const QString& data, int* from, size_t size) {
-    T output;
-
-    int to;
-    for(size_t j = 0; j != size; ++j) {
-        to = data.indexOf(' ', *from);
-        while(to == *from)
-            to = data.indexOf(' ', ++*from);
-        output.set(j, ColladaType<typename T::Type>::fromString(data.mid(*from, to-*from)));
-        *from = to+1;
-    }
-
-    return output;
-}
-
-template<class T> vector<T> ColladaImporter::parseArray(const QString& data, size_t count) {
-    vector<T> output;
-    output.reserve(count);
-
-    int from = 0;
-    int to;
-    for(size_t i = 0; i != count; ++i) {
-        to = data.indexOf(' ', from);
-        while(to == from)
-            to = data.indexOf(' ', ++from);
-        output.push_back(ColladaType<T>::fromString(data.mid(from, to-from)));
-        from = to+1;
-    }
+        output.push_back(Utility::parseVector<T>(tmp, &from, size));
 
     return output;
 }

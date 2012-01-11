@@ -80,24 +80,6 @@ class ColladaImporter: public AbstractImporter {
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id);
 
-        /** @brief Parse vector of numbers */
-        template<class T> inline static T parseVector(const QString& data, size_t size = T::Size) {
-            int from = 0;
-            return parseVector<T>(data, &from, size);
-        }
-
-        /**
-         * @brief Parse vector of numbers from array
-         * @param data      Data array
-         * @param from      Starting position
-         *
-         * Returns parsed vector and moves @c from to position of next vector.
-         */
-        template<class T> static T parseVector(const QString& data, int* from, size_t size = T::Size);
-
-        /** @brief Parse array of numbers */
-        template<class T> static std::vector<T> parseArray(const QString& data, size_t count);
-
         /**
          * @brief Builder for index array based on index count
          *
