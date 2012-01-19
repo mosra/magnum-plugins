@@ -36,7 +36,7 @@ class MeshObject: public Object {
          * @param material  Material
          * @param parent    Parent object
          */
-        MeshObject(Mesh* mesh, const std::shared_ptr<AbstractMaterial>& material, Object* parent = nullptr): Object(parent), mesh(mesh), material(material) {}
+        MeshObject(const std::shared_ptr<Mesh>& mesh, const std::shared_ptr<AbstractMaterial>& material, Object* parent = nullptr): Object(parent), mesh(mesh), material(material) {}
 
         inline void draw(const Matrix4& transformationMatrix, const Matrix4& projectionMatrix) {
             material->use(transformationMatrix, projectionMatrix);
@@ -44,7 +44,7 @@ class MeshObject: public Object {
         }
 
     private:
-        Mesh* mesh;
+        std::shared_ptr<Mesh> mesh;
         std::shared_ptr<AbstractMaterial> material;
 };
 

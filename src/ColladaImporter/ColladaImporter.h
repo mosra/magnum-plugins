@@ -40,18 +40,22 @@ class ColladaImporter: public AbstractImporter {
         bool open(std::istream& in);
         void close();
 
-        size_t objectCount() const { return d ? d->geometries.size() : 0; }
+        size_t objectCount() const { return d ? d->objects.size() : 0; }
         std::shared_ptr<Object> object(size_t id);
+
+        size_t meshCount() const { return d ? d->meshes.size() : 0; }
+        std::shared_ptr<Mesh> mesh(size_t id);
 
         size_t materialCount() const { return d ? d->materials.size() : 0; }
         std::shared_ptr<AbstractMaterial> material(size_t id);
 
     private:
         struct Document {
-            inline Document(size_t geometryCount, size_t materialCount): geometries(geometryCount), materials(materialCount) {}
+            inline Document(size_t objectCount, size_t materialCount): objects(objectCount), meshes(objectCount), materials(materialCount) {}
 
             /* Geometries and materials */
-            std::vector<std::shared_ptr<Object>> geometries;
+            std::vector<std::shared_ptr<Object>> objects;
+            std::vector<std::shared_ptr<Mesh>> meshes;
             std::vector<std::shared_ptr<AbstractMaterial>> materials;
 
             std::unordered_map<std::string, size_t> materialMap;

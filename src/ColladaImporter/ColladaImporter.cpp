@@ -71,13 +71,13 @@ bool ColladaImporter::open(istream& in) {
     /* Geometry count */
     query.setQuery(namespaceDeclaration + "count(//library_geometries/geometry)");
     query.evaluateTo(&tmp);
-    GLuint geometryCount = ColladaType<GLuint>::fromString(tmp);
+    GLuint objectCount = ColladaType<GLuint>::fromString(tmp);
 
     /* Materials */
     query.setQuery(namespaceDeclaration + "//library_materials/material/@id/string()");
     query.evaluateTo(&listTmp);
 
-    d = new Document(geometryCount, listTmp.size());
+    d = new Document(objectCount, listTmp.size());
     d->query = query;
 
     /* Add all materials to material map */
@@ -85,9 +85,9 @@ bool ColladaImporter::open(istream& in) {
         d->materialMap[listTmp[i].toStdString()] = i;
 
     Debug() << QString("ColladaImporter: file contains\n"
-                       "    %0 geometries\n"
+                       "    %0 objects/meshes\n"
                        "    %1 materials")
-        .arg(geometryCount).arg(listTmp.size()).toStdString();
+        .arg(objectCount).arg(listTmp.size()).toStdString();
 
     return true;
 }
@@ -101,8 +101,26 @@ void ColladaImporter::close() {
 
 shared_ptr<Object> ColladaImporter::object(size_t id) {
     /* Return nullptr if no such object exists, or return existing, if already parsed */
-    if(!d || id >= d->geometries.size()) return nullptr;
-    if(d->geometries[id]) return d->geometries[id];
+    if(!d || id >= d->objects.size()) return nullptr;
+    if(d->objects[id]) return d->objects[id];
+
+    /* Material ID */
+    QString tmp;
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@material/string()").arg(id+1));
+    d->query.evaluateTo(&tmp);
+
+    /* Get the material */
+    shared_ptr<AbstractMaterial> mat(material(d->materialMap[tmp.mid(1).trimmed().toStdString()]));
+    if(!mat) return nullptr;
+
+    /* Mesh has the same ID as object */
+    d->objects[id] = shared_ptr<Object>(new MeshObject(mesh(id), mat));
+    return d->objects[id];
+}
+
+shared_ptr<Mesh> ColladaImporter::ColladaImporter::mesh(size_t id) {
+    if(!d || id >= d->meshes.size()) return nullptr;
+    if(d->meshes[id]) return d->meshes[id];
 
     QString tmp;
 
@@ -195,17 +213,8 @@ shared_ptr<Object> ColladaImporter::object(size_t id) {
 
     SizeBasedCall<IndexBuilder>(uniqueData.size())(mesh, uniqueIndices);
 
-    /* Material ID */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@material/string()").arg(id+1));
-    d->query.evaluateTo(&tmp);
-
-    shared_ptr<AbstractMaterial> mat(material(d->materialMap[tmp.mid(1).trimmed().toStdString()]));
-    if(!mat)
-        return nullptr;
-
-    d->geometries[id] = shared_ptr<Object>(new MeshObject(mesh, mat));
-
-    return d->geometries[id];
+    d->meshes[id] = shared_ptr<Mesh>(mesh);
+    return d->meshes[id];
 }
 
 shared_ptr<AbstractMaterial> ColladaImporter::ColladaImporter::material(size_t id) {
