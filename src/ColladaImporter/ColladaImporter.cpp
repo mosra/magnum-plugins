@@ -185,9 +185,9 @@ shared_ptr<Mesh> ColladaImporter::ColladaImporter::mesh(size_t id) {
 
     /* Unique vertices and normals */
     vector<VertexData> uniqueData;
-    vector<GLuint> uniqueIndices;
-    QMap<unsigned long long, size_t> uniqueMap;
-    for(size_t i = 0; i < static_cast<size_t>(indices.size()); i += stride) {
+    vector<unsigned int> uniqueIndices;
+    QMap<unsigned long long, unsigned int> uniqueMap;
+    for(unsigned int i = 0; i < indices.size(); i += stride) {
         unsigned long long uniqueHash = static_cast<unsigned long long>(indices[i]) << 32 | indices[i+1];
         if(uniqueMap.contains(uniqueHash)) {
             uniqueIndices.push_back(uniqueMap[uniqueHash]);
