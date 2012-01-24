@@ -201,10 +201,10 @@ shared_ptr<Mesh> ColladaImporter::ColladaImporter::mesh(size_t id) {
     }
 
     Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
-        .arg(uniqueIndices.size()/3).arg(uniqueData.size()/2).toStdString();
+        .arg(uniqueIndices.size()/3).arg(uniqueData.size()).toStdString();
 
     /* Create output mesh */
-    IndexedMesh* mesh = new IndexedMesh(Mesh::Triangles, uniqueData.size()/2, 0, 0);
+    IndexedMesh* mesh = new IndexedMesh(Mesh::Triangles, uniqueData.size(), 0, 0);
 
     Buffer* buffer = mesh->addBuffer(true);
     buffer->setData(uniqueData.size()*sizeof(VertexData), uniqueData.data(), Buffer::DrawStatic);
