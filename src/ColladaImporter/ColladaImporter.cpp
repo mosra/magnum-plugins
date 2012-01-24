@@ -28,6 +28,7 @@
 #include "ColladaType.h"
 #include "Utility.h"
 #include "SizeTraits.h"
+#include "ColladaMeshData.h"
 
 using namespace std;
 using namespace Corrade::Utility;
@@ -118,21 +119,21 @@ shared_ptr<Object> ColladaImporter::object(size_t id) {
     return d->objects[id];
 }
 
-shared_ptr<Mesh> ColladaImporter::ColladaImporter::mesh(size_t id) {
-    if(!d || id >= d->meshes.size()) return nullptr;
-    if(d->meshes[id]) return d->meshes[id];
+shared_ptr<ColladaImporter::MeshData> ColladaImporter::meshData(size_t meshId) {
+    if(!d || meshId >= d->meshData.size()) return nullptr;
+    if(d->meshData[meshId]) return d->meshData[meshId];
 
     QString tmp;
 
     /** @todo More polylists in one mesh */
 
     /* Get polygon count */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@count/string()").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@count/string()").arg(meshId+1));
     d->query.evaluateTo(&tmp);
     GLuint polygonCount = ColladaType<GLuint>::fromString(tmp);
 
     /* Get vertex count per polygon */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/vcount/string()").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/vcount/string()").arg(meshId+1));
     d->query.evaluateTo(&tmp);
     vector<GLuint> vertexCountPerFace = Utility::parseArray<GLuint>(tmp, polygonCount);
 
@@ -147,71 +148,91 @@ shared_ptr<Mesh> ColladaImporter::ColladaImporter::mesh(size_t id) {
     }
 
     /* Get input count per vertex */
-    d->query.setQuery((namespaceDeclaration + "count(//geometry[%0]/mesh/polylist/input)").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "count(//geometry[%0]/mesh/polylist/input)").arg(meshId+1));
     d->query.evaluateTo(&tmp);
     GLuint stride = ColladaType<GLuint>::fromString(tmp);
 
     /* Get mesh indices */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/p/string()").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/p/string()").arg(meshId+1));
     d->query.evaluateTo(&tmp);
     vector<GLuint> indices = Utility::parseArray<GLuint>(tmp, vertexCount*stride);
 
     /* Get mesh vertices offset in indices */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@offset/string()")
-        .arg(id+1));
+        .arg(meshId+1));
     d->query.evaluateTo(&tmp);
     GLuint vertexOffset = ColladaType<GLuint>::fromString(tmp);
 
     /* Get mesh vertices */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@source/string()")
-        .arg(id+1));
+        .arg(meshId+1));
     d->query.evaluateTo(&tmp);
     d->query.setQuery((namespaceDeclaration + "//vertices[@id='%0']/input[@semantic='POSITION']/@source/string()")
         .arg(tmp.mid(1).trimmed()));
     d->query.evaluateTo(&tmp);
-    vector<Vector4> vertices = parseSource<Vector4>(tmp.mid(1).trimmed());
+    vector<Vector3> vertices = parseSource<Vector3>(tmp.mid(1).trimmed());
 
     /* Get mesh normals offset in indices */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='NORMAL']/@offset/string()")
-        .arg(id+1));
+        .arg(meshId+1));
     d->query.evaluateTo(&tmp);
     GLuint normalOffset = ColladaType<GLuint>::fromString(tmp);
 
     /* Get mesh normals */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='NORMAL']/@source/string()")
-        .arg(id+1));
+        .arg(meshId+1));
     d->query.evaluateTo(&tmp);
     vector<Vector3> normals = parseSource<Vector3>(tmp.mid(1).trimmed());
 
     /* Unique vertices and normals */
-    vector<VertexData> uniqueData;
-    vector<unsigned int> uniqueIndices;
+    d->meshData[meshId] = shared_ptr<ColladaMeshData>(new ColladaMeshData);
     QMap<unsigned long long, unsigned int> uniqueMap;
     for(unsigned int i = 0; i < indices.size(); i += stride) {
         unsigned long long uniqueHash = static_cast<unsigned long long>(indices[i]) << 32 | indices[i+1];
         if(uniqueMap.contains(uniqueHash)) {
-            uniqueIndices.push_back(uniqueMap[uniqueHash]);
+            d->meshData[meshId]->_indices.push_back(uniqueMap[uniqueHash]);
             continue;
         }
 
-        uniqueData.push_back({vertices[indices[i+vertexOffset]], normals[indices[i+normalOffset]]});
+        d->meshData[meshId]->_vertices.push_back(vertices[indices[i+vertexOffset]]);
+        d->meshData[meshId]->_normals.push_back(normals[indices[i+normalOffset]]);
 
-        uniqueMap[uniqueHash] = uniqueData.size()-1;
-        uniqueIndices.push_back(uniqueData.size()-1);
+        uniqueMap[uniqueHash] = d->meshData[meshId]->_vertices.size()-1;
+        d->meshData[meshId]->_indices.push_back(d->meshData[meshId]->_vertices.size()-1);
     }
 
+    return d->meshData[meshId];
+}
+
+shared_ptr<Mesh> ColladaImporter::ColladaImporter::mesh(size_t id) {
+    if(!d || id >= d->meshes.size()) return nullptr;
+    if(d->meshes[id]) return d->meshes[id];
+
+    /* Get vertex and index data */
+    if(!meshData(id)) return nullptr;
+    shared_ptr<Plugins::ColladaImporter::ColladaMeshData> data = d->meshData[id];
+
     Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
-        .arg(uniqueIndices.size()/3).arg(uniqueData.size()).toStdString();
+        .arg(data->_indices.size()/3).arg(data->_vertices.size()).toStdString();
 
     /* Create output mesh */
-    IndexedMesh* mesh = new IndexedMesh(Mesh::Triangles, uniqueData.size(), 0, 0);
+    IndexedMesh* mesh = new IndexedMesh(Mesh::Triangles, data->_vertices.size(), 0, 0);
+
+    vector<VertexData> interleavedMeshData;
+    interleavedMeshData.reserve(data->_vertices.size());
+    for(size_t i = 0; i != data->_vertices.size(); ++i) {
+        interleavedMeshData.push_back({
+            data->_vertices[i],
+            data->_normals[i]
+        });
+    }
 
     Buffer* buffer = mesh->addBuffer(true);
-    buffer->setData(uniqueData.size()*sizeof(VertexData), uniqueData.data(), Buffer::DrawStatic);
+    buffer->setData(interleavedMeshData.size()*sizeof(VertexData), interleavedMeshData.data(), Buffer::DrawStatic);
     mesh->bindAttribute<Vector4>(buffer, PhongShader::Vertex);
     mesh->bindAttribute<Vector3>(buffer, PhongShader::Normal);
 
-    SizeBasedCall<IndexBuilder>(uniqueData.size())(mesh, uniqueIndices);
+    SizeBasedCall<IndexBuilder>(interleavedMeshData.size())(mesh, data->_indices);
 
     d->meshes[id] = shared_ptr<Mesh>(mesh);
     return d->meshes[id];
@@ -295,7 +316,7 @@ template<class T> vector<T> ColladaImporter::parseSource(const QString& id) {
     d->query.evaluateTo(&tmp);
     GLuint count = ColladaType<GLuint>::fromString(tmp);
 
-    /* Assert that size of each item is size of T */
+    /* Size of each item */
     d->query.setQuery((namespaceDeclaration + "//source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
     d->query.evaluateTo(&tmp);
     GLuint size = ColladaType<GLuint>::fromString(tmp);

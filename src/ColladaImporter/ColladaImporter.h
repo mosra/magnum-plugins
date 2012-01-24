@@ -29,6 +29,8 @@
 
 namespace Magnum { namespace Plugins { namespace ColladaImporter {
 
+class ColladaMeshData;
+
 /**
 @brief Collada importer plugin
 */
@@ -44,17 +46,20 @@ class ColladaImporter: public AbstractImporter {
         std::shared_ptr<Object> object(size_t id);
 
         size_t meshCount() const { return d ? d->meshes.size() : 0; }
+        std::shared_ptr<MeshData> meshData(size_t meshId);
         std::shared_ptr<Mesh> mesh(size_t id);
 
         size_t materialCount() const { return d ? d->materials.size() : 0; }
         std::shared_ptr<AbstractMaterial> material(size_t id);
 
     private:
+        /** @brief Contents of opened Collada document */
         struct Document {
-            inline Document(size_t objectCount, size_t materialCount): objects(objectCount), meshes(objectCount), materials(materialCount) {}
+            inline Document(size_t objectCount, size_t materialCount): objects(objectCount), meshData(objectCount), meshes(objectCount), materials(materialCount) {}
 
             /* Geometries and materials */
             std::vector<std::shared_ptr<Object>> objects;
+            std::vector<std::shared_ptr<Plugins::ColladaImporter::ColladaMeshData>> meshData;
             std::vector<std::shared_ptr<Mesh>> meshes;
             std::vector<std::shared_ptr<AbstractMaterial>> materials;
 
