@@ -43,12 +43,11 @@ class Utility {
          */
         template<class Vector> static Vector parseVector(const QString& data, int* from, size_t size = Vector::Size) {
             Vector output;
-
             int to;
             for(size_t j = 0; j != size; ++j) {
-                to = data.indexOf(QRegExp("\\s"), *from);
+                to = data.indexOf(' ', *from);
                 while(to == *from)
-                    to = data.indexOf(QRegExp("\\s"), ++*from);
+                    to = data.indexOf(' ', ++*from);
                 output.set(j, ColladaType<typename Vector::Type>::fromString(data.mid(*from, to-*from)));
                 *from = (to == -1 ? data.size() : to+1);
             }
@@ -79,9 +78,9 @@ class Utility {
             int from = 0;
             int to;
             for(size_t i = 0; i != count; ++i) {
-                to = data.indexOf(QRegExp("\\s"), from);
+                to = data.indexOf(' ', from);
                 while(to == from)
-                    to = data.indexOf(QRegExp("\\s"), ++from);
+                    to = data.indexOf(' ', ++from);
                 output.push_back(ColladaType<Single>::fromString(data.mid(from, to-from)));
                 from = (to == -1 ? data.size() : to+1);
             }

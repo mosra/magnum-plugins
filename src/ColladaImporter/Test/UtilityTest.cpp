@@ -31,7 +31,7 @@ void UtilityTest::parseVector() {
     QCOMPARE((Utility::parseVector<Math::Vector<GLfloat, 1>>("3.14")[0]), 3.14f);
 
     /* Spaces */
-    QVERIFY(Utility::parseVector<Vector2>("  \t  2.17\r\n3.28  ") == Vector2(2.17f, 3.28f));
+    QVERIFY(Utility::parseVector<Vector2>("     2.17  3.28  ") == Vector2(2.17f, 3.28f));
 
     /* Nothing */
     QVERIFY(Utility::parseVector<Vector2>("") == Vector2());
@@ -56,7 +56,7 @@ void UtilityTest::parseArray() {
     QVERIFY((Utility::parseArray<GLfloat>("3.14", 1) == vector<GLfloat>{3.14f}));
 
     /* Spaces */
-    QVERIFY((Utility::parseArray<GLfloat>("  \t  2.17\r\n3.28  ", 2) == vector<GLfloat>{2.17f, 3.28f}));
+    QVERIFY((Utility::parseArray<GLfloat>("     2.17  3.28  ", 2) == vector<GLfloat>{2.17f, 3.28f}));
 
     /* Different size */
     QVERIFY((Utility::parseArray<GLfloat>("2.17 3.28", 3) == vector<GLfloat>{2.17f, 3.28f, 0.0f}));
