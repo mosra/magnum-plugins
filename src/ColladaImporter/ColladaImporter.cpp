@@ -44,26 +44,21 @@ const QString ColladaImporter::namespaceDeclaration =
 ColladaImporter::ColladaImporter(AbstractPluginManager* manager, const string& plugin): AbstractImporter(manager, plugin), d(0), zero(0), app(zero, 0) {
 }
 
-bool ColladaImporter::open(istream& in) {
+bool ColladaImporter::open(const string& filename) {
     /* Close previous document */
     if(d) close();
 
     QXmlQuery query;
 
     /* Open the file and load it into XQuery */
-    {
-        in.seekg(0, ios::end);
-        in.getloc();
-        size_t size = in.tellg();
-        in.seekg(0, ios::beg);
-        char* buffer = new char[size];
-        in.read(buffer, size);
-        QString data = QString::fromUtf8(buffer, size);
-        delete[] buffer;
-        if(!query.setFocus(data)) {
-            Error() << "ColladaImporter: cannot load XML";
-            return false;
-        }
+    QFile file(QString::fromStdString(filename));
+    if(!file.open(QIODevice::ReadOnly)) {
+        Error() << "ColladaImporter: cannot open file" << filename;
+        return false;
+    }
+    if(!query.setFocus(&file)) {
+        Error() << "ColladaImporter: cannot load XML";
+        return false;
     }
 
     QString tmp;

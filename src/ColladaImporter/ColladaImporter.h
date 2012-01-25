@@ -39,7 +39,9 @@ class ColladaImporter: public AbstractImporter {
         ColladaImporter(Corrade::PluginManager::AbstractPluginManager* manager = 0, const std::string& plugin = "");
         virtual ~ColladaImporter() { close(); }
 
-        bool open(std::istream& in);
+        inline int features() const { return OpenFile; }
+
+        bool open(const std::string& filename);
         void close();
 
         size_t objectCount() const { return d ? d->objects.size() : 0; }
