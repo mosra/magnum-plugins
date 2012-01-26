@@ -273,7 +273,7 @@ shared_ptr<AbstractMaterial> ColladaImporter::ColladaImporter::material(size_t i
     /** @todo Support other profiles */
 
     if(tmp.trimmed() != "profile_COMMON") {
-        Error() << "ColladaImporter:" << tmp.trimmed().toStdString() << "effect profile not supported";
+        Error() << "ColladaImporter:" << ('"'+tmp.trimmed()+'"').toStdString() << "effect profile not supported";
         return nullptr;
     }
 
@@ -284,7 +284,7 @@ shared_ptr<AbstractMaterial> ColladaImporter::ColladaImporter::material(size_t i
 
     /** @todo Other (blinn, goraund) profiles */
     if(tmp != "phong") {
-        Error() << "ColladaImporter:" << tmp.toStdString() << "shader not supported";
+        Error() << "ColladaImporter:" << ('"'+tmp+'"').toStdString() << "shader not supported";
         return nullptr;
     }
 

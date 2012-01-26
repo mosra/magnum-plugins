@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_effects>
+    <effect id="MaterialWrongProfileEffect">
+      <profile_GLSL />
+    </effect>
+    <effect id="MaterialWrongShaderEffect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert />
+        </technique>
+      </profile_COMMON>
+    </effect>
+    <effect id="MaterialPhongEffect">
+      <profile_COMMON>
+        <technique sid="common">
+          <phong>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <ambient>
+              <color sid="ambient">1 0 0 0</color>
+            </ambient>
+            <diffuse>
+              <color sid="diffuse">0 1 0 0</color>
+            </diffuse>
+            <specular>
+              <color sid="specular">0 0 1 0</color>
+            </specular>
+            <shininess>
+              <float sid="shininess">50</float>
+            </shininess>
+            <index_of_refraction>
+              <float sid="index_of_refraction">1.52</float>
+            </index_of_refraction>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_materials>
+    <material id="MaterialWrongProfile" name="Material">
+      <instance_effect url="#MaterialWrongProfileEffect"/>
+    </material>
+    <material id="MaterialWrongShader" name="Material">
+      <instance_effect url="#MaterialWrongShaderEffect"/>
+    </material>
+    <material id="MaterialPhong" name="Material">
+      <instance_effect url="#MaterialPhongEffect"/>
+    </material>
+  </library_materials>
+</COLLADA>

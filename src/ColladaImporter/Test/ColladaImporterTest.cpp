@@ -79,4 +79,27 @@ void ColladaImporterTest::parseSource() {
     }));
 }
 
+void ColladaImporterTest::material() {
+    ColladaImporter importer;
+    QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "material.dae")));
+
+    stringstream debug;
+    Error::setOutput(&debug);
+    QVERIFY(!importer.material(0));
+    QVERIFY(debug.str() == "ColladaImporter: \"profile_GLSL\" effect profile not supported\n");
+
+    debug.str("");
+    QVERIFY(!importer.material(1));
+    QVERIFY(debug.str() == "ColladaImporter: \"lambert\" shader not supported\n");
+
+    /** @todo Wrong way. */
+//     QVERIFY(!!importer.material(2));
+//     Material* material = static_cast<Material*>(importer.material(2).get());
+//
+//     QVERIFY(material->ambientColor == Vector3(1, 0, 0));
+//     QVERIFY(material->diffuseColor == Vector3(0, 1, 0));
+//     QVERIFY(material->specularColor == Vector3(0, 0, 1));
+//     QCOMPARE(material->shininess, 50.0f);
+}
+
 }}}}
