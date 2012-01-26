@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_materials>
+    <material id="Material0" name="Material0" />
+    <material id="Material1" name="Material1" />
+    <material id="Material2" name="Material2" />
+    <material id="Material3" name="Material3" />
+  </library_materials>
+  <library_geometries>
+    <geometry id="Geometry0" />
+    <geometry id="Geometry1" />
+    <geometry id="Geometry2" />
+    <geometry id="Geometry3" />
+    <geometry id="Geometry4" />
+  </library_geometries>
+  <library_cameras>
+    <camera id="Camera0" name="Camera 0" />
+    <camera id="Camera1" name="Camera 1" />
+  </library_cameras>
+  <library_lights>
+    <light id="Light0" name="Light 0" />
+    <light id="Light1" name="Light 1" />
+    <light id="Light2" name="Light 2" />
+  </library_lights>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene" />
+  </library_visual_scenes>
+</COLLADA>

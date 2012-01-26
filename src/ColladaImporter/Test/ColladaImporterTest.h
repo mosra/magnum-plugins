@@ -25,6 +25,7 @@ class ColladaImporterTest: public QObject {
     private slots:
         void openWrongNamespace();
         void openWrongVersion();
+        void count();
 };
 
 }}}}

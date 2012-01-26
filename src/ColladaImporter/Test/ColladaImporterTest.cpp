@@ -45,4 +45,20 @@ void ColladaImporterTest::openWrongVersion() {
     QVERIFY(debug.str() == "ColladaImporter: unsupported version \"1.4.0\"\n");
 }
 
+void ColladaImporterTest::count() {
+    ColladaImporter importer;
+    QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "count.dae")));
+
+    QVERIFY(importer.materialCount() == 4);
+    QVERIFY(importer.objectCount() == 5);
+    QVERIFY(importer.meshCount() == 5); /* Meshes are the same as objects */
+
+    QEXPECT_FAIL(0, "Cameras are not implemented", Continue);
+    QVERIFY(importer.cameraCount() == 3);
+    QEXPECT_FAIL(0, "Lights are not implemented", Continue);
+    QVERIFY(importer.lightCount() == 2);
+    QEXPECT_FAIL(0, "Scenes are not implemented", Continue);
+    QVERIFY(importer.sceneCount() == 1);
+}
+
 }}}}
