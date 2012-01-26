@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_geometries>
+    <geometry id="Mesh">
+      <mesh>
+        <source id="WrongTotalCount">
+          <float_array id="WrongTotalCountArray" count="6">0 1 2 3 4 5</float_array>
+          <technique_common>
+            <accessor source="#WrongTotalCountArray" count="1" stride="3" />
+          </technique_common>
+        </source>
+        <source id="SwappedCoords">
+          <float_array id="SwappedCoordsArray" count="3">1 0 2</float_array>
+          <technique_common>
+            <accessor source="#SwappedCoordsArray" count="1" stride="3">
+              <param name="Y" type="float"/>
+              <param name="X" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="MoreElements">
+          <float_array id="MoreElementsArray" count="6">0 1 2 3 4 5</float_array>
+          <technique_common>
+            <accessor source="#MoreElementsArray" count="2" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+      </mesh>
+    </geometry>
+  </library_geometries>
+</COLLADA>

@@ -61,4 +61,22 @@ void ColladaImporterTest::count() {
     QVERIFY(importer.sceneCount() == 1);
 }
 
+void ColladaImporterTest::parseSource() {
+    ColladaImporter importer;
+    QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "parseSource.dae")));
+
+    stringstream debug;
+    Error::setOutput(&debug);
+    QVERIFY(importer.parseSource<Vector3>("WrongTotalCount") == vector<Vector3>());
+    QVERIFY(debug.str() == "ColladaImporter: wrong total count in source \"WrongTotalCount\"\n");
+
+    QEXPECT_FAIL(0, "Swapped coordinates in source are not implemented", Continue);
+    QVERIFY(importer.parseSource<Vector3>("SwappedCoords") == vector<Vector3>{Vector3(0, 1, 2)});
+
+    QVERIFY((importer.parseSource<Vector4>("MoreElements") == vector<Vector4>{
+        Vector4(0, 1, 2),
+        Vector4(3, 4, 5)
+    }));
+}
+
 }}}}

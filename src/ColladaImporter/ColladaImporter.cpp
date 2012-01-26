@@ -25,8 +25,6 @@
 #include "PhongShader.h"
 #include "Material.h"
 #include "PointLight.h"
-#include "ColladaType.h"
-#include "Utility.h"
 #include "SizeTraits.h"
 #include "ColladaMeshData.h"
 
@@ -318,40 +316,6 @@ shared_ptr<AbstractMaterial> ColladaImporter::ColladaImporter::material(size_t i
         light));
 
     return d->materials[id];
-}
-
-template<class T> vector<T> ColladaImporter::parseSource(const QString& id) {
-    vector<T> output;
-    QString tmp;
-
-    /* Count of items */
-    d->query.setQuery((namespaceDeclaration + "//source[@id='%0']/technique_common/accessor/@count/string()").arg(id));
-    d->query.evaluateTo(&tmp);
-    GLuint count = ColladaType<GLuint>::fromString(tmp);
-
-    /* Size of each item */
-    d->query.setQuery((namespaceDeclaration + "//source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
-    d->query.evaluateTo(&tmp);
-    GLuint size = ColladaType<GLuint>::fromString(tmp);
-
-    /* Data source */
-    d->query.setQuery((namespaceDeclaration + "//source[@id='%0']/technique_common/accessor/@source/string()").arg(id));
-    d->query.evaluateTo(&tmp);
-    QString source = tmp.mid(1).trimmed();
-
-    /** @todo Assert right order of coordinates and type */
-
-    /* Items */
-    /** @todo Assert right number of items */
-    d->query.setQuery((namespaceDeclaration + "//float_array[@id='%0']/string()").arg(source));
-    d->query.evaluateTo(&tmp);
-
-    output.reserve(count);
-    int from = 0;
-    for(size_t i = 0; i != count; ++i)
-        output.push_back(Utility::parseVector<T>(tmp, &from, size));
-
-    return output;
 }
 
 }}}

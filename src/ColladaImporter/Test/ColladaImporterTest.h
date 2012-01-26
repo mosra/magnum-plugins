@@ -26,6 +26,7 @@ class ColladaImporterTest: public QObject {
         void openWrongNamespace();
         void openWrongVersion();
         void count();
+        void parseSource();
 };
 
 }}}}
