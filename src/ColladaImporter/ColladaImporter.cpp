@@ -64,6 +64,24 @@ bool ColladaImporter::open(const string& filename) {
     QString tmp;
     QStringList listTmp;
 
+    /* Check namespace */
+    query.setQuery("namespace-uri(/*:COLLADA)");
+    query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+    if(tmp != "http://www.collada.org/2005/11/COLLADASchema") {
+        Error() << "ColladaImporter: unsupported namespace" << ('"'+tmp+'"').toStdString();
+        return false;
+    }
+
+    /* Check version */
+    query.setQuery(namespaceDeclaration + "/COLLADA/@version/string()");
+    query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+    if(tmp != "1.4.1") {
+        Error() << "ColladaImporter: unsupported version" << ('"'+tmp+'"').toStdString();
+        return false;
+    }
+
     /* Geometry count */
     query.setQuery(namespaceDeclaration + "count(//library_geometries/geometry)");
     query.evaluateTo(&tmp);
