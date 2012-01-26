@@ -39,7 +39,7 @@ class ColladaMeshData;
 class ColladaImporter: public AbstractImporter {
     public:
         ColladaImporter(Corrade::PluginManager::AbstractPluginManager* manager = 0, const std::string& plugin = "");
-        virtual ~ColladaImporter() { close(); }
+        virtual ~ColladaImporter();
 
         inline int features() const { return OpenFile; }
 
@@ -130,7 +130,7 @@ class ColladaImporter: public AbstractImporter {
         int zero;
 
         /** @brief QCoreApplication, which must be started in order to use QXmlQuery */
-        QCoreApplication app;
+        QCoreApplication* app;
 
         /**
          * @brief Builder for index array based on index count

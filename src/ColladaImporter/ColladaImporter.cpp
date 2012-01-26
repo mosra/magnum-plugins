@@ -39,7 +39,11 @@ namespace Magnum { namespace Plugins { namespace ColladaImporter {
 const QString ColladaImporter::namespaceDeclaration =
     "declare default element namespace \"http://www.collada.org/2005/11/COLLADASchema\";\n";
 
-ColladaImporter::ColladaImporter(AbstractPluginManager* manager, const string& plugin): AbstractImporter(manager, plugin), d(0), zero(0), app(zero, 0) {
+ColladaImporter::ColladaImporter(AbstractPluginManager* manager, const string& plugin): AbstractImporter(manager, plugin), d(0), zero(0), app(qApp ? 0 : new QCoreApplication(zero, 0)) {}
+
+ColladaImporter::~ColladaImporter() {
+    close();
+    delete app;
 }
 
 bool ColladaImporter::open(const string& filename) {
