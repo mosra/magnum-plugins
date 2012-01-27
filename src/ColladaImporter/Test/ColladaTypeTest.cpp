@@ -19,9 +19,9 @@
 
 #include "../ColladaType.h"
 
-QTEST_APPLESS_MAIN(Magnum::Plugins::ColladaImporter::Test::ColladaTypeTest)
+QTEST_APPLESS_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaTypeTest)
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter { namespace Test {
+namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
 void ColladaTypeTest::gluint() {
     QVERIFY(ColladaType<GLuint>::fromString("123456") == 123456);

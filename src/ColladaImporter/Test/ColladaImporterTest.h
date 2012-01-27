@@ -1,5 +1,5 @@
-#ifndef Magnum_Plugins_ColladaImporter_Test_ColladaImporterTest_h
-#define Magnum_Plugins_ColladaImporter_Test_ColladaImporterTest_h
+#ifndef Magnum_Trade_ColladaImporter_Test_ColladaImporterTest_h
+#define Magnum_Trade_ColladaImporter_Test_ColladaImporterTest_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -17,7 +17,7 @@
 
 #include <QtCore/QObject>
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter { namespace Test {
+namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
 class ColladaImporterTest: public QObject {
     Q_OBJECT

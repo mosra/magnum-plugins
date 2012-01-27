@@ -1,5 +1,5 @@
-#ifndef Magnum_Plugins_ColladaImporter_Utility_h
-#define Magnum_Plugins_ColladaImporter_Utility_h
+#ifndef Magnum_Trade_ColladaImporter_Utility_h
+#define Magnum_Trade_ColladaImporter_Utility_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,7 +16,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Plugins::ColladaImporter::Utility
+ * @brief Class Magnum::Trade::ColladaImporter::Utility
  */
 
 #include <vector>
@@ -24,7 +24,7 @@
 
 #include "ColladaType.h"
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 /**
 @brief Utility functions for parsing

@@ -1,5 +1,5 @@
-#ifndef Magnum_Plugins_ColladaImporter_ColladaType_h
-#define Magnum_Plugins_ColladaImporter_ColladaType_h
+#ifndef Magnum_Trade_ColladaImporter_ColladaType_h
+#define Magnum_Trade_ColladaImporter_ColladaType_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,14 +16,14 @@
 */
 
 /** @file
- * @brief Class Magnum::Plugins::ColladaImporter::ColladaType
+ * @brief Class Magnum::Trade::ColladaImporter::ColladaType
  */
 
 #include "Magnum.h"
 
 #include <QtCore/QString>
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 /**
 @brief Class for dealing with Collada types

@@ -25,9 +25,9 @@
 using namespace std;
 using namespace Corrade::Utility;
 
-QTEST_APPLESS_MAIN(Magnum::Plugins::ColladaImporter::Test::ColladaImporterTest)
+QTEST_APPLESS_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaImporterTest)
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter { namespace Test {
+namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
 void ColladaImporterTest::openWrongNamespace() {
     ColladaImporter importer;

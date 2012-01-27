@@ -1,5 +1,5 @@
-#ifndef Magnum_Plugins_ColladaImporter_PointLight_h
-#define Magnum_Plugins_ColladaImporter_PointLight_h
+#ifndef Magnum_Trade_ColladaImporter_PointLight_h
+#define Magnum_Trade_ColladaImporter_PointLight_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,12 +16,12 @@
 */
 
 /** @file
- * @brief Class Magnum::Plugins::ColladaImporter::PointLight
+ * @brief Class Magnum::Trade::ColladaImporter::PointLight
  */
 
 #include "Light.h"
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 /** @brief Point light */
 class PointLight: public Light {

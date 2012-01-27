@@ -1,5 +1,5 @@
-#ifndef Magnum_Plugins_ColladaImporter_ColladaImporter_h
-#define Magnum_Plugins_ColladaImporter_ColladaImporter_h
+#ifndef Magnum_Trade_ColladaImporter_ColladaImporter_h
+#define Magnum_Trade_ColladaImporter_ColladaImporter_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,10 +16,10 @@
 */
 
 /** @file
- * @brief Class Magnum::Plugins::ColladaImporter::ColladaImporter
+ * @brief Class Magnum::Trade::ColladaImporter::ColladaImporter
  */
 
-#include "AbstractImporter.h"
+#include "Trade/AbstractImporter.h"
 
 #include <unordered_map>
 #include <QtCore/QCoreApplication>
@@ -29,7 +29,7 @@
 #include "ColladaType.h"
 #include "Utility.h"
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 class ColladaMeshData;
 
@@ -105,7 +105,7 @@ class ColladaImporter: public AbstractImporter {
 
             /* Geometries and materials */
             std::vector<std::shared_ptr<Object>> objects;
-            std::vector<std::shared_ptr<Plugins::ColladaImporter::ColladaMeshData>> meshData;
+            std::vector<std::shared_ptr<Trade::ColladaImporter::ColladaMeshData>> meshData;
             std::vector<std::shared_ptr<Mesh>> meshes;
             std::vector<std::shared_ptr<AbstractMaterial>> materials;
 

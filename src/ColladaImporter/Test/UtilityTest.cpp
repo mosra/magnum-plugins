@@ -20,11 +20,11 @@
 #include "Magnum.h"
 #include "../Utility.h"
 
-QTEST_APPLESS_MAIN(Magnum::Plugins::ColladaImporter::Test::UtilityTest)
+QTEST_APPLESS_MAIN(Magnum::Trade::ColladaImporter::Test::UtilityTest)
 
 using namespace std;
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter { namespace Test {
+namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
 void UtilityTest::parseVector() {
     /* Extremely spaceless */

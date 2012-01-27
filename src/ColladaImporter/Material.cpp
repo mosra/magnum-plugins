@@ -20,7 +20,7 @@
 
 using namespace std;
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 Material::Material(const shared_ptr<PhongShader>& shader, const Magnum::Vector3& ambientColor, const Magnum::Vector3& diffuseColor, const Magnum::Vector3& specularColor, GLfloat shininess, const shared_ptr<PointLight>& light): shader(shader), ambientColor(ambientColor), diffuseColor(diffuseColor), specularColor(specularColor), shininess(shininess), light(light) {}
 

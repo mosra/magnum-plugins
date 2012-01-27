@@ -32,9 +32,9 @@ using namespace std;
 using namespace Corrade::Utility;
 using namespace Corrade::PluginManager;
 
-PLUGIN_REGISTER(Magnum::Plugins::ColladaImporter::ColladaImporter, "cz.mosra.magnum.AbstractImporter/0.1")
+PLUGIN_REGISTER(Magnum::Trade::ColladaImporter::ColladaImporter, "cz.mosra.magnum.Trade.AbstractImporter/0.1")
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 const QString ColladaImporter::namespaceDeclaration =
     "declare default element namespace \"http://www.collada.org/2005/11/COLLADASchema\";\n";
@@ -225,7 +225,7 @@ shared_ptr<Mesh> ColladaImporter::ColladaImporter::mesh(size_t id) {
 
     /* Get vertex and index data */
     if(!meshData(id)) return nullptr;
-    shared_ptr<Plugins::ColladaImporter::ColladaMeshData> data = d->meshData[id];
+    shared_ptr<Trade::ColladaImporter::ColladaMeshData> data = d->meshData[id];
 
     Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
         .arg(data->_indices.size()/3).arg(data->_vertices.size()).toStdString();

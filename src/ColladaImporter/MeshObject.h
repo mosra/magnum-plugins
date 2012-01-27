@@ -1,5 +1,5 @@
-#ifndef Magnum_Plugins_ColladaImporter_MeshObject_h
-#define Magnum_Plugins_ColladaImporter_MeshObject_h
+#ifndef Magnum_Trade_ColladaImporter_MeshObject_h
+#define Magnum_Trade_ColladaImporter_MeshObject_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,16 +16,16 @@
 */
 
 /** @file
- * @brief Class Magnum::Plugins::ColladaImporter::MeshObject
+ * @brief Class Magnum::Trade::ColladaImporter::MeshObject
  */
 
 #include <memory>
 
 #include "Object.h"
 #include "Mesh.h"
-#include "AbstractMaterial.h"
+#include "Trade/AbstractMaterial.h"
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 /** @brief Object with mesh */
 class MeshObject: public Object {

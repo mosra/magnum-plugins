@@ -19,7 +19,7 @@
 
 using namespace Corrade::Utility;
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 PhongShader::PhongShader() {
     Resource rs("shaders");

@@ -1,5 +1,5 @@
-#ifndef Magnum_Plugins_ColladaImporter_Material_h
-#define Magnum_Plugins_ColladaImporter_Material_h
+#ifndef Magnum_Trade_ColladaImporter_Material_h
+#define Magnum_Trade_ColladaImporter_Material_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,14 +16,14 @@
 */
 
 /** @file
- * @brief Class Magnum::Plugins::ColladaImporter::Material
+ * @brief Class Magnum::Trade::ColladaImporter::Material
  */
 
 #include <memory>
 
-#include "AbstractMaterial.h"
+#include "Trade/AbstractMaterial.h"
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 class PointLight;
 class PhongShader;

@@ -1,5 +1,5 @@
-#ifndef Magnum_Plugins_ColladaImporter_PhongShader_h
-#define Magnum_Plugins_ColladaImporter_PhongShader_h
+#ifndef Magnum_Trade_ColladaImporter_PhongShader_h
+#define Magnum_Trade_ColladaImporter_PhongShader_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,12 +16,12 @@
 */
 
 /** @file
- * @brief Class Magnum::Plugins::ColladaImporter::PhongShader
+ * @brief Class Magnum::Trade::ColladaImporter::PhongShader
  */
 
 #include "AbstractShaderProgram.h"
 
-namespace Magnum { namespace Plugins { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 /** @brief Phong shader */
 class PhongShader: public AbstractShaderProgram {
