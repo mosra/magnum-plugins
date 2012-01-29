@@ -66,7 +66,7 @@ class PhongShader: public AbstractShaderProgram {
         }
 
         /** @brief Light position */
-        inline void setLightUniform(const Vector4& light) {
+        inline void setLightUniform(const Vector3& light) {
             setUniform(lightUniform, light);
         }
 
