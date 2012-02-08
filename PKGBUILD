@@ -2,7 +2,7 @@
 pkgname=magnum-plugins
 pkgver=dev
 pkgrel=1
-pkgdesc="OpenGL 3 graphics engine - plugins"
+pkgdesc="Plugins for Magnum OpenGL 3 graphics engine"
 arch=('i686' 'x86_64')
 url="http://mosra.cz/blog/"
 license=('LGPLv3')
