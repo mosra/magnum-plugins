@@ -17,3 +17,7 @@ if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(Test)
 endif()
+
+if(WIN32)
+    target_link_libraries(ColladaImporter ${MAGNUM_LIBRARY} ${CORRADE_UTILITY_LIBRARY} ${CORRADE_PLUGINMANAGER_LIBRARY} ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARY})
+endif()
