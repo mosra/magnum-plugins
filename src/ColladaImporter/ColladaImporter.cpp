@@ -19,14 +19,9 @@
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 
-#include "IndexedMesh.h"
-
-#include "MeshObject.h"
-#include "PhongShader.h"
-#include "Material.h"
-#include "PointLight.h"
 #include "SizeTraits.h"
-#include "ColladaMeshData.h"
+#include "Trade/PhongMaterial.h"
+#include "Trade/Mesh.h"
 
 using namespace std;
 using namespace Corrade::Utility;
@@ -44,6 +39,11 @@ ColladaImporter::ColladaImporter(AbstractPluginManager* manager, const string& p
 ColladaImporter::~ColladaImporter() {
     close();
     delete app;
+}
+
+ColladaImporter::Document::~Document() {
+    for(auto i: meshes) delete i;
+    for(auto i: materials) delete i;
 }
 
 bool ColladaImporter::open(const string& filename) {
@@ -115,28 +115,9 @@ void ColladaImporter::close() {
     d = 0;
 }
 
-shared_ptr<Object> ColladaImporter::object(size_t id) {
-    /* Return nullptr if no such object exists, or return existing, if already parsed */
-    if(!d || id >= d->objects.size()) return nullptr;
-    if(d->objects[id]) return d->objects[id];
-
-    /* Material ID */
-    QString tmp;
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@material/string()").arg(id+1));
-    d->query.evaluateTo(&tmp);
-
-    /* Get the material */
-    shared_ptr<AbstractMaterial> mat(material(d->materialMap[tmp.mid(1).trimmed().toStdString()]));
-    if(!mat) return nullptr;
-
-    /* Mesh has the same ID as object */
-    d->objects[id] = shared_ptr<Object>(new MeshObject(mesh(id), mat));
-    return d->objects[id];
-}
-
-shared_ptr<ColladaImporter::MeshData> ColladaImporter::meshData(size_t meshId) {
-    if(!d || meshId >= d->meshData.size()) return nullptr;
-    if(d->meshData[meshId]) return d->meshData[meshId];
+Mesh* ColladaImporter::mesh(size_t meshId) {
+    if(!d || meshId >= d->meshes.size()) return nullptr;
+    if(d->meshes[meshId]) return d->meshes[meshId];
 
     QString tmp;
 
@@ -200,60 +181,32 @@ shared_ptr<ColladaImporter::MeshData> ColladaImporter::meshData(size_t meshId) {
     vector<Vector3> normals = parseSource<Vector3>(tmp.mid(1).trimmed());
 
     /* Unique vertices and normals */
-    d->meshData[meshId] = shared_ptr<ColladaMeshData>(new ColladaMeshData);
     QMap<unsigned long long, unsigned int> uniqueMap;
+    vector<unsigned int>* uniqueIndices = new vector<unsigned int>();
+    vector<Vector3>* uniqueVertices = new vector<Vector3>();
+    vector<Vector3>* uniqueNormals = new vector<Vector3>();
     for(unsigned int i = 0; i < indices.size(); i += stride) {
         unsigned long long uniqueHash = static_cast<unsigned long long>(indices[i]) << 32 | indices[i+1];
         if(uniqueMap.contains(uniqueHash)) {
-            d->meshData[meshId]->_indices.push_back(uniqueMap[uniqueHash]);
+            uniqueIndices->push_back(uniqueMap[uniqueHash]);
             continue;
         }
 
-        d->meshData[meshId]->_vertices.push_back(vertices[indices[i+vertexOffset]]);
-        d->meshData[meshId]->_normals.push_back(normals[indices[i+normalOffset]]);
+        uniqueVertices->push_back(vertices[indices[i+vertexOffset]]);
+        uniqueNormals->push_back(normals[indices[i+normalOffset]]);
 
-        uniqueMap[uniqueHash] = d->meshData[meshId]->_vertices.size()-1;
-        d->meshData[meshId]->_indices.push_back(d->meshData[meshId]->_vertices.size()-1);
+        uniqueMap[uniqueHash] = uniqueVertices->size()-1;
+        uniqueIndices->push_back(uniqueVertices->size()-1);
     }
-
-    return d->meshData[meshId];
-}
-
-shared_ptr<Mesh> ColladaImporter::ColladaImporter::mesh(size_t id) {
-    if(!d || id >= d->meshes.size()) return nullptr;
-    if(d->meshes[id]) return d->meshes[id];
-
-    /* Get vertex and index data */
-    if(!meshData(id)) return nullptr;
-    shared_ptr<Trade::ColladaImporter::ColladaMeshData> data = d->meshData[id];
 
     Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
-        .arg(data->_indices.size()/3).arg(data->_vertices.size()).toStdString();
+        .arg(uniqueIndices->size()/3).arg(uniqueVertices->size()).toStdString();
 
-    /* Create output mesh */
-    IndexedMesh* mesh = new IndexedMesh(Mesh::Triangles, data->_vertices.size(), 0, 0);
-
-    vector<VertexData> interleavedMeshData;
-    interleavedMeshData.reserve(data->_vertices.size());
-    for(size_t i = 0; i != data->_vertices.size(); ++i) {
-        interleavedMeshData.push_back({
-            data->_vertices[i],
-            data->_normals[i]
-        });
-    }
-
-    Buffer* buffer = mesh->addBuffer(true);
-    buffer->setData(interleavedMeshData.size()*sizeof(VertexData), interleavedMeshData.data(), Buffer::DrawStatic);
-    mesh->bindAttribute<Vector4>(buffer, PhongShader::Vertex);
-    mesh->bindAttribute<Vector3>(buffer, PhongShader::Normal);
-
-    SizeBasedCall<IndexBuilder>(interleavedMeshData.size())(mesh, data->_indices);
-
-    d->meshes[id] = shared_ptr<Mesh>(mesh);
-    return d->meshes[id];
+    d->meshes[meshId] = new Mesh(Magnum::Mesh::Triangles, uniqueIndices, {uniqueVertices}, {uniqueNormals}, {});
+    return d->meshes[meshId];
 }
 
-shared_ptr<AbstractMaterial> ColladaImporter::ColladaImporter::material(size_t id) {
+AbstractMaterial* ColladaImporter::ColladaImporter::material(size_t id) {
     /* Return nullptr if no such material exists, or return existing, if already parsed */
     if(!d || id >= d->materials.size()) return nullptr;
     if(d->materials[id]) return d->materials[id];
@@ -304,21 +257,13 @@ shared_ptr<AbstractMaterial> ColladaImporter::ColladaImporter::material(size_t i
     Vector3 specularColor = Utility::parseVector<Vector3>(tmp);
 
     /* Shininess */
-    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/shininess/color/string()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/shininess/float/string()").arg(effect));
     d->query.evaluateTo(&tmp);
     GLfloat shininess = ColladaType<GLfloat>::fromString(tmp);
 
     /** @todo Emission, IOR */
 
-    /** @todo fixme */
-    shared_ptr<PhongShader> shader(new PhongShader());
-    shared_ptr<PointLight> light(new PointLight(
-        Vector3(), Vector3(1.0f, 1.0f, 1.0f), Vector3(1.0f, 1.0f, 1.0f)));
-    light->translate(-3, 10, 10);
-    d->materials[id] = shared_ptr<Material>(new Material(shader,
-        ambientColor, diffuseColor, specularColor, shininess,
-        light));
-
+    d->materials[id] = new PhongMaterial(ambientColor, diffuseColor, specularColor, shininess);
     return d->materials[id];
 }
 

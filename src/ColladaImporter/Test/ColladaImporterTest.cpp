@@ -50,8 +50,7 @@ void ColladaImporterTest::count() {
     QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "count.dae")));
 
     QVERIFY(importer.materialCount() == 4);
-    QVERIFY(importer.objectCount() == 5);
-    QVERIFY(importer.meshCount() == 5); /* Meshes are the same as objects */
+    QVERIFY(importer.meshCount() == 5);
 
     QEXPECT_FAIL(0, "Cameras are not implemented", Continue);
     QVERIFY(importer.cameraCount() == 3);

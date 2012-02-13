@@ -25,7 +25,6 @@
 #include <QtCore/QCoreApplication>
 #include <QtXmlPatterns/QXmlQuery>
 
-#include "IndexedMesh.h"
 #include "ColladaType.h"
 #include "Utility.h"
 
@@ -46,15 +45,11 @@ class ColladaImporter: public AbstractImporter {
         bool open(const std::string& filename);
         void close();
 
-        size_t objectCount() const { return d ? d->objects.size() : 0; }
-        std::shared_ptr<Object> object(size_t id);
-
         size_t meshCount() const { return d ? d->meshes.size() : 0; }
-        std::shared_ptr<MeshData> meshData(size_t meshId);
-        std::shared_ptr<Mesh> mesh(size_t id);
+        Mesh* mesh(size_t id);
 
         size_t materialCount() const { return d ? d->materials.size() : 0; }
-        std::shared_ptr<AbstractMaterial> material(size_t id);
+        AbstractMaterial* material(size_t id);
 
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id) {
@@ -101,13 +96,13 @@ class ColladaImporter: public AbstractImporter {
     private:
         /** @brief Contents of opened Collada document */
         struct Document {
-            inline Document(size_t objectCount, size_t materialCount): objects(objectCount), meshData(objectCount), meshes(objectCount), materials(materialCount) {}
+            inline Document(size_t objectCount, size_t materialCount): meshes(objectCount), materials(materialCount) {}
+
+            ~Document();
 
             /* Geometries and materials */
-            std::vector<std::shared_ptr<Object>> objects;
-            std::vector<std::shared_ptr<Trade::ColladaImporter::ColladaMeshData>> meshData;
-            std::vector<std::shared_ptr<Mesh>> meshes;
-            std::vector<std::shared_ptr<AbstractMaterial>> materials;
+            std::vector<Mesh*> meshes;
+            std::vector<AbstractMaterial*> materials;
 
             std::unordered_map<std::string, size_t> materialMap;
 
@@ -131,27 +126,6 @@ class ColladaImporter: public AbstractImporter {
 
         /** @brief QCoreApplication, which must be started in order to use QXmlQuery */
         QCoreApplication* app;
-
-        /**
-         * @brief Builder for index array based on index count
-         *
-         * @see SizeBasedCall
-         */
-        struct IndexBuilder {
-            template<class IndexType> static void run(IndexedMesh* mesh, const std::vector<GLuint>& indices) {
-                /* Compress index array. Using TypeTraits::IndexType to ensure
-                   we have allowed type for indexing */
-                std::vector<typename TypeTraits<IndexType>::IndexType> compressedIndices;
-                compressedIndices.reserve(indices.size());
-                for(auto it = indices.cbegin(); it != indices.cend(); ++it)
-                    compressedIndices.push_back(*it);
-
-                /* Update mesh parameters and fill index buffer */
-                mesh->setIndexCount(compressedIndices.size());
-                mesh->setIndexType(TypeTraits<IndexType>::glType());
-                mesh->indexBuffer()->setData(sizeof(IndexType)*compressedIndices.size(), compressedIndices.data(), Buffer::DrawStatic);
-            }
-        };
 };
 
 }}}

@@ -1,11 +1,7 @@
 find_package(Qt4 REQUIRED)
 
-corrade_add_resource(ColladaImporterShaders shaders PhongShader.frag PhongShader.vert)
 set(ColladaImporter_SRCS
     ColladaImporter.cpp
-    Material.cpp
-    PhongShader.cpp
-    ${ColladaImporterShaders}
 )
 
 corrade_add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR} ColladaImporter.conf ${ColladaImporter_SRCS})
