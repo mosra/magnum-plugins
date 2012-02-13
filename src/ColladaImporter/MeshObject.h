@@ -21,6 +21,7 @@
 
 #include <memory>
 
+#include "Camera.h"
 #include "Object.h"
 #include "Mesh.h"
 #include "Trade/AbstractMaterial.h"
@@ -38,8 +39,8 @@ class MeshObject: public Object {
          */
         MeshObject(const std::shared_ptr<Mesh>& mesh, const std::shared_ptr<AbstractMaterial>& material, Object* parent = nullptr): Object(parent), mesh(mesh), material(material) {}
 
-        inline void draw(const Matrix4& transformationMatrix, const Matrix4& projectionMatrix) {
-            material->use(transformationMatrix, projectionMatrix);
+        inline void draw(const Matrix4& transformationMatrix, Camera* camera) {
+            material->use(transformationMatrix, camera->projectionMatrix());
             mesh->draw();
         }
 
