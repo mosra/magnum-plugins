@@ -20,8 +20,8 @@
 #include <QtCore/QStringList>
 
 #include "SizeTraits.h"
-#include "Trade/PhongMaterial.h"
-#include "Trade/Mesh.h"
+#include "Trade/PhongMaterialData.h"
+#include "Trade/MeshData.h"
 
 using namespace std;
 using namespace Corrade::Utility;
@@ -115,7 +115,7 @@ void ColladaImporter::close() {
     d = 0;
 }
 
-Mesh* ColladaImporter::mesh(size_t meshId) {
+MeshData* ColladaImporter::mesh(size_t meshId) {
     if(!d || meshId >= d->meshes.size()) return nullptr;
     if(d->meshes[meshId]) return d->meshes[meshId];
 
@@ -202,11 +202,11 @@ Mesh* ColladaImporter::mesh(size_t meshId) {
     Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
         .arg(uniqueIndices->size()/3).arg(uniqueVertices->size()).toStdString();
 
-    d->meshes[meshId] = new Mesh(Magnum::Mesh::Triangles, uniqueIndices, {uniqueVertices}, {uniqueNormals}, {});
+    d->meshes[meshId] = new MeshData(Mesh::Primitive::Triangles, uniqueIndices, {uniqueVertices}, {uniqueNormals}, {});
     return d->meshes[meshId];
 }
 
-AbstractMaterial* ColladaImporter::ColladaImporter::material(size_t id) {
+AbstractMaterialData* ColladaImporter::ColladaImporter::material(size_t id) {
     /* Return nullptr if no such material exists, or return existing, if already parsed */
     if(!d || id >= d->materials.size()) return nullptr;
     if(d->materials[id]) return d->materials[id];
@@ -263,7 +263,7 @@ AbstractMaterial* ColladaImporter::ColladaImporter::material(size_t id) {
 
     /** @todo Emission, IOR */
 
-    d->materials[id] = new PhongMaterial(ambientColor, diffuseColor, specularColor, shininess);
+    d->materials[id] = new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
     return d->materials[id];
 }
 

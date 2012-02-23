@@ -46,10 +46,10 @@ class ColladaImporter: public AbstractImporter {
         void close();
 
         size_t meshCount() const { return d ? d->meshes.size() : 0; }
-        Mesh* mesh(size_t id);
+        MeshData* mesh(size_t id);
 
         size_t materialCount() const { return d ? d->materials.size() : 0; }
-        AbstractMaterial* material(size_t id);
+        AbstractMaterialData* material(size_t id);
 
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id) {
@@ -101,8 +101,8 @@ class ColladaImporter: public AbstractImporter {
             ~Document();
 
             /* Geometries and materials */
-            std::vector<Mesh*> meshes;
-            std::vector<AbstractMaterial*> materials;
+            std::vector<MeshData*> meshes;
+            std::vector<AbstractMaterialData*> materials;
 
             std::unordered_map<std::string, size_t> materialMap;
 

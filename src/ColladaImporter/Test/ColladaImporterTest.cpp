@@ -18,7 +18,7 @@
 #include <QtTest/QTest>
 
 #include "Utility/Directory.h"
-#include "Trade/PhongMaterial.h"
+#include "Trade/PhongMaterialData.h"
 #include "../ColladaImporter.h"
 
 #include "ColladaImporterTestConfigure.h"
@@ -93,7 +93,7 @@ void ColladaImporterTest::material() {
     QVERIFY(debug.str() == "ColladaImporter: \"lambert\" shader not supported\n");
 
     QVERIFY(!!importer.material(2));
-    PhongMaterial* material = static_cast<PhongMaterial*>(importer.material(2));
+    PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(2));
 
     QVERIFY(material->ambientColor() == Vector3(1, 0, 0));
     QVERIFY(material->diffuseColor() == Vector3(0, 1, 0));
