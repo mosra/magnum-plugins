@@ -183,7 +183,7 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
     /* Unique vertices and normals */
     QMap<unsigned long long, unsigned int> uniqueMap;
     vector<unsigned int>* uniqueIndices = new vector<unsigned int>();
-    vector<Vector3>* uniqueVertices = new vector<Vector3>();
+    vector<Vector4>* uniqueVertices = new vector<Vector4>();
     vector<Vector3>* uniqueNormals = new vector<Vector3>();
     for(unsigned int i = 0; i < indices.size(); i += stride) {
         unsigned long long uniqueHash = static_cast<unsigned long long>(indices[i]) << 32 | indices[i+1];
