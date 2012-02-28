@@ -109,12 +109,6 @@ class ColladaImporter: public AbstractImporter {
             QXmlQuery query;
         };
 
-        /** @brief Per-vertex data */
-        struct VertexData {
-            Vector4 vertex;
-            Vector3 normal;
-        };
-
         /** @brief Default namespace declaration for XQuery */
         static const QString namespaceDeclaration;
 
