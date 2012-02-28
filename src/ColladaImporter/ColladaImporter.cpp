@@ -139,7 +139,7 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
         if(count == 3) continue;
 
         /** @todo Support also quads */
-        Error() << "Collada import:" << count << "vertices per face not supported";
+        Error() << "ColladaImporter:" << count << "vertices per face not supported";
         return nullptr;
     }
 

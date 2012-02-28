@@ -19,6 +19,7 @@
 
 #include "Utility/Directory.h"
 #include "Trade/PhongMaterialData.h"
+#include "Trade/MeshData.h"
 #include "../ColladaImporter.h"
 
 #include "ColladaImporterTestConfigure.h"
@@ -76,6 +77,49 @@ void ColladaImporterTest::parseSource() {
     QVERIFY((importer.parseSource<Vector4>("MoreElements") == vector<Vector4>{
         Vector4(0, 1, 2),
         Vector4(3, 4, 5)
+    }));
+}
+
+void ColladaImporterTest::mesh() {
+    ColladaImporter importer;
+    QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "mesh.dae")));
+
+    QVERIFY(importer.meshCount() == 2);
+
+    stringstream debug;
+    Error::setOutput(&debug);
+    QVERIFY(!importer.mesh(0));
+    QVERIFY(debug.str() == "ColladaImporter: 4 vertices per face not supported\n");
+
+    QVERIFY(!!importer.mesh(1));
+    MeshData* mesh = importer.mesh(1);
+
+    QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
+
+    QVERIFY((*mesh->indices() == vector<unsigned int>{
+        0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
+    }));
+    QVERIFY(mesh->vertexArrayCount() == 1);
+    QVERIFY((*mesh->vertices(0) == vector<Vector4>{
+        {1, -1, 1},
+        {1, -1, -1},
+        {1, 1, -1},
+        {1, 1, 1},
+        {-1, -1, 1},
+        {1, -1, 1},
+        {1, 1, 1},
+        {-1, 1, 1}
+    }));
+    QVERIFY(mesh->normalArrayCount() == 1);
+    QVERIFY((*mesh->normals(0) == vector<Vector3>{
+        {1, 0, 0},
+        {1, 0, 0},
+        {1, 0, 0},
+        {1, 0, 0},
+        {0, 0, 1},
+        {0, 0, 1},
+        {0, 0, 1},
+        {0, 0, 1}
     }));
 }
 

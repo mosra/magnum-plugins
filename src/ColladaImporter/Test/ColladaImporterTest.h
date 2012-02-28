@@ -28,6 +28,7 @@ class ColladaImporterTest: public QObject {
         void count();
         void parseSource();
 
+        void mesh();
         void material();
 };
 
