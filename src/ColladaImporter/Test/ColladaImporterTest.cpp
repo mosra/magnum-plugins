@@ -83,6 +83,8 @@ void ColladaImporterTest::material() {
     ColladaImporter importer;
     QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "material.dae")));
 
+    QVERIFY(importer.materialCount() == 3);
+
     stringstream debug;
     Error::setOutput(&debug);
     QVERIFY(!importer.material(0));
