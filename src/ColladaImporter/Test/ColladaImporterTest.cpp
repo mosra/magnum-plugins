@@ -84,18 +84,36 @@ void ColladaImporterTest::mesh() {
     ColladaImporter importer;
     QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "mesh.dae")));
 
-    QVERIFY(importer.meshCount() == 2);
+    QVERIFY(importer.meshCount() == 4);
 
     stringstream debug;
     Error::setOutput(&debug);
     QVERIFY(!importer.mesh(0));
     QVERIFY(debug.str() == "ColladaImporter: 4 vertices per face not supported\n");
 
+    /* Vertex only mesh */
     QVERIFY(!!importer.mesh(1));
     MeshData* mesh = importer.mesh(1);
-
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
+    QVERIFY((*mesh->indices() == vector<unsigned int>{
+        0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
+    }));
+    QVERIFY(mesh->vertexArrayCount() == 1);
+    QVERIFY((*mesh->vertices(0) == vector<Vector4>{
+        {1, -1, 1},
+        {1, -1, -1},
+        {1, 1, -1},
+        {1, 1, 1},
+        {-1, -1, 1},
+        {-1, 1, 1}
+    }));
+    QVERIFY(mesh->normalArrayCount() == 0);
+    QVERIFY(mesh->textureCoords2DArrayCount() == 0);
 
+    /* Vertex and normal mesh */
+    QVERIFY(!!importer.mesh(2));
+    mesh = importer.mesh(2);
+    QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
@@ -121,6 +139,49 @@ void ColladaImporterTest::mesh() {
         {0, 0, 1},
         {0, 0, 1}
     }));
+    QVERIFY(mesh->textureCoords2DArrayCount() == 0);
+
+    /* Vertex, normal and texture mesh */
+    QVERIFY(!!importer.mesh(3));
+    mesh = importer.mesh(3);
+    QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
+    QVERIFY((*mesh->indices() == vector<unsigned int>{
+        0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
+    }));
+    QVERIFY(mesh->vertexArrayCount() == 1);
+    QVERIFY((*mesh->vertices(0) == vector<Vector4>{
+        {1, -1, 1},
+        {1, -1, -1},
+        {1, 1, -1},
+        {1, 1, 1},
+        {-1, -1, 1},
+        {1, -1, 1},
+        {1, 1, 1},
+        {-1, 1, 1}
+    }));
+    QVERIFY(mesh->normalArrayCount() == 1);
+    QVERIFY((*mesh->normals(0) == vector<Vector3>{
+        {1, 0, 0},
+        {1, 0, 0},
+        {1, 0, 0},
+        {1, 0, 0},
+        {0, 0, 1},
+        {0, 0, 1},
+        {0, 0, 1},
+        {0, 0, 1}
+    }));
+    QVERIFY(mesh->textureCoords2DArrayCount() == 2);
+    QVERIFY((*mesh->textureCoords2D(0) == vector<Vector2>{
+        {0.5, 1},
+        {1, 1},
+        {1, 0},
+        {0.5, 0},
+        {0, 1},
+        {0.5, 1},
+        {0.5, 0},
+        {0, 0}
+    }));
+    QVERIFY(*mesh->textureCoords2D(1) == vector<Vector2>(8));
 }
 
 void ColladaImporterTest::material() {

@@ -158,30 +158,34 @@ class ColladaImporter: public AbstractImporter {
          * @brief Offset of attribute in mesh index array
          * @param meshId            Mesh ID
          * @param attribute         Attribute
+         * @param id                Attribute ID, if there are more than one
+         *      attribute with the same name
          */
-        GLuint attributeOffset(size_t meshId, const QString& attribute);
+        GLuint attributeOffset(size_t meshId, const QString& attribute, unsigned int id = 0);
 
         /**
          * @brief Build attribute array
          * @param meshId            Mesh ID
          * @param attribute         Attribute
+         * @param id                Attribute ID, if there are more than one
+         *      attribute with the same name
          * @param originalIndices   Array with original interleaved indices
          * @param stride            Distance between two successive original
          *      indices
          * @param indexCombinations Index combinations for building the array
-         * @return Resulting
+         * @return Resulting array
          */
-        template<class T> std::vector<T>* buildAttributeArray(size_t meshId, const QString& attribute, const std::vector<GLuint>& originalIndices, GLuint stride, const std::unordered_map<unsigned int, unsigned int, IndexHash, IndexEqual>& indexCombinations) {
+        template<class T> std::vector<T>* buildAttributeArray(size_t meshId, const QString& attribute, unsigned int id, const std::vector<GLuint>& originalIndices, GLuint stride, const std::unordered_map<unsigned int, unsigned int, IndexHash, IndexEqual>& indexCombinations) {
             QString tmp;
 
             /* Original attribute array */
-            d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='%1']/@source/string()")
-                .arg(meshId+1).arg(attribute));
+            d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@source/string()")
+                .arg(meshId+1).arg(attribute).arg(id+1));
             d->query.evaluateTo(&tmp);
             std::vector<T> originalArray = parseSource<T>(tmp.mid(1).trimmed());
 
             /* Attribute offset in original index array */
-            GLuint offset = attributeOffset(meshId, attribute);
+            GLuint offset = attributeOffset(meshId, attribute, id);
 
             /* Build resulting array */
             std::vector<T>* array = new std::vector<T>(indexCombinations.size());

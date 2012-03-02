@@ -182,13 +182,18 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input/@semantic/string()").arg(meshId+1));
     d->query.evaluateTo(&tmpList);
     vector<vector<Vector3>*> normals;
+    vector<vector<Vector2>*> textureCoords2D;
     for(QString attribute: tmpList) {
         /* Vertices - already built */
         if(attribute == "VERTEX") continue;
 
         /* Normals */
         else if(attribute == "NORMAL")
-            normals.push_back(buildAttributeArray<Vector3>(meshId, "NORMAL", originalIndices, stride, indexCombinations));
+            normals.push_back(buildAttributeArray<Vector3>(meshId, "NORMAL", normals.size(), originalIndices, stride, indexCombinations));
+
+        /* 2D texture coords */
+        else if(attribute == "TEXCOORD")
+            textureCoords2D.push_back(buildAttributeArray<Vector2>(meshId, "TEXCOORD", textureCoords2D.size(), originalIndices, stride, indexCombinations));
 
         /* Something other */
         else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
@@ -197,7 +202,7 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
     Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
         .arg(indices->size()/3).arg(vertices->size()).toStdString();
 
-    d->meshes[meshId] = new MeshData(Mesh::Primitive::Triangles, indices, {vertices}, normals, {});
+    d->meshes[meshId] = new MeshData(Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
     return d->meshes[meshId];
 }
 
@@ -262,15 +267,14 @@ AbstractMaterialData* ColladaImporter::ColladaImporter::material(size_t id) {
     return d->materials[id];
 }
 
-GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute) {
+GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute, unsigned int id) {
     QString tmp;
 
     /* Get attribute offset in indices */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='%1']/@offset/string()")
-        .arg(meshId+1).arg(attribute));
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@offset/string()")
+        .arg(meshId+1).arg(attribute).arg(id+1));
     d->query.evaluateTo(&tmp);
     return ColladaType<GLuint>::fromString(tmp);
 }
-
 
 }}}
