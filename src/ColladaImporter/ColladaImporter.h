@@ -105,7 +105,7 @@ class ColladaImporter: public AbstractImporter {
             std::vector<MeshData*> meshes;
             std::vector<AbstractMaterialData*> materials;
 
-            std::unordered_map<std::string, size_t> materialMap;
+            std::unordered_map<std::string, size_t> materialMap; /** @todo unused! */
 
             QXmlQuery query;
         };

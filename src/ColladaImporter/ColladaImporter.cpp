@@ -115,21 +115,21 @@ void ColladaImporter::close() {
     d = 0;
 }
 
-MeshData* ColladaImporter::mesh(size_t meshId) {
-    if(!d || meshId >= d->meshes.size()) return nullptr;
-    if(d->meshes[meshId]) return d->meshes[meshId];
+MeshData* ColladaImporter::mesh(size_t id) {
+    if(!d || id >= d->meshes.size()) return nullptr;
+    if(d->meshes[id]) return d->meshes[id];
 
     QString tmp;
 
     /** @todo More polylists in one mesh */
 
     /* Get polygon count */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@count/string()").arg(meshId+1));
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@count/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
     GLuint polygonCount = ColladaType<GLuint>::fromString(tmp);
 
     /* Get vertex count per polygon */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/vcount/string()").arg(meshId+1));
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/vcount/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
     vector<GLuint> vertexCountPerFace = Utility::parseArray<GLuint>(tmp, polygonCount);
 
@@ -144,12 +144,12 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
     }
 
     /* Get input count per vertex */
-    d->query.setQuery((namespaceDeclaration + "count(//geometry[%0]/mesh/polylist/input)").arg(meshId+1));
+    d->query.setQuery((namespaceDeclaration + "count(//geometry[%0]/mesh/polylist/input)").arg(id+1));
     d->query.evaluateTo(&tmp);
     GLuint stride = ColladaType<GLuint>::fromString(tmp);
 
     /* Get mesh indices */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/p/string()").arg(meshId+1));
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/p/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
     vector<GLuint> originalIndices = Utility::parseArray<GLuint>(tmp, vertexCount*stride);
 
@@ -165,7 +165,7 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
 
     /* Get mesh vertices */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@source/string()")
-        .arg(meshId+1));
+        .arg(id+1));
     d->query.evaluateTo(&tmp);
     d->query.setQuery((namespaceDeclaration + "//vertices[@id='%0']/input[@semantic='POSITION']/@source/string()")
         .arg(tmp.mid(1).trimmed()));
@@ -173,13 +173,13 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
     vector<Vector3> originalVertices = parseSource<Vector3>(tmp.mid(1).trimmed());
 
     /* Build vertex array */
-    GLuint vertexOffset = attributeOffset(meshId, "VERTEX");
+    GLuint vertexOffset = attributeOffset(id, "VERTEX");
     vector<Vector4>* vertices = new vector<Vector4>(indexCombinations.size());
     for(auto i: indexCombinations)
         (*vertices)[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
 
     QStringList tmpList;
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input/@semantic/string()").arg(meshId+1));
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input/@semantic/string()").arg(id+1));
     d->query.evaluateTo(&tmpList);
     vector<vector<Vector3>*> normals;
     vector<vector<Vector2>*> textureCoords2D;
@@ -189,11 +189,11 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
 
         /* Normals */
         else if(attribute == "NORMAL")
-            normals.push_back(buildAttributeArray<Vector3>(meshId, "NORMAL", normals.size(), originalIndices, stride, indexCombinations));
+            normals.push_back(buildAttributeArray<Vector3>(id, "NORMAL", normals.size(), originalIndices, stride, indexCombinations));
 
         /* 2D texture coords */
         else if(attribute == "TEXCOORD")
-            textureCoords2D.push_back(buildAttributeArray<Vector2>(meshId, "TEXCOORD", textureCoords2D.size(), originalIndices, stride, indexCombinations));
+            textureCoords2D.push_back(buildAttributeArray<Vector2>(id, "TEXCOORD", textureCoords2D.size(), originalIndices, stride, indexCombinations));
 
         /* Something other */
         else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
@@ -202,12 +202,11 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
     Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
         .arg(indices->size()/3).arg(vertices->size()).toStdString();
 
-    d->meshes[meshId] = new MeshData(Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
-    return d->meshes[meshId];
+    d->meshes[id] = new MeshData(Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
+    return d->meshes[id];
 }
 
-AbstractMaterialData* ColladaImporter::ColladaImporter::material(size_t id) {
-    /* Return nullptr if no such material exists, or return existing, if already parsed */
+AbstractMaterialData* ColladaImporter::material(size_t id) {
     if(!d || id >= d->materials.size()) return nullptr;
     if(d->materials[id]) return d->materials[id];
 
