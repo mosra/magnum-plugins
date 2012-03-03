@@ -58,22 +58,22 @@ class ColladaImporter: public AbstractImporter {
             QString tmp;
 
             /* Count of items */
-            d->query.setQuery((namespaceDeclaration + "//source[@id='%0']/technique_common/accessor/@count/string()").arg(id));
+            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@count/string()").arg(id));
             d->query.evaluateTo(&tmp);
             GLuint count = ColladaType<GLuint>::fromString(tmp);
 
             /* Size of each item */
-            d->query.setQuery((namespaceDeclaration + "//source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
+            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
             d->query.evaluateTo(&tmp);
             GLuint size = ColladaType<GLuint>::fromString(tmp);
 
             /* Data source */
-            d->query.setQuery((namespaceDeclaration + "//source[@id='%0']/technique_common/accessor/@source/string()").arg(id));
+            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@source/string()").arg(id));
             d->query.evaluateTo(&tmp);
             QString source = tmp.mid(1).trimmed();
 
             /* Verify total count */
-            d->query.setQuery((namespaceDeclaration + "//float_array[@id='%0']/@count/string()").arg(source));
+            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/@count/string()").arg(source));
             d->query.evaluateTo(&tmp);
             if(ColladaType<GLuint>::fromString(tmp) != count*size) {
                 Corrade::Utility::Error() << "ColladaImporter: wrong total count in source" << ('"'+id+'"').toStdString();
@@ -83,7 +83,7 @@ class ColladaImporter: public AbstractImporter {
             /** @todo Assert right order of coordinates and type */
 
             /* Items */
-            d->query.setQuery((namespaceDeclaration + "//float_array[@id='%0']/string()").arg(source));
+            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/string()").arg(source));
             d->query.evaluateTo(&tmp);
 
             output.reserve(count);
@@ -179,7 +179,7 @@ class ColladaImporter: public AbstractImporter {
             QString tmp;
 
             /* Original attribute array */
-            d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@source/string()")
+            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@source/string()")
                 .arg(meshId+1).arg(attribute).arg(id+1));
             d->query.evaluateTo(&tmp);
             std::vector<T> originalArray = parseSource<T>(tmp.mid(1).trimmed());

@@ -85,12 +85,12 @@ bool ColladaImporter::open(const string& filename) {
     }
 
     /* Geometry count */
-    query.setQuery(namespaceDeclaration + "count(//library_geometries/geometry)");
+    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_geometries/geometry)");
     query.evaluateTo(&tmp);
     GLuint objectCount = ColladaType<GLuint>::fromString(tmp);
 
     /* Materials */
-    query.setQuery(namespaceDeclaration + "//library_materials/material/@id/string()");
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
     query.evaluateTo(&listTmp);
 
     d = new Document(objectCount, listTmp.size());
@@ -124,12 +124,12 @@ MeshData* ColladaImporter::mesh(size_t id) {
     /** @todo More polylists in one mesh */
 
     /* Get polygon count */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/@count/string()").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/@count/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
     GLuint polygonCount = ColladaType<GLuint>::fromString(tmp);
 
     /* Get vertex count per polygon */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/vcount/string()").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/vcount/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
     vector<GLuint> vertexCountPerFace = Utility::parseArray<GLuint>(tmp, polygonCount);
 
@@ -144,12 +144,12 @@ MeshData* ColladaImporter::mesh(size_t id) {
     }
 
     /* Get input count per vertex */
-    d->query.setQuery((namespaceDeclaration + "count(//geometry[%0]/mesh/polylist/input)").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "count(/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input)").arg(id+1));
     d->query.evaluateTo(&tmp);
     GLuint stride = ColladaType<GLuint>::fromString(tmp);
 
     /* Get mesh indices */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/p/string()").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/p/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
     vector<GLuint> originalIndices = Utility::parseArray<GLuint>(tmp, vertexCount*stride);
 
@@ -164,10 +164,10 @@ MeshData* ColladaImporter::mesh(size_t id) {
         indices->push_back(indexCombinations.insert(make_pair(i, indexCombinations.size())).first->second);
 
     /* Get mesh vertices */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@source/string()")
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@source/string()")
         .arg(id+1));
     d->query.evaluateTo(&tmp);
-    d->query.setQuery((namespaceDeclaration + "//vertices[@id='%0']/input[@semantic='POSITION']/@source/string()")
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/vertices[@id='%0']/input[@semantic='POSITION']/@source/string()")
         .arg(tmp.mid(1).trimmed()));
     d->query.evaluateTo(&tmp);
     vector<Vector3> originalVertices = parseSource<Vector3>(tmp.mid(1).trimmed());
@@ -179,7 +179,7 @@ MeshData* ColladaImporter::mesh(size_t id) {
         (*vertices)[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
 
     QStringList tmpList;
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input/@semantic/string()").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input/@semantic/string()").arg(id+1));
     d->query.evaluateTo(&tmpList);
     vector<vector<Vector3>*> normals;
     vector<vector<Vector2>*> textureCoords2D;
@@ -214,12 +214,12 @@ AbstractMaterialData* ColladaImporter::material(size_t id) {
 
     /* Get effect ID */
     QString effect;
-    d->query.setQuery((namespaceDeclaration + "//material[%0]/instance_effect/@url/string()").arg(id+1));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_materials/material[%0]/instance_effect/@url/string()").arg(id+1));
     d->query.evaluateTo(&effect);
     effect = effect.mid(1).trimmed();
 
     /* Find out which profile it is */
-    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/*[substring(name(), 1, 8) = 'profile_']/name()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/*[substring(name(), 1, 8) = 'profile_']/name()").arg(effect));
     d->query.evaluateTo(&tmp);
 
     /** @todo Support other profiles */
@@ -230,7 +230,7 @@ AbstractMaterialData* ColladaImporter::material(size_t id) {
     }
 
     /* Get shader type */
-    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/*/name()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/*/name()").arg(effect));
     d->query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
 
@@ -241,22 +241,22 @@ AbstractMaterialData* ColladaImporter::material(size_t id) {
     }
 
     /* Ambient color */
-    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
     Vector3 ambientColor = Utility::parseVector<Vector3>(tmp);
 
     /* Diffuse color */
-    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
     Vector3 diffuseColor = Utility::parseVector<Vector3>(tmp);
 
     /* Specular color */
-    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
     Vector3 specularColor = Utility::parseVector<Vector3>(tmp);
 
     /* Shininess */
-    d->query.setQuery((namespaceDeclaration + "//effect[@id='%0']/profile_COMMON/technique/phong/shininess/float/string()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/shininess/float/string()").arg(effect));
     d->query.evaluateTo(&tmp);
     GLfloat shininess = ColladaType<GLfloat>::fromString(tmp);
 
@@ -270,7 +270,7 @@ GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute,
     QString tmp;
 
     /* Get attribute offset in indices */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@offset/string()")
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@offset/string()")
         .arg(meshId+1).arg(attribute).arg(id+1));
     d->query.evaluateTo(&tmp);
     return ColladaType<GLuint>::fromString(tmp);
