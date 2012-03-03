@@ -15,7 +15,7 @@
 
 #include "ColladaImporter.h"
 
-#include <QtCore/QVector>
+#include <unordered_map>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 
@@ -151,13 +151,17 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
     /* Get mesh indices */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/p/string()").arg(meshId+1));
     d->query.evaluateTo(&tmp);
-    vector<GLuint> indices = Utility::parseArray<GLuint>(tmp, vertexCount*stride);
+    vector<GLuint> originalIndices = Utility::parseArray<GLuint>(tmp, vertexCount*stride);
 
-    /* Get mesh vertices offset in indices */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@offset/string()")
-        .arg(meshId+1));
-    d->query.evaluateTo(&tmp);
-    GLuint vertexOffset = ColladaType<GLuint>::fromString(tmp);
+    /** @todo assert size()%stride == 0 */
+
+    /* Get unique combinations of vertices, build resulting index array. Key
+       is position of unique index combination from original vertex array,
+       value is resulting index. */
+    unordered_map<unsigned int, unsigned int, IndexHash, IndexEqual> indexCombinations(originalIndices.size()/stride, IndexHash(originalIndices, stride), IndexEqual(originalIndices, stride));
+    vector<unsigned int>* indices = new vector<unsigned int>;
+    for(size_t i = 0, end = originalIndices.size()/stride; i != end; ++i)
+        indices->push_back(indexCombinations.insert(make_pair(i, indexCombinations.size())).first->second);
 
     /* Get mesh vertices */
     d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@source/string()")
@@ -166,43 +170,34 @@ MeshData* ColladaImporter::mesh(size_t meshId) {
     d->query.setQuery((namespaceDeclaration + "//vertices[@id='%0']/input[@semantic='POSITION']/@source/string()")
         .arg(tmp.mid(1).trimmed()));
     d->query.evaluateTo(&tmp);
-    vector<Vector3> vertices = parseSource<Vector3>(tmp.mid(1).trimmed());
+    vector<Vector3> originalVertices = parseSource<Vector3>(tmp.mid(1).trimmed());
 
-    /* Get mesh normals offset in indices */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='NORMAL']/@offset/string()")
-        .arg(meshId+1));
-    d->query.evaluateTo(&tmp);
-    GLuint normalOffset = ColladaType<GLuint>::fromString(tmp);
+    /* Build vertex array */
+    GLuint vertexOffset = attributeOffset(meshId, "VERTEX");
+    vector<Vector4>* vertices = new vector<Vector4>(indexCombinations.size());
+    for(auto i: indexCombinations)
+        (*vertices)[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
 
-    /* Get mesh normals */
-    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='NORMAL']/@source/string()")
-        .arg(meshId+1));
-    d->query.evaluateTo(&tmp);
-    vector<Vector3> normals = parseSource<Vector3>(tmp.mid(1).trimmed());
+    QStringList tmpList;
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input/@semantic/string()").arg(meshId+1));
+    d->query.evaluateTo(&tmpList);
+    vector<vector<Vector3>*> normals;
+    for(QString attribute: tmpList) {
+        /* Vertices - already built */
+        if(attribute == "VERTEX") continue;
 
-    /* Unique vertices and normals */
-    QMap<unsigned long long, unsigned int> uniqueMap;
-    vector<unsigned int>* uniqueIndices = new vector<unsigned int>();
-    vector<Vector4>* uniqueVertices = new vector<Vector4>();
-    vector<Vector3>* uniqueNormals = new vector<Vector3>();
-    for(unsigned int i = 0; i < indices.size(); i += stride) {
-        unsigned long long uniqueHash = static_cast<unsigned long long>(indices[i]) << 32 | indices[i+1];
-        if(uniqueMap.contains(uniqueHash)) {
-            uniqueIndices->push_back(uniqueMap[uniqueHash]);
-            continue;
-        }
+        /* Normals */
+        else if(attribute == "NORMAL")
+            normals.push_back(buildAttributeArray<Vector3>(meshId, "NORMAL", originalIndices, stride, indexCombinations));
 
-        uniqueVertices->push_back(vertices[indices[i+vertexOffset]]);
-        uniqueNormals->push_back(normals[indices[i+normalOffset]]);
-
-        uniqueMap[uniqueHash] = uniqueVertices->size()-1;
-        uniqueIndices->push_back(uniqueVertices->size()-1);
+        /* Something other */
+        else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
     Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
-        .arg(uniqueIndices->size()/3).arg(uniqueVertices->size()).toStdString();
+        .arg(indices->size()/3).arg(vertices->size()).toStdString();
 
-    d->meshes[meshId] = new MeshData(Mesh::Primitive::Triangles, uniqueIndices, {uniqueVertices}, {uniqueNormals}, {});
+    d->meshes[meshId] = new MeshData(Mesh::Primitive::Triangles, indices, {vertices}, normals, {});
     return d->meshes[meshId];
 }
 
@@ -266,5 +261,16 @@ AbstractMaterialData* ColladaImporter::ColladaImporter::material(size_t id) {
     d->materials[id] = new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
     return d->materials[id];
 }
+
+GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute) {
+    QString tmp;
+
+    /* Get attribute offset in indices */
+    d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='%1']/@offset/string()")
+        .arg(meshId+1).arg(attribute));
+    d->query.evaluateTo(&tmp);
+    return ColladaType<GLuint>::fromString(tmp);
+}
+
 
 }}}

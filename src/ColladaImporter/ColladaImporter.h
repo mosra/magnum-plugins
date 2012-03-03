@@ -25,6 +25,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtXmlPatterns/QXmlQuery>
 
+#include "Corrade/Utility/MurmurHash2.h"
 #include "ColladaType.h"
 #include "Utility.h"
 
@@ -108,6 +109,87 @@ class ColladaImporter: public AbstractImporter {
 
             QXmlQuery query;
         };
+
+        /** @brief Mesh index hasher */
+        class IndexHash {
+            public:
+                /** @brief Constructor */
+                inline IndexHash(const std::vector<unsigned int>& indices, unsigned int stride): indices(indices), stride(stride) {}
+
+                /**
+                 * @brief Functor
+                 *
+                 * Computes hash for given index of length @c stride,
+                 * specified as position in index array passed in
+                 * constructor.
+                 */
+                inline size_t operator()(unsigned int key) const {
+                    return *reinterpret_cast<const size_t*>(Corrade::Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(unsigned int)*stride).byteArray());
+                }
+
+            private:
+                const std::vector<unsigned int>& indices;
+                unsigned int stride;
+        };
+
+        /** @brief Mesh index comparator */
+        class IndexEqual {
+            public:
+                /** @brief Constructor */
+                inline IndexEqual(const std::vector<unsigned int>& indices, unsigned int stride): indices(indices), stride(stride) {}
+
+                /**
+                 * @brief Functor
+                 *
+                 * Compares two index combinations of length @c stride,
+                 * specified as position in index array, passed in
+                 * constructor.
+                 */
+                inline bool operator()(unsigned int a, unsigned int b) const {
+                    return memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(unsigned int)*stride) == 0;
+                }
+
+            private:
+                const std::vector<unsigned int>& indices;
+                unsigned int stride;
+        };
+
+        /**
+         * @brief Offset of attribute in mesh index array
+         * @param meshId            Mesh ID
+         * @param attribute         Attribute
+         */
+        GLuint attributeOffset(size_t meshId, const QString& attribute);
+
+        /**
+         * @brief Build attribute array
+         * @param meshId            Mesh ID
+         * @param attribute         Attribute
+         * @param originalIndices   Array with original interleaved indices
+         * @param stride            Distance between two successive original
+         *      indices
+         * @param indexCombinations Index combinations for building the array
+         * @return Resulting
+         */
+        template<class T> std::vector<T>* buildAttributeArray(size_t meshId, const QString& attribute, const std::vector<GLuint>& originalIndices, GLuint stride, const std::unordered_map<unsigned int, unsigned int, IndexHash, IndexEqual>& indexCombinations) {
+            QString tmp;
+
+            /* Original attribute array */
+            d->query.setQuery((namespaceDeclaration + "//geometry[%0]/mesh/polylist/input[@semantic='%1']/@source/string()")
+                .arg(meshId+1).arg(attribute));
+            d->query.evaluateTo(&tmp);
+            std::vector<T> originalArray = parseSource<T>(tmp.mid(1).trimmed());
+
+            /* Attribute offset in original index array */
+            GLuint offset = attributeOffset(meshId, attribute);
+
+            /* Build resulting array */
+            std::vector<T>* array = new std::vector<T>(indexCombinations.size());
+            for(auto i: indexCombinations)
+                (*array)[i.second] = originalArray[originalIndices[i.first*stride+offset]];
+
+            return array;
+        }
 
         /** @brief Default namespace declaration for XQuery */
         static const QString namespaceDeclaration;
