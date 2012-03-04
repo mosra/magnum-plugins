@@ -9,7 +9,7 @@ target_link_libraries(ColladaImporter ${QT_QTCORE_LIBRARY} ${QT_QTXMLPATTERNS_LI
 
 if(BUILD_TESTS)
     add_library(ColladaImporterTestLib ${ColladaImporter_SRCS})
-    target_link_libraries(ColladaImporterTestLib ${MAGNUM_LIBRARY} ${CORRADE_UTILITY_LIBRARY} ${CORRADE_PLUGINMANAGER_LIBRARY} ${QT_QTCORE_LIBRARY} ${QT_QTXMLPATTERNS_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARY})
+    target_link_libraries(ColladaImporterTestLib TgaImporterTestLib ${MAGNUM_LIBRARY} ${CORRADE_UTILITY_LIBRARY} ${CORRADE_PLUGINMANAGER_LIBRARY} ${QT_QTCORE_LIBRARY} ${QT_QTXMLPATTERNS_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARY})
     enable_testing()
     add_subdirectory(Test)
 endif()

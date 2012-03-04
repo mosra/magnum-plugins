@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_images>
+    <image id="UnsupportedImage" name="Image">
+      <init_from>image.jpg</init_from>
+    </image>
+    <image id="Image" name="Image">
+      <init_from>image.tga</init_from>
+    </image>
+  </library_images>
+</COLLADA>

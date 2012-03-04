@@ -19,9 +19,11 @@
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 
+#include "Utility/Directory.h"
 #include "SizeTraits.h"
 #include "Trade/PhongMaterialData.h"
 #include "Trade/MeshData.h"
+#include "TgaImporter/TgaImporter.h"
 
 using namespace std;
 using namespace Corrade::Utility;
@@ -94,17 +96,26 @@ bool ColladaImporter::open(const string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
     query.evaluateTo(&listTmp);
 
-    d = new Document(objectCount, listTmp.size());
+    /* Images */
+    query.setQuery(namespaceDeclaration + "count(//library_images/image)");
+    query.evaluateTo(&tmp);
+    GLuint image2DCount = ColladaType<GLuint>::fromString(tmp);
+
+    d = new Document(objectCount, listTmp.size(), image2DCount);
+    d->filename = filename;
     d->query = query;
 
     /* Add all materials to material map */
     for(size_t i = 0; i != static_cast<size_t>(listTmp.size()); ++i)
         d->materialMap[listTmp[i].toStdString()] = i;
 
+    /** @todo Also image map */
+
     Debug() << QString("ColladaImporter: file contains\n"
                        "    %0 objects/meshes\n"
-                       "    %1 materials")
-        .arg(objectCount).arg(listTmp.size()).toStdString();
+                       "    %1 materials\n"
+                       "    %2 images")
+        .arg(objectCount).arg(listTmp.size()).arg(image2DCount).toStdString();
 
     return true;
 }
@@ -265,6 +276,30 @@ AbstractMaterialData* ColladaImporter::material(size_t id) {
 
     d->materials[id] = new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
     return d->materials[id];
+}
+
+ImageData2D* ColladaImporter::image2D(size_t id) {
+    if(!d || id >= d->images2D.size()) return nullptr;
+    if(d->images2D[id]) return d->images2D[id];
+
+    QString tmp;
+
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_images/image[%0]/init_from/string()").arg(id+1));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+
+    if(tmp.right(3) != "tga") {
+        Error() << "ColladaImporter:" << '"' + tmp.toStdString() + '"' << "has unsupported format";
+        return nullptr;
+    }
+
+    TgaImporter::TgaImporter tgaImporter;
+    ImageData2D* image;
+    if(!tgaImporter.open(Directory::join(Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
+        return nullptr;
+
+    d->images2D[id] = image;
+    return d->images2D[id];
 }
 
 GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute, unsigned int id) {

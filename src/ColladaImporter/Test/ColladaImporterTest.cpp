@@ -208,4 +208,23 @@ void ColladaImporterTest::material() {
     QCOMPARE(material->shininess(), 50.0f);
 }
 
+void ColladaImporterTest::image() {
+    ColladaImporter importer;
+    QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "image.dae")));
+
+    QVERIFY(importer.image2DCount() == 2);
+
+    stringstream debug;
+    Error::setOutput(&debug);
+    QVERIFY(!importer.image2D(0));
+    Debug() << debug.str();
+    QVERIFY(debug.str() == "ColladaImporter: \"image.jpg\" has unsupported format\n");
+
+    QVERIFY(!!importer.image2D(1));
+    ImageData2D* image = importer.image2D(1);
+
+    /* Check only dimensions, as it is good enough proof that it is working */
+    QVERIFY((image->dimensions() == Math::Vector2<GLsizei>(2, 3)));
+}
+
 }}}}

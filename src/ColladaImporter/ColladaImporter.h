@@ -52,6 +52,9 @@ class ColladaImporter: public AbstractImporter {
         size_t materialCount() const { return d ? d->materials.size() : 0; }
         AbstractMaterialData* material(size_t id);
 
+        size_t image2DCount() const { return d ? d->images2D.size() : 0; }
+        ImageData2D* image2D(size_t id);
+
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id) {
             std::vector<T> output;
@@ -97,13 +100,16 @@ class ColladaImporter: public AbstractImporter {
     private:
         /** @brief Contents of opened Collada document */
         struct Document {
-            inline Document(size_t objectCount, size_t materialCount): meshes(objectCount), materials(materialCount) {}
+            inline Document(size_t objectCount, size_t materialCount, size_t image2DCount): meshes(objectCount), materials(materialCount), images2D(image2DCount) {}
 
             ~Document();
+
+            std::string filename;
 
             /* Geometries and materials */
             std::vector<MeshData*> meshes;
             std::vector<AbstractMaterialData*> materials;
+            std::vector<ImageData2D*> images2D;
 
             std::unordered_map<std::string, size_t> materialMap; /** @todo unused! */
 

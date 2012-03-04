@@ -30,6 +30,7 @@ class ColladaImporterTest: public QObject {
 
         void mesh();
         void material();
+        void image();
 };
 
 }}}}
