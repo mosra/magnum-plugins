@@ -23,6 +23,8 @@
 #include "SizeTraits.h"
 #include "Trade/PhongMaterialData.h"
 #include "Trade/MeshData.h"
+#include "Trade/ObjectData.h"
+#include "Trade/SceneData.h"
 #include "TgaImporter/TgaImporter.h"
 
 using namespace std;
@@ -123,6 +125,20 @@ void ColladaImporter::close() {
 
     delete d;
     d = 0;
+}
+
+SceneData* ColladaImporter::ColladaImporter::scene(size_t id) {
+    if(!d || id >= d->scenes.size()) return nullptr;
+    if(!d->scenes[0]) parseScenes();
+
+    return d->scenes[id];
+}
+
+ObjectData* ColladaImporter::ColladaImporter::object(size_t id) {
+    if(!d || id >= d->objects.size()) return nullptr;
+    if(!d->scenes[0]) parseScenes();
+
+    return d->objects[id];
 }
 
 MeshData* ColladaImporter::mesh(size_t id) {
@@ -305,6 +321,66 @@ GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute,
         .arg(meshId+1).arg(attribute).arg(id+1));
     d->query.evaluateTo(&tmp);
     return ColladaType<GLuint>::fromString(tmp);
+}
+
+void ColladaImporter::parseScenes() {
+    /* Parse all objects in all scenes */
+    for(size_t sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
+        size_t nextObjectId = 0;
+        vector<size_t> children;
+        QStringList childIdList;
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/node/@id/string()").arg(sceneId+1));
+        d->query.evaluateTo(&childIdList);
+        for(QString childId: childIdList) {
+            children.push_back(nextObjectId);
+            nextObjectId = parseObject(nextObjectId, childId.trimmed());
+        }
+
+        d->scenes[sceneId] = new SceneData(children);
+    }
+
+    /** @todo Default scene */
+}
+
+size_t ColladaImporter::parseObject(size_t id, const QString& name) {
+    QString tmp;
+
+    /** @todo Transformation */
+    Matrix4 transformation;
+
+    /* Instance type */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/*[substring(name(), 1, 9) = 'instance_']/name()").arg(name));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+
+    ObjectData::InstanceType instanceType;
+    if(tmp == "instance_camera")
+        instanceType = ObjectData::InstanceType::Camera;
+    else if(tmp == "instance_light")
+        instanceType = ObjectData::InstanceType::Light;
+    else if(tmp == "instance_geometry")
+        instanceType = ObjectData::InstanceType::Mesh;
+    else {
+        Error() << "ColladaImporter:" << '"'+tmp.toStdString()+'"' << "instance type not supported";
+        return id;
+    }
+
+    /** @todo Instance ID */
+    size_t instanceId = 0;
+
+    /* Parse child objects */
+    size_t nextObjectId = id+1;
+    vector<size_t> children;
+    QStringList childIdList;
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/node/@id/string()").arg(name));
+    d->query.evaluateTo(&childIdList);
+    for(QString childId: childIdList) {
+        children.push_back(nextObjectId);
+        nextObjectId = parseObject(nextObjectId, childId.trimmed());
+    }
+
+    d->objects[id] = new ObjectData(children, transformation, instanceType, instanceId);
+    return nextObjectId;
 }
 
 }}}

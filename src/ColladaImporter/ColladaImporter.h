@@ -47,8 +47,10 @@ class ColladaImporter: public AbstractImporter {
         void close();
 
         size_t sceneCount() const { return d ? d->scenes.size() : 0; }
+        SceneData* scene(size_t id);
 
         size_t objectCount() const { return d ? d->objects.size() : 0; }
+        ObjectData* object(size_t id);
 
         size_t meshCount() const { return d ? d->meshes.size() : 0; }
         MeshData* mesh(size_t id);
@@ -205,6 +207,17 @@ class ColladaImporter: public AbstractImporter {
 
             return array;
         }
+
+        /** @brief Parse all scenes */
+        void parseScenes();
+
+        /**
+         * @brief Parse object
+         * @param id        Object ID, under which it will be saved
+         * @param name      Object name
+         * @return Next free ID
+         */
+        size_t parseObject(size_t id, const QString& name);
 
         /** @brief Default namespace declaration for XQuery */
         static const QString namespaceDeclaration;

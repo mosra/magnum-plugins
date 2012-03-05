@@ -2,13 +2,20 @@
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
-      <node>
-        <node />
+      <node id="Camera">
+        <node id="Light">
+          <instance_light />
+        </node>
+        <instance_camera />
       </node>
-      <node />
+      <node id="Mesh">
+        <instance_geometry />
+      </node>
     </visual_scene>
     <visual_scene id="Scene2" name="Scene">
-      <node />
+      <node id="Wrong">
+        <instance_wrong />
+      </node>
     </visual_scene>
   </library_visual_scenes>
 </COLLADA>

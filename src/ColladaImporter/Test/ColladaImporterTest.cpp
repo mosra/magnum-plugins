@@ -20,6 +20,8 @@
 #include "Utility/Directory.h"
 #include "Trade/PhongMaterialData.h"
 #include "Trade/MeshData.h"
+#include "Trade/ObjectData.h"
+#include "Trade/SceneData.h"
 #include "../ColladaImporter.h"
 
 #include "ColladaImporterTestConfigure.h"
@@ -66,11 +68,35 @@ void ColladaImporterTest::parseSource() {
 }
 
 void ColladaImporterTest::scene() {
+    ostringstream debug;
+    Error::setOutput(&debug);
+
     ColladaImporter importer;
     QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
 
     QVERIFY(importer.sceneCount() == 2);
     QVERIFY(importer.objectCount() == 4);
+
+    SceneData* scene = importer.scene(0);
+    QVERIFY(!!scene);
+    QVERIFY((scene->children() == vector<size_t>{0, 2}));
+
+    ObjectData* object = importer.object(0);
+    QVERIFY(!!object);
+    QVERIFY(object->instanceType() == ObjectData::InstanceType::Camera);
+    QVERIFY(object->children() == vector<size_t>{1});
+
+    object = importer.object(1);
+    QVERIFY(!!object);
+    QVERIFY(object->instanceType() == ObjectData::InstanceType::Light);
+    QVERIFY(object->children().empty());
+
+    object = importer.object(2);
+    QVERIFY(!!object);
+    QVERIFY(object->instanceType() == ObjectData::InstanceType::Mesh);
+
+    QVERIFY(!importer.object(3));
+    QVERIFY(debug.str() == "ColladaImporter: \"instance_wrong\" instance type not supported\n");
 }
 
 void ColladaImporterTest::mesh() {
