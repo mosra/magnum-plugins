@@ -210,7 +210,6 @@ void ColladaImporterTest::image() {
     stringstream debug;
     Error::setOutput(&debug);
     QVERIFY(!importer.image2D(0));
-    Debug() << debug.str();
     QVERIFY(debug.str() == "ColladaImporter: \"image.jpg\" has unsupported format\n");
 
     QVERIFY(!!importer.image2D(1));
