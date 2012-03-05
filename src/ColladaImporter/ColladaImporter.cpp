@@ -107,7 +107,7 @@ bool ColladaImporter::open(const string& filename) {
     query.evaluateTo(&listTmp);
 
     /* Images */
-    query.setQuery(namespaceDeclaration + "count(//library_images/image)");
+    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_images/image)");
     query.evaluateTo(&tmp);
     GLuint image2DCount = ColladaType<GLuint>::fromString(tmp);
 
