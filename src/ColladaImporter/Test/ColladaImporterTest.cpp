@@ -94,6 +94,13 @@ void ColladaImporterTest::scene() {
     object = importer.object(2);
     QVERIFY(!!object);
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Mesh);
+    Matrix4 transformation =
+        Matrix4::translation({1, 2, 3})*
+        Matrix4::rotation(deg(60.0f), Vector3::zAxis())*
+        Matrix4::rotation(deg(90.0f), Vector3::yAxis())*
+        Matrix4::rotation(deg(120.0f), Vector3::xAxis())*
+        Matrix4::scaling({3, 4, 5});
+    QVERIFY(object->transformation() == transformation);
 
     QVERIFY(!importer.object(3));
     QVERIFY(debug.str() == "ColladaImporter: \"instance_wrong\" instance type not supported\n");

@@ -15,6 +15,7 @@
 
 #include "ColladaImporter.h"
 
+#include <cassert>
 #include <unordered_map>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
@@ -344,9 +345,35 @@ void ColladaImporter::parseScenes() {
 
 size_t ColladaImporter::parseObject(size_t id, const QString& name) {
     QString tmp;
+    QStringList tmpList, tmpList2;
 
-    /** @todo Transformation */
+    /* Transformations */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/(translate|rotate|scale)/name()").arg(name));
+    d->query.evaluateTo(&tmpList);
+
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/(translate|rotate|scale)/string()").arg(name));
+    d->query.evaluateTo(&tmpList2);
+
     Matrix4 transformation;
+    for(size_t i = 0; i != static_cast<size_t>(tmpList.size()); ++i) {
+        /* Translation */
+        if(tmpList[i].trimmed() == "translate")
+            transformation *= Matrix4::translation(Utility::parseVector<Vector3>(tmpList2[i]));
+
+        /* Rotation */
+        else if(tmpList[i].trimmed() == "rotate") {
+            int pos = 0;
+            Vector3 axis = Utility::parseVector<Vector3>(tmpList2[i], &pos);
+            GLfloat angle = ColladaType<GLfloat>::fromString(tmpList2[i].mid(pos));
+            transformation *= Matrix4::rotation(deg(angle), axis);
+
+        /* Scaling */
+        } else if(tmpList[i].trimmed() == "scale")
+            transformation *= Matrix4::scaling(Utility::parseVector<Vector3>(tmpList2[i]));
+
+        /* It shouldn't get here */
+        else assert(0);
+    }
 
     /* Instance type */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/*[substring(name(), 1, 9) = 'instance_']/name()").arg(name));

@@ -9,6 +9,11 @@
         <instance_camera />
       </node>
       <node id="Mesh">
+        <translate>1 2 3</translate>
+        <rotate>0 0 1 60</rotate>
+        <rotate>0 1 0 90</rotate>
+        <rotate>1 0 0 120</rotate>
+        <scale>3 4 5</scale>
         <instance_geometry />
       </node>
     </visual_scene>
