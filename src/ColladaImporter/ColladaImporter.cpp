@@ -87,10 +87,20 @@ bool ColladaImporter::open(const string& filename) {
         return false;
     }
 
-    /* Geometry count */
-    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_geometries/geometry)");
+    /* Scenes */
+    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_visual_scenes/visual_scene)");
+    query.evaluateTo(&tmp);
+    GLuint sceneCount = ColladaType<GLuint>::fromString(tmp);
+
+    /* Objects */
+    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_visual_scenes/visual_scene//node)");
     query.evaluateTo(&tmp);
     GLuint objectCount = ColladaType<GLuint>::fromString(tmp);
+
+    /* Meshes */
+    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_geometries/geometry)");
+    query.evaluateTo(&tmp);
+    GLuint meshCount = ColladaType<GLuint>::fromString(tmp);
 
     /* Materials */
     query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
@@ -101,7 +111,7 @@ bool ColladaImporter::open(const string& filename) {
     query.evaluateTo(&tmp);
     GLuint image2DCount = ColladaType<GLuint>::fromString(tmp);
 
-    d = new Document(objectCount, listTmp.size(), image2DCount);
+    d = new Document(sceneCount, objectCount, meshCount, listTmp.size(), image2DCount);
     d->filename = filename;
     d->query = query;
 
@@ -110,12 +120,6 @@ bool ColladaImporter::open(const string& filename) {
         d->materialMap[listTmp[i].toStdString()] = i;
 
     /** @todo Also image map */
-
-    Debug() << QString("ColladaImporter: file contains\n"
-                       "    %0 objects/meshes\n"
-                       "    %1 materials\n"
-                       "    %2 images")
-        .arg(objectCount).arg(listTmp.size()).arg(image2DCount).toStdString();
 
     return true;
 }

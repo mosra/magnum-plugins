@@ -46,6 +46,10 @@ class ColladaImporter: public AbstractImporter {
         bool open(const std::string& filename);
         void close();
 
+        size_t sceneCount() const { return d ? d->scenes.size() : 0; }
+
+        size_t objectCount() const { return d ? d->objects.size() : 0; }
+
         size_t meshCount() const { return d ? d->meshes.size() : 0; }
         MeshData* mesh(size_t id);
 
@@ -100,13 +104,15 @@ class ColladaImporter: public AbstractImporter {
     private:
         /** @brief Contents of opened Collada document */
         struct Document {
-            inline Document(size_t objectCount, size_t materialCount, size_t image2DCount): meshes(objectCount), materials(materialCount), images2D(image2DCount) {}
+            inline Document(size_t sceneCount, size_t objectCount, size_t meshCount, size_t materialCount, size_t image2DCount): scenes(sceneCount), objects(objectCount), meshes(meshCount), materials(materialCount), images2D(image2DCount) {}
 
             ~Document();
 
             std::string filename;
 
-            /* Geometries and materials */
+            /* Data */
+            std::vector<SceneData*> scenes;
+            std::vector<ObjectData*> objects;
             std::vector<MeshData*> meshes;
             std::vector<AbstractMaterialData*> materials;
             std::vector<ImageData2D*> images2D;

@@ -27,6 +27,7 @@ class ColladaImporterTest: public QObject {
         void openWrongVersion();
         void parseSource();
 
+        void scene();
         void mesh();
         void material();
         void image();

@@ -65,6 +65,14 @@ void ColladaImporterTest::parseSource() {
     }));
 }
 
+void ColladaImporterTest::scene() {
+    ColladaImporter importer;
+    QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
+
+    QVERIFY(importer.sceneCount() == 2);
+    QVERIFY(importer.objectCount() == 4);
+}
+
 void ColladaImporterTest::mesh() {
     ColladaImporter importer;
     QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "mesh.dae")));

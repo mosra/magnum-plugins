@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node>
+        <node />
+      </node>
+      <node />
+    </visual_scene>
+    <visual_scene id="Scene2" name="Scene">
+      <node />
+    </visual_scene>
+  </library_visual_scenes>
+</COLLADA>
