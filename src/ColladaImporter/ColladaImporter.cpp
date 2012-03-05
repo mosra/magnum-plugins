@@ -67,7 +67,6 @@ bool ColladaImporter::open(const string& filename) {
     }
 
     QString tmp;
-    QStringList listTmp;
 
     /* Check namespace */
     query.setQuery("namespace-uri(/*:COLLADA)");
@@ -103,23 +102,18 @@ bool ColladaImporter::open(const string& filename) {
     GLuint meshCount = ColladaType<GLuint>::fromString(tmp);
 
     /* Materials */
-    query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
-    query.evaluateTo(&listTmp);
+    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_materials/material/@id/string())");
+    query.evaluateTo(&tmp);
+    GLuint materialCount = ColladaType<GLuint>::fromString(tmp);
 
     /* Images */
     query.setQuery(namespaceDeclaration + "count(/COLLADA/library_images/image)");
     query.evaluateTo(&tmp);
     GLuint image2DCount = ColladaType<GLuint>::fromString(tmp);
 
-    d = new Document(sceneCount, objectCount, meshCount, listTmp.size(), image2DCount);
+    d = new Document(sceneCount, objectCount, meshCount, materialCount, image2DCount);
     d->filename = filename;
     d->query = query;
-
-    /* Add all materials to material map */
-    for(size_t i = 0; i != static_cast<size_t>(listTmp.size()); ++i)
-        d->materialMap[listTmp[i].toStdString()] = i;
-
-    /** @todo Also image map */
 
     return true;
 }
