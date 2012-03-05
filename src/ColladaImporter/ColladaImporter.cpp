@@ -209,9 +209,6 @@ MeshData* ColladaImporter::mesh(size_t id) {
         else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
-    Debug() << QString("ColladaImporter: mesh contains %0 faces and %1 unique vertices")
-        .arg(indices->size()/3).arg(vertices->size()).toStdString();
-
     d->meshes[id] = new MeshData(Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
     return d->meshes[id];
 }
