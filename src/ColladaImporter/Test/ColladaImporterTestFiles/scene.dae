@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_cameras>
+    <camera id="Camera0" name="Camera" />
+    <camera id="Camera1" name="Camera" />
+    <camera id="Camera2" name="Camera" />
+  </library_cameras>
+  <library_geometries>
+    <geometry id="Mesh0" name="Mesh" />
+    <geometry id="Mesh1" name="Mesh" />
+    <geometry id="Mesh2" name="Mesh" />
+  </library_geometries>
+  <library_lights>
+    <light id="Light0" name="Light" />
+    <light id="Light1" name="Light" />
+    <light id="Light2" name="Light" />
+  </library_lights>
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="Camera">
         <node id="Light">
-          <instance_light />
+          <instance_light url="#Light1" />
         </node>
-        <instance_camera />
+        <instance_camera url="#Camera2" />
       </node>
       <node id="Mesh">
         <translate>1 2 3</translate>
@@ -14,12 +29,15 @@
         <rotate>0 1 0 90</rotate>
         <rotate>1 0 0 120</rotate>
         <scale>3 4 5</scale>
-        <instance_geometry />
+        <instance_geometry url="#Mesh2" />
       </node>
     </visual_scene>
     <visual_scene id="Scene2" name="Scene">
-      <node id="Wrong">
+      <node id="WrongInstanceType">
         <instance_wrong />
+      </node>
+      <node id="WrongInstanceId">
+        <instance_geometry url="#InexistentMesh" />
       </node>
     </visual_scene>
   </library_visual_scenes>

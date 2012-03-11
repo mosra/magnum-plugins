@@ -326,6 +326,30 @@ GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute,
 void ColladaImporter::parseScenes() {
     QStringList tmpList;
 
+    /* Create camera name -> camera id map */
+    d->query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
+    tmpList.clear();
+    d->query.evaluateTo(&tmpList);
+    unordered_map<string, size_t> cameraMap;
+    for(const QString id: tmpList)
+        cameraMap.insert(make_pair(id.trimmed().toStdString(), cameraMap.size()));
+
+    /* Create light name -> light id map */
+    d->query.setQuery(namespaceDeclaration + "/COLLADA/library_lights/light/@id/string()");
+    tmpList.clear();
+    d->query.evaluateTo(&tmpList);
+    unordered_map<string, size_t> lightMap;
+    for(const QString id: tmpList)
+        lightMap.insert(make_pair(id.trimmed().toStdString(), lightMap.size()));
+
+    /* Create mesh name -> mesh id map */
+    d->query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
+    tmpList.clear();
+    d->query.evaluateTo(&tmpList);
+    unordered_map<string, size_t> meshMap;
+    for(const QString id: tmpList)
+        meshMap.insert(make_pair(id.trimmed().toStdString(), meshMap.size()));
+
     /* Parse all objects in all scenes */
     for(size_t sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
         size_t nextObjectId = 0;
@@ -335,7 +359,7 @@ void ColladaImporter::parseScenes() {
         d->query.evaluateTo(&tmpList);
         for(QString childId: tmpList) {
             children.push_back(nextObjectId);
-            nextObjectId = parseObject(nextObjectId, childId.trimmed());
+            nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, meshMap);
         }
 
         d->scenes[sceneId] = new SceneData(children);
@@ -344,7 +368,7 @@ void ColladaImporter::parseScenes() {
     /** @todo Default scene */
 }
 
-size_t ColladaImporter::parseObject(size_t id, const QString& name) {
+size_t ColladaImporter::parseObject(size_t id, const QString& name, const unordered_map<string, size_t>& cameraMap, const unordered_map<string, size_t>& lightMap, const unordered_map<string, size_t>& meshMap) {
     QString tmp;
     QStringList tmpList, tmpList2;
 
@@ -382,19 +406,47 @@ size_t ColladaImporter::parseObject(size_t id, const QString& name) {
     tmp = tmp.trimmed();
 
     ObjectData::InstanceType instanceType;
-    if(tmp == "instance_camera")
+    size_t instanceId = 0;
+
+    /* Camera instance */
+    if(tmp == "instance_camera") {
         instanceType = ObjectData::InstanceType::Camera;
-    else if(tmp == "instance_light")
+        string cameraName = instanceName(name, "instance_camera");
+        auto cameraId = cameraMap.find(cameraName);
+        if(cameraId == cameraMap.end()) {
+            Error() << "ColladaImporter: camera" << '"'+cameraName+'"' << "was not found";
+            return id;
+        }
+        instanceId = cameraId->second;
+
+    /* Light instance */
+    } else if(tmp == "instance_light") {
         instanceType = ObjectData::InstanceType::Light;
-    else if(tmp == "instance_geometry")
+
+        string lightName = instanceName(name, "instance_light");
+        auto lightId = lightMap.find(lightName);
+        if(lightId == lightMap.end()) {
+            Error() << "ColladaImporter: light" << '"'+lightName+'"' << "was not found";
+            return id;
+        }
+        instanceId = lightId->second;
+
+    /* Mesh instance */
+    } else if(tmp == "instance_geometry") {
         instanceType = ObjectData::InstanceType::Mesh;
-    else {
+
+        string meshName = instanceName(name, "instance_geometry");
+        auto meshId = meshMap.find(meshName);
+        if(meshId == meshMap.end()) {
+            Error() << "ColladaImporter: mesh" << '"'+meshName+'"' << "was not found";
+            return id;
+        }
+        instanceId = meshId->second;
+
+    } else {
         Error() << "ColladaImporter:" << '"'+tmp.toStdString()+'"' << "instance type not supported";
         return id;
     }
-
-    /** @todo Instance ID */
-    size_t instanceId = 0;
 
     /* Parse child objects */
     size_t nextObjectId = id+1;
@@ -404,11 +456,19 @@ size_t ColladaImporter::parseObject(size_t id, const QString& name) {
     d->query.evaluateTo(&tmpList);
     for(QString childId: tmpList) {
         children.push_back(nextObjectId);
-        nextObjectId = parseObject(nextObjectId, childId.trimmed());
+        nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, meshMap);
     }
 
     d->objects[id] = new ObjectData(children, transformation, instanceType, instanceId);
     return nextObjectId;
+}
+
+string ColladaImporter::instanceName(const QString& name, const QString& instanceTag) {
+    QString tmp;
+
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/%1/@url/string()").arg(name).arg(instanceTag));
+    d->query.evaluateTo(&tmp);
+    return tmp.trimmed().mid(1).toStdString();
 }
 
 }}}

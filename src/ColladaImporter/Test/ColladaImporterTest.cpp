@@ -75,7 +75,7 @@ void ColladaImporterTest::scene() {
     QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
 
     QVERIFY(importer.sceneCount() == 2);
-    QVERIFY(importer.objectCount() == 4);
+    QVERIFY(importer.objectCount() == 5);
 
     SceneData* scene = importer.scene(0);
     QVERIFY(!!scene);
@@ -84,16 +84,19 @@ void ColladaImporterTest::scene() {
     ObjectData* object = importer.object(0);
     QVERIFY(!!object);
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Camera);
+    QVERIFY(object->instanceId() == 2);
     QVERIFY(object->children() == vector<size_t>{1});
 
     object = importer.object(1);
     QVERIFY(!!object);
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Light);
+    QVERIFY(object->instanceId() == 1);
     QVERIFY(object->children().empty());
 
     object = importer.object(2);
     QVERIFY(!!object);
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Mesh);
+    QVERIFY(object->instanceId() == 2);
     Matrix4 transformation =
         Matrix4::translation({1, 2, 3})*
         Matrix4::rotation(deg(60.0f), Vector3::zAxis())*
@@ -103,7 +106,8 @@ void ColladaImporterTest::scene() {
     QVERIFY(object->transformation() == transformation);
 
     QVERIFY(!importer.object(3));
-    QVERIFY(debug.str() == "ColladaImporter: \"instance_wrong\" instance type not supported\n");
+    QVERIFY(debug.str() == "ColladaImporter: \"instance_wrong\" instance type not supported\n"
+                           "ColladaImporter: mesh \"InexistentMesh\" was not found\n");
 }
 
 void ColladaImporterTest::mesh() {

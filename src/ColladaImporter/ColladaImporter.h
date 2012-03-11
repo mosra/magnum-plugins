@@ -216,7 +216,15 @@ class ColladaImporter: public AbstractImporter {
          * @param name      Object name
          * @return Next free ID
          */
-        size_t parseObject(size_t id, const QString& name);
+        size_t parseObject(size_t id, const QString& name, const std::unordered_map<std::string, size_t>& cameraMap, const std::unordered_map<std::string, size_t>& lightMap, const std::unordered_map<std::string, size_t>& meshMap);
+
+        /**
+         * @brief Instance name
+         * @param objectName    Object name
+         * @param instanceTag   Instance tag name
+         * @return Instance name
+         */
+        std::string instanceName(const QString& name, const QString& instanceTag);
 
         /** @brief Default namespace declaration for XQuery */
         static const QString namespaceDeclaration;
