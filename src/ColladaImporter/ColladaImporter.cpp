@@ -16,7 +16,6 @@
 #include "ColladaImporter.h"
 
 #include <cassert>
-#include <unordered_map>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 

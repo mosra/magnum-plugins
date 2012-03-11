@@ -25,7 +25,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtXmlPatterns/QXmlQuery>
 
-#include "Corrade/Utility/MurmurHash2.h"
+#include "Utility/MurmurHash2.h"
 #include "ColladaType.h"
 #include "Utility.h"
 
@@ -118,7 +118,6 @@ class ColladaImporter: public AbstractImporter {
             std::vector<MeshData*> meshes;
             std::vector<AbstractMaterialData*> materials;
             std::vector<ImageData2D*> images2D;
-
 
             QXmlQuery query;
         };
