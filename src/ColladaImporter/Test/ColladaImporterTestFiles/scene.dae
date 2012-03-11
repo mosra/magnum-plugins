@@ -41,4 +41,7 @@
       </node>
     </visual_scene>
   </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene2" />
+  </scene>
 </COLLADA>

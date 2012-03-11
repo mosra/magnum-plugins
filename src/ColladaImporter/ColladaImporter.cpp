@@ -127,6 +127,13 @@ void ColladaImporter::close() {
     d = 0;
 }
 
+size_t ColladaImporter::ColladaImporter::defaultScene() {
+    if(!d || d->scenes.empty()) return 0;
+    if(!d->scenes[0]) parseScenes();
+
+    return d->defaultScene;
+}
+
 SceneData* ColladaImporter::ColladaImporter::scene(size_t id) {
     if(!d || id >= d->scenes.size()) return nullptr;
     if(!d->scenes[0]) parseScenes();
@@ -325,6 +332,7 @@ GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute,
 
 void ColladaImporter::parseScenes() {
     QStringList tmpList;
+    QString tmp;
 
     /* Create camera name -> camera id map */
     d->query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
@@ -350,8 +358,20 @@ void ColladaImporter::parseScenes() {
     for(const QString id: tmpList)
         meshMap.insert(make_pair(id.trimmed().toStdString(), meshMap.size()));
 
+    /* Default scene */
+    d->defaultScene = 0;
+    d->query.setQuery(namespaceDeclaration + "/COLLADA/scene/instance_visual_scene/@url/string()");
+    d->query.evaluateTo(&tmp);
+    QString defaultScene = tmp.trimmed().mid(1);
+
     /* Parse all objects in all scenes */
     for(size_t sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
+        /* Is this the default scene? */
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/@id/string()").arg(sceneId+1));
+        d->query.evaluateTo(&tmp);
+        if(defaultScene == tmp.trimmed())
+            d->defaultScene = sceneId;
+
         size_t nextObjectId = 0;
         vector<size_t> children;
         d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/node/@id/string()").arg(sceneId+1));
@@ -364,8 +384,6 @@ void ColladaImporter::parseScenes() {
 
         d->scenes[sceneId] = new SceneData(children);
     }
-
-    /** @todo Default scene */
 }
 
 size_t ColladaImporter::parseObject(size_t id, const QString& name, const unordered_map<string, size_t>& cameraMap, const unordered_map<string, size_t>& lightMap, const unordered_map<string, size_t>& meshMap) {

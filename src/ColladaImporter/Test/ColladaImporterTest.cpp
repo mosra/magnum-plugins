@@ -74,6 +74,7 @@ void ColladaImporterTest::scene() {
     ColladaImporter importer;
     QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
 
+    QVERIFY(importer.defaultScene() == 1);
     QVERIFY(importer.sceneCount() == 2);
     QVERIFY(importer.objectCount() == 5);
 
