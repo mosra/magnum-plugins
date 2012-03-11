@@ -324,14 +324,16 @@ GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute,
 }
 
 void ColladaImporter::parseScenes() {
+    QStringList tmpList;
+
     /* Parse all objects in all scenes */
     for(size_t sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
         size_t nextObjectId = 0;
         vector<size_t> children;
-        QStringList childIdList;
         d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/node/@id/string()").arg(sceneId+1));
-        d->query.evaluateTo(&childIdList);
-        for(QString childId: childIdList) {
+        tmpList.clear();
+        d->query.evaluateTo(&tmpList);
+        for(QString childId: tmpList) {
             children.push_back(nextObjectId);
             nextObjectId = parseObject(nextObjectId, childId.trimmed());
         }
@@ -397,10 +399,10 @@ size_t ColladaImporter::parseObject(size_t id, const QString& name) {
     /* Parse child objects */
     size_t nextObjectId = id+1;
     vector<size_t> children;
-    QStringList childIdList;
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/node/@id/string()").arg(name));
-    d->query.evaluateTo(&childIdList);
-    for(QString childId: childIdList) {
+    tmpList.clear();
+    d->query.evaluateTo(&tmpList);
+    for(QString childId: tmpList) {
         children.push_back(nextObjectId);
         nextObjectId = parseObject(nextObjectId, childId.trimmed());
     }
