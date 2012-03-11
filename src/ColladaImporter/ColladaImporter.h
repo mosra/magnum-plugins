@@ -218,7 +218,7 @@ class ColladaImporter: public AbstractImporter {
          * @param name      Object name
          * @return Next free ID
          */
-        size_t parseObject(size_t id, const QString& name, const std::unordered_map<std::string, size_t>& cameraMap, const std::unordered_map<std::string, size_t>& lightMap, const std::unordered_map<std::string, size_t>& meshMap);
+        size_t parseObject(size_t id, const QString& name, const std::unordered_map<std::string, size_t>& cameraMap, const std::unordered_map<std::string, size_t>& lightMap, const std::unordered_map<std::string, size_t>& materialMap, const std::unordered_map<std::string, size_t>& meshMap);
 
         /**
          * @brief Instance name

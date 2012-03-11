@@ -15,6 +15,10 @@
     <light id="Light1" name="Light" />
     <light id="Light2" name="Light" />
   </library_lights>
+  <library_materials>
+    <material id="Material0" name="Material" />
+    <material id="Material1" name="Material" />
+  </library_materials>
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="Camera">
@@ -29,7 +33,13 @@
         <rotate>0 1 0 90</rotate>
         <rotate>1 0 0 120</rotate>
         <scale>3 4 5</scale>
-        <instance_geometry url="#Mesh2" />
+        <instance_geometry url="#Mesh2">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Material" target="#Material1" />
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
       </node>
     </visual_scene>
     <visual_scene id="Scene2" name="Scene">
@@ -38,6 +48,15 @@
       </node>
       <node id="WrongInstanceId">
         <instance_geometry url="#InexistentMesh" />
+      </node>
+      <node id="WrongMaterialId">
+        <instance_geometry url="#Mesh1">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Material" target="#InexistentMaterial" />
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
       </node>
     </visual_scene>
   </library_visual_scenes>

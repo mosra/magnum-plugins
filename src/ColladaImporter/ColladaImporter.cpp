@@ -23,7 +23,7 @@
 #include "SizeTraits.h"
 #include "Trade/PhongMaterialData.h"
 #include "Trade/MeshData.h"
-#include "Trade/ObjectData.h"
+#include "Trade/MeshObjectData.h"
 #include "Trade/SceneData.h"
 #include "TgaImporter/TgaImporter.h"
 
@@ -350,6 +350,14 @@ void ColladaImporter::parseScenes() {
     for(const QString id: tmpList)
         lightMap.insert(make_pair(id.trimmed().toStdString(), lightMap.size()));
 
+    /* Create material name -> material id map */
+    d->query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
+    tmpList.clear();
+    d->query.evaluateTo(&tmpList);
+    unordered_map<string, size_t> materialMap;
+    for(const QString id: tmpList)
+        materialMap.insert(make_pair(id.trimmed().toStdString(), materialMap.size()));
+
     /* Create mesh name -> mesh id map */
     d->query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
     tmpList.clear();
@@ -379,14 +387,14 @@ void ColladaImporter::parseScenes() {
         d->query.evaluateTo(&tmpList);
         for(QString childId: tmpList) {
             children.push_back(nextObjectId);
-            nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, meshMap);
+            nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, materialMap, meshMap);
         }
 
         d->scenes[sceneId] = new SceneData(children);
     }
 }
 
-size_t ColladaImporter::parseObject(size_t id, const QString& name, const unordered_map<string, size_t>& cameraMap, const unordered_map<string, size_t>& lightMap, const unordered_map<string, size_t>& meshMap) {
+size_t ColladaImporter::parseObject(size_t id, const QString& name, const unordered_map<string, size_t>& cameraMap, const unordered_map<string, size_t>& lightMap, const unordered_map<string, size_t>& materialMap, const unordered_map<string, size_t>& meshMap) {
     QString tmp;
     QStringList tmpList, tmpList2;
 
@@ -423,43 +431,55 @@ size_t ColladaImporter::parseObject(size_t id, const QString& name, const unorde
     d->query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
 
-    ObjectData::InstanceType instanceType;
-    size_t instanceId = 0;
-
     /* Camera instance */
     if(tmp == "instance_camera") {
-        instanceType = ObjectData::InstanceType::Camera;
         string cameraName = instanceName(name, "instance_camera");
         auto cameraId = cameraMap.find(cameraName);
         if(cameraId == cameraMap.end()) {
             Error() << "ColladaImporter: camera" << '"'+cameraName+'"' << "was not found";
             return id;
         }
-        instanceId = cameraId->second;
+
+        d->objects[id] = new ObjectData({}, transformation, ObjectData::InstanceType::Camera, cameraId->second);
 
     /* Light instance */
     } else if(tmp == "instance_light") {
-        instanceType = ObjectData::InstanceType::Light;
-
         string lightName = instanceName(name, "instance_light");
         auto lightId = lightMap.find(lightName);
         if(lightId == lightMap.end()) {
             Error() << "ColladaImporter: light" << '"'+lightName+'"' << "was not found";
             return id;
         }
-        instanceId = lightId->second;
+
+        d->objects[id] = new ObjectData({}, transformation, ObjectData::InstanceType::Light, lightId->second);
 
     /* Mesh instance */
     } else if(tmp == "instance_geometry") {
-        instanceType = ObjectData::InstanceType::Mesh;
-
         string meshName = instanceName(name, "instance_geometry");
         auto meshId = meshMap.find(meshName);
         if(meshId == meshMap.end()) {
             Error() << "ColladaImporter: mesh" << '"'+meshName+'"' << "was not found";
             return id;
         }
-        instanceId = meshId->second;
+
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/instance_geometry/bind_material/technique_common/instance_material/@target/string()").arg(name));
+        d->query.evaluateTo(&tmp);
+        string materialName = tmp.trimmed().mid(1).toStdString();
+
+        /* Mesh doesn't have bound material, add default one */
+        /** @todo Solution for unknown materials etc.: -1 ? */
+        if(materialName.empty()) d->objects[id] = new MeshObjectData({}, transformation, meshId->second, 0);
+
+        /* Else find material ID */
+        else {
+            auto materialId = materialMap.find(materialName);
+            if(materialId == materialMap.end()) {
+                Error() << "ColladaImporter: material" << '"'+materialName+'"' << "was not found";
+                return id;
+            }
+
+            d->objects[id] = new MeshObjectData({}, transformation, meshId->second, materialId->second);
+        }
 
     } else {
         Error() << "ColladaImporter:" << '"'+tmp.toStdString()+'"' << "instance type not supported";
@@ -474,10 +494,10 @@ size_t ColladaImporter::parseObject(size_t id, const QString& name, const unorde
     d->query.evaluateTo(&tmpList);
     for(QString childId: tmpList) {
         children.push_back(nextObjectId);
-        nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, meshMap);
+        nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, materialMap, meshMap);
     }
+    d->objects[id]->children().swap(children);
 
-    d->objects[id] = new ObjectData(children, transformation, instanceType, instanceId);
     return nextObjectId;
 }
 

@@ -20,7 +20,7 @@
 #include "Utility/Directory.h"
 #include "Trade/PhongMaterialData.h"
 #include "Trade/MeshData.h"
-#include "Trade/ObjectData.h"
+#include "Trade/MeshObjectData.h"
 #include "Trade/SceneData.h"
 #include "../ColladaImporter.h"
 
@@ -76,7 +76,7 @@ void ColladaImporterTest::scene() {
 
     QVERIFY(importer.defaultScene() == 1);
     QVERIFY(importer.sceneCount() == 2);
-    QVERIFY(importer.objectCount() == 5);
+    QVERIFY(importer.objectCount() == 6);
 
     SceneData* scene = importer.scene(0);
     QVERIFY(!!scene);
@@ -105,10 +105,14 @@ void ColladaImporterTest::scene() {
         Matrix4::rotation(deg(120.0f), Vector3::xAxis())*
         Matrix4::scaling({3, 4, 5});
     QVERIFY(object->transformation() == transformation);
+    QVERIFY(static_cast<MeshObjectData*>(object)->material() == 1);
 
     QVERIFY(!importer.object(3));
+    QVERIFY(!importer.object(4));
+    QVERIFY(!importer.object(5));
     QVERIFY(debug.str() == "ColladaImporter: \"instance_wrong\" instance type not supported\n"
-                           "ColladaImporter: mesh \"InexistentMesh\" was not found\n");
+                           "ColladaImporter: mesh \"InexistentMesh\" was not found\n"
+                           "ColladaImporter: material \"InexistentMaterial\" was not found\n");
 }
 
 void ColladaImporterTest::mesh() {
