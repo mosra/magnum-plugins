@@ -15,7 +15,6 @@
 
 #include "ColladaImporter.h"
 
-#include <cassert>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 
@@ -406,24 +405,25 @@ size_t ColladaImporter::parseObject(size_t id, const QString& name, const unorde
     d->query.evaluateTo(&tmpList2);
 
     Matrix4 transformation;
-    for(size_t i = 0; i != static_cast<size_t>(tmpList.size()); ++i) {
+    for(size_t i = 0; i != size_t(tmpList.size()); ++i) {
+        QString type = tmpList[i].trimmed();
         /* Translation */
-        if(tmpList[i].trimmed() == "translate")
+        if(type == "translate")
             transformation *= Matrix4::translation(Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* Rotation */
-        else if(tmpList[i].trimmed() == "rotate") {
+        else if(type == "rotate") {
             int pos = 0;
             Vector3 axis = Utility::parseVector<Vector3>(tmpList2[i], &pos);
             GLfloat angle = ColladaType<GLfloat>::fromString(tmpList2[i].mid(pos));
             transformation *= Matrix4::rotation(deg(angle), axis);
 
         /* Scaling */
-        } else if(tmpList[i].trimmed() == "scale")
+        } else if(type == "scale")
             transformation *= Matrix4::scaling(Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* It shouldn't get here */
-        else assert(0);
+        else CORRADE_ASSERT(0, ("ColladaImporter: unknown translation " + type).toStdString(), id)
     }
 
     /* Instance type */
