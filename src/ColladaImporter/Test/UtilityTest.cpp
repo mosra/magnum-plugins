@@ -28,7 +28,7 @@ namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test 
 
 void UtilityTest::parseVector() {
     /* Extremely spaceless */
-    QCOMPARE((Utility::parseVector<Math::Vector<GLfloat, 1>>("3.14")[0]), 3.14f);
+    QCOMPARE((Utility::parseVector<Math::Vector<1, GLfloat>>("3.14")[0]), 3.14f);
 
     /* Spaces */
     QVERIFY(Utility::parseVector<Vector2>("     2.17  3.28  ") == Vector2(2.17f, 3.28f));

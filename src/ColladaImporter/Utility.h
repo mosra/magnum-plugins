@@ -48,7 +48,7 @@ class Utility {
                 to = data.indexOf(' ', *from);
                 while(to == *from)
                     to = data.indexOf(' ', ++*from);
-                output.set(j, ColladaType<typename Vector::Type>::fromString(data.mid(*from, to-*from)));
+                output[j] = ColladaType<typename Vector::Type>::fromString(data.mid(*from, to-*from));
                 *from = (to == -1 ? data.size() : to+1);
             }
 
