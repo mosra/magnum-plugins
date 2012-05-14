@@ -166,13 +166,17 @@ MeshData* ColladaImporter::mesh(size_t id) {
     vector<GLuint> vertexCountPerFace = Utility::parseArray<GLuint>(tmp, polygonCount);
 
     GLuint vertexCount = 0;
-    for(GLuint count: vertexCountPerFace) {
-        vertexCount += count;
-        if(count == 3) continue;
+    vector<GLuint> quads;
+    for(size_t i = 0; i != vertexCountPerFace.size(); ++i) {
+        GLuint count = vertexCountPerFace[i];
 
-        /** @todo Support also quads */
-        Error() << "ColladaImporter:" << count << "vertices per face not supported";
-        return nullptr;
+        if(count == 4) quads.push_back(i);
+        else if(count != 3) {
+            Error() << "ColladaImporter:" << count << "vertices per face not supported";
+            return nullptr;
+        }
+
+        vertexCount += count;
     }
 
     /* Get input count per vertex */
@@ -191,9 +195,29 @@ MeshData* ColladaImporter::mesh(size_t id) {
        is position of unique index combination from original vertex array,
        value is resulting index. */
     unordered_map<unsigned int, unsigned int, IndexHash, IndexEqual> indexCombinations(originalIndices.size()/stride, IndexHash(originalIndices, stride), IndexEqual(originalIndices, stride));
-    vector<unsigned int>* indices = new vector<unsigned int>;
+    vector<unsigned int> combinedIndices;
     for(size_t i = 0, end = originalIndices.size()/stride; i != end; ++i)
-        indices->push_back(indexCombinations.insert(make_pair(i, indexCombinations.size())).first->second);
+        combinedIndices.push_back(indexCombinations.insert(make_pair(i, indexCombinations.size())).first->second);
+
+    /* Convert quads to triangles */
+    vector<unsigned int>* indices = new vector<unsigned int>;
+    size_t quadId = 0;
+    for(size_t i = 0; i != vertexCountPerFace.size(); ++i) {
+        if(quads.size() > quadId && quads[quadId] == i) {
+            indices->push_back(combinedIndices[i*3+quadId]);
+            indices->push_back(combinedIndices[i*3+quadId+1]);
+            indices->push_back(combinedIndices[i*3+quadId+2]);
+            indices->push_back(combinedIndices[i*3+quadId]);
+            indices->push_back(combinedIndices[i*3+quadId+2]);
+            indices->push_back(combinedIndices[i*3+quadId+3]);
+
+            ++quadId;
+        } else {
+            indices->push_back(combinedIndices[i*3+quadId]);
+            indices->push_back(combinedIndices[i*3+quadId+1]);
+            indices->push_back(combinedIndices[i*3+quadId+2]);
+        }
+    }
 
     /* Get mesh vertices */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input[@semantic='VERTEX']/@source/string()")

@@ -119,12 +119,12 @@ void ColladaImporterTest::mesh() {
     ColladaImporter importer;
     QVERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "mesh.dae")));
 
-    QVERIFY(importer.meshCount() == 4);
+    QVERIFY(importer.meshCount() == 5);
 
     stringstream debug;
     Error::setOutput(&debug);
     QVERIFY(!importer.mesh(0));
-    QVERIFY(debug.str() == "ColladaImporter: 4 vertices per face not supported\n");
+    QVERIFY(debug.str() == "ColladaImporter: 5 vertices per face not supported\n");
 
     /* Vertex only mesh */
     QVERIFY(!!importer.mesh(1));
@@ -145,9 +145,16 @@ void ColladaImporterTest::mesh() {
     QVERIFY(mesh->normalArrayCount() == 0);
     QVERIFY(mesh->textureCoords2DArrayCount() == 0);
 
-    /* Vertex and normal mesh */
+    /* Mesh with quads */
     QVERIFY(!!importer.mesh(2));
     mesh = importer.mesh(2);
+    QVERIFY((*mesh->indices() == vector<unsigned int>{
+        0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
+    }));
+
+    /* Vertex and normal mesh */
+    QVERIFY(!!importer.mesh(3));
+    mesh = importer.mesh(3);
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
@@ -177,8 +184,8 @@ void ColladaImporterTest::mesh() {
     QVERIFY(mesh->textureCoords2DArrayCount() == 0);
 
     /* Vertex, normal and texture mesh */
-    QVERIFY(!!importer.mesh(3));
-    mesh = importer.mesh(3);
+    QVERIFY(!!importer.mesh(4));
+    mesh = importer.mesh(4);
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7

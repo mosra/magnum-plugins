@@ -31,7 +31,7 @@
         <polylist material="Material" count="12">
           <input semantic="VERTEX" source="#Vertices" offset="0"/>
           <input semantic="NORMAL" source="#Normals" offset="1"/>
-          <vcount>3 4</vcount>
+          <vcount>3 5</vcount>
         </polylist>
       </mesh>
     </geometry>
@@ -54,6 +54,15 @@
           <input semantic="VERTEX" source="#Vertices" offset="0"/>
           <vcount>3 3 3 3</vcount>
           <p>0 1 2 0 2 3 4 0 3 4 3 5</p>
+        </polylist>
+      </mesh>
+    </geometry>
+    <geometry id="MeshQuads">
+      <mesh>
+        <polylist material="Material" count="5">
+          <input semantic="VERTEX" source="#Vertices" offset="0"/>
+          <vcount>3 3 4 4 3</vcount>
+          <p>0 1 2 0 2 3 4 0 3 5 0 1 2 3 4 0 3</p>
         </polylist>
       </mesh>
     </geometry>
