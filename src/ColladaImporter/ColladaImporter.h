@@ -29,7 +29,10 @@
 #include "ColladaType.h"
 #include "Utility.h"
 
-namespace Magnum { namespace Trade { namespace ColladaImporter {
+namespace Magnum { namespace Trade {
+
+/** @brief Collada importer */
+namespace ColladaImporter {
 
 class ColladaMeshData;
 
@@ -38,6 +41,7 @@ class ColladaMeshData;
 */
 class ColladaImporter: public AbstractImporter {
     public:
+        /** @copydoc AbstractImporter::AbstractImporter() */
         ColladaImporter(Corrade::PluginManager::AbstractPluginManager* manager = nullptr, const std::string& plugin = "");
         virtual ~ColladaImporter();
 
