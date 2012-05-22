@@ -27,7 +27,7 @@
 namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 /**
-@brief Utility functions for parsing
+@brief %Utility functions for parsing
 */
 class Utility {
     public:

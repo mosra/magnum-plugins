@@ -29,10 +29,7 @@
 #include "ColladaType.h"
 #include "Utility.h"
 
-namespace Magnum { namespace Trade {
-
-/** @brief Collada importer */
-namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 class ColladaMeshData;
 
@@ -128,7 +125,7 @@ class ColladaImporter: public AbstractImporter {
             QXmlQuery query;
         };
 
-        /** @brief Mesh index hasher */
+        /** @brief %Mesh index hasher */
         class IndexHash {
             public:
                 /** @brief Constructor */
@@ -150,7 +147,7 @@ class ColladaImporter: public AbstractImporter {
                 unsigned int stride;
         };
 
-        /** @brief Mesh index comparator */
+        /** @brief %Mesh index comparator */
         class IndexEqual {
             public:
                 /** @brief Constructor */
@@ -174,7 +171,7 @@ class ColladaImporter: public AbstractImporter {
 
         /**
          * @brief Offset of attribute in mesh index array
-         * @param meshId            Mesh ID
+         * @param meshId            %Mesh ID
          * @param attribute         Attribute
          * @param id                Attribute ID, if there are more than one
          *      attribute with the same name
@@ -183,7 +180,7 @@ class ColladaImporter: public AbstractImporter {
 
         /**
          * @brief Build attribute array
-         * @param meshId            Mesh ID
+         * @param meshId            %Mesh ID
          * @param attribute         Attribute
          * @param id                Attribute ID, if there are more than one
          *      attribute with the same name
