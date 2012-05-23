@@ -30,9 +30,6 @@ using namespace std;
 using namespace Corrade::Utility;
 using namespace Corrade::PluginManager;
 
-PLUGIN_REGISTER(ColladaImporter, Magnum::Trade::ColladaImporter::ColladaImporter,
-                "cz.mosra.magnum.Trade.AbstractImporter/0.1")
-
 namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 const QString ColladaImporter::namespaceDeclaration =
