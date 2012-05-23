@@ -18,7 +18,7 @@ Minimal dependencies
  * C++ compiler with good C++11 support. Currently the only compiler which
    supports everything needed is **GCC** >= 4.6. **Clang** >= 3.1 (from SVN)
    will probably work too.
- * **CMake** >= 2.6
+ * **CMake** >= 2.8.8 (needed for `OBJECT` library target)
  * **OpenGL headers**, on Linux most probably shipped with Mesa
  * **GLEW** - OpenGL extension wrangler
  * **Magnum** - The engine itself
