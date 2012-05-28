@@ -27,7 +27,6 @@
 #include "ColladaImporterTestConfigure.h"
 
 using namespace std;
-using namespace Corrade::Utility;
 
 QTEST_APPLESS_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaImporterTest)
 
