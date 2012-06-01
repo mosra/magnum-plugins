@@ -27,6 +27,7 @@
 #include "TgaImporter/TgaImporter.h"
 
 using namespace std;
+using namespace Corrade::Utility;
 using namespace Corrade::PluginManager;
 
 namespace Magnum { namespace Trade { namespace ColladaImporter {
