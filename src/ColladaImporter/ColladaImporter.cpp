@@ -150,6 +150,11 @@ MeshData* ColladaImporter::mesh(unsigned int id) {
 
     QString tmp;
 
+    /* Get mesh name */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/@id/string()").arg(id+1));
+    d->query.evaluateTo(&tmp);
+    string name(tmp.trimmed().toStdString());
+
     /** @todo More polylists in one mesh */
 
     /* Get polygon count */
@@ -252,7 +257,7 @@ MeshData* ColladaImporter::mesh(unsigned int id) {
         else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
-    d->meshes[id] = new MeshData(Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
+    d->meshes[id] = new MeshData(name, Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
     return d->meshes[id];
 }
 
@@ -261,6 +266,11 @@ AbstractMaterialData* ColladaImporter::material(unsigned int id) {
     if(d->materials[id]) return d->materials[id];
 
     QString tmp;
+
+    /* Material name */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_materials/material[%0]/@id/string()").arg(id+1));
+    d->query.evaluateTo(&tmp);
+    string name(tmp.trimmed().toStdString());
 
     /* Get effect ID */
     QString effect;
@@ -312,7 +322,7 @@ AbstractMaterialData* ColladaImporter::material(unsigned int id) {
 
     /** @todo Emission, IOR */
 
-    d->materials[id] = new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
+    d->materials[id] = new PhongMaterialData(name, ambientColor, diffuseColor, specularColor, shininess);
     return d->materials[id];
 }
 
@@ -321,6 +331,11 @@ ImageData2D* ColladaImporter::image2D(unsigned int id) {
     if(d->images2D[id]) return d->images2D[id];
 
     QString tmp;
+
+    /* Image name */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_images/image[%0]/@id/string()").arg(id+1));
+    d->query.evaluateTo(&tmp);
+    string name(tmp.trimmed().toStdString());
 
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_images/image[%0]/init_from/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
@@ -333,7 +348,7 @@ ImageData2D* ColladaImporter::image2D(unsigned int id) {
 
     TgaImporter::TgaImporter tgaImporter;
     ImageData2D* image;
-    if(!tgaImporter.open(Directory::join(Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
+    if(!tgaImporter.open(Directory::join(Directory::path(d->filename), tmp.toStdString()), name) || !(image = tgaImporter.image2D(0)))
         return nullptr;
 
     d->images2D[id] = image;
@@ -390,14 +405,15 @@ void ColladaImporter::parseScenes() {
     d->defaultScene = 0;
     d->query.setQuery(namespaceDeclaration + "/COLLADA/scene/instance_visual_scene/@url/string()");
     d->query.evaluateTo(&tmp);
-    QString defaultScene = tmp.trimmed().mid(1);
+    string defaultScene = tmp.trimmed().mid(1).toStdString();
 
     /* Parse all objects in all scenes */
     for(unsigned int sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
         /* Is this the default scene? */
         d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/@id/string()").arg(sceneId+1));
         d->query.evaluateTo(&tmp);
-        if(defaultScene == tmp.trimmed())
+        string name = tmp.trimmed().toStdString();
+        if(defaultScene == name)
             d->defaultScene = sceneId;
 
         unsigned int nextObjectId = 0;
@@ -410,7 +426,7 @@ void ColladaImporter::parseScenes() {
             nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, materialMap, meshMap);
         }
 
-        d->scenes[sceneId] = new SceneData(children);
+        d->scenes[sceneId] = new SceneData(name, children);
     }
 }
 
@@ -461,7 +477,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
             return id;
         }
 
-        d->objects[id] = new ObjectData({}, transformation, ObjectData::InstanceType::Camera, cameraId->second);
+        d->objects[id] = new ObjectData(name.toStdString(), {}, transformation, ObjectData::InstanceType::Camera, cameraId->second);
 
     /* Light instance */
     } else if(tmp == "instance_light") {
@@ -472,7 +488,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
             return id;
         }
 
-        d->objects[id] = new ObjectData({}, transformation, ObjectData::InstanceType::Light, lightId->second);
+        d->objects[id] = new ObjectData(name.toStdString(), {}, transformation, ObjectData::InstanceType::Light, lightId->second);
 
     /* Mesh instance */
     } else if(tmp == "instance_geometry") {
@@ -489,7 +505,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
 
         /* Mesh doesn't have bound material, add default one */
         /** @todo Solution for unknown materials etc.: -1 ? */
-        if(materialName.empty()) d->objects[id] = new MeshObjectData({}, transformation, meshId->second, 0);
+        if(materialName.empty()) d->objects[id] = new MeshObjectData(name.toStdString(), {}, transformation, meshId->second, 0);
 
         /* Else find material ID */
         else {
@@ -499,7 +515,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
                 return id;
             }
 
-            d->objects[id] = new MeshObjectData({}, transformation, meshId->second, materialId->second);
+            d->objects[id] = new MeshObjectData(name.toStdString(), {}, transformation, meshId->second, materialId->second);
         }
 
     } else {

@@ -80,22 +80,26 @@ void ColladaImporterTest::scene() {
 
     SceneData* scene = importer.scene(0);
     QVERIFY(!!scene);
+    QVERIFY(scene->name() == "Scene");
     QVERIFY((scene->children() == vector<unsigned int>{0, 2}));
 
     ObjectData* object = importer.object(0);
     QVERIFY(!!object);
+    QVERIFY(object->name() == "Camera");
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Camera);
     QVERIFY(object->instanceId() == 2);
     QVERIFY(object->children() == vector<unsigned int>{1});
 
     object = importer.object(1);
     QVERIFY(!!object);
+    QVERIFY(object->name() == "Light");
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Light);
     QVERIFY(object->instanceId() == 1);
     QVERIFY(object->children().empty());
 
     object = importer.object(2);
     QVERIFY(!!object);
+    QVERIFY(object->name() == "Mesh");
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Mesh);
     QVERIFY(object->instanceId() == 2);
     Matrix4 transformation =
@@ -129,6 +133,7 @@ void ColladaImporterTest::mesh() {
     /* Vertex only mesh */
     QVERIFY(!!importer.mesh(1));
     MeshData* mesh = importer.mesh(1);
+    QVERIFY(mesh->name() == "MeshVertexOnly");
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
@@ -148,6 +153,7 @@ void ColladaImporterTest::mesh() {
     /* Mesh with quads */
     QVERIFY(!!importer.mesh(2));
     mesh = importer.mesh(2);
+    QVERIFY(mesh->name() == "MeshQuads");
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
     }));
@@ -155,6 +161,7 @@ void ColladaImporterTest::mesh() {
     /* Vertex and normal mesh */
     QVERIFY(!!importer.mesh(3));
     mesh = importer.mesh(3);
+    QVERIFY(mesh->name() == "MeshVertexNormals");
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
@@ -186,6 +193,7 @@ void ColladaImporterTest::mesh() {
     /* Vertex, normal and texture mesh */
     QVERIFY(!!importer.mesh(4));
     mesh = importer.mesh(4);
+    QVERIFY(mesh->name() == "Mesh");
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
@@ -243,7 +251,7 @@ void ColladaImporterTest::material() {
 
     QVERIFY(!!importer.material(2));
     PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(2));
-
+    QVERIFY(material->name() == "MaterialPhong");
     QVERIFY(material->ambientColor() == Vector3(1, 0, 0));
     QVERIFY(material->diffuseColor() == Vector3(0, 1, 0));
     QVERIFY(material->specularColor() == Vector3(0, 0, 1));
@@ -263,6 +271,7 @@ void ColladaImporterTest::image() {
 
     QVERIFY(!!importer.image2D(1));
     ImageData2D* image = importer.image2D(1);
+    QVERIFY(image->name() == "Image");
 
     /* Check only dimensions, as it is good enough proof that it is working */
     QVERIFY((image->dimensions() == Math::Vector2<GLsizei>(2, 3)));
