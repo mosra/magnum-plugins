@@ -518,6 +518,10 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
             d->objects[id] = new MeshObjectData(name.toStdString(), {}, transformation, meshId->second, materialId->second);
         }
 
+    /* Blender group instance */
+    } else if(tmp.isEmpty()) {
+        d->objects[id] = new ObjectData(name.toStdString(), {}, transformation);
+
     } else {
         Error() << "ColladaImporter:" << '"'+tmp.toStdString()+'"' << "instance type not supported";
         return id;
