@@ -9,7 +9,7 @@ set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SH
 corrade_add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     ColladaImporter.conf
     $<TARGET_OBJECTS:ColladaImporterObjects>
-    ColladaImporterPluginRegistration.cpp
+    pluginRegistrationColladaImporter.cpp
 )
 target_link_libraries(ColladaImporter ${QT_QTCORE_LIBRARY} ${QT_QTXMLPATTERNS_LIBRARY})
 
