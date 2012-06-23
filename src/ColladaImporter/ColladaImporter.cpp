@@ -123,28 +123,28 @@ void ColladaImporter::close() {
     d = 0;
 }
 
-size_t ColladaImporter::ColladaImporter::defaultScene() {
-    if(!d || d->scenes.empty()) return 0;
+int ColladaImporter::ColladaImporter::defaultScene() {
+    if(!d || d->scenes.empty()) return -1;
     if(!d->scenes[0]) parseScenes();
 
     return d->defaultScene;
 }
 
-SceneData* ColladaImporter::ColladaImporter::scene(size_t id) {
+SceneData* ColladaImporter::ColladaImporter::scene(unsigned int id) {
     if(!d || id >= d->scenes.size()) return nullptr;
     if(!d->scenes[0]) parseScenes();
 
     return d->scenes[id];
 }
 
-ObjectData* ColladaImporter::ColladaImporter::object(size_t id) {
+ObjectData* ColladaImporter::ColladaImporter::object(unsigned int id) {
     if(!d || id >= d->objects.size()) return nullptr;
     if(!d->scenes[0]) parseScenes();
 
     return d->objects[id];
 }
 
-MeshData* ColladaImporter::mesh(size_t id) {
+MeshData* ColladaImporter::mesh(unsigned int id) {
     if(!d || id >= d->meshes.size()) return nullptr;
     if(d->meshes[id]) return d->meshes[id];
 
@@ -256,7 +256,7 @@ MeshData* ColladaImporter::mesh(size_t id) {
     return d->meshes[id];
 }
 
-AbstractMaterialData* ColladaImporter::material(size_t id) {
+AbstractMaterialData* ColladaImporter::material(unsigned int id) {
     if(!d || id >= d->materials.size()) return nullptr;
     if(d->materials[id]) return d->materials[id];
 
@@ -316,7 +316,7 @@ AbstractMaterialData* ColladaImporter::material(size_t id) {
     return d->materials[id];
 }
 
-ImageData2D* ColladaImporter::image2D(size_t id) {
+ImageData2D* ColladaImporter::image2D(unsigned int id) {
     if(!d || id >= d->images2D.size()) return nullptr;
     if(d->images2D[id]) return d->images2D[id];
 
@@ -340,7 +340,7 @@ ImageData2D* ColladaImporter::image2D(size_t id) {
     return d->images2D[id];
 }
 
-GLuint ColladaImporter::attributeOffset(size_t meshId, const QString& attribute, unsigned int id) {
+GLuint ColladaImporter::attributeOffset(unsigned int meshId, const QString& attribute, unsigned int id) {
     QString tmp;
 
     /* Get attribute offset in indices */
@@ -358,7 +358,7 @@ void ColladaImporter::parseScenes() {
     d->query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
     tmpList.clear();
     d->query.evaluateTo(&tmpList);
-    unordered_map<string, size_t> cameraMap;
+    unordered_map<string, unsigned int> cameraMap;
     for(const QString id: tmpList)
         cameraMap.insert(make_pair(id.trimmed().toStdString(), cameraMap.size()));
 
@@ -366,7 +366,7 @@ void ColladaImporter::parseScenes() {
     d->query.setQuery(namespaceDeclaration + "/COLLADA/library_lights/light/@id/string()");
     tmpList.clear();
     d->query.evaluateTo(&tmpList);
-    unordered_map<string, size_t> lightMap;
+    unordered_map<string, unsigned int> lightMap;
     for(const QString id: tmpList)
         lightMap.insert(make_pair(id.trimmed().toStdString(), lightMap.size()));
 
@@ -374,7 +374,7 @@ void ColladaImporter::parseScenes() {
     d->query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
     tmpList.clear();
     d->query.evaluateTo(&tmpList);
-    unordered_map<string, size_t> materialMap;
+    unordered_map<string, unsigned int> materialMap;
     for(const QString id: tmpList)
         materialMap.insert(make_pair(id.trimmed().toStdString(), materialMap.size()));
 
@@ -382,7 +382,7 @@ void ColladaImporter::parseScenes() {
     d->query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
     tmpList.clear();
     d->query.evaluateTo(&tmpList);
-    unordered_map<string, size_t> meshMap;
+    unordered_map<string, unsigned int> meshMap;
     for(const QString id: tmpList)
         meshMap.insert(make_pair(id.trimmed().toStdString(), meshMap.size()));
 
@@ -393,15 +393,15 @@ void ColladaImporter::parseScenes() {
     QString defaultScene = tmp.trimmed().mid(1);
 
     /* Parse all objects in all scenes */
-    for(size_t sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
+    for(unsigned int sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
         /* Is this the default scene? */
         d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/@id/string()").arg(sceneId+1));
         d->query.evaluateTo(&tmp);
         if(defaultScene == tmp.trimmed())
             d->defaultScene = sceneId;
 
-        size_t nextObjectId = 0;
-        vector<size_t> children;
+        unsigned int nextObjectId = 0;
+        vector<unsigned int> children;
         d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/node/@id/string()").arg(sceneId+1));
         tmpList.clear();
         d->query.evaluateTo(&tmpList);
@@ -414,7 +414,7 @@ void ColladaImporter::parseScenes() {
     }
 }
 
-size_t ColladaImporter::parseObject(size_t id, const QString& name, const unordered_map<string, size_t>& cameraMap, const unordered_map<string, size_t>& lightMap, const unordered_map<string, size_t>& materialMap, const unordered_map<string, size_t>& meshMap) {
+unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, const unordered_map<string, unsigned int>& cameraMap, const unordered_map<string, unsigned int>& lightMap, const unordered_map<string, unsigned int>& materialMap, const unordered_map<string, unsigned int>& meshMap) {
     QString tmp;
     QStringList tmpList, tmpList2;
 
@@ -508,8 +508,8 @@ size_t ColladaImporter::parseObject(size_t id, const QString& name, const unorde
     }
 
     /* Parse child objects */
-    size_t nextObjectId = id+1;
-    vector<size_t> children;
+    unsigned int nextObjectId = id+1;
+    vector<unsigned int> children;
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/node/@id/string()").arg(name));
     tmpList.clear();
     d->query.evaluateTo(&tmpList);

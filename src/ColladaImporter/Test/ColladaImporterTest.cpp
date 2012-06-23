@@ -80,13 +80,13 @@ void ColladaImporterTest::scene() {
 
     SceneData* scene = importer.scene(0);
     QVERIFY(!!scene);
-    QVERIFY((scene->children() == vector<size_t>{0, 2}));
+    QVERIFY((scene->children() == vector<unsigned int>{0, 2}));
 
     ObjectData* object = importer.object(0);
     QVERIFY(!!object);
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Camera);
     QVERIFY(object->instanceId() == 2);
-    QVERIFY(object->children() == vector<size_t>{1});
+    QVERIFY(object->children() == vector<unsigned int>{1});
 
     object = importer.object(1);
     QVERIFY(!!object);
