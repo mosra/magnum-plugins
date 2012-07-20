@@ -86,6 +86,7 @@ void ColladaImporterTest::scene() {
     ObjectData* object = importer.object(0);
     QVERIFY(!!object);
     QVERIFY(object->name() == "Camera");
+    QVERIFY(importer.objectForName("Camera") == 0);
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Camera);
     QVERIFY(object->instanceId() == 2);
     QVERIFY(object->children() == vector<unsigned int>{1});
@@ -93,6 +94,7 @@ void ColladaImporterTest::scene() {
     object = importer.object(1);
     QVERIFY(!!object);
     QVERIFY(object->name() == "Light");
+    QCOMPARE(importer.objectForName("Light"), 1);
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Light);
     QVERIFY(object->instanceId() == 1);
     QVERIFY(object->children().empty());
@@ -100,6 +102,7 @@ void ColladaImporterTest::scene() {
     object = importer.object(2);
     QVERIFY(!!object);
     QVERIFY(object->name() == "Mesh");
+    QVERIFY(importer.objectForName("Mesh") == 2);
     QVERIFY(object->instanceType() == ObjectData::InstanceType::Mesh);
     QVERIFY(object->instanceId() == 2);
     Matrix4 transformation =
@@ -128,12 +131,14 @@ void ColladaImporterTest::mesh() {
     stringstream debug;
     Error::setOutput(&debug);
     QVERIFY(!importer.mesh(0));
+    QVERIFY(importer.meshForName("WrongPrimitives") == 0);
     QVERIFY(debug.str() == "ColladaImporter: 5 vertices per face not supported\n");
 
     /* Vertex only mesh */
     QVERIFY(!!importer.mesh(1));
     MeshData* mesh = importer.mesh(1);
     QVERIFY(mesh->name() == "MeshVertexOnly");
+    QVERIFY(importer.meshForName("MeshVertexOnly") == 1);
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
@@ -154,6 +159,7 @@ void ColladaImporterTest::mesh() {
     QVERIFY(!!importer.mesh(2));
     mesh = importer.mesh(2);
     QVERIFY(mesh->name() == "MeshQuads");
+    QVERIFY(importer.meshForName("MeshQuads") == 2);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
     }));
@@ -162,6 +168,7 @@ void ColladaImporterTest::mesh() {
     QVERIFY(!!importer.mesh(3));
     mesh = importer.mesh(3);
     QVERIFY(mesh->name() == "MeshVertexNormals");
+    QVERIFY(importer.meshForName("MeshVertexNormals") == 3);
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
@@ -194,6 +201,7 @@ void ColladaImporterTest::mesh() {
     QVERIFY(!!importer.mesh(4));
     mesh = importer.mesh(4);
     QVERIFY(mesh->name() == "Mesh");
+    QVERIFY(importer.meshForName("Mesh") == 4);
     QVERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     QVERIFY((*mesh->indices() == vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
@@ -243,15 +251,18 @@ void ColladaImporterTest::material() {
     stringstream debug;
     Error::setOutput(&debug);
     QVERIFY(!importer.material(0));
+    QVERIFY(importer.materialForName("MaterialWrongProfile") == 0);
     QVERIFY(debug.str() == "ColladaImporter: \"profile_GLSL\" effect profile not supported\n");
 
     debug.str("");
     QVERIFY(!importer.material(1));
+    QVERIFY(importer.materialForName("MaterialWrongShader") == 1);
     QVERIFY(debug.str() == "ColladaImporter: \"lambert\" shader not supported\n");
 
     QVERIFY(!!importer.material(2));
     PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(2));
     QVERIFY(material->name() == "MaterialPhong");
+    QVERIFY(importer.materialForName("MaterialPhong") == 2);
     QVERIFY(material->ambientColor() == Vector3(1, 0, 0));
     QVERIFY(material->diffuseColor() == Vector3(0, 1, 0));
     QVERIFY(material->specularColor() == Vector3(0, 0, 1));
@@ -267,11 +278,13 @@ void ColladaImporterTest::image() {
     stringstream debug;
     Error::setOutput(&debug);
     QVERIFY(!importer.image2D(0));
+    QVERIFY(importer.image2DForName("UnsupportedImage") == 0);
     QVERIFY(debug.str() == "ColladaImporter: \"image.jpg\" has unsupported format\n");
 
     QVERIFY(!!importer.image2D(1));
     ImageData2D* image = importer.image2D(1);
     QVERIFY(image->name() == "Image");
+    QVERIFY(importer.image2DForName("Image") == 1);
 
     /* Check only dimensions, as it is good enough proof that it is working */
     QVERIFY((image->dimensions() == Math::Vector2<GLsizei>(2, 3)));

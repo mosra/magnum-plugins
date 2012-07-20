@@ -52,15 +52,19 @@ class ColladaImporter: public AbstractImporter {
         SceneData* scene(unsigned int id);
 
         inline unsigned int objectCount() const { return d ? d->objects.size() : 0; }
+        int objectForName(const std::string& name);
         ObjectData* object(unsigned int id);
 
         inline unsigned int meshCount() const { return d ? d->meshes.size() : 0; }
+        int meshForName(const std::string& name);
         MeshData* mesh(unsigned int id);
 
         inline unsigned int materialCount() const { return d ? d->materials.size() : 0; }
+        int materialForName(const std::string& name);
         AbstractMaterialData* material(unsigned int id);
 
         inline unsigned int image2DCount() const { return d ? d->images2D.size() : 0; }
+        int image2DForName(const std::string& name);
         ImageData2D* image2D(unsigned int id);
 
         /** @brief Parse &lt;source&gt; element */
@@ -108,7 +112,7 @@ class ColladaImporter: public AbstractImporter {
     private:
         /** @brief Contents of opened Collada document */
         struct Document {
-            inline Document(unsigned int sceneCount, unsigned int objectCount, unsigned int meshCount, unsigned int materialCount, unsigned int image2DCount): defaultScene(0), scenes(sceneCount), objects(objectCount), meshes(meshCount), materials(materialCount), images2D(image2DCount) {}
+            inline Document(unsigned int sceneCount, unsigned int objectCount, std::unordered_map<std::string, unsigned int>&& camerasForName, std::unordered_map<std::string, unsigned int>&& lightsForName, std::unordered_map<std::string, unsigned int>&& meshesForName, std::unordered_map<std::string, unsigned int>&& materialsForName, std::unordered_map<std::string, unsigned int>&& images2DForName): defaultScene(0), scenes(sceneCount), objects(objectCount), meshes(meshesForName.size()), materials(materialsForName.size()), images2D(images2DForName.size()), camerasForName(camerasForName), lightsForName(lightsForName), meshesForName(meshesForName), materialsForName(materialsForName), images2DForName(images2DForName) {}
 
             ~Document();
 
@@ -121,6 +125,14 @@ class ColladaImporter: public AbstractImporter {
             std::vector<MeshData*> meshes;
             std::vector<AbstractMaterialData*> materials;
             std::vector<ImageData2D*> images2D;
+
+            /** @todo Make public use for camerasForName, lightsForName */
+            std::unordered_map<std::string, unsigned int> camerasForName,
+                lightsForName,
+                objectsForName,
+                meshesForName,
+                materialsForName,
+                images2DForName;
 
             QXmlQuery query;
         };
@@ -219,7 +231,7 @@ class ColladaImporter: public AbstractImporter {
          * @param name      Object name
          * @return Next free ID
          */
-        unsigned int parseObject(unsigned int id, const QString& name, const std::unordered_map<std::string, unsigned int>& cameraMap, const std::unordered_map<std::string, unsigned int>& lightMap, const std::unordered_map<std::string, unsigned int>& materialMap, const std::unordered_map<std::string, unsigned int>& meshMap);
+        unsigned int parseObject(unsigned int id, const QString& name);
 
         /**
          * @brief Instance name

@@ -94,22 +94,48 @@ bool ColladaImporter::open(const string& filename) {
     query.evaluateTo(&tmp);
     GLuint objectCount = ColladaType<GLuint>::fromString(tmp);
 
-    /* Meshes */
-    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_geometries/geometry)");
-    query.evaluateTo(&tmp);
-    GLuint meshCount = ColladaType<GLuint>::fromString(tmp);
+    QStringList tmpList;
 
-    /* Materials */
-    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_materials/material/@id/string())");
-    query.evaluateTo(&tmp);
-    GLuint materialCount = ColladaType<GLuint>::fromString(tmp);
+    /* Create camera name -> camera id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
+    query.evaluateTo(&tmpList);
+    std::unordered_map<std::string, unsigned int> camerasForName;
+    for(const QString id: tmpList)
+        camerasForName.insert(make_pair(id.trimmed().toStdString(), camerasForName.size()));
 
-    /* Images */
-    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_images/image)");
-    query.evaluateTo(&tmp);
-    GLuint image2DCount = ColladaType<GLuint>::fromString(tmp);
+    /* Create light name -> light id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_lights/light/@id/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    std::unordered_map<std::string, unsigned int> lightsForName;
+    for(const QString id: tmpList)
+        lightsForName.insert(make_pair(id.trimmed().toStdString(), lightsForName.size()));
 
-    d = new Document(sceneCount, objectCount, meshCount, materialCount, image2DCount);
+    /* Create material name -> material id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    std::unordered_map<std::string, unsigned int> materialsForName;
+    for(const QString id: tmpList)
+        materialsForName.insert(make_pair(id.trimmed().toStdString(), materialsForName.size()));
+
+    /* Create mesh name -> mesh id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    std::unordered_map<std::string, unsigned int> meshesForName;
+    for(const QString id: tmpList)
+        meshesForName.insert(make_pair(id.trimmed().toStdString(), meshesForName.size()));
+
+    /* Create image name -> image id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_images/image/@id/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    std::unordered_map<std::string, unsigned int> images2DForName;
+    for(const QString id: tmpList)
+        images2DForName.insert(make_pair(id.trimmed().toStdString(), images2DForName.size()));
+
+    d = new Document(sceneCount, objectCount, move(camerasForName), move(lightsForName), move(meshesForName), move(materialsForName), move(images2DForName));
     d->filename = filename;
     d->query = query;
 
@@ -137,11 +163,24 @@ SceneData* ColladaImporter::ColladaImporter::scene(unsigned int id) {
     return d->scenes[id];
 }
 
+int ColladaImporter::ColladaImporter::objectForName(const string& name) {
+    if(d->scenes.empty()) return -1;
+    if(!d->scenes[0]) parseScenes();
+
+    auto it = d->objectsForName.find(name);
+    return (it == d->objectsForName.end()) ? -1 : it->second;
+}
+
 ObjectData* ColladaImporter::ColladaImporter::object(unsigned int id) {
     if(!d || id >= d->objects.size()) return nullptr;
     if(!d->scenes[0]) parseScenes();
 
     return d->objects[id];
+}
+
+int ColladaImporter::ColladaImporter::meshForName(const string& name) {
+    auto it = d->meshesForName.find(name);
+    return (it == d->meshesForName.end()) ? -1 : it->second;
 }
 
 MeshData* ColladaImporter::mesh(unsigned int id) {
@@ -261,6 +300,11 @@ MeshData* ColladaImporter::mesh(unsigned int id) {
     return d->meshes[id];
 }
 
+int ColladaImporter::ColladaImporter::materialForName(const string& name) {
+    auto it = d->materialsForName.find(name);
+    return (it == d->materialsForName.end()) ? -1 : it->second;
+}
+
 AbstractMaterialData* ColladaImporter::material(unsigned int id) {
     if(!d || id >= d->materials.size()) return nullptr;
     if(d->materials[id]) return d->materials[id];
@@ -326,6 +370,11 @@ AbstractMaterialData* ColladaImporter::material(unsigned int id) {
     return d->materials[id];
 }
 
+int ColladaImporter::ColladaImporter::image2DForName(const string& name) {
+    auto it = d->images2DForName.find(name);
+    return (it == d->images2DForName.end()) ? -1 : it->second;
+}
+
 ImageData2D* ColladaImporter::image2D(unsigned int id) {
     if(!d || id >= d->images2D.size()) return nullptr;
     if(d->images2D[id]) return d->images2D[id];
@@ -369,38 +418,6 @@ void ColladaImporter::parseScenes() {
     QStringList tmpList;
     QString tmp;
 
-    /* Create camera name -> camera id map */
-    d->query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
-    tmpList.clear();
-    d->query.evaluateTo(&tmpList);
-    unordered_map<string, unsigned int> cameraMap;
-    for(const QString id: tmpList)
-        cameraMap.insert(make_pair(id.trimmed().toStdString(), cameraMap.size()));
-
-    /* Create light name -> light id map */
-    d->query.setQuery(namespaceDeclaration + "/COLLADA/library_lights/light/@id/string()");
-    tmpList.clear();
-    d->query.evaluateTo(&tmpList);
-    unordered_map<string, unsigned int> lightMap;
-    for(const QString id: tmpList)
-        lightMap.insert(make_pair(id.trimmed().toStdString(), lightMap.size()));
-
-    /* Create material name -> material id map */
-    d->query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
-    tmpList.clear();
-    d->query.evaluateTo(&tmpList);
-    unordered_map<string, unsigned int> materialMap;
-    for(const QString id: tmpList)
-        materialMap.insert(make_pair(id.trimmed().toStdString(), materialMap.size()));
-
-    /* Create mesh name -> mesh id map */
-    d->query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
-    tmpList.clear();
-    d->query.evaluateTo(&tmpList);
-    unordered_map<string, unsigned int> meshMap;
-    for(const QString id: tmpList)
-        meshMap.insert(make_pair(id.trimmed().toStdString(), meshMap.size()));
-
     /* Default scene */
     d->defaultScene = 0;
     d->query.setQuery(namespaceDeclaration + "/COLLADA/scene/instance_visual_scene/@url/string()");
@@ -423,14 +440,14 @@ void ColladaImporter::parseScenes() {
         d->query.evaluateTo(&tmpList);
         for(QString childId: tmpList) {
             children.push_back(nextObjectId);
-            nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, materialMap, meshMap);
+            nextObjectId = parseObject(nextObjectId, childId.trimmed());
         }
 
         d->scenes[sceneId] = new SceneData(name, children);
     }
 }
 
-unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, const unordered_map<string, unsigned int>& cameraMap, const unordered_map<string, unsigned int>& lightMap, const unordered_map<string, unsigned int>& materialMap, const unordered_map<string, unsigned int>& meshMap) {
+unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name) {
     QString tmp;
     QStringList tmpList, tmpList2;
 
@@ -471,8 +488,8 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
     /* Camera instance */
     if(tmp == "instance_camera") {
         string cameraName = instanceName(name, "instance_camera");
-        auto cameraId = cameraMap.find(cameraName);
-        if(cameraId == cameraMap.end()) {
+        auto cameraId = d->camerasForName.find(cameraName);
+        if(cameraId == d->camerasForName.end()) {
             Error() << "ColladaImporter: camera" << '"'+cameraName+'"' << "was not found";
             return id;
         }
@@ -482,8 +499,8 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
     /* Light instance */
     } else if(tmp == "instance_light") {
         string lightName = instanceName(name, "instance_light");
-        auto lightId = lightMap.find(lightName);
-        if(lightId == lightMap.end()) {
+        auto lightId = d->lightsForName.find(lightName);
+        if(lightId == d->lightsForName.end()) {
             Error() << "ColladaImporter: light" << '"'+lightName+'"' << "was not found";
             return id;
         }
@@ -493,8 +510,8 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
     /* Mesh instance */
     } else if(tmp == "instance_geometry") {
         string meshName = instanceName(name, "instance_geometry");
-        auto meshId = meshMap.find(meshName);
-        if(meshId == meshMap.end()) {
+        auto meshId = d->meshesForName.find(meshName);
+        if(meshId == d->meshesForName.end()) {
             Error() << "ColladaImporter: mesh" << '"'+meshName+'"' << "was not found";
             return id;
         }
@@ -509,8 +526,8 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
 
         /* Else find material ID */
         else {
-            auto materialId = materialMap.find(materialName);
-            if(materialId == materialMap.end()) {
+            auto materialId = d->materialsForName.find(materialName);
+            if(materialId == d->materialsForName.end()) {
                 Error() << "ColladaImporter: material" << '"'+materialName+'"' << "was not found";
                 return id;
             }
@@ -527,6 +544,9 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
         return id;
     }
 
+    /* Add to object name map */
+    d->objectsForName.insert({name.toStdString(), id});
+
     /* Parse child objects */
     unsigned int nextObjectId = id+1;
     vector<unsigned int> children;
@@ -535,7 +555,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name, 
     d->query.evaluateTo(&tmpList);
     for(QString childId: tmpList) {
         children.push_back(nextObjectId);
-        nextObjectId = parseObject(nextObjectId, childId.trimmed(), cameraMap, lightMap, materialMap, meshMap);
+        nextObjectId = parseObject(nextObjectId, childId.trimmed());
     }
     d->objects[id]->children().swap(children);
 
