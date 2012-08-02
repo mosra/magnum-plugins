@@ -35,6 +35,11 @@ build() {
     make
 }
 
+check() {
+    cd "$startdir/build"
+    ctest --output-on-failure
+}
+
 package() {
     cd "$srcdir/build"
     make DESTDIR="$pkgdir/" install

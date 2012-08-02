@@ -15,20 +15,23 @@
 
 #include "ColladaTypeTest.h"
 
-#include <QtTest/QTest>
-
 #include "../ColladaType.h"
 
-QTEST_APPLESS_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaTypeTest)
+CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaTypeTest)
 
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
+ColladaTypeTest::ColladaTypeTest() {
+    addTests(&ColladaTypeTest::gluint,
+             &ColladaTypeTest::glfloat);
+}
+
 void ColladaTypeTest::gluint() {
-    QVERIFY(ColladaType<GLuint>::fromString("123456") == 123456);
+    CORRADE_COMPARE(ColladaType<GLuint>::fromString("123456"), 123456);
 }
 
 void ColladaTypeTest::glfloat() {
-    QCOMPARE(ColladaType<GLfloat>::fromString("3.14"), 3.14f);
+    CORRADE_COMPARE(ColladaType<GLfloat>::fromString("3.14"), 3.14f);
 }
 
 }}}}

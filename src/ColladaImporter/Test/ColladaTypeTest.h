@@ -15,14 +15,14 @@
     GNU Lesser General Public License version 3 for more details.
 */
 
-#include <QtCore/QObject>
+#include <TestSuite/Tester.h>
 
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
-class ColladaTypeTest: public QObject {
-    Q_OBJECT
+class ColladaTypeTest: public Corrade::TestSuite::Tester<ColladaTypeTest> {
+    public:
+        ColladaTypeTest();
 
-    private slots:
         void gluint();
         void glfloat();
 };
