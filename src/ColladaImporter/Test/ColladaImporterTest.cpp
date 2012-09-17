@@ -18,8 +18,9 @@
 #include "Utility/Directory.h"
 #include <Math/Constants.h>
 #include "Trade/PhongMaterialData.h"
-#include "Trade/MeshData.h"
-#include "Trade/MeshObjectData.h"
+#include <Trade/ImageData.h>
+#include <Trade/MeshData3D.h>
+#include <Trade/MeshObjectData3D.h>
 #include "Trade/SceneData.h"
 #include "../ColladaImporter.h"
 
@@ -72,9 +73,9 @@ void ColladaImporterTest::parseSource() {
         CORRADE_COMPARE(importer.parseSource<Vector3>("SwappedCoords"), (vector<Vector3>{Vector3(0, 1, 2)}));
     }
 
-    CORRADE_COMPARE(importer.parseSource<Vector4>("MoreElements"), (vector<Vector4>{
-        Vector4(0, 1, 2),
-        Vector4(3, 4, 5)
+    CORRADE_COMPARE(importer.parseSource<Point3D>("MoreElements"), (vector<Point3D>{
+        {0, 1, 2},
+        {3, 4, 5}
     }));
 }
 
@@ -87,34 +88,34 @@ void ColladaImporterTest::scene() {
 
     CORRADE_COMPARE(importer.defaultScene(), 1);
     CORRADE_COMPARE(importer.sceneCount(), 2);
-    CORRADE_COMPARE(importer.objectCount(), 6);
+    CORRADE_COMPARE(importer.object3DCount(), 6);
 
     SceneData* scene = importer.scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->name(), "Scene");
-    CORRADE_COMPARE(scene->children(), (vector<unsigned int>{0, 2}));
+    CORRADE_COMPARE(scene->children3D(), (vector<unsigned int>{0, 2}));
 
-    ObjectData* object = importer.object(0);
+    ObjectData3D* object = importer.object3D(0);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->name(), "Camera");
-    CORRADE_COMPARE(importer.objectForName("Camera"), 0);
-    CORRADE_VERIFY(object->instanceType() == ObjectData::InstanceType::Camera);
+    CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
+    CORRADE_VERIFY(object->instanceType() == ObjectData3D::InstanceType::Camera);
     CORRADE_COMPARE(object->instanceId(), 2);
     CORRADE_COMPARE(object->children(), vector<unsigned int>{1});
 
-    object = importer.object(1);
+    object = importer.object3D(1);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->name(), "Light");
-    CORRADE_COMPARE(importer.objectForName("Light"), 1);
-    CORRADE_VERIFY(object->instanceType() == ObjectData::InstanceType::Light);
+    CORRADE_COMPARE(importer.object3DForName("Light"), 1);
+    CORRADE_VERIFY(object->instanceType() == ObjectData3D::InstanceType::Light);
     CORRADE_COMPARE(object->instanceId(), 1);
     CORRADE_VERIFY(object->children().empty());
 
-    object = importer.object(2);
+    object = importer.object3D(2);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->name(), "Mesh");
-    CORRADE_COMPARE(importer.objectForName("Mesh"), 2);
-    CORRADE_VERIFY(object->instanceType() == ObjectData::InstanceType::Mesh);
+    CORRADE_COMPARE(importer.object3DForName("Mesh"), 2);
+    CORRADE_VERIFY(object->instanceType() == ObjectData3D::InstanceType::Mesh);
     CORRADE_COMPARE(object->instanceId(), 2);
     Matrix4 transformation =
         Matrix4::translation({1, 2, 3})*
@@ -123,11 +124,11 @@ void ColladaImporterTest::scene() {
         Matrix4::rotation(deg(120.0f), Vector3::xAxis())*
         Matrix4::scaling({3, 4, 5});
     CORRADE_COMPARE(object->transformation(), transformation);
-    CORRADE_COMPARE(static_cast<MeshObjectData*>(object)->material(), 1);
+    CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object)->material(), 1);
 
-    CORRADE_VERIFY(!importer.object(3));
-    CORRADE_VERIFY(!importer.object(4));
-    CORRADE_VERIFY(!importer.object(5));
+    CORRADE_VERIFY(!importer.object3D(3));
+    CORRADE_VERIFY(!importer.object3D(4));
+    CORRADE_VERIFY(!importer.object3D(5));
     CORRADE_VERIFY(debug.str() == "ColladaImporter: \"instance_wrong\" instance type not supported\n"
                                   "ColladaImporter: mesh \"InexistentMesh\" was not found\n"
                                   "ColladaImporter: material \"InexistentMaterial\" was not found\n");
@@ -137,25 +138,25 @@ void ColladaImporterTest::mesh() {
     ColladaImporter importer;
     CORRADE_VERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "mesh.dae")));
 
-    CORRADE_COMPARE(importer.meshCount(), 5);
+    CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
     stringstream debug;
     Error::setOutput(&debug);
-    CORRADE_VERIFY(!importer.mesh(0));
-    CORRADE_COMPARE(importer.meshForName("WrongPrimitives"), 0);
+    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_COMPARE(importer.mesh3DForName("WrongPrimitives"), 0);
     CORRADE_COMPARE(debug.str(), "ColladaImporter: 5 vertices per face not supported\n");
 
     /* Vertex only mesh */
-    CORRADE_VERIFY(importer.mesh(1));
-    MeshData* mesh = importer.mesh(1);
+    CORRADE_VERIFY(importer.mesh3D(1));
+    MeshData3D* mesh = importer.mesh3D(1);
     CORRADE_COMPARE(mesh->name(), "MeshVertexOnly");
-    CORRADE_COMPARE(importer.meshForName("MeshVertexOnly"), 1);
+    CORRADE_COMPARE(importer.mesh3DForName("MeshVertexOnly"), 1);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     CORRADE_COMPARE(*mesh->indices(), (vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
     }));
-    CORRADE_COMPARE(mesh->vertexArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->vertices(0), (vector<Vector4>{
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(*mesh->positions(0), (vector<Point3D>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -167,25 +168,25 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
 
     /* Mesh with quads */
-    CORRADE_VERIFY(importer.mesh(2));
-    mesh = importer.mesh(2);
+    CORRADE_VERIFY(importer.mesh3D(2));
+    mesh = importer.mesh3D(2);
     CORRADE_COMPARE(mesh->name(), "MeshQuads");
-    CORRADE_COMPARE(importer.meshForName("MeshQuads"), 2);
+    CORRADE_COMPARE(importer.mesh3DForName("MeshQuads"), 2);
     CORRADE_COMPARE(*mesh->indices(), (vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
     }));
 
     /* Vertex and normal mesh */
-    CORRADE_VERIFY(importer.mesh(3));
-    mesh = importer.mesh(3);
+    CORRADE_VERIFY(importer.mesh3D(3));
+    mesh = importer.mesh3D(3);
     CORRADE_COMPARE(mesh->name(), "MeshVertexNormals");
-    CORRADE_COMPARE(importer.meshForName("MeshVertexNormals"), 3);
+    CORRADE_COMPARE(importer.mesh3DForName("MeshVertexNormals"), 3);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     CORRADE_COMPARE(*mesh->indices(), (vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
-    CORRADE_COMPARE(mesh->vertexArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->vertices(0), (vector<Vector4>{
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(*mesh->positions(0), (vector<Point3D>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -209,16 +210,16 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
 
     /* Vertex, normal and texture mesh */
-    CORRADE_VERIFY(importer.mesh(4));
-    mesh = importer.mesh(4);
+    CORRADE_VERIFY(importer.mesh3D(4));
+    mesh = importer.mesh3D(4);
     CORRADE_COMPARE(mesh->name(), "Mesh");
-    CORRADE_COMPARE(importer.meshForName("Mesh"), 4);
+    CORRADE_COMPARE(importer.mesh3DForName("Mesh"), 4);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     CORRADE_COMPARE(*mesh->indices(), (vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
-    CORRADE_COMPARE(mesh->vertexArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->vertices(0), (vector<Vector4>{
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(*mesh->positions(0), (vector<Point3D>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},

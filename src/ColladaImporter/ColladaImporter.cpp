@@ -22,8 +22,8 @@
 #include <Math/Constants.h>
 #include "SizeTraits.h"
 #include "Trade/PhongMaterialData.h"
-#include "Trade/MeshData.h"
-#include "Trade/MeshObjectData.h"
+#include <Trade/MeshData3D.h>
+#include <Trade/MeshObjectData3D.h>
 #include "Trade/SceneData.h"
 #include "TgaImporter/TgaImporter.h"
 
@@ -164,7 +164,7 @@ SceneData* ColladaImporter::ColladaImporter::scene(unsigned int id) {
     return d->scenes[id];
 }
 
-int ColladaImporter::ColladaImporter::objectForName(const string& name) {
+int ColladaImporter::ColladaImporter::object3DForName(const string& name) {
     if(d->scenes.empty()) return -1;
     if(!d->scenes[0]) parseScenes();
 
@@ -172,19 +172,19 @@ int ColladaImporter::ColladaImporter::objectForName(const string& name) {
     return (it == d->objectsForName.end()) ? -1 : it->second;
 }
 
-ObjectData* ColladaImporter::ColladaImporter::object(unsigned int id) {
+ObjectData3D* ColladaImporter::ColladaImporter::object3D(unsigned int id) {
     if(!d || id >= d->objects.size()) return nullptr;
     if(!d->scenes[0]) parseScenes();
 
     return d->objects[id];
 }
 
-int ColladaImporter::ColladaImporter::meshForName(const string& name) {
+int ColladaImporter::ColladaImporter::mesh3DForName(const string& name) {
     auto it = d->meshesForName.find(name);
     return (it == d->meshesForName.end()) ? -1 : it->second;
 }
 
-MeshData* ColladaImporter::mesh(unsigned int id) {
+MeshData3D* ColladaImporter::mesh3D(unsigned int id) {
     if(!d || id >= d->meshes.size()) return nullptr;
     if(d->meshes[id]) return d->meshes[id];
 
@@ -272,7 +272,7 @@ MeshData* ColladaImporter::mesh(unsigned int id) {
 
     /* Build vertex array */
     GLuint vertexOffset = attributeOffset(id, "VERTEX");
-    vector<Vector4>* vertices = new vector<Vector4>(indexCombinations.size());
+    vector<Point3D>* vertices = new vector<Point3D>(indexCombinations.size());
     for(auto i: indexCombinations)
         (*vertices)[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
 
@@ -297,7 +297,7 @@ MeshData* ColladaImporter::mesh(unsigned int id) {
         else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
-    d->meshes[id] = new MeshData(name, Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
+    d->meshes[id] = new MeshData3D(name, Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
     return d->meshes[id];
 }
 
@@ -444,7 +444,7 @@ void ColladaImporter::parseScenes() {
             nextObjectId = parseObject(nextObjectId, childId.trimmed());
         }
 
-        d->scenes[sceneId] = new SceneData(name, children);
+        d->scenes[sceneId] = new SceneData(name, {}, children);
     }
 }
 
@@ -495,7 +495,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name) 
             return id;
         }
 
-        d->objects[id] = new ObjectData(name.toStdString(), {}, transformation, ObjectData::InstanceType::Camera, cameraId->second);
+        d->objects[id] = new ObjectData3D(name.toStdString(), {}, transformation, ObjectData3D::InstanceType::Camera, cameraId->second);
 
     /* Light instance */
     } else if(tmp == "instance_light") {
@@ -506,7 +506,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name) 
             return id;
         }
 
-        d->objects[id] = new ObjectData(name.toStdString(), {}, transformation, ObjectData::InstanceType::Light, lightId->second);
+        d->objects[id] = new ObjectData3D(name.toStdString(), {}, transformation, ObjectData3D::InstanceType::Light, lightId->second);
 
     /* Mesh instance */
     } else if(tmp == "instance_geometry") {
@@ -523,7 +523,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name) 
 
         /* Mesh doesn't have bound material, add default one */
         /** @todo Solution for unknown materials etc.: -1 ? */
-        if(materialName.empty()) d->objects[id] = new MeshObjectData(name.toStdString(), {}, transformation, meshId->second, 0);
+        if(materialName.empty()) d->objects[id] = new MeshObjectData3D(name.toStdString(), {}, transformation, meshId->second, 0);
 
         /* Else find material ID */
         else {
@@ -533,12 +533,12 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name) 
                 return id;
             }
 
-            d->objects[id] = new MeshObjectData(name.toStdString(), {}, transformation, meshId->second, materialId->second);
+            d->objects[id] = new MeshObjectData3D(name.toStdString(), {}, transformation, meshId->second, materialId->second);
         }
 
     /* Blender group instance */
     } else if(tmp.isEmpty()) {
-        d->objects[id] = new ObjectData(name.toStdString(), {}, transformation);
+        d->objects[id] = new ObjectData3D(name.toStdString(), {}, transformation);
 
     } else {
         Error() << "ColladaImporter:" << '"'+tmp.toStdString()+'"' << "instance type not supported";

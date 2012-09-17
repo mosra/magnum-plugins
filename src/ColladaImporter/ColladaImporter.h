@@ -51,13 +51,13 @@ class ColladaImporter: public AbstractImporter {
         inline unsigned int sceneCount() const { return d ? d->scenes.size() : 0; }
         SceneData* scene(unsigned int id);
 
-        inline unsigned int objectCount() const { return d ? d->objects.size() : 0; }
-        int objectForName(const std::string& name);
-        ObjectData* object(unsigned int id);
+        inline unsigned int object3DCount() const { return d ? d->objects.size() : 0; }
+        int object3DForName(const std::string& name);
+        ObjectData3D* object3D(unsigned int id);
 
-        inline unsigned int meshCount() const { return d ? d->meshes.size() : 0; }
-        int meshForName(const std::string& name);
-        MeshData* mesh(unsigned int id);
+        inline unsigned int mesh3DCount() const { return d ? d->meshes.size() : 0; }
+        int mesh3DForName(const std::string& name);
+        MeshData3D* mesh3D(unsigned int id);
 
         inline unsigned int materialCount() const { return d ? d->materials.size() : 0; }
         int materialForName(const std::string& name);
@@ -121,8 +121,8 @@ class ColladaImporter: public AbstractImporter {
             /* Data */
             unsigned int defaultScene;
             std::vector<SceneData*> scenes;
-            std::vector<ObjectData*> objects;
-            std::vector<MeshData*> meshes;
+            std::vector<ObjectData3D*> objects;
+            std::vector<MeshData3D*> meshes;
             std::vector<AbstractMaterialData*> materials;
             std::vector<ImageData2D*> images2D;
 
