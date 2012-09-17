@@ -16,6 +16,7 @@
 #include "ColladaImporterTest.h"
 
 #include "Utility/Directory.h"
+#include <Math/Constants.h>
 #include "Trade/PhongMaterialData.h"
 #include "Trade/MeshData.h"
 #include "Trade/MeshObjectData.h"

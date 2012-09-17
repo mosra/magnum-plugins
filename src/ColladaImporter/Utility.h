@@ -41,7 +41,7 @@ class Utility {
          *
          * Returns parsed vector and moves @c from to position of next vector.
          */
-        template<class Vector> static Vector parseVector(const QString& data, int* from, size_t size = Vector::Size) {
+        template<class Vector> static Vector parseVector(const QString& data, int* from, size_t size = Vector::size) {
             Vector output;
             int to;
             for(size_t j = 0; j != size; ++j) {
@@ -60,7 +60,7 @@ class Utility {
          *
          * Convenience alternative to parseVector(const QString&, int*, size_t).
          */
-        template<class Vector> inline static Vector parseVector(const QString& data, size_t size = Vector::Size) {
+        template<class Vector> inline static Vector parseVector(const QString& data, size_t size = Vector::size) {
             int from = 0;
             return parseVector<Vector>(data, &from, size);
         }

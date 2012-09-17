@@ -19,6 +19,7 @@
 #include <QtCore/QStringList>
 
 #include "Utility/Directory.h"
+#include <Math/Constants.h>
 #include "SizeTraits.h"
 #include "Trade/PhongMaterialData.h"
 #include "Trade/MeshData.h"
@@ -477,7 +478,7 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name) 
             transformation *= Matrix4::scaling(Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* It shouldn't get here */
-        else CORRADE_ASSERT(0, ("ColladaImporter: unknown translation " + type).toStdString(), id)
+        else CORRADE_ASSERT(0, ("ColladaImporter: unknown translation " + type).toStdString(), id);
     }
 
     /* Instance type */
