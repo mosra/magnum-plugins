@@ -18,8 +18,10 @@
 #  MeshTools     - MeshTools library
 #  Physics       - Physics library
 #  Primitives    - Library with stock geometric primitives (static)
+#  SceneGraph    - Scene graph library
 #  Shaders       - Library with stock shaders
-#  EglContext    - EGL context (depends on EGL and X11 libraries)
+#  GlxContext    - GLX context (depends on X11 libraries)
+#  XEglContext   - X/EGL context (depends on EGL and X11 libraries)
 #  GlutContext   - GLUT context (depends on GLUT library)
 #  Sdl2Context   - SDL2 context (depends on SDL2 library)
 # Example usage with specifying additional components is:
@@ -84,13 +86,13 @@ foreach(component ${Magnum_FIND_COMPONENTS})
 
     set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_SUFFIX ${component})
 
-    # Contexts
-    if(${component} MATCHES .+Context)
+    # Window contexts
+    if(${component} MATCHES .+WindowContext)
         set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_SUFFIX Contexts)
         set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES ${component}.h)
 
-        # GLUT context dependencies
-        if(${component} STREQUAL GlutContext)
+        # GLUT window context dependencies
+        if(${component} STREQUAL GlutWindowContext)
             find_package(GLUT)
             if(GLUT_FOUND)
                 set(_MAGNUM_${_COMPONENT}_LIBRARIES ${GLUT_LIBRARIES})
@@ -99,8 +101,8 @@ foreach(component ${Magnum_FIND_COMPONENTS})
             endif()
         endif()
 
-        # SDL2 context dependencies
-        if(${component} STREQUAL Sdl2Context)
+        # SDL2 window context dependencies
+        if(${component} STREQUAL Sdl2WindowContext)
             find_package(SDL2)
             if(SDL2_FOUND)
                 set(_MAGNUM_${_COMPONENT}_LIBRARIES ${SDL2_LIBRARY})
@@ -110,8 +112,18 @@ foreach(component ${Magnum_FIND_COMPONENTS})
             endif()
         endif()
 
-        # X/EGL context dependencies
-        if(${component} STREQUAL EglContext)
+        # GLX window context dependencies
+        if(${component} STREQUAL GlxWindowContext)
+            find_package(X11)
+            if(X11_FOUND)
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${X11_LIBRARIES})
+            else()
+                unset(MAGNUM_${_COMPONENT}_LIBRARY)
+            endif()
+        endif()
+
+        # X/EGL window context dependencies
+        if(${component} STREQUAL XEglWindowContext)
             find_package(EGL)
             find_package(X11)
             if(EGL_FOUND AND X11_FOUND)
@@ -137,6 +149,11 @@ foreach(component ${Magnum_FIND_COMPONENTS})
         set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Cube.h)
     endif()
 
+    # Scene graph library
+    if(${component} STREQUAL SceneGraph)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Scene.h)
+    endif()
+
     # Shaders library
     if(${component} STREQUAL Shaders)
         set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES PhongShader.h)
@@ -147,6 +164,9 @@ foreach(component ${Magnum_FIND_COMPONENTS})
         find_path(_MAGNUM_${_COMPONENT}_INCLUDE_DIR
             NAMES ${_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES}
             PATHS ${MAGNUM_INCLUDE_DIR}/${_MAGNUM_${_COMPONENT}_INCLUDE_PATH_SUFFIX})
+
+        # Don't expose this variable to end users
+        mark_as_advanced(FORCE _MAGNUM_${_COMPONENT}_INCLUDE_DIR)
     endif()
 
     # Decide if the library was found
@@ -166,6 +186,7 @@ find_package_handle_standard_args(Magnum
 
 # Dependent libraries and includes
 set(MAGNUM_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIR}
+    ${MAGNUM_INCLUDE_DIR}/external
     ${CORRADE_INCLUDE_DIR})
 set(MAGNUM_LIBRARIES ${MAGNUM_LIBRARY}
     ${CORRADE_UTILITY_LIBRARY}
