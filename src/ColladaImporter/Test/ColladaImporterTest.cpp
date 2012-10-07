@@ -298,8 +298,8 @@ void ColladaImporterTest::image() {
     CORRADE_COMPARE(image->name(), "Image");
     CORRADE_COMPARE(importer.image2DForName("Image"), 1);
 
-    /* Check only dimensions, as it is good enough proof that it is working */
-    CORRADE_COMPARE(image->dimensions(), Math::Vector2<GLsizei>(2, 3));
+    /* Check only size, as it is good enough proof that it is working */
+    CORRADE_COMPARE(image->size(), Math::Vector2<GLsizei>(2, 3));
 }
 
 }}}}

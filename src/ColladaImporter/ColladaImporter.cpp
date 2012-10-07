@@ -100,7 +100,7 @@ bool ColladaImporter::open(const string& filename) {
     /* Create camera name -> camera id map */
     query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
     query.evaluateTo(&tmpList);
-    std::unordered_map<std::string, unsigned int> camerasForName;
+    std::unordered_map<std::string, std::uint32_t> camerasForName;
     for(const QString id: tmpList)
         camerasForName.insert(make_pair(id.trimmed().toStdString(), camerasForName.size()));
 
@@ -108,7 +108,7 @@ bool ColladaImporter::open(const string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_lights/light/@id/string()");
     tmpList.clear();
     query.evaluateTo(&tmpList);
-    std::unordered_map<std::string, unsigned int> lightsForName;
+    std::unordered_map<std::string, std::uint32_t> lightsForName;
     for(const QString id: tmpList)
         lightsForName.insert(make_pair(id.trimmed().toStdString(), lightsForName.size()));
 
@@ -116,7 +116,7 @@ bool ColladaImporter::open(const string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
     tmpList.clear();
     query.evaluateTo(&tmpList);
-    std::unordered_map<std::string, unsigned int> materialsForName;
+    std::unordered_map<std::string, std::uint32_t> materialsForName;
     for(const QString id: tmpList)
         materialsForName.insert(make_pair(id.trimmed().toStdString(), materialsForName.size()));
 
@@ -124,7 +124,7 @@ bool ColladaImporter::open(const string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
     tmpList.clear();
     query.evaluateTo(&tmpList);
-    std::unordered_map<std::string, unsigned int> meshesForName;
+    std::unordered_map<std::string, std::uint32_t> meshesForName;
     for(const QString id: tmpList)
         meshesForName.insert(make_pair(id.trimmed().toStdString(), meshesForName.size()));
 
@@ -132,7 +132,7 @@ bool ColladaImporter::open(const string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_images/image/@id/string()");
     tmpList.clear();
     query.evaluateTo(&tmpList);
-    std::unordered_map<std::string, unsigned int> images2DForName;
+    std::unordered_map<std::string, std::uint32_t> images2DForName;
     for(const QString id: tmpList)
         images2DForName.insert(make_pair(id.trimmed().toStdString(), images2DForName.size()));
 
@@ -150,21 +150,21 @@ void ColladaImporter::close() {
     d = 0;
 }
 
-int ColladaImporter::ColladaImporter::defaultScene() {
+std::int32_t ColladaImporter::ColladaImporter::defaultScene() {
     if(!d || d->scenes.empty()) return -1;
     if(!d->scenes[0]) parseScenes();
 
     return d->defaultScene;
 }
 
-SceneData* ColladaImporter::ColladaImporter::scene(unsigned int id) {
+SceneData* ColladaImporter::ColladaImporter::scene(std::uint32_t id) {
     if(!d || id >= d->scenes.size()) return nullptr;
     if(!d->scenes[0]) parseScenes();
 
     return d->scenes[id];
 }
 
-int ColladaImporter::ColladaImporter::object3DForName(const string& name) {
+std::int32_t ColladaImporter::ColladaImporter::object3DForName(const string& name) {
     if(d->scenes.empty()) return -1;
     if(!d->scenes[0]) parseScenes();
 
@@ -172,19 +172,19 @@ int ColladaImporter::ColladaImporter::object3DForName(const string& name) {
     return (it == d->objectsForName.end()) ? -1 : it->second;
 }
 
-ObjectData3D* ColladaImporter::ColladaImporter::object3D(unsigned int id) {
+ObjectData3D* ColladaImporter::ColladaImporter::object3D(std::uint32_t id) {
     if(!d || id >= d->objects.size()) return nullptr;
     if(!d->scenes[0]) parseScenes();
 
     return d->objects[id];
 }
 
-int ColladaImporter::ColladaImporter::mesh3DForName(const string& name) {
+std::int32_t ColladaImporter::ColladaImporter::mesh3DForName(const string& name) {
     auto it = d->meshesForName.find(name);
     return (it == d->meshesForName.end()) ? -1 : it->second;
 }
 
-MeshData3D* ColladaImporter::mesh3D(unsigned int id) {
+MeshData3D* ColladaImporter::mesh3D(std::uint32_t id) {
     if(!d || id >= d->meshes.size()) return nullptr;
     if(d->meshes[id]) return d->meshes[id];
 
@@ -236,13 +236,13 @@ MeshData3D* ColladaImporter::mesh3D(unsigned int id) {
     /* Get unique combinations of vertices, build resulting index array. Key
        is position of unique index combination from original vertex array,
        value is resulting index. */
-    unordered_map<unsigned int, unsigned int, IndexHash, IndexEqual> indexCombinations(originalIndices.size()/stride, IndexHash(originalIndices, stride), IndexEqual(originalIndices, stride));
-    vector<unsigned int> combinedIndices;
+    unordered_map<std::uint32_t, std::uint32_t, IndexHash, IndexEqual> indexCombinations(originalIndices.size()/stride, IndexHash(originalIndices, stride), IndexEqual(originalIndices, stride));
+    vector<std::uint32_t> combinedIndices;
     for(size_t i = 0, end = originalIndices.size()/stride; i != end; ++i)
         combinedIndices.push_back(indexCombinations.insert(make_pair(i, indexCombinations.size())).first->second);
 
     /* Convert quads to triangles */
-    vector<unsigned int>* indices = new vector<unsigned int>;
+    vector<std::uint32_t>* indices = new vector<std::uint32_t>;
     size_t quadId = 0;
     for(size_t i = 0; i != vertexCountPerFace.size(); ++i) {
         if(quads.size() > quadId && quads[quadId] == i) {
@@ -301,12 +301,12 @@ MeshData3D* ColladaImporter::mesh3D(unsigned int id) {
     return d->meshes[id];
 }
 
-int ColladaImporter::ColladaImporter::materialForName(const string& name) {
+std::int32_t ColladaImporter::ColladaImporter::materialForName(const string& name) {
     auto it = d->materialsForName.find(name);
     return (it == d->materialsForName.end()) ? -1 : it->second;
 }
 
-AbstractMaterialData* ColladaImporter::material(unsigned int id) {
+AbstractMaterialData* ColladaImporter::material(std::uint32_t id) {
     if(!d || id >= d->materials.size()) return nullptr;
     if(d->materials[id]) return d->materials[id];
 
@@ -371,12 +371,12 @@ AbstractMaterialData* ColladaImporter::material(unsigned int id) {
     return d->materials[id];
 }
 
-int ColladaImporter::ColladaImporter::image2DForName(const string& name) {
+std::int32_t ColladaImporter::ColladaImporter::image2DForName(const string& name) {
     auto it = d->images2DForName.find(name);
     return (it == d->images2DForName.end()) ? -1 : it->second;
 }
 
-ImageData2D* ColladaImporter::image2D(unsigned int id) {
+ImageData2D* ColladaImporter::image2D(std::uint32_t id) {
     if(!d || id >= d->images2D.size()) return nullptr;
     if(d->images2D[id]) return d->images2D[id];
 
@@ -405,7 +405,7 @@ ImageData2D* ColladaImporter::image2D(unsigned int id) {
     return d->images2D[id];
 }
 
-GLuint ColladaImporter::attributeOffset(unsigned int meshId, const QString& attribute, unsigned int id) {
+GLuint ColladaImporter::attributeOffset(std::uint32_t meshId, const QString& attribute, std::uint32_t id) {
     QString tmp;
 
     /* Get attribute offset in indices */
@@ -426,7 +426,7 @@ void ColladaImporter::parseScenes() {
     string defaultScene = tmp.trimmed().mid(1).toStdString();
 
     /* Parse all objects in all scenes */
-    for(unsigned int sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
+    for(std::uint32_t sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
         /* Is this the default scene? */
         d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/@id/string()").arg(sceneId+1));
         d->query.evaluateTo(&tmp);
@@ -434,8 +434,8 @@ void ColladaImporter::parseScenes() {
         if(defaultScene == name)
             d->defaultScene = sceneId;
 
-        unsigned int nextObjectId = 0;
-        vector<unsigned int> children;
+        std::uint32_t nextObjectId = 0;
+        vector<std::uint32_t> children;
         d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/node/@id/string()").arg(sceneId+1));
         tmpList.clear();
         d->query.evaluateTo(&tmpList);
@@ -448,7 +448,7 @@ void ColladaImporter::parseScenes() {
     }
 }
 
-unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name) {
+std::uint32_t ColladaImporter::parseObject(std::uint32_t id, const QString& name) {
     QString tmp;
     QStringList tmpList, tmpList2;
 
@@ -549,8 +549,8 @@ unsigned int ColladaImporter::parseObject(unsigned int id, const QString& name) 
     d->objectsForName.insert({name.toStdString(), id});
 
     /* Parse child objects */
-    unsigned int nextObjectId = id+1;
-    vector<unsigned int> children;
+    std::uint32_t nextObjectId = id+1;
+    vector<std::uint32_t> children;
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/node/@id/string()").arg(name));
     tmpList.clear();
     d->query.evaluateTo(&tmpList);

@@ -41,10 +41,10 @@ class Utility {
          *
          * Returns parsed vector and moves @c from to position of next vector.
          */
-        template<class Vector> static Vector parseVector(const QString& data, int* from, size_t size = Vector::size) {
+        template<class Vector> static Vector parseVector(const QString& data, int* from, std::size_t size = Vector::Size) {
             Vector output;
             int to;
-            for(size_t j = 0; j != size; ++j) {
+            for(std::size_t j = 0; j != size; ++j) {
                 to = data.indexOf(' ', *from);
                 while(to == *from)
                     to = data.indexOf(' ', ++*from);
@@ -60,7 +60,7 @@ class Utility {
          *
          * Convenience alternative to parseVector(const QString&, int*, size_t).
          */
-        template<class Vector> inline static Vector parseVector(const QString& data, size_t size = Vector::size) {
+        template<class Vector> inline static Vector parseVector(const QString& data, std::size_t size = Vector::Size) {
             int from = 0;
             return parseVector<Vector>(data, &from, size);
         }
@@ -71,13 +71,13 @@ class Utility {
          * @param data      Data array
          * @param count     Count of numbers
          */
-        template<class Single> static std::vector<Single> parseArray(const QString& data, size_t count) {
+        template<class Single> static std::vector<Single> parseArray(const QString& data, std::size_t count) {
             std::vector<Single> output;
             output.reserve(count);
 
             int from = 0;
             int to;
-            for(size_t i = 0; i != count; ++i) {
+            for(std::size_t i = 0; i != count; ++i) {
                 to = data.indexOf(' ', from);
                 while(to == from)
                     to = data.indexOf(' ', ++from);

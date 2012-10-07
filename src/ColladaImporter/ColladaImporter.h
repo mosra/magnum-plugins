@@ -47,25 +47,25 @@ class ColladaImporter: public AbstractImporter {
         bool open(const std::string& filename);
         void close();
 
-        int defaultScene();
-        inline unsigned int sceneCount() const { return d ? d->scenes.size() : 0; }
-        SceneData* scene(unsigned int id);
+        std::int32_t defaultScene();
+        inline std::uint32_t sceneCount() const { return d ? d->scenes.size() : 0; }
+        SceneData* scene(std::uint32_t id);
 
-        inline unsigned int object3DCount() const { return d ? d->objects.size() : 0; }
-        int object3DForName(const std::string& name);
-        ObjectData3D* object3D(unsigned int id);
+        inline std::uint32_t object3DCount() const { return d ? d->objects.size() : 0; }
+        std::int32_t object3DForName(const std::string& name);
+        ObjectData3D* object3D(std::uint32_t id);
 
-        inline unsigned int mesh3DCount() const { return d ? d->meshes.size() : 0; }
-        int mesh3DForName(const std::string& name);
-        MeshData3D* mesh3D(unsigned int id);
+        inline std::uint32_t mesh3DCount() const { return d ? d->meshes.size() : 0; }
+        std::int32_t mesh3DForName(const std::string& name);
+        MeshData3D* mesh3D(std::uint32_t id);
 
-        inline unsigned int materialCount() const { return d ? d->materials.size() : 0; }
-        int materialForName(const std::string& name);
-        AbstractMaterialData* material(unsigned int id);
+        inline std::uint32_t materialCount() const { return d ? d->materials.size() : 0; }
+        std::int32_t materialForName(const std::string& name);
+        AbstractMaterialData* material(std::uint32_t id);
 
-        inline unsigned int image2DCount() const { return d ? d->images2D.size() : 0; }
-        int image2DForName(const std::string& name);
-        ImageData2D* image2D(unsigned int id);
+        inline std::uint32_t image2DCount() const { return d ? d->images2D.size() : 0; }
+        std::int32_t image2DForName(const std::string& name);
+        ImageData2D* image2D(std::uint32_t id);
 
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id) {
@@ -102,8 +102,8 @@ class ColladaImporter: public AbstractImporter {
             d->query.evaluateTo(&tmp);
 
             output.reserve(count);
-            int from = 0;
-            for(size_t i = 0; i != count; ++i)
+            std::int32_t from = 0;
+            for(std::size_t i = 0; i != count; ++i)
                 output.push_back(Utility::parseVector<T>(tmp, &from, size));
 
             return output;
@@ -112,14 +112,14 @@ class ColladaImporter: public AbstractImporter {
     private:
         /** @brief Contents of opened Collada document */
         struct Document {
-            inline Document(unsigned int sceneCount, unsigned int objectCount, std::unordered_map<std::string, unsigned int>&& camerasForName, std::unordered_map<std::string, unsigned int>&& lightsForName, std::unordered_map<std::string, unsigned int>&& meshesForName, std::unordered_map<std::string, unsigned int>&& materialsForName, std::unordered_map<std::string, unsigned int>&& images2DForName): defaultScene(0), scenes(sceneCount), objects(objectCount), meshes(meshesForName.size()), materials(materialsForName.size()), images2D(images2DForName.size()), camerasForName(camerasForName), lightsForName(lightsForName), meshesForName(meshesForName), materialsForName(materialsForName), images2DForName(images2DForName) {}
+            inline Document(std::uint32_t sceneCount, std::uint32_t objectCount, std::unordered_map<std::string, std::uint32_t>&& camerasForName, std::unordered_map<std::string, std::uint32_t>&& lightsForName, std::unordered_map<std::string, std::uint32_t>&& meshesForName, std::unordered_map<std::string, std::uint32_t>&& materialsForName, std::unordered_map<std::string, std::uint32_t>&& images2DForName): defaultScene(0), scenes(sceneCount), objects(objectCount), meshes(meshesForName.size()), materials(materialsForName.size()), images2D(images2DForName.size()), camerasForName(camerasForName), lightsForName(lightsForName), meshesForName(meshesForName), materialsForName(materialsForName), images2DForName(images2DForName) {}
 
             ~Document();
 
             std::string filename;
 
             /* Data */
-            unsigned int defaultScene;
+            std::uint32_t defaultScene;
             std::vector<SceneData*> scenes;
             std::vector<ObjectData3D*> objects;
             std::vector<MeshData3D*> meshes;
@@ -127,7 +127,7 @@ class ColladaImporter: public AbstractImporter {
             std::vector<ImageData2D*> images2D;
 
             /** @todo Make public use for camerasForName, lightsForName */
-            std::unordered_map<std::string, unsigned int> camerasForName,
+            std::unordered_map<std::string, std::uint32_t> camerasForName,
                 lightsForName,
                 objectsForName,
                 meshesForName,
@@ -141,7 +141,7 @@ class ColladaImporter: public AbstractImporter {
         class IndexHash {
             public:
                 /** @brief Constructor */
-                inline IndexHash(const std::vector<unsigned int>& indices, unsigned int stride): indices(indices), stride(stride) {}
+                inline IndexHash(const std::vector<std::uint32_t>& indices, std::uint32_t stride): indices(indices), stride(stride) {}
 
                 /**
                  * @brief Functor
@@ -150,20 +150,20 @@ class ColladaImporter: public AbstractImporter {
                  * specified as position in index array passed in
                  * constructor.
                  */
-                inline size_t operator()(unsigned int key) const {
-                    return *reinterpret_cast<const size_t*>(Corrade::Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(unsigned int)*stride).byteArray());
+                inline size_t operator()(std::uint32_t key) const {
+                    return *reinterpret_cast<const size_t*>(Corrade::Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(std::uint32_t)*stride).byteArray());
                 }
 
             private:
-                const std::vector<unsigned int>& indices;
-                unsigned int stride;
+                const std::vector<std::uint32_t>& indices;
+                std::uint32_t stride;
         };
 
         /** @brief %Mesh index comparator */
         class IndexEqual {
             public:
                 /** @brief Constructor */
-                inline IndexEqual(const std::vector<unsigned int>& indices, unsigned int stride): indices(indices), stride(stride) {}
+                inline IndexEqual(const std::vector<std::uint32_t>& indices, std::uint32_t stride): indices(indices), stride(stride) {}
 
                 /**
                  * @brief Functor
@@ -172,13 +172,13 @@ class ColladaImporter: public AbstractImporter {
                  * specified as position in index array, passed in
                  * constructor.
                  */
-                inline bool operator()(unsigned int a, unsigned int b) const {
-                    return memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(unsigned int)*stride) == 0;
+                inline bool operator()(std::uint32_t a, std::uint32_t b) const {
+                    return memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(std::uint32_t)*stride) == 0;
                 }
 
             private:
-                const std::vector<unsigned int>& indices;
-                unsigned int stride;
+                const std::vector<std::uint32_t>& indices;
+                std::uint32_t stride;
         };
 
         /**
@@ -188,7 +188,7 @@ class ColladaImporter: public AbstractImporter {
          * @param id                Attribute ID, if there are more than one
          *      attribute with the same name
          */
-        GLuint attributeOffset(unsigned int meshId, const QString& attribute, unsigned int id = 0);
+        GLuint attributeOffset(std::uint32_t meshId, const QString& attribute, std::uint32_t id = 0);
 
         /**
          * @brief Build attribute array
@@ -202,7 +202,7 @@ class ColladaImporter: public AbstractImporter {
          * @param indexCombinations Index combinations for building the array
          * @return Resulting array
          */
-        template<class T> std::vector<T>* buildAttributeArray(unsigned int meshId, const QString& attribute, unsigned int id, const std::vector<GLuint>& originalIndices, GLuint stride, const std::unordered_map<unsigned int, unsigned int, IndexHash, IndexEqual>& indexCombinations) {
+        template<class T> std::vector<T>* buildAttributeArray(std::uint32_t meshId, const QString& attribute, std::uint32_t id, const std::vector<GLuint>& originalIndices, GLuint stride, const std::unordered_map<std::uint32_t, std::uint32_t, IndexHash, IndexEqual>& indexCombinations) {
             QString tmp;
 
             /* Original attribute array */
@@ -231,7 +231,7 @@ class ColladaImporter: public AbstractImporter {
          * @param name      Object name
          * @return Next free ID
          */
-        unsigned int parseObject(unsigned int id, const QString& name);
+        std::uint32_t parseObject(std::uint32_t id, const QString& name);
 
         /**
          * @brief Instance name
@@ -248,7 +248,7 @@ class ColladaImporter: public AbstractImporter {
         Document* d;
 
         /** @brief QCoreApplication needs pointer to 'argc', faking it by pointing here */
-        int zero;
+        std::int32_t zero;
 
         /** @brief QCoreApplication, which must be started in order to use QXmlQuery */
         QCoreApplication* app;
