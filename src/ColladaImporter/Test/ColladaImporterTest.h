@@ -19,7 +19,7 @@
 
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
-class ColladaImporterTest: public Corrade::TestSuite::Tester<ColladaImporterTest> {
+class ColladaImporterTest: public Corrade::TestSuite::Tester {
     public:
         ColladaImporterTest();
 
