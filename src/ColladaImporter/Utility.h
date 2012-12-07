@@ -58,7 +58,7 @@ class Utility {
         /**
          * @brief Parse vector of numbers
          *
-         * Convenience alternative to parseVector(const QString&, int*, size_t).
+         * Convenience alternative to parseVector(const QString&, int*, std::size_t).
          */
         template<class Vector> inline static Vector parseVector(const QString& data, std::size_t size = Vector::Size) {
             int from = 0;

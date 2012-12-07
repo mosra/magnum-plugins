@@ -26,7 +26,6 @@
 
 #include "ColladaImporterTestConfigure.h"
 
-using namespace std;
 using namespace Corrade::Utility;
 
 CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaImporterTest)
@@ -45,7 +44,7 @@ ColladaImporterTest::ColladaImporterTest() {
 
 void ColladaImporterTest::openWrongNamespace() {
     ColladaImporter importer;
-    stringstream debug;
+    std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongNamespace.dae")));
     CORRADE_COMPARE(debug.str(), "ColladaImporter: unsupported namespace \"http://www.collada.org/2006/11/COLLADASchema\"\n");
@@ -53,7 +52,7 @@ void ColladaImporterTest::openWrongNamespace() {
 
 void ColladaImporterTest::openWrongVersion() {
     ColladaImporter importer;
-    stringstream debug;
+    std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongVersion.dae")));
     CORRADE_COMPARE(debug.str(), "ColladaImporter: unsupported version \"1.4.0\"\n");
@@ -63,24 +62,24 @@ void ColladaImporterTest::parseSource() {
     ColladaImporter importer;
     CORRADE_VERIFY(importer.open(Directory::join(COLLADAIMPORTER_TEST_DIR, "parseSource.dae")));
 
-    stringstream debug;
+    std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(importer.parseSource<Vector3>("WrongTotalCount").empty());
     CORRADE_COMPARE(debug.str(), "ColladaImporter: wrong total count in source \"WrongTotalCount\"\n");
 
     {
         CORRADE_EXPECT_FAIL("Swapped coordinates in source are not implemented.");
-        CORRADE_COMPARE(importer.parseSource<Vector3>("SwappedCoords"), (vector<Vector3>{Vector3(0, 1, 2)}));
+        CORRADE_COMPARE(importer.parseSource<Vector3>("SwappedCoords"), (std::vector<Vector3>{Vector3(0, 1, 2)}));
     }
 
-    CORRADE_COMPARE(importer.parseSource<Point3D>("MoreElements"), (vector<Point3D>{
+    CORRADE_COMPARE(importer.parseSource<Point3D>("MoreElements"), (std::vector<Point3D>{
         {0, 1, 2},
         {3, 4, 5}
     }));
 }
 
 void ColladaImporterTest::scene() {
-    ostringstream debug;
+    std::ostringstream debug;
     Error::setOutput(&debug);
 
     ColladaImporter importer;
@@ -93,7 +92,7 @@ void ColladaImporterTest::scene() {
     SceneData* scene = importer.scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->name(), "Scene");
-    CORRADE_COMPARE(scene->children3D(), (vector<unsigned int>{0, 2}));
+    CORRADE_COMPARE(scene->children3D(), (std::vector<unsigned int>{0, 2}));
 
     ObjectData3D* object = importer.object3D(0);
     CORRADE_VERIFY(object);
@@ -101,7 +100,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
     CORRADE_VERIFY(object->instanceType() == ObjectData3D::InstanceType::Camera);
     CORRADE_COMPARE(object->instanceId(), 2);
-    CORRADE_COMPARE(object->children(), vector<unsigned int>{1});
+    CORRADE_COMPARE(object->children(), std::vector<unsigned int>{1});
 
     object = importer.object3D(1);
     CORRADE_VERIFY(object);
@@ -140,7 +139,7 @@ void ColladaImporterTest::mesh() {
 
     CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
-    stringstream debug;
+    std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(importer.mesh3DForName("WrongPrimitives"), 0);
@@ -152,11 +151,11 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(mesh->name(), "MeshVertexOnly");
     CORRADE_COMPARE(importer.mesh3DForName("MeshVertexOnly"), 1);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (vector<unsigned int>{
+    CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (vector<Point3D>{
+    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Point3D>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -172,7 +171,7 @@ void ColladaImporterTest::mesh() {
     mesh = importer.mesh3D(2);
     CORRADE_COMPARE(mesh->name(), "MeshQuads");
     CORRADE_COMPARE(importer.mesh3DForName("MeshQuads"), 2);
-    CORRADE_COMPARE(*mesh->indices(), (vector<unsigned int>{
+    CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
     }));
 
@@ -182,11 +181,11 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(mesh->name(), "MeshVertexNormals");
     CORRADE_COMPARE(importer.mesh3DForName("MeshVertexNormals"), 3);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (vector<unsigned int>{
+    CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (vector<Point3D>{
+    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Point3D>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -197,7 +196,7 @@ void ColladaImporterTest::mesh() {
         {-1, 1, 1}
     }));
     CORRADE_COMPARE(mesh->normalArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->normals(0), (vector<Vector3>{
+    CORRADE_COMPARE(*mesh->normals(0), (std::vector<Vector3>{
         {1, 0, 0},
         {1, 0, 0},
         {1, 0, 0},
@@ -215,11 +214,11 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(mesh->name(), "Mesh");
     CORRADE_COMPARE(importer.mesh3DForName("Mesh"), 4);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (vector<unsigned int>{
+    CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (vector<Point3D>{
+    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Point3D>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -230,7 +229,7 @@ void ColladaImporterTest::mesh() {
         {-1, 1, 1}
     }));
     CORRADE_COMPARE(mesh->normalArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->normals(0), (vector<Vector3>{
+    CORRADE_COMPARE(*mesh->normals(0), (std::vector<Vector3>{
         {1, 0, 0},
         {1, 0, 0},
         {1, 0, 0},
@@ -241,7 +240,7 @@ void ColladaImporterTest::mesh() {
         {0, 0, 1}
     }));
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 2);
-    CORRADE_COMPARE(*mesh->textureCoords2D(0), (vector<Vector2>{
+    CORRADE_COMPARE(*mesh->textureCoords2D(0), (std::vector<Vector2>{
         {0.5, 1},
         {1, 1},
         {1, 0},
@@ -251,7 +250,7 @@ void ColladaImporterTest::mesh() {
         {0.5, 0},
         {0, 0}
     }));
-    CORRADE_COMPARE(*mesh->textureCoords2D(1), vector<Vector2>(8));
+    CORRADE_COMPARE(*mesh->textureCoords2D(1), std::vector<Vector2>(8));
 }
 
 void ColladaImporterTest::material() {
@@ -260,7 +259,7 @@ void ColladaImporterTest::material() {
 
     CORRADE_COMPARE(importer.materialCount(), 3);
 
-    stringstream debug;
+    std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.material(0));
     CORRADE_COMPARE(importer.materialForName("MaterialWrongProfile"), 0);
@@ -287,7 +286,7 @@ void ColladaImporterTest::image() {
 
     CORRADE_COMPARE(importer.image2DCount(), 2);
 
-    stringstream debug;
+    std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.image2D(0));
     CORRADE_COMPARE(importer.image2DForName("UnsupportedImage"), 0);

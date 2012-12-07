@@ -150,8 +150,8 @@ class ColladaImporter: public AbstractImporter {
                  * specified as position in index array passed in
                  * constructor.
                  */
-                inline size_t operator()(std::uint32_t key) const {
-                    return *reinterpret_cast<const size_t*>(Corrade::Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(std::uint32_t)*stride).byteArray());
+                inline std::size_t operator()(std::uint32_t key) const {
+                    return *reinterpret_cast<const std::size_t*>(Corrade::Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(std::uint32_t)*stride).byteArray());
                 }
 
             private:

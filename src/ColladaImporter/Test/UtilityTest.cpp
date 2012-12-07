@@ -20,8 +20,6 @@
 
 CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::UtilityTest)
 
-using namespace std;
-
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
 UtilityTest::UtilityTest() {
@@ -56,14 +54,14 @@ void UtilityTest::parseVector() {
 
 void UtilityTest::parseArray() {
     /* Extremely spaceless */
-    CORRADE_COMPARE(Utility::parseArray<float>("3.14", 1), (vector<float>{3.14f}));
+    CORRADE_COMPARE(Utility::parseArray<float>("3.14", 1), (std::vector<float>{3.14f}));
 
     /* Spaces */
-    CORRADE_COMPARE(Utility::parseArray<float>("     2.17  3.28  ", 2), (vector<float>{2.17f, 3.28f}));
+    CORRADE_COMPARE(Utility::parseArray<float>("     2.17  3.28  ", 2), (std::vector<float>{2.17f, 3.28f}));
 
     /* Different size */
-    CORRADE_COMPARE(Utility::parseArray<float>("2.17 3.28", 3), (vector<float>{2.17f, 3.28f, 0.0f}));
-    CORRADE_COMPARE(Utility::parseArray<float>("2.17 3.28 5.15", 2), (vector<float>{2.17f, 3.28f}));
+    CORRADE_COMPARE(Utility::parseArray<float>("2.17 3.28", 3), (std::vector<float>{2.17f, 3.28f, 0.0f}));
+    CORRADE_COMPARE(Utility::parseArray<float>("2.17 3.28 5.15", 2), (std::vector<float>{2.17f, 3.28f}));
 }
 
 }}}}
