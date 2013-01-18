@@ -15,6 +15,7 @@
 
 #include "ColladaImporterTest.h"
 
+#include <sstream>
 #include "Utility/Directory.h"
 #include <Math/Constants.h>
 #include "Trade/PhongMaterialData.h"

@@ -20,7 +20,6 @@
 
 #include "Utility/Directory.h"
 #include <Math/Constants.h>
-#include "SizeTraits.h"
 #include "Trade/PhongMaterialData.h"
 #include <Trade/MeshData3D.h>
 #include <Trade/MeshObjectData3D.h>
