@@ -13,9 +13,9 @@
     GNU Lesser General Public License version 3 for more details.
 */
 
-#include "ColladaImporterTest.h"
 
 #include <sstream>
+#include <TestSuite/Tester.h>
 #include "Utility/Directory.h"
 #include <Math/Constants.h>
 #include "Trade/PhongMaterialData.h"
@@ -29,9 +29,21 @@
 
 using namespace Corrade::Utility;
 
-CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaImporterTest)
-
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
+
+class ColladaImporterTest: public Corrade::TestSuite::Tester {
+    public:
+        ColladaImporterTest();
+
+        void openWrongNamespace();
+        void openWrongVersion();
+        void parseSource();
+
+        void scene();
+        void mesh();
+        void material();
+        void image();
+};
 
 ColladaImporterTest::ColladaImporterTest() {
     addTests(&ColladaImporterTest::openWrongNamespace,
@@ -303,3 +315,5 @@ void ColladaImporterTest::image() {
 }
 
 }}}}
+
+CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaImporterTest)

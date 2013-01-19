@@ -13,14 +13,19 @@
     GNU Lesser General Public License version 3 for more details.
 */
 
-#include "UtilityTest.h"
-
+#include <TestSuite/Tester.h>
 #include <Math/Vector3.h>
 #include "../Utility.h"
 
-CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::UtilityTest)
-
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
+
+class UtilityTest: public Corrade::TestSuite::Tester {
+    public:
+        UtilityTest();
+
+        void parseVector();
+        void parseArray();
+};
 
 UtilityTest::UtilityTest() {
     addTests(&UtilityTest::parseVector,
@@ -65,3 +70,5 @@ void UtilityTest::parseArray() {
 }
 
 }}}}
+
+CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::UtilityTest)

@@ -13,13 +13,19 @@
     GNU Lesser General Public License version 3 for more details.
 */
 
-#include "ColladaTypeTest.h"
+#include <TestSuite/Tester.h>
 
 #include "../ColladaType.h"
 
-CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaTypeTest)
-
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
+
+class ColladaTypeTest: public Corrade::TestSuite::Tester {
+    public:
+        ColladaTypeTest();
+
+        void gluint();
+        void glfloat();
+};
 
 ColladaTypeTest::ColladaTypeTest() {
     addTests(&ColladaTypeTest::gluint,
@@ -35,3 +41,5 @@ void ColladaTypeTest::glfloat() {
 }
 
 }}}}
+
+CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaTypeTest)
