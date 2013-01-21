@@ -21,6 +21,7 @@
 #include "Utility/Directory.h"
 #include <Math/Constants.h>
 #include "Trade/PhongMaterialData.h"
+#include <Trade/ImageData.h>
 #include <Trade/MeshData3D.h>
 #include <Trade/MeshObjectData3D.h>
 #include "Trade/SceneData.h"
@@ -42,8 +43,11 @@ ColladaImporter::~ColladaImporter() {
 }
 
 ColladaImporter::Document::~Document() {
+    for(auto i: scenes) delete i.second;
+    for(auto i: objects) delete i.second;
     for(auto i: meshes) delete i.second;
     for(auto i: materials) delete i.second;
+    for(auto i: images2D) delete i.second;
 }
 
 bool ColladaImporter::open(const std::string& filename) {
