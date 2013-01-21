@@ -102,31 +102,31 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(importer.sceneCount(), 2);
     CORRADE_COMPARE(importer.object3DCount(), 6);
 
+    CORRADE_COMPARE(importer.sceneName(0), "Scene");
     SceneData* scene = importer.scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->name(), "Scene");
     CORRADE_COMPARE(scene->children3D(), (std::vector<unsigned int>{0, 2}));
 
+    CORRADE_COMPARE(importer.object3DName(0), "Camera");
+    CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
     ObjectData3D* object = importer.object3D(0);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->name(), "Camera");
-    CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
     CORRADE_VERIFY(object->instanceType() == ObjectData3D::InstanceType::Camera);
     CORRADE_COMPARE(object->instanceId(), 2);
     CORRADE_COMPARE(object->children(), std::vector<unsigned int>{1});
 
+    CORRADE_COMPARE(importer.object3DName(1), "Light");
+    CORRADE_COMPARE(importer.object3DForName("Light"), 1);
     object = importer.object3D(1);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->name(), "Light");
-    CORRADE_COMPARE(importer.object3DForName("Light"), 1);
     CORRADE_VERIFY(object->instanceType() == ObjectData3D::InstanceType::Light);
     CORRADE_COMPARE(object->instanceId(), 1);
     CORRADE_VERIFY(object->children().empty());
 
+    CORRADE_COMPARE(importer.object3DName(2), "Mesh");
+    CORRADE_COMPARE(importer.object3DForName("Mesh"), 2);
     object = importer.object3D(2);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->name(), "Mesh");
-    CORRADE_COMPARE(importer.object3DForName("Mesh"), 2);
     CORRADE_VERIFY(object->instanceType() == ObjectData3D::InstanceType::Mesh);
     CORRADE_COMPARE(object->instanceId(), 2);
     Matrix4 transformation =
@@ -154,15 +154,15 @@ void ColladaImporterTest::mesh() {
 
     std::stringstream debug;
     Error::setOutput(&debug);
-    CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(importer.mesh3DForName("WrongPrimitives"), 0);
+    CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(debug.str(), "ColladaImporter: 5 vertices per face not supported\n");
 
     /* Vertex only mesh */
-    CORRADE_VERIFY(importer.mesh3D(1));
-    MeshData3D* mesh = importer.mesh3D(1);
-    CORRADE_COMPARE(mesh->name(), "MeshVertexOnly");
+    CORRADE_COMPARE(importer.mesh3DName(1), "MeshVertexOnly");
     CORRADE_COMPARE(importer.mesh3DForName("MeshVertexOnly"), 1);
+    MeshData3D* mesh = importer.mesh3D(1);
+    CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
@@ -180,19 +180,19 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
 
     /* Mesh with quads */
-    CORRADE_VERIFY(importer.mesh3D(2));
-    mesh = importer.mesh3D(2);
-    CORRADE_COMPARE(mesh->name(), "MeshQuads");
+    CORRADE_COMPARE(importer.mesh3DName(2), "MeshQuads");
     CORRADE_COMPARE(importer.mesh3DForName("MeshQuads"), 2);
+    mesh = importer.mesh3D(2);
+    CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
     }));
 
     /* Vertex and normal mesh */
-    CORRADE_VERIFY(importer.mesh3D(3));
-    mesh = importer.mesh3D(3);
-    CORRADE_COMPARE(mesh->name(), "MeshVertexNormals");
+    CORRADE_COMPARE(importer.mesh3DName(3), "MeshVertexNormals");
     CORRADE_COMPARE(importer.mesh3DForName("MeshVertexNormals"), 3);
+    mesh = importer.mesh3D(3);
+    CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
@@ -222,10 +222,10 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
 
     /* Vertex, normal and texture mesh */
-    CORRADE_VERIFY(importer.mesh3D(4));
-    mesh = importer.mesh3D(4);
-    CORRADE_COMPARE(mesh->name(), "Mesh");
+    CORRADE_COMPARE(importer.mesh3DName(4), "Mesh");
     CORRADE_COMPARE(importer.mesh3DForName("Mesh"), 4);
+    mesh = importer.mesh3D(4);
+    CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->primitive() == Mesh::Primitive::Triangles);
     CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
@@ -274,19 +274,19 @@ void ColladaImporterTest::material() {
 
     std::stringstream debug;
     Error::setOutput(&debug);
-    CORRADE_VERIFY(!importer.material(0));
     CORRADE_COMPARE(importer.materialForName("MaterialWrongProfile"), 0);
+    CORRADE_VERIFY(!importer.material(0));
     CORRADE_COMPARE(debug.str(), "ColladaImporter: \"profile_GLSL\" effect profile not supported\n");
 
     debug.str("");
-    CORRADE_VERIFY(!importer.material(1));
     CORRADE_COMPARE(importer.materialForName("MaterialWrongShader"), 1);
+    CORRADE_VERIFY(!importer.material(1));
     CORRADE_COMPARE(debug.str(), "ColladaImporter: \"lambert\" shader not supported\n");
 
-    CORRADE_VERIFY(importer.material(2));
-    PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(2));
-    CORRADE_COMPARE(material->name(), "MaterialPhong");
+    CORRADE_COMPARE(importer.materialName(2), "MaterialPhong");
     CORRADE_COMPARE(importer.materialForName("MaterialPhong"), 2);
+    PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(2));
+    CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->ambientColor(), Vector3(1, 0, 0));
     CORRADE_COMPARE(material->diffuseColor(), Vector3(0, 1, 0));
     CORRADE_COMPARE(material->specularColor(), Vector3(0, 0, 1));
@@ -305,10 +305,10 @@ void ColladaImporterTest::image() {
     CORRADE_COMPARE(importer.image2DForName("UnsupportedImage"), 0);
     CORRADE_COMPARE(debug.str(), "ColladaImporter: \"image.jpg\" has unsupported format\n");
 
-    CORRADE_VERIFY(importer.image2D(1));
-    ImageData2D* image = importer.image2D(1);
-    CORRADE_COMPARE(image->name(), "Image");
+    CORRADE_COMPARE(importer.image2DName(1), "Image");
     CORRADE_COMPARE(importer.image2DForName("Image"), 1);
+    ImageData2D* image = importer.image2D(1);
+    CORRADE_VERIFY(image);
 
     /* Check only size, as it is good enough proof that it is working */
     CORRADE_COMPARE(image->size(), Math::Vector2<GLsizei>(2, 3));

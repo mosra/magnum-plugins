@@ -42,30 +42,35 @@ class ColladaImporter: public AbstractImporter {
         ColladaImporter(Corrade::PluginManager::AbstractPluginManager* manager = nullptr, const std::string& plugin = "");
         virtual ~ColladaImporter();
 
-        inline Features features() const { return Feature::OpenFile; }
+        inline Features features() const override { return Feature::OpenFile; }
 
-        bool open(const std::string& filename);
-        void close();
+        bool open(const std::string& filename) override;
+        void close() override;
 
-        std::int32_t defaultScene();
-        inline std::uint32_t sceneCount() const { return d ? d->scenes.size() : 0; }
-        SceneData* scene(std::uint32_t id);
+        std::int32_t defaultScene() override;
+        inline std::uint32_t sceneCount() const override { return d ? d->scenes.size() : 0; }
+        std::string sceneName(std::uint32_t id) override;
+        SceneData* scene(std::uint32_t id) override;
 
         inline std::uint32_t object3DCount() const { return d ? d->objects.size() : 0; }
-        std::int32_t object3DForName(const std::string& name);
-        ObjectData3D* object3D(std::uint32_t id);
+        std::int32_t object3DForName(const std::string& name) override;
+        std::string object3DName(std::uint32_t id) override;
+        ObjectData3D* object3D(std::uint32_t id) override;
 
         inline std::uint32_t mesh3DCount() const { return d ? d->meshes.size() : 0; }
-        std::int32_t mesh3DForName(const std::string& name);
-        MeshData3D* mesh3D(std::uint32_t id);
+        std::int32_t mesh3DForName(const std::string& name) override;
+        std::string mesh3DName(std::uint32_t id) override;
+        MeshData3D* mesh3D(std::uint32_t id) override;
 
-        inline std::uint32_t materialCount() const { return d ? d->materials.size() : 0; }
-        std::int32_t materialForName(const std::string& name);
-        AbstractMaterialData* material(std::uint32_t id);
+        inline std::uint32_t materialCount() const override { return d ? d->materials.size() : 0; }
+        std::int32_t materialForName(const std::string& name) override;
+        std::string materialName(std::uint32_t id) override;
+        AbstractMaterialData* material(std::uint32_t id) override;
 
-        inline std::uint32_t image2DCount() const { return d ? d->images2D.size() : 0; }
-        std::int32_t image2DForName(const std::string& name);
-        ImageData2D* image2D(std::uint32_t id);
+        inline std::uint32_t image2DCount() const override { return d ? d->images2D.size() : 0; }
+        std::int32_t image2DForName(const std::string& name) override;
+        std::string image2DName(std::uint32_t id) override;
+        ImageData2D* image2D(std::uint32_t id) override;
 
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id) {
@@ -112,19 +117,18 @@ class ColladaImporter: public AbstractImporter {
     private:
         /** @brief Contents of opened Collada document */
         struct Document {
-            inline Document(std::uint32_t sceneCount, std::uint32_t objectCount, std::unordered_map<std::string, std::uint32_t>&& camerasForName, std::unordered_map<std::string, std::uint32_t>&& lightsForName, std::unordered_map<std::string, std::uint32_t>&& meshesForName, std::unordered_map<std::string, std::uint32_t>&& materialsForName, std::unordered_map<std::string, std::uint32_t>&& images2DForName): defaultScene(0), scenes(sceneCount), objects(objectCount), meshes(meshesForName.size()), materials(materialsForName.size()), images2D(images2DForName.size()), camerasForName(camerasForName), lightsForName(lightsForName), meshesForName(meshesForName), materialsForName(materialsForName), images2DForName(images2DForName) {}
-
+            inline Document(): defaultScene(0) {}
             ~Document();
 
             std::string filename;
 
             /* Data */
             std::uint32_t defaultScene;
-            std::vector<SceneData*> scenes;
-            std::vector<ObjectData3D*> objects;
-            std::vector<MeshData3D*> meshes;
-            std::vector<AbstractMaterialData*> materials;
-            std::vector<ImageData2D*> images2D;
+            std::vector<std::pair<std::string, SceneData*>> scenes;
+            std::vector<std::pair<std::string, ObjectData3D*>> objects;
+            std::vector<std::pair<std::string, MeshData3D*>> meshes;
+            std::vector<std::pair<std::string, AbstractMaterialData*>> materials;
+            std::vector<std::pair<std::string, ImageData2D*>> images2D;
 
             /** @todo Make public use for camerasForName, lightsForName */
             std::unordered_map<std::string, std::uint32_t> camerasForName,
