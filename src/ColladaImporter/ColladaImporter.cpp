@@ -15,16 +15,16 @@
 
 #include "ColladaImporter.h"
 
-#include <QtCore/QFile>
-#include <QtCore/QStringList>
-
-#include "Utility/Directory.h"
+#include <Utility/Directory.h>
 #include <Math/Constants.h>
-#include "Trade/PhongMaterialData.h"
 #include <Trade/ImageData.h>
 #include <Trade/MeshData3D.h>
 #include <Trade/MeshObjectData3D.h>
-#include "Trade/SceneData.h"
+#include <Trade/PhongMaterialData.h>
+#include <Trade/SceneData.h>
+#include <QtCore/QFile>
+#include <QtCore/QStringList>
+
 #include "TgaImporter/TgaImporter.h"
 
 using namespace Corrade::Utility;
