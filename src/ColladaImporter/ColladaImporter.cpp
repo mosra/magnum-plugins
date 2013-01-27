@@ -487,18 +487,18 @@ std::uint32_t ColladaImporter::parseObject(std::uint32_t id, const QString& name
         QString type = tmpList[i].trimmed();
         /* Translation */
         if(type == "translate")
-            transformation *= Matrix4::translation(Utility::parseVector<Vector3>(tmpList2[i]));
+            transformation = transformation*Matrix4::translation(Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* Rotation */
         else if(type == "rotate") {
             int pos = 0;
             Vector3 axis = Utility::parseVector<Vector3>(tmpList2[i], &pos);
             GLfloat angle = ColladaType<GLfloat>::fromString(tmpList2[i].mid(pos));
-            transformation *= Matrix4::rotation(deg(angle), axis);
+            transformation = transformation*Matrix4::rotation(deg(angle), axis);
 
         /* Scaling */
         } else if(type == "scale")
-            transformation *= Matrix4::scaling(Utility::parseVector<Vector3>(tmpList2[i]));
+            transformation = transformation*Matrix4::scaling(Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* It shouldn't get here */
         else CORRADE_ASSERT(0, ("ColladaImporter: unknown translation " + type).toStdString(), id);
