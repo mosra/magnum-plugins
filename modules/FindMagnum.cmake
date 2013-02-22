@@ -15,22 +15,39 @@
 # components. The base library depends on Corrade, OpenGL and GLEW
 # libraries. Additional dependencies are specified by the components. The
 # optional components are:
+#  DebugTools    - DebugTools library (depends on MeshTools, Physics,
+#                  Primitives, SceneGraph and Shaders components)
 #  MeshTools     - MeshTools library
 #  Physics       - Physics library
 #  Primitives    - Library with stock geometric primitives (static)
 #  SceneGraph    - Scene graph library
 #  Shaders       - Library with stock shaders
-#  GlxContext    - GLX context (depends on X11 libraries)
-#  XEglContext   - X/EGL context (depends on EGL and X11 libraries)
-#  GlutContext   - GLUT context (depends on GLUT library)
-#  Sdl2Context   - SDL2 context (depends on SDL2 library)
+#  Text          - Text rendering library (depends on TextureTools component,
+#                  FreeType library and possibly HarfBuzz library, see below)
+#  TextureTools  - TextureTools library
+#  GlxApplication - GLX application (depends on X11 libraries)
+#  XEglApplication - X/EGL application (depends on EGL and X11 libraries)
+#  WindowlessGlxApplication - Windowless GLX application (depends on X11
+#   libraries)
+#  GlutApplication - GLUT application (depends on GLUT library)
+#  Sdl2Application - SDL2 application (depends on SDL2 library)
+#  NaClApplication - NaCl application (only if targetting Google Chrome
+#   Native Client)
 # Example usage with specifying additional components is:
 #  find_package(Magnum [REQUIRED|COMPONENTS]
-#               MeshTools Primitives GlutContext)
+#               MeshTools Primitives GlutApplication)
 # For each component is then defined:
 #  MAGNUM_*_FOUND   - Whether the component was found
 #  MAGNUM_*_LIBRARIES - Component library and dependent libraries
 #  MAGNUM_*_INCLUDE_DIRS - Include dirs of module dependencies
+#
+# Features of found Magnum library are exposed in these variables:
+#  MAGNUM_TARGET_GLES   - Defined if compiled for OpenGL ES
+#  MAGNUM_TARGET_GLES2  - Defined if compiled for OpenGL ES 2.0
+#  MAGNUM_TARGET_DESKTOP_GLES - Defined if compiled with OpenGL ES emulation
+#                         on desktop OpenGL
+#  MAGNUM_TARGET_NACL   - Defined if compiled for Google Chrome Native Client
+#  MAGNUM_USE_HARFBUZZ  - Defined if HarfBuzz library is used for text rendering
 #
 # Additionally these variables are defined for internal usage:
 #  MAGNUM_INCLUDE_DIR                   - Root include dir (w/o
@@ -64,17 +81,42 @@ find_path(MAGNUM_INCLUDE_DIR
 # Configuration
 file(READ ${MAGNUM_INCLUDE_DIR}/magnumConfigure.h _magnumConfigure)
 
-# Built for OpenGL ES?
+# Built for specific target?
 string(FIND "${_magnumConfigure}" "#define MAGNUM_TARGET_GLES" _TARGET_GLES)
 if(NOT _TARGET_GLES EQUAL -1)
     set(MAGNUM_TARGET_GLES 1)
 endif()
+string(FIND "${_magnumConfigure}" "#define MAGNUM_TARGET_GLES2" _TARGET_GLES2)
+if(NOT _TARGET_GLES2 EQUAL -1)
+    set(MAGNUM_TARGET_GLES2 1)
+endif()
+string(FIND "${_magnumConfigure}" "#define MAGNUM_TARGET_NACL" _TARGET_NACL)
+if(NOT _TARGET_NACL EQUAL -1)
+    set(MAGNUM_TARGET_NACL 1)
+endif()
+string(FIND "${_magnumConfigure}" "#define MAGNUM_TARGET_DESKTOP_GLES" _TARGET_DESKTOP_GLES)
+if(NOT _TARGET_DESKTOP_GLES EQUAL -1)
+    set(MAGNUM_TARGET_DESKTOP_GLES 1)
+endif()
+string(FIND "${_magnumConfigure}" "#define MAGNUM_USE_HARFBUZZ" _USE_HARFBUZZ)
+if(NOT _USE_HARFBUZZ EQUAL -1)
+    set(MAGNUM_USE_HARFBUZZ 1)
+endif()
 
-if(NOT MAGNUM_TARGET_GLES)
+if(NOT MAGNUM_TARGET_GLES OR MAGNUM_TARGET_DESKTOP_GLES)
     find_package(OpenGL REQUIRED)
-    find_package(GLEW REQUIRED)
 else()
     find_package(OpenGLES2 REQUIRED)
+endif()
+if(NOT MAGNUM_TARGET_GLES)
+    find_package(GLEW REQUIRED)
+endif()
+
+# On Windows, *Application libraries need to have ${MAGNUM_LIBRARY} listed
+# in dependencies also after *Application.lib static library name to avoid
+# linker errors
+if(WIN32)
+    set(_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY ${MAGNUM_LIBRARY})
 endif()
 
 # Additional components
@@ -86,52 +128,69 @@ foreach(component ${Magnum_FIND_COMPONENTS})
 
     set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_SUFFIX ${component})
 
-    # Window contexts
-    if(${component} MATCHES .+WindowContext)
-        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_SUFFIX Contexts)
+    # Applications
+    if(${component} MATCHES .+Application)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_SUFFIX Platform)
         set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES ${component}.h)
 
-        # GLUT window context dependencies
-        if(${component} STREQUAL GlutWindowContext)
+        # GLUT application dependencies
+        if(${component} STREQUAL GlutApplication)
             find_package(GLUT)
             if(GLUT_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${GLUT_LIBRARIES})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${GLUT_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
         endif()
 
-        # SDL2 window context dependencies
-        if(${component} STREQUAL Sdl2WindowContext)
+        # SDL2 application dependencies
+        if(${component} STREQUAL Sdl2Application)
             find_package(SDL2)
             if(SDL2_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${SDL2_LIBRARY})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${SDL2_LIBRARY} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
                 set(_MAGNUM_${_COMPONENT}_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
         endif()
 
-        # GLX window context dependencies
-        if(${component} STREQUAL GlxWindowContext)
+        # NaCl application has no additional dependencies
+
+        # GLX application dependencies
+        if(${component} STREQUAL GlxApplication)
             find_package(X11)
             if(X11_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${X11_LIBRARIES})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${X11_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
         endif()
 
-        # X/EGL window context dependencies
-        if(${component} STREQUAL XEglWindowContext)
+        # X/EGL application dependencies
+        if(${component} STREQUAL XEglApplication)
             find_package(EGL)
             find_package(X11)
             if(EGL_FOUND AND X11_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${EGL_LIBRARY} ${X11_LIBRARIES})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${EGL_LIBRARY} ${X11_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
         endif()
+
+        # Windowless GLX application dependencies
+        if(${component} STREQUAL WindowlessGlxApplication)
+            find_package(X11)
+            if(X11_FOUND)
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${X11_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
+            else()
+                unset(MAGNUM_${_COMPONENT}_LIBRARY)
+            endif()
+        endif()
+    endif()
+
+    # DebugTools library
+    if(${component} STREQUAL DebugTools)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Profiler.h)
     endif()
 
     # Mesh tools library
@@ -159,21 +218,44 @@ foreach(component ${Magnum_FIND_COMPONENTS})
         set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES PhongShader.h)
     endif()
 
+    # Text library
+    if(${component} STREQUAL Text)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Font.h)
+
+        # Dependencies
+        find_package(FreeType)
+        if(NOT FREETYPE_FOUND)
+            unset(MAGNUM_${_COMPONENT}_LIBRARY)
+        endif()
+        if(MAGNUM_USE_HARFBUZZ)
+            find_package(HarfBuzz)
+            if(NOT HARFBUZZ_FOUND)
+                unset(MAGNUM_${_COMPONENT}_LIBRARY)
+            endif()
+        endif()
+    endif()
+
+    # TextureTools library
+    if(${component} STREQUAL TextureTools)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Atlas.h)
+    endif()
+
     # Try to find the includes
     if(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES)
         find_path(_MAGNUM_${_COMPONENT}_INCLUDE_DIR
             NAMES ${_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES}
             PATHS ${MAGNUM_INCLUDE_DIR}/${_MAGNUM_${_COMPONENT}_INCLUDE_PATH_SUFFIX})
-
-        # Don't expose this variable to end users
-        mark_as_advanced(FORCE _MAGNUM_${_COMPONENT}_INCLUDE_DIR)
     endif()
 
     # Decide if the library was found
     if(MAGNUM_${_COMPONENT}_LIBRARY AND _MAGNUM_${_COMPONENT}_INCLUDE_DIR)
         set(MAGNUM_${_COMPONENT}_LIBRARIES ${MAGNUM_${_COMPONENT}_LIBRARY} ${_MAGNUM_${_COMPONENT}_LIBRARIES})
         set(MAGNUM_${_COMPONENT}_INCLUDE_DIRS ${_MAGNUM_${_COMPONENT}_INCLUDE_DIRS})
+
         set(Magnum_${component}_FOUND TRUE)
+
+        # Don't expose variables w/o dependencies to end users
+        mark_as_advanced(FORCE MAGNUM_${_COMPONENT}_LIBRARY _MAGNUM_${_COMPONENT}_INCLUDE_DIR)
     else()
         set(Magnum_${component}_FOUND FALSE)
     endif()
@@ -181,7 +263,7 @@ endforeach()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Magnum
-    REQUIRED_VARS MAGNUM_INCLUDE_DIR MAGNUM_LIBRARY
+    REQUIRED_VARS MAGNUM_LIBRARY MAGNUM_INCLUDE_DIR
     HANDLE_COMPONENTS)
 
 # Dependent libraries and includes
@@ -191,13 +273,13 @@ set(MAGNUM_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIR}
 set(MAGNUM_LIBRARIES ${MAGNUM_LIBRARY}
     ${CORRADE_UTILITY_LIBRARY}
     ${CORRADE_PLUGINMANAGER_LIBRARY})
-if(NOT MAGNUM_TARGET_GLES)
-    set(MAGNUM_LIBRARIES ${MAGNUM_LIBRARIES}
-        ${OPENGL_gl_LIBRARY}
-        ${GLEW_LIBRARY})
+if(NOT MAGNUM_TARGET_GLES OR MAGNUM_TARGET_DESKTOP_GLES)
+    set(MAGNUM_LIBRARIES ${MAGNUM_LIBRARIES} ${OPENGL_gl_LIBRARY})
 else()
-    set(MAGNUM_LIBRARIES ${MAGNUM_LIBRARIES}
-        ${OPENGLES2_LIBRARY})
+    set(MAGNUM_LIBRARIES ${MAGNUM_LIBRARIES} ${OPENGLES2_LIBRARY})
+endif()
+if(NOT MAGNUM_TARGET_GLES)
+    set(MAGNUM_LIBRARIES ${MAGNUM_LIBRARIES} ${GLEW_LIBRARIES})
 endif()
 
 # Installation dirs
