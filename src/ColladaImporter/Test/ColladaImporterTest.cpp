@@ -84,7 +84,7 @@ void ColladaImporterTest::parseSource() {
         CORRADE_COMPARE(importer.parseSource<Vector3>("SwappedCoords"), (std::vector<Vector3>{Vector3(0, 1, 2)}));
     }
 
-    CORRADE_COMPARE(importer.parseSource<Point3D>("MoreElements"), (std::vector<Point3D>{
+    CORRADE_COMPARE(importer.parseSource<Vector3>("MoreElements"), (std::vector<Vector3>{
         {0, 1, 2},
         {3, 4, 5}
     }));
@@ -130,9 +130,9 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(object->instanceId(), 2);
     Matrix4 transformation =
         Matrix4::translation({1, 2, 3})*
-        Matrix4::rotation(deg(60.0f), Vector3::zAxis())*
-        Matrix4::rotation(deg(90.0f), Vector3::yAxis())*
-        Matrix4::rotation(deg(120.0f), Vector3::xAxis())*
+        Matrix4::rotationZ(Deg(60.0f))*
+        Matrix4::rotationY(Deg(90.0f))*
+        Matrix4::rotationX(Deg(120.0f))*
         Matrix4::scaling({3, 4, 5});
     CORRADE_COMPARE(object->transformation(), transformation);
     CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object)->material(), 1);
@@ -167,7 +167,7 @@ void ColladaImporterTest::mesh() {
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Point3D>{
+    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Vector3>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -197,7 +197,7 @@ void ColladaImporterTest::mesh() {
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Point3D>{
+    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Vector3>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -230,7 +230,7 @@ void ColladaImporterTest::mesh() {
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Point3D>{
+    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Vector3>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},

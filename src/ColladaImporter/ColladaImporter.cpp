@@ -299,7 +299,7 @@ MeshData3D* ColladaImporter::mesh3D(std::uint32_t id) {
 
     /* Build vertex array */
     GLuint vertexOffset = attributeOffset(id, "VERTEX");
-    std::vector<Point3D>* vertices = new std::vector<Point3D>(indexCombinations.size());
+    auto vertices = new std::vector<Vector3>(indexCombinations.size());
     for(auto i: indexCombinations)
         (*vertices)[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
 
@@ -493,8 +493,8 @@ std::uint32_t ColladaImporter::parseObject(std::uint32_t id, const QString& name
         else if(type == "rotate") {
             int pos = 0;
             Vector3 axis = Utility::parseVector<Vector3>(tmpList2[i], &pos);
-            GLfloat angle = ColladaType<GLfloat>::fromString(tmpList2[i].mid(pos));
-            transformation = transformation*Matrix4::rotation(deg(angle), axis);
+            Deg angle(ColladaType<GLfloat>::fromString(tmpList2[i].mid(pos)));
+            transformation = transformation*Matrix4::rotation(angle, axis);
 
         /* Scaling */
         } else if(type == "scale")
