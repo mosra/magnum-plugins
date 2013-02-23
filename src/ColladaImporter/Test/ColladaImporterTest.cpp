@@ -26,7 +26,7 @@
 #include "ColladaImporter/ColladaImporter.h"
 #include "ColladaImporterTestConfigure.h"
 
-using namespace Corrade::Utility;
+using Corrade::Utility::Directory;
 
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 

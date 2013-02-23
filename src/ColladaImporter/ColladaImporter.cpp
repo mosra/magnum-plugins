@@ -15,6 +15,8 @@
 
 #include "ColladaImporter.h"
 
+#include <QtCore/QFile>
+#include <QtCore/QStringList>
 #include <Utility/Directory.h>
 #include <Math/Constants.h>
 #include <Trade/ImageData.h>
@@ -22,13 +24,11 @@
 #include <Trade/MeshObjectData3D.h>
 #include <Trade/PhongMaterialData.h>
 #include <Trade/SceneData.h>
-#include <QtCore/QFile>
-#include <QtCore/QStringList>
 
 #include "TgaImporter/TgaImporter.h"
 
-using namespace Corrade::Utility;
-using namespace Corrade::PluginManager;
+using Corrade::PluginManager::AbstractPluginManager;
+using Corrade::Utility::Directory;
 
 namespace Magnum { namespace Trade { namespace ColladaImporter {
 

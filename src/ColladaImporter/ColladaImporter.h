@@ -24,8 +24,8 @@
 #include <unordered_map>
 #include <QtCore/QCoreApplication>
 #include <QtXmlPatterns/QXmlQuery>
+#include <Utility/MurmurHash2.h>
 
-#include "Utility/MurmurHash2.h"
 #include "ColladaType.h"
 #include "Utility.h"
 
