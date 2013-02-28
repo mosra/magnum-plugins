@@ -33,11 +33,11 @@ ColladaTypeTest::ColladaTypeTest() {
 }
 
 void ColladaTypeTest::gluint() {
-    CORRADE_COMPARE(ColladaType<GLuint>::fromString("123456"), 123456);
+    CORRADE_COMPARE(ColladaType<UnsignedInt>::fromString("123456"), 123456);
 }
 
 void ColladaTypeTest::glfloat() {
-    CORRADE_COMPARE(ColladaType<GLfloat>::fromString("3.14"), 3.14f);
+    CORRADE_COMPARE(ColladaType<Float>::fromString("3.14"), 3.14f);
 }
 
 }}}}

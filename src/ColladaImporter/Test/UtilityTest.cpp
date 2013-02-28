@@ -34,7 +34,7 @@ UtilityTest::UtilityTest() {
 
 void UtilityTest::parseVector() {
     /* Extremely spaceless */
-    CORRADE_COMPARE((Utility::parseVector<Math::Vector<1, GLfloat>>("3.14")[0]), 3.14f);
+    CORRADE_COMPARE((Utility::parseVector<Math::Vector<1, Float>>("3.14")[0]), 3.14f);
 
     /* Spaces */
     CORRADE_COMPARE(Utility::parseVector<Vector2>("     2.17  3.28  "), Vector2(2.17f, 3.28f));
@@ -59,14 +59,14 @@ void UtilityTest::parseVector() {
 
 void UtilityTest::parseArray() {
     /* Extremely spaceless */
-    CORRADE_COMPARE(Utility::parseArray<float>("3.14", 1), (std::vector<float>{3.14f}));
+    CORRADE_COMPARE(Utility::parseArray<Float>("3.14", 1), (std::vector<Float>{3.14f}));
 
     /* Spaces */
-    CORRADE_COMPARE(Utility::parseArray<float>("     2.17  3.28  ", 2), (std::vector<float>{2.17f, 3.28f}));
+    CORRADE_COMPARE(Utility::parseArray<Float>("     2.17  3.28  ", 2), (std::vector<Float>{2.17f, 3.28f}));
 
     /* Different size */
-    CORRADE_COMPARE(Utility::parseArray<float>("2.17 3.28", 3), (std::vector<float>{2.17f, 3.28f, 0.0f}));
-    CORRADE_COMPARE(Utility::parseArray<float>("2.17 3.28 5.15", 2), (std::vector<float>{2.17f, 3.28f}));
+    CORRADE_COMPARE(Utility::parseArray<Float>("2.17 3.28", 3), (std::vector<Float>{2.17f, 3.28f, 0.0f}));
+    CORRADE_COMPARE(Utility::parseArray<Float>("2.17 3.28 5.15", 2), (std::vector<Float>{2.17f, 3.28f}));
 }
 
 }}}}

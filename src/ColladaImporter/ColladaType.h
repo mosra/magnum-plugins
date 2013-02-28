@@ -40,14 +40,14 @@ template<class T> struct ColladaType {
 };
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-template<> struct ColladaType<GLuint> {
-    inline static GLuint fromString(const QString& str) {
+template<> struct ColladaType<UnsignedInt> {
+    inline static UnsignedInt fromString(const QString& str) {
         return str.toUInt();
     }
 };
 
-template<> struct ColladaType<GLfloat> {
-    inline static GLfloat fromString(const QString& str) {
+template<> struct ColladaType<Float> {
+    inline static Float fromString(const QString& str) {
         return str.toFloat();
     }
 };

@@ -104,7 +104,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(importer.sceneName(0), "Scene");
     SceneData* scene = importer.scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D(), (std::vector<std::uint32_t>{0, 2}));
+    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 2}));
 
     CORRADE_COMPARE(importer.object3DName(0), "Camera");
     CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
@@ -112,7 +112,7 @@ void ColladaImporterTest::scene() {
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Camera);
     CORRADE_COMPARE(object->instanceId(), 2);
-    CORRADE_COMPARE(object->children(), std::vector<std::uint32_t>{1});
+    CORRADE_COMPARE(object->children(), std::vector<UnsignedInt>{1});
 
     CORRADE_COMPARE(importer.object3DName(1), "Light");
     CORRADE_COMPARE(importer.object3DForName("Light"), 1);
@@ -163,7 +163,7 @@ void ColladaImporterTest::mesh() {
     MeshData3D* mesh = importer.mesh3D(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (std::vector<std::uint32_t>{
+    CORRADE_COMPARE(*mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
@@ -193,7 +193,7 @@ void ColladaImporterTest::mesh() {
     mesh = importer.mesh3D(3);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (std::vector<std::uint32_t>{
+    CORRADE_COMPARE(*mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
@@ -226,7 +226,7 @@ void ColladaImporterTest::mesh() {
     mesh = importer.mesh3D(4);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (std::vector<std::uint32_t>{
+    CORRADE_COMPARE(*mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
