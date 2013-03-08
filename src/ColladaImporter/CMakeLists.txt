@@ -1,5 +1,7 @@
 find_package(Qt4 REQUIRED)
 
+include_directories(${QT_INCLUDE_DIR})
+
 set(ColladaImporter_SRCS
     ColladaImporter.cpp
 )

@@ -6,7 +6,7 @@ pkgdesc="Plugins for Magnum OpenGL 3 graphics engine (Git version)"
 arch=('i686' 'x86_64')
 url="https://github.com/mosra/magnum-plugins"
 license=('LGPLv3')
-depends=('magnum-git' 'qt')
+depends=('magnum-git' 'qt4')
 makedepends=('cmake' 'git')
 
 _gitroot="git://github.com/mosra/magnum-plugins.git"
