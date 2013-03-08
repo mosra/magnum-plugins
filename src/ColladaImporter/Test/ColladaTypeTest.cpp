@@ -28,8 +28,8 @@ class ColladaTypeTest: public Corrade::TestSuite::Tester {
 };
 
 ColladaTypeTest::ColladaTypeTest() {
-    addTests(&ColladaTypeTest::gluint,
-             &ColladaTypeTest::glfloat);
+    addTests({&ColladaTypeTest::gluint,
+              &ColladaTypeTest::glfloat});
 }
 
 void ColladaTypeTest::gluint() {

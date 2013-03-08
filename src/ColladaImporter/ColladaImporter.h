@@ -38,8 +38,12 @@ class ColladaMeshData;
 */
 class ColladaImporter: public AbstractImporter {
     public:
-        /** @copydoc AbstractImporter::AbstractImporter() */
-        ColladaImporter(Corrade::PluginManager::AbstractPluginManager* manager = nullptr, const std::string& plugin = "");
+        /** @brief Default constructor */
+        explicit ColladaImporter();
+
+        /** @brief Plugin manager constructor */
+        explicit ColladaImporter(Corrade::PluginManager::AbstractPluginManager* manager, std::string plugin);
+
         virtual ~ColladaImporter();
 
         inline Features features() const override { return Feature::OpenFile; }

@@ -45,13 +45,13 @@ class ColladaImporterTest: public Corrade::TestSuite::Tester {
 };
 
 ColladaImporterTest::ColladaImporterTest() {
-    addTests(&ColladaImporterTest::openWrongNamespace,
-             &ColladaImporterTest::openWrongVersion,
-             &ColladaImporterTest::parseSource,
-             &ColladaImporterTest::scene,
-             &ColladaImporterTest::mesh,
-             &ColladaImporterTest::material,
-             &ColladaImporterTest::image);
+    addTests({&ColladaImporterTest::openWrongNamespace,
+              &ColladaImporterTest::openWrongVersion,
+              &ColladaImporterTest::parseSource,
+              &ColladaImporterTest::scene,
+              &ColladaImporterTest::mesh,
+              &ColladaImporterTest::material,
+              &ColladaImporterTest::image});
 }
 
 void ColladaImporterTest::openWrongNamespace() {

@@ -28,8 +28,8 @@ class UtilityTest: public Corrade::TestSuite::Tester {
 };
 
 UtilityTest::UtilityTest() {
-    addTests(&UtilityTest::parseVector,
-             &UtilityTest::parseArray);
+    addTests({&UtilityTest::parseVector,
+              &UtilityTest::parseArray});
 }
 
 void UtilityTest::parseVector() {
