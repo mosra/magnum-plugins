@@ -1,3 +1,0 @@
-if(NOT CMAKE_CROSSCOMPILING)
-    install(FILES FindMagnumPlugins.cmake DESTINATION ${MAGNUM_CMAKE_MODULE_INSTALL_DIR})
-endif()
