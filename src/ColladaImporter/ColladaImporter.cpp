@@ -335,7 +335,7 @@ MeshData3D* ColladaImporter::mesh3D(UnsignedInt id) {
         else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
-    return d->meshes[id].second = new MeshData3D(Mesh::Primitive::Triangles, indices, {vertices}, normals, textureCoords2D);
+    return d->meshes[id].second = new MeshData3D(Mesh::Primitive::Triangles, indices, {vertices}, std::move(normals), std::move(textureCoords2D));
 }
 
 Int ColladaImporter::ColladaImporter::materialForName(const std::string& name) {
@@ -478,7 +478,7 @@ void ColladaImporter::parseScenes() {
             nextObjectId = parseObject(nextObjectId, childId.trimmed());
         }
 
-        d->scenes[sceneId] = {name, new SceneData({}, children)};
+        d->scenes[sceneId] = {name, new SceneData({}, std::move(children))};
     }
 }
 
