@@ -24,7 +24,8 @@
 
 find_package(Qt4 REQUIRED)
 
-include_directories(${QT_INCLUDE_DIR})
+# Silence pedantic warnings in Qt headers
+include_directories(SYSTEM ${QT_INCLUDE_DIR})
 
 set(ColladaImporter_SRCS
     ColladaImporter.cpp)
