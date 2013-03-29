@@ -61,7 +61,7 @@ ColladaImporter::Document::~Document() {
     for(auto i: images2D) delete i.second;
 }
 
-bool ColladaImporter::open(const std::string& filename) {
+bool ColladaImporter::openFile(const std::string& filename) {
     /* Close previous document */
     if(d) close();
 
@@ -433,7 +433,7 @@ ImageData2D* ColladaImporter::image2D(UnsignedInt id) {
 
     TgaImporter::TgaImporter tgaImporter;
     ImageData2D* image;
-    if(!tgaImporter.open(Directory::join(Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
+    if(!tgaImporter.openFile(Directory::join(Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
         return nullptr;
 
     return d->images2D[id].second = image;

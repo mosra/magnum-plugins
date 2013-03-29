@@ -57,7 +57,7 @@ class ColladaImporter: public AbstractImporter {
 
         inline Features features() const override { return Feature::OpenFile; }
 
-        bool open(const std::string& filename) override;
+        bool openFile(const std::string& filename) override;
         void close() override;
 
         Int defaultScene() override;
