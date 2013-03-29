@@ -22,13 +22,9 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_subdirectory(ColladaImporter)
-add_subdirectory(FreeTypeFont)
-add_subdirectory(HarfBuzzFont)
-add_subdirectory(TgaImageConverter)
-add_subdirectory(TgaImporter)
+corrade_add_test(TgaImageConverterTest TgaImageConverterTest.cpp LIBRARIES TgaImageConverterTestLib TgaImporterTestLib)

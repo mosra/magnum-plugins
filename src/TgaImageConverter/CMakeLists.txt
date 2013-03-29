@@ -22,13 +22,25 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED)
+set(TgaImageConverter_SRCS
+    TgaImageConverter.cpp)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+set(TgaImageConverter_HEADERS
+    TgaImageConverter.h)
 
-add_subdirectory(ColladaImporter)
-add_subdirectory(FreeTypeFont)
-add_subdirectory(HarfBuzzFont)
-add_subdirectory(TgaImageConverter)
-add_subdirectory(TgaImporter)
+add_library(TgaImageConverterObjects OBJECT ${TgaImageConverter_SRCS})
+set_target_properties(TgaImageConverterObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})
+
+corrade_add_plugin(TgaImageConverter ${MAGNUM_PLUGINS_IMAGECONVERTER_INSTALL_DIR}
+    TgaImageConverter.conf
+    $<TARGET_OBJECTS:TgaImageConverterObjects>
+    pluginRegistrationTgaImageConverter.cpp)
+target_link_libraries(TgaImageConverter ${MAGNUM_LIBRARIES})
+
+install(FILES ${TgaImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/TgaImageConverter)
+
+if(BUILD_TESTS)
+    add_library(TgaImageConverterTestLib $<TARGET_OBJECTS:TgaImageConverterObjects>)
+    target_link_libraries(TgaImageConverterTestLib ${MAGNUM_LIBRARIES})
+    add_subdirectory(Test)
+endif()
