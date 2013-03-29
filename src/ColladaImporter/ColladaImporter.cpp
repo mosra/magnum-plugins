@@ -175,28 +175,34 @@ void ColladaImporter::close() {
     d = 0;
 }
 
-Int ColladaImporter::ColladaImporter::defaultScene() {
-    if(!d || d->scenes.empty()) return -1;
+Int ColladaImporter::defaultScene() {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::defaultScene(): no file opened", -1);
+
+    if(d->scenes.empty()) return -1;
     if(!d->scenes[0].second) parseScenes();
 
     return d->defaultScene;
 }
 
-std::string ColladaImporter::ColladaImporter::sceneName(UnsignedInt id) {
-    if(!d || id >= d->scenes.size()) return {};
-    if(!d->scenes[0].second) parseScenes();
+std::string ColladaImporter::sceneName(UnsignedInt id) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::sceneName(): no file opened", {});
+    CORRADE_ASSERT(id < d->scenes.size(), "Trade::ColladaImporter::ColladaImporter::sceneName(): wrong scene ID", {});
 
+    if(!d->scenes[0].second) parseScenes();
     return d->scenes[id].first;
 }
 
-SceneData* ColladaImporter::ColladaImporter::scene(UnsignedInt id) {
-    if(!d || id >= d->scenes.size()) return nullptr;
-    if(!d->scenes[0].second) parseScenes();
+SceneData* ColladaImporter::scene(UnsignedInt id) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::scene(): no file opened", nullptr);
+    CORRADE_ASSERT(id < d->scenes.size(), "Trade::ColladaImporter::ColladaImporter::scene(): wrong scene ID", nullptr);
 
+    if(!d->scenes[0].second) parseScenes();
     return d->scenes[id].second;
 }
 
-Int ColladaImporter::ColladaImporter::object3DForName(const std::string& name) {
+Int ColladaImporter::object3DForName(const std::string& name) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::object3DForName(): no file opened", -1);
+
     if(d->scenes.empty()) return -1;
     if(!d->scenes[0].second) parseScenes();
 
@@ -204,31 +210,40 @@ Int ColladaImporter::ColladaImporter::object3DForName(const std::string& name) {
     return (it == d->objectsForName.end()) ? -1 : it->second;
 }
 
-std::string ColladaImporter::ColladaImporter::object3DName(UnsignedInt id) {
-    if(!d || id >= d->objects.size()) return {};
-    if(!d->scenes[0].second) parseScenes();
+std::string ColladaImporter::object3DName(UnsignedInt id) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::object3DName(): no file opened", {});
+    CORRADE_ASSERT(id < d->objects.size(), "Trade::ColladaImporter::ColladaImporter::object3DName(): wrong object ID", {});
 
+    if(!d->scenes[0].second) parseScenes();
     return d->objects[id].first;
 }
 
-ObjectData3D* ColladaImporter::ColladaImporter::object3D(UnsignedInt id) {
-    if(!d || id >= d->objects.size()) return nullptr;
-    if(!d->scenes[0].second) parseScenes();
+ObjectData3D* ColladaImporter::object3D(UnsignedInt id) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::object3D(): no file opened", nullptr);
+    CORRADE_ASSERT(id < d->objects.size(), "Trade::ColladaImporter::ColladaImporter::object3D(): wrong object ID", nullptr);
 
+    if(!d->scenes[0].second) parseScenes();
     return d->objects[id].second;
 }
 
 Int ColladaImporter::ColladaImporter::mesh3DForName(const std::string& name) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::mesh3DForName(): no file opened", -1);
+
     auto it = d->meshesForName.find(name);
     return (it == d->meshesForName.end()) ? -1 : it->second;
 }
 
 std::string ColladaImporter::ColladaImporter::mesh3DName(UnsignedInt id) {
-    if(!d || id >= d->meshes.size()) return {};
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::mesh3DName(): no file opened", {});
+    CORRADE_ASSERT(id < d->meshes.size(), "Trade::ColladaImporter::ColladaImporter::mesh3DName(): wrong mesh ID", {});
+
     return d->meshes[id].first;
 }
 
 MeshData3D* ColladaImporter::mesh3D(UnsignedInt id) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::mesh3D(): no file opened", nullptr);
+    CORRADE_ASSERT(id < d->meshes.size(), "Trade::ColladaImporter::ColladaImporter::mesh3D(): wrong mesh ID", nullptr);
+
     if(!d || id >= d->meshes.size()) return nullptr;
     if(d->meshes[id].second) return d->meshes[id].second;
 
@@ -339,17 +354,23 @@ MeshData3D* ColladaImporter::mesh3D(UnsignedInt id) {
 }
 
 Int ColladaImporter::ColladaImporter::materialForName(const std::string& name) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::materialForName(): no file opened", -1);
+
     auto it = d->materialsForName.find(name);
     return (it == d->materialsForName.end()) ? -1 : it->second;
 }
 
 std::string ColladaImporter::ColladaImporter::materialName(UnsignedInt id) {
-    if(!d || id >= d->materials.size()) return {};
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::materialName(): no file opened", {});
+    CORRADE_ASSERT(id < d->materials.size(), "Trade::ColladaImporter::ColladaImporter::materialName(): wrong material ID", {});
+
     return d->materials[id].first;
 }
 
 AbstractMaterialData* ColladaImporter::material(UnsignedInt id) {
-    if(!d || id >= d->materials.size()) return nullptr;
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::material(): no file opened", nullptr);
+    CORRADE_ASSERT(id < d->materials.size(), "Trade::ColladaImporter::ColladaImporter::material(): wrong material ID", nullptr);
+
     if(d->materials[id].second) return d->materials[id].second;
 
     /* Get effect ID */
@@ -407,17 +428,23 @@ AbstractMaterialData* ColladaImporter::material(UnsignedInt id) {
 }
 
 Int ColladaImporter::ColladaImporter::image2DForName(const std::string& name) {
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::image2DForName(): no file opened", -1);
+
     auto it = d->images2DForName.find(name);
     return (it == d->images2DForName.end()) ? -1 : it->second;
 }
 
 std::string ColladaImporter::ColladaImporter::image2DName(UnsignedInt id) {
-    if(!d || id >= d->images2D.size()) return {};
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::image2DName(): no file opened", {});
+    CORRADE_ASSERT(id < d->images2D.size(), "Trade::ColladaImporter::ColladaImporter::image2DName(): wrong image ID", {});
+
     return d->images2D[id].first;
 }
 
 ImageData2D* ColladaImporter::image2D(UnsignedInt id) {
-    if(!d || id >= d->images2D.size()) return nullptr;
+    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::image2D(): no file opened", nullptr);
+    CORRADE_ASSERT(id < d->images2D.size(), "Trade::ColladaImporter::ColladaImporter::image2D(): wrong image ID", nullptr);
+
     if(d->images2D[id].second) return d->images2D[id].second;
 
     /* Image filename */
