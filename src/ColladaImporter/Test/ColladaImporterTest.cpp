@@ -114,6 +114,7 @@ void ColladaImporterTest::scene() {
     SceneData* scene = importer.scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 2}));
+//     delete scene;
 
     CORRADE_COMPARE(importer.object3DName(0), "Camera");
     CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
@@ -122,6 +123,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Camera);
     CORRADE_COMPARE(object->instanceId(), 2);
     CORRADE_COMPARE(object->children(), std::vector<UnsignedInt>{1});
+//     delete object;
 
     CORRADE_COMPARE(importer.object3DName(1), "Light");
     CORRADE_COMPARE(importer.object3DForName("Light"), 1);
@@ -130,6 +132,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Light);
     CORRADE_COMPARE(object->instanceId(), 1);
     CORRADE_VERIFY(object->children().empty());
+//     delete object;
 
     CORRADE_COMPARE(importer.object3DName(2), "Mesh");
     CORRADE_COMPARE(importer.object3DForName("Mesh"), 2);
@@ -145,6 +148,7 @@ void ColladaImporterTest::scene() {
         Matrix4::scaling({3, 4, 5});
     CORRADE_COMPARE(object->transformation(), transformation);
     CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object)->material(), 1);
+//     delete object;
 
     CORRADE_VERIFY(!importer.object3D(3));
     CORRADE_VERIFY(!importer.object3D(4));
@@ -186,6 +190,7 @@ void ColladaImporterTest::mesh() {
     }));
     CORRADE_COMPARE(mesh->normalArrayCount(), 0);
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
+    delete mesh;
 
     /* Mesh with quads */
     CORRADE_COMPARE(importer.mesh3DName(2), "MeshQuads");
@@ -195,6 +200,7 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
     }));
+    delete mesh;
 
     /* Vertex and normal mesh */
     CORRADE_COMPARE(importer.mesh3DName(3), "MeshVertexNormals");
@@ -228,6 +234,7 @@ void ColladaImporterTest::mesh() {
         {0, 0, 1}
     }));
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
+    delete mesh;
 
     /* Vertex, normal and texture mesh */
     CORRADE_COMPARE(importer.mesh3DName(4), "Mesh");
@@ -272,6 +279,7 @@ void ColladaImporterTest::mesh() {
         {0, 0}
     }));
     CORRADE_COMPARE(*mesh->textureCoords2D(1), std::vector<Vector2>(8));
+    delete mesh;
 }
 
 void ColladaImporterTest::material() {
@@ -299,6 +307,7 @@ void ColladaImporterTest::material() {
     CORRADE_COMPARE(material->diffuseColor(), Vector3(0, 1, 0));
     CORRADE_COMPARE(material->specularColor(), Vector3(0, 0, 1));
     CORRADE_COMPARE(material->shininess(), 50.0f);
+    delete material;
 }
 
 void ColladaImporterTest::image() {
@@ -319,7 +328,8 @@ void ColladaImporterTest::image() {
     CORRADE_VERIFY(image);
 
     /* Check only size, as it is good enough proof that it is working */
-    CORRADE_COMPARE(image->size(), Math::Vector2<GLsizei>(2, 3));
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    delete image;
 }
 
 }}}}

@@ -56,9 +56,6 @@ ColladaImporter::~ColladaImporter() {
 ColladaImporter::Document::~Document() {
     for(auto i: scenes) delete i.second;
     for(auto i: objects) delete i.second;
-    for(auto i: meshes) delete i.second;
-    for(auto i: materials) delete i.second;
-    for(auto i: images2D) delete i.second;
 }
 
 bool ColladaImporter::openFile(const std::string& filename) {
@@ -137,7 +134,7 @@ bool ColladaImporter::openFile(const std::string& filename) {
     d->materialsForName.reserve(tmpList.size());
     for(const QString id: tmpList) {
         std::string name = id.trimmed().toStdString();
-        d->materials.push_back({name, nullptr});
+        d->materials.push_back(name);
         d->materialsForName.insert({name, d->materialsForName.size()});
     }
 
@@ -149,7 +146,7 @@ bool ColladaImporter::openFile(const std::string& filename) {
     d->meshesForName.reserve(tmpList.size());
     for(const QString id: tmpList) {
         std::string name = id.trimmed().toStdString();
-        d->meshes.push_back({name, nullptr});
+        d->meshes.push_back(name);
         d->meshesForName.insert({name, d->meshesForName.size()});
     }
 
@@ -161,7 +158,7 @@ bool ColladaImporter::openFile(const std::string& filename) {
     d->images2DForName.reserve(tmpList.size());
     for(const QString id: tmpList) {
         std::string name = id.trimmed().toStdString();
-        d->images2D.push_back({name, nullptr});
+        d->images2D.push_back(name);
         d->images2DForName.insert({name, d->images2DForName.size()});
     }
 
@@ -198,6 +195,7 @@ SceneData* ColladaImporter::scene(UnsignedInt id) {
 
     if(!d->scenes[0].second) parseScenes();
     return d->scenes[id].second;
+    /** @todo return copy so user can delete it */
 }
 
 Int ColladaImporter::object3DForName(const std::string& name) {
@@ -224,6 +222,7 @@ ObjectData3D* ColladaImporter::object3D(UnsignedInt id) {
 
     if(!d->scenes[0].second) parseScenes();
     return d->objects[id].second;
+    /** @todo return copy so user can delete it */
 }
 
 Int ColladaImporter::ColladaImporter::mesh3DForName(const std::string& name) {
@@ -237,7 +236,7 @@ std::string ColladaImporter::ColladaImporter::mesh3DName(UnsignedInt id) {
     CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::mesh3DName(): no file opened", {});
     CORRADE_ASSERT(id < d->meshes.size(), "Trade::ColladaImporter::ColladaImporter::mesh3DName(): wrong mesh ID", {});
 
-    return d->meshes[id].first;
+    return d->meshes[id];
 }
 
 MeshData3D* ColladaImporter::mesh3D(UnsignedInt id) {
@@ -245,7 +244,6 @@ MeshData3D* ColladaImporter::mesh3D(UnsignedInt id) {
     CORRADE_ASSERT(id < d->meshes.size(), "Trade::ColladaImporter::ColladaImporter::mesh3D(): wrong mesh ID", nullptr);
 
     if(!d || id >= d->meshes.size()) return nullptr;
-    if(d->meshes[id].second) return d->meshes[id].second;
 
     /** @todo More polylists in one mesh */
 
@@ -350,7 +348,7 @@ MeshData3D* ColladaImporter::mesh3D(UnsignedInt id) {
         else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
-    return d->meshes[id].second = new MeshData3D(Mesh::Primitive::Triangles, indices, {vertices}, std::move(normals), std::move(textureCoords2D));
+    return new MeshData3D(Mesh::Primitive::Triangles, indices, {vertices}, std::move(normals), std::move(textureCoords2D));
 }
 
 Int ColladaImporter::ColladaImporter::materialForName(const std::string& name) {
@@ -364,14 +362,12 @@ std::string ColladaImporter::ColladaImporter::materialName(UnsignedInt id) {
     CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::materialName(): no file opened", {});
     CORRADE_ASSERT(id < d->materials.size(), "Trade::ColladaImporter::ColladaImporter::materialName(): wrong material ID", {});
 
-    return d->materials[id].first;
+    return d->materials[id];
 }
 
 AbstractMaterialData* ColladaImporter::material(UnsignedInt id) {
     CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::material(): no file opened", nullptr);
     CORRADE_ASSERT(id < d->materials.size(), "Trade::ColladaImporter::ColladaImporter::material(): wrong material ID", nullptr);
-
-    if(d->materials[id].second) return d->materials[id].second;
 
     /* Get effect ID */
     QString effect;
@@ -424,7 +420,7 @@ AbstractMaterialData* ColladaImporter::material(UnsignedInt id) {
 
     /** @todo Emission, IOR */
 
-    return d->materials[id].second = new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
+    return new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
 }
 
 Int ColladaImporter::ColladaImporter::image2DForName(const std::string& name) {
@@ -438,14 +434,12 @@ std::string ColladaImporter::ColladaImporter::image2DName(UnsignedInt id) {
     CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::image2DName(): no file opened", {});
     CORRADE_ASSERT(id < d->images2D.size(), "Trade::ColladaImporter::ColladaImporter::image2DName(): wrong image ID", {});
 
-    return d->images2D[id].first;
+    return d->images2D[id];
 }
 
 ImageData2D* ColladaImporter::image2D(UnsignedInt id) {
     CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::image2D(): no file opened", nullptr);
     CORRADE_ASSERT(id < d->images2D.size(), "Trade::ColladaImporter::ColladaImporter::image2D(): wrong image ID", nullptr);
-
-    if(d->images2D[id].second) return d->images2D[id].second;
 
     /* Image filename */
     QString tmp;
@@ -463,7 +457,7 @@ ImageData2D* ColladaImporter::image2D(UnsignedInt id) {
     if(!tgaImporter.openFile(Directory::join(Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
         return nullptr;
 
-    return d->images2D[id].second = image;
+    return image;
 }
 
 UnsignedInt ColladaImporter::attributeOffset(UnsignedInt meshId, const QString& attribute, UnsignedInt id) {

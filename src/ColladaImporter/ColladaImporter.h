@@ -139,9 +139,9 @@ class ColladaImporter: public AbstractImporter {
             UnsignedInt defaultScene;
             std::vector<std::pair<std::string, SceneData*>> scenes;
             std::vector<std::pair<std::string, ObjectData3D*>> objects;
-            std::vector<std::pair<std::string, MeshData3D*>> meshes;
-            std::vector<std::pair<std::string, AbstractMaterialData*>> materials;
-            std::vector<std::pair<std::string, ImageData2D*>> images2D;
+            std::vector<std::string> meshes;
+            std::vector<std::string> materials;
+            std::vector<std::string> images2D;
 
             /** @todo Make public use for camerasForName, lightsForName */
             std::unordered_map<std::string, UnsignedInt> camerasForName,
