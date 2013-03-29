@@ -1,5 +1,5 @@
-#ifndef Magnum_Text_HarfBuzzFont_h
-#define Magnum_Text_HarfBuzzFont_h
+#ifndef Magnum_Text_HarfBuzzFont_HarfBuzzFont_h
+#define Magnum_Text_HarfBuzzFont_HarfBuzzFont_h
 /*
     This file is part of Magnum.
 
@@ -25,20 +25,16 @@
 */
 
 /** @file
- * @brief Class Magnum::Text::HarfBuzzFont
+ * @brief Class Magnum::Text::HarfBuzzFont::HarfBuzzFont
  */
 
-#include "Text/FreeTypeFont.h"
+#include "FreeTypeFont/FreeTypeFont.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 struct hb_font_t;
 #endif
 
-#ifndef MAGNUM_USE_HARFBUZZ
-#error Magnum is not compiled with HarfBuzz support
-#endif
-
-namespace Magnum { namespace Text {
+namespace Magnum { namespace Text { namespace HarfBuzzFont {
 
 /**
 @brief HarfBuzz font
@@ -47,27 +43,19 @@ Improves FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/H
 text layouting capabilities, such as kerning, ligatures etc. See FreeTypeFont
 class documentation for more information about usage.
 */
-class MAGNUM_TEXT_EXPORT HarfBuzzFont: public FreeTypeFont {
+class HarfBuzzFont: public FreeTypeFont::FreeTypeFont {
     public:
-        /**
-         * @brief Create font from file
-         * @param renderer      Font renderer
-         * @param fontFile      Font file
-         * @param size          Font size
-         */
-        explicit HarfBuzzFont(FreeTypeFontRenderer& renderer, const std::string& fontFile, Float size);
+        /** @brief Default constructor */
+        explicit HarfBuzzFont();
 
-        /**
-         * @brief Create font from memory
-         * @param renderer      Font renderer
-         * @param data          Font data
-         * @param dataSize      Font data size
-         * @param size          Font size
-         */
-        explicit HarfBuzzFont(FreeTypeFontRenderer& renderer, const unsigned char* data, std::size_t dataSize, Float size);
+        /** @brief Plugin manager constructor */
+        explicit HarfBuzzFont(Corrade::PluginManager::AbstractPluginManager* manager, std::string plugin);
 
         ~HarfBuzzFont();
 
+        bool open(const std::string& filename, Float size) override;
+        bool open(const unsigned char* data, std::size_t dataSize, Float size) override;
+        void close() override;
         AbstractLayouter* layout(const GlyphCache* const cache, const Float size, const std::string& text) override;
 
     private:
@@ -76,6 +64,6 @@ class MAGNUM_TEXT_EXPORT HarfBuzzFont: public FreeTypeFont {
         hb_font_t* hbFont;
 };
 
-}}
+}}}
 
 #endif

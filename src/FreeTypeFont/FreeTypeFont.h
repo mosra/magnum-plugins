@@ -1,5 +1,5 @@
-#ifndef Magnum_Text_FreeTypeFont_h
-#define Magnum_Text_FreeTypeFont_h
+#ifndef Magnum_Text_FreeTypeFont_FreeTypeFont_h
+#define Magnum_Text_FreeTypeFont_FreeTypeFont_h
 /*
     This file is part of Magnum.
 
@@ -25,83 +25,57 @@
 */
 
 /** @file
- * @brief Class Magnum::Text::FreeTypeFontRenderer, Magnum::Text::FreeTypeFont
+ * @brief Class Magnum::Text::FreeTypeFont::FreeTypeFontRenderer, Magnum::Text::FreeTypeFont::FreeTypeFont
  */
 
-#include <unordered_map>
-
-#include "Math/Geometry/Rectangle.h"
-#include "Texture.h"
-#include "Text/AbstractFont.h"
-#include "Text/magnumTextVisibility.h"
+#include <Text/AbstractFont.h>
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 struct FT_LibraryRec_;
 typedef FT_LibraryRec_* FT_Library;
 struct FT_FaceRec_;
 typedef FT_FaceRec_*  FT_Face;
+
+#ifdef _WIN32
+    #ifdef FreeTypeFont_EXPORTS
+        #define MAGNUM_FREETYPEFONT_EXPORT __declspec(dllexport)
+    #else
+        #define MAGNUM_FREETYPEFONT_EXPORT __declspec(dllimport)
+    #endif
+    #define MAGNUM_FREETYPEFONT_LOCAL
+#else
+    #define MAGNUM_FREETYPEFONT_EXPORT __attribute__ ((visibility ("default")))
+    #define MAGNUM_FREETYPEFONT_LOCAL __attribute__ ((visibility ("hidden")))
+#endif
 #endif
 
-namespace Magnum { namespace Text {
-
-/**
-@brief FreeType font renderer
-
-Contains global instance of font renderer. See FreeTypeFont class documentation
-for more information.
-*/
-class MAGNUM_TEXT_EXPORT FreeTypeFontRenderer {
-    public:
-        explicit FreeTypeFontRenderer();
-
-        ~FreeTypeFontRenderer();
-
-        /** @brief FreeType library handle */
-        inline FT_Library library() { return _library; }
-
-    private:
-        FT_Library _library;
-};
+namespace Magnum { namespace Text { namespace FreeTypeFont {
 
 /**
 @brief FreeType font
 
-@section FreeTypeFont-usage Usage
-
-You need to maintain instance of FreeTypeFontRenderer during the lifetime of
-all FreeTypeFont instances. The font can be created either from file or from
-memory location of format supported by [FreeType](http://www.freetype.org/)
-library.
-@code
-Text::FreeTypeFontRenderer fontRenderer;
-
-Text::FreeTypeFont font(fontRenderer, "MyFreeTypeFont.ttf", 48.0f);
-@endcode
-Next step is to prerender all the glyphs which will be used in text rendering
-later, see GlyphCache for more information. See TextRenderer for information
-about text rendering.
+The font can be created either from file or from memory location of format
+supported by [FreeType](http://www.freetype.org/) library.
 */
-class MAGNUM_TEXT_EXPORT FreeTypeFont: public AbstractFont {
+class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     public:
-        /**
-         * @brief Create font from file
-         * @param renderer      Font renderer
-         * @param fontFile      Font file
-         * @param size          Font size
-         */
-        explicit FreeTypeFont(FreeTypeFontRenderer& renderer, const std::string& fontFile, Float size);
+        /** @brief Initialize FreeType library */
+        static void initialize();
 
-        /**
-         * @brief Create font from memory
-         * @param renderer      Font renderer
-         * @param data          Font data
-         * @param dataSize      Font data size
-         * @param size          Font size
-         */
-        explicit FreeTypeFont(FreeTypeFontRenderer& renderer, const unsigned char* data, std::size_t dataSize, Float size);
+        /** @brief Finalize FreeType library */
+        static void finalize();
+
+        /** @brief Default constructor */
+        explicit FreeTypeFont();
+
+        /** @brief Plugin manager constructor */
+        explicit FreeTypeFont(Corrade::PluginManager::AbstractPluginManager* manager, std::string plugin);
 
         ~FreeTypeFont();
 
+        bool open(const std::string& filename, Float size) override;
+        bool open(const unsigned char* data, std::size_t dataSize, Float size) override;
+        void close() override;
         void createGlyphCache(GlyphCache* const cache, const std::string& characters) override;
         AbstractLayouter* layout(const GlyphCache* const cache, const Float size, const std::string& text) override;
 
@@ -110,9 +84,11 @@ class MAGNUM_TEXT_EXPORT FreeTypeFont: public AbstractFont {
     #else
     protected:
     #endif
+        static MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
+
         FT_Face ftFont;
 };
 
-}}
+}}}
 
 #endif

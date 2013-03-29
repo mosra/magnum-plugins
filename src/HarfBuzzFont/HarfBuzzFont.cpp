@@ -25,10 +25,9 @@
 #include "HarfBuzzFont.h"
 
 #include <hb-ft.h>
+#include <Text/GlyphCache.h>
 
-#include "GlyphCache.h"
-
-namespace Magnum { namespace Text {
+namespace Magnum { namespace Text { namespace HarfBuzzFont {
 
 namespace {
 
@@ -50,12 +49,32 @@ class HarfBuzzLayouter: public AbstractLayouter {
 
 }
 
-HarfBuzzFont::HarfBuzzFont(FreeTypeFontRenderer& renderer, const std::string& fontFile, Float size): FreeTypeFont(renderer, fontFile, size) {
+HarfBuzzFont::HarfBuzzFont(): hbFont(nullptr) {}
+
+HarfBuzzFont::HarfBuzzFont(Corrade::PluginManager::AbstractPluginManager* manager, std::string plugin): FreeTypeFont(manager, std::move(plugin)), hbFont(nullptr) {}
+
+HarfBuzzFont::~HarfBuzzFont() { close(); }
+
+bool HarfBuzzFont::open(const std::string& filename, Float size) {
+    close();
+
+    if(!FreeTypeFont::FreeTypeFont::open(filename, size)) return false;
     finishConstruction();
+    return true;
 }
 
-HarfBuzzFont::HarfBuzzFont(FreeTypeFontRenderer& renderer, const unsigned char* data, std::size_t dataSize, Float size): FreeTypeFont(renderer, data, dataSize, size) {
+bool HarfBuzzFont::open(const unsigned char* data, std::size_t dataSize, Float size) {
+    close();
+
+    if(!FreeTypeFont::FreeTypeFont::open(data, dataSize, size)) return false;
     finishConstruction();
+    return true;
+}
+
+void HarfBuzzFont::close() {
+    if(!hbFont) return;
+    hb_font_destroy(hbFont);
+    FreeTypeFont::FreeTypeFont::close();
 }
 
 void HarfBuzzFont::finishConstruction() {
@@ -63,11 +82,9 @@ void HarfBuzzFont::finishConstruction() {
     hbFont = hb_ft_font_create(ftFont, nullptr);
 }
 
-HarfBuzzFont::~HarfBuzzFont() {
-    hb_font_destroy(hbFont);
-}
-
 AbstractLayouter* HarfBuzzFont::layout(const GlyphCache* const cache, const Float size, const std::string& text) {
+    CORRADE_ASSERT(hbFont, "Text::HarfBuzzFont::HarfBuzzFont::layout(): no font opened", nullptr);
+
     return new HarfBuzzLayouter(hbFont, cache, this->size(), size, text);
 }
 
@@ -121,4 +138,7 @@ std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const Ve
 
 }
 
-}}
+}}}
+
+PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont::HarfBuzzFont,
+                "cz.mosra.magnum.Text.AbstractFont/0.1")

@@ -22,12 +22,24 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED)
+find_package(Magnum REQUIRED Text)
+find_package(Freetype REQUIRED)
+find_package(HarfBuzz REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+include_directories(${FREETYPE_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS})
 
-add_subdirectory(ColladaImporter)
-add_subdirectory(FreeTypeFont)
-add_subdirectory(HarfBuzzFont)
-add_subdirectory(TgaImporter)
+set(HarfBuzzFont_SRCS
+    HarfBuzzFont.cpp)
+
+set(HarfBuzzFont_HEADERS
+    HarfBuzzFont.h)
+
+corrade_add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
+    HarfBuzzFont.conf ${HarfBuzzFont_SRCS})
+target_link_libraries(HarfBuzzFont
+    ${MAGNUM_LIBRARIES}
+    ${MAGNUM_TEXT_LIBRARIES}
+    ${FREETYPE_LIBRARIES}
+    ${HARFBUZZ_LIBRARIES})
+
+install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)

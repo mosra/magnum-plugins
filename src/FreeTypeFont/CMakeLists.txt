@@ -22,12 +22,22 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED)
+find_package(Magnum REQUIRED Text)
+find_package(Freetype REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+include_directories(${FREETYPE_INCLUDE_DIRS})
 
-add_subdirectory(ColladaImporter)
-add_subdirectory(FreeTypeFont)
-add_subdirectory(HarfBuzzFont)
-add_subdirectory(TgaImporter)
+set(FreeTypeFont_SRCS
+    FreeTypeFont.cpp)
+
+set(FreeTypeFont_HEADERS
+    FreeTypeFont.h)
+
+corrade_add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
+    FreeTypeFont.conf ${FreeTypeFont_SRCS})
+target_link_libraries(FreeTypeFont
+    ${MAGNUM_LIBRARIES}
+    ${MAGNUM_TEXT_LIBRARIES}
+    ${FREETYPE_LIBRARIES})
+
+install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
