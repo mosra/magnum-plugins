@@ -44,9 +44,9 @@ namespace Magnum { namespace Trade { namespace ColladaImporter {
 const QString ColladaImporter::namespaceDeclaration =
     "declare default element namespace \"http://www.collada.org/2005/11/COLLADASchema\";\n";
 
-ColladaImporter::ColladaImporter(): d(nullptr), zero(0), app(qApp ? 0 : new QCoreApplication(zero, 0)) {}
+ColladaImporter::ColladaImporter(): d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
-ColladaImporter::ColladaImporter(AbstractPluginManager* manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? 0 : new QCoreApplication(zero, 0)) {}
+ColladaImporter::ColladaImporter(AbstractPluginManager* manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
 ColladaImporter::~ColladaImporter() {
     close();
@@ -169,7 +169,7 @@ void ColladaImporter::close() {
     if(!d) return;
 
     delete d;
-    d = 0;
+    d = nullptr;
 }
 
 Int ColladaImporter::defaultScene() {
