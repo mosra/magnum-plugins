@@ -29,6 +29,7 @@
 #include FT_FREETYPE_H
 #include <Utility/Unicode.h>
 #include <Image.h>
+#include <ImageFormat.h>
 #include <Text/GlyphCache.h>
 
 namespace Magnum { namespace Text { namespace FreeTypeFont {
@@ -130,7 +131,7 @@ void FreeTypeFont::createGlyphCache(GlyphCache* const cache, const std::string& 
 
     /* Render all characters to the atlas and create character map */
     unsigned char* pixmap = new unsigned char[cache->textureSize().product()]();
-    Image2D image(cache->textureSize(), Image2D::Format::Red, Image2D::Type::UnsignedByte, pixmap);
+    Image2D image(cache->textureSize(), ImageFormat::Red, ImageType::UnsignedByte, pixmap);
     for(std::size_t i = 0; i != charPositions.size(); ++i) {
         /* Load and render glyph */
         /** @todo B&W only if radius != 0 */
