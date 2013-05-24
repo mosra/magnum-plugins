@@ -51,7 +51,7 @@ class ColladaImporter: public AbstractImporter {
         explicit ColladaImporter();
 
         /** @brief Plugin manager constructor */
-        explicit ColladaImporter(Corrade::PluginManager::AbstractPluginManager* manager, std::string plugin);
+        explicit ColladaImporter(PluginManager::AbstractManager* manager, std::string plugin);
 
         virtual ~ColladaImporter();
 
@@ -109,7 +109,7 @@ class ColladaImporter: public AbstractImporter {
             d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/@count/string()").arg(source));
             d->query.evaluateTo(&tmp);
             if(ColladaType<UnsignedInt>::fromString(tmp) != count*size) {
-                Corrade::Utility::Error() << "ColladaImporter: wrong total count in source" << ('"'+id+'"').toStdString();
+                Error() << "ColladaImporter: wrong total count in source" << ('"'+id+'"').toStdString();
                 return output;
             }
 

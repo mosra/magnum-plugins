@@ -24,11 +24,11 @@
 
 #include <TestSuite/Tester.h>
 
-#include "../ColladaType.h"
+#include "ColladaImporter/ColladaType.h"
 
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
-class ColladaTypeTest: public Corrade::TestSuite::Tester {
+class ColladaTypeTest: public TestSuite::Tester {
     public:
         ColladaTypeTest();
 

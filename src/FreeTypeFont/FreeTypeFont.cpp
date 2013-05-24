@@ -68,7 +68,7 @@ void FreeTypeFont::finalize() {
 
 FreeTypeFont::FreeTypeFont(): ftFont(nullptr) {}
 
-FreeTypeFont::FreeTypeFont(Corrade::PluginManager::AbstractPluginManager* manager, std::string plugin): AbstractFont(manager, std::move(plugin)), ftFont(nullptr) {}
+FreeTypeFont::FreeTypeFont(PluginManager::AbstractManager* manager, std::string plugin): AbstractFont(manager, std::move(plugin)), ftFont(nullptr) {}
 
 FreeTypeFont::~FreeTypeFont() { close(); }
 
@@ -110,7 +110,7 @@ void FreeTypeFont::createGlyphCache(GlyphCache* const cache, const std::string& 
     charIndices.push_back(0);
     for(std::size_t i = 0; i != characters.size(); ) {
         UnsignedInt codepoint;
-        std::tie(codepoint, i) = Corrade::Utility::Unicode::nextChar(characters, i);
+        std::tie(codepoint, i) = Utility::Unicode::nextChar(characters, i);
         charIndices.push_back(FT_Get_Char_Index(ftFont, codepoint));
     }
 
@@ -170,7 +170,7 @@ FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const GlyphCache* const cache, 
     glyphs.reserve(text.size());
     for(std::size_t i = 0; i != text.size(); ) {
         UnsignedInt codepoint;
-        std::tie(codepoint, i) = Corrade::Utility::Unicode::nextChar(text, i);
+        std::tie(codepoint, i) = Utility::Unicode::nextChar(text, i);
         glyphs.push_back(FT_Get_Char_Index(font, codepoint));
     }
     _glyphCount = glyphs.size();

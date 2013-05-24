@@ -24,11 +24,12 @@
 
 #include <TestSuite/Tester.h>
 #include <Math/Vector3.h>
-#include "../Utility.h"
+
+#include "ColladaImporter//Utility.h"
 
 namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
 
-class UtilityTest: public Corrade::TestSuite::Tester {
+class UtilityTest: public TestSuite::Tester {
     public:
         UtilityTest();
 

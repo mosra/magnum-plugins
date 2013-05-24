@@ -36,9 +36,6 @@
 
 #include "TgaImporter/TgaImporter.h"
 
-using Corrade::PluginManager::AbstractPluginManager;
-using Corrade::Utility::Directory;
-
 namespace Magnum { namespace Trade { namespace ColladaImporter {
 
 const QString ColladaImporter::namespaceDeclaration =
@@ -46,7 +43,7 @@ const QString ColladaImporter::namespaceDeclaration =
 
 ColladaImporter::ColladaImporter(): d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
-ColladaImporter::ColladaImporter(AbstractPluginManager* manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
+ColladaImporter::ColladaImporter(PluginManager::AbstractManager* manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
 ColladaImporter::~ColladaImporter() {
     close();
@@ -454,7 +451,7 @@ ImageData2D* ColladaImporter::image2D(UnsignedInt id) {
 
     TgaImporter::TgaImporter tgaImporter;
     ImageData2D* image;
-    if(!tgaImporter.openFile(Directory::join(Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
+    if(!tgaImporter.openFile(Corrade::Utility::Directory::join(Corrade::Utility::Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
         return nullptr;
 
     return image;
