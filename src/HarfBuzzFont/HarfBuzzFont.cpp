@@ -140,5 +140,5 @@ std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const Ve
 
 }}}
 
-PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont::HarfBuzzFont,
-                "cz.mosra.magnum.Text.AbstractFont/0.1")
+CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont::HarfBuzzFont,
+    "cz.mosra.magnum.Text.AbstractFont/0.1")
