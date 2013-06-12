@@ -28,6 +28,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <Utility/Unicode.h>
+#include <Context.h>
+#include <Extensions.h>
 #include <Image.h>
 #include <ImageFormat.h>
 #include <Text/GlyphCache.h>
@@ -131,7 +133,14 @@ void FreeTypeFont::createGlyphCache(GlyphCache* const cache, const std::string& 
 
     /* Render all characters to the atlas and create character map */
     unsigned char* pixmap = new unsigned char[cache->textureSize().product()]();
+    /** @todo Some better way for this */
+    #ifndef MAGNUM_TARGET_GLES2
     Image2D image(cache->textureSize(), ImageFormat::Red, ImageType::UnsignedByte, pixmap);
+    #else
+    Image2D image(cache->textureSize(), Context::current() &&
+        Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
+        ImageFormat::Red : ImageFormat::Luminance, ImageType::UnsignedByte, pixmap);
+    #endif
     for(std::size_t i = 0; i != charPositions.size(); ++i) {
         /* Load and render glyph */
         /** @todo B&W only if radius != 0 */
