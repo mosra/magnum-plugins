@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <Containers/Array.h>
 #include <Utility/Unicode.h>
 #include <Context.h>
 #include <Extensions.h>
@@ -74,47 +75,39 @@ FreeTypeFont::FreeTypeFont(PluginManager::AbstractManager* manager, std::string 
 
 FreeTypeFont::~FreeTypeFont() { close(); }
 
-bool FreeTypeFont::open(const std::string& filename, Float size) {
-    close();
+auto FreeTypeFont::doFeatures() const -> Features { return Feature::OpenData; }
 
-    CORRADE_ASSERT(library, "Text::FreeTypeFont::FreeTypeFont::open(): initialize() was not called", false);
-    if(FT_New_Face(library, filename.c_str(), 0, &ftFont) != 0) return false;
+bool FreeTypeFont::FreeTypeFont::doIsOpened() const { return ftFont; }
+
+void FreeTypeFont::doOpenFile(const std::string& filename, const Float size) {
+    CORRADE_ASSERT(library, "Text::FreeTypeFont::FreeTypeFont::open(): initialize() was not called", );
+    if(FT_New_Face(library, filename.c_str(), 0, &ftFont) != 0) return;
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
     _size = size;
-    return true;
 }
 
-bool FreeTypeFont::open(const unsigned char* data, std::size_t dataSize, Float size) {
-    close();
-
-    CORRADE_ASSERT(library, "Text::FreeTypeFont::FreeTypeFont::open(): initialize() was not called", false);
-    if(FT_New_Memory_Face(library, data, dataSize, 0, &ftFont) != 0) return false;
+void FreeTypeFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
+    CORRADE_ASSERT(library, "Text::FreeTypeFont::FreeTypeFont::open(): initialize() was not called", );
+    if(FT_New_Memory_Face(library, data.begin(), data.size(), 0, &ftFont) != 0) return;
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
     _size = size;
-    return true;
 }
 
-void FreeTypeFont::FreeTypeFont::close() {
-    if(!ftFont) return;
+void FreeTypeFont::FreeTypeFont::doClose() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_Face(ftFont) == 0);
     ftFont = nullptr;
     _size = 0.0f;
 }
 
-void FreeTypeFont::createGlyphCache(GlyphCache* const cache, const std::string& characters) {
-    CORRADE_ASSERT(ftFont, "Text::FreeTypeFont::FreeTypeFont::createGlyphCache(): no font opened", );
-
+void FreeTypeFont::doCreateGlyphCache(GlyphCache* const cache, const std::u32string& characters) {
     /** @bug Crash when atlas is too small */
 
     /* Get glyph codes from characters */
     std::vector<FT_UInt> charIndices;
-    charIndices.reserve(characters.size()+1);
-    charIndices.push_back(0);
-    for(std::size_t i = 0; i != characters.size(); ) {
-        UnsignedInt codepoint;
-        std::tie(codepoint, i) = Utility::Unicode::nextChar(characters, i);
-        charIndices.push_back(FT_Get_Char_Index(ftFont, codepoint));
-    }
+    charIndices.resize(characters.size()+1);
+    charIndices[0] = 0;
+    std::transform(characters.begin(), characters.end(), charIndices.begin()+1,
+        [this](const char32_t c) { return FT_Get_Char_Index(ftFont, c); });
 
     /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
     std::sort(charIndices.begin(), charIndices.end());
@@ -166,9 +159,7 @@ void FreeTypeFont::createGlyphCache(GlyphCache* const cache, const std::string& 
     cache->setImage({}, &image);
 }
 
-AbstractLayouter* FreeTypeFont::layout(const GlyphCache* const cache, const Float size, const std::string& text) {
-    CORRADE_ASSERT(ftFont, "Text::FreeTypeFont::FreeTypeFont::layout(): no font opened", nullptr);
-
+AbstractLayouter* FreeTypeFont::doLayout(const GlyphCache* const cache, const Float size, const std::string& text) {
     return new FreeTypeLayouter(ftFont, cache, this->size(), size, text);
 }
 
@@ -216,4 +207,4 @@ std::tuple<Rectangle, Rectangle, Vector2> FreeTypeLayouter::renderGlyph(const Ve
 }}}
 
 CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont::FreeTypeFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.1")
+    "cz.mosra.magnum.Text.AbstractFont/0.2")

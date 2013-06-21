@@ -53,13 +53,14 @@ class HarfBuzzFont: public FreeTypeFont::FreeTypeFont {
 
         ~HarfBuzzFont();
 
-        bool open(const std::string& filename, Float size) override;
-        bool open(const unsigned char* data, std::size_t dataSize, Float size) override;
-        void close() override;
-        AbstractLayouter* layout(const GlyphCache* const cache, const Float size, const std::string& text) override;
-
     private:
-        void MAGNUM_TEXT_LOCAL finishConstruction();
+        Features doFeatures() const override;
+        bool doIsOpened() const override;
+        void doOpenFile(const std::string& filename, Float size) override;
+        void doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
+        void doClose() override;
+        AbstractLayouter* doLayout(const GlyphCache* cache, Float size, const std::string& text) override;
+        void finishConstruction();
 
         hb_font_t* hbFont;
 };

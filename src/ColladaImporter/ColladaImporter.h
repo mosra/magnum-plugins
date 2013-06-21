@@ -55,36 +55,6 @@ class ColladaImporter: public AbstractImporter {
 
         virtual ~ColladaImporter();
 
-        inline Features features() const override { return Feature::OpenFile; }
-
-        bool openFile(const std::string& filename) override;
-        void close() override;
-
-        Int defaultScene() override;
-        inline UnsignedInt sceneCount() const override { return d ? d->scenes.size() : 0; }
-        std::string sceneName(UnsignedInt id) override;
-        SceneData* scene(UnsignedInt id) override;
-
-        inline UnsignedInt object3DCount() const { return d ? d->objects.size() : 0; }
-        Int object3DForName(const std::string& name) override;
-        std::string object3DName(UnsignedInt id) override;
-        ObjectData3D* object3D(UnsignedInt id) override;
-
-        inline UnsignedInt mesh3DCount() const { return d ? d->meshes.size() : 0; }
-        Int mesh3DForName(const std::string& name) override;
-        std::string mesh3DName(UnsignedInt id) override;
-        MeshData3D* mesh3D(UnsignedInt id) override;
-
-        inline UnsignedInt materialCount() const override { return d ? d->materials.size() : 0; }
-        Int materialForName(const std::string& name) override;
-        std::string materialName(UnsignedInt id) override;
-        AbstractMaterialData* material(UnsignedInt id) override;
-
-        inline UnsignedInt image2DCount() const override { return d ? d->images2D.size() : 0; }
-        Int image2DForName(const std::string& name) override;
-        std::string image2DName(UnsignedInt id) override;
-        ImageData2D* image2D(UnsignedInt id) override;
-
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id) {
             std::vector<T> output;
@@ -197,6 +167,37 @@ class ColladaImporter: public AbstractImporter {
                 const std::vector<UnsignedInt>& indices;
                 UnsignedInt stride;
         };
+
+        Features doFeatures() const override;
+
+        bool doIsOpened() const override;
+        void doOpenFile(const std::string& filename) override;
+        void doClose() override;
+
+        Int doDefaultScene() override;
+        UnsignedInt doSceneCount() const override;
+        std::string doSceneName(UnsignedInt id) override;
+        SceneData* doScene(UnsignedInt id) override;
+
+        UnsignedInt doObject3DCount() const override;
+        Int doObject3DForName(const std::string& name) override;
+        std::string doObject3DName(UnsignedInt id) override;
+        ObjectData3D* doObject3D(UnsignedInt id) override;
+
+        UnsignedInt doMesh3DCount() const override;
+        Int doMesh3DForName(const std::string& name) override;
+        std::string doMesh3DName(UnsignedInt id) override;
+        MeshData3D* doMesh3D(UnsignedInt id) override;
+
+        UnsignedInt doMaterialCount() const override;
+        Int doMaterialForName(const std::string& name) override;
+        std::string doMaterialName(UnsignedInt id) override;
+        AbstractMaterialData* doMaterial(UnsignedInt id) override;
+
+        UnsignedInt doImage2DCount() const override;
+        Int doImage2DForName(const std::string& name) override;
+        std::string doImage2DName(UnsignedInt id) override;
+        ImageData2D* doImage2D(UnsignedInt id) override;
 
         /**
          * @brief Offset of attribute in mesh index array

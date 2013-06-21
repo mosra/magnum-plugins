@@ -25,4 +25,4 @@
 #include "ColladaImporter.h"
 
 CORRADE_PLUGIN_REGISTER(ColladaImporter, Magnum::Trade::ColladaImporter::ColladaImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.2.1")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3")

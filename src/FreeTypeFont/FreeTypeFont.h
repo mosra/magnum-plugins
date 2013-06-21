@@ -73,20 +73,25 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
 
         ~FreeTypeFont();
 
-        bool open(const std::string& filename, Float size) override;
-        bool open(const unsigned char* data, std::size_t dataSize, Float size) override;
-        void close() override;
-        void createGlyphCache(GlyphCache* const cache, const std::string& characters) override;
-        AbstractLayouter* layout(const GlyphCache* const cache, const Float size, const std::string& text) override;
-
     #ifdef DOXYGEN_GENERATING_OUTPUT
     private:
     #else
     protected:
     #endif
+        FT_Face ftFont;
+
+        bool doIsOpened() const override;
+        void doOpenFile(const std::string& filename, Float size) override;
+        void doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
+        void doClose() override;
+
+    private:
         static MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
 
-        FT_Face ftFont;
+        Features MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
+        /** @todo Why this can't be defined as local? */
+        void doCreateGlyphCache(GlyphCache* cache, const std::u32string& characters) override;
+        AbstractLayouter MAGNUM_FREETYPEFONT_LOCAL * doLayout(const GlyphCache* cache, Float size, const std::string& text) override;
 };
 
 }}}

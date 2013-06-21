@@ -25,6 +25,7 @@
 #include "HarfBuzzFont.h"
 
 #include <hb-ft.h>
+#include <Containers/Array.h>
 #include <Text/GlyphCache.h>
 
 namespace Magnum { namespace Text { namespace HarfBuzzFont {
@@ -55,26 +56,29 @@ HarfBuzzFont::HarfBuzzFont(PluginManager::AbstractManager* manager, std::string 
 
 HarfBuzzFont::~HarfBuzzFont() { close(); }
 
-bool HarfBuzzFont::open(const std::string& filename, Float size) {
-    close();
+auto HarfBuzzFont::doFeatures() const -> Features { return Feature::OpenData; }
 
-    if(!FreeTypeFont::FreeTypeFont::open(filename, size)) return false;
-    finishConstruction();
-    return true;
+bool HarfBuzzFont::HarfBuzzFont::doIsOpened() const {
+    return FreeTypeFont::FreeTypeFont::doIsOpened() && hbFont;
 }
 
-bool HarfBuzzFont::open(const unsigned char* data, std::size_t dataSize, Float size) {
-    close();
+void HarfBuzzFont::doOpenFile(const std::string& filename, const Float size) {
+    FreeTypeFont::FreeTypeFont::doOpenFile(filename, size);
+    if(!FreeTypeFont::FreeTypeFont::doIsOpened()) return;
 
-    if(!FreeTypeFont::FreeTypeFont::open(data, dataSize, size)) return false;
     finishConstruction();
-    return true;
 }
 
-void HarfBuzzFont::close() {
-    if(!hbFont) return;
+void HarfBuzzFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
+    FreeTypeFont::FreeTypeFont::doOpenSingleData(data, size);
+    if(!FreeTypeFont::FreeTypeFont::doIsOpened()) return;
+
+    finishConstruction();
+}
+
+void HarfBuzzFont::doClose() {
     hb_font_destroy(hbFont);
-    FreeTypeFont::FreeTypeFont::close();
+    FreeTypeFont::FreeTypeFont::doClose();
 }
 
 void HarfBuzzFont::finishConstruction() {
@@ -82,9 +86,7 @@ void HarfBuzzFont::finishConstruction() {
     hbFont = hb_ft_font_create(ftFont, nullptr);
 }
 
-AbstractLayouter* HarfBuzzFont::layout(const GlyphCache* const cache, const Float size, const std::string& text) {
-    CORRADE_ASSERT(hbFont, "Text::HarfBuzzFont::HarfBuzzFont::layout(): no font opened", nullptr);
-
+AbstractLayouter* HarfBuzzFont::doLayout(const GlyphCache* const cache, const Float size, const std::string& text) {
     return new HarfBuzzLayouter(hbFont, cache, this->size(), size, text);
 }
 
@@ -141,4 +143,4 @@ std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const Ve
 }}}
 
 CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont::HarfBuzzFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.1")
+    "cz.mosra.magnum.Text.AbstractFont/0.2")
