@@ -28,6 +28,7 @@
  * @brief Class Magnum::Text::FreeTypeFont::FreeTypeFontRenderer, Magnum::Text::FreeTypeFont::FreeTypeFont
  */
 
+#include <Utility/Visibility.h>
 #include <Text/AbstractFont.h>
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -35,19 +36,14 @@ struct FT_LibraryRec_;
 typedef FT_LibraryRec_* FT_Library;
 struct FT_FaceRec_;
 typedef FT_FaceRec_*  FT_Face;
+#endif
 
-#ifdef _WIN32
-    #ifdef FreeTypeFont_EXPORTS
-        #define MAGNUM_FREETYPEFONT_EXPORT __declspec(dllexport)
-    #else
-        #define MAGNUM_FREETYPEFONT_EXPORT __declspec(dllimport)
-    #endif
-    #define MAGNUM_FREETYPEFONT_LOCAL
+#ifdef FreeTypeFont_EXPORTS
+    #define MAGNUM_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
 #else
-    #define MAGNUM_FREETYPEFONT_EXPORT __attribute__ ((visibility ("default")))
-    #define MAGNUM_FREETYPEFONT_LOCAL __attribute__ ((visibility ("hidden")))
+    #define MAGNUM_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
 #endif
-#endif
+#define MAGNUM_FREETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
 
 namespace Magnum { namespace Text { namespace FreeTypeFont {
 
