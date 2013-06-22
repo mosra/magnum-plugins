@@ -8,19 +8,20 @@
 #  MAGNUM_INCLUDE_DIRS          - Root include dir and include dirs of
 #   dependencies
 #  MAGNUM_PLUGINS_FONT_DIR      - Directory with font plugins
+#  MAGNUM_PLUGINS_FONTCONVERTER_DIR - Directory with font converter plugins
 #  MAGNUM_PLUGINS_IMAGECONVERTER_DIR - Directory with image converter plugins
 #  MAGNUM_PLUGINS_IMPORTER_DIR  - Directory with importer plugins
 # This command will try to find only the base library, not the optional
 # components. The base library depends on Corrade, OpenGL and GLEW
 # libraries. Additional dependencies are specified by the components. The
 # optional components are:
-#  DebugTools       - DebugTools library (depends on MeshTools, Physics,
-#                     Primitives, SceneGraph and Shaders components)
+#  DebugTools       - DebugTools library (depends on MeshTools, Primitives,
+#                     SceneGraph, Shaders and Shapes components)
 #  MeshTools        - MeshTools library
-#  Physics          - Physics library (depends on SceneGraph component)
 #  Primitives       - Primitives library
 #  SceneGraph       - SceneGraph library
 #  Shaders          - Shaders library
+#  Shapes           - Shapes library (depends on SceneGraph component)
 #  Text             - Text library (depends on TextureTools component)
 #  TextureTools     - TextureTools library
 #  GlutApplication  - GLUT application (depends on GLUT library)
@@ -45,13 +46,12 @@
 # / MAGNUM_WINDOWLESSAPPLICATION_INCLUDE_DIRS to simplify porting.
 #
 # Features of found Magnum library are exposed in these variables:
+#  MAGNUM_BUILD_STATIC  - Defined if compiled as static libraries
 #  MAGNUM_TARGET_GLES   - Defined if compiled for OpenGL ES
 #  MAGNUM_TARGET_GLES2  - Defined if compiled for OpenGL ES 2.0
 #  MAGNUM_TARGET_GLES3  - Defined if compiled for OpenGL ES 3.0
 #  MAGNUM_TARGET_DESKTOP_GLES - Defined if compiled with OpenGL ES
 #   emulation on desktop OpenGL
-#  MAGNUM_TARGET_NACL   - Defined if compiled for Google Chrome Native
-#   Client
 #
 # Additionally these variables are defined for internal usage:
 #  MAGNUM_INCLUDE_DIR                   - Root include dir (w/o
@@ -64,6 +64,8 @@
 #  MAGNUM_PLUGINS_INSTALL_DIR           - Plugin installation directory
 #  MAGNUM_PLUGINS_FONT_INSTALL_DIR      - Font plugin installation
 #   directory
+#  MAGNUM_PLUGINS_FONTCONVERTER_INSTALL_DIR - Font converter plugin
+#   installation directory
 #  MAGNUM_PLUGINS_IMAGECONVERTER_INSTALL_DIR - Image converter plugin
 #   installation directory
 #  MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR  - Importer plugin installation
@@ -113,7 +115,10 @@ find_path(MAGNUM_INCLUDE_DIR
 # Configuration
 file(READ ${MAGNUM_INCLUDE_DIR}/magnumConfigure.h _magnumConfigure)
 
-# Built for specific target?
+string(FIND "${_magnumConfigure}" "#define MAGNUM_BUILD_STATIC" _BUILD_STATIC)
+if(NOT _BUILD_STATIC EQUAL -1)
+    set(MAGNUM_BUILD_STATIC 1)
+endif()
 string(FIND "${_magnumConfigure}" "#define MAGNUM_TARGET_GLES" _TARGET_GLES)
 if(NOT _TARGET_GLES EQUAL -1)
     set(MAGNUM_TARGET_GLES 1)
@@ -125,10 +130,6 @@ endif()
 string(FIND "${_magnumConfigure}" "#define MAGNUM_TARGET_GLES3" _TARGET_GLES3)
 if(NOT _TARGET_GLES3 EQUAL -1)
     set(MAGNUM_TARGET_GLES3 1)
-endif()
-string(FIND "${_magnumConfigure}" "#define MAGNUM_TARGET_NACL" _TARGET_NACL)
-if(NOT _TARGET_NACL EQUAL -1)
-    set(MAGNUM_TARGET_NACL 1)
 endif()
 string(FIND "${_magnumConfigure}" "#define MAGNUM_TARGET_DESKTOP_GLES" _TARGET_DESKTOP_GLES)
 if(NOT _TARGET_DESKTOP_GLES EQUAL -1)
@@ -144,11 +145,12 @@ if(NOT MAGNUM_TARGET_GLES)
     find_package(GLEW REQUIRED)
 endif()
 
-# On Windows, *Application libraries need to have ${MAGNUM_LIBRARY} listed
-# in dependencies also after *Application.lib static library name to avoid
-# linker errors
-if(WIN32)
-    set(_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY ${MAGNUM_LIBRARY})
+# On Windows and in static builds, *Application libraries need to have
+# ${MAGNUM_LIBRARIES} listed in dependencies also after all other library names
+# to avoid linker errors. Applicaiton libraries are often last thus it is
+# +- sufficient to add it there only.
+if(WIN32 OR MAGNUM_BUILD_STATIC)
+    set(_WINDOWCONTEXT_MAGNUM_LIBRARIES_DEPENDENCY ${MAGNUM_LIBRARIES})
 endif()
 
 # Additional components
@@ -169,7 +171,7 @@ foreach(component ${Magnum_FIND_COMPONENTS})
         if(${component} STREQUAL GlutApplication)
             find_package(GLUT)
             if(GLUT_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${GLUT_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${GLUT_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARIES_DEPENDENCY})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
@@ -179,20 +181,23 @@ foreach(component ${Magnum_FIND_COMPONENTS})
         if(${component} STREQUAL Sdl2Application)
             find_package(SDL2)
             if(SDL2_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${SDL2_LIBRARY} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${SDL2_LIBRARY} ${_WINDOWCONTEXT_MAGNUM_LIBRARIES_DEPENDENCY})
                 set(_MAGNUM_${_COMPONENT}_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
         endif()
 
-        # NaCl application has no additional dependencies
+        # (Windowless) NaCl application dependencies
+        if(${component} STREQUAL NaClApplication OR ${component} STREQUAL WindowlessNaClApplication)
+            set(_MAGNUM_${_COMPONENT}_LIBRARIES ppapi_cpp ppapi ${_WINDOWCONTEXT_MAGNUM_LIBRARIES_DEPENDENCY})
+        endif()
 
         # GLX application dependencies
-        if(${component} STREQUAL GlxApplication)
+        if(${component} STREQUAL GlxApplication OR ${component} STREQUAL WindowlessGlxApplication)
             find_package(X11)
             if(X11_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${X11_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${X11_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARIES_DEPENDENCY})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
@@ -203,17 +208,7 @@ foreach(component ${Magnum_FIND_COMPONENTS})
             find_package(EGL)
             find_package(X11)
             if(EGL_FOUND AND X11_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${EGL_LIBRARY} ${X11_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
-            else()
-                unset(MAGNUM_${_COMPONENT}_LIBRARY)
-            endif()
-        endif()
-
-        # Windowless GLX application dependencies
-        if(${component} STREQUAL WindowlessGlxApplication)
-            find_package(X11)
-            if(X11_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${X11_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARY_DEPENDENCY})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${EGL_LIBRARY} ${X11_LIBRARIES} ${_WINDOWCONTEXT_MAGNUM_LIBRARIES_DEPENDENCY})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
@@ -222,17 +217,12 @@ foreach(component ${Magnum_FIND_COMPONENTS})
 
     # DebugTools library
     if(${component} STREQUAL DebugTools)
-        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Profiler.h)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES DebugTools.h)
     endif()
 
     # Mesh tools library
     if(${component} STREQUAL MeshTools)
         set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES CompressIndices.h)
-    endif()
-
-    # Physics library
-    if(${component} STREQUAL Physics)
-        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES AbstractShape.h)
     endif()
 
     # Primitives library
@@ -242,17 +232,22 @@ foreach(component ${Magnum_FIND_COMPONENTS})
 
     # Scene graph library
     if(${component} STREQUAL SceneGraph)
-        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Scene.h)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES SceneGraph.h)
     endif()
 
     # Shaders library
     if(${component} STREQUAL Shaders)
-        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES PhongShader.h)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Shaders.h)
+    endif()
+
+    # Shapes library
+    if(${component} STREQUAL Shapes)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Shapes.h)
     endif()
 
     # Text library
     if(${component} STREQUAL Text)
-        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES AbstractFont.h)
+        set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES Text.h)
     endif()
 
     # TextureTools library
@@ -326,6 +321,7 @@ endif()
 set(MAGNUM_LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX})
 set(MAGNUM_PLUGINS_INSTALL_DIR ${MAGNUM_LIBRARY_INSTALL_DIR}/magnum)
 set(MAGNUM_PLUGINS_FONT_INSTALL_DIR ${MAGNUM_PLUGINS_INSTALL_DIR}/fonts)
+set(MAGNUM_PLUGINS_FONTCONVERTER_INSTALL_DIR ${MAGNUM_PLUGINS_INSTALL_DIR}/fontconverters)
 set(MAGNUM_PLUGINS_IMAGECONVERTER_INSTALL_DIR ${MAGNUM_PLUGINS_INSTALL_DIR}/imageconverters)
 set(MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR ${MAGNUM_PLUGINS_INSTALL_DIR}/importers)
 set(MAGNUM_CMAKE_MODULE_INSTALL_DIR ${CMAKE_ROOT}/Modules)
@@ -337,6 +333,7 @@ mark_as_advanced(FORCE
     MAGNUM_LIBRARY_INSTALL_DIR
     MAGNUM_PLUGINS_INSTALL_DIR
     MAGNUM_PLUGINS_FONT_INSTALL_DIR
+    MAGNUM_PLUGINS_FONTCONVERTER_INSTALL_DIR
     MAGNUM_PLUGINS_IMAGECONVERTER_INSTALL_DIR
     MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR
     MAGNUM_CMAKE_MODULE_INSTALL_DIR
@@ -346,10 +343,12 @@ mark_as_advanced(FORCE
 # Plugin directories
 if(NOT WIN32)
     set(MAGNUM_PLUGINS_FONT_DIR ${MAGNUM_PLUGINS_INSTALL_DIR}/fonts)
+    set(MAGNUM_PLUGINS_FONTCONVERTER_DIR ${MAGNUM_PLUGINS_INSTALL_DIR}/fontconverters)
     set(MAGNUM_PLUGINS_IMAGECONVERTER_DIR ${MAGNUM_PLUGINS_INSTALL_DIR}/imageconverters)
     set(MAGNUM_PLUGINS_IMPORTER_DIR ${MAGNUM_PLUGINS_INSTALL_DIR}/importers)
 else()
     set(MAGNUM_PLUGINS_FONT_DIR fonts)
+    set(MAGNUM_PLUGINS_FONTCONVERTER_DIR fontconverters)
     set(MAGNUM_PLUGINS_IMAGECONVERTER_DIR imageconverters)
     set(MAGNUM_PLUGINS_IMPORTER_DIR importers)
 endif()
