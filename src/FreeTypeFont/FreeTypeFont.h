@@ -39,11 +39,11 @@ typedef FT_FaceRec_*  FT_Face;
 #endif
 
 #ifdef FreeTypeFont_EXPORTS
-    #define MAGNUM_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
+    #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
 #else
-    #define MAGNUM_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
+    #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
 #endif
-#define MAGNUM_FREETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
+#define MAGNUM_TEXT_FREETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
 
 namespace Magnum { namespace Text {
 
@@ -53,7 +53,7 @@ namespace Magnum { namespace Text {
 The font can be created either from file or from memory location of format
 supported by [FreeType](http://www.freetype.org/) library.
 */
-class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
+class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     public:
         /** @brief Initialize FreeType library */
         static void initialize();
@@ -82,12 +82,12 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         void doClose() override;
 
     private:
-        static MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
+        static MAGNUM_TEXT_FREETYPEFONT_LOCAL FT_Library library;
 
-        Features MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
+        Features MAGNUM_TEXT_FREETYPEFONT_LOCAL doFeatures() const override;
         /** @todo Why this can't be defined as local? */
         void doCreateGlyphCache(GlyphCache* cache, const std::u32string& characters) override;
-        AbstractLayouter MAGNUM_FREETYPEFONT_LOCAL * doLayout(const GlyphCache* cache, Float size, const std::string& text) override;
+        AbstractLayouter MAGNUM_TEXT_FREETYPEFONT_LOCAL * doLayout(const GlyphCache* cache, Float size, const std::string& text) override;
 };
 
 }}
