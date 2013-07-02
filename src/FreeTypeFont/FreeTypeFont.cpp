@@ -128,11 +128,10 @@ void FreeTypeFont::doCreateGlyphCache(GlyphCache* const cache, const std::u32str
     unsigned char* pixmap = new unsigned char[cache->textureSize().product()]();
     /** @todo Some better way for this */
     #ifndef MAGNUM_TARGET_GLES2
-    Image2D image(cache->textureSize(), ImageFormat::Red, ImageType::UnsignedByte, pixmap);
+    Image2D image(ImageFormat::Red, ImageType::UnsignedByte, cache->textureSize(), pixmap);
     #else
-    Image2D image(cache->textureSize(), Context::current() &&
-        Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-        ImageFormat::Red : ImageFormat::Luminance, ImageType::UnsignedByte, pixmap);
+    Image2D image(Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
+        ImageFormat::Red : ImageFormat::Luminance, ImageType::UnsignedByte, cache->textureSize(), pixmap);
     #endif
     for(std::size_t i = 0; i != charPositions.size(); ++i) {
         /* Load and render glyph */
@@ -156,7 +155,7 @@ void FreeTypeFont::doCreateGlyphCache(GlyphCache* const cache, const std::u32str
     }
 
     /* Set cache image */
-    cache->setImage({}, &image);
+    cache->setImage({}, image);
 }
 
 AbstractLayouter* FreeTypeFont::doLayout(const GlyphCache* const cache, const Float size, const std::string& text) {
