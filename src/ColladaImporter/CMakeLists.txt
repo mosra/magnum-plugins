@@ -31,9 +31,7 @@ set(ColladaImporter_SRCS
     ColladaImporter.cpp)
 
 set(ColladaImporter_HEADERS
-    ColladaImporter.h
-    ColladaType.h
-    Utility.h)
+    ColladaImporter.h)
 
 add_library(ColladaImporterObjects OBJECT ${ColladaImporter_SRCS})
 set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})

@@ -25,9 +25,9 @@
 #include <TestSuite/Tester.h>
 #include <Math/Vector3.h>
 
-#include "ColladaImporter//Utility.h"
+#include "ColladaImporter/Utility.h"
 
-namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
+namespace Magnum { namespace Trade { namespace Test {
 
 class UtilityTest: public TestSuite::Tester {
     public:
@@ -44,41 +44,41 @@ UtilityTest::UtilityTest() {
 
 void UtilityTest::parseVector() {
     /* Extremely spaceless */
-    CORRADE_COMPARE((Utility::parseVector<Math::Vector<1, Float>>("3.14")[0]), 3.14f);
+    CORRADE_COMPARE((Implementation::Utility::parseVector<Math::Vector<1, Float>>("3.14")[0]), 3.14f);
 
     /* Spaces */
-    CORRADE_COMPARE(Utility::parseVector<Vector2>("     2.17  3.28  "), Vector2(2.17f, 3.28f));
+    CORRADE_COMPARE(Implementation::Utility::parseVector<Vector2>("     2.17  3.28  "), Vector2(2.17f, 3.28f));
 
     /* Nothing */
-    CORRADE_COMPARE(Utility::parseVector<Vector2>(""), Vector2());
-    CORRADE_COMPARE(Utility::parseVector<Vector2>("    "), Vector2());
+    CORRADE_COMPARE(Implementation::Utility::parseVector<Vector2>(""), Vector2());
+    CORRADE_COMPARE(Implementation::Utility::parseVector<Vector2>("    "), Vector2());
 
     /* Different size */
-    CORRADE_COMPARE(Utility::parseVector<Vector3>("2.17 3.28"), Vector3(2.17f, 3.28f, 0.0f));
-    CORRADE_COMPARE(Utility::parseVector<Vector3>("2.17 3.28 5.15", 2), Vector3(2.17f, 3.28f, 0.0f));
+    CORRADE_COMPARE(Implementation::Utility::parseVector<Vector3>("2.17 3.28"), Vector3(2.17f, 3.28f, 0.0f));
+    CORRADE_COMPARE(Implementation::Utility::parseVector<Vector3>("2.17 3.28 5.15", 2), Vector3(2.17f, 3.28f, 0.0f));
 
     /* Moving from value */
     int from;
-    Utility::parseVector<Vector2>("2.17 3.28", &(from = 0));
+    Implementation::Utility::parseVector<Vector2>("2.17 3.28", &(from = 0));
     CORRADE_COMPARE(from, 9);
 
     /* Different start */
-    CORRADE_COMPARE(Utility::parseVector<Vector2>("2.17 3.28", &(from = 5)), Vector2(3.28f, 0.0f));
+    CORRADE_COMPARE(Implementation::Utility::parseVector<Vector2>("2.17 3.28", &(from = 5)), Vector2(3.28f, 0.0f));
     CORRADE_COMPARE(from, 9);
 }
 
 void UtilityTest::parseArray() {
     /* Extremely spaceless */
-    CORRADE_COMPARE(Utility::parseArray<Float>("3.14", 1), (std::vector<Float>{3.14f}));
+    CORRADE_COMPARE(Implementation::Utility::parseArray<Float>("3.14", 1), (std::vector<Float>{3.14f}));
 
     /* Spaces */
-    CORRADE_COMPARE(Utility::parseArray<Float>("     2.17  3.28  ", 2), (std::vector<Float>{2.17f, 3.28f}));
+    CORRADE_COMPARE(Implementation::Utility::parseArray<Float>("     2.17  3.28  ", 2), (std::vector<Float>{2.17f, 3.28f}));
 
     /* Different size */
-    CORRADE_COMPARE(Utility::parseArray<Float>("2.17 3.28", 3), (std::vector<Float>{2.17f, 3.28f, 0.0f}));
-    CORRADE_COMPARE(Utility::parseArray<Float>("2.17 3.28 5.15", 2), (std::vector<Float>{2.17f, 3.28f}));
+    CORRADE_COMPARE(Implementation::Utility::parseArray<Float>("2.17 3.28", 3), (std::vector<Float>{2.17f, 3.28f, 0.0f}));
+    CORRADE_COMPARE(Implementation::Utility::parseArray<Float>("2.17 3.28 5.15", 2), (std::vector<Float>{2.17f, 3.28f}));
 }
 
-}}}}
+}}}
 
-CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::UtilityTest)
+CORRADE_TEST_MAIN(Magnum::Trade::Test::UtilityTest)

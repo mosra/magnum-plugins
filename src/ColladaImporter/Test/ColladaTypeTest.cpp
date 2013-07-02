@@ -26,7 +26,7 @@
 
 #include "ColladaImporter/ColladaType.h"
 
-namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
+namespace Magnum { namespace Trade { namespace Test {
 
 class ColladaTypeTest: public TestSuite::Tester {
     public:
@@ -42,13 +42,13 @@ ColladaTypeTest::ColladaTypeTest() {
 }
 
 void ColladaTypeTest::gluint() {
-    CORRADE_COMPARE(ColladaType<UnsignedInt>::fromString("123456"), 123456);
+    CORRADE_COMPARE(Implementation::ColladaType<UnsignedInt>::fromString("123456"), 123456);
 }
 
 void ColladaTypeTest::glfloat() {
-    CORRADE_COMPARE(ColladaType<Float>::fromString("3.14"), 3.14f);
+    CORRADE_COMPARE(Implementation::ColladaType<Float>::fromString("3.14"), 3.14f);
 }
 
-}}}}
+}}}
 
-CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaTypeTest)
+CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaTypeTest)

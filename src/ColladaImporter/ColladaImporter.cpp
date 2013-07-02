@@ -36,7 +36,7 @@
 
 #include "TgaImporter/TgaImporter.h"
 
-namespace Magnum { namespace Trade { namespace ColladaImporter {
+namespace Magnum { namespace Trade {
 
 const QString ColladaImporter::namespaceDeclaration =
     "declare default element namespace \"http://www.collada.org/2005/11/COLLADASchema\";\n";
@@ -100,12 +100,12 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     /* Scenes */
     query.setQuery(namespaceDeclaration + "count(/COLLADA/library_visual_scenes/visual_scene)");
     query.evaluateTo(&tmp);
-    d->scenes.resize(ColladaType<UnsignedInt>::fromString(tmp));
+    d->scenes.resize(Implementation::ColladaType<UnsignedInt>::fromString(tmp));
 
     /* Objects */
     query.setQuery(namespaceDeclaration + "count(/COLLADA/library_visual_scenes/visual_scene//node)");
     query.evaluateTo(&tmp);
-    d->objects.resize(ColladaType<UnsignedInt>::fromString(tmp));
+    d->objects.resize(Implementation::ColladaType<UnsignedInt>::fromString(tmp));
 
     QStringList tmpList;
 
@@ -225,12 +225,12 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
     QString tmp;
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/@count/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
-    UnsignedInt polygonCount = ColladaType<UnsignedInt>::fromString(tmp);
+    UnsignedInt polygonCount = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
 
     /* Get vertex count per polygon */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/vcount/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
-    std::vector<UnsignedInt> vertexCountPerFace = Utility::parseArray<UnsignedInt>(tmp, polygonCount);
+    std::vector<UnsignedInt> vertexCountPerFace = Implementation::Utility::parseArray<UnsignedInt>(tmp, polygonCount);
 
     UnsignedInt vertexCount = 0;
     std::vector<UnsignedInt> quads;
@@ -249,12 +249,12 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
     /* Get input count per vertex */
     d->query.setQuery((namespaceDeclaration + "count(/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input)").arg(id+1));
     d->query.evaluateTo(&tmp);
-    UnsignedInt stride = ColladaType<UnsignedInt>::fromString(tmp);
+    UnsignedInt stride = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
 
     /* Get mesh indices */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/p/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
-    std::vector<UnsignedInt> originalIndices = Utility::parseArray<UnsignedInt>(tmp, vertexCount*stride);
+    std::vector<UnsignedInt> originalIndices = Implementation::Utility::parseArray<UnsignedInt>(tmp, vertexCount*stride);
 
     /** @todo assert size()%stride == 0 */
 
@@ -369,22 +369,22 @@ AbstractMaterialData* ColladaImporter::doMaterial(const UnsignedInt id) {
     /* Ambient color */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Vector3 ambientColor = Utility::parseVector<Vector3>(tmp);
+    Vector3 ambientColor = Implementation::Utility::parseVector<Vector3>(tmp);
 
     /* Diffuse color */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Vector3 diffuseColor = Utility::parseVector<Vector3>(tmp);
+    Vector3 diffuseColor = Implementation::Utility::parseVector<Vector3>(tmp);
 
     /* Specular color */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Vector3 specularColor = Utility::parseVector<Vector3>(tmp);
+    Vector3 specularColor = Implementation::Utility::parseVector<Vector3>(tmp);
 
     /* Shininess */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/shininess/float/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Float shininess = ColladaType<Float>::fromString(tmp);
+    Float shininess = Implementation::ColladaType<Float>::fromString(tmp);
 
     /** @todo Emission, IOR */
 
@@ -414,9 +414,9 @@ ImageData2D* ColladaImporter::doImage2D(const UnsignedInt id) {
         return nullptr;
     }
 
-    TgaImporter::TgaImporter tgaImporter;
+    TgaImporter tgaImporter;
     ImageData2D* image;
-    if(!tgaImporter.openFile(Corrade::Utility::Directory::join(Corrade::Utility::Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
+    if(!tgaImporter.openFile(Utility::Directory::join(Utility::Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
         return nullptr;
 
     return image;
@@ -429,7 +429,7 @@ UnsignedInt ColladaImporter::attributeOffset(UnsignedInt meshId, const QString& 
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@offset/string()")
         .arg(meshId+1).arg(attribute).arg(id+1));
     d->query.evaluateTo(&tmp);
-    return ColladaType<UnsignedInt>::fromString(tmp);
+    return Implementation::ColladaType<UnsignedInt>::fromString(tmp);
 }
 
 void ColladaImporter::parseScenes() {
@@ -481,18 +481,18 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         QString type = tmpList[i].trimmed();
         /* Translation */
         if(type == "translate")
-            transformation = transformation*Matrix4::translation(Utility::parseVector<Vector3>(tmpList2[i]));
+            transformation = transformation*Matrix4::translation(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* Rotation */
         else if(type == "rotate") {
             int pos = 0;
-            Vector3 axis = Utility::parseVector<Vector3>(tmpList2[i], &pos);
-            Deg angle(ColladaType<Float>::fromString(tmpList2[i].mid(pos)));
+            Vector3 axis = Implementation::Utility::parseVector<Vector3>(tmpList2[i], &pos);
+            Deg angle(Implementation::ColladaType<Float>::fromString(tmpList2[i].mid(pos)));
             transformation = transformation*Matrix4::rotation(angle, axis);
 
         /* Scaling */
         } else if(type == "scale")
-            transformation = transformation*Matrix4::scaling(Utility::parseVector<Vector3>(tmpList2[i]));
+            transformation = transformation*Matrix4::scaling(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* It shouldn't get here */
         else CORRADE_ASSERT(0, ("ColladaImporter: unknown translation " + type).toStdString(), id);
@@ -588,4 +588,4 @@ std::string ColladaImporter::instanceName(const QString& name, const QString& in
     return tmp.trimmed().mid(1).toStdString();
 }
 
-}}}
+}}

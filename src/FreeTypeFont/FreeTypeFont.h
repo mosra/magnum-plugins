@@ -1,5 +1,5 @@
-#ifndef Magnum_Text_FreeTypeFont_FreeTypeFont_h
-#define Magnum_Text_FreeTypeFont_FreeTypeFont_h
+#ifndef Magnum_Text_FreeTypeFont_h
+#define Magnum_Text_FreeTypeFont_h
 /*
     This file is part of Magnum.
 
@@ -25,7 +25,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Text::FreeTypeFont::FreeTypeFontRenderer, Magnum::Text::FreeTypeFont::FreeTypeFont
+ * @brief Class Magnum::Text::FreeTypeFont
  */
 
 #include <Utility/Visibility.h>
@@ -45,7 +45,7 @@ typedef FT_FaceRec_*  FT_Face;
 #endif
 #define MAGNUM_FREETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
 
-namespace Magnum { namespace Text { namespace FreeTypeFont {
+namespace Magnum { namespace Text {
 
 /**
 @brief FreeType font
@@ -90,6 +90,6 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         AbstractLayouter MAGNUM_FREETYPEFONT_LOCAL * doLayout(const GlyphCache* cache, Float size, const std::string& text) override;
 };
 
-}}}
+}}
 
 #endif

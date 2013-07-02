@@ -24,5 +24,5 @@
 
 #include "ColladaImporter.h"
 
-CORRADE_PLUGIN_REGISTER(ColladaImporter, Magnum::Trade::ColladaImporter::ColladaImporter,
+CORRADE_PLUGIN_REGISTER(ColladaImporter, Magnum::Trade::ColladaImporter,
     "cz.mosra.magnum.Trade.AbstractImporter/0.3")

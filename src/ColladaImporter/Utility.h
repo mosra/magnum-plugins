@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_ColladaImporter_Utility_h
-#define Magnum_Trade_ColladaImporter_Utility_h
+#ifndef Magnum_Trade_Implementation_Utility_h
+#define Magnum_Trade_Implementation_Utility_h
 /*
     This file is part of Magnum.
 
@@ -24,20 +24,13 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @file
- * @brief Class Magnum::Trade::ColladaImporter::Utility
- */
-
 #include <vector>
 #include <QtCore/QString>
 
 #include "ColladaType.h"
 
-namespace Magnum { namespace Trade { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace Implementation {
 
-/**
-@brief %Utility functions for parsing
-*/
 class Utility {
     public:
         /**

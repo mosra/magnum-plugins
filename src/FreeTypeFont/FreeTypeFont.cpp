@@ -35,7 +35,7 @@
 #include <ImageFormat.h>
 #include <Text/GlyphCache.h>
 
-namespace Magnum { namespace Text { namespace FreeTypeFont {
+namespace Magnum { namespace Text {
 
 namespace {
 
@@ -77,23 +77,23 @@ FreeTypeFont::~FreeTypeFont() { close(); }
 
 auto FreeTypeFont::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool FreeTypeFont::FreeTypeFont::doIsOpened() const { return ftFont; }
+bool FreeTypeFont::doIsOpened() const { return ftFont; }
 
 void FreeTypeFont::doOpenFile(const std::string& filename, const Float size) {
-    CORRADE_ASSERT(library, "Text::FreeTypeFont::FreeTypeFont::open(): initialize() was not called", );
+    CORRADE_ASSERT(library, "Text::FreeTypeFont::open(): initialize() was not called", );
     if(FT_New_Face(library, filename.c_str(), 0, &ftFont) != 0) return;
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
     _size = size;
 }
 
 void FreeTypeFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
-    CORRADE_ASSERT(library, "Text::FreeTypeFont::FreeTypeFont::open(): initialize() was not called", );
+    CORRADE_ASSERT(library, "Text::FreeTypeFont::open(): initialize() was not called", );
     if(FT_New_Memory_Face(library, data.begin(), data.size(), 0, &ftFont) != 0) return;
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
     _size = size;
 }
 
-void FreeTypeFont::FreeTypeFont::doClose() {
+void FreeTypeFont::doClose() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_Face(ftFont) == 0);
     ftFont = nullptr;
     _size = 0.0f;
@@ -204,7 +204,7 @@ std::tuple<Rectangle, Rectangle, Vector2> FreeTypeLayouter::renderGlyph(const Ve
 
 }
 
-}}}
+}}
 
-CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont::FreeTypeFont,
+CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont,
     "cz.mosra.magnum.Text.AbstractFont/0.2")

@@ -35,7 +35,7 @@
 #include "ColladaImporter/ColladaImporter.h"
 #include "ColladaImporterTestConfigure.h"
 
-namespace Magnum { namespace Trade { namespace ColladaImporter { namespace Test {
+namespace Magnum { namespace Trade { namespace Test {
 
 class ColladaImporterTest: public TestSuite::Tester {
     public:
@@ -330,6 +330,6 @@ void ColladaImporterTest::image() {
     delete image;
 }
 
-}}}}
+}}}
 
-CORRADE_TEST_MAIN(Magnum::Trade::ColladaImporter::Test::ColladaImporterTest)
+CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaImporterTest)

@@ -28,7 +28,7 @@
 #include <Containers/Array.h>
 #include <Text/GlyphCache.h>
 
-namespace Magnum { namespace Text { namespace HarfBuzzFont {
+namespace Magnum { namespace Text {
 
 namespace {
 
@@ -58,27 +58,27 @@ HarfBuzzFont::~HarfBuzzFont() { close(); }
 
 auto HarfBuzzFont::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool HarfBuzzFont::HarfBuzzFont::doIsOpened() const {
-    return FreeTypeFont::FreeTypeFont::doIsOpened() && hbFont;
+bool HarfBuzzFont::doIsOpened() const {
+    return FreeTypeFont::doIsOpened() && hbFont;
 }
 
 void HarfBuzzFont::doOpenFile(const std::string& filename, const Float size) {
-    FreeTypeFont::FreeTypeFont::doOpenFile(filename, size);
-    if(!FreeTypeFont::FreeTypeFont::doIsOpened()) return;
+    FreeTypeFont::doOpenFile(filename, size);
+    if(!FreeTypeFont::doIsOpened()) return;
 
     finishConstruction();
 }
 
 void HarfBuzzFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
-    FreeTypeFont::FreeTypeFont::doOpenSingleData(data, size);
-    if(!FreeTypeFont::FreeTypeFont::doIsOpened()) return;
+    FreeTypeFont::doOpenSingleData(data, size);
+    if(!FreeTypeFont::doIsOpened()) return;
 
     finishConstruction();
 }
 
 void HarfBuzzFont::doClose() {
     hb_font_destroy(hbFont);
-    FreeTypeFont::FreeTypeFont::doClose();
+    FreeTypeFont::doClose();
 }
 
 void HarfBuzzFont::finishConstruction() {
@@ -140,7 +140,7 @@ std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const Ve
 
 }
 
-}}}
+}}
 
-CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont::HarfBuzzFont,
+CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont,
     "cz.mosra.magnum.Text.AbstractFont/0.2")

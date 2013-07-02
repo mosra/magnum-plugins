@@ -1,5 +1,5 @@
-#ifndef Magnum_Text_HarfBuzzFont_HarfBuzzFont_h
-#define Magnum_Text_HarfBuzzFont_HarfBuzzFont_h
+#ifndef Magnum_Text_HarfBuzzFont_h
+#define Magnum_Text_HarfBuzzFont_h
 /*
     This file is part of Magnum.
 
@@ -25,7 +25,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Text::HarfBuzzFont::HarfBuzzFont
+ * @brief Class Magnum::Text::HarfBuzzFont
  */
 
 #include "FreeTypeFont/FreeTypeFont.h"
@@ -34,7 +34,7 @@
 struct hb_font_t;
 #endif
 
-namespace Magnum { namespace Text { namespace HarfBuzzFont {
+namespace Magnum { namespace Text {
 
 /**
 @brief HarfBuzz font
@@ -65,6 +65,6 @@ class HarfBuzzFont: public FreeTypeFont::FreeTypeFont {
         hb_font_t* hbFont;
 };
 
-}}}
+}}
 
 #endif

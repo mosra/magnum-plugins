@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_ColladaImporter_ColladaType_h
-#define Magnum_Trade_ColladaImporter_ColladaType_h
+#ifndef Magnum_Trade_Implementation_ColladaType_h
+#define Magnum_Trade_Implementation_ColladaType_h
 /*
     This file is part of Magnum.
 
@@ -24,26 +24,14 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @file
- * @brief Class Magnum::Trade::ColladaImporter::ColladaType
- */
-
 #include "Magnum.h"
 
 #include <QtCore/QString>
 
-namespace Magnum { namespace Trade { namespace ColladaImporter {
+namespace Magnum { namespace Trade { namespace Implementation {
 
-/**
-@brief Class for dealing with Collada types
-*/
 template<class T> struct ColladaType {
     #ifdef DOXYGEN_GENERATING_OUTPUT
-    /**
-     * @brief Convert type from string
-     *
-     * Not implemented for unknown types.
-     */
     static T fromString(const QString& str);
     #endif
 };

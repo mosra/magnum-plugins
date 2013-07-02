@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_ColladaImporter_ColladaImporter_h
-#define Magnum_Trade_ColladaImporter_ColladaImporter_h
+#ifndef Magnum_Trade_ColladaImporter_h
+#define Magnum_Trade_ColladaImporter_h
 /*
     This file is part of Magnum.
 
@@ -25,7 +25,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Trade::ColladaImporter::ColladaImporter
+ * @brief Class Magnum::Trade::ColladaImporter
  */
 
 #include "Trade/AbstractImporter.h"
@@ -38,7 +38,7 @@
 #include "ColladaType.h"
 #include "Utility.h"
 
-namespace Magnum { namespace Trade { namespace ColladaImporter {
+namespace Magnum { namespace Trade {
 
 class ColladaMeshData;
 
@@ -63,12 +63,12 @@ class ColladaImporter: public AbstractImporter {
             /* Count of items */
             d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@count/string()").arg(id));
             d->query.evaluateTo(&tmp);
-            UnsignedInt count = ColladaType<UnsignedInt>::fromString(tmp);
+            UnsignedInt count = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
 
             /* Size of each item */
             d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
             d->query.evaluateTo(&tmp);
-            UnsignedInt size = ColladaType<UnsignedInt>::fromString(tmp);
+            UnsignedInt size = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
 
             /* Data source */
             d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@source/string()").arg(id));
@@ -78,7 +78,7 @@ class ColladaImporter: public AbstractImporter {
             /* Verify total count */
             d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/@count/string()").arg(source));
             d->query.evaluateTo(&tmp);
-            if(ColladaType<UnsignedInt>::fromString(tmp) != count*size) {
+            if(Implementation::ColladaType<UnsignedInt>::fromString(tmp) != count*size) {
                 Error() << "ColladaImporter: wrong total count in source" << ('"'+id+'"').toStdString();
                 return output;
             }
@@ -92,7 +92,7 @@ class ColladaImporter: public AbstractImporter {
             output.reserve(count);
             Int from = 0;
             for(std::size_t i = 0; i != count; ++i)
-                output.push_back(Utility::parseVector<T>(tmp, &from, size));
+                output.push_back(Implementation::Utility::parseVector<T>(tmp, &from, size));
 
             return output;
         }
@@ -272,6 +272,6 @@ class ColladaImporter: public AbstractImporter {
         QCoreApplication* app;
 };
 
-}}}
+}}
 
 #endif
