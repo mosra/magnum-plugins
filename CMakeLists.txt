@@ -27,6 +27,7 @@ cmake_minimum_required(VERSION 2.8.8)
 project(MagnumPlugins)
 
 # This is needed for sure
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/modules/")
 find_package(Magnum REQUIRED)
 
 include(CMakeDependentOption)
@@ -49,8 +50,6 @@ cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code." OFF "B
 if(BUILD_TESTS)
     enable_testing()
 endif()
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/modules/")
 
 if(BUILD_GL_TESTS)
     if(UNIX AND (NOT MAGNUM_TARGET_GLES OR MAGNUM_TARGET_DESKTOP_GLES))
