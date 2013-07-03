@@ -22,39 +22,6 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED Text)
-find_package(Freetype REQUIRED)
-find_package(HarfBuzz REQUIRED)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/../../FreeTypeFont/Test/)
 
-include_directories(${FREETYPE_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS})
-
-set(HarfBuzzFont_SRCS
-    HarfBuzzFont.cpp)
-
-set(HarfBuzzFont_HEADERS
-    HarfBuzzFont.h)
-
-add_library(HarfBuzzFontObjects OBJECT ${HarfBuzzFont_SRCS})
-set_target_properties(HarfBuzzFontObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})
-
-corrade_add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
-    HarfBuzzFont.conf
-    $<TARGET_OBJECTS:HarfBuzzFontObjects>
-    pluginRegistrationHarfBuzzFont.cpp)
-target_link_libraries(HarfBuzzFont
-    ${MAGNUM_LIBRARIES}
-    ${MAGNUM_TEXT_LIBRARIES}
-    ${FREETYPE_LIBRARIES}
-    ${HARFBUZZ_LIBRARIES})
-
-install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
-
-if(BUILD_GL_TESTS)
-    add_library(HarfBuzzFontTestLib $<TARGET_OBJECTS:HarfBuzzFontObjects>)
-    target_link_libraries(HarfBuzzFontTestLib
-        ${MAGNUM_LIBRARIES}
-        ${MAGNUM_TEXT_LIBRARIES}
-        ${FREETYPE_LIBRARIES}
-        ${HARFBUZZ_LIBRARIES})
-    add_subdirectory(Test)
-endif()
+corrade_add_test(HarfBuzzFontTest HarfBuzzFontTest.cpp LIBRARIES HarfBuzzFontTestLib FreeTypeFontTestLib ${GL_TEST_LIBRARIES})
