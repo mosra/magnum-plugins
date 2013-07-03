@@ -37,7 +37,7 @@ class HarfBuzzLayouter: public AbstractLayouter {
         explicit HarfBuzzLayouter(hb_font_t* const font, const GlyphCache* const cache, const Float fontSize, const Float textSize, const std::string& text);
         ~HarfBuzzLayouter();
 
-        std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const Vector2& cursorPosition, const UnsignedInt i) override;
+        std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const UnsignedInt i) override;
 
     private:
         const hb_font_t* const font;
@@ -112,28 +112,30 @@ HarfBuzzLayouter::~HarfBuzzLayouter() {
     hb_buffer_destroy(buffer);
 }
 
-std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const Vector2& cursorPosition, const UnsignedInt i) {
+std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Rectanglei rectangle;
     std::tie(position, rectangle) = (*cache)[glyphInfo[i].codepoint];
 
-    Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
-                                                    Vector2(rectangle.size())/fontSize);
-    Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache->textureSize(),
-                                 Vector2(rectangle.topRight())/cache->textureSize());
+    const Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
+                                                          Vector2(rectangle.size())/fontSize);
+    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache->textureSize(),
+                                       Vector2(rectangle.topRight())/cache->textureSize());
 
-    /* Glyph offset and advance to next glyph in normalized coordinates */
-    Vector2 offset = Vector2(glyphPositions[i].x_offset,
-                             glyphPositions[i].y_offset)/(64*fontSize);
-    Vector2 advance = Vector2(glyphPositions[i].x_advance,
-                              glyphPositions[i].y_advance)/(64*fontSize);
+    /* Glyph offset in normalized coordinates */
+    const Vector2 offset = Vector2(glyphPositions[i].x_offset,
+                                   glyphPositions[i].y_offset)/(64*fontSize);
 
     /* Absolute quad position, composed from cursor position, glyph offset
-        and texture position, denormalized to requested text size */
-    Rectangle quadPosition = Rectangle::fromSize(
-        (cursorPosition + offset + Vector2(texturePosition.left(), texturePosition.bottom()))*textSize,
+       and texture position, denormalized to requested text size */
+    const Rectangle quadPosition = Rectangle::fromSize(
+        (offset + Vector2(texturePosition.left(), texturePosition.bottom()))*textSize,
         texturePosition.size()*textSize);
+
+    /* Glyph advance, denormalized to requested text size */
+    const Vector2 advance = Vector2(glyphPositions[i].x_advance,
+                                    glyphPositions[i].y_advance)*textSize/(64*fontSize);
 
     return std::make_tuple(quadPosition, textureCoordinates, advance);
 }

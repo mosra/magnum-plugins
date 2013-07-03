@@ -85,8 +85,14 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         static MAGNUM_TEXT_FREETYPEFONT_LOCAL FT_Library library;
 
         Features MAGNUM_TEXT_FREETYPEFONT_LOCAL doFeatures() const override;
+
+        UnsignedInt doGlyphId(char32_t character) override;
+
+        Vector2 doGlyphAdvance(UnsignedInt glyph) override;
+
         /** @todo Why this can't be defined as local? */
-        void doCreateGlyphCache(GlyphCache* cache, const std::u32string& characters) override;
+        void doFillGlyphCache(GlyphCache* cache, const std::u32string& characters) override;
+
         AbstractLayouter MAGNUM_TEXT_FREETYPEFONT_LOCAL * doLayout(const GlyphCache* cache, Float size, const std::string& text) override;
 };
 

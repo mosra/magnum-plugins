@@ -43,7 +43,7 @@ class FreeTypeLayouter: public AbstractLayouter {
     public:
         explicit FreeTypeLayouter(FT_Face ftFont, const GlyphCache* const cache, const Float fontSize, const Float textSize, const std::string& text);
 
-        std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const Vector2& cursorPosition, const UnsignedInt i) override;
+        std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const UnsignedInt i) override;
 
     private:
         FT_Face font;
@@ -99,7 +99,16 @@ void FreeTypeFont::doClose() {
     _size = 0.0f;
 }
 
-void FreeTypeFont::doCreateGlyphCache(GlyphCache* const cache, const std::u32string& characters) {
+UnsignedInt FreeTypeFont::doGlyphId(const char32_t character) {
+    return FT_Get_Char_Index(ftFont, character);
+}
+
+Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyph, FT_LOAD_DEFAULT) == 0);
+    return Vector2(ftFont->glyph->advance.x, ftFont->glyph->advance.y)/64.0f;
+}
+
+void FreeTypeFont::doFillGlyphCache(GlyphCache* const cache, const std::u32string& characters) {
     /** @bug Crash when atlas is too small */
 
     /* Get glyph codes from characters */
@@ -175,28 +184,29 @@ FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const GlyphCache* const cache, 
     _glyphCount = glyphs.size();
 }
 
-std::tuple<Rectangle, Rectangle, Vector2> FreeTypeLayouter::renderGlyph(const Vector2& cursorPosition, const UnsignedInt i) {
+std::tuple<Rectangle, Rectangle, Vector2> FreeTypeLayouter::renderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Rectanglei rectangle;
     std::tie(position, rectangle) = (*cache)[glyphs[i]];
 
-    Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
-                                                    Vector2(rectangle.size())/fontSize);
-    Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache->textureSize(),
-                                 Vector2(rectangle.topRight())/cache->textureSize());
+    const Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
+                                                          Vector2(rectangle.size())/fontSize);
+    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache->textureSize(),
+                                       Vector2(rectangle.topRight())/cache->textureSize());
 
     /* Load glyph */
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(font, glyphs[i], FT_LOAD_DEFAULT) == 0);
-    const FT_GlyphSlot  slot = font->glyph;
-    Vector2 offset = Vector2(0, 0); /** @todo really? */
-    Vector2 advance = Vector2(slot->advance.x, slot->advance.y)/(64*fontSize);
+    const FT_GlyphSlot slot = font->glyph;
 
     /* Absolute quad position, composed from cursor position, glyph offset
-        and texture position, denormalized to requested text size */
-    Rectangle quadPosition = Rectangle::fromSize(
-        (cursorPosition + offset + Vector2(texturePosition.left(), texturePosition.bottom()))*textSize,
+       and texture position, denormalized to requested text size */
+    const Rectangle quadPosition = Rectangle::fromSize(
+        Vector2(texturePosition.left(), texturePosition.bottom())*textSize,
         texturePosition.size()*textSize);
+
+    /* Glyph advance, denormalized to requested text size */
+    const Vector2 advance = Vector2(slot->advance.x, slot->advance.y)*textSize/(64*fontSize);
 
     return std::make_tuple(quadPosition, textureCoordinates, advance);
 }
