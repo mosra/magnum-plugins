@@ -19,8 +19,18 @@
 # hidden visibility by default.
 #
 # Features of found Corrade library are exposed in these variables:
-#  CORRADE_GCC46_COMPATIBILITY - Defined if compiled with compatibility
+#  CORRADE_GCC46_COMPATIBILITY  - Defined if compiled with compatibility
 #   mode for GCC 4.6
+#  CORRADE_GCC47_COMPATIBILITY  - Defined if compiled with compatibility
+#   mode for GCC 4.7
+#  CORRADE_BUILD_STATIC         - Defined if compiled as static libraries
+#  CORRADE_TARGET_NACL          - Defined if compiled for Google Chrome
+#   Native Client
+#  CORRADE_TARGET_NACL_NEWLIB   - Defined if compiled for Google Chrome
+#   Native Client with `newlib` toolchain
+#  CORRADE_TARGET_NACL_GLIBC    - Defined if compiled for Google Chrome
+#   Native Client with `glibc` toolchain
+#  CORRADE_TARGET_EMSCRIPTEN    - Defined if compiled for Emscripten
 #
 # Corrade provides these macros and functions:
 #
@@ -36,16 +46,14 @@
 #
 #
 # Compile data resources into application binary.
-#  corrade_add_resource(name group_name
-#                       file [ALIAS alias]
-#                       [file1 [ALIAS alias1]...])
+#  corrade_add_resource(name resources.conf)
 # Depends on corrade-rc, which is part of Corrade utilities. This command
-# generates resource file with group group_name from given files in current
-# build directory. Argument name is name under which the resources can be
-# explicitly loaded. Variable `name` contains compiled resource filename,
-# which is then used for compiling library / executable. Example usage:
-#  corrade_add_resource(name group_name file1 ALIAS alias1 file2 file3)
-#  add_executable(app source1 source2 ... ${name})
+# generates resource data using given configuration file in current build
+# directory. Argument name is name under which the resources can be explicitly
+# loaded. Variable `name` contains compiled resource filename, which is then
+# used for compiling library / executable. Example usage:
+#  corrade_add_resource(app_resources resources.conf)
+#  add_executable(app source1 source2 ... ${app_resources})
 #
 # Add dynamic plugin.
 #  corrade_add_plugin(plugin_name install_dir metadata_file
@@ -57,27 +65,12 @@
 #
 #
 # Add static plugin.
-#  corrade_add_static_plugin(static_plugins_variable
-#                            plugin_name metadata_file
+#  corrade_add_static_plugin(plugin_name install_dir metadata_file
 #                            sources...)
 # The macro adds preprocessor directive CORRADE_STATIC_PLUGIN. Additional
-# libraries can be linked in via target_link_libraries(plugin_name ...). Plugin
-# library name will be appended to static_plugins_variable and the variable is
-# meant to be used for linking plugins to main executable/library, e.g:
-#  target_link_libraries(app lib1 lib2 ... ${static_plugins_variable})
-# This variable is set with parent scope to be available in parent directory.
-# If there are more intermediate directories between plugin directory and main
-# executable directory, the variable can be propagated to parent scope like
-# this:
-#  set(static_plugins_variable ${static_plugins_variable} PARENT_SCOPE)
-#
-# Find and install DLLs for bundling with Windows build.
-#  corrade_bundle_dlls(library_install_dir
-#                      dlls...
-#                      [PATHS paths...])
-# It is possible to specify also additional paths for searching. DLL names can
-# also contain paths, they will be installed into exact specified path. If an
-# DLL is not found, fatal error message is printed.
+# libraries can be linked in via target_link_libraries(plugin_name ...). If
+# install_dir is set to CMAKE_CURRENT_BINARY_DIR (e.g. for testing purposes),
+# no installation is performed.
 #
 #
 # Additionally these variables are defined for internal usage:
@@ -149,6 +142,30 @@ string(FIND "${_corradeConfigure}" "#define CORRADE_GCC46_COMPATIBILITY" _GCC46_
 if(NOT _GCC46_COMPATIBILITY EQUAL -1)
     set(CORRADE_GCC46_COMPATIBILITY 1)
 endif()
+string(FIND "${_corradeConfigure}" "#define CORRADE_GCC47_COMPATIBILITY" _GCC47_COMPATIBILITY)
+if(NOT _GCC47_COMPATIBILITY EQUAL -1)
+    set(CORRADE_GCC47_COMPATIBILITY 1)
+endif()
+string(FIND "${_corradeConfigure}" "#define CORRADE_BUILD_STATIC" _BUILD_STATIC)
+if(NOT _BUILD_STATIC EQUAL -1)
+    set(CORRADE_BUILD_STATIC 1)
+endif()
+string(FIND "${_corradeConfigure}" "#define CORRADE_TARGET_NACL" _TARGET_NACL)
+if(NOT _TARGET_NACL EQUAL -1)
+    set(CORRADE_TARGET_NACL 1)
+endif()
+string(FIND "${_corradeConfigure}" "#define CORRADE_TARGET_NACL_NEWLIB" _TARGET_NACL_NEWLIB)
+if(NOT _TARGET_NACL_NEWLIB EQUAL -1)
+    set(CORRADE_TARGET_NACL_NEWLIB 1)
+endif()
+string(FIND "${_corradeConfigure}" "#define CORRADE_TARGET_NACL_GLIBC" _TARGET_NACL_GLIBC)
+if(NOT _TARGET_NACL_GLIBC EQUAL -1)
+    set(CORRADE_TARGET_NACL_GLIBC 1)
+endif()
+string(FIND "${_corradeConfigure}" "#define CORRADE_TARGET_EMSCRIPTEN" _TARGET_EMSCRIPTEN)
+if(NOT _TARGET_EMSCRIPTEN EQUAL -1)
+    set(CORRADE_TARGET_EMSCRIPTEN 1)
+endif()
 
 set(CORRADE_UTILITY_LIBRARIES ${CORRADE_UTILITY_LIBRARY})
 set(CORRADE_INTERCONNECT_LIBRARIES ${CORRADE_INTERCONNECT_LIBRARY} ${CORRADE_UTILITY_LIBRARIES})
@@ -156,7 +173,7 @@ set(CORRADE_PLUGINMANAGER_LIBRARIES ${CORRADE_PLUGINMANAGER_LIBRARY} ${CORRADE_U
 set(CORRADE_TESTSUITE_LIBRARIES ${CORRADE_TESTSUITE_LIBRARY} ${CORRADE_UTILITY_LIBRARIES})
 
 # At least static build needs this
-if(UNIX OR ${CMAKE_SYSTEM_NAME} STREQUAL NaCl)
+if((UNIX OR CORRADE_TARGET_NACL) AND NOT CORRADE_TARGET_NACL_NEWLIB)
     set(CORRADE_PLUGINMANAGER_LIBRARIES ${CORRADE_PLUGINMANAGER_LIBRARIES} dl)
 endif()
 
