@@ -36,7 +36,6 @@ struct FT_LibraryRec_;
 typedef FT_LibraryRec_* FT_Library;
 struct FT_FaceRec_;
 typedef FT_FaceRec_*  FT_Face;
-#endif
 
 #ifdef FreeTypeFont_EXPORTS
     #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
@@ -44,6 +43,7 @@ typedef FT_FaceRec_*  FT_Face;
     #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
 #endif
 #define MAGNUM_TEXT_FREETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
 
 namespace Magnum { namespace Text {
 
