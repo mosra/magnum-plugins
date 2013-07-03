@@ -36,7 +36,7 @@ set(FreeTypeFont_HEADERS
 add_library(FreeTypeFontObjects OBJECT ${FreeTypeFont_SRCS})
 set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})
 
-corrade_add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
+add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
     FreeTypeFont.conf
     $<TARGET_OBJECTS:FreeTypeFontObjects>
     pluginRegistrationFreeTypeFont.cpp)

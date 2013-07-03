@@ -36,7 +36,7 @@ set(ColladaImporter_HEADERS
 add_library(ColladaImporterObjects OBJECT ${ColladaImporter_SRCS})
 set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})
 
-corrade_add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
+add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     ColladaImporter.conf
     $<TARGET_OBJECTS:ColladaImporterObjects>
     pluginRegistrationColladaImporter.cpp)

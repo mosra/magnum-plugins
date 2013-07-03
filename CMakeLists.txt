@@ -47,9 +47,25 @@ include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests." OFF)
 cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code." OFF "BUILD_TESTS" OFF)
 
+option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
+
+# Newlib toolchain supports only static linking
+if(CORRADE_TARGET_NACL_NEWLIB)
+    set(BUILD_STATIC ON)
+endif()
+
 if(BUILD_TESTS)
     enable_testing()
 endif()
+
+# Wrapper for creating given plugin type
+macro(add_plugin)
+    if(NOT BUILD_STATIC)
+        corrade_add_plugin(${ARGN})
+    else()
+        corrade_add_static_plugin(${ARGN})
+    endif()
+endmacro()
 
 if(BUILD_GL_TESTS)
     if(UNIX AND (NOT MAGNUM_TARGET_GLES OR MAGNUM_TARGET_DESKTOP_GLES))
