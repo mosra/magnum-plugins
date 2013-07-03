@@ -26,6 +26,22 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(MagnumPlugins)
 
+# This is needed for sure
+find_package(Magnum REQUIRED)
+
+include(CMakeDependentOption)
+
+# Plugins to build
+option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
+cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)
+option(WITH_HARFBUZZFONT "Builf HarfBuzzFont plugin" OFF)
+option(WITH_MAGNUMFONT "Build MagnumFont plugin" OFF)
+if(NOT MAGNUM_TARGET_GLES)
+    option(WITH_MAGNUMFONTCONVERTER "Build MagnumFontConverter plugin" OFF)
+endif()
+cmake_dependent_option(WITH_TGAIMAGECONVERTER "Build TgaImageConverter plugin" OFF "NOT WITH_MAGNUMFONTCONVERTER" ON)
+cmake_dependent_option(WITH_TGAIMPORTER "Build TgaImporter plugin" OFF "NOT WITH_MAGNUMFONT;NOT WITH_COLLADAIMPORTER" ON)
+
 include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests." OFF)
 cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code." OFF "BUILD_TESTS" OFF)
@@ -35,8 +51,6 @@ if(BUILD_TESTS)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/modules/")
-
-find_package(Magnum)
 
 if(BUILD_GL_TESTS)
     if(UNIX AND (NOT MAGNUM_TARGET_GLES OR MAGNUM_TARGET_DESKTOP_GLES))

@@ -22,15 +22,33 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
 
-add_subdirectory(ColladaImporter)
-add_subdirectory(FreeTypeFont)
-add_subdirectory(HarfBuzzFont)
-add_subdirectory(MagnumFont)
-add_subdirectory(MagnumFontConverter)
-add_subdirectory(TgaImageConverter)
-add_subdirectory(TgaImporter)
+if(WITH_COLLADAIMPORTER)
+    add_subdirectory(ColladaImporter)
+endif()
+
+if(WITH_FREETYPEFONT)
+    add_subdirectory(FreeTypeFont)
+endif()
+
+if(WITH_HARFBUZZFONT)
+    add_subdirectory(HarfBuzzFont)
+endif()
+
+if(WITH_MAGNUMFONT)
+    add_subdirectory(MagnumFont)
+endif()
+
+if(WITH_MAGNUMFONTCONVERTER AND NOT MAGNUM_TARGET_GLES)
+    add_subdirectory(MagnumFontConverter)
+endif()
+
+if(WITH_TGAIMAGECONVERTER)
+    add_subdirectory(TgaImageConverter)
+endif()
+
+if(WITH_TGAIMPORTER)
+    add_subdirectory(TgaImporter)
+endif()
