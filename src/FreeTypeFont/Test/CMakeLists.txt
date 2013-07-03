@@ -22,36 +22,9 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED Text)
-find_package(Freetype REQUIRED)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freeTypeFontTestConfigure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/freeTypeFontTestConfigure.h)
 
-include_directories(${FREETYPE_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-set(FreeTypeFont_SRCS
-    FreeTypeFont.cpp)
-
-set(FreeTypeFont_HEADERS
-    FreeTypeFont.h)
-
-add_library(FreeTypeFontObjects OBJECT ${FreeTypeFont_SRCS})
-set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})
-
-corrade_add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
-    FreeTypeFont.conf
-    $<TARGET_OBJECTS:FreeTypeFontObjects>
-    pluginRegistrationFreeTypeFont.cpp)
-target_link_libraries(FreeTypeFont
-    ${MAGNUM_LIBRARIES}
-    ${MAGNUM_TEXT_LIBRARIES}
-    ${FREETYPE_LIBRARIES})
-
-install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
-
-if(BUILD_GL_TESTS)
-    add_library(FreeTypeFontTestLib $<TARGET_OBJECTS:FreeTypeFontObjects>)
-    target_link_libraries(FreeTypeFontTestLib
-        ${MAGNUM_LIBRARIES}
-        ${MAGNUM_TEXT_LIBRARIES}
-        ${FREETYPE_LIBRARIES})
-    add_subdirectory(Test)
-endif()
+corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp LIBRARIES FreeTypeFontTestLib ${GL_TEST_LIBRARIES})

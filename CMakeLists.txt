@@ -26,11 +26,26 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(MagnumPlugins)
 
+include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests." OFF)
+cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code." OFF "BUILD_TESTS" OFF)
+
 if(BUILD_TESTS)
     enable_testing()
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/modules/")
+
+find_package(Magnum)
+
+if(BUILD_GL_TESTS)
+    if(UNIX AND (NOT MAGNUM_TARGET_GLES OR MAGNUM_TARGET_DESKTOP_GLES))
+        find_package(Magnum REQUIRED WindowlessGlxApplication)
+    else()
+        message(FATAL_ERROR "Cannot run tests for OpenGL code on this platform. Set BUILD_GL_TESTS to OFF to skip building them.")
+    endif()
+
+    set(GL_TEST_LIBRARIES ${MAGNUM_WINDOWLESSAPPLICATION_LIBRARIES})
+endif()
 
 add_subdirectory(src)

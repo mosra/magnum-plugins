@@ -214,6 +214,3 @@ std::tuple<Rectangle, Rectangle, Vector2> FreeTypeLayouter::renderGlyph(const Un
 }
 
 }}
-
-CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.2")
