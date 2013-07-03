@@ -22,15 +22,31 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED)
+find_package(Magnum REQUIRED Text)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+set(MagnumFontConverter_SOURCES
+    MagnumFontConverter.cpp)
 
-add_subdirectory(ColladaImporter)
-add_subdirectory(FreeTypeFont)
-add_subdirectory(HarfBuzzFont)
-add_subdirectory(MagnumFont)
-add_subdirectory(MagnumFontConverter)
-add_subdirectory(TgaImageConverter)
-add_subdirectory(TgaImporter)
+set(MagnumFontConverter_HEADERS
+    MagnumFontConverter.h)
+
+add_library(MagnumFontConverterObjects OBJECT ${MagnumFontConverter_SOURCES})
+set_target_properties(MagnumFontConverterObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})
+
+corrade_add_plugin(MagnumFontConverter ${MAGNUM_PLUGINS_FONTCONVERTER_INSTALL_DIR}
+    MagnumFontConverter.conf
+    $<TARGET_OBJECTS:MagnumFontConverterObjects>
+    pluginRegistrationMagnumFontConverter.cpp)
+target_link_libraries(MagnumFontConverter
+    ${MAGNUM_LIBRARIES}
+    ${MAGNUM_TEXT_LIBRARIES})
+
+install(FILES ${MagnumFontConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MagnumFontConverter)
+
+if(BUILD_TESTS)
+    add_library(MagnumFontConverterTestLib $<TARGET_OBJECTS:MagnumFontConverterObjects>)
+    target_link_libraries(MagnumFontConverterTestLib
+        ${MAGNUM_LIBRARIES}
+        ${MAGNUM_TEXT_LIBRARIES})
+    add_subdirectory(Test)
+endif()
