@@ -77,4 +77,5 @@ if(BUILD_GL_TESTS)
     set(GL_TEST_LIBRARIES ${MAGNUM_WINDOWLESSAPPLICATION_LIBRARIES})
 endif()
 
+add_subdirectory(modules)
 add_subdirectory(src)
