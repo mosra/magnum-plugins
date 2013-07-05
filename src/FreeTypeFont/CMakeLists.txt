@@ -47,11 +47,15 @@ target_link_libraries(FreeTypeFont
 
 install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
 
-if(BUILD_GL_TESTS)
+# The lib is needed by non-GL tests
+if(BUILD_TESTS)
     add_library(FreeTypeFontTestLib $<TARGET_OBJECTS:FreeTypeFontObjects>)
     target_link_libraries(FreeTypeFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
         ${FREETYPE_LIBRARIES})
+endif()
+
+if(BUILD_GL_TESTS)
     add_subdirectory(Test)
 endif()
