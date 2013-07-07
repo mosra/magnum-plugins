@@ -267,22 +267,26 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
         combinedIndices.push_back(indexCombinations.insert(std::make_pair(i, indexCombinations.size())).first->second);
 
     /* Convert quads to triangles */
-    std::vector<UnsignedInt>* indices = new std::vector<UnsignedInt>;
+    std::vector<UnsignedInt> indices;
     std::size_t quadId = 0;
     for(std::size_t i = 0; i != vertexCountPerFace.size(); ++i) {
         if(quads.size() > quadId && quads[quadId] == i) {
-            indices->push_back(combinedIndices[i*3+quadId]);
-            indices->push_back(combinedIndices[i*3+quadId+1]);
-            indices->push_back(combinedIndices[i*3+quadId+2]);
-            indices->push_back(combinedIndices[i*3+quadId]);
-            indices->push_back(combinedIndices[i*3+quadId+2]);
-            indices->push_back(combinedIndices[i*3+quadId+3]);
+            indices.insert(indices.end(), {
+                combinedIndices[i*3+quadId],
+                combinedIndices[i*3+quadId+1],
+                combinedIndices[i*3+quadId+2],
+                combinedIndices[i*3+quadId],
+                combinedIndices[i*3+quadId+2],
+                combinedIndices[i*3+quadId+3]
+            });
 
             ++quadId;
         } else {
-            indices->push_back(combinedIndices[i*3+quadId]);
-            indices->push_back(combinedIndices[i*3+quadId+1]);
-            indices->push_back(combinedIndices[i*3+quadId+2]);
+            indices.insert(indices.end(), {
+                combinedIndices[i*3+quadId],
+                combinedIndices[i*3+quadId+1],
+                combinedIndices[i*3+quadId+2]
+            });
         }
     }
 
@@ -297,15 +301,15 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
 
     /* Build vertex array */
     UnsignedInt vertexOffset = attributeOffset(id, "VERTEX");
-    auto vertices = new std::vector<Vector3>(indexCombinations.size());
+    std::vector<Vector3> vertices(indexCombinations.size());
     for(auto i: indexCombinations)
-        (*vertices)[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
+        vertices[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
 
     QStringList tmpList;
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input/@semantic/string()").arg(id+1));
     d->query.evaluateTo(&tmpList);
-    std::vector<std::vector<Vector3>*> normals;
-    std::vector<std::vector<Vector2>*> textureCoords2D;
+    std::vector<std::vector<Vector3>> normals;
+    std::vector<std::vector<Vector2>> textureCoords2D;
     for(QString attribute: tmpList) {
         /* Vertices - already built */
         if(attribute == "VERTEX") continue;
@@ -322,7 +326,7 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
         else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
-    return new MeshData3D(Mesh::Primitive::Triangles, indices, {vertices}, std::move(normals), std::move(textureCoords2D));
+    return new MeshData3D(Mesh::Primitive::Triangles, std::move(indices), {std::move(vertices)}, std::move(normals), std::move(textureCoords2D));
 }
 
 UnsignedInt ColladaImporter::doMaterialCount() const { return d->materials.size(); }

@@ -174,11 +174,11 @@ void ColladaImporterTest::mesh() {
     MeshData3D* mesh = importer.mesh3D(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (std::vector<UnsignedInt>{
+    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Vector3>{
+    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -195,7 +195,7 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(importer.mesh3DForName("MeshQuads"), 2);
     mesh = importer.mesh3D(2);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(*mesh->indices(), (std::vector<unsigned int>{
+    CORRADE_COMPARE(mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
     }));
     delete mesh;
@@ -206,11 +206,11 @@ void ColladaImporterTest::mesh() {
     mesh = importer.mesh3D(3);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (std::vector<UnsignedInt>{
+    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Vector3>{
+    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -221,7 +221,7 @@ void ColladaImporterTest::mesh() {
         {-1, 1, 1}
     }));
     CORRADE_COMPARE(mesh->normalArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->normals(0), (std::vector<Vector3>{
+    CORRADE_COMPARE(mesh->normals(0), (std::vector<Vector3>{
         {1, 0, 0},
         {1, 0, 0},
         {1, 0, 0},
@@ -240,11 +240,11 @@ void ColladaImporterTest::mesh() {
     mesh = importer.mesh3D(4);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
-    CORRADE_COMPARE(*mesh->indices(), (std::vector<UnsignedInt>{
+    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->positions(0), (std::vector<Vector3>{
+    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
         {1, -1, 1},
         {1, -1, -1},
         {1, 1, -1},
@@ -255,7 +255,7 @@ void ColladaImporterTest::mesh() {
         {-1, 1, 1}
     }));
     CORRADE_COMPARE(mesh->normalArrayCount(), 1);
-    CORRADE_COMPARE(*mesh->normals(0), (std::vector<Vector3>{
+    CORRADE_COMPARE(mesh->normals(0), (std::vector<Vector3>{
         {1, 0, 0},
         {1, 0, 0},
         {1, 0, 0},
@@ -266,7 +266,7 @@ void ColladaImporterTest::mesh() {
         {0, 0, 1}
     }));
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 2);
-    CORRADE_COMPARE(*mesh->textureCoords2D(0), (std::vector<Vector2>{
+    CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
         {0.5, 1},
         {1, 1},
         {1, 0},
@@ -276,7 +276,7 @@ void ColladaImporterTest::mesh() {
         {0.5, 0},
         {0, 0}
     }));
-    CORRADE_COMPARE(*mesh->textureCoords2D(1), std::vector<Vector2>(8));
+    CORRADE_COMPARE(mesh->textureCoords2D(1), std::vector<Vector2>(8));
     delete mesh;
 }
 

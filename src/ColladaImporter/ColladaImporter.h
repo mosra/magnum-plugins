@@ -220,7 +220,7 @@ class ColladaImporter: public AbstractImporter {
          * @param indexCombinations Index combinations for building the array
          * @return Resulting array
          */
-        template<class T> std::vector<T>* buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations) {
+        template<class T> std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations) {
             QString tmp;
 
             /* Original attribute array */
@@ -233,11 +233,11 @@ class ColladaImporter: public AbstractImporter {
             UnsignedInt offset = attributeOffset(meshId, attribute, id);
 
             /* Build resulting array */
-            std::vector<T>* array = new std::vector<T>(indexCombinations.size());
+            std::vector<T> array(indexCombinations.size());
             for(auto i: indexCombinations)
-                (*array)[i.second] = originalArray[originalIndices[i.first*stride+offset]];
+                array[i.second] = originalArray[originalIndices[i.first*stride+offset]];
 
-            return array;
+            return std::move(array);
         }
 
         /** @brief Parse all scenes */
