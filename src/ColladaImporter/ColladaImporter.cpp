@@ -65,11 +65,11 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     /* Open the file and load it into XQuery */
     QFile file(QString::fromStdString(filename));
     if(!file.open(QIODevice::ReadOnly)) {
-        Error() << "ColladaImporter: cannot open file" << filename;
+        Error() << "Trade::ColladaImporter:openFile(): cannot open file" << filename;
         return;
     }
     if(!query.setFocus(&file)) {
-        Error() << "ColladaImporter: cannot load XML";
+        Error() << "Trade::ColladaImporter::openFile(): cannot load XML";
         return;
     }
 
@@ -80,7 +80,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
     if(tmp != "http://www.collada.org/2005/11/COLLADASchema") {
-        Error() << "ColladaImporter: unsupported namespace" << ('"'+tmp+'"').toStdString();
+        Error() << "Trade::ColladaImporter::openFile(): unsupported namespace" << ('"'+tmp+'"').toStdString();
         return;
     }
 
@@ -89,7 +89,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
     if(tmp != "1.4.1") {
-        Error() << "ColladaImporter: unsupported version" << ('"'+tmp+'"').toStdString();
+        Error() << "Trade::ColladaImporter::openFile(): unsupported version" << ('"'+tmp+'"').toStdString();
         return;
     }
 
@@ -167,8 +167,6 @@ void ColladaImporter::doClose() {
 }
 
 Int ColladaImporter::doDefaultScene() {
-    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::defaultScene(): no file opened", -1);
-
     if(d->scenes.empty()) return -1;
     if(!d->scenes[0].second) parseScenes();
 
@@ -239,7 +237,7 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
 
         if(count == 4) quads.push_back(i);
         else if(count != 3) {
-            Error() << "ColladaImporter:" << count << "vertices per face not supported";
+            Error() << "Trade::ColladaImporter::mesh3D():" << count << "vertices per face not supported";
             return nullptr;
         }
 
@@ -323,7 +321,7 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
             textureCoords2D.push_back(buildAttributeArray<Vector2>(id, "TEXCOORD", textureCoords2D.size(), originalIndices, stride, indexCombinations));
 
         /* Something other */
-        else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
+        else Warning() << "Trade::ColladaImporter::mesh3D():" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
     return new MeshData3D(Mesh::Primitive::Triangles, std::move(indices), {std::move(vertices)}, std::move(normals), std::move(textureCoords2D));
@@ -355,7 +353,7 @@ AbstractMaterialData* ColladaImporter::doMaterial(const UnsignedInt id) {
     /** @todo Support other profiles */
 
     if(tmp.trimmed() != "profile_COMMON") {
-        Error() << "ColladaImporter:" << ('"'+tmp.trimmed()+'"').toStdString() << "effect profile not supported";
+        Error() << "Trade::ColladaImporter::material():" << ('"'+tmp.trimmed()+'"').toStdString() << "effect profile not supported";
         return nullptr;
     }
 
@@ -366,7 +364,7 @@ AbstractMaterialData* ColladaImporter::doMaterial(const UnsignedInt id) {
 
     /** @todo Other (blinn, goraund) profiles */
     if(tmp != "phong") {
-        Error() << "ColladaImporter:" << ('"'+tmp+'"').toStdString() << "shader not supported";
+        Error() << "Trade::ColladaImporter::material():" << ('"'+tmp+'"').toStdString() << "shader not supported";
         return nullptr;
     }
 
@@ -414,7 +412,7 @@ ImageData2D* ColladaImporter::doImage2D(const UnsignedInt id) {
     tmp = tmp.trimmed();
 
     if(tmp.right(3) != "tga") {
-        Error() << "ColladaImporter:" << '"' + tmp.toStdString() + '"' << "has unsupported format";
+        Error() << "Trade::ColladaImporter::image2D():" << '"' + tmp.toStdString() + '"' << "has unsupported format";
         return nullptr;
     }
 
@@ -502,7 +500,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
             transformation = transformation*Matrix4::scaling(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* It shouldn't get here */
-        else CORRADE_ASSERT(0, ("ColladaImporter: unknown translation " + type).toStdString(), id);
+        else CORRADE_ASSERT(0, ("Trade::ColladaImporter::openFile(): unknown translation " + type).toStdString(), id);
     }
 
     /* Instance type */
@@ -515,7 +513,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         std::string cameraName = instanceName(name, "instance_camera");
         auto cameraId = d->camerasForName.find(cameraName);
         if(cameraId == d->camerasForName.end()) {
-            Error() << "ColladaImporter: camera" << '"'+cameraName+'"' << "was not found";
+            Error() << "Trade::ColladaImporter::openFile(): camera" << '"'+cameraName+'"' << "was not found";
             return id;
         }
 
@@ -526,7 +524,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         std::string lightName = instanceName(name, "instance_light");
         auto lightId = d->lightsForName.find(lightName);
         if(lightId == d->lightsForName.end()) {
-            Error() << "ColladaImporter: light" << '"'+lightName+'"' << "was not found";
+            Error() << "Trade::ColladaImporter::openFile(): light" << '"'+lightName+'"' << "was not found";
             return id;
         }
 
@@ -537,7 +535,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         std::string meshName = instanceName(name, "instance_geometry");
         auto meshId = d->meshesForName.find(meshName);
         if(meshId == d->meshesForName.end()) {
-            Error() << "ColladaImporter: mesh" << '"'+meshName+'"' << "was not found";
+            Error() << "Trade::ColladaImporter::openFile(): mesh" << '"'+meshName+'"' << "was not found";
             return id;
         }
 
@@ -553,7 +551,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         else {
             auto materialId = d->materialsForName.find(materialName);
             if(materialId == d->materialsForName.end()) {
-                Error() << "ColladaImporter: material" << '"'+materialName+'"' << "was not found";
+                Error() << "Trade::ColladaImporter::openFile(): material" << '"'+materialName+'"' << "was not found";
                 return id;
             }
 
@@ -565,7 +563,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         d->objects[id] = {name.toStdString(), new ObjectData3D({}, transformation)};
 
     } else {
-        Error() << "ColladaImporter:" << '"'+tmp.toStdString()+'"' << "instance type not supported";
+        Error() << "Trade::ColladaImporter::openFile():" << '"'+tmp.toStdString()+'"' << "instance type not supported";
         return id;
     }
 
