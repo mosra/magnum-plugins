@@ -8,7 +8,7 @@
 #   dependencies
 # This command will not try to find any actual plugin. The plugins are:
 #  ColladaImporter  - Collada importer (depends on Qt4)
-#  FreeTypeFont     - FreeType font (depends on FreeType)
+#  FreeTypeFont     - FreeType font (depends on FreeType library)
 #  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
 #                     library)
 #  MagnumFont       - Magnum bitmap font
@@ -106,7 +106,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
     endif()
 
-    # FreeTypeFont plugin dependencies
+    # HarfBuzzFont plugin dependencies
     if(${component} STREQUAL HarfBuzzFont)
         find_package(Freetype)
         find_package(HarfBuzz)
