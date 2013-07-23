@@ -419,8 +419,11 @@ ImageData2D* ColladaImporter::doImage2D(const UnsignedInt id) {
     }
 
     TgaImporter tgaImporter;
+    if(!tgaImporter.openFile(Utility::Directory::join(Utility::Directory::path(d->filename), tmp.toStdString())))
+        return nullptr;
+
     ImageData2D* image;
-    if(!tgaImporter.openFile(Utility::Directory::join(Utility::Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
+    if(!(image = tgaImporter.image2D(0)))
         return nullptr;
 
     return image;
