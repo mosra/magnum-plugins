@@ -37,7 +37,7 @@ typedef FT_LibraryRec_* FT_Library;
 struct FT_FaceRec_;
 typedef FT_FaceRec_*  FT_Face;
 
-#ifdef FreeTypeFont_EXPORTS
+#if defined(FreeTypeFont_EXPORTS) || defined(FreeTypeFontObjects_EXPORTS)
     #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
 #else
     #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
