@@ -22,37 +22,34 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+find_package(PNG REQUIRED)
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+include_directories(${PNG_INCLUDE_DIRS})
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
+set(PngImporter_SOURCES
+    PngImporter.cpp)
 
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
+set(PngImporter_HEADERS
+    PngImporter.h)
 
-if(WITH_MAGNUMFONT)
-    add_subdirectory(MagnumFont)
-endif()
+add_library(PngImporterObjects OBJECT ${PngImporter_SOURCES})
+set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
-if(WITH_MAGNUMFONTCONVERTER AND NOT MAGNUM_TARGET_GLES)
-    add_subdirectory(MagnumFontConverter)
-endif()
+add_plugin(PngImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
+    PngImporter.conf
+    $<TARGET_OBJECTS:PngImporterObjects>
+    pluginRegistrationPngImporter.cpp)
+target_link_libraries(PngImporter
+    ${MAGNUM_LIBRARIES}
+    ${PNG_LIBRARIES})
 
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
+install(FILES ${PngImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImporter)
 
-if(WITH_TGAIMAGECONVERTER)
-    add_subdirectory(TgaImageConverter)
-endif()
+if(BUILD_TESTS)
+    add_library(PngImporterTestLib SHARED $<TARGET_OBJECTS:PngImporterObjects>)
+    target_link_libraries(PngImporterTestLib
+        ${MAGNUM_LIBRARIES}
+        ${PNG_LIBRARIES})
 
-if(WITH_TGAIMPORTER)
-    add_subdirectory(TgaImporter)
+    add_subdirectory(Test)
 endif()

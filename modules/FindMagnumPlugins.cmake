@@ -13,6 +13,7 @@
 #                     library)
 #  MagnumFont       - Magnum bitmap font
 #  MagnumFontConverter - Magnum bitmap font converter
+#  PngImporter      - PNG importer (depends on libPNG library)
 #  TgaImageConverter - TGA image converter
 #  TgaImporter      - TGA importer
 # Example usage with specifying the plugins is:
@@ -119,6 +120,18 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     endif()
 
     # MagnumFont plugin has no dependencies
+
+    # PngImporter plugin dependencies
+    if(${component} STREQUAL PngImporter)
+        find_package(PNG)
+        if(PNG_FOUND)
+            set(_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${PNG_LIBRARIES})
+            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
+        else()
+            unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
+        endif()
+    endif()
+
     # TgaImageConverter plugin has no dependencies
     # TgaImporter plugin has no dependencies
 

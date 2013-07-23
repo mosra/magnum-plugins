@@ -40,6 +40,7 @@ option(WITH_MAGNUMFONT "Build MagnumFont plugin" OFF)
 if(NOT MAGNUM_TARGET_GLES)
     option(WITH_MAGNUMFONTCONVERTER "Build MagnumFontConverter plugin" OFF)
 endif()
+option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
 cmake_dependent_option(WITH_TGAIMAGECONVERTER "Build TgaImageConverter plugin" OFF "NOT WITH_MAGNUMFONTCONVERTER" ON)
 cmake_dependent_option(WITH_TGAIMPORTER "Build TgaImporter plugin" OFF "NOT WITH_MAGNUMFONT;NOT WITH_COLLADAIMPORTER" ON)
 
