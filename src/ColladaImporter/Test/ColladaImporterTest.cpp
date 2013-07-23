@@ -66,7 +66,7 @@ void ColladaImporterTest::openWrongNamespace() {
     std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongNamespace.dae")));
-    CORRADE_COMPARE(debug.str(), "ColladaImporter: unsupported namespace \"http://www.collada.org/2006/11/COLLADASchema\"\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): unsupported namespace \"http://www.collada.org/2006/11/COLLADASchema\"\n");
 }
 
 void ColladaImporterTest::openWrongVersion() {
@@ -74,7 +74,7 @@ void ColladaImporterTest::openWrongVersion() {
     std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongVersion.dae")));
-    CORRADE_COMPARE(debug.str(), "ColladaImporter: unsupported version \"1.4.0\"\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): unsupported version \"1.4.0\"\n");
 }
 
 void ColladaImporterTest::parseSource() {
@@ -84,7 +84,7 @@ void ColladaImporterTest::parseSource() {
     std::stringstream debug;
     Error::setOutput(&debug);
     CORRADE_VERIFY(importer.parseSource<Vector3>("WrongTotalCount").empty());
-    CORRADE_COMPARE(debug.str(), "ColladaImporter: wrong total count in source \"WrongTotalCount\"\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::mesh3D(): wrong total count in source \"WrongTotalCount\"\n");
 
     {
         CORRADE_EXPECT_FAIL("Swapped coordinates in source are not implemented.");
@@ -151,9 +151,9 @@ void ColladaImporterTest::scene() {
     CORRADE_VERIFY(!importer.object3D(3));
     CORRADE_VERIFY(!importer.object3D(4));
     CORRADE_VERIFY(!importer.object3D(5));
-    CORRADE_COMPARE(debug.str(), "ColladaImporter: \"instance_wrong\" instance type not supported\n"
-                                 "ColladaImporter: mesh \"InexistentMesh\" was not found\n"
-                                 "ColladaImporter: material \"InexistentMaterial\" was not found\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): \"instance_wrong\" instance type not supported\n"
+                                 "Trade::ColladaImporter::openFile(): mesh \"InexistentMesh\" was not found\n"
+                                 "Trade::ColladaImporter::openFile(): material \"InexistentMaterial\" was not found\n");
 }
 
 void ColladaImporterTest::mesh() {
@@ -166,7 +166,7 @@ void ColladaImporterTest::mesh() {
     Error::setOutput(&debug);
     CORRADE_COMPARE(importer.mesh3DForName("WrongPrimitives"), 0);
     CORRADE_VERIFY(!importer.mesh3D(0));
-    CORRADE_COMPARE(debug.str(), "ColladaImporter: 5 vertices per face not supported\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::mesh3D(): 5 vertices per face not supported\n");
 
     /* Vertex only mesh */
     CORRADE_COMPARE(importer.mesh3DName(1), "MeshVertexOnly");
@@ -290,12 +290,12 @@ void ColladaImporterTest::material() {
     Error::setOutput(&debug);
     CORRADE_COMPARE(importer.materialForName("MaterialWrongProfile"), 0);
     CORRADE_VERIFY(!importer.material(0));
-    CORRADE_COMPARE(debug.str(), "ColladaImporter: \"profile_GLSL\" effect profile not supported\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::material(): \"profile_GLSL\" effect profile not supported\n");
 
     debug.str("");
     CORRADE_COMPARE(importer.materialForName("MaterialWrongShader"), 1);
     CORRADE_VERIFY(!importer.material(1));
-    CORRADE_COMPARE(debug.str(), "ColladaImporter: \"lambert\" shader not supported\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::material(): \"lambert\" shader not supported\n");
 
     CORRADE_COMPARE(importer.materialName(2), "MaterialPhong");
     CORRADE_COMPARE(importer.materialForName("MaterialPhong"), 2);
@@ -318,7 +318,7 @@ void ColladaImporterTest::image() {
     Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.image2D(0));
     CORRADE_COMPARE(importer.image2DForName("UnsupportedImage"), 0);
-    CORRADE_COMPARE(debug.str(), "ColladaImporter: \"image.jpg\" has unsupported format\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::image2D(): \"image.jpg\" has unsupported format\n");
 
     CORRADE_COMPARE(importer.image2DName(1), "Image");
     CORRADE_COMPARE(importer.image2DForName("Image"), 1);

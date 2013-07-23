@@ -79,7 +79,7 @@ class ColladaImporter: public AbstractImporter {
             d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/@count/string()").arg(source));
             d->query.evaluateTo(&tmp);
             if(Implementation::ColladaType<UnsignedInt>::fromString(tmp) != count*size) {
-                Error() << "ColladaImporter: wrong total count in source" << ('"'+id+'"').toStdString();
+                Error() << "Trade::ColladaImporter::mesh3D(): wrong total count in source" << ('"'+id+'"').toStdString();
                 return output;
             }
 
