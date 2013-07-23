@@ -47,6 +47,10 @@ target_link_libraries(HarfBuzzFont
     ${FREETYPE_LIBRARIES}
     ${HARFBUZZ_LIBRARIES})
 
+if(WIN32)
+    target_link_libraries(HarfBuzzFont FreeTypeFont)
+endif()
+
 install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
 if(BUILD_GL_TESTS)
