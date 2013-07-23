@@ -53,7 +53,7 @@ class ColladaImporter: public AbstractImporter {
         /** @brief Plugin manager constructor */
         explicit ColladaImporter(PluginManager::AbstractManager* manager, std::string plugin);
 
-        virtual ~ColladaImporter();
+        ~ColladaImporter();
 
         /** @brief Parse &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id) {
