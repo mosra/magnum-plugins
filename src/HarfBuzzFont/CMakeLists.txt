@@ -55,6 +55,8 @@ if(BUILD_GL_TESTS)
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
         ${FREETYPE_LIBRARIES}
-        ${HARFBUZZ_LIBRARIES})
+        ${HARFBUZZ_LIBRARIES}
+        FreeTypeFontTestLib)
+
     add_subdirectory(Test)
 endif()
