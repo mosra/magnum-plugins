@@ -48,7 +48,7 @@ target_link_libraries(ColladaImporter
 install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
 
 if(BUILD_TESTS)
-    add_library(ColladaImporterTestLib $<TARGET_OBJECTS:ColladaImporterObjects>)
+    add_library(ColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
     target_link_libraries(ColladaImporterTestLib TgaImporterTestLib
         ${MAGNUM_LIBRARIES}
         ${QT_QTCORE_LIBRARY}

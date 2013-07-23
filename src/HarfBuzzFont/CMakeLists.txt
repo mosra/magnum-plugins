@@ -50,7 +50,7 @@ target_link_libraries(HarfBuzzFont
 install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
 if(BUILD_GL_TESTS)
-    add_library(HarfBuzzFontTestLib $<TARGET_OBJECTS:HarfBuzzFontObjects>)
+    add_library(HarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
     target_link_libraries(HarfBuzzFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
