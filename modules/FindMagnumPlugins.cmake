@@ -120,6 +120,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     endif()
 
     # MagnumFont plugin has no dependencies
+    # MagnumFontConverter plugin has no dependencies
 
     # PngImporter plugin dependencies
     if(${component} STREQUAL PngImporter)
