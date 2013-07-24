@@ -22,41 +22,34 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+find_package(JPEG REQUIRED)
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+include_directories(${JPEG_INCLUDE_DIR})
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
+set(JpegImporter_SOURCES
+    JpegImporter.cpp)
 
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
+set(JpegImporter_HEADERS
+    JpegImporter.h)
 
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
+add_library(JpegImporterObjects OBJECT ${JpegImporter_SOURCES})
+set_target_properties(JpegImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
-if(WITH_MAGNUMFONT)
-    add_subdirectory(MagnumFont)
-endif()
+add_plugin(JpegImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
+    JpegImporter.conf
+    $<TARGET_OBJECTS:JpegImporterObjects>
+    pluginRegistrationJpegImporter.cpp)
+target_link_libraries(JpegImporter
+    ${MAGNUM_LIBRARIES}
+    ${JPEG_LIBRARIES})
 
-if(WITH_MAGNUMFONTCONVERTER AND NOT MAGNUM_TARGET_GLES)
-    add_subdirectory(MagnumFontConverter)
-endif()
+install(FILES ${JpegImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)
 
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
+if(BUILD_TESTS)
+    add_library(JpegImporterTestLib SHARED $<TARGET_OBJECTS:JpegImporterObjects>)
+    target_link_libraries(JpegImporterTestLib
+        ${MAGNUM_LIBRARIES}
+        ${JPEG_LIBRARIES})
 
-if(WITH_TGAIMAGECONVERTER)
-    add_subdirectory(TgaImageConverter)
-endif()
-
-if(WITH_TGAIMPORTER)
-    add_subdirectory(TgaImporter)
+    add_subdirectory(Test)
 endif()

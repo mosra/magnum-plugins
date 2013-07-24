@@ -11,6 +11,7 @@
 #  FreeTypeFont     - FreeType font (depends on FreeType library)
 #  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
 #                     library)
+#  JpegImporter     - JPEG importer (depends on libJPEG library)
 #  MagnumFont       - Magnum bitmap font
 #  MagnumFontConverter - Magnum bitmap font converter
 #  PngImporter      - PNG importer (depends on libPNG library)
@@ -114,6 +115,17 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         if(FREETYPE_FOUND AND HARFBUZZ_FOUND)
             set(_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${FREETYPE_LIBRARIES} ${HARFBUZZ_LIBRARIES})
             set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${FREETYPE_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS})
+        else()
+            unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
+        endif()
+    endif()
+
+    # JpegImporter plugin dependencies
+    if(${component} STREQUAL JpegImporter)
+        find_package(JPEG)
+        if(JPEG_FOUND)
+            set(_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${JPEG_LIBRARIES})
+            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${JPEG_INCLUDE_DIR})
         else()
             unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
         endif()
