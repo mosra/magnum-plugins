@@ -35,7 +35,7 @@ include(CMakeDependentOption)
 # Plugins to build
 option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
 cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)
-option(WITH_HARFBUZZFONT "Builf HarfBuzzFont plugin" OFF)
+option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
 option(WITH_MAGNUMFONT "Build MagnumFont plugin" OFF)
 if(NOT MAGNUM_TARGET_GLES)
     option(WITH_MAGNUMFONTCONVERTER "Build MagnumFontConverter plugin" OFF)
