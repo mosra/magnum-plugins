@@ -113,7 +113,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
     query.evaluateTo(&tmpList);
     d->camerasForName.reserve(tmpList.size());
-    for(const QString id: tmpList)
+    for(const QString& id: tmpList)
         d->camerasForName.insert(std::make_pair(id.trimmed().toStdString(), d->camerasForName.size()));
 
     /* Create light name -> light id map */
@@ -121,7 +121,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->lightsForName.reserve(tmpList.size());
-    for(const QString id: tmpList)
+    for(const QString& id: tmpList)
         d->lightsForName.insert(std::make_pair(id.trimmed().toStdString(), d->lightsForName.size()));
 
     /* Create mesh name -> mesh id map */
@@ -130,7 +130,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->meshes.reserve(tmpList.size());
     d->meshesForName.reserve(tmpList.size());
-    for(const QString id: tmpList) {
+    for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->meshes.push_back(name);
         d->meshesForName.insert({name, d->meshesForName.size()});
@@ -142,7 +142,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->materials.reserve(tmpList.size());
     d->materialsForName.reserve(tmpList.size());
-    for(const QString id: tmpList) {
+    for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->materials.push_back(name);
         d->materialsForName.insert({name, d->materialsForName.size()});
@@ -154,7 +154,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->images2D.reserve(tmpList.size());
     d->images2DForName.reserve(tmpList.size());
-    for(const QString id: tmpList) {
+    for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->images2D.push_back(name);
         d->images2DForName.insert({name, d->images2DForName.size()});
