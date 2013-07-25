@@ -43,26 +43,14 @@ class Utility {
          *
          * Returns parsed vector and moves @c from to position of next vector.
          */
-        template<class Vector> static Vector parseVector(const QString& data, int* from, std::size_t size = Vector::Size) {
-            Vector output;
-            int to;
-            for(std::size_t j = 0; j != size; ++j) {
-                to = data.indexOf(' ', *from);
-                while(to == *from)
-                    to = data.indexOf(' ', ++*from);
-                output[j] = ColladaType<typename Vector::Type>::fromString(data.mid(*from, to-*from));
-                *from = (to == -1 ? data.size() : to+1);
-            }
-
-            return output;
-        }
+        template<class Vector> static Vector parseVector(const QString& data, int* from, std::size_t size = Vector::Size);
 
         /**
          * @brief Parse vector of numbers
          *
          * Convenience alternative to parseVector(const QString&, int*, std::size_t).
          */
-        template<class Vector> inline static Vector parseVector(const QString& data, std::size_t size = Vector::Size) {
+        template<class Vector> static Vector parseVector(const QString& data, std::size_t size = Vector::Size) {
             int from = 0;
             return parseVector<Vector>(data, &from, size);
         }
@@ -73,23 +61,39 @@ class Utility {
          * @param data      Data array
          * @param count     Count of numbers
          */
-        template<class Single> static std::vector<Single> parseArray(const QString& data, std::size_t count) {
-            std::vector<Single> output;
-            output.reserve(count);
-
-            int from = 0;
-            int to;
-            for(std::size_t i = 0; i != count; ++i) {
-                to = data.indexOf(' ', from);
-                while(to == from)
-                    to = data.indexOf(' ', ++from);
-                output.push_back(ColladaType<Single>::fromString(data.mid(from, to-from)));
-                from = (to == -1 ? data.size() : to+1);
-            }
-
-            return output;
-        }
+        template<class Single> static std::vector<Single> parseArray(const QString& data, std::size_t count);
 };
+
+template<class Vector> Vector Utility::parseVector(const QString& data, int* from, std::size_t size) {
+    Vector output;
+    int to;
+    for(std::size_t j = 0; j != size; ++j) {
+        to = data.indexOf(' ', *from);
+        while(to == *from)
+            to = data.indexOf(' ', ++*from);
+        output[j] = ColladaType<typename Vector::Type>::fromString(data.mid(*from, to-*from));
+        *from = (to == -1 ? data.size() : to+1);
+    }
+
+    return output;
+}
+
+template<class Single> std::vector<Single> Utility::parseArray(const QString& data, std::size_t count) {
+    std::vector<Single> output;
+    output.reserve(count);
+
+    int from = 0;
+    int to;
+    for(std::size_t i = 0; i != count; ++i) {
+        to = data.indexOf(' ', from);
+        while(to == from)
+            to = data.indexOf(' ', ++from);
+        output.push_back(ColladaType<Single>::fromString(data.mid(from, to-from)));
+        from = (to == -1 ? data.size() : to+1);
+    }
+
+    return output;
+}
 
 }}}
 

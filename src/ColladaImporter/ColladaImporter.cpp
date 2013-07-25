@@ -437,6 +437,67 @@ UnsignedInt ColladaImporter::attributeOffset(UnsignedInt meshId, const QString& 
     return Implementation::ColladaType<UnsignedInt>::fromString(tmp);
 }
 
+template<class T> std::vector<T> ColladaImporter::parseSource(const QString& id) {
+    std::vector<T> output;
+    QString tmp;
+
+    /* Count of items */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@count/string()").arg(id));
+    d->query.evaluateTo(&tmp);
+    UnsignedInt count = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
+
+    /* Size of each item */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
+    d->query.evaluateTo(&tmp);
+    UnsignedInt size = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
+
+    /* Data source */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@source/string()").arg(id));
+    d->query.evaluateTo(&tmp);
+    QString source = tmp.mid(1).trimmed();
+
+    /* Verify total count */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/@count/string()").arg(source));
+    d->query.evaluateTo(&tmp);
+    if(Implementation::ColladaType<UnsignedInt>::fromString(tmp) != count*size) {
+        Error() << "Trade::ColladaImporter::mesh3D(): wrong total count in source" << ('"'+id+'"').toStdString();
+        return output;
+    }
+
+    /** @todo Assert right order of coordinates and type */
+
+    /* Items */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/string()").arg(source));
+    d->query.evaluateTo(&tmp);
+
+    output.reserve(count);
+    Int from = 0;
+    for(std::size_t i = 0; i != count; ++i)
+        output.push_back(Implementation::Utility::parseVector<T>(tmp, &from, size));
+
+    return output;
+}
+
+template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations) {
+    QString tmp;
+
+    /* Original attribute array */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@source/string()")
+        .arg(meshId+1).arg(attribute).arg(id+1));
+    d->query.evaluateTo(&tmp);
+    std::vector<T> originalArray = parseSource<T>(tmp.mid(1).trimmed());
+
+    /* Attribute offset in original index array */
+    UnsignedInt offset = attributeOffset(meshId, attribute, id);
+
+    /* Build resulting array */
+    std::vector<T> array(indexCombinations.size());
+    for(auto i: indexCombinations)
+        array[i.second] = originalArray[originalIndices[i.first*stride+offset]];
+
+    return std::move(array);
+}
+
 void ColladaImporter::parseScenes() {
     QStringList tmpList;
     QString tmp;
