@@ -121,7 +121,7 @@ class ColladaImporter: public AbstractImporter {
                  * constructor.
                  */
                 bool operator()(UnsignedInt a, UnsignedInt b) const {
-                    return memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(UnsignedInt)*stride) == 0;
+                    return std::memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(UnsignedInt)*stride) == 0;
                 }
 
             private:
