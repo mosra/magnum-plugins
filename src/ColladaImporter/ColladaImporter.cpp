@@ -114,7 +114,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->camerasForName.reserve(tmpList.size());
     for(const QString& id: tmpList)
-        d->camerasForName.insert(std::make_pair(id.trimmed().toStdString(), d->camerasForName.size()));
+        d->camerasForName.emplace(id.trimmed().toStdString(), d->camerasForName.size());
 
     /* Create light name -> light id map */
     query.setQuery(namespaceDeclaration + "/COLLADA/library_lights/light/@id/string()");
@@ -122,7 +122,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->lightsForName.reserve(tmpList.size());
     for(const QString& id: tmpList)
-        d->lightsForName.insert(std::make_pair(id.trimmed().toStdString(), d->lightsForName.size()));
+        d->lightsForName.emplace(id.trimmed().toStdString(), d->lightsForName.size());
 
     /* Create mesh name -> mesh id map */
     query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
@@ -133,7 +133,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->meshes.push_back(name);
-        d->meshesForName.insert({name, d->meshesForName.size()});
+        d->meshesForName.emplace(std::move(name), d->meshesForName.size());
     }
 
     /* Create material name -> material id map */
@@ -145,7 +145,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->materials.push_back(name);
-        d->materialsForName.insert({name, d->materialsForName.size()});
+        d->materialsForName.emplace(std::move(name), d->materialsForName.size());
     }
 
     /* Create image name -> image id map */
@@ -157,7 +157,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->images2D.push_back(name);
-        d->images2DForName.insert({name, d->images2DForName.size()});
+        d->images2DForName.emplace(std::move(name), d->images2DForName.size());
     }
 }
 
