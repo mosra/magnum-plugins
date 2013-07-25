@@ -124,18 +124,6 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString id: tmpList)
         d->lightsForName.insert(std::make_pair(id.trimmed().toStdString(), d->lightsForName.size()));
 
-    /* Create material name -> material id map */
-    query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
-    tmpList.clear();
-    query.evaluateTo(&tmpList);
-    d->materials.reserve(tmpList.size());
-    d->materialsForName.reserve(tmpList.size());
-    for(const QString id: tmpList) {
-        std::string name = id.trimmed().toStdString();
-        d->materials.push_back(name);
-        d->materialsForName.insert({name, d->materialsForName.size()});
-    }
-
     /* Create mesh name -> mesh id map */
     query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
     tmpList.clear();
@@ -146,6 +134,18 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
         std::string name = id.trimmed().toStdString();
         d->meshes.push_back(name);
         d->meshesForName.insert({name, d->meshesForName.size()});
+    }
+
+    /* Create material name -> material id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    d->materials.reserve(tmpList.size());
+    d->materialsForName.reserve(tmpList.size());
+    for(const QString id: tmpList) {
+        std::string name = id.trimmed().toStdString();
+        d->materials.push_back(name);
+        d->materialsForName.insert({name, d->materialsForName.size()});
     }
 
     /* Create image name -> image id map */
