@@ -99,7 +99,7 @@ class ColladaImporter: public AbstractImporter {
                  * constructor.
                  */
                 std::size_t operator()(UnsignedInt key) const {
-                    return *reinterpret_cast<const std::size_t*>(Corrade::Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(UnsignedInt)*stride).byteArray());
+                    return *reinterpret_cast<const std::size_t*>(Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(UnsignedInt)*stride).byteArray());
                 }
 
             private:

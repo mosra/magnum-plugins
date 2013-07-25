@@ -65,7 +65,7 @@ void ColladaImporterTest::openWrongNamespace() {
     ColladaImporter importer;
     std::stringstream debug;
     Error::setOutput(&debug);
-    CORRADE_VERIFY(!importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongNamespace.dae")));
+    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongNamespace.dae")));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): unsupported namespace \"http://www.collada.org/2006/11/COLLADASchema\"\n");
 }
 
@@ -73,13 +73,13 @@ void ColladaImporterTest::openWrongVersion() {
     ColladaImporter importer;
     std::stringstream debug;
     Error::setOutput(&debug);
-    CORRADE_VERIFY(!importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongVersion.dae")));
+    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongVersion.dae")));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): unsupported version \"1.4.0\"\n");
 }
 
 void ColladaImporterTest::parseSource() {
     ColladaImporter importer;
-    CORRADE_VERIFY(importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "parseSource.dae")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "parseSource.dae")));
 
     std::stringstream debug;
     Error::setOutput(&debug);
@@ -102,7 +102,7 @@ void ColladaImporterTest::scene() {
     Error::setOutput(&debug);
 
     ColladaImporter importer;
-    CORRADE_VERIFY(importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
 
     CORRADE_COMPARE(importer.defaultScene(), 1);
     CORRADE_COMPARE(importer.sceneCount(), 2);
@@ -158,7 +158,7 @@ void ColladaImporterTest::scene() {
 
 void ColladaImporterTest::mesh() {
     ColladaImporter importer;
-    CORRADE_VERIFY(importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "mesh.dae")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "mesh.dae")));
 
     CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
@@ -282,7 +282,7 @@ void ColladaImporterTest::mesh() {
 
 void ColladaImporterTest::material() {
     ColladaImporter importer;
-    CORRADE_VERIFY(importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "material.dae")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "material.dae")));
 
     CORRADE_COMPARE(importer.materialCount(), 3);
 
@@ -310,7 +310,7 @@ void ColladaImporterTest::material() {
 
 void ColladaImporterTest::image() {
     ColladaImporter importer;
-    CORRADE_VERIFY(importer.openFile(Corrade::Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "image.dae")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "image.dae")));
 
     CORRADE_COMPARE(importer.image2DCount(), 2);
 
