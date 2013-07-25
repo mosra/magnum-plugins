@@ -347,7 +347,7 @@ AbstractMaterialData* ColladaImporter::doMaterial(const UnsignedInt id) {
 
     /* Find out which profile it is */
     QString tmp;
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/*[substring(name(), 1, 8) = 'profile_']/name()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/*[starts-with(name(), 'profile_')]/name()").arg(effect));
     d->query.evaluateTo(&tmp);
 
     /** @todo Support other profiles */
@@ -565,7 +565,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
     }
 
     /* Instance type */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/*[substring(name(), 1, 9) = 'instance_']/name()").arg(name));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/*[starts-with(name(), 'instance_')]/name()").arg(name));
     d->query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
 
