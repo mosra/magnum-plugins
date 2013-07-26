@@ -31,6 +31,7 @@
 #include <Trade/MeshData3D.h>
 #include <Trade/MeshObjectData3D.h>
 #include <Trade/SceneData.h>
+#include <Trade/TextureData.h>
 
 #include "ColladaImporter/ColladaImporter.h"
 #include "ColladaImporterTestConfigure.h"
@@ -48,6 +49,7 @@ class ColladaImporterTest: public TestSuite::Tester {
         void scene();
         void mesh();
         void material();
+        void texture();
         void image();
 };
 
@@ -55,9 +57,11 @@ ColladaImporterTest::ColladaImporterTest() {
     addTests({&ColladaImporterTest::openWrongNamespace,
               &ColladaImporterTest::openWrongVersion,
               &ColladaImporterTest::parseSource,
+
               &ColladaImporterTest::scene,
               &ColladaImporterTest::mesh,
               &ColladaImporterTest::material,
+              &ColladaImporterTest::texture,
               &ColladaImporterTest::image});
 }
 
@@ -312,6 +316,60 @@ void ColladaImporterTest::material() {
     CORRADE_COMPARE(material->specularColor(), Vector3(0, 0, 1));
     CORRADE_COMPARE(material->shininess(), 50.0f);
     delete material;
+}
+
+void ColladaImporterTest::texture() {
+    ColladaImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "texture.dae")));
+
+    CORRADE_COMPARE(importer.textureCount(), 4);
+
+    /* Unsupported sampler type */
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_COMPARE(importer.textureName(0), "UnsupportedSampler");
+    CORRADE_COMPARE(importer.textureForName("UnsupportedSampler"), 0);
+    CORRADE_VERIFY(!importer.texture(0));
+    CORRADE_COMPARE(out.str(), "Trade::ColladaImporter::texture(): unsupported sampler type samplerRECT\n");
+
+    /* Unknown image reference */
+    out.str({});
+    CORRADE_COMPARE(importer.textureName(1), "SamplerWithoutImage");
+    CORRADE_COMPARE(importer.textureForName("SamplerWithoutImage"), 1);
+    CORRADE_VERIFY(!importer.texture(1));
+    CORRADE_COMPARE(out.str(), "Trade::ColladaImporter::texture(): image UnknownImage not found\n");
+
+    /* Proper one */
+    {
+        CORRADE_COMPARE(importer.textureName(2), "Sampler");
+        CORRADE_COMPARE(importer.textureForName("Sampler"), 2);
+        TextureData* const texture = importer.texture(2);
+        CORRADE_VERIFY(texture);
+
+        CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+        CORRADE_COMPARE(texture->wrapping(), Array3D<Sampler::Wrapping>(Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::MirroredRepeat, Sampler::Wrapping::Repeat));
+        CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
+        CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
+        CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Nearest);
+        CORRADE_COMPARE(texture->image(), 1);
+        delete texture;
+    }
+
+    /* Default sampling values */
+    {
+        CORRADE_COMPARE(importer.textureName(3), "SamplerDefaults");
+        CORRADE_COMPARE(importer.textureForName("SamplerDefaults"), 3);
+        TextureData* const texture = importer.texture(3);
+        CORRADE_VERIFY(texture);
+
+        CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+        CORRADE_COMPARE(texture->wrapping(), Array3D<Sampler::Wrapping>(Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat));
+        CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Nearest);
+        CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Nearest);
+        CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Base);
+        CORRADE_COMPARE(texture->image(), 0);
+        delete texture;
+    }
 }
 
 void ColladaImporterTest::image() {

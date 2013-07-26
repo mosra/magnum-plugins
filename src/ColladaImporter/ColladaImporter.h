@@ -72,6 +72,7 @@ class ColladaImporter: public AbstractImporter {
             std::vector<std::pair<std::string, ObjectData3D*>> objects;
             std::vector<std::string> meshes;
             std::vector<std::string> materials;
+            std::vector<std::string> textures;
             std::vector<std::string> images2D;
 
             /** @todo Make public use for camerasForName, lightsForName */
@@ -81,6 +82,7 @@ class ColladaImporter: public AbstractImporter {
                 objectsForName,
                 meshesForName,
                 materialsForName,
+                texturesForName,
                 images2DForName;
 
             QXmlQuery query;
@@ -156,6 +158,11 @@ class ColladaImporter: public AbstractImporter {
         Int doMaterialForName(const std::string& name) override;
         std::string doMaterialName(UnsignedInt id) override;
         AbstractMaterialData* doMaterial(UnsignedInt id) override;
+
+        UnsignedInt doTextureCount() const override;
+        Int doTextureForName(const std::string& name) override;
+        std::string doTextureName(UnsignedInt id) override;
+        TextureData* doTexture(UnsignedInt id) override;
 
         UnsignedInt doImage2DCount() const override;
         Int doImage2DForName(const std::string& name) override;

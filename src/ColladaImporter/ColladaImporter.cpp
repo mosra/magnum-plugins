@@ -33,6 +33,7 @@
 #include <Trade/MeshObjectData3D.h>
 #include <Trade/PhongMaterialData.h>
 #include <Trade/SceneData.h>
+#include <Trade/TextureData.h>
 
 #include "TgaImporter/TgaImporter.h"
 
@@ -146,6 +147,18 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
         std::string name = id.trimmed().toStdString();
         d->materials.push_back(name);
         d->materialsForName.emplace(std::move(name), d->materialsForName.size());
+    }
+
+    /* Create texture name -> texture id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam/*[starts-with(name(), 'sampler')]/../@sid/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    d->textures.reserve(tmpList.size());
+    d->materialsForName.reserve(tmpList.size());
+    for(const QString& id: tmpList) {
+        std::string name = id.trimmed().toStdString();
+        d->textures.push_back(name);
+        d->texturesForName.emplace(std::move(name), d->texturesForName.size());
     }
 
     /* Create image name -> image id map */
@@ -399,6 +412,120 @@ AbstractMaterialData* ColladaImporter::doMaterial(const UnsignedInt id) {
     /** @todo Emission, IOR */
 
     return new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
+}
+
+UnsignedInt ColladaImporter::doTextureCount() const { return d->textures.size(); }
+
+Int ColladaImporter::doTextureForName(const std::string& name) {
+    auto it = d->texturesForName.find(name);
+    return it == d->texturesForName.end() ? -1 : it->second;
+}
+
+std::string ColladaImporter::doTextureName(const UnsignedInt id) {
+    return d->textures[id];
+}
+
+namespace {
+
+Sampler::Wrapping wrappingFromString(const QString& string) {
+    /* Treat NONE and element not present as default */
+    if(string.isEmpty() || string == "WRAP" || string == "NONE") return Sampler::Wrapping::Repeat;
+    if(string == "MIRROR") return Sampler::Wrapping::MirroredRepeat;
+    if(string == "CLAMP") return Sampler::Wrapping::ClampToEdge;
+    if(string == "BORDER") return Sampler::Wrapping::ClampToBorder;
+
+    Error() << "Trade::ColladaImporter::texture(): unknown texture wrapping" << string.toStdString();
+    return Sampler::Wrapping(-1);
+}
+
+Sampler::Filter filterFromString(const QString& string) {
+    /* Treat NONE and element not present as default */
+    if(string.isEmpty() || string == "NEAREST" || string == "NONE") return Sampler::Filter::Nearest;
+    if(string == "LINEAR") return Sampler::Filter::Linear;
+
+    Error() << "Trade::ColladaImporter::texture(): unknown texture filter" << string.toStdString();
+    return Sampler::Filter(-1);
+}
+
+Sampler::Mipmap mipmapFromString(const QString& string) {
+    /* Treat element not present as default */
+    if(string.isEmpty() || string == "NONE") return Sampler::Mipmap::Base;
+    if(string == "NEAREST") return Sampler::Mipmap::Nearest;
+    if(string == "LINEAR") return Sampler::Mipmap::Linear;
+
+    Error() << "Trade::ColladaImporter::texture(): unknown texture mipmap filter" << string.toStdString();
+    return Sampler::Mipmap(-1);
+}
+
+}
+
+TextureData* ColladaImporter::doTexture(const UnsignedInt id) {
+    const auto name = QString::fromStdString(d->textures[id]);
+
+    /* Texture type */
+    QString tmp;
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/name()").arg(name));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+
+    TextureData::Type type;
+    if(tmp == "sampler1D")          type = TextureData::Type::Texture1D;
+    else if(tmp == "sampler2D")     type = TextureData::Type::Texture2D;
+    else if(tmp == "sampler3D")     type = TextureData::Type::Texture3D;
+    else if(tmp == "samplerCUBE")   type = TextureData::Type::Cube;
+    else {
+        Error() << "Trade::ColladaImporter::texture(): unsupported sampler type" << tmp.toStdString();
+        return nullptr;
+    }
+
+    /* Texture image */
+    /** @todo Verify that surface type is the same as sampler type */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[surface][@sid=/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/source/string()]/surface/init_from/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+
+    auto it = d->images2DForName.find(tmp.toStdString());
+    if(it == d->images2DForName.end()) {
+        Error() << "Trade::ColladaImporter::texture(): image" << tmp.toStdString() << "not found";
+        return nullptr;
+    }
+    const UnsignedInt image = it->second;
+
+    /* Texture sampler wrapping */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_s/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Wrapping wrappingX = wrappingFromString(tmp.trimmed());
+    if(wrappingX == Sampler::Wrapping(-1)) return nullptr;
+
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_t/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Wrapping wrappingY = wrappingFromString(tmp.trimmed());
+    if(wrappingY == Sampler::Wrapping(-1)) return nullptr;
+
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_p/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Wrapping wrappingZ = wrappingFromString(tmp.trimmed());
+    if(wrappingZ == Sampler::Wrapping(-1)) return nullptr;
+
+    /* Texture minification filter */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/minfilter/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Filter minificationFilter = filterFromString(tmp.trimmed());
+    if(minificationFilter == Sampler::Filter(-1)) return nullptr;
+
+    /* Texture magnification filter */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/magfilter/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Filter magnificationFilter = filterFromString(tmp.trimmed());
+    if(magnificationFilter == Sampler::Filter(-1)) return nullptr;
+
+    /* Texture mipmap filter */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/mipfilter/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Mipmap mipmapFilter = mipmapFromString(tmp.trimmed());
+    if(mipmapFilter == Sampler::Mipmap(-1)) return nullptr;
+
+    return new TextureData(type, minificationFilter, magnificationFilter, mipmapFilter, {wrappingX, wrappingY, wrappingZ}, image);
 }
 
 UnsignedInt ColladaImporter::doImage2DCount() const { return d->images2D.size(); }
