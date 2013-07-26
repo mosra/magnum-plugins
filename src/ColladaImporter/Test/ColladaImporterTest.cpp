@@ -109,6 +109,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(importer.object3DCount(), 6);
 
     CORRADE_COMPARE(importer.sceneName(0), "Scene");
+    CORRADE_COMPARE(importer.sceneForName("Scene"), 0);
     SceneData* scene = importer.scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 2}));
@@ -288,11 +289,13 @@ void ColladaImporterTest::material() {
 
     std::stringstream debug;
     Error::setOutput(&debug);
+    CORRADE_COMPARE(importer.materialName(0), "MaterialWrongProfile");
     CORRADE_COMPARE(importer.materialForName("MaterialWrongProfile"), 0);
     CORRADE_VERIFY(!importer.material(0));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::material(): \"profile_GLSL\" effect profile not supported\n");
 
     debug.str("");
+    CORRADE_COMPARE(importer.materialName(1), "MaterialWrongShader");
     CORRADE_COMPARE(importer.materialForName("MaterialWrongShader"), 1);
     CORRADE_VERIFY(!importer.material(1));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::material(): \"lambert\" shader not supported\n");
@@ -316,8 +319,9 @@ void ColladaImporterTest::image() {
 
     std::stringstream debug;
     Error::setOutput(&debug);
-    CORRADE_VERIFY(!importer.image2D(0));
+    CORRADE_COMPARE(importer.image2DName(0), "UnsupportedImage");
     CORRADE_COMPARE(importer.image2DForName("UnsupportedImage"), 0);
+    CORRADE_VERIFY(!importer.image2D(0));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::image2D(): \"image.jpg\" has unsupported format\n");
 
     CORRADE_COMPARE(importer.image2DName(1), "Image");
