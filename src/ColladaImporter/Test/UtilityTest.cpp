@@ -50,7 +50,7 @@ void UtilityTest::parseVector() {
     CORRADE_COMPARE(Implementation::Utility::parseVector<Vector2>("     2.17  3.28  "), Vector2(2.17f, 3.28f));
 
     /* Nothing */
-    CORRADE_COMPARE(Implementation::Utility::parseVector<Vector2>(""), Vector2());
+    CORRADE_COMPARE(Implementation::Utility::parseVector<Vector2>({}), Vector2());
     CORRADE_COMPARE(Implementation::Utility::parseVector<Vector2>("    "), Vector2());
 
     /* Different size */

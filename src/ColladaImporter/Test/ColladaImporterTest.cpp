@@ -297,7 +297,7 @@ void ColladaImporterTest::material() {
     CORRADE_VERIFY(!importer.material(0));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::material(): \"profile_GLSL\" effect profile not supported\n");
 
-    debug.str("");
+    debug.str({});
     CORRADE_COMPARE(importer.materialName(1), "MaterialWrongShader");
     CORRADE_COMPARE(importer.materialForName("MaterialWrongShader"), 1);
     CORRADE_VERIFY(!importer.material(1));
