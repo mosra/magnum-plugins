@@ -193,7 +193,7 @@ Int ColladaImporter::doObject3DForName(const std::string& name) {
     if(!d->scenes[0].second) parseScenes();
 
     auto it = d->objectsForName.find(name);
-    return (it == d->objectsForName.end()) ? -1 : it->second;
+    return it == d->objectsForName.end() ? -1 : it->second;
 }
 
 std::string ColladaImporter::doObject3DName(const UnsignedInt id) {
@@ -211,7 +211,7 @@ UnsignedInt ColladaImporter::doMesh3DCount() const { return d->meshes.size(); }
 
 Int ColladaImporter::doMesh3DForName(const std::string& name) {
     auto it = d->meshesForName.find(name);
-    return (it == d->meshesForName.end()) ? -1 : it->second;
+    return it == d->meshesForName.end() ? -1 : it->second;
 }
 
 std::string ColladaImporter::doMesh3DName(const UnsignedInt id) { return d->meshes[id]; }
@@ -331,7 +331,7 @@ UnsignedInt ColladaImporter::doMaterialCount() const { return d->materials.size(
 
 Int ColladaImporter::doMaterialForName(const std::string& name) {
     auto it = d->materialsForName.find(name);
-    return (it == d->materialsForName.end()) ? -1 : it->second;
+    return it == d->materialsForName.end() ? -1 : it->second;
 }
 
 std::string ColladaImporter::doMaterialName(const UnsignedInt id) {
@@ -397,7 +397,7 @@ UnsignedInt ColladaImporter::doImage2DCount() const { return d->images2D.size();
 
 Int ColladaImporter::doImage2DForName(const std::string& name) {
     auto it = d->images2DForName.find(name);
-    return (it == d->images2DForName.end()) ? -1 : it->second;
+    return it == d->images2DForName.end() ? -1 : it->second;
 }
 
 std::string ColladaImporter::doImage2DName(const UnsignedInt id) {
