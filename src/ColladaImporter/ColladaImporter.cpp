@@ -175,6 +175,14 @@ Int ColladaImporter::doDefaultScene() {
 
 UnsignedInt ColladaImporter::doSceneCount() const { return d->scenes.size(); }
 
+Int ColladaImporter::doSceneForName(const std::string& name) {
+    if(d->scenes.empty()) return -1;
+    if(!d->scenes[0].second) parseScenes();
+
+    auto it = d->scenesForName.find(name);
+    return it == d->scenesForName.end() ? -1 : it->second;
+}
+
 std::string ColladaImporter::doSceneName(const UnsignedInt id) {
     if(!d->scenes[0].second) parseScenes();
     return d->scenes[id].first;
@@ -528,6 +536,7 @@ void ColladaImporter::parseScenes() {
         }
 
         d->scenes[sceneId] = {name, new SceneData({}, std::move(children))};
+        d->scenesForName.emplace(std::move(name), sceneId);
     }
 }
 

@@ -77,6 +77,7 @@ class ColladaImporter: public AbstractImporter {
             /** @todo Make public use for camerasForName, lightsForName */
             std::unordered_map<std::string, UnsignedInt> camerasForName,
                 lightsForName,
+                scenesForName,
                 objectsForName,
                 meshesForName,
                 materialsForName,
@@ -137,6 +138,7 @@ class ColladaImporter: public AbstractImporter {
 
         Int doDefaultScene() override;
         UnsignedInt doSceneCount() const override;
+        Int doSceneForName(const std::string& name) override;
         std::string doSceneName(UnsignedInt id) override;
         SceneData* doScene(UnsignedInt id) override;
 

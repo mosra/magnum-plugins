@@ -108,6 +108,9 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(importer.sceneCount(), 2);
     CORRADE_COMPARE(importer.object3DCount(), 6);
 
+    CORRADE_COMPARE(importer.sceneName(1), "Scene2");
+    CORRADE_COMPARE(importer.sceneForName("Scene2"), 1);
+
     CORRADE_COMPARE(importer.sceneName(0), "Scene");
     CORRADE_COMPARE(importer.sceneForName("Scene"), 0);
     SceneData* scene = importer.scene(0);
