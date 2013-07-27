@@ -389,29 +389,94 @@ AbstractMaterialData* ColladaImporter::doMaterial(const UnsignedInt id) {
         return nullptr;
     }
 
-    /* Ambient color */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
-    d->query.evaluateTo(&tmp);
-    Vector3 ambientColor = Implementation::Utility::parseVector<Vector3>(tmp);
-
-    /* Diffuse color */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
-    d->query.evaluateTo(&tmp);
-    Vector3 diffuseColor = Implementation::Utility::parseVector<Vector3>(tmp);
-
-    /* Specular color */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
-    d->query.evaluateTo(&tmp);
-    Vector3 specularColor = Implementation::Utility::parseVector<Vector3>(tmp);
-
     /* Shininess */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/shininess/float/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Float shininess = Implementation::ColladaType<Float>::fromString(tmp);
+    const Float shininess = Implementation::ColladaType<Float>::fromString(tmp);
+
+    /* Decide about what is textured in the material */
+    PhongMaterialData::Flags flags;
+
+    /* Ambient texture */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/ambient/texture/@texture/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+    UnsignedInt ambientTexture = 0;
+    if(!tmp.isEmpty()) {
+        auto it = d->texturesForName.find(tmp.toStdString());
+        if(it == d->texturesForName.end()) {
+            Error() << "Trade::ColladaImporter::material(): ambient texture" << tmp.toStdString() << "not found";
+            return nullptr;
+        }
+
+        flags |= PhongMaterialData::Flag::AmbientTexture;
+        ambientTexture = it->second;
+    }
+
+    /* Diffuse texture */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/diffuse/texture/@texture/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+    UnsignedInt diffuseTexture = 0;
+    if(!tmp.isEmpty()) {
+        auto it = d->texturesForName.find(tmp.toStdString());
+        if(it == d->texturesForName.end()) {
+            Error() << "Trade::ColladaImporter::material(): diffuse texture" << tmp.toStdString() << "not found";
+            return nullptr;
+        }
+
+        flags |= PhongMaterialData::Flag::DiffuseTexture;
+        diffuseTexture = it->second;
+    }
+
+    /* Specular texture */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/specular/texture/@texture/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+    UnsignedInt specularTexture = 0;
+    if(!tmp.isEmpty()) {
+        auto it = d->texturesForName.find(tmp.toStdString());
+        if(it == d->texturesForName.end()) {
+            Error() << "Trade::ColladaImporter::material(): specular texture" << tmp.toStdString() << "not found";
+            return nullptr;
+        }
+
+        flags |= PhongMaterialData::Flag::SpecularTexture;
+        specularTexture = it->second;
+    }
+
+    auto material = new PhongMaterialData(flags, shininess);
+
+    /* Ambient texture or color, if not textured */
+    if(flags & PhongMaterialData::Flag::AmbientTexture)
+        material->ambientTexture() = ambientTexture;
+    else {
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
+        d->query.evaluateTo(&tmp);
+        material->ambientColor() = Implementation::Utility::parseVector<Vector3>(tmp);
+    }
+
+    /* Diffuse texture or color, if not textured */
+    if(flags & PhongMaterialData::Flag::DiffuseTexture)
+        material->diffuseTexture() = diffuseTexture;
+    else {
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
+        d->query.evaluateTo(&tmp);
+        material->diffuseColor() = Implementation::Utility::parseVector<Vector3>(tmp);
+    }
+
+    /* Specular color */
+    if(flags & PhongMaterialData::Flag::SpecularTexture)
+        material->specularTexture() = specularTexture;
+    else {
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
+        d->query.evaluateTo(&tmp);
+        material->specularColor() = Implementation::Utility::parseVector<Vector3>(tmp);
+    }
 
     /** @todo Emission, IOR */
 
-    return new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
+    return material;
 }
 
 UnsignedInt ColladaImporter::doTextureCount() const { return d->textures.size(); }

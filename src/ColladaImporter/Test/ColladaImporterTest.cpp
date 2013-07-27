@@ -292,7 +292,7 @@ void ColladaImporterTest::material() {
     ColladaImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "material.dae")));
 
-    CORRADE_COMPARE(importer.materialCount(), 3);
+    CORRADE_COMPARE(importer.materialCount(), 5);
 
     std::stringstream debug;
     Error::setOutput(&debug);
@@ -307,15 +307,41 @@ void ColladaImporterTest::material() {
     CORRADE_VERIFY(!importer.material(1));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::material(): \"lambert\" shader not supported\n");
 
-    CORRADE_COMPARE(importer.materialName(2), "MaterialPhong");
-    CORRADE_COMPARE(importer.materialForName("MaterialPhong"), 2);
-    PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(2));
-    CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->ambientColor(), Vector3(1, 0, 0));
-    CORRADE_COMPARE(material->diffuseColor(), Vector3(0, 1, 0));
-    CORRADE_COMPARE(material->specularColor(), Vector3(0, 0, 1));
-    CORRADE_COMPARE(material->shininess(), 50.0f);
-    delete material;
+    debug.str({});
+    CORRADE_COMPARE(importer.materialName(2), "MaterialPhongUnknownTexture");
+    CORRADE_COMPARE(importer.materialForName("MaterialPhongUnknownTexture"), 2);
+    CORRADE_VERIFY(!importer.material(2));
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::material(): diffuse texture UnknownTexture not found\n");
+
+    /* Color only material */
+    {
+        CORRADE_COMPARE(importer.materialName(3), "MaterialPhong");
+        CORRADE_COMPARE(importer.materialForName("MaterialPhong"), 3);
+        PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(3));
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->flags() == PhongMaterialData::Flags());
+        CORRADE_COMPARE(material->ambientColor(), Vector3(1, 0, 0));
+        CORRADE_COMPARE(material->diffuseColor(), Vector3(0, 1, 0));
+        CORRADE_COMPARE(material->specularColor(), Vector3(0, 0, 1));
+        CORRADE_COMPARE(material->shininess(), 50.0f);
+        delete material;
+    }
+
+    /* Textured material */
+    {
+        CORRADE_COMPARE(importer.materialName(4), "MaterialPhongTextured");
+        CORRADE_COMPARE(importer.materialForName("MaterialPhongTextured"), 4);
+        PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(4));
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->flags() == (PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture));
+        CORRADE_COMPARE(material->ambientColor(), Vector3(1, 1, 0));
+        CORRADE_COMPARE(material->diffuseTexture(), 0);
+        CORRADE_COMPARE(importer.textureName(0), "DiffuseTexture");
+        CORRADE_COMPARE(material->specularTexture(), 1);
+        CORRADE_COMPARE(importer.textureName(1), "SpecularTexture");
+        CORRADE_COMPARE(material->shininess(), 50.0f);
+        delete material;
+    }
 }
 
 void ColladaImporterTest::texture() {
