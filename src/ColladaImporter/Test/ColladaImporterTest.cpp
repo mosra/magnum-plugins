@@ -127,7 +127,7 @@ void ColladaImporterTest::scene() {
     ObjectData3D* object = importer.object3D(0);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Camera);
-    CORRADE_COMPARE(object->instanceId(), 2);
+    CORRADE_COMPARE(object->instance(), 2);
     CORRADE_COMPARE(object->children(), std::vector<UnsignedInt>{1});
 //     delete object;
 
@@ -136,7 +136,7 @@ void ColladaImporterTest::scene() {
     object = importer.object3D(1);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Light);
-    CORRADE_COMPARE(object->instanceId(), 1);
+    CORRADE_COMPARE(object->instance(), 1);
     CORRADE_VERIFY(object->children().empty());
 //     delete object;
 
@@ -145,7 +145,7 @@ void ColladaImporterTest::scene() {
     object = importer.object3D(2);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Mesh);
-    CORRADE_COMPARE(object->instanceId(), 2);
+    CORRADE_COMPARE(object->instance(), 2);
     Matrix4 transformation =
         Matrix4::translation({1, 2, 3})*
         Matrix4::rotationZ(Deg(60.0f))*
