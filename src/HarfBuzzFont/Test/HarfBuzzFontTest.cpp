@@ -59,7 +59,7 @@ void HarfBuzzFontTest::layout() {
     cache.insert(font.glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
     cache.insert(font.glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
 
-    AbstractLayouter* layouter = font.layout(&cache, 0.5f, "Wave");
+    AbstractLayouter* layouter = font.layout(cache, 0.5f, "Wave");
     CORRADE_VERIFY(layouter);
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 

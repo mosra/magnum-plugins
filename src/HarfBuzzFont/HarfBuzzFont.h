@@ -59,7 +59,7 @@ class HarfBuzzFont: public FreeTypeFont::FreeTypeFont {
         void doOpenFile(const std::string& filename, Float size) override;
         void doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
         void doClose() override;
-        AbstractLayouter* doLayout(const GlyphCache* cache, Float size, const std::string& text) override;
+        AbstractLayouter* doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
         void finishConstruction();
 
         hb_font_t* hbFont;

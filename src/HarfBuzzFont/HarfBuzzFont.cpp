@@ -34,14 +34,14 @@ namespace {
 
 class HarfBuzzLayouter: public AbstractLayouter {
     public:
-        explicit HarfBuzzLayouter(hb_font_t* const font, const GlyphCache* const cache, const Float fontSize, const Float textSize, const std::string& text);
+        explicit HarfBuzzLayouter(hb_font_t* const font, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text);
         ~HarfBuzzLayouter();
 
         std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const UnsignedInt i) override;
 
     private:
         const hb_font_t* const font;
-        const GlyphCache* const cache;
+        const GlyphCache& cache;
         const Float fontSize, textSize;
         hb_buffer_t* buffer;
         hb_glyph_info_t* glyphInfo;
@@ -86,13 +86,13 @@ void HarfBuzzFont::finishConstruction() {
     hbFont = hb_ft_font_create(ftFont, nullptr);
 }
 
-AbstractLayouter* HarfBuzzFont::doLayout(const GlyphCache* const cache, const Float size, const std::string& text) {
+AbstractLayouter* HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
     return new HarfBuzzLayouter(hbFont, cache, this->size(), size, text);
 }
 
 namespace {
 
-HarfBuzzLayouter::HarfBuzzLayouter(hb_font_t* const font, const GlyphCache* const cache, const Float fontSize, const Float textSize, const std::string& text): font(font), cache(cache), fontSize(fontSize), textSize(textSize) {
+HarfBuzzLayouter::HarfBuzzLayouter(hb_font_t* const font, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text): font(font), cache(cache), fontSize(fontSize), textSize(textSize) {
     /* Prepare HarfBuzz buffer */
     buffer = hb_buffer_create();
     hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
@@ -116,12 +116,12 @@ std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const Un
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Rectanglei rectangle;
-    std::tie(position, rectangle) = (*cache)[glyphInfo[i].codepoint];
+    std::tie(position, rectangle) = cache[glyphInfo[i].codepoint];
 
     const Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
                                                           Vector2(rectangle.size())/fontSize);
-    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache->textureSize(),
-                                       Vector2(rectangle.topRight())/cache->textureSize());
+    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache.textureSize(),
+                                       Vector2(rectangle.topRight())/cache.textureSize());
 
     /* Glyph offset in normalized coordinates */
     const Vector2 offset = Vector2(glyphPositions[i].x_offset,
