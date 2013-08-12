@@ -22,45 +22,9 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
-
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
-
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
-
-if(WITH_MAGNUMFONT)
-    add_subdirectory(MagnumFont)
-endif()
-
-if(WITH_MAGNUMFONTCONVERTER AND NOT MAGNUM_TARGET_GLES)
-    add_subdirectory(MagnumFontConverter)
-endif()
-
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
-
-if(WITH_TGAIMAGECONVERTER)
-    add_subdirectory(TgaImageConverter)
-endif()
-
-if(WITH_TGAIMPORTER)
-    add_subdirectory(TgaImporter)
-endif()
-
-if(WITH_WAVAUDIOIMPORTER)
-    add_subdirectory(WavAudioImporter)
-endif()
+corrade_add_test(WavAudioImporterTest WavImporterTest.cpp LIBRARIES WavAudioImporterTestLib)

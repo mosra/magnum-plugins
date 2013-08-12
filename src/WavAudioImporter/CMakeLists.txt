@@ -22,45 +22,30 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
+find_package(Magnum REQUIRED Audio)
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+include_directories(${MAGNUM_AUDIO_INCLUDE_DIRS})
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
+set(WavAudioImporter_SRCS
+    WavImporter.cpp)
 
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
+set(WavAudioImporter_HEADERS
+    WavHeader.h
+    WavImporter.h)
 
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
+add_library(WavAudioImporterObjects OBJECT ${WavAudioImporter_SRCS})
+set_target_properties(WavAudioImporterObjects PROPERTIES COMPILE_FLAGS "-DWavAudioImporterObjects_EXPORTS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
-if(WITH_MAGNUMFONT)
-    add_subdirectory(MagnumFont)
-endif()
+add_plugin(WavAudioImporter ${MAGNUM_PLUGINS_AUDIOIMPORTER_INSTALL_DIR}
+    WavAudioImporter.conf
+    $<TARGET_OBJECTS:WavAudioImporterObjects>
+    pluginRegistrationWavAudioImporter.cpp)
+target_link_libraries(WavAudioImporter ${MAGNUM_AUDIO_LIBRARIES})
 
-if(WITH_MAGNUMFONTCONVERTER AND NOT MAGNUM_TARGET_GLES)
-    add_subdirectory(MagnumFontConverter)
-endif()
+install(FILES ${WavAudioImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/WavAudioImporter)
 
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
-
-if(WITH_TGAIMAGECONVERTER)
-    add_subdirectory(TgaImageConverter)
-endif()
-
-if(WITH_TGAIMPORTER)
-    add_subdirectory(TgaImporter)
-endif()
-
-if(WITH_WAVAUDIOIMPORTER)
-    add_subdirectory(WavAudioImporter)
+if(BUILD_TESTS)
+    add_library(WavAudioImporterTestLib STATIC $<TARGET_OBJECTS:WavAudioImporterObjects>)
+    target_link_libraries(WavAudioImporterTestLib ${MAGNUM_LIBRARIES} ${MAGNUM_AUDIO_LIBRARIES})
+    add_subdirectory(Test)
 endif()

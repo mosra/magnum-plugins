@@ -44,6 +44,7 @@ endif()
 option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
 cmake_dependent_option(WITH_TGAIMAGECONVERTER "Build TgaImageConverter plugin" OFF "NOT WITH_MAGNUMFONTCONVERTER" ON)
 cmake_dependent_option(WITH_TGAIMPORTER "Build TgaImporter plugin" OFF "NOT WITH_MAGNUMFONT;NOT WITH_COLLADAIMPORTER" ON)
+option(WITH_WAVAUDIOIMPORTER "Build WavAudioImporter plugin" OFF)
 
 include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests." OFF)
