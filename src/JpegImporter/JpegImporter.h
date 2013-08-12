@@ -28,6 +28,7 @@
  * @brief Class Magnum::Trade::JpegImporter
  */
 
+#include <Containers/Array.h>
 #include <Trade/AbstractImporter.h>
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -74,7 +75,7 @@ class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
         MAGNUM_JPEGIMPORTER_LOCAL ImageData2D* doImage2D(UnsignedInt id) override;
 
     private:
-        Containers::Array<unsigned char>* _in;
+        Containers::Array<unsigned char> _in;
 };
 
 }}

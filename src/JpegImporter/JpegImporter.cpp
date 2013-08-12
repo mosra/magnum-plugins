@@ -26,7 +26,6 @@
 
 #include <csetjmp>
 #include <jpeglib.h>
-#include <Containers/Array.h>
 #include <Utility/Debug.h>
 #include <ImageFormat.h>
 #include <Trade/ImageData.h>
@@ -38,9 +37,9 @@
 
 namespace Magnum { namespace Trade {
 
-JpegImporter::JpegImporter(): _in(nullptr) {}
+JpegImporter::JpegImporter() = default;
 
-JpegImporter::JpegImporter(PluginManager::AbstractManager* manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), _in(nullptr) {}
+JpegImporter::JpegImporter(PluginManager::AbstractManager* manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
 
 JpegImporter::~JpegImporter() { close(); }
 
@@ -48,11 +47,11 @@ auto JpegImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool JpegImporter::doIsOpened() const { return _in; }
 
-void JpegImporter::doClose() { delete _in; }
+void JpegImporter::doClose() { _in = nullptr; }
 
 void JpegImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
-    _in = new Containers::Array<unsigned char>(data.size());
-    std::copy(data.begin(), data.end(), _in->begin());
+    _in = Containers::Array<unsigned char>(data.size());
+    std::copy(data.begin(), data.end(), _in.begin());
 }
 
 UnsignedInt JpegImporter::doImage2DCount() const { return 1; }
@@ -85,7 +84,7 @@ ImageData2D* JpegImporter::doImage2D(UnsignedInt) {
 
     /* Open file */
     jpeg_create_decompress(&file);
-    jpeg_mem_src(&file, _in->begin(), _in->size());
+    jpeg_mem_src(&file, _in.begin(), _in.size());
 
     /* Read file header, start decompression */
     jpeg_read_header(&file, true);
