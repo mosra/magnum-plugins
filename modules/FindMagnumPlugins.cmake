@@ -7,16 +7,18 @@
 #  MAGNUMPLUGINS_INCLUDE_DIRS   - Plugin include dir and include dirs of
 #   dependencies
 # This command will not try to find any actual plugin. The plugins are:
-#  ColladaImporter  - Collada importer (depends on Qt4)
+#  ColladaImporter  - Collada importer (depends on Qt library)
 #  FreeTypeFont     - FreeType font (depends on FreeType library)
 #  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
 #                     library)
 #  JpegImporter     - JPEG importer (depends on libJPEG library)
-#  MagnumFont       - Magnum bitmap font
-#  MagnumFontConverter - Magnum bitmap font converter
+#  MagnumFont       - Magnum bitmap font (depends on TgaImporter plugin)
+#  MagnumFontConverter - Magnum bitmap font converter (depends on
+#                     TgaImageConverter plugin)
 #  PngImporter      - PNG importer (depends on libPNG library)
 #  TgaImageConverter - TGA image converter
 #  TgaImporter      - TGA importer
+#  WavAudioImporter - WAV sound importer
 # Example usage with specifying the plugins is:
 #  find_package(MagnumPlugins [REQUIRED|COMPONENTS]
 #               MagnumFont TgaImporter)
@@ -149,6 +151,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
 
     # TgaImageConverter plugin has no dependencies
     # TgaImporter plugin has no dependencies
+    # WavAudioImporter plugin has no dependencies
 
     # Decide if the plugin was found
     if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
