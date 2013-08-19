@@ -65,5 +65,22 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_WAVAUDIOIMPORTER` -- @ref Audio::WavImporter "WavAudioImporter"
     plugin
 
+@section building-plugins-arch Building ArchLinux packages
+
+In `package/archlinux` directory is currently one PKGBUILD for Git development
+build. The package is also in AUR under the same name.
+
+There are also a few development PKGBUILDs in project root, which allow you to
+build and install the package directly from source tree without downloading
+anything. The native PKGBUILD also contains `check()` function which will run
+all unit tests before packaging.
+
+If you want to build with another compiler (e.g. Clang), run makepkg this way:
+
+    CXX=clang++ makepkg
+
+Development PKGBUILDs can detect when Clang is used and remove unsupported CXX
+flags.
+
 */
 }
