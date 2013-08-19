@@ -1,0 +1,89 @@
+/*
+    This file is part of Magnum.
+
+    Copyright © 2010, 2011, 2012, 2013 Vladimír Vondruš <mosra@centrum.cz>
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+*/
+
+namespace Magnum {
+/** @page cmake-plugins Plugin usage with CMake
+@brief Guide how to find and use static %Magnum plugins with CMake build system
+
+If the plugins are built as dynamic (the default), they don't need to be
+handled via CMake. The manager will look for them at runtime at specified
+location and loads them dynamically. However, if they are built as static (see
+@ref building-plugins for more information), they need to be linked into the
+executable and then explicitly imported. The logic is in module
+`FindMagnumPlugins.cmake` distributed in plugin repository in `modules/`
+directory, you are encouraged to copy it into your project and add path to the
+files to `CMAKE_MODULE_PATH`. Otherwise, if CMake won't be able to find this
+file in predefined locations, it will error out even if %Magnum plugins might
+be installed on the system.
+
+Basic usage is:
+
+    find_package(MagnumPlugins [REQUIRED])
+
+This command tries to find %Magnum plugins and then defines:
+
+-   `MAGNUMPLUGINS_FOUND` -- Whether %Magnum plugins were found
+-   `MAGNUMPLUGINS_INCLUDE_DIRS` -- Plugin include dir and include dirs of
+    dependencies
+
+This command will not try to find any actual plugin. The plugins are:
+
+-   `ColladaImporter` -- @ref Trade::ColladaImporter "ColladaImporter" plugin
+    (depends on Qt library)
+-   `FreeTypeFont` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin (depends on
+    FreeType library)
+-   `HarfBuzzFont` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin (depends on
+    FreeType plugin and HarfBuzz library)
+-   `JpegImporter` -- @ref Trade::JpegImporter "JpegImporter" plugin (depends
+    on libJPEG library)
+-   `MagnumFont` -- @ref Text::MagnumFont "MagnumFont" plugin (depends on
+    TgaImporter plugin)
+-   `MagnumFontConverter` -- @ref Text::MagnumFontConverter "MagnumFontConverter"
+    plugin (depends on TgaImageConverter plugin)
+-   `PngImporter` -- @ref Trade::PngImporter "PngImporter" plugin (depends on
+    libPNG library)
+-   `TgaImageConverter` -- @ref Trade::TgaImageConverter "TgaImageConverter"
+    plugin
+-   `TgaImporter` -- @ref Trade::TgaImporter "TgaImporter" plugin
+-   `WavAudioImporter` -- @ref Audio::WavImporter "WavAudioImporter" plugin
+
+Example usage with specifying the plugins is:
+
+    find_package(MagnumPlugins REQUIRED MagnumFont TgaImporter)
+
+For each plugin is then defined:
+
+-   `MAGNUMPLUGINS_*_FOUND` -- Whether the plugin was found
+-   `MAGNUMPLUGINS_*_LIBRARIES` -- Plugin library and dependent libraries
+-   `MAGNUMPLUGINS_*_INCLUDE_DIRS` -- Include dirs of plugin dependencies
+
+Additionally these variables are defined for internal usage:
+
+-   `MAGNUMPLUGINS_INCLUDE_DIR` -- Plugin include dir (w/o dependencies)
+-   `MAGNUMPLUGINS_*_LIBRARY` -- Plugin library (w/o dependencies)
+
+See also @ref cmake "Magnum usage with CMake" for more information.
+
+*/
+}
