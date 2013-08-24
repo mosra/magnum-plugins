@@ -47,13 +47,12 @@ namespace Magnum { namespace Trade {
 
 Supports RGB or grayscale images with 8 bits per channel.
 
-The images are imported with @ref ImageType "ImageType::UnsignedByte" and
-@ref ImageFormat "ImageFormat::RGB" or @ref ImageFormat "ImageFormat::Red"
-respectively. Grayscale images require extension @extension{ARB,texture_rg}.
+The images are imported with @ref ImageType::UnsignedByte and @ref ImageFormat::RGB
+or @ref ImageFormat::Red, respectively. Grayscale images require extension
+@extension{ARB,texture_rg}.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
-images use @ref ImageFormat "ImageFormat::Luminance" instead of
-@ref ImageFormat "ImageFormat::Red".
+images use @ref ImageFormat::Luminance instead of @ref ImageFormat::Red.
 */
 class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
     public:
