@@ -132,10 +132,12 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
             }
 
             break;
+
         case PNG_COLOR_TYPE_RGB:
             format = ImageFormat::RGB;
             CORRADE_INTERNAL_ASSERT(channels == 3);
             break;
+
         case PNG_COLOR_TYPE_RGBA:
             format = ImageFormat::RGBA;
             CORRADE_INTERNAL_ASSERT(channels == 4);
@@ -143,8 +145,11 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
 
         /* Palette needs to be converted */
         case PNG_COLOR_TYPE_PALETTE:
+            /** @todo test case for this */
             png_set_palette_to_rgb(file);
+            format = ImageFormat::RGB;
             channels = 3;
+            break;
 
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported color type" << colorType;
