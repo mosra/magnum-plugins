@@ -49,7 +49,10 @@ auto PngImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool PngImporter::doIsOpened() const { return _in; }
 
-void PngImporter::doClose() { delete _in; }
+void PngImporter::doClose() {
+    delete _in;
+    _in = nullptr;
+}
 
 void PngImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
     _in = new std::istringstream(std::string(reinterpret_cast<const char*>(data.begin()), data.size()));
