@@ -34,7 +34,7 @@ set(ColladaImporter_HEADERS
     ColladaImporter.h)
 
 add_library(ColladaImporterObjects OBJECT ${ColladaImporter_SRCS})
-set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})
+set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
 add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     ColladaImporter.conf
@@ -45,17 +45,19 @@ target_link_libraries(ColladaImporter
     ${QT_QTCORE_LIBRARY}
     ${QT_QTXMLPATTERNS_LIBRARY})
 
+if(WIN32)
+    target_link_libraries(ColladaImporter TgaImporter)
+endif()
+
 install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
 
 if(BUILD_TESTS)
-    add_library(ColladaImporterTestLib $<TARGET_OBJECTS:ColladaImporterObjects>)
-    target_link_libraries(ColladaImporterTestLib TgaImporterTestLib
+    add_library(ColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
+    target_link_libraries(ColladaImporterTestLib
         ${MAGNUM_LIBRARIES}
         ${QT_QTCORE_LIBRARY}
-        ${QT_QTXMLPATTERNS_LIBRARY})
-    add_subdirectory(Test)
-endif()
+        ${QT_QTXMLPATTERNS_LIBRARY}
+        TgaImporterTestLib)
 
-if(WIN32)
-    target_link_libraries(ColladaImporter TgaImporter)
+    add_subdirectory(Test)
 endif()

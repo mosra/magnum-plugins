@@ -25,21 +25,3 @@
 /** @dir magnum-plugins
  * @brief Plugins for %Magnum library
  */
-
-/** @dir ColladaImporter
- * @brief Namespace Magnum::Trade::ColladaImporter
- */
-/** @namespace Magnum::Trade::ColladaImporter
-@brief COLLADA importer
-
-Importer for scenes in COLLADA file format.
-*/
-
-/** @dir TgaImporter
- * @brief Namespace Magnum::Trade::TgaImporter
- */
-/** @namespace Magnum::Trade::TgaImporter
-@brief TGA importer
-
-Importer for TGA images.
-*/

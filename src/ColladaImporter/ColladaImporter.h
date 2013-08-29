@@ -53,49 +53,10 @@ class ColladaImporter: public AbstractImporter {
         /** @brief Plugin manager constructor */
         explicit ColladaImporter(PluginManager::AbstractManager* manager, std::string plugin);
 
-        virtual ~ColladaImporter();
+        ~ColladaImporter();
 
         /** @brief Parse &lt;source&gt; element */
-        template<class T> std::vector<T> parseSource(const QString& id) {
-            std::vector<T> output;
-            QString tmp;
-
-            /* Count of items */
-            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@count/string()").arg(id));
-            d->query.evaluateTo(&tmp);
-            UnsignedInt count = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
-
-            /* Size of each item */
-            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
-            d->query.evaluateTo(&tmp);
-            UnsignedInt size = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
-
-            /* Data source */
-            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@source/string()").arg(id));
-            d->query.evaluateTo(&tmp);
-            QString source = tmp.mid(1).trimmed();
-
-            /* Verify total count */
-            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/@count/string()").arg(source));
-            d->query.evaluateTo(&tmp);
-            if(Implementation::ColladaType<UnsignedInt>::fromString(tmp) != count*size) {
-                Error() << "ColladaImporter: wrong total count in source" << ('"'+id+'"').toStdString();
-                return output;
-            }
-
-            /** @todo Assert right order of coordinates and type */
-
-            /* Items */
-            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/string()").arg(source));
-            d->query.evaluateTo(&tmp);
-
-            output.reserve(count);
-            Int from = 0;
-            for(std::size_t i = 0; i != count; ++i)
-                output.push_back(Implementation::Utility::parseVector<T>(tmp, &from, size));
-
-            return output;
-        }
+        template<class T> std::vector<T> parseSource(const QString& id);
 
     private:
         /** @brief Contents of opened Collada document */
@@ -111,14 +72,17 @@ class ColladaImporter: public AbstractImporter {
             std::vector<std::pair<std::string, ObjectData3D*>> objects;
             std::vector<std::string> meshes;
             std::vector<std::string> materials;
+            std::vector<std::string> textures;
             std::vector<std::string> images2D;
 
             /** @todo Make public use for camerasForName, lightsForName */
             std::unordered_map<std::string, UnsignedInt> camerasForName,
                 lightsForName,
+                scenesForName,
                 objectsForName,
                 meshesForName,
                 materialsForName,
+                texturesForName,
                 images2DForName;
 
             QXmlQuery query;
@@ -128,7 +92,7 @@ class ColladaImporter: public AbstractImporter {
         class IndexHash {
             public:
                 /** @brief Constructor */
-                inline IndexHash(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
+                IndexHash(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
 
                 /**
                  * @brief Functor
@@ -137,8 +101,8 @@ class ColladaImporter: public AbstractImporter {
                  * specified as position in index array passed in
                  * constructor.
                  */
-                inline std::size_t operator()(UnsignedInt key) const {
-                    return *reinterpret_cast<const std::size_t*>(Corrade::Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(UnsignedInt)*stride).byteArray());
+                std::size_t operator()(UnsignedInt key) const {
+                    return *reinterpret_cast<const std::size_t*>(Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(UnsignedInt)*stride).byteArray());
                 }
 
             private:
@@ -150,7 +114,7 @@ class ColladaImporter: public AbstractImporter {
         class IndexEqual {
             public:
                 /** @brief Constructor */
-                inline IndexEqual(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
+                IndexEqual(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
 
                 /**
                  * @brief Functor
@@ -159,8 +123,8 @@ class ColladaImporter: public AbstractImporter {
                  * specified as position in index array, passed in
                  * constructor.
                  */
-                inline bool operator()(UnsignedInt a, UnsignedInt b) const {
-                    return memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(UnsignedInt)*stride) == 0;
+                bool operator()(UnsignedInt a, UnsignedInt b) const {
+                    return std::memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(UnsignedInt)*stride) == 0;
                 }
 
             private:
@@ -176,6 +140,7 @@ class ColladaImporter: public AbstractImporter {
 
         Int doDefaultScene() override;
         UnsignedInt doSceneCount() const override;
+        Int doSceneForName(const std::string& name) override;
         std::string doSceneName(UnsignedInt id) override;
         SceneData* doScene(UnsignedInt id) override;
 
@@ -193,6 +158,11 @@ class ColladaImporter: public AbstractImporter {
         Int doMaterialForName(const std::string& name) override;
         std::string doMaterialName(UnsignedInt id) override;
         AbstractMaterialData* doMaterial(UnsignedInt id) override;
+
+        UnsignedInt doTextureCount() const override;
+        Int doTextureForName(const std::string& name) override;
+        std::string doTextureName(UnsignedInt id) override;
+        TextureData* doTexture(UnsignedInt id) override;
 
         UnsignedInt doImage2DCount() const override;
         Int doImage2DForName(const std::string& name) override;
@@ -220,25 +190,7 @@ class ColladaImporter: public AbstractImporter {
          * @param indexCombinations Index combinations for building the array
          * @return Resulting array
          */
-        template<class T> std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations) {
-            QString tmp;
-
-            /* Original attribute array */
-            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@source/string()")
-                .arg(meshId+1).arg(attribute).arg(id+1));
-            d->query.evaluateTo(&tmp);
-            std::vector<T> originalArray = parseSource<T>(tmp.mid(1).trimmed());
-
-            /* Attribute offset in original index array */
-            UnsignedInt offset = attributeOffset(meshId, attribute, id);
-
-            /* Build resulting array */
-            std::vector<T> array(indexCombinations.size());
-            for(auto i: indexCombinations)
-                array[i.second] = originalArray[originalIndices[i.first*stride+offset]];
-
-            return std::move(array);
-        }
+        template<class T> std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations);
 
         /** @brief Parse all scenes */
         void parseScenes();

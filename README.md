@@ -1,38 +1,36 @@
-Here are various plugins for Magnum OpenGL 3 graphics engine. If you don't
-know what Magnum is, see https://github.com/mosra/magnum . Featured plugins:
-
- * Importer for non-paletted TGA images
- * Importer for COLLADA files
+Here are various plugins for Magnum C++11 OpenGL graphics engine. If you don't
+know what Magnum is, see https://github.com/mosra/magnum.
 
 INSTALLATION
 ============
 
-You can either use packaging scripts, which are stored in package/
-subdirectory, or compile and install everything manually. The building
-process is similar to Magnum itself - see Magnum documentation for more
-comprehensive guide for building, packaging and crosscompiling.
+You can either use packaging scripts, which are stored in `package/`
+subdirectory, or compile and install everything manually. The building process
+is similar to Magnum itself - see [Magnum documentation](http://mosra.cz/blog/magnum-doc/)
+for more comprehensive guide for building, packaging and crosscompiling.
 
 Minimal dependencies
 --------------------
 
- * C++ compiler with good C++11 support. Currently there are two compilers
-   which are tested to support everything needed: **GCC** >= 4.6 and **Clang**
-   >= 3.1.
- * **CMake** >= 2.8.8 (needed for `OBJECT` library target)
- * **OpenGL headers**, on Linux most probably shipped with Mesa
- * **GLEW** - OpenGL extension wrangler
- * **Magnum** - The engine itself
- * **Qt** >= 4.6 - COLLADA importer needs it for XML parsing
+*   C++ compiler with good C++11 support. Currently there are two compilers
+    which are tested to support everything needed: **GCC** >= 4.6 and **Clang**
+    >= 3.1. On Windows you can use **MinGW**, Visual Studio compiler still
+    lacks some needed features.
+*   **CMake** >= 2.8.8
+*   **Magnum** - The engine itself
 
 Compilation, installation
 -------------------------
 
 The plugins can be built and installed using these four commands:
 
-    mkdir -p build
-    cd build
-    cmake -DCMAKE_INSTALL_PREFIX=/usr .. && make
+    mkdir -p build && cd build
+    cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+    make
     make install
+
+None of the plugins is built by default, see Doxygen documentation for more
+information about particular plugins and their sdependencies.
 
 Building and running unit tests
 -------------------------------
@@ -48,13 +46,14 @@ in build directory. Everything should pass ;-)
 CONTACT
 =======
 
-Want to learn more about the library? Found a bug or want to tell me an
-awesome idea? Feel free to visit my website or contact me at:
+Want to learn more about the library? Found a bug or want to tell me an awesome
+idea? Feel free to visit my website or contact me at:
 
- * Website - http://mosra.cz/blog/
- * GitHub - https://github.com/mosra/magnum-plugins
- * E-mail - mosra@centrum.cz
- * Jabber - mosra@jabbim.cz
+*   Website - http://mosra.cz/blog/magnum.php
+*   GitHub - https://github.com/mosra/magnum-plugins
+*   Twitter - https://twitter.com/czmosra
+*   E-mail - mosra@centrum.cz
+*   Jabber - mosra@jabbim.cz
 
 LICENSE
 =======

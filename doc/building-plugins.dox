@@ -1,0 +1,86 @@
+/*
+    This file is part of Magnum.
+
+    Copyright © 2010, 2011, 2012, 2013 Vladimír Vondruš <mosra@centrum.cz>
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+*/
+
+namespace Magnum {
+/** @page building-plugins Downloading and building plugins
+@brief Guide how to download and build plugins for %Magnum engine.
+
+Plugins provide additional capability for %Magnum engine in terms of importing
+and exporting various media file formats. They are not needed for essential
+usage, but you will need them sooner or later when you would want to use image
+as a texture or render text on the screen.
+
+The source is available on GitHub: https://github.com/mosra/magnum-plugins.
+Building plugins is very similar to building %Magnum itself. See @ref building
+for additonal information about building and running tests, crosscompiling and
+platform-specific issues.
+
+Similarly to %Magnum, the plugins are build as shared by default. If you are
+developing for platform which doesn't support dynamic library loading or if you
+just want to link them statically, enable `BUILD_STATIC` to build the plugins
+as static. Dynamic plugins are loaded by the manager on request at runtime,
+potentially saving memory when the plugin is not needed, static plugins must be
+linked in at compile time.
+
+By default no plugins are built and you need to select them manually:
+
+-   `WITH_COLLADAIMPORTER` -- @ref Trade::ColladaImporter "ColladaImporter"
+    plugin. Depends on `TgaImporter` plugin and requires **Qt** library.
+-   `WITH_FREETYPEFONT` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin.
+    Requires **FreeType** library.
+-   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
+    Depends on `FreeTypeFont` plugin and requires **HarfBuzz** library.
+-   `WITH_JPEGIMPORTER` -- @ref Trade::JpegImporter "JpegImporter" plugin.
+    Requires **libJPEG** library.
+-   `WITH_MAGNUMFONT` -- @ref Text::MagnumFont "MagnumFont" plugin. Depends on
+    TgaImporter plugin.
+-   `WITH_MAGNUMFONTCONVERTER` -- @ref Text::MagnumFontConverter "MagnumFontConverter"
+    plugin. Depends on `TgaImageConverter` plugin.
+-   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
+    Requires **libPNG** library.
+-   `WITH_TGAIMPORTER` -- @ref Trade::TgaImporter "TgaImporter" plugin
+-   `WITH_TGAIMAGECONVERTER` -- @ref Trade::TgaImageConverter "TgaImageConverter"
+    plugin
+-   `WITH_WAVAUDIOIMPORTER` -- @ref Audio::WavImporter "WavAudioImporter"
+    plugin
+
+@section building-plugins-arch Building ArchLinux packages
+
+In `package/archlinux` directory is currently one PKGBUILD for Git development
+build. The package is also in AUR under the same name.
+
+There are also a few development PKGBUILDs in project root, which allow you to
+build and install the package directly from source tree without downloading
+anything. The native PKGBUILD also contains `check()` function which will run
+all unit tests before packaging.
+
+If you want to build with another compiler (e.g. Clang), run makepkg this way:
+
+    CXX=clang++ makepkg
+
+Development PKGBUILDs can detect when Clang is used and remove unsupported CXX
+flags.
+
+*/
+}

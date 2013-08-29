@@ -7,14 +7,18 @@
 #  MAGNUMPLUGINS_INCLUDE_DIRS   - Plugin include dir and include dirs of
 #   dependencies
 # This command will not try to find any actual plugin. The plugins are:
-#  ColladaImporter  - Collada importer (depends on Qt4)
-#  FreeTypeFont     - FreeType font (depends on FreeType)
+#  ColladaImporter  - Collada importer (depends on Qt library)
+#  FreeTypeFont     - FreeType font (depends on FreeType library)
 #  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
 #                     library)
-#  MagnumFont       - Magnum bitmap font
-#  MagnumFontConverter - Magnum bitmap font converter
+#  JpegImporter     - JPEG importer (depends on libJPEG library)
+#  MagnumFont       - Magnum bitmap font (depends on TgaImporter plugin)
+#  MagnumFontConverter - Magnum bitmap font converter (depends on
+#                     TgaImageConverter plugin)
+#  PngImporter      - PNG importer (depends on libPNG library)
 #  TgaImageConverter - TGA image converter
 #  TgaImporter      - TGA importer
+#  WavAudioImporter - WAV sound importer
 # Example usage with specifying the plugins is:
 #  find_package(MagnumPlugins [REQUIRED|COMPONENTS]
 #               MagnumFont TgaImporter)
@@ -65,6 +69,8 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${component} _COMPONENT)
 
     # Plugin library suffix
+    if(${component} MATCHES ".+AudioImporter$")
+        set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX audioimporters)
     if(${component} MATCHES ".+Importer$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX importers)
     elseif(${component} MATCHES ".+Font$")
@@ -106,7 +112,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
     endif()
 
-    # FreeTypeFont plugin dependencies
+    # HarfBuzzFont plugin dependencies
     if(${component} STREQUAL HarfBuzzFont)
         find_package(Freetype)
         find_package(HarfBuzz)
@@ -118,9 +124,34 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
     endif()
 
+    # JpegImporter plugin dependencies
+    if(${component} STREQUAL JpegImporter)
+        find_package(JPEG)
+        if(JPEG_FOUND)
+            set(_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${JPEG_LIBRARIES})
+            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${JPEG_INCLUDE_DIR})
+        else()
+            unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
+        endif()
+    endif()
+
     # MagnumFont plugin has no dependencies
+    # MagnumFontConverter plugin has no dependencies
+
+    # PngImporter plugin dependencies
+    if(${component} STREQUAL PngImporter)
+        find_package(PNG)
+        if(PNG_FOUND)
+            set(_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${PNG_LIBRARIES})
+            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
+        else()
+            unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
+        endif()
+    endif()
+
     # TgaImageConverter plugin has no dependencies
     # TgaImporter plugin has no dependencies
+    # WavAudioImporter plugin has no dependencies
 
     # Decide if the plugin was found
     if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)

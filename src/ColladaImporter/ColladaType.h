@@ -30,25 +30,14 @@
 
 namespace Magnum { namespace Trade { namespace Implementation {
 
-template<class T> struct ColladaType {
-    #ifdef DOXYGEN_GENERATING_OUTPUT
-    static T fromString(const QString& str);
-    #endif
-};
+template<class T> struct ColladaType;
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
 template<> struct ColladaType<UnsignedInt> {
-    inline static UnsignedInt fromString(const QString& str) {
-        return str.toUInt();
-    }
+    static UnsignedInt fromString(const QString& str) { return str.toUInt(); }
 };
-
 template<> struct ColladaType<Float> {
-    inline static Float fromString(const QString& str) {
-        return str.toFloat();
-    }
+    static Float fromString(const QString& str) { return str.toFloat(); }
 };
-#endif
 
 }}}
 

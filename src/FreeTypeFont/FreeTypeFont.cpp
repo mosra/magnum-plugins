@@ -41,13 +41,13 @@ namespace {
 
 class FreeTypeLayouter: public AbstractLayouter {
     public:
-        explicit FreeTypeLayouter(FT_Face ftFont, const GlyphCache* const cache, const Float fontSize, const Float textSize, const std::string& text);
+        explicit FreeTypeLayouter(FT_Face ftFont, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text);
 
         std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const UnsignedInt i) override;
 
     private:
         FT_Face font;
-        const GlyphCache* const cache;
+        const GlyphCache& cache;
         const Float fontSize, textSize;
         std::vector<FT_UInt> glyphs;
 };
@@ -108,7 +108,7 @@ Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2(ftFont->glyph->advance.x, ftFont->glyph->advance.y)/64.0f;
 }
 
-void FreeTypeFont::doFillGlyphCache(GlyphCache* const cache, const std::u32string& characters) {
+void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) {
     /** @bug Crash when atlas is too small */
 
     /* Get glyph codes from characters */
@@ -131,16 +131,16 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache* const cache, const std::u32strin
     }
 
     /* Create texture atlas */
-    const std::vector<Rectanglei> charPositions = cache->reserve(charSizes);
+    const std::vector<Rectanglei> charPositions = cache.reserve(charSizes);
 
     /* Render all characters to the atlas and create character map */
-    unsigned char* pixmap = new unsigned char[cache->textureSize().product()]();
+    unsigned char* pixmap = new unsigned char[cache.textureSize().product()]();
     /** @todo Some better way for this */
     #ifndef MAGNUM_TARGET_GLES2
-    Image2D image(ImageFormat::Red, ImageType::UnsignedByte, cache->textureSize(), pixmap);
+    Image2D image(ImageFormat::Red, ImageType::UnsignedByte, cache.textureSize(), pixmap);
     #else
     Image2D image(Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-        ImageFormat::Red : ImageFormat::Luminance, ImageType::UnsignedByte, cache->textureSize(), pixmap);
+        ImageFormat::Red : ImageFormat::Luminance, ImageType::UnsignedByte, cache.textureSize(), pixmap);
     #endif
     for(std::size_t i = 0; i != charPositions.size(); ++i) {
         /* Load and render glyph */
@@ -155,25 +155,25 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache* const cache, const std::u32strin
         CORRADE_INTERNAL_ASSERT(std::abs(bitmap.rows-charPositions[i].height()) <= 2);
         for(Int yin = 0, yout = charPositions[i].bottom(), ymax = bitmap.rows; yin != ymax; ++yin, ++yout)
             for(Int xin = 0, xout = charPositions[i].left(), xmax = bitmap.width; xin != xmax; ++xin, ++xout)
-                pixmap[yout*cache->textureSize().x() + xout] = bitmap.buffer[(bitmap.rows-yin-1)*bitmap.width + xin];
+                pixmap[yout*cache.textureSize().x() + xout] = bitmap.buffer[(bitmap.rows-yin-1)*bitmap.width + xin];
 
         /* Insert glyph parameters into cache */
-        cache->insert(charIndices[i],
+        cache.insert(charIndices[i],
             Vector2i(glyph->bitmap_left, glyph->bitmap_top-charPositions[i].height()),
             charPositions[i]);
     }
 
     /* Set cache image */
-    cache->setImage({}, image);
+    cache.setImage({}, image);
 }
 
-AbstractLayouter* FreeTypeFont::doLayout(const GlyphCache* const cache, const Float size, const std::string& text) {
+AbstractLayouter* FreeTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
     return new FreeTypeLayouter(ftFont, cache, this->size(), size, text);
 }
 
 namespace {
 
-FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const GlyphCache* const cache, const Float fontSize, const Float textSize, const std::string& text): font(font), cache(cache), fontSize(fontSize), textSize(textSize) {
+FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text): font(font), cache(cache), fontSize(fontSize), textSize(textSize) {
     /* Get glyph codes from characters */
     glyphs.reserve(text.size());
     for(std::size_t i = 0; i != text.size(); ) {
@@ -188,12 +188,12 @@ std::tuple<Rectangle, Rectangle, Vector2> FreeTypeLayouter::renderGlyph(const Un
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Rectanglei rectangle;
-    std::tie(position, rectangle) = (*cache)[glyphs[i]];
+    std::tie(position, rectangle) = cache[glyphs[i]];
 
     const Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
                                                           Vector2(rectangle.size())/fontSize);
-    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache->textureSize(),
-                                       Vector2(rectangle.topRight())/cache->textureSize());
+    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache.textureSize(),
+                                       Vector2(rectangle.topRight())/cache.textureSize());
 
     /* Load glyph */
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(font, glyphs[i], FT_LOAD_DEFAULT) == 0);

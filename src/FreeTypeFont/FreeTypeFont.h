@@ -37,7 +37,7 @@ typedef FT_LibraryRec_* FT_Library;
 struct FT_FaceRec_;
 typedef FT_FaceRec_*  FT_Face;
 
-#ifdef FreeTypeFont_EXPORTS
+#if defined(FreeTypeFont_EXPORTS) || defined(FreeTypeFontObjects_EXPORTS)
     #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
 #else
     #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
@@ -91,9 +91,9 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         Vector2 doGlyphAdvance(UnsignedInt glyph) override;
 
         /** @todo Why this can't be defined as local? */
-        void doFillGlyphCache(GlyphCache* cache, const std::u32string& characters) override;
+        void doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) override;
 
-        AbstractLayouter MAGNUM_TEXT_FREETYPEFONT_LOCAL * doLayout(const GlyphCache* cache, Float size, const std::string& text) override;
+        AbstractLayouter MAGNUM_TEXT_FREETYPEFONT_LOCAL * doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 };
 
 }}

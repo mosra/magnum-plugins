@@ -33,6 +33,7 @@
 #include <Trade/MeshObjectData3D.h>
 #include <Trade/PhongMaterialData.h>
 #include <Trade/SceneData.h>
+#include <Trade/TextureData.h>
 
 #include "TgaImporter/TgaImporter.h"
 
@@ -65,11 +66,11 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     /* Open the file and load it into XQuery */
     QFile file(QString::fromStdString(filename));
     if(!file.open(QIODevice::ReadOnly)) {
-        Error() << "ColladaImporter: cannot open file" << filename;
+        Error() << "Trade::ColladaImporter:openFile(): cannot open file" << filename;
         return;
     }
     if(!query.setFocus(&file)) {
-        Error() << "ColladaImporter: cannot load XML";
+        Error() << "Trade::ColladaImporter::openFile(): cannot load XML";
         return;
     }
 
@@ -80,7 +81,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
     if(tmp != "http://www.collada.org/2005/11/COLLADASchema") {
-        Error() << "ColladaImporter: unsupported namespace" << ('"'+tmp+'"').toStdString();
+        Error() << "Trade::ColladaImporter::openFile(): unsupported namespace" << ('"'+tmp+'"').toStdString();
         return;
     }
 
@@ -89,7 +90,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
     if(tmp != "1.4.1") {
-        Error() << "ColladaImporter: unsupported version" << ('"'+tmp+'"').toStdString();
+        Error() << "Trade::ColladaImporter::openFile(): unsupported version" << ('"'+tmp+'"').toStdString();
         return;
     }
 
@@ -113,28 +114,16 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
     query.evaluateTo(&tmpList);
     d->camerasForName.reserve(tmpList.size());
-    for(const QString id: tmpList)
-        d->camerasForName.insert(std::make_pair(id.trimmed().toStdString(), d->camerasForName.size()));
+    for(const QString& id: tmpList)
+        d->camerasForName.emplace(id.trimmed().toStdString(), d->camerasForName.size());
 
     /* Create light name -> light id map */
     query.setQuery(namespaceDeclaration + "/COLLADA/library_lights/light/@id/string()");
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->lightsForName.reserve(tmpList.size());
-    for(const QString id: tmpList)
-        d->lightsForName.insert(std::make_pair(id.trimmed().toStdString(), d->lightsForName.size()));
-
-    /* Create material name -> material id map */
-    query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
-    tmpList.clear();
-    query.evaluateTo(&tmpList);
-    d->materials.reserve(tmpList.size());
-    d->materialsForName.reserve(tmpList.size());
-    for(const QString id: tmpList) {
-        std::string name = id.trimmed().toStdString();
-        d->materials.push_back(name);
-        d->materialsForName.insert({name, d->materialsForName.size()});
-    }
+    for(const QString& id: tmpList)
+        d->lightsForName.emplace(id.trimmed().toStdString(), d->lightsForName.size());
 
     /* Create mesh name -> mesh id map */
     query.setQuery(namespaceDeclaration + "/COLLADA/library_geometries/geometry/@id/string()");
@@ -142,10 +131,34 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->meshes.reserve(tmpList.size());
     d->meshesForName.reserve(tmpList.size());
-    for(const QString id: tmpList) {
+    for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->meshes.push_back(name);
-        d->meshesForName.insert({name, d->meshesForName.size()});
+        d->meshesForName.emplace(std::move(name), d->meshesForName.size());
+    }
+
+    /* Create material name -> material id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_materials/material/@id/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    d->materials.reserve(tmpList.size());
+    d->materialsForName.reserve(tmpList.size());
+    for(const QString& id: tmpList) {
+        std::string name = id.trimmed().toStdString();
+        d->materials.push_back(name);
+        d->materialsForName.emplace(std::move(name), d->materialsForName.size());
+    }
+
+    /* Create texture name -> texture id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam/*[starts-with(name(), 'sampler')]/../@sid/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    d->textures.reserve(tmpList.size());
+    d->materialsForName.reserve(tmpList.size());
+    for(const QString& id: tmpList) {
+        std::string name = id.trimmed().toStdString();
+        d->textures.push_back(name);
+        d->texturesForName.emplace(std::move(name), d->texturesForName.size());
     }
 
     /* Create image name -> image id map */
@@ -154,10 +167,10 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->images2D.reserve(tmpList.size());
     d->images2DForName.reserve(tmpList.size());
-    for(const QString id: tmpList) {
+    for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->images2D.push_back(name);
-        d->images2DForName.insert({name, d->images2DForName.size()});
+        d->images2DForName.emplace(std::move(name), d->images2DForName.size());
     }
 }
 
@@ -167,8 +180,6 @@ void ColladaImporter::doClose() {
 }
 
 Int ColladaImporter::doDefaultScene() {
-    CORRADE_ASSERT(d, "Trade::ColladaImporter::ColladaImporter::defaultScene(): no file opened", -1);
-
     if(d->scenes.empty()) return -1;
     if(!d->scenes[0].second) parseScenes();
 
@@ -176,6 +187,14 @@ Int ColladaImporter::doDefaultScene() {
 }
 
 UnsignedInt ColladaImporter::doSceneCount() const { return d->scenes.size(); }
+
+Int ColladaImporter::doSceneForName(const std::string& name) {
+    if(d->scenes.empty()) return -1;
+    if(!d->scenes[0].second) parseScenes();
+
+    auto it = d->scenesForName.find(name);
+    return it == d->scenesForName.end() ? -1 : it->second;
+}
 
 std::string ColladaImporter::doSceneName(const UnsignedInt id) {
     if(!d->scenes[0].second) parseScenes();
@@ -195,7 +214,7 @@ Int ColladaImporter::doObject3DForName(const std::string& name) {
     if(!d->scenes[0].second) parseScenes();
 
     auto it = d->objectsForName.find(name);
-    return (it == d->objectsForName.end()) ? -1 : it->second;
+    return it == d->objectsForName.end() ? -1 : it->second;
 }
 
 std::string ColladaImporter::doObject3DName(const UnsignedInt id) {
@@ -213,7 +232,7 @@ UnsignedInt ColladaImporter::doMesh3DCount() const { return d->meshes.size(); }
 
 Int ColladaImporter::doMesh3DForName(const std::string& name) {
     auto it = d->meshesForName.find(name);
-    return (it == d->meshesForName.end()) ? -1 : it->second;
+    return it == d->meshesForName.end() ? -1 : it->second;
 }
 
 std::string ColladaImporter::doMesh3DName(const UnsignedInt id) { return d->meshes[id]; }
@@ -239,7 +258,7 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
 
         if(count == 4) quads.push_back(i);
         else if(count != 3) {
-            Error() << "ColladaImporter:" << count << "vertices per face not supported";
+            Error() << "Trade::ColladaImporter::mesh3D():" << count << "vertices per face not supported";
             return nullptr;
         }
 
@@ -323,7 +342,7 @@ MeshData3D* ColladaImporter::doMesh3D(const UnsignedInt id) {
             textureCoords2D.push_back(buildAttributeArray<Vector2>(id, "TEXCOORD", textureCoords2D.size(), originalIndices, stride, indexCombinations));
 
         /* Something other */
-        else Warning() << "ColladaImporter:" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
+        else Warning() << "Trade::ColladaImporter::mesh3D():" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
     return new MeshData3D(Mesh::Primitive::Triangles, std::move(indices), {std::move(vertices)}, std::move(normals), std::move(textureCoords2D));
@@ -333,7 +352,7 @@ UnsignedInt ColladaImporter::doMaterialCount() const { return d->materials.size(
 
 Int ColladaImporter::doMaterialForName(const std::string& name) {
     auto it = d->materialsForName.find(name);
-    return (it == d->materialsForName.end()) ? -1 : it->second;
+    return it == d->materialsForName.end() ? -1 : it->second;
 }
 
 std::string ColladaImporter::doMaterialName(const UnsignedInt id) {
@@ -349,13 +368,13 @@ AbstractMaterialData* ColladaImporter::doMaterial(const UnsignedInt id) {
 
     /* Find out which profile it is */
     QString tmp;
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/*[substring(name(), 1, 8) = 'profile_']/name()").arg(effect));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/*[starts-with(name(), 'profile_')]/name()").arg(effect));
     d->query.evaluateTo(&tmp);
 
     /** @todo Support other profiles */
 
     if(tmp.trimmed() != "profile_COMMON") {
-        Error() << "ColladaImporter:" << ('"'+tmp.trimmed()+'"').toStdString() << "effect profile not supported";
+        Error() << "Trade::ColladaImporter::material():" << ('"'+tmp.trimmed()+'"').toStdString() << "effect profile not supported";
         return nullptr;
     }
 
@@ -366,40 +385,219 @@ AbstractMaterialData* ColladaImporter::doMaterial(const UnsignedInt id) {
 
     /** @todo Other (blinn, goraund) profiles */
     if(tmp != "phong") {
-        Error() << "ColladaImporter:" << ('"'+tmp+'"').toStdString() << "shader not supported";
+        Error() << "Trade::ColladaImporter::material():" << ('"'+tmp+'"').toStdString() << "shader not supported";
         return nullptr;
     }
-
-    /* Ambient color */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
-    d->query.evaluateTo(&tmp);
-    Vector3 ambientColor = Implementation::Utility::parseVector<Vector3>(tmp);
-
-    /* Diffuse color */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
-    d->query.evaluateTo(&tmp);
-    Vector3 diffuseColor = Implementation::Utility::parseVector<Vector3>(tmp);
-
-    /* Specular color */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
-    d->query.evaluateTo(&tmp);
-    Vector3 specularColor = Implementation::Utility::parseVector<Vector3>(tmp);
 
     /* Shininess */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/shininess/float/string()").arg(effect));
     d->query.evaluateTo(&tmp);
-    Float shininess = Implementation::ColladaType<Float>::fromString(tmp);
+    const Float shininess = Implementation::ColladaType<Float>::fromString(tmp);
+
+    /* Decide about what is textured in the material */
+    PhongMaterialData::Flags flags;
+
+    /* Ambient texture */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/ambient/texture/@texture/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+    UnsignedInt ambientTexture = 0;
+    if(!tmp.isEmpty()) {
+        auto it = d->texturesForName.find(tmp.toStdString());
+        if(it == d->texturesForName.end()) {
+            Error() << "Trade::ColladaImporter::material(): ambient texture" << tmp.toStdString() << "not found";
+            return nullptr;
+        }
+
+        flags |= PhongMaterialData::Flag::AmbientTexture;
+        ambientTexture = it->second;
+    }
+
+    /* Diffuse texture */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/diffuse/texture/@texture/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+    UnsignedInt diffuseTexture = 0;
+    if(!tmp.isEmpty()) {
+        auto it = d->texturesForName.find(tmp.toStdString());
+        if(it == d->texturesForName.end()) {
+            Error() << "Trade::ColladaImporter::material(): diffuse texture" << tmp.toStdString() << "not found";
+            return nullptr;
+        }
+
+        flags |= PhongMaterialData::Flag::DiffuseTexture;
+        diffuseTexture = it->second;
+    }
+
+    /* Specular texture */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/specular/texture/@texture/string()").arg(effect));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+    UnsignedInt specularTexture = 0;
+    if(!tmp.isEmpty()) {
+        auto it = d->texturesForName.find(tmp.toStdString());
+        if(it == d->texturesForName.end()) {
+            Error() << "Trade::ColladaImporter::material(): specular texture" << tmp.toStdString() << "not found";
+            return nullptr;
+        }
+
+        flags |= PhongMaterialData::Flag::SpecularTexture;
+        specularTexture = it->second;
+    }
+
+    auto material = new PhongMaterialData(flags, shininess);
+
+    /* Ambient texture or color, if not textured */
+    if(flags & PhongMaterialData::Flag::AmbientTexture)
+        material->ambientTexture() = ambientTexture;
+    else {
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/ambient/color/string()").arg(effect));
+        d->query.evaluateTo(&tmp);
+        material->ambientColor() = Implementation::Utility::parseVector<Vector3>(tmp);
+    }
+
+    /* Diffuse texture or color, if not textured */
+    if(flags & PhongMaterialData::Flag::DiffuseTexture)
+        material->diffuseTexture() = diffuseTexture;
+    else {
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/diffuse/color/string()").arg(effect));
+        d->query.evaluateTo(&tmp);
+        material->diffuseColor() = Implementation::Utility::parseVector<Vector3>(tmp);
+    }
+
+    /* Specular color */
+    if(flags & PhongMaterialData::Flag::SpecularTexture)
+        material->specularTexture() = specularTexture;
+    else {
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect[@id='%0']/profile_COMMON/technique/phong/specular/color/string()").arg(effect));
+        d->query.evaluateTo(&tmp);
+        material->specularColor() = Implementation::Utility::parseVector<Vector3>(tmp);
+    }
 
     /** @todo Emission, IOR */
 
-    return new PhongMaterialData(ambientColor, diffuseColor, specularColor, shininess);
+    return material;
+}
+
+UnsignedInt ColladaImporter::doTextureCount() const { return d->textures.size(); }
+
+Int ColladaImporter::doTextureForName(const std::string& name) {
+    auto it = d->texturesForName.find(name);
+    return it == d->texturesForName.end() ? -1 : it->second;
+}
+
+std::string ColladaImporter::doTextureName(const UnsignedInt id) {
+    return d->textures[id];
+}
+
+namespace {
+
+Sampler::Wrapping wrappingFromString(const QString& string) {
+    /* Treat NONE and element not present as default */
+    if(string.isEmpty() || string == "WRAP" || string == "NONE") return Sampler::Wrapping::Repeat;
+    if(string == "MIRROR") return Sampler::Wrapping::MirroredRepeat;
+    if(string == "CLAMP") return Sampler::Wrapping::ClampToEdge;
+    if(string == "BORDER") return Sampler::Wrapping::ClampToBorder;
+
+    Error() << "Trade::ColladaImporter::texture(): unknown texture wrapping" << string.toStdString();
+    return Sampler::Wrapping(-1);
+}
+
+Sampler::Filter filterFromString(const QString& string) {
+    /* Treat NONE and element not present as default */
+    if(string.isEmpty() || string == "NEAREST" || string == "NONE") return Sampler::Filter::Nearest;
+    if(string == "LINEAR") return Sampler::Filter::Linear;
+
+    Error() << "Trade::ColladaImporter::texture(): unknown texture filter" << string.toStdString();
+    return Sampler::Filter(-1);
+}
+
+Sampler::Mipmap mipmapFromString(const QString& string) {
+    /* Treat element not present as default */
+    if(string.isEmpty() || string == "NONE") return Sampler::Mipmap::Base;
+    if(string == "NEAREST") return Sampler::Mipmap::Nearest;
+    if(string == "LINEAR") return Sampler::Mipmap::Linear;
+
+    Error() << "Trade::ColladaImporter::texture(): unknown texture mipmap filter" << string.toStdString();
+    return Sampler::Mipmap(-1);
+}
+
+}
+
+TextureData* ColladaImporter::doTexture(const UnsignedInt id) {
+    const auto name = QString::fromStdString(d->textures[id]);
+
+    /* Texture type */
+    QString tmp;
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/name()").arg(name));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+
+    TextureData::Type type;
+    if(tmp == "sampler1D")          type = TextureData::Type::Texture1D;
+    else if(tmp == "sampler2D")     type = TextureData::Type::Texture2D;
+    else if(tmp == "sampler3D")     type = TextureData::Type::Texture3D;
+    else if(tmp == "samplerCUBE")   type = TextureData::Type::Cube;
+    else {
+        Error() << "Trade::ColladaImporter::texture(): unsupported sampler type" << tmp.toStdString();
+        return nullptr;
+    }
+
+    /* Texture image */
+    /** @todo Verify that surface type is the same as sampler type */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[surface][@sid=/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/source/string()]/surface/init_from/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+
+    auto it = d->images2DForName.find(tmp.toStdString());
+    if(it == d->images2DForName.end()) {
+        Error() << "Trade::ColladaImporter::texture(): image" << tmp.toStdString() << "not found";
+        return nullptr;
+    }
+    const UnsignedInt image = it->second;
+
+    /* Texture sampler wrapping */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_s/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Wrapping wrappingX = wrappingFromString(tmp.trimmed());
+    if(wrappingX == Sampler::Wrapping(-1)) return nullptr;
+
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_t/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Wrapping wrappingY = wrappingFromString(tmp.trimmed());
+    if(wrappingY == Sampler::Wrapping(-1)) return nullptr;
+
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_p/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Wrapping wrappingZ = wrappingFromString(tmp.trimmed());
+    if(wrappingZ == Sampler::Wrapping(-1)) return nullptr;
+
+    /* Texture minification filter */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/minfilter/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Filter minificationFilter = filterFromString(tmp.trimmed());
+    if(minificationFilter == Sampler::Filter(-1)) return nullptr;
+
+    /* Texture magnification filter */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/magfilter/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Filter magnificationFilter = filterFromString(tmp.trimmed());
+    if(magnificationFilter == Sampler::Filter(-1)) return nullptr;
+
+    /* Texture mipmap filter */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/mipfilter/string()").arg(name));
+    d->query.evaluateTo(&tmp);
+    const Sampler::Mipmap mipmapFilter = mipmapFromString(tmp.trimmed());
+    if(mipmapFilter == Sampler::Mipmap(-1)) return nullptr;
+
+    return new TextureData(type, minificationFilter, magnificationFilter, mipmapFilter, {wrappingX, wrappingY, wrappingZ}, image);
 }
 
 UnsignedInt ColladaImporter::doImage2DCount() const { return d->images2D.size(); }
 
 Int ColladaImporter::doImage2DForName(const std::string& name) {
     auto it = d->images2DForName.find(name);
-    return (it == d->images2DForName.end()) ? -1 : it->second;
+    return it == d->images2DForName.end() ? -1 : it->second;
 }
 
 std::string ColladaImporter::doImage2DName(const UnsignedInt id) {
@@ -414,13 +612,16 @@ ImageData2D* ColladaImporter::doImage2D(const UnsignedInt id) {
     tmp = tmp.trimmed();
 
     if(tmp.right(3) != "tga") {
-        Error() << "ColladaImporter:" << '"' + tmp.toStdString() + '"' << "has unsupported format";
+        Error() << "Trade::ColladaImporter::image2D():" << '"' + tmp.toStdString() + '"' << "has unsupported format";
         return nullptr;
     }
 
     TgaImporter tgaImporter;
+    if(!tgaImporter.openFile(Utility::Directory::join(Utility::Directory::path(d->filename), tmp.toStdString())))
+        return nullptr;
+
     ImageData2D* image;
-    if(!tgaImporter.openFile(Utility::Directory::join(Utility::Directory::path(d->filename), tmp.toStdString())) || !(image = tgaImporter.image2D(0)))
+    if(!(image = tgaImporter.image2D(0)))
         return nullptr;
 
     return image;
@@ -434,6 +635,67 @@ UnsignedInt ColladaImporter::attributeOffset(UnsignedInt meshId, const QString& 
         .arg(meshId+1).arg(attribute).arg(id+1));
     d->query.evaluateTo(&tmp);
     return Implementation::ColladaType<UnsignedInt>::fromString(tmp);
+}
+
+template<class T> std::vector<T> ColladaImporter::parseSource(const QString& id) {
+    std::vector<T> output;
+    QString tmp;
+
+    /* Count of items */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@count/string()").arg(id));
+    d->query.evaluateTo(&tmp);
+    UnsignedInt count = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
+
+    /* Size of each item */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
+    d->query.evaluateTo(&tmp);
+    UnsignedInt size = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
+
+    /* Data source */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@source/string()").arg(id));
+    d->query.evaluateTo(&tmp);
+    QString source = tmp.mid(1).trimmed();
+
+    /* Verify total count */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/@count/string()").arg(source));
+    d->query.evaluateTo(&tmp);
+    if(Implementation::ColladaType<UnsignedInt>::fromString(tmp) != count*size) {
+        Error() << "Trade::ColladaImporter::mesh3D(): wrong total count in source" << ('"'+id+'"').toStdString();
+        return output;
+    }
+
+    /** @todo Assert right order of coordinates and type */
+
+    /* Items */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/string()").arg(source));
+    d->query.evaluateTo(&tmp);
+
+    output.reserve(count);
+    Int from = 0;
+    for(std::size_t i = 0; i != count; ++i)
+        output.push_back(Implementation::Utility::parseVector<T>(tmp, &from, size));
+
+    return output;
+}
+
+template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations) {
+    QString tmp;
+
+    /* Original attribute array */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input[@semantic='%1'][%2]/@source/string()")
+        .arg(meshId+1).arg(attribute).arg(id+1));
+    d->query.evaluateTo(&tmp);
+    std::vector<T> originalArray = parseSource<T>(tmp.mid(1).trimmed());
+
+    /* Attribute offset in original index array */
+    UnsignedInt offset = attributeOffset(meshId, attribute, id);
+
+    /* Build resulting array */
+    std::vector<T> array(indexCombinations.size());
+    for(auto i: indexCombinations)
+        array[i.second] = originalArray[originalIndices[i.first*stride+offset]];
+
+    return std::move(array);
 }
 
 void ColladaImporter::parseScenes() {
@@ -466,6 +728,7 @@ void ColladaImporter::parseScenes() {
         }
 
         d->scenes[sceneId] = {name, new SceneData({}, std::move(children))};
+        d->scenesForName.emplace(std::move(name), sceneId);
     }
 }
 
@@ -499,11 +762,11 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
             transformation = transformation*Matrix4::scaling(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* It shouldn't get here */
-        else CORRADE_ASSERT(0, ("ColladaImporter: unknown translation " + type).toStdString(), id);
+        else CORRADE_ASSERT(0, ("Trade::ColladaImporter::openFile(): unknown translation " + type).toStdString(), id);
     }
 
     /* Instance type */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/*[substring(name(), 1, 9) = 'instance_']/name()").arg(name));
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/*[starts-with(name(), 'instance_')]/name()").arg(name));
     d->query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
 
@@ -512,7 +775,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         std::string cameraName = instanceName(name, "instance_camera");
         auto cameraId = d->camerasForName.find(cameraName);
         if(cameraId == d->camerasForName.end()) {
-            Error() << "ColladaImporter: camera" << '"'+cameraName+'"' << "was not found";
+            Error() << "Trade::ColladaImporter::openFile(): camera" << '"'+cameraName+'"' << "was not found";
             return id;
         }
 
@@ -523,7 +786,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         std::string lightName = instanceName(name, "instance_light");
         auto lightId = d->lightsForName.find(lightName);
         if(lightId == d->lightsForName.end()) {
-            Error() << "ColladaImporter: light" << '"'+lightName+'"' << "was not found";
+            Error() << "Trade::ColladaImporter::openFile(): light" << '"'+lightName+'"' << "was not found";
             return id;
         }
 
@@ -534,7 +797,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         std::string meshName = instanceName(name, "instance_geometry");
         auto meshId = d->meshesForName.find(meshName);
         if(meshId == d->meshesForName.end()) {
-            Error() << "ColladaImporter: mesh" << '"'+meshName+'"' << "was not found";
+            Error() << "Trade::ColladaImporter::openFile(): mesh" << '"'+meshName+'"' << "was not found";
             return id;
         }
 
@@ -550,7 +813,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         else {
             auto materialId = d->materialsForName.find(materialName);
             if(materialId == d->materialsForName.end()) {
-                Error() << "ColladaImporter: material" << '"'+materialName+'"' << "was not found";
+                Error() << "Trade::ColladaImporter::openFile(): material" << '"'+materialName+'"' << "was not found";
                 return id;
             }
 
@@ -562,7 +825,7 @@ UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
         d->objects[id] = {name.toStdString(), new ObjectData3D({}, transformation)};
 
     } else {
-        Error() << "ColladaImporter:" << '"'+tmp.toStdString()+'"' << "instance type not supported";
+        Error() << "Trade::ColladaImporter::openFile():" << '"'+tmp.toStdString()+'"' << "instance type not supported";
         return id;
     }
 

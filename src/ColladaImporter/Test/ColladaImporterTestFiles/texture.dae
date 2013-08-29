@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_images>
+    <image id="Image0" name="Image0" />
+    <image id="Image1" name="Image1" />
+  </library_images>
+  <library_effects>
+    <effect id="Material0">
+      <profile_COMMON>
+        <newparam sid="UnsupportedSampler">
+          <samplerRECT />
+        </newparam>
+      </profile_COMMON>
+    </effect>
+    <effect id="Material1">
+      <profile_COMMON>
+        <newparam sid="SurfaceWithoutImage">
+          <surface type="2D">
+            <init_from>UnknownImage</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="SamplerWithoutImage">
+          <sampler2D>
+            <source>SurfaceWithoutImage</source>
+          </sampler2D>
+        </newparam>
+      </profile_COMMON>
+    </effect>
+    <effect id="Material2">
+      <profile_COMMON>
+        <newparam sid="SamplerSurface0">
+          <surface type="2D">
+            <init_from>Image0</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="SamplerSurface1">
+          <surface type="2D">
+            <init_from>Image1</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="Sampler">
+          <sampler2D>
+            <source>SamplerSurface1</source>
+            <wrap_s>CLAMP</wrap_s>
+            <wrap_t>MIRROR</wrap_t>
+            <minfilter>LINEAR</minfilter>
+            <magfilter>LINEAR</magfilter>
+            <mipfilter>NEAREST</mipfilter>
+          </sampler2D>
+        </newparam>
+        <newparam sid="SamplerDefaults">
+          <sampler2D>
+            <source>SamplerSurface0</source>
+          </sampler2D>
+        </newparam>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+</COLLADA>
