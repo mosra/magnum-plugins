@@ -120,8 +120,8 @@ std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const Un
 
     const Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
                                                           Vector2(rectangle.size())/fontSize);
-    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache.textureSize(),
-                                       Vector2(rectangle.topRight())/cache.textureSize());
+    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/Vector2(cache.textureSize()),
+                                       Vector2(rectangle.topRight())/Vector2(cache.textureSize()));
 
     /* Glyph offset in normalized coordinates */
     const Vector2 offset = Vector2(glyphPositions[i].x_offset,
