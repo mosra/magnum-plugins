@@ -72,7 +72,7 @@ class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
         MAGNUM_PNGIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
 
         MAGNUM_PNGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_PNGIMPORTER_LOCAL ImageData2D* doImage2D(UnsignedInt id) override;
+        MAGNUM_PNGIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
         std::istream* _in;

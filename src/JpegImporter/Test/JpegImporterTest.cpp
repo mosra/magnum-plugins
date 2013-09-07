@@ -50,7 +50,7 @@ void JpegImporterTest::gray() {
     JpegImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ImageFormat::Red);
@@ -64,7 +64,7 @@ void JpegImporterTest::rgb() {
     JpegImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ImageFormat::RGB);

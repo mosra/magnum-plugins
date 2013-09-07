@@ -56,7 +56,7 @@ void JpegImporter::doOpenData(const Containers::ArrayReference<const unsigned ch
 
 UnsignedInt JpegImporter::doImage2DCount() const { return 1; }
 
-ImageData2D* JpegImporter::doImage2D(UnsignedInt) {
+std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Initialize structures */
     jpeg_decompress_struct file;
     JSAMPARRAY rows = nullptr;
@@ -79,7 +79,7 @@ ImageData2D* JpegImporter::doImage2D(UnsignedInt) {
         jpeg_destroy_decompress(&file);
         delete[] rows;
         delete[] data;
-        return nullptr;
+        return std::nullopt;
     }
 
     /* Open file */
@@ -135,7 +135,7 @@ ImageData2D* JpegImporter::doImage2D(UnsignedInt) {
     jpeg_finish_decompress(&file);
     jpeg_destroy_decompress(&file);
 
-    return new Trade::ImageData2D(format, type, size, data);
+    return Trade::ImageData2D(format, type, size, data);
 }
 
 }}

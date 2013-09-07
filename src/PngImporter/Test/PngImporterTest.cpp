@@ -52,7 +52,7 @@ void PngImporterTest::gray() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ImageFormat::Red);
@@ -66,7 +66,7 @@ void PngImporterTest::rgb() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ImageFormat::RGB);
@@ -84,7 +84,7 @@ void PngImporterTest::rgba() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ImageFormat::RGBA);

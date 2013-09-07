@@ -68,13 +68,13 @@ void PngImporter::doOpenFile(const std::string& filename) {
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
-ImageData2D* PngImporter::doImage2D(UnsignedInt) {
+std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     /* Verify file signature */
     png_byte signature[8];
     _in->read(reinterpret_cast<char*>(signature), 8);
     if(png_sig_cmp(signature, 0, 8) != 0) {
         Error() << "Trade::PngImporter::image2D(): wrong file signature";
-        return nullptr;
+        return std::nullopt;
     }
 
     /* Structures for reading the file */
@@ -93,7 +93,7 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
         png_destroy_read_struct(&file, &info, nullptr);
         delete[] rows;
         delete[] data;
-        return nullptr;
+        return std::nullopt;
     }
 
     /* Set function for reading from std::istream */
@@ -157,7 +157,7 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported color type" << colorType;
             png_destroy_read_struct(&file, &info, nullptr);
-            return nullptr;
+            return std::nullopt;
     }
 
     /* Convert transparency mask to alpha */
@@ -176,7 +176,7 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported bit depth" << bits;
             png_destroy_read_struct(&file, &info, nullptr);
-            return nullptr;
+            return std::nullopt;
     }
 
     /* Initialize data array */
@@ -193,7 +193,7 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
     /* Cleanup */
     png_destroy_read_struct(&file, &info, nullptr);
 
-    return new Trade::ImageData2D(format, type, size, data);
+    return Trade::ImageData2D(format, type, size, data);
 }
 
 }}

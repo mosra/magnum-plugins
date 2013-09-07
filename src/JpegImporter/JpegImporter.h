@@ -71,7 +71,7 @@ class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
         MAGNUM_JPEGIMPORTER_LOCAL void doOpenData(Containers::ArrayReference<const unsigned char> data) override;
 
         MAGNUM_JPEGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_JPEGIMPORTER_LOCAL ImageData2D* doImage2D(UnsignedInt id) override;
+        MAGNUM_JPEGIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
         Containers::Array<unsigned char> _in;
