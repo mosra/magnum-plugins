@@ -122,7 +122,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
     std::unique_ptr<ObjectData3D> object = importer.object3D(0);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Camera);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
     CORRADE_COMPARE(object->instance(), 2);
     CORRADE_COMPARE(object->children(), std::vector<UnsignedInt>{1});
 
@@ -130,7 +130,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(importer.object3DForName("Light"), 1);
     object = importer.object3D(1);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Light);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
     CORRADE_COMPARE(object->instance(), 1);
     CORRADE_VERIFY(object->children().empty());
 
@@ -138,7 +138,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(importer.object3DForName("Mesh"), 2);
     object = importer.object3D(2);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Mesh);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(object->instance(), 2);
     Matrix4 transformation =
         Matrix4::translation({1, 2, 3})*
@@ -310,7 +310,7 @@ void ColladaImporterTest::material() {
         CORRADE_COMPARE(importer.materialForName("MaterialPhong"), 3);
         const std::unique_ptr<AbstractMaterialData> abstractMaterial = importer.material(3);
         CORRADE_VERIFY(abstractMaterial);
-        CORRADE_VERIFY(abstractMaterial->type() == AbstractMaterialData::Type::Phong);
+        CORRADE_VERIFY(abstractMaterial->type() == MaterialType::Phong);
 
         auto material = static_cast<const PhongMaterialData*>(abstractMaterial.get());
         CORRADE_VERIFY(material->flags() == PhongMaterialData::Flags());
@@ -326,7 +326,7 @@ void ColladaImporterTest::material() {
         CORRADE_COMPARE(importer.materialForName("MaterialPhongTextured"), 4);
         const std::unique_ptr<AbstractMaterialData> abstractMaterial = importer.material(4);
         CORRADE_VERIFY(abstractMaterial);
-        CORRADE_VERIFY(abstractMaterial->type() == AbstractMaterialData::Type::Phong);
+        CORRADE_VERIFY(abstractMaterial->type() == MaterialType::Phong);
 
         auto material = static_cast<const PhongMaterialData*>(abstractMaterial.get());
         CORRADE_VERIFY(material->flags() == (PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture));

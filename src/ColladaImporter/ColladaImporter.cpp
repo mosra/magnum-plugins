@@ -362,7 +362,7 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
         }
 
         /** @todo C++14: std::make_unique() */
-        return std::unique_ptr<ObjectData3D>(new ObjectData3D(std::move(children), transformation, ObjectData3D::InstanceType::Camera, cameraId->second));
+        return std::unique_ptr<ObjectData3D>(new ObjectData3D(std::move(children), transformation, ObjectInstanceType3D::Camera, cameraId->second));
 
     /* Light instance */
     } else if(tmp == "instance_light") {
@@ -375,7 +375,7 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
         }
 
         /** @todo C++14: std::make_unique() */
-        return std::unique_ptr<ObjectData3D>(new ObjectData3D(std::move(children), transformation, ObjectData3D::InstanceType::Light, lightId->second));
+        return std::unique_ptr<ObjectData3D>(new ObjectData3D(std::move(children), transformation, ObjectInstanceType3D::Light, lightId->second));
 
     /* Mesh instance */
     } else if(tmp == "instance_geometry") {
