@@ -24,9 +24,12 @@
 
 #include "ColladaImporter.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
+#include <QtXmlPatterns/QXmlQuery>
 #include <Utility/Directory.h>
+#include <Utility/MurmurHash2.h>
 #include <Math/Constants.h>
 #include <Trade/ImageData.h>
 #include <Trade/MeshData3D.h>
@@ -38,6 +41,57 @@
 #include "TgaImporter/TgaImporter.h"
 
 namespace Magnum { namespace Trade {
+
+struct ColladaImporter::Document {
+    std::string filename;
+
+    /* Data */
+    /** @todo Camera, light names, deduplicate the relevant code */
+    std::vector<std::string> scenes,
+        objects,
+        meshes,
+        materials,
+        textures,
+        images2D;
+
+    /** @todo Make public use for camerasForName, lightsForName */
+    std::unordered_map<std::string, UnsignedInt> camerasForName,
+        lightsForName,
+        scenesForName,
+        objectsForName,
+        meshesForName,
+        materialsForName,
+        texturesForName,
+        images2DForName;
+
+    QXmlQuery query;
+};
+
+class ColladaImporter::IndexHash {
+    public:
+        IndexHash(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
+
+        std::size_t operator()(UnsignedInt key) const {
+            return *reinterpret_cast<const std::size_t*>(Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(UnsignedInt)*stride).byteArray());
+        }
+
+    private:
+        const std::vector<UnsignedInt>& indices;
+        UnsignedInt stride;
+};
+
+class ColladaImporter::IndexEqual {
+    public:
+        IndexEqual(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
+
+        bool operator()(UnsignedInt a, UnsignedInt b) const {
+            return std::memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(UnsignedInt)*stride) == 0;
+        }
+
+    private:
+        const std::vector<UnsignedInt>& indices;
+        UnsignedInt stride;
+};
 
 const QString ColladaImporter::namespaceDeclaration =
     "declare default element namespace \"http://www.collada.org/2005/11/COLLADASchema\";\n";

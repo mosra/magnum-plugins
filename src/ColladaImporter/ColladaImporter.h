@@ -31,12 +31,11 @@
 #include "Trade/AbstractImporter.h"
 
 #include <unordered_map>
-#include <QtCore/QCoreApplication>
-#include <QtXmlPatterns/QXmlQuery>
-#include <Utility/MurmurHash2.h>
 
 #include "ColladaType.h"
 #include "Utility.h"
+
+class QCoreApplication;
 
 namespace Magnum { namespace Trade {
 
@@ -59,75 +58,9 @@ class ColladaImporter: public AbstractImporter {
         template<class T> std::vector<T> parseSource(const QString& id);
 
     private:
-        /** @brief Contents of opened Collada document */
-        struct Document {
-            std::string filename;
-
-            /* Data */
-            /** @todo Camera, light names, deduplicate the relevant code */
-            std::vector<std::string> scenes,
-                objects,
-                meshes,
-                materials,
-                textures,
-                images2D;
-
-            /** @todo Make public use for camerasForName, lightsForName */
-            std::unordered_map<std::string, UnsignedInt> camerasForName,
-                lightsForName,
-                scenesForName,
-                objectsForName,
-                meshesForName,
-                materialsForName,
-                texturesForName,
-                images2DForName;
-
-            QXmlQuery query;
-        };
-
-        /** @brief %Mesh index hasher */
-        class IndexHash {
-            public:
-                /** @brief Constructor */
-                IndexHash(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
-
-                /**
-                 * @brief Functor
-                 *
-                 * Computes hash for given index of length @c stride,
-                 * specified as position in index array passed in
-                 * constructor.
-                 */
-                std::size_t operator()(UnsignedInt key) const {
-                    return *reinterpret_cast<const std::size_t*>(Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(UnsignedInt)*stride).byteArray());
-                }
-
-            private:
-                const std::vector<UnsignedInt>& indices;
-                UnsignedInt stride;
-        };
-
-        /** @brief %Mesh index comparator */
-        class IndexEqual {
-            public:
-                /** @brief Constructor */
-                IndexEqual(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
-
-                /**
-                 * @brief Functor
-                 *
-                 * Compares two index combinations of length @c stride,
-                 * specified as position in index array, passed in
-                 * constructor.
-                 */
-                bool operator()(UnsignedInt a, UnsignedInt b) const {
-                    return std::memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(UnsignedInt)*stride) == 0;
-                }
-
-            private:
-                const std::vector<UnsignedInt>& indices;
-                UnsignedInt stride;
-        };
+        struct Document;
+        class IndexHash;
+        class IndexEqual;
 
         Features doFeatures() const override;
 
