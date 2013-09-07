@@ -102,9 +102,6 @@ void ColladaImporterTest::parseSource() {
 }
 
 void ColladaImporterTest::scene() {
-    std::ostringstream debug;
-    Error::setOutput(&debug);
-
     ColladaImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
 
@@ -120,7 +117,7 @@ void ColladaImporterTest::scene() {
     SceneData* scene = importer.scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 2}));
-//     delete scene;
+    delete scene;
 
     CORRADE_COMPARE(importer.object3DName(0), "Camera");
     CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
@@ -129,7 +126,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Camera);
     CORRADE_COMPARE(object->instance(), 2);
     CORRADE_COMPARE(object->children(), std::vector<UnsignedInt>{1});
-//     delete object;
+    delete object;
 
     CORRADE_COMPARE(importer.object3DName(1), "Light");
     CORRADE_COMPARE(importer.object3DForName("Light"), 1);
@@ -138,7 +135,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Light);
     CORRADE_COMPARE(object->instance(), 1);
     CORRADE_VERIFY(object->children().empty());
-//     delete object;
+    delete object;
 
     CORRADE_COMPARE(importer.object3DName(2), "Mesh");
     CORRADE_COMPARE(importer.object3DForName("Mesh"), 2);
@@ -154,14 +151,16 @@ void ColladaImporterTest::scene() {
         Matrix4::scaling({3, 4, 5});
     CORRADE_COMPARE(object->transformation(), transformation);
     CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object)->material(), 1);
-//     delete object;
+    delete object;
 
+    std::ostringstream debug;
+    Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.object3D(3));
     CORRADE_VERIFY(!importer.object3D(4));
     CORRADE_VERIFY(!importer.object3D(5));
-    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): \"instance_wrong\" instance type not supported\n"
-                                 "Trade::ColladaImporter::openFile(): mesh \"InexistentMesh\" was not found\n"
-                                 "Trade::ColladaImporter::openFile(): material \"InexistentMaterial\" was not found\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::object3D(): \"instance_wrong\" instance type not supported\n"
+                                 "Trade::ColladaImporter::object3D(): mesh \"InexistentMesh\" was not found\n"
+                                 "Trade::ColladaImporter::object3D(): material \"InexistentMaterial\" was not found\n");
 }
 
 void ColladaImporterTest::mesh() {

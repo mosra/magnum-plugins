@@ -51,11 +51,6 @@ ColladaImporter::~ColladaImporter() {
     delete app;
 }
 
-ColladaImporter::Document::~Document() {
-    for(auto i: scenes) delete i.second;
-    for(auto i: objects) delete i.second;
-}
-
 auto ColladaImporter::doFeatures() const -> Features { return {}; }
 
 bool ColladaImporter::doIsOpened() const { return d; }
@@ -98,20 +93,34 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     d->filename = filename;
     d->query = query;
 
-    /* Scenes */
-    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_visual_scenes/visual_scene)");
-    query.evaluateTo(&tmp);
-    d->scenes.resize(Implementation::ColladaType<UnsignedInt>::fromString(tmp));
-
-    /* Objects */
-    query.setQuery(namespaceDeclaration + "count(/COLLADA/library_visual_scenes/visual_scene//node)");
-    query.evaluateTo(&tmp);
-    d->objects.resize(Implementation::ColladaType<UnsignedInt>::fromString(tmp));
-
     QStringList tmpList;
+
+    /* Create scene name -> scene id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene/@id/string()");
+    query.evaluateTo(&tmpList);
+    d->scenes.reserve(tmpList.size());
+    d->scenesForName.reserve(tmpList.size());
+    for(const QString& id: tmpList) {
+        std::string name = id.trimmed().toStdString();
+        d->scenes.push_back(name);
+        d->scenesForName.emplace(std::move(name), d->scenesForName.size());
+    }
+
+    /* Create object name -> object id map */
+    query.setQuery(namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node/@id/string()");
+    tmpList.clear();
+    query.evaluateTo(&tmpList);
+    d->objects.reserve(tmpList.size());
+    d->objectsForName.reserve(tmpList.size());
+    for(const QString& id: tmpList) {
+        std::string name = id.trimmed().toStdString();
+        d->objects.push_back(name);
+        d->objectsForName.emplace(std::move(name), d->objectsForName.size());
+    }
 
     /* Create camera name -> camera id map */
     query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
+    tmpList.clear();
     query.evaluateTo(&tmpList);
     d->camerasForName.reserve(tmpList.size());
     for(const QString& id: tmpList)
@@ -180,52 +189,173 @@ void ColladaImporter::doClose() {
 }
 
 Int ColladaImporter::doDefaultScene() {
-    if(d->scenes.empty()) return -1;
-    if(!d->scenes[0].second) parseScenes();
+    QString tmp;
 
-    return d->defaultScene;
+    /* Default scene */
+    d->query.setQuery(namespaceDeclaration + "/COLLADA/scene/instance_visual_scene/@url/string()");
+    d->query.evaluateTo(&tmp);
+
+    auto it = d->scenesForName.find(tmp.trimmed().mid(1).toStdString());
+    return it == d->scenesForName.end() ? -1 : it->second;
 }
 
 UnsignedInt ColladaImporter::doSceneCount() const { return d->scenes.size(); }
 
 Int ColladaImporter::doSceneForName(const std::string& name) {
-    if(d->scenes.empty()) return -1;
-    if(!d->scenes[0].second) parseScenes();
-
     auto it = d->scenesForName.find(name);
     return it == d->scenesForName.end() ? -1 : it->second;
 }
 
-std::string ColladaImporter::doSceneName(const UnsignedInt id) {
-    if(!d->scenes[0].second) parseScenes();
-    return d->scenes[id].first;
-}
+std::string ColladaImporter::doSceneName(const UnsignedInt id) { return d->scenes[id]; }
 
 SceneData* ColladaImporter::doScene(const UnsignedInt id) {
-    if(!d->scenes[0].second) parseScenes();
-    return d->scenes[id].second;
-    /** @todo return copy so user can delete it */
+    QStringList tmpList;
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/node/@id/string()").arg(id+1));
+    d->query.evaluateTo(&tmpList);
+
+    std::vector<UnsignedInt> children;
+    children.reserve(tmpList.size());
+    for(const QString& childId: tmpList) {
+        const std::string childIdTrimmed = childId.trimmed().toStdString();
+        const Int id = doObject3DForName(childIdTrimmed);
+        if(id == -1) {
+            Error() << "Trade::ColladaImporter::scene(): object" << '"' + childIdTrimmed + '"' << "was not found";
+            return nullptr;
+        }
+        children.push_back(id);
+    }
+
+    return new SceneData({}, std::move(children));
 }
 
 UnsignedInt ColladaImporter::doObject3DCount() const { return d->objects.size(); }
 
 Int ColladaImporter::doObject3DForName(const std::string& name) {
-    if(d->scenes.empty()) return -1;
-    if(!d->scenes[0].second) parseScenes();
-
     auto it = d->objectsForName.find(name);
     return it == d->objectsForName.end() ? -1 : it->second;
 }
 
-std::string ColladaImporter::doObject3DName(const UnsignedInt id) {
-    if(!d->scenes[0].second) parseScenes();
-    return d->objects[id].first;
-}
+std::string ColladaImporter::doObject3DName(const UnsignedInt id) { return d->objects[id]; }
 
 ObjectData3D* ColladaImporter::doObject3D(const UnsignedInt id) {
-    if(!d->scenes[0].second) parseScenes();
-    return d->objects[id].second;
-    /** @todo return copy so user can delete it */
+    /* Referring to <node>s with numbers somehow doesn't work (i.e. it selects
+       many extra elements), we need to refer to them by id attribute instead */
+    const auto name = QString::fromStdString(doObject3DName(id));
+
+    QString tmp;
+    QStringList tmpList, tmpList2;
+
+    /* Transformations */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/(translate|rotate|scale)/name()").arg(name));
+    d->query.evaluateTo(&tmpList);
+
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/(translate|rotate|scale)/string()").arg(name));
+    d->query.evaluateTo(&tmpList2);
+
+    Matrix4 transformation;
+    for(std::size_t i = 0; i != std::size_t(tmpList.size()); ++i) {
+        QString type = tmpList[i].trimmed();
+        /* Translation */
+        if(type == "translate")
+            transformation = transformation*Matrix4::translation(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
+
+        /* Rotation */
+        else if(type == "rotate") {
+            int pos = 0;
+            Vector3 axis = Implementation::Utility::parseVector<Vector3>(tmpList2[i], &pos);
+            Deg angle(Implementation::ColladaType<Float>::fromString(tmpList2[i].mid(pos)));
+            transformation = transformation*Matrix4::rotation(angle, axis);
+
+        /* Scaling */
+        } else if(type == "scale")
+            transformation = transformation*Matrix4::scaling(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
+
+        /* It shouldn't get here */
+        else CORRADE_ASSERT(0, ("Trade::ColladaImporter::object3D(): unknown translation " + type).toStdString(), nullptr);
+    }
+
+    /* Child object names */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/node/@id/string()").arg(name));
+    tmpList.clear();
+    d->query.evaluateTo(&tmpList);
+
+    /* Child object IDs */
+    std::vector<UnsignedInt> children;
+    children.reserve(tmpList.size());
+    for(const QString& childId: tmpList) {
+        const std::string childIdTrimmed = childId.trimmed().toStdString();
+        const Int id = doObject3DForName(childIdTrimmed);
+        if(id == -1) {
+            Error() << "Trade::ColladaImporter::object3D(): object" << '"' + childIdTrimmed + '"' << "was not found";
+            return nullptr;
+        }
+        children.push_back(id);
+    }
+
+    /* Instance type */
+    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/*[starts-with(name(), 'instance_')]/name()").arg(name));
+    d->query.evaluateTo(&tmp);
+    tmp = tmp.trimmed();
+
+    /* Camera instance */
+    if(tmp == "instance_camera") {
+        /** @todo use doCameraForName() */
+        std::string cameraName = instanceName(name, "instance_camera");
+        auto cameraId = d->camerasForName.find(cameraName);
+        if(cameraId == d->camerasForName.end()) {
+            Error() << "Trade::ColladaImporter::object3D(): camera" << '"'+cameraName+'"' << "was not found";
+            return nullptr;
+        }
+
+        return new ObjectData3D(std::move(children), transformation, ObjectData3D::InstanceType::Camera, cameraId->second);
+
+    /* Light instance */
+    } else if(tmp == "instance_light") {
+        /** @todo use doLightForName() */
+        std::string lightName = instanceName(name, "instance_light");
+        auto lightId = d->lightsForName.find(lightName);
+        if(lightId == d->lightsForName.end()) {
+            Error() << "Trade::ColladaImporter::object3D(): light" << '"'+lightName+'"' << "was not found";
+            return nullptr;
+        }
+
+        return new ObjectData3D(std::move(children), transformation, ObjectData3D::InstanceType::Light, lightId->second);
+
+    /* Mesh instance */
+    } else if(tmp == "instance_geometry") {
+        std::string meshName = instanceName(name, "instance_geometry");
+        const Int meshId = doMesh3DForName(meshName);
+        if(meshId == -1) {
+            Error() << "Trade::ColladaImporter::object3D(): mesh" << '"'+meshName+'"' << "was not found";
+            return nullptr;
+        }
+
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/instance_geometry/bind_material/technique_common/instance_material/@target/string()").arg(name));
+        d->query.evaluateTo(&tmp);
+        std::string materialName = tmp.trimmed().mid(1).toStdString();
+
+        /* If the mesh doesn't have bound material, add default one, else find
+           its ID */
+        /** @todo Solution for unknown materials etc.: -1 ? */
+        Int materialId = 0;
+        if(!materialName.empty()) {
+            materialId = doMaterialForName(materialName);
+            if(materialId == -1) {
+                Error() << "Trade::ColladaImporter::object3D(): material" << '"'+materialName+'"' << "was not found";
+                return nullptr;
+            }
+        }
+
+        return new MeshObjectData3D(std::move(children), transformation, meshId, materialId);
+
+    /* Blender group instance */
+    } else if(tmp.isEmpty()) {
+        return new ObjectData3D(std::move(children), transformation);
+    }
+
+    /* Something else */
+    Error() << "Trade::ColladaImporter::object3D():" << '"'+tmp.toStdString()+'"' << "instance type not supported";
+    return nullptr;
 }
 
 UnsignedInt ColladaImporter::doMesh3DCount() const { return d->meshes.size(); }
@@ -696,155 +826,6 @@ template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedIn
         array[i.second] = originalArray[originalIndices[i.first*stride+offset]];
 
     return std::move(array);
-}
-
-void ColladaImporter::parseScenes() {
-    QStringList tmpList;
-    QString tmp;
-
-    /* Default scene */
-    d->defaultScene = 0;
-    d->query.setQuery(namespaceDeclaration + "/COLLADA/scene/instance_visual_scene/@url/string()");
-    d->query.evaluateTo(&tmp);
-    std::string defaultScene = tmp.trimmed().mid(1).toStdString();
-
-    /* Parse all objects in all scenes */
-    for(UnsignedInt sceneId = 0; sceneId != d->scenes.size(); ++sceneId) {
-        /* Is this the default scene? */
-        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/@id/string()").arg(sceneId+1));
-        d->query.evaluateTo(&tmp);
-        std::string name = tmp.trimmed().toStdString();
-        if(defaultScene == name)
-            d->defaultScene = sceneId;
-
-        UnsignedInt nextObjectId = 0;
-        std::vector<UnsignedInt> children;
-        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene[%0]/node/@id/string()").arg(sceneId+1));
-        tmpList.clear();
-        d->query.evaluateTo(&tmpList);
-        for(QString childId: tmpList) {
-            children.push_back(nextObjectId);
-            nextObjectId = parseObject(nextObjectId, childId.trimmed());
-        }
-
-        d->scenes[sceneId] = {name, new SceneData({}, std::move(children))};
-        d->scenesForName.emplace(std::move(name), sceneId);
-    }
-}
-
-UnsignedInt ColladaImporter::parseObject(UnsignedInt id, const QString& name) {
-    QString tmp;
-    QStringList tmpList, tmpList2;
-
-    /* Transformations */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/(translate|rotate|scale)/name()").arg(name));
-    d->query.evaluateTo(&tmpList);
-
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/(translate|rotate|scale)/string()").arg(name));
-    d->query.evaluateTo(&tmpList2);
-
-    Matrix4 transformation;
-    for(std::size_t i = 0; i != std::size_t(tmpList.size()); ++i) {
-        QString type = tmpList[i].trimmed();
-        /* Translation */
-        if(type == "translate")
-            transformation = transformation*Matrix4::translation(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
-
-        /* Rotation */
-        else if(type == "rotate") {
-            int pos = 0;
-            Vector3 axis = Implementation::Utility::parseVector<Vector3>(tmpList2[i], &pos);
-            Deg angle(Implementation::ColladaType<Float>::fromString(tmpList2[i].mid(pos)));
-            transformation = transformation*Matrix4::rotation(angle, axis);
-
-        /* Scaling */
-        } else if(type == "scale")
-            transformation = transformation*Matrix4::scaling(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
-
-        /* It shouldn't get here */
-        else CORRADE_ASSERT(0, ("Trade::ColladaImporter::openFile(): unknown translation " + type).toStdString(), id);
-    }
-
-    /* Instance type */
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/*[starts-with(name(), 'instance_')]/name()").arg(name));
-    d->query.evaluateTo(&tmp);
-    tmp = tmp.trimmed();
-
-    /* Camera instance */
-    if(tmp == "instance_camera") {
-        std::string cameraName = instanceName(name, "instance_camera");
-        auto cameraId = d->camerasForName.find(cameraName);
-        if(cameraId == d->camerasForName.end()) {
-            Error() << "Trade::ColladaImporter::openFile(): camera" << '"'+cameraName+'"' << "was not found";
-            return id;
-        }
-
-        d->objects[id] = {name.toStdString(), new ObjectData3D({}, transformation, ObjectData3D::InstanceType::Camera, cameraId->second)};
-
-    /* Light instance */
-    } else if(tmp == "instance_light") {
-        std::string lightName = instanceName(name, "instance_light");
-        auto lightId = d->lightsForName.find(lightName);
-        if(lightId == d->lightsForName.end()) {
-            Error() << "Trade::ColladaImporter::openFile(): light" << '"'+lightName+'"' << "was not found";
-            return id;
-        }
-
-        d->objects[id] = {name.toStdString(), new ObjectData3D({}, transformation, ObjectData3D::InstanceType::Light, lightId->second)};
-
-    /* Mesh instance */
-    } else if(tmp == "instance_geometry") {
-        std::string meshName = instanceName(name, "instance_geometry");
-        auto meshId = d->meshesForName.find(meshName);
-        if(meshId == d->meshesForName.end()) {
-            Error() << "Trade::ColladaImporter::openFile(): mesh" << '"'+meshName+'"' << "was not found";
-            return id;
-        }
-
-        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/instance_geometry/bind_material/technique_common/instance_material/@target/string()").arg(name));
-        d->query.evaluateTo(&tmp);
-        std::string materialName = tmp.trimmed().mid(1).toStdString();
-
-        /* Mesh doesn't have bound material, add default one */
-        /** @todo Solution for unknown materials etc.: -1 ? */
-        if(materialName.empty()) d->objects[id] = {name.toStdString(), new MeshObjectData3D({}, transformation, meshId->second, 0)};
-
-        /* Else find material ID */
-        else {
-            auto materialId = d->materialsForName.find(materialName);
-            if(materialId == d->materialsForName.end()) {
-                Error() << "Trade::ColladaImporter::openFile(): material" << '"'+materialName+'"' << "was not found";
-                return id;
-            }
-
-            d->objects[id] = {name.toStdString(), new MeshObjectData3D({}, transformation, meshId->second, materialId->second)};
-        }
-
-    /* Blender group instance */
-    } else if(tmp.isEmpty()) {
-        d->objects[id] = {name.toStdString(), new ObjectData3D({}, transformation)};
-
-    } else {
-        Error() << "Trade::ColladaImporter::openFile():" << '"'+tmp.toStdString()+'"' << "instance type not supported";
-        return id;
-    }
-
-    /* Add to object name map */
-    d->objectsForName.insert({name.toStdString(), id});
-
-    /* Parse child objects */
-    UnsignedInt nextObjectId = id+1;
-    std::vector<UnsignedInt> children;
-    d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/node/@id/string()").arg(name));
-    tmpList.clear();
-    d->query.evaluateTo(&tmpList);
-    for(QString childId: tmpList) {
-        children.push_back(nextObjectId);
-        nextObjectId = parseObject(nextObjectId, childId.trimmed());
-    }
-    d->objects[id].second->children().swap(children);
-
-    return nextObjectId;
 }
 
 std::string ColladaImporter::instanceName(const QString& name, const QString& instanceTag) {

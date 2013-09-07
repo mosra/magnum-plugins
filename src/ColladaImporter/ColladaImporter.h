@@ -61,19 +61,16 @@ class ColladaImporter: public AbstractImporter {
     private:
         /** @brief Contents of opened Collada document */
         struct Document {
-            inline Document(): defaultScene(0) {}
-            ~Document();
-
             std::string filename;
 
             /* Data */
-            UnsignedInt defaultScene;
-            std::vector<std::pair<std::string, SceneData*>> scenes;
-            std::vector<std::pair<std::string, ObjectData3D*>> objects;
-            std::vector<std::string> meshes;
-            std::vector<std::string> materials;
-            std::vector<std::string> textures;
-            std::vector<std::string> images2D;
+            /** @todo Camera, light names, deduplicate the relevant code */
+            std::vector<std::string> scenes,
+                objects,
+                meshes,
+                materials,
+                textures,
+                images2D;
 
             /** @todo Make public use for camerasForName, lightsForName */
             std::unordered_map<std::string, UnsignedInt> camerasForName,
@@ -192,23 +189,6 @@ class ColladaImporter: public AbstractImporter {
          */
         template<class T> std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations);
 
-        /** @brief Parse all scenes */
-        void parseScenes();
-
-        /**
-         * @brief Parse object
-         * @param id        Object ID, under which it will be saved
-         * @param name      Object name
-         * @return Next free ID
-         */
-        UnsignedInt parseObject(UnsignedInt id, const QString& name);
-
-        /**
-         * @brief Instance name
-         * @param objectName    Object name
-         * @param instanceTag   Instance tag name
-         * @return Instance name
-         */
         std::string instanceName(const QString& name, const QString& instanceTag);
 
         /** @brief Default namespace declaration for XQuery */
