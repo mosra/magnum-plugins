@@ -72,32 +72,32 @@ class ColladaImporter: public AbstractImporter {
         UnsignedInt doSceneCount() const override;
         Int doSceneForName(const std::string& name) override;
         std::string doSceneName(UnsignedInt id) override;
-        SceneData* doScene(UnsignedInt id) override;
+        std::optional<SceneData> doScene(UnsignedInt id) override;
 
         UnsignedInt doObject3DCount() const override;
         Int doObject3DForName(const std::string& name) override;
         std::string doObject3DName(UnsignedInt id) override;
-        ObjectData3D* doObject3D(UnsignedInt id) override;
+        std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
 
         UnsignedInt doMesh3DCount() const override;
         Int doMesh3DForName(const std::string& name) override;
         std::string doMesh3DName(UnsignedInt id) override;
-        MeshData3D* doMesh3D(UnsignedInt id) override;
+        std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
         UnsignedInt doMaterialCount() const override;
         Int doMaterialForName(const std::string& name) override;
         std::string doMaterialName(UnsignedInt id) override;
-        AbstractMaterialData* doMaterial(UnsignedInt id) override;
+        std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
 
         UnsignedInt doTextureCount() const override;
         Int doTextureForName(const std::string& name) override;
         std::string doTextureName(UnsignedInt id) override;
-        TextureData* doTexture(UnsignedInt id) override;
+        std::optional<TextureData> doTexture(UnsignedInt id) override;
 
         UnsignedInt doImage2DCount() const override;
         Int doImage2DForName(const std::string& name) override;
         std::string doImage2DName(UnsignedInt id) override;
-        ImageData2D* doImage2D(UnsignedInt id) override;
+        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
         /**
          * @brief Offset of attribute in mesh index array
