@@ -25,10 +25,17 @@
 #include "JpegImporter.h"
 
 #include <csetjmp>
-#include <jpeglib.h>
 #include <Utility/Debug.h>
 #include <ImageFormat.h>
 #include <Trade/ImageData.h>
+
+/* On Windows we need to circumvent conflicting definition of INT32 in
+   <windows.h> (included by glLoadGen from OpenGL.h). Problem with libjpeg-tubo
+   only, libjpeg solves that already somehow. */
+#ifdef _WIN32
+#define XMD_H
+#endif
+#include <jpeglib.h>
 
 #ifdef MAGNUM_TARGET_GLES
 #include <Context.h>
