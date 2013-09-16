@@ -33,7 +33,7 @@ set(JpegImporter_HEADERS
     JpegImporter.h)
 
 add_library(JpegImporterObjects OBJECT ${JpegImporter_SOURCES})
-set_target_properties(JpegImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+set_target_properties(JpegImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DJpegImporterObjects_EXPORTS")
 
 add_plugin(JpegImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     JpegImporter.conf
