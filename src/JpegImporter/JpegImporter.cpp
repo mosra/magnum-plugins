@@ -26,7 +26,7 @@
 
 #include <csetjmp>
 #include <Utility/Debug.h>
-#include <ImageFormat.h>
+#include <ColorFormat.h>
 #include <Trade/ImageData.h>
 
 /* On Windows we need to circumvent conflicting definition of INT32 in
@@ -100,23 +100,23 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Image size and type */
     const Vector2i size(file.output_width, file.output_height);
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
-    constexpr const ImageType type = ImageType::UnsignedByte;
+    constexpr const ColorType type = ColorType::UnsignedByte;
 
     /* Image format */
-    ImageFormat format;
+    ColorFormat format;
     switch(file.out_color_space) {
         case JCS_GRAYSCALE:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 1);
             #ifdef MAGNUM_TARGET_GLES
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                ImageFormat::Red : ImageFormat::Luminance;
+                ColorFormat::Red : ColorFormat::Luminance;
             #else
-            format = ImageFormat::Red;
+            format = ColorFormat::Red;
             #endif
             break;
         case JCS_RGB:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 3);
-            format = ImageFormat::RGB;
+            format = ColorFormat::RGB;
             break;
 
         /** @todo RGBA (only in libjpeg-turbo and probably ignored) */

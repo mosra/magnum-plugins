@@ -47,12 +47,12 @@ namespace Magnum { namespace Trade {
 Supports RGB, RGBA or grayscale images with 8 and 16 bits per channel. Palleted
 images and images with transparency mask are automatically converted to RGB(A).
 
-The images are imported with @ref ImageType::UnsignedByte / @ref ImageType::UnsignedShort
-and @ref ImageFormat::RGB, @ref ImageFormat::RGBA or @ref ImageFormat::Red,
+The images are imported with @ref ColorType::UnsignedByte / @ref ColorType::UnsignedShort
+and @ref ColorFormat::RGB, @ref ColorFormat::RGBA or @ref ColorFormat::Red,
 respectively. Grayscale images require extension @extension{ARB,texture_rg}.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
-images use @ref ImageFormat::Luminance instead of @ref ImageFormat::Red.
+images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red.
 */
 class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
     public:

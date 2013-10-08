@@ -29,10 +29,10 @@
 #include FT_FREETYPE_H
 #include <Containers/Array.h>
 #include <Utility/Unicode.h>
+#include <ColorFormat.h>
 #include <Context.h>
 #include <Extensions.h>
 #include <Image.h>
-#include <ImageFormat.h>
 #include <Text/GlyphCache.h>
 
 namespace Magnum { namespace Text {
@@ -142,10 +142,10 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
     unsigned char* pixmap = new unsigned char[cache.textureSize().product()]();
     /** @todo Some better way for this */
     #ifndef MAGNUM_TARGET_GLES2
-    Image2D image(ImageFormat::Red, ImageType::UnsignedByte, cache.textureSize(), pixmap);
+    Image2D image(ColorFormat::Red, ColorType::UnsignedByte, cache.textureSize(), pixmap);
     #else
     Image2D image(Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-        ImageFormat::Red : ImageFormat::Luminance, ImageType::UnsignedByte, cache.textureSize(), pixmap);
+        ColorFormat::Red : ColorFormat::Luminance, ColorType::UnsignedByte, cache.textureSize(), pixmap);
     #endif
     for(std::size_t i = 0; i != charPositions.size(); ++i) {
         /* Load and render glyph */
