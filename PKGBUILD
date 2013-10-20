@@ -2,11 +2,11 @@
 pkgname=magnum-plugins
 pkgver=dev
 pkgrel=1
-pkgdesc="Plugins for Magnum OpenGL 3 graphics engine"
+pkgdesc="Plugins for Magnum OpenGL graphics engine"
 arch=('i686' 'x86_64')
-url="https://github.com/magnum-plugins"
+url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
-depends=('magnum' 'qt4')
+depends=('magnum')
 makedepends=('cmake')
 options=(!strip)
 provides=('magnum-plugins-git')
