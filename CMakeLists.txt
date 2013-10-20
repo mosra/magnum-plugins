@@ -55,7 +55,7 @@ cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code." OFF "B
 option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
 
 # Newlib toolchain supports only static linking
-if(CORRADE_TARGET_NACL_NEWLIB)
+if(CORRADE_TARGET_NACL_NEWLIB OR CORRADE_TARGET_EMSCRIPTEN)
     set(BUILD_STATIC ON)
 endif()
 
