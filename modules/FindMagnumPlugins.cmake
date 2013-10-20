@@ -71,7 +71,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     # Plugin library suffix
     if(${component} MATCHES ".+AudioImporter$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX audioimporters)
-    if(${component} MATCHES ".+Importer$")
+    elseif(${component} MATCHES ".+Importer$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX importers)
     elseif(${component} MATCHES ".+Font$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX fonts)
