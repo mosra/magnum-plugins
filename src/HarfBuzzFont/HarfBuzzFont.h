@@ -43,7 +43,7 @@ Improves FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/H
 text layouting capabilities, such as kerning, ligatures etc. See FreeTypeFont
 class documentation for more information about usage.
 */
-class HarfBuzzFont: public FreeTypeFont::FreeTypeFont {
+class HarfBuzzFont: public FreeTypeFont {
     public:
         /** @brief Default constructor */
         explicit HarfBuzzFont();
