@@ -48,10 +48,18 @@ typedef FT_FaceRec_*  FT_Face;
 namespace Magnum { namespace Text {
 
 /**
-@brief FreeType font
+@brief FreeType font plugin
 
 The font can be created either from file or from memory location of format
 supported by [FreeType](http://www.freetype.org/) library.
+
+This plugin depends on **FreeType** library and is built if `WITH_FREETYPEFONT`
+is enabled in CMake. To use dynamic plugin, you need to load `%FreeTypeFont`
+plugin from `fonts/` subdirectory of your plugin dir. To use static plugin or
+use this as a dependency of another plugin, you need to request `%FreeTypeFont`
+component in CMake, add `${MAGNUMPLUGINS_FREETYPEFONT_INCLUDE_DIRS}` to include
+path and link to `${MAGNUMPLUGINS_FREETYPEFONT_LIBRARIES}`. See @ref building-plugins
+and @ref cmake-plugins for more information.
 */
 class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     public:

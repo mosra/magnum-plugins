@@ -43,6 +43,15 @@ class ColladaMeshData;
 
 /**
 @brief Collada importer plugin
+
+This plugin depends on **Qt 4** library and @ref TgaImporter plugin. It is
+built if `WITH_COLLADAIMPORTER` is enabled in CMake. To use dynamic plugin, you
+need to load `%ColladaImporter` plugin from `importers/` subdirectory of your
+plugin dir. To use static plugin or use this as a dependency of another plugin,
+you need to request `%ColladaImporter` component in CMake, add
+`${MAGNUMPLUGINS_COLLADAIMPORTER_INCLUDE_DIRS}` to include path and link to
+`${MAGNUMPLUGINS_COLLADAIMPORTER_LIBRARIES}`. See @ref building-plugins and
+@ref cmake-plugins for more information.
 */
 class ColladaImporter: public AbstractImporter {
     public:

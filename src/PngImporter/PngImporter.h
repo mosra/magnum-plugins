@@ -42,10 +42,18 @@
 namespace Magnum { namespace Trade {
 
 /**
-@brief PNG importer
+@brief PNG importer plugin
 
 Supports RGB, RGBA or grayscale images with 8 and 16 bits per channel. Palleted
 images and images with transparency mask are automatically converted to RGB(A).
+
+This plugin depends on **libPNG** library and is built if `WITH_PNGIMPORTER`
+is enabled in CMake. To use dynamic plugin, you need to load `%PngImporter`
+plugin from `importers/` subdirectory of your plugin dir. To use static plugin
+or use this as a dependency of another plugin, you need to request `%PngImporter`
+component in CMake, add `${MAGNUMPLUGINS_PNGIMPORTER_INCLUDE_DIRS}` to include
+path and link to `${MAGNUMPLUGINS_PNGIMPORTER_LIBRARIES}`. See
+@ref building-plugins and @ref cmake-plugins for more information.
 
 The images are imported with @ref ColorType::UnsignedByte / @ref ColorType::UnsignedShort
 and @ref ColorFormat::RGB, @ref ColorFormat::RGBA or @ref ColorFormat::Red,

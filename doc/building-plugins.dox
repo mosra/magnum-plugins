@@ -50,24 +50,27 @@ system location. You can install it by enabling `WITH_FIND_MODULE`.
 By default no plugins are built and you need to select them manually:
 
 -   `WITH_COLLADAIMPORTER` -- @ref Trade::ColladaImporter "ColladaImporter"
-    plugin. Depends on `TgaImporter` plugin and requires **Qt** library.
+    plugin. Enables also building of @ref Trade::TgaImporter "TgaImporter"
+    plugin.
 -   `WITH_FREETYPEFONT` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin.
-    Requires **FreeType** library.
 -   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
-    Depends on `FreeTypeFont` plugin and requires **HarfBuzz** library.
+    Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.
 -   `WITH_JPEGIMPORTER` -- @ref Trade::JpegImporter "JpegImporter" plugin.
-    Requires **libJPEG** library.
--   `WITH_MAGNUMFONT` -- @ref Text::MagnumFont "MagnumFont" plugin. Depends on
-    TgaImporter plugin.
+-   `WITH_MAGNUMFONT` -- @ref Text::MagnumFont "MagnumFont" plugin. Enables
+    also building of @ref Trade::TgaImporter "TgaImporter" plugin.
 -   `WITH_MAGNUMFONTCONVERTER` -- @ref Text::MagnumFontConverter "MagnumFontConverter"
-    plugin. Depends on `TgaImageConverter` plugin.
+    plugin. Enables also building of @ref Trade::TgaImageConverter "TgaImageConverter"
+    plugin.
 -   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
-    Requires **libPNG** library.
--   `WITH_TGAIMPORTER` -- @ref Trade::TgaImporter "TgaImporter" plugin
+-   `WITH_TGAIMPORTER` -- @ref Trade::TgaImporter "TgaImporter" plugin.
 -   `WITH_TGAIMAGECONVERTER` -- @ref Trade::TgaImageConverter "TgaImageConverter"
-    plugin
+    plugin.
 -   `WITH_WAVAUDIOIMPORTER` -- @ref Audio::WavImporter "WavAudioImporter"
-    plugin
+    plugin.
+
+Note that each plugin class contains more detailed information about
+dependencies, availability on particular platform and also guide how to enable
+given library in build and use it with CMake.
 
 @section building-plugins-arch Building ArchLinux packages
 

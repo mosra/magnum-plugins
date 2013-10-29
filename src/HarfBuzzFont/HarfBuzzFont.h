@@ -37,11 +37,19 @@ struct hb_font_t;
 namespace Magnum { namespace Text {
 
 /**
-@brief HarfBuzz font
+@brief HarfBuzz font plugin
 
-Improves FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz)
-text layouting capabilities, such as kerning, ligatures etc. See FreeTypeFont
-class documentation for more information about usage.
+Improves @ref FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz)
+text layouting capabilities, such as kerning, ligatures etc.
+
+This plugin depends on **HarfBuzz** library and @ref FreeTypeFont plugin. It
+is built if `WITH_HARFBUZZFONT` is enabled in CMake. To use dynamic plugin, you
+need to load `%HarfBuzzFont` plugin from `importers/` subdirectory of your
+plugin dir. To use static plugin or use this as a dependency of another plugin,
+you need to request `%HarfBuzzFont` component in CMake, add
+`${MAGNUMPLUGINS_HARFBUZZFONT_INCLUDE_DIRS}` to include path and link to
+`${MAGNUMPLUGINS_HARFBUZZFONT_LIBRARIES}`. See @ref building-plugins and
+@ref cmake-plugins for more information.
 */
 class HarfBuzzFont: public FreeTypeFont {
     public:

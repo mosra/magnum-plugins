@@ -50,23 +50,21 @@ This command tries to find %Magnum plugins and then defines:
 This command will not try to find any actual plugin. The plugins are:
 
 -   `ColladaImporter` -- @ref Trade::ColladaImporter "ColladaImporter" plugin
-    (depends on Qt library)
--   `FreeTypeFont` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin (depends on
-    FreeType library)
--   `HarfBuzzFont` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin (depends on
-    FreeType plugin and HarfBuzz library)
--   `JpegImporter` -- @ref Trade::JpegImporter "JpegImporter" plugin (depends
-    on libJPEG library)
--   `MagnumFont` -- @ref Text::MagnumFont "MagnumFont" plugin (depends on
-    TgaImporter plugin)
+-   `FreeTypeFont` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin
+-   `HarfBuzzFont` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin
+-   `JpegImporter` -- @ref Trade::JpegImporter "JpegImporter" plugin
+-   `MagnumFont` -- @ref Text::MagnumFont "MagnumFont" plugin
 -   `MagnumFontConverter` -- @ref Text::MagnumFontConverter "MagnumFontConverter"
-    plugin (depends on TgaImageConverter plugin)
--   `PngImporter` -- @ref Trade::PngImporter "PngImporter" plugin (depends on
-    libPNG library)
+    plugin
+-   `PngImporter` -- @ref Trade::PngImporter "PngImporter" plugin
 -   `TgaImageConverter` -- @ref Trade::TgaImageConverter "TgaImageConverter"
     plugin
 -   `TgaImporter` -- @ref Trade::TgaImporter "TgaImporter" plugin
 -   `WavAudioImporter` -- @ref Audio::WavImporter "WavAudioImporter" plugin
+
+Note that each plugin class contains more detailed information about
+dependencies, availability on particular platform and also guide how to enable
+given library in build and use it with CMake.
 
 Example usage with specifying the plugins is:
 
