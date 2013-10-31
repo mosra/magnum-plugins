@@ -41,26 +41,6 @@ if(WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
 
-if(WITH_MAGNUMFONT)
-    add_subdirectory(MagnumFont)
-endif()
-
-if(WITH_MAGNUMFONTCONVERTER AND NOT MAGNUM_TARGET_GLES)
-    add_subdirectory(MagnumFontConverter)
-endif()
-
 if(WITH_PNGIMPORTER)
     add_subdirectory(PngImporter)
-endif()
-
-if(WITH_TGAIMAGECONVERTER)
-    add_subdirectory(TgaImageConverter)
-endif()
-
-if(WITH_TGAIMPORTER)
-    add_subdirectory(TgaImporter)
-endif()
-
-if(WITH_WAVAUDIOIMPORTER)
-    add_subdirectory(WavAudioImporter)
 endif()

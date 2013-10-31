@@ -56,17 +56,7 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
     Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.
 -   `WITH_JPEGIMPORTER` -- @ref Trade::JpegImporter "JpegImporter" plugin.
--   `WITH_MAGNUMFONT` -- @ref Text::MagnumFont "MagnumFont" plugin. Enables
-    also building of @ref Trade::TgaImporter "TgaImporter" plugin.
--   `WITH_MAGNUMFONTCONVERTER` -- @ref Text::MagnumFontConverter "MagnumFontConverter"
-    plugin. Enables also building of @ref Trade::TgaImageConverter "TgaImageConverter"
-    plugin.
 -   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
--   `WITH_TGAIMPORTER` -- @ref Trade::TgaImporter "TgaImporter" plugin.
--   `WITH_TGAIMAGECONVERTER` -- @ref Trade::TgaImageConverter "TgaImageConverter"
-    plugin.
--   `WITH_WAVAUDIOIMPORTER` -- @ref Audio::WavImporter "WavAudioImporter"
-    plugin.
 
 Note that each plugin class contains more detailed information about
 dependencies, availability on particular platform and also guide how to enable

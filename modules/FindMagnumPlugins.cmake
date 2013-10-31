@@ -12,13 +12,7 @@
 #  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
 #                     library)
 #  JpegImporter     - JPEG importer (depends on libJPEG library)
-#  MagnumFont       - Magnum bitmap font (depends on TgaImporter plugin)
-#  MagnumFontConverter - Magnum bitmap font converter (depends on
-#                     TgaImageConverter plugin)
 #  PngImporter      - PNG importer (depends on libPNG library)
-#  TgaImageConverter - TGA image converter
-#  TgaImporter      - TGA importer
-#  WavAudioImporter - WAV sound importer
 # Example usage with specifying the plugins is:
 #  find_package(MagnumPlugins [REQUIRED|COMPONENTS]
 #               MagnumFont TgaImporter)
@@ -135,9 +129,6 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
     endif()
 
-    # MagnumFont plugin has no dependencies
-    # MagnumFontConverter plugin has no dependencies
-
     # PngImporter plugin dependencies
     if(${component} STREQUAL PngImporter)
         find_package(PNG)
@@ -148,10 +139,6 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
             unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
         endif()
     endif()
-
-    # TgaImageConverter plugin has no dependencies
-    # TgaImporter plugin has no dependencies
-    # WavAudioImporter plugin has no dependencies
 
     # Decide if the plugin was found
     if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
