@@ -106,6 +106,7 @@ void FreeTypeFontTest::layout() {
 
 void FreeTypeFontTest::fillGlyphCache() {
     /** @todo */
+    CORRADE_SKIP("Not yet implemented");
 }
 
 }}}
