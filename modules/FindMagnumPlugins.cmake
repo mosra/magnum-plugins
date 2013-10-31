@@ -75,9 +75,14 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX fontconverters)
     endif()
 
-    # Find the library
+    # Find the library. Dynamic plugins don't have any prefix (e.g. `lib` on
+    # Linux), search with empty prefix and then reset that back so we don't
+    # accidentaly break something else
+    set(_tmp_prefixes ${CMAKE_FIND_LIBRARY_PREFIXES})
+    set(CMAKE_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES} "")
     find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY ${component}
         PATH_SUFFIXES magnum/${_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX})
+    set(CMAKE_FIND_LIBRARY_PREFIXES ${_tmp_prefixes})
 
     # Find include path
     find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
