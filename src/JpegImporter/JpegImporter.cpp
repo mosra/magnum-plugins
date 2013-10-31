@@ -103,7 +103,7 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     constexpr const ColorType type = ColorType::UnsignedByte;
 
     /* Image format */
-    ColorFormat format;
+    ColorFormat format = {};
     switch(file.out_color_space) {
         case JCS_GRAYSCALE:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 1);
