@@ -7,7 +7,7 @@ arch=('i686' 'x86_64')
 url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
 depends=('magnum')
-makedepends=('cmake')
+makedepends=('cmake' 'ninja')
 options=(!strip)
 provides=('magnum-plugins-git')
 
@@ -18,8 +18,9 @@ build() {
     cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_INSTALL_PREFIX=/usr \
-        -DBUILD_TESTS=TRUE
-    make
+        -DBUILD_TESTS=TRUE \
+        -G Ninja
+    ninja
 }
 
 check() {
@@ -29,5 +30,5 @@ check() {
 
 package() {
   cd "$startdir/build"
-  make DESTDIR="$pkgdir/" install
+  DESTDIR="$pkgdir/" ninja install
 }
