@@ -79,24 +79,23 @@ auto FreeTypeFont::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return ftFont; }
 
-void FreeTypeFont::doOpenFile(const std::string& filename, const Float size) {
-    CORRADE_ASSERT(library, "Text::FreeTypeFont::open(): initialize() was not called", );
-    if(FT_New_Face(library, filename.c_str(), 0, &ftFont) != 0) return;
+std::pair<Float, Float> FreeTypeFont::doOpenFile(const std::string& filename, const Float size) {
+    CORRADE_ASSERT(library, "Text::FreeTypeFont::openFile(): initialize() was not called", {});
+    if(FT_New_Face(library, filename.c_str(), 0, &ftFont) != 0) return {};
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
-    _size = size;
+    return {size, 0.0f};
 }
 
-void FreeTypeFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
-    CORRADE_ASSERT(library, "Text::FreeTypeFont::open(): initialize() was not called", );
-    if(FT_New_Memory_Face(library, data.begin(), data.size(), 0, &ftFont) != 0) return;
+std::pair<Float, Float> FreeTypeFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
+    CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
+    if(FT_New_Memory_Face(library, data.begin(), data.size(), 0, &ftFont) != 0) return {};
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
-    _size = size;
+    return {size, 0.0f};
 }
 
 void FreeTypeFont::doClose() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_Face(ftFont) == 0);
     ftFont = nullptr;
-    _size = 0.0f;
 }
 
 UnsignedInt FreeTypeFont::doGlyphId(const char32_t character) {
@@ -172,8 +171,8 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
     cache.setImage({}, image);
 }
 
-AbstractLayouter* FreeTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
-    return new FreeTypeLayouter(ftFont, cache, this->size(), size, text);
+std::unique_ptr<AbstractLayouter> FreeTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
+    return std::unique_ptr<AbstractLayouter>(new FreeTypeLayouter(ftFont, cache, this->size(), size, text));
 }
 
 namespace {

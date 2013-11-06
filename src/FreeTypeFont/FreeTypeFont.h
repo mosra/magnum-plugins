@@ -85,8 +85,8 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         FT_Face ftFont;
 
         bool doIsOpened() const override;
-        void doOpenFile(const std::string& filename, Float size) override;
-        void doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
+        std::pair<Float, Float> doOpenFile(const std::string& filename, Float size) override;
+        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
         void doClose() override;
 
     private:
@@ -105,7 +105,7 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         void doFillGlyphCache(GlyphCache& cache, const std::vector<char32_t>& characters) override;
         #endif
 
-        AbstractLayouter MAGNUM_TEXT_FREETYPEFONT_LOCAL * doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        std::unique_ptr<AbstractLayouter> MAGNUM_TEXT_FREETYPEFONT_LOCAL doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 };
 
 }}

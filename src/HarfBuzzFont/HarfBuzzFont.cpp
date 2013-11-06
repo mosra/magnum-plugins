@@ -62,18 +62,20 @@ bool HarfBuzzFont::doIsOpened() const {
     return FreeTypeFont::doIsOpened() && hbFont;
 }
 
-void HarfBuzzFont::doOpenFile(const std::string& filename, const Float size) {
-    FreeTypeFont::doOpenFile(filename, size);
-    if(!FreeTypeFont::doIsOpened()) return;
+std::pair<Float, Float> HarfBuzzFont::doOpenFile(const std::string& filename, const Float size) {
+    auto ret = FreeTypeFont::doOpenFile(filename, size);
+    if(!FreeTypeFont::doIsOpened()) return {};
 
     finishConstruction();
+    return ret;
 }
 
-void HarfBuzzFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
-    FreeTypeFont::doOpenSingleData(data, size);
-    if(!FreeTypeFont::doIsOpened()) return;
+std::pair<Float, Float> HarfBuzzFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
+    auto ret = FreeTypeFont::doOpenSingleData(data, size);
+    if(!FreeTypeFont::doIsOpened()) return {};
 
     finishConstruction();
+    return ret;
 }
 
 void HarfBuzzFont::doClose() {
@@ -86,8 +88,8 @@ void HarfBuzzFont::finishConstruction() {
     hbFont = hb_ft_font_create(ftFont, nullptr);
 }
 
-AbstractLayouter* HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
-    return new HarfBuzzLayouter(hbFont, cache, this->size(), size, text);
+std::unique_ptr<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
+    return std::unique_ptr<AbstractLayouter>(new HarfBuzzLayouter(hbFont, cache, this->size(), size, text));
 }
 
 namespace {

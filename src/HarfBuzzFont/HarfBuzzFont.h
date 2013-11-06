@@ -64,10 +64,10 @@ class HarfBuzzFont: public FreeTypeFont {
     private:
         Features doFeatures() const override;
         bool doIsOpened() const override;
-        void doOpenFile(const std::string& filename, Float size) override;
-        void doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
+        std::pair<Float, Float> doOpenFile(const std::string& filename, Float size) override;
+        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
         void doClose() override;
-        AbstractLayouter* doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
         void finishConstruction();
 
         hb_font_t* hbFont;
