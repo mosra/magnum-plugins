@@ -59,33 +59,24 @@ HarfBuzzFont::~HarfBuzzFont() { close(); }
 auto HarfBuzzFont::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool HarfBuzzFont::doIsOpened() const {
-    return FreeTypeFont::doIsOpened() && hbFont;
-}
-
-std::pair<Float, Float> HarfBuzzFont::doOpenFile(const std::string& filename, const Float size) {
-    auto ret = FreeTypeFont::doOpenFile(filename, size);
-    if(!FreeTypeFont::doIsOpened()) return {};
-
-    finishConstruction();
-    return ret;
+    CORRADE_INTERNAL_ASSERT(FreeTypeFont::doIsOpened() == !!hbFont);
+    return FreeTypeFont::doIsOpened();
 }
 
 std::pair<Float, Float> HarfBuzzFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
+    /* Open FreeType font */
     auto ret = FreeTypeFont::doOpenSingleData(data, size);
-    if(!FreeTypeFont::doIsOpened()) return {};
 
-    finishConstruction();
+    /* Create Harfbuzz font */
+    if(FreeTypeFont::doIsOpened()) hbFont = hb_ft_font_create(ftFont, nullptr);
+
     return ret;
 }
 
 void HarfBuzzFont::doClose() {
     hb_font_destroy(hbFont);
+    hbFont = nullptr;
     FreeTypeFont::doClose();
-}
-
-void HarfBuzzFont::finishConstruction() {
-    /* Create Harfbuzz font */
-    hbFont = hb_ft_font_create(ftFont, nullptr);
 }
 
 std::unique_ptr<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {

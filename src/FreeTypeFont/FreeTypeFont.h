@@ -82,10 +82,10 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     #else
     protected:
     #endif
+        Containers::Array<unsigned char> _data;
         FT_Face ftFont;
 
         bool doIsOpened() const override;
-        std::pair<Float, Float> doOpenFile(const std::string& filename, Float size) override;
         std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
         void doClose() override;
 

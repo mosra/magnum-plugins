@@ -79,22 +79,20 @@ auto FreeTypeFont::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return ftFont; }
 
-std::pair<Float, Float> FreeTypeFont::doOpenFile(const std::string& filename, const Float size) {
-    CORRADE_ASSERT(library, "Text::FreeTypeFont::openFile(): initialize() was not called", {});
-    if(FT_New_Face(library, filename.c_str(), 0, &ftFont) != 0) return {};
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
-    return {size, 0.0f};
-}
-
 std::pair<Float, Float> FreeTypeFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
+    /* We need to preserve the data for whole FT_Face lifetime */
+    _data = Containers::Array<unsigned char>(data.size());
+    std::copy(data.begin(), data.end(), _data.begin());
+
     CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
-    if(FT_New_Memory_Face(library, data.begin(), data.size(), 0, &ftFont) != 0) return {};
+    if(FT_New_Memory_Face(library, _data.begin(), _data.size(), 0, &ftFont) != 0) return {};
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
     return {size, 0.0f};
 }
 
 void FreeTypeFont::doClose() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_Face(ftFont) == 0);
+    _data = nullptr;
     ftFont = nullptr;
 }
 
