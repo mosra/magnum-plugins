@@ -58,6 +58,7 @@ void FreeTypeFontTest::properties() {
     FreeTypeFont font;
     CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
     CORRADE_COMPARE(font.size(), 16.0f);
+    CORRADE_COMPARE(font.lineHeight(), 37.25f);
     CORRADE_COMPARE(font.glyphId(U'W'), 58);
     CORRADE_COMPARE(font.glyphAdvance(58), Vector2(23.0f, 0.0f));
 }

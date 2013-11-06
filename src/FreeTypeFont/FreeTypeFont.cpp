@@ -87,7 +87,7 @@ std::pair<Float, Float> FreeTypeFont::doOpenSingleData(const Containers::ArrayRe
     CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
     if(FT_New_Memory_Face(library, _data.begin(), _data.size(), 0, &ftFont) != 0) return {};
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
-    return {size, 0.0f};
+    return {size, ftFont->height/64.0f};
 }
 
 void FreeTypeFont::doClose() {
