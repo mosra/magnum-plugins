@@ -25,4 +25,4 @@
 #include "HarfBuzzFont/HarfBuzzFont.h"
 
 CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.2.2")
+    "cz.mosra.magnum.Text.AbstractFont/0.2.3")

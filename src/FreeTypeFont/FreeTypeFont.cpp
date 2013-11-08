@@ -41,15 +41,15 @@ namespace {
 
 class FreeTypeLayouter: public AbstractLayouter {
     public:
-        explicit FreeTypeLayouter(FT_Face ftFont, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text);
-
-        std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const UnsignedInt i) override;
+        explicit FreeTypeLayouter(FT_Face font, const GlyphCache& cache, const Float fontSize, const Float textSize, std::vector<FT_UInt>&& glyphs);
 
     private:
+        std::tuple<Rectangle, Rectangle, Vector2> doRenderGlyph(const UnsignedInt i) override;
+
         FT_Face font;
         const GlyphCache& cache;
         const Float fontSize, textSize;
-        std::vector<FT_UInt> glyphs;
+        const std::vector<FT_UInt> glyphs;
 };
 
 }
@@ -170,23 +170,23 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
 }
 
 std::unique_ptr<AbstractLayouter> FreeTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
-    return std::unique_ptr<AbstractLayouter>(new FreeTypeLayouter(ftFont, cache, this->size(), size, text));
-}
-
-namespace {
-
-FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text): font(font), cache(cache), fontSize(fontSize), textSize(textSize) {
     /* Get glyph codes from characters */
+    std::vector<UnsignedInt> glyphs;
     glyphs.reserve(text.size());
     for(std::size_t i = 0; i != text.size(); ) {
         UnsignedInt codepoint;
         std::tie(codepoint, i) = Utility::Unicode::nextChar(text, i);
-        glyphs.push_back(FT_Get_Char_Index(font, codepoint));
+        glyphs.push_back(FT_Get_Char_Index(ftFont, codepoint));
     }
-    _glyphCount = glyphs.size();
+
+    return std::unique_ptr<AbstractLayouter>(new FreeTypeLayouter(ftFont, cache, this->size(), size, std::move(glyphs)));
 }
 
-std::tuple<Rectangle, Rectangle, Vector2> FreeTypeLayouter::renderGlyph(const UnsignedInt i) {
+namespace {
+
+FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const GlyphCache& cache, const Float fontSize, const Float textSize, std::vector<FT_UInt>&& glyphs): AbstractLayouter(glyphs.size()), font(font), cache(cache), fontSize(fontSize), textSize(textSize), glyphs(std::move(glyphs)) {}
+
+std::tuple<Rectangle, Rectangle, Vector2> FreeTypeLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Rectanglei rectangle;

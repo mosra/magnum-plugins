@@ -34,18 +34,18 @@ namespace {
 
 class HarfBuzzLayouter: public AbstractLayouter {
     public:
-        explicit HarfBuzzLayouter(hb_font_t* const font, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text);
+        explicit HarfBuzzLayouter(const GlyphCache& cache, Float fontSize, Float textSize, hb_buffer_t* buffer, hb_glyph_info_t* glyphInfo, hb_glyph_position_t* glyphPositions, UnsignedInt glyphCount);
+
         ~HarfBuzzLayouter();
 
-        std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const UnsignedInt i) override;
-
     private:
-        const hb_font_t* const font;
+        std::tuple<Rectangle, Rectangle, Vector2> doRenderGlyph(UnsignedInt i) override;
+
         const GlyphCache& cache;
         const Float fontSize, textSize;
-        hb_buffer_t* buffer;
-        hb_glyph_info_t* glyphInfo;
-        hb_glyph_position_t* glyphPositions;
+        hb_buffer_t* const buffer;
+        hb_glyph_info_t* const glyphInfo;
+        hb_glyph_position_t* const glyphPositions;
 };
 
 }
@@ -80,32 +80,33 @@ void HarfBuzzFont::doClose() {
 }
 
 std::unique_ptr<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
-    return std::unique_ptr<AbstractLayouter>(new HarfBuzzLayouter(hbFont, cache, this->size(), size, text));
-}
-
-namespace {
-
-HarfBuzzLayouter::HarfBuzzLayouter(hb_font_t* const font, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text): font(font), cache(cache), fontSize(fontSize), textSize(textSize) {
     /* Prepare HarfBuzz buffer */
-    buffer = hb_buffer_create();
+    hb_buffer_t* const buffer = hb_buffer_create();
     hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
     hb_buffer_set_script(buffer, HB_SCRIPT_LATIN);
     hb_buffer_set_language(buffer, hb_language_from_string("en", 2));
 
     /* Layout the text */
     hb_buffer_add_utf8(buffer, text.c_str(), -1, 0, -1);
-    hb_shape(font, buffer, nullptr, 0);
+    hb_shape(hbFont, buffer, nullptr, 0);
 
-    glyphInfo = hb_buffer_get_glyph_infos(buffer, &_glyphCount);
-    glyphPositions = hb_buffer_get_glyph_positions(buffer, &_glyphCount);
+    UnsignedInt glyphCount;
+    hb_glyph_info_t* const glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
+    hb_glyph_position_t* const glyphPositions = hb_buffer_get_glyph_positions(buffer, &glyphCount);
+
+    return std::unique_ptr<AbstractLayouter>(new HarfBuzzLayouter(cache, this->size(), size, buffer, glyphInfo, glyphPositions, glyphCount));
 }
+
+namespace {
+
+HarfBuzzLayouter::HarfBuzzLayouter(const GlyphCache& cache, const Float fontSize, const Float textSize, hb_buffer_t* const buffer, hb_glyph_info_t* const glyphInfo, hb_glyph_position_t* const glyphPositions, const UnsignedInt glyphCount): AbstractLayouter(glyphCount), cache(cache), fontSize(fontSize), textSize(textSize), buffer(buffer), glyphInfo(glyphInfo), glyphPositions(glyphPositions) {}
 
 HarfBuzzLayouter::~HarfBuzzLayouter() {
     /* Destroy HarfBuzz buffer */
     hb_buffer_destroy(buffer);
 }
 
-std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const UnsignedInt i) {
+std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Rectanglei rectangle;

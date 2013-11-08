@@ -25,4 +25,4 @@
 #include "FreeTypeFont/FreeTypeFont.h"
 
 CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.2.2")
+    "cz.mosra.magnum.Text.AbstractFont/0.2.3")
