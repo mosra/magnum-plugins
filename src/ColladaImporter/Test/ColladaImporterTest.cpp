@@ -155,8 +155,8 @@ void ColladaImporterTest::scene() {
     CORRADE_VERIFY(!importer.object3D(4));
     CORRADE_VERIFY(!importer.object3D(5));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::object3D(): \"instance_wrong\" instance type not supported\n"
-                                 "Trade::ColladaImporter::object3D(): mesh \"InexistentMesh\" was not found\n"
-                                 "Trade::ColladaImporter::object3D(): material \"InexistentMaterial\" was not found\n");
+                                 "Trade::ColladaImporter::object3D(): mesh \"NonexistentMesh\" was not found\n"
+                                 "Trade::ColladaImporter::object3D(): material \"NonexistentMaterial\" was not found\n");
 }
 
 void ColladaImporterTest::mesh() {

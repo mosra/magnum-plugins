@@ -53,7 +53,7 @@
         <instance_geometry url="#Mesh1">
           <bind_material>
             <technique_common>
-              <instance_material symbol="Material" target="#InexistentMaterial" />
+              <instance_material symbol="Material" target="#NonexistentMaterial" />
             </technique_common>
           </bind_material>
         </instance_geometry>
