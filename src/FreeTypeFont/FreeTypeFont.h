@@ -99,7 +99,7 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         Vector2 doGlyphAdvance(UnsignedInt glyph) override;
 
         /** @todo Why this can't be defined as local? */
-        #ifndef _WIN32
+        #ifndef __MINGW32__
         void doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) override;
         #else
         void doFillGlyphCache(GlyphCache& cache, const std::vector<char32_t>& characters) override;

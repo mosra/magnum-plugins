@@ -105,7 +105,7 @@ Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2(ftFont->glyph->advance.x, ftFont->glyph->advance.y)/64.0f;
 }
 
-#ifndef _WIN32
+#ifndef __MINGW32__
 void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& characters)
 #else
 void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_t>& characters)
