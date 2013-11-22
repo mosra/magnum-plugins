@@ -28,6 +28,7 @@
  * @brief Class Magnum::Text::FreeTypeFont
  */
 
+#include <Containers/Array.h>
 #include <Utility/Visibility.h>
 #include <Text/AbstractFont.h>
 
