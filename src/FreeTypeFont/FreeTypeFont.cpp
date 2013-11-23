@@ -27,7 +27,6 @@
 #include <algorithm>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include <Containers/Array.h>
 #include <Utility/Unicode.h>
 #include <ColorFormat.h>
 #include <Context.h>
