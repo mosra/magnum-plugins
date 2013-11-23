@@ -47,7 +47,7 @@
         <instance_wrong />
       </node>
       <node id="WrongInstanceId">
-        <instance_geometry url="#InexistentMesh" />
+        <instance_geometry url="#NonexistentMesh" />
       </node>
       <node id="WrongMaterialId">
         <instance_geometry url="#Mesh1">
