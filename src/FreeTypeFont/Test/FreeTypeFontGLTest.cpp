@@ -26,32 +26,45 @@
 #include <Test/AbstractOpenGLTester.h>
 #include <Text/GlyphCache.h>
 
-#include "HarfBuzzFont/HarfBuzzFont.h"
+#include "FreeTypeFont/FreeTypeFont.h"
 #include "freeTypeFontTestConfigure.h"
 
 namespace Magnum { namespace Text { namespace Test {
 
-class HarfBuzzFontTest: public Magnum::Test::AbstractOpenGLTester {
+class FreeTypeFontGLTest: public Magnum::Test::AbstractOpenGLTester {
     public:
-        explicit HarfBuzzFontTest();
+        explicit FreeTypeFontGLTest();
 
-        ~HarfBuzzFontTest();
+        ~FreeTypeFontGLTest();
 
+        void properties();
         void layout();
+        void fillGlyphCache();
 };
 
-HarfBuzzFontTest::HarfBuzzFontTest() {
-    addTests({&HarfBuzzFontTest::layout});
+FreeTypeFontGLTest::FreeTypeFontGLTest() {
+    addTests({&FreeTypeFontGLTest::properties,
+              &FreeTypeFontGLTest::layout,
+              &FreeTypeFontGLTest::fillGlyphCache});
 
     FreeTypeFont::initialize();
 }
 
-HarfBuzzFontTest::~HarfBuzzFontTest() {
+FreeTypeFontGLTest::~FreeTypeFontGLTest() {
     FreeTypeFont::finalize();
 }
 
-void HarfBuzzFontTest::layout() {
-    HarfBuzzFont font;
+void FreeTypeFontGLTest::properties() {
+    FreeTypeFont font;
+    CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+    CORRADE_COMPARE(font.size(), 16.0f);
+    CORRADE_COMPARE(font.lineHeight(), 37.25f);
+    CORRADE_COMPARE(font.glyphId(U'W'), 58);
+    CORRADE_COMPARE(font.glyphAdvance(58), Vector2(23.0f, 0.0f));
+}
+
+void FreeTypeFontGLTest::layout() {
+    FreeTypeFont font;
     CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     /* Fill the cache with some fake glyphs */
@@ -68,19 +81,17 @@ void HarfBuzzFontTest::layout() {
     Rectangle position;
     Rectangle textureCoordinates;
 
-    /* Difference between this and FreeTypeFont should be _only_ in advances */
-
     /* 'W' */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(0, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Rectangle({0.78125f, 1.0625f}, {1.28125f, 4.8125f}));
     CORRADE_COMPARE(textureCoordinates, Rectangle({0, 0.03125f}, {0.0625f, 0.5f}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.702637f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.71875f, 0.0f));
 
     /* 'a' (not in cache) */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(1, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Rectangle());
     CORRADE_COMPARE(textureCoordinates, Rectangle());
-    CORRADE_COMPARE(cursorPosition, Vector2(0.35498f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.34375f, 0.0f));
 
     /* 'v' (not in cache) */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(2, cursorPosition = {}, rectangle);
@@ -92,9 +103,14 @@ void HarfBuzzFontTest::layout() {
     std::tie(position, textureCoordinates) = layouter->renderGlyph(3, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Rectangle({0.78125f, 0.375f}, {2.28125f, 1.25f}));
     CORRADE_COMPARE(textureCoordinates, Rectangle({0.0625f, 0.015625f}, {0.25f, 0.125f}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.358398f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.375f, 0.0f));
+}
+
+void FreeTypeFontGLTest::fillGlyphCache() {
+    /** @todo */
+    CORRADE_SKIP("Not yet implemented");
 }
 
 }}}
 
-CORRADE_TEST_MAIN(Magnum::Text::Test::HarfBuzzFontTest)
+CORRADE_TEST_MAIN(Magnum::Text::Test::FreeTypeFontGLTest)
