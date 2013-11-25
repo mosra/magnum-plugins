@@ -120,7 +120,7 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     switch(colorType) {
         /* Types that can be used without conversion */
         case PNG_COLOR_TYPE_GRAY:
-            #ifndef MAGNUM_TARGET_GLES
+            #ifndef MAGNUM_TARGET_GLES2
             format = ColorFormat::Red;
             #else
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
