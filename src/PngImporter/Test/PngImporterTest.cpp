@@ -55,7 +55,11 @@ void PngImporterTest::gray() {
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    #ifndef MAGNUM_TARGET_GLES2
     CORRADE_COMPARE(image->format(), ColorFormat::Red);
+    #else
+    CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
+    #endif
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
                     (std::vector<unsigned char>{0xff, 0x88, 0x00,
