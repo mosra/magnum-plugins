@@ -100,7 +100,7 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Image size and type */
     const Vector2i size(file.output_width, file.output_height);
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
-    constexpr const ColorType type = ColorType::UnsignedByte;
+    constexpr ColorType type = ColorType::UnsignedByte;
 
     /* Image format */
     ColorFormat format = {};
