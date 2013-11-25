@@ -53,6 +53,7 @@ if(BUILD_TESTS)
     target_link_libraries(FreeTypeFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
+        ${MAGNUM_TEXTURETOOLS_LIBRARIES}
         ${FREETYPE_LIBRARIES})
 endif()
 
