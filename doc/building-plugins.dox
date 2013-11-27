@@ -64,20 +64,16 @@ given library in build and use it with CMake.
 
 @section building-plugins-arch Building ArchLinux packages
 
-In `package/archlinux` directory is currently one PKGBUILD for Git development
+In `package/archlinux` directory is currently one package for Git development
 build. The package is also in AUR under the same name.
 
-There are also a few development PKGBUILDs in project root, which allow you to
-build and install the package directly from source tree without downloading
-anything. The native PKGBUILD also contains `check()` function which will run
-all unit tests before packaging.
+There are also a few development PKGBUILDs in `package/archlinux`, which allow
+you to build and install the package directly from source tree without
+downloading anything. The native PKGBUILDs also contain `check()` function
+which will run all unit tests before packaging. You need to build them from
+project root:
 
-If you want to build with another compiler (e.g. Clang), run makepkg this way:
-
-    CXX=clang++ makepkg
-
-Development PKGBUILDs can detect when Clang is used and remove unsupported CXX
-flags.
+    makepkg -p package/archlinux/<file>
 
 */
 }
