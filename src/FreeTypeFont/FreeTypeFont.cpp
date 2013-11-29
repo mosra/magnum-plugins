@@ -203,7 +203,7 @@ std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const Unsi
     const FT_GlyphSlot slot = font->glyph;
 
     /* Glyph advance, denormalized to requested text size */
-    const Vector2 advance = Vector2(slot->advance.x, slot->advance.y)*textSize/(64*fontSize);
+    const Vector2 advance = Vector2(slot->advance.x, slot->advance.y)*(textSize/(64.0f*fontSize));
 
     return std::make_tuple(quadRectangle, textureCoordinates, advance);
 }

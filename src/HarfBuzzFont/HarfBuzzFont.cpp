@@ -126,7 +126,7 @@ std::tuple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const Unsi
 
     /* Glyph advance, denormalized to requested text size */
     const Vector2 advance = Vector2(glyphPositions[i].x_advance,
-                                    glyphPositions[i].y_advance)*textSize/(64*fontSize);
+                                    glyphPositions[i].y_advance)*(textSize/(64.0f*fontSize));
 
     return std::make_tuple(quadRectangle, textureCoordinates, advance);
 }
