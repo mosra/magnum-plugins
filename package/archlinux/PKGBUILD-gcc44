@@ -1,0 +1,47 @@
+# Author: mosra <mosra@centrum.cz>
+pkgname=magnum-plugins
+pkgver=dev.gcc44
+pkgrel=1
+pkgdesc="Plugins for Magnum OpenGL graphics engine"
+arch=('i686' 'x86_64')
+url="http://mosra.cz/blog/magnum.php"
+license=('MIT')
+depends=('magnum')
+makedepends=('gcc44' 'cmake' 'ninja' 'qt4' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
+options=(!strip)
+provides=('magnum-plugins-git')
+
+build() {
+    if [ ! -d "$startdir/build-gcc44" ] ; then
+        mkdir "$startdir/build-gcc44"
+        cd "$startdir/build-gcc44"
+
+        cmake .. \
+            -DCMAKE_CXX_COMPILER=g++-4.4 \
+            -G Ninja
+    fi
+
+    cd "$startdir/build-gcc44"
+
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DBUILD_TESTS=ON \
+        -DBUILD_GL_TESTS=ON \
+        -DWITH_COLLADAIMPORTER=ON \
+        -DWITH_FREETYPEFONT=ON \
+        -DWITH_HARFBUZZFONT=ON \
+        -DWITH_JPEGIMPORTER=ON \
+        -DWITH_PNGIMPORTER=ON
+    ninja
+}
+
+check() {
+    cd "$startdir/build-gcc44"
+    ctest --output-on-failure
+}
+
+package() {
+  cd "$startdir/build-gcc44"
+  DESTDIR="$pkgdir/" ninja install
+}
