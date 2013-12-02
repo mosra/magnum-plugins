@@ -126,7 +126,9 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
     /* Sizes of all characters */
     std::vector<Vector2i> charSizes;
     charSizes.reserve(charIndices.size());
-    for(FT_UInt c: charIndices) {
+    for(auto it = charIndices.begin(); it != charIndices.end(); ++it) {
+        const FT_UInt c = *it;
+
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, c, FT_LOAD_DEFAULT) == 0);
         charSizes.push_back(Vector2i(ftFont->glyph->metrics.width, ftFont->glyph->metrics.height)/64);
     }

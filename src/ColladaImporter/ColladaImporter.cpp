@@ -154,8 +154,8 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->scenes.reserve(tmpList.size());
     d->scenesForName.reserve(tmpList.size());
-    for(const QString& id: tmpList) {
-        std::string name = id.trimmed().toStdString();
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        std::string name = it->trimmed().toStdString();
         d->scenes.push_back(name);
         #ifndef CORRADE_GCC46_COMPATIBILITY
         d->scenesForName.emplace(std::move(name), d->scenesForName.size());
@@ -170,8 +170,8 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->objects.reserve(tmpList.size());
     d->objectsForName.reserve(tmpList.size());
-    for(const QString& id: tmpList) {
-        std::string name = id.trimmed().toStdString();
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        std::string name = it->trimmed().toStdString();
         d->objects.push_back(name);
         #ifndef CORRADE_GCC46_COMPATIBILITY
         d->objectsForName.emplace(std::move(name), d->objectsForName.size());
@@ -185,11 +185,11 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->camerasForName.reserve(tmpList.size());
-    for(const QString& id: tmpList) {
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         #ifndef CORRADE_GCC46_COMPATIBILITY
-        d->camerasForName.emplace(id.trimmed().toStdString(), d->camerasForName.size());
+        d->camerasForName.emplace(it->trimmed().toStdString(), d->camerasForName.size());
         #else
-        d->camerasForName.insert({id.trimmed().toStdString(), d->camerasForName.size()});
+        d->camerasForName.insert({it->trimmed().toStdString(), d->camerasForName.size()});
         #endif
     }
 
@@ -198,11 +198,11 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->lightsForName.reserve(tmpList.size());
-    for(const QString& id: tmpList) {
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         #ifndef CORRADE_GCC46_COMPATIBILITY
-        d->lightsForName.emplace(id.trimmed().toStdString(), d->lightsForName.size());
+        d->lightsForName.emplace(it->trimmed().toStdString(), d->lightsForName.size());
         #else
-        d->lightsForName.insert({id.trimmed().toStdString(), d->lightsForName.size()});
+        d->lightsForName.insert({it->trimmed().toStdString(), d->lightsForName.size()});
         #endif
     }
 
@@ -212,8 +212,8 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->meshes.reserve(tmpList.size());
     d->meshesForName.reserve(tmpList.size());
-    for(const QString& id: tmpList) {
-        std::string name = id.trimmed().toStdString();
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        std::string name = it->trimmed().toStdString();
         d->meshes.push_back(name);
         #ifndef CORRADE_GCC46_COMPATIBILITY
         d->meshesForName.emplace(std::move(name), d->meshesForName.size());
@@ -228,8 +228,8 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->materials.reserve(tmpList.size());
     d->materialsForName.reserve(tmpList.size());
-    for(const QString& id: tmpList) {
-        std::string name = id.trimmed().toStdString();
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        std::string name = it->trimmed().toStdString();
         d->materials.push_back(name);
         #ifndef CORRADE_GCC46_COMPATIBILITY
         d->materialsForName.emplace(std::move(name), d->materialsForName.size());
@@ -244,8 +244,8 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->textures.reserve(tmpList.size());
     d->materialsForName.reserve(tmpList.size());
-    for(const QString& id: tmpList) {
-        std::string name = id.trimmed().toStdString();
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        std::string name = it->trimmed().toStdString();
         d->textures.push_back(name);
         #ifndef CORRADE_GCC46_COMPATIBILITY
         d->texturesForName.emplace(std::move(name), d->texturesForName.size());
@@ -260,8 +260,8 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->images2D.reserve(tmpList.size());
     d->images2DForName.reserve(tmpList.size());
-    for(const QString& id: tmpList) {
-        std::string name = id.trimmed().toStdString();
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        std::string name = it->trimmed().toStdString();
         d->images2D.push_back(name);
         #ifndef CORRADE_GCC46_COMPATIBILITY
         d->images2DForName.emplace(std::move(name), d->images2DForName.size());
@@ -303,8 +303,8 @@ std::optional<SceneData> ColladaImporter::doScene(const UnsignedInt id) {
 
     std::vector<UnsignedInt> children;
     children.reserve(tmpList.size());
-    for(const QString& childId: tmpList) {
-        const std::string childIdTrimmed = childId.trimmed().toStdString();
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        const std::string childIdTrimmed = it->trimmed().toStdString();
         const Int id = doObject3DForName(childIdTrimmed);
         if(id == -1) {
             Error() << "Trade::ColladaImporter::scene(): object" << '"' + childIdTrimmed + '"' << "was not found";
@@ -370,8 +370,8 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
     /* Child object IDs */
     std::vector<UnsignedInt> children;
     children.reserve(tmpList.size());
-    for(const QString& childId: tmpList) {
-        const std::string childIdTrimmed = childId.trimmed().toStdString();
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        const std::string childIdTrimmed = it->trimmed().toStdString();
         const Int id = doObject3DForName(childIdTrimmed);
         if(id == -1) {
             Error() << "Trade::ColladaImporter::object3D(): object" << '"' + childIdTrimmed + '"' << "was not found";
@@ -541,15 +541,19 @@ std::optional<MeshData3D> ColladaImporter::doMesh3D(const UnsignedInt id) {
     /* Build vertex array */
     UnsignedInt vertexOffset = attributeOffset(id, "VERTEX");
     std::vector<Vector3> vertices(indexCombinations.size());
-    for(auto i: indexCombinations)
+    for(auto it = indexCombinations.begin(); it != indexCombinations.end(); ++it) {
+        const auto& i = *it;
         vertices[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
+    }
 
     QStringList tmpList;
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input/@semantic/string()").arg(id+1));
     d->query.evaluateTo(&tmpList);
     std::vector<std::vector<Vector3>> normals;
     std::vector<std::vector<Vector2>> textureCoords2D;
-    for(QString attribute: tmpList) {
+    for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
+        const QString& attribute = *it;
+
         /* Vertices - already built */
         if(attribute == "VERTEX") continue;
 
@@ -909,8 +913,11 @@ template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedIn
 
     /* Build resulting array */
     std::vector<T> array(indexCombinations.size());
-    for(auto i: indexCombinations)
+
+    for(auto it = indexCombinations.begin(); it != indexCombinations.end(); ++it) {
+        const auto& i = *it;
         array[i.second] = originalArray[originalIndices[i.first*stride+offset]];
+    }
 
     return std::move(array);
 }
