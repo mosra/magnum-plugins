@@ -87,19 +87,19 @@ GL tests only. Setup your Jenkins server, enable the **Git** and
 Then add new jobs or update existing ones (replace `<command>` with `create-job`
 or `update-job`).
 
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins < jenkins.xml
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-GLTests < jenkins-gltests.xml
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-Compatibility < jenkins.xml
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-Compatibility-GLTests < jenkins-gltests.xml
 
 Build is done using **Ninja** build system and everything possible is enabled,
 thus you need also **FreeType**, **HarfBuzz**, **libJPEG**, **libPNG** and
-**Qt4** libraries. It expects that **GCC** >=4.8.2, 4.7, 4.6 and **Clang** are
-installed and there are **OpenGL**, **OpenGL ES 2.0** and **OpenGL ES 3.0**
-librares as it tries to compile the library with every combination of them. You
-can add/remove the axes in `axes/hudson.matrix.TextAxis` or via the web
-interface later.
+**Qt4** libraries. It expects that **GCC** >=4.8.2, 4.7, 4.6, 4.5, 4.4 and
+**Clang** are installed and there are **OpenGL**, **OpenGL ES 2.0** and
+**OpenGL ES 3.0** librares as it tries to compile the library with every
+combination of them. You can add/remove the axes in `axes/hudson.matrix.TextAxis`
+or via the web interface later.
 
-MagnumPlugins-GLTests depend on active X11 session, thus they should be run from
-Jenkins instance running on graphical user session.
+MagnumPlugins-Compatibility-GLTests depend on active X11 session, thus they
+should be run from Jenkins instance running on graphical user session.
 
 There is also MinGW32 and Emscripten configuration, add or update them with the
 commands below. See @ref building-crosscompiling for more information about
