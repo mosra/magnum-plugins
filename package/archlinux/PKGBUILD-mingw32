@@ -2,11 +2,11 @@
 pkgname=mingw32-magnum-plugins
 pkgver=dev
 pkgrel=1
-pkgdesc="Plugins for Magnum OpenGL 3 graphics engine (mingw32)"
+pkgdesc="Plugins for Magnum OpenGL graphics engine (mingw32)"
 arch=('any')
-url="https://github.com/magnum-plugins"
+url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
-depends=('mingw32-runtime' 'mingw32-magnum' 'mingw32-qt' 'mingw32-glew')
+depends=('mingw32-runtime' 'mingw32-magnum' 'mingw32-freetype' 'mingw32-libjpeg' 'mingw32-libpng')
 makedepends=('mingw32-gcc' 'cmake' 'corrade')
 options=(!buildflags !strip)
 
@@ -19,7 +19,10 @@ build() {
     cmake .. \
         -DCMAKE_TOOLCHAIN_FILE=../toolchains/archlinux/basic-mingw32.cmake \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr/i486-mingw32
+        -DCMAKE_INSTALL_PREFIX=/usr/i486-mingw32 \
+        -DWITH_FREETYPEFONT=ON \
+        -DWITH_JPEGIMPORTER=ON \
+        -DWITH_PNGIMPORTER=ON
     make
 }
 

@@ -29,7 +29,7 @@
 #include <png.h>
 #include <Containers/Array.h>
 #include <Utility/Debug.h>
-#include <ImageFormat.h>
+#include <ColorFormat.h>
 #include <Trade/ImageData.h>
 
 #ifdef MAGNUM_TARGET_GLES
@@ -59,7 +59,7 @@ void PngImporter::doOpenData(const Containers::ArrayReference<const unsigned cha
 }
 
 void PngImporter::doOpenFile(const std::string& filename) {
-    _in = new std::ifstream(filename.c_str());
+    _in = new std::ifstream(filename);
     if(_in->good()) return;
 
     Error() << "Trade::PngImporter::openFile(): cannot open file" << filename;
@@ -68,13 +68,13 @@ void PngImporter::doOpenFile(const std::string& filename) {
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
-ImageData2D* PngImporter::doImage2D(UnsignedInt) {
+std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     /* Verify file signature */
     png_byte signature[8];
     _in->read(reinterpret_cast<char*>(signature), 8);
     if(png_sig_cmp(signature, 0, 8) != 0) {
         Error() << "Trade::PngImporter::image2D(): wrong file signature";
-        return nullptr;
+        return std::nullopt;
     }
 
     /* Structures for reading the file */
@@ -93,7 +93,7 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
         png_destroy_read_struct(&file, &info, nullptr);
         delete[] rows;
         delete[] data;
-        return nullptr;
+        return std::nullopt;
     }
 
     /* Set function for reading from std::istream */
@@ -116,15 +116,15 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
     const png_uint_32 colorType = png_get_color_type(file, info);
 
     /* Image format */
-    ImageFormat format;
+    ColorFormat format;
     switch(colorType) {
         /* Types that can be used without conversion */
         case PNG_COLOR_TYPE_GRAY:
-            #ifndef MAGNUM_TARGET_GLES
-            format = ImageFormat::Red;
+            #ifndef MAGNUM_TARGET_GLES2
+            format = ColorFormat::Red;
             #else
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                ImageFormat::Red : ImageFormat::Luminance;
+                ColorFormat::Red : ColorFormat::Luminance;
             #endif
             CORRADE_INTERNAL_ASSERT(channels == 1);
 
@@ -137,12 +137,12 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
             break;
 
         case PNG_COLOR_TYPE_RGB:
-            format = ImageFormat::RGB;
+            format = ColorFormat::RGB;
             CORRADE_INTERNAL_ASSERT(channels == 3);
             break;
 
         case PNG_COLOR_TYPE_RGBA:
-            format = ImageFormat::RGBA;
+            format = ColorFormat::RGBA;
             CORRADE_INTERNAL_ASSERT(channels == 4);
             break;
 
@@ -150,14 +150,14 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
         case PNG_COLOR_TYPE_PALETTE:
             /** @todo test case for this */
             png_set_palette_to_rgb(file);
-            format = ImageFormat::RGB;
+            format = ColorFormat::RGB;
             channels = 3;
             break;
 
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported color type" << colorType;
             png_destroy_read_struct(&file, &info, nullptr);
-            return nullptr;
+            return std::nullopt;
     }
 
     /* Convert transparency mask to alpha */
@@ -168,15 +168,15 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
     }
 
     /* Image type */
-    ImageType type;
+    ColorType type;
     switch(bits) {
-        case 8:  type = ImageType::UnsignedByte;  break;
-        case 16: type = ImageType::UnsignedShort; break;
+        case 8:  type = ColorType::UnsignedByte;  break;
+        case 16: type = ColorType::UnsignedShort; break;
 
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported bit depth" << bits;
             png_destroy_read_struct(&file, &info, nullptr);
-            return nullptr;
+            return std::nullopt;
     }
 
     /* Initialize data array */
@@ -193,7 +193,7 @@ ImageData2D* PngImporter::doImage2D(UnsignedInt) {
     /* Cleanup */
     png_destroy_read_struct(&file, &info, nullptr);
 
-    return new Trade::ImageData2D(format, type, size, data);
+    return Trade::ImageData2D(format, type, size, data);
 }
 
 }}

@@ -26,16 +26,17 @@ namespace Magnum {
 /** @page cmake-plugins Plugin usage with CMake
 @brief Guide how to find and use static %Magnum plugins with CMake build system
 
-If the plugins are built as dynamic (the default), they don't need to be
-handled via CMake. The manager will look for them at runtime at specified
-location and loads them dynamically. However, if they are built as static (see
-@ref building-plugins for more information), they need to be linked into the
-executable and then explicitly imported. The logic is in module
-`FindMagnumPlugins.cmake` distributed in plugin repository in `modules/`
-directory, you are encouraged to copy it into your project and add path to the
-files to `CMAKE_MODULE_PATH`. Otherwise, if CMake won't be able to find this
-file in predefined locations, it will error out even if %Magnum plugins might
-be installed on the system.
+If you are going to use dynamic plugins (the default) via plugin manager, they
+don't need to be handled via CMake. The manager will look for them at runtime
+at specified location and loads them dynamically. However, if they are built as
+static (see @ref building-plugins for more information), they need to be linked
+into the executable and then explicitly imported. Also if you are going to use
+them as dependencies, you need to find the dependency and then link to it. The
+logic is in module `FindMagnumPlugins.cmake` distributed in plugin repository
+in `modules/` directory, you are encouraged to copy it into your project and
+add path to the files to `CMAKE_MODULE_PATH`. Otherwise, if CMake won't be able
+to find this file in predefined locations, it will error out even if %Magnum
+plugins might be installed on the system.
 
 Basic usage is:
 
@@ -50,23 +51,14 @@ This command tries to find %Magnum plugins and then defines:
 This command will not try to find any actual plugin. The plugins are:
 
 -   `ColladaImporter` -- @ref Trade::ColladaImporter "ColladaImporter" plugin
-    (depends on Qt library)
--   `FreeTypeFont` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin (depends on
-    FreeType library)
--   `HarfBuzzFont` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin (depends on
-    FreeType plugin and HarfBuzz library)
--   `JpegImporter` -- @ref Trade::JpegImporter "JpegImporter" plugin (depends
-    on libJPEG library)
--   `MagnumFont` -- @ref Text::MagnumFont "MagnumFont" plugin (depends on
-    TgaImporter plugin)
--   `MagnumFontConverter` -- @ref Text::MagnumFontConverter "MagnumFontConverter"
-    plugin (depends on TgaImageConverter plugin)
--   `PngImporter` -- @ref Trade::PngImporter "PngImporter" plugin (depends on
-    libPNG library)
--   `TgaImageConverter` -- @ref Trade::TgaImageConverter "TgaImageConverter"
-    plugin
--   `TgaImporter` -- @ref Trade::TgaImporter "TgaImporter" plugin
--   `WavAudioImporter` -- @ref Audio::WavImporter "WavAudioImporter" plugin
+-   `FreeTypeFont` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin
+-   `HarfBuzzFont` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin
+-   `JpegImporter` -- @ref Trade::JpegImporter "JpegImporter" plugin
+-   `PngImporter` -- @ref Trade::PngImporter "PngImporter" plugin
+
+Note that each plugin class contains more detailed information about
+dependencies, availability on particular platform and also guide how to enable
+given library in build and use it with CMake.
 
 Example usage with specifying the plugins is:
 

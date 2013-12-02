@@ -12,13 +12,7 @@
 #  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
 #                     library)
 #  JpegImporter     - JPEG importer (depends on libJPEG library)
-#  MagnumFont       - Magnum bitmap font (depends on TgaImporter plugin)
-#  MagnumFontConverter - Magnum bitmap font converter (depends on
-#                     TgaImageConverter plugin)
 #  PngImporter      - PNG importer (depends on libPNG library)
-#  TgaImageConverter - TGA image converter
-#  TgaImporter      - TGA importer
-#  WavAudioImporter - WAV sound importer
 # Example usage with specifying the plugins is:
 #  find_package(MagnumPlugins [REQUIRED|COMPONENTS]
 #               MagnumFont TgaImporter)
@@ -71,7 +65,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     # Plugin library suffix
     if(${component} MATCHES ".+AudioImporter$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX audioimporters)
-    if(${component} MATCHES ".+Importer$")
+    elseif(${component} MATCHES ".+Importer$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX importers)
     elseif(${component} MATCHES ".+Font$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX fonts)
@@ -81,9 +75,14 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX fontconverters)
     endif()
 
-    # Find the library
+    # Find the library. Dynamic plugins don't have any prefix (e.g. `lib` on
+    # Linux), search with empty prefix and then reset that back so we don't
+    # accidentaly break something else
+    set(_tmp_prefixes ${CMAKE_FIND_LIBRARY_PREFIXES})
+    set(CMAKE_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES} "")
     find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY ${component}
         PATH_SUFFIXES magnum/${_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX})
+    set(CMAKE_FIND_LIBRARY_PREFIXES ${_tmp_prefixes})
 
     # Find include path
     find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
@@ -135,9 +134,6 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
     endif()
 
-    # MagnumFont plugin has no dependencies
-    # MagnumFontConverter plugin has no dependencies
-
     # PngImporter plugin dependencies
     if(${component} STREQUAL PngImporter)
         find_package(PNG)
@@ -148,10 +144,6 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
             unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
         endif()
     endif()
-
-    # TgaImageConverter plugin has no dependencies
-    # TgaImporter plugin has no dependencies
-    # WavAudioImporter plugin has no dependencies
 
     # Decide if the plugin was found
     if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)

@@ -25,10 +25,17 @@
 #include "JpegImporter.h"
 
 #include <csetjmp>
-#include <jpeglib.h>
 #include <Utility/Debug.h>
-#include <ImageFormat.h>
+#include <ColorFormat.h>
 #include <Trade/ImageData.h>
+
+/* On Windows we need to circumvent conflicting definition of INT32 in
+   <windows.h> (included by glLoadGen from OpenGL.h). Problem with libjpeg-tubo
+   only, libjpeg solves that already somehow. */
+#ifdef _WIN32
+#define XMD_H
+#endif
+#include <jpeglib.h>
 
 #ifdef MAGNUM_TARGET_GLES
 #include <Context.h>
@@ -56,7 +63,7 @@ void JpegImporter::doOpenData(const Containers::ArrayReference<const unsigned ch
 
 UnsignedInt JpegImporter::doImage2DCount() const { return 1; }
 
-ImageData2D* JpegImporter::doImage2D(UnsignedInt) {
+std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Initialize structures */
     jpeg_decompress_struct file;
     JSAMPARRAY rows = nullptr;
@@ -79,7 +86,7 @@ ImageData2D* JpegImporter::doImage2D(UnsignedInt) {
         jpeg_destroy_decompress(&file);
         delete[] rows;
         delete[] data;
-        return nullptr;
+        return std::nullopt;
     }
 
     /* Open file */
@@ -93,23 +100,23 @@ ImageData2D* JpegImporter::doImage2D(UnsignedInt) {
     /* Image size and type */
     const Vector2i size(file.output_width, file.output_height);
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
-    constexpr const ImageType type = ImageType::UnsignedByte;
+    constexpr ColorType type = ColorType::UnsignedByte;
 
     /* Image format */
-    ImageFormat format;
+    ColorFormat format = {};
     switch(file.out_color_space) {
         case JCS_GRAYSCALE:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 1);
-            #ifdef MAGNUM_TARGET_GLES
+            #ifdef MAGNUM_TARGET_GLES2
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                ImageFormat::Red : ImageFormat::Luminance;
+                ColorFormat::Red : ColorFormat::Luminance;
             #else
-            format = ImageFormat::Red;
+            format = ColorFormat::Red;
             #endif
             break;
         case JCS_RGB:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 3);
-            format = ImageFormat::RGB;
+            format = ColorFormat::RGB;
             break;
 
         /** @todo RGBA (only in libjpeg-turbo and probably ignored) */
@@ -135,7 +142,7 @@ ImageData2D* JpegImporter::doImage2D(UnsignedInt) {
     jpeg_finish_decompress(&file);
     jpeg_destroy_decompress(&file);
 
-    return new Trade::ImageData2D(format, type, size, data);
+    return Trade::ImageData2D(format, type, size, data);
 }
 
 }}

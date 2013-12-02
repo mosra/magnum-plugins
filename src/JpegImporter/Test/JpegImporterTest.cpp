@@ -24,8 +24,8 @@
 
 #include <TestSuite/Tester.h>
 #include <Utility/Directory.h>
+#include <ColorFormat.h>
 #include <Trade/ImageData.h>
-#include <ImageFormat.h>
 
 #include "JpegImporter/JpegImporter.h"
 
@@ -50,11 +50,15 @@ void JpegImporterTest::gray() {
     JpegImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ImageFormat::Red);
-    CORRADE_COMPARE(image->type(), ImageType::UnsignedByte);
+    #ifndef MAGNUM_TARGET_GLES2
+    CORRADE_COMPARE(image->format(), ColorFormat::Red);
+    #else
+    CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
+    #endif
+    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
                     (std::vector<unsigned char>{0xff, 0x88, 0x00,
                                                 0x88, 0x00, 0xff}));
@@ -64,11 +68,11 @@ void JpegImporterTest::rgb() {
     JpegImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ImageFormat::RGB);
-    CORRADE_COMPARE(image->type(), ImageType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), ColorFormat::RGB);
+    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     /* Data should be similar to the PNG */
     CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
                     (std::vector<unsigned char>{0xca, 0xfe, 0x76,

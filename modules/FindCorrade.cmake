@@ -27,6 +27,8 @@
 #   mode for GCC 4.5
 #  CORRADE_GCC44_COMPATIBILITY  - Defined if compiled with compatibility
 #   mode for GCC 4.4
+#  CORRADE_BUILD_DEPRECATED     - Defined if compiled with deprecated APIs
+#   included
 #  CORRADE_BUILD_STATIC         - Defined if compiled as static libraries
 #  CORRADE_TARGET_NACL          - Defined if compiled for Google Chrome
 #   Native Client
@@ -120,10 +122,21 @@ find_library(CORRADE_TESTSUITE_LIBRARY CorradeTestSuite)
 # RC executable
 find_program(CORRADE_RC_EXECUTABLE corrade-rc)
 
-# Paths
+# Include dir
 find_path(CORRADE_INCLUDE_DIR
     NAMES PluginManager Utility
     PATH_SUFFIXES Corrade)
+
+# CMake module dir
+find_path(_CORRADE_MODULE_DIR
+    NAMES UseCorrade.cmake CorradeLibSuffix.cmake
+    PATH_SUFFIXES share/cmake/Corrade)
+
+# If not found, try system module dir
+find_path(_CORRADE_MODULE_DIR
+    NAMES UseCorrade.cmake CorradeLibSuffix.cmake
+    PATHS ${CMAKE_ROOT}/Modules
+    NO_CMAKE_FIND_ROOT_PATH)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Corrade DEFAULT_MSG
@@ -132,7 +145,8 @@ find_package_handle_standard_args(Corrade DEFAULT_MSG
     CORRADE_PLUGINMANAGER_LIBRARY
     CORRADE_TESTSUITE_LIBRARY
     CORRADE_INCLUDE_DIR
-    CORRADE_RC_EXECUTABLE)
+    CORRADE_RC_EXECUTABLE
+    _CORRADE_MODULE_DIR)
 
 if(NOT CORRADE_FOUND)
     return()
@@ -157,6 +171,10 @@ endif()
 string(FIND "${_corradeConfigure}" "#define CORRADE_GCC47_COMPATIBILITY" _GCC47_COMPATIBILITY)
 if(NOT _GCC47_COMPATIBILITY EQUAL -1)
     set(CORRADE_GCC47_COMPATIBILITY 1)
+endif()
+string(FIND "${_corradeConfigure}" "#define CORRADE_BUILD_DEPRECATED" _BUILD_DEPRECATED)
+if(NOT _BUILD_DEPRECATED EQUAL -1)
+    set(CORRADE_BUILD_DEPRECATED 1)
 endif()
 string(FIND "${_corradeConfigure}" "#define CORRADE_BUILD_STATIC" _BUILD_STATIC)
 if(NOT _BUILD_STATIC EQUAL -1)
@@ -192,6 +210,13 @@ endif()
 mark_as_advanced(CORRADE_UTILITY_LIBRARY
     CORRADE_INTERCONNECT_LIBRARY
     CORRADE_PLUGINMANAGER_LIBRARY
-    CORRADE_TESTSUITE_LIBRARY)
+    CORRADE_TESTSUITE_LIBRARY
+    _CORRADE_MODULE_DIR)
 
+# Include our module dir, if we have any
+if(NOT "${_CORRADE_MODULE_DIR}" STREQUAL "${CMAKE_ROOT}/Modules")
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${_CORRADE_MODULE_DIR}")
+endif()
+
+# Finalize the finding process
 include(UseCorrade)

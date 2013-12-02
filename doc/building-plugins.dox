@@ -43,44 +43,70 @@ as static. Dynamic plugins are loaded by the manager on request at runtime,
 potentially saving memory when the plugin is not needed, static plugins must be
 linked in at compile time.
 
+The library by default does not install `FindMagnumPlugins.cmake`, as you
+should bundle the module with your code instead of depending on it being in
+system location. You can install it by enabling `WITH_FIND_MODULE`.
+
 By default no plugins are built and you need to select them manually:
 
 -   `WITH_COLLADAIMPORTER` -- @ref Trade::ColladaImporter "ColladaImporter"
-    plugin. Depends on `TgaImporter` plugin and requires **Qt** library.
+    plugin. Enables also building of @ref Trade::TgaImporter "TgaImporter"
+    plugin.
 -   `WITH_FREETYPEFONT` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin.
-    Requires **FreeType** library.
 -   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
-    Depends on `FreeTypeFont` plugin and requires **HarfBuzz** library.
+    Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.
 -   `WITH_JPEGIMPORTER` -- @ref Trade::JpegImporter "JpegImporter" plugin.
-    Requires **libJPEG** library.
--   `WITH_MAGNUMFONT` -- @ref Text::MagnumFont "MagnumFont" plugin. Depends on
-    TgaImporter plugin.
--   `WITH_MAGNUMFONTCONVERTER` -- @ref Text::MagnumFontConverter "MagnumFontConverter"
-    plugin. Depends on `TgaImageConverter` plugin.
 -   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
-    Requires **libPNG** library.
--   `WITH_TGAIMPORTER` -- @ref Trade::TgaImporter "TgaImporter" plugin
--   `WITH_TGAIMAGECONVERTER` -- @ref Trade::TgaImageConverter "TgaImageConverter"
-    plugin
--   `WITH_WAVAUDIOIMPORTER` -- @ref Audio::WavImporter "WavAudioImporter"
-    plugin
+
+Note that each plugin class contains more detailed information about
+dependencies, availability on particular platform and also guide how to enable
+given library in build and use it with CMake.
 
 @section building-plugins-arch Building ArchLinux packages
 
-In `package/archlinux` directory is currently one PKGBUILD for Git development
+In `package/archlinux` directory is currently one package for Git development
 build. The package is also in AUR under the same name.
 
-There are also a few development PKGBUILDs in project root, which allow you to
-build and install the package directly from source tree without downloading
-anything. The native PKGBUILD also contains `check()` function which will run
-all unit tests before packaging.
+There are also a few development PKGBUILDs in `package/archlinux`, which allow
+you to build and install the package directly from source tree without
+downloading anything. The native PKGBUILDs also contain `check()` function
+which will run all unit tests before packaging. You need to build them from
+project root:
 
-If you want to build with another compiler (e.g. Clang), run makepkg this way:
+    makepkg -p package/archlinux/<file>
 
-    CXX=clang++ makepkg
+@section building-ci-jenkins Jenkins Continuous Integration
 
-Development PKGBUILDs can detect when Clang is used and remove unsupported CXX
-flags.
+In `package/ci/` there are `jenkins.xml` and `jenkins-gltests.xml` files
+containing job configuration, one for build and non-GL tests and the other for
+GL tests only. Setup your Jenkins server, enable the **Git** and
+**Text-finder** plugin and download the CLI application from here:
 
+    http://your-jenkins-server/cli
+
+Then add new jobs or update existing ones (replace `<command>` with `create-job`
+or `update-job`).
+
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins < jenkins.xml
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-GLTests < jenkins-gltests.xml
+
+Build is done using **Ninja** build system and everything possible is enabled,
+thus you need also **FreeType**, **HarfBuzz**, **libJPEG**, **libPNG** and
+**Qt4** libraries. It expects that **GCC** >=4.8.2, 4.7, 4.6 and **Clang** are
+installed and there are **OpenGL**, **OpenGL ES 2.0** and **OpenGL ES 3.0**
+librares as it tries to compile the library with every combination of them. You
+can add/remove the axes in `axes/hudson.matrix.TextAxis` or via the web
+interface later.
+
+MagnumPlugins-GLTests depend on active X11 session, thus they should be run from
+Jenkins instance running on graphical user session.
+
+There is also MinGW32 and Emscripten configuration, add or update them with the
+commands below. See @ref building-crosscompiling for more information about
+setting up the crosscompilers and `toolchains/` submodule. For Emscripten you
+need also **Node.js** installed to run the tests.
+
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-MinGW32 < jenkins-mingw32.xml
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-Emscripten < jenkins-emscripten.xml
 */
 }

@@ -34,18 +34,18 @@ namespace {
 
 class HarfBuzzLayouter: public AbstractLayouter {
     public:
-        explicit HarfBuzzLayouter(hb_font_t* const font, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text);
+        explicit HarfBuzzLayouter(const GlyphCache& cache, Float fontSize, Float textSize, hb_buffer_t* buffer, hb_glyph_info_t* glyphInfo, hb_glyph_position_t* glyphPositions, UnsignedInt glyphCount);
+
         ~HarfBuzzLayouter();
 
-        std::tuple<Rectangle, Rectangle, Vector2> renderGlyph(const UnsignedInt i) override;
-
     private:
-        const hb_font_t* const font;
+        std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(UnsignedInt i) override;
+
         const GlyphCache& cache;
         const Float fontSize, textSize;
-        hb_buffer_t* buffer;
-        hb_glyph_info_t* glyphInfo;
-        hb_glyph_position_t* glyphPositions;
+        hb_buffer_t* const buffer;
+        hb_glyph_info_t* const glyphInfo;
+        hb_glyph_position_t* const glyphPositions;
 };
 
 }
@@ -59,85 +59,76 @@ HarfBuzzFont::~HarfBuzzFont() { close(); }
 auto HarfBuzzFont::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool HarfBuzzFont::doIsOpened() const {
-    return FreeTypeFont::doIsOpened() && hbFont;
+    CORRADE_INTERNAL_ASSERT(FreeTypeFont::doIsOpened() == !!hbFont);
+    return FreeTypeFont::doIsOpened();
 }
 
-void HarfBuzzFont::doOpenFile(const std::string& filename, const Float size) {
-    FreeTypeFont::doOpenFile(filename, size);
-    if(!FreeTypeFont::doIsOpened()) return;
+std::pair<Float, Float> HarfBuzzFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
+    /* Open FreeType font */
+    auto ret = FreeTypeFont::doOpenSingleData(data, size);
 
-    finishConstruction();
-}
+    /* Create Harfbuzz font */
+    if(FreeTypeFont::doIsOpened()) hbFont = hb_ft_font_create(ftFont, nullptr);
 
-void HarfBuzzFont::doOpenSingleData(const Containers::ArrayReference<const unsigned char> data, const Float size) {
-    FreeTypeFont::doOpenSingleData(data, size);
-    if(!FreeTypeFont::doIsOpened()) return;
-
-    finishConstruction();
+    return ret;
 }
 
 void HarfBuzzFont::doClose() {
     hb_font_destroy(hbFont);
+    hbFont = nullptr;
     FreeTypeFont::doClose();
 }
 
-void HarfBuzzFont::finishConstruction() {
-    /* Create Harfbuzz font */
-    hbFont = hb_ft_font_create(ftFont, nullptr);
-}
-
-AbstractLayouter* HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
-    return new HarfBuzzLayouter(hbFont, cache, this->size(), size, text);
-}
-
-namespace {
-
-HarfBuzzLayouter::HarfBuzzLayouter(hb_font_t* const font, const GlyphCache& cache, const Float fontSize, const Float textSize, const std::string& text): font(font), cache(cache), fontSize(fontSize), textSize(textSize) {
+std::unique_ptr<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
     /* Prepare HarfBuzz buffer */
-    buffer = hb_buffer_create();
+    hb_buffer_t* const buffer = hb_buffer_create();
     hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
     hb_buffer_set_script(buffer, HB_SCRIPT_LATIN);
     hb_buffer_set_language(buffer, hb_language_from_string("en", 2));
 
     /* Layout the text */
     hb_buffer_add_utf8(buffer, text.c_str(), -1, 0, -1);
-    hb_shape(font, buffer, nullptr, 0);
+    hb_shape(hbFont, buffer, nullptr, 0);
 
-    glyphInfo = hb_buffer_get_glyph_infos(buffer, &_glyphCount);
-    glyphPositions = hb_buffer_get_glyph_positions(buffer, &_glyphCount);
+    UnsignedInt glyphCount;
+    hb_glyph_info_t* const glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
+    hb_glyph_position_t* const glyphPositions = hb_buffer_get_glyph_positions(buffer, &glyphCount);
+
+    return std::unique_ptr<AbstractLayouter>(new HarfBuzzLayouter(cache, this->size(), size, buffer, glyphInfo, glyphPositions, glyphCount));
 }
+
+namespace {
+
+HarfBuzzLayouter::HarfBuzzLayouter(const GlyphCache& cache, const Float fontSize, const Float textSize, hb_buffer_t* const buffer, hb_glyph_info_t* const glyphInfo, hb_glyph_position_t* const glyphPositions, const UnsignedInt glyphCount): AbstractLayouter(glyphCount), cache(cache), fontSize(fontSize), textSize(textSize), buffer(buffer), glyphInfo(glyphInfo), glyphPositions(glyphPositions) {}
 
 HarfBuzzLayouter::~HarfBuzzLayouter() {
     /* Destroy HarfBuzz buffer */
     hb_buffer_destroy(buffer);
 }
 
-std::tuple<Rectangle, Rectangle, Vector2> HarfBuzzLayouter::renderGlyph(const UnsignedInt i) {
+std::tuple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
-    Rectanglei rectangle;
+    Range2Di rectangle;
     std::tie(position, rectangle) = cache[glyphInfo[i].codepoint];
 
-    const Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
-                                                          Vector2(rectangle.size())/fontSize);
-    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/cache.textureSize(),
-                                       Vector2(rectangle.topRight())/cache.textureSize());
+    /* Normalized texture coordinates */
+    const auto textureCoordinates = Range2D(rectangle).scaled(1.0f/Vector2(cache.textureSize()));
 
     /* Glyph offset in normalized coordinates */
     const Vector2 offset = Vector2(glyphPositions[i].x_offset,
-                                   glyphPositions[i].y_offset)/(64*fontSize);
+                                   glyphPositions[i].y_offset)/64.0f;
 
-    /* Absolute quad position, composed from cursor position, glyph offset
-       and texture position, denormalized to requested text size */
-    const Rectangle quadPosition = Rectangle::fromSize(
-        (offset + Vector2(texturePosition.left(), texturePosition.bottom()))*textSize,
-        texturePosition.size()*textSize);
+    /* Quad rectangle, computed from glyph offset and texture rectangle,
+       denormalized to requested text size */
+    const auto quadRectangle = Range2D(Range2Di::fromSize(position, rectangle.size()))
+        .translated(offset).scaled(Vector2(textSize/fontSize));
 
     /* Glyph advance, denormalized to requested text size */
     const Vector2 advance = Vector2(glyphPositions[i].x_advance,
-                                    glyphPositions[i].y_advance)*textSize/(64*fontSize);
+                                    glyphPositions[i].y_advance)*(textSize/(64.0f*fontSize));
 
-    return std::make_tuple(quadPosition, textureCoordinates, advance);
+    return std::make_tuple(quadRectangle, textureCoordinates, advance);
 }
 
 }

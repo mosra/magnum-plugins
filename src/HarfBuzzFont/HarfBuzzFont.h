@@ -37,13 +37,23 @@ struct hb_font_t;
 namespace Magnum { namespace Text {
 
 /**
-@brief HarfBuzz font
+@brief HarfBuzz font plugin
 
-Improves FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz)
-text layouting capabilities, such as kerning, ligatures etc. See FreeTypeFont
-class documentation for more information about usage.
+Improves @ref FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz)
+text layouting capabilities, such as kerning, ligatures etc.
+
+This plugin depends on **HarfBuzz** library and @ref FreeTypeFont plugin. It
+is built if `WITH_HARFBUZZFONT` is enabled when building %Magnum Plugins. To
+use dynamic plugin, you need to load `%HarfBuzzFont` plugin from
+`MAGNUM_PLUGINS_FONT_DIR`. To use static plugin, you need to request
+`%HarfBuzzFont` component of `%MagnumPlugins` package in CMake and link to
+`${MAGNUMPLUGINS_HARFBUZZFONT_LIBRARIES}`. To use this as a dependency of
+another plugin, you additionally need to add
+`${MAGNUMPLUGINS_HARFBUZZFONT_INCLUDE_DIRS}` to include path. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
-class HarfBuzzFont: public FreeTypeFont::FreeTypeFont {
+class HarfBuzzFont: public FreeTypeFont {
     public:
         /** @brief Default constructor */
         explicit HarfBuzzFont();
@@ -56,11 +66,9 @@ class HarfBuzzFont: public FreeTypeFont::FreeTypeFont {
     private:
         Features doFeatures() const override;
         bool doIsOpened() const override;
-        void doOpenFile(const std::string& filename, Float size) override;
-        void doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
+        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
         void doClose() override;
-        AbstractLayouter* doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
-        void finishConstruction();
+        std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 
         hb_font_t* hbFont;
 };

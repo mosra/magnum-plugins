@@ -28,6 +28,7 @@
  * @brief Class Magnum::Text::FreeTypeFont
  */
 
+#include <Containers/Array.h>
 #include <Utility/Visibility.h>
 #include <Text/AbstractFont.h>
 
@@ -48,10 +49,20 @@ typedef FT_FaceRec_*  FT_Face;
 namespace Magnum { namespace Text {
 
 /**
-@brief FreeType font
+@brief FreeType font plugin
 
 The font can be created either from file or from memory location of format
 supported by [FreeType](http://www.freetype.org/) library.
+
+This plugin depends on **FreeType** library and is built if `WITH_FREETYPEFONT`
+is enabled when building %Magnum Plugins. To use dynamic plugin, you need to
+load `%FreeTypeFont` plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use static
+plugin, you need to request `%FreeTypeFont` component of `%MagnumPlugins`
+package in CMake and link to `${MAGNUMPLUGINS_FREETYPEFONT_LIBRARIES}`. To use
+this as a dependency of another plugin, you additionally need to add
+`${MAGNUMPLUGINS_FREETYPEFONT_INCLUDE_DIRS}` to include path. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     public:
@@ -74,11 +85,11 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     #else
     protected:
     #endif
+        Containers::Array<unsigned char> _data;
         FT_Face ftFont;
 
         bool doIsOpened() const override;
-        void doOpenFile(const std::string& filename, Float size) override;
-        void doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
+        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
         void doClose() override;
 
     private:
@@ -91,9 +102,13 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         Vector2 doGlyphAdvance(UnsignedInt glyph) override;
 
         /** @todo Why this can't be defined as local? */
+        #ifndef __MINGW32__
         void doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) override;
+        #else
+        void doFillGlyphCache(GlyphCache& cache, const std::vector<char32_t>& characters) override;
+        #endif
 
-        AbstractLayouter MAGNUM_TEXT_FREETYPEFONT_LOCAL * doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        std::unique_ptr<AbstractLayouter> MAGNUM_TEXT_FREETYPEFONT_LOCAL doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 };
 
 }}

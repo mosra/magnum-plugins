@@ -42,17 +42,27 @@
 namespace Magnum { namespace Trade {
 
 /**
-@brief PNG importer
+@brief PNG importer plugin
 
 Supports RGB, RGBA or grayscale images with 8 and 16 bits per channel. Palleted
 images and images with transparency mask are automatically converted to RGB(A).
 
-The images are imported with @ref ImageType::UnsignedByte / @ref ImageType::UnsignedShort
-and @ref ImageFormat::RGB, @ref ImageFormat::RGBA or @ref ImageFormat::Red,
+This plugin depends on **libPNG** library and is built if `WITH_PNGIMPORTER`
+is enabled when building %Magnum Plugins. To use dynamic plugin, you need to
+load `%PngImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
+plugin, you need to request `%PngImporter` component of `%MagnumPlugins`
+package in CMake and link to `${MAGNUMPLUGINS_PNGIMPORTER_LIBRARIES}`. To use
+this as a dependency of another plugin, you additionally need to add
+`${MAGNUMPLUGINS_PNGIMPORTER_INCLUDE_DIRS}` to include path. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
+
+The images are imported with @ref ColorType::UnsignedByte / @ref ColorType::UnsignedShort
+and @ref ColorFormat::RGB, @ref ColorFormat::RGBA or @ref ColorFormat::Red,
 respectively. Grayscale images require extension @extension{ARB,texture_rg}.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
-images use @ref ImageFormat::Luminance instead of @ref ImageFormat::Red.
+images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red.
 */
 class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
     public:
@@ -72,7 +82,7 @@ class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
         MAGNUM_PNGIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
 
         MAGNUM_PNGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_PNGIMPORTER_LOCAL ImageData2D* doImage2D(UnsignedInt id) override;
+        MAGNUM_PNGIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
         std::istream* _in;

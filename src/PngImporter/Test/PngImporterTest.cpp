@@ -24,8 +24,8 @@
 
 #include <TestSuite/Tester.h>
 #include <Utility/Directory.h>
+#include <ColorFormat.h>
 #include <Trade/ImageData.h>
-#include <ImageFormat.h>
 
 #include "PngImporter/PngImporter.h"
 
@@ -52,11 +52,15 @@ void PngImporterTest::gray() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ImageFormat::Red);
-    CORRADE_COMPARE(image->type(), ImageType::UnsignedByte);
+    #ifndef MAGNUM_TARGET_GLES2
+    CORRADE_COMPARE(image->format(), ColorFormat::Red);
+    #else
+    CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
+    #endif
+    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
                     (std::vector<unsigned char>{0xff, 0x88, 0x00,
                                                 0x88, 0x00, 0xff}));
@@ -66,11 +70,11 @@ void PngImporterTest::rgb() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ImageFormat::RGB);
-    CORRADE_COMPARE(image->type(), ImageType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), ColorFormat::RGB);
+    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
                     (std::vector<unsigned char>{0xca, 0xfe, 0x77,
                                                 0xde, 0xad, 0xb5,
@@ -84,11 +88,11 @@ void PngImporterTest::rgba() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    Trade::ImageData2D* image = importer.image2D(0);
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ImageFormat::RGBA);
-    CORRADE_COMPARE(image->type(), ImageType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), ColorFormat::RGBA);
+    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
                     (std::vector<unsigned char>{0xde, 0xad, 0xb5, 0xff,
                                                 0xca, 0xfe, 0x77, 0xff,

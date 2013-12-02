@@ -1,0 +1,36 @@
+# Author: mosra <mosra@centrum.cz>
+pkgname=emscripten-magnum-plugins
+pkgver=dev
+pkgrel=1
+pkgdesc="Plugins for Magnum OpenGL graphics engine (Emscripten)"
+arch=('any')
+url="http://mosra.cz/blog/magnum.php"
+license=('MIT')
+depends=('emscripten-magnum')
+makedepends=('cmake')
+options=(!strip !buildflags)
+
+build() {
+    if [ ! -d "$startdir/build-emscripten" ] ; then
+        mkdir "$startdir/build-emscripten"
+        cd "$startdir/build-emscripten"
+
+        cmake .. \
+            -DCMAKE_MODULE_PATH="$startdir/toolchains/modules" \
+            -DCMAKE_TOOLCHAIN_FILE="$startdir/toolchains/generic/Emscripten.cmake"
+    fi
+
+    cd "$startdir/build-emscripten"
+
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/emscripten/system \
+        -DWITH_MAGNUMFONT=ON \
+        -DWITH_TGAIMPORTER=ON
+    make
+}
+
+package() {
+    cd "$startdir/build-emscripten"
+    make DESTDIR="$pkgdir/" install
+}

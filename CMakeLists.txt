@@ -32,19 +32,14 @@ find_package(Magnum REQUIRED)
 
 include(CMakeDependentOption)
 
+option(WITH_FIND_MODULE "Install FindMagnumPlugins.cmake module into CMake's module dir (might require admin privileges)" OFF)
+
 # Plugins to build
 option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
 cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)
 option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
 option(WITH_JPEGIMPORTER "Build JpegImporter plugin" OFF)
-option(WITH_MAGNUMFONT "Build MagnumFont plugin" OFF)
-if(NOT MAGNUM_TARGET_GLES)
-    option(WITH_MAGNUMFONTCONVERTER "Build MagnumFontConverter plugin" OFF)
-endif()
 option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
-cmake_dependent_option(WITH_TGAIMAGECONVERTER "Build TgaImageConverter plugin" OFF "NOT WITH_MAGNUMFONTCONVERTER" ON)
-cmake_dependent_option(WITH_TGAIMPORTER "Build TgaImporter plugin" OFF "NOT WITH_MAGNUMFONT;NOT WITH_COLLADAIMPORTER" ON)
-option(WITH_WAVAUDIOIMPORTER "Build WavAudioImporter plugin" OFF)
 
 include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests." OFF)
@@ -53,7 +48,7 @@ cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code." OFF "B
 option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
 
 # Newlib toolchain supports only static linking
-if(CORRADE_TARGET_NACL_NEWLIB)
+if(CORRADE_TARGET_NACL_NEWLIB OR CORRADE_TARGET_EMSCRIPTEN)
     set(BUILD_STATIC ON)
 endif()
 

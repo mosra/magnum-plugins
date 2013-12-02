@@ -102,9 +102,6 @@ void ColladaImporterTest::parseSource() {
 }
 
 void ColladaImporterTest::scene() {
-    std::ostringstream debug;
-    Error::setOutput(&debug);
-
     ColladaImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
 
@@ -117,34 +114,31 @@ void ColladaImporterTest::scene() {
 
     CORRADE_COMPARE(importer.sceneName(0), "Scene");
     CORRADE_COMPARE(importer.sceneForName("Scene"), 0);
-    SceneData* scene = importer.scene(0);
+    std::optional<SceneData> scene = importer.scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 2}));
-//     delete scene;
 
     CORRADE_COMPARE(importer.object3DName(0), "Camera");
     CORRADE_COMPARE(importer.object3DForName("Camera"), 0);
-    ObjectData3D* object = importer.object3D(0);
+    std::unique_ptr<ObjectData3D> object = importer.object3D(0);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Camera);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
     CORRADE_COMPARE(object->instance(), 2);
     CORRADE_COMPARE(object->children(), std::vector<UnsignedInt>{1});
-//     delete object;
 
     CORRADE_COMPARE(importer.object3DName(1), "Light");
     CORRADE_COMPARE(importer.object3DForName("Light"), 1);
     object = importer.object3D(1);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Light);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
     CORRADE_COMPARE(object->instance(), 1);
     CORRADE_VERIFY(object->children().empty());
-//     delete object;
 
     CORRADE_COMPARE(importer.object3DName(2), "Mesh");
     CORRADE_COMPARE(importer.object3DForName("Mesh"), 2);
     object = importer.object3D(2);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectData3D::InstanceType::Mesh);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(object->instance(), 2);
     Matrix4 transformation =
         Matrix4::translation({1, 2, 3})*
@@ -153,15 +147,16 @@ void ColladaImporterTest::scene() {
         Matrix4::rotationX(Deg(120.0f))*
         Matrix4::scaling({3, 4, 5});
     CORRADE_COMPARE(object->transformation(), transformation);
-    CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object)->material(), 1);
-//     delete object;
+    CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object.get())->material(), 1);
 
+    std::ostringstream debug;
+    Error::setOutput(&debug);
     CORRADE_VERIFY(!importer.object3D(3));
     CORRADE_VERIFY(!importer.object3D(4));
     CORRADE_VERIFY(!importer.object3D(5));
-    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): \"instance_wrong\" instance type not supported\n"
-                                 "Trade::ColladaImporter::openFile(): mesh \"InexistentMesh\" was not found\n"
-                                 "Trade::ColladaImporter::openFile(): material \"InexistentMaterial\" was not found\n");
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::object3D(): \"instance_wrong\" instance type not supported\n"
+                                 "Trade::ColladaImporter::object3D(): mesh \"NonexistentMesh\" was not found\n"
+                                 "Trade::ColladaImporter::object3D(): material \"NonexistentMaterial\" was not found\n");
 }
 
 void ColladaImporterTest::mesh() {
@@ -179,7 +174,7 @@ void ColladaImporterTest::mesh() {
     /* Vertex only mesh */
     CORRADE_COMPARE(importer.mesh3DName(1), "MeshVertexOnly");
     CORRADE_COMPARE(importer.mesh3DForName("MeshVertexOnly"), 1);
-    MeshData3D* mesh = importer.mesh3D(1);
+    std::optional<MeshData3D> mesh = importer.mesh3D(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
@@ -196,7 +191,6 @@ void ColladaImporterTest::mesh() {
     }));
     CORRADE_COMPARE(mesh->normalArrayCount(), 0);
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
-    delete mesh;
 
     /* Mesh with quads */
     CORRADE_COMPARE(importer.mesh3DName(2), "MeshQuads");
@@ -206,7 +200,6 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(mesh->indices(), (std::vector<unsigned int>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5, 0, 1, 2, 0, 2, 3, 4, 0, 3
     }));
-    delete mesh;
 
     /* Vertex and normal mesh */
     CORRADE_COMPARE(importer.mesh3DName(3), "MeshVertexNormals");
@@ -240,7 +233,6 @@ void ColladaImporterTest::mesh() {
         {0, 0, 1}
     }));
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
-    delete mesh;
 
     /* Vertex, normal and texture mesh */
     CORRADE_COMPARE(importer.mesh3DName(4), "Mesh");
@@ -285,7 +277,6 @@ void ColladaImporterTest::mesh() {
         {0, 0}
     }));
     CORRADE_COMPARE(mesh->textureCoords2D(1), std::vector<Vector2>(8));
-    delete mesh;
 }
 
 void ColladaImporterTest::material() {
@@ -317,22 +308,27 @@ void ColladaImporterTest::material() {
     {
         CORRADE_COMPARE(importer.materialName(3), "MaterialPhong");
         CORRADE_COMPARE(importer.materialForName("MaterialPhong"), 3);
-        PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(3));
-        CORRADE_VERIFY(material);
+        const std::unique_ptr<AbstractMaterialData> abstractMaterial = importer.material(3);
+        CORRADE_VERIFY(abstractMaterial);
+        CORRADE_VERIFY(abstractMaterial->type() == MaterialType::Phong);
+
+        auto material = static_cast<const PhongMaterialData*>(abstractMaterial.get());
         CORRADE_VERIFY(material->flags() == PhongMaterialData::Flags());
         CORRADE_COMPARE(material->ambientColor(), Vector3(1, 0, 0));
         CORRADE_COMPARE(material->diffuseColor(), Vector3(0, 1, 0));
         CORRADE_COMPARE(material->specularColor(), Vector3(0, 0, 1));
         CORRADE_COMPARE(material->shininess(), 50.0f);
-        delete material;
     }
 
     /* Textured material */
     {
         CORRADE_COMPARE(importer.materialName(4), "MaterialPhongTextured");
         CORRADE_COMPARE(importer.materialForName("MaterialPhongTextured"), 4);
-        PhongMaterialData* material = static_cast<PhongMaterialData*>(importer.material(4));
-        CORRADE_VERIFY(material);
+        const std::unique_ptr<AbstractMaterialData> abstractMaterial = importer.material(4);
+        CORRADE_VERIFY(abstractMaterial);
+        CORRADE_VERIFY(abstractMaterial->type() == MaterialType::Phong);
+
+        auto material = static_cast<const PhongMaterialData*>(abstractMaterial.get());
         CORRADE_VERIFY(material->flags() == (PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture));
         CORRADE_COMPARE(material->ambientColor(), Vector3(1, 1, 0));
         CORRADE_COMPARE(material->diffuseTexture(), 0);
@@ -340,7 +336,6 @@ void ColladaImporterTest::material() {
         CORRADE_COMPARE(material->specularTexture(), 1);
         CORRADE_COMPARE(importer.textureName(1), "SpecularTexture");
         CORRADE_COMPARE(material->shininess(), 50.0f);
-        delete material;
     }
 }
 
@@ -369,7 +364,7 @@ void ColladaImporterTest::texture() {
     {
         CORRADE_COMPARE(importer.textureName(2), "Sampler");
         CORRADE_COMPARE(importer.textureForName("Sampler"), 2);
-        TextureData* const texture = importer.texture(2);
+        const std::optional<TextureData> texture = importer.texture(2);
         CORRADE_VERIFY(texture);
 
         CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
@@ -378,14 +373,13 @@ void ColladaImporterTest::texture() {
         CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
         CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Nearest);
         CORRADE_COMPARE(texture->image(), 1);
-        delete texture;
     }
 
     /* Default sampling values */
     {
         CORRADE_COMPARE(importer.textureName(3), "SamplerDefaults");
         CORRADE_COMPARE(importer.textureForName("SamplerDefaults"), 3);
-        TextureData* const texture = importer.texture(3);
+        const std::optional<TextureData> texture = importer.texture(3);
         CORRADE_VERIFY(texture);
 
         CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
@@ -394,7 +388,6 @@ void ColladaImporterTest::texture() {
         CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Nearest);
         CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Base);
         CORRADE_COMPARE(texture->image(), 0);
-        delete texture;
     }
 }
 
@@ -413,12 +406,11 @@ void ColladaImporterTest::image() {
 
     CORRADE_COMPARE(importer.image2DName(1), "Image");
     CORRADE_COMPARE(importer.image2DForName("Image"), 1);
-    ImageData2D* image = importer.image2D(1);
+    std::optional<ImageData2D> image = importer.image2D(1);
     CORRADE_VERIFY(image);
 
     /* Check only size, as it is good enough proof that it is working */
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
-    delete image;
 }
 
 }}}

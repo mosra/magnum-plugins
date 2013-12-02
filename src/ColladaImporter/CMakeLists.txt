@@ -22,6 +22,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED TgaImporter)
 find_package(Qt4 REQUIRED)
 
 # Silence pedantic warnings in Qt headers
@@ -46,7 +47,7 @@ target_link_libraries(ColladaImporter
     ${QT_QTXMLPATTERNS_LIBRARY})
 
 if(WIN32)
-    target_link_libraries(ColladaImporter TgaImporter)
+    target_link_libraries(ColladaImporter ${MAGNUM_TGAIMPORTER_LIBRARY})
 endif()
 
 install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
@@ -57,7 +58,7 @@ if(BUILD_TESTS)
         ${MAGNUM_LIBRARIES}
         ${QT_QTCORE_LIBRARY}
         ${QT_QTXMLPATTERNS_LIBRARY}
-        TgaImporterTestLib)
+        ${MAGNUM_TGAIMPORTER_LIBRARY})
 
     add_subdirectory(Test)
 endif()

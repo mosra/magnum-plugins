@@ -31,12 +31,11 @@
 #include "Trade/AbstractImporter.h"
 
 #include <unordered_map>
-#include <QtCore/QCoreApplication>
-#include <QtXmlPatterns/QXmlQuery>
-#include <Utility/MurmurHash2.h>
 
 #include "ColladaType.h"
 #include "Utility.h"
+
+class QCoreApplication;
 
 namespace Magnum { namespace Trade {
 
@@ -44,6 +43,17 @@ class ColladaMeshData;
 
 /**
 @brief Collada importer plugin
+
+This plugin depends on **Qt 4** library and @ref TgaImporter plugin. It is
+built if `WITH_COLLADAIMPORTER` is enabled when building %Magnum Plugins. To
+use dynamic plugin, you need to load `%ColladaImporter` plugin from
+`MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
+`%ColladaImporter` component of `%MagnumPlugins` package in CMake and link to
+`${MAGNUMPLUGINS_COLLADAIMPORTER_LIBRARIES}`. To use this as a dependency of
+another plugin, you additionally need to add
+`${MAGNUMPLUGINS_COLLADAIMPORTER_INCLUDE_DIRS}` to include path. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class ColladaImporter: public AbstractImporter {
     public:
@@ -59,78 +69,9 @@ class ColladaImporter: public AbstractImporter {
         template<class T> std::vector<T> parseSource(const QString& id);
 
     private:
-        /** @brief Contents of opened Collada document */
-        struct Document {
-            inline Document(): defaultScene(0) {}
-            ~Document();
-
-            std::string filename;
-
-            /* Data */
-            UnsignedInt defaultScene;
-            std::vector<std::pair<std::string, SceneData*>> scenes;
-            std::vector<std::pair<std::string, ObjectData3D*>> objects;
-            std::vector<std::string> meshes;
-            std::vector<std::string> materials;
-            std::vector<std::string> textures;
-            std::vector<std::string> images2D;
-
-            /** @todo Make public use for camerasForName, lightsForName */
-            std::unordered_map<std::string, UnsignedInt> camerasForName,
-                lightsForName,
-                scenesForName,
-                objectsForName,
-                meshesForName,
-                materialsForName,
-                texturesForName,
-                images2DForName;
-
-            QXmlQuery query;
-        };
-
-        /** @brief %Mesh index hasher */
-        class IndexHash {
-            public:
-                /** @brief Constructor */
-                IndexHash(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
-
-                /**
-                 * @brief Functor
-                 *
-                 * Computes hash for given index of length @c stride,
-                 * specified as position in index array passed in
-                 * constructor.
-                 */
-                std::size_t operator()(UnsignedInt key) const {
-                    return *reinterpret_cast<const std::size_t*>(Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(UnsignedInt)*stride).byteArray());
-                }
-
-            private:
-                const std::vector<UnsignedInt>& indices;
-                UnsignedInt stride;
-        };
-
-        /** @brief %Mesh index comparator */
-        class IndexEqual {
-            public:
-                /** @brief Constructor */
-                IndexEqual(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
-
-                /**
-                 * @brief Functor
-                 *
-                 * Compares two index combinations of length @c stride,
-                 * specified as position in index array, passed in
-                 * constructor.
-                 */
-                bool operator()(UnsignedInt a, UnsignedInt b) const {
-                    return std::memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(UnsignedInt)*stride) == 0;
-                }
-
-            private:
-                const std::vector<UnsignedInt>& indices;
-                UnsignedInt stride;
-        };
+        struct Document;
+        class IndexHash;
+        class IndexEqual;
 
         Features doFeatures() const override;
 
@@ -142,32 +83,32 @@ class ColladaImporter: public AbstractImporter {
         UnsignedInt doSceneCount() const override;
         Int doSceneForName(const std::string& name) override;
         std::string doSceneName(UnsignedInt id) override;
-        SceneData* doScene(UnsignedInt id) override;
+        std::optional<SceneData> doScene(UnsignedInt id) override;
 
         UnsignedInt doObject3DCount() const override;
         Int doObject3DForName(const std::string& name) override;
         std::string doObject3DName(UnsignedInt id) override;
-        ObjectData3D* doObject3D(UnsignedInt id) override;
+        std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
 
         UnsignedInt doMesh3DCount() const override;
         Int doMesh3DForName(const std::string& name) override;
         std::string doMesh3DName(UnsignedInt id) override;
-        MeshData3D* doMesh3D(UnsignedInt id) override;
+        std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
         UnsignedInt doMaterialCount() const override;
         Int doMaterialForName(const std::string& name) override;
         std::string doMaterialName(UnsignedInt id) override;
-        AbstractMaterialData* doMaterial(UnsignedInt id) override;
+        std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
 
         UnsignedInt doTextureCount() const override;
         Int doTextureForName(const std::string& name) override;
         std::string doTextureName(UnsignedInt id) override;
-        TextureData* doTexture(UnsignedInt id) override;
+        std::optional<TextureData> doTexture(UnsignedInt id) override;
 
         UnsignedInt doImage2DCount() const override;
         Int doImage2DForName(const std::string& name) override;
         std::string doImage2DName(UnsignedInt id) override;
-        ImageData2D* doImage2D(UnsignedInt id) override;
+        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
         /**
          * @brief Offset of attribute in mesh index array
@@ -192,23 +133,6 @@ class ColladaImporter: public AbstractImporter {
          */
         template<class T> std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations);
 
-        /** @brief Parse all scenes */
-        void parseScenes();
-
-        /**
-         * @brief Parse object
-         * @param id        Object ID, under which it will be saved
-         * @param name      Object name
-         * @return Next free ID
-         */
-        UnsignedInt parseObject(UnsignedInt id, const QString& name);
-
-        /**
-         * @brief Instance name
-         * @param objectName    Object name
-         * @param instanceTag   Instance tag name
-         * @return Instance name
-         */
         std::string instanceName(const QString& name, const QString& instanceTag);
 
         /** @brief Default namespace declaration for XQuery */

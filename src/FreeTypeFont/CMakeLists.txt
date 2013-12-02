@@ -22,7 +22,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED Text)
+find_package(Magnum REQUIRED Text TextureTools)
 find_package(Freetype REQUIRED)
 
 include_directories(${FREETYPE_INCLUDE_DIRS})
@@ -53,6 +53,7 @@ if(BUILD_TESTS)
     target_link_libraries(FreeTypeFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
+        ${MAGNUM_TEXTURETOOLS_LIBRARIES}
         ${FREETYPE_LIBRARIES})
 endif()
 

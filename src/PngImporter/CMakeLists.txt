@@ -33,7 +33,7 @@ set(PngImporter_HEADERS
     PngImporter.h)
 
 add_library(PngImporterObjects OBJECT ${PngImporter_SOURCES})
-set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DPngImporterObjects_EXPORTS")
 
 add_plugin(PngImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     PngImporter.conf

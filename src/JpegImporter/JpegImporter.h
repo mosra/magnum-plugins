@@ -43,16 +43,26 @@
 namespace Magnum { namespace Trade {
 
 /**
-@brief JPEG importer
+@brief JPEG importer plugin
 
 Supports RGB or grayscale images with 8 bits per channel.
 
-The images are imported with @ref ImageType::UnsignedByte and @ref ImageFormat::RGB
-or @ref ImageFormat::Red, respectively. Grayscale images require extension
+This plugin depends on **libJPEG** library and is built if `WITH_JPEGIMPORTER`
+is enabled when building %Magnum Plugins. To use dynamic plugin, you need to
+load `%JpegImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
+plugin, you need to request `%JpegImporter` component of `%MagnumPlugins`
+package in CMake and link to `${MAGNUMPLUGINS_JPEGIMPORTER_LIBRARIES}`. To use
+this as a dependency of another plugin, you additionally need to add
+`${MAGNUMPLUGINS_JPEGIMPORTER_INCLUDE_DIRS}` to include path. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
+
+The images are imported with @ref ColorType::UnsignedByte and @ref ColorFormat::RGB
+or @ref ColorFormat::Red, respectively. Grayscale images require extension
 @extension{ARB,texture_rg}.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
-images use @ref ImageFormat::Luminance instead of @ref ImageFormat::Red.
+images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red.
 */
 class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
     public:
@@ -71,7 +81,7 @@ class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
         MAGNUM_JPEGIMPORTER_LOCAL void doOpenData(Containers::ArrayReference<const unsigned char> data) override;
 
         MAGNUM_JPEGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_JPEGIMPORTER_LOCAL ImageData2D* doImage2D(UnsignedInt id) override;
+        MAGNUM_JPEGIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
         Containers::Array<unsigned char> _in;
