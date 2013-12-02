@@ -59,7 +59,7 @@ void PngImporter::doOpenData(const Containers::ArrayReference<const unsigned cha
 }
 
 void PngImporter::doOpenFile(const std::string& filename) {
-    _in = new std::ifstream(filename.c_str());
+    _in = new std::ifstream(filename);
     if(_in->good()) return;
 
     Error() << "Trade::PngImporter::openFile(): cannot open file" << filename;
