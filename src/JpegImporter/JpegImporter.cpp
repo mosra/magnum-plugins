@@ -54,7 +54,13 @@ auto JpegImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool JpegImporter::doIsOpened() const { return _in; }
 
-void JpegImporter::doClose() { _in = nullptr; }
+void JpegImporter::doClose() {
+    #ifndef CORRADE_GCC45_COMPATIBILITY
+    _in = nullptr;
+    #else
+    _in = {};
+    #endif
+}
 
 void JpegImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
     _in = Containers::Array<unsigned char>(data.size());

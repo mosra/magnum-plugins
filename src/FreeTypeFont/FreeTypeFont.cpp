@@ -91,7 +91,11 @@ std::pair<Float, Float> FreeTypeFont::doOpenSingleData(const Containers::ArrayRe
 
 void FreeTypeFont::doClose() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_Face(ftFont) == 0);
+    #ifndef CORRADE_GCC45_COMPATIBILITY
     _data = nullptr;
+    #else
+    _data = {};
+    #endif
     ftFont = nullptr;
 }
 

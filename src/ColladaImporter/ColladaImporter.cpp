@@ -359,7 +359,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
             transformation = transformation*Matrix4::scaling(Implementation::Utility::parseVector<Vector3>(tmpList2[i]));
 
         /* It shouldn't get here */
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         else CORRADE_ASSERT(0, ("Trade::ColladaImporter::object3D(): unknown translation " + type).toStdString(), nullptr);
+        #else
+        else CORRADE_ASSERT(0, ("Trade::ColladaImporter::object3D(): unknown translation " + type).toStdString(), {});
+        #endif
     }
 
     /* Child object names */
@@ -375,7 +379,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
         const Int id = doObject3DForName(childIdTrimmed);
         if(id == -1) {
             Error() << "Trade::ColladaImporter::object3D(): object" << '"' + childIdTrimmed + '"' << "was not found";
+            #ifndef CORRADE_GCC45_COMPATIBILITY
             return nullptr;
+            #else
+            return {};
+            #endif
         }
         children.push_back(id);
     }
@@ -392,7 +400,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
         auto cameraId = d->camerasForName.find(cameraName);
         if(cameraId == d->camerasForName.end()) {
             Error() << "Trade::ColladaImporter::object3D(): camera" << '"'+cameraName+'"' << "was not found";
+            #ifndef CORRADE_GCC45_COMPATIBILITY
             return nullptr;
+            #else
+            return {};
+            #endif
         }
 
         /** @todo C++14: std::make_unique() */
@@ -405,7 +417,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
         auto lightId = d->lightsForName.find(lightName);
         if(lightId == d->lightsForName.end()) {
             Error() << "Trade::ColladaImporter::object3D(): light" << '"'+lightName+'"' << "was not found";
+            #ifndef CORRADE_GCC45_COMPATIBILITY
             return nullptr;
+            #else
+            return {};
+            #endif
         }
 
         /** @todo C++14: std::make_unique() */
@@ -417,7 +433,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
         const Int meshId = doMesh3DForName(meshName);
         if(meshId == -1) {
             Error() << "Trade::ColladaImporter::object3D(): mesh" << '"'+meshName+'"' << "was not found";
+            #ifndef CORRADE_GCC45_COMPATIBILITY
             return nullptr;
+            #else
+            return {};
+            #endif
         }
 
         d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/instance_geometry/bind_material/technique_common/instance_material/@target/string()").arg(name));
@@ -432,7 +452,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
             materialId = doMaterialForName(materialName);
             if(materialId == -1) {
                 Error() << "Trade::ColladaImporter::object3D(): material" << '"'+materialName+'"' << "was not found";
+                #ifndef CORRADE_GCC45_COMPATIBILITY
                 return nullptr;
+                #else
+                return {};
+                #endif
             }
         }
 
@@ -445,7 +469,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
 
     /* Something else */
     Error() << "Trade::ColladaImporter::object3D():" << '"'+tmp.toStdString()+'"' << "instance type not supported";
+    #ifndef CORRADE_GCC45_COMPATIBILITY
     return nullptr;
+    #else
+    return {};
+    #endif
 }
 
 UnsignedInt ColladaImporter::doMesh3DCount() const { return d->meshes.size(); }
@@ -599,7 +627,11 @@ std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const Unsigned
 
     if(tmp.trimmed() != "profile_COMMON") {
         Error() << "Trade::ColladaImporter::material():" << ('"'+tmp.trimmed()+'"').toStdString() << "effect profile not supported";
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         return nullptr;
+        #else
+        return {};
+        #endif
     }
 
     /* Get shader type */
@@ -610,7 +642,11 @@ std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const Unsigned
     /** @todo Other (blinn, goraund) profiles */
     if(tmp != "phong") {
         Error() << "Trade::ColladaImporter::material():" << ('"'+tmp+'"').toStdString() << "shader not supported";
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         return nullptr;
+        #else
+        return {};
+        #endif
     }
 
     /* Shininess */
@@ -630,7 +666,11 @@ std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const Unsigned
         auto it = d->texturesForName.find(tmp.toStdString());
         if(it == d->texturesForName.end()) {
             Error() << "Trade::ColladaImporter::material(): ambient texture" << tmp.toStdString() << "not found";
+            #ifndef CORRADE_GCC45_COMPATIBILITY
             return nullptr;
+            #else
+            return {};
+            #endif
         }
 
         flags |= PhongMaterialData::Flag::AmbientTexture;
@@ -646,7 +686,11 @@ std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const Unsigned
         auto it = d->texturesForName.find(tmp.toStdString());
         if(it == d->texturesForName.end()) {
             Error() << "Trade::ColladaImporter::material(): diffuse texture" << tmp.toStdString() << "not found";
+            #ifndef CORRADE_GCC45_COMPATIBILITY
             return nullptr;
+            #else
+            return {};
+            #endif
         }
 
         flags |= PhongMaterialData::Flag::DiffuseTexture;
@@ -662,7 +706,11 @@ std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const Unsigned
         auto it = d->texturesForName.find(tmp.toStdString());
         if(it == d->texturesForName.end()) {
             Error() << "Trade::ColladaImporter::material(): specular texture" << tmp.toStdString() << "not found";
+            #ifndef CORRADE_GCC45_COMPATIBILITY
             return nullptr;
+            #else
+            return {};
+            #endif
         }
 
         flags |= PhongMaterialData::Flag::SpecularTexture;
