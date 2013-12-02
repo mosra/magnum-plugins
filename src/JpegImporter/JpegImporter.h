@@ -48,12 +48,14 @@ namespace Magnum { namespace Trade {
 Supports RGB or grayscale images with 8 bits per channel.
 
 This plugin depends on **libJPEG** library and is built if `WITH_JPEGIMPORTER`
-is enabled in CMake. To use dynamic plugin, you need to load `%JpegImporter`
-plugin from `importers/` subdirectory of your plugin dir. To use static plugin
-or use this as a dependency of another plugin, you need to request`%JpegImporter`
-component in CMake, add `${MAGNUMPLUGINS_JPEGIMPORTER_INCLUDE_DIRS}` to include
-path and link to `${MAGNUMPLUGINS_JPEGIMPORTER_LIBRARIES}`. See
-@ref building-plugins and @ref cmake-plugins for more information.
+is enabled when building %Magnum Plugins. To use dynamic plugin, you need to
+load `%JpegImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
+plugin, you need to request `%JpegImporter` component of `%MagnumPlugins`
+package in CMake and link to `${MAGNUMPLUGINS_JPEGIMPORTER_LIBRARIES}`. To use
+this as a dependency of another plugin, you additionally need to add
+`${MAGNUMPLUGINS_JPEGIMPORTER_INCLUDE_DIRS}` to include path. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 The images are imported with @ref ColorType::UnsignedByte and @ref ColorFormat::RGB
 or @ref ColorFormat::Red, respectively. Grayscale images require extension
