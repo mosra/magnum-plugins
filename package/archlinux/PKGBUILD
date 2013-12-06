@@ -24,7 +24,7 @@ build() {
         -DWITH_FREETYPEFONT=ON \
         -DWITH_HARFBUZZFONT=ON \
         -DWITH_JPEGIMPORTER=ON \
-        -DWITH_PNGIMPORTER=ON
+        -DWITH_PNGIMPORTER=ON \
         -G Ninja
     ninja
 }
