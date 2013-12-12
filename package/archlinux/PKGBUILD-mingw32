@@ -7,7 +7,7 @@ arch=('any')
 url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
 depends=('mingw32-runtime' 'mingw32-magnum' 'mingw32-freetype' 'mingw32-libjpeg' 'mingw32-libpng')
-makedepends=('mingw32-gcc' 'cmake' 'corrade')
+makedepends=('mingw32-gcc' 'cmake' 'corrade' 'ninja')
 options=(!buildflags !strip)
 
 build() {
@@ -22,11 +22,12 @@ build() {
         -DCMAKE_INSTALL_PREFIX=/usr/i486-mingw32 \
         -DWITH_FREETYPEFONT=ON \
         -DWITH_JPEGIMPORTER=ON \
-        -DWITH_PNGIMPORTER=ON
-    make
+        -DWITH_PNGIMPORTER=ON \
+        -G Ninja
+    ninja
 }
 
 package() {
   cd "$startdir/build-win"
-  make DESTDIR="$pkgdir/" install
+  DESTDIR="$pkgdir/" ninja install
 }

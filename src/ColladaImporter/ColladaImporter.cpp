@@ -31,6 +31,7 @@
 #include <Utility/Directory.h>
 #include <Utility/MurmurHash2.h>
 #include <Math/Constants.h>
+#include <Mesh.h>
 #include <Trade/ImageData.h>
 #include <Trade/MeshData3D.h>
 #include <Trade/MeshObjectData3D.h>
@@ -597,7 +598,7 @@ std::optional<MeshData3D> ColladaImporter::doMesh3D(const UnsignedInt id) {
         else Warning() << "Trade::ColladaImporter::mesh3D():" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
-    return MeshData3D(Mesh::Primitive::Triangles, std::move(indices), {std::move(vertices)}, std::move(normals), std::move(textureCoords2D));
+    return MeshData3D(MeshPrimitive::Triangles, std::move(indices), {std::move(vertices)}, std::move(normals), std::move(textureCoords2D));
 }
 
 UnsignedInt ColladaImporter::doMaterialCount() const { return d->materials.size(); }

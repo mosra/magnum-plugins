@@ -26,6 +26,7 @@
 #include <TestSuite/Tester.h>
 #include <Utility/Directory.h>
 #include <Math/Constants.h>
+#include <Mesh.h>
 #include <Trade/PhongMaterialData.h>
 #include <Trade/ImageData.h>
 #include <Trade/MeshData3D.h>
@@ -176,7 +177,7 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(importer.mesh3DForName("MeshVertexOnly"), 1);
     std::optional<MeshData3D> mesh = importer.mesh3D(1);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 0, 3, 4, 3, 5
     }));
@@ -206,7 +207,7 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(importer.mesh3DForName("MeshVertexNormals"), 3);
     mesh = importer.mesh3D(3);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
@@ -239,7 +240,7 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(importer.mesh3DForName("Mesh"), 4);
     mesh = importer.mesh3D(4);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->primitive(), Mesh::Primitive::Triangles);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
     }));
