@@ -24,6 +24,7 @@
 
 #include "ColladaImporter.h"
 
+#include <cstring>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
@@ -99,7 +100,7 @@ const QString ColladaImporter::namespaceDeclaration =
 
 ColladaImporter::ColladaImporter(): d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
-ColladaImporter::ColladaImporter(PluginManager::AbstractManager* manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
+ColladaImporter::ColladaImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
 ColladaImporter::~ColladaImporter() {
     close();

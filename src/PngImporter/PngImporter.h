@@ -70,7 +70,7 @@ class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
         explicit PngImporter();
 
         /** @brief Plugin manager constructor */
-        explicit PngImporter(PluginManager::AbstractManager* manager, std::string plugin);
+        explicit PngImporter(PluginManager::AbstractManager& manager, std::string plugin);
 
         ~PngImporter();
 

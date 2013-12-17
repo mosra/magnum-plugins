@@ -70,7 +70,7 @@ class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
         explicit JpegImporter();
 
         /** @brief Plugin manager constructor */
-        explicit JpegImporter(PluginManager::AbstractManager* manager, std::string plugin);
+        explicit JpegImporter(PluginManager::AbstractManager& manager, std::string plugin);
 
         ~JpegImporter();
 

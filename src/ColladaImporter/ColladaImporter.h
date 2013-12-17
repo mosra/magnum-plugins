@@ -61,7 +61,7 @@ class ColladaImporter: public AbstractImporter {
         explicit ColladaImporter();
 
         /** @brief Plugin manager constructor */
-        explicit ColladaImporter(PluginManager::AbstractManager* manager, std::string plugin);
+        explicit ColladaImporter(PluginManager::AbstractManager& manager, std::string plugin);
 
         ~ColladaImporter();
 

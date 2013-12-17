@@ -70,7 +70,7 @@ void FreeTypeFont::finalize() {
 
 FreeTypeFont::FreeTypeFont(): ftFont(nullptr) {}
 
-FreeTypeFont::FreeTypeFont(PluginManager::AbstractManager* manager, std::string plugin): AbstractFont(manager, std::move(plugin)), ftFont(nullptr) {}
+FreeTypeFont::FreeTypeFont(PluginManager::AbstractManager& manager, std::string plugin): AbstractFont(manager, std::move(plugin)), ftFont(nullptr) {}
 
 FreeTypeFont::~FreeTypeFont() { close(); }
 
