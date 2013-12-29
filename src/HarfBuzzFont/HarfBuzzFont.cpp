@@ -87,7 +87,7 @@ std::unique_ptr<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache
     hb_buffer_set_language(buffer, hb_language_from_string("en", 2));
 
     /* Layout the text */
-    hb_buffer_add_utf8(buffer, text.c_str(), -1, 0, -1);
+    hb_buffer_add_utf8(buffer, text.data(), -1, 0, -1);
     hb_shape(hbFont, buffer, nullptr, 0);
 
     UnsignedInt glyphCount;
