@@ -22,10 +22,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ColladaImporterTestConfigure.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/ColladaImporterTestConfigure.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
 corrade_add_test(ColladaImporterTypeTest ColladaTypeTest.cpp LIBRARIES ${QT_QTCORE_LIBRARY})
 corrade_add_test(ColladaImporterUtilityTest UtilityTest.cpp LIBRARIES ${QT_QTCORE_LIBRARY} ${MAGNUM_LIBRARIES})

@@ -38,7 +38,7 @@ set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARE
 add_plugin(PngImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     PngImporter.conf
     $<TARGET_OBJECTS:PngImporterObjects>
-    pluginRegistrationPngImporter.cpp)
+    pluginRegistration.cpp)
 target_link_libraries(PngImporter
     ${MAGNUM_LIBRARIES}
     ${PNG_LIBRARIES})

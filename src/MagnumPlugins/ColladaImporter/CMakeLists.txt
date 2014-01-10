@@ -40,7 +40,7 @@ set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_S
 add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     ColladaImporter.conf
     $<TARGET_OBJECTS:ColladaImporterObjects>
-    pluginRegistrationColladaImporter.cpp)
+    pluginRegistration.cpp)
 target_link_libraries(ColladaImporter
     ${MAGNUM_LIBRARIES}
     ${QT_QTCORE_LIBRARY}

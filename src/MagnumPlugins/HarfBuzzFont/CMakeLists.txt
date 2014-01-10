@@ -40,7 +40,7 @@ set_target_properties(HarfBuzzFontObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHAR
 add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
     HarfBuzzFont.conf
     $<TARGET_OBJECTS:HarfBuzzFontObjects>
-    pluginRegistrationHarfBuzzFont.cpp)
+    pluginRegistration.cpp)
 target_link_libraries(HarfBuzzFont
     ${MAGNUM_LIBRARIES}
     ${MAGNUM_TEXT_LIBRARIES}

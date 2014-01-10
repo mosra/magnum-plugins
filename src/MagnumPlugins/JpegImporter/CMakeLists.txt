@@ -38,7 +38,7 @@ set_target_properties(JpegImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHAR
 add_plugin(JpegImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     JpegImporter.conf
     $<TARGET_OBJECTS:JpegImporterObjects>
-    pluginRegistrationJpegImporter.cpp)
+    pluginRegistration.cpp)
 target_link_libraries(JpegImporter
     ${MAGNUM_LIBRARIES}
     ${JPEG_LIBRARIES})

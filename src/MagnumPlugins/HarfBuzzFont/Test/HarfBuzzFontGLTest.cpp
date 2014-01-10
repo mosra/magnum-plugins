@@ -28,7 +28,7 @@
 
 #include "MagnumPlugins/HarfBuzzFont/HarfBuzzFont.h"
 
-#include "freeTypeFontTestConfigure.h"
+#include "../../FreeTypeFont/Test/configure.h"
 
 namespace Magnum { namespace Text { namespace Test {
 

@@ -22,6 +22,6 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/../../FreeTypeFont/Test/)
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp LIBRARIES HarfBuzzFontTestLib ${GL_TEST_LIBRARIES})

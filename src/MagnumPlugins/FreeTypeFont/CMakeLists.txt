@@ -39,7 +39,7 @@ set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFo
 add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
     FreeTypeFont.conf
     $<TARGET_OBJECTS:FreeTypeFontObjects>
-    pluginRegistrationFreeTypeFont.cpp)
+    pluginRegistration.cpp)
 target_link_libraries(FreeTypeFont
     ${MAGNUM_LIBRARIES}
     ${MAGNUM_TEXT_LIBRARIES}
