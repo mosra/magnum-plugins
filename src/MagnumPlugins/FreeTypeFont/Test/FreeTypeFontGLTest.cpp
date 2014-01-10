@@ -22,11 +22,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Utility/Directory.h>
-#include <Test/AbstractOpenGLTester.h>
-#include <Text/GlyphCache.h>
+#include <Corrade/Utility/Directory.h>
+#include <Magnum/Test/AbstractOpenGLTester.h>
+#include <Magnum/Text/GlyphCache.h>
 
-#include "FreeTypeFont/FreeTypeFont.h"
+#include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"
+
 #include "freeTypeFontTestConfigure.h"
 
 namespace Magnum { namespace Text { namespace Test {

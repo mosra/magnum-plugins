@@ -22,10 +22,6 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(MAGNUM_BUILD_DEPRECATED)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_PLUGINS_INCLUDE_DIR})
-endif()
-
 if(WITH_COLLADAIMPORTER)
     add_subdirectory(ColladaImporter)
 endif()

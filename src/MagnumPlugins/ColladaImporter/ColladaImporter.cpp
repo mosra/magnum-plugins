@@ -29,18 +29,18 @@
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 #include <QtXmlPatterns/QXmlQuery>
-#include <Utility/Directory.h>
-#include <Utility/MurmurHash2.h>
-#include <Math/Constants.h>
-#include <Mesh.h>
-#include <Trade/ImageData.h>
-#include <Trade/MeshData3D.h>
-#include <Trade/MeshObjectData3D.h>
-#include <Trade/PhongMaterialData.h>
-#include <Trade/SceneData.h>
-#include <Trade/TextureData.h>
+#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/MurmurHash2.h>
+#include <Magnum/Mesh.h>
+#include <Magnum/Math/Constants.h>
+#include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshObjectData3D.h>
+#include <Magnum/Trade/PhongMaterialData.h>
+#include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/TextureData.h>
 
-#include "TgaImporter/TgaImporter.h"
+#include "MagnumPlugins/TgaImporter/TgaImporter.h"
 
 namespace Magnum { namespace Trade {
 

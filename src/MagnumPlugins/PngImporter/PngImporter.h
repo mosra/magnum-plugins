@@ -28,7 +28,7 @@
  * @brief Class Magnum::Trade::PngImporter
  */
 
-#include <Trade/AbstractImporter.h>
+#include <Magnum/Trade/AbstractImporter.h>
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
     #if defined(PngImporter_EXPORTS) || defined(PngImporterObjects_EXPORTS)

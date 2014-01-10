@@ -23,18 +23,19 @@
 */
 
 #include <sstream>
-#include <TestSuite/Tester.h>
-#include <Utility/Directory.h>
-#include <Math/Constants.h>
-#include <Mesh.h>
-#include <Trade/PhongMaterialData.h>
-#include <Trade/ImageData.h>
-#include <Trade/MeshData3D.h>
-#include <Trade/MeshObjectData3D.h>
-#include <Trade/SceneData.h>
-#include <Trade/TextureData.h>
+#include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/Directory.h>
+#include <Magnum/Mesh.h>
+#include <Magnum/Math/Constants.h>
+#include <Magnum/Trade/PhongMaterialData.h>
+#include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshObjectData3D.h>
+#include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/TextureData.h>
 
-#include "ColladaImporter/ColladaImporter.h"
+#include "MagnumPlugins/ColladaImporter/ColladaImporter.h"
+
 #include "ColladaImporterTestConfigure.h"
 
 namespace Magnum { namespace Trade { namespace Test {

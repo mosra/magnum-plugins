@@ -22,7 +22,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "HarfBuzzFont/HarfBuzzFont.h"
+#include "MagnumPlugins/HarfBuzzFont/HarfBuzzFont.h"
 
 CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont,
     "cz.mosra.magnum.Text.AbstractFont/0.2.3")

@@ -22,12 +22,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <TestSuite/Tester.h>
-#include <Utility/Directory.h>
-#include <ColorFormat.h>
-#include <Trade/ImageData.h>
+#include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/Directory.h>
+#include <Magnum/ColorFormat.h>
+#include <Magnum/Trade/ImageData.h>
 
-#include "PngImporter/PngImporter.h"
+#include "MagnumPlugins/PngImporter/PngImporter.h"
 
 #include "configure.h"
 

@@ -22,9 +22,9 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <TestSuite/Tester.h>
+#include <Corrade/TestSuite/Tester.h>
 
-#include "ColladaImporter/ColladaType.h"
+#include "MagnumPlugins/ColladaImporter/ColladaType.h"
 
 namespace Magnum { namespace Trade { namespace Test {
 

@@ -28,12 +28,11 @@
  * @brief Class Magnum::Trade::ColladaImporter
  */
 
-#include "Trade/AbstractImporter.h"
-
 #include <unordered_map>
+#include <Magnum/Trade/AbstractImporter.h>
 
-#include "ColladaType.h"
-#include "Utility.h"
+#include "MagnumPlugins/ColladaImporter/ColladaType.h"
+#include "MagnumPlugins/ColladaImporter/Utility.h"
 
 class QCoreApplication;
 

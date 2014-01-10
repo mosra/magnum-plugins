@@ -28,8 +28,8 @@
  * @brief Class Magnum::Trade::JpegImporter
  */
 
-#include <Containers/Array.h>
-#include <Trade/AbstractImporter.h>
+#include <Corrade/Containers/Array.h>
+#include <Magnum/Trade/AbstractImporter.h>
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
     #if defined(JpegImporter_EXPORTS) || defined(JpegImporterObjects_EXPORTS)

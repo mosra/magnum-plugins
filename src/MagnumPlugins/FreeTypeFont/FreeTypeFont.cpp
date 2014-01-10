@@ -27,12 +27,12 @@
 #include <algorithm>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include <Utility/Unicode.h>
-#include <ColorFormat.h>
-#include <Context.h>
-#include <Extensions.h>
-#include <Image.h>
-#include <Text/GlyphCache.h>
+#include <Corrade/Utility/Unicode.h>
+#include <Magnum/ColorFormat.h>
+#include <Magnum/Context.h>
+#include <Magnum/Extensions.h>
+#include <Magnum/Image.h>
+#include <Magnum/Text/GlyphCache.h>
 
 namespace Magnum { namespace Text {
 

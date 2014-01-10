@@ -24,9 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "Magnum.h"
-
 #include <QtCore/QString>
+#include <Magnum/Magnum.h>
 
 namespace Magnum { namespace Trade { namespace Implementation {
 

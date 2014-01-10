@@ -28,7 +28,7 @@
  * @brief Class Magnum::Text::HarfBuzzFont
  */
 
-#include "FreeTypeFont/FreeTypeFont.h"
+#include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 struct hb_font_t;

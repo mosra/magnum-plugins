@@ -25,8 +25,8 @@
 #include "HarfBuzzFont.h"
 
 #include <hb-ft.h>
-#include <Containers/Array.h>
-#include <Text/GlyphCache.h>
+#include <Corrade/Containers/Array.h>
+#include <Magnum/Text/GlyphCache.h>
 
 namespace Magnum { namespace Text {
 

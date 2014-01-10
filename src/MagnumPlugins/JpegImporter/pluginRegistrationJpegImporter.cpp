@@ -22,7 +22,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "JpegImporter/JpegImporter.h"
+#include "MagnumPlugins/JpegImporter/JpegImporter.h"
 
 CORRADE_PLUGIN_REGISTER(JpegImporter, Magnum::Trade::JpegImporter,
     "cz.mosra.magnum.Trade.AbstractImporter/0.3")

@@ -25,9 +25,9 @@
 #include "JpegImporter.h"
 
 #include <csetjmp>
-#include <Utility/Debug.h>
-#include <ColorFormat.h>
-#include <Trade/ImageData.h>
+#include <Corrade/Utility/Debug.h>
+#include <Magnum/ColorFormat.h>
+#include <Magnum/Trade/ImageData.h>
 
 /* On Windows we need to circumvent conflicting definition of INT32 in
    <windows.h> (included by glLoadGen from OpenGL.h). Problem with libjpeg-tubo
@@ -38,8 +38,8 @@
 #include <jpeglib.h>
 
 #ifdef MAGNUM_TARGET_GLES
-#include <Context.h>
-#include <Extensions.h>
+#include <Magnum/Context.h>
+#include <Magnum/Extensions.h>
 #endif
 
 namespace Magnum { namespace Trade {

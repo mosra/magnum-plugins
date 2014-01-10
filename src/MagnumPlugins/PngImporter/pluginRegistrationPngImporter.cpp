@@ -22,7 +22,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "PngImporter/PngImporter.h"
+#include "MagnumPlugins/PngImporter/PngImporter.h"
 
 CORRADE_PLUGIN_REGISTER(PngImporter, Magnum::Trade::PngImporter,
     "cz.mosra.magnum.Trade.AbstractImporter/0.3")

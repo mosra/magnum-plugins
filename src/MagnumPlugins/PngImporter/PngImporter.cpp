@@ -27,14 +27,14 @@
 #include <fstream>
 #include <sstream>
 #include <png.h>
-#include <Containers/Array.h>
-#include <Utility/Debug.h>
-#include <ColorFormat.h>
-#include <Trade/ImageData.h>
+#include <Corrade/Containers/Array.h>
+#include <Corrade/Utility/Debug.h>
+#include <Magnum/ColorFormat.h>
+#include <Magnum/Trade/ImageData.h>
 
 #ifdef MAGNUM_TARGET_GLES
-#include <Context.h>
-#include <Extensions.h>
+#include <Magnum/Context.h>
+#include <Magnum/Extensions.h>
 #endif
 
 namespace Magnum { namespace Trade {

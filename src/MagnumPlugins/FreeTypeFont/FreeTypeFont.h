@@ -28,9 +28,9 @@
  * @brief Class Magnum::Text::FreeTypeFont
  */
 
-#include <Containers/Array.h>
-#include <Utility/Visibility.h>
-#include <Text/AbstractFont.h>
+#include <Corrade/Containers/Array.h>
+#include <Corrade/Utility/VisibilityMacros.h>
+#include <Magnum/Text/AbstractFont.h>
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 struct FT_LibraryRec_;
