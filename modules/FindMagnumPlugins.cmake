@@ -4,8 +4,6 @@
 #  find_package(MagnumPlugins [REQUIRED])
 # This command tries to find Magnum plugins and then defines:
 #  MAGNUMPLUGINS_FOUND          - Whether Magnum plugins were found
-#  MAGNUMPLUGINS_INCLUDE_DIRS   - Plugin include dir and include dirs of
-#   dependencies
 # This command will not try to find any actual plugin. The plugins are:
 #  ColladaImporter  - Collada importer (depends on Qt library)
 #  FreeTypeFont     - FreeType font (depends on FreeType library)
@@ -21,8 +19,11 @@
 #  MAGNUMPLUGINS_*_LIBRARIES    - Plugin library and dependent libraries
 #  MAGNUMPLUGINS_*_INCLUDE_DIRS - Include dirs of plugin dependencies
 #
+# If `MAGNUM_BUILD_DEPRECATED` is defined, `MAGNUM_PLUGINS_INCLUDE_DIRS`
+# contains include dir for plugins (i.e. instead of `MagnumPlugins/` prefix)
+# and include dirs of dependencies.
+#
 # Additionally these variables are defined for internal usage:
-#  MAGNUMPLUGINS_INCLUDE_DIR    - Plugin include dir (w/o dependencies)
 #  MAGNUMPLUGINS_*_LIBRARY      - Plugin library (w/o dependencies)
 #
 
@@ -53,11 +54,6 @@
 # Dependencies
 find_package(Magnum REQUIRED)
 
-# Plugins include dir
-find_path(MAGNUMPLUGINS_INCLUDE_DIR
-    NAMES TgaImporter
-    PATH_SUFFIXES Magnum/Plugins)
-
 # Additional components
 foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${component} _COMPONENT)
@@ -87,7 +83,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     # Find include path
     find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
             NAMES ${component}.h
-            PATHS ${MAGNUM_INCLUDE_DIR}/Plugins/${component})
+            PATHS ${MAGNUM_INCLUDE_DIR}/MagnumPlugins/${component})
 
     # ColladaImporter plugin dependencies
     if(${component} STREQUAL ColladaImporter)
@@ -165,5 +161,5 @@ find_package_handle_standard_args(MagnumPlugins
     HANDLE_COMPONENTS)
 
 # Dependent libraries and includes
-set(MAGNUMPLUGINS_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIRS} ${MAGNUM_INCLUDE_DIR}/Plugins)
+set(MAGNUMPLUGINS_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIRS} ${MAGNUM_INCLUDE_DIR}/MagnumPlugins)
 mark_as_advanced(FORCE MAGNUMPLUGINS_INCLUDE_DIR)
