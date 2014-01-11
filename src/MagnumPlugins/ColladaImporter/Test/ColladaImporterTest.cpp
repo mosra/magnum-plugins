@@ -36,7 +36,7 @@
 
 #include "MagnumPlugins/ColladaImporter/ColladaImporter.h"
 
-#include "ColladaImporterTestConfigure.h"
+#include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test {
 

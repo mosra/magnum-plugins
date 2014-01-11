@@ -28,7 +28,7 @@
 
 #include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"
 
-#include "freeTypeFontTestConfigure.h"
+#include "configure.h"
 
 namespace Magnum { namespace Text { namespace Test {
 
