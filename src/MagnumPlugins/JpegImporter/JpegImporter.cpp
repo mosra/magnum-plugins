@@ -37,7 +37,7 @@
 #endif
 #include <jpeglib.h>
 
-#ifdef MAGNUM_TARGET_GLES
+#ifdef MAGNUM_TARGET_GLES2
 #include <Magnum/Context.h>
 #include <Magnum/Extensions.h>
 #endif
