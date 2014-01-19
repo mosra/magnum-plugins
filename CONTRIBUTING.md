@@ -16,12 +16,7 @@ Code contribution
     surrounding code and avoid any trailing whitespace. When in doubt, consult
     coding guidelines, which are available also [online](http://mosra.cz/blog/magnum-doc/coding-style.html).
 *   Document your code. When updating or adding new API, make sure that Doxygen
-    documentation is up to date. Run
-
-        doxygen
-
-    in project root to generate the documentation and check that your
-    modifications didn't add any warnings.
+    documentation is up to date.
 *   Build unit tests (`-DBUILD_TESTS=ON` parameter to CMake) and run them
     using
 
