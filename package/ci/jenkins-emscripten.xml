@@ -67,7 +67,6 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/emscripten-${compatibility}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/emscripten-${compatibility} \
-    -DBUILD_TESTS=ON \
   `#-DWITH_COLLADAIMPORTER=ON` \
   `#-DWITH_FREETYPEFONT=ON` \
   `#-DWITH_HARFBUZZFONT=ON` \
@@ -76,7 +75,6 @@ cmake .. \
     -G Ninja
 
 ninja
-ctest --output-on-failure || true
 ninja install
 ]]>
     </command>
