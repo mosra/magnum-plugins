@@ -42,8 +42,9 @@ add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
     $<TARGET_OBJECTS:FreeTypeFontObjects>
     pluginRegistration.cpp)
 target_link_libraries(FreeTypeFont
-    ${MAGNUM_LIBRARIES}
     ${MAGNUM_TEXT_LIBRARIES}
+    ${MAGNUM_TEXTURETOOLS_LIBRARIES}
+    ${MAGNUM_LIBRARIES}
     ${FREETYPE_LIBRARIES})
 
 install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
@@ -52,9 +53,9 @@ install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 if(BUILD_TESTS)
     add_library(FreeTypeFontTestLib SHARED $<TARGET_OBJECTS:FreeTypeFontObjects>)
     target_link_libraries(FreeTypeFontTestLib
-        ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
         ${MAGNUM_TEXTURETOOLS_LIBRARIES}
+        ${MAGNUM_LIBRARIES}
         ${FREETYPE_LIBRARIES})
 endif()
 
