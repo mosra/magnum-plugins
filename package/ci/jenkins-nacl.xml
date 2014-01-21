@@ -40,10 +40,10 @@
   <customWorkspace>MagnumPlugins</customWorkspace>
   <axes>
     <hudson.matrix.TextAxis>
-      <name>libraries</name>
+      <name>toolchain</name>
       <values>
-        <string>static</string>
-        <string>dynamic</string>
+        <string>newlib-x86-32</string>
+        <string>newlib-x86-64</string>
       </values>
     </hudson.matrix.TextAxis>
     <hudson.matrix.TextAxis>
@@ -61,34 +61,30 @@
 git submodule init
 git submodule update
 
-if [ ${libraries} = "static" ] ; then
-    static_build_flag="-DBUILD_STATIC=ON -DBUILD_STATIC_PIC=ON"
-fi
-
 if [ "${compatibility}" = "deprecated" ] ; then
     deprecated_build_flag=ON
 else
     deprecated_build_flag=OFF
 fi
 
-mkdir -p build-mingw32-${libraries}-${compatibility}
-cd build-mingw32-${libraries}-${compatibility}
+mkdir -p build-nacl-${toolchain}-${compatibility}
+cd build-nacl-${toolchain}-${compatibility}
 
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_TOOLCHAIN_FILE=../toolchains/archlinux/basic-mingw32.cmake \
-    -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility}" \
-    -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility} \
-    -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility}/lib" \
+    -DCMAKE_MODULE_PATH="${WORKSPACE}/toolchains/modules" \
+    -DCMAKE_TOOLCHAIN_FILE=../toolchains/generic/NaCl-${toolchain}.cmake \
+    -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/nacl-${toolchain}-${compatibility}" \
+    -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/nacl-${toolchain}-${compatibility} \
   `#-DWITH_COLLADAIMPORTER=ON` \
-    -DWITH_FREETYPEFONT=ON \
+  `#-DWITH_FREETYPEFONT=ON` \
   `#-DWITH_HARFBUZZFONT=ON` \
-    -DWITH_JPEGIMPORTER=ON \
-    -DWITH_PNGIMPORTER=ON \
+  `#-DWITH_JPEGIMPORTER=ON` \
+  `#-DWITH_PNGIMPORTER=ON` \
     -G Ninja
 
 ninja
-ninja install
+#ninja install
 ]]>
     </command>
     </hudson.tasks.Shell>
@@ -106,7 +102,7 @@ ninja install
     <runSequentially>true</runSequentially>
     <touchStoneCombinationFilter>
 <![CDATA[
-libraries == "dynamic" && compatibility == "deprecated"
+toolchain == "newlib-x86-64" && compatibility == "deprecated"
 ]]>
     </touchStoneCombinationFilter>
     <touchStoneResultCondition>

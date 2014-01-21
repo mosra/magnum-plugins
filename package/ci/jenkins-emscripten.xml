@@ -65,9 +65,10 @@ cd build-emscripten-${compatibility}
 
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/emscripten;${JENKINS_HOME}/filesystem/emscripten-${compatibility}" \
+    -DCMAKE_MODULE_PATH="${WORKSPACE}/toolchains/modules" \
+    -DCMAKE_TOOLCHAIN_FILE="../toolchains/generic/Emscripten.cmake" \
+    -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/emscripten-${compatibility}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/emscripten-${compatibility} \
-    -DBUILD_TESTS=ON \
   `#-DWITH_COLLADAIMPORTER=ON` \
   `#-DWITH_FREETYPEFONT=ON` \
   `#-DWITH_HARFBUZZFONT=ON` \
@@ -76,8 +77,7 @@ cmake .. \
     -G Ninja
 
 ninja
-ctest --output-on-failure || true
-ninja install
+#ninja install
 ]]>
     </command>
     </hudson.tasks.Shell>
