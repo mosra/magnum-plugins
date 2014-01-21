@@ -121,8 +121,13 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
     std::vector<FT_UInt> charIndices;
     charIndices.resize(characters.size()+1);
     charIndices[0] = 0;
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     std::transform(characters.begin(), characters.end(), charIndices.begin()+1,
         [this](const char32_t c) { return FT_Get_Char_Index(ftFont, c); });
+    #else
+    for(std::size_t i = 0; i != characters.size(); ++i)
+        charIndices[i+1] = FT_Get_Char_Index(ftFont, characters[i]);
+    #endif
 
     /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
     std::sort(charIndices.begin(), charIndices.end());

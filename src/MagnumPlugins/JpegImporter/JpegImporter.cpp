@@ -70,6 +70,20 @@ void JpegImporter::doOpenData(const Containers::ArrayReference<const unsigned ch
 
 UnsignedInt JpegImporter::doImage2DCount() const { return 1; }
 
+#ifdef CORRADE_GCC44_COMPATIBILITY
+namespace {
+    struct ErrorManager {
+        jpeg_error_mgr jpegErrorManager;
+        std::jmp_buf setjmpBuffer;
+    };
+
+    void exiter(j_common_ptr info) {
+        info->err->output_message(info);
+        std::longjmp(reinterpret_cast<ErrorManager*>(info->err)->setjmpBuffer, 1);
+    }
+}
+#endif
+
 std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Initialize structures */
     jpeg_decompress_struct file;
@@ -78,15 +92,23 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
 
     /* Fugly error handling stuff */
     /** @todo Get rid of this crap */
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     struct ErrorManager {
         jpeg_error_mgr jpegErrorManager;
         std::jmp_buf setjmpBuffer;
     } errorManager;
+    #else
+    ErrorManager errorManager;
+    #endif
     file.err = jpeg_std_error(&errorManager.jpegErrorManager);
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     errorManager.jpegErrorManager.error_exit = [](j_common_ptr info) {
         info->err->output_message(info);
         std::longjmp(reinterpret_cast<ErrorManager*>(info->err)->setjmpBuffer, 1);
     };
+    #else
+    errorManager.jpegErrorManager.error_exit = exiter;
+    #endif
     if(setjmp(errorManager.setjmpBuffer)) {
         Error() << "Trade::JpegImporter::image2D(): error while reading JPEG file";
 

@@ -69,6 +69,14 @@ void PngImporter::doOpenFile(const std::string& filename) {
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
+#ifdef CORRADE_GCC44_COMPATIBILITY
+namespace {
+    void reader(png_structp file, png_bytep data, png_size_t length) {
+        reinterpret_cast<std::istream*>(png_get_io_ptr(file))->read(reinterpret_cast<char*>(data), length);
+    }
+}
+#endif
+
 std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     /* Verify file signature */
     png_byte signature[8];
@@ -98,9 +106,13 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     }
 
     /* Set function for reading from std::istream */
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     png_set_read_fn(file, _in, [](png_structp file, png_bytep data, png_size_t length) {
         reinterpret_cast<std::istream*>(png_get_io_ptr(file))->read(reinterpret_cast<char*>(data), length);
     });
+    #else
+    png_set_read_fn(file, _in, reader);
+    #endif
 
     /* The signature is already read */
     png_set_sig_bytes(file, 8);
