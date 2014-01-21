@@ -65,6 +65,8 @@ cd build-emscripten-${compatibility}
 
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_MODULE_PATH="${WORKSPACE}/toolchains/modules" \
+    -DCMAKE_TOOLCHAIN_FILE="../toolchains/generic/Emscripten.cmake" \
     -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/emscripten-${compatibility}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/emscripten-${compatibility} \
   `#-DWITH_COLLADAIMPORTER=ON` \
