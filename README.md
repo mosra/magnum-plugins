@@ -13,11 +13,12 @@ Minimal dependencies
 --------------------
 
 *   C++ compiler with good C++11 support. Currently there are two compilers
-    which are tested to support everything needed: **GCC** >= 4.6 and **Clang**
-    >= 3.1. On Windows you can use **MinGW**, Visual Studio compiler still
-    lacks some needed features.
+    which are tested to have everything needed: **GCC** >= 4.6 and **Clang**
+    >= 3.1. On Windows you can use **MinGW**. GCC 4.5, 4.4 and **MSVC** 2013
+    support involves some ugly workarounds and thus is available only in
+    `compatibility` branch.
 *   **CMake** >= 2.8.8
-*   **Magnum** - The engine itself
+*   **Corrade**, **Magnum** -- The engine itself
 
 Compilation, installation
 -------------------------
@@ -49,11 +50,12 @@ CONTACT
 Want to learn more about the library? Found a bug or want to tell me an awesome
 idea? Feel free to visit my website or contact me at:
 
-*   Website - http://mosra.cz/blog/magnum.php
-*   GitHub - https://github.com/mosra/magnum-plugins
-*   Twitter - https://twitter.com/czmosra
-*   E-mail - mosra@centrum.cz
-*   Jabber - mosra@jabbim.cz
+*   Website -- http://mosra.cz/blog/magnum.php
+*   GitHub -- https://github.com/mosra/magnum-plugins
+*   Google Groups -- https://groups.google.com/forum/#!forum/magnum-engine
+*   Twitter -- https://twitter.com/czmosra
+*   E-mail -- mosra@centrum.cz
+*   Jabber -- mosra@jabbim.cz
 
 LICENSE
 =======

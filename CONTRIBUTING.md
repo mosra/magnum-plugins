@@ -16,12 +16,7 @@ Code contribution
     surrounding code and avoid any trailing whitespace. When in doubt, consult
     coding guidelines, which are available also [online](http://mosra.cz/blog/magnum-doc/coding-style.html).
 *   Document your code. When updating or adding new API, make sure that Doxygen
-    documentation is up to date. Run
-
-        doxygen
-
-    in project root to generate the documentation and check that your
-    modifications didn't add any warnings.
+    documentation is up to date.
 *   Build unit tests (`-DBUILD_TESTS=ON` parameter to CMake) and run them
     using
 
@@ -44,7 +39,8 @@ Code contribution
         /*
             This file is part of Magnum.
 
-            Copyright © 2010, 2011, 2012, 2013 Vladimír Vondruš <mosra@centrum.cz>
+            Copyright © 2010, 2011, 2012, 2013, 2014
+                      Vladimír Vondruš <mosra@centrum.cz>
             Copyright © YEAR YOUR_NAME <your@mail.com>
 
             Permission is hereby granted, free of charge, to any person obtaining a
@@ -53,8 +49,9 @@ Code contribution
 Contact
 -------
 
-*   Website - http://mosra.cz/blog/magnum.php
-*   GitHub - https://github.com/mosra/magnum-plugins
-*   Twitter - https://twitter.com/czmosra
-*   E-mail - mosra@centrum.cz
-*   Jabber - mosra@jabbim.cz
+*   Website -- http://mosra.cz/blog/magnum.php
+*   GitHub -- https://github.com/mosra/magnum-plugins
+*   Google Groups -- https://groups.google.com/forum/#!forum/magnum-engine
+*   Twitter -- https://twitter.com/czmosra
+*   E-mail -- mosra@centrum.cz
+*   Jabber -- mosra@jabbim.cz

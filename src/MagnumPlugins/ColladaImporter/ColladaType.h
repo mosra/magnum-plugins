@@ -1,3 +1,5 @@
+#ifndef Magnum_Trade_Implementation_ColladaType_h
+#define Magnum_Trade_Implementation_ColladaType_h
 /*
     This file is part of Magnum.
 
@@ -23,6 +25,20 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @dir magnum-plugins/src/MagnumPlugins
- * @brief %Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
- */
+#include <QtCore/QString>
+#include <Magnum/Magnum.h>
+
+namespace Magnum { namespace Trade { namespace Implementation {
+
+template<class T> struct ColladaType;
+
+template<> struct ColladaType<UnsignedInt> {
+    static UnsignedInt fromString(const QString& str) { return str.toUInt(); }
+};
+template<> struct ColladaType<Float> {
+    static Float fromString(const QString& str) { return str.toFloat(); }
+};
+
+}}}
+
+#endif

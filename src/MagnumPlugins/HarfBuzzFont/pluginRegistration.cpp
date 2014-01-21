@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @dir magnum-plugins/src/MagnumPlugins
- * @brief %Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
- */
+#include "MagnumPlugins/HarfBuzzFont/HarfBuzzFont.h"
+
+CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont,
+    "cz.mosra.magnum.Text.AbstractFont/0.2.3")

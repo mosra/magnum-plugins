@@ -1,15 +1,3 @@
-# - Find HarfBuzz
-#
-# This module tries to find HarfBuzz library and then defines:
-#  HARFBUZZ_FOUND          - True if HarfBuzz library is found
-#  HARFBUZZ_INCLUDE_DIRS   - Include dirs
-#  HARFBUZZ_LIBRARIES      - HarfBuzz libraries
-#
-# Additionally these variables are defined for internal usage:
-#  HARFBUZZ_INCLUDE_DIR    - Include dir (w/o dependencies)
-#  HARFBUZZ_LIBRARY        - HarfBuzz library (w/o dependencies)
-#
-
 #
 #   This file is part of Magnum.
 #
@@ -35,24 +23,34 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Library
-find_library(HARFBUZZ_LIBRARY NAMES harfbuzz)
+find_package(PNG REQUIRED)
 
-# Include dir
-find_path(HARFBUZZ_INCLUDE_DIR
-    NAMES hb.h
-    PATH_SUFFIXES harfbuzz
-)
+include_directories(${PNG_INCLUDE_DIRS})
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args("HarfBuzz" DEFAULT_MSG
-    HARFBUZZ_LIBRARY
-    HARFBUZZ_INCLUDE_DIR
-)
+set(PngImporter_SOURCES
+    PngImporter.cpp)
 
-set(HARFBUZZ_INCLUDE_DIRS ${HARFBUZZ_INCLUDE_DIR})
-set(HARFBUZZ_LIBRARIES ${HARFBUZZ_LIBRARY})
+set(PngImporter_HEADERS
+    PngImporter.h)
 
-mark_as_advanced(FORCE
-    HARFBUZZ_LIBRARY
-    HARFBUZZ_INCLUDE_DIR)
+add_library(PngImporterObjects OBJECT ${PngImporter_SOURCES})
+set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DPngImporterObjects_EXPORTS")
+
+add_plugin(PngImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
+    PngImporter.conf
+    $<TARGET_OBJECTS:PngImporterObjects>
+    pluginRegistration.cpp)
+target_link_libraries(PngImporter
+    ${MAGNUM_LIBRARIES}
+    ${PNG_LIBRARIES})
+
+install(FILES ${PngImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImporter)
+
+if(BUILD_TESTS)
+    add_library(PngImporterTestLib SHARED $<TARGET_OBJECTS:PngImporterObjects>)
+    target_link_libraries(PngImporterTestLib
+        ${MAGNUM_LIBRARIES}
+        ${PNG_LIBRARIES})
+
+    add_subdirectory(Test)
+endif()

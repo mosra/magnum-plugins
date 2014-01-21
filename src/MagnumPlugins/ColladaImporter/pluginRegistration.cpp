@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @dir magnum-plugins/src/MagnumPlugins
- * @brief %Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
- */
+#include "ColladaImporter.h"
+
+CORRADE_PLUGIN_REGISTER(ColladaImporter, Magnum::Trade::ColladaImporter,
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3")

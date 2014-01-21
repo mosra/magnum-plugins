@@ -1,7 +1,8 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013 Vladimír Vondruš <mosra@centrum.cz>
+#   Copyright © 2010, 2011, 2012, 2013, 2014
+#             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -23,24 +24,7 @@
 #
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS} ${MAGNUM_PLUGINS_INCLUDE_DIR})
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
-
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
-
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
-
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
+add_subdirectory(MagnumPlugins)

@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @dir magnum-plugins/src/MagnumPlugins
- * @brief %Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
- */
+#include "MagnumPlugins/PngImporter/PngImporter.h"
+
+CORRADE_PLUGIN_REGISTER(PngImporter, Magnum::Trade::PngImporter,
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3")

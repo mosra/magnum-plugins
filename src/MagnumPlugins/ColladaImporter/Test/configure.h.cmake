@@ -23,6 +23,4 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @dir magnum-plugins/src/MagnumPlugins
- * @brief %Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
- */
+#define COLLADAIMPORTER_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ColladaImporterTestFiles/"

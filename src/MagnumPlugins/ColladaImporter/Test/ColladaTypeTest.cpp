@@ -23,6 +23,33 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @dir magnum-plugins/src/MagnumPlugins
- * @brief %Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
- */
+#include <Corrade/TestSuite/Tester.h>
+
+#include "MagnumPlugins/ColladaImporter/ColladaType.h"
+
+namespace Magnum { namespace Trade { namespace Test {
+
+class ColladaTypeTest: public TestSuite::Tester {
+    public:
+        ColladaTypeTest();
+
+        void gluint();
+        void glfloat();
+};
+
+ColladaTypeTest::ColladaTypeTest() {
+    addTests({&ColladaTypeTest::gluint,
+              &ColladaTypeTest::glfloat});
+}
+
+void ColladaTypeTest::gluint() {
+    CORRADE_COMPARE(Implementation::ColladaType<UnsignedInt>::fromString("123456"), 123456);
+}
+
+void ColladaTypeTest::glfloat() {
+    CORRADE_COMPARE(Implementation::ColladaType<Float>::fromString("3.14"), 3.14f);
+}
+
+}}}
+
+CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaTypeTest)

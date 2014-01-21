@@ -1,15 +1,3 @@
-# - Find HarfBuzz
-#
-# This module tries to find HarfBuzz library and then defines:
-#  HARFBUZZ_FOUND          - True if HarfBuzz library is found
-#  HARFBUZZ_INCLUDE_DIRS   - Include dirs
-#  HARFBUZZ_LIBRARIES      - HarfBuzz libraries
-#
-# Additionally these variables are defined for internal usage:
-#  HARFBUZZ_INCLUDE_DIR    - Include dir (w/o dependencies)
-#  HARFBUZZ_LIBRARY        - HarfBuzz library (w/o dependencies)
-#
-
 #
 #   This file is part of Magnum.
 #
@@ -35,24 +23,41 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Library
-find_library(HARFBUZZ_LIBRARY NAMES harfbuzz)
+find_package(Magnum REQUIRED Text TextureTools)
+find_package(Freetype REQUIRED)
 
-# Include dir
-find_path(HARFBUZZ_INCLUDE_DIR
-    NAMES hb.h
-    PATH_SUFFIXES harfbuzz
-)
+include_directories(${FREETYPE_INCLUDE_DIRS})
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args("HarfBuzz" DEFAULT_MSG
-    HARFBUZZ_LIBRARY
-    HARFBUZZ_INCLUDE_DIR
-)
+set(FreeTypeFont_SRCS
+    FreeTypeFont.cpp)
 
-set(HARFBUZZ_INCLUDE_DIRS ${HARFBUZZ_INCLUDE_DIR})
-set(HARFBUZZ_LIBRARIES ${HARFBUZZ_LIBRARY})
+set(FreeTypeFont_HEADERS
+    FreeTypeFont.h)
 
-mark_as_advanced(FORCE
-    HARFBUZZ_LIBRARY
-    HARFBUZZ_INCLUDE_DIR)
+add_library(FreeTypeFontObjects OBJECT ${FreeTypeFont_SRCS})
+set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFontObjects_EXPORTS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+
+add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
+    FreeTypeFont.conf
+    $<TARGET_OBJECTS:FreeTypeFontObjects>
+    pluginRegistration.cpp)
+target_link_libraries(FreeTypeFont
+    ${MAGNUM_LIBRARIES}
+    ${MAGNUM_TEXT_LIBRARIES}
+    ${FREETYPE_LIBRARIES})
+
+install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
+
+# The lib is needed by non-GL tests
+if(BUILD_TESTS)
+    add_library(FreeTypeFontTestLib SHARED $<TARGET_OBJECTS:FreeTypeFontObjects>)
+    target_link_libraries(FreeTypeFontTestLib
+        ${MAGNUM_LIBRARIES}
+        ${MAGNUM_TEXT_LIBRARIES}
+        ${MAGNUM_TEXTURETOOLS_LIBRARIES}
+        ${FREETYPE_LIBRARIES})
+endif()
+
+if(BUILD_GL_TESTS)
+    add_subdirectory(Test)
+endif()
