@@ -156,7 +156,9 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene/@id/string()");
     query.evaluateTo(&tmpList);
     d->scenes.reserve(tmpList.size());
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     d->scenesForName.reserve(tmpList.size());
+    #endif
     for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         std::string name = it->trimmed().toStdString();
         d->scenes.push_back(name);
@@ -172,7 +174,9 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->objects.reserve(tmpList.size());
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     d->objectsForName.reserve(tmpList.size());
+    #endif
     for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         std::string name = it->trimmed().toStdString();
         d->objects.push_back(name);
@@ -187,7 +191,9 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_cameras/camera/@id/string()");
     tmpList.clear();
     query.evaluateTo(&tmpList);
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     d->camerasForName.reserve(tmpList.size());
+    #endif
     for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         #ifndef CORRADE_GCC46_COMPATIBILITY
         d->camerasForName.emplace(it->trimmed().toStdString(), d->camerasForName.size());
@@ -200,7 +206,9 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.setQuery(namespaceDeclaration + "/COLLADA/library_lights/light/@id/string()");
     tmpList.clear();
     query.evaluateTo(&tmpList);
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     d->lightsForName.reserve(tmpList.size());
+    #endif
     for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         #ifndef CORRADE_GCC46_COMPATIBILITY
         d->lightsForName.emplace(it->trimmed().toStdString(), d->lightsForName.size());
@@ -214,7 +222,9 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->meshes.reserve(tmpList.size());
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     d->meshesForName.reserve(tmpList.size());
+    #endif
     for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         std::string name = it->trimmed().toStdString();
         d->meshes.push_back(name);
@@ -230,7 +240,9 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->materials.reserve(tmpList.size());
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     d->materialsForName.reserve(tmpList.size());
+    #endif
     for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         std::string name = it->trimmed().toStdString();
         d->materials.push_back(name);
@@ -246,7 +258,9 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->textures.reserve(tmpList.size());
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     d->materialsForName.reserve(tmpList.size());
+    #endif
     for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         std::string name = it->trimmed().toStdString();
         d->textures.push_back(name);
@@ -262,7 +276,9 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     tmpList.clear();
     query.evaluateTo(&tmpList);
     d->images2D.reserve(tmpList.size());
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     d->images2DForName.reserve(tmpList.size());
+    #endif
     for(auto it = tmpList.begin(); it != tmpList.end(); ++it) {
         std::string name = it->trimmed().toStdString();
         d->images2D.push_back(name);
