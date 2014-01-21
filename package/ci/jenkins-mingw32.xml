@@ -77,9 +77,9 @@ cd build-mingw32-${libraries}-${compatibility}
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=../toolchains/archlinux/basic-mingw32.cmake \
-    -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/mingw32-${libraries};${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility}" \
+    -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility} \
-    -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/mingw32-${libraries}/lib;${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility}/lib" \
+    -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility}/lib" \
   `#-DWITH_COLLADAIMPORTER=ON` \
     -DWITH_FREETYPEFONT=ON \
   `#-DWITH_HARFBUZZFONT=ON` \
