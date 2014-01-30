@@ -29,7 +29,6 @@
  * @brief Class Magnum::Trade::ColladaImporter
  */
 
-#include <unordered_map>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "MagnumPlugins/ColladaImporter/ColladaType.h"
@@ -70,8 +69,6 @@ class ColladaImporter: public AbstractImporter {
 
     private:
         struct Document;
-        class IndexHash;
-        class IndexEqual;
 
         Features doFeatures() const override;
 
@@ -131,7 +128,7 @@ class ColladaImporter: public AbstractImporter {
          * @param indexCombinations Index combinations for building the array
          * @return Resulting array
          */
-        template<class T> std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations);
+        template<class T> std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, UnsignedInt stride, const std::vector<UnsignedInt>& interleavedIndexArrays);
 
         std::string instanceName(const QString& name, const QString& instanceTag);
 

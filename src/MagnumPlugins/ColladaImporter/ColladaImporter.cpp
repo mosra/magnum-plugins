@@ -25,15 +25,15 @@
 
 #include "ColladaImporter.h"
 
-#include <cstring>
+#include <unordered_map>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 #include <QtXmlPatterns/QXmlQuery>
 #include <Corrade/Utility/Directory.h>
-#include <Corrade/Utility/MurmurHash2.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Constants.h>
+#include <Magnum/MeshTools/CombineIndexedArrays.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
@@ -68,32 +68,6 @@ struct ColladaImporter::Document {
         images2DForName;
 
     QXmlQuery query;
-};
-
-class ColladaImporter::IndexHash {
-    public:
-        IndexHash(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
-
-        std::size_t operator()(UnsignedInt key) const {
-            return *reinterpret_cast<const std::size_t*>(Utility::MurmurHash2()(reinterpret_cast<const char*>(indices.data()+key*stride), sizeof(UnsignedInt)*stride).byteArray());
-        }
-
-    private:
-        const std::vector<UnsignedInt>& indices;
-        UnsignedInt stride;
-};
-
-class ColladaImporter::IndexEqual {
-    public:
-        IndexEqual(const std::vector<UnsignedInt>& indices, UnsignedInt stride): indices(indices), stride(stride) {}
-
-        bool operator()(UnsignedInt a, UnsignedInt b) const {
-            return std::memcmp(indices.data()+a*stride, indices.data()+b*stride, sizeof(UnsignedInt)*stride) == 0;
-        }
-
-    private:
-        const std::vector<UnsignedInt>& indices;
-        UnsignedInt stride;
 };
 
 const QString ColladaImporter::namespaceDeclaration =
@@ -493,20 +467,14 @@ std::optional<MeshData3D> ColladaImporter::doMesh3D(const UnsignedInt id) {
     d->query.evaluateTo(&tmp);
     UnsignedInt stride = Implementation::ColladaType<UnsignedInt>::fromString(tmp);
 
-    /* Get mesh indices */
+    /* Get mesh index arrays */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/p/string()").arg(id+1));
     d->query.evaluateTo(&tmp);
-    std::vector<UnsignedInt> originalIndices = Implementation::Utility::parseArray<UnsignedInt>(tmp, vertexCount*stride);
+    std::vector<UnsignedInt> interleavedIndexArrays = Implementation::Utility::parseArray<UnsignedInt>(tmp, vertexCount*stride);
 
-    /** @todo assert size()%stride == 0 */
-
-    /* Get unique combinations of vertices, build resulting index array. Key
-       is position of unique index combination from original vertex array,
-       value is resulting index. */
-    std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual> indexCombinations(originalIndices.size()/stride, IndexHash(originalIndices, stride), IndexEqual(originalIndices, stride));
+    /* Combine index arrays */
     std::vector<UnsignedInt> combinedIndices;
-    for(std::size_t i = 0, end = originalIndices.size()/stride; i != end; ++i)
-        combinedIndices.push_back(indexCombinations.insert(std::make_pair(i, indexCombinations.size())).first->second);
+    std::tie(combinedIndices, interleavedIndexArrays) = MeshTools::combineIndexArrays(interleavedIndexArrays, stride);
 
     /* Convert quads to triangles */
     std::vector<UnsignedInt> indices;
@@ -543,9 +511,9 @@ std::optional<MeshData3D> ColladaImporter::doMesh3D(const UnsignedInt id) {
 
     /* Build vertex array */
     UnsignedInt vertexOffset = attributeOffset(id, "VERTEX");
-    std::vector<Vector3> vertices(indexCombinations.size());
-    for(auto i: indexCombinations)
-        vertices[i.second] = originalVertices[originalIndices[i.first*stride+vertexOffset]];
+    std::vector<Vector3> vertices(interleavedIndexArrays.size()/stride);
+    for(UnsignedInt i = 0; i != vertices.size(); ++i)
+        vertices[i] = originalVertices[interleavedIndexArrays[i*stride + vertexOffset]];
 
     QStringList tmpList;
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry[%0]/mesh/polylist/input/@semantic/string()").arg(id+1));
@@ -558,11 +526,11 @@ std::optional<MeshData3D> ColladaImporter::doMesh3D(const UnsignedInt id) {
 
         /* Normals */
         else if(attribute == "NORMAL")
-            normals.push_back(buildAttributeArray<Vector3>(id, "NORMAL", normals.size(), originalIndices, stride, indexCombinations));
+            normals.push_back(buildAttributeArray<Vector3>(id, "NORMAL", normals.size(), stride, interleavedIndexArrays));
 
         /* 2D texture coords */
         else if(attribute == "TEXCOORD")
-            textureCoords2D.push_back(buildAttributeArray<Vector2>(id, "TEXCOORD", textureCoords2D.size(), originalIndices, stride, indexCombinations));
+            textureCoords2D.push_back(buildAttributeArray<Vector2>(id, "TEXCOORD", textureCoords2D.size(), stride, interleavedIndexArrays));
 
         /* Something other */
         else Warning() << "Trade::ColladaImporter::mesh3D():" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
@@ -898,7 +866,7 @@ template<class T> std::vector<T> ColladaImporter::parseSource(const QString& id)
     return output;
 }
 
-template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, const std::vector<UnsignedInt>& originalIndices, UnsignedInt stride, const std::unordered_map<UnsignedInt, UnsignedInt, IndexHash, IndexEqual>& indexCombinations) {
+template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, UnsignedInt stride, const std::vector<UnsignedInt>& interleavedIndexArrays) {
     QString tmp;
 
     /* Original attribute array */
@@ -911,9 +879,9 @@ template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedIn
     UnsignedInt offset = attributeOffset(meshId, attribute, id);
 
     /* Build resulting array */
-    std::vector<T> array(indexCombinations.size());
-    for(auto i: indexCombinations)
-        array[i.second] = originalArray[originalIndices[i.first*stride+offset]];
+    std::vector<T> array(interleavedIndexArrays.size()/stride);
+    for(UnsignedInt i = 0; i != array.size(); ++i)
+        array[i] = originalArray[interleavedIndexArrays[i*stride+offset]];
 
     return std::move(array);
 }
