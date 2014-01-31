@@ -1,0 +1,25 @@
+Source: magnum-plugins
+Priority: optional
+Maintainer: Vladimír Vondruš <mosra@centrum.cz>
+Build-Depends: debhelper (>= 9), cmake (>= 2.8.8)
+Standards-Version: 3.9.2
+Section: libs
+Homepage: http://mosra.cz/blog/magnum.php
+Vcs-Git: git://github.com/mosra/magnum-plugins.git
+Vcs-Browser: https://github.com/mosra/magnum-plugins
+
+Package: magnum-plugins-dev
+Section: libdevel
+Architecture: any
+Depends: magnum-plugins (= ${binary:Version}), magnum-dev, libjpeg62-dev, libpng12-dev, libqt4-dev, libfreetype6-dev
+Description: Magnum Plugins development files
+ Headers and tools needed for developing with Magnum Plugins.
+
+Package: magnum-plugins
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, magnum, libjpeg62, libpng12-0, libqt4-xmlpatterns, libfreetype6
+Description: Plugins for Magnum OpenGL graphics engine
+ Magnum is 2D/3D graphics engine written in C++11 and modern OpenGL. Its goal
+ is to simplify low-level graphics development and interaction with OpenGL
+ using recent C++11 features and to abstract away platform-specific issues.
