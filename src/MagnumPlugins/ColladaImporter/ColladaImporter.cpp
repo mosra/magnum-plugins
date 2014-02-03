@@ -397,19 +397,28 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
             return nullptr;
         }
 
-        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/instance_geometry/bind_material/technique_common/instance_material/@target/string()").arg(name));
+        d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/instance_geometry/bind_material/technique_common/count(instance_material)").arg(name));
         d->query.evaluateTo(&tmp);
-        std::string materialName = tmp.trimmed().mid(1).toStdString();
 
-        /* If the mesh doesn't have bound material, add default one, else find
-           its ID */
-        /** @todo Solution for unknown materials etc.: -1 ? */
-        Int materialId = 0;
-        if(!materialName.empty()) {
-            materialId = doMaterialForName(materialName);
-            if(materialId == -1) {
-                Error() << "Trade::ColladaImporter::object3D(): material" << '"'+materialName+'"' << "was not found";
-                return nullptr;
+        const Int materialCount = tmp.toInt();
+        Int materialId = -1;
+        if(materialCount > 1) {
+            Error() << "Trade::ColladaImporter::object3D(): multiple materials per object are not supported";
+            return nullptr;
+        } else if(materialCount != 0) {
+            d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/instance_geometry/bind_material/technique_common/instance_material/@target/string()").arg(name));
+            d->query.evaluateTo(&tmp);
+            std::string materialName = tmp.trimmed().mid(1).toStdString();
+
+            /* If the mesh doesn't have bound material, add default one, else find
+               its ID */
+            /** @todo Solution for unknown materials etc.: -1 ? */
+            if(!materialName.empty()) {
+                materialId = doMaterialForName(materialName);
+                if(materialId == -1) {
+                    Error() << "Trade::ColladaImporter::object3D(): material" << '"'+materialName+'"' << "was not found";
+                    return nullptr;
+                }
             }
         }
 
