@@ -50,6 +50,9 @@ class ColladaImporterTest: public TestSuite::Tester {
         void parseSource();
 
         void scene();
+        void objectNoMaterial();
+        void objectMultipleMaterials();
+
         void mesh();
         void material();
         void texture();
@@ -62,6 +65,9 @@ ColladaImporterTest::ColladaImporterTest() {
               &ColladaImporterTest::parseSource,
 
               &ColladaImporterTest::scene,
+              &ColladaImporterTest::objectNoMaterial,
+              &ColladaImporterTest::objectMultipleMaterials,
+
               &ColladaImporterTest::mesh,
               &ColladaImporterTest::material,
               &ColladaImporterTest::texture,
@@ -160,6 +166,27 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::object3D(): \"instance_wrong\" instance type not supported\n"
                                  "Trade::ColladaImporter::object3D(): mesh \"NonexistentMesh\" was not found\n"
                                  "Trade::ColladaImporter::object3D(): material \"NonexistentMaterial\" was not found\n");
+}
+
+void ColladaImporterTest::objectNoMaterial() {
+    ColladaImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "object-no-material.dae")));
+    CORRADE_COMPARE(importer.object3DCount(), 1);
+
+    std::unique_ptr<ObjectData3D> object = importer.object3D(0);
+    CORRADE_VERIFY(object);
+    CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object.get())->material(), -1);
+}
+
+void ColladaImporterTest::objectMultipleMaterials() {
+    ColladaImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "object-multiple-materials.dae")));
+    CORRADE_COMPARE(importer.object3DCount(), 1);
+
+    std::ostringstream debug;
+    Error::setOutput(&debug);
+    CORRADE_VERIFY(!importer.object3D(0));
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::object3D(): multiple materials per object are not supported\n");
 }
 
 void ColladaImporterTest::mesh() {
