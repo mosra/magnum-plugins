@@ -23,7 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED TgaImporter)
+find_package(Magnum REQUIRED TgaImporter MeshTools)
 find_package(Qt4 REQUIRED)
 
 # Silence pedantic warnings in Qt headers
@@ -44,6 +44,7 @@ add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
     pluginRegistration.cpp)
 target_link_libraries(ColladaImporter
     ${MAGNUM_LIBRARIES}
+    ${MAGNUM_MESHTOOLS_LIBRARIES}
     ${QT_QTCORE_LIBRARY}
     ${QT_QTXMLPATTERNS_LIBRARY})
 
@@ -57,6 +58,7 @@ if(BUILD_TESTS)
     add_library(ColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
     target_link_libraries(ColladaImporterTestLib
         ${MAGNUM_LIBRARIES}
+        ${MAGNUM_MESHTOOLS_LIBRARIES}
         ${QT_QTCORE_LIBRARY}
         ${QT_QTXMLPATTERNS_LIBRARY}
         ${MAGNUM_TGAIMPORTER_LIBRARY})
