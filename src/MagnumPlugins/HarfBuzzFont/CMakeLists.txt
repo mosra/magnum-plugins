@@ -38,7 +38,7 @@ set(HarfBuzzFont_HEADERS
 add_library(HarfBuzzFontObjects OBJECT ${HarfBuzzFont_SRCS})
 set_target_properties(HarfBuzzFontObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
-add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
+add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_FONT_RELEASE_INSTALL_DIR}
     HarfBuzzFont.conf
     $<TARGET_OBJECTS:HarfBuzzFontObjects>
     pluginRegistration.cpp)

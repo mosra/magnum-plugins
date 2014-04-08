@@ -73,6 +73,12 @@ For each plugin is then defined:
 -   `MAGNUMPLUGINS_*_LIBRARIES` -- Plugin library and dependent libraries
 -   `MAGNUMPLUGINS_*_INCLUDE_DIRS` -- Include dirs of plugin dependencies
 
+The package is found if either debug or release version of each requested
+plugin is found. If both debug and release plugins are found, proper version is
+chosen based on actual build configuration of the project (i.e. `Debug` build
+is linked to debug plugins, `Release` build to release plugins). See @ref cmake
+for more information about autodetection of `MAGNUM_PLUGINS_DIR`.
+
 Additionally these variables are defined for internal usage:
 
 -   `MAGNUMPLUGINS_INCLUDE_DIR` -- Plugin include dir (w/o dependencies)

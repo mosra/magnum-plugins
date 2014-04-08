@@ -19,12 +19,21 @@
 #  MAGNUMPLUGINS_*_LIBRARIES    - Plugin library and dependent libraries
 #  MAGNUMPLUGINS_*_INCLUDE_DIRS - Include dirs of plugin dependencies
 #
-# If `MAGNUM_BUILD_DEPRECATED` is defined, `MAGNUM_PLUGINS_INCLUDE_DIRS`
-# contains include dir for plugins (i.e. instead of `MagnumPlugins/` prefix)
-# and include dirs of dependencies.
+# The package is found if either debug or release version of each requested
+# plugin is found. If both debug and release plugins are found, proper version
+# is chosen based on actual build configuration of the project (i.e. Debug
+# build is linked to debug plugins, Release build to release plugins). See
+# FindMagnum.cmake for more information about autodetection of
+# MAGNUM_PLUGINS_DIR.
+#
+# If MAGNUM_BUILD_DEPRECATED is defined, MAGNUM_PLUGINS_INCLUDE_DIRS contains
+# include dir for plugins (i.e. instead of MagnumPlugins/ prefix) and include
+# dirs of dependencies.
 #
 # Additionally these variables are defined for internal usage:
 #  MAGNUMPLUGINS_*_LIBRARY      - Plugin library (w/o dependencies)
+#  MAGNUMPLUGINS_*_LIBRARY_DEBUG - Debug version of given library, if found
+#  MAGNUMPLUGINS_*_LIBRARY_RELEASE - Release version of given library, if found
 #
 
 #
@@ -77,8 +86,27 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     # accidentaly break something else
     set(_tmp_prefixes ${CMAKE_FIND_LIBRARY_PREFIXES})
     set(CMAKE_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES} "")
-    find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY ${component}
+
+    # Try to find both debug and release version. Dynamic and static debug
+    # libraries are on different places.
+    find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG ${component}
+        PATH_SUFFIXES magnum-d/${_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX})
+    find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG ${component}-d
         PATH_SUFFIXES magnum/${_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX})
+    find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE ${component}
+        PATH_SUFFIXES magnum/${_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX})
+
+    # Set the _LIBRARY variable based on what was found
+    if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG AND MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE)
+        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY
+            debug ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG}
+            optimized ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE})
+    elseif(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG)
+        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG})
+    elseif(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE)
+        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE})
+    endif()
+
     set(CMAKE_FIND_LIBRARY_PREFIXES ${_tmp_prefixes})
 
     # Find include path
@@ -150,7 +178,11 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         set(MagnumPlugins_${component}_FOUND TRUE)
 
         # Don't expose variables w/o dependencies to end users
-        mark_as_advanced(FORCE MAGNUMPLUGINS_${_COMPONENT}_LIBRARY _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
+        mark_as_advanced(FORCE
+            MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG
+            MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE
+            MAGNUMPLUGINS_${_COMPONENT}_LIBRARY
+            _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
     else()
         set(MagnumPlugins_${component}_FOUND FALSE)
     endif()
