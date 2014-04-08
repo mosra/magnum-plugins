@@ -79,11 +79,6 @@ chosen based on actual build configuration of the project (i.e. `Debug` build
 is linked to debug plugins, `Release` build to release plugins). See @ref cmake
 for more information about autodetection of `MAGNUM_PLUGINS_DIR`.
 
-Additionally these variables are defined for internal usage:
-
--   `MAGNUMPLUGINS_INCLUDE_DIR` -- Plugin include dir (w/o dependencies)
--   `MAGNUMPLUGINS_*_LIBRARY` -- Plugin library (w/o dependencies)
-
 See also @ref cmake "Magnum usage with CMake" for more information.
 
 */
