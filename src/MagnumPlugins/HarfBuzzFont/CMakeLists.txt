@@ -55,13 +55,13 @@ endif()
 install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
 if(BUILD_GL_TESTS)
-    add_library(HarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
-    target_link_libraries(HarfBuzzFontTestLib
+    add_library(MagnumHarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
+    target_link_libraries(MagnumHarfBuzzFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${HARFBUZZ_LIBRARIES}
-        FreeTypeFontTestLib)
+        MagnumFreeTypeFontTestLib)
 
     add_subdirectory(Test)
 endif()
