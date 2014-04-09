@@ -64,5 +64,14 @@ if(BUILD_TESTS)
         ${QT_QTXMLPATTERNS_LIBRARY}
         ${MAGNUM_TGAIMPORTER_LIBRARY})
 
+    # On Windows we need to install first and then run the tests to avoid "DLL
+    # not found" hell, thus we need to install this too
+    if(WIN32 AND NOT CMAKE_CROSSCOMPILING)
+        install(TARGETS MagnumColladaImporterTestLib
+            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
+            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
+            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
+    endif()
+
     add_subdirectory(Test)
 endif()

@@ -58,6 +58,15 @@ if(BUILD_TESTS)
         ${MAGNUM_TEXTURETOOLS_LIBRARIES}
         ${MAGNUM_LIBRARIES}
         ${FREETYPE_LIBRARIES})
+
+    # On Windows we need to install first and then run the tests to avoid "DLL
+    # not found" hell, thus we need to install this too
+    if(WIN32 AND NOT CMAKE_CROSSCOMPILING)
+        install(TARGETS MagnumFreeTypeFontTestLib
+            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
+            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
+            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
+    endif()
 endif()
 
 if(BUILD_GL_TESTS)
