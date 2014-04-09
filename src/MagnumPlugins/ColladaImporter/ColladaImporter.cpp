@@ -440,7 +440,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
         Int materialId = -1;
         if(materialCount > 1) {
             Error() << "Trade::ColladaImporter::object3D(): multiple materials per object are not supported";
+            #ifndef CORRADE_GCC45_COMPATIBILITY
             return nullptr;
+            #else
+            return {};
+            #endif
         } else if(materialCount != 0) {
             d->query.setQuery((namespaceDeclaration + "/COLLADA/library_visual_scenes/visual_scene//node[@id='%0']/instance_geometry/bind_material/technique_common/instance_material/@target/string()").arg(name));
             d->query.evaluateTo(&tmp);
@@ -453,7 +457,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
                 materialId = doMaterialForName(materialName);
                 if(materialId == -1) {
                     Error() << "Trade::ColladaImporter::object3D(): material" << '"'+materialName+'"' << "was not found";
+                    #ifndef CORRADE_GCC45_COMPATIBILITY
                     return nullptr;
+                    #else
+                    return {};
+                    #endif
                 }
             }
         }
