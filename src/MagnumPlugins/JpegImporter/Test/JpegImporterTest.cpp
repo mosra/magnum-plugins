@@ -43,7 +43,7 @@ class JpegImporterTest: public TestSuite::Tester {
 };
 
 JpegImporterTest::JpegImporterTest() {
-    addTests({&JpegImporterTest::gray,
+    addTests<JpegImporterTest>({&JpegImporterTest::gray,
               &JpegImporterTest::rgb});
 }
 
