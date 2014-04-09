@@ -56,12 +56,22 @@ install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 if(BUILD_GL_TESTS)
     add_library(MagnumHarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
+    set_target_properties(MagnumHarfBuzzFontTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumHarfBuzzFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${HARFBUZZ_LIBRARIES}
         MagnumFreeTypeFontTestLib)
+
+    # On Windows we need to install first and then run the tests to avoid "DLL
+    # not found" hell, thus we need to install this too
+    if(WIN32 AND NOT CMAKE_CROSSCOMPILING)
+        install(TARGETS MagnumHarfBuzzFontTestLib
+            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
+            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
+            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
+    endif()
 
     add_subdirectory(Test)
 endif()

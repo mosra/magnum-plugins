@@ -48,9 +48,19 @@ install(FILES ${JpegImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 if(BUILD_TESTS)
     add_library(MagnumJpegImporterTestLib SHARED $<TARGET_OBJECTS:JpegImporterObjects>)
+    set_target_properties(MagnumJpegImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumJpegImporterTestLib
         ${MAGNUM_LIBRARIES}
         ${JPEG_LIBRARIES})
+
+    # On Windows we need to install first and then run the tests to avoid "DLL
+    # not found" hell, thus we need to install this too
+    if(WIN32 AND NOT CMAKE_CROSSCOMPILING)
+        install(TARGETS MagnumJpegImporterTestLib
+            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
+            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
+            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
+    endif()
 
     add_subdirectory(Test)
 endif()
