@@ -48,6 +48,7 @@ install(FILES ${PngImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTAL
 
 if(BUILD_TESTS)
     add_library(MagnumPngImporterTestLib SHARED $<TARGET_OBJECTS:PngImporterObjects>)
+    set_target_properties(MagnumPngImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumPngImporterTestLib
         ${MAGNUM_LIBRARIES}
         ${PNG_LIBRARIES})

@@ -56,6 +56,7 @@ install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 if(BUILD_GL_TESTS)
     add_library(MagnumHarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
+    set_target_properties(MagnumHarfBuzzFontTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumHarfBuzzFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}

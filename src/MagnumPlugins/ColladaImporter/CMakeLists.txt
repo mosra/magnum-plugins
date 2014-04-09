@@ -56,6 +56,7 @@ install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_IN
 
 if(BUILD_TESTS)
     add_library(MagnumColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
+    set_target_properties(MagnumColladaImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumColladaImporterTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_MESHTOOLS_LIBRARIES}

@@ -52,6 +52,7 @@ install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)
     add_library(MagnumFreeTypeFontTestLib SHARED $<TARGET_OBJECTS:FreeTypeFontObjects>)
+    set_target_properties(MagnumFreeTypeFontTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumFreeTypeFontTestLib
         ${MAGNUM_TEXT_LIBRARIES}
         ${MAGNUM_TEXTURETOOLS_LIBRARIES}

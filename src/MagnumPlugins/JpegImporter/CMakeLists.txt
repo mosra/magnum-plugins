@@ -48,6 +48,7 @@ install(FILES ${JpegImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 if(BUILD_TESTS)
     add_library(MagnumJpegImporterTestLib SHARED $<TARGET_OBJECTS:JpegImporterObjects>)
+    set_target_properties(MagnumJpegImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumJpegImporterTestLib
         ${MAGNUM_LIBRARIES}
         ${JPEG_LIBRARIES})
