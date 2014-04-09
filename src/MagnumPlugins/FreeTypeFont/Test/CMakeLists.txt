@@ -28,4 +28,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
-corrade_add_test(FreeTypeFontGLTest FreeTypeFontGLTest.cpp LIBRARIES FreeTypeFontTestLib ${GL_TEST_LIBRARIES})
+corrade_add_test(FreeTypeFontGLTest FreeTypeFontGLTest.cpp LIBRARIES MagnumFreeTypeFontTestLib ${GL_TEST_LIBRARIES})

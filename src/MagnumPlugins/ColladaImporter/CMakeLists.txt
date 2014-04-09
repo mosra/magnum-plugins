@@ -38,7 +38,7 @@ set(ColladaImporter_HEADERS
 add_library(ColladaImporterObjects OBJECT ${ColladaImporter_SRCS})
 set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
-add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_INSTALL_DIR}
+add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
     ColladaImporter.conf
     $<TARGET_OBJECTS:ColladaImporterObjects>
     pluginRegistration.cpp)
@@ -55,8 +55,8 @@ endif()
 install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
 
 if(BUILD_TESTS)
-    add_library(ColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
-    target_link_libraries(ColladaImporterTestLib
+    add_library(MagnumColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
+    target_link_libraries(MagnumColladaImporterTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_MESHTOOLS_LIBRARIES}
         ${QT_QTCORE_LIBRARY}

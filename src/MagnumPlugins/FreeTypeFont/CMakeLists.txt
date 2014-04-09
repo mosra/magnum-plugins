@@ -37,7 +37,7 @@ set(FreeTypeFont_HEADERS
 add_library(FreeTypeFontObjects OBJECT ${FreeTypeFont_SRCS})
 set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFontObjects_EXPORTS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
-add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
+add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_FONT_RELEASE_INSTALL_DIR}
     FreeTypeFont.conf
     $<TARGET_OBJECTS:FreeTypeFontObjects>
     pluginRegistration.cpp)
@@ -51,8 +51,8 @@ install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)
-    add_library(FreeTypeFontTestLib SHARED $<TARGET_OBJECTS:FreeTypeFontObjects>)
-    target_link_libraries(FreeTypeFontTestLib
+    add_library(MagnumFreeTypeFontTestLib SHARED $<TARGET_OBJECTS:FreeTypeFontObjects>)
+    target_link_libraries(MagnumFreeTypeFontTestLib
         ${MAGNUM_TEXT_LIBRARIES}
         ${MAGNUM_TEXTURETOOLS_LIBRARIES}
         ${MAGNUM_LIBRARIES}

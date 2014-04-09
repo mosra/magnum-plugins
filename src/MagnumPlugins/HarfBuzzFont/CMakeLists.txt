@@ -38,7 +38,7 @@ set(HarfBuzzFont_HEADERS
 add_library(HarfBuzzFontObjects OBJECT ${HarfBuzzFont_SRCS})
 set_target_properties(HarfBuzzFontObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
-add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_INSTALL_DIR}
+add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_FONT_RELEASE_INSTALL_DIR}
     HarfBuzzFont.conf
     $<TARGET_OBJECTS:HarfBuzzFontObjects>
     pluginRegistration.cpp)
@@ -55,13 +55,13 @@ endif()
 install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
 if(BUILD_GL_TESTS)
-    add_library(HarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
-    target_link_libraries(HarfBuzzFontTestLib
+    add_library(MagnumHarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
+    target_link_libraries(MagnumHarfBuzzFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${HARFBUZZ_LIBRARIES}
-        FreeTypeFontTestLib)
+        MagnumFreeTypeFontTestLib)
 
     add_subdirectory(Test)
 endif()

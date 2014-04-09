@@ -88,7 +88,7 @@ cmake .. \
     -G Ninja
 
 ninja
-ninja install
+ninja install/strip
 ]]>
     </command>
     </hudson.tasks.Shell>

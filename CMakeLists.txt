@@ -56,15 +56,6 @@ if(BUILD_TESTS)
     enable_testing()
 endif()
 
-# Wrapper for creating given plugin type
-macro(add_plugin)
-    if(NOT BUILD_STATIC)
-        corrade_add_plugin(${ARGN})
-    else()
-        corrade_add_static_plugin(${ARGN})
-    endif()
-endmacro()
-
 if(BUILD_GL_TESTS)
     if(UNIX AND (NOT MAGNUM_TARGET_GLES OR MAGNUM_TARGET_DESKTOP_GLES))
         find_package(Magnum REQUIRED WindowlessGlxApplication)

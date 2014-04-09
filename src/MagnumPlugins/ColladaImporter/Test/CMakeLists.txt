@@ -30,4 +30,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 
 corrade_add_test(ColladaImporterTypeTest ColladaTypeTest.cpp LIBRARIES ${QT_QTCORE_LIBRARY})
 corrade_add_test(ColladaImporterUtilityTest UtilityTest.cpp LIBRARIES ${QT_QTCORE_LIBRARY} ${MAGNUM_LIBRARIES})
-corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp LIBRARIES ColladaImporterTestLib)
+corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp LIBRARIES MagnumColladaImporterTestLib)

@@ -25,4 +25,4 @@
 
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
-corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp LIBRARIES HarfBuzzFontTestLib ${GL_TEST_LIBRARIES})
+corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp LIBRARIES MagnumHarfBuzzFontTestLib ${GL_TEST_LIBRARIES})

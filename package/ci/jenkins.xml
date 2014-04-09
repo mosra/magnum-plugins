@@ -139,7 +139,7 @@ cmake .. \
 
 ninja
 ctest --output-on-failure -E GLTest || true
-ninja install
+ninja install/strip
 ]]>
     </command>
     </hudson.tasks.Shell>
