@@ -48,8 +48,8 @@ cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code." OFF "B
 option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
 
 # Check compiler compatibility
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS "4.6.0")
-    message(FATAL_ERROR "Compatibility branch of Magnum Plugins is needed for use with GCC < 4.6. See the documentation for more information.")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS "4.7.0")
+    message(FATAL_ERROR "Compatibility branch of Magnum Plugins is needed for use with GCC < 4.7. See the documentation for more information.")
 elseif(MSVC)
     message(FATAL_ERROR "Compatibility branch of Magnum Plugins is needed for use with MSVC. See the documentation for more information.")
 endif()

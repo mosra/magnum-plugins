@@ -134,11 +134,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->scenes.push_back(name);
-        #ifndef CORRADE_GCC46_COMPATIBILITY
         d->scenesForName.emplace(std::move(name), d->scenesForName.size());
-        #else
-        d->scenesForName.insert({std::move(name), d->scenesForName.size()});
-        #endif
     }
 
     /* Create object name -> object id map */
@@ -150,11 +146,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->objects.push_back(name);
-        #ifndef CORRADE_GCC46_COMPATIBILITY
         d->objectsForName.emplace(std::move(name), d->objectsForName.size());
-        #else
-        d->objectsForName.insert({std::move(name), d->objectsForName.size()});
-        #endif
     }
 
     /* Create camera name -> camera id map */
@@ -163,11 +155,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->camerasForName.reserve(tmpList.size());
     for(const QString& id: tmpList) {
-        #ifndef CORRADE_GCC46_COMPATIBILITY
         d->camerasForName.emplace(id.trimmed().toStdString(), d->camerasForName.size());
-        #else
-        d->camerasForName.insert({id.trimmed().toStdString(), d->camerasForName.size()});
-        #endif
     }
 
     /* Create light name -> light id map */
@@ -176,11 +164,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     query.evaluateTo(&tmpList);
     d->lightsForName.reserve(tmpList.size());
     for(const QString& id: tmpList) {
-        #ifndef CORRADE_GCC46_COMPATIBILITY
         d->lightsForName.emplace(id.trimmed().toStdString(), d->lightsForName.size());
-        #else
-        d->lightsForName.insert({id.trimmed().toStdString(), d->lightsForName.size()});
-        #endif
     }
 
     /* Create mesh name -> mesh id map */
@@ -192,11 +176,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->meshes.push_back(name);
-        #ifndef CORRADE_GCC46_COMPATIBILITY
         d->meshesForName.emplace(std::move(name), d->meshesForName.size());
-        #else
-        d->meshesForName.insert({std::move(name), d->meshesForName.size()});
-        #endif
     }
 
     /* Create material name -> material id map */
@@ -208,11 +188,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->materials.push_back(name);
-        #ifndef CORRADE_GCC46_COMPATIBILITY
         d->materialsForName.emplace(std::move(name), d->materialsForName.size());
-        #else
-        d->materialsForName.insert({std::move(name), d->materialsForName.size()});
-        #endif
     }
 
     /* Create texture name -> texture id map */
@@ -224,11 +200,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->textures.push_back(name);
-        #ifndef CORRADE_GCC46_COMPATIBILITY
         d->texturesForName.emplace(std::move(name), d->texturesForName.size());
-        #else
-        d->texturesForName.insert({std::move(name), d->texturesForName.size()});
-        #endif
     }
 
     /* Create image name -> image id map */
@@ -240,11 +212,7 @@ void ColladaImporter::doOpenFile(const std::string& filename) {
     for(const QString& id: tmpList) {
         std::string name = id.trimmed().toStdString();
         d->images2D.push_back(name);
-        #ifndef CORRADE_GCC46_COMPATIBILITY
         d->images2DForName.emplace(std::move(name), d->images2DForName.size());
-        #else
-        d->images2DForName.insert({std::move(name), d->images2DForName.size()});
-        #endif
     }
 }
 
