@@ -40,6 +40,13 @@
   <customWorkspace>MagnumPlugins</customWorkspace>
   <axes>
     <hudson.matrix.TextAxis>
+      <name>arch</name>
+      <values>
+        <string>32</string>
+        <string>64</string>
+      </values>
+    </hudson.matrix.TextAxis>
+    <hudson.matrix.TextAxis>
       <name>libraries</name>
       <values>
         <string>static</string>
@@ -76,10 +83,10 @@ cd build-mingw32-${libraries}-${compatibility}
 
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_TOOLCHAIN_FILE=../toolchains/archlinux/basic-mingw32.cmake \
-    -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility}" \
-    -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility} \
-    -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/mingw32-${libraries}-${compatibility}/lib" \
+    -DCMAKE_TOOLCHAIN_FILE=../toolchains/archlinux/basic-mingw-w64-${arch}.cmake \
+    -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility}" \
+    -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility} \
+    -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility}/lib" \
   `#-DWITH_COLLADAIMPORTER=ON` \
     -DWITH_FREETYPEFONT=ON \
   `#-DWITH_HARFBUZZFONT=ON` \
@@ -106,7 +113,7 @@ ninja install/strip
     <runSequentially>true</runSequentially>
     <touchStoneCombinationFilter>
 <![CDATA[
-libraries == "dynamic" && compatibility == "deprecated"
+arch == "64" && libraries == "dynamic" && compatibility == "deprecated"
 ]]>
     </touchStoneCombinationFilter>
     <touchStoneResultCondition>

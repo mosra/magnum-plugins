@@ -112,7 +112,7 @@ or `update-job`).
 
 Build is done using **Ninja** build system and everything possible is enabled,
 thus you need also **FreeType**, **HarfBuzz**, **libJPEG**, **libPNG** and
-**Qt4** libraries. It expects that **GCC** >=4.8.2, 4.7, 4.6, 4.5, 4.4 and
+**Qt4** libraries. It expects that **GCC** >= 4.8.1, 4.7, 4.6, 4.5, 4.4 and
 **Clang** are installed and there are **OpenGL**, **OpenGL ES 2.0** and
 **OpenGL ES 3.0** librares as it tries to compile the library with every
 combination of them. You can add/remove the axes in `axes/hudson.matrix.TextAxis`
@@ -121,12 +121,13 @@ or via the web interface later.
 MagnumPlugins-Compatibility-GLTests depend on active X11 session, thus they
 should be run from Jenkins instance running on graphical user session.
 
-There is also MinGW32 and Emscripten configuration, add or update them with the
-commands below. See @ref building-crosscompiling for more information about
-setting up the crosscompilers and `toolchains/` submodule. For Emscripten you
-need also **Node.js** installed to run the tests.
+There is also MinGW-w64, Emscripten and NaCl configuration, add or update them
+with the commands below. See @ref building-crosscompiling for more information
+about setting up the crosscompilers and `toolchains/` submodule. For Emscripten
+you need also **Node.js** installed to run the tests.
 
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-MinGW32 < jenkins-mingw32.xml
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-MinGW-w64 < jenkins-mingw-w64.xml
     java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-Emscripten < jenkins-emscripten.xml
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-NaCl < jenkins-nacl.xml
 */
 }

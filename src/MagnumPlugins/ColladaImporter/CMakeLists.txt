@@ -48,7 +48,7 @@ target_link_libraries(ColladaImporter
     ${QT_QTCORE_LIBRARY}
     ${QT_QTXMLPATTERNS_LIBRARY})
 
-if(WIN32)
+if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(ColladaImporter ${MAGNUM_TGAIMPORTER_LIBRARY})
 endif()
 
@@ -66,7 +66,7 @@ if(BUILD_TESTS)
 
     # On Windows we need to install first and then run the tests to avoid "DLL
     # not found" hell, thus we need to install this too
-    if(WIN32 AND NOT CMAKE_CROSSCOMPILING)
+    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
         install(TARGETS MagnumColladaImporterTestLib
             RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
             LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
