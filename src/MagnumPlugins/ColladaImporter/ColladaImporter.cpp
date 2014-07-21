@@ -73,6 +73,7 @@ struct ColladaImporter::Document {
 const QString ColladaImporter::namespaceDeclaration =
     "declare default element namespace \"http://www.collada.org/2005/11/COLLADASchema\";\n";
 
+/** @todo use init()/fini() for this */
 ColladaImporter::ColladaImporter(): d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
 ColladaImporter::ColladaImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
