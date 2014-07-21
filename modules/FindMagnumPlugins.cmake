@@ -188,9 +188,12 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     endif()
 endforeach()
 
+# We need to feed FPHSA with at least one variable in REQUIRED_VARS (its value
+# is then displayed in the "Found" message)
 include(FindPackageHandleStandardArgs)
+set(_MAGNUMPLUGINS_INCLUDE_DIR ${MAGNUM_INCLUDE_DIR}/MagnumPlugins)
 find_package_handle_standard_args(MagnumPlugins
-    REQUIRED_VARS MAGNUMPLUGINS_INCLUDE_DIR
+    REQUIRED_VARS _MAGNUMPLUGINS_INCLUDE_DIR
     HANDLE_COMPONENTS)
 
 # Dependent libraries and includes
