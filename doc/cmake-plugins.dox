@@ -79,7 +79,7 @@ chosen based on actual build configuration of the project (i.e. `Debug` build
 is linked to debug plugins, `Release` build to release plugins). See @ref cmake
 for more information about autodetection of `MAGNUM_PLUGINS_DIR`.
 
-If @rref MAGNUM_BUILD_DEPRECATED is defined, `MAGNUMPLUGINS_INCLUDE_DIRS`
+If @ref MAGNUM_BUILD_DEPRECATED is defined, `MAGNUMPLUGINS_INCLUDE_DIRS`
 contains include dir for plugins (i.e. for includes without `MagnumPlugins/`
 prefix) and include dirs of dependencies.
 
