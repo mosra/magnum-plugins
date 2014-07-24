@@ -23,35 +23,13 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Wrapper for creating given plugin type
-macro(add_plugin plugin_name debug_install_dir release_install_dir metadata_file)
-    if(NOT BUILD_STATIC)
-        corrade_add_plugin(${plugin_name} ${debug_install_dir} ${release_install_dir} ${metadata_file} ${ARGN})
-    else()
-        corrade_add_static_plugin(${plugin_name} ${release_install_dir} ${metadata_file} ${ARGN})
-    endif()
-endmacro()
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
-if(WITH_ANYIMAGEIMPORTER)
-    add_subdirectory(AnyImageImporter)
-endif()
+set(TGA_FILE ${CMAKE_SOURCE_DIR}/src/MagnumPlugins/ColladaImporter/Test/ColladaImporterTestFiles/image.tga)
+set(JPEG_FILE ${CMAKE_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test/rgb.jpg)
+set(PNG_FILE ${CMAKE_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb.png)
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
-
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
-
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
-
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
+corrade_add_test(AnyImageImporterTest Test.cpp LIBRARIES MagnumAnyImageImporterTestLib)
