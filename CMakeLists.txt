@@ -35,7 +35,7 @@ include(CMakeDependentOption)
 option(WITH_FIND_MODULE "Install FindMagnumPlugins.cmake module into CMake's module dir (might require admin privileges)" OFF)
 
 # Plugins to build
-option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF)
+cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER" ON)
 option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
 cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)
 option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)

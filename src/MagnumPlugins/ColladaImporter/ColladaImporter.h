@@ -56,8 +56,21 @@ information.
 */
 class ColladaImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
+        /**
+         * @brief Default constructor
+         *
+         * In case you want to open images, use
+         * @ref ColladaImporter(PluginManager::Manager<AbstractImporter>&)
+         * instead.
+         */
         explicit ColladaImporter();
+
+        /**
+         * @brief Constructor
+         *
+         * The plugin needs access to plugin manager for importing images.
+         */
+        explicit ColladaImporter(PluginManager::Manager<AbstractImporter>& manager);
 
         /** @brief Plugin manager constructor */
         explicit ColladaImporter(PluginManager::AbstractManager& manager, std::string plugin);
