@@ -26,7 +26,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Text::HarfBuzzFont
+ * @brief Class @ref Magnum::Text::HarfBuzzFont
  */
 
 #include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"

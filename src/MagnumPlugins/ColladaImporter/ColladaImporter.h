@@ -43,7 +43,10 @@ class ColladaMeshData;
 /**
 @brief Collada importer plugin
 
-This plugin depends on **Qt 4** library and @ref TgaImporter plugin. It is
+Imports triangle and quad meshes, images (delegated to @ref AnyImageImporter),
+Phong material data, texture properties and scene hierarchy.
+
+This plugin depends on **Qt 4** library and @ref AnyImageImporter plugin. It is
 built if `WITH_COLLADAIMPORTER` is enabled when building %Magnum Plugins. To
 use dynamic plugin, you need to load `%ColladaImporter` plugin from
 `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request

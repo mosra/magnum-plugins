@@ -26,7 +26,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Text::FreeTypeFont
+ * @brief Class @ref Magnum::Text::FreeTypeFont
  */
 
 #include <Corrade/Containers/Array.h>
