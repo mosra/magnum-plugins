@@ -27,13 +27,13 @@ find_package(JPEG REQUIRED)
 
 include_directories(${JPEG_INCLUDE_DIR})
 
-set(JpegImporter_SOURCES
+set(JpegImporter_SRCS
     JpegImporter.cpp)
 
 set(JpegImporter_HEADERS
     JpegImporter.h)
 
-add_library(JpegImporterObjects OBJECT ${JpegImporter_SOURCES})
+add_library(JpegImporterObjects OBJECT ${JpegImporter_SRCS})
 set_target_properties(JpegImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DJpegImporterObjects_EXPORTS")
 
 add_plugin(JpegImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
