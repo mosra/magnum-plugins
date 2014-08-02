@@ -33,7 +33,9 @@ set(PngImporter_SRCS
 set(PngImporter_HEADERS
     PngImporter.h)
 
-add_library(PngImporterObjects OBJECT ${PngImporter_SRCS})
+add_library(PngImporterObjects OBJECT
+    ${PngImporter_SRCS}
+    ${PngImporter_HEADERS})
 set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DPngImporterObjects_EXPORTS")
 
 add_plugin(PngImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}

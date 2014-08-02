@@ -33,7 +33,9 @@ set(JpegImporter_SRCS
 set(JpegImporter_HEADERS
     JpegImporter.h)
 
-add_library(JpegImporterObjects OBJECT ${JpegImporter_SRCS})
+add_library(JpegImporterObjects OBJECT
+    ${JpegImporter_SRCS}
+    ${JpegImporter_HEADERS})
 set_target_properties(JpegImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DJpegImporterObjects_EXPORTS")
 
 add_plugin(JpegImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}

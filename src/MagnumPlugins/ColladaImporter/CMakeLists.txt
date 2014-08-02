@@ -35,7 +35,15 @@ set(ColladaImporter_SRCS
 set(ColladaImporter_HEADERS
     ColladaImporter.h)
 
-add_library(ColladaImporterObjects OBJECT ${ColladaImporter_SRCS})
+# Header files to display in project view of IDEs only
+set(ColladaImporter_PRIVATE_HEADERS
+    ColladaType.h
+    Utility.h)
+
+add_library(ColladaImporterObjects OBJECT
+    ${ColladaImporter_SRCS}
+    ${ColladaImporter_HEADERS}
+    ${ColladaImporter_PRIVATE_HEADERS})
 set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
 add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}

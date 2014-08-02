@@ -34,7 +34,9 @@ set(FreeTypeFont_SRCS
 set(FreeTypeFont_HEADERS
     FreeTypeFont.h)
 
-add_library(FreeTypeFontObjects OBJECT ${FreeTypeFont_SRCS})
+add_library(FreeTypeFontObjects OBJECT
+    ${FreeTypeFont_SRCS}
+    ${FreeTypeFont_HEADERS})
 set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFontObjects_EXPORTS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
 add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_FONT_RELEASE_INSTALL_DIR}
