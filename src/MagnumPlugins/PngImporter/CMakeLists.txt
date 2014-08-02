@@ -27,13 +27,13 @@ find_package(PNG REQUIRED)
 
 include_directories(${PNG_INCLUDE_DIRS})
 
-set(PngImporter_SOURCES
+set(PngImporter_SRCS
     PngImporter.cpp)
 
 set(PngImporter_HEADERS
     PngImporter.h)
 
-add_library(PngImporterObjects OBJECT ${PngImporter_SOURCES})
+add_library(PngImporterObjects OBJECT ${PngImporter_SRCS})
 set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DPngImporterObjects_EXPORTS")
 
 add_plugin(PngImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
