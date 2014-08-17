@@ -32,14 +32,20 @@ don't need to be handled via CMake. The manager will look for them at runtime
 at specified location and loads them dynamically. However, if they are built as
 static (see @ref building-plugins for more information), they need to be linked
 into the executable and then explicitly imported. Also if you are going to use
-them as dependencies, you need to find the dependency and then link to it. The
-logic is in module `FindMagnumPlugins.cmake` distributed in plugin repository
-in `modules/` directory, you are encouraged to copy it into your project and
-add path to the files to `CMAKE_MODULE_PATH`. Otherwise, if CMake won't be able
-to find this file in predefined locations, it will error out even if %Magnum
-plugins might be installed on the system. Note that the module file is updated
-as the library evolves, you are encouraged to update your copy from time to
-time to avoid strange building issues.
+them as dependencies, you need to find the dependency and then link to it.
+
+The logic is in module `FindMagnumPlugins.cmake` distributed in plugin
+repository in `modules/` directory, you are encouraged to copy it into your
+project and add path to the files to `CMAKE_MODULE_PATH`. Otherwise, if CMake
+won't be able to find this file in predefined locations, it will error out even
+if %Magnum plugins might be installed on the system. Note that the module file
+is updated as the library evolves, you are encouraged to update your copy from
+time to time to avoid strange building issues.
+
+If you installed the library or its dependencies to non-standard location
+(other than `/usr`, e.g. `/home/xyz/projects`), set `CMAKE_PREFIX_PATH` to that
+directory to help CMake find it. You can enter more different dirs if you
+separate them with semicolons.
 
 Basic usage is:
 
