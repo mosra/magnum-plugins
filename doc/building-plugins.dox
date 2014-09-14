@@ -81,6 +81,10 @@ project root:
 
     makepkg -p package/archlinux/<file>
 
+@section building-plugins-gentoo Gentoo ebuilds
+
+Gentoo Git ebuild is available in `package/gentoo` directory.
+
 @section building-plugins-deb Building DEB packages
 
 There is also `package/debian/` directory with all files needed for building
