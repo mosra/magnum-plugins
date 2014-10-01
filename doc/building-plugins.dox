@@ -27,6 +27,8 @@ namespace Magnum {
 /** @page building-plugins Downloading and building plugins
 @brief Guide how to download and build plugins for %Magnum engine.
 
+@tableofcontents
+
 Plugins provide additional capability for %Magnum engine in terms of importing
 and exporting various media file formats. They are not needed for essential
 usage, but you will need them sooner or later when you would want to use image
