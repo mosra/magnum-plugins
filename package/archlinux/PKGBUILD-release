@@ -20,11 +20,13 @@ build() {
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
+        -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_COLLADAIMPORTER=ON \
         -DWITH_FREETYPEFONT=ON \
         -DWITH_HARFBUZZFONT=ON \
         -DWITH_JPEGIMPORTER=ON \
         -DWITH_PNGIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
         -G Ninja
     ninja
 
@@ -36,11 +38,13 @@ build() {
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
+        -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_COLLADAIMPORTER=ON \
         -DWITH_FREETYPEFONT=ON \
         -DWITH_HARFBUZZFONT=ON \
         -DWITH_JPEGIMPORTER=ON \
         -DWITH_PNGIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
         -G Ninja
     ninja
 }

@@ -25,7 +25,9 @@ build() {
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system
+        -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON
     ninja
 }
 

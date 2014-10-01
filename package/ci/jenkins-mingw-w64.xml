@@ -87,11 +87,13 @@ cmake .. \
     -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility} \
     -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility}/lib" \
+    -DWITH_ANYIMAGEIMPORTER=ON \
   `#-DWITH_COLLADAIMPORTER=ON` \
     -DWITH_FREETYPEFONT=ON \
   `#-DWITH_HARFBUZZFONT=ON` \
     -DWITH_JPEGIMPORTER=ON \
     -DWITH_PNGIMPORTER=ON \
+    -DWITH_STBIMAGEIMPORTER=ON \
     -G Ninja
 
 ninja

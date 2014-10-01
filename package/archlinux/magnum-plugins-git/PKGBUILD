@@ -1,6 +1,6 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=magnum-plugins-git
-pkgver=20130819
+pkgver=20141001
 pkgrel=1
 pkgdesc="Plugins for Magnum graphics engine (Git version)"
 arch=('i686' 'x86_64')
@@ -38,11 +38,11 @@ build() {
     cmake ../$_gitname \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
-        -DWITH_TGAIMPORTER=ON \
-        -DWITH_PNGIMPORTER=ON \
-        -DWITH_JPEGIMPORTER=ON \
+        -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_FREETYPEFONT=ON \
-        -DWITH_WAVAUDIOIMPORTER=ON
+        -DWITH_JPEGIMPORTER=ON \
+        -DWITH_PNGIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON
     make
 }
 

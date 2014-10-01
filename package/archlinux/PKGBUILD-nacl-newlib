@@ -19,8 +19,10 @@ build() {
         -DCMAKE_MODULE_PATH="$startdir/toolchains/modules" \
         -DCMAKE_TOOLCHAIN_FILE="$startdir/toolchains/generic/NaCl-newlib-x86-32.cmake" \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr/nacl
+        -DCMAKE_INSTALL_PREFIX=/usr/nacl \
         -DLIB_SUFFIX=/32 \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
         -G Ninja
     ninja
 
@@ -32,7 +34,9 @@ build() {
         -DCMAKE_MODULE_PATH="$startdir/toolchains/modules" \
         -DCMAKE_TOOLCHAIN_FILE="$startdir/toolchains/generic/NaCl-newlib-x86-64.cmake" \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr/nacl
+        -DCMAKE_INSTALL_PREFIX=/usr/nacl \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
         -G Ninja
     ninja
 }
