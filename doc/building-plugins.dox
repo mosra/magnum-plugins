@@ -63,6 +63,8 @@ By default no plugins are built and you need to select them manually:
     Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.
 -   `WITH_JPEGIMPORTER` -- @ref Trade::JpegImporter "JpegImporter" plugin.
 -   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
+-   `WITH_STBIMAGEIMPORTER` -- @ref Trade::StbImageImporter "StbImageImporter"
+    plugin.
 
 Note that each plugin class contains more detailed information about
 dependencies, availability on particular platform and also guide how to enable

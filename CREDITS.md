@@ -12,6 +12,8 @@ Third-party components
     licensed under BSD license
 *   The `PngImporter` plugin uses **libPNG** library -- http://www.libpng.org/pub/png/libpng.html,
     licensed under [libPNG license](http://libpng.org/pub/png/src/libpng-LICENSE.txt)
+*   The `StbImageImporter` plugins uses **stb_image** public domain library --
+    https://github.com/nothings/stb
 
 Contributors to Magnum Plugins library
 --------------------------------------
