@@ -26,7 +26,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Trade::PngImporter
+ * @brief Class @ref Magnum::Trade::PngImporter
  */
 
 #include <Magnum/Trade/AbstractImporter.h>

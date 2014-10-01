@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
@@ -422,7 +423,12 @@ void ColladaImporterTest::texture() {
 }
 
 void ColladaImporterTest::image() {
-    ColladaImporter importer;
+    PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
+
+    if(manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("TgaImporter plugin not found, cannot test");
+
+    ColladaImporter importer{manager};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "image.dae")));
 
     CORRADE_COMPARE(importer.image2DCount(), 2);
@@ -432,7 +438,7 @@ void ColladaImporterTest::image() {
     CORRADE_COMPARE(importer.image2DName(0), "UnsupportedImage");
     CORRADE_COMPARE(importer.image2DForName("UnsupportedImage"), 0);
     CORRADE_VERIFY(!importer.image2D(0));
-    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::image2D(): \"image.jpg\" has unsupported format\n");
+    CORRADE_COMPARE(debug.str(), "Trade::AnyImageImporter::openFile(): cannot determine type of file /image.xcf\n");
 
     CORRADE_COMPARE(importer.image2DName(1), "Image");
     CORRADE_COMPARE(importer.image2DForName("Image"), 1);

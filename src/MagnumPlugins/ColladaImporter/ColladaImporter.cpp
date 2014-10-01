@@ -30,6 +30,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 #include <QtXmlPatterns/QXmlQuery>
+#include <Corrade/PluginManager/Manager.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Constants.h>
@@ -41,7 +42,7 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
-#include "MagnumPlugins/TgaImporter/TgaImporter.h"
+#include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
 
 namespace Magnum { namespace Trade {
 
@@ -73,7 +74,11 @@ struct ColladaImporter::Document {
 const QString ColladaImporter::namespaceDeclaration =
     "declare default element namespace \"http://www.collada.org/2005/11/COLLADASchema\";\n";
 
+/** @todo use init()/fini() for this */
+/** @todo somehow delegating constructors for this? */
 ColladaImporter::ColladaImporter(): d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
+
+ColladaImporter::ColladaImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager}, d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
 ColladaImporter::ColladaImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
@@ -882,16 +887,13 @@ std::optional<ImageData2D> ColladaImporter::doImage2D(const UnsignedInt id) {
     d->query.evaluateTo(&tmp);
     tmp = tmp.trimmed();
 
-    if(tmp.right(3) != "tga") {
-        Error() << "Trade::ColladaImporter::image2D():" << '"' + tmp.toStdString() + '"' << "has unsupported format";
-        return std::nullopt;
-    }
+    CORRADE_ASSERT(manager(), "Trade::ColladaImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", std::nullopt);
 
-    TgaImporter tgaImporter;
-    if(!tgaImporter.openFile(Utility::Directory::join(Utility::Directory::path(d->filename), tmp.toStdString())))
+    AnyImageImporter imageImporter{static_cast<PluginManager::Manager<AbstractImporter>&>(*manager())};
+    if(!imageImporter.openFile(Utility::Directory::join(Utility::Directory::path(d->filename), tmp.toStdString())))
         return std::nullopt;
 
-    return tgaImporter.image2D(0);
+    return imageImporter.image2D(0);
 }
 
 UnsignedInt ColladaImporter::attributeOffset(UnsignedInt meshId, const QString& attribute, UnsignedInt id) {

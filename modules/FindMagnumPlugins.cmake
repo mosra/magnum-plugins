@@ -26,9 +26,9 @@
 # FindMagnum.cmake for more information about autodetection of
 # MAGNUM_PLUGINS_DIR.
 #
-# If MAGNUM_BUILD_DEPRECATED is defined, MAGNUM_PLUGINS_INCLUDE_DIRS contains
-# include dir for plugins (i.e. instead of MagnumPlugins/ prefix) and include
-# dirs of dependencies.
+# If MAGNUM_BUILD_DEPRECATED is defined, MAGNUMPLUGINS_INCLUDE_DIRS contains
+# include dir for plugins (i.e. for includes without MagnumPlugins/ prefix) and
+# include dirs of dependencies.
 #
 # Additionally these variables are defined for internal usage:
 #  MAGNUMPLUGINS_*_LIBRARY      - Plugin library (w/o dependencies)
@@ -172,7 +172,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
 
     # Decide if the plugin was found
     if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
-        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY} ${_MAGNUM_${_COMPONENT}_LIBRARIES})
+        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY} ${_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES})
         set(MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS})
 
         set(MagnumPlugins_${component}_FOUND TRUE)
@@ -188,11 +188,15 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     endif()
 endforeach()
 
+# We need to feed FPHSA with at least one variable in REQUIRED_VARS (its value
+# is then displayed in the "Found" message)
 include(FindPackageHandleStandardArgs)
+set(_MAGNUMPLUGINS_INCLUDE_DIR ${MAGNUM_INCLUDE_DIR}/MagnumPlugins)
 find_package_handle_standard_args(MagnumPlugins
-    REQUIRED_VARS MAGNUMPLUGINS_INCLUDE_DIR
+    REQUIRED_VARS _MAGNUMPLUGINS_INCLUDE_DIR
     HANDLE_COMPONENTS)
 
-# Dependent libraries and includes
-set(MAGNUMPLUGINS_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIRS} ${MAGNUM_INCLUDE_DIR}/MagnumPlugins)
-mark_as_advanced(FORCE MAGNUMPLUGINS_INCLUDE_DIR)
+# Create MAGNUMPLUGINS_INCLUDE_DIRS if this is deprecated build
+if(MAGNUM_BUILD_DEPRECATED)
+    set(MAGNUMPLUGINS_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIRS} ${_MAGNUMPLUGINS_INCLUDE_DIR})
+endif()

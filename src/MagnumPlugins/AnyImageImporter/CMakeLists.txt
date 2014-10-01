@@ -23,53 +23,35 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED Text)
-find_package(Freetype REQUIRED)
-find_package(HarfBuzz REQUIRED)
+set(AnyImageImporter_SRCS
+    AnyImageImporter.cpp)
 
-include_directories(${FREETYPE_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS})
+set(AnyImageImporter_HEADERS
+    AnyImageImporter.h)
 
-set(HarfBuzzFont_SRCS
-    HarfBuzzFont.cpp)
+add_library(AnyImageImporterObjects OBJECT
+    ${AnyImageImporter_SRCS}
+    ${AnyImageImporter_HEADERS})
+set_target_properties(AnyImageImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
-set(HarfBuzzFont_HEADERS
-    HarfBuzzFont.h)
-
-add_library(HarfBuzzFontObjects OBJECT
-    ${HarfBuzzFont_SRCS}
-    ${HarfBuzzFont_HEADERS})
-set_target_properties(HarfBuzzFontObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
-
-add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_FONT_RELEASE_INSTALL_DIR}
-    HarfBuzzFont.conf
-    $<TARGET_OBJECTS:HarfBuzzFontObjects>
+add_plugin(AnyImageImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
+    AnyImageImporter.conf
+    $<TARGET_OBJECTS:AnyImageImporterObjects>
     pluginRegistration.cpp)
-target_link_libraries(HarfBuzzFont
-    ${MAGNUM_LIBRARIES}
-    ${MAGNUM_TEXT_LIBRARIES}
-    ${FREETYPE_LIBRARIES}
-    ${HARFBUZZ_LIBRARIES})
+target_link_libraries(AnyImageImporter
+    ${MAGNUM_LIBRARIES})
 
-if(CORRADE_TARGET_WINDOWS)
-    target_link_libraries(HarfBuzzFont FreeTypeFont)
-endif()
+install(FILES ${AnyImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AnyImageImporter)
 
-install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
-
-if(BUILD_GL_TESTS)
-    add_library(MagnumHarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
-    set_target_properties(MagnumHarfBuzzFontTestLib PROPERTIES DEBUG_POSTFIX "-d")
-    target_link_libraries(MagnumHarfBuzzFontTestLib
-        ${MAGNUM_LIBRARIES}
-        ${MAGNUM_TEXT_LIBRARIES}
-        ${FREETYPE_LIBRARIES}
-        ${HARFBUZZ_LIBRARIES}
-        MagnumFreeTypeFontTestLib)
+if(BUILD_TESTS)
+    add_library(MagnumAnyImageImporterTestLib STATIC $<TARGET_OBJECTS:AnyImageImporterObjects>)
+    set_target_properties(MagnumAnyImageImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
+    target_link_libraries(MagnumAnyImageImporterTestLib ${MAGNUM_LIBRARIES})
 
     # On Windows we need to install first and then run the tests to avoid "DLL
     # not found" hell, thus we need to install this too
     if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumHarfBuzzFontTestLib
+        install(TARGETS MagnumAnyImageImporterTestLib
             RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
             LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
             ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})

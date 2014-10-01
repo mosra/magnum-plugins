@@ -23,10 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#ifdef CORRADE_IS_DEBUG_BUILD
-#define MAGNUM_PLUGINS_IMPORTER_DIR "${MAGNUM_PLUGINS_IMPORTER_DEBUG_DIR}"
-#else
-#define MAGNUM_PLUGINS_IMPORTER_DIR "${MAGNUM_PLUGINS_IMPORTER_DIR}"
-#endif
+#include "AnyImageImporter.h"
 
-#define COLLADAIMPORTER_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ColladaImporterTestFiles/"
+CORRADE_PLUGIN_REGISTER(AnyImageImporter, Magnum::Trade::AnyImageImporter,
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3")

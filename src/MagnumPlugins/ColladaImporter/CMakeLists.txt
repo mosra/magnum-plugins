@@ -23,7 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED TgaImporter MeshTools)
+find_package(Magnum REQUIRED MeshTools)
 find_package(Qt4 REQUIRED)
 
 # Silence pedantic warnings in Qt headers
@@ -35,7 +35,15 @@ set(ColladaImporter_SRCS
 set(ColladaImporter_HEADERS
     ColladaImporter.h)
 
-add_library(ColladaImporterObjects OBJECT ${ColladaImporter_SRCS})
+# Header files to display in project view of IDEs only
+set(ColladaImporter_PRIVATE_HEADERS
+    ColladaType.h
+    Utility.h)
+
+add_library(ColladaImporterObjects OBJECT
+    ${ColladaImporter_SRCS}
+    ${ColladaImporter_HEADERS}
+    ${ColladaImporter_PRIVATE_HEADERS})
 set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
 
 add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
@@ -49,7 +57,7 @@ target_link_libraries(ColladaImporter
     ${QT_QTXMLPATTERNS_LIBRARY})
 
 if(CORRADE_TARGET_WINDOWS)
-    target_link_libraries(ColladaImporter ${MAGNUM_TGAIMPORTER_LIBRARY})
+    target_link_libraries(ColladaImporter AnyImageImporter)
 endif()
 
 install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
@@ -62,7 +70,7 @@ if(BUILD_TESTS)
         ${MAGNUM_MESHTOOLS_LIBRARIES}
         ${QT_QTCORE_LIBRARY}
         ${QT_QTXMLPATTERNS_LIBRARY}
-        ${MAGNUM_TGAIMPORTER_LIBRARY})
+        MagnumAnyImageImporterTestLib)
 
     # On Windows we need to install first and then run the tests to avoid "DLL
     # not found" hell, thus we need to install this too

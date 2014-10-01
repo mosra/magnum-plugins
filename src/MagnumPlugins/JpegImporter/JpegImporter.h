@@ -26,7 +26,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Trade::JpegImporter
+ * @brief Class @ref Magnum::Trade::JpegImporter
  */
 
 #include <Corrade/Containers/Array.h>
