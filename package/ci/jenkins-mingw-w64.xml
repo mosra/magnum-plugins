@@ -72,8 +72,8 @@ if [ ${libraries} = "static" ] ; then
     static_build_flag="-DBUILD_STATIC=ON -DBUILD_STATIC_PIC=ON"
 fi
 
-mkdir -p build-mingw32-${libraries}-${compatibility}
-cd build-mingw32-${libraries}-${compatibility}
+mkdir -p build-mingw-w64-${arch}-${libraries}-${compatibility}
+cd build-mingw-w64-${arch}-${libraries}-${compatibility}
 
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
