@@ -72,12 +72,6 @@ if [ ${libraries} = "static" ] ; then
     static_build_flag="-DBUILD_STATIC=ON -DBUILD_STATIC_PIC=ON"
 fi
 
-if [ "${compatibility}" = "deprecated" ] ; then
-    deprecated_build_flag=ON
-else
-    deprecated_build_flag=OFF
-fi
-
 mkdir -p build-mingw32-${libraries}-${compatibility}
 cd build-mingw32-${libraries}-${compatibility}
 
@@ -87,6 +81,7 @@ cmake .. \
     -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility} \
     -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility}/lib" \
+    ${static_build_flag} \
     -DWITH_ANYIMAGEIMPORTER=ON \
   `#-DWITH_COLLADAIMPORTER=ON` \
     -DWITH_FREETYPEFONT=ON \

@@ -61,12 +61,6 @@
 git submodule init
 git submodule update
 
-if [ "${compatibility}" = "deprecated" ] ; then
-    deprecated_build_flag=ON
-else
-    deprecated_build_flag=OFF
-fi
-
 mkdir -p build-nacl-${toolchain}-${compatibility}
 cd build-nacl-${toolchain}-${compatibility}
 

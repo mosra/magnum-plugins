@@ -88,12 +88,6 @@ if [ ${libraries} = "static" ] ; then
     static_build_flag="-DBUILD_STATIC=ON -DBUILD_STATIC_PIC=ON"
 fi
 
-if [ "${compatibility}" = "deprecated" ] ; then
-    deprecated_build_flag=ON
-else
-    deprecated_build_flag=OFF
-fi
-
 if [ ${gl} = "desktop" ] ; then
     desktop_flag=ON
     windowless_flag=ON
@@ -125,6 +119,7 @@ cmake .. \
     -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/${compiler}-${libraries}-${compatibility}/lib;${JENKINS_HOME}/filesystem/${compiler}-${libraries}-${compatibility}-${gl}/lib" \
     -DCMAKE_CXX_COMPILER=${compiler_binary} \
     "${compiler_flags[@]}" \
+    ${static_build_flag} \
     -DBUILD_TESTS=ON \
     -DBUILD_GL_TESTS=${windowless_flag} \
     -DWITH_ANYIMAGEIMPORTER=ON \
