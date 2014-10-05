@@ -40,16 +40,24 @@ set(ColladaImporter_PRIVATE_HEADERS
     ColladaType.h
     Utility.h)
 
+# Objects shared between plugin and test library
 add_library(ColladaImporterObjects OBJECT
     ${ColladaImporter_SRCS}
     ${ColladaImporter_HEADERS}
     ${ColladaImporter_PRIVATE_HEADERS})
-set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(ColladaImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# ColladaImporter plugin
 add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
     ColladaImporter.conf
     $<TARGET_OBJECTS:ColladaImporterObjects>
     pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(ColladaImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 target_link_libraries(ColladaImporter
     ${MAGNUM_LIBRARIES}
     ${MAGNUM_MESHTOOLS_LIBRARIES}

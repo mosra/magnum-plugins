@@ -33,15 +33,24 @@ set(PngImporter_SRCS
 set(PngImporter_HEADERS
     PngImporter.h)
 
+# Objects shared between plugin and test library
 add_library(PngImporterObjects OBJECT
     ${PngImporter_SRCS}
     ${PngImporter_HEADERS})
-set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DPngImporterObjects_EXPORTS")
+set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "-DPngImporterObjects_EXPORTS")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(PngImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# PngImporter plugin
 add_plugin(PngImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
     PngImporter.conf
     $<TARGET_OBJECTS:PngImporterObjects>
     pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(PngImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 target_link_libraries(PngImporter
     ${MAGNUM_LIBRARIES}
     ${PNG_LIBRARIES})

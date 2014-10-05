@@ -32,17 +32,25 @@ set(StbImageImporter_SRCS
 set(StbImageImporter_HEADERS
     StbImageImporter.h)
 
+# Objects shared between plugin and test library
 add_library(StbImageImporterObjects OBJECT
     ${StbImageImporter_SRCS}
     ${StbImageImporter_HEADERS})
-set_target_properties(StbImageImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DStbImageImporterObjects_EXPORTS")
+set_target_properties(StbImageImporterObjects PROPERTIES COMPILE_FLAGS "-DStbImageImporterObjects_EXPORTS")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(StbImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# StbImageImporter plugin
 add_plugin(StbImageImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
     StbImageImporter.conf
     $<TARGET_OBJECTS:StbImageImporterObjects>
     pluginRegistration.cpp)
-target_link_libraries(StbImageImporter
-    ${MAGNUM_LIBRARIES})
+if(BUILD_STATIC_PIC)
+    set_target_properties(StbImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+target_link_libraries(StbImageImporter ${MAGNUM_LIBRARIES})
 
 install(FILES ${StbImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageImporter)
 

@@ -33,15 +33,24 @@ set(JpegImporter_SRCS
 set(JpegImporter_HEADERS
     JpegImporter.h)
 
+# Objects shared between plugin and test library
 add_library(JpegImporterObjects OBJECT
     ${JpegImporter_SRCS}
     ${JpegImporter_HEADERS})
-set_target_properties(JpegImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DJpegImporterObjects_EXPORTS")
+set_target_properties(JpegImporterObjects PROPERTIES COMPILE_FLAGS "-DJpegImporterObjects_EXPORTS")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(JpegImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# JpegImporter plugin
 add_plugin(JpegImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
     JpegImporter.conf
     $<TARGET_OBJECTS:JpegImporterObjects>
     pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(JpegImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 target_link_libraries(JpegImporter
     ${MAGNUM_LIBRARIES}
     ${JPEG_LIBRARIES})

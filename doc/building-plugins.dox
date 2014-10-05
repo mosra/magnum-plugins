@@ -42,9 +42,10 @@ platform-specific issues.
 Similarly to %Magnum, the plugins are build as shared by default. If you are
 developing for platform which doesn't support dynamic library loading or if you
 just want to link them statically, enable `BUILD_STATIC` to build the plugins
-as static. Dynamic plugins are loaded by the manager on request at runtime,
-potentially saving memory when the plugin is not needed, static plugins must be
-linked in at compile time.
+as static. If you plan to use the static plugins with shared libraries later,
+enable also position-independent code with `BUILD_STATIC_PIC`. Dynamic plugins
+are loaded by the manager on request at runtime, potentially saving memory when the
+plugin is not needed, static plugins must be linked in at compile time.
 
 Static plugins built in `Debug` configuration (e.g. with `CMAKE_BUILD_TYPE` set
 to `Debug`) have `-d` suffix, *dynamic* plugins in `Debug` configuration are

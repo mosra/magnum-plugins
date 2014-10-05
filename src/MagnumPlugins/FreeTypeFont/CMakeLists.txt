@@ -34,15 +34,24 @@ set(FreeTypeFont_SRCS
 set(FreeTypeFont_HEADERS
     FreeTypeFont.h)
 
+# Objects shared between plugin and test library
 add_library(FreeTypeFontObjects OBJECT
     ${FreeTypeFont_SRCS}
     ${FreeTypeFont_HEADERS})
-set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFontObjects_EXPORTS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFontObjects_EXPORTS")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(FreeTypeFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# FreeTypeFont plugin
 add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_FONT_RELEASE_INSTALL_DIR}
     FreeTypeFont.conf
     $<TARGET_OBJECTS:FreeTypeFontObjects>
     pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(FreeTypeFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 target_link_libraries(FreeTypeFont
     ${MAGNUM_TEXT_LIBRARIES}
     ${MAGNUM_TEXTURETOOLS_LIBRARIES}
