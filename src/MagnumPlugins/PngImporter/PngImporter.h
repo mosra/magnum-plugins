@@ -31,15 +31,6 @@
 
 #include <Magnum/Trade/AbstractImporter.h>
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-    #if defined(PngImporter_EXPORTS) || defined(PngImporterObjects_EXPORTS)
-        #define MAGNUM_PNGIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
-    #else
-        #define MAGNUM_PNGIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
-    #endif
-    #define MAGNUM_PNGIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
-#endif
-
 namespace Magnum { namespace Trade {
 
 /**
@@ -65,7 +56,7 @@ respectively. Grayscale images require extension @extension{ARB,texture_rg}.
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
 images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red.
 */
-class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
+class PngImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit PngImporter();
@@ -76,14 +67,14 @@ class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
         ~PngImporter();
 
     private:
-        MAGNUM_PNGIMPORTER_LOCAL Features doFeatures() const override;
-        MAGNUM_PNGIMPORTER_LOCAL bool doIsOpened() const override;
-        MAGNUM_PNGIMPORTER_LOCAL void doClose() override;
-        MAGNUM_PNGIMPORTER_LOCAL void doOpenData(Containers::ArrayReference<const unsigned char> data) override;
-        MAGNUM_PNGIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        Features doFeatures() const override;
+        bool doIsOpened() const override;
+        void doClose() override;
+        void doOpenData(Containers::ArrayReference<const unsigned char> data) override;
+        void doOpenFile(const std::string& filename) override;
 
-        MAGNUM_PNGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_PNGIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        UnsignedInt doImage2DCount() const override;
+        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
         std::istream* _in;

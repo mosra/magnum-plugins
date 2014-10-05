@@ -36,7 +36,6 @@ set(StbImageImporter_HEADERS
 add_library(StbImageImporterObjects OBJECT
     ${StbImageImporter_SRCS}
     ${StbImageImporter_HEADERS})
-set_target_properties(StbImageImporterObjects PROPERTIES COMPILE_FLAGS "-DStbImageImporterObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -55,20 +54,7 @@ target_link_libraries(StbImageImporter ${MAGNUM_LIBRARIES})
 install(FILES ${StbImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumStbImageImporterTestLib SHARED $<TARGET_OBJECTS:StbImageImporterObjects>)
-    set_target_properties(MagnumStbImageImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
-    target_link_libraries(MagnumStbImageImporterTestLib
-        ${MAGNUM_LIBRARIES}
-        ${PNG_LIBRARIES})
-
-    # On Windows we need to install first and then run the tests to avoid "DLL
-    # not found" hell, thus we need to install this too
-    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumStbImageImporterTestLib
-            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
-            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
-            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
-    endif()
-
-     add_subdirectory(Test)
+    add_library(MagnumStbImageImporterTestLib STATIC $<TARGET_OBJECTS:StbImageImporterObjects>)
+    target_link_libraries(MagnumStbImageImporterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    add_subdirectory(Test)
 endif()

@@ -32,15 +32,6 @@
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-    #if defined(JpegImporter_EXPORTS) || defined(JpegImporterObjects_EXPORTS)
-        #define MAGNUM_JPEGIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
-    #else
-        #define MAGNUM_JPEGIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
-    #endif
-    #define MAGNUM_JPEGIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
-#endif
-
 namespace Magnum { namespace Trade {
 
 /**
@@ -65,7 +56,7 @@ or @ref ColorFormat::Red, respectively. Grayscale images require extension
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
 images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red.
 */
-class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
+class JpegImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit JpegImporter();
@@ -76,13 +67,13 @@ class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
         ~JpegImporter();
 
     private:
-        MAGNUM_JPEGIMPORTER_LOCAL Features doFeatures() const override;
-        MAGNUM_JPEGIMPORTER_LOCAL bool doIsOpened() const override;
-        MAGNUM_JPEGIMPORTER_LOCAL void doClose() override;
-        MAGNUM_JPEGIMPORTER_LOCAL void doOpenData(Containers::ArrayReference<const unsigned char> data) override;
+        Features doFeatures() const override;
+        bool doIsOpened() const override;
+        void doClose() override;
+        void doOpenData(Containers::ArrayReference<const unsigned char> data) override;
 
-        MAGNUM_JPEGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_JPEGIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        UnsignedInt doImage2DCount() const override;
+        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
         Containers::Array<unsigned char> _in;

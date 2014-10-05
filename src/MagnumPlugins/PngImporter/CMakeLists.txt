@@ -37,7 +37,6 @@ set(PngImporter_HEADERS
 add_library(PngImporterObjects OBJECT
     ${PngImporter_SRCS}
     ${PngImporter_HEADERS})
-set_target_properties(PngImporterObjects PROPERTIES COMPILE_FLAGS "-DPngImporterObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(PngImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -58,20 +57,7 @@ target_link_libraries(PngImporter
 install(FILES ${PngImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumPngImporterTestLib SHARED $<TARGET_OBJECTS:PngImporterObjects>)
-    set_target_properties(MagnumPngImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
-    target_link_libraries(MagnumPngImporterTestLib
-        ${MAGNUM_LIBRARIES}
-        ${PNG_LIBRARIES})
-
-    # On Windows we need to install first and then run the tests to avoid "DLL
-    # not found" hell, thus we need to install this too
-    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumPngImporterTestLib
-            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
-            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
-            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
-    endif()
-
+    add_library(MagnumPngImporterTestLib STATIC $<TARGET_OBJECTS:PngImporterObjects>)
+    target_link_libraries(MagnumPngImporterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
     add_subdirectory(Test)
 endif()
