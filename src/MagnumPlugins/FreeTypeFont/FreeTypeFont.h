@@ -56,9 +56,9 @@ The font can be created either from file or from memory location of format
 supported by [FreeType](http://www.freetype.org/) library.
 
 This plugin depends on **FreeType** library and is built if `WITH_FREETYPEFONT`
-is enabled when building %Magnum Plugins. To use dynamic plugin, you need to
-load `%FreeTypeFont` plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use static
-plugin, you need to request `%FreeTypeFont` component of `%MagnumPlugins`
+is enabled when building Magnum Plugins. To use dynamic plugin, you need to
+load `FreeTypeFont` plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use static
+plugin, you need to request `FreeTypeFont` component of `MagnumPlugins`
 package in CMake and link to `${MAGNUMPLUGINS_FREETYPEFONT_LIBRARIES}`. To use
 this as a dependency of another plugin, you additionally need to add
 `${MAGNUMPLUGINS_FREETYPEFONT_INCLUDE_DIRS}` to include path.

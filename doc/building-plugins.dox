@@ -25,21 +25,21 @@
 
 namespace Magnum {
 /** @page building-plugins Downloading and building plugins
-@brief Guide how to download and build plugins for %Magnum engine.
+@brief Guide how to download and build plugins for Magnum engine.
 
 @tableofcontents
 
-Plugins provide additional capability for %Magnum engine in terms of importing
+Plugins provide additional capability for Magnum engine in terms of importing
 and exporting various media file formats. They are not needed for essential
 usage, but you will need them sooner or later when you would want to use image
 as a texture or render text on the screen.
 
 The source is available on GitHub: https://github.com/mosra/magnum-plugins.
-Building plugins is very similar to building %Magnum itself. See @ref building
+Building plugins is very similar to building Magnum itself. See @ref building
 for additonal information about building and running tests, crosscompiling and
 platform-specific issues.
 
-Similarly to %Magnum, the plugins are build as shared by default. If you are
+Similarly to Magnum, the plugins are build as shared by default. If you are
 developing for platform which doesn't support dynamic library loading or if you
 just want to link them statically, enable `BUILD_STATIC` to build the plugins
 as static. If you plan to use the static plugins with shared libraries later,

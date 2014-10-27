@@ -24,5 +24,5 @@
 */
 
 /** @dir magnum-plugins/src/MagnumPlugins
- * @brief %Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
+ * @brief Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
  */

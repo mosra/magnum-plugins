@@ -35,7 +35,7 @@
 namespace Magnum { namespace Trade {
 
 /**
-@brief %Image importer plugin using stb_image
+@brief Image importer plugin using stb_image
 
 Supports the following formats:
 
@@ -52,16 +52,16 @@ Creates RGB, RGBA, grayscale or grayscale + alpha images with 8 bits per
 channel. Palleted images are automatically converted to RGB(A).
 
 This plugin is built if `WITH_STBIMAGEIMPORTER` is enabled when building
-%Magnum Plugins. To use dynamic plugin, you need to load `%StbImageImporter`
+Magnum Plugins. To use dynamic plugin, you need to load `StbImageImporter`
 plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to
-request `%StbImageImporter` component of `%MagnumPlugins` package in CMake and
+request `StbImageImporter` component of `MagnumPlugins` package in CMake and
 link to `${MAGNUMPLUGINS_STBIMAGEIMPORTER_LIBRARIES}`. To use this as a
 dependency of another plugin, you additionally need to add
 `${MAGNUMPLUGINS_STBIMAGEIMPORTER_INCLUDE_DIRS}` to include path.
 
 This plugins provides `BmpImporter`, `GifImporter`, `HdrImporter`,
-`%JpegImporter`, `PicImporter`, `%PngImporter`, `PsdImporter` and
-`%TgaImporter` plugins, but note that this plugin doesn't have complete support
+`JpegImporter`, `PicImporter`, `PngImporter`, `PsdImporter` and
+`TgaImporter` plugins, but note that this plugin doesn't have complete support
 for all format quirks and the performance might be worse than when using plugin
 dedicated for given format.
 
