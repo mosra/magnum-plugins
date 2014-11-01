@@ -111,15 +111,17 @@ plugins, for example), modify the last entry in `debian/rules`.
 In `package/ci/` there are `jenkins.xml` and `jenkins-gltests.xml` files
 containing job configuration, one for build and non-GL tests and the other for
 GL tests only. Setup your Jenkins server, enable the **Git** and
-**Text-finder** plugin and download the CLI application from here:
+**Text-finder** plugin and download the CLI application from here (replace
+`localhost:8080` with your server name):
 
-    http://your-jenkins-server/cli
+    http://localhost:8080/cli
 
-Then add new jobs or update existing ones (replace `<command>` with `create-job`
-or `update-job`).
+Then add new jobs or update existing ones (update path to the `*.jar` file,
+replace `localhost:8080` with your server name, replace `update-job` with
+`create-job` if the job doesn't exist yet).
 
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins < jenkins.xml
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-GLTests < jenkins-gltests.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins < package/ci/jenkins.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-GLTests < package/ci/jenkins-gltests.xml
 
 Build is done using **Ninja** build system and everything possible is enabled,
 thus you need also **FreeType**, **HarfBuzz**, **libJPEG**, **libPNG** and
@@ -137,8 +139,8 @@ with the commands below. See @ref building-crosscompiling for more information
 about setting up the crosscompilers and `toolchains/` submodule. For Emscripten
 you need also **Node.js** installed to run the tests.
 
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-MinGW-w64 < jenkins-mingw-w64.xml
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-Emscripten < jenkins-emscripten.xml
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-NaCl < jenkins-nacl.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-MinGW-w64 < package/ci/jenkins-mingw-w64.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-Emscripten < package/ci/jenkins-emscripten.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-NaCl < package/ci/jenkins-nacl.xml
 */
 }
