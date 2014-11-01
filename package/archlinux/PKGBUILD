@@ -27,6 +27,7 @@ build() {
         -DWITH_JPEGIMPORTER=ON \
         -DWITH_PNGIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBPNGIMAGECONVERTER=ON \
         -G Ninja
     ninja
 }

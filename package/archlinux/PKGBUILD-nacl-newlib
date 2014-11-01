@@ -23,6 +23,7 @@ build() {
         -DLIB_SUFFIX=/32 \
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBPNGIMAGECONVERTER=ON \
         -G Ninja
     ninja
 
@@ -37,6 +38,7 @@ build() {
         -DCMAKE_INSTALL_PREFIX=/usr/nacl \
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBPNGIMAGECONVERTER=ON \
         -G Ninja
     ninja
 }
