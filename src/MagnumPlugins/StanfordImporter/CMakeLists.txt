@@ -23,47 +23,35 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Wrapper for creating given plugin type
-macro(add_plugin plugin_name debug_install_dir release_install_dir metadata_file)
-    if(NOT BUILD_STATIC)
-        corrade_add_plugin(${plugin_name} ${debug_install_dir} ${release_install_dir} ${metadata_file} ${ARGN})
-    else()
-        corrade_add_static_plugin(${plugin_name} ${release_install_dir} ${metadata_file} ${ARGN})
-    endif()
-endmacro()
+set(StanfordImporter_SRCS
+    StanfordImporter.cpp)
 
-if(WITH_ANYIMAGEIMPORTER)
-    add_subdirectory(AnyImageImporter)
+set(StanfordImporter_HEADERS
+    StanfordImporter.h)
+
+# Objects shared between plugin and test library
+add_library(StanfordImporterObjects OBJECT
+    ${StanfordImporter_SRCS}
+    ${StanfordImporter_HEADERS})
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(StanfordImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
+# StanfordImporter plugin
+add_plugin(StanfordImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
+    StanfordImporter.conf
+    $<TARGET_OBJECTS:StanfordImporterObjects>
+    pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(StanfordImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
+target_link_libraries(StanfordImporter ${MAGNUM_LIBRARIES})
 
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
+install(FILES ${StanfordImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordImporter)
 
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
-
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
-
-if(WITH_STANFORDIMPORTER)
-    add_subdirectory(StanfordImporter)
-endif()
-
-if(WITH_STBIMAGEIMPORTER)
-    add_subdirectory(StbImageImporter)
-endif()
-
-if(WITH_STBPNGIMAGECONVERTER)
-    add_subdirectory(StbPngImageConverter)
+if(BUILD_TESTS)
+    add_library(MagnumStanfordImporterTestLib STATIC $<TARGET_OBJECTS:StanfordImporterObjects>)
+    target_link_libraries(MagnumStanfordImporterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    add_subdirectory(Test)
 endif()

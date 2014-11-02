@@ -41,6 +41,7 @@ cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WI
 option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
 option(WITH_JPEGIMPORTER "Build JpegImporter plugin" OFF)
 option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
+option(WITH_STANFORDIMPORTER "Build StanfordImporter plugin" OFF)
 option(WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
 option(WITH_STBPNGIMAGECONVERTER "Build StbPngImageConverter plugin" OFF)
 
