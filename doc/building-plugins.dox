@@ -72,6 +72,8 @@ By default no plugins are built and you need to select them manually:
     plugin.
 -   `WITH_STBIMAGEIMPORTER` -- @ref Trade::StbImageImporter "StbImageImporter"
     plugin.
+-   `WITH_STBPNGIMAGECONVERTER` -- @ref Trade::StbPngImageConverter "StbPngImageConverter"
+    plugin.
 
 Note that each plugin class contains more detailed information about
 dependencies, availability on particular platform and also guide how to enable
