@@ -62,22 +62,12 @@ install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)
-    add_library(MagnumFreeTypeFontTestLib SHARED $<TARGET_OBJECTS:FreeTypeFontObjects>)
-    set_target_properties(MagnumFreeTypeFontTestLib PROPERTIES DEBUG_POSTFIX "-d")
+    add_library(MagnumFreeTypeFontTestLib STATIC $<TARGET_OBJECTS:FreeTypeFontObjects>)
     target_link_libraries(MagnumFreeTypeFontTestLib
         ${MAGNUM_TEXT_LIBRARIES}
         ${MAGNUM_TEXTURETOOLS_LIBRARIES}
         ${MAGNUM_LIBRARIES}
         ${FREETYPE_LIBRARIES})
-
-    # On Windows we need to install first and then run the tests to avoid "DLL
-    # not found" hell, thus we need to install this too
-    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumFreeTypeFontTestLib
-            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
-            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
-            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
-    endif()
 endif()
 
 if(BUILD_GL_TESTS)
