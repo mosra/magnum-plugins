@@ -5,12 +5,16 @@
 # This command tries to find Magnum plugins and then defines:
 #  MAGNUMPLUGINS_FOUND          - Whether Magnum plugins were found
 # This command will not try to find any actual plugin. The plugins are:
+#  AnyImageImporter - Any image importer
 #  ColladaImporter  - Collada importer (depends on Qt library)
 #  FreeTypeFont     - FreeType font (depends on FreeType library)
 #  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
 #                     library)
 #  JpegImporter     - JPEG importer (depends on libJPEG library)
 #  PngImporter      - PNG importer (depends on libPNG library)
+#  StanfordImporter - Stanford PLY importer
+#  StbImageImporter - Image importer using stb_image
+#  StbPngImageConverter - PNG image converter using stb_image_write
 # Example usage with specifying the plugins is:
 #  find_package(MagnumPlugins [REQUIRED|COMPONENTS]
 #               MagnumFont TgaImporter)
@@ -114,6 +118,8 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
             NAMES ${component}.h
             PATHS ${MAGNUM_INCLUDE_DIR}/MagnumPlugins/${component})
 
+    # AnyImageImporter has no dependencies
+
     # ColladaImporter plugin dependencies
     if(${component} STREQUAL ColladaImporter)
         find_package(Qt4)
@@ -169,6 +175,10 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
             unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
         endif()
     endif()
+
+    # StanfordImporter has no dependencies
+    # StbImageImporter has no dependencies
+    # StbPngImageConverter has no dependencies
 
     # Decide if the plugin was found
     if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
