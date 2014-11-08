@@ -79,7 +79,7 @@ given library in build and use it with CMake.
 
 Example usage with specifying the plugins is:
 
-    find_package(MagnumPlugins REQUIRED MagnumFont TgaImporter)
+    find_package(MagnumPlugins REQUIRED FreeTypeFont PngImporter)
 
 For each plugin is then defined:
 

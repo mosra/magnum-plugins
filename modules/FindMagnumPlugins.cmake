@@ -17,7 +17,7 @@
 #  StbPngImageConverter - PNG image converter using stb_image_write
 # Example usage with specifying the plugins is:
 #  find_package(MagnumPlugins [REQUIRED|COMPONENTS]
-#               MagnumFont TgaImporter)
+#               FreeTypeFont PngImporter)
 # For each plugin is then defined:
 #  MAGNUMPLUGINS_*_FOUND        - Whether the plugin was found
 #  MAGNUMPLUGINS_*_LIBRARIES    - Plugin library and dependent libraries
