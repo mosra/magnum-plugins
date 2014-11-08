@@ -416,7 +416,7 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         }
     }
 
-    return MeshData3D{MeshPrimitive::Triangles, indices, {positions}, {}, {}};
+    return MeshData3D{MeshPrimitive::Triangles, std::move(indices), {std::move(positions)}, {}, {}};
 }
 
 }}
