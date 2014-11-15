@@ -32,8 +32,6 @@ find_package(Magnum REQUIRED)
 
 include(CMakeDependentOption)
 
-option(WITH_FIND_MODULE "Install FindMagnumPlugins.cmake module into CMake's module dir (might require admin privileges)" OFF)
-
 # Plugins to build
 cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER" ON)
 option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
@@ -77,6 +75,8 @@ if(BUILD_GL_TESTS)
 
     set(GL_TEST_LIBRARIES ${MAGNUM_WINDOWLESSAPPLICATION_LIBRARIES})
 endif()
+
+set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake/MagnumPlugins)
 
 add_subdirectory(modules)
 add_subdirectory(src)
