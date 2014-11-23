@@ -83,6 +83,7 @@ cmake .. \
     -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/mingw-w64-${arch}-${libraries}-${compatibility}/lib" \
     ${static_build_flag} \
     -DWITH_ANYIMAGEIMPORTER=ON \
+    -DWITH_ANYSCENEIMPORTER=ON \
   `#-DWITH_COLLADAIMPORTER=ON` \
     -DWITH_FREETYPEFONT=ON \
   `#-DWITH_HARFBUZZFONT=ON` \

@@ -64,6 +64,7 @@ cmake .. \
     -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/emscripten-${compatibility}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/emscripten-${compatibility} \
     -DWITH_ANYIMAGEIMPORTER=ON \
+    -DWITH_ANYSCENEIMPORTER=ON \
   `#-DWITH_COLLADAIMPORTER=ON` \
   `#-DWITH_FREETYPEFONT=ON` \
   `#-DWITH_HARFBUZZFONT=ON` \

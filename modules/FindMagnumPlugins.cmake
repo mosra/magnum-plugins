@@ -6,6 +6,7 @@
 #  MAGNUMPLUGINS_FOUND          - Whether Magnum plugins were found
 # This command will not try to find any actual plugin. The plugins are:
 #  AnyImageImporter - Any image importer
+#  AnySceneImporter - Any scene importer
 #  ColladaImporter  - Collada importer (depends on Qt library)
 #  FreeTypeFont     - FreeType font (depends on FreeType library)
 #  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
@@ -119,6 +120,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
             PATHS ${MAGNUM_INCLUDE_DIR}/MagnumPlugins/${component})
 
     # AnyImageImporter has no dependencies
+    # AnySceneImporter has no dependencies
 
     # ColladaImporter plugin dependencies
     if(${component} STREQUAL ColladaImporter)

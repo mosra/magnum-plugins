@@ -23,51 +23,36 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Wrapper for creating given plugin type
-macro(add_plugin plugin_name debug_install_dir release_install_dir metadata_file)
-    if(NOT BUILD_STATIC)
-        corrade_add_plugin(${plugin_name} ${debug_install_dir} ${release_install_dir} ${metadata_file} ${ARGN})
-    else()
-        corrade_add_static_plugin(${plugin_name} ${release_install_dir} ${metadata_file} ${ARGN})
-    endif()
-endmacro()
+set(AnySceneImporter_SRCS
+    AnySceneImporter.cpp)
 
-if(WITH_ANYIMAGEIMPORTER)
-    add_subdirectory(AnyImageImporter)
+set(AnySceneImporter_HEADERS
+    AnySceneImporter.h)
+
+# Objects shared between plugin and test library
+add_library(AnySceneImporterObjects OBJECT
+    ${AnySceneImporter_SRCS}
+    ${AnySceneImporter_HEADERS})
+set_target_properties(AnySceneImporterObjects PROPERTIES COMPILE_FLAGS "-DAnySceneImporterObjects_EXPORTS")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(AnySceneImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if(WITH_ANYSCENEIMPORTER)
-    add_subdirectory(AnySceneImporter)
+# AnySceneImporter plugin
+add_plugin(AnySceneImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
+    AnySceneImporter.conf
+    $<TARGET_OBJECTS:AnySceneImporterObjects>
+    pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(AnySceneImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+target_link_libraries(AnySceneImporter ${MAGNUM_LIBRARIES})
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
+install(FILES ${AnySceneImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AnySceneImporter)
 
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
-
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
-
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
-
-if(WITH_STANFORDIMPORTER)
-    add_subdirectory(StanfordImporter)
-endif()
-
-if(WITH_STBIMAGEIMPORTER)
-    add_subdirectory(StbImageImporter)
-endif()
-
-if(WITH_STBPNGIMAGECONVERTER)
-    add_subdirectory(StbPngImageConverter)
+if(BUILD_TESTS)
+    add_library(MagnumAnySceneImporterTestLib STATIC $<TARGET_OBJECTS:AnySceneImporterObjects>)
+    target_link_libraries(MagnumAnySceneImporterTestLib ${MAGNUM_LIBRARIES})
+    add_subdirectory(Test)
 endif()

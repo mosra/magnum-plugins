@@ -56,6 +56,8 @@ By default no plugins are built and you need to select them manually:
 
 -   `WITH_ANYIMAGEIMPORTER` -- @ref Trade::AnyImageImporter "AnyImageImporter"
     plugin.
+-   `WITH_ANYSCENEIMPORTER` -- @ref Trade::AnySceneImporter "AnySceneImporter"
+    plugin.
 -   `WITH_COLLADAIMPORTER` -- @ref Trade::ColladaImporter "ColladaImporter"
     plugin. Enables also building of @ref Trade::TgaImporter "TgaImporter"
     plugin.

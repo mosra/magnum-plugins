@@ -34,6 +34,7 @@ include(CMakeDependentOption)
 
 # Plugins to build
 cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER" ON)
+option(WITH_ANYSCENEIMPORTER "Build AnySceneImporter plugin" OFF)
 option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
 cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)
 option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
