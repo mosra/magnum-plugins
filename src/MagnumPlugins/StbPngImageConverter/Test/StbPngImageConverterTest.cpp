@@ -56,7 +56,7 @@ namespace {
         5, 6, 7, 6, 7, 8
     };
 
-    constexpr const ImageReference2D original(ColorFormat::RGB, ColorType::UnsignedByte, {2, 3}, originalData);
+    const ImageReference2D original(ColorFormat::RGB, ColorType::UnsignedByte, {2, 3}, originalData);
 }
 
 StbPngImageConverterTest::StbPngImageConverterTest() {
