@@ -83,7 +83,9 @@ enum class Type {
     UnsignedInt,
     Int,
     Float,
+    #ifndef MAGNUM_TARGET_GLES
     Double
+    #endif
 };
 
 enum class PropertyType {
@@ -100,7 +102,9 @@ Type parseType(const std::string& type) {
     if(type == "uint"   || type == "uint32")    return Type::UnsignedInt;
     if(type == "int"    || type == "int32")     return Type::Int;
     if(type == "float"  || type == "float32")   return Type::Float;
+    #ifndef MAGNUM_TARGET_GLES
     if(type == "double" || type == "float64")   return Type::Double;
+    #endif
 
     return {};
 }
@@ -115,7 +119,9 @@ std::size_t sizeOf(Type type) {
         _c(UnsignedInt)
         _c(Int)
         _c(Float)
+        #ifndef MAGNUM_TARGET_GLES
         _c(Double)
+        #endif
         #undef _c
     }
 
@@ -146,7 +152,9 @@ template<class T, FileFormat format> Float extractAndSkip(const char*& buffer, c
         _c(UnsignedInt)
         _c(Int)
         _c(Float)
+        #ifndef MAGNUM_TARGET_GLES
         _c(Double)
+        #endif
         #undef _c
     }
 
