@@ -22,3 +22,5 @@
 #   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #   DEALINGS IN THE SOFTWARE.
 #
+
+corrade_add_test(OpenDdlParsersTest ParsersTest.cpp LIBRARIES ${MAGNUM_LIBRARIES} MagnumOpenGexImporterTestLib)
