@@ -23,55 +23,23 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Wrapper for creating given plugin type
-macro(add_plugin plugin_name debug_install_dir release_install_dir metadata_file)
-    if(NOT BUILD_STATIC)
-        corrade_add_plugin(${plugin_name} ${debug_install_dir} ${release_install_dir} ${metadata_file} ${ARGN})
-    else()
-        corrade_add_static_plugin(${plugin_name} ${release_install_dir} ${metadata_file} ${ARGN})
-    endif()
-endmacro()
+set(OpenGexImporterOpenDdl_HEADERS
+    Document.h
+    OpenDdl.h
+    Property.h
+    Structure.h
+    Type.h)
 
-if(WITH_ANYIMAGEIMPORTER)
-    add_subdirectory(AnyImageImporter)
-endif()
+set(OpenGexImporterOpenDdl_PRIVATE_HEADERS
+    parsers.h)
 
-if(WITH_ANYSCENEIMPORTER)
-    add_subdirectory(AnySceneImporter)
-endif()
+# Force IDEs to display all header files in project view
+add_custom_target(OpenGexImporterOpenDdl SOURCES
+    ${OpenGexImporterOpenDdl_HEADERS}
+    ${OpenGexImporterOpenDdl_PRIVATE_HEADERS})
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+install(FILES ${OpenGexImporterOpenDdl_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImprter/OpenDdl)
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
-
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
-
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
-
-if(WITH_OPENGEXIMPORTER)
-    add_subdirectory(OpenGexImporter)
-endif()
-
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
-
-if(WITH_STANFORDIMPORTER)
-    add_subdirectory(StanfordImporter)
-endif()
-
-if(WITH_STBIMAGEIMPORTER)
-    add_subdirectory(StbImageImporter)
-endif()
-
-if(WITH_STBPNGIMAGECONVERTER)
-    add_subdirectory(StbPngImageConverter)
+if(BUILD_TESTS)
+    add_subdirectory(Test)
 endif()

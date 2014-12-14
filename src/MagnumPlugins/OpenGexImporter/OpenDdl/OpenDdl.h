@@ -1,3 +1,5 @@
+#ifndef Magnum_OpenDdl_OpenDdl_h
+#define Magnum_OpenDdl_OpenDdl_h
 /*
     This file is part of Magnum.
 
@@ -23,16 +25,20 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @dir magnum-plugins/src/MagnumPlugins
- * @brief Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
+/** @file
+ * @brief Forward declarations for @ref Magnum::OpenDdl namespace
  */
 
-/** @dir magnum-plugins/src/MagnumPlugins/OpenGexImporter/OpenDdl
- * @brief Namespace @ref Magnum::OpenDdl
- */
-/** @namespace Magnum::OpenDdl
-@brief OpenDDL parser
+#include "Magnum/Types.h"
 
-Parser for [OpenDDL](http://openddl.org) file format. See
-@ref OpenDdl::Document for more information.
-*/
+namespace Magnum { namespace OpenDdl {
+
+struct CharacterLiteral;
+class Document;
+class Property;
+class Structure;
+enum class Type: UnsignedInt;
+
+}}
+
+#endif

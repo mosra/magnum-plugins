@@ -23,55 +23,19 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Wrapper for creating given plugin type
-macro(add_plugin plugin_name debug_install_dir release_install_dir metadata_file)
-    if(NOT BUILD_STATIC)
-        corrade_add_plugin(${plugin_name} ${debug_install_dir} ${release_install_dir} ${metadata_file} ${ARGN})
-    else()
-        corrade_add_static_plugin(${plugin_name} ${release_install_dir} ${metadata_file} ${ARGN})
-    endif()
-endmacro()
+set(OpenGexImporter_SRCS
+    OpenDdl/OpenDdl.cpp
+    OpenDdl/parsers.cpp)
 
-if(WITH_ANYIMAGEIMPORTER)
-    add_subdirectory(AnyImageImporter)
+# Objects shared between plugin and test library
+add_library(OpenGexImporterObjects OBJECT ${OpenGexImporter_SRCS})
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(OpenGexImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if(WITH_ANYSCENEIMPORTER)
-    add_subdirectory(AnySceneImporter)
+if(BUILD_TESTS)
+    add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
+    target_link_libraries(MagnumOpenGexImporterTestLib ${MAGNUM_LIBRARIES})
 endif()
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
-
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
-
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
-
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
-
-if(WITH_OPENGEXIMPORTER)
-    add_subdirectory(OpenGexImporter)
-endif()
-
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
-
-if(WITH_STANFORDIMPORTER)
-    add_subdirectory(StanfordImporter)
-endif()
-
-if(WITH_STBIMAGEIMPORTER)
-    add_subdirectory(StbImageImporter)
-endif()
-
-if(WITH_STBPNGIMAGECONVERTER)
-    add_subdirectory(StbPngImageConverter)
-endif()
+add_subdirectory(OpenDdl)
