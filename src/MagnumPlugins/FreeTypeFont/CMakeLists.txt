@@ -24,7 +24,12 @@
 #
 
 find_package(Magnum REQUIRED Text TextureTools)
+
+# On OSX avoid finding Freetype which is bundled with Mono
+set(PREV_CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK})
+set(CMAKE_FIND_FRAMEWORK LAST)
 find_package(Freetype REQUIRED)
+set(CMAKE_FIND_FRAMEWORK ${PREV_CMAKE_FIND_FRAMEWORK})
 
 include_directories(${FREETYPE_INCLUDE_DIRS})
 

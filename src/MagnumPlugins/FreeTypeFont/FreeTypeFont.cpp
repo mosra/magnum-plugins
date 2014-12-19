@@ -153,8 +153,8 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
 
         /* Copy rendered bitmap to texture image */
         const FT_Bitmap& bitmap = glyph->bitmap;
-        CORRADE_INTERNAL_ASSERT(std::abs(bitmap.width-charPositions[i].sizeX()) <= 2);
-        CORRADE_INTERNAL_ASSERT(std::abs(bitmap.rows-charPositions[i].sizeY()) <= 2);
+        CORRADE_INTERNAL_ASSERT(std::abs(Int(bitmap.width)-charPositions[i].sizeX()) <= 2);
+        CORRADE_INTERNAL_ASSERT(std::abs(Int(bitmap.rows)-charPositions[i].sizeY()) <= 2);
         for(Int yin = 0, yout = charPositions[i].bottom(), ymax = bitmap.rows; yin != ymax; ++yin, ++yout)
             for(Int xin = 0, xout = charPositions[i].left(), xmax = bitmap.width; xin != xmax; ++xin, ++xout)
                 pixmap[yout*cache.textureSize().x() + xout] = bitmap.buffer[(bitmap.rows-yin-1)*bitmap.width + xin];
