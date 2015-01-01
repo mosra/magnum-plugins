@@ -11,9 +11,11 @@ makedepends=('cmake' 'ninja' 'qt4' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
 options=(!strip)
 provides=('magnum-plugins-git')
 
+_rootdir=$startdir/../../
+
 build() {
-    mkdir -p "$startdir/build"
-    cd "$startdir/build"
+    mkdir -p "$_rootdir/build"
+    cd "$_rootdir/build"
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
@@ -35,11 +37,11 @@ build() {
 }
 
 check() {
-    cd "$startdir/build"
+    cd "$_rootdir/build"
     ctest --output-on-failure
 }
 
 package() {
-  cd "$startdir/build"
+  cd "$_rootdir/build"
   DESTDIR="$pkgdir/" ninja install
 }
