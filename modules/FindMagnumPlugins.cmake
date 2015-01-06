@@ -7,12 +7,11 @@
 # This command will not try to find any actual plugin. The plugins are:
 #  AnyImageImporter - Any image importer
 #  AnySceneImporter - Any scene importer
-#  ColladaImporter  - Collada importer (depends on Qt library)
-#  FreeTypeFont     - FreeType font (depends on FreeType library)
-#  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
-#                     library)
-#  JpegImporter     - JPEG importer (depends on libJPEG library)
-#  PngImporter      - PNG importer (depends on libPNG library)
+#  ColladaImporter  - Collada importer
+#  FreeTypeFont     - FreeType font
+#  HarfBuzzFont     - HarfBuzz font
+#  JpegImporter     - JPEG importer
+#  PngImporter      - PNG importer
 #  StanfordImporter - Stanford PLY importer
 #  StbImageImporter - Image importer using stb_image
 #  StbPngImageConverter - PNG image converter using stb_image_write
@@ -66,8 +65,42 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Dependencies
-find_package(Magnum REQUIRED)
+# Ensure that all inter-component dependencies are specified as well
+set(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS )
+foreach(component ${Magnum_FIND_COMPONENTS})
+    string(TOUPPER ${component} _COMPONENT)
+
+    # The dependencies need to be sorted by their dependency order as well
+    if(component STREQUAL ColladaImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
+    elseif(component STREQUAL HarfBuzzFont)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES FreeTypeFont)
+    endif()
+
+    list(APPEND _MAGNUMPLUGINS_ADDITIONAL_COMPONENTS ${_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES})
+endforeach()
+
+# Join the lists, remove duplicate components
+if(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS)
+    list(INSERT MagnumPlugins_FIND_COMPONENTS 0 ${_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS})
+endif()
+if(MagnumPlugins_FIND_COMPONENTS)
+    list(REMOVE_DUPLICATES MagnumPlugins_FIND_COMPONENTS)
+endif()
+
+# Magnum library dependencies
+foreach(component ${MagnumPlugins_FIND_COMPONENTS})
+    string(TOUPPER ${component} _COMPONENT)
+
+    if(component MATCHES ".+AudioImporter$")
+        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY Audio)
+    elseif(component MATCHES ".+(Font|FontConverter)$")
+        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY Text)
+    endif()
+
+    set(_MAGNUMPLUGINS_DEPENDENCIES ${_MAGNUMPLUGINS_DEPENDENCIES} ${_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY})
+endforeach()
+find_package(Magnum REQUIRED ${_MAGNUMPLUGINS_DEPENDENCIES})
 
 # Additional components
 foreach(component ${MagnumPlugins_FIND_COMPONENTS})
@@ -182,10 +215,21 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     # StbImageImporter has no dependencies
     # StbPngImageConverter has no dependencies
 
+    # Add Magnum library dependency, if there is any
+    if(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY)
+        string(TOUPPER ${_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY} _DEPENDENCY)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES} ${MAGNUM_${_DEPENDENCY}_LIBRARIES})
+        set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES} ${MAGNUM_${_DEPENDENCY}_INCLUDE_DIRS})
+    endif()
+
     # Decide if the plugin was found
     if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
-        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY} ${_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES})
-        set(MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS})
+        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES
+            ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY}
+            ${_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES}
+            ${MAGNUM_LIBRARIES})
+        set(MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS
+            ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS})
 
         set(MagnumPlugins_${component}_FOUND TRUE)
 
