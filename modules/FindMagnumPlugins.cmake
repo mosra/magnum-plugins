@@ -67,7 +67,7 @@
 
 # Ensure that all inter-component dependencies are specified as well
 set(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS )
-foreach(component ${Magnum_FIND_COMPONENTS})
+foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${component} _COMPONENT)
 
     # The dependencies need to be sorted by their dependency order as well
@@ -89,6 +89,7 @@ if(MagnumPlugins_FIND_COMPONENTS)
 endif()
 
 # Magnum library dependencies
+set(_MAGNUMPLUGINS_DEPENDENCIES )
 foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${component} _COMPONENT)
 
