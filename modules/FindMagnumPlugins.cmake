@@ -11,6 +11,7 @@
 #  FreeTypeFont     - FreeType font
 #  HarfBuzzFont     - HarfBuzz font
 #  JpegImporter     - JPEG importer
+#  OpenGexImporter  - OpenGEX importer
 #  PngImporter      - PNG importer
 #  StanfordImporter - Stanford PLY importer
 #  StbImageImporter - Image importer using stb_image
@@ -200,6 +201,8 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
             unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
         endif()
     endif()
+
+    # OpenGexImporter has no dependencies
 
     # PngImporter plugin dependencies
     if(${component} STREQUAL PngImporter)

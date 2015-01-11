@@ -24,14 +24,33 @@
 #
 
 set(OpenGexImporter_SRCS
+    OpenGexImporter.cpp
+
     OpenDdl/OpenDdl.cpp
     OpenDdl/parsers.cpp)
+
+set(OpenGexImporter_HEADERS
+    OpenGexImporter.h)
 
 # Objects shared between plugin and test library
 add_library(OpenGexImporterObjects OBJECT ${OpenGexImporter_SRCS})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+
+# OpenGexImporter plugin
+add_plugin(OpenGexImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
+    OpenGexImporter.conf
+    $<TARGET_OBJECTS:OpenGexImporterObjects>
+    pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(OpenGexImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+target_link_libraries(OpenGexImporter
+    ${MAGNUM_LIBRARIES})
+
+install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
