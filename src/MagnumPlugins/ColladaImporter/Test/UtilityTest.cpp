@@ -30,12 +30,11 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-class UtilityTest: public TestSuite::Tester {
-    public:
-        UtilityTest();
+struct UtilityTest: TestSuite::Tester {
+    explicit UtilityTest();
 
-        void parseVector();
-        void parseArray();
+    void parseVector();
+    void parseArray();
 };
 
 UtilityTest::UtilityTest() {

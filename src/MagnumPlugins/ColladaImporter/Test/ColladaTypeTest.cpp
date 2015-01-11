@@ -29,12 +29,11 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-class ColladaTypeTest: public TestSuite::Tester {
-    public:
-        ColladaTypeTest();
+struct ColladaTypeTest: TestSuite::Tester {
+    explicit ColladaTypeTest();
 
-        void gluint();
-        void glfloat();
+    void gluint();
+    void glfloat();
 };
 
 ColladaTypeTest::ColladaTypeTest() {

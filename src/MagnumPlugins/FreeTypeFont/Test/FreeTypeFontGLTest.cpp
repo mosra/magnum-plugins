@@ -33,15 +33,14 @@
 
 namespace Magnum { namespace Text { namespace Test {
 
-class FreeTypeFontGLTest: public Magnum::Test::AbstractOpenGLTester {
-    public:
-        explicit FreeTypeFontGLTest();
+struct FreeTypeFontGLTest: Magnum::Test::AbstractOpenGLTester {
+    explicit FreeTypeFontGLTest();
 
-        ~FreeTypeFontGLTest();
+    ~FreeTypeFontGLTest();
 
-        void properties();
-        void layout();
-        void fillGlyphCache();
+    void properties();
+    void layout();
+    void fillGlyphCache();
 };
 
 FreeTypeFontGLTest::FreeTypeFontGLTest() {

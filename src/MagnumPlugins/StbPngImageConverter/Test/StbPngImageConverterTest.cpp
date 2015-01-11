@@ -39,14 +39,13 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-class StbPngImageConverterTest: public TestSuite::Tester {
-    public:
-        explicit StbPngImageConverterTest();
+struct StbPngImageConverterTest: TestSuite::Tester {
+    explicit StbPngImageConverterTest();
 
-        void wrongFormat();
-        void wrongType();
+    void wrongFormat();
+    void wrongType();
 
-        void data();
+    void data();
 };
 
 namespace {

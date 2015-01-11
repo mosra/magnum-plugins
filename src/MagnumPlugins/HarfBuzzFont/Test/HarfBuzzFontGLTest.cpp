@@ -33,13 +33,12 @@
 
 namespace Magnum { namespace Text { namespace Test {
 
-class HarfBuzzFontGLTest: public Magnum::Test::AbstractOpenGLTester {
-    public:
-        explicit HarfBuzzFontGLTest();
+struct HarfBuzzFontGLTest: Magnum::Test::AbstractOpenGLTester {
+    explicit HarfBuzzFontGLTest();
 
-        ~HarfBuzzFontGLTest();
+    ~HarfBuzzFontGLTest();
 
-        void layout();
+    void layout();
 };
 
 HarfBuzzFontGLTest::HarfBuzzFontGLTest() {

@@ -35,37 +35,36 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-class StanfordImporterTest: public TestSuite::Tester {
-    public:
-        explicit StanfordImporterTest();
+struct StanfordImporterTest: TestSuite::Tester {
+    explicit StanfordImporterTest();
 
-        void invalidSignature();
+    void invalidSignature();
 
-        void invalidFormat();
-        void unsupportedFormat();
-        void missingFormat();
+    void invalidFormat();
+    void unsupportedFormat();
+    void missingFormat();
 
-        void unknownLine();
-        void unknownElement();
+    void unknownLine();
+    void unknownElement();
 
-        void unexpectedProperty();
-        void invalidVertexProperty();
-        void invalidVertexType();
-        void unknownFaceProperty();
-        void invalidFaceSizeType();
-        void invalidFaceIndexType();
+    void unexpectedProperty();
+    void invalidVertexProperty();
+    void invalidVertexType();
+    void unknownFaceProperty();
+    void invalidFaceSizeType();
+    void invalidFaceIndexType();
 
-        void incompleteVertex();
-        void incompleteFace();
+    void incompleteVertex();
+    void incompleteFace();
 
-        void invalidFaceSize();
-        void shortFile();
+    void invalidFaceSize();
+    void shortFile();
 
-        void empty();
-        void common();
-        void bigEndian();
-        void crlf();
-        void ignoredVertexComponents();
+    void empty();
+    void common();
+    void bigEndian();
+    void crlf();
+    void ignoredVertexComponents();
 };
 
 StanfordImporterTest::StanfordImporterTest() {

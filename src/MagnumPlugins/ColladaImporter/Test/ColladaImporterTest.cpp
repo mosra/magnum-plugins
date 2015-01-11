@@ -42,22 +42,21 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-class ColladaImporterTest: public TestSuite::Tester {
-    public:
-        ColladaImporterTest();
+struct ColladaImporterTest: TestSuite::Tester {
+    explicit ColladaImporterTest();
 
-        void openWrongNamespace();
-        void openWrongVersion();
-        void parseSource();
+    void openWrongNamespace();
+    void openWrongVersion();
+    void parseSource();
 
-        void scene();
-        void objectNoMaterial();
-        void objectMultipleMaterials();
+    void scene();
+    void objectNoMaterial();
+    void objectMultipleMaterials();
 
-        void mesh();
-        void material();
-        void texture();
-        void image();
+    void mesh();
+    void material();
+    void texture();
+    void image();
 };
 
 ColladaImporterTest::ColladaImporterTest() {

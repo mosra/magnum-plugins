@@ -34,15 +34,14 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-class StbImageImporterTest: public TestSuite::Tester {
-    public:
-        explicit StbImageImporterTest();
+struct StbImageImporterTest: TestSuite::Tester {
+    explicit StbImageImporterTest();
 
-        void grayPng();
-        void grayJpeg();
-        void rgbPng();
-        void rgbJpeg();
-        void rgbaPng();
+    void grayPng();
+    void grayJpeg();
+    void rgbPng();
+    void rgbJpeg();
+    void rgbaPng();
 };
 
 StbImageImporterTest::StbImageImporterTest() {

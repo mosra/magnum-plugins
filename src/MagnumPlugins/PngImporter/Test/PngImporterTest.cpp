@@ -34,13 +34,12 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-class PngImporterTest: public TestSuite::Tester {
-    public:
-        explicit PngImporterTest();
+struct PngImporterTest: TestSuite::Tester {
+    explicit PngImporterTest();
 
-        void gray();
-        void rgb();
-        void rgba();
+    void gray();
+    void rgb();
+    void rgba();
 };
 
 PngImporterTest::PngImporterTest() {
