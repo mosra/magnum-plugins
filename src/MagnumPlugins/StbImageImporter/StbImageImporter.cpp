@@ -36,6 +36,7 @@
 #endif
 
 #define STBI_NO_STDIO
+#define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #include "stb_image.h"
