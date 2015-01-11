@@ -42,9 +42,11 @@ Supports the following formats:
 -   BMP, only non-1bpp, no RLE
 -   GIF
 -   HDR
--   JPEG, only non-progressive
+-   JPEG, except for arithmetic encoding
+-   PGM
 -   PIC
 -   PNG
+-   PPM
 -   PSD, only composited view
 -   TGA
 
@@ -60,10 +62,10 @@ dependency of another plugin, you additionally need to add
 `${MAGNUMPLUGINS_STBIMAGEIMPORTER_INCLUDE_DIRS}` to include path.
 
 This plugins provides `BmpImporter`, `GifImporter`, `HdrImporter`,
-`JpegImporter`, `PicImporter`, `PngImporter`, `PsdImporter` and
-`TgaImporter` plugins, but note that this plugin doesn't have complete support
-for all format quirks and the performance might be worse than when using plugin
-dedicated for given format.
+`JpegImporter`, `PgmImporter`, `PicImporter`, `PngImporter`, `PpmImporter`,
+`PsdImporter` and `TgaImporter` plugins, but note that this plugin doesn't have
+complete support for all format quirks and the performance might be worse than
+when using plugin dedicated for given format.
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
@@ -76,6 +78,9 @@ grayscale + alpha images require extension @extension{ARB,texture_rg}.
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
 images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red and
 @ref ColorFormat::LuminanceAlpha instead of @ref ColorFormat::RG.
+
+@todo Properly support floating-point HDR images
+@todo Enable ARM NEON when I'm able to test that
 */
 class StbImageImporter: public AbstractImporter {
     public:
