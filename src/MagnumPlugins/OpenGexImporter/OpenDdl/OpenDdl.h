@@ -39,6 +39,8 @@ class Property;
 class Structure;
 enum class Type: UnsignedInt;
 
+/* Stuff from Validation namespace is used directly */
+
 }}
 
 #endif

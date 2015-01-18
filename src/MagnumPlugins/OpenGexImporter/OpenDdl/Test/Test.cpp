@@ -30,6 +30,7 @@
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Structure.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Validation.h"
 
 namespace Magnum { namespace OpenDdl { namespace Test {
 
@@ -73,6 +74,24 @@ struct Test: TestSuite::Tester {
     void documentChildren();
     void structureChildren();
     void structureProperties();
+
+    void validate();
+
+    void validateUnexpectedPrimitiveInRoot();
+    void validateTooManyPrimitives();
+    void validateTooLittlePrimitives();
+    void validateUnexpectedPrimitiveArraySize();
+    void validateWrongPrimitiveType();
+
+    void validateUnexpectedStructure();
+    void validateTooManyStructures();
+    void validateTooLittleStructures();
+    void validateUnknownStructure();
+
+    void validateExpectedProperty();
+    void validateUnexpectedProperty();
+    void validateWrongPropertyType();
+    void validateUnknownProperty();
 };
 
 Test::Test() {
@@ -110,7 +129,25 @@ Test::Test() {
 
               &Test::documentChildren,
               &Test::structureChildren,
-              &Test::structureProperties});
+              &Test::structureProperties,
+
+              &Test::validate,
+
+              &Test::validateUnexpectedPrimitiveInRoot,
+              &Test::validateTooManyPrimitives,
+              &Test::validateTooLittlePrimitives,
+              &Test::validateUnexpectedPrimitiveArraySize,
+              &Test::validateWrongPrimitiveType,
+
+              &Test::validateUnexpectedStructure,
+              &Test::validateTooManyStructures,
+              &Test::validateTooLittleStructures,
+              &Test::validateUnknownStructure,
+
+              &Test::validateExpectedProperty,
+              &Test::validateUnexpectedProperty,
+              &Test::validateWrongPropertyType,
+              &Test::validateUnknownProperty});
 }
 
 void Test::primitive() {
@@ -620,6 +657,295 @@ Hierarchic () {}
             strings.push_back(p.as<std::string>());
         CORRADE_VERIFY(strings.empty());
     }
+}
+
+void Test::validate() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+Root (some = 15.0, some = 0.5) { string { "hello", "world" } }
+
+Hierarchic (boolean = false, id = 819) {
+    ref { null }
+
+    Hierarchic (boolean = true, id = 820) {
+        Some { int32[2] { {3, 4}, {5, 6} } }
+    }
+
+    Some { int16[2] { {0, 1}, {2, 3} } }
+}
+
+Hierarchic (boolean = false) {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    CORRADE_VERIFY(d.validate(
+        Structures{{RootStructure, {1, 1}},
+                   {HierarchicStructure, {1, 0}}},
+        {
+            {RootStructure,
+                 Properties{{SomeProperty, PropertyType::Float, RequiredProperty},
+                            {BooleanProperty, PropertyType::Bool, OptionalProperty}},
+                 Primitives{Type::String}, 1, 0},
+            {HierarchicStructure,
+                 Properties{{BooleanProperty, PropertyType::Bool, RequiredProperty}},
+                 Primitives{Type::Reference}, 0, 1,
+                 Structures{{SomeStructure, {0, 1}},
+                            {HierarchicStructure, {}}}},
+            {SomeStructure,
+                 Primitives{Type::Int, Type::Short}, 1, 4}
+        }));
+}
+
+void Test::validateUnexpectedPrimitiveInRoot() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+string { "hello" }
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate({}, {}));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected primitive structure in root\n");
+}
+
+void Test::validateTooManyPrimitives() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root {
+    Hierarchic { }
+    string { "world" }
+    string { "world" }
+}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure,
+                Primitives{Type::String}, 1, 1,
+                Structures{{HierarchicStructure, {1, 1}}}},
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): expected exactly 1 primitive sub-structures in structure Root\n");
+}
+
+void Test::validateTooLittlePrimitives() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root {
+    Hierarchic { }
+    string { "world" }
+}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure,
+                Primitives{Type::String}, 2, 1,
+                Structures{{HierarchicStructure, {1, 1}}}},
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): expected exactly 2 primitive sub-structures in structure Root\n");
+}
+
+void Test::validateUnexpectedPrimitiveArraySize() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root {
+    string { "hello", "world", "how is it going" }
+}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure, Primitives{Type::String}, 1, 2},
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): expected exactly 2 values in Root sub-structure\n");
+}
+
+void Test::validateWrongPrimitiveType() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root { int32 {} }
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure, Primitives{Type::String}, 1, 0},
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected sub-structure of type OpenDdl::Type::Int in structure Root\n");
+}
+
+void Test::validateUnexpectedStructure() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root { }
+Hierarchic {  }
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 2}}},
+        {
+            {RootStructure},
+            {HierarchicStructure},
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected structure Hierarchic\n");
+}
+
+void Test::validateTooManyStructures() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root { }
+Root { }
+Root { }
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 2}}},
+        {
+            {RootStructure, Structures{}},
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): too many Root structures, got 3 but expected max 2\n");
+}
+
+void Test::validateTooLittleStructures() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root { }
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {2, 3}}},
+        {
+            {RootStructure, Structures{}},
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): too little Root structures, got 1 but expected min 2\n");
+}
+
+void Test::validateUnknownStructure() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root { string { "hello" } }
+
+Unknown { Root { int32 {} } }
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    /* Unknown structure should be ignored even if its contents don't
+       validate */
+    CORRADE_VERIFY(d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure, Primitives{Type::String}, 1, 1},
+        }));
+}
+
+void Test::validateExpectedProperty() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+Root () {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure,
+                 Properties{{SomeProperty, PropertyType::Float, RequiredProperty},
+                            {BooleanProperty, PropertyType::Bool, OptionalProperty}}}
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): expected property some in structure Root\n");
+}
+
+void Test::validateUnexpectedProperty() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+Root (some = 15.0, boolean = true) {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure, Properties{{SomeProperty, PropertyType::Float, RequiredProperty}}}
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected property boolean in structure Root\n");
+}
+
+void Test::validateWrongPropertyType() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+Root (some = false) {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure, Properties{{SomeProperty, PropertyType::Float, RequiredProperty}}}
+        }));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected type of property some , expected OpenDdl::PropertyType::Float\n");
+}
+
+void Test::validateUnknownProperty() {
+    using namespace Validation;
+
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+Root (some = 15.0, id = null) {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    /* Unknown property should be ignored */
+    CORRADE_VERIFY(d.validate(
+        Structures{{RootStructure, {1, 1}}},
+        {
+            {RootStructure, Properties{{SomeProperty, PropertyType::Float, RequiredProperty}}}
+        }));
 }
 
 }}}

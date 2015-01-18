@@ -28,7 +28,8 @@ set(OpenGexImporterOpenDdl_HEADERS
     OpenDdl.h
     Property.h
     Structure.h
-    Type.h)
+    Type.h
+    Validation.h)
 
 set(OpenGexImporterOpenDdl_PRIVATE_HEADERS
     parsers.h)

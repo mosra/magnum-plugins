@@ -28,11 +28,17 @@
  */
 
 /** @dir magnum-plugins/src/MagnumPlugins/OpenGexImporter/OpenDdl
- * @brief Namespace @ref Magnum::OpenDdl
+ * @brief Namespace @ref Magnum::OpenDdl, @ref Magnum::OpenDdl::Validation
  */
 /** @namespace Magnum::OpenDdl
 @brief OpenDDL parser
 
 Parser for [OpenDDL](http://openddl.org) file format. See
 @ref OpenDdl::Document for more information.
+*/
+/** @namespace Magnum::OpenDdl::Validation
+@brief OpenDDL document validation
+
+Validation of OpenDDL documents. See @ref OpenDdl::Document::validate() for
+more information.
 */

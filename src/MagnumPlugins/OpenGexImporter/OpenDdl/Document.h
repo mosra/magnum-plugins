@@ -60,6 +60,11 @@ namespace Implementation {
     class StructureOfList;
 }
 
+namespace Validation {
+    typedef std::initializer_list<std::pair<Int, std::pair<Int, Int>>> Structures;
+    class Structure;
+}
+
 /**
 @brief OpenDDL document
 
@@ -182,7 +187,7 @@ class Document {
          * @brief First custom top-level structure of given identifier
          *
          * Expects that there is such structure.
-         * @see @ref firstChild(), @ref findFirstChildOf(),
+         * @see @ref firstChild(), @ref findFirstChildOf(), @ref validate(),
          *      @ref Structure::firstChildOf()
          */
         Structure firstChildOf(Int identifier) const;
@@ -200,6 +205,20 @@ class Document {
          */
         Implementation::StructureOfList childrenOf(Int identifier) const;
 
+        /**
+         * @brief Validate document
+         *
+         * Validates the document according to passed specification. Structures
+         * and properties that have unknown names are ignored.
+         *
+         * Note that sub-array sizes, reference validity and some other things
+         * are not checked, this is just to ensure that the document has
+         * expected structure so you can use @ref firstChildOf(),
+         * @ref Structure::firstChildOf(), @ref Structure::propertyOf() etc.
+         * without additional validation.
+         */
+        bool validate(Validation::Structures allowedRootStructures, std::initializer_list<Validation::Structure> structures) const;
+
     private:
         struct PropertyData;
         struct StructureData;
@@ -207,6 +226,12 @@ class Document {
         const char* parseProperty(Containers::ArrayReference<const char> data, std::string& buffer, Int position, Implementation::ParseError& error);
         std::pair<const char*, std::size_t> parseStructure(Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error);
         const char* parseStructureList(Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error);
+
+        bool validateLevel(std::optional<Structure> first, std::initializer_list<std::pair<Int, std::pair<Int, Int>>> allowedStructures, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
+        bool validateStructure(Structure structure, const Validation::Structure& validation, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
+
+        const char* structureName(Int identifier) const;
+        const char* propertyName(Int identifier) const;
 
         template<class T> std::vector<T>& data();
         template<class T> const std::vector<T>& data() const;

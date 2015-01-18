@@ -26,8 +26,10 @@
 #include "Document.h"
 #include "Property.h"
 #include "Structure.h"
+#include "Validation.h"
 #include "parsers.h"
 
+#include <algorithm>
 #include <tuple>
 
 namespace Magnum { namespace OpenDdl {
@@ -663,6 +665,154 @@ const char* Document::parseStructureList(const Containers::ArrayReference<const 
     if(listStart != _structures.size()) _structures[last].next = 0;
 
     return i;
+}
+
+bool Document::validate(const Validation::Structures allowedRootStructures, const std::initializer_list<Validation::Structure> structures) const {
+    std::vector<Int> countsBuffer;
+    countsBuffer.reserve(structures.size());
+
+    /* Check that there are no primitive structures in root */
+    for(const Structure s: children()) if(!s.isCustom()) {
+        Error() << "OpenDdl::Document::validate(): unexpected primitive structure in root";
+        return false;
+    }
+
+    /* Check custom structures */
+    return validateLevel(findFirstChild(), allowedRootStructures, structures, countsBuffer);
+}
+
+bool Document::validateLevel(const std::optional<Structure> first, const std::initializer_list<std::pair<Int, std::pair<Int, Int>>> allowedStructures, const std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const {
+    counts.assign(allowedStructures.size(), 0);
+
+    /* Count number of custom structures in this level */
+    for(std::optional<Structure> it = first; it; it = it->findNext()) {
+        const Structure s = *it;
+
+        if(!s.isCustom() || s.identifier() == UnknownIdentifier) continue;
+
+        /* Verify that the structure is allowed (ignoring unknown ones) */
+        auto found = std::find_if(allowedStructures.begin(), allowedStructures.end(), [s](const std::pair<Int, std::pair<Int, Int>>& v){ return v.first == s.identifier(); });
+        if(found == allowedStructures.end()) {
+            Error() << "OpenDdl::Document::validate(): unexpected structure" << structureName(s.identifier());
+            return false;
+        }
+
+        /* Verify that we don't exceed allowed count */
+        const std::size_t i = found - allowedStructures.begin();
+        if(++counts[i] > found->second.second && found->second.second) {
+            Error() << "OpenDdl::Document::validate(): too many" << structureName(s.identifier()) << "structures, got" << counts[i] << "but expected max" << found->second.second;
+            return false;
+        }
+    }
+
+    /* Verify that all required structures are there */
+    {
+        std::size_t i = 0;
+        for(const std::pair<Int, std::pair<Int, Int>> allowedStructure: allowedStructures) {
+            CORRADE_INTERNAL_ASSERT(allowedStructure.second.first >= 0 && (allowedStructure.second.second == 0 || allowedStructure.second.second >= allowedStructure.second.first));
+
+            if(allowedStructure.second.first > counts[i]) {
+                Error() << "OpenDdl::Document::validate(): too little" << structureName(allowedStructure.first) << "structures, got" << counts[i] << "but expected min" << allowedStructure.second.first;
+                return false;
+            }
+
+            ++i;
+        }
+    }
+
+    /* Descend into substructures (breadth-first) */
+    for(std::optional<Structure> it = first; it; it = it->findNext()) {
+        const Structure s = *it;
+
+        if(!s.isCustom() || s.identifier() == UnknownIdentifier) continue;
+
+        auto found = std::find_if(structures.begin(), structures.end(), [s](const Validation::Structure& v){ return v.identifier() == s.identifier(); });
+        CORRADE_ASSERT(found != structures.end(), "OpenDdl::Document::validate(): missing specification for structure" << structureName(s.identifier()), false);
+        if(!validateStructure(s, *found, structures, counts))
+            return false;
+    }
+
+    return true;
+}
+
+bool Document::validateStructure(const Structure structure, const Validation::Structure& validation, const std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const {
+    counts.assign(validation.properties().size(), 0);
+
+    /* Verify that there is no unexpected property (ignoring unknown ones) */
+    for(const Property p: structure.properties()) {
+        if(p.identifier() == UnknownIdentifier) continue;
+
+        auto found = std::find_if(validation.properties().begin(), validation.properties().end(), [p](const Validation::Property& v){ return v.identifier() == p.identifier(); });
+        if(found == validation.properties().end()) {
+            Error() << "OpenDdl::Document::validate(): unexpected property" << propertyName(p.identifier()) << "in structure" << structureName(structure.identifier());
+            return false;
+        }
+
+        if(!p.isTypeCompatibleWith(found->type())) {
+            Error() << "OpenDdl::Document::validate(): unexpected type of property" << propertyName(p.identifier()) << ", expected" << found->type();
+            return false;
+        }
+
+        counts[found - validation.properties().begin()] = 1;
+    }
+
+    /* Verify that all required properties are there */
+    {
+        std::size_t i = 0;
+        for(const Validation::Property& p: validation.properties()) if(counts[i++] == 0 && p.isRequired()) {
+            Error() << "OpenDdl::Document::validate(): expected property" << propertyName(p.identifier()) << "in structure" << structureName(structure.identifier());
+            return false;
+        }
+    }
+
+    /* Check that there are only primitive sub-structures with required type
+       and size and in required amount */
+    Int remainingPrimitiveCountAllowed = validation.primitiveCount();
+    for(const Structure s: structure.children()) {
+        if(s.isCustom()) continue;
+
+        /* Error if there are no primitive sub-structures allowed or there is requirement on
+           primitive count and we exceeded that requirement */
+        if(!validation.primitives().size() || (validation.primitiveCount() && --remainingPrimitiveCountAllowed < 0)) {
+            Error() << "OpenDdl::Document::validate(): expected exactly" << validation.primitiveCount() << "primitive sub-structures in structure" << structureName(structure.identifier());
+            return false;
+        }
+
+        /* Verify that the primitive sub-structure has one of allowed types */
+        auto found = std::find(validation.primitives().begin(), validation.primitives().end(), s.type());
+        if(found == validation.primitives().end()) {
+            Error() << "OpenDdl::Document::validate(): unexpected sub-structure of type" << s.type() << "in structure" << structureName(structure.identifier());
+            return false;
+        }
+
+        /* Verify that the primitive sub-structure has required size */
+        if(validation.primitiveArraySize() != 0 && s.arraySize() != validation.primitiveArraySize()) {
+            Error() << "OpenDdl::Document::validate(): expected exactly" << validation.primitiveArraySize() << "values in" << structureName(structure.identifier()) << "sub-structure";
+            return false;
+        }
+    }
+
+    /* Error if there was requirement on primitive structures count and we had
+       less primitive structures */
+    if(validation.primitiveCount() && remainingPrimitiveCountAllowed > 0) {
+        Error() << "OpenDdl::Document::validate(): expected exactly" << validation.primitiveCount() << "primitive sub-structures in structure" << structureName(structure.identifier());
+        return false;
+    }
+
+    /* Check also custom substructures */
+    return validateLevel(structure.findFirstChild(), validation.structures(), structures, counts);
+}
+
+const char* Document::structureName(const Int identifier) const {
+    if(identifier == UnknownIdentifier) return "(unknown)";
+    CORRADE_INTERNAL_ASSERT(std::size_t(identifier) < _structureIdentifiers.size());
+    return *(_structureIdentifiers.begin() + identifier);
+}
+
+const char* Document::propertyName(const Int identifier) const {
+    if(identifier == UnknownIdentifier) return "(unknown)";
+    CORRADE_INTERNAL_ASSERT(std::size_t(identifier) < _propertyIdentifiers.size());
+    return *(_propertyIdentifiers.begin() + identifier);
 }
 
 #ifndef DOXYGEN_GENERATING_OUTPUT

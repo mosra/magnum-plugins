@@ -193,7 +193,8 @@ class Structure {
          * @brief Custom structure property of given identifier
          *
          * The structure must be custom and there must be such property.
-         * @see @ref isCustom(), @ref findPropertyOf()
+         * @see @ref isCustom(), @ref Document::validate(),
+         *      @ref findPropertyOf()
          */
         Property propertyOf(Int identifier) const;
 
@@ -220,7 +221,7 @@ class Structure {
          *
          * The structure must be custom and must have at least one child.
          * @see @ref isCustom(), @ref hasChildren(), @ref findFirstChild(),
-         *      @ref firstChildOf()
+         *      @ref Document::validate(), @ref firstChildOf()
          */
         Structure firstChild() const;
 
@@ -269,7 +270,8 @@ class Structure {
          * @brief First custom child structure of given identifier
          *
          * The structure must be custom and there must be such child structure.
-         * @see @ref isCustom(), @ref findFirstChildOf()
+         * @see @ref isCustom(), @ref Document::validate(),
+         *      @ref findFirstChildOf()
          */
         Structure firstChildOf(Int identifier) const;
 
