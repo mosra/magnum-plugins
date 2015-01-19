@@ -32,6 +32,9 @@ set(OpenGexImporter_SRCS
 set(OpenGexImporter_HEADERS
     OpenGexImporter.h)
 
+set(OpenGexImporter_PRIVATE_HEADERS
+    openGexSpec.hpp)
+
 # Objects shared between plugin and test library
 add_library(OpenGexImporterObjects OBJECT ${OpenGexImporter_SRCS})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
