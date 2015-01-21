@@ -27,7 +27,15 @@
 
 #include <Corrade/Containers/Array.h>
 
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
+
+#include "openGexSpec.hpp"
+
 namespace Magnum { namespace Trade {
+
+struct OpenGexImporter::Document {
+    OpenDdl::Document document;
+};
 
 OpenGexImporter::OpenGexImporter() = default;
 
@@ -39,8 +47,21 @@ OpenGexImporter::~OpenGexImporter() = default;
 
 auto OpenGexImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool OpenGexImporter::doIsOpened() const { return false; }
+bool OpenGexImporter::doIsOpened() const { return !!_d; }
 
-void OpenGexImporter::doClose() {}
+void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> data) {
+    std::unique_ptr<Document> d{new Document};
+
+    /* Parse the document */
+    if(!d->document.parse(data, OpenGex::structures, OpenGex::properties)) return;
+
+    /* Validate the document */
+    if(!d->document.validate(OpenGex::rootStructures, OpenGex::structureInfo)) return;
+
+    /* Everything okay, save the instance */
+    _d = std::move(d);
+}
+
+void OpenGexImporter::doClose() { _d = nullptr; }
 
 }}

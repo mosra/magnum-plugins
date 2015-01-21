@@ -76,10 +76,15 @@ class OpenGexImporter: public AbstractImporter {
         ~OpenGexImporter();
 
     private:
+        struct Document;
+
         Features doFeatures() const override;
 
         bool doIsOpened() const override;
+        void doOpenData(Containers::ArrayReference<const char> data) override;
         void doClose() override;
+
+        std::unique_ptr<Document> _d;
 };
 
 }}
