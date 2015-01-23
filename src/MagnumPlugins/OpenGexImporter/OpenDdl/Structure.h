@@ -128,9 +128,19 @@ class Structure {
          * @brief Find next custom sibling structure of given identifier
          *
          * Returns `std::nullopt` if there is no such structure.
-         * @see @ref findNext(), @ref findFirstChildOf()
+         * @see @ref findNext(), @ref findNextSame(), @ref findFirstChildOf()
          */
         std::optional<Structure> findNextOf(Int identifier) const;
+
+        /**
+         * @brief Find next custom sibling structure of the same identifier
+         *
+         * The structure must be custom. Equivalent to calling
+         * `structure.findNextOf(structure.identifier())`. Returns
+         * `std::nullopt` if there is no such structure.
+         * @see @ref isCustom(), @ref findNext(), @ref findNextOf()
+         */
+        std::optional<Structure> findNextSame() const { return findNextOf(identifier()); }
 
         /**
          * @brief Whether the structure has properties
