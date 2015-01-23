@@ -37,6 +37,8 @@
 
 namespace Magnum { namespace OpenDdl {
 
+namespace Implementation { class PropertyIterator; }
+
 /**
 @brief OpenDDL property
 
@@ -51,6 +53,7 @@ See @ref Document for more information.
 */
 class Property {
     friend Structure;
+    friend Implementation::PropertyIterator;
 
     public:
         /**
@@ -112,6 +115,44 @@ Property::as() const {
     CORRADE_ASSERT(Implementation::isPropertyType<T>(_data.get().type),
         "OpenDdl::Property::as(): not compatible with given type", _document.get().data<T>().front());
     return _document.get().data<T>()[_data.get().position];
+}
+
+namespace Implementation {
+
+class PropertyIterator {
+    public:
+        explicit PropertyIterator(const Document& document, std::size_t i) noexcept: _document{document}, _i{i} {}
+
+        Property operator*() const {
+            return Property{_document, _i};
+        }
+        bool operator!=(const PropertyIterator& other) const {
+            return _i != other._i || &_document.get() != &other._document.get();
+        }
+        PropertyIterator& operator++() {
+            ++_i;
+            return *this;
+        }
+
+    private:
+        std::reference_wrapper<const Document> _document;
+        std::size_t _i;
+};
+
+class PropertyList {
+    public:
+        explicit PropertyList(const Document& document, std::size_t begin, std::size_t size) noexcept: _document{document}, _begin{begin}, _end{begin + size} {}
+
+        PropertyIterator begin() const { return PropertyIterator{_document, _begin}; }
+        PropertyIterator cbegin() const { return begin(); }
+        PropertyIterator end() const { return PropertyIterator{_document, _end}; }
+        PropertyIterator cend() const { return end(); }
+
+    private:
+        std::reference_wrapper<const Document> _document;
+        std::size_t _begin, _end;
+};
+
 }
 
 }}

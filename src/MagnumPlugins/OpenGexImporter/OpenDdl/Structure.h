@@ -36,6 +36,12 @@
 
 namespace Magnum { namespace OpenDdl {
 
+namespace Implementation {
+    class StructureIterator;
+    class StructureOfIterator;
+    class PropertyList;
+}
+
 /**
 @brief OpenDDL structure
 
@@ -48,6 +54,8 @@ See @ref Document for more information.
 */
 class Structure {
     friend Document;
+    friend Implementation::StructureIterator;
+    friend Implementation::StructureOfIterator;
 
     public:
         /**
@@ -159,6 +167,20 @@ class Structure {
         Int propertyCount() const;
 
         /**
+         * @brief Custom structure properties
+         *
+         * The structure must be custom. The returned list can be traversed
+         * using common range-based for:
+         * @code
+         * for(Property p: structure.properties()) {
+         *     // ...
+         * }
+         * @endcode
+         * @see @ref isCustom(), @ref children()
+         */
+        Implementation::PropertyList properties() const;
+
+        /**
          * @brief Find custom structure property of given identifier
          *
          * The structure must be custom. Returns `std::nullopt` if the
@@ -203,6 +225,20 @@ class Structure {
         Structure firstChild() const;
 
         /**
+         * @brief Structure children
+         *
+         * The structure must be custom. The returned list can be traversed
+         * using common range-based for:
+         * @code
+         * for(Structure p: structure.children()) {
+         *     // ...
+         * }
+         * @endcode
+         * @see @ref isCustom(), @ref childrenOf(), @ref Document::children()
+         */
+        Implementation::StructureList children() const;
+
+        /**
          * @brief Find first custom child structure of given type
          *
          * The structure must be custom. Returns `std::nullopt` if there is no
@@ -236,6 +272,20 @@ class Structure {
          * @see @ref isCustom(), @ref findFirstChildOf()
          */
         Structure firstChildOf(Int identifier) const;
+
+        /**
+         * @brief Structure children of given identifier
+         *
+         * The structure must be custom. The returned list can be traversed
+         * using common range-based for:
+         * @code
+         * for(Structure p: structure.childrenOf(...)) {
+         *     // ...
+         * }
+         * @endcode
+         * @see @ref isCustom(), @ref children(), @ref Document::childrenOf()
+         */
+        Implementation::StructureOfList childrenOf(Int identifier) const;
 
     private:
         explicit Structure(const Document& document, const Document::StructureData& data) noexcept: _document{document}, _data{data} {}
@@ -290,6 +340,71 @@ template<class T> Containers::ArrayReference<const T> Structure::asArray() const
     CORRADE_ASSERT(Implementation::isStructureType<T>(type()),
         "OpenDdl::Structure::asArray(): not of given type", nullptr);
     return {&_document.get().data<T>()[0] + _data.get().primitive.begin, _data.get().primitive.size};
+}
+
+namespace Implementation {
+
+class StructureIterator {
+    public:
+        explicit StructureIterator(std::optional<Structure> item) noexcept: _item{item} {}
+
+        Structure operator*() const { return *_item; }
+        bool operator!=(const StructureIterator& other) const {
+            return !_item != !other._item || ((_item && other._item) && &_item->_data != &other._item->_data);
+        }
+
+        StructureIterator& operator++() {
+            _item = _item->findNext();
+            return *this;
+        }
+
+    private:
+        std::optional<Structure> _item;
+};
+
+class StructureList {
+    public:
+        explicit StructureList(std::optional<Structure> first) noexcept: _first{first} {}
+
+        StructureIterator begin() const { return StructureIterator{_first}; }
+        StructureIterator cbegin() const { return begin(); }
+        StructureIterator end() const { return StructureIterator{std::nullopt}; }
+        StructureIterator cend() const { return end(); }
+
+    private:
+        std::optional<Structure> _first;
+};
+
+class StructureOfIterator {
+    public:
+        explicit StructureOfIterator(std::optional<Structure> item) noexcept: _item{item} {}
+
+        Structure operator*() const { return *_item; }
+        bool operator!=(const StructureOfIterator& other) const {
+            return !_item != !other._item || ((_item && other._item) && &_item->_data != &other._item->_data);
+        }
+        StructureOfIterator& operator++() {
+            _item = _item->findNextSame();
+            return *this;
+        }
+
+    private:
+        std::optional<Structure> _item;
+};
+
+class StructureOfList {
+    public:
+        explicit StructureOfList(std::optional<Structure> first) noexcept: _first{first} {}
+
+        StructureOfIterator begin() const { return StructureOfIterator{_first}; }
+        StructureOfIterator cbegin() const { return begin(); }
+        StructureOfIterator end() const { return StructureOfIterator{std::nullopt}; }
+        StructureOfIterator cend() const { return end(); }
+
+    private:
+        std::optional<Structure> _first;
+};
+
 }
 
 }}

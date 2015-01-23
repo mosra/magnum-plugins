@@ -685,6 +685,10 @@ Structure Document::firstChild() const {
     return *s;
 }
 
+Implementation::StructureList Document::children() const {
+    return Implementation::StructureList{findFirstChild()};
+}
+
 std::optional<Structure> Document::findFirstChildOf(const Type type) const {
     for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
         if(!s->isCustom() && s->type() == type) return s;
@@ -707,6 +711,10 @@ Structure Document::firstChildOf(const Int identifier) const {
     const std::optional<Structure> s = findFirstChildOf(identifier);
     CORRADE_ASSERT(s, "OpenDdl::Document::firstChildOf(): no such child", *s);
     return *s;
+}
+
+Implementation::StructureOfList Document::childrenOf(const Int identifier) const {
+    return Implementation::StructureOfList{findFirstChildOf(identifier)};
 }
 
 Int Structure::identifier() const {
@@ -734,6 +742,12 @@ std::optional<Structure> Structure::findNextOf(const Int identifier) const {
 Int Structure::propertyCount() const {
     CORRADE_ASSERT(isCustom(), "OpenDdl::Structure::propertyCount(): not a custom structure", {});
     return _data.get().custom.propertiesSize;
+}
+
+Implementation::PropertyList Structure::properties() const {
+    CORRADE_ASSERT(isCustom(), "OpenDdl::Structure::properties(): not a custom structure",
+        Implementation::PropertyList(_document, 0, 0));
+    return Implementation::PropertyList{_document, _data.get().custom.propertiesBegin, _data.get().custom.propertiesSize};
 }
 
 std::optional<Property> Structure::findPropertyOf(const Int identifier) const {
@@ -768,6 +782,12 @@ Structure Structure::firstChild() const {
     return *s;
 }
 
+Implementation::StructureList Structure::children() const {
+    CORRADE_ASSERT(isCustom(), "OpenDdl::Structure::children(): not a custom structure",
+        Implementation::StructureList(findFirstChild()));
+    return Implementation::StructureList{findFirstChild()};
+}
+
 std::optional<Structure> Structure::findFirstChildOf(const Type type) const  {
     for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
         if(!s->isCustom() && s->type() == type) return s;
@@ -790,6 +810,12 @@ Structure Structure::firstChildOf(const Int identifier) const {
     std::optional<Structure> const s = findFirstChildOf(identifier);
     CORRADE_ASSERT(s, "OpenDdl::Structure::firstChildOf(): no such child", *s);
     return *s;
+}
+
+Implementation::StructureOfList Structure::childrenOf(const Int identifier) const {
+    CORRADE_ASSERT(isCustom(), "OpenDdl::Structure::childrenOf(): not a custom structure",
+        Implementation::StructureOfList(findFirstChildOf(identifier)));
+    return Implementation::StructureOfList{findFirstChildOf(identifier)};
 }
 
 bool Property::isTypeCompatibleWith(PropertyType type) const {

@@ -56,6 +56,8 @@ namespace Implementation {
     template<class> struct ExtractFloatingPointDataListItem;
     enum class ParseErrorType: UnsignedInt;
     struct ParseError;
+    class StructureList;
+    class StructureOfList;
 }
 
 /**
@@ -137,6 +139,19 @@ class Document {
         Structure firstChild() const;
 
         /**
+         * @brief Top-level structures
+         *
+         * The returned list can be traversed using common range-based for:
+         * @code
+         * for(Structure s: document.children()) {
+         *     // ...
+         * }
+         * @endcode
+         * @see @ref childrenOf(), @ref Structure::children()
+         */
+        Implementation::StructureList children() const;
+
+        /**
          * @brief Find first custom top-level structure of given type
          *
          * Returns `std::nullopt` if there is no such structure.
@@ -171,6 +186,19 @@ class Document {
          *      @ref Structure::firstChildOf()
          */
         Structure firstChildOf(Int identifier) const;
+
+        /**
+         * @brief Top-level structures of given identifier
+         *
+         * The returned list can be traversed using common range-based for:
+         * @code
+         * for(Structure s: document.childrenOf(...)) {
+         *     // ...
+         * }
+         * @endcode
+         * @see @ref children(), @ref Structure::childrenOf()
+         */
+        Implementation::StructureOfList childrenOf(Int identifier) const;
 
     private:
         struct PropertyData;

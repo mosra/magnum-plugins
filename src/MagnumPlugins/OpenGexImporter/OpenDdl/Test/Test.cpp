@@ -69,6 +69,10 @@ struct Test: TestSuite::Tester {
     void customPropertyInvalidValue();
 
     void hierarchy();
+
+    void documentChildren();
+    void structureChildren();
+    void structureProperties();
 };
 
 Test::Test() {
@@ -102,7 +106,11 @@ Test::Test() {
               &Test::customPropertyExpectedListEnd,
               &Test::customPropertyInvalidValue,
 
-              &Test::hierarchy});
+              &Test::hierarchy,
+
+              &Test::documentChildren,
+              &Test::structureChildren,
+              &Test::structureProperties});
 }
 
 void Test::primitive() {
@@ -513,6 +521,105 @@ Hierarchic %node821 {}
     CORRADE_COMPARE(hierarchicC->name(), "%node821");
 
     CORRADE_VERIFY(!hierarchicC->findNextOf(HierarchicStructure));
+}
+
+void Test::documentChildren() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root %root1 {}
+Hierarchic %hierarchic1 {
+    Root %root2 {}
+    Hierarchic %hierarchic2 {}
+}
+Hierarchic %hierarchic3 {}
+Unknown %unknown {}
+Root %root3 {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    {
+        std::vector<std::string> names;
+        for(Structure s: d.children()) names.push_back(s.name());
+        CORRADE_COMPARE(names, (std::vector<std::string>{
+            "%root1",
+            "%hierarchic1",
+            "%hierarchic3",
+            "%unknown",
+            "%root3"}));
+    } {
+        std::vector<std::string> names;
+        for(Structure s: d.childrenOf(HierarchicStructure)) names.push_back(s.name());
+        CORRADE_COMPARE(names, (std::vector<std::string>{
+            "%hierarchic1",
+            "%hierarchic3"}));
+    } {
+        std::vector<std::string> names;
+        for(Structure s: d.childrenOf(SomeStructure))
+            names.push_back(s.name());
+        CORRADE_VERIFY(names.empty());
+    }
+}
+
+void Test::structureChildren() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root %root1 {}
+Hierarchic %hierarchic1 {
+    Root %root2 {}
+    Unknown %unknown {}
+    Hierarchic %hierarchic2 {
+        Root %root3 {}
+    }
+    Root %root4 {}
+}
+Hierarchic %hierarchic3 {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    {
+        std::vector<std::string> names;
+        for(Structure s: d.firstChildOf(HierarchicStructure).children())
+            names.push_back(s.name());
+        CORRADE_COMPARE(names, (std::vector<std::string>{
+            "%root2",
+            "%unknown",
+            "%hierarchic2",
+            "%root4"}));
+    } {
+        std::vector<std::string> names;
+        for(Structure s: d.firstChildOf(HierarchicStructure).childrenOf(RootStructure))
+            names.push_back(s.name());
+        CORRADE_COMPARE(names, (std::vector<std::string>{
+            "%root2",
+            "%root4"}));
+    } {
+        std::vector<std::string> names;
+        for(Structure s: d.firstChildOf(RootStructure).children())
+            names.push_back(s.name());
+        CORRADE_VERIFY(names.empty());
+    }
+}
+
+void Test::structureProperties() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root (some = "string to ignore", boolean = "hello", unknown = "hey", some = "string") {}
+Hierarchic () {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    {
+        std::vector<std::string> strings;
+        for(Property p: d.firstChildOf(RootStructure).properties())
+            strings.push_back(p.as<std::string>());
+        CORRADE_COMPARE(strings, (std::vector<std::string>{
+            "string to ignore",
+            "hello",
+            "hey",
+            "string"}));
+    } {
+        std::vector<std::string> strings;
+        for(Property p: d.firstChildOf(HierarchicStructure).properties())
+            strings.push_back(p.as<std::string>());
+        CORRADE_VERIFY(strings.empty());
+    }
 }
 
 }}}
