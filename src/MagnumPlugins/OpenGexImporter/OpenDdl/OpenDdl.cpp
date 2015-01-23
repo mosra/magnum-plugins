@@ -151,6 +151,9 @@ bool Document::parse(Containers::ArrayReference<const char> data, const std::ini
             case Implementation::ParseErrorType::InvalidPropertyValue:
                 e << "invalid property value";
                 break;
+            case Implementation::ParseErrorType::InvalidSubArraySize:
+                e << "invalid subarray size";
+                break;
             case Implementation::ParseErrorType::LiteralOutOfRange:
                 e << (error.type == Type::String ? "unterminated string literal" : "numeric literal out of range");
                 break;
@@ -460,11 +463,16 @@ std::pair<const char*, std::size_t> Document::parseStructure(const Containers::A
         i = Implementation::whitespace(data.suffix(structureIdentifier));
 
         /* Array */
-        Int subArraySize = 0;
+        std::size_t subArraySize = 0;
         if(i != data.end() && *i == '[') {
             i = Implementation::whitespace(data.suffix(i + 1));
 
-            std::tie(i, subArraySize, std::ignore) = Implementation::integralLiteral<Int>(data.suffix(i), buffer, error);
+            std::tie(i, subArraySize, std::ignore) = Implementation::integralLiteral<std::size_t>(data.suffix(i), buffer, error);
+
+            if(subArraySize == 0) {
+                error = {Implementation::ParseErrorType::InvalidSubArraySize, i};
+                return {};
+            }
 
             if(!i) return {};
 

@@ -94,7 +94,8 @@ class Structure {
         /**
          * @brief Subarray size
          *
-         * The structure must not be custom.
+         * The structure must not be custom. If the array has no subarrays, `0`
+         * is returned.
          * @see @ref isCustom()
          */
         std::size_t subArraySize() const;

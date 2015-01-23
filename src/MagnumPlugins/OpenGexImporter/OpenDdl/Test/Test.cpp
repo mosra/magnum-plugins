@@ -47,6 +47,7 @@ struct Test: TestSuite::Tester {
     void primitiveSubArray();
     void primitiveSubArrayEmpty();
     void primitiveSubArrayName();
+    void primitiveSubArrayInvalidSize();
     void primitiveSubArrayExpectedArraySizeEnd();
     void primitiveSubArrayExpectedSubSeparator();
     void primitiveSubArrayExpectedSubListEnd();
@@ -105,6 +106,7 @@ Test::Test() {
               &Test::primitiveSubArray,
               &Test::primitiveSubArrayEmpty,
               &Test::primitiveSubArrayName,
+              &Test::primitiveSubArrayInvalidSize,
               &Test::primitiveSubArrayExpectedArraySizeEnd,
               &Test::primitiveSubArrayExpectedSubSeparator,
               &Test::primitiveSubArrayExpectedSubListEnd,
@@ -245,6 +247,15 @@ void Test::primitiveSubArrayName() {
     CORRADE_VERIFY(d.parse(CharacterLiteral{"unsigned_int8[2] $name {}"}, {}, {}));
     CORRADE_VERIFY(!d.isEmpty());
     CORRADE_COMPARE(d.firstChild().name(), "$name");
+}
+
+void Test::primitiveSubArrayInvalidSize() {
+    std::ostringstream out;
+    Error::setOutput(&out);
+
+    Document d;
+    CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[0] {}"}, {}, {}));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): invalid subarray size on line 1\n");
 }
 
 void Test::primitiveSubArrayExpectedArraySizeEnd() {

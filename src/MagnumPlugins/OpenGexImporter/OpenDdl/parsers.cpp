@@ -43,6 +43,7 @@ Debug operator<<(Debug debug, const ParseErrorType value) {
         _c(InvalidCharacterLiteral)
         _c(InvalidLiteral)
         _c(InvalidPropertyValue)
+        _c(InvalidSubArraySize)
         _c(LiteralOutOfRange)
         _c(ExpectedIdentifier)
         _c(ExpectedName)

@@ -44,6 +44,7 @@ enum class ParseErrorType: UnsignedInt {
     InvalidCharacterLiteral,
     InvalidLiteral,
     InvalidPropertyValue,
+    InvalidSubArraySize,
     LiteralOutOfRange,
     ExpectedIdentifier,
     ExpectedName,
