@@ -57,7 +57,7 @@ bool JpegImporter::doIsOpened() const { return _in; }
 
 void JpegImporter::doClose() { _in = nullptr; }
 
-void JpegImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
+void JpegImporter::doOpenData(const Containers::ArrayReference<const char> data) {
     _in = Containers::Array<unsigned char>(data.size());
     std::copy(data.begin(), data.end(), _in.begin());
 }

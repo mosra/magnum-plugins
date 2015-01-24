@@ -41,7 +41,7 @@ StbPngImageConverter::StbPngImageConverter(PluginManager::AbstractManager& manag
 
 auto StbPngImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 
-Containers::Array<unsigned char> StbPngImageConverter::doExportToData(const ImageReference2D& image) const {
+Containers::Array<char> StbPngImageConverter::doExportToData(const ImageReference2D& image) const {
     if(image.type() != ColorType::UnsignedByte) {
         Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color type" << image.type();
         return nullptr;
@@ -71,7 +71,7 @@ Containers::Array<unsigned char> StbPngImageConverter::doExportToData(const Imag
 
     /* Copy the data to a new[]-allocated array so we can delete[] it later,
        then delete the original data with free() */
-    Containers::Array<unsigned char> fileData{std::size_t(size)};
+    Containers::Array<char> fileData{std::size_t(size)};
     std::copy(data, data + size, fileData.begin());
     std::free(data);
 

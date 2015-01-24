@@ -57,7 +57,7 @@ void StbImageImporter::doClose() {
     _in = nullptr;
 }
 
-void StbImageImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
+void StbImageImporter::doOpenData(const Containers::ArrayReference<const char> data) {
     _in = Containers::Array<unsigned char>{data.size()};
     std::copy(data.begin(), data.end(), _in.data());
 }

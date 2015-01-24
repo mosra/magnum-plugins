@@ -55,8 +55,8 @@ void PngImporter::doClose() {
     _in = nullptr;
 }
 
-void PngImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
-    _in = new std::istringstream(std::string(reinterpret_cast<const char*>(data.begin()), data.size()));
+void PngImporter::doOpenData(const Containers::ArrayReference<const char> data) {
+    _in = new std::istringstream{{data, data.size()}};
 }
 
 void PngImporter::doOpenFile(const std::string& filename) {

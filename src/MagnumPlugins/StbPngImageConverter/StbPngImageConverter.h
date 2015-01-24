@@ -65,7 +65,7 @@ class StbPngImageConverter: public AbstractImageConverter {
 
     private:
         Features doFeatures() const override;
-        Containers::Array<unsigned char> doExportToData(const ImageReference2D& image) const override;
+        Containers::Array<char> doExportToData(const ImageReference2D& image) const override;
 };
 
 }}

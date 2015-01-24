@@ -65,9 +65,9 @@ void StbImageImporterTest::grayPng() {
     CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<unsigned char>{0xff, 0x88, 0x00,
-                                                0x88, 0x00, 0xff}));
+    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
+                    (std::vector<char>{'\xff', '\x88', '\x00',
+                                       '\x88', '\x00', '\xff'}));
 }
 
 void StbImageImporterTest::grayJpeg() {
@@ -83,9 +83,9 @@ void StbImageImporterTest::grayJpeg() {
     CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<unsigned char>{0xff, 0x88, 0x00,
-                                                0x88, 0x00, 0xff}));
+    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
+                    (std::vector<char>{'\xff', '\x88', '\x00',
+                                       '\x88', '\x00', '\xff'}));
 }
 
 void StbImageImporterTest::rgbPng() {
@@ -97,13 +97,13 @@ void StbImageImporterTest::rgbPng() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ColorFormat::RGB);
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<unsigned char>{0xca, 0xfe, 0x77,
-                                                0xde, 0xad, 0xb5,
-                                                0xca, 0xfe, 0x77,
-                                                0xde, 0xad, 0xb5,
-                                                0xca, 0xfe, 0x77,
-                                                0xde, 0xad, 0xb5}));
+    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
+                    (std::vector<char>{'\xca', '\xfe', '\x77',
+                                       '\xde', '\xad', '\xb5',
+                                       '\xca', '\xfe', '\x77',
+                                       '\xde', '\xad', '\xb5',
+                                       '\xca', '\xfe', '\x77',
+                                       '\xde', '\xad', '\xb5'}));
 }
 
 void StbImageImporterTest::rgbJpeg() {
@@ -116,13 +116,13 @@ void StbImageImporterTest::rgbJpeg() {
     CORRADE_COMPARE(image->format(), ColorFormat::RGB);
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<unsigned char>{0xca, 0xfe, 0x76,
-                                                0xdf, 0xad, 0xb6,
-                                                0xca, 0xfe, 0x76,
-                                                0xe0, 0xad, 0xb6,
-                                                0xc9, 0xff, 0x76,
-                                                0xdf, 0xad, 0xb6}));
+    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
+                    (std::vector<char>{'\xca', '\xfe', '\x76',
+                                       '\xdf', '\xad', '\xb6',
+                                       '\xca', '\xfe', '\x76',
+                                       '\xe0', '\xad', '\xb6',
+                                       '\xc9', '\xff', '\x76',
+                                       '\xdf', '\xad', '\xb6'}));
 }
 
 void StbImageImporterTest::rgbaPng() {
@@ -134,13 +134,13 @@ void StbImageImporterTest::rgbaPng() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ColorFormat::RGBA);
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<unsigned char>{0xde, 0xad, 0xb5, 0xff,
-                                                0xca, 0xfe, 0x77, 0xff,
-                                                0x00, 0x00, 0x00, 0x00,
-                                                0xca, 0xfe, 0x77, 0xff,
-                                                0x00, 0x00, 0x00, 0x00,
-                                                0xde, 0xad, 0xb5, 0xff}));
+    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
+                    (std::vector<char>{'\xde', '\xad', '\xb5', '\xff',
+                                       '\xca', '\xfe', '\x77', '\xff',
+                                       '\x00', '\x00', '\x00', '\x00',
+                                       '\xca', '\xfe', '\x77', '\xff',
+                                       '\x00', '\x00', '\x00', '\x00',
+                                       '\xde', '\xad', '\xb5', '\xff'}));
 }
 
 }}}

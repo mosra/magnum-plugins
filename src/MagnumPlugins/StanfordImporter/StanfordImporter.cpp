@@ -61,9 +61,8 @@ void StanfordImporter::doOpenFile(const std::string& filename) {
     _in = std::move(in);
 }
 
-void StanfordImporter::doOpenData(Containers::ArrayReference<const unsigned char> data) {
-    /* Open file in *binary* mode to avoid broken binary data (need to handle \r manually) */
-    _in.reset(new std::istringstream{{reinterpret_cast<const char*>(data.begin()), data.size()}});
+void StanfordImporter::doOpenData(const Containers::ArrayReference<const char> data) {
+    _in.reset(new std::istringstream{{data, data.size()}});
 }
 
 UnsignedInt StanfordImporter::doMesh3DCount() const { return 1; }

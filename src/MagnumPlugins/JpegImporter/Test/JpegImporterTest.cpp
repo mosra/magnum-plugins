@@ -59,9 +59,9 @@ void JpegImporterTest::gray() {
     CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<unsigned char>{0xff, 0x88, 0x00,
-                                                0x88, 0x00, 0xff}));
+    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
+                    (std::vector<char>{'\xff', '\x88', '\x00',
+                                       '\x88', '\x00', '\xff'}));
 }
 
 void JpegImporterTest::rgb() {
@@ -74,13 +74,13 @@ void JpegImporterTest::rgb() {
     CORRADE_COMPARE(image->format(), ColorFormat::RGB);
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE(std::vector<unsigned char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<unsigned char>{0xca, 0xfe, 0x76,
-                                                0xdf, 0xad, 0xb6,
-                                                0xca, 0xfe, 0x76,
-                                                0xe0, 0xad, 0xb6,
-                                                0xc9, 0xff, 0x76,
-                                                0xdf, 0xad, 0xb6}));
+    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
+                    (std::vector<char>{'\xca', '\xfe', '\x76',
+                                       '\xdf', '\xad', '\xb6',
+                                       '\xca', '\xfe', '\x76',
+                                       '\xe0', '\xad', '\xb6',
+                                       '\xc9', '\xff', '\x76',
+                                       '\xdf', '\xad', '\xb6'}));
 }
 
 }}}
