@@ -58,6 +58,7 @@ install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_IN
 if(BUILD_TESTS)
     add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
     target_link_libraries(MagnumOpenGexImporterTestLib ${MAGNUM_LIBRARIES})
+    add_subdirectory(Test)
 endif()
 
 add_subdirectory(OpenDdl)

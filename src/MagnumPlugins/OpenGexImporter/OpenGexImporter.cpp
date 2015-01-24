@@ -35,6 +35,12 @@ namespace Magnum { namespace Trade {
 
 struct OpenGexImporter::Document {
     OpenDdl::Document document;
+
+    /* Default metrics */
+    Float distanceMultiplier = 1.0f;
+    Float angleMultiplier = 1.0f;
+    Float timeMultiplier = 1.0f;
+    bool yUp = false;
 };
 
 OpenGexImporter::OpenGexImporter() = default;
@@ -57,6 +63,49 @@ void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> da
 
     /* Validate the document */
     if(!d->document.validate(OpenGex::rootStructures, OpenGex::structureInfo)) return;
+
+    /* Metrics */
+    for(const OpenDdl::Structure metric: d->document.childrenOf(OpenGex::Metric)) {
+        auto&& key = metric.propertyOf(OpenGex::key).as<std::string>();
+        const OpenDdl::Structure value = metric.firstChild();
+
+        /* Distance multiplier */
+        if(key == "distance") {
+            if(value.type() != OpenDdl::Type::Float) {
+                Error() << "Trade::OpenGexImporter::openData(): invalid value for distance metric";
+                return;
+            }
+
+            d->distanceMultiplier = value.as<Float>();
+
+        /* Angle multiplier */
+        } else if(key == "angle") {
+            if(value.type() != OpenDdl::Type::Float) {
+                Error() << "Trade::OpenGexImporter::openData(): invalid value for angle metric";
+                return;
+            }
+
+            d->angleMultiplier = value.as<Float>();
+
+        /* Time multiplier */
+        } else if(key == "time") {
+            if(value.type() != OpenDdl::Type::Float) {
+                Error() << "Trade::OpenGexImporter::openData(): invalid value for time metric";
+                return;
+            }
+
+            d->timeMultiplier = value.as<Float>();
+
+        /* Up axis */
+        } else if(key == "up") {
+            if(value.type() != OpenDdl::Type::String || (value.as<std::string>() != "y" && value.as<std::string>() != "z")) {
+                Error() << "Trade::OpenGexImporter::openData(): invalid value for up metric";
+                return;
+            }
+
+            d->yUp = value.as<std::string>() == "y";
+        }
+    }
 
     /* Everything okay, save the instance */
     _d = std::move(d);
