@@ -39,6 +39,8 @@ namespace Magnum { namespace Trade {
 Imports the [OpenDDL](http://openddl.org)-based [OpenGEX](http://opengex.org)
 format.
 
+Supports importing of mesh data.
+
 This plugin is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
 Plugins. To use dynamic plugin, you need to load `OpenGexImporter` plugin from
 `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
@@ -48,6 +50,19 @@ another plugin, you additionally need to add
 `${MAGNUMPLUGINS_OPENGEXIMPORTER_INCLUDE_DIRS}` to include path. See
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+### Limitations
+
+-   `half` data type results in parsing error.
+-   On OpenGL ES, usage of double type and on WebGL additionally also usage of
+    64bit integer types results in parsing error.
+
+#### Mesh import
+
+-   64bit indices are not supported.
+-   Quads are not supported.
+-   Additional mesh LoDs after the first one are ignored.
+-   `w` coordinate for vertex positions and normals is ignored if present.
 
 Generic importer for OpenDDL files is implemented in @ref OpenDdl::Document
 class available as part of this plugin.
@@ -83,6 +98,9 @@ class OpenGexImporter: public AbstractImporter {
         bool doIsOpened() const override;
         void doOpenData(Containers::ArrayReference<const char> data) override;
         void doClose() override;
+
+        UnsignedInt doMesh3DCount() const override;
+        std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
         std::unique_ptr<Document> _d;
 };

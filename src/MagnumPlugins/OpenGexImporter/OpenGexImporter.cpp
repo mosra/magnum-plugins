@@ -25,9 +25,16 @@
 
 #include "OpenGexImporter.h"
 
+#include <limits>
+#include <unordered_map>
 #include <Corrade/Containers/Array.h>
+#include <Magnum/Mesh.h>
+#include <Magnum/Math/Vector3.h>
+#include <Magnum/Trade/MeshData3D.h>
 
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Structure.h"
 
 #include "openGexSpec.hpp"
 
@@ -41,6 +48,8 @@ struct OpenGexImporter::Document {
     Float angleMultiplier = 1.0f;
     Float timeMultiplier = 1.0f;
     bool yUp = false;
+
+    std::vector<OpenDdl::Structure> meshes;
 };
 
 OpenGexImporter::OpenGexImporter() = default;
@@ -107,10 +116,200 @@ void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> da
         }
     }
 
+    /* Gather all meshes */
+    /** @todo Support for LOD */
+    for(const OpenDdl::Structure geometry: d->document.childrenOf(OpenGex::GeometryObject))
+        d->meshes.push_back(geometry);
+
     /* Everything okay, save the instance */
     _d = std::move(d);
 }
 
 void OpenGexImporter::doClose() { _d = nullptr; }
+
+UnsignedInt OpenGexImporter::doMesh3DCount() const {
+    return _d->meshes.size();
+}
+
+namespace {
+
+template<class Result, class Original> std::vector<Result> extractVertexData3(const OpenDdl::Structure vertexArray) {
+    const Containers::ArrayReference<const typename Original::Type> data = vertexArray.asArray<typename Original::Type>();
+    const std::size_t vertexCount = vertexArray.arraySize()/(vertexArray.subArraySize() ? vertexArray.subArraySize() : 1);
+
+    std::vector<Result> output;
+    output.reserve(vertexCount);
+    for(std::size_t i = 0; i != vertexCount; ++i)
+        /* Convert the data to result type and then pad it to result size */
+        output.push_back(Result::pad(Math::Vector<Original::Size, typename Result::Type>{Original::from(data + i*Original::Size)}));
+
+    return output;
+}
+
+template<class Result, std::size_t originalSize> std::vector<Result> extractVertexData2(const OpenDdl::Structure vertexArray) {
+    switch(vertexArray.type()) {
+        /** @todo half */
+        case OpenDdl::Type::Float:
+            return extractVertexData3<Result, Math::Vector<originalSize, Float>>(vertexArray);
+        #ifndef MAGNUM_TARGET_GLES
+        case OpenDdl::Type::Double:
+            return extractVertexData3<Result, Math::Vector<originalSize, Double>>(vertexArray);
+        #endif
+        default: CORRADE_ASSERT_UNREACHABLE();
+    }
+
+}
+
+template<class Result> std::vector<Result> extractVertexData(const OpenDdl::Structure vertexArray) {
+    switch(vertexArray.subArraySize()) {
+        case 0:
+        case 1:
+            return extractVertexData2<Result, 1>(vertexArray);
+        case 2:
+            return extractVertexData2<Result, 2>(vertexArray);
+        case 3:
+            return extractVertexData2<Result, 3>(vertexArray);
+        case 4:
+            return extractVertexData2<Result, 4>(vertexArray);
+    }
+
+    CORRADE_ASSERT_UNREACHABLE();
+}
+
+template<class T> std::vector<UnsignedInt> extractIndices(const OpenDdl::Structure indexArray) {
+    const Containers::ArrayReference<const T> data = indexArray.asArray<T>();
+    return {data.begin(), data.end()};
+}
+
+inline Vector3 fixZUp(Vector3 vec) { return {vec.x(), vec.z(), -vec.y()}; }
+
+}
+
+std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
+    const OpenDdl::Structure mesh = _d->meshes[id].firstChildOf(OpenGex::Mesh);
+
+    /* Primitive type, triangles by default */
+    std::size_t indexArraySubArraySize = 3;
+    MeshPrimitive primitive = MeshPrimitive::Triangles;
+    if(const std::optional<OpenDdl::Property> primitiveProperty = mesh.findPropertyOf(OpenGex::primitive)) {
+        auto&& primitiveString = primitiveProperty->as<std::string>();
+        if(primitiveString == "points") {
+            primitive = MeshPrimitive::Points;
+            indexArraySubArraySize = 0;
+        } else if(primitiveString == "lines") {
+            primitive = MeshPrimitive::Lines;
+            indexArraySubArraySize = 1;
+        } else if(primitiveString == "line_strip") {
+            primitive = MeshPrimitive::LineStrip;
+            indexArraySubArraySize = 1;
+        } else if(primitiveString == "triangle_strip") {
+            primitive = MeshPrimitive::TriangleStrip;
+            indexArraySubArraySize = 1;
+        } else if(primitiveString != "triangles") {
+            /** @todo quads */
+            Error() << "Trade::OpenGexImporter::mesh3D(): unsupported primitive" << primitiveString;
+            return std::nullopt;
+        }
+    }
+
+    /* Vertices */
+    std::vector<std::vector<Vector3>> positions;
+    std::vector<std::vector<Vector2>> textureCoordinates;
+    std::vector<std::vector<Vector3>> normals;
+    for(const OpenDdl::Structure vertexArray: mesh.childrenOf(OpenGex::VertexArray)) {
+        /* Skip unsupported ones */
+        auto&& attrib = vertexArray.propertyOf(OpenGex::attrib).as<std::string>();
+        if(attrib != "position" && attrib != "normal" && attrib != "texcoord")
+            continue;
+
+        const OpenDdl::Structure vertexArrayData = vertexArray.firstChild();
+
+        /* Sanity checks (would be too bloaty to do in actual templated code) */
+        if(vertexArrayData.type() != OpenDdl::Type::Float
+           #ifndef MAGNUM_TARGET_GLES
+           && vertexArrayData.type() != OpenDdl::Type::Double
+           #endif
+        ) {
+            Error() << "Trade::OpenGexImporter::mesh3D(): unsupported vertex array type" << vertexArrayData.type();
+            return std::nullopt;
+        }
+        if(vertexArrayData.subArraySize() > 4) {
+            Error() << "Trade::OpenGexImporter::mesh3D(): unsupported vertex array vector size" << vertexArrayData.subArraySize();
+            return std::nullopt;
+        }
+
+        /* Vertex positions */
+        if(attrib == "position") {
+            std::vector<Vector3> positionData = extractVertexData<Vector3>(vertexArrayData);
+            for(auto& i: positionData) i *= _d->distanceMultiplier;
+            if(!_d->yUp) for(auto& i: positionData) i = fixZUp(i);
+            positions.push_back(std::move(positionData));
+
+        /* Normals */
+        } else if(attrib == "normal") {
+            std::vector<Vector3> normalData = extractVertexData<Vector3>(vertexArrayData);
+            if(!_d->yUp) for(auto& i: normalData) i = fixZUp(i);
+            normals.emplace_back(std::move(normalData));
+
+        /* 2D texture coordinates */
+        } else if(attrib == "texcoord")
+            textureCoordinates.emplace_back(extractVertexData<Vector2>(vertexArrayData));
+    }
+
+    /* Sanity checks */
+    if(positions.empty()) {
+        Error() << "Trade::OpenGexImporter::mesh3D(): no vertex position array found";
+        return std::nullopt;
+    }
+    std::size_t count = 0;
+    for(auto&& a: positions) {
+        if(!count) count = a.size();
+        else if(a.size() != count) count = std::numeric_limits<std::size_t>::max();
+    }
+    for(auto&& a: normals) {
+        if(!count) count = a.size();
+        else if(a.size() != count) count = std::numeric_limits<std::size_t>::max();
+    }
+    for(auto&& a: textureCoordinates) {
+        if(!count) count = a.size();
+        else if(a.size() != count) count = std::numeric_limits<std::size_t>::max();
+    }
+    if(count == std::numeric_limits<std::size_t>::max()) {
+        Error() << "Trade::OpenGexImporter::mesh3D(): mismatched vertex array sizes";
+        return std::nullopt;
+    }
+
+    /* Index array */
+    std::vector<UnsignedInt> indices;
+    if(const std::optional<OpenDdl::Structure> indexArray = mesh.findFirstChildOf(OpenGex::IndexArray)) {
+        const OpenDdl::Structure indexArrayData = indexArray->firstChild();
+
+        if(indexArrayData.subArraySize() != indexArraySubArraySize) {
+            Error() << "Trade::OpenGexImporter::mesh3D(): invalid index array subarray size" << indexArrayData.subArraySize() << "for" << primitive;
+            return std::nullopt;
+        }
+
+        switch(indexArrayData.type()) {
+            case OpenDdl::Type::UnsignedByte:
+                indices = extractIndices<UnsignedByte>(indexArrayData);
+                break;
+            case OpenDdl::Type::UnsignedShort:
+                indices = extractIndices<UnsignedShort>(indexArrayData);
+                break;
+            case OpenDdl::Type::UnsignedInt:
+                indices = extractIndices<UnsignedInt>(indexArrayData);
+                break;
+            #ifndef MAGNUM_TARGET_GLES
+            case OpenDdl::Type::UnsignedLong:
+                Error() << "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices";
+                return std::nullopt;
+            #endif
+
+            default: CORRADE_ASSERT_UNREACHABLE();
+        }
+    }
+
+    return MeshData3D{primitive, indices, positions, normals, textureCoordinates};
+}
 
 }}
