@@ -1,5 +1,5 @@
-Here are various plugins for Magnum C++11 OpenGL graphics engine. If you don't
-know what Magnum is, see https://github.com/mosra/magnum.
+Here are various plugins for Magnum C++11/C++14 OpenGL graphics engine. If you
+don't know what Magnum is, see https://github.com/mosra/magnum.
 
 INSTALLATION
 ============
