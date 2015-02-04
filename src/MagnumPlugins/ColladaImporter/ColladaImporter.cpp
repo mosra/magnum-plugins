@@ -862,7 +862,7 @@ template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedIn
     for(UnsignedInt i = 0; i != array.size(); ++i)
         array[i] = originalArray[interleavedIndexArrays[i*stride+offset]];
 
-    return std::move(array);
+    return array;
 }
 
 std::string ColladaImporter::instanceName(const QString& name, const QString& instanceTag) {
