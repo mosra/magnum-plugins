@@ -28,6 +28,7 @@
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/MeshData3D.h>
@@ -48,6 +49,8 @@ struct OpenGexImporter::Document {
     Float angleMultiplier = 1.0f;
     Float timeMultiplier = 1.0f;
     bool yUp = false;
+
+    std::optional<std::string> filePath;
 
     std::vector<OpenDdl::Structure> meshes;
 };
@@ -123,6 +126,14 @@ void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> da
 
     /* Everything okay, save the instance */
     _d = std::move(d);
+}
+
+void OpenGexImporter::doOpenFile(const std::string& filename) {
+    /* Make doOpenData() do the thing */
+    AbstractImporter::doOpenFile(filename);
+
+    /* If succeeded, save file path for later */
+    if(_d) _d->filePath = Utility::Directory::path(filename);
 }
 
 void OpenGexImporter::doClose() { _d = nullptr; }

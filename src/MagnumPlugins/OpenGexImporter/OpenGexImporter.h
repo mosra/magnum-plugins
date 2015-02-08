@@ -97,6 +97,7 @@ class OpenGexImporter: public AbstractImporter {
 
         bool doIsOpened() const override;
         void doOpenData(Containers::ArrayReference<const char> data) override;
+        void doOpenFile(const std::string& filename) override;
         void doClose() override;
 
         UnsignedInt doMesh3DCount() const override;
