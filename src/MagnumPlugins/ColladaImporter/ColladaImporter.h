@@ -26,7 +26,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Trade::ColladaImporter
+ * @brief Class @ref Magnum::Trade::ColladaImporter
  */
 
 #include <Magnum/Trade/AbstractImporter.h>
