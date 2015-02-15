@@ -53,11 +53,17 @@ endif()
 target_link_libraries(OpenGexImporter
     ${MAGNUM_LIBRARIES})
 
+if(CORRADE_TARGET_WINDOWS)
+    target_link_libraries(OpenGexImporter AnyImageImporter)
+endif()
+
 install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
-    target_link_libraries(MagnumOpenGexImporterTestLib ${MAGNUM_LIBRARIES})
+    target_link_libraries(MagnumOpenGexImporterTestLib
+        ${MAGNUM_LIBRARIES}
+        MagnumAnyImageImporterTestLib)
     add_subdirectory(Test)
 endif()
 

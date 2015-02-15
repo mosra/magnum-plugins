@@ -33,7 +33,7 @@ find_package(Magnum REQUIRED)
 include(CMakeDependentOption)
 
 # Plugins to build
-cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER" ON)
+cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER;NOT WITH_OPENGEXIMPORTER" ON)
 option(WITH_ANYSCENEIMPORTER "Build AnySceneImporter plugin" OFF)
 option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
 cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)

@@ -30,7 +30,9 @@
 
 #include "Magnum/Mesh.h"
 #include "Magnum/Math/Vector3.h"
+#include "Magnum/Trade/ImageData.h"
 #include "Magnum/Trade/MeshData3D.h"
+#include "Magnum/Trade/TextureData.h"
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
 
 #include "configure.h"
@@ -56,6 +58,12 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void meshMismatchedSizes();
     void meshInvalidIndexArraySubArraySize();
     void meshUnsupportedIndexType();
+
+    void texture();
+    void textureInvalidCoordinateSet();
+
+    void image();
+    void imageInvalid();
 };
 
 OpenGexImporterTest::OpenGexImporterTest() {
@@ -74,7 +82,13 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::meshNoPositions,
               &OpenGexImporterTest::meshMismatchedSizes,
               &OpenGexImporterTest::meshInvalidIndexArraySubArraySize,
-              &OpenGexImporterTest::meshUnsupportedIndexType});
+              &OpenGexImporterTest::meshUnsupportedIndexType,
+
+              &OpenGexImporterTest::image,
+              &OpenGexImporterTest::imageInvalid,
+
+              &OpenGexImporterTest::texture,
+              &OpenGexImporterTest::textureInvalidCoordinateSet});
 }
 
 void OpenGexImporterTest::open() {
@@ -271,6 +285,63 @@ void OpenGexImporterTest::meshUnsupportedIndexType() {
     Error::setOutput(&out);
     CORRADE_VERIFY(!importer.mesh3D(5));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices\n");
+}
+
+void OpenGexImporterTest::texture() {
+    OpenGexImporter importer;
+
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
+    CORRADE_COMPARE(importer.textureCount(), 2);
+
+    std::optional<Trade::TextureData> texture = importer.texture(1);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->wrapping(), Sampler::Wrapping::ClampToEdge);
+    CORRADE_COMPARE(texture->image(), 1);
+}
+
+void OpenGexImporterTest::textureInvalidCoordinateSet() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
+    CORRADE_COMPARE(importer.textureCount(), 2);
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.texture(0));
+    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::texture(): unsupported texture coordinate set\n");
+}
+
+void OpenGexImporterTest::image() {
+    PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
+
+    if(manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("TgaImporter plugin not found, cannot test");
+
+    OpenGexImporter importer{manager};
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
+    CORRADE_COMPARE(importer.image2DCount(), 2);
+
+    /* Check only size, as it is good enough proof that it is working */
+    std::optional<Trade::ImageData2D> image = importer.image2D(1);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+}
+
+void OpenGexImporterTest::imageInvalid() {
+    PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
+
+    if(manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("TgaImporter plugin not found, cannot test");
+
+    OpenGexImporter importer{manager};
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
+    CORRADE_COMPARE(importer.image2DCount(), 2);
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.image2D(1));
+    CORRADE_COMPARE(out.str(), "Trade::TgaImporter::openFile(): cannot open file /nonexistent.tga\n");
 }
 
 }}}

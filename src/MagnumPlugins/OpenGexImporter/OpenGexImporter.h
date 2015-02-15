@@ -39,10 +39,11 @@ namespace Magnum { namespace Trade {
 Imports the [OpenDDL](http://openddl.org)-based [OpenGEX](http://opengex.org)
 format.
 
-Supports importing of mesh data.
+Supports importing of mesh, texture and image data.
 
-This plugin is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
-Plugins. To use dynamic plugin, you need to load `OpenGexImporter` plugin from
+This plugin depends on @ref AnyImageImporter plugin. It is built if
+`WITH_OPENGEXIMPORTER` is enabled when building Magnum Plugins. To use dynamic
+plugin, you need to load `OpenGexImporter` plugin from
 `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
 `OpenGexImporter` component of `MagnumPlugins` package in CMake and link to
 `${MAGNUMPLUGINS_OPENGEXIMPORTER_LIBRARIES}`. To use this as a dependency of
@@ -63,6 +64,15 @@ information.
 -   Quads are not supported.
 -   Additional mesh LoDs after the first one are ignored.
 -   `w` coordinate for vertex positions and normals is ignored if present.
+
+#### Texture import
+
+-   Texture coordinate transformation is ignored.
+-   Textures using other than the first coordinate set are not supported.
+-   Texture type is always @ref Trade::TextureData::Type::Texture2D, wrapping
+    is always @ref Sampler::Wrapping::ClampToEdge, minification and
+    magnification is @ref Sampler::Filter::Linear and mipmap selection is
+    @ref Sampler::Mipmap::Linear.
 
 Generic importer for OpenDDL files is implemented in @ref OpenDdl::Document
 class available as part of this plugin.
@@ -102,6 +112,12 @@ class OpenGexImporter: public AbstractImporter {
 
         UnsignedInt doMesh3DCount() const override;
         std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+
+        UnsignedInt doTextureCount() const override;
+        std::optional<TextureData> doTexture(UnsignedInt id) override;
+
+        UnsignedInt doImage2DCount() const override;
+        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
         std::unique_ptr<Document> _d;
 };

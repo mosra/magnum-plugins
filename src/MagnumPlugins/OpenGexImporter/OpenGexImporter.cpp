@@ -31,8 +31,11 @@
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Vector3.h>
+#include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/TextureData.h>
 
+#include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Structure.h"
@@ -52,7 +55,8 @@ struct OpenGexImporter::Document {
 
     std::optional<std::string> filePath;
 
-    std::vector<OpenDdl::Structure> meshes;
+    std::vector<OpenDdl::Structure> meshes,
+        textures;
 };
 
 OpenGexImporter::OpenGexImporter() = default;
@@ -123,6 +127,15 @@ void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> da
     /** @todo Support for LOD */
     for(const OpenDdl::Structure geometry: d->document.childrenOf(OpenGex::GeometryObject))
         d->meshes.push_back(geometry);
+
+    /* Gather all textures */
+    /** @todo do this during gathering of materials and lights when these are done */
+    for(const OpenDdl::Structure lightObject: d->document.childrenOf(OpenGex::LightObject))
+        for(const OpenDdl::Structure texture: lightObject.childrenOf(OpenGex::Texture))
+            d->textures.push_back(texture);
+    for(const OpenDdl::Structure material: d->document.childrenOf(OpenGex::Material))
+        for(const OpenDdl::Structure texture: material.childrenOf(OpenGex::Texture))
+            d->textures.push_back(texture);
 
     /* Everything okay, save the instance */
     _d = std::move(d);
@@ -321,6 +334,36 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
     }
 
     return MeshData3D{primitive, indices, positions, normals, textureCoordinates};
+}
+
+UnsignedInt OpenGexImporter::doTextureCount() const { return _d->textures.size(); }
+
+std::optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt id) {
+    const OpenDdl::Structure texture = _d->textures[id];
+
+    if(const auto texcoord = texture.findPropertyOf(OpenGex::texcoord)) if(texcoord->as<Int>() != 0) {
+        Error() << "Trade::OpenGexImporter::texture(): unsupported texture coordinate set";
+        return std::nullopt;
+    }
+
+    /** @todo texture coordinate transformations */
+
+    return TextureData{TextureData::Type::Texture2D, Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Mipmap::Linear, Sampler::Wrapping::ClampToEdge, id};
+}
+
+UnsignedInt OpenGexImporter::doImage2DCount() const { return _d->textures.size(); }
+
+std::optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id) {
+    CORRADE_ASSERT(_d->filePath, "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from filesystem", {});
+    CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+
+    const OpenDdl::Structure texture = _d->textures[id];
+
+    AnyImageImporter imageImporter{static_cast<PluginManager::Manager<AbstractImporter>&>(*manager())};
+    if(!imageImporter.openFile(Utility::Directory::join(*_d->filePath, texture.firstChildOf(OpenDdl::Type::String).as<std::string>())))
+        return std::nullopt;
+
+    return imageImporter.image2D(0);
 }
 
 }}
