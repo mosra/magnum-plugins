@@ -76,6 +76,8 @@ struct Test: TestSuite::Tester {
     void structureChildren();
     void structureProperties();
 
+    void structureEquality();
+
     void validate();
 
     void validateUnexpectedPrimitiveInRoot();
@@ -132,6 +134,8 @@ Test::Test() {
               &Test::documentChildren,
               &Test::structureChildren,
               &Test::structureProperties,
+
+              &Test::structureEquality,
 
               &Test::validate,
 
@@ -668,6 +672,19 @@ Hierarchic () {}
             strings.push_back(p.as<std::string>());
         CORRADE_VERIFY(strings.empty());
     }
+}
+
+void Test::structureEquality() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+Root {}
+Some {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    Structure a = d.firstChildOf(RootStructure);
+    Structure b = d.firstChildOf(SomeStructure);
+    CORRADE_VERIFY(a == a && b == b);
+    CORRADE_VERIFY(a != b && b != a);
 }
 
 void Test::validate() {

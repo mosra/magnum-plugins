@@ -59,6 +59,20 @@ class Structure {
 
     public:
         /**
+         * @brief Equality operator
+         *
+         * Returns `true` if the two instances refer to the same structure in
+         * the same document.
+         */
+        bool operator==(const Structure& other) const {
+            return &_document.get() == &other._document.get() &&
+                   &_data.get() == &other._data.get();
+        }
+
+        /** @brief Non-equality operator */
+        bool operator!=(const Structure& other) const { return !operator==(other); }
+
+        /**
          * @brief Whether the structure is custom
          *
          * @see @ref type(), @ref identifier()
