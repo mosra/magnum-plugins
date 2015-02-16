@@ -25,6 +25,7 @@
 
 #include "OpenGexImporter.h"
 
+#include <algorithm>
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
@@ -33,6 +34,7 @@
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/TextureData.h>
 
 #include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
@@ -56,8 +58,26 @@ struct OpenGexImporter::Document {
     std::optional<std::string> filePath;
 
     std::vector<OpenDdl::Structure> meshes,
+        materials,
         textures;
+
+    std::unordered_map<std::string, Int> materialsForName;
 };
+
+namespace {
+
+inline Int findStructureId(const std::vector<OpenDdl::Structure>& structures, OpenDdl::Structure structure) {
+    auto found = std::find(structures.begin(), structures.end(), structure);
+    return found == structures.end() ? -1 : found - structures.begin();
+}
+
+UnsignedInt structureId(const std::vector<OpenDdl::Structure>& structures, OpenDdl::Structure structure) {
+    const Int id = findStructureId(structures, structure);
+    CORRADE_INTERNAL_ASSERT(id != -1);
+    return id;
+}
+
+}
 
 OpenGexImporter::OpenGexImporter() = default;
 
@@ -128,14 +148,23 @@ void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> da
     for(const OpenDdl::Structure geometry: d->document.childrenOf(OpenGex::GeometryObject))
         d->meshes.push_back(geometry);
 
-    /* Gather all textures */
-    /** @todo do this during gathering of materials and lights when these are done */
+    /* Gather all light textures */
     for(const OpenDdl::Structure lightObject: d->document.childrenOf(OpenGex::LightObject))
         for(const OpenDdl::Structure texture: lightObject.childrenOf(OpenGex::Texture))
             d->textures.push_back(texture);
-    for(const OpenDdl::Structure material: d->document.childrenOf(OpenGex::Material))
-        for(const OpenDdl::Structure texture: material.childrenOf(OpenGex::Texture))
-            d->textures.push_back(texture);
+
+    /* Gather all materials */
+    {
+        for(const OpenDdl::Structure material: d->document.childrenOf(OpenGex::Material)) {
+            if(const auto name = material.findFirstChildOf(OpenGex::Name))
+                d->materialsForName.emplace(name->firstChild().as<std::string>(), d->materials.size());
+            d->materials.push_back(material);
+
+            /* Gather all material textures */
+            for(const OpenDdl::Structure texture: material.childrenOf(OpenGex::Texture))
+                d->textures.push_back(texture);
+        }
+    }
 
     /* Everything okay, save the instance */
     _d = std::move(d);
@@ -334,6 +363,89 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
     }
 
     return MeshData3D{primitive, indices, positions, normals, textureCoordinates};
+}
+
+UnsignedInt OpenGexImporter::doMaterialCount() const { return _d->materials.size(); }
+
+Int OpenGexImporter::doMaterialForName(const std::string& name) {
+    const auto found = _d->materialsForName.find(name);
+    return found == _d->materialsForName.end() ? -1 : found->second;
+}
+
+std::string OpenGexImporter::doMaterialName(const UnsignedInt id) {
+    const auto name = _d->materials[id].findFirstChildOf(OpenGex::Name);
+    return name ? name->firstChild().as<std::string>() : "";
+}
+
+namespace {
+
+template<class Result, std::size_t originalSize> Result extractColorData2(const OpenDdl::Structure floatArray) {
+    return Result::pad(*reinterpret_cast<const Math::Vector<originalSize, Float>*>(floatArray.asArray<Float>().data()));
+}
+
+template<class Result> Result extractColorData(const OpenDdl::Structure floatArray) {
+    switch(floatArray.subArraySize()) {
+        case 3: return extractColorData2<Result, 3>(floatArray);
+        case 4: return extractColorData2<Result, 4>(floatArray);
+    }
+
+    CORRADE_ASSERT_UNREACHABLE();
+}
+
+}
+
+std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const UnsignedInt id) {
+    const OpenDdl::Structure material = _d->materials[id];
+
+    /* Textures */
+    PhongMaterialData::Flags flags;
+    UnsignedInt diffuseTexture{}, specularTexture{};
+    for(const OpenDdl::Structure texture: material.childrenOf(OpenGex::Texture)) {
+        const auto& attrib = texture.propertyOf(OpenGex::attrib).as<std::string>();
+        if(attrib == "diffuse") {
+            diffuseTexture = structureId(_d->textures, texture);
+            flags |= PhongMaterialData::Flag::DiffuseTexture;
+        } else if(attrib == "specular") {
+            specularTexture = structureId(_d->textures, texture);
+            flags |= PhongMaterialData::Flag::SpecularTexture;
+        }
+    }
+
+    /* Colors (used only if matching texture isn't already specified) */
+    Vector3 diffuseColor{1.0f};
+    Vector3 specularColor{0.0f};
+    for(const OpenDdl::Structure color: material.childrenOf(OpenGex::Color)) {
+        const OpenDdl::Structure floatArray = color.firstChild();
+        if(floatArray.subArraySize() != 3 && floatArray.subArraySize() != 4) {
+            Error() << "Trade::OpenGexImporter::material(): invalid color structure";
+            return nullptr;
+        }
+
+        const auto& attrib = color.propertyOf(OpenGex::attrib).as<std::string>();
+        if(attrib == "diffuse")
+            diffuseColor = extractColorData<Vector3>(floatArray);
+        else if(attrib == "specular")
+            specularColor = extractColorData<Vector3>(floatArray);
+    }
+
+    /* Parameters */
+    Float shininess{1.0f};
+    for(const OpenDdl::Structure param: material.childrenOf(OpenGex::Param)) {
+        const auto& attrib = param.propertyOf(OpenGex::attrib).as<std::string>();
+        if(attrib == "specular_power")
+            shininess = param.firstChild().as<Float>();
+    }
+
+    /* Put things together */
+    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess}};
+    data->ambientColor() = Vector3{0.0f};
+    if(flags & PhongMaterialData::Flag::DiffuseTexture)
+        data->diffuseTexture() = diffuseTexture;
+    else data->diffuseColor() = diffuseColor;
+    if(flags & PhongMaterialData::Flag::SpecularTexture)
+        data->specularTexture() = specularTexture;
+    else data->specularColor() = specularColor;
+    return std::move(data);
 }
 
 UnsignedInt OpenGexImporter::doTextureCount() const { return _d->textures.size(); }

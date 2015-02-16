@@ -52,7 +52,7 @@ another plugin, you additionally need to add
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-### Limitations
+### Behavior and limitations
 
 -   `half` data type results in parsing error.
 -   On OpenGL ES, usage of double type and on WebGL additionally also usage of
@@ -64,6 +64,15 @@ information.
 -   Quads are not supported.
 -   Additional mesh LoDs after the first one are ignored.
 -   `w` coordinate for vertex positions and normals is ignored if present.
+
+#### Material import
+
+-   Two-sided property is ignored.
+-   All materials are imported as @ref Trade::PhongMaterialData with ambient
+    color always set to `{0.0f, 0.0f, 0.0f}`.
+-   Alpha channel of colors is ignored.
+-   `emission`, `opacity` and `transparency` attributes are not supported.
+-   `normal` textures are not supported.
 
 #### Texture import
 
@@ -112,6 +121,11 @@ class OpenGexImporter: public AbstractImporter {
 
         UnsignedInt doMesh3DCount() const override;
         std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+
+        UnsignedInt doMaterialCount() const override;
+        Int doMaterialForName(const std::string& name) override;
+        std::string doMaterialName(UnsignedInt id) override;
+        std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
 
         UnsignedInt doTextureCount() const override;
         std::optional<TextureData> doTexture(UnsignedInt id) override;

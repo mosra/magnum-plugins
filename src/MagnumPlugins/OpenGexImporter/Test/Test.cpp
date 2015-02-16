@@ -32,6 +32,7 @@
 #include "Magnum/Math/Vector3.h"
 #include "Magnum/Trade/ImageData.h"
 #include "Magnum/Trade/MeshData3D.h"
+#include "Magnum/Trade/PhongMaterialData.h"
 #include "Magnum/Trade/TextureData.h"
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
 
@@ -59,6 +60,11 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void meshInvalidIndexArraySubArraySize();
     void meshUnsupportedIndexType();
 
+    void materialDefaults();
+    void materialColors();
+    void materialTextured();
+    void materialInvalidColor();
+
     void texture();
     void textureInvalidCoordinateSet();
 
@@ -83,6 +89,11 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::meshMismatchedSizes,
               &OpenGexImporterTest::meshInvalidIndexArraySubArraySize,
               &OpenGexImporterTest::meshUnsupportedIndexType,
+
+              &OpenGexImporterTest::materialDefaults,
+              &OpenGexImporterTest::materialColors,
+              &OpenGexImporterTest::materialTextured,
+              &OpenGexImporterTest::materialInvalidColor,
 
               &OpenGexImporterTest::image,
               &OpenGexImporterTest::imageInvalid,
@@ -285,6 +296,79 @@ void OpenGexImporterTest::meshUnsupportedIndexType() {
     Error::setOutput(&out);
     CORRADE_VERIFY(!importer.mesh3D(5));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices\n");
+}
+
+void OpenGexImporterTest::materialDefaults() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
+
+    std::unique_ptr<Trade::AbstractMaterialData> material = importer.material(0);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+    CORRADE_COMPARE(importer.materialName(0), "");
+
+    auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+    CORRADE_COMPARE(phong.ambientColor(), Vector3{0.0f});
+    CORRADE_COMPARE(phong.diffuseColor(), Vector3{1.0f});
+    CORRADE_COMPARE(phong.specularColor(), Vector3{0.0f});
+    CORRADE_COMPARE(phong.shininess(), 1.0f);
+}
+
+void OpenGexImporterTest::materialColors() {
+    OpenGexImporter importer;
+
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
+    CORRADE_COMPARE(importer.materialCount(), 4);
+
+    std::unique_ptr<Trade::AbstractMaterialData> material = importer.material(1);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+    CORRADE_COMPARE(importer.materialName(1), "colors");
+    CORRADE_COMPARE(importer.materialForName("colors"), 1);
+
+    auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+    CORRADE_VERIFY(!phong.flags());
+    CORRADE_COMPARE(phong.diffuseColor(), (Vector3{0.0f, 0.8f, 0.5f}));
+    CORRADE_COMPARE(phong.specularColor(), (Vector3{0.5f, 0.2f, 1.0f}));
+    CORRADE_COMPARE(phong.shininess(), 80.0f);
+}
+
+void OpenGexImporterTest::materialTextured() {
+    OpenGexImporter importer;
+
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
+    CORRADE_COMPARE(importer.materialCount(), 4);
+    CORRADE_COMPARE(importer.textureCount(), 4);
+
+    {
+        std::unique_ptr<Trade::AbstractMaterialData> material = importer.material(2);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(importer.materialName(2), "diffuse_texture");
+
+        auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_VERIFY(phong.flags() == Trade::PhongMaterialData::Flag::DiffuseTexture);
+        CORRADE_COMPARE(phong.diffuseTexture(), 1);
+    } {
+        std::unique_ptr<Trade::AbstractMaterialData> material = importer.material(3);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(importer.materialName(3), "both_textures");
+
+        auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_VERIFY(phong.flags() == (Trade::PhongMaterialData::Flag::DiffuseTexture|Trade::PhongMaterialData::Flag::SpecularTexture));
+        CORRADE_COMPARE(phong.diffuseTexture(), 2);
+        CORRADE_COMPARE(phong.specularTexture(), 3);
+    }
+}
+
+void OpenGexImporterTest::materialInvalidColor() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material-invalid.ogex")));
+    CORRADE_COMPARE(importer.materialCount(), 1);
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.material(0));
+    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::material(): invalid color structure\n");
 }
 
 void OpenGexImporterTest::texture() {
