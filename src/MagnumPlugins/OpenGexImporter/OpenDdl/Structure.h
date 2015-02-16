@@ -138,6 +138,13 @@ class Structure {
         template<class T> Containers::ArrayReference<const T> asArray() const;
 
         /**
+         * @brief Parent structure
+         *
+         * Returns `std::nullopt` if the structure is top-level.
+         */
+        std::optional<Structure> parent() const;
+
+        /**
          * @brief Find next sibling structure
          *
          * Returns `std::nullopt` if the structure is last in given level.
@@ -227,7 +234,7 @@ class Structure {
          * The structure must be custom. Returns `std::nullopt` if the
          * structure has no children.
          * @see @ref isCustom(), @ref firstChild(), @ref findNext(),
-         *      @ref findFirstChildOf()
+         *      @ref findFirstChildOf(), @ref parent()
          */
         std::optional<Structure> findFirstChild() const;
 
@@ -236,7 +243,7 @@ class Structure {
          *
          * The structure must be custom and must have at least one child.
          * @see @ref isCustom(), @ref hasChildren(), @ref findFirstChild(),
-         *      @ref Document::validate(), @ref firstChildOf()
+         *      @ref Document::validate(), @ref firstChildOf(), @ref parent()
          */
         Structure firstChild() const;
 

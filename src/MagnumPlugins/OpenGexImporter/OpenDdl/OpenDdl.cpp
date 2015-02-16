@@ -117,6 +117,8 @@ Document::Document() {
 
 Document::~Document() = default;
 
+namespace { enum: std::size_t { NoParent = ~std::size_t{} }; }
+
 bool Document::parse(Containers::ArrayReference<const char> data, const std::initializer_list<CharacterLiteral> structureIdentifiers, const std::initializer_list<CharacterLiteral> propertyIdentifiers) {
     _structureIdentifiers = {structureIdentifiers.begin(), structureIdentifiers.size()};
     _propertyIdentifiers = {propertyIdentifiers.begin(), propertyIdentifiers.size()};
@@ -125,7 +127,7 @@ bool Document::parse(Containers::ArrayReference<const char> data, const std::ini
     std::string buffer;
 
     const char* i = Implementation::whitespace(data);
-    i = parseStructureList(data.suffix(i), buffer, error);
+    i = parseStructureList(NoParent, data.suffix(i), buffer, error);
 
     if(!i) {
         /* Calculate line number */
@@ -448,7 +450,7 @@ Int identifierId(const Containers::ArrayReference<const char> data, Containers::
 
 }
 
-std::pair<const char*, std::size_t> Document::parseStructure(const Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error) {
+std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t parent, const Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error) {
     /* Identifier */
     const char* const structureIdentifier = Implementation::identifier(data, error);
     if(!structureIdentifier) return {};
@@ -548,7 +550,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const Containers::A
             return {};
         }
 
-        _structures.emplace_back(type, name, subArraySize, dataBegin, dataSize, _structures.size() + 1);
+        _structures.emplace_back(type, name, subArraySize, dataBegin, dataSize, parent, _structures.size() + 1);
         return {i + 1, _structures.size() - 1};
 
     /* Custom structure */
@@ -632,7 +634,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const Containers::A
         _structures.emplace_back();
 
         /* Substructure */
-        i = parseStructureList(data.suffix(i), buffer, error);
+        i = parseStructureList(position, data.suffix(i), buffer, error);
 
         /* Propagate errors */
         if(!i) return {};
@@ -652,20 +654,20 @@ std::pair<const char*, std::size_t> Document::parseStructure(const Containers::A
         /* Next sibling is implicitly the one after all children. If this is
            the last structure in given list, the "next" index is set to 0 in
            parseStructureList() below. */
-        _structures[position] = StructureData{structureIdentifierId, name, propertyBegin, propertySize, firstChild, _structures.size()};
+        _structures[position] = StructureData{structureIdentifierId, name, propertyBegin, propertySize, firstChild, parent, _structures.size()};
 
         return {i + 1, position};
     }
 }
 
-const char* Document::parseStructureList(const Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error) {
+const char* Document::parseStructureList(const std::size_t parent, const Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error) {
     const std::size_t listStart = _structures.size();
 
     /* Parse all structures in the list */
     const char* i = data;
     std::size_t last;
     while(i && i != data.end() && *i != '}') {
-        std::tie(i, last) = parseStructure(data.suffix(i), buffer, error);
+        std::tie(i, last) = parseStructure(parent, data.suffix(i), buffer, error);
         i = Implementation::whitespace(data.suffix(i));
     }
 
@@ -824,11 +826,11 @@ const char* Document::propertyName(const Int identifier) const {
 }
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-Document::StructureData::StructureData(const Type type, const std::size_t name, const std::size_t subArraySize, const std::size_t dataBegin, const std::size_t dataSize, const std::size_t next) noexcept: name{name}, primitive{type, subArraySize, dataBegin, dataSize}, next{next} {
+Document::StructureData::StructureData(const Type type, const std::size_t name, const std::size_t subArraySize, const std::size_t dataBegin, const std::size_t dataSize, const std::size_t parent, const std::size_t next) noexcept: name{name}, primitive{type, subArraySize, dataBegin, dataSize}, parent{parent}, next{next} {
     CORRADE_INTERNAL_ASSERT(type < Type::Custom);
 }
 
-Document::StructureData::StructureData(const Int type, const std::size_t name, const std::size_t propertyBegin, const std::size_t propertySize, const std::size_t firstChild, const std::size_t next) noexcept: name{name}, custom{type, propertyBegin, propertySize, firstChild}, next{next} {
+Document::StructureData::StructureData(const Int type, const std::size_t name, const std::size_t propertyBegin, const std::size_t propertySize, const std::size_t firstChild, const std::size_t parent, const std::size_t next) noexcept: name{name}, custom{type, propertyBegin, propertySize, firstChild}, parent{parent}, next{next} {
     CORRADE_INTERNAL_ASSERT(type >= 0);
 }
 #endif
@@ -888,6 +890,11 @@ std::size_t Structure::arraySize() const {
 std::size_t Structure::subArraySize() const {
     CORRADE_ASSERT(!isCustom(), "OpenDdl::Structure::subArraySize(): not a primitive structure", {});
     return _data.get().primitive.subArraySize;
+}
+
+std::optional<Structure> Structure::parent() const {
+    return _data.get().parent == NoParent ? std::nullopt :
+        std::make_optional(Structure{_document, _document.get()._structures[_data.get().parent]});
 }
 
 std::optional<Structure> Structure::findNextOf(const Int identifier) const {

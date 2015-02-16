@@ -224,8 +224,8 @@ class Document {
         struct StructureData;
 
         const char* parseProperty(Containers::ArrayReference<const char> data, std::string& buffer, Int position, Implementation::ParseError& error);
-        std::pair<const char*, std::size_t> parseStructure(Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error);
-        const char* parseStructureList(Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error);
+        std::pair<const char*, std::size_t> parseStructure(std::size_t parent, Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error);
+        const char* parseStructureList(std::size_t parent, Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error);
 
         bool validateLevel(std::optional<Structure> first, std::initializer_list<std::pair<Int, std::pair<Int, Int>>> allowedStructures, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
         bool validateStructure(Structure structure, const Validation::Structure& validation, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
@@ -323,11 +323,11 @@ struct Document::PropertyData {
 };
 
 struct Document::StructureData {
-    constexpr explicit StructureData() noexcept: name{}, custom{UnknownIdentifier, 0, 0, 0}, next{0} {}
+    constexpr explicit StructureData() noexcept: name{}, custom{UnknownIdentifier, 0, 0, 0}, parent{0}, next{0} {}
 
-    explicit StructureData(Type type, std::size_t name, std::size_t subArraySize, std::size_t dataBegin, std::size_t dataSize, std::size_t next) noexcept;
+    explicit StructureData(Type type, std::size_t name, std::size_t subArraySize, std::size_t dataBegin, std::size_t dataSize, std::size_t parent, std::size_t next) noexcept;
 
-    explicit StructureData(Int type, std::size_t name, std::size_t propertyBegin, std::size_t propertySize, std::size_t firstChild, std::size_t next) noexcept;
+    explicit StructureData(Int type, std::size_t name, std::size_t propertyBegin, std::size_t propertySize, std::size_t firstChild, std::size_t parent, std::size_t next) noexcept;
 
     std::size_t name;
 
@@ -357,6 +357,7 @@ struct Document::StructureData {
          Custom custom;
     };
 
+    std::size_t parent;
     std::size_t next;
 };
 #endif

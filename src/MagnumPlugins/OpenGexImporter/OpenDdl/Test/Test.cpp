@@ -514,15 +514,20 @@ Hierarchic %node821 {}
 
     std::optional<Structure> root = d.findFirstChildOf(RootStructure);
     CORRADE_VERIFY(root);
+    CORRADE_VERIFY(!root->parent());
     CORRADE_VERIFY(root->isCustom());
     std::optional<Property> rootSomeProperty = root->findPropertyOf(SomeProperty);
     CORRADE_VERIFY(rootSomeProperty);
     CORRADE_COMPARE(rootSomeProperty->identifier(), SomeProperty);
     CORRADE_VERIFY(rootSomeProperty->isTypeCompatibleWith(PropertyType::Float));
     CORRADE_COMPARE(rootSomeProperty->as<Float>(), 0.5f);
+
     CORRADE_VERIFY(root->hasChildren());
-    CORRADE_VERIFY(!root->findFirstChild()->findNext());
-    CORRADE_COMPARE(root->firstChild().type(), Type::String);
+    Structure string = root->firstChild();
+    CORRADE_VERIFY(string.parent());
+    CORRADE_VERIFY(string.parent() == root);
+    CORRADE_VERIFY(!string.findNext());
+    CORRADE_COMPARE(string.type(), Type::String);
     CORRADE_COMPARE_AS(root->firstChildOf(Type::String).asArray<std::string>(),
         Containers::Array<std::string>::from("hello", "world"),
         TestSuite::Compare::Container);
@@ -532,15 +537,18 @@ Hierarchic %node821 {}
 
     std::optional<Structure> hierarchicA = d.findFirstChildOf(HierarchicStructure);
     CORRADE_VERIFY(hierarchicA);
+    CORRADE_VERIFY(!hierarchicA->parent());
     CORRADE_VERIFY(hierarchicA->isCustom());
     CORRADE_COMPARE(hierarchicA->identifier(), HierarchicStructure);
     CORRADE_COMPARE(hierarchicA->name(), "%node819");
     std::optional<Structure> hASome = hierarchicA->findFirstChildOf(SomeStructure);
     CORRADE_VERIFY(hASome);
+    CORRADE_VERIFY(hASome->parent() == hierarchicA);
     CORRADE_VERIFY(hASome->isCustom());
     CORRADE_VERIFY(!hASome->findNext());
     std::optional<Structure> hASomeData = hASome->findFirstChild();
     CORRADE_VERIFY(hASomeData);
+    CORRADE_VERIFY(hASomeData->parent() && *hASomeData->parent() == *hASome);
     CORRADE_COMPARE(hASomeData->type(), Type::Short);
     CORRADE_COMPARE(hASomeData->subArraySize(), 2);
     CORRADE_COMPARE_AS(hASomeData->asArray<Short>(),
@@ -549,6 +557,7 @@ Hierarchic %node821 {}
 
     std::optional<Structure> hierarchicB = hierarchicA->findFirstChildOf(HierarchicStructure);
     CORRADE_VERIFY(hierarchicB);
+    CORRADE_VERIFY(hierarchicB->parent() == hierarchicA);
     CORRADE_VERIFY(hierarchicB->isCustom());
     CORRADE_COMPARE(hierarchicB->name(), "%node820");
     std::optional<Property> hBbooleanProperty = hierarchicB->findPropertyOf(BooleanProperty);
@@ -557,10 +566,12 @@ Hierarchic %node821 {}
     CORRADE_COMPARE(hBbooleanProperty->as<bool>(), true);
     std::optional<Structure> hBSome = hierarchicB->findFirstChildOf(SomeStructure);
     CORRADE_VERIFY(hBSome);
+    CORRADE_VERIFY(hBSome->parent() == hierarchicB);
     CORRADE_VERIFY(hBSome->isCustom());
     CORRADE_VERIFY(!hBSome->findNext());
     std::optional<Structure> hBSomeData = hBSome->findFirstChild();
     CORRADE_VERIFY(hBSomeData);
+    CORRADE_VERIFY(hBSomeData->parent() == hBSome);
     CORRADE_COMPARE(hBSomeData->type(), Type::Int);
     CORRADE_COMPARE(hBSomeData->subArraySize(), 2);
     CORRADE_COMPARE_AS(hBSomeData->asArray<Int>(),
@@ -569,6 +580,7 @@ Hierarchic %node821 {}
 
     std::optional<Structure> hierarchicC = hierarchicA->findNextOf(HierarchicStructure);
     CORRADE_VERIFY(hierarchicC);
+    CORRADE_VERIFY(!hierarchicC->parent());
     CORRADE_VERIFY(hierarchicC->isCustom());
     CORRADE_COMPARE(hierarchicC->name(), "%node821");
 
