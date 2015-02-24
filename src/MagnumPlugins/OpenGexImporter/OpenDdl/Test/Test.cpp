@@ -179,6 +179,7 @@ void Test::primitiveEmpty() {
     Structure s = d.firstChild();
     CORRADE_VERIFY(!s.isCustom());
     CORRADE_COMPARE(s.type(), Type::Float);
+    CORRADE_VERIFY(!s.hasName());
     CORRADE_COMPARE(s.name(), "");
     CORRADE_COMPARE(s.arraySize(), 0);
 }
@@ -187,6 +188,7 @@ void Test::primitiveName() {
     Document d;
     CORRADE_VERIFY(d.parse(CharacterLiteral{"float %name {}"}, {}, {}));
     CORRADE_VERIFY(!d.isEmpty());
+    CORRADE_VERIFY(d.firstChild().hasName());
     CORRADE_COMPARE(d.firstChild().name(), "%name");
 }
 
@@ -351,6 +353,8 @@ void Test::customEmpty() {
     CORRADE_VERIFY(s.isCustom());
     CORRADE_COMPARE(s.identifier(), SomeStructure);
     CORRADE_VERIFY(!s.hasChildren());
+    CORRADE_VERIFY(!s.hasName());
+    CORRADE_COMPARE(s.name(), "");
 }
 
 void Test::customUnknown() {
@@ -368,6 +372,7 @@ void Test::customName() {
     Document d;
     CORRADE_VERIFY(d.parse(CharacterLiteral{"Some %some_name {}"}, structureIdentifiers, {}));
     CORRADE_VERIFY(!d.isEmpty());
+    CORRADE_VERIFY(d.firstChild().hasName());
     CORRADE_COMPARE(d.firstChild().name(), "%some_name");
 }
 

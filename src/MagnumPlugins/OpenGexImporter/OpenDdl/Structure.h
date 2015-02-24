@@ -94,7 +94,14 @@ class Structure {
          */
         Int identifier() const;
 
-        /** @brief Structure name */
+        /** @brief Whether the structure has a name */
+        bool hasName() const { return _data.get().name != 0; }
+
+        /**
+         * @brief Structure name
+         *
+         * @see @ref hasName()
+         */
         const std::string& name() const { return _document.get()._strings[_data.get().name]; }
 
         /**
