@@ -74,6 +74,14 @@ struct ParseError {
 
 bool equals(Containers::ArrayReference<const char> a, Containers::ArrayReference<const char> b);
 
+template<std::size_t size> const char* findLastOf(Containers::ArrayReference<const char> data, const char(&characters)[size]) {
+    for(const char* c = data.end(); c != data.begin(); --c)
+        for(std::size_t i = 0; i != size - 1; ++i)
+            if(*(c - 1) == characters[i]) return c - 1;
+
+    return data.begin();
+}
+
 const char* whitespace(Containers::ArrayReference<const char> data);
 std::pair<const char*, char> escapedChar(Containers::ArrayReference<const char> data, ParseError& error);
 const char* escapedUnicode(Containers::ArrayReference<const char> data, std::string& out, ParseError& error);

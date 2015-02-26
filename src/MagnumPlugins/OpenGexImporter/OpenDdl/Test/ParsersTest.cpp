@@ -36,6 +36,7 @@ struct ParsersTest: TestSuite::Tester {
     explicit ParsersTest();
 
     void equals();
+    void findLastOf();
     void whitespace();
     void onelineComment();
     void multilineComment();
@@ -97,6 +98,7 @@ struct ParsersTest: TestSuite::Tester {
 
 ParsersTest::ParsersTest() {
     addTests({&ParsersTest::equals,
+              &ParsersTest::findLastOf,
               &ParsersTest::whitespace,
               &ParsersTest::onelineComment,
               &ParsersTest::multilineComment,
@@ -168,6 +170,22 @@ void ParsersTest::equals() {
     CORRADE_VERIFY(Implementation::equals(a, a));
     CORRADE_VERIFY(!Implementation::equals(a, b));
     CORRADE_VERIFY(!Implementation::equals(b, a));
+}
+
+void ParsersTest::findLastOf() {
+    /* I'm too lazy to create another VERIFY_SUFFIX_PARSED(), so I'll test to
+       prefix instead */
+    CharacterLiteral a{"$hello%world"};
+    auto ai = Implementation::findLastOf(a, "$%");
+    VERIFY_PARSED(Implementation::ParseError{}, a, ai, "$hello");
+
+    CharacterLiteral b{"%hello$world"};
+    auto bi = Implementation::findLastOf(b, "$%");
+    VERIFY_PARSED(Implementation::ParseError{}, b, bi, "%hello");
+
+    Containers::ArrayReference<const char> c{"%", 0};
+    auto ci = Implementation::findLastOf({c, 0}, "$%");
+    VERIFY_PARSED(Implementation::ParseError{}, c, ci, "");
 }
 
 void ParsersTest::whitespace() {
