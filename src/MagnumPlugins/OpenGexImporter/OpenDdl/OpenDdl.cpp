@@ -117,7 +117,68 @@ Document::Document() {
 
 Document::~Document() = default;
 
-namespace { enum: std::size_t { NoParent = ~std::size_t{} }; }
+namespace {
+
+enum: std::size_t {
+    NoParent = ~std::size_t{},
+    NullReference = ~std::size_t{}
+};
+
+bool checkReferencePrefix(std::optional<Structure> s, Containers::ArrayReference<const char> prefix) {
+    const bool isLocal = !prefix.empty() && prefix[0] == '%';
+
+    while(!prefix.empty()) {
+        /* No parent structure and the prefix was not fully consumed, nothing
+           found */
+        if(!s) return false;
+
+        /* If the name matches, cut the prefix, otherwise nothing found */
+        if(s->hasName()) {
+            const Containers::ArrayReference<const char> leafName = prefix.suffix(Implementation::findLastOf(prefix, "$%"));
+            if(Implementation::equals(leafName, {s->name().data(), s->name().size()}))
+                prefix = prefix.prefix(leafName.begin());
+            else return false;
+        }
+
+        /* Continue in parent */
+        s = s->parent();
+    }
+
+    /* For local references check that the reference chain is really absolute */
+    if(isLocal) while(s) {
+        if(s->hasName()) return false;
+        s = s->parent();
+    }
+
+    return true;
+}
+
+}
+
+std::size_t Document::dereference(const std::size_t originatingStructure, const Containers::ArrayReference<const char> reference) const {
+    CORRADE_INTERNAL_ASSERT(!reference.empty());
+
+    const Containers::ArrayReference<const char> leafName = reference.suffix(Implementation::findLastOf(reference, "$%"));
+
+    /* If the reference is a single local name, try to find in in siblings first */
+    if(leafName.begin() == reference.begin() && reference[0] == '%') {
+        const std::size_t parentIndex = _structures[originatingStructure].parent;
+        std::size_t i = parentIndex == NoParent ? 0 : _structures[parentIndex].custom.firstChild;
+        for(std::optional<Structure> s{Structure{*this, _structures[i]}}; s; i = s->_data.get().next, s = s->findNext())
+            if(Implementation::equals(leafName, {s->name().data(), s->name().size()})) return i;
+    }
+
+    /* The element which has leaf name is the result if also the rest of the
+       reference prefix matches in parent structures */
+    const Containers::ArrayReference<const char> referencePrefix = reference.prefix(leafName.begin());
+    for(std::size_t i = 0; i != _structures.size(); ++i) {
+        const Structure s{*this, _structures[i]};
+        if(s.hasName() && Implementation::equals(leafName, {s.name().data(), s.name().size()}) && checkReferencePrefix(s.parent(), referencePrefix))
+            return i;
+    }
+
+    return NullReference;
+}
 
 bool Document::parse(Containers::ArrayReference<const char> data, const std::initializer_list<CharacterLiteral> structureIdentifiers, const std::initializer_list<CharacterLiteral> propertyIdentifiers) {
     _structureIdentifiers = {structureIdentifiers.begin(), structureIdentifiers.size()};
@@ -127,7 +188,8 @@ bool Document::parse(Containers::ArrayReference<const char> data, const std::ini
     std::string buffer;
 
     const char* i = Implementation::whitespace(data);
-    i = parseStructureList(NoParent, data.suffix(i), buffer, error);
+    std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>> references;
+    i = parseStructureList(NoParent, data.suffix(i), references, buffer, error);
 
     if(!i) {
         /* Calculate line number */
@@ -231,19 +293,37 @@ bool Document::parse(Containers::ArrayReference<const char> data, const std::ini
         return false;
     }
 
+    /* Everything parsed, dereference references */
+    for(const std::pair<std::size_t, Containers::ArrayReference<const char>> reference: references) {
+        /* Null reference */
+        if(reference.second.empty())
+            _references.push_back(NullReference);
+
+        /* Non-null, try to dereference */
+        else {
+            std::size_t r = dereference(reference.first, reference.second);
+            if(r == NullReference) {
+                Error() << "OpenDdl::Document::parse(): reference" << std::string{reference.second, reference.second.size()} << "was not found";
+                return false;
+            }
+            _references.push_back(r);
+        }
+    }
+
     return true;
 }
 
-const char* Document::parseProperty(const Containers::ArrayReference<const char> data, std::string& buffer, const Int identifier, Implementation::ParseError& error) {
+const char* Document::parseProperty(const Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, const Int identifier, Implementation::ParseError& error) {
     bool boolValue;
     Int integerValue;
     Float floatValue;
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue;
 
     const char* i;
     Implementation::InternalPropertyType type;
-    std::tie(i, type) = Implementation::propertyValue(data, boolValue, integerValue, floatValue, stringValue, typeValue, buffer, error);
+    std::tie(i, type) = Implementation::propertyValue(data, boolValue, integerValue, floatValue, stringValue, referenceValue, typeValue, buffer, error);
 
     if(!i) return nullptr;
 
@@ -264,9 +344,14 @@ const char* Document::parseProperty(const Containers::ArrayReference<const char>
             _floats.push_back(floatValue);
             break;
         case Implementation::InternalPropertyType::String:
-        case Implementation::InternalPropertyType::Reference:
             position = _strings.size();
             _strings.push_back(stringValue);
+            break;
+        case Implementation::InternalPropertyType::Reference:
+            position = references.size();
+            /* Containing structure will be put into the vector after the
+               properties are parsed */
+            references.emplace_back(_structures.size(), referenceValue);
             break;
         case Implementation::InternalPropertyType::Type:
             position = _types.size();
@@ -281,7 +366,7 @@ const char* Document::parseProperty(const Containers::ArrayReference<const char>
 namespace Implementation {
 
 template<> struct ExtractDataListItem<Type::Bool> {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::string&, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string&, Implementation::ParseError& error) {
         const char* i;
         bool value;
         std::tie(i, value) = Implementation::boolLiteral(data, error);
@@ -291,7 +376,7 @@ template<> struct ExtractDataListItem<Type::Bool> {
 };
 
 template<class T> struct ExtractIntegralDataListItem {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::string& buffer, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string& buffer, Implementation::ParseError& error) {
         const char* i;
         T value;
         std::tie(i, value, std::ignore) = Implementation::integralLiteral<T>(data, buffer, error);
@@ -314,7 +399,7 @@ _c(Long)
 #undef _c
 
 template<class T> struct ExtractFloatingPointDataListItem {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::string& buffer, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string& buffer, Implementation::ParseError& error) {
         const char* i;
         T value;
         std::tie(i, value) = Implementation::floatingPointLiteral<T>(data, buffer, error);
@@ -332,7 +417,7 @@ _c(Double)
 #undef _c
 
 template<> struct ExtractDataListItem<Type::String> {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::string&, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string&, Implementation::ParseError& error) {
         const char* i;
         std::string value;
         std::tie(i, value) = Implementation::stringLiteral(data, error);
@@ -342,17 +427,19 @@ template<> struct ExtractDataListItem<Type::String> {
 };
 
 template<> struct ExtractDataListItem<Type::Reference> {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::string&, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string&, Implementation::ParseError& error) {
         const char* i;
-        std::string value;
+        Containers::ArrayReference<const char> value;
         std::tie(i, value) = Implementation::referenceLiteral(data, error);
-        document.data<std::string>().push_back(std::move(value));
+        /* Containing structure will be put into the vector after its data are
+           parsed */
+        references.emplace_back(document._structures.size(), value);
         return i;
     }
 };
 
 template<> struct ExtractDataListItem<Type::Type> {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::string&, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string&, Implementation::ParseError& error) {
         const char* i;
         Type value;
         std::tie(i, value) = Implementation::typeLiteral(data, error);
@@ -365,7 +452,7 @@ template<> struct ExtractDataListItem<Type::Type> {
 
 namespace {
 
-template<Type type> std::pair<const char*, std::size_t> dataList(const Containers::ArrayReference<const char> data, Document& document, std::string& buffer, Implementation::ParseError& error) {
+template<Type type> std::pair<const char*, std::size_t> dataList(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
     const char* i = data;
     std::size_t j = 0;
     for(; i && i != data.end() && *i != '}'; ) {
@@ -378,7 +465,7 @@ template<Type type> std::pair<const char*, std::size_t> dataList(const Container
             i = Implementation::whitespace(data.suffix(i + 1));
         }
 
-        i = Implementation::ExtractDataListItem<type>::extract(data.suffix(i), document, buffer, error);
+        i = Implementation::ExtractDataListItem<type>::extract(data.suffix(i), document, references, buffer, error);
 
         i = Implementation::whitespace(data.suffix(i));
 
@@ -388,8 +475,8 @@ template<Type type> std::pair<const char*, std::size_t> dataList(const Container
     return {i, j};
 }
 
-template<Type type> std::pair<const char*, std::size_t> dataArrayList(const Containers::ArrayReference<const char> data, Document& document, std::string& buffer, const std::size_t subArraySize, Implementation::ParseError& error) {
-    if(!subArraySize) return dataList<type>(data, document, buffer, error);
+template<Type type> std::pair<const char*, std::size_t> dataArrayList(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, const std::size_t subArraySize, Implementation::ParseError& error) {
+    if(!subArraySize) return dataList<type>(data, document, references, buffer, error);
 
     const char* i = data;
     std::size_t j = 0;
@@ -420,7 +507,7 @@ template<Type type> std::pair<const char*, std::size_t> dataArrayList(const Cont
                 i = Implementation::whitespace(data.suffix(i + 1));
             }
 
-            i = Implementation::ExtractDataListItem<type>::extract(data.suffix(i), document, buffer, error);
+            i = Implementation::ExtractDataListItem<type>::extract(data.suffix(i), document, references, buffer, error);
 
             i = Implementation::whitespace(data.suffix(i));
         }
@@ -450,7 +537,7 @@ Int identifierId(const Containers::ArrayReference<const char> data, Containers::
 
 }
 
-std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t parent, const Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error) {
+std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t parent, const Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
     /* Identifier */
     const char* const structureIdentifier = Implementation::identifier(data, error);
     if(!structureIdentifier) return {};
@@ -515,7 +602,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
             #define _c(type) \
             case Type::type: \
                 dataBegin = dataPosition<Type::type>(); \
-                std::tie(i, dataSize) = dataArrayList<Type::type>(data.suffix(i), *this, buffer, subArraySize, error); break;
+                std::tie(i, dataSize) = dataArrayList<Type::type>(data.suffix(i), *this, references, buffer, subArraySize, error); break;
             _c(Bool)
             _c(UnsignedByte)
             _c(Byte)
@@ -533,9 +620,12 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
             _c(Double)
             #endif
             _c(String)
-            _c(Reference)
             _c(Type)
             #undef _c
+            case Type::Reference:
+                dataBegin = references.size();
+                std::tie(i, dataSize) = dataArrayList<Type::Reference>(data.suffix(i), *this, references, buffer, subArraySize, error);
+                break;
             case Type::Custom:
                 CORRADE_ASSERT_UNREACHABLE();
         }
@@ -604,7 +694,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
 
                 i = Implementation::whitespace(data.suffix(i + 1));
 
-                i = parseProperty(data.suffix(i), buffer, propertyIdentifierId, error);
+                i = parseProperty(data.suffix(i), references, buffer, propertyIdentifierId, error);
 
                 i = Implementation::whitespace(data.suffix(i));
 
@@ -634,7 +724,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
         _structures.emplace_back();
 
         /* Substructure */
-        i = parseStructureList(position, data.suffix(i), buffer, error);
+        i = parseStructureList(position, data.suffix(i), references, buffer, error);
 
         /* Propagate errors */
         if(!i) return {};
@@ -660,14 +750,14 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
     }
 }
 
-const char* Document::parseStructureList(const std::size_t parent, const Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error) {
+const char* Document::parseStructureList(const std::size_t parent, const Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
     const std::size_t listStart = _structures.size();
 
     /* Parse all structures in the list */
     const char* i = data;
     std::size_t last;
     while(i && i != data.end() && *i != '}') {
-        std::tie(i, last) = parseStructure(parent, data.suffix(i), buffer, error);
+        std::tie(i, last) = parseStructure(parent, data.suffix(i), references, buffer, error);
         i = Implementation::whitespace(data.suffix(i));
     }
 
@@ -892,6 +982,25 @@ std::size_t Structure::subArraySize() const {
     return _data.get().primitive.subArraySize;
 }
 
+std::optional<Structure> Structure::asReference() const {
+    CORRADE_ASSERT(arraySize() == 1, "OpenDdl::Structure::asReference(): not a single value", {});
+    CORRADE_ASSERT(type() == Type::Reference, "OpenDdl::Structure::asReference(): not of reference type", {});
+    const std::size_t reference = _document.get()._references[_data.get().primitive.begin];
+    return reference == NullReference ? std::nullopt :
+        std::make_optional(Structure{_document, _document.get()._structures[reference]});
+}
+
+Containers::Array<std::optional<Structure>> Structure::asReferenceArray() const {
+    CORRADE_ASSERT(type() == Type::Reference, "OpenDdl::Structure::asReferenceArray(): not of reference type", nullptr);
+
+    Containers::Array<std::optional<Structure>> out(_data.get().primitive.size);
+    for(std::size_t i = 0; i != _data.get().primitive.size; ++i)
+        if(const std::size_t reference = _document.get()._references[_data.get().primitive.begin + i])
+            out[i] = Structure{_document, _document.get()._structures[reference]};
+
+    return out;
+}
+
 std::optional<Structure> Structure::parent() const {
     return _data.get().parent == NoParent ? std::nullopt :
         std::make_optional(Structure{_document, _document.get()._structures[_data.get().parent]});
@@ -1015,6 +1124,13 @@ bool Property::isTypeCompatibleWith(PropertyType type) const {
     }
 
     CORRADE_ASSERT_UNREACHABLE();
+}
+
+std::optional<Structure> Property::asReference() const {
+    CORRADE_ASSERT(isTypeCompatibleWith(PropertyType::Reference), "OpenDdl::Property::asReference(): not of reference type", {});
+    const std::size_t reference = _document.get()._references[_data.get().position];
+    return reference == NullReference ? std::nullopt :
+        std::make_optional(Structure{_document, _document.get()._structures[reference]});
 }
 
 }}

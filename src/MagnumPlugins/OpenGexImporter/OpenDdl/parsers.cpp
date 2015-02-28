@@ -616,7 +616,7 @@ std::pair<const char*, std::string> nameLiteral(const Containers::ArrayReference
     return {i, i ? std::string{data, std::size_t(i - data)} : std::string{}};
 }
 
-std::pair<const char*, std::string> referenceLiteral(const Containers::ArrayReference<const char> data, ParseError& error) {
+std::pair<const char*, Containers::ArrayReference<const char>> referenceLiteral(const Containers::ArrayReference<const char> data, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -626,7 +626,7 @@ std::pair<const char*, std::string> referenceLiteral(const Containers::ArrayRefe
     }
 
     if(const char* const end = prefix(data, "null"))
-        return {end, "null"};
+        return {end, nullptr};
 
     const char* i = data;
     if(*i != '$' && *i != '%') {
@@ -641,7 +641,7 @@ std::pair<const char*, std::string> referenceLiteral(const Containers::ArrayRefe
         i = identifier(data.suffix(i + 1), error);
     }
 
-    return {i, i ? std::string{data, std::size_t(i - data)} : std::string{}};
+    return {i, i ? data.prefix(i) : nullptr};
 }
 
 std::pair<const char*, Type> possiblyTypeLiteral(const Containers::ArrayReference<const char> data) {
@@ -689,7 +689,7 @@ std::pair<const char*, Type> typeLiteral(const Containers::ArrayReference<const 
     return {};
 }
 
-std::pair<const char*, InternalPropertyType> propertyValue(const Containers::ArrayReference<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Type& typeValue, std::string& buffer, ParseError& error) {
+std::pair<const char*, InternalPropertyType> propertyValue(const Containers::ArrayReference<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Containers::ArrayReference<const char>& referenceValue, Type& typeValue, std::string& buffer, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -708,7 +708,7 @@ std::pair<const char*, InternalPropertyType> propertyValue(const Containers::Arr
 
     /* Reference literal */
     if(*i == '%' || *i == '$') {
-        std::tie(i, stringValue) = referenceLiteral(data, error);
+        std::tie(i, referenceValue) = referenceLiteral(data, error);
         return {i, InternalPropertyType::Reference};
     }
 

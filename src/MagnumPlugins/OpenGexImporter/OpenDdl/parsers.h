@@ -93,11 +93,11 @@ template<class T> std::tuple<const char*, T, Int> integralLiteral(Containers::Ar
 template<class T> std::pair<const char*, T> floatingPointLiteral(Containers::ArrayReference<const char> data, std::string& buffer, ParseError& error);
 std::pair<const char*, std::string> stringLiteral(Containers::ArrayReference<const char> data, ParseError& error);
 std::pair<const char*, std::string> nameLiteral(Containers::ArrayReference<const char> data, ParseError& error);
-std::pair<const char*, std::string> referenceLiteral(Containers::ArrayReference<const char> data, ParseError& error);
+std::pair<const char*, Containers::ArrayReference<const char>> referenceLiteral(Containers::ArrayReference<const char> data, ParseError& error);
 std::pair<const char*, Type> possiblyTypeLiteral(Containers::ArrayReference<const char> data);
 std::pair<const char*, Type> typeLiteral(Containers::ArrayReference<const char> data, ParseError& error);
 
-std::pair<const char*, InternalPropertyType> propertyValue(Containers::ArrayReference<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Type& typeValue, std::string& buffer, ParseError& error);
+std::pair<const char*, InternalPropertyType> propertyValue(Containers::ArrayReference<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Containers::ArrayReference<const char>& referenceValue, Type& typeValue, std::string& buffer, ParseError& error);
 
 }}}
 

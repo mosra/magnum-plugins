@@ -70,7 +70,7 @@ class Property {
          * @brief Property data
          *
          * The property type must be compatible with desired type.
-         * @see @ref isTypeCompatibleWith()
+         * @see @ref isTypeCompatibleWith(), @ref asReference()
          */
         template<class T>
         #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -79,6 +79,15 @@ class Property {
         const T&
         #endif
         as() const;
+
+        /**
+         * @brief Reference property data
+         *
+         * The property type must be @ref Type::Reference. Returns referenced
+         * structure or `std::nullopt` if the reference is `null`.
+         * @see @ref isTypeCompatibleWith()
+         */
+        std::optional<Structure> asReference() const;
 
     private:
         explicit Property(const Document& document, std::size_t i) noexcept: _document{document}, _data{document._properties[i]} {}

@@ -587,10 +587,10 @@ void ParsersTest::referenceLiteralNull() {
 
     Implementation::ParseError error;
     const char* ai;
-    std::string value;
+    Containers::ArrayReference<const char> value;
     std::tie(ai, value) = Implementation::referenceLiteral(a, error);
     VERIFY_PARSED(error, a, ai, "null");
-    CORRADE_COMPARE(value, "null");
+    CORRADE_VERIFY(value.empty());
 }
 
 void ParsersTest::referenceLiteral() {
@@ -598,10 +598,10 @@ void ParsersTest::referenceLiteral() {
 
     Implementation::ParseError error;
     const char* ai;
-    std::string value;
+    Containers::ArrayReference<const char> value;
     std::tie(ai, value) = Implementation::referenceLiteral(a, error);
     VERIFY_PARSED(error, a, ai, "$my_mesh%my_array");
-    CORRADE_COMPARE(value, "$my_mesh%my_array");
+    CORRADE_COMPARE((std::string{value, value.size()}), "$my_mesh%my_array");
 }
 
 void ParsersTest::typeLiteralInvalid() {
@@ -633,12 +633,13 @@ void ParsersTest::propertyValueInvalid() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
 
-    CORRADE_VERIFY(!Implementation::propertyValue(CharacterLiteral{""}, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error).first);
+    CORRADE_VERIFY(!Implementation::propertyValue(CharacterLiteral{""}, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error).first);
     CORRADE_COMPARE(error.error, Implementation::ParseErrorType::ExpectedPropertyValue);
 
-    CORRADE_VERIFY(!Implementation::propertyValue(CharacterLiteral{"bleh"}, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error).first);
+    CORRADE_VERIFY(!Implementation::propertyValue(CharacterLiteral{"bleh"}, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error).first);
     CORRADE_COMPARE(error.error, Implementation::ParseErrorType::InvalidPropertyValue);
 }
 
@@ -651,10 +652,11 @@ void ParsersTest::propertyValueBool() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "true");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Bool);
     CORRADE_COMPARE(boolValue, true);
@@ -669,10 +671,11 @@ void ParsersTest::propertyValueIntegral() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "17");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Integral);
     CORRADE_COMPARE(integerValue, 17);
@@ -687,10 +690,11 @@ void ParsersTest::propertyValueCharacter() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "'a'");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Character);
     CORRADE_COMPARE(integerValue, 'a');
@@ -705,10 +709,11 @@ void ParsersTest::propertyValueBinary() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "0xff");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Binary);
     CORRADE_COMPARE(integerValue, 0xff);
@@ -723,10 +728,11 @@ void ParsersTest::propertyValueFloatingPoint() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "15.0_0");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Float);
     CORRADE_COMPARE(floatingPointValue, 15.0f);
@@ -741,10 +747,11 @@ void ParsersTest::propertyValueString() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "\"hello\"");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::String);
     CORRADE_COMPARE(stringValue, "hello");
@@ -759,13 +766,14 @@ void ParsersTest::propertyValueReference() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "%my_array2");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Reference);
-    CORRADE_COMPARE(stringValue, "%my_array2");
+    CORRADE_COMPARE((std::string{referenceValue, referenceValue.size()}), "%my_array2");
 }
 
 void ParsersTest::propertyValueReferenceNull() {
@@ -777,13 +785,14 @@ void ParsersTest::propertyValueReferenceNull() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "null");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Reference);
-    CORRADE_COMPARE(stringValue, "null");
+    CORRADE_VERIFY(referenceValue.empty());
 }
 
 void ParsersTest::propertyValueType() {
@@ -795,10 +804,11 @@ void ParsersTest::propertyValueType() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
+    Containers::ArrayReference<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
-    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, typeValue, buffer, error);
+    std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "float");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Type);
     CORRADE_COMPARE(typeValue, Type::Float);

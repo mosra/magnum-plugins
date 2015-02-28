@@ -223,9 +223,11 @@ class Document {
         struct PropertyData;
         struct StructureData;
 
-        const char* parseProperty(Containers::ArrayReference<const char> data, std::string& buffer, Int position, Implementation::ParseError& error);
-        std::pair<const char*, std::size_t> parseStructure(std::size_t parent, Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error);
-        const char* parseStructureList(std::size_t parent, Containers::ArrayReference<const char> data, std::string& buffer, Implementation::ParseError& error);
+        const char* parseProperty(Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Int position, Implementation::ParseError& error);
+        std::pair<const char*, std::size_t> parseStructure(std::size_t parent, Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Implementation::ParseError& error);
+        const char* parseStructureList(std::size_t parent, Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Implementation::ParseError& error);
+
+        std::size_t dereference(std::size_t originatingStructure, Containers::ArrayReference<const char> reference) const;
 
         bool validateLevel(std::optional<Structure> first, std::initializer_list<std::pair<Int, std::pair<Int, Int>>> allowedStructures, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
         bool validateStructure(Structure structure, const Validation::Structure& validation, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
@@ -254,6 +256,7 @@ class Document {
         std::vector<Double> _doubles;
         #endif
         std::vector<std::string> _strings;
+        std::vector<std::size_t> _references;
         std::vector<Type> _types;
 
         std::vector<PropertyData> _properties;
@@ -308,7 +311,6 @@ _c(Float, Float)
 _c(Double, Double)
 #endif
 _c(String, std::string)
-_c(Reference, std::string)
 _c(Type, Type)
 #undef _c
 #endif

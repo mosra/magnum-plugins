@@ -54,6 +54,7 @@ See @ref Document for more information.
 */
 class Structure {
     friend Document;
+    friend Property;
     friend Implementation::StructureIterator;
     friend Implementation::StructureOfIterator;
 
@@ -126,7 +127,8 @@ class Structure {
          *
          * The structure must not be custom, must be of corresponding type and
          * the array must have exactly one item.
-         * @see @ref isCustom(), @ref type(), @ref arraySize(), @ref asArray()
+         * @see @ref isCustom(), @ref type(), @ref arraySize(), @ref asArray(),
+         *      @ref asReference()
          */
         template<class T>
         #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -137,12 +139,32 @@ class Structure {
         as() const;
 
         /**
+         * @brief Reference structure data
+         *
+         * The structure must not be custom, must be of @ref Type::Reference
+         * and the array must have exactly one item. Returns referenced
+         * structure or `std::nullopt` if the reference is `null`.
+         * @see @ref isCustom(), @ref type(), @ref arraySize()
+         */
+        std::optional<Structure> asReference() const;
+
+        /**
          * @brief Structure data array
          *
          * The structure must not be custom and must be of corresponding type.
          * @see @ref isCustom(), @ref type(), @ref subArraySize(), @ref as()
          */
         template<class T> Containers::ArrayReference<const T> asArray() const;
+
+        /**
+         * @brief Reference structure data array
+         *
+         * The structure must not be custom and must be of @ref Type::Reference.
+         * For each item returns referenced structure or `std::nullopt` if the
+         * reference is `null`.
+         * @see @ref isCustom(), @ref type(), @ref arraySize()
+         */
+        Containers::Array<std::optional<Structure>> asReferenceArray() const;
 
         /**
          * @brief Parent structure
@@ -329,7 +351,7 @@ namespace Implementation {
     template<class> bool isStructureType(Type);
     template<> inline bool isStructureType<bool>(Type type) { return type == Type::Bool; }
     template<> inline bool isStructureType<std::string>(Type type) {
-        return type == Type::String || type == Type::Reference;
+        return type == Type::String;
     }
     #ifndef DOXYGEN_GENERATING_OUTPUT
     #define _c(T) \

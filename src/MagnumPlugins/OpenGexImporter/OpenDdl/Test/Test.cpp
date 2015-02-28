@@ -95,6 +95,12 @@ struct Test: TestSuite::Tester {
     void validateUnexpectedProperty();
     void validateWrongPropertyType();
     void validateUnknownProperty();
+
+    void reference();
+    void referenceInProperty();
+    void referenceNull();
+    void referenceChain();
+    void referenceInvalid();
 };
 
 Test::Test() {
@@ -153,7 +159,13 @@ Test::Test() {
               &Test::validateExpectedProperty,
               &Test::validateUnexpectedProperty,
               &Test::validateWrongPropertyType,
-              &Test::validateUnknownProperty});
+              &Test::validateUnknownProperty,
+
+              &Test::reference,
+              &Test::referenceInProperty,
+              &Test::referenceNull,
+              &Test::referenceChain,
+              &Test::referenceInvalid});
 }
 
 void Test::primitive() {
@@ -991,6 +1003,170 @@ Root (some = 15.0, id = null) {}
         {
             {RootStructure, Properties{{SomeProperty, PropertyType::Float, RequiredProperty}}}
         }));
+}
+
+void Test::reference() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+Root { ref { %b0 } }
+Hierarchic { ref { $b1 } }
+Root {
+    Root %b0 {}
+    Root {
+        Root $b1 {}
+    }
+}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::optional<Structure> b0 = d.firstChildOf(RootStructure).firstChild().asReference();
+    CORRADE_VERIFY(b0);
+    CORRADE_COMPARE(b0->name(), "%b0");
+
+    std::optional<Structure> b1 = d.firstChildOf(HierarchicStructure).firstChild().asReference();
+    CORRADE_VERIFY(b1);
+    CORRADE_COMPARE(b1->name(), "$b1");
+}
+
+void Test::referenceInProperty() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+Root (reference = %b0) {}
+Hierarchic (reference = $b1) {}
+Root {
+    Root %b0 {}
+    Root {
+        Root $b1 {}
+    }
+}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    std::optional<Structure> b0 = d.firstChildOf(RootStructure).propertyOf(ReferenceProperty).asReference();
+    CORRADE_VERIFY(b0);
+    CORRADE_COMPARE(b0->name(), "%b0");
+
+    std::optional<Structure> b1 = d.firstChildOf(HierarchicStructure).propertyOf(ReferenceProperty).asReference();
+    CORRADE_VERIFY(b1);
+    CORRADE_COMPARE(b1->name(), "$b1");
+}
+
+void Test::referenceNull() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+Root (reference = null) {}
+Hierarchic { ref { null } }
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    CORRADE_VERIFY(!d.firstChildOf(RootStructure).propertyOf(ReferenceProperty).asReference());
+    CORRADE_VERIFY(!d.firstChildOf(HierarchicStructure).firstChild().asReference());
+}
+
+void Test::referenceChain() {
+    Document d;
+    CORRADE_VERIFY(d.parse(CharacterLiteral{
+R"oddl(
+ref {
+    /* These two are different structures */
+    %local1, %root%local1,
+
+    /* Both of these should be found and not result in an error */
+    $global1%local2,  $global2
+}
+
+Root %root {
+    Root %local1 {
+        int16 %local3 {}
+    }
+
+    ref {
+        /* Single name, takes the sibling */
+        %local1,
+
+        /* Single name but sibling not found, takes the global one */
+        %local4,
+
+        /* Multiple names, takes the global one */
+        %local1%local3
+    }
+
+    Root $global1 {
+        int8 $global2 {}
+        float %local2 {}
+    }
+}
+Root %local1 {
+    int32 %local3 {}
+}
+bool %local4 {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    Containers::Array<std::optional<Structure>> topLevel =
+        d.firstChildOf(Type::Reference).asReferenceArray();
+    CORRADE_COMPARE(topLevel.size(), 4);
+
+    CORRADE_VERIFY(topLevel[0]);
+    CORRADE_COMPARE(topLevel[0]->name(), "%local1");
+    CORRADE_VERIFY(!topLevel[0]->parent());
+
+    CORRADE_VERIFY(topLevel[1]);
+    CORRADE_VERIFY(topLevel[1] != topLevel[0]);
+    CORRADE_COMPARE(topLevel[1]->name(), "%local1");
+    CORRADE_VERIFY(topLevel[1]->parent());
+
+    CORRADE_VERIFY(topLevel[2]);
+    CORRADE_COMPARE(topLevel[2]->name(), "%local2");
+    CORRADE_COMPARE(topLevel[2]->type(), Type::Float);
+
+    CORRADE_VERIFY(topLevel[3]);
+    CORRADE_COMPARE(topLevel[3]->name(), "$global2");
+    CORRADE_COMPARE(topLevel[3]->type(), Type::Byte);
+
+
+    Containers::Array<std::optional<Structure>> local =
+        d.firstChildOf(RootStructure).firstChildOf(Type::Reference).asReferenceArray();
+    CORRADE_COMPARE(local.size(), 3);
+
+    CORRADE_VERIFY(local[0]);
+    CORRADE_COMPARE(local[0]->name(), "%local1");
+    CORRADE_VERIFY(local[0]->parent());
+
+    CORRADE_VERIFY(local[1]);
+    CORRADE_COMPARE(local[1]->name(), "%local4");
+    CORRADE_COMPARE(local[1]->type(), Type::Bool);
+
+    CORRADE_VERIFY(local[2]);
+    CORRADE_COMPARE(local[2]->name(), "%local3");
+    CORRADE_COMPARE(local[2]->type(), Type::Int);
+}
+
+void Test::referenceInvalid() {
+    Document d;
+    std::ostringstream out;
+    Error::setOutput(&out);
+
+    /* Single name not found */
+    CORRADE_VERIFY(!d.parse(CharacterLiteral{
+R"oddl(
+Hierarchic (reference = %local1) {}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    /* Incomplete chain (even though that could be found as sibling) */
+    CORRADE_VERIFY(!d.parse(CharacterLiteral{
+R"oddl(
+Root %root {
+    Hierarchic (reference = %local1%local2) {}
+
+    Root %local1 {
+        int16 %local2 {}
+    }
+}
+    )oddl"}, structureIdentifiers, propertyIdentifiers));
+
+    CORRADE_COMPARE(out.str(),
+        "OpenDdl::Document::parse(): reference %local1 was not found\n"
+        "OpenDdl::Document::parse(): reference %local1%local2 was not found\n");
 }
 
 }}}
