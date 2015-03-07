@@ -191,6 +191,12 @@ class Structure {
          */
         std::optional<Structure> findNextOf(Int identifier) const;
 
+        /** @overload */
+        std::optional<Structure> findNextOf(std::initializer_list<Int> identifiers) const {
+            return findNextOf({identifiers.begin(), identifiers.size()});
+        }
+        std::optional<Structure> findNextOf(Containers::ArrayReference<const Int> identifiers) const; /**< @overload */
+
         /**
          * @brief Find next custom sibling structure of the same identifier
          *
@@ -308,6 +314,12 @@ class Structure {
          */
         std::optional<Structure> findFirstChildOf(Int identifier) const;
 
+        /** @overload */
+        std::optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const {
+            return findFirstChildOf({identifiers.begin(), identifiers.size()});
+        }
+        std::optional<Structure> findFirstChildOf(Containers::ArrayReference<const Int> identifiers) const; /**< @overload */
+
         /**
          * @brief First custom child structure of given type
          *
@@ -338,7 +350,8 @@ class Structure {
          * @endcode
          * @see @ref isCustom(), @ref children(), @ref Document::childrenOf()
          */
-        Implementation::StructureOfList childrenOf(Int identifier) const;
+        Implementation::StructureOfList<1> childrenOf(Int identifier) const;
+        template<class ...T> Implementation::StructureOfList<sizeof...(T)+1> childrenOf(Int identifier, T... identifiers) const; /** @overload */
 
     private:
         explicit Structure(const Document& document, const Document::StructureData& data) noexcept: _document{document}, _data{data} {}
@@ -430,34 +443,44 @@ class StructureList {
 
 class StructureOfIterator {
     public:
-        explicit StructureOfIterator(std::optional<Structure> item) noexcept: _item{item} {}
+        explicit StructureOfIterator(std::optional<Structure> item, Containers::ArrayReference<const Int> identifiers) noexcept: _item{item}, _identifiers(identifiers) {}
 
         Structure operator*() const { return *_item; }
         bool operator!=(const StructureOfIterator& other) const {
-            return !_item != !other._item || ((_item && other._item) && &_item->_data != &other._item->_data);
+            return _item != other._item;
         }
         StructureOfIterator& operator++() {
-            _item = _item->findNextSame();
+            _item = _item->findNextOf(_identifiers);
             return *this;
         }
 
     private:
         std::optional<Structure> _item;
+        Containers::ArrayReference<const Int> _identifiers;
 };
 
-class StructureOfList {
+template<std::size_t size> class StructureOfList {
     public:
-        explicit StructureOfList(std::optional<Structure> first) noexcept: _first{first} {}
+        template<class ...T> explicit StructureOfList(std::optional<Structure> first, T... identifiers) noexcept: _first{first}, _identifiers{identifiers...} {
+            static_assert(sizeof...(T) == size, "Invalid identifier count");
+        }
 
-        StructureOfIterator begin() const { return StructureOfIterator{_first}; }
+        StructureOfIterator begin() const { return StructureOfIterator{_first, _identifiers}; }
         StructureOfIterator cbegin() const { return begin(); }
-        StructureOfIterator end() const { return StructureOfIterator{std::nullopt}; }
+        StructureOfIterator end() const { return StructureOfIterator{std::nullopt, _identifiers}; }
         StructureOfIterator cend() const { return end(); }
 
     private:
         std::optional<Structure> _first;
+        Int _identifiers[size];
 };
 
+}
+
+template<class ...T> inline Implementation::StructureOfList<sizeof...(T)+1> Structure::childrenOf(Int identifier, T... identifiers) const {
+    CORRADE_ASSERT(isCustom(), "OpenDdl::Structure::childrenOf(): not a custom structure",
+        (Implementation::StructureOfList<sizeof...(T)+1>{findFirstChildOf({identifier, identifiers...}), identifier, identifiers...}));
+    return Implementation::StructureOfList<sizeof...(T)+1>{findFirstChildOf({identifier, identifiers...}), identifier, identifiers...};
 }
 
 }}

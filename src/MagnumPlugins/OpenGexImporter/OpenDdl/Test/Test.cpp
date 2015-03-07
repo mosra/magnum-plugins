@@ -634,6 +634,14 @@ Root %root3 {}
             "%hierarchic3"}));
     } {
         std::vector<std::string> names;
+        for(Structure s: d.childrenOf(HierarchicStructure, RootStructure)) names.push_back(s.name());
+        CORRADE_COMPARE(names, (std::vector<std::string>{
+            "%root1",
+            "%hierarchic1",
+            "%hierarchic3",
+            "%root3"}));
+    } {
+        std::vector<std::string> names;
         for(Structure s: d.childrenOf(SomeStructure))
             names.push_back(s.name());
         CORRADE_VERIFY(names.empty());
@@ -670,6 +678,14 @@ Hierarchic %hierarchic3 {}
             names.push_back(s.name());
         CORRADE_COMPARE(names, (std::vector<std::string>{
             "%root2",
+            "%root4"}));
+    } {
+        std::vector<std::string> names;
+        for(Structure s: d.firstChildOf(HierarchicStructure).childrenOf(RootStructure, HierarchicStructure))
+            names.push_back(s.name());
+        CORRADE_COMPARE(names, (std::vector<std::string>{
+            "%root2",
+            "%hierarchic2",
             "%root4"}));
     } {
         std::vector<std::string> names;

@@ -57,7 +57,7 @@ namespace Implementation {
     enum class ParseErrorType: UnsignedInt;
     struct ParseError;
     class StructureList;
-    class StructureOfList;
+    template<std::size_t size> class StructureOfList;
 }
 
 namespace Validation {
@@ -174,6 +174,10 @@ class Document {
          */
         std::optional<Structure> findFirstChildOf(Int identifier) const;
 
+        /** @overload */
+        std::optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const;
+        std::optional<Structure> findFirstChildOf(Containers::ArrayReference<const Int> identifiers) const; /**< @overload */
+
         /**
          * @brief First custom top-level structure of given type
          *
@@ -202,8 +206,9 @@ class Document {
          * }
          * @endcode
          * @see @ref children(), @ref Structure::childrenOf()
+         * @todo This is ugly because it does not use { } like all the others
          */
-        Implementation::StructureOfList childrenOf(Int identifier) const;
+        template<class ...T> Implementation::StructureOfList<sizeof...(T)+1> childrenOf(Int identifier, T... identifiers) const;
 
         /**
          * @brief Validate document
@@ -367,6 +372,10 @@ struct Document::StructureData {
 namespace Implementation {
     template<class T> struct ReturnTypeFor { typedef T Type; };
     template<> struct ReturnTypeFor<std::string> { typedef const std::string& Type; };
+}
+
+template<class ...T> inline Implementation::StructureOfList<sizeof...(T)+1> Document::childrenOf(Int identifier, T... identifiers) const {
+    return Implementation::StructureOfList<sizeof...(T)+1>{findFirstChildOf({identifier, identifiers...}), identifier, identifiers...};
 }
 
 }}

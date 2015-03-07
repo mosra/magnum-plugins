@@ -951,6 +951,19 @@ std::optional<Structure> Document::findFirstChildOf(const Int identifier) const 
     return std::nullopt;
 }
 
+std::optional<Structure> Document::findFirstChildOf(const std::initializer_list<Int> identifiers) const {
+    return findFirstChildOf({identifiers.begin(), identifiers.size()});
+}
+
+std::optional<Structure> Document::findFirstChildOf(const Containers::ArrayReference<const Int> identifiers) const {
+    /* Shortcut with less branching */
+    if(identifiers.size() == 1) return findFirstChildOf(identifiers[0]);
+
+    for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
+        if(s->isCustom()) for(const Int identifier: identifiers) if(s->identifier() == identifier) return s;
+    return std::nullopt;
+}
+
 Structure Document::firstChildOf(const Type type) const {
     const std::optional<Structure> s = findFirstChildOf(type);
     CORRADE_ASSERT(s, "OpenDdl::Document::firstChildOf(): no such child", *s);
@@ -961,10 +974,6 @@ Structure Document::firstChildOf(const Int identifier) const {
     const std::optional<Structure> s = findFirstChildOf(identifier);
     CORRADE_ASSERT(s, "OpenDdl::Document::firstChildOf(): no such child", *s);
     return *s;
-}
-
-Implementation::StructureOfList Document::childrenOf(const Int identifier) const {
-    return Implementation::StructureOfList{findFirstChildOf(identifier)};
 }
 
 Int Structure::identifier() const {
@@ -1010,6 +1019,16 @@ std::optional<Structure> Structure::findNextOf(const Int identifier) const {
     std::optional<Structure> s = *this;
     while((s = s->findNext()))
         if(s->isCustom() && s->identifier() == identifier) return s;
+    return std::nullopt;
+}
+
+std::optional<Structure> Structure::findNextOf(const Containers::ArrayReference<const Int> identifiers) const {
+    /* Shortcut with less branching */
+    if(identifiers.size() == 1) return findNextOf(identifiers[0]);
+
+    std::optional<Structure> s = *this;
+    while((s = s->findNext()))
+        if(s->isCustom()) for(const Int identifier: identifiers) if(s->identifier() == identifier) return s;
     return std::nullopt;
 }
 
@@ -1074,6 +1093,15 @@ std::optional<Structure> Structure::findFirstChildOf(const Int identifier) const
     return std::nullopt;
 }
 
+std::optional<Structure> Structure::findFirstChildOf(const Containers::ArrayReference<const Int> identifiers) const {
+    /* Shortcut with less branching */
+    if(identifiers.size() == 1) return findFirstChildOf(identifiers[0]);
+
+    for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
+        if(s->isCustom()) for(const Int identifier: identifiers) if(s->identifier() == identifier) return s;
+    return std::nullopt;
+}
+
 Structure Structure::firstChildOf(const Type type) const {
     std::optional<Structure> const s = findFirstChildOf(type);
     CORRADE_ASSERT(s, "OpenDdl::Structure::firstChildOf(): no such child", *s);
@@ -1086,10 +1114,12 @@ Structure Structure::firstChildOf(const Int identifier) const {
     return *s;
 }
 
-Implementation::StructureOfList Structure::childrenOf(const Int identifier) const {
+/* Most of the code will use childrenOf with exactly one parameter, avoid
+   binary bloat by defining it as non-template */
+Implementation::StructureOfList<1> Structure::childrenOf(Int identifier) const {
     CORRADE_ASSERT(isCustom(), "OpenDdl::Structure::childrenOf(): not a custom structure",
-        Implementation::StructureOfList(findFirstChildOf(identifier)));
-    return Implementation::StructureOfList{findFirstChildOf(identifier)};
+        (Implementation::StructureOfList<1>{findFirstChildOf(identifier), identifier}));
+    return Implementation::StructureOfList<1>{findFirstChildOf(identifier), identifier};
 }
 
 bool Property::isTypeCompatibleWith(PropertyType type) const {
