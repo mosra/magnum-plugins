@@ -1,0 +1,33 @@
+Metric (key = "up") { string { "y" } }
+
+Node {
+    Scale (object = false, kind = "xyz") { float[3] {{ 7.5, -1.5, 2.0 }} }
+}
+
+Node {
+    Scale { float[3] {{ 7.5, -1.5, 2.0 }} }
+}
+
+Node {
+    Scale (kind = "x") { float { 7.5 } }
+}
+
+Node {
+    Scale (kind = "y") { float { -1.5 } }
+}
+
+Node {
+    Scale (kind = "z") { float { 2.0 } }
+}
+
+Node {
+    Scale (kind = "XYZ") { float[3] {} }
+}
+
+Node {
+    Scale (kind = "y") { float[3] {{ 7.5, -1.5, 2.0 }} }
+}
+
+Node {
+    Scale (object = true) { float[3] {} }
+}

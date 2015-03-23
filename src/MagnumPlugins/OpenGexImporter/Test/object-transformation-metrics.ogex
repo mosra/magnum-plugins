@@ -1,0 +1,50 @@
+/* Only "up", "angle" and "distance" would be used in the following */
+Metric (key = "up") { string { "z" } }
+Metric (key = "distance") { float { 100.0 } }
+Metric (key = "angle") { float { 0.017453293 } }
+Metric (key = "time") { float { 2.0 } }
+
+Node {
+    Transform { float[16] {{
+        1.0,  0.0, 0.0, 0.0,
+        0.0, -2.0, 0.0, 0.0,
+        0.0,  0.0, 5.5, 0.0,
+        1.0, -2.0, 5.5, 1.0
+    }}}
+}
+
+Node {
+    Translation { float[3] {{ 1.0, -2.0, 5.5 }} }
+}
+Node {
+    Transform { float[16] {{
+        1.0,  0.0, 0.0, 0.0,
+        0.0,  1.0, 0.0, 0.0,
+        0.0,  0.0, 1.0, 0.0,
+        1.0, -2.0, 5.5, 1.0
+    }}}
+}
+
+Node {
+    Rotation { float[4] {{ 90.0, 0.0, 1.0, 0.0 }} }
+}
+Node {
+    Transform { float[16] {{
+        0.0, 0.0, -1.0, 0.0,
+        0.0, 1.0,  0.0, 0.0,
+        1.0, 0.0,  0.0, 0.0,
+        0.0, 0.0,  0.0, 1.0
+    }}}
+}
+
+Node {
+    Scale { float[3] {{ 1.0, -2.0, 5.5 }} }
+}
+Node {
+    Transform { float[16] {{
+        1.0,  0.0, 0.0, 0.0,
+        0.0, -2.0, 0.0, 0.0,
+        0.0,  0.0, 5.5, 0.0,
+        0.0,  0.0, 0.0, 1.0
+    }}}
+}

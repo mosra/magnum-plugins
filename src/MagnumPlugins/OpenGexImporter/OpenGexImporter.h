@@ -58,6 +58,15 @@ information.
 -   On OpenGL ES, usage of double type and on WebGL additionally also usage of
     64bit integer types results in parsing error.
 
+#### Scene hierarchy import
+
+-   Object-only transformations are not supported.
+-   Additional material references after the first one for given geometry node
+    are ignored.
+-   Geometry node visibility, shadow and motion blur properties are ignored.
+-   Camera and light object data are not supported yet, bone node is parsed as
+    @ref Trade::ObjectInstanceType3D::Empty.
+
 #### Mesh import
 
 -   64bit indices are not supported.
@@ -118,6 +127,15 @@ class OpenGexImporter: public AbstractImporter {
         void doOpenData(Containers::ArrayReference<const char> data) override;
         void doOpenFile(const std::string& filename) override;
         void doClose() override;
+
+        Int doDefaultScene() override;
+        UnsignedInt doSceneCount() const override;
+        std::optional<SceneData> doScene(UnsignedInt id) override;
+
+        UnsignedInt doObject3DCount() const override;
+        Int doObject3DForName(const std::string& name) override;
+        std::string doObject3DName(UnsignedInt id) override;
+        std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
 
         UnsignedInt doMesh3DCount() const override;
         std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;

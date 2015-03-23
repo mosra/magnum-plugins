@@ -31,10 +31,12 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
-#include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
+#include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
 #include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
@@ -57,11 +59,13 @@ struct OpenGexImporter::Document {
 
     std::optional<std::string> filePath;
 
-    std::vector<OpenDdl::Structure> meshes,
+    std::vector<OpenDdl::Structure> nodes,
+        meshes,
         materials,
         textures;
 
-    std::unordered_map<std::string, Int> materialsForName;
+    std::unordered_map<std::string, Int> nodesForName,
+        materialsForName;
 };
 
 namespace {
@@ -90,6 +94,20 @@ OpenGexImporter::~OpenGexImporter() = default;
 auto OpenGexImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool OpenGexImporter::doIsOpened() const { return !!_d; }
+
+namespace {
+
+void gatherNodes(OpenDdl::Structure node, std::vector<OpenDdl::Structure>& nodes, std::unordered_map<std::string, Int>& nodesForName) {
+    if(const auto name = node.findFirstChildOf(OpenGex::Name))
+        nodesForName.emplace(name->firstChild().as<std::string>(), nodes.size());
+    nodes.push_back(node);
+
+    /* Recurse into children */
+    for(const OpenDdl::Structure childNode: node.childrenOf(OpenGex::Node, OpenGex::BoneNode, OpenGex::GeometryNode, OpenGex::CameraNode, OpenGex::LightNode))
+        gatherNodes(childNode, nodes, nodesForName);
+}
+
+}
 
 void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> data) {
     std::unique_ptr<Document> d{new Document};
@@ -166,6 +184,10 @@ void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> da
         }
     }
 
+    /* Gather the scene nodes */
+    for(const OpenDdl::Structure node: d->document.childrenOf(OpenGex::Node, OpenGex::BoneNode, OpenGex::GeometryNode, OpenGex::CameraNode, OpenGex::LightNode))
+        gatherNodes(node, d->nodes, d->nodesForName);
+
     /* Everything okay, save the instance */
     _d = std::move(d);
 }
@@ -179,6 +201,205 @@ void OpenGexImporter::doOpenFile(const std::string& filename) {
 }
 
 void OpenGexImporter::doClose() { _d = nullptr; }
+
+Int OpenGexImporter::doDefaultScene() { return 0; }
+
+UnsignedInt OpenGexImporter::doSceneCount() const { return 1; }
+
+std::optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
+    /* Just gather all nodes that have no parent */
+    Int i = 0;
+    std::vector<UnsignedInt> children;
+    for(const OpenDdl::Structure node: _d->nodes) {
+        if(!node.parent()) children.push_back(i);
+        ++i;
+    }
+
+    return SceneData{{}, children};
+}
+
+UnsignedInt OpenGexImporter::doObject3DCount() const {
+    return _d->nodes.size();
+}
+
+Int OpenGexImporter::doObject3DForName(const std::string& name) {
+    const auto found = _d->nodesForName.find(name);
+    return found == _d->nodesForName.end() ? -1 : found->second;
+}
+
+std::string OpenGexImporter::doObject3DName(const UnsignedInt id) {
+    const auto name = _d->nodes[id].findFirstChildOf(OpenGex::Name);
+    return name ? name->firstChild().as<std::string>() : "";
+}
+
+namespace {
+    inline Matrix4 fixMatrixZUp(const Matrix4& m) {
+        /* Rotate back to Z up, apply transformation and then rotate to final Y
+           up */
+        return Matrix4{{1.0f, 0.0f,  0.0f, 0.0f},
+                       {0.0f, 0.0f, -1.0f, 0.0f},
+                       {0.0f, 1.0f,  0.0f, 0.0f},
+                       {0.0f, 0.0f,  0.0f, 1.0f}}*m*
+               Matrix4{{1.0f,  0.0f, 0.0f, 0.0f},
+                       {0.0f,  0.0f, 1.0f, 0.0f},
+                       {0.0f, -1.0f, 0.0f, 0.0f},
+                       {0.0f,  0.0f, 0.0f, 1.0f}};
+    }
+
+    inline Vector3 fixVectorZUp(Vector3 vec) { return {vec.x(), vec.z(), -vec.y()}; }
+
+    inline Vector3 fixScalingZUp(Vector3 vec) { return {vec.x(), vec.z(), vec.y()}; }
+
+    inline Matrix4 fixMatrixTranslation(Matrix4 m, Float distanceMultiplier) {
+        m[3].xyz() *= distanceMultiplier;
+        return m;
+    }
+}
+
+std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) {
+    const OpenDdl::Structure node = _d->nodes[id];
+
+    /* Compute total transformation */
+    Matrix4 transformation;
+    for(const OpenDdl::Structure t: node.childrenOf(OpenGex::Transform, OpenGex::Translation, OpenGex::Rotation, OpenGex::Scale)) {
+        /** @todo support object transformations */
+        if(const auto object = t.findPropertyOf(OpenGex::object)) if(object->as<bool>()) {
+            Error() << "Trade::OpenGexImporter::object3D(): unsupported object-only transformation";
+            return nullptr;
+        }
+
+        Matrix4 matrix;
+
+        /* 4x4 matrix */
+        if(t.identifier() == OpenGex::Transform) {
+            const OpenDdl::Structure data = t.firstChild();
+            if(data.subArraySize() != 16) {
+                Error() << "Trade::OpenGexImporter::object3D(): invalid transformation";
+                return nullptr;
+            }
+
+            const Matrix4 m = fixMatrixTranslation(Matrix4::from(data.asArray<Float>()), _d->distanceMultiplier);
+            matrix = _d->yUp ? m : fixMatrixZUp(m);
+
+        /* Translation */
+        } else if(t.identifier() == OpenGex::Translation) {
+            const OpenDdl::Structure data = t.firstChild();
+
+            /* "xyz" is the default if no kind property is specified */
+            Vector3 v;
+            const auto kind = t.findPropertyOf(OpenGex::kind);
+            if((!kind || kind->as<std::string>() == "xyz") && data.subArraySize() == 3)
+                v = Vector3::from(data.asArray<Float>())*_d->distanceMultiplier;
+            else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0)
+                v = Vector3::xAxis(data.as<Float>()*_d->distanceMultiplier);
+            else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0)
+                v = Vector3::yAxis(data.as<Float>()*_d->distanceMultiplier);
+            else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0)
+                v = Vector3::zAxis(data.as<Float>()*_d->distanceMultiplier);
+            else {
+                Error() << "Trade::OpenGexImporter::object3D(): invalid translation";
+                return nullptr;
+            }
+
+            matrix = Matrix4::translation((_d->yUp ? v : fixVectorZUp(v)));
+
+        /* Rotation */
+        } else if(t.identifier() == OpenGex::Rotation) {
+            const OpenDdl::Structure data = t.firstChild();
+
+            /* "axis" is the default if no kind property is specified */
+            Matrix4 m;
+            const auto kind = t.findPropertyOf(OpenGex::kind);
+            if((!kind || kind->as<std::string>() == "axis") && data.subArraySize() == 4) {
+                const auto angle = Rad{data.asArray<Float>()[0]*_d->angleMultiplier};
+                const auto axis = Vector3::from(data.asArray<Float>() + 1).normalized();
+                m = Matrix4::rotation(angle, axis);
+            } else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0) {
+                const auto angle = Rad{data.as<Float>()*_d->angleMultiplier};
+                m = Matrix4::rotationX(angle);
+            } else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0) {
+                const auto angle = Rad{data.as<Float>()*_d->angleMultiplier};
+                m = Matrix4::rotationY(angle);
+            } else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0) {
+                const auto angle = Rad{data.as<Float>()*_d->angleMultiplier};
+                m = Matrix4::rotationZ(angle);
+            } else if(kind && kind->as<std::string>() == "quaternion" && data.subArraySize() == 4) {
+                const auto vector = Vector3::from(data.asArray<Float>());
+                const auto scalar = data.asArray<Float>()[3];
+                m = Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
+            } else {
+                Error() << "Trade::OpenGexImporter::object3D(): invalid rotation";
+                return nullptr;
+            }
+
+            matrix = _d->yUp ? m : fixMatrixZUp(m);
+
+        /* Scaling */
+        } else if(t.identifier() == OpenGex::Scale) {
+            const OpenDdl::Structure data = t.firstChild();
+
+            /* "xyz" is the default if no kind property is specified */
+            Vector3 v;
+            const auto kind = t.findPropertyOf(OpenGex::kind);
+            if((!kind || kind->as<std::string>() == "xyz") && data.subArraySize() == 3)
+                v = Vector3::from(data.asArray<Float>());
+            else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0)
+                v = Vector3::xScale(data.as<Float>());
+            else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0)
+                v = Vector3::yScale(data.as<Float>());
+            else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0)
+                v = Vector3::zScale(data.as<Float>());
+            else {
+                Error() << "Trade::OpenGexImporter::object3D(): invalid scaling";
+                return nullptr;
+            }
+
+            matrix = Matrix4::scaling(_d->yUp ? v : fixScalingZUp(v));
+
+        } else CORRADE_ASSERT_UNREACHABLE();
+
+        transformation = transformation*matrix;
+    }
+
+    /* Child node IDs */
+    std::vector<UnsignedInt> children;
+    for(const OpenDdl::Structure childNode: node.childrenOf(OpenGex::Node, OpenGex::BoneNode, OpenGex::GeometryNode, OpenGex::CameraNode, OpenGex::LightNode))
+        children.push_back(structureId(_d->nodes, childNode));
+
+    /* Mesh object */
+    if(node.identifier() == OpenGex::GeometryNode) {
+        /* Mesh ID */
+        const auto mesh = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
+        if(!mesh) {
+            Error() << "Trade::OpenGexImporter::object3D(): null geometry reference";
+            return nullptr;
+        }
+        const UnsignedInt meshId = structureId(_d->meshes, *mesh);
+
+        /* Material ID, if present */
+        /** @todo support more materials per mesh */
+        Int materialId = -1;
+        if(const auto materialRef = node.findFirstChildOf(OpenGex::MaterialRef))
+            if(const auto material = materialRef->firstChildOf(OpenDdl::Type::Reference).asReference())
+                materialId = structureId(_d->materials, *material);
+
+        return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId}};
+
+    /* Camera object */
+    } else if(node.identifier() == OpenGex::CameraNode) {
+        /** @todo actually extract the ID when cameras are supported */
+        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, 0}};
+
+    /* Light object */
+    } else if(node.identifier() == OpenGex::LightNode) {
+        /** @todo actually extract the ID when lights are supported */
+        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, 0}};
+    }
+
+    /* Bone or empty object otherwise */
+    /** @todo support for bone nodes */
+    return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation}};
+}
 
 UnsignedInt OpenGexImporter::doMesh3DCount() const {
     return _d->meshes.size();
@@ -233,8 +454,6 @@ template<class T> std::vector<UnsignedInt> extractIndices(const OpenDdl::Structu
     const Containers::ArrayReference<const T> data = indexArray.asArray<T>();
     return {data.begin(), data.end()};
 }
-
-inline Vector3 fixZUp(Vector3 vec) { return {vec.x(), vec.z(), -vec.y()}; }
 
 }
 
@@ -295,13 +514,13 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
         if(attrib == "position") {
             std::vector<Vector3> positionData = extractVertexData<Vector3>(vertexArrayData);
             for(auto& i: positionData) i *= _d->distanceMultiplier;
-            if(!_d->yUp) for(auto& i: positionData) i = fixZUp(i);
+            if(!_d->yUp) for(auto& i: positionData) i = fixVectorZUp(i);
             positions.push_back(std::move(positionData));
 
         /* Normals */
         } else if(attrib == "normal") {
             std::vector<Vector3> normalData = extractVertexData<Vector3>(vertexArrayData);
-            if(!_d->yUp) for(auto& i: normalData) i = fixZUp(i);
+            if(!_d->yUp) for(auto& i: normalData) i = fixVectorZUp(i);
             normals.emplace_back(std::move(normalData));
 
         /* 2D texture coordinates */

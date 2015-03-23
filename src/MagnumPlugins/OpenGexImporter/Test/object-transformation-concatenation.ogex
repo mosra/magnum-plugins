@@ -1,0 +1,7 @@
+Metric (key = "up") { string { "y" } }
+
+Node {
+    Translation { float[3] {{ 7.5, -1.5, 1.0 }} }
+    Scale { float[3] {{ 1.0, 2.0, -1.0 }} }
+    Rotation { float[4] {{ -1.570796327, 1.0, 0.0, 0.0 }} }
+}

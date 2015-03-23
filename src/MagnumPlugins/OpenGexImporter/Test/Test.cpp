@@ -30,10 +30,14 @@
 
 #include "Magnum/Mesh.h"
 #include "Magnum/Math/Vector3.h"
+#include <Math/Quaternion.h>
 #include "Magnum/Trade/ImageData.h"
 #include "Magnum/Trade/MeshData3D.h"
 #include "Magnum/Trade/PhongMaterialData.h"
 #include "Magnum/Trade/TextureData.h"
+#include <Trade/ObjectData3D.h>
+#include <Trade/SceneData.h>
+#include <Trade/MeshObjectData3D.h>
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
 
 #include "configure.h"
@@ -47,6 +51,15 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void openParseError();
     void openValidationError();
     void openInvalidMetric();
+
+    void object();
+    void objectMesh();
+    void objectTransformation();
+    void objectTranslation();
+    void objectRotation();
+    void objectScaling();
+    void objectTransformationConcatentation();
+    void objectTransformationMetrics();
 
     void mesh();
     void meshIndexed();
@@ -77,6 +90,15 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::openParseError,
               &OpenGexImporterTest::openValidationError,
               &OpenGexImporterTest::openInvalidMetric,
+
+              &OpenGexImporterTest::object,
+              &OpenGexImporterTest::objectMesh,
+              &OpenGexImporterTest::objectTransformation,
+              &OpenGexImporterTest::objectTranslation,
+              &OpenGexImporterTest::objectRotation,
+              &OpenGexImporterTest::objectScaling,
+              &OpenGexImporterTest::objectTransformationConcatentation,
+              &OpenGexImporterTest::objectTransformationMetrics,
 
               &OpenGexImporterTest::mesh,
               &OpenGexImporterTest::meshIndexed,
@@ -144,6 +166,309 @@ void OpenGexImporterTest::openInvalidMetric() {
 Metric (key = "distance") { string { "0.5" } }
     )oddl"));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::openData(): invalid value for distance metric\n");
+}
+
+void OpenGexImporterTest::object() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object.ogex")));
+    CORRADE_COMPARE(importer.sceneCount(), 1);
+    CORRADE_COMPARE(importer.object3DCount(), 5);
+
+    std::optional<Trade::SceneData> scene = importer.scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 3}));
+
+    std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+    CORRADE_VERIFY(object);
+    CORRADE_COMPARE(importer.object3DName(0), "MyNode");
+    CORRADE_COMPARE(importer.object3DForName("MyNode"), 0);
+    CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Empty);
+    CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{1, 2}));
+
+    std::unique_ptr<Trade::ObjectData3D> cameraObject = importer.object3D(1);
+    CORRADE_VERIFY(cameraObject);
+    CORRADE_COMPARE(cameraObject->instanceType(), Trade::ObjectInstanceType3D::Camera);
+
+    std::unique_ptr<Trade::ObjectData3D> meshObject = importer.object3D(2);
+    CORRADE_VERIFY(meshObject);
+    CORRADE_COMPARE(importer.object3DName(2), "MyGeometryNode");
+    CORRADE_COMPARE(importer.object3DForName("MyGeometryNode"), 2);
+    CORRADE_COMPARE(meshObject->instanceType(), Trade::ObjectInstanceType3D::Mesh);
+    CORRADE_VERIFY(meshObject->children().empty());
+
+    std::unique_ptr<Trade::ObjectData3D> boneObject = importer.object3D(3);
+    CORRADE_VERIFY(boneObject);
+    CORRADE_COMPARE(boneObject->instanceType(), Trade::ObjectInstanceType3D::Empty);
+    CORRADE_COMPARE(boneObject->children(), (std::vector<UnsignedInt>{4}));
+
+    std::unique_ptr<Trade::ObjectData3D> lightObject = importer.object3D(4);
+    CORRADE_VERIFY(lightObject);
+    CORRADE_COMPARE(lightObject->instanceType(), Trade::ObjectInstanceType3D::Light);
+    CORRADE_VERIFY(lightObject->children().empty());
+}
+
+void OpenGexImporterTest::objectMesh() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-geometry.ogex")));
+    CORRADE_COMPARE(importer.object3DCount(), 4);
+
+    {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Mesh);
+
+        auto&& meshObject = static_cast<Trade::MeshObjectData3D&>(*object);
+        CORRADE_COMPARE(meshObject.instance(), 1);
+        CORRADE_COMPARE(meshObject.material(), 2);
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(1);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Mesh);
+
+        auto&& meshObject = static_cast<Trade::MeshObjectData3D&>(*object);
+        CORRADE_COMPARE(meshObject.material(), -1);
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(2);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Mesh);
+
+        auto&& meshObject = static_cast<Trade::MeshObjectData3D&>(*object);
+        CORRADE_COMPARE(meshObject.material(), -1);
+    }
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.object3D(3));
+    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::object3D(): null geometry reference\n");
+}
+
+void OpenGexImporterTest::objectTransformation() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation.ogex")));
+    CORRADE_COMPARE(importer.object3DCount(), 3);
+
+    {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), (Matrix4{
+            {3.0f,  0.0f, 0.0f, 0.0f},
+            {0.0f, -2.0f, 0.0f, 0.0f},
+            {0.0f,  0.0f, 0.5f, 0.0f},
+            {7.5f, -1.5f, 1.0f, 1.0f}
+        }));
+    }
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.object3D(1));
+    CORRADE_VERIFY(!importer.object3D(2));
+    CORRADE_COMPARE(out.str(),
+        "Trade::OpenGexImporter::object3D(): invalid transformation\n"
+        "Trade::OpenGexImporter::object3D(): unsupported object-only transformation\n");
+}
+
+void OpenGexImporterTest::objectTranslation() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-translation.ogex")));
+    CORRADE_COMPARE(importer.object3DCount(), 8);
+
+    /* XYZ */
+    {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::translation({7.5f, -1.5f, 1.0f}));
+
+    /* Default, which is also XYZ */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(1);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::translation({7.5f, -1.5f, 1.0f}));
+
+    /* X */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(2);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::xAxis(7.5f)));
+
+    /* Y */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(3);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::yAxis(-1.5f)));
+
+    /* Z */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(4);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::zAxis(1.0f)));
+    }
+
+    /* Invalid kind, invalid array size, object-only transformation */
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.object3D(5));
+    CORRADE_VERIFY(!importer.object3D(6));
+    CORRADE_VERIFY(!importer.object3D(7));
+    CORRADE_COMPARE(out.str(),
+        "Trade::OpenGexImporter::object3D(): invalid translation\n"
+        "Trade::OpenGexImporter::object3D(): invalid translation\n"
+        "Trade::OpenGexImporter::object3D(): unsupported object-only transformation\n");
+}
+
+void OpenGexImporterTest::objectRotation() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-rotation.ogex")));
+    CORRADE_COMPARE(importer.object3DCount(), 9);
+
+    /* Axis + angle */
+    {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(90.0_degf, Vector3::zAxis()));
+
+    /* Default, which is also axis + angle */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(1);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(-90.0_degf, Vector3::zAxis(-1.0f)));
+
+    /* Quaternion */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(2);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::from(Quaternion::rotation(90.0_degf, Vector3::zAxis()).toMatrix(), {}));
+
+    /* X */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(3);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationX(90.0_degf));
+
+    /* Y */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(4);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationY(90.0_degf));
+
+    /* Z */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(5);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(90.0_degf));
+    }
+
+    /* Invalid kind, invalid array size, object-only transformation */
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.object3D(6));
+    CORRADE_VERIFY(!importer.object3D(7));
+    CORRADE_VERIFY(!importer.object3D(8));
+    CORRADE_COMPARE(out.str(),
+        "Trade::OpenGexImporter::object3D(): invalid rotation\n"
+        "Trade::OpenGexImporter::object3D(): invalid rotation\n"
+        "Trade::OpenGexImporter::object3D(): unsupported object-only transformation\n");
+}
+
+void OpenGexImporterTest::objectScaling() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-scaling.ogex")));
+    CORRADE_COMPARE(importer.object3DCount(), 8);
+
+    /* XYZ */
+    {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::scaling({7.5f, -1.5f, 2.0f}));
+
+    /* Default, which is also XYZ */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(1);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::scaling({7.5f, -1.5f, 2.0f}));
+
+    /* X */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(2);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::xScale(7.5f)));
+
+    /* Y */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(3);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::yScale(-1.5f)));
+
+    /* Z */
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(4);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::zScale(2.0f)));
+    }
+
+    /* Invalid kind, invalid array size, object-only transformation */
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.object3D(5));
+    CORRADE_VERIFY(!importer.object3D(6));
+    CORRADE_VERIFY(!importer.object3D(7));
+    CORRADE_COMPARE(out.str(),
+        "Trade::OpenGexImporter::object3D(): invalid scaling\n"
+        "Trade::OpenGexImporter::object3D(): invalid scaling\n"
+        "Trade::OpenGexImporter::object3D(): unsupported object-only transformation\n");
+}
+
+void OpenGexImporterTest::objectTransformationConcatentation() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation-concatenation.ogex")));
+    CORRADE_COMPARE(importer.object3DCount(), 1);
+
+    std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+    CORRADE_VERIFY(object);
+    CORRADE_COMPARE(object->transformation(),
+        Matrix4::translation({7.5f, -1.5f, 1.0f})*
+        Matrix4::scaling({1.0f, 2.0f, -1.0f})*
+        Matrix4::rotationX(-90.0_degf));
+}
+
+void OpenGexImporterTest::objectTransformationMetrics() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation-metrics.ogex")));
+    CORRADE_COMPARE(importer.object3DCount(), 7);
+
+    {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(),
+            Matrix4::translation({100.0f, 550.0f, 200.0f})*
+            Matrix4::scaling({1.0f, 5.5f, -2.0f})
+        );
+    }
+
+    /* Each pair describes the same transformation using given operation and
+       transformation matrix */
+    {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(1);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::translation({100.0f, 550.0f, 200.0f}));
+        std::unique_ptr<Trade::ObjectData3D> matrix = importer.object3D(2);
+        CORRADE_VERIFY(matrix);
+        CORRADE_COMPARE(matrix->transformation(), Matrix4::translation({100.0f, 550.0f, 200.0f}));
+    } {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(3);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(-90.0_degf));
+        std::unique_ptr<Trade::ObjectData3D> matrix = importer.object3D(4);
+        CORRADE_VERIFY(matrix);
+        CORRADE_COMPARE(matrix->transformation(), Matrix4::rotationZ(-90.0_degf));
+    } {
+        /* This won't be multiplied by 100, as the original mesh data are adjusted already */
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(5);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::scaling({1.0f, 5.5f, -2.0f}));
+        std::unique_ptr<Trade::ObjectData3D> matrix = importer.object3D(6);
+        CORRADE_VERIFY(matrix);
+        CORRADE_COMPARE(matrix->transformation(), Matrix4::scaling({1.0f, 5.5f, -2.0f}));
+    }
 }
 
 void OpenGexImporterTest::mesh() {
