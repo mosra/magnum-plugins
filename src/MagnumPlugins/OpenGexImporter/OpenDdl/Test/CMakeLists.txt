@@ -24,3 +24,4 @@
 #
 
 corrade_add_test(OpenDdlParsersTest ParsersTest.cpp LIBRARIES ${MAGNUM_LIBRARIES} MagnumOpenGexImporterTestLib)
+corrade_add_test(OpenDdlTest Test.cpp LIBRARIES ${MAGNUM_LIBRARIES} MagnumOpenGexImporterTestLib)
