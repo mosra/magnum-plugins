@@ -351,7 +351,7 @@ class Structure {
          * @see @ref isCustom(), @ref children(), @ref Document::childrenOf()
          */
         Implementation::StructureOfList<1> childrenOf(Int identifier) const;
-        template<class ...T> Implementation::StructureOfList<sizeof...(T)+1> childrenOf(Int identifier, T... identifiers) const; /** @overload */
+        template<class ...T> Implementation::StructureOfList<sizeof...(T)+1> childrenOf(Int identifier, T... identifiers) const; /**< @overload */
 
     private:
         explicit Structure(const Document& document, const Document::StructureData& data) noexcept: _document{document}, _data{data} {}
