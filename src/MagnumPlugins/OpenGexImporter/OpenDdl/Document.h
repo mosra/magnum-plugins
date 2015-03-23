@@ -68,9 +68,200 @@ namespace Validation {
 /**
 @brief OpenDDL document
 
-@attention All @ref Structure and @ref Property instances are just references
-    to internal data of originating document, thus you must ensure that the
-    document is available for whole lifetime of these instances.
+Parser for the [OpenDDL](http://www.openddl.org) file format.
+
+The parser loads the file into an in-memory structure, which is just a set of
+flat arrays. When traversing the parsed document, all @ref Structure and
+@ref Property objects are just tiny wrappers around references to the internal
+data of the originating document, thus you must ensure that the document is
+available for whole lifetime of these instances. On the other hand this allows
+you to copy and store these instances without worrying about performance.
+
+## Usage
+
+To avoid needless allocations and string comparisons when using the parsed
+document, all structure and property names are represented as integer IDs. To
+parse a file, you first need to build a list of string names with their
+corresponding IDs for both structure and property names. The following example
+is a subset of the [OpenGEX](http://www.opengex.org) file format:
+@code
+namespace OpenGex {
+
+enum: Int {
+    GeometryObject,
+    IndexArray,
+    Mesh,
+    VertexArray
+};
+
+const std::initializer_list<OpenDdl::CharacterLiteral> structures{
+    "GeometryObject",
+    "IndexArray",
+    "Mesh",
+    "VertexArray"
+}
+
+enum: Int {
+    attrib,
+    key,
+    motion_blur,
+    primitive,
+    shadow,
+    two_sided,
+    visible
+};
+
+const std::initializer_list<OpenDdl::CharacterLiteral> properties{
+    "attrib",
+    "key",
+    "motion_blur",
+    "primitive",
+    "shadow",
+    "two_sided",
+    "visible"
+};
+
+}
+@endcode
+
+Each enum value has corresponding string representation and the string
+identifiers are then passed to @ref parse():
+@code
+OpenDdl::Document d;
+bool parsed = d.parse(data, OpenGex::structureIdentifiers, OpenGex::propertyIdentifiers);
+@endcode
+
+If the file contains structures or properties which are not included in the
+identifer lists, these are parsed with @ref UnknownIdentifier ID. If the
+document has syntax errors, the function returns `false` and prints detailed
+diagnostics on @ref Corrade::Utility::Error output. After parsing you can
+traverse the document using IDs from the enums:
+@code
+for(OpenDdl::Structure geometryObject: d.childrenOf(OpenGex::GeometryObject) {
+    // Decide about primitive
+    if(std::optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
+        if(!primitive->isTypeCompatibleWith(OpenDdl::Type::String)) {
+            // error ...
+        }
+
+        std::string str = primitive->as<std::string>();
+        if(str == "triangles") {
+            // ...
+        } else if(str == "lines") {
+            // ...
+        } // ...
+    } else {
+        // ...
+    }
+
+    // Parse vertex array
+    if(std::optional<OpenDdl::Structure> vertexArray = geometryObject.findFirstChildOf(OpenGex::VertexArray)) {
+        if(!vertexArray->hasChildren() || vertexArray->firstChild().type() != OpenDdl::Type::Float) {
+            // error ...
+        }
+
+        Containers::ArrayReference<const Float> vertexArray = vertexArray->firstChild().asArray<Float>();
+        // ...
+
+    } else {
+        // error ...
+    }
+}
+@endcode
+
+As you can see, the error checking can get pretty tiresome after a while.
+That's when document validation proves to be useful. The validation is just
+rough and checks only proper document hierarchy, allowed structure and property
+types, structure count and presence of required properties, but that's often
+enough to avoid most of the redundant checks. You define which structures can
+appear at document level and then for each structure what properties and which
+substructures it can have. Again an (very stripped down) subset of OpenGEX
+specification:
+@code
+namespace OpenGex {
+
+using namespace OpenDdl::Validation;
+
+// GeometryObject and Metric can be root structures
+const Structures allowedRootStructures{
+    {GeometryObject, {}},
+    {Metric, {}}
+};
+
+// Info about particular structures
+const std::initializer_list<Structure> structureInfo{
+    // Metric structure has required key string property and contains exactly
+    // one float or string primitive substructure with exactly one value
+    {Metric,            Properties{{key, PropertyType::String, RequiredProperty}},
+                        Primitives{Type::Float,
+                                   Type::String}, 1, 1},
+
+    // GeometryObject structure has optional visible and shadow boolean
+    // properties and one or more Mesh substructures
+    {GeometryObject,    Properties{{visible, OpenDdl::PropertyType::Bool, OptionalProperty},
+                                   {shadow, OpenDdl::PropertyType::Bool, OptionalProperty}},
+                        Structures{{Mesh, {1, 0}}}},
+
+    // Mesh structure has optional lod and primitive properties, at least one
+    // VertexArray substructure and zero or more IndexArray substructures
+    {Mesh,              Properties{{lod, OpenDdl::PropertyType::UnsignedInt, OptionalProperty},
+                                   {primitive, OpenDdl::PropertyType::String, OptionalProperty}},
+                        Structures{{VertexArray, {1, 0}},
+                                   {IndexArray, {}}}},
+
+    // IndexArray structure has exactly one unsigned primitive substructure
+    // with any number of values
+    {IndexArray,        Primitives{OpenDdl::Type::UnsignedByte,
+                                   OpenDdl::Type::UnsignedShort,
+                                   OpenDdl::Type::UnsignedInt}, 1, 0},
+
+    // VertexArray structure has required attrib property and exactly one float
+    // substructure with any number of values
+    {VertexArray,       Properties{{attrib, OpenDdl::PropertyType::String, RequiredProperty}},
+                        Primitives{OpenDdl::Type::Float}, 1, 0}
+};
+
+}
+@endcode
+
+You then pass it to @ref validate() and check the return value. As with
+@ref parse(), structures with @ref UnknownIdentifier ID are ignored and if the
+validation fails, detailed diagnostics is printed on @ref Corrade::Utility::Error
+output:
+@code
+bool valid = d.validate(OpenGex::allowedRootStructures, OpenGex::structureInfo);
+@endcode
+
+If the document is valid, you can access child structures and properties
+directly with e.g. @ref Structure::firstChildOf(), @ref Structure::propertyOf() etc.
+instead of using @ref Structure::findFirstChildOf(),
+@ref Structure::findPropertyOf() etc. and checking return value all the time:
+@code
+// Decide about primitive
+if(std::optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
+    auto&& str = primitive->as<std::string>();
+    if(str == "triangles") {
+        // ...
+    } else if(str == "lines") {
+        // ...
+    } // ...
+} else {
+    // ...
+}
+
+// Parse vertex array
+OpenDdl::Structure vertexArray = geometryObject.firstChildOf(OpenGex::VertexArray);
+auto&& attrib = vertexArray->propertyOf(OpenGex::attrib).as<std::string>();
+if(attrib == "position") {
+    // ...
+} else if(attrib == "normal") {
+    // ...
+}
+
+// Parse vertex array data
+Containers::ArrayReference<const Float> data = vertexArray->firstChild().asArray<Float>();
+// ...
+@endcode
 
 @requires_gl On OpenGL ES the `double` type is not recognized. Additionally,
     due to JavaScript limitations, on @ref MAGNUM_TARGET_WEBGL "WebGL" the
