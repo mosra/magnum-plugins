@@ -29,7 +29,7 @@
  * @brief Enum @ref Magnum::OpenDdl::Type, @ref Magnum::OpenDdl::PropertyType, constant @ref Magnum::OpenDdl::UnknownIdentifier
  */
 
-#include "Magnum/Magnum.h"
+#include <Magnum/Magnum.h>
 
 namespace Magnum { namespace OpenDdl {
 

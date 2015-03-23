@@ -29,7 +29,7 @@
  * @brief Forward declarations for @ref Magnum::OpenDdl namespace
  */
 
-#include "Magnum/Types.h"
+#include <Magnum/Types.h>
 
 namespace Magnum { namespace OpenDdl {
 

@@ -27,17 +27,17 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
+#include <Magnum/Mesh.h>
+#include <Magnum/Math/Quaternion.h>
+#include <Magnum/Math/Vector3.h>
+#include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshObjectData3D.h>
+#include <Magnum/Trade/ObjectData3D.h>
+#include <Magnum/Trade/PhongMaterialData.h>
+#include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/TextureData.h>
 
-#include "Magnum/Mesh.h"
-#include "Magnum/Math/Vector3.h"
-#include <Math/Quaternion.h>
-#include "Magnum/Trade/ImageData.h"
-#include "Magnum/Trade/MeshData3D.h"
-#include "Magnum/Trade/PhongMaterialData.h"
-#include "Magnum/Trade/TextureData.h"
-#include <Trade/ObjectData3D.h>
-#include <Trade/SceneData.h>
-#include <Trade/MeshObjectData3D.h>
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
 
 #include "configure.h"

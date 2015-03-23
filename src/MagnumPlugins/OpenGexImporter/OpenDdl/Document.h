@@ -32,8 +32,8 @@
 #include <string>
 #include <vector>
 #include <Corrade/Containers/Array.h>
+#include <MagnumExternal/Optional/optional.hpp>
 
-#include "MagnumExternal/Optional/optional.hpp"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
 

@@ -28,8 +28,8 @@
 #include <string>
 #include <tuple>
 #include <Corrade/Containers/Array.h>
+#include <Magnum/Magnum.h>
 
-#include "Magnum/Magnum.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
 
 namespace Magnum { namespace OpenDdl { namespace Implementation {
