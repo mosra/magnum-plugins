@@ -128,7 +128,7 @@ Each enum value has corresponding string representation and the string
 identifiers are then passed to @ref parse():
 @code
 OpenDdl::Document d;
-bool parsed = d.parse(data, OpenGex::structureIdentifiers, OpenGex::propertyIdentifiers);
+bool parsed = d.parse(data, OpenGex::structures, OpenGex::properties);
 @endcode
 
 If the file contains structures or properties which are not included in the
@@ -137,7 +137,7 @@ document has syntax errors, the function returns `false` and prints detailed
 diagnostics on @ref Corrade::Utility::Error output. After parsing you can
 traverse the document using IDs from the enums:
 @code
-for(OpenDdl::Structure geometryObject: d.childrenOf(OpenGex::GeometryObject) {
+for(OpenDdl::Structure geometryObject: d.childrenOf(OpenGex::GeometryObject)) {
     // Decide about primitive
     if(std::optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
         if(!primitive->isTypeCompatibleWith(OpenDdl::Type::String)) {
@@ -183,7 +183,7 @@ namespace OpenGex {
 using namespace OpenDdl::Validation;
 
 // GeometryObject and Metric can be root structures
-const Structures allowedRootStructures{
+const Structures rootStructures{
     {GeometryObject, {}},
     {Metric, {}}
 };
@@ -229,7 +229,7 @@ You then pass it to @ref validate() and check the return value. As with
 validation fails, detailed diagnostics is printed on @ref Corrade::Utility::Error
 output:
 @code
-bool valid = d.validate(OpenGex::allowedRootStructures, OpenGex::structureInfo);
+bool valid = d.validate(OpenGex::rootStructures, OpenGex::structureInfo);
 @endcode
 
 If the document is valid, you can access child structures and properties
@@ -251,7 +251,7 @@ if(std::optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(Op
 
 // Parse vertex array
 OpenDdl::Structure vertexArray = geometryObject.firstChildOf(OpenGex::VertexArray);
-auto&& attrib = vertexArray->propertyOf(OpenGex::attrib).as<std::string>();
+auto&& attrib = vertexArray.propertyOf(OpenGex::attrib).as<std::string>();
 if(attrib == "position") {
     // ...
 } else if(attrib == "normal") {
@@ -259,7 +259,7 @@ if(attrib == "position") {
 }
 
 // Parse vertex array data
-Containers::ArrayReference<const Float> data = vertexArray->firstChild().asArray<Float>();
+Containers::ArrayReference<const Float> data = vertexArray.firstChild().asArray<Float>();
 // ...
 @endcode
 
