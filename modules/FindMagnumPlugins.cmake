@@ -31,10 +31,6 @@
 # FindMagnum.cmake for more information about autodetection of
 # MAGNUM_PLUGINS_DIR.
 #
-# If MAGNUM_BUILD_DEPRECATED is defined, MAGNUMPLUGINS_INCLUDE_DIRS contains
-# include dir for plugins (i.e. for includes without MagnumPlugins/ prefix) and
-# include dirs of dependencies.
-#
 # Additionally these variables are defined for internal usage:
 #  MAGNUMPLUGINS_*_LIBRARY      - Plugin library (w/o dependencies)
 #  MAGNUMPLUGINS_*_LIBRARY_DEBUG - Debug version of given library, if found
@@ -255,8 +251,3 @@ set(_MAGNUMPLUGINS_INCLUDE_DIR ${MAGNUM_INCLUDE_DIR}/MagnumPlugins)
 find_package_handle_standard_args(MagnumPlugins
     REQUIRED_VARS _MAGNUMPLUGINS_INCLUDE_DIR
     HANDLE_COMPONENTS)
-
-# Create MAGNUMPLUGINS_INCLUDE_DIRS if this is deprecated build
-if(MAGNUM_BUILD_DEPRECATED)
-    set(MAGNUMPLUGINS_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIRS} ${_MAGNUMPLUGINS_INCLUDE_DIR})
-endif()
