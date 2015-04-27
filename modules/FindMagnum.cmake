@@ -98,11 +98,6 @@
 #   emulation on desktop OpenGL
 #  MAGNUM_TARGET_WEBGL          - Defined if compiled for WebGL
 #
-# If MAGNUM_BUILD_DEPRECATED is defined, the MAGNUM_INCLUDE_DIR variable also
-# contains path directly to Magnum directory (i.e. for includes without
-# Magnum/ prefix) and MAGNUM_PLUGINS_INCLUDE_DIR contains include dir for
-# plugins (i.e. for includes without MagnumPlugins/ prefix).
-#
 # Additionally these variables are defined for internal usage:
 #  MAGNUM_INCLUDE_DIR           - Root include dir (w/o dependencies)
 #  MAGNUM_LIBRARY               - Magnum library (w/o dependencies)
@@ -113,6 +108,7 @@
 #  MAGNUM_*_LIBRARY_RELEASE     - Release version of given library, if found
 #  MAGNUM_BINARY_INSTALL_DIR    - Binary installation directory
 #  MAGNUM_LIBRARY_INSTALL_DIR   - Library installation directory
+#  MAGNUM_DATA_INSTALL_DIR      - Data installation directory
 #  MAGNUM_PLUGINS_[DEBUG|RELEASE]_INSTALL_DIR - Plugin installation directory
 #  MAGNUM_PLUGINS_FONT_[DEBUG|RELEASE]_INSTALL_DIR - Font plugin installation
 #   directory
@@ -566,6 +562,7 @@ find_package_handle_standard_args(Magnum
 include(${CORRADE_LIB_SUFFIX_MODULE})
 set(MAGNUM_BINARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/bin)
 set(MAGNUM_LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX})
+set(MAGNUM_DATA_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/magnum)
 set(MAGNUM_PLUGINS_DEBUG_INSTALL_DIR ${MAGNUM_LIBRARY_INSTALL_DIR}/magnum-d)
 set(MAGNUM_PLUGINS_RELEASE_INSTALL_DIR ${MAGNUM_LIBRARY_INSTALL_DIR}/magnum)
 set(MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_INSTALL_DIR}/fonts)
@@ -602,15 +599,6 @@ mark_as_advanced(FORCE
     MAGNUM_CMAKE_MODULE_INSTALL_DIR
     MAGNUM_INCLUDE_INSTALL_DIR
     MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR)
-
-# Add Magnum dir to include path and create MAGNUM_PLUGINS_INCLUDE_DIR if this
-# is deprecated build
-if(MAGNUM_BUILD_DEPRECATED)
-    set(MAGNUM_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIRS}
-        ${MAGNUM_INCLUDE_DIR}/Magnum
-        ${MAGNUM_INCLUDE_DIR}/MagnumExternal)
-    set(MAGNUM_PLUGINS_INCLUDE_DIR ${MAGNUM_INCLUDE_DIR}/MagnumPlugins)
-endif()
 
 # Get base plugin directory from main library location
 set(MAGNUM_PLUGINS_DEBUG_DIR ${_MAGNUM_LIBRARY_PATH}/magnum-d
