@@ -1,7 +1,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,7 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 2.8.9)
 project(MagnumPlugins)
 
 # This is needed for sure
@@ -32,22 +32,25 @@ find_package(Magnum REQUIRED)
 
 include(CMakeDependentOption)
 
-option(WITH_FIND_MODULE "Install FindMagnumPlugins.cmake module into CMake's module dir (might require admin privileges)" OFF)
-
 # Plugins to build
-cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER" ON)
+cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER;NOT WITH_OPENGEXIMPORTER" ON)
+option(WITH_ANYSCENEIMPORTER "Build AnySceneImporter plugin" OFF)
 option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
 cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)
 option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
 option(WITH_JPEGIMPORTER "Build JpegImporter plugin" OFF)
+option(WITH_OPENGEXIMPORTER "Build OpenGexImporter plugin" OFF)
 option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
+option(WITH_STANFORDIMPORTER "Build StanfordImporter plugin" OFF)
 option(WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
+option(WITH_STBPNGIMAGECONVERTER "Build StbPngImageConverter plugin" OFF)
 
 include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests." OFF)
 cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code." OFF "BUILD_TESTS" OFF)
 
 option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
+cmake_dependent_option(BUILD_STATIC_PIC "Build static plugins with position-independent code" OFF "BUILD_STATIC" OFF)
 
 # Newlib toolchain supports only static linking
 if(CORRADE_TARGET_NACL_NEWLIB OR CORRADE_TARGET_EMSCRIPTEN)
@@ -67,6 +70,8 @@ if(BUILD_GL_TESTS)
 
     set(GL_TEST_LIBRARIES ${MAGNUM_WINDOWLESSAPPLICATION_LIBRARIES})
 endif()
+
+set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake/MagnumPlugins)
 
 add_subdirectory(modules)
 add_subdirectory(src)

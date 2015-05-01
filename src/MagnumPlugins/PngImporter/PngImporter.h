@@ -3,7 +3,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -31,15 +31,6 @@
 
 #include <Magnum/Trade/AbstractImporter.h>
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-    #if defined(PngImporter_EXPORTS) || defined(PngImporterObjects_EXPORTS)
-        #define MAGNUM_PNGIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
-    #else
-        #define MAGNUM_PNGIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
-    #endif
-    #define MAGNUM_PNGIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
-#endif
-
 namespace Magnum { namespace Trade {
 
 /**
@@ -49,9 +40,9 @@ Supports RGB, RGBA or grayscale images with 8 and 16 bits per channel. Palleted
 images and images with transparency mask are automatically converted to RGB(A).
 
 This plugin depends on **libPNG** library and is built if `WITH_PNGIMPORTER`
-is enabled when building %Magnum Plugins. To use dynamic plugin, you need to
-load `%PngImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
-plugin, you need to request `%PngImporter` component of `%MagnumPlugins`
+is enabled when building Magnum Plugins. To use dynamic plugin, you need to
+load `PngImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
+plugin, you need to request `PngImporter` component of `MagnumPlugins`
 package in CMake and link to `${MAGNUMPLUGINS_PNGIMPORTER_LIBRARIES}`. To use
 this as a dependency of another plugin, you additionally need to add
 `${MAGNUMPLUGINS_PNGIMPORTER_INCLUDE_DIRS}` to include path. See
@@ -65,7 +56,7 @@ respectively. Grayscale images require extension @extension{ARB,texture_rg}.
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
 images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red.
 */
-class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
+class PngImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit PngImporter();
@@ -76,14 +67,14 @@ class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
         ~PngImporter();
 
     private:
-        MAGNUM_PNGIMPORTER_LOCAL Features doFeatures() const override;
-        MAGNUM_PNGIMPORTER_LOCAL bool doIsOpened() const override;
-        MAGNUM_PNGIMPORTER_LOCAL void doClose() override;
-        MAGNUM_PNGIMPORTER_LOCAL void doOpenData(Containers::ArrayReference<const unsigned char> data) override;
-        MAGNUM_PNGIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        Features doFeatures() const override;
+        bool doIsOpened() const override;
+        void doClose() override;
+        void doOpenData(Containers::ArrayReference<const char> data) override;
+        void doOpenFile(const std::string& filename) override;
 
-        MAGNUM_PNGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_PNGIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        UnsignedInt doImage2DCount() const override;
+        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
         std::istream* _in;

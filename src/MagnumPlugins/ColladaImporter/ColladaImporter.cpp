@@ -1,7 +1,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -964,7 +964,7 @@ template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedIn
     for(UnsignedInt i = 0; i != array.size(); ++i)
         array[i] = originalArray[interleavedIndexArrays[i*stride+offset]];
 
-    return std::move(array);
+    return array;
 }
 
 std::string ColladaImporter::instanceName(const QString& name, const QString& instanceTag) {

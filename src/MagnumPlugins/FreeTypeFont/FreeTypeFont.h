@@ -3,7 +3,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -56,9 +56,9 @@ The font can be created either from file or from memory location of format
 supported by [FreeType](http://www.freetype.org/) library.
 
 This plugin depends on **FreeType** library and is built if `WITH_FREETYPEFONT`
-is enabled when building %Magnum Plugins. To use dynamic plugin, you need to
-load `%FreeTypeFont` plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use static
-plugin, you need to request `%FreeTypeFont` component of `%MagnumPlugins`
+is enabled when building Magnum Plugins. To use dynamic plugin, you need to
+load `FreeTypeFont` plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use static
+plugin, you need to request `FreeTypeFont` component of `MagnumPlugins`
 package in CMake and link to `${MAGNUMPLUGINS_FREETYPEFONT_LIBRARIES}`. To use
 this as a dependency of another plugin, you additionally need to add
 `${MAGNUMPLUGINS_FREETYPEFONT_INCLUDE_DIRS}` to include path.
@@ -93,7 +93,7 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         FT_Face ftFont;
 
         bool doIsOpened() const override;
-        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
+        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const char> data, Float size) override;
         void doClose() override;
 
     private:

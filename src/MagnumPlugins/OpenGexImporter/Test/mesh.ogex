@@ -1,0 +1,45 @@
+Metric (key = "up") { string { "y" } }
+
+GeometryObject /*mesh*/ {
+    Mesh (primitive = "triangle_strip") {
+        VertexArray (attrib = "position") { float[3] {
+            {0.0, 1.0, 3.0}, {-1.0, 2.0, 2.0}, {3.0, 3.0, 1.0}
+        }}
+        VertexArray (attrib = "normal") { float[3] {
+            {0.0, 1.0, 0.0}, {-1.0, 0.0, 0.0}, {0.0, 0.0, 1.0}
+        }}
+        VertexArray (attrib = "texcoord") { float[2] {
+            {0.5, 0.5}, {0.5, 1.0}, {1.0, 1.0}
+        }}
+        VertexArray (attrib = "texcoord") { float[2] {
+            {0.5, 1.0}, {1.0, 0.5}, {0.5, 0.5}
+        }}
+        VertexArray (attrib = "color") { float {} }
+    }
+}
+
+GeometryObject /*meshIndexed*/ {
+    Mesh (primitive = "triangles") {
+        VertexArray (attrib = "position") { float[3] {
+            {0.0, 1.0, 3.0}, {-1.0, 2.0, 2.0}, {3.0, 3.0, 1.0}, {5.0, 7.0, 0.5}
+        }}
+
+        IndexArray { unsigned_int16[3] {
+            {2, 0, 1}, {1, 2, 3}
+        }}
+    }
+}
+
+GeometryObject /*meshEnlargeShrink*/ {
+    Mesh {
+        VertexArray (attrib = "position") { float[4] {
+            {0.0, 1.0, 3.0, 0.5}, {-1.0, 2.0, 2.0, 1.0}, {3.0, 3.0, 1.0, 1.0}
+        }}
+        VertexArray (attrib = "normal") { float[2] {
+            {0.0, 1.0}, {-1.0, 0.0}, {1.0, 0.0}
+        }}
+        VertexArray (attrib = "texcoord") { float[1] {
+            {0.5}, {0.0}, {1.0}
+        }}
+    }
+}

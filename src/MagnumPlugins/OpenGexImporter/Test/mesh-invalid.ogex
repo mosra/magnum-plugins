@@ -1,0 +1,44 @@
+GeometryObject /*invalidPrimitive*/ {
+    Mesh (primitive = "quads") {
+        VertexArray (attrib = "position") { float { } }
+    }
+}
+
+GeometryObject /*unsupportedSize*/ {
+    Mesh {
+        VertexArray (attrib = "position") { float[5] { } }
+    }
+}
+
+GeometryObject /*noPositions*/ {
+    Mesh {
+        VertexArray (attrib = "normal") { float { } }
+    }
+}
+
+GeometryObject /*mismatchedSizes*/ {
+    Mesh {
+        VertexArray (attrib = "position") { float {
+            1.0, 2.0, 3.0
+        }}
+        VertexArray (attrib = "normal") { float {
+            2.0, 1.0
+        }}
+    }
+}
+
+GeometryObject /*invalidIndexSubArraySize*/ {
+    Mesh (primitive = "lines") {
+        VertexArray (attrib = "position") { float { } }
+
+        IndexArray { unsigned_int64[3] { } }
+    }
+}
+
+GeometryObject /*unsupportedIndexType*/ {
+    Mesh {
+        VertexArray (attrib = "position") { float { } }
+
+        IndexArray { unsigned_int64[3] { } }
+    }
+}

@@ -1,7 +1,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -63,7 +63,7 @@ void JpegImporter::doClose() {
     #endif
 }
 
-void JpegImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
+void JpegImporter::doOpenData(const Containers::ArrayReference<const char> data) {
     _in = Containers::Array<unsigned char>(data.size());
     std::copy(data.begin(), data.end(), _in.begin());
 }

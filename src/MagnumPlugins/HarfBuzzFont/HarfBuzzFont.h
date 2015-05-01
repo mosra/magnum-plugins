@@ -3,7 +3,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -44,10 +44,10 @@ Improves @ref FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Softw
 text layouting capabilities, such as kerning, ligatures etc.
 
 This plugin depends on **HarfBuzz** library and @ref FreeTypeFont plugin. It
-is built if `WITH_HARFBUZZFONT` is enabled when building %Magnum Plugins. To
-use dynamic plugin, you need to load `%HarfBuzzFont` plugin from
+is built if `WITH_HARFBUZZFONT` is enabled when building Magnum Plugins. To
+use dynamic plugin, you need to load `HarfBuzzFont` plugin from
 `MAGNUM_PLUGINS_FONT_DIR`. To use static plugin, you need to request
-`%HarfBuzzFont` component of `%MagnumPlugins` package in CMake and link to
+`HarfBuzzFont` component of `MagnumPlugins` package in CMake and link to
 `${MAGNUMPLUGINS_HARFBUZZFONT_LIBRARIES}`. To use this as a dependency of
 another plugin, you additionally need to add
 `${MAGNUMPLUGINS_HARFBUZZFONT_INCLUDE_DIRS}` to include path. See
@@ -67,7 +67,7 @@ class HarfBuzzFont: public FreeTypeFont {
     private:
         Features doFeatures() const override;
         bool doIsOpened() const override;
-        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const unsigned char> data, Float size) override;
+        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const char> data, Float size) override;
         void doClose() override;
         std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 

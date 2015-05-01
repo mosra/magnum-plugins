@@ -1,7 +1,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,6 +23,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(WITH_FIND_MODULE)
-    install(FILES FindMagnumPlugins.cmake DESTINATION ${MAGNUM_CMAKE_FIND_MODULE_INSTALL_DIR})
-endif()
+set(MagnumPlugins_MODULES
+    FindMagnumPlugins.cmake
+    MagnumPluginsConfig.cmake)
+
+install(FILES ${MagnumPlugins_MODULES} DESTINATION ${MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR})

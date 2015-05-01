@@ -1,7 +1,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,7 +24,12 @@
 #
 
 find_package(Magnum REQUIRED Text TextureTools)
+
+# On OSX avoid finding Freetype which is bundled with Mono
+set(PREV_CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK})
+set(CMAKE_FIND_FRAMEWORK LAST)
 find_package(Freetype REQUIRED)
+set(CMAKE_FIND_FRAMEWORK ${PREV_CMAKE_FIND_FRAMEWORK})
 
 include_directories(${FREETYPE_INCLUDE_DIRS})
 
@@ -34,15 +39,24 @@ set(FreeTypeFont_SRCS
 set(FreeTypeFont_HEADERS
     FreeTypeFont.h)
 
+# Objects shared between plugin and test library
 add_library(FreeTypeFontObjects OBJECT
     ${FreeTypeFont_SRCS}
     ${FreeTypeFont_HEADERS})
-set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFontObjects_EXPORTS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFontObjects_EXPORTS")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(FreeTypeFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# FreeTypeFont plugin
 add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_FONT_RELEASE_INSTALL_DIR}
     FreeTypeFont.conf
     $<TARGET_OBJECTS:FreeTypeFontObjects>
     pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(FreeTypeFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 target_link_libraries(FreeTypeFont
     ${MAGNUM_TEXT_LIBRARIES}
     ${MAGNUM_TEXTURETOOLS_LIBRARIES}
@@ -53,22 +67,12 @@ install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)
-    add_library(MagnumFreeTypeFontTestLib SHARED $<TARGET_OBJECTS:FreeTypeFontObjects>)
-    set_target_properties(MagnumFreeTypeFontTestLib PROPERTIES DEBUG_POSTFIX "-d")
+    add_library(MagnumFreeTypeFontTestLib STATIC $<TARGET_OBJECTS:FreeTypeFontObjects>)
     target_link_libraries(MagnumFreeTypeFontTestLib
         ${MAGNUM_TEXT_LIBRARIES}
         ${MAGNUM_TEXTURETOOLS_LIBRARIES}
         ${MAGNUM_LIBRARIES}
         ${FREETYPE_LIBRARIES})
-
-    # On Windows we need to install first and then run the tests to avoid "DLL
-    # not found" hell, thus we need to install this too
-    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumFreeTypeFontTestLib
-            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
-            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
-            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
-    endif()
 endif()
 
 if(BUILD_GL_TESTS)

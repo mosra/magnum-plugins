@@ -91,30 +91,15 @@ if [ ${libraries} = "static" ] ; then
     static_build_flag="-DBUILD_STATIC=ON -DBUILD_STATIC_PIC=ON"
 fi
 
-if [ "${compatibility}" = "deprecated" ] ; then
-    deprecated_build_flag=ON
-else
-    deprecated_build_flag=OFF
-fi
-
 if [ ${gl} = "desktop" ] ; then
-    desktop_flag=ON
     windowless_flag=ON
 elif [ ${gl} = "es2" ] ; then
-    gl_flags="-DTARGET_GLES=ON -DTARGET_GLES2=ON"
-    desktop_flag=OFF
     windowless_flag=OFF
 elif [ ${gl} = "es2desktop" ] ; then
-    gl_flags="-DTARGET_GLES=ON -DTARGET_GLES2=ON -DTARGET_DESKTOP_GLES=ON"
-    desktop_flag=OFF
     windowless_flag=ON
 elif [ ${gl} = "es3" ] ; then
-    gl_flags="-DTARGET_GLES=ON -DTARGET_GLES2=OFF"
-    desktop_flag=OFF
     windowless_flag=OFF
 elif [ ${gl} = "es3desktop" ] ; then
-    gl_flags="-DTARGET_GLES=ON -DTARGET_GLES2=OFF -DTARGET_DESKTOP_GLES=ON"
-    desktop_flag=OFF
     windowless_flag=ON
 fi
 
@@ -128,13 +113,20 @@ cmake .. \
     -DCMAKE_INSTALL_RPATH="${JENKINS_HOME}/filesystem/compatibility-${compiler}-${libraries}-${compatibility}/lib;${JENKINS_HOME}/filesystem/compatibility-${compiler}-${libraries}-${compatibility}-${gl}/lib" \
     -DCMAKE_CXX_COMPILER=${compiler_binary} \
     "${compiler_flags[@]}" \
+    ${static_build_flag} \
     -DBUILD_TESTS=ON \
     -DBUILD_GL_TESTS=${windowless_flag} \
+    -DWITH_ANYIMAGEIMPORTER=ON \
+    -DWITH_ANYSCENEIMPORTER=ON \
     -DWITH_COLLADAIMPORTER=ON \
     -DWITH_FREETYPEFONT=ON \
     -DWITH_HARFBUZZFONT=ON \
     -DWITH_JPEGIMPORTER=ON \
+    -DWITH_OPENGEXIMPORTER=ON \
     -DWITH_PNGIMPORTER=ON \
+    -DWITH_STANFORDIMPORTER=ON \
+    -DWITH_STBIMAGEIMPORTER=ON \
+    -DWITH_STBPNGIMAGECONVERTER=ON \
     -G Ninja
 
 ninja

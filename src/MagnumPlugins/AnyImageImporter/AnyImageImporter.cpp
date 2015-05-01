@@ -1,7 +1,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -60,10 +60,14 @@ void AnyImageImporter::doOpenFile(const std::string& filename) {
         plugin = "HdrImporter";
     else if(Utility::String::endsWith(filename, ".jpg") || Utility::String::endsWith(filename, ".jpeg"))
         plugin = "JpegImporter";
+    else if(Utility::String::endsWith(filename, ".pgm"))
+        plugin = "PgmImporter";
     else if(Utility::String::endsWith(filename, ".pic"))
         plugin = "PicImporter";
     else if(Utility::String::endsWith(filename, ".png"))
         plugin = "PngImporter";
+    else if(Utility::String::endsWith(filename, ".ppm"))
+        plugin = "PpmImporter";
     else if(Utility::String::endsWith(filename, ".psd"))
         plugin = "PsdImporter";
     else if(Utility::String::endsWith(filename, ".tga"))

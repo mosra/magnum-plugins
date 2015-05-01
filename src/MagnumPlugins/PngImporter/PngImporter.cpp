@@ -1,7 +1,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -55,8 +55,8 @@ void PngImporter::doClose() {
     _in = nullptr;
 }
 
-void PngImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
-    _in = new std::istringstream(std::string(reinterpret_cast<const char*>(data.begin()), data.size()));
+void PngImporter::doOpenData(const Containers::ArrayReference<const char> data) {
+    _in = new std::istringstream{{data, data.size()}};
 }
 
 void PngImporter::doOpenFile(const std::string& filename) {

@@ -1,0 +1,6 @@
+*.ply -crlf
+big-endian.ply binary
+common.ply binary
+crlf.ply binary
+ignored-vertex-components.ply binary
+short-file.ply binary

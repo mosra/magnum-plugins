@@ -1,7 +1,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,33 +29,30 @@ set(AnyImageImporter_SRCS
 set(AnyImageImporter_HEADERS
     AnyImageImporter.h)
 
+# Objects shared between plugin and test library
 add_library(AnyImageImporterObjects OBJECT
     ${AnyImageImporter_SRCS}
     ${AnyImageImporter_HEADERS})
-set_target_properties(AnyImageImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+set_target_properties(AnyImageImporterObjects PROPERTIES COMPILE_FLAGS "-DAnyImageImporterObjects_EXPORTS")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(AnyImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# AnyImageImporter plugin
 add_plugin(AnyImageImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
     AnyImageImporter.conf
     $<TARGET_OBJECTS:AnyImageImporterObjects>
     pluginRegistration.cpp)
-target_link_libraries(AnyImageImporter
-    ${MAGNUM_LIBRARIES})
+if(BUILD_STATIC_PIC)
+    set_target_properties(AnyImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+target_link_libraries(AnyImageImporter ${MAGNUM_LIBRARIES})
 
 install(FILES ${AnyImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AnyImageImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumAnyImageImporterTestLib STATIC $<TARGET_OBJECTS:AnyImageImporterObjects>)
-    set_target_properties(MagnumAnyImageImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumAnyImageImporterTestLib ${MAGNUM_LIBRARIES})
-
-    # On Windows we need to install first and then run the tests to avoid "DLL
-    # not found" hell, thus we need to install this too
-    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumAnyImageImporterTestLib
-            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
-            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
-            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
-    endif()
-
     add_subdirectory(Test)
 endif()

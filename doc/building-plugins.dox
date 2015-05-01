@@ -1,7 +1,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,37 +25,38 @@
 
 namespace Magnum {
 /** @page building-plugins Downloading and building plugins
-@brief Guide how to download and build plugins for %Magnum engine.
+@brief Guide how to download and build plugins for Magnum engine.
 
-Plugins provide additional capability for %Magnum engine in terms of importing
+@tableofcontents
+
+Plugins provide additional capability for Magnum engine in terms of importing
 and exporting various media file formats. They are not needed for essential
 usage, but you will need them sooner or later when you would want to use image
 as a texture or render text on the screen.
 
 The source is available on GitHub: https://github.com/mosra/magnum-plugins.
-Building plugins is very similar to building %Magnum itself. See @ref building
+Building plugins is very similar to building Magnum itself. See @ref building
 for additonal information about building and running tests, crosscompiling and
 platform-specific issues.
 
-Similarly to %Magnum, the plugins are build as shared by default. If you are
+Similarly to Magnum, the plugins are build as shared by default. If you are
 developing for platform which doesn't support dynamic library loading or if you
 just want to link them statically, enable `BUILD_STATIC` to build the plugins
-as static. Dynamic plugins are loaded by the manager on request at runtime,
-potentially saving memory when the plugin is not needed, static plugins must be
-linked in at compile time.
+as static. If you plan to use the static plugins with shared libraries later,
+enable also position-independent code with `BUILD_STATIC_PIC`. Dynamic plugins
+are loaded by the manager on request at runtime, potentially saving memory when the
+plugin is not needed, static plugins must be linked in at compile time.
 
 Static plugins built in `Debug` configuration (e.g. with `CMAKE_BUILD_TYPE` set
 to `Debug`) have `-d` suffix, *dynamic* plugins in `Debug` configuration are
 installed to `magnum-d` subdirectory, similarly to what is done when
 @ref building "building Magnum itself".
 
-The library by default does not install `FindMagnumPlugins.cmake`, as you
-should bundle the module with your code instead of depending on it being in
-system location. You can install it by enabling `WITH_FIND_MODULE`.
-
 By default no plugins are built and you need to select them manually:
 
 -   `WITH_ANYIMAGEIMPORTER` -- @ref Trade::AnyImageImporter "AnyImageImporter"
+    plugin.
+-   `WITH_ANYSCENEIMPORTER` -- @ref Trade::AnySceneImporter "AnySceneImporter"
     plugin.
 -   `WITH_COLLADAIMPORTER` -- @ref Trade::ColladaImporter "ColladaImporter"
     plugin. Enables also building of @ref Trade::TgaImporter "TgaImporter"
@@ -64,8 +65,14 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
     Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.
 -   `WITH_JPEGIMPORTER` -- @ref Trade::JpegImporter "JpegImporter" plugin.
+-   `WITH_OPENGEXIMPORTER` -- @ref Trade::OpenGexImporter "OpenGexImporter"
+    plugin.
 -   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
+-   `WITH_STANFORDIMPORTER` -- @ref Trade::StanfordImporter "StanfordImporter"
+    plugin.
 -   `WITH_STBIMAGEIMPORTER` -- @ref Trade::StbImageImporter "StbImageImporter"
+    plugin.
+-   `WITH_STBPNGIMAGECONVERTER` -- @ref Trade::StbPngImageConverter "StbPngImageConverter"
     plugin.
 
 Note that each plugin class contains more detailed information about
@@ -80,10 +87,7 @@ build. The package is also in AUR under the same name.
 There are also a few development PKGBUILDs in `package/archlinux`, which allow
 you to build and install the package directly from source tree without
 downloading anything. The native PKGBUILDs also contain `check()` function
-which will run all unit tests before packaging. You need to build them from
-project root:
-
-    makepkg -p package/archlinux/<file>
+which will run all unit tests before packaging.
 
 @section building-plugins-gentoo Gentoo ebuilds
 
@@ -107,24 +111,26 @@ plugins, for example), modify the last entry in `debian/rules`.
 
 In `package/ci/` there are `jenkins.xml` and `jenkins-gltests.xml` files
 containing job configuration, one for build and non-GL tests and the other for
-GL tests only. Setup your Jenkins server, enable the **Git** and
-**Text-finder** plugin and download the CLI application from here:
+GL tests only. Setup your Jenkins server, enable the **Git** and **Text-finder**
+plugin and download the CLI application from here (replace `localhost:8080`
+with your server name):
 
-    http://your-jenkins-server/cli
+    http://localhost:8080/cli
 
-Then add new jobs or update existing ones (replace `<command>` with `create-job`
-or `update-job`).
+Then add new jobs or update existing ones (update path to the `*.jar` file,
+replace `localhost:8080` with your server name, replace `update-job` with
+`create-job` if the job doesn't exist yet).
 
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-Compatibility < jenkins.xml
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-Compatibility-GLTests < jenkins-gltests.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-Compatibility < package/ci/jenkins.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-Compatibility-GLTests < package/ci/jenkins-gltests.xml
 
 Build is done using **Ninja** build system and everything possible is enabled,
-thus you need also **FreeType**, **HarfBuzz**, **libJPEG**, **libPNG** and
-**Qt4** libraries. It expects that **GCC** >= 4.8.1, 4.7, 4.6, 4.5, 4.4 and
-**Clang** are installed and there are **OpenGL**, **OpenGL ES 2.0** and
-**OpenGL ES 3.0** librares as it tries to compile the library with every
-combination of them. You can add/remove the axes in `axes/hudson.matrix.TextAxis`
-or via the web interface later.
+thus you need also **FreeType**, **HarfBuzz**, **libJPEG**, **libPNG** and **Qt4**
+libraries. It expects that **GCC** >= 4.8.1, 4.7, 4.6, 4.5, 4.4 and **Clang**
+are installed and there are **OpenGL**, **OpenGL ES 2.0** and **OpenGL ES 3.0**
+librares as it tries to compile the library with every combination of them. You
+can add/remove the axes in `axes/hudson.matrix.TextAxis` or via the web
+interface later.
 
 MagnumPlugins-Compatibility-GLTests depend on active X11 session, thus they
 should be run from Jenkins instance running on graphical user session.
@@ -134,8 +140,8 @@ with the commands below. See @ref building-crosscompiling for more information
 about setting up the crosscompilers and `toolchains/` submodule. For Emscripten
 you need also **Node.js** installed to run the tests.
 
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-MinGW-w64 < jenkins-mingw-w64.xml
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-Emscripten < jenkins-emscripten.xml
-    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> MagnumPlugins-NaCl < jenkins-nacl.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-MinGW-w64 < package/ci/jenkins-mingw-w64.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-Emscripten < package/ci/jenkins-emscripten.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-NaCl < package/ci/jenkins-nacl.xml
 */
 }

@@ -3,7 +3,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,7 +29,6 @@
  * @brief Class @ref Magnum::Trade::AnyImageImporter
  */
 
-#include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -49,15 +48,17 @@ namespace Magnum { namespace Trade {
 Detects file type based on file extension, loads corresponding plugin and then
 tries to open the file with it. Supported formats:
 
--   BMP (`*.bmp`), loaded with any plugin that provides `%BmpImporter`
--   GIF (`*.gif`), loaded with any plugin that provides `%GifImporter`
--   HDR (`*.hdr`), loaded with any plugin that provides `%HdrImporter`
+-   BMP (`*.bmp`), loaded with any plugin that provides `BmpImporter`
+-   GIF (`*.gif`), loaded with any plugin that provides `GifImporter`
+-   HDR (`*.hdr`), loaded with any plugin that provides `HdrImporter`
 -   JPEG (`*.jpg`, `*.jpeg`), loaded with @ref JpegImporter or any other plugin
     that provides it
--   PIC (`*.pic`), loaded with any plugin that provides `%PicImporter`
+-   PIC (`*.pic`), loaded with any plugin that provides `PicImporter`
+-   PGM (`*.pgm`), loaded with any plugin that provides `PgmImporter`
 -   PNG (`*.png`), loaded with @ref PngImporter or any other plugin that
     provides it
--   PSD (`*.psd`), loaded with any plugin that provides `%PsdImporter`
+-   PPM (`*.ppm`), loaded with any plugin that provides `PpmImporter`
+-   PSD (`*.psd`), loaded with any plugin that provides `PsdImporter`
 -   TGA (`*.tga`), loaded with @ref TgaImporter or any other plugin that
     provides it
 

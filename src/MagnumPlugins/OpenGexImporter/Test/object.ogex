@@ -1,0 +1,25 @@
+Node {
+    Name { string { "MyNode" } }
+
+    CameraNode {
+        ObjectRef { ref { null } }
+    }
+
+    GeometryNode {
+        Name { string { "MyGeometryNode" } }
+
+        ObjectRef { ref { %myMesh } }
+    }
+}
+
+BoneNode {
+    LightNode {
+        ObjectRef { ref { null } }
+    }
+}
+
+GeometryObject %myMesh {
+    Mesh {
+        VertexArray (attrib = "position") { float {} }
+    }
+}

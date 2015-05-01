@@ -1,7 +1,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -32,35 +32,29 @@ set(StbImageImporter_SRCS
 set(StbImageImporter_HEADERS
     StbImageImporter.h)
 
+# Objects shared between plugin and test library
 add_library(StbImageImporterObjects OBJECT
     ${StbImageImporter_SRCS}
     ${StbImageImporter_HEADERS})
-set_target_properties(StbImageImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -DStbImageImporterObjects_EXPORTS")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(StbImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# StbImageImporter plugin
 add_plugin(StbImageImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
     StbImageImporter.conf
     $<TARGET_OBJECTS:StbImageImporterObjects>
     pluginRegistration.cpp)
-target_link_libraries(StbImageImporter
-    ${MAGNUM_LIBRARIES})
+if(BUILD_STATIC_PIC)
+    set_target_properties(StbImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+target_link_libraries(StbImageImporter ${MAGNUM_LIBRARIES})
 
 install(FILES ${StbImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumStbImageImporterTestLib SHARED $<TARGET_OBJECTS:StbImageImporterObjects>)
-    set_target_properties(MagnumStbImageImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
-    target_link_libraries(MagnumStbImageImporterTestLib
-        ${MAGNUM_LIBRARIES}
-        ${PNG_LIBRARIES})
-
-    # On Windows we need to install first and then run the tests to avoid "DLL
-    # not found" hell, thus we need to install this too
-    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumStbImageImporterTestLib
-            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
-            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
-            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
-    endif()
-
-     add_subdirectory(Test)
+    add_library(MagnumStbImageImporterTestLib STATIC $<TARGET_OBJECTS:StbImageImporterObjects>)
+    target_link_libraries(MagnumStbImageImporterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    add_subdirectory(Test)
 endif()

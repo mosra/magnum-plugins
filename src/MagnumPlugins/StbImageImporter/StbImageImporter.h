@@ -3,7 +3,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -32,28 +32,21 @@
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-    #if defined(StbImageImporter_EXPORTS) || defined(StbImageImporterObjects_EXPORTS)
-        #define MAGNUM_STBIMAGEIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
-    #else
-        #define MAGNUM_STBIMAGEIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
-    #endif
-    #define MAGNUM_STBIMAGEIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
-#endif
-
 namespace Magnum { namespace Trade {
 
 /**
-@brief %Image importer plugin using stb_image
+@brief Image importer plugin using stb_image
 
 Supports the following formats:
 
 -   BMP, only non-1bpp, no RLE
 -   GIF
 -   HDR
--   JPEG, only non-progressive
+-   JPEG, except for arithmetic encoding
+-   PGM
 -   PIC
 -   PNG
+-   PPM
 -   PSD, only composited view
 -   TGA
 
@@ -61,18 +54,18 @@ Creates RGB, RGBA, grayscale or grayscale + alpha images with 8 bits per
 channel. Palleted images are automatically converted to RGB(A).
 
 This plugin is built if `WITH_STBIMAGEIMPORTER` is enabled when building
-%Magnum Plugins. To use dynamic plugin, you need to load `%StbImageImporter`
+Magnum Plugins. To use dynamic plugin, you need to load `StbImageImporter`
 plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to
-request `%StbImageImporter` component of `%MagnumPlugins` package in CMake and
+request `StbImageImporter` component of `MagnumPlugins` package in CMake and
 link to `${MAGNUMPLUGINS_STBIMAGEIMPORTER_LIBRARIES}`. To use this as a
 dependency of another plugin, you additionally need to add
 `${MAGNUMPLUGINS_STBIMAGEIMPORTER_INCLUDE_DIRS}` to include path.
 
 This plugins provides `BmpImporter`, `GifImporter`, `HdrImporter`,
-`%JpegImporter`, `PicImporter`, `%PngImporter`, `PsdImporter` and
-`%TgaImporter` plugins, but note that this plugin doesn't have complete support
-for all format quirks and the performance might be worse than when using plugin
-dedicated for given format.
+`JpegImporter`, `PgmImporter`, `PicImporter`, `PngImporter`, `PpmImporter`,
+`PsdImporter` and `TgaImporter` plugins, but note that this plugin doesn't have
+complete support for all format quirks and the performance might be worse than
+when using plugin dedicated for given format.
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
@@ -85,8 +78,11 @@ grayscale + alpha images require extension @extension{ARB,texture_rg}.
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
 images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red and
 @ref ColorFormat::LuminanceAlpha instead of @ref ColorFormat::RG.
+
+@todo Properly support floating-point HDR images
+@todo Enable ARM NEON when I'm able to test that
 */
-class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
+class StbImageImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit StbImageImporter();
@@ -97,13 +93,13 @@ class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
         ~StbImageImporter();
 
     private:
-        MAGNUM_STBIMAGEIMPORTER_LOCAL Features doFeatures() const override;
-        MAGNUM_STBIMAGEIMPORTER_LOCAL bool doIsOpened() const override;
-        MAGNUM_STBIMAGEIMPORTER_LOCAL void doClose() override;
-        MAGNUM_STBIMAGEIMPORTER_LOCAL void doOpenData(Containers::ArrayReference<const unsigned char> data) override;
+        Features doFeatures() const override;
+        bool doIsOpened() const override;
+        void doClose() override;
+        void doOpenData(Containers::ArrayReference<const char> data) override;
 
-        MAGNUM_STBIMAGEIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_STBIMAGEIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        UnsignedInt doImage2DCount() const override;
+        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
         Containers::Array<unsigned char> _in;

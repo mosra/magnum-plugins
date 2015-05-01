@@ -1,7 +1,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -40,16 +40,24 @@ set(ColladaImporter_PRIVATE_HEADERS
     ColladaType.h
     Utility.h)
 
+# Objects shared between plugin and test library
 add_library(ColladaImporterObjects OBJECT
     ${ColladaImporter_SRCS}
     ${ColladaImporter_HEADERS}
     ${ColladaImporter_PRIVATE_HEADERS})
-set_target_properties(ColladaImporterObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(ColladaImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# ColladaImporter plugin
 add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
     ColladaImporter.conf
     $<TARGET_OBJECTS:ColladaImporterObjects>
     pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(ColladaImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 target_link_libraries(ColladaImporter
     ${MAGNUM_LIBRARIES}
     ${MAGNUM_MESHTOOLS_LIBRARIES}
@@ -64,22 +72,11 @@ install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_IN
 
 if(BUILD_TESTS)
     add_library(MagnumColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
-    set_target_properties(MagnumColladaImporterTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumColladaImporterTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_MESHTOOLS_LIBRARIES}
         ${QT_QTCORE_LIBRARY}
         ${QT_QTXMLPATTERNS_LIBRARY}
         MagnumAnyImageImporterTestLib)
-
-    # On Windows we need to install first and then run the tests to avoid "DLL
-    # not found" hell, thus we need to install this too
-    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumColladaImporterTestLib
-            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
-            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
-            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
-    endif()
-
     add_subdirectory(Test)
 endif()

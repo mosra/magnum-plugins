@@ -5,15 +5,20 @@
 # This command tries to find Magnum plugins and then defines:
 #  MAGNUMPLUGINS_FOUND          - Whether Magnum plugins were found
 # This command will not try to find any actual plugin. The plugins are:
-#  ColladaImporter  - Collada importer (depends on Qt library)
-#  FreeTypeFont     - FreeType font (depends on FreeType library)
-#  HarfBuzzFont     - HarfBuzz font (depends on FreeType plugin and HarfBuzz
-#                     library)
-#  JpegImporter     - JPEG importer (depends on libJPEG library)
-#  PngImporter      - PNG importer (depends on libPNG library)
+#  AnyImageImporter - Any image importer
+#  AnySceneImporter - Any scene importer
+#  ColladaImporter  - Collada importer
+#  FreeTypeFont     - FreeType font
+#  HarfBuzzFont     - HarfBuzz font
+#  JpegImporter     - JPEG importer
+#  OpenGexImporter  - OpenGEX importer
+#  PngImporter      - PNG importer
+#  StanfordImporter - Stanford PLY importer
+#  StbImageImporter - Image importer using stb_image
+#  StbPngImageConverter - PNG image converter using stb_image_write
 # Example usage with specifying the plugins is:
 #  find_package(MagnumPlugins [REQUIRED|COMPONENTS]
-#               MagnumFont TgaImporter)
+#               FreeTypeFont PngImporter)
 # For each plugin is then defined:
 #  MAGNUMPLUGINS_*_FOUND        - Whether the plugin was found
 #  MAGNUMPLUGINS_*_LIBRARIES    - Plugin library and dependent libraries
@@ -26,10 +31,6 @@
 # FindMagnum.cmake for more information about autodetection of
 # MAGNUM_PLUGINS_DIR.
 #
-# If MAGNUM_BUILD_DEPRECATED is defined, MAGNUMPLUGINS_INCLUDE_DIRS contains
-# include dir for plugins (i.e. for includes without MagnumPlugins/ prefix) and
-# include dirs of dependencies.
-#
 # Additionally these variables are defined for internal usage:
 #  MAGNUMPLUGINS_*_LIBRARY      - Plugin library (w/o dependencies)
 #  MAGNUMPLUGINS_*_LIBRARY_DEBUG - Debug version of given library, if found
@@ -39,7 +40,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -61,8 +62,43 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Dependencies
-find_package(Magnum REQUIRED)
+# Ensure that all inter-component dependencies are specified as well
+set(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS )
+foreach(component ${MagnumPlugins_FIND_COMPONENTS})
+    string(TOUPPER ${component} _COMPONENT)
+
+    # The dependencies need to be sorted by their dependency order as well
+    if(component STREQUAL ColladaImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
+    elseif(component STREQUAL HarfBuzzFont)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES FreeTypeFont)
+    endif()
+
+    list(APPEND _MAGNUMPLUGINS_ADDITIONAL_COMPONENTS ${_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES})
+endforeach()
+
+# Join the lists, remove duplicate components
+if(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS)
+    list(INSERT MagnumPlugins_FIND_COMPONENTS 0 ${_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS})
+endif()
+if(MagnumPlugins_FIND_COMPONENTS)
+    list(REMOVE_DUPLICATES MagnumPlugins_FIND_COMPONENTS)
+endif()
+
+# Magnum library dependencies
+set(_MAGNUMPLUGINS_DEPENDENCIES )
+foreach(component ${MagnumPlugins_FIND_COMPONENTS})
+    string(TOUPPER ${component} _COMPONENT)
+
+    if(component MATCHES ".+AudioImporter$")
+        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY Audio)
+    elseif(component MATCHES ".+(Font|FontConverter)$")
+        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY Text)
+    endif()
+
+    list(APPEND _MAGNUMPLUGINS_DEPENDENCIES ${_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY})
+endforeach()
+find_package(Magnum REQUIRED ${_MAGNUMPLUGINS_DEPENDENCIES})
 
 # Additional components
 foreach(component ${MagnumPlugins_FIND_COMPONENTS})
@@ -114,6 +150,9 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
             NAMES ${component}.h
             PATHS ${MAGNUM_INCLUDE_DIR}/MagnumPlugins/${component})
 
+    # AnyImageImporter has no dependencies
+    # AnySceneImporter has no dependencies
+
     # ColladaImporter plugin dependencies
     if(${component} STREQUAL ColladaImporter)
         find_package(Qt4)
@@ -159,6 +198,8 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
     endif()
 
+    # OpenGexImporter has no dependencies
+
     # PngImporter plugin dependencies
     if(${component} STREQUAL PngImporter)
         find_package(PNG)
@@ -170,10 +211,25 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
     endif()
 
+    # StanfordImporter has no dependencies
+    # StbImageImporter has no dependencies
+    # StbPngImageConverter has no dependencies
+
+    # Add Magnum library dependency, if there is any
+    if(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY)
+        string(TOUPPER ${_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY} _DEPENDENCY)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES} ${MAGNUM_${_DEPENDENCY}_LIBRARIES})
+        set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS} ${MAGNUM_${_DEPENDENCY}_INCLUDE_DIRS})
+    endif()
+
     # Decide if the plugin was found
     if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
-        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY} ${_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES})
-        set(MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS})
+        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES
+            ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY}
+            ${_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES}
+            ${MAGNUM_LIBRARIES})
+        set(MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS
+            ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS})
 
         set(MagnumPlugins_${component}_FOUND TRUE)
 
@@ -195,8 +251,3 @@ set(_MAGNUMPLUGINS_INCLUDE_DIR ${MAGNUM_INCLUDE_DIR}/MagnumPlugins)
 find_package_handle_standard_args(MagnumPlugins
     REQUIRED_VARS _MAGNUMPLUGINS_INCLUDE_DIR
     HANDLE_COMPONENTS)
-
-# Create MAGNUMPLUGINS_INCLUDE_DIRS if this is deprecated build
-if(MAGNUM_BUILD_DEPRECATED)
-    set(MAGNUMPLUGINS_INCLUDE_DIRS ${MAGNUM_INCLUDE_DIRS} ${_MAGNUMPLUGINS_INCLUDE_DIR})
-endif()

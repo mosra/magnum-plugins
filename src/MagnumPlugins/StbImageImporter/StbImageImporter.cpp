@@ -1,7 +1,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -36,6 +36,7 @@
 #endif
 
 #define STBI_NO_STDIO
+#define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #include "stb_image.h"
@@ -56,7 +57,7 @@ void StbImageImporter::doClose() {
     _in = nullptr;
 }
 
-void StbImageImporter::doOpenData(const Containers::ArrayReference<const unsigned char> data) {
+void StbImageImporter::doOpenData(const Containers::ArrayReference<const char> data) {
     _in = Containers::Array<unsigned char>{data.size()};
     std::copy(data.begin(), data.end(), _in.data());
 }

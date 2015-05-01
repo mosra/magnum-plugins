@@ -1,0 +1,34 @@
+GeometryNode {
+    ObjectRef { ref { %myOtherMesh } }
+    MaterialRef (index = 1) { ref { %myThirdMaterial } }
+    MaterialRef { ref { %myMaterial } }
+}
+
+GeometryNode {
+    ObjectRef { ref { %myMesh } }
+    MaterialRef { ref { null } }
+}
+
+GeometryNode {
+    ObjectRef { ref { %myMesh } }
+}
+
+GeometryNode {
+    ObjectRef { ref { null } }
+}
+
+GeometryObject %myMesh {
+    Mesh {
+        VertexArray (attrib = "position") { float {} }
+    }
+}
+
+GeometryObject %myOtherMesh {
+    Mesh {
+        VertexArray (attrib = "position") { float[3] {} }
+    }
+}
+
+Material %myMaterial {}
+Material {}
+Material %myThirdMaterial {}

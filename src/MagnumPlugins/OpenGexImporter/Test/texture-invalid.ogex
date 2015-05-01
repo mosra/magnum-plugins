@@ -1,0 +1,7 @@
+Material {
+    Texture (attrib = "diffuse", texcoord = 1) { string { "" } }
+
+    Texture (attrib = "diffuse", texcoord = 0) {
+        string { "/nonexistent.tga" }
+    }
+}

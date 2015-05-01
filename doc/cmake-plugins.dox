@@ -1,7 +1,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,7 +25,7 @@
 
 namespace Magnum {
 /** @page cmake-plugins Plugin usage with CMake
-@brief Guide how to find and use static %Magnum plugins with CMake build system
+@brief Guide how to find and use static Magnum plugins with CMake build system
 
 If you are going to use dynamic plugins (the default) via plugin manager, they
 don't need to be handled via CMake. The manager will look for them at runtime
@@ -38,7 +38,7 @@ The logic is in module `FindMagnumPlugins.cmake` distributed in plugin
 repository in `modules/` directory, you are encouraged to copy it into your
 project and add path to the files to `CMAKE_MODULE_PATH`. Otherwise, if CMake
 won't be able to find this file in predefined locations, it will error out even
-if %Magnum plugins might be installed on the system. Note that the module file
+if Magnum plugins might be installed on the system. Note that the module file
 is updated as the library evolves, you are encouraged to update your copy from
 time to time to avoid strange building issues.
 
@@ -51,19 +51,30 @@ Basic usage is:
 
     find_package(MagnumPlugins [REQUIRED])
 
-This command tries to find %Magnum plugins and then defines:
+This command tries to find Magnum plugins and then defines:
 
--   `MAGNUMPLUGINS_FOUND` -- Whether %Magnum plugins were found
+-   `MAGNUMPLUGINS_FOUND` -- Whether Magnum plugins were found
 -   `MAGNUMPLUGINS_INCLUDE_DIRS` -- Plugin include dir and include dirs of
     dependencies
 
 This command will not try to find any actual plugin. The plugins are:
 
+-   `AnyImageImporter` -- @ref Trade::AnyImageImporter "AnyImageImporter"
+    plugin
+-   `AnySceneImporter` -- @ref Trade::AnySceneImporter "AnySceneImporter"
+    plugin
 -   `ColladaImporter` -- @ref Trade::ColladaImporter "ColladaImporter" plugin
 -   `FreeTypeFont` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin
 -   `HarfBuzzFont` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin
 -   `JpegImporter` -- @ref Trade::JpegImporter "JpegImporter" plugin
+-   `OpenGexImporter` -- @ref Trade::OpenGexImporter "OpenGexImporter" plugin
 -   `PngImporter` -- @ref Trade::PngImporter "PngImporter" plugin
+-   `StanfordImporter` -- @ref Trade::StanfordImporter "StanfordImporter"
+    plugin
+-   `StbImageImporter` -- @ref Trade::StbImageImporter "StbImageImporter"
+    plugin
+-   `StbPngImageConverter` -- @ref Trade::StbPngImageConverter "StbPngImageConverter"
+    plugin
 
 Note that each plugin class contains more detailed information about
 dependencies, availability on particular platform and also guide how to enable
@@ -71,7 +82,7 @@ given library in build and use it with CMake.
 
 Example usage with specifying the plugins is:
 
-    find_package(MagnumPlugins REQUIRED MagnumFont TgaImporter)
+    find_package(MagnumPlugins REQUIRED FreeTypeFont PngImporter)
 
 For each plugin is then defined:
 

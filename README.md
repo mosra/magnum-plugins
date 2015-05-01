@@ -1,5 +1,5 @@
-Here are various plugins for Magnum C++11 OpenGL graphics engine. If you don't
-know what Magnum is, see https://github.com/mosra/magnum.
+Here are various plugins for Magnum C++11/C++14 OpenGL graphics engine. If you
+don't know what Magnum is, see https://github.com/mosra/magnum.
 
 INSTALLATION
 ============
@@ -17,7 +17,7 @@ Minimal dependencies
     >= 3.1. On Windows you can use **MinGW**. GCC 4.5, 4.4 and **MSVC** 2013
     support involves some ugly workarounds and thus is available only in
     `compatibility` branch.
-*   **CMake** >= 2.8.8
+*   **CMake** >= 2.8.9
 *   **Corrade**, **Magnum** -- The engine itself
 
 Compilation, installation
@@ -52,6 +52,7 @@ idea? Feel free to visit my website or contact me at:
 
 *   Website -- http://mosra.cz/blog/magnum.php
 *   GitHub -- https://github.com/mosra/magnum-plugins
+*   IRC -- join `#magnum-engine` channel on freenode
 *   Google Groups -- https://groups.google.com/forum/#!forum/magnum-engine
 *   Twitter -- https://twitter.com/czmosra
 *   E-mail -- mosra@centrum.cz

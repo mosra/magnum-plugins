@@ -1,0 +1,37 @@
+Metric (key = "up") { string { "y" } }
+
+Node {
+    Rotation (object = false, kind = "axis") { float[4] {{ 1.570796327, 0.0, 0.0, 2.5 }} }
+}
+
+Node {
+    Rotation { float[4] {{ -1.570796327, 0.0, 0.0, -0.5 }} }
+}
+
+Node {
+    Rotation (kind = "quaternion") { float[4] {{ 0.0, 0.0, 2.5, 2.5 }} }
+}
+
+Node {
+    Rotation (kind = "x") { float { 1.570796327 } }
+}
+
+Node {
+    Rotation (kind = "y") { float { 1.570796327 } }
+}
+
+Node {
+    Rotation (kind = "z") { float { 1.570796327 } }
+}
+
+Node {
+    Rotation (kind = "Quaternion") { float[4] {} }
+}
+
+Node {
+    Rotation (kind = "z") { float[4] {{ 1.570796327, 0.0, 0.0, 1.0 }} }
+}
+
+Node {
+    Rotation (object = true) { float[4] {} }
+}

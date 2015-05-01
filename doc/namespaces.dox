@@ -1,7 +1,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,5 +24,21 @@
 */
 
 /** @dir magnum-plugins/src/MagnumPlugins
- * @brief %Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
+ * @brief Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
  */
+
+/** @dir magnum-plugins/src/MagnumPlugins/OpenGexImporter/OpenDdl
+ * @brief Namespace @ref Magnum::OpenDdl, @ref Magnum::OpenDdl::Validation
+ */
+/** @namespace Magnum::OpenDdl
+@brief OpenDDL parser
+
+Parser for [OpenDDL](http://openddl.org) file format. See
+@ref OpenDdl::Document for more information.
+*/
+/** @namespace Magnum::OpenDdl::Validation
+@brief OpenDDL document validation
+
+Validation of OpenDDL documents. See @ref OpenDdl::Document::validate() for
+more information.
+*/

@@ -1,7 +1,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -35,21 +35,28 @@ set(HarfBuzzFont_SRCS
 set(HarfBuzzFont_HEADERS
     HarfBuzzFont.h)
 
+# Objects shared between plugin and test library
 add_library(HarfBuzzFontObjects OBJECT
     ${HarfBuzzFont_SRCS}
     ${HarfBuzzFont_HEADERS})
-set_target_properties(HarfBuzzFontObjects PROPERTIES COMPILE_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS}")
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(HarfBuzzFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
+# HarfBuzzFont plugin
 add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_FONT_RELEASE_INSTALL_DIR}
     HarfBuzzFont.conf
     $<TARGET_OBJECTS:HarfBuzzFontObjects>
     pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(HarfBuzzFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 target_link_libraries(HarfBuzzFont
     ${MAGNUM_LIBRARIES}
     ${MAGNUM_TEXT_LIBRARIES}
     ${FREETYPE_LIBRARIES}
     ${HARFBUZZ_LIBRARIES})
-
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(HarfBuzzFont FreeTypeFont)
 endif()
@@ -58,22 +65,11 @@ install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 if(BUILD_GL_TESTS)
     add_library(MagnumHarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
-    set_target_properties(MagnumHarfBuzzFontTestLib PROPERTIES DEBUG_POSTFIX "-d")
     target_link_libraries(MagnumHarfBuzzFontTestLib
         ${MAGNUM_LIBRARIES}
         ${MAGNUM_TEXT_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${HARFBUZZ_LIBRARIES}
         MagnumFreeTypeFontTestLib)
-
-    # On Windows we need to install first and then run the tests to avoid "DLL
-    # not found" hell, thus we need to install this too
-    if(CORRADE_TARGET_WINDOWS AND NOT CMAKE_CROSSCOMPILING)
-        install(TARGETS MagnumHarfBuzzFontTestLib
-            RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
-            LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
-            ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
-    endif()
-
     add_subdirectory(Test)
 endif()

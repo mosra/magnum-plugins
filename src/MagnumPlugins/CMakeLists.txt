@@ -1,7 +1,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -36,6 +36,10 @@ if(WITH_ANYIMAGEIMPORTER)
     add_subdirectory(AnyImageImporter)
 endif()
 
+if(WITH_ANYSCENEIMPORTER)
+    add_subdirectory(AnySceneImporter)
+endif()
+
 if(WITH_COLLADAIMPORTER)
     add_subdirectory(ColladaImporter)
 endif()
@@ -52,10 +56,22 @@ if(WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
 
+if(WITH_OPENGEXIMPORTER)
+    add_subdirectory(OpenGexImporter)
+endif()
+
 if(WITH_PNGIMPORTER)
     add_subdirectory(PngImporter)
 endif()
 
+if(WITH_STANFORDIMPORTER)
+    add_subdirectory(StanfordImporter)
+endif()
+
 if(WITH_STBIMAGEIMPORTER)
     add_subdirectory(StbImageImporter)
+endif()
+
+if(WITH_STBPNGIMAGECONVERTER)
+    add_subdirectory(StbPngImageConverter)
 endif()

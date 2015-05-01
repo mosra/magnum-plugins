@@ -7,29 +7,37 @@ arch=('any')
 url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
 depends=('emscripten-magnum')
-makedepends=('cmake' 'ninja' 'emscripten-git')
+makedepends=('cmake' 'ninja' 'emscripten')
 options=(!strip !buildflags)
 
+_rootdir=$startdir/../../
+
 build() {
-    if [ ! -d "$startdir/build-emscripten" ] ; then
-        mkdir "$startdir/build-emscripten"
-        cd "$startdir/build-emscripten"
+    if [ ! -d "$_rootdir/build-emscripten" ] ; then
+        mkdir "$_rootdir/build-emscripten"
+        cd "$_rootdir/build-emscripten"
 
         cmake .. \
-            -DCMAKE_MODULE_PATH="$startdir/toolchains/modules" \
-            -DCMAKE_TOOLCHAIN_FILE="$startdir/toolchains/generic/Emscripten.cmake" \
+            -DCMAKE_MODULE_PATH="$_rootdir/toolchains/modules" \
+            -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/Emscripten.cmake" \
             -G Ninja
     fi
 
-    cd "$startdir/build-emscripten"
+    cd "$_rootdir/build-emscripten"
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system
+        -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_OPENGEXIMPORTER=ON \
+        -DWITH_STANFORDIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBPNGIMAGECONVERTER=ON
     ninja
 }
 
 package() {
-    cd "$startdir/build-emscripten"
+    cd "$_rootdir/build-emscripten"
     DESTDIR="$pkgdir/" ninja install
 }

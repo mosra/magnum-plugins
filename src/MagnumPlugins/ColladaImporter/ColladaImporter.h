@@ -3,7 +3,7 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
               Vladimír Vondruš <mosra@centrum.cz>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -26,7 +26,7 @@
 */
 
 /** @file
- * @brief Class Magnum::Trade::ColladaImporter
+ * @brief Class @ref Magnum::Trade::ColladaImporter
  */
 
 #include <Magnum/Trade/AbstractImporter.h>
@@ -43,14 +43,15 @@ class ColladaMeshData;
 /**
 @brief Collada importer plugin
 
-Imports triangle and quad meshes, images (delegated to @ref AnyImageImporter),
-Phong material data, texture properties and scene hierarchy.
+Imports the XML-based [COLLADA](https://collada.org/) format. Supports triangle
+and quad meshes, images (delegated to @ref AnyImageImporter), Phong material
+data, texture properties and scene hierarchy.
 
 This plugin depends on **Qt 4** library and @ref AnyImageImporter plugin. It is
-built if `WITH_COLLADAIMPORTER` is enabled when building %Magnum Plugins. To
-use dynamic plugin, you need to load `%ColladaImporter` plugin from
+built if `WITH_COLLADAIMPORTER` is enabled when building Magnum Plugins. To
+use dynamic plugin, you need to load `ColladaImporter` plugin from
 `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
-`%ColladaImporter` component of `%MagnumPlugins` package in CMake and link to
+`ColladaImporter` component of `MagnumPlugins` package in CMake and link to
 `${MAGNUMPLUGINS_COLLADAIMPORTER_LIBRARIES}`. To use this as a dependency of
 another plugin, you additionally need to add
 `${MAGNUMPLUGINS_COLLADAIMPORTER_INCLUDE_DIRS}` to include path. See
@@ -125,7 +126,7 @@ class ColladaImporter: public AbstractImporter {
 
         /**
          * @brief Offset of attribute in mesh index array
-         * @param meshId            %Mesh ID
+         * @param meshId            Mesh ID
          * @param attribute         Attribute
          * @param id                Attribute ID, if there are more than one
          *      attribute with the same name
@@ -134,7 +135,7 @@ class ColladaImporter: public AbstractImporter {
 
         /**
          * @brief Build attribute array
-         * @param meshId            %Mesh ID
+         * @param meshId            Mesh ID
          * @param attribute         Attribute
          * @param id                Attribute ID, if there are more than one
          *      attribute with the same name
