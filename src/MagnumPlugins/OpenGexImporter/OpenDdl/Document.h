@@ -521,7 +521,7 @@ struct Document::PropertyData {
 };
 
 struct Document::StructureData {
-    constexpr explicit StructureData() noexcept: name{}, custom{UnknownIdentifier, 0, 0, 0}, parent{0}, next{0} {}
+    explicit StructureData() noexcept: name{}, custom{UnknownIdentifier, 0, 0, 0}, parent{0}, next{0} {}
 
     explicit StructureData(Type type, std::size_t name, std::size_t subArraySize, std::size_t dataBegin, std::size_t dataSize, std::size_t parent, std::size_t next) noexcept;
 
