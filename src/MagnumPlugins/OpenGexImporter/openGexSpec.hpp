@@ -373,7 +373,7 @@ const std::initializer_list<Validation::Structure> structureInfo{
                                    {morph, PropertyType::UnsignedInt, OptionalProperty}},
                         Primitives{/** @todo half */
                                    Type::Float,
-                                   #ifndef MAGNUM_TARGET_WEBGL
+                                   #ifndef MAGNUM_TARGET_GLES
                                    Type::Double
                                    #endif
                                    }, 1, 0}};
