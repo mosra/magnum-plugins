@@ -47,7 +47,14 @@ that character literals have proper size.
 */
 struct CharacterLiteral: Containers::ArrayReference<const char> {
     /** @brief Constructor */
-    template<std::size_t size> constexpr CharacterLiteral(const char(&string)[size]): Containers::ArrayReference<const char>{string, size - 1} {}
+    /* GCC 4.6 doesn't like {} here, also size conflicts with the member */
+    #ifdef CORRADE_GCC46_COMPATIBILITY
+    #define size size_
+    #endif
+    template<std::size_t size> constexpr CharacterLiteral(const char(&string)[size]): Containers::ArrayReference<const char>(string, size - 1) {}
+    #ifdef CORRADE_GCC46_COMPATIBILITY
+    #undef size
+    #endif
 };
 
 namespace Implementation {
