@@ -56,7 +56,8 @@ void PngImporter::doClose() {
 }
 
 void PngImporter::doOpenData(const Containers::ArrayReference<const char> data) {
-    _in = new std::istringstream{{data, data.size()}};
+    /* GCC 4.5 doesn't like {} here */
+    _in = new std::istringstream{std::string(data, data.size())};
 }
 
 void PngImporter::doOpenFile(const std::string& filename) {

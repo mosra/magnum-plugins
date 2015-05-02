@@ -62,7 +62,8 @@ void StanfordImporter::doOpenFile(const std::string& filename) {
 }
 
 void StanfordImporter::doOpenData(const Containers::ArrayReference<const char> data) {
-    _in.reset(new std::istringstream{{data, data.size()}});
+    /* GCC 4.5 doesn't like {} here */
+    _in.reset(new std::istringstream{std::string(data, data.size())});
 }
 
 UnsignedInt StanfordImporter::doMesh3DCount() const { return 1; }
@@ -105,7 +106,8 @@ Type parseType(const std::string& type) {
     if(type == "double" || type == "float64")   return Type::Double;
     #endif
 
-    return {};
+    /* GCC 4.5 doesn't like {} here */
+    return Type();
 }
 
 std::size_t sizeOf(Type type) {
@@ -136,7 +138,8 @@ template<class T> struct EndianSwap<FileFormat::BigEndian, T> {
 };
 
 template<class T, FileFormat format, class U> inline T extractAndSkip(const char*& buffer) {
-    const T result(EndianSwap<format, U>{}(*reinterpret_cast<const U*>(buffer)));
+    /* GCC 4.5 doesn't like {} here */
+    const T result(EndianSwap<format, U>()(*reinterpret_cast<const U*>(buffer)));
     buffer += sizeof(U);
     return result;
 }
@@ -268,7 +271,8 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     }
 
     /* Check format line consistency */
-    if(fileFormat == FileFormat{}) {
+    /* GCC 4.5 doesn't like {} here */
+    if(fileFormat == FileFormat()) {
         Error() << "Trade::StanfordImporter::mesh3D(): missing format line";
         return std::nullopt;
     }
@@ -318,7 +322,8 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 
                     /* Component type */
                     const Type componentType = parseType(tokens[1]);
-                    if(componentType == Type{}) {
+                    /* GCC 4.5 doesn't like {} here */
+                    if(componentType == Type()) {
                         Error() << "Trade::StanfordImporter::mesh3D(): invalid vertex component type" << tokens[1];
                         return std::nullopt;
                     }
@@ -347,13 +352,15 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
                     }
 
                     /* Face size type */
-                    if((faceSizeType = parseType(tokens[2])) == Type{}) {
+                    /* GCC 4.5 doesn't like {} here */
+                    if((faceSizeType = parseType(tokens[2])) == Type()) {
                         Error() << "Trade::StanfordImporter::mesh3D(): invalid face size type" << tokens[2];
                         return std::nullopt;
                     }
 
                     /* Face index type */
-                    if((faceIndexType = parseType(tokens[3])) == Type{}) {
+                    /* GCC 4.5 doesn't like {} here */
+                    if((faceIndexType = parseType(tokens[3])) == Type()) {
                         Error() << "Trade::StanfordImporter::mesh3D(): invalid face index type" << tokens[3];
                         return std::nullopt;
                     }
@@ -383,7 +390,8 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         Error() << "Trade::StanfordImporter::mesh3D(): incomplete vertex specification";
         return std::nullopt;
     }
-    if(faceSizeType == Type{} || faceIndexType == Type{}) {
+    /* GCC 4.5 doesn't like {} here */
+    if(faceSizeType == Type() || faceIndexType == Type()) {
         Error() << "Trade::StanfordImporter::mesh3D(): incomplete face specification";
         return std::nullopt;
     }

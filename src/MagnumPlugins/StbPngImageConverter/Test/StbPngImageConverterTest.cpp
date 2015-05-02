@@ -101,8 +101,9 @@ void StbPngImageConverterTest::data() {
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), ColorFormat::RGB);
     CORRADE_COMPARE(converted->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE((std::string{converted->data(), 2*3*3}),
-                    (std::string{original.data(), 2*3*3}));
+    /* GCC 4.5 doesn't like {} here */
+    CORRADE_COMPARE(std::string(converted->data(), 2*3*3),
+                    std::string(original.data(), 2*3*3));
 }
 
 }}}
