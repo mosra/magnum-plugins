@@ -17,6 +17,7 @@ build() {
     mkdir -p "$_rootdir/build-nacl-newlib-x86-32"
     cd "$_rootdir/build-nacl-newlib-x86-32"
 
+    # OpenGEX importer is not ported to GCC <= 4.5
     cmake .. \
         -DCMAKE_MODULE_PATH="$_rootdir/toolchains/modules" \
         -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/NaCl-newlib-x86-32.cmake" \
@@ -25,7 +26,7 @@ build() {
         -DLIB_SUFFIX=/32 \
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
-        -DWITH_OPENGEXIMPORTER=ON \
+        -DWITH_OPENGEXIMPORTER=OFF \
         -DWITH_STANFORDIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
         -DWITH_STBPNGIMAGECONVERTER=ON \
@@ -36,6 +37,7 @@ build() {
     mkdir -p "$_rootdir/build-nacl-newlib-x86-64"
     cd "$_rootdir/build-nacl-newlib-x86-64"
 
+    # OpenGEX importer is not ported to GCC <= 4.5
     cmake .. \
         -DCMAKE_MODULE_PATH="$_rootdir/toolchains/modules" \
         -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/NaCl-newlib-x86-64.cmake" \
@@ -43,7 +45,7 @@ build() {
         -DCMAKE_INSTALL_PREFIX=/usr/nacl \
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
-        -DWITH_OPENGEXIMPORTER=ON \
+        -DWITH_OPENGEXIMPORTER=OFF \
         -DWITH_STANFORDIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
         -DWITH_STBPNGIMAGECONVERTER=ON \
