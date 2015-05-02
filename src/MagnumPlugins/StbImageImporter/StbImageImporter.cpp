@@ -35,11 +35,24 @@
 #include <Magnum/Extensions.h>
 #endif
 
+/* GCC 4.6 compatibility layer defines out the final keyword, which is used for
+   a variable in stb_image code */
+#ifdef CORRADE_GCC46_COMPATIBILITY
+#define _old_final final
+#undef final
+#endif
+
 #define STBI_NO_STDIO
 #define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #include "stb_image.h"
+
+/* Revert that back */
+#ifdef CORRADE_GCC46_COMPATIBILITY
+#define final _old_final
+#undef _old_final
+#endif
 
 namespace Magnum { namespace Trade {
 
