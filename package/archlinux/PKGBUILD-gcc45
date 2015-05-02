@@ -2,7 +2,7 @@
 pkgname=magnum-plugins
 pkgver=dev.gcc45
 pkgrel=1
-pkgdesc="Plugins for Magnum OpenGL graphics engine"
+pkgdesc="Plugins for Magnum OpenGL graphics engine (built with GCC 4.5)"
 arch=('i686' 'x86_64')
 url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
@@ -11,37 +11,49 @@ makedepends=('gcc45' 'cmake' 'ninja' 'qt4' 'freetype2' 'harfbuzz' 'libjpeg' 'lib
 options=(!strip)
 provides=('magnum-plugins-git')
 
+_rootdir=$startdir/../../
+
 build() {
-    if [ ! -d "$startdir/build-gcc45" ] ; then
-        mkdir "$startdir/build-gcc45"
-        cd "$startdir/build-gcc45"
+    # Disable flags unknown to GCC 4.7
+    newcxxflags=$(echo $CXXFLAGS | sed s/-fstack-protector-strong.//g)
+    export CXXFLAGS="$newcxxflags"
+
+    if [ ! -d "$_rootdir/build-gcc45" ] ; then
+        mkdir "$_rootdir/build-gcc45"
+        cd "$_rootdir/build-gcc45"
 
         cmake .. \
             -DCMAKE_CXX_COMPILER=g++-4.5 \
             -G Ninja
     fi
 
-    cd "$startdir/build-gcc45"
+    cd "$_rootdir/build-gcc45"
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_ANYSCENEIMPORTER=ON \
         -DWITH_COLLADAIMPORTER=ON \
         -DWITH_FREETYPEFONT=ON \
         -DWITH_HARFBUZZFONT=ON \
         -DWITH_JPEGIMPORTER=ON \
-        -DWITH_PNGIMPORTER=ON
+        -DWITH_PNGIMPORTER=ON \
+        -DWITH_OPENGEXIMPORTER=ON \
+        -DWITH_STANFORDIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBPNGIMAGECONVERTER=ON
     ninja
 }
 
 check() {
-    cd "$startdir/build-gcc45"
+    cd "$_rootdir/build-gcc45"
     ctest --output-on-failure
 }
 
 package() {
-  cd "$startdir/build-gcc45"
+  cd "$_rootdir/build-gcc45"
   DESTDIR="$pkgdir/" ninja install
 }

@@ -1,13 +1,13 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=magnum-plugins
-pkgver=dev.gcc44
+pkgver=dev.gcc46
 pkgrel=1
-pkgdesc="Plugins for Magnum OpenGL graphics engine (built with GCC 4.4)"
+pkgdesc="Plugins for Magnum OpenGL graphics engine (built with GCC 4.6)"
 arch=('i686' 'x86_64')
 url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
 depends=('magnum')
-makedepends=('gcc44' 'cmake' 'ninja' 'qt4' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
+makedepends=('gcc46' 'cmake' 'ninja' 'qt4' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
 options=(!strip)
 provides=('magnum-plugins-git')
 
@@ -18,16 +18,16 @@ build() {
     newcxxflags=$(echo $CXXFLAGS | sed s/-fstack-protector-strong.//g)
     export CXXFLAGS="$newcxxflags"
 
-    if [ ! -d "$_rootdir/build-gcc44" ] ; then
-        mkdir "$_rootdir/build-gcc44"
-        cd "$_rootdir/build-gcc44"
+    if [ ! -d "$_rootdir/build-gcc46" ] ; then
+        mkdir "$_rootdir/build-gcc46"
+        cd "$_rootdir/build-gcc46"
 
         cmake .. \
-            -DCMAKE_CXX_COMPILER=g++-4.4 \
+            -DCMAKE_CXX_COMPILER=g++-4.6 \
             -G Ninja
     fi
 
-    cd "$_rootdir/build-gcc44"
+    cd "$_rootdir/build-gcc46"
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
@@ -49,11 +49,11 @@ build() {
 }
 
 check() {
-    cd "$_rootdir/build-gcc44"
+    cd "$_rootdir/build-gcc46"
     ctest --output-on-failure
 }
 
 package() {
-  cd "$_rootdir/build-gcc44"
+  cd "$_rootdir/build-gcc46"
   DESTDIR="$pkgdir/" ninja install
 }
