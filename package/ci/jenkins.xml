@@ -87,9 +87,9 @@ else
     compiler_binary=${compiler}
 fi
 
-if [ ${compiler} = "gcc44" ] ; then
+if [ ${compiler} = "g++-4.4" ] ; then
     build_opengex=OFF
-elif [ ${compiler} = "gcc45" ] ; then
+elif [ ${compiler} = "g++-4.5" ] ; then
     build_opengex=OFF
 else
     build_opengex=ON
