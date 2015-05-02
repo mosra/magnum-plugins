@@ -67,7 +67,8 @@ auto StbImageImporter::doFeatures() const -> Features { return Feature::OpenData
 bool StbImageImporter::doIsOpened() const { return _in; }
 
 void StbImageImporter::doClose() {
-    _in = nullptr;
+    /* GCC 4.5 doesn't have nullptr */
+    _in = {};
 }
 
 void StbImageImporter::doOpenData(const Containers::ArrayReference<const char> data) {

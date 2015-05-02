@@ -44,7 +44,8 @@ auto StbPngImageConverter::doFeatures() const -> Features { return Feature::Conv
 Containers::Array<char> StbPngImageConverter::doExportToData(const ImageReference2D& image) const {
     if(image.type() != ColorType::UnsignedByte) {
         Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color type" << image.type();
-        return nullptr;
+        /* GCC 4.5 doesn't have nullptr */
+        return {};
     }
 
     Int components;
@@ -55,7 +56,8 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageReferenc
         case ColorFormat::RGBA: components = 4; break;
         default:
             Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color format" << image.format();
-            return nullptr;
+            /* GCC 4.5 doesn't have nullptr */
+            return {};
     }
 
     /* Reverse rows in image data */
