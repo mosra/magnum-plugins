@@ -27,4 +27,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MAGNUM_INCLUDE_DIRS})
 
+# Disable strict aliasing for GCC 4.5 and 4.4, as it doesn't work with
+# StbPngImageConverter (and probably other stuff using stb_*)
+if(CORRADE_GCC45_COMPATIBILITY)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+endif()
+
 add_subdirectory(MagnumPlugins)
