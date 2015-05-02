@@ -100,8 +100,13 @@ bool OpenGexImporter::doIsOpened() const { return !!_d; }
 namespace {
 
 void gatherNodes(OpenDdl::Structure node, std::vector<OpenDdl::Structure>& nodes, std::unordered_map<std::string, Int>& nodesForName) {
-    if(const auto name = node.findFirstChildOf(OpenGex::Name))
+    if(const auto name = node.findFirstChildOf(OpenGex::Name)) {
+        #ifndef CORRADE_GCC46_COMPATIBILITY
         nodesForName.emplace(name->firstChild().as<std::string>(), nodes.size());
+        #else
+        nodesForName.insert({name->firstChild().as<std::string>(), nodes.size()});
+        #endif
+    }
     nodes.push_back(node);
 
     /* Recurse into children */
@@ -176,8 +181,13 @@ void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> da
     /* Gather all materials */
     {
         for(const OpenDdl::Structure material: d->document.childrenOf(OpenGex::Material)) {
-            if(const auto name = material.findFirstChildOf(OpenGex::Name))
+            if(const auto name = material.findFirstChildOf(OpenGex::Name)) {
+                #ifndef CORRADE_GCC46_COMPATIBILITY
                 d->materialsForName.emplace(name->firstChild().as<std::string>(), d->materials.size());
+                #else
+                d->materialsForName.insert({name->firstChild().as<std::string>(), d->materials.size()});
+                #endif
+            }
             d->materials.push_back(material);
 
             /* Gather all material textures */
