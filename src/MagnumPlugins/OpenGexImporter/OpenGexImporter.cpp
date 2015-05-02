@@ -52,10 +52,12 @@ struct OpenGexImporter::Document {
     OpenDdl::Document document;
 
     /* Default metrics */
-    Float distanceMultiplier = 1.0f;
-    Float angleMultiplier = 1.0f;
-    Float timeMultiplier = 1.0f;
-    bool yUp = false;
+    /* GCC 4.6 doesn't have non-static data member initializers */
+    explicit Document(): distanceMultiplier{1.0f}, angleMultiplier{1.0f}, timeMultiplier{1.0f}, yUp{false} {}
+    Float distanceMultiplier;
+    Float angleMultiplier;
+    Float timeMultiplier;
+    bool yUp;
 
     std::optional<std::string> filePath;
 
