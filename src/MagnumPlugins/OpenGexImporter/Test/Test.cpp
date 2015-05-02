@@ -337,37 +337,37 @@ void OpenGexImporterTest::objectRotation() {
     {
         std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(90.0_degf, Vector3::zAxis()));
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(Deg{90.0f}, Vector3::zAxis()));
 
     /* Default, which is also axis + angle */
     } {
         std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(1);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(-90.0_degf, Vector3::zAxis(-1.0f)));
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(Deg{-90.0f}, Vector3::zAxis(-1.0f)));
 
     /* Quaternion */
     } {
         std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(2);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::from(Quaternion::rotation(90.0_degf, Vector3::zAxis()).toMatrix(), {}));
+        CORRADE_COMPARE(object->transformation(), Matrix4::from(Quaternion::rotation(Deg{90.0f}, Vector3::zAxis()).toMatrix(), {}));
 
     /* X */
     } {
         std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(3);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationX(90.0_degf));
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationX(Deg{90.0f}));
 
     /* Y */
     } {
         std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(4);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationY(90.0_degf));
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationY(Deg{90.0f}));
 
     /* Z */
     } {
         std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(5);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(90.0_degf));
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(Deg{90.0f}));
     }
 
     /* Invalid kind, invalid array size, object-only transformation */
@@ -440,7 +440,7 @@ void OpenGexImporterTest::objectTransformationConcatentation() {
     CORRADE_COMPARE(object->transformation(),
         Matrix4::translation({7.5f, -1.5f, 1.0f})*
         Matrix4::scaling({1.0f, 2.0f, -1.0f})*
-        Matrix4::rotationX(-90.0_degf));
+        Matrix4::rotationX(Deg{-90.0f}));
 }
 
 void OpenGexImporterTest::objectTransformationMetrics() {
@@ -469,10 +469,10 @@ void OpenGexImporterTest::objectTransformationMetrics() {
     } {
         std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(3);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(-90.0_degf));
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(Deg{-90.0f}));
         std::unique_ptr<Trade::ObjectData3D> matrix = importer.object3D(4);
         CORRADE_VERIFY(matrix);
-        CORRADE_COMPARE(matrix->transformation(), Matrix4::rotationZ(-90.0_degf));
+        CORRADE_COMPARE(matrix->transformation(), Matrix4::rotationZ(Deg{-90.0f}));
     } {
         /* This won't be multiplied by 100, as the original mesh data are adjusted already */
         std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(5);
