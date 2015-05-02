@@ -23,6 +23,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(CORRADE_GCC45_COMPATIBILITY)
+    message(FATAL_ERROR "OpenGexImporter is not ported to GCC 4.5 and older. Set WITH_OPENGEXIMPORTER to OFF to skip building it.")
+endif()
+
 set(OpenGexImporter_SRCS
     OpenGexImporter.cpp
 

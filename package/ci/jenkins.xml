@@ -87,6 +87,14 @@ else
     compiler_binary=${compiler}
 fi
 
+if [ ${compiler} = "gcc44" ] ; then
+    build_opengex=OFF
+elif [ ${compiler} = "gcc45" ] ; then
+    build_opengex=OFF
+else
+    build_opengex=ON
+fi
+
 if [ ${libraries} = "static" ] ; then
     static_build_flag="-DBUILD_STATIC=ON -DBUILD_STATIC_PIC=ON"
 fi
@@ -122,7 +130,7 @@ cmake .. \
     -DWITH_FREETYPEFONT=ON \
     -DWITH_HARFBUZZFONT=ON \
     -DWITH_JPEGIMPORTER=ON \
-    -DWITH_OPENGEXIMPORTER=ON \
+    -DWITH_OPENGEXIMPORTER=${build_opengex} \
     -DWITH_PNGIMPORTER=ON \
     -DWITH_STANFORDIMPORTER=ON \
     -DWITH_STBIMAGEIMPORTER=ON \
