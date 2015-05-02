@@ -282,7 +282,6 @@ template<> struct IntegralType<Float> { typedef UnsignedInt Type; };
 #ifndef MAGNUM_TARGET_GLES
 template<> struct IntegralType<Double> { typedef UnsignedLong Type; };
 #endif
-template<class T> using IntegralTypeFor = typename IntegralType<T>::Type;
 
 template<class> struct ExtractToType;
 /** @todo isn't there something better for extracting to unsigned int on webgl? */
@@ -313,7 +312,6 @@ template<> struct ExtractToType<UnsignedShort>: ExtractToType<UnsignedInt> {};
 template<> struct ExtractToType<Short>: ExtractToType<UnsignedInt> {};
 template<> struct ExtractToType<Int>: ExtractToType<UnsignedInt> {};
 #endif
-template<class T> using ExtractedType = typename ExtractToType<T>::Type;
 
 template<> struct ExtractToType<Float> {
     static Float extract(const std::string& buffer) { return std::stof(buffer); }
@@ -376,8 +374,8 @@ template<Int base, class T> std::pair<const char*, T> baseNLiteral(const Contain
     if(!i) return {};
 
     extractWithoutUnderscore(data.prefix(i), buffer);
-    const ExtractedType<T> out = ExtractToType<T>::extract(buffer, base);
-    if(out > ExtractedType<T>(std::numeric_limits<T>::max())) {
+    const typename ExtractToType<T>::Type out = ExtractToType<T>::extract(buffer, base);
+    if(out > typename ExtractToType<T>::Type(std::numeric_limits<T>::max())) {
         error = {ParseErrorType::LiteralOutOfRange, typeFor<T>(), data};
         return {};
     }
@@ -484,21 +482,21 @@ template<class T> std::pair<const char*, T> floatingPointLiteral(const Container
 
     /* Binary literal */
     if(i + 1 < data.end() && *i == '0' && isBinaryPrefix(i[1])) {
-        IntegralTypeFor<T> integralValue;
+        typename IntegralType<T>::Type integralValue;
         switch(i[1]) {
             case 'x':
             case 'X': {
-                std::tie(i, integralValue) = baseNLiteral<16, IntegralTypeFor<T>>(data.suffix(i + 2), buffer, error);
+                std::tie(i, integralValue) = baseNLiteral<16, typename IntegralType<T>::Type>(data.suffix(i + 2), buffer, error);
                 break;
             }
             case 'o':
             case 'O': {
-                std::tie(i, integralValue) = baseNLiteral<8, IntegralTypeFor<T>>(data.suffix(i + 2), buffer, error);
+                std::tie(i, integralValue) = baseNLiteral<8, typename IntegralType<T>::Type>(data.suffix(i + 2), buffer, error);
                 break;
             }
             case 'b':
             case 'B': {
-                std::tie(i, integralValue) = baseNLiteral<2, IntegralTypeFor<T>>(data.suffix(i + 2), buffer, error);
+                std::tie(i, integralValue) = baseNLiteral<2, typename IntegralType<T>::Type>(data.suffix(i + 2), buffer, error);
                 break;
             }
 
