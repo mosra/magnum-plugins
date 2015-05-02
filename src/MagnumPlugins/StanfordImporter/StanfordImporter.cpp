@@ -404,9 +404,10 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         for(std::size_t i = 0; i != vertexCount; ++i) {
             _in->read(buffer, stride);
             positions.push_back({
-                extract<Float>(buffer + componentOffsets.x(), fileFormat, componentTypes.x()),
-                extract<Float>(buffer + componentOffsets.y(), fileFormat, componentTypes.y()),
-                extract<Float>(buffer + componentOffsets.z(), fileFormat, componentTypes.z())
+                /* GCC 4.4 needs explicit begin() here to avoid implicit bool conversion */
+                extract<Float>(buffer.begin() + componentOffsets.x(), fileFormat, componentTypes.x()),
+                extract<Float>(buffer.begin() + componentOffsets.y(), fileFormat, componentTypes.y()),
+                extract<Float>(buffer.begin() + componentOffsets.z(), fileFormat, componentTypes.z())
             });
         }
     }

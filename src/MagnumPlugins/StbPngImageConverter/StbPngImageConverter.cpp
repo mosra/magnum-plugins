@@ -64,7 +64,8 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageReferenc
     Containers::Array<unsigned char> reversedData{std::size_t(image.size().product()*components)};
     for(Int y = 0; y != image.size().y(); ++y) {
         const Int stride = image.size().x()*components;
-        std::copy(image.data<unsigned char>() + y*stride, image.data<unsigned char>() + (y + 1)*stride, reversedData + (image.size().y() - y - 1)*stride);
+        /* GCC 4.4 needs explicit begin() here to avoid implicit bool conversion */
+        std::copy(image.data<unsigned char>() + y*stride, image.data<unsigned char>() + (y + 1)*stride, reversedData.begin() + (image.size().y() - y - 1)*stride);
     }
 
     Int size;
