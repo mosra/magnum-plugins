@@ -308,7 +308,11 @@ void Test::primitiveSubArrayExpectedSeparator() {
     Error::setOutput(&out);
 
     Document d;
+    #ifndef MAGNUM_TARGET_GLES
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"double[2] { {35 45"}, {}, {}));
+    #else
+    CORRADE_VERIFY(!d.parse(CharacterLiteral{"float[2] { {35 45"}, {}, {}));
+    #endif
     CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected , character on line 1\n");
 }
 

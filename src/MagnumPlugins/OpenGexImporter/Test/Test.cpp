@@ -72,7 +72,9 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void meshNoPositions();
     void meshMismatchedSizes();
     void meshInvalidIndexArraySubArraySize();
+    #ifndef MAGNUM_TARGET_WEBGL
     void meshUnsupportedIndexType();
+    #endif
 
     void materialDefaults();
     void materialColors();
@@ -111,7 +113,9 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::meshNoPositions,
               &OpenGexImporterTest::meshMismatchedSizes,
               &OpenGexImporterTest::meshInvalidIndexArraySubArraySize,
+              #ifndef MAGNUM_TARGET_WEBGL
               &OpenGexImporterTest::meshUnsupportedIndexType,
+              #endif
 
               &OpenGexImporterTest::materialDefaults,
               &OpenGexImporterTest::materialColors,
@@ -621,6 +625,7 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): invalid index array subarray size 3 for MeshPrimitive::Lines\n");
 }
 
+#ifndef MAGNUM_TARGET_WEBGL
 void OpenGexImporterTest::meshUnsupportedIndexType() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
@@ -631,6 +636,7 @@ void OpenGexImporterTest::meshUnsupportedIndexType() {
     CORRADE_VERIFY(!importer.mesh3D(5));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices\n");
 }
+#endif
 
 void OpenGexImporterTest::materialDefaults() {
     OpenGexImporter importer;
