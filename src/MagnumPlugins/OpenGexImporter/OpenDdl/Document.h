@@ -425,8 +425,8 @@ class Document {
 
         std::size_t dereference(std::size_t originatingStructure, Containers::ArrayReference<const char> reference) const;
 
-        bool validateLevel(std::optional<Structure> first, std::initializer_list<std::pair<Int, std::pair<Int, Int>>> allowedStructures, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
-        bool validateStructure(Structure structure, const Validation::Structure& validation, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
+        bool validateLevel(std::optional<Structure> first, Containers::ArrayReference<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, Containers::ArrayReference<const Validation::Structure> structures, std::vector<Int>& counts) const;
+        bool validateStructure(Structure structure, const Validation::Structure& validation, Containers::ArrayReference<const Validation::Structure> structures, std::vector<Int>& counts) const;
 
         const char* structureName(Int identifier) const;
         const char* propertyName(Int identifier) const;

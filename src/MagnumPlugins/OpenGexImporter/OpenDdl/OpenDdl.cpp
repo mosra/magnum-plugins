@@ -778,10 +778,10 @@ bool Document::validate(const Validation::Structures allowedRootStructures, cons
     }
 
     /* Check custom structures */
-    return validateLevel(findFirstChild(), allowedRootStructures, structures, countsBuffer);
+    return validateLevel(findFirstChild(), {allowedRootStructures.begin(), allowedRootStructures.size()}, {structures.begin(), structures.size()}, countsBuffer);
 }
 
-bool Document::validateLevel(const std::optional<Structure> first, const std::initializer_list<std::pair<Int, std::pair<Int, Int>>> allowedStructures, const std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const {
+bool Document::validateLevel(const std::optional<Structure> first, const Containers::ArrayReference<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, const Containers::ArrayReference<const Validation::Structure> structures, std::vector<Int>& counts) const {
     counts.assign(allowedStructures.size(), 0);
 
     /* Count number of custom structures in this level */
@@ -835,7 +835,7 @@ bool Document::validateLevel(const std::optional<Structure> first, const std::in
     return true;
 }
 
-bool Document::validateStructure(const Structure structure, const Validation::Structure& validation, const std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const {
+bool Document::validateStructure(const Structure structure, const Validation::Structure& validation, const Containers::ArrayReference<const Validation::Structure> structures, std::vector<Int>& counts) const {
     counts.assign(validation.properties().size(), 0);
 
     /* Verify that there is no unexpected property (ignoring unknown ones) */
@@ -1161,6 +1161,23 @@ std::optional<Structure> Property::asReference() const {
     const std::size_t reference = _document.get()._references[_data.get().position];
     return reference == NullReference ? std::nullopt :
         std::make_optional(Structure{_document, _document.get()._structures[reference]});
+}
+
+namespace Validation {
+
+Structure::Structure(Int identifier, Properties properties, Primitives primitives, std::size_t primitiveCount, std::size_t primitiveArraySize, Structures structures):
+    _identifier{identifier},
+    _properties{properties.size()},
+    _primitives{primitives.size()},
+    _structures{structures.size()},
+    _primitiveCount{primitiveCount}, _primitiveArraySize{primitiveArraySize}
+{
+    /** @todo use NoInit and std::uninitialized_copy when done */
+    std::copy(properties.begin(), properties.end(), _properties.begin());
+    std::copy(primitives.begin(), primitives.end(), _primitives.begin());
+    std::copy(structures.begin(), structures.end(), _structures.begin());
+}
+
 }
 
 }}
