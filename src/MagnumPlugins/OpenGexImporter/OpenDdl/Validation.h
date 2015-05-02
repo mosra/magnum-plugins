@@ -95,7 +95,8 @@ class Property {
 
     private:
         /** @todo remove this ugly hack when we have Containers::Array(NoInit) */
-        friend Containers::Array<Property>;
+        /* GCC 4.6 needs the class keyword */
+        friend class Containers::Array<Property>;
         constexpr explicit Property(): _identifier{-1}, _type{}, _required{} {}
 
         Int _identifier;

@@ -275,8 +275,9 @@ Containers::ArrayReference<const Float> data = vertexArray.firstChild().asArray<
     `unsigned_int64` and `int64` types are not recognized.
 */
 class Document {
-    friend Property;
-    friend Structure;
+    /* GCC 4.6 needs the class keyword */
+    friend class Property;
+    friend class Structure;
     template<Type> friend struct Implementation::ExtractDataListItem;
     template<class> friend struct Implementation::ExtractIntegralDataListItem;
     template<class> friend struct Implementation::ExtractFloatingPointDataListItem;

@@ -52,8 +52,9 @@ See @ref Document for more information.
 @see @ref Structure::properties()
 */
 class Property {
-    friend Structure;
-    friend Implementation::PropertyIterator;
+    /* GCC 4.6 needs the class keyword */
+    friend class Structure;
+    friend class Implementation::PropertyIterator;
 
     public:
         /**

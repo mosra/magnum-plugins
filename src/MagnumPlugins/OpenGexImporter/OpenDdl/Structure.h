@@ -53,10 +53,11 @@ See @ref Document for more information.
     however you like without worrying about performance.
 */
 class Structure {
-    friend Document;
-    friend Property;
-    friend Implementation::StructureIterator;
-    friend Implementation::StructureOfIterator;
+    /* GCC 4.6 needs the class keyword */
+    friend class Document;
+    friend class Property;
+    friend class Implementation::StructureIterator;
+    friend class Implementation::StructureOfIterator;
 
     public:
         /**
