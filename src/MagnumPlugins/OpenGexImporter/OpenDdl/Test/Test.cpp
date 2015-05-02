@@ -512,7 +512,8 @@ void Test::customPropertyInvalidValue() {
 
 void Test::hierarchy() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 // This should finally work.
 
 Root (some /*duplicates are ignored*/ = 15.0, some = 0.5) { string { "hello", "world" } }
@@ -526,7 +527,8 @@ Hierarchic %node819 (boolean = false, id = 819) {
 }
 
 Hierarchic %node821 {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
     CORRADE_VERIFY(!d.isEmpty());
 
     std::optional<Structure> root = d.findFirstChildOf(RootStructure);
@@ -606,7 +608,8 @@ Hierarchic %node821 {}
 
 void Test::documentChildren() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root %root1 {}
 Hierarchic %hierarchic1 {
     Root %root2 {}
@@ -615,7 +618,8 @@ Hierarchic %hierarchic1 {
 Hierarchic %hierarchic3 {}
 Unknown %unknown {}
 Root %root3 {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     {
         std::vector<std::string> names;
@@ -650,7 +654,8 @@ Root %root3 {}
 
 void Test::structureChildren() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root %root1 {}
 Hierarchic %hierarchic1 {
     Root %root2 {}
@@ -661,7 +666,8 @@ Hierarchic %hierarchic1 {
     Root %root4 {}
 }
 Hierarchic %hierarchic3 {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     {
         std::vector<std::string> names;
@@ -697,10 +703,12 @@ Hierarchic %hierarchic3 {}
 
 void Test::structureProperties() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root (some = "string to ignore", boolean = "hello", unknown = "hey", some = "string") {}
 Hierarchic () {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     {
         std::vector<std::string> strings;
@@ -721,10 +729,12 @@ Hierarchic () {}
 
 void Test::structureEquality() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root {}
 Some {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     Structure a = d.firstChildOf(RootStructure);
     Structure b = d.firstChildOf(SomeStructure);
@@ -736,7 +746,8 @@ void Test::validate() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 Root (some = 15.0, some = 0.5) { string { "hello", "world" } }
 
@@ -751,7 +762,8 @@ Hierarchic (boolean = false, id = 819) {
 }
 
 Hierarchic (boolean = false) {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     CORRADE_VERIFY(d.validate(
         Structures{{RootStructure, {1, 1}},
@@ -773,9 +785,11 @@ Hierarchic (boolean = false) {}
 
 void Test::validateUnexpectedPrimitiveInRoot() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 string { "hello" }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -787,13 +801,15 @@ void Test::validateTooManyPrimitives() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root {
     Hierarchic { }
     string { "world" }
     string { "world" }
 }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -811,12 +827,14 @@ void Test::validateTooLittlePrimitives() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root {
     Hierarchic { }
     string { "world" }
 }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -834,11 +852,13 @@ void Test::validateUnexpectedPrimitiveArraySize() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root {
     string { "hello", "world", "how is it going" }
 }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -854,9 +874,11 @@ void Test::validateWrongPrimitiveType() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root { int32 {} }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -872,10 +894,12 @@ void Test::validateUnexpectedStructure() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root { }
 Hierarchic {  }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -892,11 +916,13 @@ void Test::validateTooManyStructures() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root { }
 Root { }
 Root { }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -912,9 +938,11 @@ void Test::validateTooLittleStructures() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root { }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -930,11 +958,13 @@ void Test::validateUnknownStructure() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{R"oddl(
 Root { string { "hello" } }
 
 Unknown { Root { int32 {} } }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     /* Unknown structure should be ignored even if its contents don't
        validate */
@@ -949,10 +979,12 @@ void Test::validateExpectedProperty() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 Root () {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -970,10 +1002,12 @@ void Test::validateUnexpectedProperty() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 Root (some = 15.0, boolean = true) {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -989,10 +1023,12 @@ void Test::validateWrongPropertyType() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 Root (some = false) {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -1008,10 +1044,12 @@ void Test::validateUnknownProperty() {
     using namespace Validation;
 
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 Root (some = 15.0, id = null) {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     /* Unknown property should be ignored */
     CORRADE_VERIFY(d.validate(
@@ -1023,7 +1061,8 @@ Root (some = 15.0, id = null) {}
 
 void Test::reference() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 Root { ref { %b0 } }
 Hierarchic { ref { $b1 } }
@@ -1033,7 +1072,8 @@ Root {
         Root $b1 {}
     }
 }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::optional<Structure> b0 = d.firstChildOf(RootStructure).firstChild().asReference();
     CORRADE_VERIFY(b0);
@@ -1046,7 +1086,8 @@ Root {
 
 void Test::referenceInProperty() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 Root (reference = %b0) {}
 Hierarchic (reference = $b1) {}
@@ -1056,7 +1097,8 @@ Root {
         Root $b1 {}
     }
 }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::optional<Structure> b0 = d.firstChildOf(RootStructure).propertyOf(ReferenceProperty).asReference();
     CORRADE_VERIFY(b0);
@@ -1069,11 +1111,13 @@ Root {
 
 void Test::referenceNull() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 Root (reference = null) {}
 Hierarchic { ref { null } }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     CORRADE_VERIFY(!d.firstChildOf(RootStructure).propertyOf(ReferenceProperty).asReference());
     CORRADE_VERIFY(!d.firstChildOf(HierarchicStructure).firstChild().asReference());
@@ -1081,7 +1125,8 @@ Hierarchic { ref { null } }
 
 void Test::referenceChain() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = CharacterLiteral{
 R"oddl(
 ref {
     /* These two are different structures */
@@ -1116,7 +1161,8 @@ Root %local1 {
     int32 %local3 {}
 }
 bool %local4 {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     Containers::Array<std::optional<Structure>> topLevel =
         d.firstChildOf(Type::Reference).asReferenceArray();
@@ -1163,13 +1209,16 @@ void Test::referenceInvalid() {
     Error::setOutput(&out);
 
     /* Single name not found */
-    CORRADE_VERIFY(!d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s1 = CharacterLiteral{
 R"oddl(
 Hierarchic (reference = %local1) {}
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(!d.parse(s1, structureIdentifiers, propertyIdentifiers));
 
     /* Incomplete chain (even though that could be found as sibling) */
-    CORRADE_VERIFY(!d.parse(CharacterLiteral{
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s2 = CharacterLiteral{
 R"oddl(
 Root %root {
     Hierarchic (reference = %local1%local2) {}
@@ -1178,7 +1227,8 @@ Root %root {
         int16 %local2 {}
     }
 }
-    )oddl"}, structureIdentifiers, propertyIdentifiers));
+    )oddl"};
+    CORRADE_VERIFY(!d.parse(s2, structureIdentifiers, propertyIdentifiers));
 
     CORRADE_COMPARE(out.str(),
         "OpenDdl::Document::parse(): reference %local1 was not found\n"
