@@ -31,7 +31,8 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 find_package(Freetype REQUIRED)
 set(CMAKE_FIND_FRAMEWORK ${PREV_CMAKE_FIND_FRAMEWORK})
 
-include_directories(${FREETYPE_INCLUDE_DIRS})
+# Avoid warning spam with old-style casts
+include_directories(SYSTEM ${FREETYPE_INCLUDE_DIRS})
 
 set(FreeTypeFont_SRCS
     FreeTypeFont.cpp)

@@ -1,0 +1,59 @@
+# Author: mosra <mosra@centrum.cz>
+pkgname=magnum-plugins
+pkgver=dev.clang
+pkgrel=1
+pkgdesc="Plugins for Magnum OpenGL graphics engine (built with clang)"
+arch=('i686' 'x86_64')
+url="http://mosra.cz/blog/magnum.php"
+license=('MIT')
+depends=('magnum')
+makedepends=('cmake' 'clang' 'ninja' 'qt4' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
+options=(!strip)
+provides=('magnum-plugins-git')
+
+_rootdir=$startdir/../../
+
+build() {
+    # Disable optimization (saves A LOT of compilation time)
+    newcxxflags=$(echo $CXXFLAGS | sed s/-O.//g | sed s/-D_FORTIFY_SOURCE=.//g)
+    export CXXFLAGS="$newcxxflags"
+
+    if [ ! -d "$_rootdir/build-clang" ] ; then
+        mkdir "$_rootdir/build-clang"
+        cd "$_rootdir/build-clang"
+
+        cmake .. \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -G Ninja
+    fi
+
+    cd "$_rootdir/build-clang"
+
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DBUILD_TESTS=ON \
+        -DBUILD_GL_TESTS=ON \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_COLLADAIMPORTER=ON \
+        -DWITH_FREETYPEFONT=ON \
+        -DWITH_HARFBUZZFONT=ON \
+        -DWITH_JPEGIMPORTER=ON \
+        -DWITH_PNGIMPORTER=ON \
+        -DWITH_OPENGEXIMPORTER=ON \
+        -DWITH_STANFORDIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBPNGIMAGECONVERTER=ON
+    ninja
+}
+
+check() {
+    cd "$_rootdir/build-clang"
+    ctest --output-on-failure
+}
+
+package() {
+  cd "$_rootdir/build-clang"
+  DESTDIR="$pkgdir/" ninja install
+}

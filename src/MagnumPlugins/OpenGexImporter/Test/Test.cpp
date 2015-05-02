@@ -39,6 +39,7 @@
 #include <Magnum/Trade/TextureData.h>
 
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
 
 #include "configure.h"
 
@@ -71,7 +72,9 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void meshNoPositions();
     void meshMismatchedSizes();
     void meshInvalidIndexArraySubArraySize();
+    #ifndef MAGNUM_TARGET_WEBGL
     void meshUnsupportedIndexType();
+    #endif
 
     void materialDefaults();
     void materialColors();
@@ -110,7 +113,9 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::meshNoPositions,
               &OpenGexImporterTest::meshMismatchedSizes,
               &OpenGexImporterTest::meshInvalidIndexArraySubArraySize,
+              #ifndef MAGNUM_TARGET_WEBGL
               &OpenGexImporterTest::meshUnsupportedIndexType,
+              #endif
 
               &OpenGexImporterTest::materialDefaults,
               &OpenGexImporterTest::materialColors,
@@ -127,12 +132,14 @@ OpenGexImporterTest::OpenGexImporterTest() {
 void OpenGexImporterTest::open() {
     OpenGexImporter importer;
 
-    CORRADE_VERIFY(importer.openData(R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { float { 0.5 } }
 Metric (key = "angle") { float { 1.0 } }
 Metric (key = "time") { float { 1000 } }
 Metric (key = "up") { string { "z" } }
-    )oddl"));
+    )oddl"};
+    CORRADE_VERIFY(importer.openData(s));
 }
 
 void OpenGexImporterTest::openParseError() {
@@ -140,9 +147,11 @@ void OpenGexImporterTest::openParseError() {
 
     std::ostringstream out;
     Error::setOutput(&out);
-    CORRADE_VERIFY(!importer.openData(R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = OpenDdl::CharacterLiteral{R"oddl(
 <collada>THIS IS COLLADA XML</collada>
-    )oddl"));
+    )oddl"};
+    CORRADE_VERIFY(!importer.openData(s));
     CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): invalid identifier on line 2\n");
 }
 
@@ -151,9 +160,11 @@ void OpenGexImporterTest::openValidationError() {
 
     std::ostringstream out;
     Error::setOutput(&out);
-    CORRADE_VERIFY(!importer.openData(R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { int32 { 1 } }
-    )oddl"));
+    )oddl"};
+    CORRADE_VERIFY(!importer.openData(s));
     CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected sub-structure of type OpenDdl::Type::Int in structure Metric\n");
 }
 
@@ -162,9 +173,11 @@ void OpenGexImporterTest::openInvalidMetric() {
 
     std::ostringstream out;
     Error::setOutput(&out);
-    CORRADE_VERIFY(!importer.openData(R"oddl(
+    /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { string { "0.5" } }
-    )oddl"));
+    )oddl"};
+    CORRADE_VERIFY(!importer.openData(s));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::openData(): invalid value for distance metric\n");
 }
 
@@ -612,6 +625,7 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): invalid index array subarray size 3 for MeshPrimitive::Lines\n");
 }
 
+#ifndef MAGNUM_TARGET_WEBGL
 void OpenGexImporterTest::meshUnsupportedIndexType() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
@@ -622,6 +636,7 @@ void OpenGexImporterTest::meshUnsupportedIndexType() {
     CORRADE_VERIFY(!importer.mesh3D(5));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices\n");
 }
+#endif
 
 void OpenGexImporterTest::materialDefaults() {
     OpenGexImporter importer;

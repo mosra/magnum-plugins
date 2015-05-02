@@ -298,10 +298,10 @@ void StanfordImporterTest::common() {
     CORRADE_COMPARE(mesh->positions(0), positions);
 }
 
-void StanfordImporterTest::crlf() {
+void StanfordImporterTest::bigEndian() {
     StanfordImporter importer;
 
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "crlf.ply")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "big-endian.ply")));
 
     auto mesh = importer.mesh3D(0);
     CORRADE_VERIFY(mesh);
@@ -309,10 +309,10 @@ void StanfordImporterTest::crlf() {
     CORRADE_COMPARE(mesh->positions(0), positions);
 }
 
-void StanfordImporterTest::bigEndian() {
+void StanfordImporterTest::crlf() {
     StanfordImporter importer;
 
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "big-endian.ply")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "crlf.ply")));
 
     auto mesh = importer.mesh3D(0);
     CORRADE_VERIFY(mesh);

@@ -571,7 +571,7 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
             case OpenDdl::Type::UnsignedInt:
                 indices = extractIndices<UnsignedInt>(indexArrayData);
                 break;
-            #ifndef MAGNUM_TARGET_GLES
+            #ifndef MAGNUM_TARGET_WEBGL
             case OpenDdl::Type::UnsignedLong:
                 Error() << "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices";
                 return std::nullopt;

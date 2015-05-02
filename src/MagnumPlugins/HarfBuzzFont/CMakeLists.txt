@@ -27,7 +27,8 @@ find_package(Magnum REQUIRED Text)
 find_package(Freetype REQUIRED)
 find_package(HarfBuzz REQUIRED)
 
-include_directories(${FREETYPE_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS})
+# Avoid warning spam with old-style casts
+include_directories(SYSTEM ${FREETYPE_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS})
 
 set(HarfBuzzFont_SRCS
     HarfBuzzFont.cpp)

@@ -311,6 +311,7 @@ class Document {
          * After parsing, all references to structure data are valid until next
          * parse call.
          */
+        /** @todo some sane way to ensure that the initializer lists are valid for whole Document lifetime */
         bool parse(Containers::ArrayReference<const char> data, std::initializer_list<CharacterLiteral> structureIdentifiers, std::initializer_list<CharacterLiteral> propertyIdentifiers);
 
         /** @brief Whether the document is empty */
@@ -425,8 +426,8 @@ class Document {
 
         std::size_t dereference(std::size_t originatingStructure, Containers::ArrayReference<const char> reference) const;
 
-        bool validateLevel(std::optional<Structure> first, std::initializer_list<std::pair<Int, std::pair<Int, Int>>> allowedStructures, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
-        bool validateStructure(Structure structure, const Validation::Structure& validation, std::initializer_list<Validation::Structure> structures, std::vector<Int>& counts) const;
+        bool validateLevel(std::optional<Structure> first, Containers::ArrayReference<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, Containers::ArrayReference<const Validation::Structure> structures, std::vector<Int>& counts) const;
+        bool validateStructure(Structure structure, const Validation::Structure& validation, Containers::ArrayReference<const Validation::Structure> structures, std::vector<Int>& counts) const;
 
         const char* structureName(Int identifier) const;
         const char* propertyName(Int identifier) const;
@@ -521,7 +522,9 @@ struct Document::PropertyData {
 };
 
 struct Document::StructureData {
-    constexpr explicit StructureData() noexcept: name{}, custom{UnknownIdentifier, 0, 0, 0}, parent{0}, next{0} {}
+    /* Needed for "placeholder" object in parseStructure() which is later
+       replaced with real one */
+    explicit StructureData() noexcept: name{}, custom{UnknownIdentifier, 0, 0, 0}, parent{0}, next{0} {}
 
     explicit StructureData(Type type, std::size_t name, std::size_t subArraySize, std::size_t dataBegin, std::size_t dataSize, std::size_t parent, std::size_t next) noexcept;
 

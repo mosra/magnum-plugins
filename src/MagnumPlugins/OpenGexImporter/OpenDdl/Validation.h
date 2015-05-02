@@ -94,6 +94,10 @@ class Property {
         #endif
 
     private:
+        /** @todo remove this ugly hack when we have Containers::Array(NoInit) */
+        friend Containers::Array<Property>;
+        constexpr explicit Property(): _identifier{-1}, _type{}, _required{} {}
+
         Int _identifier;
         PropertyType _type;
         bool _required;
@@ -162,26 +166,22 @@ class Structure {
          * on primitive array count. Setting @p primitiveArraySize to `0` means
          * that there is no requirement on primitive array size.
          */
-        /*implicit*/ Structure(Int identifier, Properties properties, Primitives primitives, std::size_t primitiveCount, std::size_t primitiveArraySize, Structures structures = {}):
-            _identifier{identifier}, _properties(properties), _primitives(primitives), _structures(structures), _primitiveCount{primitiveCount}, _primitiveArraySize{primitiveArraySize} {}
+        /*implicit*/ Structure(Int identifier, Properties properties, Primitives primitives, std::size_t primitiveCount, std::size_t primitiveArraySize, Structures structures = {});
 
         /** @overload */
-        /*implicit*/ Structure(Int identifier, Primitives primitives, std::size_t primitiveCount, std::size_t primitiveArraySize, Structures structures = {}):
-            _identifier{identifier}, _primitives(primitives), _structures(structures), _primitiveCount{primitiveCount}, _primitiveArraySize{primitiveArraySize} {}
+        /*implicit*/ Structure(Int identifier, Primitives primitives, std::size_t primitiveCount, std::size_t primitiveArraySize, Structures structures = {}): Structure{identifier, {}, primitives, primitiveCount, primitiveArraySize, structures} {}
 
         /** @overload */
-        /*implicit*/ Structure(Int identifier, Properties properties, Structures structures = {}):
-            _identifier{identifier}, _properties(properties), _structures(structures), _primitiveCount{}, _primitiveArraySize{} {}
+        /*implicit*/ Structure(Int identifier, Properties properties, Structures structures = {}): Structure{identifier, properties, {}, {}, {}, structures} {}
 
         /** @overload */
-        /*implicit*/ Structure(Int identifier, Structures structures = {}):
-            _identifier{identifier}, _structures(structures), _primitiveCount{}, _primitiveArraySize{} {}
+        /*implicit*/ Structure(Int identifier, Structures structures = {}): Structure{identifier, {}, {}, {}, {}, structures} {}
 
         #ifndef DOXYGEN_GENERATING_OUTPUT
         Int identifier() const { return _identifier; }
-        Properties properties() const { return _properties; }
-        Structures structures() const { return _structures; }
-        Primitives primitives() const { return _primitives; }
+        Containers::ArrayReference<const Property> properties() const { return _properties; }
+        Containers::ArrayReference<const Type> primitives() const { return _primitives; }
+        Containers::ArrayReference<const std::pair<Int, std::pair<Int, Int>>> structures() const { return _structures; }
         std::size_t primitiveCount() const { return _primitiveCount; }
         std::size_t primitiveArraySize() const { return _primitiveArraySize; }
         #endif
@@ -189,9 +189,9 @@ class Structure {
     private:
         Int _identifier;
 
-        Properties _properties;
-        Primitives _primitives;
-        Structures _structures;
+        Containers::Array<Property> _properties;
+        Containers::Array<Type> _primitives;
+        Containers::Array<std::pair<Int, std::pair<Int, Int>>> _structures;
         std::size_t _primitiveCount;
         std::size_t _primitiveArraySize;
 };
