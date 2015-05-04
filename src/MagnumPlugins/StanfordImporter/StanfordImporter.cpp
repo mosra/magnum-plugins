@@ -136,7 +136,7 @@ template<class T> struct EndianSwap<FileFormat::BigEndian, T> {
 };
 
 template<class T, FileFormat format, class U> inline T extractAndSkip(const char*& buffer) {
-    const T result(EndianSwap<format, U>{}(*reinterpret_cast<const U*>(buffer)));
+    const auto result = T(EndianSwap<format, U>{}(*reinterpret_cast<const U*>(buffer)));
     buffer += sizeof(U);
     return result;
 }
