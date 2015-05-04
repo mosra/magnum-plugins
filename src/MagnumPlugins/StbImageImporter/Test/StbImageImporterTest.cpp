@@ -45,7 +45,7 @@ struct StbImageImporterTest: TestSuite::Tester {
 };
 
 StbImageImporterTest::StbImageImporterTest() {
-    addTests({&StbImageImporterTest::grayPng,
+    addTests<StbImageImporterTest>({&StbImageImporterTest::grayPng,
               &StbImageImporterTest::grayJpeg,
               &StbImageImporterTest::rgbPng,
               &StbImageImporterTest::rgbJpeg,

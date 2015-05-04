@@ -68,7 +68,7 @@ struct StanfordImporterTest: TestSuite::Tester {
 };
 
 StanfordImporterTest::StanfordImporterTest() {
-    addTests({&StanfordImporterTest::invalidSignature,
+    addTests<StanfordImporterTest>({&StanfordImporterTest::invalidSignature,
 
               &StanfordImporterTest::invalidFormat,
               &StanfordImporterTest::unsupportedFormat,

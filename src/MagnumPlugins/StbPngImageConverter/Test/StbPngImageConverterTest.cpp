@@ -62,7 +62,7 @@ namespace {
 }
 
 StbPngImageConverterTest::StbPngImageConverterTest() {
-    addTests({&StbPngImageConverterTest::wrongFormat,
+    addTests<StbPngImageConverterTest>({&StbPngImageConverterTest::wrongFormat,
               &StbPngImageConverterTest::wrongType,
 
               &StbPngImageConverterTest::data});

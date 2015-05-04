@@ -48,7 +48,7 @@ struct AnySceneImporterTest: TestSuite::Tester {
 };
 
 AnySceneImporterTest::AnySceneImporterTest(): _manager{MAGNUM_PLUGINS_IMPORTER_DIR} {
-    addTests({&AnySceneImporterTest::obj,
+    addTests<AnySceneImporterTest>({&AnySceneImporterTest::obj,
               &AnySceneImporterTest::ply,
 
               &AnySceneImporterTest::unknown});

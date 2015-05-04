@@ -49,7 +49,7 @@ struct AnyImageImporterTest: TestSuite::Tester {
 };
 
 AnyImageImporterTest::AnyImageImporterTest(): _manager{MAGNUM_PLUGINS_IMPORTER_DIR} {
-    addTests({&AnyImageImporterTest::tga,
+    addTests<AnyImageImporterTest>({&AnyImageImporterTest::tga,
               &AnyImageImporterTest::jpeg,
               &AnyImageImporterTest::png,
 
