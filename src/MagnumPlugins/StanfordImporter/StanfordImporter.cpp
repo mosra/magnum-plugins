@@ -139,12 +139,12 @@ template<class T> struct EndianSwap<FileFormat::BigEndian, T> {
 
 template<class T, FileFormat format, class U> inline T extractAndSkip(const char*& buffer) {
     /* GCC 4.5 doesn't like {} here */
-    const T result(EndianSwap<format, U>()(*reinterpret_cast<const U*>(buffer)));
+    const auto result = T(EndianSwap<format, U>()(*reinterpret_cast<const U*>(buffer)));
     buffer += sizeof(U);
     return result;
 }
 
-template<class T, FileFormat format> Float extractAndSkip(const char*& buffer, const Type type) {
+template<class T, FileFormat format> T extractAndSkip(const char*& buffer, const Type type) {
     switch(type) {
         #define _c(type) case Type::type: return extractAndSkip<T, format, type>(buffer);
         _c(UnsignedByte)
