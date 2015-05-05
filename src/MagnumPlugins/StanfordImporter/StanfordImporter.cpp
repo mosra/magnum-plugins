@@ -187,8 +187,9 @@ inline void extractTriangle(std::vector<UnsignedInt>& indices, const char* const
 inline void extractQuad(std::vector<UnsignedInt>& indices, const char* const buffer, const FileFormat fileFormat, const Type indexType) {
     const char* position = buffer;
 
-    /* GCC 4.7(4.8?) doesn't properly sequence the operations in list-initializer */
-    #ifndef CORRADE_GCC47_COMPATIBILITY
+    /* GCC 4.7(4.8?) and MSVC 2013 doesn't properly sequence the operations in
+       list-initializer */
+    #if !defined(CORRADE_GCC47_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
     Vector4ui quad{
         extractAndSkip<UnsignedInt>(position, fileFormat, indexType),
         extractAndSkip<UnsignedInt>(position, fileFormat, indexType),
