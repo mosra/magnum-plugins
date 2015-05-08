@@ -135,13 +135,14 @@ later.
 MagnumPlugins-GLTests depend on active X11 session, thus they should be run
 from Jenkins instance running on graphical user session.
 
-There is also MinGW-w64, Emscripten and NaCl configuration, add or update them
-with the commands below. See @ref building-crosscompiling for more information
-about setting up the crosscompilers and `toolchains/` submodule. For Emscripten
-you need also **Node.js** installed to run the tests.
+There is also MinGW-w64, Emscripten, NaCl and Android configuration, add or
+update them with the commands below. See @ref building-crosscompiling for more
+information about setting up the crosscompilers and `toolchains/` submodule.
+For Emscripten you need also **Node.js** installed to run the tests.
 
     java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-MinGW-w64 < package/ci/jenkins-mingw-w64.xml
     java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-Emscripten < package/ci/jenkins-emscripten.xml
     java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-NaCl < package/ci/jenkins-nacl.xml
+    java -jar ~/jenkins-cli.jar -s http://localhost:8080 update-job MagnumPlugins-Android < package/ci/jenkins-android.xml
 */
 }

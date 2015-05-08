@@ -1,0 +1,44 @@
+# Author: mosra <mosra@centrum.cz>
+pkgname=android-arm-magnum-plugins
+pkgver=dev
+pkgrel=1
+pkgdesc="Plugins for Magnum OpenGL graphics engine (Android ARM)"
+arch=('any')
+url="http://mosra.cz/blog/magnum.php"
+license=('MIT')
+depends=('android-arm-magnum')
+makedepends=('cmake' 'ninja' 'android-ndk' 'corrade')
+options=('!strip' '!buildflags')
+
+_rootdir=$startdir/../../
+
+build() {
+    if [ ! -d "$_rootdir/build-android-arm" ] ; then
+        mkdir "$_rootdir/build-android-arm"
+        cd "$_rootdir/build-android-arm"
+
+        cmake .. \
+            -DCMAKE_MODULE_PATH="$_rootdir/toolchains/modules" \
+            -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/Android-ARM.cmake" \
+            -G Ninja
+    fi
+
+    cd "$_rootdir/build-android-arm"
+
+    # OpenGEX importer is not ported to platforms without std::stof() etc
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/opt/android-ndk/platforms/android-19/arch-arm/usr \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_OPENGEXIMPORTER=OFF \
+        -DWITH_STANFORDIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBPNGIMAGECONVERTER=ON
+    ninja
+}
+
+package() {
+    cd "$_rootdir/build-android-arm"
+    DESTDIR="$pkgdir/" ninja install/strip
+}
