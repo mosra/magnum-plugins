@@ -324,7 +324,7 @@ template<> struct ExtractToType<Double> {
 };
 #endif
 
-template<class> Type typeFor();
+template<class> constexpr Type typeFor();
 #define _c(T) template<> constexpr Type typeFor<T>() { return Type::T; }
 _c(UnsignedByte)
 _c(Byte)
