@@ -189,21 +189,15 @@ inline void extractTriangle(std::vector<UnsignedInt>& indices, const char* const
 inline void extractQuad(std::vector<UnsignedInt>& indices, const char* const buffer, const FileFormat fileFormat, const Type indexType) {
     const char* position = buffer;
 
-    /* GCC 4.7(4.8?) doesn't properly sequence the operations in list-initializer */
-    #ifndef CORRADE_GCC47_COMPATIBILITY
-    Vector4ui quad{
-        extractAndSkip<UnsignedInt>(position, fileFormat, indexType),
-        extractAndSkip<UnsignedInt>(position, fileFormat, indexType),
-        extractAndSkip<UnsignedInt>(position, fileFormat, indexType),
-        extractAndSkip<UnsignedInt>(position, fileFormat, indexType)
-    };
-    #else
+    /* GCC <=4.8 doesn't properly sequence the operations in list-initializer
+       (e.g. Vector4ui{extractAndSkip(), extractAndSkip(), ...}, so I need to
+       make the order really explicit. From what I understood from the specs,
+       this should be defined when using {}. Am I right? */
     Vector4ui quad; /** @todo NoInit */
     quad[0] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
     quad[1] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
     quad[2] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
     quad[3] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
-    #endif
 
     /* 0 0---3
        |\ \  |
