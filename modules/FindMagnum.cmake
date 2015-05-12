@@ -246,7 +246,7 @@ foreach(component ${Magnum_FIND_COMPONENTS})
     if(component MATCHES ".+AudioImporter")
         set(_MAGNUM_${_COMPONENT}_DEPENDENCIES Audio)
     elseif(component MATCHES ".+(Font|FontConverter)")
-        set(_MAGNUM_${_COMPONENT}_DEPENDENCIES TextureTools Text)
+        set(_MAGNUM_${_COMPONENT}_DEPENDENCIES Text TextureTools)
     endif()
 
     list(APPEND _MAGNUM_ADDITIONAL_COMPONENTS ${_MAGNUM_${_COMPONENT}_DEPENDENCIES})
@@ -387,6 +387,16 @@ foreach(component ${Magnum_FIND_COMPONENTS})
                 set(_MAGNUM_${_COMPONENT}_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
+            endif()
+
+            # Find also EGL library, if on ES
+            if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES)
+                find_package(EGL)
+                if(EGL_FOUND)
+                    list(APPEND _MAGNUM_${_COMPONENT}_LIBRARIES ${EGL_LIBRARY})
+                else()
+                    unset(MAGNUM_${_COMPONENT}_LIBRARY)
+                endif()
             endif()
 
         # (Windowless) NaCl application dependencies
