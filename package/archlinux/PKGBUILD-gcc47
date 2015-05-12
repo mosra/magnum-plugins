@@ -7,7 +7,7 @@ arch=('i686' 'x86_64')
 url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
 depends=('magnum')
-makedepends=('cmake' 'ninja' 'qt4' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
+makedepends=('cmake' 'ninja' 'gcc47' 'qt4' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
 options=(!strip)
 provides=('magnum-plugins-git')
 
