@@ -73,11 +73,10 @@ cmake .. \
   `#-DWITH_PNGIMPORTER=ON` \
     -DWITH_STANFORDIMPORTER=ON \
     -DWITH_STBIMAGEIMPORTER=ON \
-    -DWITH_STBPNGIMAGECONVERTER=ON \
-    -G Ninja
+    -DWITH_STBPNGIMAGECONVERTER=ON
 
-ninja
-ninja install
+make -j
+make -j install
 ]]>
     </command>
     </hudson.tasks.Shell>

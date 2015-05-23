@@ -7,7 +7,7 @@ arch=('any')
 url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
 depends=('emscripten-magnum')
-makedepends=('cmake' 'ninja' 'emscripten')
+makedepends=('cmake' 'emscripten')
 options=(!strip !buildflags)
 
 _rootdir=$startdir/../../
@@ -19,8 +19,7 @@ build() {
 
         cmake .. \
             -DCMAKE_MODULE_PATH="$_rootdir/toolchains/modules" \
-            -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/Emscripten.cmake" \
-            -G Ninja
+            -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/Emscripten.cmake"
     fi
 
     cd "$_rootdir/build-emscripten"
@@ -34,10 +33,10 @@ build() {
         -DWITH_STANFORDIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
         -DWITH_STBPNGIMAGECONVERTER=ON
-    ninja
+    make
 }
 
 package() {
     cd "$_rootdir/build-emscripten"
-    DESTDIR="$pkgdir/" ninja install
+    DESTDIR="$pkgdir/" make install
 }
