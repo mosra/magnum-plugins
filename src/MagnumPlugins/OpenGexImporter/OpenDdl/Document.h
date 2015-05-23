@@ -263,9 +263,9 @@ Containers::ArrayReference<const Float> data = vertexArray.firstChild().asArray<
 // ...
 @endcode
 
-@requires_gl On OpenGL ES the `double` type is not recognized. Additionally,
-    due to JavaScript limitations, on @ref MAGNUM_TARGET_WEBGL "WebGL" the
-    `unsigned_int64` and `int64` types are not recognized.
+@requires_gl On OpenGL ES and WebGL the `double` type is not recognized.
+    Additionally, due to JavaScript limitations, on WebGL the `unsigned_int64`
+    and `int64` types are not recognized.
 */
 class Document {
     friend Property;

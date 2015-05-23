@@ -73,15 +73,13 @@ enum class Type: UnsignedInt {
     /**
      * Unsigned long (64 bit). Stored in @ref Magnum::UnsignedLong "UnsignedLong"
      * type.
-     * @attention 64-bit integers are not available in
-     *      @ref MAGNUM_TARGET_WEBGL "WebGL".
+     * @requires_gles 64-bit integers are not available in WebGL.
      */
     UnsignedLong,
 
     /**
      * Long (64 bit). Stored in @ref Magnum::Long "Long" type.
-     * @attention 64-bit integers are not available in
-     *      @ref MAGNUM_TARGET_WEBGL "WebGL".
+     * @requires_gles 64-bit integers are not available in WebGL.
      */
     Long,
     #endif
@@ -94,7 +92,8 @@ enum class Type: UnsignedInt {
     #ifndef MAGNUM_TARGET_GLES
     /**
      * Double (64 bit). Stored in @ref Magnum::Double "Double" type.
-     * @requires_gl Only single-precision types are available in OpenGL ES.
+     * @requires_gl Only single-precision types are available in OpenGL ES and
+     *      WebGL.
      */
     Double,
     #endif
@@ -148,15 +147,13 @@ enum class PropertyType: UnsignedByte {
     #ifndef MAGNUM_TARGET_WEBGL
     /**
      * Unsigned long (64 bit). Stored as if it is @ref PropertyType::Int.
-     * @attention 64-bit integers are not available in
-     *      @ref MAGNUM_TARGET_WEBGL "WebGL".
+     * @requires_gles 64-bit integers are not available in WebGL.
      */
     UnsignedLong,
 
     /**
      * Long (64 bit). Stored as if it is @ref PropertyType::Int.
-     * @attention 64-bit integers are not available in
-     *      @ref MAGNUM_TARGET_WEBGL "WebGL".
+     * @requires_gles 64-bit integers are not available in WebGL.
      */
     Long,
     #endif
@@ -169,7 +166,8 @@ enum class PropertyType: UnsignedByte {
     #ifndef MAGNUM_TARGET_GLES
     /**
      * Double (64 bit). Stored as if it is @ref PropertyType::Float.
-     * @requires_gl Only single-precision types are available in OpenGL ES.
+     * @requires_gl Only single-precision types are available in OpenGL ES and
+     *      WebGL.
      */
     Double,
     #endif
