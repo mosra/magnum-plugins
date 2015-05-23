@@ -49,8 +49,22 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageReferenc
 
     Int components;
     switch(image.format()) {
-        case ColorFormat::Red: components = 1; break;
-        case ColorFormat::RG: components = 2; break;
+        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
+        case ColorFormat::Red:
+        #endif
+        #ifdef MAGNUM_TARGET_GLES2
+        case ColorFormat::Luminance:
+        #endif
+            components = 1;
+            break;
+        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
+        case ColorFormat::RG:
+        #endif
+        #ifdef MAGNUM_TARGET_GLES2
+        case ColorFormat::LuminanceAlpha:
+        #endif
+            components = 2;
+            break;
         case ColorFormat::RGB: components = 3; break;
         case ColorFormat::RGBA: components = 4; break;
         default:

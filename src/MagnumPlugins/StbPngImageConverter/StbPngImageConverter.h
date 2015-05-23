@@ -38,7 +38,9 @@ namespace Magnum { namespace Trade {
 
 Supports images with format @ref ColorFormat::Red, @ref ColorFormat::RG,
 @ref ColorFormat::RGB or @ref ColorFormat::RGBA and type
-@ref ColorType::UnsignedByte.
+@ref ColorType::UnsignedByte. On OpenGL ES 2.0 and WebGL 1.0 accepts also
+@ref ColorFormat::Luminance instead of @ref ColorFormat::Red and
+@ref ColorFormat::LuminanceAlpha instaed of @ref ColorFormat::RG.
 
 This plugin is built if `WITH_STBPNGIMAGECONVERTER` is enabled when building
 Magnum Plugins. To use dynamic plugin, you need to load `StbPngImageConverter`
