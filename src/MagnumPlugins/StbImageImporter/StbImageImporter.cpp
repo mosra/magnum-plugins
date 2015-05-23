@@ -79,17 +79,21 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
         case 1:
             #ifndef MAGNUM_TARGET_GLES2
             format = ColorFormat::Red;
-            #else
+            #elif !defined(MAGNUM_TARGET_WEBGL)
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
                 ColorFormat::Red : ColorFormat::Luminance;
+            #else
+            format = ColorFormat::Luminance;
             #endif
             break;
         case 2:
             #ifndef MAGNUM_TARGET_GLES2
             format = ColorFormat::RG;
-            #else
+            #elif !defined(MAGNUM_TARGET_WEBGL)
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
                 ColorFormat::RG : ColorFormat::LuminanceAlpha;
+            #else
+            format = ColorFormat::LuminanceAlpha;
             #endif
             break;
 
