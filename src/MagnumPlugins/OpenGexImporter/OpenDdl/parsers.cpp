@@ -28,6 +28,7 @@
 #include <cstring>
 #include <limits>
 #include <tuple>
+#include <Corrade/Utility/Debug.h>
 
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
 

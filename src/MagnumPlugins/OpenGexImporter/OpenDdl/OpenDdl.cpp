@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <tuple>
+#include <Corrade/Utility/Debug.h>
 
 namespace Magnum { namespace OpenDdl {
 
