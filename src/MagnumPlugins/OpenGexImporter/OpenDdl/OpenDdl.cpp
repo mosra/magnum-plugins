@@ -125,7 +125,7 @@ enum: std::size_t {
     NullReference = ~std::size_t{}
 };
 
-bool checkReferencePrefix(std::optional<Structure> s, Containers::ArrayReference<const char> prefix) {
+bool checkReferencePrefix(std::optional<Structure> s, Containers::ArrayView<const char> prefix) {
     const bool isLocal = !prefix.empty() && prefix[0] == '%';
 
     while(!prefix.empty()) {
@@ -135,7 +135,7 @@ bool checkReferencePrefix(std::optional<Structure> s, Containers::ArrayReference
 
         /* If the name matches, cut the prefix, otherwise nothing found */
         if(s->hasName()) {
-            const Containers::ArrayReference<const char> leafName = prefix.suffix(Implementation::findLastOf(prefix, "$%"));
+            const Containers::ArrayView<const char> leafName = prefix.suffix(Implementation::findLastOf(prefix, "$%"));
             if(Implementation::equals(leafName, {s->name().data(), s->name().size()}))
                 prefix = prefix.prefix(leafName.begin());
             else return false;
@@ -156,10 +156,10 @@ bool checkReferencePrefix(std::optional<Structure> s, Containers::ArrayReference
 
 }
 
-std::size_t Document::dereference(const std::size_t originatingStructure, const Containers::ArrayReference<const char> reference) const {
+std::size_t Document::dereference(const std::size_t originatingStructure, const Containers::ArrayView<const char> reference) const {
     CORRADE_INTERNAL_ASSERT(!reference.empty());
 
-    const Containers::ArrayReference<const char> leafName = reference.suffix(Implementation::findLastOf(reference, "$%"));
+    const Containers::ArrayView<const char> leafName = reference.suffix(Implementation::findLastOf(reference, "$%"));
 
     /* If the reference is a single local name, try to find in in siblings first */
     if(leafName.begin() == reference.begin() && reference[0] == '%') {
@@ -171,7 +171,7 @@ std::size_t Document::dereference(const std::size_t originatingStructure, const 
 
     /* The element which has leaf name is the result if also the rest of the
        reference prefix matches in parent structures */
-    const Containers::ArrayReference<const char> referencePrefix = reference.prefix(leafName.begin());
+    const Containers::ArrayView<const char> referencePrefix = reference.prefix(leafName.begin());
     for(std::size_t i = 0; i != _structures.size(); ++i) {
         const Structure s{*this, _structures[i]};
         if(s.hasName() && Implementation::equals(leafName, {s.name().data(), s.name().size()}) && checkReferencePrefix(s.parent(), referencePrefix))
@@ -181,7 +181,7 @@ std::size_t Document::dereference(const std::size_t originatingStructure, const 
     return NullReference;
 }
 
-bool Document::parse(Containers::ArrayReference<const char> data, const std::initializer_list<CharacterLiteral> structureIdentifiers, const std::initializer_list<CharacterLiteral> propertyIdentifiers) {
+bool Document::parse(Containers::ArrayView<const char> data, const std::initializer_list<CharacterLiteral> structureIdentifiers, const std::initializer_list<CharacterLiteral> propertyIdentifiers) {
     _structureIdentifiers = {structureIdentifiers.begin(), structureIdentifiers.size()};
     _propertyIdentifiers = {propertyIdentifiers.begin(), propertyIdentifiers.size()};
 
@@ -189,7 +189,7 @@ bool Document::parse(Containers::ArrayReference<const char> data, const std::ini
     std::string buffer;
 
     const char* i = Implementation::whitespace(data);
-    std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>> references;
+    std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>> references;
     i = parseStructureList(NoParent, data.suffix(i), references, buffer, error);
 
     if(!i) {
@@ -295,7 +295,7 @@ bool Document::parse(Containers::ArrayReference<const char> data, const std::ini
     }
 
     /* Everything parsed, dereference references */
-    for(const std::pair<std::size_t, Containers::ArrayReference<const char>> reference: references) {
+    for(const std::pair<std::size_t, Containers::ArrayView<const char>> reference: references) {
         /* Null reference */
         if(reference.second.empty())
             _references.push_back(NullReference);
@@ -314,12 +314,12 @@ bool Document::parse(Containers::ArrayReference<const char> data, const std::ini
     return true;
 }
 
-const char* Document::parseProperty(const Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, const Int identifier, Implementation::ParseError& error) {
+const char* Document::parseProperty(const Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, const Int identifier, Implementation::ParseError& error) {
     bool boolValue;
     Int integerValue;
     Float floatValue;
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue;
 
     const char* i;
@@ -367,7 +367,7 @@ const char* Document::parseProperty(const Containers::ArrayReference<const char>
 namespace Implementation {
 
 template<> struct ExtractDataListItem<Type::Bool> {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string&, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>&, std::string&, Implementation::ParseError& error) {
         const char* i;
         bool value;
         std::tie(i, value) = Implementation::boolLiteral(data, error);
@@ -377,7 +377,7 @@ template<> struct ExtractDataListItem<Type::Bool> {
 };
 
 template<class T> struct ExtractIntegralDataListItem {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string& buffer, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>&, std::string& buffer, Implementation::ParseError& error) {
         const char* i;
         T value;
         std::tie(i, value, std::ignore) = Implementation::integralLiteral<T>(data, buffer, error);
@@ -400,7 +400,7 @@ _c(Long)
 #undef _c
 
 template<class T> struct ExtractFloatingPointDataListItem {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string& buffer, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>&, std::string& buffer, Implementation::ParseError& error) {
         const char* i;
         T value;
         std::tie(i, value) = Implementation::floatingPointLiteral<T>(data, buffer, error);
@@ -418,7 +418,7 @@ _c(Double)
 #undef _c
 
 template<> struct ExtractDataListItem<Type::String> {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string&, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>&, std::string&, Implementation::ParseError& error) {
         const char* i;
         std::string value;
         std::tie(i, value) = Implementation::stringLiteral(data, error);
@@ -428,9 +428,9 @@ template<> struct ExtractDataListItem<Type::String> {
 };
 
 template<> struct ExtractDataListItem<Type::Reference> {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string&, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string&, Implementation::ParseError& error) {
         const char* i;
-        Containers::ArrayReference<const char> value;
+        Containers::ArrayView<const char> value;
         std::tie(i, value) = Implementation::referenceLiteral(data, error);
         /* Containing structure will be put into the vector after its data are
            parsed */
@@ -440,7 +440,7 @@ template<> struct ExtractDataListItem<Type::Reference> {
 };
 
 template<> struct ExtractDataListItem<Type::Type> {
-    static const char* extract(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>&, std::string&, Implementation::ParseError& error) {
+    static const char* extract(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>&, std::string&, Implementation::ParseError& error) {
         const char* i;
         Type value;
         std::tie(i, value) = Implementation::typeLiteral(data, error);
@@ -453,7 +453,7 @@ template<> struct ExtractDataListItem<Type::Type> {
 
 namespace {
 
-template<Type type> std::pair<const char*, std::size_t> dataList(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
+template<Type type> std::pair<const char*, std::size_t> dataList(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
     const char* i = data;
     std::size_t j = 0;
     for(; i && i != data.end() && *i != '}'; ) {
@@ -476,7 +476,7 @@ template<Type type> std::pair<const char*, std::size_t> dataList(const Container
     return {i, j};
 }
 
-template<Type type> std::pair<const char*, std::size_t> dataArrayList(const Containers::ArrayReference<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, const std::size_t subArraySize, Implementation::ParseError& error) {
+template<Type type> std::pair<const char*, std::size_t> dataArrayList(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, const std::size_t subArraySize, Implementation::ParseError& error) {
     if(!subArraySize) return dataList<type>(data, document, references, buffer, error);
 
     const char* i = data;
@@ -526,9 +526,9 @@ template<Type type> std::pair<const char*, std::size_t> dataArrayList(const Cont
     return {i, j*subArraySize};
 }
 
-Int identifierId(const Containers::ArrayReference<const char> data, Containers::ArrayReference<const CharacterLiteral> identifiers) {
+Int identifierId(const Containers::ArrayView<const char> data, Containers::ArrayView<const CharacterLiteral> identifiers) {
     Int i = 0;
-    for(const Containers::ArrayReference<const char> identifier: identifiers) {
+    for(const Containers::ArrayView<const char> identifier: identifiers) {
         if(Implementation::equals(data, identifier)) return i;
         ++i;
     }
@@ -538,7 +538,7 @@ Int identifierId(const Containers::ArrayReference<const char> data, Containers::
 
 }
 
-std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t parent, const Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
+std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t parent, const Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
     /* Identifier */
     const char* const structureIdentifier = Implementation::identifier(data, error);
     if(!structureIdentifier) return {};
@@ -751,7 +751,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
     }
 }
 
-const char* Document::parseStructureList(const std::size_t parent, const Containers::ArrayReference<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayReference<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
+const char* Document::parseStructureList(const std::size_t parent, const Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
     const std::size_t listStart = _structures.size();
 
     /* Parse all structures in the list */
@@ -782,7 +782,7 @@ bool Document::validate(const Validation::Structures allowedRootStructures, cons
     return validateLevel(findFirstChild(), {allowedRootStructures.begin(), allowedRootStructures.size()}, {structures.begin(), structures.size()}, countsBuffer);
 }
 
-bool Document::validateLevel(const std::optional<Structure> first, const Containers::ArrayReference<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, const Containers::ArrayReference<const Validation::Structure> structures, std::vector<Int>& counts) const {
+bool Document::validateLevel(const std::optional<Structure> first, const Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, const Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const {
     counts.assign(allowedStructures.size(), 0);
 
     /* Count number of custom structures in this level */
@@ -836,7 +836,7 @@ bool Document::validateLevel(const std::optional<Structure> first, const Contain
     return true;
 }
 
-bool Document::validateStructure(const Structure structure, const Validation::Structure& validation, const Containers::ArrayReference<const Validation::Structure> structures, std::vector<Int>& counts) const {
+bool Document::validateStructure(const Structure structure, const Validation::Structure& validation, const Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const {
     counts.assign(validation.properties().size(), 0);
 
     /* Verify that there is no unexpected property (ignoring unknown ones) */
@@ -956,7 +956,7 @@ std::optional<Structure> Document::findFirstChildOf(const std::initializer_list<
     return findFirstChildOf({identifiers.begin(), identifiers.size()});
 }
 
-std::optional<Structure> Document::findFirstChildOf(const Containers::ArrayReference<const Int> identifiers) const {
+std::optional<Structure> Document::findFirstChildOf(const Containers::ArrayView<const Int> identifiers) const {
     /* Shortcut with less branching */
     if(identifiers.size() == 1) return findFirstChildOf(identifiers[0]);
 
@@ -1023,7 +1023,7 @@ std::optional<Structure> Structure::findNextOf(const Int identifier) const {
     return std::nullopt;
 }
 
-std::optional<Structure> Structure::findNextOf(const Containers::ArrayReference<const Int> identifiers) const {
+std::optional<Structure> Structure::findNextOf(const Containers::ArrayView<const Int> identifiers) const {
     /* Shortcut with less branching */
     if(identifiers.size() == 1) return findNextOf(identifiers[0]);
 
@@ -1094,7 +1094,7 @@ std::optional<Structure> Structure::findFirstChildOf(const Int identifier) const
     return std::nullopt;
 }
 
-std::optional<Structure> Structure::findFirstChildOf(const Containers::ArrayReference<const Int> identifiers) const {
+std::optional<Structure> Structure::findFirstChildOf(const Containers::ArrayView<const Int> identifiers) const {
     /* Shortcut with less branching */
     if(identifiers.size() == 1) return findFirstChildOf(identifiers[0]);
 

@@ -79,7 +79,7 @@ auto FreeTypeFont::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return ftFont; }
 
-std::pair<Float, Float> FreeTypeFont::doOpenSingleData(const Containers::ArrayReference<const char> data, const Float size) {
+std::pair<Float, Float> FreeTypeFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) {
     /* We need to preserve the data for whole FT_Face lifetime */
     _data = Containers::Array<unsigned char>(data.size());
     std::copy(data.begin(), data.end(), _data.begin());

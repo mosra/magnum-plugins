@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <limits>
 #include <unordered_map>
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Quaternion.h>
@@ -109,7 +109,7 @@ void gatherNodes(OpenDdl::Structure node, std::vector<OpenDdl::Structure>& nodes
 
 }
 
-void OpenGexImporter::doOpenData(const Containers::ArrayReference<const char> data) {
+void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
     std::unique_ptr<Document> d{new Document};
 
     /* Parse the document */
@@ -408,7 +408,7 @@ UnsignedInt OpenGexImporter::doMesh3DCount() const {
 namespace {
 
 template<class Result, class Original> std::vector<Result> extractVertexData3(const OpenDdl::Structure vertexArray) {
-    const Containers::ArrayReference<const typename Original::Type> data = vertexArray.asArray<typename Original::Type>();
+    const Containers::ArrayView<const typename Original::Type> data = vertexArray.asArray<typename Original::Type>();
     const std::size_t vertexCount = vertexArray.arraySize()/(vertexArray.subArraySize() ? vertexArray.subArraySize() : 1);
 
     std::vector<Result> output;
@@ -451,7 +451,7 @@ template<class Result> std::vector<Result> extractVertexData(const OpenDdl::Stru
 }
 
 template<class T> std::vector<UnsignedInt> extractIndices(const OpenDdl::Structure indexArray) {
-    const Containers::ArrayReference<const T> data = indexArray.asArray<T>();
+    const Containers::ArrayView<const T> data = indexArray.asArray<T>();
     return {data.begin(), data.end()};
 }
 

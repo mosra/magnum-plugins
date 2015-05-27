@@ -99,11 +99,11 @@ template<class T> inline T parseHex(const char* data) {
     return out;
 }
 
-inline bool equalsPrefix(const Containers::ArrayReference<const char> data, const char* const prefix) {
+inline bool equalsPrefix(const Containers::ArrayView<const char> data, const char* const prefix) {
     return std::strncmp(data, prefix, data.size()) == 0;
 }
 
-template<std::size_t n> inline const char* prefix(const Containers::ArrayReference<const char> data, const char(&compare)[n]) {
+template<std::size_t n> inline const char* prefix(const Containers::ArrayView<const char> data, const char(&compare)[n]) {
     /* Propagate errors */
     if(!data) return nullptr;
 
@@ -113,18 +113,18 @@ template<std::size_t n> inline const char* prefix(const Containers::ArrayReferen
     return equalsPrefix(data.prefix(end), compare) ? end : nullptr;
 }
 
-void extractWithoutUnderscore(const Containers::ArrayReference<const char> data, std::string& buffer) {
+void extractWithoutUnderscore(const Containers::ArrayView<const char> data, std::string& buffer) {
     buffer.clear();
     for(char c: data) if(c != '_') buffer += c;
 }
 
 }
 
-bool equals(const Containers::ArrayReference<const char> a, const Containers::ArrayReference<const char> b) {
+bool equals(const Containers::ArrayView<const char> a, const Containers::ArrayView<const char> b) {
     return a.size() == b.size() && equalsPrefix(a, b);
 }
 
-const char* whitespace(const Containers::ArrayReference<const char> data) {
+const char* whitespace(const Containers::ArrayView<const char> data) {
     /* Propagate error */
     if(!data) return nullptr;
 
@@ -159,7 +159,7 @@ const char* whitespace(const Containers::ArrayReference<const char> data) {
     return i;
 }
 
-std::pair<const char*, char> escapedChar(const Containers::ArrayReference<const char> data, ParseError& error) {
+std::pair<const char*, char> escapedChar(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Escape sequence is not standalone, thus we can't expect it anywhere */
     CORRADE_INTERNAL_ASSERT(!data.empty() && *data == '\\');
 
@@ -192,7 +192,7 @@ std::pair<const char*, char> escapedChar(const Containers::ArrayReference<const 
     return {};
 }
 
-const char* escapedUnicode(const Containers::ArrayReference<const char> data, std::string& out, ParseError& error) {
+const char* escapedUnicode(const Containers::ArrayView<const char> data, std::string& out, ParseError& error) {
     /* Escape sequence is not standalone, thus we can't expect it anywhere */
     CORRADE_INTERNAL_ASSERT(!data.empty() && *data == '\\');
 
@@ -220,7 +220,7 @@ const char* escapedUnicode(const Containers::ArrayReference<const char> data, st
     return end;
 }
 
-const char* identifier(const Containers::ArrayReference<const char> data, ParseError& error) {
+const char* identifier(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Propagate errors */
     if(!data) return nullptr;
 
@@ -244,7 +244,7 @@ const char* identifier(const Containers::ArrayReference<const char> data, ParseE
     return i;
 }
 
-std::pair<const char*, bool> boolLiteral(const Containers::ArrayReference<const char> data, ParseError& error) {
+std::pair<const char*, bool> boolLiteral(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -255,7 +255,7 @@ std::pair<const char*, bool> boolLiteral(const Containers::ArrayReference<const 
     return {};
 }
 
-std::pair<const char*, char> characterLiteral(const Containers::ArrayReference<const char> data, ParseError& error) {
+std::pair<const char*, char> characterLiteral(const Containers::ArrayView<const char> data, ParseError& error) {
     if(data.size() >= 3 && data[0] == '\'') {
         /* Allowed ASCII character */
         if(((data[1] >= 0x20 && data[1] < '\'') ||
@@ -343,7 +343,7 @@ _c(Double)
 #endif
 #undef _c
 
-template<Int base> const char* possiblyNumericCharacters(const Containers::ArrayReference<const char> data) {
+template<Int base> const char* possiblyNumericCharacters(const Containers::ArrayView<const char> data) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -353,7 +353,7 @@ template<Int base> const char* possiblyNumericCharacters(const Containers::Array
     return i;
 }
 
-template<Int base, class T> const char* numericCharacters(const Containers::ArrayReference<const char> data, ParseError& error) {
+template<Int base, class T> const char* numericCharacters(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -367,7 +367,7 @@ template<Int base, class T> const char* numericCharacters(const Containers::Arra
     return i;
 }
 
-template<Int base, class T> std::pair<const char*, T> baseNLiteral(const Containers::ArrayReference<const char> data, std::string& buffer, ParseError& error) {
+template<Int base, class T> std::pair<const char*, T> baseNLiteral(const Containers::ArrayView<const char> data, std::string& buffer, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -388,7 +388,7 @@ template<Int base, class T> std::pair<const char*, T> baseNLiteral(const Contain
 
 }
 
-template<class T> std::tuple<const char*, T, Int> integralLiteral(const Containers::ArrayReference<const char> data, std::string& buffer, ParseError& error) {
+template<class T> std::tuple<const char*, T, Int> integralLiteral(const Containers::ArrayView<const char> data, std::string& buffer, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -453,18 +453,18 @@ template<class T> std::tuple<const char*, T, Int> integralLiteral(const Containe
     return std::make_tuple(i, sign*value, base);
 }
 
-template std::tuple<const char*, UnsignedByte, Int> integralLiteral<UnsignedByte>(Containers::ArrayReference<const char>, std::string&, ParseError&);
-template std::tuple<const char*, Byte, Int> integralLiteral<Byte>(Containers::ArrayReference<const char>, std::string&, ParseError&);
-template std::tuple<const char*, UnsignedShort, Int> integralLiteral<UnsignedShort>(Containers::ArrayReference<const char>, std::string&, ParseError&);
-template std::tuple<const char*, Short, Int> integralLiteral<Short>(Containers::ArrayReference<const char>, std::string&, ParseError&);
-template std::tuple<const char*, UnsignedInt, Int> integralLiteral<UnsignedInt>(Containers::ArrayReference<const char>, std::string&, ParseError&);
-template std::tuple<const char*, Int, Int> integralLiteral<Int>(Containers::ArrayReference<const char>, std::string&, ParseError&);
+template std::tuple<const char*, UnsignedByte, Int> integralLiteral<UnsignedByte>(Containers::ArrayView<const char>, std::string&, ParseError&);
+template std::tuple<const char*, Byte, Int> integralLiteral<Byte>(Containers::ArrayView<const char>, std::string&, ParseError&);
+template std::tuple<const char*, UnsignedShort, Int> integralLiteral<UnsignedShort>(Containers::ArrayView<const char>, std::string&, ParseError&);
+template std::tuple<const char*, Short, Int> integralLiteral<Short>(Containers::ArrayView<const char>, std::string&, ParseError&);
+template std::tuple<const char*, UnsignedInt, Int> integralLiteral<UnsignedInt>(Containers::ArrayView<const char>, std::string&, ParseError&);
+template std::tuple<const char*, Int, Int> integralLiteral<Int>(Containers::ArrayView<const char>, std::string&, ParseError&);
 #ifndef MAGNUM_TARGET_WEBGL
-template std::tuple<const char*, UnsignedLong, Int> integralLiteral<UnsignedLong>(Containers::ArrayReference<const char>, std::string&, ParseError&);
-template std::tuple<const char*, Long, Int> integralLiteral<Long>(Containers::ArrayReference<const char>, std::string&, ParseError&);
+template std::tuple<const char*, UnsignedLong, Int> integralLiteral<UnsignedLong>(Containers::ArrayView<const char>, std::string&, ParseError&);
+template std::tuple<const char*, Long, Int> integralLiteral<Long>(Containers::ArrayView<const char>, std::string&, ParseError&);
 #endif
 
-template<class T> std::pair<const char*, T> floatingPointLiteral(const Containers::ArrayReference<const char> data, std::string& buffer, ParseError& error) {
+template<class T> std::pair<const char*, T> floatingPointLiteral(const Containers::ArrayView<const char> data, std::string& buffer, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -549,12 +549,12 @@ template<class T> std::pair<const char*, T> floatingPointLiteral(const Container
     return {i, ExtractToType<T>::extract(buffer)};
 }
 
-template std::pair<const char*, Float> floatingPointLiteral<Float>(Containers::ArrayReference<const char>, std::string&, ParseError&);
+template std::pair<const char*, Float> floatingPointLiteral<Float>(Containers::ArrayView<const char>, std::string&, ParseError&);
 #ifndef MAGNUM_TARGET_GLES
-template std::pair<const char*, Double> floatingPointLiteral<Double>(Containers::ArrayReference<const char>, std::string&, ParseError&);
+template std::pair<const char*, Double> floatingPointLiteral<Double>(Containers::ArrayView<const char>, std::string&, ParseError&);
 #endif
 
-std::pair<const char*, std::string> stringLiteral(const Containers::ArrayReference<const char> data, ParseError& error) {
+std::pair<const char*, std::string> stringLiteral(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -598,7 +598,7 @@ std::pair<const char*, std::string> stringLiteral(const Containers::ArrayReferen
     return {};
 }
 
-std::pair<const char*, std::string> nameLiteral(const Containers::ArrayReference<const char> data, ParseError& error) {
+std::pair<const char*, std::string> nameLiteral(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -617,7 +617,7 @@ std::pair<const char*, std::string> nameLiteral(const Containers::ArrayReference
     return {i, i ? std::string{data, std::size_t(i - data)} : std::string{}};
 }
 
-std::pair<const char*, Containers::ArrayReference<const char>> referenceLiteral(const Containers::ArrayReference<const char> data, ParseError& error) {
+std::pair<const char*, Containers::ArrayView<const char>> referenceLiteral(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -645,7 +645,7 @@ std::pair<const char*, Containers::ArrayReference<const char>> referenceLiteral(
     return {i, i ? data.prefix(i) : nullptr};
 }
 
-std::pair<const char*, Type> possiblyTypeLiteral(const Containers::ArrayReference<const char> data) {
+std::pair<const char*, Type> possiblyTypeLiteral(const Containers::ArrayView<const char> data) {
     #define _c(identifier, type) \
         if(const char* const c = prefix(data, #identifier)) return {c, Type::type};
     _c(bool, Bool)
@@ -672,7 +672,7 @@ std::pair<const char*, Type> possiblyTypeLiteral(const Containers::ArrayReferenc
     return {};
 }
 
-std::pair<const char*, Type> typeLiteral(const Containers::ArrayReference<const char> data, ParseError& error) {
+std::pair<const char*, Type> typeLiteral(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 
@@ -690,7 +690,7 @@ std::pair<const char*, Type> typeLiteral(const Containers::ArrayReference<const 
     return {};
 }
 
-std::pair<const char*, InternalPropertyType> propertyValue(const Containers::ArrayReference<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Containers::ArrayReference<const char>& referenceValue, Type& typeValue, std::string& buffer, ParseError& error) {
+std::pair<const char*, InternalPropertyType> propertyValue(const Containers::ArrayView<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Containers::ArrayView<const char>& referenceValue, Type& typeValue, std::string& buffer, ParseError& error) {
     /* Propagate errors */
     if(!data) return {};
 

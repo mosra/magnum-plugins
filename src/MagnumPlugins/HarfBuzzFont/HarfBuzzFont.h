@@ -67,7 +67,7 @@ class HarfBuzzFont: public FreeTypeFont {
     private:
         Features doFeatures() const override;
         bool doIsOpened() const override;
-        std::pair<Float, Float> doOpenSingleData(Containers::ArrayReference<const char> data, Float size) override;
+        std::pair<Float, Float> doOpenSingleData(Containers::ArrayView<const char> data, Float size) override;
         void doClose() override;
         std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 

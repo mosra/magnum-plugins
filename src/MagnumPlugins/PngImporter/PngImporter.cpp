@@ -28,7 +28,7 @@
 #include <fstream>
 #include <sstream>
 #include <png.h>
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/ColorFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -55,7 +55,7 @@ void PngImporter::doClose() {
     _in = nullptr;
 }
 
-void PngImporter::doOpenData(const Containers::ArrayReference<const char> data) {
+void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _in = new std::istringstream{{data, data.size()}};
 }
 

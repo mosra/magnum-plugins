@@ -25,7 +25,6 @@
 
 #include "StbImageImporter.h"
 
-#include <Corrade/Containers/Array.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/ColorFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -57,7 +56,7 @@ void StbImageImporter::doClose() {
     _in = nullptr;
 }
 
-void StbImageImporter::doOpenData(const Containers::ArrayReference<const char> data) {
+void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _in = Containers::Array<unsigned char>{data.size()};
     std::copy(data.begin(), data.end(), _in.data());
 }

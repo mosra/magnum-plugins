@@ -26,7 +26,6 @@
 #include "HarfBuzzFont.h"
 
 #include <hb-ft.h>
-#include <Corrade/Containers/Array.h>
 #include <Magnum/Text/GlyphCache.h>
 
 namespace Magnum { namespace Text {
@@ -64,7 +63,7 @@ bool HarfBuzzFont::doIsOpened() const {
     return FreeTypeFont::doIsOpened();
 }
 
-std::pair<Float, Float> HarfBuzzFont::doOpenSingleData(const Containers::ArrayReference<const char> data, const Float size) {
+std::pair<Float, Float> HarfBuzzFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) {
     /* Open FreeType font */
     auto ret = FreeTypeFont::doOpenSingleData(data, size);
 

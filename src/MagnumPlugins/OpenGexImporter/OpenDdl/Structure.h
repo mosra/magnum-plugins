@@ -154,7 +154,7 @@ class Structure {
          * The structure must not be custom and must be of corresponding type.
          * @see @ref isCustom(), @ref type(), @ref subArraySize(), @ref as()
          */
-        template<class T> Containers::ArrayReference<const T> asArray() const;
+        template<class T> Containers::ArrayView<const T> asArray() const;
 
         /**
          * @brief Reference structure data array
@@ -195,7 +195,7 @@ class Structure {
         std::optional<Structure> findNextOf(std::initializer_list<Int> identifiers) const {
             return findNextOf({identifiers.begin(), identifiers.size()});
         }
-        std::optional<Structure> findNextOf(Containers::ArrayReference<const Int> identifiers) const; /**< @overload */
+        std::optional<Structure> findNextOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
 
         /**
          * @brief Find next custom sibling structure of the same identifier
@@ -318,7 +318,7 @@ class Structure {
         std::optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const {
             return findFirstChildOf({identifiers.begin(), identifiers.size()});
         }
-        std::optional<Structure> findFirstChildOf(Containers::ArrayReference<const Int> identifiers) const; /**< @overload */
+        std::optional<Structure> findFirstChildOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
 
         /**
          * @brief First custom child structure of given type
@@ -402,7 +402,7 @@ Structure::as() const {
     return _document.get().data<T>()[_data.get().primitive.begin];
 }
 
-template<class T> Containers::ArrayReference<const T> Structure::asArray() const {
+template<class T> Containers::ArrayView<const T> Structure::asArray() const {
     CORRADE_ASSERT(Implementation::isStructureType<T>(type()),
         "OpenDdl::Structure::asArray(): not of given type", nullptr);
     return {&_document.get().data<T>()[0] + _data.get().primitive.begin, _data.get().primitive.size};
@@ -443,7 +443,7 @@ class StructureList {
 
 class StructureOfIterator {
     public:
-        explicit StructureOfIterator(std::optional<Structure> item, Containers::ArrayReference<const Int> identifiers) noexcept: _item{item}, _identifiers(identifiers) {}
+        explicit StructureOfIterator(std::optional<Structure> item, Containers::ArrayView<const Int> identifiers) noexcept: _item{item}, _identifiers(identifiers) {}
 
         Structure operator*() const { return *_item; }
         bool operator!=(const StructureOfIterator& other) const {
@@ -456,7 +456,7 @@ class StructureOfIterator {
 
     private:
         std::optional<Structure> _item;
-        Containers::ArrayReference<const Int> _identifiers;
+        Containers::ArrayView<const Int> _identifiers;
 };
 
 template<std::size_t size> class StructureOfList {

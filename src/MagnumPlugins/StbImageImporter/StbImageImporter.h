@@ -97,7 +97,7 @@ class StbImageImporter: public AbstractImporter {
         Features doFeatures() const override;
         bool doIsOpened() const override;
         void doClose() override;
-        void doOpenData(Containers::ArrayReference<const char> data) override;
+        void doOpenData(Containers::ArrayView<const char> data) override;
 
         UnsignedInt doImage2DCount() const override;
         std::optional<ImageData2D> doImage2D(UnsignedInt id) override;

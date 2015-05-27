@@ -29,6 +29,8 @@
  * @brief Class @ref Magnum::OpenDdl::Validation::Property, @ref Magnum::OpenDdl::Validation::Structure, typedef @ref Magnum::OpenDdl::Validation::Primitives, @ref Magnum::OpenDdl::Validation::Properties, @ref Magnum::OpenDdl::Validation::Structures, tag @ref Magnum::OpenDdl::Validation::RequiredPropertyType, constant @ref Magnum::OpenDdl::Validation::OptionalProperty, @ref Magnum::OpenDdl::Validation::RequiredProperty
  */
 
+#include <Corrade/Containers/Array.h>
+
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
 
 namespace Magnum { namespace OpenDdl {
@@ -179,9 +181,9 @@ class Structure {
 
         #ifndef DOXYGEN_GENERATING_OUTPUT
         Int identifier() const { return _identifier; }
-        Containers::ArrayReference<const Property> properties() const { return _properties; }
-        Containers::ArrayReference<const Type> primitives() const { return _primitives; }
-        Containers::ArrayReference<const std::pair<Int, std::pair<Int, Int>>> structures() const { return _structures; }
+        Containers::ArrayView<const Property> properties() const { return _properties; }
+        Containers::ArrayView<const Type> primitives() const { return _primitives; }
+        Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> structures() const { return _structures; }
         std::size_t primitiveCount() const { return _primitiveCount; }
         std::size_t primitiveArraySize() const { return _primitiveArraySize; }
         #endif

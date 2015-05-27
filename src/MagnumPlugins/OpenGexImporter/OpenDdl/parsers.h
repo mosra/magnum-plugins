@@ -27,7 +27,7 @@
 
 #include <string>
 #include <tuple>
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/ArrayView.h>
 #include <Magnum/Magnum.h>
 
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
@@ -72,9 +72,9 @@ struct ParseError {
     const char* position;
 };
 
-bool equals(Containers::ArrayReference<const char> a, Containers::ArrayReference<const char> b);
+bool equals(Containers::ArrayView<const char> a, Containers::ArrayView<const char> b);
 
-template<std::size_t size> const char* findLastOf(Containers::ArrayReference<const char> data, const char(&characters)[size]) {
+template<std::size_t size> const char* findLastOf(Containers::ArrayView<const char> data, const char(&characters)[size]) {
     for(const char* c = data.end(); c != data.begin(); --c)
         for(std::size_t i = 0; i != size - 1; ++i)
             if(*(c - 1) == characters[i]) return c - 1;
@@ -82,22 +82,22 @@ template<std::size_t size> const char* findLastOf(Containers::ArrayReference<con
     return data.begin();
 }
 
-const char* whitespace(Containers::ArrayReference<const char> data);
-std::pair<const char*, char> escapedChar(Containers::ArrayReference<const char> data, ParseError& error);
-const char* escapedUnicode(Containers::ArrayReference<const char> data, std::string& out, ParseError& error);
-const char* identifier(Containers::ArrayReference<const char> data, ParseError& error);
+const char* whitespace(Containers::ArrayView<const char> data);
+std::pair<const char*, char> escapedChar(Containers::ArrayView<const char> data, ParseError& error);
+const char* escapedUnicode(Containers::ArrayView<const char> data, std::string& out, ParseError& error);
+const char* identifier(Containers::ArrayView<const char> data, ParseError& error);
 
-std::pair<const char*, bool> boolLiteral(Containers::ArrayReference<const char> data, ParseError& error);
-std::pair<const char*, char> characterLiteral(Containers::ArrayReference<const char> data, ParseError& error);
-template<class T> std::tuple<const char*, T, Int> integralLiteral(Containers::ArrayReference<const char> data, std::string& buffer, ParseError& error);
-template<class T> std::pair<const char*, T> floatingPointLiteral(Containers::ArrayReference<const char> data, std::string& buffer, ParseError& error);
-std::pair<const char*, std::string> stringLiteral(Containers::ArrayReference<const char> data, ParseError& error);
-std::pair<const char*, std::string> nameLiteral(Containers::ArrayReference<const char> data, ParseError& error);
-std::pair<const char*, Containers::ArrayReference<const char>> referenceLiteral(Containers::ArrayReference<const char> data, ParseError& error);
-std::pair<const char*, Type> possiblyTypeLiteral(Containers::ArrayReference<const char> data);
-std::pair<const char*, Type> typeLiteral(Containers::ArrayReference<const char> data, ParseError& error);
+std::pair<const char*, bool> boolLiteral(Containers::ArrayView<const char> data, ParseError& error);
+std::pair<const char*, char> characterLiteral(Containers::ArrayView<const char> data, ParseError& error);
+template<class T> std::tuple<const char*, T, Int> integralLiteral(Containers::ArrayView<const char> data, std::string& buffer, ParseError& error);
+template<class T> std::pair<const char*, T> floatingPointLiteral(Containers::ArrayView<const char> data, std::string& buffer, ParseError& error);
+std::pair<const char*, std::string> stringLiteral(Containers::ArrayView<const char> data, ParseError& error);
+std::pair<const char*, std::string> nameLiteral(Containers::ArrayView<const char> data, ParseError& error);
+std::pair<const char*, Containers::ArrayView<const char>> referenceLiteral(Containers::ArrayView<const char> data, ParseError& error);
+std::pair<const char*, Type> possiblyTypeLiteral(Containers::ArrayView<const char> data);
+std::pair<const char*, Type> typeLiteral(Containers::ArrayView<const char> data, ParseError& error);
 
-std::pair<const char*, InternalPropertyType> propertyValue(Containers::ArrayReference<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Containers::ArrayReference<const char>& referenceValue, Type& typeValue, std::string& buffer, ParseError& error);
+std::pair<const char*, InternalPropertyType> propertyValue(Containers::ArrayView<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Containers::ArrayView<const char>& referenceValue, Type& typeValue, std::string& buffer, ParseError& error);
 
 }}}
 

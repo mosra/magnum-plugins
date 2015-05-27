@@ -66,7 +66,7 @@ void StanfordImporter::doOpenFile(const std::string& filename) {
     _in = std::move(in);
 }
 
-void StanfordImporter::doOpenData(const Containers::ArrayReference<const char> data) {
+void StanfordImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _in.reset(new std::istringstream{{data, data.size()}});
 }
 

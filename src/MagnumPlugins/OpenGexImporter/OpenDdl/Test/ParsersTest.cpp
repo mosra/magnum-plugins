@@ -183,7 +183,7 @@ void ParsersTest::findLastOf() {
     auto bi = Implementation::findLastOf(b, "$%");
     VERIFY_PARSED(Implementation::ParseError{}, b, bi, "%hello");
 
-    Containers::ArrayReference<const char> c{"%", 0};
+    Containers::ArrayView<const char> c{"%", 0};
     auto ci = Implementation::findLastOf({c, 0}, "$%");
     VERIFY_PARSED(Implementation::ParseError{}, c, ci, "");
 }
@@ -587,7 +587,7 @@ void ParsersTest::referenceLiteralNull() {
 
     Implementation::ParseError error;
     const char* ai;
-    Containers::ArrayReference<const char> value;
+    Containers::ArrayView<const char> value;
     std::tie(ai, value) = Implementation::referenceLiteral(a, error);
     VERIFY_PARSED(error, a, ai, "null");
     CORRADE_VERIFY(value.empty());
@@ -598,7 +598,7 @@ void ParsersTest::referenceLiteral() {
 
     Implementation::ParseError error;
     const char* ai;
-    Containers::ArrayReference<const char> value;
+    Containers::ArrayView<const char> value;
     std::tie(ai, value) = Implementation::referenceLiteral(a, error);
     VERIFY_PARSED(error, a, ai, "$my_mesh%my_array");
     CORRADE_COMPARE((std::string{value, value.size()}), "$my_mesh%my_array");
@@ -633,7 +633,7 @@ void ParsersTest::propertyValueInvalid() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
 
     CORRADE_VERIFY(!Implementation::propertyValue(CharacterLiteral{""}, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error).first);
@@ -652,7 +652,7 @@ void ParsersTest::propertyValueBool() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
@@ -671,7 +671,7 @@ void ParsersTest::propertyValueIntegral() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
@@ -690,7 +690,7 @@ void ParsersTest::propertyValueCharacter() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
@@ -709,7 +709,7 @@ void ParsersTest::propertyValueBinary() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
@@ -728,7 +728,7 @@ void ParsersTest::propertyValueFloatingPoint() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
@@ -747,7 +747,7 @@ void ParsersTest::propertyValueString() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
@@ -766,7 +766,7 @@ void ParsersTest::propertyValueReference() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
@@ -785,7 +785,7 @@ void ParsersTest::propertyValueReferenceNull() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
@@ -804,7 +804,7 @@ void ParsersTest::propertyValueType() {
     Int integerValue = {};
     Float floatingPointValue = {};
     std::string stringValue;
-    Containers::ArrayReference<const char> referenceValue;
+    Containers::ArrayView<const char> referenceValue;
     Type typeValue = {};
     const char* ai;
     Implementation::InternalPropertyType type;
