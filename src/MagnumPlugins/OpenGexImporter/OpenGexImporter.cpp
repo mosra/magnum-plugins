@@ -53,7 +53,7 @@ struct OpenGexImporter::Document {
 
     /* Default metrics */
     Float distanceMultiplier = 1.0f;
-    Float angleMultiplier = 1.0f;
+    Rad angleMultiplier = 1.0_radf;
     Float timeMultiplier = 1.0f;
     bool yUp = false;
 
@@ -139,7 +139,7 @@ void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 return;
             }
 
-            d->angleMultiplier = value.as<Float>();
+            d->angleMultiplier = Rad{value.as<Float>()};
 
         /* Time multiplier */
         } else if(key == "time") {
@@ -311,17 +311,17 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
             Matrix4 m;
             const auto kind = t.findPropertyOf(OpenGex::kind);
             if((!kind || kind->as<std::string>() == "axis") && data.subArraySize() == 4) {
-                const auto angle = Rad{data.asArray<Float>()[0]*_d->angleMultiplier};
+                const auto angle = data.asArray<Float>()[0]*_d->angleMultiplier;
                 const auto axis = Vector3::from(data.asArray<Float>() + 1).normalized();
                 m = Matrix4::rotation(angle, axis);
             } else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0) {
-                const auto angle = Rad{data.as<Float>()*_d->angleMultiplier};
+                const auto angle = data.as<Float>()*_d->angleMultiplier;
                 m = Matrix4::rotationX(angle);
             } else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0) {
-                const auto angle = Rad{data.as<Float>()*_d->angleMultiplier};
+                const auto angle = data.as<Float>()*_d->angleMultiplier;
                 m = Matrix4::rotationY(angle);
             } else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0) {
-                const auto angle = Rad{data.as<Float>()*_d->angleMultiplier};
+                const auto angle = data.as<Float>()*_d->angleMultiplier;
                 m = Matrix4::rotationZ(angle);
             } else if(kind && kind->as<std::string>() == "quaternion" && data.subArraySize() == 4) {
                 const auto vector = Vector3::from(data.asArray<Float>());
