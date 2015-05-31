@@ -422,8 +422,15 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
 
     /* Camera object */
     } else if(node.identifier() == OpenGex::CameraNode) {
-        /** @todo actually extract the ID when cameras are supported */
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, 0}};
+        /* Camera ID */
+        const auto camera = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
+        if(!camera) {
+            Error() << "Trade::OpenGexImporter::object3D(): null camera reference";
+            return nullptr;
+        }
+        const UnsignedInt cameraId = structureId(_d->cameras, *camera);
+
+        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId}};
 
     /* Light object */
     } else if(node.identifier() == OpenGex::LightNode) {

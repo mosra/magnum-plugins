@@ -2,7 +2,7 @@ Node {
     Name { string { "MyNode" } }
 
     CameraNode {
-        ObjectRef { ref { null } }
+        ObjectRef { ref { %myCamera } }
     }
 
     GeometryNode {
@@ -17,6 +17,8 @@ BoneNode {
         ObjectRef { ref { null } }
     }
 }
+
+CameraObject %myCamera {}
 
 GeometryObject %myMesh {
     Mesh {

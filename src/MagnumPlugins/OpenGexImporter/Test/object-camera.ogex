@@ -1,0 +1,11 @@
+CameraNode {
+    ObjectRef { ref { %myOtherCamera } }
+}
+
+CameraNode {
+    ObjectRef { ref { null } }
+}
+
+CameraObject %myCamera {}
+
+CameraObject %myOtherCamera {}

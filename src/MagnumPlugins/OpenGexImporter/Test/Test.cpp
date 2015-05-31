@@ -58,6 +58,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void cameraMetrics();
 
     void object();
+    void objectCamera();
     void objectMesh();
     void objectTransformation();
     void objectTranslation();
@@ -102,6 +103,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::cameraMetrics,
 
               &OpenGexImporterTest::object,
+              &OpenGexImporterTest::objectCamera,
               &OpenGexImporterTest::objectMesh,
               &OpenGexImporterTest::objectTransformation,
               &OpenGexImporterTest::objectTranslation,
@@ -266,6 +268,24 @@ void OpenGexImporterTest::object() {
     CORRADE_VERIFY(lightObject);
     CORRADE_COMPARE(lightObject->instanceType(), Trade::ObjectInstanceType3D::Light);
     CORRADE_VERIFY(lightObject->children().empty());
+}
+
+void OpenGexImporterTest::objectCamera() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-camera.ogex")));
+    CORRADE_COMPARE(importer.object3DCount(), 2);
+
+    {
+        std::unique_ptr<Trade::ObjectData3D> object = importer.object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Camera);
+        CORRADE_COMPARE(object->instance(), 1);
+    }
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.object3D(1));
+    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::object3D(): null camera reference\n");
 }
 
 void OpenGexImporterTest::objectMesh() {
