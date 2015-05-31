@@ -32,6 +32,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Quaternion.h>
+#include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
@@ -60,6 +61,7 @@ struct OpenGexImporter::Document {
     std::optional<std::string> filePath;
 
     std::vector<OpenDdl::Structure> nodes,
+        cameras,
         meshes,
         materials,
         textures;
@@ -161,6 +163,10 @@ void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
+    /* Gather all cameras */
+    for(const OpenDdl::Structure camera: d->document.childrenOf(OpenGex::CameraObject))
+        d->cameras.push_back(camera);
+
     /* Gather all meshes */
     /** @todo Support for LOD */
     for(const OpenDdl::Structure geometry: d->document.childrenOf(OpenGex::GeometryObject))
@@ -216,6 +222,35 @@ std::optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
     }
 
     return SceneData{{}, children};
+}
+
+UnsignedInt OpenGexImporter::doCameraCount() const {
+    return _d->cameras.size();
+}
+
+std::optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
+    const OpenDdl::Structure camera = _d->cameras[id];
+
+    Rad fov = Rad{Constants::nan()};
+    Float near = Constants::nan();
+    Float far = Constants::nan();
+    for(const OpenDdl::Structure param: camera.childrenOf(OpenGex::Param)) {
+        const OpenDdl::Structure data = param.firstChild();
+
+        const auto attrib = param.propertyOf(OpenGex::attrib);
+        if(attrib.as<std::string>() == "fov")
+            fov = data.as<Float>()*_d->angleMultiplier;
+        else if(attrib.as<std::string>() == "near")
+            near = data.as<Float>()*_d->distanceMultiplier;
+        else if(attrib.as<std::string>() == "far")
+            far = data.as<Float>()*_d->distanceMultiplier;
+        else {
+            Error() << "Trade::OpenGexImporter::camera(): invalid parameter";
+            return std::nullopt;
+        }
+    }
+
+    return CameraData{fov, near, far};
 }
 
 UnsignedInt OpenGexImporter::doObject3DCount() const {

@@ -37,6 +37,7 @@
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
+#include <Magnum/Trade/CameraData.h>
 
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
@@ -52,6 +53,9 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void openParseError();
     void openValidationError();
     void openInvalidMetric();
+
+    void camera();
+    void cameraMetrics();
 
     void object();
     void objectMesh();
@@ -93,6 +97,9 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::openParseError,
               &OpenGexImporterTest::openValidationError,
               &OpenGexImporterTest::openInvalidMetric,
+
+              &OpenGexImporterTest::camera,
+              &OpenGexImporterTest::cameraMetrics,
 
               &OpenGexImporterTest::object,
               &OpenGexImporterTest::objectMesh,
@@ -179,6 +186,47 @@ Metric (key = "distance") { string { "0.5" } }
     )oddl"};
     CORRADE_VERIFY(!importer.openData(s));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::openData(): invalid value for distance metric\n");
+}
+
+void OpenGexImporterTest::camera() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera.ogex")));
+    CORRADE_COMPARE(importer.cameraCount(), 3);
+
+    /* Everything specified */
+    {
+        std::optional<Trade::CameraData> camera = importer.camera(0);
+        CORRADE_VERIFY(camera);
+        CORRADE_COMPARE(camera->fov(), 0.97_radf);
+        CORRADE_COMPARE(camera->near(), 1.5f);
+        CORRADE_COMPARE(camera->far(), 150.0f);
+    }
+
+    /* Nothing specified (defaults) */
+    {
+        std::optional<Trade::CameraData> camera = importer.camera(1);
+        CORRADE_VERIFY(camera);
+        CORRADE_COMPARE(camera->fov(), Rad{35.0_degf});
+        CORRADE_COMPARE(camera->near(), 0.01f);
+        CORRADE_COMPARE(camera->far(), 100.0f);
+    }
+
+    std::ostringstream out;
+    Error::setOutput(&out);
+    CORRADE_VERIFY(!importer.camera(2));
+    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::camera(): invalid parameter\n");
+}
+
+void OpenGexImporterTest::cameraMetrics() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera-metrics.ogex")));
+    CORRADE_COMPARE(importer.cameraCount(), 1);
+
+    std::optional<Trade::CameraData> camera = importer.camera(0);
+    CORRADE_VERIFY(camera);
+    CORRADE_COMPARE(camera->fov(), 0.97_radf);
+    CORRADE_COMPARE(camera->near(), 1.5f);
+    CORRADE_COMPARE(camera->far(), 150.0f);
 }
 
 void OpenGexImporterTest::object() {

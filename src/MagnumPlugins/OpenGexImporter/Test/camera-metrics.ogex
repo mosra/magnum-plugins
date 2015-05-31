@@ -1,0 +1,11 @@
+/* Only "distance" and "angle" would be used in the following */
+Metric (key = "up") { string { "z" } }
+Metric (key = "distance") { float { 100.0 } }
+Metric (key = "angle") { float { 0.01 } }
+Metric (key = "time") { float { 2.0 } }
+
+CameraObject {
+    Param (attrib = "fov") { float { 97.0 } }
+    Param (attrib = "near") { float { 0.015 } }
+    Param (attrib = "far") { float { 1.5 } }
+}
