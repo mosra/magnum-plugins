@@ -29,6 +29,8 @@ build() {
         -DWITH_STANFORDIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
         -DWITH_STBPNGIMAGECONVERTER=ON \
+        -DBUILD_TESTS=ON \
+        -DBUILD_GL_TESTS=ON \
         -G Ninja
     ninja
 
@@ -48,6 +50,8 @@ build() {
         -DWITH_STANFORDIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
         -DWITH_STBPNGIMAGECONVERTER=ON \
+        -DBUILD_TESTS=ON \
+        -DBUILD_GL_TESTS=ON \
         -G Ninja
     ninja
 }
