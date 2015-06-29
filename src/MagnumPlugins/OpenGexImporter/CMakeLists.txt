@@ -36,7 +36,10 @@ set(OpenGexImporter_PRIVATE_HEADERS
     openGexSpec.hpp)
 
 # Objects shared between plugin and test library
-add_library(OpenGexImporterObjects OBJECT ${OpenGexImporter_SRCS})
+add_library(OpenGexImporterObjects OBJECT
+    ${OpenGexImporter_SRCS}
+    ${OpenGexImporter_HEADERS}
+    ${OpenGexImporter_PRIVATE_HEADERS})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -60,10 +63,23 @@ endif()
 install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
+    # On Win32 we need to avoid dllimporting TgaImporter symbols, because it
+    # would search for the symbols in some DLL even when they were linked
+    # statically. However it apparently doesn't matter that they were
+    # dllexported when building the static library. EH.
+    if(WIN32)
+        add_library(MagnumOpenGexImporterTestLib STATIC
+            ${OpenGexImporter_SRCS}
+            ${OpenGexImporter_HEADERS}
+            ${OpenGexImporter_PRIVATE_HEADERS})
+        set_target_properties(MagnumOpenGexImporterTestLib PROPERTIES COMPILE_FLAGS "-DMAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC")
+    else()
+        add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
+    endif()
     target_link_libraries(MagnumOpenGexImporterTestLib
         ${MAGNUM_LIBRARIES}
         MagnumAnyImageImporterTestLib)
+
     add_subdirectory(Test)
 endif()
 

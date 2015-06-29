@@ -33,16 +33,22 @@
 #include <Corrade/Utility/VisibilityMacros.h>
 #include <Magnum/Text/AbstractFont.h>
 
+#include "MagnumPlugins/FreeTypeFont/configure.h"
+
 #ifndef DOXYGEN_GENERATING_OUTPUT
 struct FT_LibraryRec_;
 typedef FT_LibraryRec_* FT_Library;
 struct FT_FaceRec_;
 typedef FT_FaceRec_*  FT_Face;
 
-#if defined(FreeTypeFont_EXPORTS) || defined(FreeTypeFontObjects_EXPORTS)
-    #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
+#ifndef MAGNUM_FREETYPEFONT_BUILD_STATIC
+    #if defined(FreeTypeFont_EXPORTS) || defined(FreeTypeFontObjects_EXPORTS)
+        #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
 #else
-    #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
+    #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_STATIC
 #endif
 #define MAGNUM_TEXT_FREETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
 #endif

@@ -34,6 +34,13 @@ set(CMAKE_FIND_FRAMEWORK ${PREV_CMAKE_FIND_FRAMEWORK})
 # Avoid warning spam with old-style casts
 include_directories(SYSTEM ${FREETYPE_INCLUDE_DIRS})
 
+if(BUILD_STATIC)
+    set(MAGNUM_FREETYPEFONT_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(FreeTypeFont_SRCS
     FreeTypeFont.cpp)
 
@@ -65,6 +72,7 @@ target_link_libraries(FreeTypeFont
     ${FREETYPE_LIBRARIES})
 
 install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
 
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)
