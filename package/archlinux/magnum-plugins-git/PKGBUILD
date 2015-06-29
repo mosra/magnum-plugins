@@ -1,6 +1,6 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=magnum-plugins-git
-pkgver=snapshot.2014.06.r56.g71aabc5
+pkgver=snapshot.2015.05.r22.g8b68e4b
 pkgrel=1
 pkgdesc="Plugins for Magnum graphics engine (Git version)"
 arch=('i686' 'x86_64')
@@ -33,7 +33,7 @@ build() {
         -DWITH_OPENGEXIMPORTER=ON \
         -DWITH_STANFORDIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
-        -DWITH_STBIMAGEIMPORTER=ON
+        -DWITH_STBPNGIMAGECONVERTER=ON
     make
 }
 
