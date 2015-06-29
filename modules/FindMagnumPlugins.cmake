@@ -70,6 +70,8 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     # The dependencies need to be sorted by their dependency order as well
     if(component STREQUAL ColladaImporter)
         set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
+    elseif(component STREQUAL OpenGexImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
     elseif(component STREQUAL HarfBuzzFont)
         set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES FreeTypeFont)
     endif()
