@@ -96,4 +96,4 @@ void HarfBuzzFontGLTest::layout() {
 
 }}}
 
-CORRADE_TEST_MAIN(Magnum::Text::Test::HarfBuzzFontGLTest)
+MAGNUM_GL_TEST_MAIN(Magnum::Text::Test::HarfBuzzFontGLTest)

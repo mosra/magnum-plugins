@@ -112,4 +112,4 @@ void FreeTypeFontGLTest::fillGlyphCache() {
 
 }}}
 
-CORRADE_TEST_MAIN(Magnum::Text::Test::FreeTypeFontGLTest)
+MAGNUM_GL_TEST_MAIN(Magnum::Text::Test::FreeTypeFontGLTest)
