@@ -96,10 +96,6 @@ class Property {
         #endif
 
     private:
-        /** @todo remove this ugly hack when we have Containers::Array(NoInit) */
-        friend Containers::Array<Property>;
-        constexpr explicit Property(): _identifier{-1}, _type{}, _required{} {}
-
         Int _identifier;
         PropertyType _type;
         bool _required;

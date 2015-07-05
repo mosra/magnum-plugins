@@ -193,7 +193,7 @@ inline void extractQuad(std::vector<UnsignedInt>& indices, const char* const buf
        (e.g. Vector4ui{extractAndSkip(), extractAndSkip(), ...}, so I need to
        make the order really explicit. From what I understood from the specs,
        this should be defined when using {}. Am I right? */
-    Vector4ui quad; /** @todo NoInit */
+    Vector4ui quad{Math::NoInit};
     quad[0] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
     quad[1] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
     quad[2] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);

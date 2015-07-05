@@ -1168,15 +1168,14 @@ namespace Validation {
 
 Structure::Structure(Int identifier, Properties properties, Primitives primitives, std::size_t primitiveCount, std::size_t primitiveArraySize, Structures structures):
     _identifier{identifier},
-    _properties{properties.size()},
-    _primitives{primitives.size()},
-    _structures{structures.size()},
+    _properties{Containers::NoInit, properties.size()},
+    _primitives{Containers::NoInit, primitives.size()},
+    _structures{Containers::NoInit, structures.size()},
     _primitiveCount{primitiveCount}, _primitiveArraySize{primitiveArraySize}
 {
-    /** @todo use NoInit and std::uninitialized_copy when done */
-    std::copy(properties.begin(), properties.end(), _properties.begin());
-    std::copy(primitives.begin(), primitives.end(), _primitives.begin());
-    std::copy(structures.begin(), structures.end(), _structures.begin());
+    std::uninitialized_copy(properties.begin(), properties.end(), _properties.begin());
+    std::uninitialized_copy(primitives.begin(), primitives.end(), _primitives.begin());
+    std::uninitialized_copy(structures.begin(), structures.end(), _structures.begin());
 }
 
 }
