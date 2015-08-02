@@ -3,6 +3,7 @@
 #
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
 #             Vladimír Vondruš <mosra@centrum.cz>
+#   Copyright © 2015 Jonathan Hale <squareys@googlemail.com>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -23,59 +24,36 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Wrapper for creating given plugin type
-macro(add_plugin plugin_name debug_install_dir release_install_dir metadata_file)
-    if(NOT BUILD_STATIC)
-        corrade_add_plugin(${plugin_name} ${debug_install_dir} ${release_install_dir} ${metadata_file} ${ARGN})
-    else()
-        corrade_add_static_plugin(${plugin_name} ${release_install_dir} ${metadata_file} ${ARGN})
-    endif()
-endmacro()
+set(DdsImporter_SRCS
+    DdsImporter.cpp)
 
-if(WITH_ANYIMAGEIMPORTER)
-    add_subdirectory(AnyImageImporter)
+set(DdsImporter_HEADERS
+    DdsImporter.h)
+
+# Objects shared between plugin and test library
+add_library(DdsImporterObjects OBJECT
+    ${DdsImporter_SRCS}
+    ${DdsImporter_HEADERS})
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(DdsImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if(WITH_ANYSCENEIMPORTER)
-    add_subdirectory(AnySceneImporter)
+# DdsImporter plugin
+add_plugin(DdsImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGINS_IMPORTER_RELEASE_INSTALL_DIR}
+    DdsImporter.conf
+    $<TARGET_OBJECTS:DdsImporterObjects>
+    pluginRegistration.cpp)
+if(BUILD_STATIC_PIC)
+    set_target_properties(DdsImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
+target_link_libraries(DdsImporter
+    ${MAGNUM_LIBRARIES})
 
-if(WITH_DDSIMPORTER)
-	add_subdirectory(DdsImporter)
-endif()
+install(FILES ${DdsImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
 
-if(WITH_FREETYPEFONT)
-    add_subdirectory(FreeTypeFont)
-endif()
-
-if(WITH_HARFBUZZFONT)
-    add_subdirectory(HarfBuzzFont)
-endif()
-
-if(WITH_JPEGIMPORTER)
-    add_subdirectory(JpegImporter)
-endif()
-
-if(WITH_OPENGEXIMPORTER)
-    add_subdirectory(OpenGexImporter)
-endif()
-
-if(WITH_PNGIMPORTER)
-    add_subdirectory(PngImporter)
-endif()
-
-if(WITH_STANFORDIMPORTER)
-    add_subdirectory(StanfordImporter)
-endif()
-
-if(WITH_STBIMAGEIMPORTER)
-    add_subdirectory(StbImageImporter)
-endif()
-
-if(WITH_STBPNGIMAGECONVERTER)
-    add_subdirectory(StbPngImageConverter)
+if(BUILD_TESTS)
+    add_library(MagnumDdsImporterTestLib STATIC $<TARGET_OBJECTS:DdsImporterObjects>)
+    target_link_libraries(MagnumDdsImporterTestLib ${MAGNUM_LIBRARIES})
+    add_subdirectory(Test)
 endif()
