@@ -24,6 +24,7 @@
 */
 
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/ColorFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -65,9 +66,10 @@ void StbImageImporterTest::grayPng() {
     CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<char>{'\xff', '\x88', '\x00',
-                                       '\x88', '\x00', '\xff'}));
+    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+        '\xff', '\x88', '\x00',
+        '\x88', '\x00', '\xff'),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
 void StbImageImporterTest::grayJpeg() {
@@ -83,9 +85,10 @@ void StbImageImporterTest::grayJpeg() {
     CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<char>{'\xff', '\x88', '\x00',
-                                       '\x88', '\x00', '\xff'}));
+    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+        '\xff', '\x88', '\x00',
+        '\x88', '\x00', '\xff', '\x00', '\x00'),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
 void StbImageImporterTest::rgbPng() {
@@ -97,13 +100,14 @@ void StbImageImporterTest::rgbPng() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ColorFormat::RGB);
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<char>{'\xca', '\xfe', '\x77',
-                                       '\xde', '\xad', '\xb5',
-                                       '\xca', '\xfe', '\x77',
-                                       '\xde', '\xad', '\xb5',
-                                       '\xca', '\xfe', '\x77',
-                                       '\xde', '\xad', '\xb5'}));
+    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5'),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
 void StbImageImporterTest::rgbJpeg() {
@@ -116,13 +120,14 @@ void StbImageImporterTest::rgbJpeg() {
     CORRADE_COMPARE(image->format(), ColorFormat::RGB);
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<char>{'\xca', '\xfe', '\x76',
-                                       '\xdf', '\xad', '\xb6',
-                                       '\xca', '\xfe', '\x76',
-                                       '\xe0', '\xad', '\xb6',
-                                       '\xc9', '\xff', '\x76',
-                                       '\xdf', '\xad', '\xb6'}));
+    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+        '\xca', '\xfe', '\x76',
+        '\xdf', '\xad', '\xb6',
+        '\xca', '\xfe', '\x76',
+        '\xe0', '\xad', '\xb6',
+        '\xc9', '\xff', '\x76',
+        '\xdf', '\xad', '\xb6'),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
 void StbImageImporterTest::rgbaPng() {
@@ -134,13 +139,14 @@ void StbImageImporterTest::rgbaPng() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), ColorFormat::RGBA);
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<char>{'\xde', '\xad', '\xb5', '\xff',
-                                       '\xca', '\xfe', '\x77', '\xff',
-                                       '\x00', '\x00', '\x00', '\x00',
-                                       '\xca', '\xfe', '\x77', '\xff',
-                                       '\x00', '\x00', '\x00', '\x00',
-                                       '\xde', '\xad', '\xb5', '\xff'}));
+    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+        '\xde', '\xad', '\xb5', '\xff',
+        '\xca', '\xfe', '\x77', '\xff',
+        '\x00', '\x00', '\x00', '\x00',
+        '\xca', '\xfe', '\x77', '\xff',
+        '\x00', '\x00', '\x00', '\x00',
+        '\xde', '\xad', '\xb5', '\xff'),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
 }}}

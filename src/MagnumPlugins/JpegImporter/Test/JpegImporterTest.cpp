@@ -24,6 +24,7 @@
 */
 
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/ColorFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -59,9 +60,10 @@ void JpegImporterTest::gray() {
     CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
-    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<char>{'\xff', '\x88', '\x00',
-                                       '\x88', '\x00', '\xff'}));
+    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+        '\xff', '\x88', '\x00',
+        '\x88', '\x00', '\xff'),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
 void JpegImporterTest::rgb() {
@@ -74,13 +76,14 @@ void JpegImporterTest::rgb() {
     CORRADE_COMPARE(image->format(), ColorFormat::RGB);
     CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE(std::vector<char>(image->data(), image->data()+image->size().product()*image->pixelSize()),
-                    (std::vector<char>{'\xca', '\xfe', '\x76',
-                                       '\xdf', '\xad', '\xb6',
-                                       '\xca', '\xfe', '\x76',
-                                       '\xe0', '\xad', '\xb6',
-                                       '\xc9', '\xff', '\x76',
-                                       '\xdf', '\xad', '\xb6'}));
+    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+        '\xca', '\xfe', '\x76',
+        '\xdf', '\xad', '\xb6',
+        '\xca', '\xfe', '\x76',
+        '\xe0', '\xad', '\xb6',
+        '\xc9', '\xff', '\x76',
+        '\xdf', '\xad', '\xb6'),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
 }}}
