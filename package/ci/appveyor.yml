@@ -1,0 +1,50 @@
+version: '{branch}-{build}'
+branches:
+  only:
+  - master
+skip_tags: true
+os: Visual Studio 2015
+shallow_clone: true
+clone_depth: 1
+environment:
+  matrix:
+  - BUILD_STATIC: OFF
+install:
+- cinst ninja
+build_script:
+- set PATH=C:/Sys/bin;C:/tools/ninja;%PATH%
+- call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat"
+- git clone --depth 1 git://github.com/mosra/corrade.git
+- cd corrade
+- mkdir build
+- cd build
+- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DBUILD_STATIC=%BUILD_STATIC% -G Ninja
+- cmake --build .
+- cmake --build . --target install
+- cd ..
+- cd ..
+- git clone --depth 1 git://github.com/mosra/magnum.git
+- cd magnum
+- mkdir build
+- cd build
+- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DWITH_AUDIO=OFF -DWITH_DEBUGTOOLS=OFF -DWITH_PRIMITIVES=OFF -DWITH_SCENEGRAPH=OFF -DWITH_SHADERS=OFF -DWITH_SHAPES=OFF -DWITH_TEXT=OFF -DWITH_TEXTURETOOLS=OFF -DBUILD_STATIC=%BUILD_STATIC% -G Ninja
+- cmake --build .
+- cmake --build . --target install
+- cd ..
+- cd ..
+- mkdir build
+- cd build
+- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DWITH_ANYIMAGEIMPORTER=ON -DWITH_ANYSCENEIMPORTER=ON -DWITH_FREETYPEFONT=OFF -DWITH_HARFBUZZFONT=OFF -DWITH_JPEGIMPORTER=OFF -DWITH_OPENGEXIMPORTER=OFF -DWITH_PNGIMPORTER=OFF -DWITH_STANFORDIMPORTER=ON -DWITH_STBIMAGEIMPORTER=ON -DWITH_STBPNGIMAGECONVERTER=ON -DBUILD_TESTS=ON -DBUILD_STATIC=%BUILD_STATIC% -G Ninja
+- cmake --build .
+- cmake --build . --target install
+- cmake . -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/Deploy -DBUILD_TESTS=OFF
+- cmake --build . --target install
+- cd ../Deploy
+- 7z a ../magnum-plugins.zip *
+test_script:
+- cd %APPVEYOR_BUILD_FOLDER%/build
+- SET fail=0
+- ctest --output-on-failure || SET fail=1 & ver > nul
+- cd %APPVEYOR_BUILD_FOLDER%
+- appveyor PushArtifact magnum-plugins.zip
+- exit %fail%
