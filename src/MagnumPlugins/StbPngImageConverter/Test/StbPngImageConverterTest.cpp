@@ -55,7 +55,7 @@ namespace {
         5, 6, 7, 6, 7, 8
     };
 
-    const ImageReference2D original(ColorFormat::RGB, ColorType::UnsignedByte, {2, 3}, originalData);
+    const ImageView2D original{ColorFormat::RGB, ColorType::UnsignedByte, {2, 3}, originalData};
 }
 
 StbPngImageConverterTest::StbPngImageConverterTest() {
@@ -66,7 +66,7 @@ StbPngImageConverterTest::StbPngImageConverterTest() {
 }
 
 void StbPngImageConverterTest::wrongFormat() {
-    ImageReference2D image(ColorFormat::DepthComponent, ColorType::UnsignedByte, {}, nullptr);
+    ImageView2D image{ColorFormat::DepthComponent, ColorType::UnsignedByte, {}, nullptr};
 
     std::ostringstream out;
     Error::setOutput(&out);
@@ -77,7 +77,7 @@ void StbPngImageConverterTest::wrongFormat() {
 }
 
 void StbPngImageConverterTest::wrongType() {
-    ImageReference2D image(ColorFormat::Red, ColorType::Float, {}, nullptr);
+    ImageView2D image{ColorFormat::Red, ColorType::Float, {}, nullptr};
 
     std::ostringstream out;
     Error::setOutput(&out);

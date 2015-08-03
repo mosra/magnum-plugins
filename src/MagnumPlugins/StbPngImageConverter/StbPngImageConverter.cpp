@@ -41,7 +41,7 @@ StbPngImageConverter::StbPngImageConverter(PluginManager::AbstractManager& manag
 
 auto StbPngImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 
-Containers::Array<char> StbPngImageConverter::doExportToData(const ImageReference2D& image) const {
+Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& image) const {
     if(image.type() != ColorType::UnsignedByte) {
         Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color type" << image.type();
         return nullptr;
