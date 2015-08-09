@@ -43,6 +43,8 @@ struct StbImageImporterTest: TestSuite::Tester {
     void rgbPng();
     void rgbJpeg();
     void rgbaPng();
+
+    void useTwice();
 };
 
 StbImageImporterTest::StbImageImporterTest() {
@@ -50,7 +52,9 @@ StbImageImporterTest::StbImageImporterTest() {
               &StbImageImporterTest::grayJpeg,
               &StbImageImporterTest::rgbPng,
               &StbImageImporterTest::rgbJpeg,
-              &StbImageImporterTest::rgbaPng});
+              &StbImageImporterTest::rgbaPng,
+
+              &StbImageImporterTest::useTwice});
 }
 
 void StbImageImporterTest::grayPng() {
@@ -147,6 +151,22 @@ void StbImageImporterTest::rgbaPng() {
         '\x00', '\x00', '\x00', '\x00',
         '\xde', '\xad', '\xb5', '\xff'),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+}
+
+void StbImageImporterTest::useTwice() {
+    StbImageImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+
+    /* Verify that the file is rewound for second use */
+    {
+        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+    } {
+        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+    }
 }
 
 }}}

@@ -40,11 +40,15 @@ struct JpegImporterTest: TestSuite::Tester {
 
     void gray();
     void rgb();
+
+    void useTwice();
 };
 
 JpegImporterTest::JpegImporterTest() {
     addTests({&JpegImporterTest::gray,
-              &JpegImporterTest::rgb});
+              &JpegImporterTest::rgb,
+
+              &JpegImporterTest::useTwice});
 }
 
 void JpegImporterTest::gray() {
@@ -84,6 +88,22 @@ void JpegImporterTest::rgb() {
         '\xc9', '\xff', '\x76',
         '\xdf', '\xad', '\xb6'),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+}
+
+void JpegImporterTest::useTwice() {
+    JpegImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+
+    /* Verify that the file is rewinded for second use */
+    {
+        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+    } {
+        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+    }
 }
 
 }}}

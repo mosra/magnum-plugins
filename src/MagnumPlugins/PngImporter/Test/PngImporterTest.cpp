@@ -41,12 +41,16 @@ struct PngImporterTest: TestSuite::Tester {
     void gray();
     void rgb();
     void rgba();
+
+    void useTwice();
 };
 
 PngImporterTest::PngImporterTest() {
     addTests({&PngImporterTest::gray,
               &PngImporterTest::rgb,
-              &PngImporterTest::rgba});
+              &PngImporterTest::rgba,
+
+              &PngImporterTest::useTwice});
 }
 
 void PngImporterTest::gray() {
@@ -104,6 +108,22 @@ void PngImporterTest::rgba() {
         '\x00', '\x00', '\x00', '\x00',
         '\xde', '\xad', '\xb5', '\xff'),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+}
+
+void PngImporterTest::useTwice() {
+    PngImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+
+    /* Verify that the file is rewound for second use */
+    {
+        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+    } {
+        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+    }
 }
 
 }}}
