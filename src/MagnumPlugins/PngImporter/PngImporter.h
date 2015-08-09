@@ -29,6 +29,7 @@
  * @brief Class @ref Magnum::Trade::PngImporter
  */
 
+#include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 namespace Magnum { namespace Trade {
@@ -71,13 +72,12 @@ class PngImporter: public AbstractImporter {
         bool doIsOpened() const override;
         void doClose() override;
         void doOpenData(Containers::ArrayView<const char> data) override;
-        void doOpenFile(const std::string& filename) override;
 
         UnsignedInt doImage2DCount() const override;
         std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
-        std::istream* _in;
+        Containers::Array<unsigned char> _in;
 };
 
 }}

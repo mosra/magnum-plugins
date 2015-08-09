@@ -25,12 +25,11 @@
 
 #include "PngImporter.h"
 
-#include <fstream>
-#include <sstream>
+#include <algorithm>
 #include <png.h>
-#include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/ColorFormat.h>
+#include <Magnum/Math/Functions.h>
 #include <Magnum/Trade/ImageData.h>
 
 #ifdef MAGNUM_TARGET_GLES2
@@ -50,30 +49,18 @@ auto PngImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool PngImporter::doIsOpened() const { return _in; }
 
-void PngImporter::doClose() {
-    delete _in;
-    _in = nullptr;
-}
+void PngImporter::doClose() { _in = nullptr; }
 
 void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    _in = new std::istringstream{{data, data.size()}};
-}
-
-void PngImporter::doOpenFile(const std::string& filename) {
-    _in = new std::ifstream(filename);
-    if(_in->good()) return;
-
-    Error() << "Trade::PngImporter::openFile(): cannot open file" << filename;
-    close();
+    _in = Containers::Array<unsigned char>(data.size());
+    std::copy(data.begin(), data.end(), _in.begin());
 }
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
 std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     /* Verify file signature */
-    png_byte signature[8];
-    _in->read(reinterpret_cast<char*>(signature), 8);
-    if(png_sig_cmp(signature, 0, 8) != 0) {
+    if(png_sig_cmp(_in, 0, Math::min<std::size_t>(8, _in.size())) != 0) {
         Error() << "Trade::PngImporter::image2D(): wrong file signature";
         return std::nullopt;
     }
@@ -97,9 +84,14 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         return std::nullopt;
     }
 
+    /* Input starts right after the header */
+    Containers::ArrayView<unsigned char> input =_in.suffix(8);
+
     /* Set function for reading from std::istream */
-    png_set_read_fn(file, _in, [](png_structp file, png_bytep data, png_size_t length) {
-        reinterpret_cast<std::istream*>(png_get_io_ptr(file))->read(reinterpret_cast<char*>(data), length);
+    png_set_read_fn(file, &input, [](png_structp file, png_bytep data, png_size_t length) {
+        auto&& input = *reinterpret_cast<Containers::ArrayView<unsigned char>*>(png_get_io_ptr(file));
+        std::copy_n(input.begin(), Math::min(length, input.size()), data);
+        input = input.suffix(length);
     });
 
     /* The signature is already read */
