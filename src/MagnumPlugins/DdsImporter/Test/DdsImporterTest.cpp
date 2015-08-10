@@ -41,6 +41,7 @@ struct DdsImporterTest: TestSuite::Tester {
 
     void testUncompressedRgb();
     void testUncompressedRgbWithMips();
+    void testUncompressedRgbVolume();
     void testDxt1Compressed();
     void testDxt3Compressed();
     void testDxt5Compressed();
@@ -49,6 +50,7 @@ struct DdsImporterTest: TestSuite::Tester {
 DdsImporterTest::DdsImporterTest() {
     addTests({&DdsImporterTest::testUncompressedRgb});
     addTests({&DdsImporterTest::testUncompressedRgbWithMips});
+    addTests({&DdsImporterTest::testUncompressedRgbVolume});
     addTests({&DdsImporterTest::testDxt1Compressed});
     addTests({&DdsImporterTest::testDxt3Compressed});
     addTests({&DdsImporterTest::testDxt5Compressed});
@@ -104,6 +106,43 @@ void DdsImporterTest::testUncompressedRgbWithMips() {
     CORRADE_COMPARE_AS(mip->data(), Containers::ArrayView<const char>(mipPixels),
             TestSuite::Compare::Container);
 }
+
+void DdsImporterTest::testUncompressedRgbVolume() {
+    DdsImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed_volume.dds")));
+
+    const char pixels[] = {
+        /* slice 0 */
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        /* slice 1 */
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        /* slice 2 */
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77'};
+
+    std::optional<Trade::ImageData3D> image = importer.image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
+    CORRADE_COMPARE(image->format(), ColorFormat::RGB);
+    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
+        TestSuite::Compare::Container);
+}
+
 
 void DdsImporterTest::testDxt1Compressed() {
     DdsImporter importer;
