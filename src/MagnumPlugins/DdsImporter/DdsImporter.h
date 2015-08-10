@@ -29,7 +29,7 @@
 /** @file
  * @brief Class @ref Magnum::Trade::DdsImporter
  */
-
+#include <vector>
 #include <Magnum/Trade/AbstractImporter.h>
 
 namespace Magnum { namespace Trade {
@@ -59,7 +59,14 @@ class DdsImporter: public AbstractImporter {
         std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
     private:
+        void loadUncompressedImageData(ColorFormat format, UnsignedInt width, UnsignedInt height, UnsignedInt depth, UnsignedInt components);
+        void loadCompressedImageData(CompressedColorFormat format, UnsignedInt width, UnsignedInt height, UnsignedInt components);
+
         std::istream* _in;
+
+        std::vector<ImageData1D> _imageData1D;
+        std::vector<ImageData2D> _imageData2D;
+        std::vector<ImageData3D> _imageData3D;
 };
 
 }}
