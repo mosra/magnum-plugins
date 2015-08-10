@@ -161,7 +161,6 @@ struct DdsHeader {
 
 DdsImporter::DdsImporter():
     _in(nullptr),
-    _imageData1D(),
     _imageData2D(),
     _imageData3D()
 {
@@ -171,7 +170,6 @@ DdsImporter::DdsImporter():
 DdsImporter::DdsImporter(PluginManager::AbstractManager& manager, std::string plugin):
     AbstractImporter(manager, std::move(plugin)),
     _in(nullptr),
-    _imageData1D(),
     _imageData2D(),
     _imageData3D()
 {
@@ -190,6 +188,10 @@ void DdsImporter::doClose() {
 }
 
 void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
+    /* clear previous data */
+    _imageData2D.clear();
+    _imageData3D.clear();
+
     _in = new std::istringstream{{data, data.size()}};
 
     /* read magic number to verify this is a dds file. */
@@ -203,13 +205,11 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     DdsHeader ddsh;
     _in->read(reinterpret_cast<char*>(&ddsh), sizeof(DdsHeader));
 
-    UnsignedByte dimensions = 2;
+    /* check if image is a 2D or 3D texture */
+    const UnsignedByte dimensions = ((ddsh.caps2 & DdsCaps2::Volume) && (ddsh.depth > 0)) ? 3 : 2;
 
+    /* check if image is a cubemap */
     const bool isCubemap = (ddsh.caps2 & DdsCaps2::Cubemap);
-
-    // check if image is a 3D texture
-    if ((ddsh.caps2 & DdsCaps2::Volume) && (ddsh.depth > 0))
-        dimensions = 3;
 
     bool compressed = false;
     union {
@@ -274,6 +274,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     const UnsignedInt height = ddsh.height;
     const UnsignedInt depth = Math::max(ddsh.depth, 1u);   // set to 1 if 0
 
+    /* check how many mipmaps to load */
     const UnsignedInt numMipmaps = (ddsh.flags & DdsDescriptionFlag::MipMapCount)
                     ? ((ddsh.mipMapCount == 0) ? 0 : ddsh.mipMapCount - 1)
                     : 0;
@@ -282,9 +283,9 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     const UnsignedInt numImages = (isCubemap) ? 6 : 1;
     for (UnsignedInt n = 0; n < numImages; ++n) {
         if (compressed) {
-            loadCompressedImageData(colorFormat.compressed, width, height, depth);
+            loadCompressedImageData(colorFormat.compressed, width, height, depth, dimensions);
         } else {
-            loadUncompressedImageData(colorFormat.uncompressed, width, height, depth, components);
+            loadUncompressedImageData(colorFormat.uncompressed, width, height, depth, components, dimensions);
         }
 
         UnsignedInt w = width;
@@ -299,16 +300,19 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
             d = Math::max(d >> 1, 1u);
 
             if (compressed) {
-                loadCompressedImageData(colorFormat.compressed, w, h, d);
+                loadCompressedImageData(colorFormat.compressed, w, h, d, dimensions);
             } else {
-                loadUncompressedImageData(colorFormat.uncompressed, w, h, d, components);
+                loadUncompressedImageData(colorFormat.uncompressed, w, h, d, components, dimensions);
             }
         }
     }
 
 }
 
-void DdsImporter::loadUncompressedImageData(const ColorFormat format, const UnsignedInt width, const UnsignedInt height, const UnsignedInt depth, const UnsignedInt components) {
+void DdsImporter::loadUncompressedImageData(const ColorFormat format,
+    const UnsignedInt width, const UnsignedInt height, const UnsignedInt depth,
+    const UnsignedInt components, const UnsignedByte dimensions)
+{
     const unsigned int numPixels = width * height * depth;
     const unsigned int size = numPixels * components;
 
@@ -326,17 +330,33 @@ void DdsImporter::loadUncompressedImageData(const ColorFormat format, const Unsi
         convertBGRAToRGBA(data, numPixels);
         newColorFormat = ColorFormat::RGBA;
     }
-    _imageData2D.emplace_back(newColorFormat, ColorType::UnsignedByte, Vector2i{Int(width), Int(height)}, std::move(static_cast<void*>(data)));
+
+    if (dimensions == 2) {
+        _imageData2D.emplace_back(newColorFormat, ColorType::UnsignedByte, Vector2i{Int(width), Int(height)}, std::move(static_cast<void*>(data)));
+    } else if (dimensions == 3) {
+        _imageData3D.emplace_back(newColorFormat, ColorType::UnsignedByte, Vector3i{Int(width), Int(height), Int(depth)}, std::move(static_cast<void*>(data)));
+    } else {
+        Error() << "Unsupported image dimensions:" << dimensions;
+    }
 }
 
-void DdsImporter::loadCompressedImageData(const CompressedColorFormat format, const UnsignedInt width, const UnsignedInt height, const UnsignedInt depth) {
+void DdsImporter::loadCompressedImageData(const CompressedColorFormat format,
+    const UnsignedInt width, const UnsignedInt height,
+    const UnsignedInt depth, const UnsignedByte dimensions)
+{
     const unsigned int size = (depth*((width + 3)/4)*(((height + 3)/4))*((format == CompressedColorFormat::RGBAS3tcDxt1) ? 8 : 16));
 
     /* load image data */
     char *data = new char[size];
     _in->read(data, size);
 
-    _imageData2D.emplace_back(format, Vector2i{Int(width), Int(height)}, Containers::Array<char>(data, size));
+    if (dimensions == 2) {
+        _imageData2D.emplace_back(format, Vector2i{Int(width), Int(height)}, Containers::Array<char>(data, size));
+    } else if (dimensions == 3) {
+        _imageData3D.emplace_back(format, Vector3i{Int(width), Int(height), Int(depth)}, Containers::Array<char>(data, size));
+    } else {
+        Error() << "Unsupported image dimensions:" << dimensions;
+    }
 }
 
 void DdsImporter::doOpenFile(const std::string& filename) {
@@ -344,7 +364,7 @@ void DdsImporter::doOpenFile(const std::string& filename) {
     AbstractImporter::doOpenFile(filename);
 }
 
-UnsignedInt DdsImporter::doImage2DCount() const { return 1; }
+UnsignedInt DdsImporter::doImage2DCount() const { return _imageData2D.size(); }
 
 std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     if (id < _imageData2D.size()) {
@@ -352,6 +372,16 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     }
 
     return std::optional<ImageData2D>();
+}
+
+UnsignedInt DdsImporter::doImage3DCount() const { return _imageData3D.size(); }
+
+std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
+    if (id < _imageData3D.size()) {
+        return std::move(_imageData3D[id]);
+    }
+
+    return std::optional<ImageData3D>();
 }
 
 }}
