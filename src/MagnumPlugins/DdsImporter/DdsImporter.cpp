@@ -206,7 +206,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _in->read(reinterpret_cast<char*>(&ddsh), sizeof(DdsHeader));
 
     /* check if image is a 2D or 3D texture */
-    const UnsignedByte dimensions = ((ddsh.caps2 & DdsCaps2::Volume) && (ddsh.depth > 0)) ? 3 : 2;
+    const UnsignedByte numDimensions = ((ddsh.caps2 & DdsCaps2::Volume) && (ddsh.depth > 0)) ? 3 : 2;
 
     /* check if image is a cubemap */
     const bool isCubemap = (ddsh.caps2 & DdsCaps2::Cubemap);
@@ -270,9 +270,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
         Error() << "Unknow texture format";
     }
 
-    const UnsignedInt width = ddsh.width;
-    const UnsignedInt height = ddsh.height;
-    const UnsignedInt depth = Math::max(ddsh.depth, 1u);   // set to 1 if 0
+    const Vector3i size{Int(ddsh.width), Int(ddsh.height), Int(Math::max(ddsh.depth, 1u))};
 
     /* check how many mipmaps to load */
     const UnsignedInt numMipmaps = (ddsh.flags & DdsDescriptionFlag::MipMapCount)
@@ -283,26 +281,22 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     const UnsignedInt numImages = (isCubemap) ? 6 : 1;
     for (UnsignedInt n = 0; n < numImages; ++n) {
         if (compressed) {
-            loadCompressedImageData(colorFormat.compressed, width, height, depth, dimensions);
+            loadCompressedImageData(colorFormat.compressed, size, numDimensions);
         } else {
-            loadUncompressedImageData(colorFormat.uncompressed, width, height, depth, components, dimensions);
+            loadUncompressedImageData(colorFormat.uncompressed, size, components, numDimensions);
         }
 
-        UnsignedInt w = width;
-        UnsignedInt h = height;
-        UnsignedInt d = depth;
+        Vector3i mipSize{size};
 
         /* load all mipmaps for current surface */
-        for (UnsignedInt i = 0; i < numMipmaps && (w || h); i++) {
+        for (UnsignedInt i = 0; i < numMipmaps && (mipSize.x() || mipSize.y()); i++) {
             /* shrink to next power of 2 */
-            w = Math::max(w >> 1, 1u);
-            h = Math::max(h >> 1, 1u);
-            d = Math::max(d >> 1, 1u);
+            mipSize = Math::max(mipSize >> 1, Vector3i{1});
 
             if (compressed) {
-                loadCompressedImageData(colorFormat.compressed, w, h, d, dimensions);
+                loadCompressedImageData(colorFormat.compressed, mipSize, numDimensions);
             } else {
-                loadUncompressedImageData(colorFormat.uncompressed, w, h, d, components, dimensions);
+                loadUncompressedImageData(colorFormat.uncompressed, mipSize, components, numDimensions);
             }
         }
     }
@@ -310,10 +304,10 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 }
 
 void DdsImporter::loadUncompressedImageData(const ColorFormat format,
-    const UnsignedInt width, const UnsignedInt height, const UnsignedInt depth,
-    const UnsignedInt components, const UnsignedByte dimensions)
+    const Vector3i& dims, const UnsignedInt components,
+    const UnsignedByte numDimensions)
 {
-    const unsigned int numPixels = width * height * depth;
+    const unsigned int numPixels = dims.product();
     const unsigned int size = numPixels * components;
 
     /* load image data */
@@ -331,31 +325,30 @@ void DdsImporter::loadUncompressedImageData(const ColorFormat format,
         newColorFormat = ColorFormat::RGBA;
     }
 
-    if (dimensions == 2) {
-        _imageData2D.emplace_back(newColorFormat, ColorType::UnsignedByte, Vector2i{Int(width), Int(height)}, std::move(static_cast<void*>(data)));
-    } else if (dimensions == 3) {
-        _imageData3D.emplace_back(newColorFormat, ColorType::UnsignedByte, Vector3i{Int(width), Int(height), Int(depth)}, std::move(static_cast<void*>(data)));
+    if (numDimensions == 2) {
+        _imageData2D.emplace_back(newColorFormat, ColorType::UnsignedByte, dims.xy(), std::move(static_cast<void*>(data)));
+    } else if (numDimensions == 3) {
+        _imageData3D.emplace_back(newColorFormat, ColorType::UnsignedByte, dims, std::move(static_cast<void*>(data)));
     } else {
-        Error() << "Unsupported image dimensions:" << dimensions;
+        Error() << "Unsupported image dimensions:" << numDimensions;
     }
 }
 
 void DdsImporter::loadCompressedImageData(const CompressedColorFormat format,
-    const UnsignedInt width, const UnsignedInt height,
-    const UnsignedInt depth, const UnsignedByte dimensions)
+    const Vector3i& dims, const UnsignedByte numDimensions)
 {
-    const unsigned int size = (depth*((width + 3)/4)*(((height + 3)/4))*((format == CompressedColorFormat::RGBAS3tcDxt1) ? 8 : 16));
+    const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((format == CompressedColorFormat::RGBAS3tcDxt1) ? 8 : 16));
 
     /* load image data */
     char *data = new char[size];
     _in->read(data, size);
 
-    if (dimensions == 2) {
-        _imageData2D.emplace_back(format, Vector2i{Int(width), Int(height)}, Containers::Array<char>(data, size));
-    } else if (dimensions == 3) {
-        _imageData3D.emplace_back(format, Vector3i{Int(width), Int(height), Int(depth)}, Containers::Array<char>(data, size));
+    if (numDimensions == 2) {
+        _imageData2D.emplace_back(format, dims.xy(), Containers::Array<char>(data, size));
+    } else if (numDimensions == 3) {
+        _imageData3D.emplace_back(format, dims, Containers::Array<char>(data, size));
     } else {
-        Error() << "Unsupported image dimensions:" << dimensions;
+        Error() << "Unsupported image dimensions:" << numDimensions;
     }
 }
 

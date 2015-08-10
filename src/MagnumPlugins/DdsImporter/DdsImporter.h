@@ -62,10 +62,10 @@ class DdsImporter: public AbstractImporter {
         std::optional<ImageData3D> doImage3D(UnsignedInt id) override;
 
     private:
-        void loadUncompressedImageData(ColorFormat format, UnsignedInt width, UnsignedInt height,
-                        UnsignedInt depth, UnsignedInt components, UnsignedByte dimensions);
-        void loadCompressedImageData(CompressedColorFormat format, UnsignedInt width, UnsignedInt height,
-                        UnsignedInt components, UnsignedByte dimensions);
+        void loadUncompressedImageData(ColorFormat format, const Vector3i& dims, UnsignedInt components,
+            UnsignedByte numDimensions);
+        void loadCompressedImageData(CompressedColorFormat format, const Vector3i& dims,
+            UnsignedByte numDimensions);
 
         std::istream* _in;
 
