@@ -352,29 +352,16 @@ void DdsImporter::loadCompressedImageData(const CompressedColorFormat format,
     }
 }
 
-void DdsImporter::doOpenFile(const std::string& filename) {
-    /* let doOpenData handle it */
-    AbstractImporter::doOpenFile(filename);
-}
-
 UnsignedInt DdsImporter::doImage2DCount() const { return _imageData2D.size(); }
 
 std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
-    if (id < _imageData2D.size()) {
-        return std::move(_imageData2D[id]);
-    }
-
-    return std::optional<ImageData2D>();
+    return std::move(_imageData2D[id]);
 }
 
 UnsignedInt DdsImporter::doImage3DCount() const { return _imageData3D.size(); }
 
 std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
-    if (id < _imageData3D.size()) {
-        return std::move(_imageData3D[id]);
-    }
-
-    return std::optional<ImageData3D>();
+    return std::move(_imageData3D[id]);
 }
 
 }}

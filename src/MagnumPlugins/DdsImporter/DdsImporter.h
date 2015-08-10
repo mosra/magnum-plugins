@@ -53,7 +53,6 @@ class DdsImporter: public AbstractImporter {
         bool doIsOpened() const override;
         void doClose() override;
         void doOpenData(Containers::ArrayView<const char> data) override;
-        void doOpenFile(const std::string& filename) override;
 
         UnsignedInt doImage2DCount() const override;
         std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
