@@ -69,6 +69,7 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     Vector2i size;
     Int components;
 
+    stbi_set_flip_vertically_on_load(true);
     stbi_uc* const data = stbi_load_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0);
     if(!data) {
         Error() << "Trade::StbImageImporter::image2D(): cannot open the image:" << stbi_failure_reason();
@@ -103,13 +104,12 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
         default: CORRADE_ASSERT_UNREACHABLE();
     }
 
-    /* Copy the data with reversed row order to a new[]-allocated array so we
-       can delete[] it later (the original data with must be deleted with free()) */
-    unsigned char* const imageData = new unsigned char[size.product()*components];
-    for(Int y = 0; y != size.y(); ++y) {
-        const Int stride = size.x()*components;
-        std::copy(data + y*stride, data + (y + 1)*stride, imageData + (size.y() - y - 1)*stride);
-    }
+    /* Copy the data to a new[]-allocated array so we can delete[] it later
+       (the original data with must be deleted with free()) */
+    /** @todo remove when Array/Image has custom deleter support */
+    const std::size_t dataSize = size.product()*components;
+    unsigned char* const imageData = new unsigned char[dataSize];
+    std::copy(data, data + dataSize, imageData);
     stbi_image_free(data);
 
     return Trade::ImageData2D(format, ColorType::UnsignedByte, size, imageData);
