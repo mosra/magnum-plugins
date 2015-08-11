@@ -38,6 +38,8 @@
 #define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
+#define STBI_ASSERT CORRADE_INTERNAL_ASSERT
+/* Not defining malloc/free, because there's no equivalent for realloc in C++ */
 #include "stb_image.h"
 
 namespace Magnum { namespace Trade {

@@ -31,6 +31,8 @@
 #include "Magnum/Image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STBI_ASSERT CORRADE_INTERNAL_ASSERT
+/* Not defining malloc/free, because there's no equivalent for realloc in C++ */
 #include "stb_image_write.h"
 
 namespace Magnum { namespace Trade {
@@ -85,6 +87,7 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& 
 
     /* Copy the data to a new[]-allocated array so we can delete[] it later,
        then delete the original data with free() */
+    /** @todo remove when Array has custom deleter support */
     Containers::Array<char> fileData{std::size_t(size)};
     std::copy(data, data + size, fileData.begin());
     std::free(data);
