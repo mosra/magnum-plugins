@@ -129,6 +129,20 @@ inline void convertBGRAToRGBA(char* data, const unsigned int size) {
         [](Math::Vector4<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r', 'a'>(pixel); });
 }
 
+inline ColorFormat convertColorFormat(const ColorFormat format, Containers::Array<char>& data) {
+    if (format == ColorFormat::BGR) {
+        Debug() << "Converting from BGR to RGB";
+        convertBGRToRGB(data.begin(), data.size() / 3);
+        return ColorFormat::RGB;
+    } else if (format == ColorFormat::BGRA) {
+        Debug() << "Converting from BGRA to RGBA";
+        convertBGRAToRGBA(data.begin(), data.size() / 4);
+        return ColorFormat::RGBA;
+    } else {
+        return format;
+    }
+}
+
 /**
  * Dds file header struct.
  */
@@ -161,17 +175,17 @@ struct DdsHeader {
 
 DdsImporter::DdsImporter():
     _in(nullptr),
-    _imageData2D(),
-    _imageData3D()
+    _imageData()
 {
 
 }
 
 DdsImporter::DdsImporter(PluginManager::AbstractManager& manager, std::string plugin):
     AbstractImporter(manager, std::move(plugin)),
+    _compressed(false),
+    _volume(false),
     _in(nullptr),
-    _imageData2D(),
-    _imageData3D()
+    _imageData()
 {
 
 }
@@ -183,88 +197,77 @@ auto DdsImporter::doFeatures() const -> Features { return Feature::OpenData; }
 bool DdsImporter::doIsOpened() const { return _in; }
 
 void DdsImporter::doClose() {
-    delete _in;
     _in = nullptr;
 }
 
 void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* clear previous data */
-    _imageData2D.clear();
-    _imageData3D.clear();
+    _in = Containers::Array<char>(data.size());
+    _imageData.clear();
+    std::copy(data.begin(), data.end(), _in.begin());
 
-    _in = new std::istringstream{{data, data.size()}};
-
+    constexpr size_t magicNumberSize = 4;
     /* read magic number to verify this is a dds file. */
-    char magic[4];
-    _in->read(magic, 4);
-    if (strncmp(magic, "DDS ", 4) != 0) {
+    if (strncmp(_in.prefix(magicNumberSize).data(), "DDS ", magicNumberSize) != 0) {
         Error() << "Not a DDS file.";
     }
 
     /* read in DDS header */
-    DdsHeader ddsh;
-    _in->read(reinterpret_cast<char*>(&ddsh), sizeof(DdsHeader));
+    const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(_in.suffix(magicNumberSize).data());
 
     /* check if image is a 2D or 3D texture */
-    const UnsignedByte numDimensions = ((ddsh.caps2 & DdsCaps2::Volume) && (ddsh.depth > 0)) ? 3 : 2;
+    _volume = ((ddsh.caps2 & DdsCaps2::Volume) && (ddsh.depth > 0));
 
     /* check if image is a cubemap */
     const bool isCubemap = (ddsh.caps2 & DdsCaps2::Cubemap);
 
-    bool compressed = false;
-    union {
-        ColorFormat uncompressed;
-        CompressedColorFormat compressed;
-    } colorFormat;
-
-    /* components per pixel */
-    UnsignedInt components = 4;
-
     /* set the color format */
+    _components = 4;
+    _compressed = false;
     if (ddsh.ddspf.flags & DdsPixelFormat::FourCC) {
         switch (DdsCompressionTypes(ddsh.ddspf.fourCC)) {
             case DdsCompressionTypes::DXT1:
-                colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt1;
+                _colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt1;
                 break;
             case DdsCompressionTypes::DXT3:
-                colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt3;
+                _colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt3;
                 break;
             case DdsCompressionTypes::DXT5:
-                colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt5;
+                _colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt5;
                 break;
             default:
                 Error() << "unknown texture compression '" + fourcc(ddsh.ddspf.fourCC) + "'";
         }
-        compressed = true;
+        _compressed = true;
     } else if (ddsh.ddspf.rgbBitCount == 32 &&
                ddsh.ddspf.rBitMask == 0x00FF0000 &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
-        colorFormat.uncompressed = ColorFormat::BGRA;
+        _colorFormat.uncompressed = ColorFormat::BGRA;
     } else if (ddsh.ddspf.rgbBitCount == 32 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x00FF0000 &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
-        colorFormat.uncompressed = ColorFormat::RGBA;
+        _colorFormat.uncompressed = ColorFormat::RGBA;
     } else if (ddsh.ddspf.rgbBitCount == 24 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x00FF0000) {
-        colorFormat.uncompressed = ColorFormat::RGB;
-        components = 3;
+        _colorFormat.uncompressed = ColorFormat::RGB;
+        _components = 3;
     } else if (ddsh.ddspf.rgbBitCount == 24 &&
                ddsh.ddspf.rBitMask == 0x00FF0000 &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF) {
-        colorFormat.uncompressed = ColorFormat::BGR;
-        components = 3;
+        _colorFormat.uncompressed = ColorFormat::BGR;
+        _components = 3;
     } else if (ddsh.ddspf.rgbBitCount == 8) {
         #ifndef MAGNUM_TARGET_GLES2
-        colorFormat.uncompressed = ColorFormat::Red;
+        _colorFormat.uncompressed = ColorFormat::Red;
         #else
-        colorFormat.uncompressed = ColorFormat::Luminance;
+        _colorFormat.uncompressed = ColorFormat::Luminance;
         #endif
     } else {
         Error() << "Unknow texture format";
@@ -279,12 +282,9 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* load all surfaces for the image (6 surfaces for cubemaps) */
     const UnsignedInt numImages = (isCubemap) ? 6 : 1;
+    const size_t offset = sizeof(DdsHeader) + magicNumberSize;
     for (UnsignedInt n = 0; n < numImages; ++n) {
-        if (compressed) {
-            loadCompressedImageData(colorFormat.compressed, size, numDimensions);
-        } else {
-            loadUncompressedImageData(colorFormat.uncompressed, size, components, numDimensions);
-        }
+        offset = addImageDataOffset(size, offset);
 
         Vector3i mipSize{size};
 
@@ -293,75 +293,62 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
             /* shrink to next power of 2 */
             mipSize = Math::max(mipSize >> 1, Vector3i{1});
 
-            if (compressed) {
-                loadCompressedImageData(colorFormat.compressed, mipSize, numDimensions);
-            } else {
-                loadUncompressedImageData(colorFormat.uncompressed, mipSize, components, numDimensions);
-            }
+            offset = addImageDataOffset(mipSize, offset);
         }
     }
 
 }
 
-void DdsImporter::loadUncompressedImageData(const ColorFormat format,
-    const Vector3i& dims, const UnsignedInt components,
-    const UnsignedByte numDimensions)
+size_t DdsImporter::addImageDataOffset(const Vector3i& dims, const size_t offset)
 {
-    const unsigned int numPixels = dims.product();
-    const unsigned int size = numPixels * components;
+    if (_compressed) {
+        const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((_colorFormat.compressed == CompressedColorFormat::RGBAS3tcDxt1) ? 8 : 16));
 
-    /* load image data */
-    char *data = new char[size];
-    _in->read(data, size);
+        _imageData.push_back({dims, _in.slice(offset, offset + size)});
 
-    ColorFormat newColorFormat = format;
-    if (format == ColorFormat::BGR) {
-        Debug() << "Converting from BGR to RGB";
-        convertBGRToRGB(data, numPixels);
-        newColorFormat = ColorFormat::RGB;
-    } else if (format == ColorFormat::BGRA) {
-        Debug() << "Converting from BGRA to RGBA";
-        convertBGRAToRGBA(data, numPixels);
-        newColorFormat = ColorFormat::RGBA;
-    }
-
-    if (numDimensions == 2) {
-        _imageData2D.emplace_back(newColorFormat, ColorType::UnsignedByte, dims.xy(), std::move(static_cast<void*>(data)));
-    } else if (numDimensions == 3) {
-        _imageData3D.emplace_back(newColorFormat, ColorType::UnsignedByte, dims, std::move(static_cast<void*>(data)));
+        return offset + size;
     } else {
-        Error() << "Unsupported image dimensions:" << numDimensions;
+        const unsigned int numPixels = dims.product();
+        const unsigned int size = numPixels * _components;
+
+        _imageData.push_back({dims, _in.slice(offset, offset + size)});
+
+        return offset + size;
     }
 }
 
-void DdsImporter::loadCompressedImageData(const CompressedColorFormat format,
-    const Vector3i& dims, const UnsignedByte numDimensions)
-{
-    const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((format == CompressedColorFormat::RGBAS3tcDxt1) ? 8 : 16));
-
-    /* load image data */
-    char *data = new char[size];
-    _in->read(data, size);
-
-    if (numDimensions == 2) {
-        _imageData2D.emplace_back(format, dims.xy(), Containers::Array<char>(data, size));
-    } else if (numDimensions == 3) {
-        _imageData3D.emplace_back(format, dims, Containers::Array<char>(data, size));
-    } else {
-        Error() << "Unsupported image dimensions:" << numDimensions;
-    }
-}
-
-UnsignedInt DdsImporter::doImage2DCount() const { return _imageData2D.size(); }
+UnsignedInt DdsImporter::doImage2DCount() const {  return (_volume) ? 0 : _imageData.size(); }
 
 std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
-    return std::move(_imageData2D[id]);
+    ImageDataOffset& dataOffset = _imageData[id];
+
+    /* copy image data */
+    Containers::Array<char> data = Containers::Array<char>(dataOffset._data.size());
+    std::copy(dataOffset._data.begin(), dataOffset._data.end(), data.begin());
+
+    if (_compressed) {
+        return ImageData2D(_colorFormat.compressed, dataOffset._dimensions.xy(), std::move(data));
+    } else {
+        ColorFormat newColorFormat = convertColorFormat(_colorFormat.uncompressed, data);
+        return ImageData2D(newColorFormat, ColorType::UnsignedByte, dataOffset._dimensions.xy(), static_cast<void*>(data.release()));
+    }
 }
 
-UnsignedInt DdsImporter::doImage3DCount() const { return _imageData3D.size(); }
+UnsignedInt DdsImporter::doImage3DCount() const { return (_volume) ? _imageData.size() : 0; }
 
 std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
-    return std::move(_imageData3D[id]);
+    ImageDataOffset& dataOffset = _imageData[id];
+
+    /* copy image data */
+    Containers::Array<char> data = Containers::Array<char>(dataOffset._data.size());
+    std::copy(dataOffset._data.begin(), dataOffset._data.end(), data.begin());
+
+    if (_compressed) {
+        return ImageData3D(_colorFormat.compressed, dataOffset._dimensions, std::move(data));
+    } else {
+        ColorFormat newColorFormat = convertColorFormat(_colorFormat.uncompressed, data);
+        return ImageData3D(newColorFormat, ColorType::UnsignedByte, dataOffset._dimensions, static_cast<void*>(data.release()));
+    }
 }
 
 }}

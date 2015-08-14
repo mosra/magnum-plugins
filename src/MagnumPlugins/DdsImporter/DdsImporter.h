@@ -31,8 +31,16 @@
  */
 #include <vector>
 #include <Magnum/Trade/AbstractImporter.h>
+#include <Magnum/Math/Vector3.h>
+#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/ArrayView.h>
 
 namespace Magnum { namespace Trade {
+
+struct ImageDataOffset {
+    Vector3i _dimensions;
+    Containers::ArrayView<char> _data;
+};
 
 /**
 @brief DDS importer plugin
@@ -61,15 +69,21 @@ class DdsImporter: public AbstractImporter {
         std::optional<ImageData3D> doImage3D(UnsignedInt id) override;
 
     private:
-        void loadUncompressedImageData(ColorFormat format, const Vector3i& dims, UnsignedInt components,
-            UnsignedByte numDimensions);
-        void loadCompressedImageData(CompressedColorFormat format, const Vector3i& dims,
-            UnsignedByte numDimensions);
+        size_t addImageDataOffset(const Vector3i& dims, size_t offset);
 
-        std::istream* _in;
+        Containers::Array<char> _in;
 
-        std::vector<ImageData2D> _imageData2D;
-        std::vector<ImageData3D> _imageData3D;
+        bool _compressed;
+        bool _volume;
+
+        /* components per pixel */
+        UnsignedInt _components;
+        union {
+            ColorFormat uncompressed;
+            CompressedColorFormat compressed;
+        } _colorFormat;
+
+        std::vector<ImageDataOffset> _imageData;
 };
 
 }}
