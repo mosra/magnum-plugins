@@ -40,10 +40,8 @@ namespace Magnum { namespace Trade {
 
 namespace {
 
-/*
- * Flags to indicate which members of a DdsHeader contain valid data.
- */
-enum DdsDescriptionFlag: UnsignedInt {
+/* Flags to indicate which members of a DdsHeader contain valid data */
+enum class DdsDescriptionFlag: UnsignedInt {
     Caps = 0x00000001,
     Height = 0x00000002,
     Width = 0x00000004,
@@ -54,22 +52,24 @@ enum DdsDescriptionFlag: UnsignedInt {
     Depth = 0x00800000
 };
 
-/*
- * Direct Draw Surface pixel format.
- */
-enum DdsPixelFormat: UnsignedInt {
+typedef Corrade::Containers::EnumSet<DdsDescriptionFlag> DdsDescriptionFlags;
+CORRADE_ENUMSET_OPERATORS(DdsDescriptionFlags)
+
+/* Direct Draw Surface pixel format */
+enum class DdsPixelFormatFlag: UnsignedInt {
     AlphaPixels = 0x00000001,
     FourCC = 0x00000004,
     RGB = 0x00000040,
     RGBA = 0x00000041
 };
 
-/*
- * Specifies the complexity of the surfaces stored.
- */
-enum DdsCaps1: UnsignedInt {
-    /* Set for files that contain more than one surface (a mipmap, a cubic environment map,
-     * or mipmapped volume texture). */
+typedef Corrade::Containers::EnumSet<DdsPixelFormatFlag> DdsPixelFormatFlags;
+CORRADE_ENUMSET_OPERATORS(DdsPixelFormatFlags)
+
+/* Specifies the complexity of the surfaces stored */
+enum class DdsCap1: UnsignedInt {
+    /* Set for files that contain more than one surface (a mipmap, a cubic
+       environment map, or mipmapped volume texture) */
     Complex = 0x00000008,
     /* Texture (required). */
     Texture = 0x00001000,
@@ -77,10 +77,11 @@ enum DdsCaps1: UnsignedInt {
     MipMap = 0x00400000
 };
 
-/**
- * Additional detail about the surfaces stored.
- */
-enum DdsCaps2: UnsignedInt {
+typedef Corrade::Containers::EnumSet<DdsCap1> DdsCaps1;
+CORRADE_ENUMSET_OPERATORS(DdsCaps1)
+
+/** Additional detail about the surfaces stored */
+enum class DdsCap2: UnsignedInt {
     Cubemap = 0x00000200,
     CubemapPositiveX = 0x00000400,
     CubemapNegativeX = 0x00000800,
@@ -92,10 +93,13 @@ enum DdsCaps2: UnsignedInt {
     Volume = 0x00200000
 };
 
+typedef Corrade::Containers::EnumSet<DdsCap2> DdsCaps2;
+CORRADE_ENUMSET_OPERATORS(DdsCaps2)
+
 /*
  * Compressed texture types.
  */
-enum DdsCompressionTypes: UnsignedInt {
+enum class DdsCompressionTypes: UnsignedInt {
     /* MAKEFOURCC('D','X','T','1'). */
     DXT1 = 0x31545844,
     /* MAKEFOURCC('D','X','T','2'), not supported. */
@@ -160,18 +164,18 @@ inline PixelFormat convertPixelFormat(const PixelFormat format, Containers::Arra
  * Dds file header struct.
  */
 struct DdsHeader {
-    UnsignedInt     size;
-    UnsignedInt     flags;
-    UnsignedInt     height;
-    UnsignedInt     width;
-    UnsignedInt     pitchOrLinearSize;
-    UnsignedInt     depth;
-    UnsignedInt     mipMapCount;
-    UnsignedInt     reserved1[11];
+    UnsignedInt size;
+    DdsDescriptionFlags flags;
+    UnsignedInt height;
+    UnsignedInt width;
+    UnsignedInt pitchOrLinearSize;
+    UnsignedInt depth;
+    UnsignedInt mipMapCount;
+    UnsignedInt reserved1[11];
     struct {
         /* pixel format */
         UnsignedInt size;
-        UnsignedInt flags;
+        DdsPixelFormatFlags flags;
         UnsignedInt fourCC;
         UnsignedInt rgbBitCount;
         UnsignedInt rBitMask;
@@ -179,12 +183,14 @@ struct DdsHeader {
         UnsignedInt bBitMask;
         UnsignedInt aBitMask;
     } ddspf;
-    UnsignedInt     caps;
-    UnsignedInt     caps2;
-    UnsignedInt     caps3;
-    UnsignedInt     caps4;
-    UnsignedInt     reserved2;
+    DdsCaps1 caps;
+    DdsCaps2 caps2;
+    UnsignedInt caps3;
+    UnsignedInt caps4;
+    UnsignedInt reserved2;
 };
+
+static_assert(sizeof(DdsHeader) + 4 == 128, "Improper size of DdsHeader struct");
 
 }
 
@@ -233,15 +239,15 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(_in.suffix(magicNumberSize).data());
 
     /* check if image is a 2D or 3D texture */
-    _volume = ((ddsh.caps2 & DdsCaps2::Volume) && (ddsh.depth > 0));
+    _volume = ((ddsh.caps2 & DdsCap2::Volume) && (ddsh.depth > 0));
 
     /* check if image is a cubemap */
-    const bool isCubemap = (ddsh.caps2 & DdsCaps2::Cubemap);
+    const bool isCubemap = !!(ddsh.caps2 & DdsCap2::Cubemap);
 
     /* set the color format */
     _components = 4;
     _compressed = false;
-    if(ddsh.ddspf.flags & DdsPixelFormat::FourCC) {
+    if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
         switch(DdsCompressionTypes(ddsh.ddspf.fourCC)) {
             case DdsCompressionTypes::DXT1:
                 _colorFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt1;
