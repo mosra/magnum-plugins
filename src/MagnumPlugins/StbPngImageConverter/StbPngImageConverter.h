@@ -29,18 +29,18 @@
  * @brief Class @ref Magnum::Trade::StbPngImageConverter
  */
 
-#include "Magnum/Trade/AbstractImageConverter.h"
+#include <Magnum/Trade/AbstractImageConverter.h>
 
 namespace Magnum { namespace Trade {
 
 /**
 @brief PNG image converter plugin using stb_image_write
 
-Supports images with format @ref ColorFormat::Red, @ref ColorFormat::RG,
-@ref ColorFormat::RGB or @ref ColorFormat::RGBA and type
-@ref ColorType::UnsignedByte. On OpenGL ES 2.0 and WebGL 1.0 accepts also
-@ref ColorFormat::Luminance instead of @ref ColorFormat::Red and
-@ref ColorFormat::LuminanceAlpha instaed of @ref ColorFormat::RG.
+Supports images with format @ref PixelFormat::Red, @ref PixelFormat::RG,
+@ref PixelFormat::RGB or @ref PixelFormat::RGBA and type
+@ref PixelType::UnsignedByte. On OpenGL ES 2.0 and WebGL 1.0 accepts also
+@ref PixelFormat::Luminance instead of @ref PixelFormat::Red and
+@ref PixelFormat::LuminanceAlpha instaed of @ref PixelFormat::RG.
 
 This plugin is built if `WITH_STBPNGIMAGECONVERTER` is enabled when building
 Magnum Plugins. To use dynamic plugin, you need to load `StbPngImageConverter`

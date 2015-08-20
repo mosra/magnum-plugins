@@ -26,9 +26,8 @@
 #include "StbPngImageConverter.h"
 
 #include <Corrade/Containers/Array.h>
-
-#include "Magnum/ColorFormat.h"
-#include "Magnum/Image.h"
+#include <Magnum/Image.h>
+#include <Magnum/PixelFormat.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBI_ASSERT CORRADE_INTERNAL_ASSERT
@@ -44,7 +43,7 @@ StbPngImageConverter::StbPngImageConverter(PluginManager::AbstractManager& manag
 auto StbPngImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 
 Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& image) const {
-    if(image.type() != ColorType::UnsignedByte) {
+    if(image.type() != PixelType::UnsignedByte) {
         Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color type" << image.type();
         return nullptr;
     }
@@ -52,23 +51,23 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& 
     Int components;
     switch(image.format()) {
         #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        case ColorFormat::Red:
+        case PixelFormat::Red:
         #endif
         #ifdef MAGNUM_TARGET_GLES2
-        case ColorFormat::Luminance:
+        case PixelFormat::Luminance:
         #endif
             components = 1;
             break;
         #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        case ColorFormat::RG:
+        case PixelFormat::RG:
         #endif
         #ifdef MAGNUM_TARGET_GLES2
-        case ColorFormat::LuminanceAlpha:
+        case PixelFormat::LuminanceAlpha:
         #endif
             components = 2;
             break;
-        case ColorFormat::RGB: components = 3; break;
-        case ColorFormat::RGBA: components = 4; break;
+        case PixelFormat::RGB: components = 3; break;
+        case PixelFormat::RGBA: components = 4; break;
         default:
             Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color format" << image.format();
             return nullptr;

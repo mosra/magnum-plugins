@@ -28,10 +28,10 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
+#include <Magnum/Image.h>
+#include <Magnum/PixelFormat.h>
+#include <Magnum/Trade/ImageData.h>
 
-#include "Magnum/ColorFormat.h"
-#include "Magnum/Image.h"
-#include "Magnum/Trade/ImageData.h"
 #include "MagnumPlugins/StbPngImageConverter/StbPngImageConverter.h"
 #include "MagnumPlugins/StbImageImporter/StbImageImporter.h"
 
@@ -55,7 +55,7 @@ namespace {
         5, 6, 7, 6, 7, 8
     };
 
-    const ImageView2D original{ColorFormat::RGB, ColorType::UnsignedByte, {2, 3}, originalData};
+    const ImageView2D original{PixelFormat::RGB, PixelType::UnsignedByte, {2, 3}, originalData};
 }
 
 StbPngImageConverterTest::StbPngImageConverterTest() {
@@ -66,25 +66,25 @@ StbPngImageConverterTest::StbPngImageConverterTest() {
 }
 
 void StbPngImageConverterTest::wrongFormat() {
-    ImageView2D image{ColorFormat::DepthComponent, ColorType::UnsignedByte, {}, nullptr};
+    ImageView2D image{PixelFormat::DepthComponent, PixelType::UnsignedByte, {}, nullptr};
 
     std::ostringstream out;
     Error::setOutput(&out);
 
     const auto data = StbPngImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
-    CORRADE_COMPARE(out.str(), "Trade::StbPngImageConverter::exportToData(): unsupported color format ColorFormat::DepthComponent\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbPngImageConverter::exportToData(): unsupported color format PixelFormat::DepthComponent\n");
 }
 
 void StbPngImageConverterTest::wrongType() {
-    ImageView2D image{ColorFormat::Red, ColorType::Float, {}, nullptr};
+    ImageView2D image{PixelFormat::Red, PixelType::Float, {}, nullptr};
 
     std::ostringstream out;
     Error::setOutput(&out);
 
     const auto data = StbPngImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
-    CORRADE_COMPARE(out.str(), "Trade::StbPngImageConverter::exportToData(): unsupported color type ColorType::Float\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbPngImageConverter::exportToData(): unsupported color type PixelType::Float\n");
 }
 
 void StbPngImageConverterTest::data() {
@@ -96,8 +96,8 @@ void StbPngImageConverterTest::data() {
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), ColorFormat::RGB);
-    CORRADE_COMPARE(converted->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
+    CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE((std::string{converted->data(), 2*3*3}),
                     (std::string{original.data(), 2*3*3}));
 }

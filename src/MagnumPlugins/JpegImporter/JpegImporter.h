@@ -49,12 +49,12 @@ this as a dependency of another plugin, you additionally need to add
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref ColorType::UnsignedByte and @ref ColorFormat::RGB
-or @ref ColorFormat::Red, respectively. Grayscale images require extension
+The images are imported with @ref PixelType::UnsignedByte and @ref PixelFormat::RGB
+or @ref PixelFormat::Red, respectively. Grayscale images require extension
 @extension{ARB,texture_rg}.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
-images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red.
+images use @ref PixelFormat::Luminance instead of @ref PixelFormat::Red.
 */
 class JpegImporter: public AbstractImporter {
     public:

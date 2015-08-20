@@ -27,7 +27,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
-#include <Magnum/ColorFormat.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 
 #include "MagnumPlugins/DdsImporter/DdsImporter.h"
@@ -70,8 +70,8 @@ void DdsImporterTest::testUncompressedRgb() {
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ColorFormat::RGB);
-    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
+    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
         TestSuite::Compare::Container);
 }
@@ -92,8 +92,8 @@ void DdsImporterTest::testUncompressedRgbWithMips() {
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ColorFormat::RGB);
-    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
+    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
             TestSuite::Compare::Container);
 
@@ -101,8 +101,8 @@ void DdsImporterTest::testUncompressedRgbWithMips() {
     std::optional<Trade::ImageData2D> mip = importer.image2D(1);
     CORRADE_VERIFY(mip);
     CORRADE_COMPARE(mip->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(mip->format(), ColorFormat::RGB);
-    CORRADE_COMPARE(mip->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE(mip->format(), PixelFormat::RGB);
+    CORRADE_COMPARE(mip->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(mip->data(), Containers::ArrayView<const char>(mipPixels),
             TestSuite::Compare::Container);
 }
@@ -137,8 +137,8 @@ void DdsImporterTest::testUncompressedRgbVolume() {
     std::optional<Trade::ImageData3D> image = importer.image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
-    CORRADE_COMPARE(image->format(), ColorFormat::RGB);
-    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
+    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
         TestSuite::Compare::Container);
 }
@@ -154,7 +154,7 @@ void DdsImporterTest::testDxt1Compressed() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_VERIFY(image->isCompressed());
-    CORRADE_COMPARE(image->compressedFormat(), CompressedColorFormat::RGBAS3tcDxt1);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt1);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
             TestSuite::Compare::Container);
 }
@@ -170,7 +170,7 @@ void DdsImporterTest::testDxt3Compressed() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_VERIFY(image->isCompressed());
-    CORRADE_COMPARE(image->compressedFormat(), CompressedColorFormat::RGBAS3tcDxt3);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt3);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
             TestSuite::Compare::Container);
 }
@@ -186,7 +186,7 @@ void DdsImporterTest::testDxt5Compressed() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_VERIFY(image->isCompressed());
-    CORRADE_COMPARE(image->compressedFormat(), CompressedColorFormat::RGBAS3tcDxt5);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt5);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
             TestSuite::Compare::Container);
 }

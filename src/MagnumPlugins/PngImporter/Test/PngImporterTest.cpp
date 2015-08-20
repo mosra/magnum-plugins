@@ -26,7 +26,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
-#include <Magnum/ColorFormat.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 
 #include "MagnumPlugins/PngImporter/PngImporter.h"
@@ -61,11 +61,11 @@ void PngImporterTest::gray() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     #ifndef MAGNUM_TARGET_GLES2
-    CORRADE_COMPARE(image->format(), ColorFormat::Red);
+    CORRADE_COMPARE(image->format(), PixelFormat::Red);
     #else
-    CORRADE_COMPARE(image->format(), ColorFormat::Luminance);
+    CORRADE_COMPARE(image->format(), PixelFormat::Luminance);
     #endif
-    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
         '\xff', '\x88', '\x00',
         '\x88', '\x00', '\xff'),
@@ -79,8 +79,8 @@ void PngImporterTest::rgb() {
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ColorFormat::RGB);
-    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
+    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
@@ -98,8 +98,8 @@ void PngImporterTest::rgba() {
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), ColorFormat::RGBA);
-    CORRADE_COMPARE(image->type(), ColorType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA);
+    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
         '\xde', '\xad', '\xb5', '\xff',
         '\xca', '\xfe', '\x77', '\xff',

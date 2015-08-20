@@ -55,15 +55,15 @@ dependency of another plugin, you additionally need to add
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref ColorType::UnsignedByte type and
-@ref ColorFormat::RGB, @ref ColorFormat::RGBA, @ref ColorFormat::Red for
-grayscale. BGR and BGRA images are converted to @ref ColorFormat::RGB,
-@ref ColorFormat::RGBA respectively. If the image is compressed, they are
-imported with @ref CompressedColorFormat::RGBAS3tcDxt1, @ref CompressedColorFormat::RGBAS3tcDxt3
-and @ref CompressedColorFormat::RGBAS3tcDxt5.
+The images are imported with @ref PixelType::UnsignedByte type and
+@ref PixelFormat::RGB, @ref PixelFormat::RGBA, @ref PixelFormat::Red for
+grayscale. BGR and BGRA images are converted to @ref PixelFormat::RGB,
+@ref PixelFormat::RGBA respectively. If the image is compressed, they are
+imported with @ref CompressedPixelFormat::RGBAS3tcDxt1, @ref CompressedPixelFormat::RGBAS3tcDxt3
+and @ref CompressedPixelFormat::RGBAS3tcDxt5.
 
-In In OpenGL ES 2.0 grayscale images use @ref ColorFormat::Luminance instead
-of ColorFormat::Red.
+In In OpenGL ES 2.0 grayscale images use @ref PixelFormat::Luminance instead
+of PixelFormat::Red.
 
 Note: Mipmaps are currently imported under separate image data ids. You may access
 them via @ref DdsImporter::imageData2D(n) which will return the n-th mip, a bigger n
@@ -112,8 +112,8 @@ class DdsImporter: public AbstractImporter {
         /* components per pixel */
         UnsignedInt _components;
         union {
-            ColorFormat uncompressed;
-            CompressedColorFormat compressed;
+            PixelFormat uncompressed;
+            CompressedPixelFormat compressed;
         } _colorFormat;
 
         std::vector<ImageDataOffset> _imageData;

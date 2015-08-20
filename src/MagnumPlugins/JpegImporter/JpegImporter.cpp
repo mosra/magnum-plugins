@@ -27,7 +27,7 @@
 
 #include <csetjmp>
 #include <Corrade/Utility/Debug.h>
-#include <Magnum/ColorFormat.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 
 /* On Windows we need to circumvent conflicting definition of INT32 in
@@ -101,23 +101,23 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Image size and type */
     const Vector2i size(file.output_width, file.output_height);
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
-    constexpr ColorType type = ColorType::UnsignedByte;
+    constexpr PixelType type = PixelType::UnsignedByte;
 
     /* Image format */
-    ColorFormat format = {};
+    PixelFormat format = {};
     switch(file.out_color_space) {
         case JCS_GRAYSCALE:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 1);
             #ifdef MAGNUM_TARGET_GLES2
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                ColorFormat::Red : ColorFormat::Luminance;
+                PixelFormat::Red : PixelFormat::Luminance;
             #else
-            format = ColorFormat::Red;
+            format = PixelFormat::Red;
             #endif
             break;
         case JCS_RGB:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 3);
-            format = ColorFormat::RGB;
+            format = PixelFormat::RGB;
             break;
 
         /** @todo RGBA (only in libjpeg-turbo and probably ignored) */

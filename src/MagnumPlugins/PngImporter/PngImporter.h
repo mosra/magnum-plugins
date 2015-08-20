@@ -50,12 +50,12 @@ this as a dependency of another plugin, you additionally need to add
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref ColorType::UnsignedByte / @ref ColorType::UnsignedShort
-and @ref ColorFormat::RGB, @ref ColorFormat::RGBA or @ref ColorFormat::Red,
+The images are imported with @ref PixelType::UnsignedByte / @ref PixelType::UnsignedShort
+and @ref PixelFormat::RGB, @ref PixelFormat::RGBA or @ref PixelFormat::Red,
 respectively. Grayscale images require extension @extension{ARB,texture_rg}.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported, grayscale
-images use @ref ColorFormat::Luminance instead of @ref ColorFormat::Red.
+images use @ref PixelFormat::Luminance instead of @ref PixelFormat::Red.
 */
 class PngImporter: public AbstractImporter {
     public:

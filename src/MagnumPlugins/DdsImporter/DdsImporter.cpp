@@ -30,7 +30,7 @@
 #include <sstream>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Debug.h>
-#include <Magnum/ColorFormat.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 #include <MagnumPlugins/DdsImporter/DdsImporter.h>
 #include <Magnum/Math/Functions.h>
@@ -148,15 +148,15 @@ inline void convertBGRAToRGBA(char* data, const unsigned int size) {
  * @param data Array data to convert.
  * @return The format which the converted array data is in.
  */
-inline ColorFormat convertColorFormat(const ColorFormat format, Containers::Array<char>& data) {
-    if(format == ColorFormat::BGR) {
+inline PixelFormat convertPixelFormat(const PixelFormat format, Containers::Array<char>& data) {
+    if(format == PixelFormat::BGR) {
         Debug() << "Converting from BGR to RGB";
         convertBGRToRGB(data.begin(), data.size() / 3);
-        return ColorFormat::RGB;
-    } else if(format == ColorFormat::BGRA) {
+        return PixelFormat::RGB;
+    } else if(format == PixelFormat::BGRA) {
         Debug() << "Converting from BGRA to RGBA";
         convertBGRAToRGBA(data.begin(), data.size() / 4);
-        return ColorFormat::RGBA;
+        return PixelFormat::RGBA;
     } else {
         return format;
     }
@@ -250,13 +250,13 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(ddsh.ddspf.flags & DdsPixelFormat::FourCC) {
         switch(DdsCompressionTypes(ddsh.ddspf.fourCC)) {
             case DdsCompressionTypes::DXT1:
-                _colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt1;
+                _colorFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt1;
                 break;
             case DdsCompressionTypes::DXT3:
-                _colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt3;
+                _colorFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt3;
                 break;
             case DdsCompressionTypes::DXT5:
-                _colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt5;
+                _colorFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt5;
                 break;
             default:
                 Error() << "unknown texture compression '" + fourcc(ddsh.ddspf.fourCC) + "'";
@@ -267,30 +267,30 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
-        _colorFormat.uncompressed = ColorFormat::BGRA;
+        _colorFormat.uncompressed = PixelFormat::BGRA;
     } else if(ddsh.ddspf.rgbBitCount == 32 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x00FF0000 &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
-        _colorFormat.uncompressed = ColorFormat::RGBA;
+        _colorFormat.uncompressed = PixelFormat::RGBA;
     } else if(ddsh.ddspf.rgbBitCount == 24 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x00FF0000) {
-        _colorFormat.uncompressed = ColorFormat::RGB;
+        _colorFormat.uncompressed = PixelFormat::RGB;
         _components = 3;
     } else if(ddsh.ddspf.rgbBitCount == 24 &&
                ddsh.ddspf.rBitMask == 0x00FF0000 &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF) {
-        _colorFormat.uncompressed = ColorFormat::BGR;
+        _colorFormat.uncompressed = PixelFormat::BGR;
         _components = 3;
     } else if(ddsh.ddspf.rgbBitCount == 8) {
         #ifndef MAGNUM_TARGET_GLES2
-        _colorFormat.uncompressed = ColorFormat::Red;
+        _colorFormat.uncompressed = PixelFormat::Red;
         #else
-        _colorFormat.uncompressed = ColorFormat::Luminance;
+        _colorFormat.uncompressed = PixelFormat::Luminance;
         #endif
     } else {
         Error() << "Unknow texture format";
@@ -325,7 +325,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 size_t DdsImporter::addImageDataOffset(const Vector3i& dims, const size_t offset)
 {
     if(_compressed) {
-        const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((_colorFormat.compressed == CompressedColorFormat::RGBAS3tcDxt1) ? 8 : 16));
+        const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((_colorFormat.compressed == CompressedPixelFormat::RGBAS3tcDxt1) ? 8 : 16));
 
         _imageData.push_back({dims, _in.slice(offset, offset + size)});
 
@@ -352,8 +352,8 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     if(_compressed) {
         return ImageData2D(_colorFormat.compressed, dataOffset._dimensions.xy(), std::move(data));
     } else {
-        ColorFormat newColorFormat = convertColorFormat(_colorFormat.uncompressed, data);
-        return ImageData2D(newColorFormat, ColorType::UnsignedByte, dataOffset._dimensions.xy(), static_cast<void*>(data.release()));
+        PixelFormat newPixelFormat = convertPixelFormat(_colorFormat.uncompressed, data);
+        return ImageData2D(newPixelFormat, PixelType::UnsignedByte, dataOffset._dimensions.xy(), static_cast<void*>(data.release()));
     }
 }
 
@@ -369,8 +369,8 @@ std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
     if(_compressed) {
         return ImageData3D(_colorFormat.compressed, dataOffset._dimensions, std::move(data));
     } else {
-        ColorFormat newColorFormat = convertColorFormat(_colorFormat.uncompressed, data);
-        return ImageData3D(newColorFormat, ColorType::UnsignedByte, dataOffset._dimensions, static_cast<void*>(data.release()));
+        PixelFormat newPixelFormat = convertPixelFormat(_colorFormat.uncompressed, data);
+        return ImageData3D(newPixelFormat, PixelType::UnsignedByte, dataOffset._dimensions, static_cast<void*>(data.release()));
     }
 }
 

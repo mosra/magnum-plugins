@@ -26,7 +26,7 @@
 #include "StbImageImporter.h"
 
 #include <Corrade/Utility/Debug.h>
-#include <Magnum/ColorFormat.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 
 #ifdef MAGNUM_TARGET_GLES2
@@ -76,31 +76,31 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
         return std::nullopt;
     }
 
-    ColorFormat format;
+    PixelFormat format;
     switch(components) {
         case 1:
             #ifndef MAGNUM_TARGET_GLES2
-            format = ColorFormat::Red;
+            format = PixelFormat::Red;
             #elif !defined(MAGNUM_TARGET_WEBGL)
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                ColorFormat::Red : ColorFormat::Luminance;
+                PixelFormat::Red : PixelFormat::Luminance;
             #else
-            format = ColorFormat::Luminance;
+            format = PixelFormat::Luminance;
             #endif
             break;
         case 2:
             #ifndef MAGNUM_TARGET_GLES2
-            format = ColorFormat::RG;
+            format = PixelFormat::RG;
             #elif !defined(MAGNUM_TARGET_WEBGL)
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                ColorFormat::RG : ColorFormat::LuminanceAlpha;
+                PixelFormat::RG : PixelFormat::LuminanceAlpha;
             #else
-            format = ColorFormat::LuminanceAlpha;
+            format = PixelFormat::LuminanceAlpha;
             #endif
             break;
 
-        case 3: format = ColorFormat::RGB; break;
-        case 4: format = ColorFormat::RGBA; break;
+        case 3: format = PixelFormat::RGB; break;
+        case 4: format = PixelFormat::RGBA; break;
         default: CORRADE_ASSERT_UNREACHABLE();
     }
 
@@ -112,7 +112,7 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     std::copy(data, data + dataSize, imageData);
     stbi_image_free(data);
 
-    return Trade::ImageData2D(format, ColorType::UnsignedByte, size, imageData);
+    return Trade::ImageData2D(format, PixelType::UnsignedByte, size, imageData);
 }
 
 }}

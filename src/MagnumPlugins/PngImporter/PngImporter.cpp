@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <png.h>
 #include <Corrade/Utility/Debug.h>
-#include <Magnum/ColorFormat.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -109,15 +109,15 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     const png_uint_32 colorType = png_get_color_type(file, info);
 
     /* Image format */
-    ColorFormat format;
+    PixelFormat format;
     switch(colorType) {
         /* Types that can be used without conversion */
         case PNG_COLOR_TYPE_GRAY:
             #ifndef MAGNUM_TARGET_GLES2
-            format = ColorFormat::Red;
+            format = PixelFormat::Red;
             #else
             format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                ColorFormat::Red : ColorFormat::Luminance;
+                PixelFormat::Red : PixelFormat::Luminance;
             #endif
             CORRADE_INTERNAL_ASSERT(channels == 1);
 
@@ -130,12 +130,12 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
             break;
 
         case PNG_COLOR_TYPE_RGB:
-            format = ColorFormat::RGB;
+            format = PixelFormat::RGB;
             CORRADE_INTERNAL_ASSERT(channels == 3);
             break;
 
         case PNG_COLOR_TYPE_RGBA:
-            format = ColorFormat::RGBA;
+            format = PixelFormat::RGBA;
             CORRADE_INTERNAL_ASSERT(channels == 4);
             break;
 
@@ -143,7 +143,7 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         case PNG_COLOR_TYPE_PALETTE:
             /** @todo test case for this */
             png_set_palette_to_rgb(file);
-            format = ColorFormat::RGB;
+            format = PixelFormat::RGB;
             channels = 3;
             break;
 
@@ -161,10 +161,10 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     }
 
     /* Image type */
-    ColorType type;
+    PixelType type;
     switch(bits) {
-        case 8:  type = ColorType::UnsignedByte;  break;
-        case 16: type = ColorType::UnsignedShort; break;
+        case 8:  type = PixelType::UnsignedByte;  break;
+        case 16: type = PixelType::UnsignedShort; break;
 
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported bit depth" << bits;

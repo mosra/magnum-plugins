@@ -70,15 +70,15 @@ when using plugin dedicated for given format.
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref ColorType::UnsignedByte type and
-@ref ColorFormat::RGB, @ref ColorFormat::RGBA, @ref ColorFormat::Red for
-grayscale or @ref ColorFormat::RG for grayscale + alpha. Grayscale and
+The images are imported with @ref PixelType::UnsignedByte type and
+@ref PixelFormat::RGB, @ref PixelFormat::RGBA, @ref PixelFormat::Red for
+grayscale or @ref PixelFormat::RG for grayscale + alpha. Grayscale and
 grayscale + alpha images require extension @extension{ARB,texture_rg}.
 
 In OpenGL ES 2.0 if @es_extension{EXT,texture_rg} is not supported and in WebGL
-1.0, grayscale images use @ref ColorFormat::Luminance instead of
-@ref ColorFormat::Red and @ref ColorFormat::LuminanceAlpha instead of
-@ref ColorFormat::RG.
+1.0, grayscale images use @ref PixelFormat::Luminance instead of
+@ref PixelFormat::Red and @ref PixelFormat::LuminanceAlpha instead of
+@ref PixelFormat::RG.
 
 @todo Properly support floating-point HDR images
 @todo Enable ARM NEON when I'm able to test that
