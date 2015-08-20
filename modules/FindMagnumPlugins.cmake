@@ -8,6 +8,7 @@
 #  AnyImageImporter - Any image importer
 #  AnySceneImporter - Any scene importer
 #  ColladaImporter  - Collada importer
+#  DdsImporter      - DDS importer
 #  FreeTypeFont     - FreeType font
 #  HarfBuzzFont     - HarfBuzz font
 #  JpegImporter     - JPEG importer
@@ -165,6 +166,8 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
             unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
         endif()
     endif()
+
+    # DdsImporter has no dependencies
 
     # FreeTypeFont plugin dependencies
     if(${component} STREQUAL FreeTypeFont)
