@@ -30,11 +30,7 @@
  * @brief Class @ref Magnum::Trade::DdsImporter
  */
 
-#include <vector>
-#include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
-#include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/ArrayView.h>
 
 namespace Magnum { namespace Trade {
 
@@ -93,31 +89,9 @@ class DdsImporter: public AbstractImporter {
         std::optional<ImageData3D> doImage3D(UnsignedInt id) override;
 
     private:
-        /* "Bookmark" in a .dds file to later load image data from */
-        struct ImageDataOffset {
-            Vector3i _dimensions;
-            Containers::ArrayView<char> _data;
-        };
+        struct File;
 
-        /*
-         * @brief Add ImageDataOffset to _imageData.
-         * @return New offset after the image data which has been noted.
-         */
-        size_t addImageDataOffset(const Vector3i& dims, size_t offset);
-
-        Containers::Array<char> _in;
-
-        bool _compressed;
-        bool _volume;
-
-        /* components per pixel */
-        UnsignedInt _components;
-        union {
-            PixelFormat uncompressed;
-            CompressedPixelFormat compressed;
-        } _colorFormat;
-
-        std::vector<ImageDataOffset> _imageData;
+        std::unique_ptr<File> _f;
 };
 
 }}
