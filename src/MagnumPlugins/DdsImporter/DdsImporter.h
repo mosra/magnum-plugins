@@ -60,15 +60,15 @@ The images are imported with @ref PixelType::UnsignedByte type and
 @ref PixelFormat::RGB, @ref PixelFormat::RGBA, @ref PixelFormat::Red for
 grayscale. BGR and BGRA images are converted to @ref PixelFormat::RGB,
 @ref PixelFormat::RGBA respectively. If the image is compressed, they are
-imported with @ref CompressedPixelFormat::RGBAS3tcDxt1, @ref CompressedPixelFormat::RGBAS3tcDxt3
-and @ref CompressedPixelFormat::RGBAS3tcDxt5.
+imported with @ref CompressedPixelFormat::RGBAS3tcDxt1,
+@ref CompressedPixelFormat::RGBAS3tcDxt3 and @ref CompressedPixelFormat::RGBAS3tcDxt5.
 
 In In OpenGL ES 2.0 grayscale images use @ref PixelFormat::Luminance instead
-of PixelFormat::Red.
+of @ref PixelFormat::Red.
 
-Note: Mipmaps are currently imported under separate image data ids. You may access
-them via @ref DdsImporter::imageData2D(n) which will return the n-th mip, a bigger n
-indicating a smaller mip.
+Note: Mipmaps are currently imported under separate image data ids. You may
+access them via @ref image2D(UnsignedInt)/@ref image3D(UnsignedInt) which will
+return the n-th mip, a bigger n indicating a smaller mip.
 */
 class DdsImporter: public AbstractImporter {
     public:
