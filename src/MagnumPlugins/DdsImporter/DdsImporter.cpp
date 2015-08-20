@@ -366,7 +366,7 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
         return ImageData2D(_f->colorFormat.compressed, dataOffset.dimensions.xy(), std::move(data));
     } else {
         PixelFormat newPixelFormat = convertPixelFormat(_f->colorFormat.uncompressed, data);
-        return ImageData2D(newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions.xy(), static_cast<void*>(data.release()));
+        return ImageData2D(newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions.xy(), std::move(data));
     }
 }
 
@@ -383,7 +383,7 @@ std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
         return ImageData3D(_f->colorFormat.compressed, dataOffset.dimensions, std::move(data));
     } else {
         PixelFormat newPixelFormat = convertPixelFormat(_f->colorFormat.uncompressed, data);
-        return ImageData3D(newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions, static_cast<void*>(data.release()));
+        return ImageData3D(newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions, std::move(data));
     }
 }
 
