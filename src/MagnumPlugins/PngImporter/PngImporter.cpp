@@ -39,11 +39,11 @@
 
 namespace Magnum { namespace Trade {
 
-PngImporter::PngImporter(): _in(nullptr) {}
+PngImporter::PngImporter() = default;
 
-PngImporter::PngImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), _in(nullptr) {}
+PngImporter::PngImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
 
-PngImporter::~PngImporter() { close(); }
+PngImporter::~PngImporter() = default;
 
 auto PngImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
