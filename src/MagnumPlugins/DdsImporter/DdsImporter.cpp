@@ -365,8 +365,14 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     if(_f->compressed) {
         return ImageData2D(_f->colorFormat.compressed, dataOffset.dimensions.xy(), std::move(data));
     } else {
-        PixelFormat newPixelFormat = convertPixelFormat(_f->colorFormat.uncompressed, data);
-        return ImageData2D(newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions.xy(), std::move(data));
+        const PixelFormat newPixelFormat = convertPixelFormat(_f->colorFormat.uncompressed, data);
+
+        /* Adjust pixel storage if row size is not four byte aligned */
+        PixelStorage storage;
+        if((dataOffset.dimensions.x()*PixelStorage::pixelSize(newPixelFormat, PixelType::UnsignedByte))%4 != 0)
+            storage.setAlignment(1);
+
+        return ImageData2D{storage, newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions.xy(), std::move(data)};
     }
 }
 
@@ -382,8 +388,14 @@ std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
     if(_f->compressed) {
         return ImageData3D(_f->colorFormat.compressed, dataOffset.dimensions, std::move(data));
     } else {
-        PixelFormat newPixelFormat = convertPixelFormat(_f->colorFormat.uncompressed, data);
-        return ImageData3D(newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions, std::move(data));
+        const PixelFormat newPixelFormat = convertPixelFormat(_f->colorFormat.uncompressed, data);
+
+        /* Adjust pixel storage if row size is not four byte aligned */
+        PixelStorage storage;
+        if((dataOffset.dimensions.x()*PixelStorage::pixelSize(newPixelFormat, PixelType::UnsignedByte))%4 != 0)
+            storage.setAlignment(1);
+
+        return ImageData3D{storage, newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions, std::move(data)};
     }
 }
 
