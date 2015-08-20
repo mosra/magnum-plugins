@@ -39,24 +39,26 @@ namespace Magnum { namespace Trade { namespace Test {
 struct DdsImporterTest: TestSuite::Tester {
     explicit DdsImporterTest();
 
-    void testUncompressedRgb();
-    void testUncompressedRgbWithMips();
-    void testUncompressedRgbVolume();
-    void testDxt1Compressed();
-    void testDxt3Compressed();
-    void testDxt5Compressed();
+    void rgb();
+    void rgbWithMips();
+    void rgbVolume();
+
+    void dxt1();
+    void dxt3();
+    void dxt5();
 };
 
 DdsImporterTest::DdsImporterTest() {
-    addTests({&DdsImporterTest::testUncompressedRgb});
-    addTests({&DdsImporterTest::testUncompressedRgbWithMips});
-    addTests({&DdsImporterTest::testUncompressedRgbVolume});
-    addTests({&DdsImporterTest::testDxt1Compressed});
-    addTests({&DdsImporterTest::testDxt3Compressed});
-    addTests({&DdsImporterTest::testDxt5Compressed});
+    addTests({&DdsImporterTest::rgb,
+              &DdsImporterTest::rgbWithMips,
+              &DdsImporterTest::rgbVolume,
+
+              &DdsImporterTest::dxt1,
+              &DdsImporterTest::dxt3,
+              &DdsImporterTest::dxt5});
 }
 
-void DdsImporterTest::testUncompressedRgb() {
+void DdsImporterTest::rgb() {
     DdsImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed.dds")));
 
@@ -76,7 +78,7 @@ void DdsImporterTest::testUncompressedRgb() {
         TestSuite::Compare::Container);
 }
 
-void DdsImporterTest::testUncompressedRgbWithMips() {
+void DdsImporterTest::rgbWithMips() {
     DdsImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed_mips.dds")));
 
@@ -107,7 +109,7 @@ void DdsImporterTest::testUncompressedRgbWithMips() {
             TestSuite::Compare::Container);
 }
 
-void DdsImporterTest::testUncompressedRgbVolume() {
+void DdsImporterTest::rgbVolume() {
     DdsImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed_volume.dds")));
 
@@ -144,7 +146,7 @@ void DdsImporterTest::testUncompressedRgbVolume() {
 }
 
 
-void DdsImporterTest::testDxt1Compressed() {
+void DdsImporterTest::dxt1() {
     DdsImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt1.dds")));
 
@@ -159,7 +161,7 @@ void DdsImporterTest::testDxt1Compressed() {
             TestSuite::Compare::Container);
 }
 
-void DdsImporterTest::testDxt3Compressed() {
+void DdsImporterTest::dxt3() {
     DdsImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt3.dds")));
 
@@ -175,7 +177,7 @@ void DdsImporterTest::testDxt3Compressed() {
             TestSuite::Compare::Container);
 }
 
-void DdsImporterTest::testDxt5Compressed() {
+void DdsImporterTest::dxt5() {
     DdsImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
 
