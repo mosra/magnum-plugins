@@ -29,9 +29,10 @@
 /** @file
  * @brief Class @ref Magnum::Trade::DdsImporter
  */
+
 #include <vector>
-#include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Math/Vector3.h>
+#include <Magnum/Trade/AbstractImporter.h>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 

@@ -24,23 +24,17 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include "DdsImporter.h"
+
 #include <algorithm>
 #include <cstring>
-#include <fstream>
-#include <sstream>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
-#include <Magnum/Trade/ImageData.h>
-#include <MagnumPlugins/DdsImporter/DdsImporter.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
-
-#ifdef MAGNUM_TARGET_GLES2
-#include <Magnum/Context.h>
-#include <Magnum/Extensions.h>
-#endif
+#include <Magnum/Trade/ImageData.h>
 
 namespace Magnum { namespace Trade {
 
