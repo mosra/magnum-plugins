@@ -149,11 +149,11 @@ inline void convertBGRAToRGBA(char* data, const unsigned int size) {
  */
 inline PixelFormat convertPixelFormat(const PixelFormat format, Containers::Array<char>& data) {
     if(format == PixelFormat::BGR) {
-        Debug() << "Converting from BGR to RGB";
+        Debug() << "Trade::DdsImporter: converting from BGR to RGB";
         convertBGRToRGB(data.begin(), data.size() / 3);
         return PixelFormat::RGB;
     } else if(format == PixelFormat::BGRA) {
-        Debug() << "Converting from BGRA to RGBA";
+        Debug() << "Trade::DdsImporter: converting from BGRA to RGBA";
         convertBGRAToRGBA(data.begin(), data.size() / 4);
         return PixelFormat::RGBA;
     } else {
@@ -258,7 +258,8 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     constexpr size_t magicNumberSize = 4;
     /* read magic number to verify this is a dds file. */
     if(strncmp(f->in.prefix(magicNumberSize).data(), "DDS ", magicNumberSize) != 0) {
-        Error() << "Not a DDS file.";
+        Error() << "Trade::DdsImporter::openData(): wrong file signature";
+        return;
     }
 
     /* read in DDS header */
@@ -285,7 +286,8 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 f->colorFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt5;
                 break;
             default:
-                Error() << "unknown texture compression '" + fourcc(ddsh.ddspf.fourCC) + "'";
+                Error() << "Trade::DdsImporter::openData(): unknown compression" << fourcc(ddsh.ddspf.fourCC);
+                return;
         }
         f->compressed = true;
     } else if(ddsh.ddspf.rgbBitCount == 32 &&
@@ -319,7 +321,8 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
         f->colorFormat.uncompressed = PixelFormat::Luminance;
         #endif
     } else {
-        Error() << "Unknow texture format";
+        Error() << "Trade::DdsImporter::openData(): unknown format";
+        return;
     }
 
     const Vector3i size{Int(ddsh.width), Int(ddsh.height), Int(Math::max(ddsh.depth, 1u))};

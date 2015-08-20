@@ -91,7 +91,7 @@ void DdsImporterTest::unknownCompression() {
 
     DdsImporter importer;
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "unknown_compression.dds")));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown compression 'DX10'\n");
+    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown compression DX10\n");
 }
 
 void DdsImporterTest::rgb() {
