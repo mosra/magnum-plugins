@@ -144,7 +144,7 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_VERIFY(mip);
     CORRADE_VERIFY(!mip->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
-    CORRADE_COMPARE(mip->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(mip->size(), Vector2i{1});
     CORRADE_COMPARE(mip->format(), PixelFormat::RGB);
     CORRADE_COMPARE(mip->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(mip->data(), Containers::ArrayView<const char>(mipPixels),
