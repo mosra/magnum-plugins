@@ -24,6 +24,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
@@ -39,6 +40,10 @@ namespace Magnum { namespace Trade { namespace Test {
 struct DdsImporterTest: TestSuite::Tester {
     explicit DdsImporterTest();
 
+    void wrongSignature();
+    void unknownFormat();
+    void unknownCompression();
+
     void rgb();
     void rgbWithMips();
     void rgbVolume();
@@ -49,13 +54,44 @@ struct DdsImporterTest: TestSuite::Tester {
 };
 
 DdsImporterTest::DdsImporterTest() {
-    addTests({&DdsImporterTest::rgb,
+    addTests({&DdsImporterTest::wrongSignature,
+              &DdsImporterTest::unknownFormat,
+              &DdsImporterTest::unknownCompression,
+
+              &DdsImporterTest::rgb,
               &DdsImporterTest::rgbWithMips,
               &DdsImporterTest::rgbVolume,
 
               &DdsImporterTest::dxt1,
               &DdsImporterTest::dxt3,
               &DdsImporterTest::dxt5});
+}
+
+void DdsImporterTest::wrongSignature() {
+    std::ostringstream out;
+    Error::setOutput(&out);
+
+    DdsImporter importer;
+    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "wrong_signature.dds")));
+    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): wrong file signature\n");
+}
+
+void DdsImporterTest::unknownFormat() {
+    std::ostringstream out;
+    Error::setOutput(&out);
+
+    DdsImporter importer;
+    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "unknown_format.dds")));
+    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown format\n");
+}
+
+void DdsImporterTest::unknownCompression() {
+    std::ostringstream out;
+    Error::setOutput(&out);
+
+    DdsImporter importer;
+    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "unknown_compression.dds")));
+    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown compression 'DX10'\n");
 }
 
 void DdsImporterTest::rgb() {
