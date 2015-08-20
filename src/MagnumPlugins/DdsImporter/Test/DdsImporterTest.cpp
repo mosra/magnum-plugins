@@ -71,6 +71,7 @@ void DdsImporterTest::rgb() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
@@ -93,6 +94,7 @@ void DdsImporterTest::rgbWithMips() {
     /* check image */
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
@@ -102,6 +104,7 @@ void DdsImporterTest::rgbWithMips() {
     /* check mip 0 */
     std::optional<Trade::ImageData2D> mip = importer.image2D(1);
     CORRADE_VERIFY(mip);
+    CORRADE_VERIFY(!mip->isCompressed());
     CORRADE_COMPARE(mip->size(), Vector2i(3, 2));
     CORRADE_COMPARE(mip->format(), PixelFormat::RGB);
     CORRADE_COMPARE(mip->type(), PixelType::UnsignedByte);
@@ -138,6 +141,7 @@ void DdsImporterTest::rgbVolume() {
 
     std::optional<Trade::ImageData3D> image = importer.image3D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
@@ -154,8 +158,8 @@ void DdsImporterTest::dxt1() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt1);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
             TestSuite::Compare::Container);
@@ -170,8 +174,8 @@ void DdsImporterTest::dxt3() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt3);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
             TestSuite::Compare::Container);
@@ -186,8 +190,8 @@ void DdsImporterTest::dxt5() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt5);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
             TestSuite::Compare::Container);
