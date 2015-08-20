@@ -37,14 +37,45 @@
 
 namespace Magnum { namespace Trade {
 
+/**
+ * @brief "Bookmark" in a .dds file to later load image data from.
+ */
 struct ImageDataOffset {
     Vector3i _dimensions;
     Containers::ArrayView<char> _data;
 };
 
 /**
-@brief DDS importer plugin
+@brief DDS image importer plugin
 
+Supports the following formats:
+-   DDS uncompressed RGB, RGBA, BGR, BGRA, grayscale
+-   DDS compressed DXT1, DXT3, DXT5
+
+This plugin is built if `WITH_DDSIMPORTER` is enabled when building
+Magnum Plugins. To use dynamic plugin, you need to load `DdsImporter`
+plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to
+request `DdsImporter` component of `MagnumPlugins` package in CMake and
+link to `${MAGNUMPLUGINS_DDSIMPORTER_LIBRARIES}`. To use this as a
+dependency of another plugin, you additionally need to add
+`${MAGNUMPLUGINS_DDSIMPORTER_INCLUDE_DIRS}` to include path.
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
+
+The images are imported with @ref ColorType::UnsignedByte type and
+@ref ColorFormat::RGB, @ref ColorFormat::RGBA, @ref ColorFormat::Red for
+grayscale. BGR and BGRA images are converted to @ref ColorFormat::RGB,
+@ref ColorFormat::RGBA respectively. If the image is compressed, they are
+imported with @ref CompressedColorFormat::RGBAS3tcDxt1, @ref CompressedColorFormat::RGBAS3tcDxt3
+and @ref CompressedColorFormat::RGBAS3tcDxt5.
+
+In In OpenGL ES 2.0 grayscale images use @ref ColorFormat::Luminance instead
+of ColorFormat::Red.
+
+Note: Mipmaps are currently imported under separate image data ids. You may access
+them via @ref DdsImporter::imageData2D(n) which will return the n-th mip, a bigger n
+indicating a smaller mip.
 */
 class DdsImporter: public AbstractImporter {
     public:
@@ -69,6 +100,10 @@ class DdsImporter: public AbstractImporter {
         std::optional<ImageData3D> doImage3D(UnsignedInt id) override;
 
     private:
+        /*
+         * @brief Add ImageDataOffset to _imageData.
+         * @return New offset after the image data which has been noted.
+         */
         size_t addImageDataOffset(const Vector3i& dims, size_t offset);
 
         Containers::Array<char> _in;

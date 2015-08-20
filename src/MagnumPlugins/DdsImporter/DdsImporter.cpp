@@ -44,70 +44,79 @@
 
 namespace Magnum { namespace Trade {
 
-/**
+/*
  * Flags to indicate which members of a DdsHeader contain valid data.
  */
 enum DdsDescriptionFlag: UnsignedInt {
-    Caps = 0x00000001,       //!< Caps
-    Height = 0x00000002,     //!< Height
-    Width = 0x00000004,      //!< Width
-    Pitch = 0x00000008,      //!< Pitch
-    PixelFormat = 0x00001000,//!< PixelFormat
-    MipMapCount = 0x00020000,//!< MipMapCount
-    LinearSize = 0x00080000, //!< LinearSize
-    Depth = 0x00800000       //!< Depth
+    Caps = 0x00000001,
+    Height = 0x00000002,
+    Width = 0x00000004,
+    Pitch = 0x00000008,
+    PixelFormat = 0x00001000,
+    MipMapCount = 0x00020000,
+    LinearSize = 0x00080000,
+    Depth = 0x00800000
 };
 
-/**
+/*
  * Direct Draw Surface pixel format.
  */
 enum DdsPixelFormat: UnsignedInt {
-    AlphaPixels = 0x00000001,//!< AlphaPixels
-    FourCC = 0x00000004,     //!< FourCC
-    RGB = 0x00000040,        //!< RGB
-    RGBA = 0x00000041        //!< RGBA
+    AlphaPixels = 0x00000001,
+    FourCC = 0x00000004,
+    RGB = 0x00000040,
+    RGBA = 0x00000041
 };
 
-/**
+/*
  * Specifies the complexity of the surfaces stored.
  */
 enum DdsCaps1: UnsignedInt {
-    /**
-     * Set for files that contain more than one surface (a mipmap, a cubic environment map,
-     * or mipmapped volume texture).
-     */
+    /* Set for files that contain more than one surface (a mipmap, a cubic environment map,
+     * or mipmapped volume texture). */
     Complex = 0x00000008,
-    Texture = 0x00001000,//!< Texture (required).
-    MipMap = 0x00400000  //!< Is set for mipmaps.
+    /* Texture (required). */
+    Texture = 0x00001000,
+    /* Is set for mipmaps. */
+    MipMap = 0x00400000
 };
 
 /**
  * Additional detail about the surfaces stored.
  */
 enum DdsCaps2: UnsignedInt {
-    Cubemap = 0x00000200,         //!< Cubemap
-    CubemapPositiveX = 0x00000400,//!< CubemapPositiveX
-    CubemapNegativeX = 0x00000800,//!< CubemapNegativeX
-    CubemapPositiveY = 0x00001000,//!< CubemapPositiveY
-    CubemapNegativeY = 0x00002000,//!< CubemapNegativeY
-    CubemapPositiveZ = 0x00004000,//!< CubemapPositiveZ
-    CubemapNegativeZ = 0x00008000,//!< CubemapNegativeZ
-    CubemapAllFaces = 0x0000FC00, //!< CubemapAllFaces
-    Volume = 0x00200000           //!< Volume
+    Cubemap = 0x00000200,
+    CubemapPositiveX = 0x00000400,
+    CubemapNegativeX = 0x00000800,
+    CubemapPositiveY = 0x00001000,
+    CubemapNegativeY = 0x00002000,
+    CubemapPositiveZ = 0x00004000,
+    CubemapNegativeZ = 0x00008000,
+    CubemapAllFaces = 0x0000FC00,
+    Volume = 0x00200000
 };
 
-/**
+/*
  * Compressed texture types.
  */
 enum DdsCompressionTypes: UnsignedInt {
-    DXT1 = 0x31545844, //!< (MAKEFOURCC('D','X','T','1')).
-    DXT2 = 0x32545844, //!< (MAKEFOURCC('D','X','T','2')), not supported.
-    DXT3 = 0x33545844, //!< (MAKEFOURCC('D','X','T','3')).
-    DXT4 = 0x34545844, //!< (MAKEFOURCC('D','X','T','4')), not supported.
-    DXT5 = 0x35545844, //!< (MAKEFOURCC('D','X','T','5')).
-    DXT10 = 0x30315844 //!< (MAKEFOURCC('D','X','1','0')), not supported.
+    /* MAKEFOURCC('D','X','T','1'). */
+    DXT1 = 0x31545844,
+    /* MAKEFOURCC('D','X','T','2'), not supported. */
+    DXT2 = 0x32545844,
+    /* MAKEFOURCC('D','X','T','3'). */
+    DXT3 = 0x33545844,
+    /* MAKEFOURCC('D','X','T','4'), not supported. */
+    DXT4 = 0x34545844,
+    /* MAKEFOURCC('D','X','T','5'). */
+    DXT5 = 0x35545844,
+    /* MAKEFOURCC('D','X','1','0'), not supported. */
+    DXT10 = 0x30315844
 };
 
+/*
+ * @return string from given fourcc integer.
+ */
 inline std::string fourcc(UnsignedInt enc) {
     char c[5] = { '\0' };
     c[0] = enc >> 0 & 0xFF;
@@ -117,24 +126,32 @@ inline std::string fourcc(UnsignedInt enc) {
     return c;
 }
 
+/* @brief Convert array data to RGB assuming it is in BGR. */
 inline void convertBGRToRGB(char* data, const unsigned int size) {
     auto pixels = reinterpret_cast<Math::Vector3<UnsignedByte>*>(data);
     std::transform(pixels, pixels + size, pixels,
         [](Math::Vector3<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r'>(pixel); });
 }
 
+/* @brief Convert array data to RGBA assuming it is in BGRA. */
 inline void convertBGRAToRGBA(char* data, const unsigned int size) {
     auto pixels = reinterpret_cast<Math::Vector4<UnsignedByte>*>(data);
     std::transform(pixels, pixels + size, pixels,
         [](Math::Vector4<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r', 'a'>(pixel); });
 }
 
+/*
+ * @brief Convert array data from BGR(A) to RGB(A) depending on code.
+ * @param format Format to expect data to be in.
+ * @param data Array data to convert.
+ * @return The format which the converted array data is in.
+ */
 inline ColorFormat convertColorFormat(const ColorFormat format, Containers::Array<char>& data) {
-    if (format == ColorFormat::BGR) {
+    if(format == ColorFormat::BGR) {
         Debug() << "Converting from BGR to RGB";
         convertBGRToRGB(data.begin(), data.size() / 3);
         return ColorFormat::RGB;
-    } else if (format == ColorFormat::BGRA) {
+    } else if(format == ColorFormat::BGRA) {
         Debug() << "Converting from BGRA to RGBA";
         convertBGRAToRGBA(data.begin(), data.size() / 4);
         return ColorFormat::RGBA;
@@ -143,7 +160,7 @@ inline ColorFormat convertColorFormat(const ColorFormat format, Containers::Arra
     }
 }
 
-/**
+/*
  * Dds file header struct.
  */
 struct DdsHeader {
@@ -175,6 +192,8 @@ struct DdsHeader {
 
 DdsImporter::DdsImporter():
     _in(nullptr),
+    _compressed(false),
+    _volume(false),
     _imageData()
 {
 
@@ -182,9 +201,9 @@ DdsImporter::DdsImporter():
 
 DdsImporter::DdsImporter(PluginManager::AbstractManager& manager, std::string plugin):
     AbstractImporter(manager, std::move(plugin)),
+    _in(nullptr),
     _compressed(false),
     _volume(false),
-    _in(nullptr),
     _imageData()
 {
 
@@ -208,7 +227,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     constexpr size_t magicNumberSize = 4;
     /* read magic number to verify this is a dds file. */
-    if (strncmp(_in.prefix(magicNumberSize).data(), "DDS ", magicNumberSize) != 0) {
+    if(strncmp(_in.prefix(magicNumberSize).data(), "DDS ", magicNumberSize) != 0) {
         Error() << "Not a DDS file.";
     }
 
@@ -224,8 +243,8 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* set the color format */
     _components = 4;
     _compressed = false;
-    if (ddsh.ddspf.flags & DdsPixelFormat::FourCC) {
-        switch (DdsCompressionTypes(ddsh.ddspf.fourCC)) {
+    if(ddsh.ddspf.flags & DdsPixelFormat::FourCC) {
+        switch(DdsCompressionTypes(ddsh.ddspf.fourCC)) {
             case DdsCompressionTypes::DXT1:
                 _colorFormat.compressed = CompressedColorFormat::RGBAS3tcDxt1;
                 break;
@@ -239,31 +258,31 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 Error() << "unknown texture compression '" + fourcc(ddsh.ddspf.fourCC) + "'";
         }
         _compressed = true;
-    } else if (ddsh.ddspf.rgbBitCount == 32 &&
+    } else if(ddsh.ddspf.rgbBitCount == 32 &&
                ddsh.ddspf.rBitMask == 0x00FF0000 &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
         _colorFormat.uncompressed = ColorFormat::BGRA;
-    } else if (ddsh.ddspf.rgbBitCount == 32 &&
+    } else if(ddsh.ddspf.rgbBitCount == 32 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x00FF0000 &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
         _colorFormat.uncompressed = ColorFormat::RGBA;
-    } else if (ddsh.ddspf.rgbBitCount == 24 &&
+    } else if(ddsh.ddspf.rgbBitCount == 24 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x00FF0000) {
         _colorFormat.uncompressed = ColorFormat::RGB;
         _components = 3;
-    } else if (ddsh.ddspf.rgbBitCount == 24 &&
+    } else if(ddsh.ddspf.rgbBitCount == 24 &&
                ddsh.ddspf.rBitMask == 0x00FF0000 &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF) {
         _colorFormat.uncompressed = ColorFormat::BGR;
         _components = 3;
-    } else if (ddsh.ddspf.rgbBitCount == 8) {
+    } else if(ddsh.ddspf.rgbBitCount == 8) {
         #ifndef MAGNUM_TARGET_GLES2
         _colorFormat.uncompressed = ColorFormat::Red;
         #else
@@ -282,14 +301,14 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* load all surfaces for the image (6 surfaces for cubemaps) */
     const UnsignedInt numImages = (isCubemap) ? 6 : 1;
-    const size_t offset = sizeof(DdsHeader) + magicNumberSize;
-    for (UnsignedInt n = 0; n < numImages; ++n) {
+    size_t offset = sizeof(DdsHeader) + magicNumberSize;
+    for(UnsignedInt n = 0; n < numImages; ++n) {
         offset = addImageDataOffset(size, offset);
 
         Vector3i mipSize{size};
 
         /* load all mipmaps for current surface */
-        for (UnsignedInt i = 0; i < numMipmaps && (mipSize.x() || mipSize.y()); i++) {
+        for(UnsignedInt i = 0; i < numMipmaps && (mipSize.x() || mipSize.y()); i++) {
             /* shrink to next power of 2 */
             mipSize = Math::max(mipSize >> 1, Vector3i{1});
 
@@ -301,7 +320,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 size_t DdsImporter::addImageDataOffset(const Vector3i& dims, const size_t offset)
 {
-    if (_compressed) {
+    if(_compressed) {
         const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((_colorFormat.compressed == CompressedColorFormat::RGBAS3tcDxt1) ? 8 : 16));
 
         _imageData.push_back({dims, _in.slice(offset, offset + size)});
@@ -326,7 +345,7 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     Containers::Array<char> data = Containers::Array<char>(dataOffset._data.size());
     std::copy(dataOffset._data.begin(), dataOffset._data.end(), data.begin());
 
-    if (_compressed) {
+    if(_compressed) {
         return ImageData2D(_colorFormat.compressed, dataOffset._dimensions.xy(), std::move(data));
     } else {
         ColorFormat newColorFormat = convertColorFormat(_colorFormat.uncompressed, data);
@@ -343,7 +362,7 @@ std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
     Containers::Array<char> data = Containers::Array<char>(dataOffset._data.size());
     std::copy(dataOffset._data.begin(), dataOffset._data.end(), data.begin());
 
-    if (_compressed) {
+    if(_compressed) {
         return ImageData3D(_colorFormat.compressed, dataOffset._dimensions, std::move(data));
     } else {
         ColorFormat newColorFormat = convertColorFormat(_colorFormat.uncompressed, data);
