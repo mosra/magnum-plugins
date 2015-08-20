@@ -38,14 +38,6 @@
 namespace Magnum { namespace Trade {
 
 /**
- * @brief "Bookmark" in a .dds file to later load image data from.
- */
-struct ImageDataOffset {
-    Vector3i _dimensions;
-    Containers::ArrayView<char> _data;
-};
-
-/**
 @brief DDS image importer plugin
 
 Supports the following formats:
@@ -100,6 +92,12 @@ class DdsImporter: public AbstractImporter {
         std::optional<ImageData3D> doImage3D(UnsignedInt id) override;
 
     private:
+        /* "Bookmark" in a .dds file to later load image data from */
+        struct ImageDataOffset {
+            Vector3i _dimensions;
+            Containers::ArrayView<char> _data;
+        };
+
         /*
          * @brief Add ImageDataOffset to _imageData.
          * @return New offset after the image data which has been noted.

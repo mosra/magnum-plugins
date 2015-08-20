@@ -44,6 +44,8 @@
 
 namespace Magnum { namespace Trade {
 
+namespace {
+
 /*
  * Flags to indicate which members of a DdsHeader contain valid data.
  */
@@ -189,6 +191,8 @@ struct DdsHeader {
     UnsignedInt     caps4;
     UnsignedInt     reserved2;
 };
+
+}
 
 DdsImporter::DdsImporter():
     _in(nullptr),
