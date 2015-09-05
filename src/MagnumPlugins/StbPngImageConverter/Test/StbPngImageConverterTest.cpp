@@ -27,6 +27,7 @@
 #include <tuple>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Image.h>
 #include <Magnum/PixelFormat.h>
@@ -49,13 +50,23 @@ struct StbPngImageConverterTest: TestSuite::Tester {
 };
 
 namespace {
-    constexpr const char originalData[] = {
+    constexpr const char OriginalData[] = {
+        /* Skip */
+        0, 0, 0, 0, 0, 0, 0, 0,
+
+        1, 2, 3, 2, 3, 4, 0, 0,
+        3, 4, 5, 4, 5, 6, 0, 0,
+        5, 6, 7, 6, 7, 8, 0, 0
+    };
+
+    const ImageView2D original{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::RGB, PixelType::UnsignedByte, {2, 3}, OriginalData};
+
+    constexpr const char ConvertedData[] = {
         1, 2, 3, 2, 3, 4,
         3, 4, 5, 4, 5, 6,
         5, 6, 7, 6, 7, 8
     };
-
-    const ImageView2D original{PixelFormat::RGB, PixelType::UnsignedByte, {2, 3}, originalData};
 }
 
 StbPngImageConverterTest::StbPngImageConverterTest() {
@@ -98,8 +109,9 @@ void StbPngImageConverterTest::data() {
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
     CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE((std::string{converted->data(), 2*3*3}),
-                    (std::string{original.data(), 2*3*3}));
+    CORRADE_COMPARE_AS(converted->data(),
+        Containers::ArrayView<const char>{ConvertedData},
+        TestSuite::Compare::Container);
 }
 
 }}}

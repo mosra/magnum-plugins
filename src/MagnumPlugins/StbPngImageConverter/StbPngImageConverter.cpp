@@ -43,6 +43,13 @@ StbPngImageConverter::StbPngImageConverter(PluginManager::AbstractManager& manag
 auto StbPngImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 
 Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& image) const {
+    #ifndef MAGNUM_TARGET_GLES
+    if(image.storage().swapBytes()) {
+        Error() << "Trade::StbPngImageConverter::exportToData(): pixel byte swap is not supported";
+        return nullptr;
+    }
+    #endif
+
     if(image.type() != PixelType::UnsignedByte) {
         Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color type" << image.type();
         return nullptr;
@@ -73,15 +80,19 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& 
             return nullptr;
     }
 
+    /* Data properties */
+    std::size_t offset;
+    Math::Vector2<std::size_t> dataSize;
+    std::tie(offset, dataSize, std::ignore) = image.dataProperties();
+
     /* Reverse rows in image data */
-    Containers::Array<unsigned char> reversedData{std::size_t(image.size().product()*components)};
+    Containers::Array<unsigned char> reversedData{image.data().size()};
     for(Int y = 0; y != image.size().y(); ++y) {
-        const Int stride = image.size().x()*components;
-        std::copy(image.data<unsigned char>() + y*stride, image.data<unsigned char>() + (y + 1)*stride, reversedData + (image.size().y() - y - 1)*stride);
+        std::copy(image.data<unsigned char>() + offset + y*dataSize.x(), image.data<unsigned char>() + offset + (y + 1)*dataSize.x(), reversedData + (image.size().y() - y - 1)*dataSize.x());
     }
 
     Int size;
-    unsigned char* const data = stbi_write_png_to_mem(reversedData, 0, image.size().x(), image.size().y(), components, &size);
+    unsigned char* const data = stbi_write_png_to_mem(reversedData, dataSize.x(), image.size().x(), image.size().y(), components, &size);
     CORRADE_INTERNAL_ASSERT(data);
 
     /* Copy the data to a new[]-allocated array so we can delete[] it later,
