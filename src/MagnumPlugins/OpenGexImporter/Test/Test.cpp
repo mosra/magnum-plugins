@@ -833,7 +833,7 @@ void OpenGexImporterTest::imageInvalid() {
     std::ostringstream out;
     Error::setOutput(&out);
     CORRADE_VERIFY(!importer.image2D(1));
-    CORRADE_COMPARE(out.str(), "Trade::TgaImporter::openFile(): cannot open file /nonexistent.tga\n");
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n");
 }
 
 }}}
