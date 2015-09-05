@@ -213,7 +213,7 @@ struct DdsImporter::File {
     union {
         PixelFormat uncompressed;
         CompressedPixelFormat compressed;
-    } colorFormat;
+    } pixelFormat;
 
     std::vector<ImageDataOffset> imageData;
 };
@@ -221,7 +221,7 @@ struct DdsImporter::File {
 std::size_t DdsImporter::File::addImageDataOffset(const Vector3i& dims, const std::size_t offset)
 {
     if(compressed) {
-        const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((colorFormat.compressed == CompressedPixelFormat::RGBAS3tcDxt1) ? 8 : 16));
+        const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((pixelFormat.compressed == CompressedPixelFormat::RGBAS3tcDxt1) ? 8 : 16));
 
         imageData.push_back({dims, in.slice(offset, offset + size)});
 
@@ -277,13 +277,13 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
         switch(DdsCompressionTypes(ddsh.ddspf.fourCC)) {
             case DdsCompressionTypes::DXT1:
-                f->colorFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt1;
+                f->pixelFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt1;
                 break;
             case DdsCompressionTypes::DXT3:
-                f->colorFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt3;
+                f->pixelFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt3;
                 break;
             case DdsCompressionTypes::DXT5:
-                f->colorFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt5;
+                f->pixelFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt5;
                 break;
             default:
                 Error() << "Trade::DdsImporter::openData(): unknown compression" << fourcc(ddsh.ddspf.fourCC);
@@ -295,30 +295,30 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
-        f->colorFormat.uncompressed = PixelFormat::BGRA;
+        f->pixelFormat.uncompressed = PixelFormat::BGRA;
     } else if(ddsh.ddspf.rgbBitCount == 32 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x00FF0000 &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
-        f->colorFormat.uncompressed = PixelFormat::RGBA;
+        f->pixelFormat.uncompressed = PixelFormat::RGBA;
     } else if(ddsh.ddspf.rgbBitCount == 24 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x00FF0000) {
-        f->colorFormat.uncompressed = PixelFormat::RGB;
+        f->pixelFormat.uncompressed = PixelFormat::RGB;
         f->components = 3;
     } else if(ddsh.ddspf.rgbBitCount == 24 &&
                ddsh.ddspf.rBitMask == 0x00FF0000 &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF) {
-        f->colorFormat.uncompressed = PixelFormat::BGR;
+        f->pixelFormat.uncompressed = PixelFormat::BGR;
         f->components = 3;
     } else if(ddsh.ddspf.rgbBitCount == 8) {
         #ifndef MAGNUM_TARGET_GLES2
-        f->colorFormat.uncompressed = PixelFormat::Red;
+        f->pixelFormat.uncompressed = PixelFormat::Red;
         #else
-        f->colorFormat.uncompressed = PixelFormat::Luminance;
+        f->pixelFormat.uncompressed = PixelFormat::Luminance;
         #endif
     } else {
         Error() << "Trade::DdsImporter::openData(): unknown format";
@@ -363,9 +363,9 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     std::copy(dataOffset.data.begin(), dataOffset.data.end(), data.begin());
 
     if(_f->compressed) {
-        return ImageData2D(_f->colorFormat.compressed, dataOffset.dimensions.xy(), std::move(data));
+        return ImageData2D(_f->pixelFormat.compressed, dataOffset.dimensions.xy(), std::move(data));
     } else {
-        const PixelFormat newPixelFormat = convertPixelFormat(_f->colorFormat.uncompressed, data);
+        const PixelFormat newPixelFormat = convertPixelFormat(_f->pixelFormat.uncompressed, data);
 
         /* Adjust pixel storage if row size is not four byte aligned */
         PixelStorage storage;
@@ -386,9 +386,9 @@ std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
     std::copy(dataOffset.data.begin(), dataOffset.data.end(), data.begin());
 
     if(_f->compressed) {
-        return ImageData3D(_f->colorFormat.compressed, dataOffset.dimensions, std::move(data));
+        return ImageData3D(_f->pixelFormat.compressed, dataOffset.dimensions, std::move(data));
     } else {
-        const PixelFormat newPixelFormat = convertPixelFormat(_f->colorFormat.uncompressed, data);
+        const PixelFormat newPixelFormat = convertPixelFormat(_f->pixelFormat.uncompressed, data);
 
         /* Adjust pixel storage if row size is not four byte aligned */
         PixelStorage storage;
