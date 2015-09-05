@@ -98,9 +98,9 @@ typedef Corrade::Containers::EnumSet<DdsCap2> DdsCaps2;
 CORRADE_ENUMSET_OPERATORS(DdsCaps2)
 
 /*
- * Compressed texture types.
+ * Compressed texture type.
  */
-enum class DdsCompressionTypes: UnsignedInt {
+enum class DdsCompressionType: UnsignedInt {
     /* MAKEFOURCC('D','X','T','1'). */
     DXT1 = 0x31545844,
     /* MAKEFOURCC('D','X','T','2'), not supported. */
@@ -203,20 +203,13 @@ struct DdsImporter::File {
 
 std::size_t DdsImporter::File::addImageDataOffset(const Vector3i& dims, const std::size_t offset)
 {
-    if(compressed) {
-        const unsigned int size = (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((pixelFormat.compressed == CompressedPixelFormat::RGBAS3tcDxt1) ? 8 : 16));
+    const std::size_t size = compressed ?
+        (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((pixelFormat.compressed == CompressedPixelFormat::RGBAS3tcDxt1) ? 8 : 16)) :
+        dims.product()*components;
 
-        imageData.push_back({dims, in.slice(offset, offset + size)});
+    imageData.push_back({dims, in.slice(offset, offset + size)});
 
-        return offset + size;
-    } else {
-        const unsigned int numPixels = dims.product();
-        const unsigned int size = numPixels*components;
-
-        imageData.push_back({dims, in.slice(offset, offset + size)});
-
-        return offset + size;
-    }
+    return offset + size;
 }
 
 DdsImporter::DdsImporter() = default;
@@ -259,14 +252,14 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     f->compressed = false;
     f->needsSwizzle = false;
     if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
-        switch(DdsCompressionTypes(ddsh.ddspf.fourCC)) {
-            case DdsCompressionTypes::DXT1:
+        switch(DdsCompressionType(ddsh.ddspf.fourCC)) {
+            case DdsCompressionType::DXT1:
                 f->pixelFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt1;
                 break;
-            case DdsCompressionTypes::DXT3:
+            case DdsCompressionType::DXT3:
                 f->pixelFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt3;
                 break;
-            case DdsCompressionTypes::DXT5:
+            case DdsCompressionType::DXT5:
                 f->pixelFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt5;
                 break;
             default:
@@ -314,24 +307,20 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     const Vector3i size{Int(ddsh.width), Int(ddsh.height), Int(Math::max(ddsh.depth, 1u))};
 
     /* check how many mipmaps to load */
-    const UnsignedInt numMipmaps = (ddsh.flags & DdsDescriptionFlag::MipMapCount)
-                    ? ((ddsh.mipMapCount == 0) ? 0 : ddsh.mipMapCount - 1)
-                    : 0;
+    const UnsignedInt numMipmaps = ddsh.flags & DdsDescriptionFlag::MipMapCount ? ddsh.mipMapCount : 1;
 
     /* load all surfaces for the image (6 surfaces for cubemaps) */
-    const UnsignedInt numImages = (isCubemap) ? 6 : 1;
-    size_t offset = sizeof(DdsHeader) + magicNumberSize;
+    const UnsignedInt numImages = isCubemap ? 6 : 1;
+    std::size_t offset = sizeof(DdsHeader) + magicNumberSize;
     for(UnsignedInt n = 0; n < numImages; ++n) {
-        offset = f->addImageDataOffset(size, offset);
-
         Vector3i mipSize{size};
 
         /* load all mipmaps for current surface */
-        for(UnsignedInt i = 0; i < numMipmaps && (mipSize.x() || mipSize.y()); i++) {
+        for(UnsignedInt i = 0; i < numMipmaps; i++) {
+            offset = f->addImageDataOffset(mipSize, offset);
+
             /* shrink to next power of 2 */
             mipSize = Math::max(mipSize >> 1, Vector3i{1});
-
-            offset = f->addImageDataOffset(mipSize, offset);
         }
     }
 
@@ -342,47 +331,49 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 UnsignedInt DdsImporter::doImage2DCount() const {  return _f->volume ? 0 : _f->imageData.size(); }
 
 std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
-    File::ImageDataOffset& dataOffset = _f->imageData[id];
+    const File::ImageDataOffset& dataOffset = _f->imageData[id];
 
     /* copy image data */
     Containers::Array<char> data = Containers::Array<char>(dataOffset.data.size());
     std::copy(dataOffset.data.begin(), dataOffset.data.end(), data.begin());
 
-    if(_f->compressed) {
+    /* Compressed image */
+    if(_f->compressed)
         return ImageData2D(_f->pixelFormat.compressed, dataOffset.dimensions.xy(), std::move(data));
-    } else {
-        if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data);
 
-        /* Adjust pixel storage if row size is not four byte aligned */
-        PixelStorage storage;
-        if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, PixelType::UnsignedByte))%4 != 0)
-            storage.setAlignment(1);
+    /* Uncompressed */
+    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data);
 
-        return ImageData2D{storage, _f->pixelFormat.uncompressed, PixelType::UnsignedByte, dataOffset.dimensions.xy(), std::move(data)};
-    }
+    /* Adjust pixel storage if row size is not four byte aligned */
+    PixelStorage storage;
+    if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, PixelType::UnsignedByte))%4 != 0)
+        storage.setAlignment(1);
+
+    return ImageData2D{storage, _f->pixelFormat.uncompressed, PixelType::UnsignedByte, dataOffset.dimensions.xy(), std::move(data)};
 }
 
 UnsignedInt DdsImporter::doImage3DCount() const { return _f->volume ? _f->imageData.size() : 0; }
 
 std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
-    File::ImageDataOffset& dataOffset = _f->imageData[id];
+    const File::ImageDataOffset& dataOffset = _f->imageData[id];
 
     /* copy image data */
     Containers::Array<char> data = Containers::Array<char>(dataOffset.data.size());
     std::copy(dataOffset.data.begin(), dataOffset.data.end(), data.begin());
 
-    if(_f->compressed) {
+    /* Compressed image */
+    if(_f->compressed)
         return ImageData3D(_f->pixelFormat.compressed, dataOffset.dimensions, std::move(data));
-    } else {
-        if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data);
 
-        /* Adjust pixel storage if row size is not four byte aligned */
-        PixelStorage storage;
-        if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, PixelType::UnsignedByte))%4 != 0)
-            storage.setAlignment(1);
+    /* Uncompressed */
+    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data);
 
-        return ImageData3D{storage, _f->pixelFormat.uncompressed, PixelType::UnsignedByte, dataOffset.dimensions, std::move(data)};
-    }
+    /* Adjust pixel storage if row size is not four byte aligned */
+    PixelStorage storage;
+    if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, PixelType::UnsignedByte))%4 != 0)
+        storage.setAlignment(1);
+
+    return ImageData3D{storage, _f->pixelFormat.uncompressed, PixelType::UnsignedByte, dataOffset.dimensions, std::move(data)};
 }
 
 }}
