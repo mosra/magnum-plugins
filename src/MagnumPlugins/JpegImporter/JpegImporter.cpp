@@ -124,6 +124,7 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
 
         default:
             Error() << "Trade::JpegImporter::image2D(): unsupported color space" << file.out_color_space;
+            return std::nullopt;
     }
 
     /* Initialize data array */
