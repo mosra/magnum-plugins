@@ -51,6 +51,8 @@ struct DdsImporterTest: TestSuite::Tester {
     void dxt1();
     void dxt3();
     void dxt5();
+
+    void useTwice();
 };
 
 DdsImporterTest::DdsImporterTest() {
@@ -64,7 +66,9 @@ DdsImporterTest::DdsImporterTest() {
 
               &DdsImporterTest::dxt1,
               &DdsImporterTest::dxt3,
-              &DdsImporterTest::dxt5});
+              &DdsImporterTest::dxt5,
+
+              &DdsImporterTest::useTwice});
 }
 
 void DdsImporterTest::wrongSignature() {
@@ -235,6 +239,22 @@ void DdsImporterTest::dxt5() {
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt5);
     CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
             TestSuite::Compare::Container);
+}
+
+void DdsImporterTest::useTwice() {
+    DdsImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
+
+    /* Verify that the file is rewinded for second use */
+    {
+        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+    } {
+        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+    }
 }
 
 }}}
