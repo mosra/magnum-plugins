@@ -247,10 +247,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* check if image is a cubemap */
     const bool isCubemap = !!(ddsh.caps2 & DdsCap2::Cubemap);
 
-    /* set the color format */
-    f->components = 4;
-    f->compressed = false;
-    f->needsSwizzle = false;
+    /* Compressed */
     if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
         switch(DdsCompressionType(ddsh.ddspf.fourCC)) {
             case DdsCompressionType::DXT1:
@@ -266,39 +263,63 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 Error() << "Trade::DdsImporter::openData(): unknown compression" << fourcc(ddsh.ddspf.fourCC);
                 return;
         }
+        f->components = 4;
         f->compressed = true;
+        f->needsSwizzle = false;
+
+    /* RGBA */
     } else if(ddsh.ddspf.rgbBitCount == 32 &&
-               ddsh.ddspf.rBitMask == 0x00FF0000 &&
-               ddsh.ddspf.gBitMask == 0x0000FF00 &&
-               ddsh.ddspf.bBitMask == 0x000000FF &&
-               ddsh.ddspf.aBitMask == 0xFF000000) {
+              ddsh.ddspf.rBitMask == 0x000000FF &&
+              ddsh.ddspf.gBitMask == 0x0000FF00 &&
+              ddsh.ddspf.bBitMask == 0x00FF0000 &&
+              ddsh.ddspf.aBitMask == 0xFF000000) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA;
+        f->components = 4;
+        f->compressed = false;
+        f->needsSwizzle = false;
+
+    /* BGRA */
+    } else if(ddsh.ddspf.rgbBitCount == 32 &&
+              ddsh.ddspf.rBitMask == 0x00FF0000 &&
+              ddsh.ddspf.gBitMask == 0x0000FF00 &&
+              ddsh.ddspf.bBitMask == 0x000000FF &&
+              ddsh.ddspf.aBitMask == 0xFF000000) {
+        f->pixelFormat.uncompressed = PixelFormat::RGBA;
+        f->components = 4;
+        f->compressed = false;
         f->needsSwizzle = true;
-    } else if(ddsh.ddspf.rgbBitCount == 32 &&
-               ddsh.ddspf.rBitMask == 0x000000FF &&
-               ddsh.ddspf.gBitMask == 0x0000FF00 &&
-               ddsh.ddspf.bBitMask == 0x00FF0000 &&
-               ddsh.ddspf.aBitMask == 0xFF000000) {
-        f->pixelFormat.uncompressed = PixelFormat::RGBA;
+
+    /* RGB */
     } else if(ddsh.ddspf.rgbBitCount == 24 &&
-               ddsh.ddspf.rBitMask == 0x000000FF &&
-               ddsh.ddspf.gBitMask == 0x0000FF00 &&
-               ddsh.ddspf.bBitMask == 0x00FF0000) {
+              ddsh.ddspf.rBitMask == 0x000000FF &&
+              ddsh.ddspf.gBitMask == 0x0000FF00 &&
+              ddsh.ddspf.bBitMask == 0x00FF0000) {
         f->pixelFormat.uncompressed = PixelFormat::RGB;
         f->components = 3;
+        f->compressed = false;
+        f->needsSwizzle = false;
+
+    /* BGR */
     } else if(ddsh.ddspf.rgbBitCount == 24 &&
-               ddsh.ddspf.rBitMask == 0x00FF0000 &&
-               ddsh.ddspf.gBitMask == 0x0000FF00 &&
-               ddsh.ddspf.bBitMask == 0x000000FF) {
+              ddsh.ddspf.rBitMask == 0x00FF0000 &&
+              ddsh.ddspf.gBitMask == 0x0000FF00 &&
+              ddsh.ddspf.bBitMask == 0x000000FF) {
         f->pixelFormat.uncompressed = PixelFormat::RGB;
-        f->needsSwizzle = true;
         f->components = 3;
+        f->compressed = false;
+        f->needsSwizzle = true;
+
+    /* Grayscale */
     } else if(ddsh.ddspf.rgbBitCount == 8) {
         #ifndef MAGNUM_TARGET_GLES2
         f->pixelFormat.uncompressed = PixelFormat::Red;
         #else
         f->pixelFormat.uncompressed = PixelFormat::Luminance;
         #endif
+        f->components = 1;
+        f->compressed = false;
+        f->needsSwizzle = false;
+
     } else {
         Error() << "Trade::DdsImporter::openData(): unknown format";
         return;
