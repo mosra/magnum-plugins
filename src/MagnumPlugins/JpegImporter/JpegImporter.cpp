@@ -67,8 +67,8 @@ UnsignedInt JpegImporter::doImage2DCount() const { return 1; }
 std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Initialize structures */
     jpeg_decompress_struct file;
-    JSAMPARRAY rows = nullptr;
-    unsigned char* data = nullptr;
+    Containers::Array<JSAMPROW> rows;
+    Containers::Array<char> data;
 
     /* Fugly error handling stuff */
     /** @todo Get rid of this crap */
@@ -85,8 +85,6 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
         Error() << "Trade::JpegImporter::image2D(): error while reading JPEG file";
 
         jpeg_destroy_decompress(&file);
-        delete[] rows;
-        delete[] data;
         return std::nullopt;
     }
 
@@ -127,24 +125,23 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
             return std::nullopt;
     }
 
-    /* Initialize data array */
-    data = new unsigned char[size.product()*file.out_color_components*BITS_IN_JSAMPLE/8];
+    /* Initialize data array, align rows to four bytes */
+    const std::size_t stride = ((size.x()*file.out_color_components*BITS_IN_JSAMPLE/8 + 3)/4)*4;
+    data = Containers::Array<char>{stride*std::size_t(size.y())};
 
     /* Read image row by row */
-    rows = new JSAMPROW[size.y()];
-    const Int stride = size.x()*file.out_color_components*BITS_IN_JSAMPLE/8;
+    rows = Containers::Array<JSAMPROW>{std::size_t(size.y())};
     for(Int i = 0; i != size.y(); ++i)
-        rows[i] = data + (size.y() - i - 1)*stride;
+        rows[i] = reinterpret_cast<JSAMPROW>(data.data()) + (size.y() - i - 1)*stride;
     while(file.output_scanline < file.output_height)
-        jpeg_read_scanlines(&file, rows+file.output_scanline, file.output_height-file.output_scanline);
-    delete[] rows;
-    rows = nullptr;
+        jpeg_read_scanlines(&file, rows + file.output_scanline, file.output_height - file.output_scanline);
 
     /* Cleanup */
     jpeg_finish_decompress(&file);
     jpeg_destroy_decompress(&file);
 
-    return Trade::ImageData2D(format, type, size, data);
+    /* Always using the default 4-byte alignment */
+    return Trade::ImageData2D{format, type, size, std::move(data)};
 }
 
 }}

@@ -64,9 +64,15 @@ void JpegImporterTest::gray() {
     CORRADE_COMPARE(image->format(), PixelFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+
+    /* The image has four-byte aligned rows, clear the padding to deterministic
+       values */
+    CORRADE_COMPARE(image->data().size(), 8);
+    image->data()[3] = image->data()[7] = 0;
+
     CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
-        '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff'),
+        '\xff', '\x88', '\x00', 0,
+        '\x88', '\x00', '\xff', 0),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -79,14 +85,22 @@ void JpegImporterTest::rgb() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+
+    /* The image has four-byte aligned rows, clear the padding to deterministic
+       values */
+    CORRADE_COMPARE(image->data().size(), 24);
+    image->data()[9] = image->data()[10] = image->data()[11] =
+         image->data()[21] = image->data()[22] = image->data()[23] = 0;
+
     /* Data should be similar to the PNG */
     CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
         '\xca', '\xfe', '\x76',
         '\xdf', '\xad', '\xb6',
-        '\xca', '\xfe', '\x76',
+        '\xca', '\xfe', '\x76', 0, 0, 0,
+
         '\xe0', '\xad', '\xb6',
         '\xc9', '\xff', '\x76',
-        '\xdf', '\xad', '\xb6'),
+        '\xdf', '\xad', '\xb6', 0, 0, 0),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
