@@ -70,8 +70,8 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     CORRADE_INTERNAL_ASSERT(file);
     png_infop info = png_create_info_struct(file);
     CORRADE_INTERNAL_ASSERT(info);
-    png_bytep* rows = nullptr;
-    unsigned char* data = nullptr;
+    Containers::Array<png_bytep> rows;
+    Containers::Array<char> data;
 
     /* Error handling routine */
     /** @todo Get rid of setjmp (won't work everywhere) */
@@ -79,8 +79,6 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         Error() << "Trade::PngImporter::image2D(): error while reading PNG file";
 
         png_destroy_read_struct(&file, &info, nullptr);
-        delete[] rows;
-        delete[] data;
         return std::nullopt;
     }
 
@@ -172,21 +170,21 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
             return std::nullopt;
     }
 
-    /* Initialize data array */
-    data = new unsigned char[size.product()*channels*bits/8];
+    /* Initialize data array, align rows to four bytes */
+    const std::size_t stride = ((size.x()*channels*bits/8 + 3)/4)*4;
+    data = Containers::Array<char>{stride*std::size_t(size.y())};
 
     /* Read image row by row */
-    rows = new png_bytep[size.y()];
-    const Int stride = size.x()*channels*bits/8;
+    rows = Containers::Array<png_bytep>{std::size_t(size.y())};
     for(Int i = 0; i != size.y(); ++i)
-        rows[i] = data + (size.y() - i - 1)*stride;
+        rows[i] = reinterpret_cast<unsigned char*>(data.data()) + (size.y() - i - 1)*stride;
     png_read_image(file, rows);
-    delete[] rows;
 
     /* Cleanup */
     png_destroy_read_struct(&file, &info, nullptr);
 
-    return Trade::ImageData2D(format, type, size, data);
+    /* Always using the default 4-byte alignment */
+    return Trade::ImageData2D{format, type, size, std::move(data)};
 }
 
 }}
