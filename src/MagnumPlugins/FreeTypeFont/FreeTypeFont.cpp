@@ -136,13 +136,13 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
     const std::vector<Range2Di> charPositions = cache.reserve(charSizes);
 
     /* Render all characters to the atlas and create character map */
-    unsigned char* pixmap = new unsigned char[cache.textureSize().product()]();
+    Containers::Array<char> pixmap{Containers::ValueInit, std::size_t(cache.textureSize().product())};
     /** @todo Some better way for this */
     #ifndef MAGNUM_TARGET_GLES2
-    Image2D image(PixelFormat::Red, PixelType::UnsignedByte, cache.textureSize(), pixmap);
+    Image2D image(PixelFormat::Red, PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
     #else
     Image2D image(Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-        PixelFormat::Red : PixelFormat::Luminance, PixelType::UnsignedByte, cache.textureSize(), pixmap);
+        PixelFormat::Red : PixelFormat::Luminance, PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
     #endif
     for(std::size_t i = 0; i != charPositions.size(); ++i) {
         /* Load and render glyph */
