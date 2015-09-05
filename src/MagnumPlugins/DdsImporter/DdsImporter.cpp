@@ -127,38 +127,20 @@ inline std::string fourcc(UnsignedInt enc) {
     return c;
 }
 
-/* @brief Convert array data to RGB assuming it is in BGR. */
-inline void convertBGRToRGB(char* data, const unsigned int size) {
-    auto pixels = reinterpret_cast<Math::Vector3<UnsignedByte>*>(data);
-    std::transform(pixels, pixels + size, pixels,
-        [](Math::Vector3<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r'>(pixel); });
-}
-
-/* @brief Convert array data to RGBA assuming it is in BGRA. */
-inline void convertBGRAToRGBA(char* data, const unsigned int size) {
-    auto pixels = reinterpret_cast<Math::Vector4<UnsignedByte>*>(data);
-    std::transform(pixels, pixels + size, pixels,
-        [](Math::Vector4<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r', 'a'>(pixel); });
-}
-
-/*
- * @brief Convert array data from BGR(A) to RGB(A) depending on code.
- * @param format Format to expect data to be in.
- * @param data Array data to convert.
- * @return The format which the converted array data is in.
- */
-inline PixelFormat convertPixelFormat(const PixelFormat format, Containers::Array<char>& data) {
-    if(format == PixelFormat::BGR) {
+void swizzlePixels(const PixelFormat format, Containers::Array<char>& data) {
+    if(format == PixelFormat::RGB) {
         Debug() << "Trade::DdsImporter: converting from BGR to RGB";
-        convertBGRToRGB(data.begin(), data.size() / 3);
-        return PixelFormat::RGB;
-    } else if(format == PixelFormat::BGRA) {
+        auto pixels = reinterpret_cast<Math::Vector3<UnsignedByte>*>(data.data());
+        std::transform(pixels, pixels + data.size()/sizeof(Math::Vector3<UnsignedByte>), pixels,
+            [](Math::Vector3<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r'>(pixel); });
+
+    } else if(format == PixelFormat::RGBA) {
         Debug() << "Trade::DdsImporter: converting from BGRA to RGBA";
-        convertBGRAToRGBA(data.begin(), data.size() / 4);
-        return PixelFormat::RGBA;
-    } else {
-        return format;
-    }
+        auto pixels = reinterpret_cast<Math::Vector4<UnsignedByte>*>(data.data());
+        std::transform(pixels, pixels + data.size()/sizeof(Math::Vector4<UnsignedByte>), pixels,
+            [](Math::Vector4<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r', 'a'>(pixel); });
+
+    } else CORRADE_ASSERT_UNREACHABLE();
 }
 
 /*
@@ -207,6 +189,7 @@ struct DdsImporter::File {
 
     bool compressed;
     bool volume;
+    bool needsSwizzle;
 
     /* components per pixel */
     UnsignedInt components;
@@ -274,6 +257,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* set the color format */
     f->components = 4;
     f->compressed = false;
+    f->needsSwizzle = false;
     if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
         switch(DdsCompressionTypes(ddsh.ddspf.fourCC)) {
             case DdsCompressionTypes::DXT1:
@@ -295,7 +279,8 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF &&
                ddsh.ddspf.aBitMask == 0xFF000000) {
-        f->pixelFormat.uncompressed = PixelFormat::BGRA;
+        f->pixelFormat.uncompressed = PixelFormat::RGBA;
+        f->needsSwizzle = true;
     } else if(ddsh.ddspf.rgbBitCount == 32 &&
                ddsh.ddspf.rBitMask == 0x000000FF &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
@@ -312,7 +297,8 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
                ddsh.ddspf.rBitMask == 0x00FF0000 &&
                ddsh.ddspf.gBitMask == 0x0000FF00 &&
                ddsh.ddspf.bBitMask == 0x000000FF) {
-        f->pixelFormat.uncompressed = PixelFormat::BGR;
+        f->pixelFormat.uncompressed = PixelFormat::RGB;
+        f->needsSwizzle = true;
         f->components = 3;
     } else if(ddsh.ddspf.rgbBitCount == 8) {
         #ifndef MAGNUM_TARGET_GLES2
@@ -365,14 +351,14 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     if(_f->compressed) {
         return ImageData2D(_f->pixelFormat.compressed, dataOffset.dimensions.xy(), std::move(data));
     } else {
-        const PixelFormat newPixelFormat = convertPixelFormat(_f->pixelFormat.uncompressed, data);
+        if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data);
 
         /* Adjust pixel storage if row size is not four byte aligned */
         PixelStorage storage;
-        if((dataOffset.dimensions.x()*PixelStorage::pixelSize(newPixelFormat, PixelType::UnsignedByte))%4 != 0)
+        if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, PixelType::UnsignedByte))%4 != 0)
             storage.setAlignment(1);
 
-        return ImageData2D{storage, newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions.xy(), std::move(data)};
+        return ImageData2D{storage, _f->pixelFormat.uncompressed, PixelType::UnsignedByte, dataOffset.dimensions.xy(), std::move(data)};
     }
 }
 
@@ -388,14 +374,14 @@ std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
     if(_f->compressed) {
         return ImageData3D(_f->pixelFormat.compressed, dataOffset.dimensions, std::move(data));
     } else {
-        const PixelFormat newPixelFormat = convertPixelFormat(_f->pixelFormat.uncompressed, data);
+        if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data);
 
         /* Adjust pixel storage if row size is not four byte aligned */
         PixelStorage storage;
-        if((dataOffset.dimensions.x()*PixelStorage::pixelSize(newPixelFormat, PixelType::UnsignedByte))%4 != 0)
+        if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, PixelType::UnsignedByte))%4 != 0)
             storage.setAlignment(1);
 
-        return ImageData3D{storage, newPixelFormat, PixelType::UnsignedByte, dataOffset.dimensions, std::move(data)};
+        return ImageData3D{storage, _f->pixelFormat.uncompressed, PixelType::UnsignedByte, dataOffset.dimensions, std::move(data)};
     }
 }
 
