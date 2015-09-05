@@ -63,6 +63,7 @@ void StbImageImporterTest::grayPng() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     #ifndef MAGNUM_TARGET_GLES2
     CORRADE_COMPARE(image->format(), PixelFormat::Red);
@@ -82,6 +83,7 @@ void StbImageImporterTest::grayJpeg() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     #ifndef MAGNUM_TARGET_GLES2
     CORRADE_COMPARE(image->format(), PixelFormat::Red);
@@ -91,7 +93,7 @@ void StbImageImporterTest::grayJpeg() {
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
         '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff', '\x00', '\x00'),
+        '\x88', '\x00', '\xff'),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -101,6 +103,7 @@ void StbImageImporterTest::rgbPng() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
@@ -120,6 +123,7 @@ void StbImageImporterTest::rgbJpeg() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
@@ -140,6 +144,7 @@ void StbImageImporterTest::rgbaPng() {
 
     std::optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);

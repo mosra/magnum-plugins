@@ -107,12 +107,16 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     /* Copy the data to a new[]-allocated array so we can delete[] it later
        (the original data with must be deleted with free()) */
     /** @todo remove when Array/Image has custom deleter support */
-    const std::size_t dataSize = size.product()*components;
-    unsigned char* const imageData = new unsigned char[dataSize];
-    std::copy(data, data + dataSize, imageData);
+    Containers::Array<char> imageData{std::size_t(size.product()*components)};
+    std::copy(data, data + imageData.size(), imageData.begin());
     stbi_image_free(data);
 
-    return Trade::ImageData2D(format, PixelType::UnsignedByte, size, imageData);
+    /* Adjust pixel storage if row size is not four byte aligned */
+    PixelStorage storage;
+    if((size.x()*components)%4 != 0)
+        storage.setAlignment(1);
+
+    return Trade::ImageData2D{storage, format, PixelType::UnsignedByte, size, std::move(imageData)};
 }
 
 }}
