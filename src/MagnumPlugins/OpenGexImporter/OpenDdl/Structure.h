@@ -29,6 +29,9 @@
  * @brief Class @ref Magnum::OpenDdl::Structure, enum @ref Magnum::OpenDdl::Type
  */
 
+#ifdef _MSC_VER
+#include <algorithm> /* For std::min() */
+#endif
 #include <functional>
 #include <Corrade/Utility/Assert.h>
 
