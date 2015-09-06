@@ -47,7 +47,8 @@ that character literals have proper size.
 */
 struct CharacterLiteral: Containers::ArrayView<const char> {
     /** @brief Constructor */
-    template<std::size_t size> constexpr CharacterLiteral(const char(&string)[size]): Containers::ArrayView<const char>{string, size - 1} {}
+    /* MSVC 2015 can't handle {} here */
+    template<std::size_t size> constexpr CharacterLiteral(const char(&string)[size]): Containers::ArrayView<const char>(string, size - 1) {}
 };
 
 namespace Implementation {
