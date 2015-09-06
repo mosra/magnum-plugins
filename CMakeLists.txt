@@ -54,10 +54,12 @@ option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
 cmake_dependent_option(BUILD_STATIC_PIC "Build static plugins with position-independent code" OFF "BUILD_STATIC" OFF)
 
 # Check compiler compatibility
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS "4.7.0")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7.0")
     message(FATAL_ERROR "Compatibility branch of Magnum Plugins is needed for use with GCC < 4.7. See the documentation for more information.")
 elseif(MSVC)
-    message(FATAL_ERROR "Compatibility branch of Magnum Plugins is needed for use with MSVC. See the documentation for more information.")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0")
+        message(FATAL_ERROR "Compatibility branch of Magnum Plugins is needed for use with MSVC < 2015. See the documentation for more information.")
+    endif()
 endif()
 
 # Newlib toolchain supports only static linking
