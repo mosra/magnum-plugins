@@ -32,6 +32,10 @@ macro(add_plugin plugin_name debug_install_dir release_install_dir metadata_file
     endif()
 endmacro()
 
+if(WITH_ANYAUDIOIMPORTER)
+    add_subdirectory(AnyAudioImporter)
+endif()
+
 if(WITH_ANYIMAGEIMPORTER)
     add_subdirectory(AnyImageImporter)
 endif()
