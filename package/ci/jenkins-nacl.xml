@@ -70,6 +70,7 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=../toolchains/generic/NaCl-${toolchain}.cmake \
     -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/nacl-${toolchain}-${compatibility}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/nacl-${toolchain}-${compatibility} \
+    -DWITH_ANYIMAGECONVERTER=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
     -DWITH_ANYSCENEIMPORTER=ON \
   `#-DWITH_COLLADAIMPORTER=ON` \
