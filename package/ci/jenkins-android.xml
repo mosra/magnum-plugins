@@ -78,6 +78,7 @@ cmake .. \
     -DCMAKE_FIND_ROOT_PATH=${JENKINS_HOME}/filesystem/android-${toolchain}-${compatibility} \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/android-${toolchain}-${compatibility} \
     -DBUILD_DEPRECATED=${deprecated_build_flag} \
+  `#-DWITH_ANYAUDIOIMPORTER=ON` \
     -DWITH_ANYIMAGECONVERTER=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
     -DWITH_ANYSCENEIMPORTER=ON \

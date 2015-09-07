@@ -118,6 +118,7 @@ cmake .. \
     ${static_build_flag} \
     -DBUILD_TESTS=ON \
     -DBUILD_GL_TESTS=${windowless_flag} \
+    -DWITH_ANYAUDIOIMPORTER=ON \
     -DWITH_ANYIMAGECONVERTER=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
     -DWITH_ANYSCENEIMPORTER=ON \

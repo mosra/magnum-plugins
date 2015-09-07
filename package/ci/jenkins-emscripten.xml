@@ -71,6 +71,7 @@ cmake .. \
     -DCMAKE_FIND_ROOT_PATH="${JENKINS_HOME}/filesystem/emscripten-${compatibility};${JENKINS_HOME}/filesystem/emscripten-${compatibility}-${gl}" \
     -DCMAKE_PREFIX_PATH="${JENKINS_HOME}/filesystem/emscripten-${compatibility};${JENKINS_HOME}/filesystem/emscripten-${compatibility}-${gl}" \
     -DCMAKE_INSTALL_PREFIX=${JENKINS_HOME}/filesystem/emscripten-${compatibility}-${gl} \
+  `#-DWITH_ANYAUDIOIMPORTER=ON` \
     -DWITH_ANYIMAGECONVERTER=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
     -DWITH_ANYSCENEIMPORTER=ON \
