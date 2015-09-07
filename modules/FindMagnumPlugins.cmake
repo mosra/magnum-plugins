@@ -5,6 +5,7 @@
 # This command tries to find Magnum plugins and then defines:
 #  MAGNUMPLUGINS_FOUND          - Whether Magnum plugins were found
 # This command will not try to find any actual plugin. The plugins are:
+#  AnyImageConverter - Any image converter
 #  AnyImageImporter - Any image importer
 #  AnySceneImporter - Any scene importer
 #  ColladaImporter  - Collada importer

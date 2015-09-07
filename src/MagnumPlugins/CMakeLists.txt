@@ -36,6 +36,10 @@ if(WITH_ANYIMAGEIMPORTER)
     add_subdirectory(AnyImageImporter)
 endif()
 
+if(WITH_ANYIMAGECONVERTER)
+    add_subdirectory(AnyImageConverter)
+endif()
+
 if(WITH_ANYSCENEIMPORTER)
     add_subdirectory(AnySceneImporter)
 endif()

@@ -54,6 +54,8 @@ installed to `magnum-d` subdirectory, similarly to what is done when
 
 By default no plugins are built and you need to select them manually:
 
+-   `WITH_ANYIMAGECONVERTER` -- @ref Trade::AnyImageConverter "AnyImageConverter"
+    plugin.
 -   `WITH_ANYIMAGEIMPORTER` -- @ref Trade::AnyImageImporter "AnyImageImporter"
     plugin.
 -   `WITH_ANYSCENEIMPORTER` -- @ref Trade::AnySceneImporter "AnySceneImporter"
