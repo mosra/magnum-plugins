@@ -42,7 +42,7 @@ StbPngImageConverter::StbPngImageConverter(PluginManager::AbstractManager& manag
 
 auto StbPngImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 
-Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& image) const {
+Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& image) {
     #ifndef MAGNUM_TARGET_GLES
     if(image.storage().swapBytes()) {
         Error() << "Trade::StbPngImageConverter::exportToData(): pixel byte swap is not supported";
