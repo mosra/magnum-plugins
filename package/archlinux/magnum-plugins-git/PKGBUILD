@@ -1,6 +1,6 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=magnum-plugins-git
-pkgver=snapshot.2015.05.r84.g5532593
+pkgver=snapshot.2015.05.r92.ga840dfd
 pkgrel=1
 pkgdesc="Plugins for Magnum graphics engine (Git version)"
 arch=('i686' 'x86_64')
