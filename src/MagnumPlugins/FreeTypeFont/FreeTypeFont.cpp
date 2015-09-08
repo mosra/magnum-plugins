@@ -137,13 +137,6 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
 
     /* Render all characters to the atlas and create character map */
     Containers::Array<char> pixmap{Containers::ValueInit, std::size_t(cache.textureSize().product())};
-    /** @todo Some better way for this */
-    #ifndef MAGNUM_TARGET_GLES2
-    Image2D image(PixelFormat::Red, PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
-    #else
-    Image2D image(Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-        PixelFormat::Red : PixelFormat::Luminance, PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
-    #endif
     for(std::size_t i = 0; i != charPositions.size(); ++i) {
         /* Load and render glyph */
         /** @todo B&W only if radius != 0 */
@@ -166,6 +159,12 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::vector<char32_
     }
 
     /* Set cache image */
+    #ifndef MAGNUM_TARGET_GLES2
+    Image2D image(PixelFormat::Red, PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
+    #else
+    Image2D image(Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
+        PixelFormat::Red : PixelFormat::Luminance, PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
+    #endif
     cache.setImage({}, image);
 }
 
