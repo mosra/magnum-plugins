@@ -20,6 +20,7 @@ build_script:
 - set PATH=C:/Sys/bin;C:/tools/ninja;%APPVEYOR_BUILD_FOLDER%/openal/bin/Win32;%PATH%
 - appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.2.0/libjpeg-turbo-1.2.0.tar.gz
 - 7z x libjpeg-turbo-1.2.0.tar.gz
+- 7z x libjpeg-turbo-1.2.0.tar
 - ren libjpeg-turbo-1.2.0 libjpeg-turbo
 - cd libjpeg-turbo
 - mkdir build
