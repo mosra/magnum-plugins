@@ -11,7 +11,6 @@ environment:
   - BUILD_STATIC: OFF
 install:
 - cinst ninja
-- cinst libjpeg-turbo -x86
 build_script:
 - call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat"
 - appveyor DownloadFile http://kcat.strangesoft.net/openal-soft-1.16.0-bin.zip
@@ -19,6 +18,17 @@ build_script:
 - ren openal-soft-1.16.0-bin openal
 - ren openal\bin\Win32\soft_oal.dll OpenAL32.dll
 - set PATH=C:/Sys/bin;C:/tools/ninja;%APPVEYOR_BUILD_FOLDER%/openal/bin/Win32;%PATH%
+- appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.2.0/libjpeg-turbo-1.2.0.tar.gz
+- 7z x libjpeg-turbo-1.2.0.tar.gz
+- ren libjpeg-turbo-1.2.0 libjpeg-turbo
+- cd libjpeg-turbo
+- mkdir build
+- cd build
+- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DWITH_JPEG8=1 -G Ninja
+- cmake --build .
+- cmake --build . --target install
+- cd ..
+- cd ..
 - git clone --depth 1 git://github.com/mosra/corrade.git
 - cd corrade
 - mkdir build
@@ -39,7 +49,7 @@ build_script:
 - cd ..
 - mkdir build
 - cd build
-- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DCMAKE_PREFIX_PATH="%APPVEYOR_BUILD_FOLDER%/openal;C:/libjpeg-turbo" -DWITH_ANYAUDIOIMPORTER=ON -DWITH_ANYIMAGECONVERTER=ON -DWITH_ANYIMAGEIMPORTER=ON -DWITH_ANYSCENEIMPORTER=ON -DWITH_DDSIMPORTER=ON -DWITH_FREETYPEFONT=OFF -DWITH_HARFBUZZFONT=OFF -DWITH_JPEGIMPORTER=ON -DWITH_OPENGEXIMPORTER=ON -DWITH_PNGIMPORTER=OFF -DWITH_STANFORDIMPORTER=ON -DWITH_STBIMAGEIMPORTER=ON -DWITH_STBPNGIMAGECONVERTER=ON -DBUILD_TESTS=ON -DBUILD_STATIC=%BUILD_STATIC% -G Ninja
+- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal -DWITH_ANYAUDIOIMPORTER=ON -DWITH_ANYIMAGECONVERTER=ON -DWITH_ANYIMAGEIMPORTER=ON -DWITH_ANYSCENEIMPORTER=ON -DWITH_DDSIMPORTER=ON -DWITH_FREETYPEFONT=OFF -DWITH_HARFBUZZFONT=OFF -DWITH_JPEGIMPORTER=ON -DWITH_OPENGEXIMPORTER=ON -DWITH_PNGIMPORTER=OFF -DWITH_STANFORDIMPORTER=ON -DWITH_STBIMAGEIMPORTER=ON -DWITH_STBPNGIMAGECONVERTER=ON -DBUILD_TESTS=ON -DBUILD_STATIC=%BUILD_STATIC% -G Ninja
 - cmake --build .
 - cmake --build . --target install
 - cmake . -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/Deploy -DBUILD_TESTS=OFF
