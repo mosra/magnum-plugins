@@ -106,8 +106,19 @@ void FreeTypeFontGLTest::layout() {
 }
 
 void FreeTypeFontGLTest::fillGlyphCache() {
-    /** @todo */
-    CORRADE_SKIP("Not yet implemented");
+    FreeTypeFont font;
+    CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    /* Just testing that nothing crashes, asserts or errors */
+    GlyphCache cache{Vector2i{256}};
+    font.fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyz");
+
+    MAGNUM_VERIFY_NO_ERROR();
+
+    /* All characters + one "not found" glyph */
+    CORRADE_COMPARE(cache.glyphCount(), 27);
+
+    /** @todo properly test contents */
 }
 
 }}}
