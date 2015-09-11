@@ -104,12 +104,9 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
         default: CORRADE_ASSERT_UNREACHABLE();
     }
 
-    /* Copy the data to a new[]-allocated array so we can delete[] it later
-       (the original data with must be deleted with free()) */
-    /** @todo remove when Array/Image has custom deleter support */
-    Containers::Array<char> imageData{std::size_t(size.product()*components)};
-    std::copy(data, data + imageData.size(), imageData.begin());
-    stbi_image_free(data);
+    /* Wrap the data in an array with custom deleter (we can't use delete[]) */
+    Containers::Array<char> imageData{reinterpret_cast<char*>(data), std::size_t(size.product()*components),
+        [](char* data, std::size_t) { stbi_image_free(data); }};
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
