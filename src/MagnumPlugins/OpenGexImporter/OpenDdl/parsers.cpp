@@ -32,6 +32,10 @@
 
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
 
+#ifdef CORRADE_TARGET_APPLE
+#include <climits>
+#endif
+
 namespace Magnum { namespace OpenDdl { namespace Implementation {
 
 Debug operator<<(Debug debug, const ParseErrorType value) {
@@ -301,6 +305,10 @@ template<> struct ExtractToType<Short>: ExtractToType<UnsignedLong> {};
 template<> struct ExtractToType<UnsignedInt>: ExtractToType<UnsignedLong> {};
 template<> struct ExtractToType<Int>: ExtractToType<UnsignedLong> {};
 template<> struct ExtractToType<Long>: ExtractToType<UnsignedLong> {};
+#ifdef CORRADE_TARGET_APPLE
+template<> struct ExtractToType<unsigned long>: ExtractToType<UnsignedLong> {};
+template<> struct ExtractToType<long>: ExtractToType<UnsignedLong> {};
+#endif
 #else
 template<> struct ExtractToType<UnsignedInt> {
     typedef UnsignedInt Type;
@@ -342,6 +350,20 @@ _c(Float)
 _c(Double)
 #endif
 #undef _c
+#ifdef CORRADE_TARGET_APPLE
+#if LONG_MAX == 0x7FFFFFFFFFFFFFFF
+template<> constexpr Type typeFor<unsigned long>() { return Type::UnsignedLong; }
+template<> constexpr Type typeFor<long>() { return Type::Long; }
+#elif LONG_MAX == 0x7FFFFFFF
+template<> constexpr Type typeFor<unsigned long>() { return Type::UnsignedInt; }
+template<> constexpr Type typeFor<long>() { return Type::Int; }
+#elif !defined(LONG_MAX)
+#error wat
+#else
+blah LONG_MAX i/ugh
+//#error Unexpected size of builtin long type
+#endif
+#endif
 
 template<Int base> const char* possiblyNumericCharacters(const Containers::ArrayView<const char> data) {
     /* Propagate errors */
@@ -459,6 +481,10 @@ template std::tuple<const char*, UnsignedShort, Int> integralLiteral<UnsignedSho
 template std::tuple<const char*, Short, Int> integralLiteral<Short>(Containers::ArrayView<const char>, std::string&, ParseError&);
 template std::tuple<const char*, UnsignedInt, Int> integralLiteral<UnsignedInt>(Containers::ArrayView<const char>, std::string&, ParseError&);
 template std::tuple<const char*, Int, Int> integralLiteral<Int>(Containers::ArrayView<const char>, std::string&, ParseError&);
+#ifdef CORRADE_TARGET_APPLE
+template std::tuple<const char*, unsigned long, Int> integralLiteral<unsigned long>(Containers::ArrayView<const char>, std::string&, ParseError&);
+template std::tuple<const char*, long, Int> integralLiteral<long>(Containers::ArrayView<const char>, std::string&, ParseError&);
+#endif
 #ifndef MAGNUM_TARGET_WEBGL
 template std::tuple<const char*, UnsignedLong, Int> integralLiteral<UnsignedLong>(Containers::ArrayView<const char>, std::string&, ParseError&);
 template std::tuple<const char*, Long, Int> integralLiteral<Long>(Containers::ArrayView<const char>, std::string&, ParseError&);
