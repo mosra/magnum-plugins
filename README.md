@@ -9,7 +9,7 @@ subdirectory, or compile and install everything manually. The building process
 is similar to Magnum itself - see [Magnum documentation](http://mosra.cz/blog/magnum-doc/)
 for more comprehensive guide for building, packaging and crosscompiling.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/nkdlwaxm2i9d6vpx/branch/master?svg=true)](https://ci.appveyor.com/project/mosra/magnum-plugins/branch/master)
+[![Linux/OSX Build Status](https://travis-ci.org/mosra/magnum-plugins.svg?branch=master)](https://travis-ci.org/mosra/magnum-plugins) [![Windows Build status](https://ci.appveyor.com/api/projects/status/nkdlwaxm2i9d6vpx/branch/master?svg=true)](https://ci.appveyor.com/project/mosra/magnum-plugins/branch/master)
 
 Minimal dependencies
 --------------------
