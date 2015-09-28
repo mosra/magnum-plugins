@@ -38,7 +38,7 @@
 
 namespace Magnum { namespace OpenDdl { namespace Implementation {
 
-Debug operator<<(Debug debug, const ParseErrorType value) {
+Debug& operator<<(Debug& debug, const ParseErrorType value) {
     switch(value) {
         #define _c(value) case ParseErrorType::value: return debug << "OpenDdl::ParseErrorType::" #value;
         _c(NoError)

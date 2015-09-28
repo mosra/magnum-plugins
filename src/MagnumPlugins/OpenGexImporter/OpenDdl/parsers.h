@@ -58,7 +58,7 @@ enum class ParseErrorType: UnsignedInt {
     ExpectedPropertyListEnd
 };
 
-Debug operator<<(Debug debug, ParseErrorType value);
+Debug& operator<<(Debug& debug, ParseErrorType value);
 
 struct ParseError {
     /*implicit*/ constexpr ParseError(): error{ParseErrorType::NoError}, type{}, position{} {}

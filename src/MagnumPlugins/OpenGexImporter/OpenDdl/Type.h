@@ -112,7 +112,7 @@ enum class Type: UnsignedInt {
 };
 
 /** @debugoperatorenum{Type} */
-Debug operator<<(Debug debug, Type value);
+Debug& operator<<(Debug& debug, Type value);
 
 /**
 @brief Property type
@@ -183,7 +183,7 @@ enum class PropertyType: UnsignedByte {
 };
 
 /** @debugoperatorenum{PropertyType} */
-Debug operator<<(Debug debug, PropertyType value);
+Debug& operator<<(Debug& debug, PropertyType value);
 
 enum: Int {
     /**
@@ -207,7 +207,7 @@ namespace Implementation {
         Character = 254,
         Binary = 255
     };
-    Debug operator<<(Debug debug, InternalPropertyType value);
+    Debug& operator<<(Debug& debug, InternalPropertyType value);
 }
 
 }}

@@ -35,7 +35,7 @@
 
 namespace Magnum { namespace OpenDdl {
 
-Debug operator<<(Debug debug, const Type value) {
+Debug& operator<<(Debug& debug, const Type value) {
     switch(value) {
         #define _c(value) case Type::value: return debug << "OpenDdl::Type::" #value;
         _c(Bool)
@@ -64,7 +64,7 @@ Debug operator<<(Debug debug, const Type value) {
     return debug << "OpenDdl::Type::(invalid)";
 }
 
-Debug operator<<(Debug debug, const PropertyType value) {
+Debug& operator<<(Debug& debug, const PropertyType value) {
     switch(value) {
         #define _c(value) case PropertyType::value: return debug << "OpenDdl::PropertyType::" #value;
         _c(Bool)
@@ -93,7 +93,7 @@ Debug operator<<(Debug debug, const PropertyType value) {
 }
 
 namespace Implementation {
-    Debug operator<<(Debug debug, const InternalPropertyType value) {
+    Debug& operator<<(Debug& debug, const InternalPropertyType value) {
         switch(value) {
             #define _c(value) case InternalPropertyType::value: return debug << "OpenDdl::Implementation::InternalPropertyType::" #value;
             _c(Bool)
