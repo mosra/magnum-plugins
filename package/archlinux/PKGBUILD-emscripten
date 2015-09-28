@@ -27,7 +27,7 @@ build() {
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \
-        -DWITH_ANYAUDIOIMPORTER=ON \
+        -DWITH_ANYAUDIOIMPORTER=OFF \
         -DWITH_ANYIMAGECONVERTER=ON \
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
