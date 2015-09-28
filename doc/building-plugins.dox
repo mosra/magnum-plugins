@@ -114,6 +114,11 @@ plugins, for example), modify the last entry in `debian/rules`.
 
 @section building-plugins-ci Continuous Integration
 
+@subsection building-plugins-ci-travis Travis
+
+In `package/ci/` there is `travis.yml` file with Linux GCC 4.7 and OSX Clang
+configuration. Online at https://travis-ci.org/mosra/magnum-plugins.
+
 @subsection building-plugins-ci-appveyor AppVeyor
 
 In `package/ci/` there is `appveyor.yml` file with Windows MSVC configuration.
