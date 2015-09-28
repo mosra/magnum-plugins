@@ -57,6 +57,7 @@
 #  WindowlessGlxApplication - Windowless GLX application
 #  WindowlessNaClApplication - Windowless NaCl application
 #  WindowlessWglApplication - Windowless WGL application
+#  WindowlessWindowsEglApplication - Windowless Windows/EGL application
 #  CglContext       - CGL context
 #  EglContext       - EGL context
 #  GlxContext       - GLX context
@@ -249,9 +250,9 @@ foreach(component ${Magnum_FIND_COMPONENTS})
     endif()
 
     if(component MATCHES ".+AudioImporter")
-        set(_MAGNUM_${_COMPONENT}_DEPENDENCIES Audio)
+        set(_MAGNUM_${_COMPONENT}_DEPENDENCIES ${_MAGNUM_${_COMPONENT}_DEPENDENCIES} Audio)
     elseif(component MATCHES ".+(Font|FontConverter)")
-        set(_MAGNUM_${_COMPONENT}_DEPENDENCIES Text TextureTools)
+        set(_MAGNUM_${_COMPONENT}_DEPENDENCIES ${_MAGNUM_${_COMPONENT}_DEPENDENCIES} Text TextureTools)
     endif()
 
     list(APPEND _MAGNUM_ADDITIONAL_COMPONENTS ${_MAGNUM_${_COMPONENT}_DEPENDENCIES})
@@ -394,8 +395,8 @@ foreach(component ${Magnum_FIND_COMPONENTS})
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()
 
-            # Find also EGL library, if on ES
-            if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES)
+            # Find also EGL library, if on ES (and not on WebGL)
+            if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES AND NOT MAGNUM_TARGET_WEBGL)
                 find_package(EGL)
                 if(EGL_FOUND)
                     list(APPEND _MAGNUM_${_COMPONENT}_LIBRARIES ${EGL_LIBRARY})
@@ -419,6 +420,15 @@ foreach(component ${Magnum_FIND_COMPONENTS})
 
         # Windowless CGL application has no additional dependencies
         # Windowless WGL application has no additional dependencies
+
+        # Windowless Windows/EGL application dependencies
+        elseif(${component} STREQUAL WindowlessWindowsEglApplication)
+            find_package(EGL)
+            if(EGL_FOUND)
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${EGL_LIBRARY})
+            else()
+                unset(MAGNUM_${_COMPONENT}_LIBRARY)
+            endif()
 
         # X/EGL application dependencies
         elseif(${component} STREQUAL XEglApplication)
@@ -506,9 +516,9 @@ foreach(component ${Magnum_FIND_COMPONENTS})
         string(TOUPPER ${dependency} _DEPENDENCY)
         if(MAGNUM_${_DEPENDENCY}_LIBRARY)
             list(APPEND _MAGNUM_${_COMPONENT}_DEPENDENCY_LIBRARIES ${MAGNUM_${_DEPENDENCY}_LIBRARY} ${_MAGNUM_${_DEPENDENCY}_LIBRARIES})
-            list(APPEND _MAGNUM_${_COMPONENT}_DEPENDENCY_INCLUDE_DIRS ${MAGNUM_${_DEPENDENCY}_INCLUDE_DIRS})
+            list(APPEND _MAGNUM_${_COMPONENT}_DEPENDENCY_INCLUDE_DIRS ${_MAGNUM_${_DEPENDENCY}_INCLUDE_DIRS})
         else()
-            unset(MAGNUM_${_DEPENDENCY}_LIBRARY)
+            unset(MAGNUM_${_COMPONENT}_LIBRARY)
         endif()
     endforeach()
 
