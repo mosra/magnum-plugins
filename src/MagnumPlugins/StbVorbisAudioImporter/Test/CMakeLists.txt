@@ -29,4 +29,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
-corrade_add_test(StbVorbisImporterTest StbVorbisImporterTest.cpp LIBRARIES MagnumStbVorbisImporterTestLib)
+corrade_add_test(StbVorbisAudioImporterTest StbVorbisImporterTest.cpp LIBRARIES MagnumStbVorbisAudioImporterTestLib)
