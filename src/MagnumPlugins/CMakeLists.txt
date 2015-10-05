@@ -87,3 +87,7 @@ endif()
 if(WITH_STBPNGIMAGECONVERTER)
     add_subdirectory(StbPngImageConverter)
 endif()
+
+if(WITH_STBVORBISAUDIOIMPORTER)
+    add_subdirectory(StbVorbisAudioImporter)
+endif()

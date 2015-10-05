@@ -79,6 +79,8 @@ By default no plugins are built and you need to select them manually:
     plugin.
 -   `WITH_STBPNGIMAGECONVERTER` -- @ref Trade::StbPngImageConverter "StbPngImageConverter"
     plugin.
+-   `WITH_STBVORBISAUDIOIMPORTER` -- @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
+    plugin.
 
 Note that each plugin class contains more detailed information about
 dependencies, availability on particular platform and also guide how to enable
