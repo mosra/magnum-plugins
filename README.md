@@ -1,6 +1,8 @@
 Here are various plugins for Magnum C++11/C++14 OpenGL graphics engine. If you
 don't know what Magnum is, see https://github.com/mosra/magnum.
 
+[![Join the chat at https://gitter.im/mosra/magnum](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mosra/magnum?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Linux/OSX Build Status](https://travis-ci.org/mosra/magnum-plugins.svg?branch=master)](https://travis-ci.org/mosra/magnum-plugins) [![Windows Build status](https://ci.appveyor.com/api/projects/status/nkdlwaxm2i9d6vpx/branch/master?svg=true)](https://ci.appveyor.com/project/mosra/magnum-plugins/branch/master)
+
 INSTALLATION
 ============
 
@@ -8,8 +10,6 @@ You can either use packaging scripts, which are stored in `package/`
 subdirectory, or compile and install everything manually. The building process
 is similar to Magnum itself - see [Magnum documentation](http://mosra.cz/blog/magnum-doc/)
 for more comprehensive guide for building, packaging and crosscompiling.
-
-[![Linux/OSX Build Status](https://travis-ci.org/mosra/magnum-plugins.svg?branch=master)](https://travis-ci.org/mosra/magnum-plugins) [![Windows Build status](https://ci.appveyor.com/api/projects/status/nkdlwaxm2i9d6vpx/branch/master?svg=true)](https://ci.appveyor.com/project/mosra/magnum-plugins/branch/master)
 
 Minimal dependencies
 --------------------
