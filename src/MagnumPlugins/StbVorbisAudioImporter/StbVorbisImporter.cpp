@@ -67,7 +67,7 @@ void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
         _format = Buffer::Format::Mono16;
     else if(numChannels == 2)
         _format = Buffer::Format::Stereo16;
-    // TODO: Buffer::Format::*Float32 when extension support is done.
+    /** @todo Buffer::Format::*Float32 when extension support is done */
     else {
         Error() << "Audio::StbVorbisImporter::openData(): unsupported channel count"
                 << numChannels << "with" << 16 << "bits per sample";
