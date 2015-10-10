@@ -16,10 +16,14 @@ Third-party components
     https://github.com/nothings/stb
 *   The `StbPngImageConverter` plugin uses **stb_image_write** public domain
     library -- https://github.com/nothings/stb
+*   The `StbVorbisAudioImporter` plugin uses **stb_vorbis** public domain
+    library -- https://github.com/nothings/stb
 
 Contributors to Magnum Plugins library
 --------------------------------------
 
+*   Jonathan Hale ([@Squareys](https://github.com/Squareys)) --
+    `StbVorbisAudioImporter` plugin
 *   Konstantinos Chatzilygeroudis ([@costashatz](https://github.com/costashatz)) --
     Debian package
 *   Olga Turanksaya ([@olga-python](https://github.com/olga-python)) -- Gentoo
