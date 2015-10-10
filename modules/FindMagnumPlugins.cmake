@@ -19,6 +19,7 @@
 #  StanfordImporter - Stanford PLY importer
 #  StbImageImporter - Image importer using stb_image
 #  StbPngImageConverter - PNG image converter using stb_image_write
+#  StbVorbisAudioImporter - OGG audio importer using stb_vorbis
 # Example usage with specifying the plugins is:
 #  find_package(MagnumPlugins [REQUIRED|COMPONENTS]
 #               FreeTypeFont PngImporter)
@@ -221,6 +222,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     # StanfordImporter has no dependencies
     # StbImageImporter has no dependencies
     # StbPngImageConverter has no dependencies
+    # StbVorbisAudioImporter has no dependencies
 
     # Add Magnum library dependency, if there is any
     if(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCY)
