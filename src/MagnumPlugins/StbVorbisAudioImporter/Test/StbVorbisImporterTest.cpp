@@ -59,7 +59,7 @@ void StbVorbisImporterTest::wrongSignature() {
     Error::setOutput(&out);
 
     StbVorbisImporter importer;
-    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISIMPORTER_TEST_DIR, "wrongSignature.ogg")));
+    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "wrongSignature.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
 }
 
@@ -68,13 +68,13 @@ void StbVorbisImporterTest::unsupportedChannelCount() {
     Error::setOutput(&out);
 
     StbVorbisImporter importer;
-    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
+    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): unsupported channel count 6 with 16 bits per sample\n");
 }
 
 void StbVorbisImporterTest::mono16() {
     StbVorbisImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBVORBISIMPORTER_TEST_DIR, "mono16.ogg")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
 
     CORRADE_COMPARE(importer.format(), Buffer::Format::Mono16);
     CORRADE_COMPARE(importer.frequency(), 96000);
@@ -85,7 +85,7 @@ void StbVorbisImporterTest::mono16() {
 
 void StbVorbisImporterTest::stereo8() {
     StbVorbisImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBVORBISIMPORTER_TEST_DIR, "stereo8.ogg")));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "stereo8.ogg")));
 
     CORRADE_COMPARE(importer.format(), Buffer::Format::Stereo16);
     CORRADE_COMPARE(importer.frequency(), 96000);
