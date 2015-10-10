@@ -48,8 +48,14 @@ Magnum. To use dynamic plugin, you need to load `StbVorbisAudioImporter` plugin
 from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use static plugin or use this as a
 dependency of another plugin, you need to request `StbVorbisAudioImporter`
 component of `MagnumPlugins` package in CMake and link to
-`${MAGNUMPLUGINS_STBVORBISAUDIOIMPORTER_LIBRARIES}`. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
+`${MAGNUMPLUGINS_STBVORBISAUDIOIMPORTER_LIBRARIES}`.
+
+This plugins provides `VorbisAudioImporter`, but note that this plugin doesn't
+have complete support for all format quirks and the performance might be worse
+than when using plugin dedicated for given format.
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class StbVorbisImporter: public AbstractImporter {
     public:
