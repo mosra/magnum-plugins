@@ -36,6 +36,7 @@ build() {
         -DWITH_STANFORDIMPORTER=ON \
         -DWITH_STBIMAGEIMPORTER=ON \
         -DWITH_STBPNGIMAGECONVERTER=ON \
+        -DWITH_STBVORBISAUDIOIMPORTER=ON \
         -G Ninja
     ninja
 }
