@@ -32,8 +32,8 @@ The plugins can be built and installed using these four commands:
     make
     make install
 
-None of the plugins is built by default, see Doxygen documentation for more
-information about particular plugins and their sdependencies.
+None of the plugins are built by default, see Doxygen documentation for more
+information about particular plugins and their dependencies.
 
 Building and running unit tests
 -------------------------------
