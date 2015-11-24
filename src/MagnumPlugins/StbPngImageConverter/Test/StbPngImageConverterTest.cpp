@@ -24,19 +24,13 @@
 */
 
 #include <sstream>
-#include <tuple>
-#include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
-#include <Corrade/Utility/Directory.h>
-#include <Magnum/Image.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 
 #include "MagnumPlugins/StbPngImageConverter/StbPngImageConverter.h"
 #include "MagnumPlugins/StbImageImporter/StbImageImporter.h"
-
-#include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test {
 

@@ -26,7 +26,7 @@
 #include "StbPngImageConverter.h"
 
 #include <Corrade/Containers/Array.h>
-#include <Magnum/Image.h>
+#include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
