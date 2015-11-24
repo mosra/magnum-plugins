@@ -10,6 +10,8 @@ Third-party components
     licensed under [MIT license](https://raw.githubusercontent.com/behdad/harfbuzz/master/COPYING)
 *   The `JpegImporter` plugin uses **libJPEG** library -- http://ijg.org/,
     licensed under BSD license
+*   The `MiniExrImageConverter` plugin uses **miniexr** public domain library --
+    https://github.com/aras-p/miniexr
 *   The `PngImporter` plugin uses **libPNG** library -- http://www.libpng.org/pub/png/libpng.html,
     licensed under [libPNG license](http://libpng.org/pub/png/src/libpng-LICENSE.txt)
 *   The `StbImageImporter` plugin uses **stb_image** public domain library --

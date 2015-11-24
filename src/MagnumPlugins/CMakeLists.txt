@@ -68,6 +68,10 @@ if(WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
 
+if(WITH_MINIEXRIMAGECONVERTER)
+    add_subdirectory(MiniExrImageConverter)
+endif()
+
 if(WITH_OPENGEXIMPORTER)
     add_subdirectory(OpenGexImporter)
 endif()

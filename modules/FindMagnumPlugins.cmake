@@ -14,6 +14,7 @@
 #  FreeTypeFont     - FreeType font
 #  HarfBuzzFont     - HarfBuzz font
 #  JpegImporter     - JPEG importer
+#  MiniExrImageConverter - OpenEXR image converter using miniexr
 #  OpenGexImporter  - OpenGEX importer
 #  PngImporter      - PNG importer
 #  StanfordImporter - Stanford PLY importer
@@ -206,6 +207,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
     endif()
 
+    # MiniExrImageConverter has no dependencies
     # OpenGexImporter has no dependencies
 
     # PngImporter plugin dependencies

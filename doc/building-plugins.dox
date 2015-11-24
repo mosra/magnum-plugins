@@ -70,6 +70,8 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
     Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.
 -   `WITH_JPEGIMPORTER` -- @ref Trade::JpegImporter "JpegImporter" plugin.
+-   `WITH_MINIEXRIMAGECONVERTER` -- @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
+    plugin.
 -   `WITH_OPENGEXIMPORTER` -- @ref Trade::OpenGexImporter "OpenGexImporter"
     plugin.
 -   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
