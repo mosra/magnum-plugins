@@ -42,10 +42,10 @@ type @ref PixelType::HalfFloat. Does *not* support non-default
 
 This plugin is built if `WITH_MINIEXRIMAGECONVERTER` is enabled when building
 Magnum Plugins. To use dynamic plugin, you need to load `MiniExrImageConverter`
-plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to
-request `MiniExrImageConverter` component of `MagnumPlugins` package in CMake
-and link to `${MAGNUMPLUGINS_MINIEXRIMAGECONVERTER_LIBRARIES}`. To use this as
-a dependency of another plugin, you additionally need to add
+plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use static plugin, you need
+to request `MiniExrImageConverter` component of `MagnumPlugins` package in
+CMake and link to `${MAGNUMPLUGINS_MINIEXRIMAGECONVERTER_LIBRARIES}`. To use
+this as a dependency of another plugin, you additionally need to add
 `${MAGNUMPLUGINS_MINIEXRIMAGECONVERTER_INCLUDE_DIRS}` to include path.
 
 This plugins provides `OpenExrImageConverter` plugin, but note that this plugin
