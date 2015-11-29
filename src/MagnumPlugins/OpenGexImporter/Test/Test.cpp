@@ -131,11 +131,11 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::materialTextured,
               &OpenGexImporterTest::materialInvalidColor,
 
-              &OpenGexImporterTest::image,
-              &OpenGexImporterTest::imageInvalid,
-
               &OpenGexImporterTest::texture,
-              &OpenGexImporterTest::textureInvalidCoordinateSet});
+              &OpenGexImporterTest::textureInvalidCoordinateSet,
+
+              &OpenGexImporterTest::image,
+              &OpenGexImporterTest::imageInvalid});
 }
 
 void OpenGexImporterTest::open() {
