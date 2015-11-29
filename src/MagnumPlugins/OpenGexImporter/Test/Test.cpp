@@ -39,8 +39,11 @@
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/CameraData.h>
 
+#include "MagnumPlugins/OpenGexImporter/OpenGex.h"
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Structure.h"
 
 #include "configure.h"
 
@@ -91,6 +94,8 @@ struct OpenGexImporterTest: public TestSuite::Tester {
 
     void image();
     void imageInvalid();
+
+    void extension();
 };
 
 OpenGexImporterTest::OpenGexImporterTest() {
@@ -135,7 +140,9 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::textureInvalidCoordinateSet,
 
               &OpenGexImporterTest::image,
-              &OpenGexImporterTest::imageInvalid});
+              &OpenGexImporterTest::imageInvalid,
+
+              &OpenGexImporterTest::extension});
 }
 
 void OpenGexImporterTest::open() {
@@ -834,6 +841,56 @@ void OpenGexImporterTest::imageInvalid() {
     Error::setOutput(&out);
     CORRADE_VERIFY(!importer.image2D(1));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n");
+}
+
+void OpenGexImporterTest::extension() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "extension.ogex")));
+
+    /* Version info */
+    {
+        CORRADE_VERIFY(importer.importerState());
+        std::optional<OpenDdl::Structure> version = static_cast<const OpenDdl::Document*>(importer.importerState())->findFirstChildOf(OpenGex::Extension);
+        CORRADE_VERIFY(version);
+        CORRADE_VERIFY(version->findPropertyOf(OpenGex::applic));
+        CORRADE_COMPARE(version->propertyOf(OpenGex::applic).as<std::string>(), "Magnum");
+        CORRADE_COMPARE(version->propertyOf(OpenGex::type).as<std::string>(), "Version");
+        CORRADE_VERIFY(version->hasChildren());
+        CORRADE_COMPARE(version->firstChild().type(), OpenDdl::Type::Int);
+        CORRADE_COMPARE(version->firstChild().as<Int>(), 123);
+    }
+
+    /* Camera name */
+    {
+        CORRADE_COMPARE(importer.object3DCount(), 2);
+        std::unique_ptr<ObjectData3D> cameraObject = importer.object3D(1);
+        CORRADE_VERIFY(cameraObject);
+        CORRADE_VERIFY(cameraObject->importerState());
+        std::optional<OpenDdl::Structure> cameraName = static_cast<const OpenDdl::Structure*>(cameraObject->importerState())->findFirstChildOf(OpenGex::Extension);
+        CORRADE_VERIFY(cameraName);
+        CORRADE_VERIFY(cameraName->findPropertyOf(OpenGex::applic));
+        CORRADE_COMPARE(cameraName->propertyOf(OpenGex::applic).as<std::string>(), "Magnum");
+        CORRADE_COMPARE(cameraName->propertyOf(OpenGex::type).as<std::string>(), "CameraName");
+        CORRADE_VERIFY(cameraName->hasChildren());
+        CORRADE_COMPARE(cameraName->firstChild().type(), OpenDdl::Type::String);
+        CORRADE_COMPARE(cameraName->firstChild().as<std::string>(), "My camera");
+    }
+
+    /* Camera aperture */
+    {
+        CORRADE_COMPARE(importer.cameraCount(), 1);
+        std::optional<CameraData> camera = importer.camera(0);
+        CORRADE_VERIFY(camera);
+        CORRADE_VERIFY(camera->importerState());
+        std::optional<OpenDdl::Structure> cameraObject = static_cast<const OpenDdl::Structure*>(camera->importerState())->findFirstChildOf(OpenGex::Extension);
+        CORRADE_VERIFY(cameraObject);
+        CORRADE_VERIFY(cameraObject->findPropertyOf(OpenGex::applic));
+        CORRADE_COMPARE(cameraObject->propertyOf(OpenGex::applic).as<std::string>(), "Magnum");
+        CORRADE_COMPARE(cameraObject->propertyOf(OpenGex::type).as<std::string>(), "CameraAperture");
+        CORRADE_VERIFY(cameraObject->hasChildren());
+        CORRADE_COMPARE(cameraObject->firstChild().type(), OpenDdl::Type::Float);
+        CORRADE_COMPARE(cameraObject->firstChild().as<Float>(), 1.8f);
+    }
 }
 
 }}}

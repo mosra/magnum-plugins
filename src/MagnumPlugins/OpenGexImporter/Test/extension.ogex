@@ -1,0 +1,12 @@
+Extension (applic = "Magnum", type = "Version") { int32 { 123 } }
+
+Node {
+    CameraNode {
+        Extension (applic = "Magnum", type = "CameraName") { string { "My camera" }  }
+        ObjectRef { ref { %myCamera } }
+    }
+}
+
+CameraObject %myCamera {
+    Extension (applic = "Magnum", type = "CameraAperture") { float { 1.8 } }
+}

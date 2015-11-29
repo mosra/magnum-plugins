@@ -229,7 +229,7 @@ UnsignedInt OpenGexImporter::doCameraCount() const {
 }
 
 std::optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
-    const OpenDdl::Structure camera = _d->cameras[id];
+    const OpenDdl::Structure& camera = _d->cameras[id];
 
     Rad fov = Rad{Constants::nan()};
     Float near = Constants::nan();
@@ -250,7 +250,7 @@ std::optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
         }
     }
 
-    return CameraData{fov, near, far};
+    return CameraData{fov, near, far, &camera};
 }
 
 UnsignedInt OpenGexImporter::doObject3DCount() const {
@@ -292,7 +292,7 @@ namespace {
 }
 
 std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) {
-    const OpenDdl::Structure node = _d->nodes[id];
+    const OpenDdl::Structure& node = _d->nodes[id];
 
     /* Compute total transformation */
     Matrix4 transformation;
@@ -418,7 +418,7 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
             if(const auto material = materialRef->firstChildOf(OpenDdl::Type::Reference).asReference())
                 materialId = structureId(_d->materials, *material);
 
-        return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId}};
+        return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
 
     /* Camera object */
     } else if(node.identifier() == OpenGex::CameraNode) {
@@ -430,17 +430,17 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
         }
         const UnsignedInt cameraId = structureId(_d->cameras, *camera);
 
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId}};
+        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId, &node}};
 
     /* Light object */
     } else if(node.identifier() == OpenGex::LightNode) {
         /** @todo actually extract the ID when lights are supported */
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, 0}};
+        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, 0, &node}};
     }
 
     /* Bone or empty object otherwise */
     /** @todo support for bone nodes */
-    return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation}};
+    return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, &node}};
 }
 
 UnsignedInt OpenGexImporter::doMesh3DCount() const {
@@ -500,7 +500,7 @@ template<class T> std::vector<UnsignedInt> extractIndices(const OpenDdl::Structu
 }
 
 std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
-    const OpenDdl::Structure mesh = _d->meshes[id].firstChildOf(OpenGex::Mesh);
+    const OpenDdl::Structure& mesh = _d->meshes[id].firstChildOf(OpenGex::Mesh);
 
     /* Primitive type, triangles by default */
     std::size_t indexArraySubArraySize = 3;
@@ -623,7 +623,7 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
         }
     }
 
-    return MeshData3D{primitive, indices, positions, normals, textureCoordinates};
+    return MeshData3D{primitive, indices, positions, normals, textureCoordinates, &mesh};
 }
 
 UnsignedInt OpenGexImporter::doMaterialCount() const { return _d->materials.size(); }
@@ -656,7 +656,7 @@ template<class Result> Result extractColorData(const OpenDdl::Structure floatArr
 }
 
 std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const UnsignedInt id) {
-    const OpenDdl::Structure material = _d->materials[id];
+    const OpenDdl::Structure& material = _d->materials[id];
 
     /* Textures */
     PhongMaterialData::Flags flags;
@@ -698,7 +698,7 @@ std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsigned
     }
 
     /* Put things together */
-    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess}};
+    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess, &material}};
     data->ambientColor() = Vector3{0.0f};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
@@ -712,7 +712,7 @@ std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsigned
 UnsignedInt OpenGexImporter::doTextureCount() const { return _d->textures.size(); }
 
 std::optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt id) {
-    const OpenDdl::Structure texture = _d->textures[id];
+    const OpenDdl::Structure& texture = _d->textures[id];
 
     if(const auto texcoord = texture.findPropertyOf(OpenGex::texcoord)) if(texcoord->as<Int>() != 0) {
         Error() << "Trade::OpenGexImporter::texture(): unsupported texture coordinate set";
@@ -721,7 +721,7 @@ std::optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt id) {
 
     /** @todo texture coordinate transformations */
 
-    return TextureData{TextureData::Type::Texture2D, Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Mipmap::Linear, Sampler::Wrapping::ClampToEdge, id};
+    return TextureData{TextureData::Type::Texture2D, Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Mipmap::Linear, Sampler::Wrapping::ClampToEdge, id, &texture};
 }
 
 UnsignedInt OpenGexImporter::doImage2DCount() const { return _d->textures.size(); }
@@ -737,6 +737,10 @@ std::optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id) {
         return std::nullopt;
 
     return imageImporter.image2D(0);
+}
+
+const void* OpenGexImporter::doImporterState() const {
+    return &_d->document;
 }
 
 }}

@@ -31,6 +31,8 @@
 
 #include <Magnum/Trade/AbstractImporter.h>
 
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -92,8 +94,26 @@ information.
     magnification is @ref Sampler::Filter::Linear and mipmap selection is
     @ref Sampler::Mipmap::Linear.
 
+### Access to internal importer state
+
 Generic importer for OpenDDL files is implemented in @ref OpenDdl::Document
-class available as part of this plugin.
+class available as part of this plugin and access to it is provided through
+importer-specific data accessors:
+
+-   Calling @ref importerState() returns pointer to parsed @ref OpenDdl::Document
+-   Calling `*::importerState()` on data class instances returned from this
+    importer return pointer to @ref OpenDdl::Structure of these types:
+    -   @ref AbstractMaterialData::importerState() returns @ref OpenGex::Material
+        structure
+    -   @ref CameraData::importerState() returns @ref OpenGex::CameraObject
+        structure
+    -   @ref TextureData::importerState() returns @ref OpenGex::Texture
+        structure
+    -   @ref MeshData3D::importerState() returns @ref OpenGex::GeometryObject
+        structure
+    -   @ref ObjectData3D::importerState() returns @ref OpenGex::Node,
+        @ref OpenGex::BoneNode, @ref OpenGex::GeometryNode,
+        @ref OpenGex::CameraNode or @ref OpenGex::LightNode structure
 */
 class OpenGexImporter: public AbstractImporter {
     public:
@@ -117,6 +137,16 @@ class OpenGexImporter: public AbstractImporter {
         explicit OpenGexImporter(PluginManager::AbstractManager& manager, std::string plugin);
 
         ~OpenGexImporter();
+
+        /**
+         * @brief Importer state
+         *
+         * Provides access to the parsed OpenDDL document. See class
+         * documentation for more information.
+         */
+        const OpenDdl::Document* importerState() const {
+            return static_cast<const OpenDdl::Document*>(AbstractImporter::importerState());
+        }
 
     private:
         struct Document;
@@ -153,6 +183,8 @@ class OpenGexImporter: public AbstractImporter {
 
         UnsignedInt doImage2DCount() const override;
         std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+
+        const void* doImporterState() const override;
 
         std::unique_ptr<Document> _d;
 };
