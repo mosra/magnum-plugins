@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include "MagnumPlugins/OpenGexImporter/OpenGex.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Validation.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -34,48 +35,6 @@ namespace Magnum { namespace Trade { namespace OpenGex {
 
 using namespace OpenDdl;
 using namespace OpenDdl::Validation;
-
-enum: Int {
-    Animation,
-    Atten,
-    BoneCountArray,
-    BoneIndexArray,
-    BoneNode,
-    BoneRefArray,
-    BoneWeightArray,
-    CameraNode,
-    CameraObject,
-    Clip,
-    Color,
-    Extension,
-    GeometryNode,
-    GeometryObject,
-    IndexArray,
-    Key,
-    LightNode,
-    LightObject,
-    Material,
-    MaterialRef,
-    Mesh,
-    Metric,
-    Morph,
-    MorphWeight,
-    Name,
-    Node,
-    ObjectRef,
-    Param,
-    Rotation,
-    Scale,
-    Skeleton,
-    Skin,
-    Texture,
-    Time,
-    Track,
-    Transform,
-    Translation,
-    Value,
-    VertexArray
-};
 
 #define _c(val) #val
 const std::initializer_list<CharacterLiteral> structures{
@@ -120,32 +79,6 @@ const std::initializer_list<CharacterLiteral> structures{
     _c(VertexArray)
 };
 #undef _c
-
-enum: Int {
-    applic,
-    attrib,
-    begin,
-    clip,
-    curve,
-    end,
-    front,
-    index,
-    key,
-    kind,
-    lod,
-    material,
-    morph,
-    motion_blur,
-    object,
-    primitive,
-    restart,
-    shadow,
-    target,
-    texcoord,
-    two_sided,
-    type,
-    visible
-};
 
 #define _c(val) #val
 const std::initializer_list<CharacterLiteral> properties{

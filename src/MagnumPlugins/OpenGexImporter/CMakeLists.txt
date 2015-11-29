@@ -30,7 +30,8 @@ set(OpenGexImporter_SRCS
     OpenDdl/parsers.cpp)
 
 set(OpenGexImporter_HEADERS
-    OpenGexImporter.h)
+    OpenGexImporter.h
+    OpenGex.h)
 
 set(OpenGexImporter_PRIVATE_HEADERS
     openGexSpec.hpp)
