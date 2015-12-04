@@ -23,4 +23,4 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#define MINIEXRIMAGECONVERTER_TEST_DIR "${CMAKE_SOURCE_DIR}/src/MagnumPlugins/MiniExrImageConverter/Test"
+#define MINIEXRIMAGECONVERTER_TEST_DIR "${PROJECT_SOURCE_DIR}/src/MagnumPlugins/MiniExrImageConverter/Test"

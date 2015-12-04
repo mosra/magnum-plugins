@@ -23,4 +23,4 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#define STANFORDIMPORTER_TEST_DIR "${CMAKE_SOURCE_DIR}/src/MagnumPlugins/StanfordImporter/Test"
+#define STANFORDIMPORTER_TEST_DIR "${PROJECT_SOURCE_DIR}/src/MagnumPlugins/StanfordImporter/Test"

@@ -24,7 +24,7 @@
 #
 
 # Include the stb_*.h files as a system directory to supress warnings
-include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/src/external/miniexr)
+include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/src/external/miniexr)
 
 set(MiniExrImageConverter_SRCS
     MiniExrImageConverter.cpp)

@@ -23,5 +23,5 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#define PNGIMPORTER_TEST_DIR "${CMAKE_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test"
-#define JPEGIMPORTER_TEST_DIR "${CMAKE_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test"
+#define PNGIMPORTER_TEST_DIR "${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test"
+#define JPEGIMPORTER_TEST_DIR "${PROJECT_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test"

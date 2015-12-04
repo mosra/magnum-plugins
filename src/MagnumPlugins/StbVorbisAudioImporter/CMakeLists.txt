@@ -27,7 +27,7 @@
 find_package(Magnum REQUIRED Audio)
 
 include_directories(${MAGNUM_AUDIO_INCLUDE_DIRS})
-include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/src/external/stb)
+include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/src/external/stb)
 
 set(StbVorbisAudioImporter_SRCS
     StbVorbisImporter.cpp)
