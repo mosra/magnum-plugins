@@ -31,7 +31,7 @@
 
 namespace Magnum { namespace Trade {
 
-/** @namespace
+/** @namespace Magnum::Trade::OpenGex
 @brief OpenGEX structure and property names
 
 Use these identifiers to access the document tree using the @ref OpenDdl
