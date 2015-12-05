@@ -61,3 +61,6 @@ if(BUILD_TESTS)
     target_link_libraries(MagnumStbVorbisAudioImporterTestLib ${MAGNUM_LIBRARIES} ${MAGNUM_AUDIO_LIBRARIES})
     add_subdirectory(Test)
 endif()
+
+# Magnum StbVorbisAudioImporter library for superprojects
+set(MAGNUMPLUGINS_STBVORBISAUDIOIMPORTER_LIBRARY StbVorbisAudioImporter CACHE INTERNAL "")

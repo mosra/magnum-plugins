@@ -74,3 +74,6 @@ if(BUILD_GL_TESTS)
         MagnumFreeTypeFontTestLib)
     add_subdirectory(Test)
 endif()
+
+# Magnum HarfBuzzFont library for superprojects
+set(MAGNUMPLUGINS_HARFBUZZFONT_LIBRARY HarfBuzzFont CACHE INTERNAL "")

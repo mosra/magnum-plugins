@@ -57,3 +57,6 @@ if(BUILD_TESTS)
     target_link_libraries(MagnumDdsImporterTestLib ${MAGNUM_LIBRARIES})
     add_subdirectory(Test)
 endif()
+
+# Magnum DdsImporter library for superprojects
+set(MAGNUMPLUGINS_DDSIMPORTER_LIBRARY DdsImporter CACHE INTERNAL "")

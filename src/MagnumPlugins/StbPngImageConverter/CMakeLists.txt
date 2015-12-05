@@ -58,3 +58,6 @@ if(BUILD_TESTS)
     target_link_libraries(MagnumStbPngImageConverterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
     add_subdirectory(Test)
 endif()
+
+# Magnum StbPngImageConverter library for superprojects
+set(MAGNUMPLUGINS_STBPNGIMAGECONVERTER_LIBRARY StbPngImageConverter CACHE INTERNAL "")

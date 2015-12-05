@@ -85,3 +85,6 @@ if(BUILD_TESTS)
 endif()
 
 add_subdirectory(OpenDdl)
+
+# Magnum OpenGexImporter library for superprojects
+set(MAGNUMPLUGINS_OPENGEXIMPORTER_LIBRARY OpenGexImporter CACHE INTERNAL "")

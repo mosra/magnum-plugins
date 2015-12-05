@@ -80,3 +80,6 @@ if(BUILD_TESTS)
         MagnumAnyImageImporterTestLib)
     add_subdirectory(Test)
 endif()
+
+# Magnum ColladaImporter library for superprojects
+set(MAGNUMPLUGINS_COLLADAIMPORTER_LIBRARY ColladaImporter CACHE INTERNAL "")

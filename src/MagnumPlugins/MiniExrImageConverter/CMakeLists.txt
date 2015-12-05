@@ -58,3 +58,6 @@ if(BUILD_TESTS)
     target_link_libraries(MagnumMiniExrImageConverterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
     add_subdirectory(Test)
 endif()
+
+# Magnum MiniExrImageConverter library for superprojects
+set(MAGNUMPLUGINS_MINIEXRIMAGECONVERTER_LIBRARY MiniExrImageConverter CACHE INTERNAL "")

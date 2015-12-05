@@ -87,3 +87,6 @@ endif()
 if(BUILD_GL_TESTS)
     add_subdirectory(Test)
 endif()
+
+# Magnum FreeTypeFont library for superprojects
+set(MAGNUMPLUGINS_FREETYPEFONT_LIBRARY FreeTypeFont CACHE INTERNAL "")

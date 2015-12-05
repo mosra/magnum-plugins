@@ -55,3 +55,6 @@ if(BUILD_TESTS)
     target_link_libraries(MagnumStanfordImporterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
     add_subdirectory(Test)
 endif()
+
+# Magnum StanfordImporter library for superprojects
+set(MAGNUMPLUGINS_STANFORDIMPORTER_LIBRARY StanfordImporter CACHE INTERNAL "")

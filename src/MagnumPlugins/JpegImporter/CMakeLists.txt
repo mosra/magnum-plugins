@@ -61,3 +61,6 @@ if(BUILD_TESTS)
     target_link_libraries(MagnumJpegImporterTestLib ${MAGNUM_LIBRARIES} ${JPEG_LIBRARIES})
     add_subdirectory(Test)
 endif()
+
+# Magnum JpegImporter library for superprojects
+set(MAGNUMPLUGINS_JPEGIMPORTER_LIBRARY JpegImporter CACHE INTERNAL "")
