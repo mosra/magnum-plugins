@@ -4,6 +4,8 @@
 #  find_package(MagnumPlugins [REQUIRED])
 # This command tries to find Magnum plugins and then defines:
 #  MAGNUMPLUGINS_FOUND          - Whether Magnum plugins were found
+#  MAGNUMPLUGINS_INCLUDE_DIRS   - Magnum plugins include dir and include dirs
+#   of global dependencies
 # This command will not try to find any actual plugin. The plugins are:
 #  AnyAudioImporter - Any audio importer
 #  AnyImageConverter - Any image converter
@@ -37,6 +39,7 @@
 # MAGNUM_PLUGINS_DIR.
 #
 # Additionally these variables are defined for internal usage:
+#  MAGNUMPLUGINS_INCLUDE_DIR    - Magnum plugins include dir (w/o dependencies)
 #  MAGNUMPLUGINS_*_LIBRARY      - Plugin library (w/o dependencies)
 #  MAGNUMPLUGINS_*_LIBRARY_DEBUG - Debug version of given library, if found
 #  MAGNUMPLUGINS_*_LIBRARY_RELEASE - Release version of given library, if found
@@ -107,6 +110,12 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
 endforeach()
 find_package(Magnum REQUIRED ${_MAGNUMPLUGINS_DEPENDENCIES})
 
+find_path(MAGNUMPLUGINS_INCLUDE_DIR MagnumPlugins
+    HINTS ${MAGNUM_INCLUDE_DIR})
+
+# Global plugin include dir
+set(MAGNUMPLUGINS_INCLUDE_DIRS ${MAGNUMPLUGINS_INCLUDE_DIR})
+
 # Additional components
 foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${component} _COMPONENT)
@@ -154,8 +163,8 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
 
     # Find include path
     find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
-            NAMES ${component}.h
-            PATHS ${MAGNUM_INCLUDE_DIR}/MagnumPlugins/${component})
+        NAMES ${component}.h
+        HINTS ${MAGNUMPLUGINS_INCLUDE_DIR}/MagnumPlugins/${component})
 
     # AnyImageImporter has no dependencies
     # AnySceneImporter has no dependencies
@@ -271,10 +280,9 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     endif()
 endforeach()
 
-# We need to feed FPHSA with at least one variable in REQUIRED_VARS (its value
-# is then displayed in the "Found" message)
 include(FindPackageHandleStandardArgs)
-set(_MAGNUMPLUGINS_INCLUDE_DIR ${MAGNUM_INCLUDE_DIR}/MagnumPlugins)
 find_package_handle_standard_args(MagnumPlugins
-    REQUIRED_VARS _MAGNUMPLUGINS_INCLUDE_DIR
+    REQUIRED_VARS MAGNUMPLUGINS_INCLUDE_DIR
     HANDLE_COMPONENTS)
+
+mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
