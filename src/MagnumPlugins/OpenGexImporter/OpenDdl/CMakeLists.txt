@@ -39,7 +39,7 @@ add_custom_target(OpenGexImporterOpenDdl SOURCES
     ${OpenGexImporterOpenDdl_HEADERS}
     ${OpenGexImporterOpenDdl_PRIVATE_HEADERS})
 
-install(FILES ${OpenGexImporterOpenDdl_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImprter/OpenDdl)
+install(FILES ${OpenGexImporterOpenDdl_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter/OpenDdl)
 
 if(BUILD_TESTS)
     add_subdirectory(Test)
