@@ -114,7 +114,7 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
             #ifndef MAGNUM_TARGET_GLES2
             format = PixelFormat::Red;
             #else
-            format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
+            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
                 PixelFormat::Red : PixelFormat::Luminance;
             #endif
             CORRADE_INTERNAL_ASSERT(channels == 1);

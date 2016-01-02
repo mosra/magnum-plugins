@@ -107,7 +107,7 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
         case JCS_GRAYSCALE:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 1);
             #ifdef MAGNUM_TARGET_GLES2
-            format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
+            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
                 PixelFormat::Red : PixelFormat::Luminance;
             #else
             format = PixelFormat::Red;

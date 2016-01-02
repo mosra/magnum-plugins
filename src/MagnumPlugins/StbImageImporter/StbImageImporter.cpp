@@ -82,7 +82,7 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
             #ifndef MAGNUM_TARGET_GLES2
             format = PixelFormat::Red;
             #elif !defined(MAGNUM_TARGET_WEBGL)
-            format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
+            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
                 PixelFormat::Red : PixelFormat::Luminance;
             #else
             format = PixelFormat::Luminance;
@@ -92,7 +92,7 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
             #ifndef MAGNUM_TARGET_GLES2
             format = PixelFormat::RG;
             #elif !defined(MAGNUM_TARGET_WEBGL)
-            format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
+            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
                 PixelFormat::RG : PixelFormat::LuminanceAlpha;
             #else
             format = PixelFormat::LuminanceAlpha;
