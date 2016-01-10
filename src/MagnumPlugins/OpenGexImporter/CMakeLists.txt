@@ -74,16 +74,18 @@ install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_IN
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 
 if(BUILD_TESTS)
-    # On Win32 we need to avoid dllimporting TgaImporter symbols, because it
-    # would search for the symbols in some DLL even when they were linked
+    # On Win32 we need to avoid dllimporting AnyImageImporter symbols, because
+    # it would search for the symbols in some DLL even when they were linked
     # statically. However it apparently doesn't matter that they were
-    # dllexported when building the static library. EH.
+    # dllexported when building the static library. EH. And because the
+    # -DOpenGexImporterObjects_EXPORTS is no longer set in this case, we need
+    # to avoid dllimporting OpenGexImporter symbols as well.
     if(WIN32)
         add_library(MagnumOpenGexImporterTestLib STATIC
             ${OpenGexImporter_SRCS}
             ${OpenGexImporter_HEADERS}
             ${OpenGexImporter_PRIVATE_HEADERS})
-        set_target_properties(MagnumOpenGexImporterTestLib PROPERTIES COMPILE_FLAGS "-DMAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC")
+        set_target_properties(MagnumOpenGexImporterTestLib PROPERTIES COMPILE_FLAGS "-DMAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC -DMAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
     else()
         add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
     endif()
