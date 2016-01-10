@@ -24,7 +24,7 @@
 #
 
 if(BUILD_STATIC)
-    set(MAGNUM_FREETYPEFONT_BUILD_STATIC 1)
+    set(MAGNUM_OPENGEXIMPORTER_BUILD_STATIC 1)
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
