@@ -51,7 +51,7 @@ See @ref Document for more information.
 
 @see @ref Structure::properties()
 */
-class Property {
+class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Property {
     friend Structure;
     friend Implementation::PropertyIterator;
 

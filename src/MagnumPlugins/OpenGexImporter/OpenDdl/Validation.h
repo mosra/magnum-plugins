@@ -31,6 +31,7 @@
 
 #include <Corrade/Containers/Array.h>
 
+#include "MagnumPlugins/OpenGexImporter/visibility.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
 
 namespace Magnum { namespace OpenDdl {
@@ -149,7 +150,7 @@ Example usage (excerpt from OpenGEX specification of `Texture` structure):
                {Animation, {}}}}
 @endcode
 */
-class Structure {
+class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
     public:
         /**
          * @brief Constructor

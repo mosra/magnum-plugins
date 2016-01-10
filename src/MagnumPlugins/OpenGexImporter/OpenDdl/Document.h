@@ -34,6 +34,7 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <MagnumExternal/Optional/optional.hpp>
 
+#include "MagnumPlugins/OpenGexImporter/visibility.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
 
@@ -268,7 +269,7 @@ Containers::ArrayView<const Float> data = vertexArray.firstChild().asArray<Float
     Additionally, due to JavaScript limitations, on WebGL the `unsigned_int64`
     and `int64` types are not recognized.
 */
-class Document {
+class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
     friend Property;
     friend Structure;
     template<Type> friend struct Implementation::ExtractDataListItem;
@@ -421,17 +422,17 @@ class Document {
         struct PropertyData;
         struct StructureData;
 
-        const char* parseProperty(Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Int position, Implementation::ParseError& error);
-        std::pair<const char*, std::size_t> parseStructure(std::size_t parent, Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error);
-        const char* parseStructureList(std::size_t parent, Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error);
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL const char* parseProperty(Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Int position, Implementation::ParseError& error);
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::pair<const char*, std::size_t> parseStructure(std::size_t parent, Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error);
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL const char* parseStructureList(std::size_t parent, Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error);
 
-        std::size_t dereference(std::size_t originatingStructure, Containers::ArrayView<const char> reference) const;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::size_t dereference(std::size_t originatingStructure, Containers::ArrayView<const char> reference) const;
 
-        bool validateLevel(std::optional<Structure> first, Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
-        bool validateStructure(Structure structure, const Validation::Structure& validation, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool validateLevel(std::optional<Structure> first, Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool validateStructure(Structure structure, const Validation::Structure& validation, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
 
-        const char* structureName(Int identifier) const;
-        const char* propertyName(Int identifier) const;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL const char* structureName(Int identifier) const;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL const char* propertyName(Int identifier) const;
 
         template<class T> std::vector<T>& data();
         template<class T> const std::vector<T>& data() const;
@@ -514,7 +515,7 @@ _c(Type, Type)
 #endif
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-struct Document::PropertyData {
+struct MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Document::PropertyData {
     constexpr explicit PropertyData(Int identifier, Implementation::InternalPropertyType type, std::size_t position) noexcept: identifier{identifier}, type{type}, position{position} {}
 
     Int identifier;
@@ -522,7 +523,7 @@ struct Document::PropertyData {
     std::size_t position;
 };
 
-struct Document::StructureData {
+struct MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Document::StructureData {
     /* Needed for "placeholder" object in parseStructure() which is later
        replaced with real one */
     explicit StructureData() noexcept: name{}, custom{UnknownIdentifier, 0, 0, 0}, parent{0}, next{0} {}

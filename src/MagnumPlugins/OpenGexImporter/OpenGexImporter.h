@@ -31,6 +31,7 @@
 
 #include <Magnum/Trade/AbstractImporter.h>
 
+#include "MagnumPlugins/OpenGexImporter/visibility.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
 
 namespace Magnum { namespace Trade {
@@ -115,7 +116,7 @@ importer-specific data accessors:
         @ref OpenGex::BoneNode, @ref OpenGex::GeometryNode,
         @ref OpenGex::CameraNode or @ref OpenGex::LightNode structure
 */
-class OpenGexImporter: public AbstractImporter {
+class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
     public:
         /**
          * @brief Default constructor
@@ -151,40 +152,40 @@ class OpenGexImporter: public AbstractImporter {
     private:
         struct Document;
 
-        Features doFeatures() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Features doFeatures() const override;
 
-        bool doIsOpened() const override;
-        void doOpenData(Containers::ArrayView<const char> data) override;
-        void doOpenFile(const std::string& filename) override;
-        void doClose() override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL void doClose() override;
 
-        Int doDefaultScene() override;
-        UnsignedInt doSceneCount() const override;
-        std::optional<SceneData> doScene(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Int doDefaultScene() override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::optional<SceneData> doScene(UnsignedInt id) override;
 
-        UnsignedInt doCameraCount() const override;
-        std::optional<CameraData> doCamera(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::optional<CameraData> doCamera(UnsignedInt id) override;
 
-        UnsignedInt doObject3DCount() const override;
-        Int doObject3DForName(const std::string& name) override;
-        std::string doObject3DName(UnsignedInt id) override;
-        std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
 
-        UnsignedInt doMesh3DCount() const override;
-        std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
-        UnsignedInt doMaterialCount() const override;
-        Int doMaterialForName(const std::string& name) override;
-        std::string doMaterialName(UnsignedInt id) override;
-        std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
 
-        UnsignedInt doTextureCount() const override;
-        std::optional<TextureData> doTexture(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::optional<TextureData> doTexture(UnsignedInt id) override;
 
-        UnsignedInt doImage2DCount() const override;
-        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
-        const void* doImporterState() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL const void* doImporterState() const override;
 
         std::unique_ptr<Document> _d;
 };

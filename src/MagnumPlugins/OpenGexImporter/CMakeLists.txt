@@ -23,6 +23,13 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(BUILD_STATIC)
+    set(MAGNUM_FREETYPEFONT_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(OpenGexImporter_SRCS
     OpenGexImporter.cpp
 
@@ -31,7 +38,8 @@ set(OpenGexImporter_SRCS
 
 set(OpenGexImporter_HEADERS
     OpenGexImporter.h
-    OpenGex.h)
+    OpenGex.h
+    visibility.h)
 
 set(OpenGexImporter_PRIVATE_HEADERS
     openGexSpec.hpp)
@@ -41,6 +49,7 @@ add_library(OpenGexImporterObjects OBJECT
     ${OpenGexImporter_SRCS}
     ${OpenGexImporter_HEADERS}
     ${OpenGexImporter_PRIVATE_HEADERS})
+set_target_properties(OpenGexImporterObjects PROPERTIES COMPILE_FLAGS "-DOpenGexImporterObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -62,6 +71,7 @@ if(CORRADE_TARGET_WINDOWS)
 endif()
 
 install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 
 if(BUILD_TESTS)
     # On Win32 we need to avoid dllimporting TgaImporter symbols, because it

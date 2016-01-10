@@ -55,7 +55,7 @@ See @ref Document for more information.
     for whole instance lifetime. On the other hand you can copy the instance
     however you like without worrying about performance.
 */
-class Structure {
+class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
     friend Document;
     friend Property;
     friend Implementation::StructureIterator;
