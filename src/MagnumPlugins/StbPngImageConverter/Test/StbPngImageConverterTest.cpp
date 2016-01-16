@@ -74,7 +74,7 @@ void StbPngImageConverterTest::wrongFormat() {
     ImageView2D image{PixelFormat::DepthComponent, PixelType::UnsignedByte, {}, nullptr};
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     const auto data = StbPngImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
@@ -85,7 +85,7 @@ void StbPngImageConverterTest::wrongType() {
     ImageView2D image{PixelFormat::Red, PixelType::Float, {}, nullptr};
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     const auto data = StbPngImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);

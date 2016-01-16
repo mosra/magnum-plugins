@@ -56,7 +56,7 @@ StbVorbisImporterTest::StbVorbisImporterTest() {
 
 void StbVorbisImporterTest::wrongSignature() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     StbVorbisImporter importer;
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "wrongSignature.ogg")));
@@ -65,7 +65,7 @@ void StbVorbisImporterTest::wrongSignature() {
 
 void StbVorbisImporterTest::unsupportedChannelCount() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     StbVorbisImporter importer;
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));

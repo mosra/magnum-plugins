@@ -77,7 +77,7 @@ ColladaImporterTest::ColladaImporterTest() {
 void ColladaImporterTest::openWrongNamespace() {
     ColladaImporter importer;
     std::stringstream debug;
-    Error::setOutput(&debug);
+    Error redirectError{&debug};
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongNamespace.dae")));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): unsupported namespace \"http://www.collada.org/2006/11/COLLADASchema\"\n");
 }
@@ -85,7 +85,7 @@ void ColladaImporterTest::openWrongNamespace() {
 void ColladaImporterTest::openWrongVersion() {
     ColladaImporter importer;
     std::stringstream debug;
-    Error::setOutput(&debug);
+    Error redirectError{&debug};
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongVersion.dae")));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): unsupported version \"1.4.0\"\n");
 }
@@ -95,7 +95,7 @@ void ColladaImporterTest::parseSource() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "parseSource.dae")));
 
     std::stringstream debug;
-    Error::setOutput(&debug);
+    Error redirectError{&debug};
     CORRADE_VERIFY(importer.parseSource<Vector3>("WrongTotalCount").empty());
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::mesh3D(): wrong total count in source \"WrongTotalCount\"\n");
 
@@ -159,7 +159,7 @@ void ColladaImporterTest::scene() {
     CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object.get())->material(), 1);
 
     std::ostringstream debug;
-    Error::setOutput(&debug);
+    Error redirectError{&debug};
     CORRADE_VERIFY(!importer.object3D(3));
     CORRADE_VERIFY(!importer.object3D(4));
     CORRADE_VERIFY(!importer.object3D(5));
@@ -184,7 +184,7 @@ void ColladaImporterTest::objectMultipleMaterials() {
     CORRADE_COMPARE(importer.object3DCount(), 1);
 
     std::ostringstream debug;
-    Error::setOutput(&debug);
+    Error redirectError{&debug};
     CORRADE_VERIFY(!importer.object3D(0));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::object3D(): multiple materials per object are not supported\n");
 }
@@ -196,7 +196,7 @@ void ColladaImporterTest::mesh() {
     CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
     std::stringstream debug;
-    Error::setOutput(&debug);
+    Error redirectError{&debug};
     CORRADE_COMPARE(importer.mesh3DForName("WrongPrimitives"), 0);
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::mesh3D(): 5 vertices per face not supported\n");
@@ -316,7 +316,7 @@ void ColladaImporterTest::material() {
     CORRADE_COMPARE(importer.materialCount(), 5);
 
     std::stringstream debug;
-    Error::setOutput(&debug);
+    Error redirectError{&debug};
     CORRADE_COMPARE(importer.materialName(0), "MaterialWrongProfile");
     CORRADE_COMPARE(importer.materialForName("MaterialWrongProfile"), 0);
     CORRADE_VERIFY(!importer.material(0));
@@ -377,7 +377,7 @@ void ColladaImporterTest::texture() {
 
     /* Unsupported sampler type */
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_COMPARE(importer.textureName(0), "UnsupportedSampler");
     CORRADE_COMPARE(importer.textureForName("UnsupportedSampler"), 0);
     CORRADE_VERIFY(!importer.texture(0));
@@ -433,7 +433,7 @@ void ColladaImporterTest::image() {
     CORRADE_COMPARE(importer.image2DCount(), 2);
 
     std::stringstream debug;
-    Error::setOutput(&debug);
+    Error redirectError{&debug};
     CORRADE_COMPARE(importer.image2DName(0), "UnsupportedImage");
     CORRADE_COMPARE(importer.image2DForName("UnsupportedImage"), 0);
     CORRADE_VERIFY(!importer.image2D(0));

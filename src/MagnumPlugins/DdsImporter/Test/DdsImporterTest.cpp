@@ -73,7 +73,7 @@ DdsImporterTest::DdsImporterTest() {
 
 void DdsImporterTest::wrongSignature() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     DdsImporter importer;
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "wrong_signature.dds")));
@@ -82,7 +82,7 @@ void DdsImporterTest::wrongSignature() {
 
 void DdsImporterTest::unknownFormat() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     DdsImporter importer;
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "unknown_format.dds")));
@@ -91,7 +91,7 @@ void DdsImporterTest::unknownFormat() {
 
 void DdsImporterTest::unknownCompression() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     DdsImporter importer;
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "unknown_compression.dds")));

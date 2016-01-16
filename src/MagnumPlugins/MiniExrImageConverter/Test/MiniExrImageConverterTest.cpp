@@ -81,7 +81,7 @@ void MiniExrImageConverterTest::wrongFormat() {
     ImageView2D image{PixelFormat::Red, PixelType::HalfFloat, {}, nullptr};
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     const auto data = MiniExrImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
@@ -92,7 +92,7 @@ void MiniExrImageConverterTest::wrongType() {
     ImageView2D image{PixelFormat::RGB, PixelType::Float, {}, nullptr};
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     const auto data = MiniExrImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);

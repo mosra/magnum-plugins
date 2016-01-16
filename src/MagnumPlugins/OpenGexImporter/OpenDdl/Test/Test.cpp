@@ -206,7 +206,7 @@ void Test::primitiveName() {
 
 void Test::primitiveExpectedListStart() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"float 35"}, {}, {}));
@@ -215,7 +215,7 @@ void Test::primitiveExpectedListStart() {
 
 void Test::primitiveExpectedListEnd() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"float { 35"}, {}, {}));
@@ -224,7 +224,7 @@ void Test::primitiveExpectedListEnd() {
 
 void Test::primitiveExpectedSeparator() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"float { 35 45"}, {}, {}));
@@ -269,7 +269,7 @@ void Test::primitiveSubArrayName() {
 
 void Test::primitiveSubArrayInvalidSize() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[0] {}"}, {}, {}));
@@ -278,7 +278,7 @@ void Test::primitiveSubArrayInvalidSize() {
 
 void Test::primitiveSubArrayExpectedArraySizeEnd() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[2 {"}, {}, {}));
@@ -287,7 +287,7 @@ void Test::primitiveSubArrayExpectedArraySizeEnd() {
 
 void Test::primitiveSubArrayExpectedSubSeparator() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[2] { {0xca, 0xfe} {0xba"}, {}, {}));
@@ -296,7 +296,7 @@ void Test::primitiveSubArrayExpectedSubSeparator() {
 
 void Test::primitiveSubArrayExpectedSubListEnd() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"int32[2] { {0xca, 0xfe, 0xba"}, {}, {}));
@@ -305,7 +305,7 @@ void Test::primitiveSubArrayExpectedSubListEnd() {
 
 void Test::primitiveSubArrayExpectedSeparator() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     #ifndef MAGNUM_TARGET_GLES
@@ -394,7 +394,7 @@ void Test::customName() {
 
 void Test::customInvalidIdentifier() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"%name { string"}, {}, {}));
@@ -403,7 +403,7 @@ void Test::customInvalidIdentifier() {
 
 void Test::customExpectedListStart() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root string"}, {}, {}));
@@ -412,7 +412,7 @@ void Test::customExpectedListStart() {
 
 void Test::customExpectedListEnd() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root { "}, {}, {}));
@@ -471,7 +471,7 @@ void Test::customPropertyUnknown() {
 
 void Test::customPropertyExpectedSeparator() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (some = 15.3 boolean"}, structureIdentifiers, propertyIdentifiers));
@@ -480,7 +480,7 @@ void Test::customPropertyExpectedSeparator() {
 
 void Test::customPropertyExpectedValueAssignment() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (some 15.3"}, structureIdentifiers, propertyIdentifiers));
@@ -489,7 +489,7 @@ void Test::customPropertyExpectedValueAssignment() {
 
 void Test::customPropertyExpectedListEnd() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (some = 15.3 "}, structureIdentifiers, propertyIdentifiers));
@@ -498,7 +498,7 @@ void Test::customPropertyExpectedListEnd() {
 
 void Test::customPropertyInvalidIdentifier() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (%some = 15.3"}, structureIdentifiers, propertyIdentifiers));
@@ -507,7 +507,7 @@ void Test::customPropertyInvalidIdentifier() {
 
 void Test::customPropertyInvalidValue() {
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (some = Fail"}, structureIdentifiers, propertyIdentifiers));
@@ -796,7 +796,7 @@ string { "hello" }
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate({}, {}));
     CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected primitive structure in root\n");
 }
@@ -816,7 +816,7 @@ Root {
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
@@ -841,7 +841,7 @@ Root {
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
@@ -865,7 +865,7 @@ Root {
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
@@ -885,7 +885,7 @@ Root { int32 {} }
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
@@ -906,7 +906,7 @@ Hierarchic {  }
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 2}}},
         {
@@ -929,7 +929,7 @@ Root { }
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 2}}},
         {
@@ -949,7 +949,7 @@ Root { }
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {2, 3}}},
         {
@@ -991,7 +991,7 @@ Root () {}
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
@@ -1014,7 +1014,7 @@ Root (some = 15.0, boolean = true) {}
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
@@ -1035,7 +1035,7 @@ Root (some = false) {}
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
@@ -1210,7 +1210,7 @@ bool %local4 {}
 void Test::referenceInvalid() {
     Document d;
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
 
     /* Single name not found */
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */

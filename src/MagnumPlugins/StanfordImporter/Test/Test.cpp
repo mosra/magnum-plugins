@@ -101,7 +101,7 @@ void StanfordImporterTest::invalidSignature() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-signature.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid file signature bla\n");
@@ -111,7 +111,7 @@ void StanfordImporterTest::invalidFormat() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-format.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid format line format binary_big_endian 1.0 extradata\n");
@@ -121,7 +121,7 @@ void StanfordImporterTest::unsupportedFormat() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unsupported-format.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unsupported file format ascii 1.0\n");
@@ -131,7 +131,7 @@ void StanfordImporterTest::missingFormat() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "missing-format.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): missing format line\n");
@@ -141,7 +141,7 @@ void StanfordImporterTest::unknownLine() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-line.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown line heh\n");
@@ -151,7 +151,7 @@ void StanfordImporterTest::unknownElement() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-element.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown element edge\n");
@@ -161,7 +161,7 @@ void StanfordImporterTest::unexpectedProperty() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unexpected-property.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unexpected property line\n");
@@ -171,7 +171,7 @@ void StanfordImporterTest::invalidVertexProperty() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-vertex-property.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid vertex property line property float x extradata\n");
@@ -181,7 +181,7 @@ void StanfordImporterTest::invalidVertexType() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-vertex-type.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid vertex component type float16\n");
@@ -191,7 +191,7 @@ void StanfordImporterTest::unknownFaceProperty() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-face-property.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown face property line property float x\n");
@@ -201,7 +201,7 @@ void StanfordImporterTest::invalidFaceSizeType() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size-type.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face size type int128\n");
@@ -211,7 +211,7 @@ void StanfordImporterTest::invalidFaceIndexType() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-index-type.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face index type int128\n");
@@ -221,7 +221,7 @@ void StanfordImporterTest::incompleteVertex() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "incomplete-vertex.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): incomplete vertex specification\n");
@@ -231,7 +231,7 @@ void StanfordImporterTest::incompleteFace() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "incomplete-face.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): incomplete face specification\n");
@@ -241,7 +241,7 @@ void StanfordImporterTest::invalidFaceSize() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unsupported face size 5\n");
@@ -251,7 +251,7 @@ void StanfordImporterTest::shortFile() {
     StanfordImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "short-file.ply")));
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): file is too short\n");

@@ -162,7 +162,7 @@ void OpenGexImporterTest::openParseError() {
     OpenGexImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 <collada>THIS IS COLLADA XML</collada>
@@ -175,7 +175,7 @@ void OpenGexImporterTest::openValidationError() {
     OpenGexImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { int32 { 1 } }
@@ -188,7 +188,7 @@ void OpenGexImporterTest::openInvalidMetric() {
     OpenGexImporter importer;
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { string { "0.5" } }
@@ -221,7 +221,7 @@ void OpenGexImporterTest::camera() {
     }
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.camera(2));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::camera(): invalid parameter\n");
 }
@@ -290,7 +290,7 @@ void OpenGexImporterTest::objectCamera() {
     }
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.object3D(1));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::object3D(): null camera reference\n");
 }
@@ -325,7 +325,7 @@ void OpenGexImporterTest::objectMesh() {
     }
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.object3D(3));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::object3D(): null geometry reference\n");
 }
@@ -347,7 +347,7 @@ void OpenGexImporterTest::objectTransformation() {
     }
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.object3D(1));
     CORRADE_VERIFY(!importer.object3D(2));
     CORRADE_COMPARE(out.str(),
@@ -393,7 +393,7 @@ void OpenGexImporterTest::objectTranslation() {
 
     /* Invalid kind, invalid array size, object-only transformation */
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.object3D(5));
     CORRADE_VERIFY(!importer.object3D(6));
     CORRADE_VERIFY(!importer.object3D(7));
@@ -447,7 +447,7 @@ void OpenGexImporterTest::objectRotation() {
 
     /* Invalid kind, invalid array size, object-only transformation */
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.object3D(6));
     CORRADE_VERIFY(!importer.object3D(7));
     CORRADE_VERIFY(!importer.object3D(8));
@@ -495,7 +495,7 @@ void OpenGexImporterTest::objectScaling() {
 
     /* Invalid kind, invalid array size, object-only transformation */
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.object3D(5));
     CORRADE_VERIFY(!importer.object3D(6));
     CORRADE_VERIFY(!importer.object3D(7));
@@ -651,7 +651,7 @@ void OpenGexImporterTest::meshInvalidPrimitive() {
     CORRADE_COMPARE(importer.mesh3DCount(), 6);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): unsupported primitive quads\n");
 }
@@ -662,7 +662,7 @@ void OpenGexImporterTest::meshUnsupportedSize() {
     CORRADE_COMPARE(importer.mesh3DCount(), 6);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.mesh3D(1));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): unsupported vertex array vector size 5\n");
 }
@@ -673,7 +673,7 @@ void OpenGexImporterTest::meshNoPositions() {
     CORRADE_COMPARE(importer.mesh3DCount(), 6);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.mesh3D(2));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): no vertex position array found\n");
 }
@@ -684,7 +684,7 @@ void OpenGexImporterTest::meshMismatchedSizes() {
     CORRADE_COMPARE(importer.mesh3DCount(), 6);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.mesh3D(3));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): mismatched vertex array sizes\n");
 }
@@ -695,7 +695,7 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
     CORRADE_COMPARE(importer.mesh3DCount(), 6);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.mesh3D(4));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): invalid index array subarray size 3 for MeshPrimitive::Lines\n");
 }
@@ -707,7 +707,7 @@ void OpenGexImporterTest::meshUnsupportedIndexType() {
     CORRADE_COMPARE(importer.mesh3DCount(), 6);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.mesh3D(5));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices\n");
 }
@@ -781,7 +781,7 @@ void OpenGexImporterTest::materialInvalidColor() {
     CORRADE_COMPARE(importer.materialCount(), 1);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.material(0));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::material(): invalid color structure\n");
 }
@@ -806,7 +806,7 @@ void OpenGexImporterTest::textureInvalidCoordinateSet() {
     CORRADE_COMPARE(importer.textureCount(), 2);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.texture(0));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::texture(): unsupported texture coordinate set\n");
 }
@@ -838,7 +838,7 @@ void OpenGexImporterTest::imageInvalid() {
     CORRADE_COMPARE(importer.image2DCount(), 2);
 
     std::ostringstream out;
-    Error::setOutput(&out);
+    Error redirectError{&out};
     CORRADE_VERIFY(!importer.image2D(1));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n");
 }
