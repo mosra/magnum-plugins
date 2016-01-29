@@ -120,15 +120,31 @@ set(MAGNUMPLUGINS_INCLUDE_DIRS ${MAGNUMPLUGINS_INCLUDE_DIR})
 foreach(component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${component} _COMPONENT)
 
-    # Plugin library suffix
+    # Header files to use for finding the include path later
+    set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES ${component}.h)
+
+    # AudioImporter plugin specific name suffixes
     if(${component} MATCHES ".+AudioImporter$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX audioimporters)
+
+        # Audio importer class is Audio::*Importer, thus we need to convert
+        # *AudioImporter.h to *Importer.h
+        string(REPLACE "AudioImporter" "Importer" _MAGNUMPLUGINS_${_COMPONENT}_HEADER_NAME "${component}")
+        set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES ${_MAGNUMPLUGINS_${_COMPONENT}_HEADER_NAME}.h)
+
+    # Importer plugin specific name suffixes
     elseif(${component} MATCHES ".+Importer$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX importers)
+
+    # Font plugin specific name suffixes
     elseif(${component} MATCHES ".+Font$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX fonts)
+
+    # ImageConverter plugin specific name suffixes
     elseif(${component} MATCHES ".+ImageConverter$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX imageconverters)
+
+    # FontConverter plugin specific name suffixes
     elseif(${component} MATCHES ".+FontConverter$")
         set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX fontconverters)
     endif()
@@ -163,7 +179,7 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
 
     # Find include path
     find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
-        NAMES ${component}.h
+        NAMES ${_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES}
         HINTS ${MAGNUMPLUGINS_INCLUDE_DIR}/MagnumPlugins/${component})
 
     # AnyImageImporter has no dependencies
