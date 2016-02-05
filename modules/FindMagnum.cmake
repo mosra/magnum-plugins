@@ -128,7 +128,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -402,8 +402,8 @@ foreach(component ${Magnum_FIND_COMPONENTS})
         elseif(${component} STREQUAL Sdl2Application)
             find_package(SDL2)
             if(SDL2_FOUND)
-                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${SDL2_LIBRARY})
-                set(_MAGNUM_${_COMPONENT}_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
+                set(_MAGNUM_${_COMPONENT}_LIBRARIES ${SDL2_LIBRARIES})
+                set(_MAGNUM_${_COMPONENT}_INCLUDE_DIRS ${SDL2_INCLUDE_DIRS})
             else()
                 unset(MAGNUM_${_COMPONENT}_LIBRARY)
             endif()

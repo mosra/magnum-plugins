@@ -10,7 +10,7 @@
 #
 #   This file is part of Magnum.
 #
-#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015
+#   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016
 #             Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
@@ -37,14 +37,24 @@
 if(NOT CORRADE_TARGET_EMSCRIPTEN)
     find_library(OPENGLES2_LIBRARY NAMES
         GLESv2
-        libGLESv2 # ANGLE (CMake doesn't search for lib prefix on Windows)
-        ppapi_gles2) # NaCl
+
+        # ANGLE (CMake doesn't search for lib prefix on Windows)
+        libGLESv2
+
+        # iOS
+        OpenGLES
+
+        # NaCl
+        ppapi_gles2)
     set(OPENGLES2_LIBRARY_NEEDED OPENGLES2_LIBRARY)
 endif()
 
 # Include dir
-find_path(OPENGLES2_INCLUDE_DIR
-    NAMES GLES2/gl2.h)
+find_path(OPENGLES2_INCLUDE_DIR NAMES
+    GLES2/gl2.h
+
+    # iOS
+    ES2/gl.h)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args("OpenGLES2" DEFAULT_MSG
