@@ -59,6 +59,6 @@ check() {
 }
 
 package() {
-  cd "$_rootdir/build-gcc47"
-  DESTDIR="$pkgdir/" ninja install
+    cd "$_rootdir/build-gcc47"
+    DESTDIR="$pkgdir/" ninja install
 }
