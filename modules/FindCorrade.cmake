@@ -4,7 +4,7 @@
 #
 # Finds the Corrade library. Basic usage::
 #
-#  find_package(Corrade [REQUIRED])
+#  find_package(Corrade REQUIRED)
 #
 # This module tries to find the base Corrade library and then defines the
 # following:
@@ -23,12 +23,11 @@
 #
 # Example usage with specifying additional components is::
 #
-#  find_package(Corrade [REQUIRED|COMPONENTS]
-#               Utility TestSuite)
+#  find_package(Corrade REQUIRED Utility TestSuite)
 #
 # For each component is then defined:
 #
-#  CORRADE_*_FOUND              - Whether the component was found
+#  Corrade_*_FOUND              - Whether the component was found
 #  Corrade::*                   - Component imported target
 #
 # The package is found if either debug or release version of each library is
@@ -36,19 +35,32 @@
 # chosen based on actual build configuration of the project (i.e. Debug build
 # is linked to debug libraries, Release build to release libraries).
 #
-# On multi-configuration build systems (such as Visual Studio or XCode) the
-# preprocessor variable ``CORRADE_IS_DEBUG_BUILD`` is defined if given build
-# configuration is Debug (not Corrade itself, but build configuration of the
-# project using it). Useful e.g. for selecting proper plugin directory. On
-# single-configuration build systems (such as Makefiles) this information is
-# not needed and thus the variable is not defined in any case.
+# Corrade conditionally defines ``CORRADE_IS_DEBUG_BUILD`` preprocessor
+# variable in case build configuration is ``Debug`` (not Corrade itself, but
+# build configuration of the project using it). Useful e.g. for selecting
+# proper plugin directory.
 #
-# If you link to any Corrade library, the compiler will be configured to use
-# the C++11 standard (if not already). Additionally you can use
-# ``CORRADE_CXX_FLAGS`` to enable additional pedantic set of warnings and
-# enable hidden visibility by default.
+# Corrade defines the following custom target properties:
 #
-# Features of found Corrade library are exposed in these variables::
+#  CORRADE_CXX_STANDARD         - C++ standard to require when compiling given
+#   target. Does nothing if :variable:`CMAKE_CXX_FLAGS` already contains
+#   particular standard setting flag or if given target contains
+#   :prop_tgt:`CMAKE_CXX_STANDARD` property. Allowed value is 11, 14 or 17.
+#  INTERFACE_CORRADE_CXX_STANDARD - C++ standard to require when using given
+#   target. Does nothing if :variable:`CMAKE_CXX_FLAGS` already contains
+#   particular standard setting flag or if given target contains
+#   :prop_tgt:`CMAKE_CXX_STANDARD` property. Allowed value is 11, 14 or 17.
+#  CORRADE_USE_PEDANTIC_FLAGS   - Enable additional compiler/linker flags.
+#   Boolean.
+#
+# These properties are inherited from directory properties, meaning that if you
+# set them on directories, they get implicitly set on all targets in given
+# directory (with a possibility to do target-specific overrides). All Corrade
+# libraries have the :prop_tgt:`INTERFACE_CORRADE_CXX_STANDARD` property set to
+# 11, meaning that you will always have at least C++11 enabled once you link to
+# any Corrade library.
+#
+# Features of found Corrade library are exposed in these variables:
 #
 #  CORRADE_GCC47_COMPATIBILITY  - Defined if compiled with compatibility mode
 #   for GCC 4.7
@@ -73,93 +85,100 @@
 #  CORRADE_TARGET_EMSCRIPTEN    - Defined if compiled for Emscripten
 #  CORRADE_TARGET_ANDROID       - Defined if compiled for Android
 #
-# Additionally these variables are defined for internal usage::
+# Additionally these variables are defined for internal usage:
 #
 #  CORRADE_INCLUDE_DIR          - Root include dir
 #  CORRADE_*_LIBRARY_DEBUG      - Debug version of given library, if found
 #  CORRADE_*_LIBRARY_RELEASE    - Release version of given library, if found
 #  CORRADE_USE_MODULE           - Path to UseCorrade.cmake module (included
 #   automatically)
+#  CORRADE_TESTSUITE_XCTEST_RUNNER - Path to XCTestRunner.mm.in file
+#  CORRADE_PEDANTIC_COMPILER_OPTIONS - List of pedantic compiler options used
+#   for targets with :prop_tgt:`CORRADE_USE_PEDANTIC_FLAGS` enabled
+#  CORRADE_PEDANTIC_COMPILER_DEFINITIONS - List of pedantic compiler
+#   definitions used for targets with :prop_tgt:`CORRADE_USE_PEDANTIC_FLAGS`
+#   enabled
 #
 # Workflows without :prop_tgt:`IMPORTED` targets are deprecated and the
 # following variables are included just for backwards compatibility and only if
-# ``CORRADE_BUILD_DEPRECATED`` is enabled:
+# :variable:`CORRADE_BUILD_DEPRECATED` is enabled:
 #
-#  CORRADE_INCLUDE_DIRS         - Include directories
-#  CORRADE_*_LIBRARIES          - Expands to Corrade::* target
+#  CORRADE_*_LIBRARIES          - Expands to ``Corrade::*`` target. Use
+#   ``Corrade::*`` target directly instead.
+#  CORRADE_CXX_FLAGS            - Pedantic compile flags. Use
+#   :prop_tgt:`CORRADE_USE_PEDANTIC_FLAGS` property instead.
 #
 # Corrade provides these macros and functions:
 #
-# Add unit test using Corrade's TestSuite
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# .. command:: corrade_add_test
 #
-# ::
+# Add unit test using Corrade's TestSuite::
 #
-#  corrade_add_test(test_name
-#                   sources...
-#                   [LIBRARIES libraries...])
+#  corrade_add_test(<test name>
+#                   <sources>...
+#                   [LIBRARIES <libraries>...])
 #
 # Test name is also executable name. You can also specify libraries to link
 # with instead of using :command:`target_link_libraries()`.
 # ``Corrade::TestSuite`` library is linked automatically to each test. Note
 # that the :command:`enable_testing()` function must be called explicitly.
 #
-# Compile data resources into application binary
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# .. command:: corrade_add_resource
 #
-# ::
+# Compile data resources into application binary::
 #
-#  corrade_add_resource(name resources.conf)
+#  corrade_add_resource(<name> <resources.conf>)
 #
 # Depends on ``Corrade::rc``, which is part of Corrade utilities. This command
 # generates resource data using given configuration file in current build
 # directory. Argument name is name under which the resources can be explicitly
-# loaded. Variable ``name`` contains compiled resource filename, which is then
-# used for compiling library / executable. Example usage::
+# loaded. Variable ``<name>`` contains compiled resource filename, which is
+# then used for compiling library / executable. Example usage::
 #
 #  corrade_add_resource(app_resources resources.conf)
 #  add_executable(app source1 source2 ... ${app_resources})
 #
-# Add dynamic plugin
-# ^^^^^^^^^^^^^^^^^^
+# .. command:: corrade_add_plugin
 #
-# ::
+# Add dynamic plugin::
 #
-#  corrade_add_plugin(plugin_name debug_install_dir release_install_dir
-#                     metadata_file sources...)
+#  corrade_add_plugin(<plugin name>
+#                     <debug install dir> <release install dir>
+#                     <metadata file>
+#                     <sources>...)
 #
 # The macro adds preprocessor directive ``CORRADE_DYNAMIC_PLUGIN``. Additional
 # libraries can be linked in via :command:`target_link_libraries(plugin_name ...) <target_link_libraries>`.
-# If ``debug_install_dir`` is set to :variable:`CMAKE_CURRENT_BINARY_DIR` (e.g.
-# for testing purposes), the files are copied directly, without the need to
-# perform install step. Note that the files are actually put into
+# If ``<debug install dir>`` is set to :variable:`CMAKE_CURRENT_BINARY_DIR`
+# (e.g. for testing purposes), the files are copied directly, without the need
+# to perform install step. Note that the files are actually put into
 # configuration-based subdirectory, i.e. ``${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}``.
 # See documentation of :variable:`CMAKE_CFG_INTDIR` variable for more
 # information.
 #
-# Add static plugin
-# ^^^^^^^^^^^^^^^^^
+# .. command:: corrade_add_static_plugin
 #
-# ::
+# Add static plugin::
 #
-#  corrade_add_static_plugin(plugin_name install_dir metadata_file
-#                            sources...)
+#  corrade_add_static_plugin(<plugin name>
+#                            <install dir>
+#                            <metadata file>
+#                            <sources>...)
 #
 # The macro adds preprocessor directive ``CORRADE_STATIC_PLUGIN``. Additional
 # libraries can be linked in via :command:`target_link_libraries(plugin_name ...) <target_link_libraries>`.
-# If ``install_dir`` is set to :variable:`CMAKE_CURRENT_BINARY_DIR` (e.g. for
+# If ``<install dir>`` is set to :variable:`CMAKE_CURRENT_BINARY_DIR` (e.g. for
 # testing purposes), no installation rules are added.
 #
 # Note that plugins built in debug configuration (e.g. with :variable:`CMAKE_BUILD_TYPE`
 # set to ``Debug``) have ``"-d"`` suffix to make it possible to have both debug
 # and release plugins installed alongside each other.
 #
-# Find corresponding DLLs for library files
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# .. command:: corrade_find_dlls_for_libs
 #
-# ::
+# Find corresponding DLLs for library files::
 #
-#  corrade_find_dlls_for_libs(<VAR> libs...)
+#  corrade_find_dlls_for_libs(<output variable> <libs>...)
 #
 # Available only on Windows, for all ``*.lib`` files tries to find
 # corresponding DLL file. Useful for bundling dependencies for e.g. WinRT
@@ -194,6 +213,7 @@
 # Root include dir
 find_path(CORRADE_INCLUDE_DIR
     NAMES Corrade/Corrade.h)
+mark_as_advanced(CORRADE_INCLUDE_DIR)
 
 # Configuration file
 find_file(_CORRADE_CONFIGURE_FILE configure.h
@@ -225,13 +245,21 @@ set(_corradeFlags
     TARGET_NACL_NEWLIB
     TARGET_NACL_GLIBC
     TARGET_EMSCRIPTEN
-    TARGET_ANDROID)
+    TARGET_ANDROID
+    TESTSUITE_TARGET_XCTEST)
 foreach(_corradeFlag ${_corradeFlags})
     string(FIND "${_corradeConfigure}" "#define CORRADE_${_corradeFlag}" _corrade_${_corradeFlag})
     if(NOT _corrade_${_corradeFlag} EQUAL -1)
         set(CORRADE_${_corradeFlag} 1)
     endif()
 endforeach()
+
+# XCTest runner file
+if(CORRADE_TESTSUITE_TARGET_XCTEST)
+    find_file(CORRADE_TESTSUITE_XCTEST_RUNNER XCTestRunner.mm.in
+        PATH_SUFFIXES share/corrade/TestSuite)
+    set(CORRADE_TESTSUITE_XCTEST_RUNNER_NEEDED CORRADE_TESTSUITE_XCTEST_RUNNER)
+endif()
 
 # CMake module dir
 find_path(_CORRADE_MODULE_DIR
@@ -243,18 +271,18 @@ set(CORRADE_USE_MODULE ${_CORRADE_MODULE_DIR}/UseCorrade.cmake)
 set(CORRADE_LIB_SUFFIX_MODULE ${_CORRADE_MODULE_DIR}/CorradeLibSuffix.cmake)
 
 # Ensure that all inter-component dependencies are specified as well
-foreach(component ${Corrade_FIND_COMPONENTS})
-    string(TOUPPER ${component} _COMPONENT)
+foreach(_component ${Corrade_FIND_COMPONENTS})
+    string(TOUPPER ${_component} _COMPONENT)
 
-    if(component STREQUAL Containers)
+    if(_component STREQUAL Containers)
         set(_CORRADE_${_COMPONENT}_DEPENDENCIES Utility)
-    elseif(component STREQUAL Interconnect)
+    elseif(_component STREQUAL Interconnect)
         set(_CORRADE_${_COMPONENT}_DEPENDENCIES Utility)
-    elseif(component STREQUAL PluginManager)
-        set(_CORRADE_${_COMPONENT}_DEPENDENCIES Containers Utility)
-    elseif(component STREQUAL TestSuite)
+    elseif(_component STREQUAL PluginManager)
+        set(_CORRADE_${_COMPONENT}_DEPENDENCIES Containers Utility rc)
+    elseif(_component STREQUAL TestSuite)
         set(_CORRADE_${_COMPONENT}_DEPENDENCIES Utility)
-    elseif(component STREQUAL Utility)
+    elseif(_component STREQUAL Utility)
         set(_CORRADE_${_COMPONENT}_DEPENDENCIES Containers rc)
     endif()
 
@@ -282,7 +310,7 @@ foreach(_component ${Corrade_FIND_COMPONENTS})
     # added as subproject to CMake, the target already exists and all the
     # required setup is already done from the build tree.
     if(TARGET Corrade::${_component})
-        set(Corrade_${_component}_FOUND ON)
+        set(Corrade_${_component}_FOUND TRUE)
     else()
         # Library components
         if(_component MATCHES ${_CORRADE_LIBRARY_COMPONENTS} AND NOT _component MATCHES ${_CORRADE_HEADER_ONLY_COMPONENTS})
@@ -297,14 +325,14 @@ foreach(_component ${Corrade_FIND_COMPONENTS})
             if(CORRADE_${_COMPONENT}_LIBRARY_RELEASE)
                 set_property(TARGET Corrade::${_component} APPEND PROPERTY
                     IMPORTED_CONFIGURATIONS RELEASE)
-                set_target_properties(Corrade::${_component} PROPERTIES
+                set_property(TARGET Corrade::${_component} PROPERTY
                     IMPORTED_LOCATION_RELEASE ${CORRADE_${_COMPONENT}_LIBRARY_RELEASE})
             endif()
 
             if(CORRADE_${_COMPONENT}_LIBRARY_DEBUG)
                 set_property(TARGET Corrade::${_component} APPEND PROPERTY
                     IMPORTED_CONFIGURATIONS DEBUG)
-                set_target_properties(Corrade::${_component} PROPERTIES
+                set_property(TARGET Corrade::${_component} PROPERTY
                     IMPORTED_LOCATION_DEBUG ${CORRADE_${_COMPONENT}_LIBRARY_DEBUG})
             endif()
         endif()
@@ -334,8 +362,8 @@ foreach(_component ${Corrade_FIND_COMPONENTS})
         if(_component STREQUAL PluginManager)
             # At least static build needs this
             if(CORRADE_TARGET_UNIX OR CORRADE_TARGET_NACL_GLIBC)
-                set_property(TARGET Corrade::${_component}
-                    APPEND PROPERTY INTERFACE_LINK_LIBRARIES ${CMAKE_DL_LIBS})
+                set_property(TARGET Corrade::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES ${CMAKE_DL_LIBS})
             endif()
 
         # No special setup for TestSuite library
@@ -343,43 +371,35 @@ foreach(_component ${Corrade_FIND_COMPONENTS})
         # Utility library (contains all setup that is used by others)
         elseif(_component STREQUAL Utility)
             # Top-level include directory
-            set_property(TARGET Corrade::Utility PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-                ${CORRADE_INCLUDE_DIR})
+            set_property(TARGET Corrade::${_component} APPEND PROPERTY
+                INTERFACE_INCLUDE_DIRECTORIES ${CORRADE_INCLUDE_DIR})
 
-            # If the configure file is somewhere else than in root include dir (e.g. when
-            # using CMake subproject), we need to include that dir too
-            if(NOT ${CORRADE_INCLUDE_DIR}/Corrade/configure.h STREQUAL ${_CORRADE_CONFIGURE_FILE})
-                # Go two levels up
-                get_filename_component(_CORRADE_CONFIGURE_FILE_INCLUDE_DIR ${_CORRADE_CONFIGURE_FILE} DIRECTORY)
-                get_filename_component(_CORRADE_CONFIGURE_FILE_INCLUDE_DIR ${_CORRADE_CONFIGURE_FILE_INCLUDE_DIR} DIRECTORY)
-                set_property(TARGET Corrade::Utility APPEND PROPERTY
-                    INTERFACE_INCLUDE_DIRECTORIES
-                    ${_CORRADE_CONFIGURE_FILE_INCLUDE_DIR})
-            endif()
-
-            # Enable C++11 on GCC/Clang. Allow the users to override this, so in case the
-            # user specified CXX_STANDARD property or put "-std=" in CMAKE_CXX_FLAGS
-            # nothing would be added. It doesn't cover adding flags using
-            # target_compile_options(), but that didn't work before anyway.
-            if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "(Apple)?Clang" OR CORRADE_TARGET_EMSCRIPTEN)
-                if(NOT CMAKE_CXX_FLAGS MATCHES "-std=")
-                    # TODO: CMake 3.1 has CMAKE_CXX_STANDARD and CMAKE_CXX_STANDARD_REQUIRED
-                    set_property(TARGET Corrade::Utility PROPERTY INTERFACE_COMPILE_OPTIONS
-                        "$<$<NOT:$<BOOL:$<TARGET_PROPERTY:CXX_STANDARD>>>:-std=c++11>")
-                endif()
-            endif()
-
-            # Use C++11-enabled libcxx on OSX. Again, it only covers overriding the
-            # "-stdlib=" in CMAKE_CXX_FLAGS and nowhere else.
-            if(CORRADE_TARGET_APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "(Apple)?Clang" AND NOT CMAKE_CXX_FLAGS MATCHES "-stdlib=")
-                set_property(TARGET Corrade::Utility APPEND PROPERTY INTERFACE_COMPILE_OPTIONS "-stdlib=libc++")
-                set_property(TARGET Corrade::Utility PROPERTY INTERFACE_LINK_LIBRARIES c++)
+            # Require (at least) C++11 for users
+            if(NOT CMAKE_VERSION VERSION_LESS 3.0.0)
+                set_property(TARGET Corrade::${_component} PROPERTY
+                    INTERFACE_CORRADE_CXX_STANDARD 11)
+                set_property(TARGET Corrade::${_component} APPEND PROPERTY
+                    COMPATIBLE_INTERFACE_NUMBER_MAX CORRADE_CXX_STANDARD)
+            else()
+                # 2.8.12 is fucking buggy shit. Besides the fact that it
+                # doesn't know COMPATIBLE_INTERFACE_NUMBER_MAX, if I
+                # define_property() so I can inherit it from directory on a
+                # target, then I can't use it in COMPATIBLE_INTERFACE_STRING
+                # to inherit it from interfaces BECAUSE!! it thinks that it is
+                # not an user-defined property anymore. So I need to have two
+                # sets of properties, CORRADE_CXX_STANDARD_ used silently for
+                # inheritance from interfaces and CORRADE_CXX_STANDARD used
+                # publicly for inheritance from directories. AAAAAAAAARGH.
+                set_property(TARGET Corrade::${_component} PROPERTY
+                    INTERFACE_CORRADE_CXX_STANDARD_ 11)
+                set_property(TARGET Corrade::${_component} APPEND PROPERTY
+                    COMPATIBLE_INTERFACE_STRING CORRADE_CXX_STANDARD_)
             endif()
 
             # AndroidLogStreamBuffer class needs to be linked to log library
             if(CORRADE_TARGET_ANDROID)
-                set_property(TARGET Corrade::${_component}
-                    APPEND PROPERTY INTERFACE_LINK_LIBRARIES log)
+                set_property(TARGET Corrade::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES "log")
             endif()
         endif()
 
@@ -404,9 +424,9 @@ foreach(_component ${Corrade_FIND_COMPONENTS})
 
         # Decide if the component was found
         if((_component MATCHES ${_CORRADE_LIBRARY_COMPONENTS} AND _CORRADE_${_COMPONENT}_INCLUDE_DIR AND (_component MATCHES ${_CORRADE_HEADER_ONLY_COMPONENTS} OR CORRADE_${_COMPONENT}_LIBRARY_RELEASE OR CORRADE_${_COMPONENT}_LIBRARY_DEBUG)) OR (_component MATCHES ${_CORRADE_EXECUTABLE_COMPONENTS} AND CORRADE_${_COMPONENT}_EXECUTABLE))
-            set(Corrade_${_component}_FOUND True)
+            set(Corrade_${_component}_FOUND TRUE)
         else()
-            set(Corrade_${_component}_FOUND False)
+            set(Corrade_${_component}_FOUND FALSE)
         endif()
     endif()
 
@@ -417,14 +437,12 @@ foreach(_component ${Corrade_FIND_COMPONENTS})
 endforeach()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Corrade
-    REQUIRED_VARS CORRADE_INCLUDE_DIR _CORRADE_MODULE_DIR _CORRADE_CONFIGURE_FILE
+find_package_handle_standard_args(Corrade REQUIRED_VARS
+    CORRADE_INCLUDE_DIR
+    _CORRADE_MODULE_DIR
+    _CORRADE_CONFIGURE_FILE
+    ${CORRADE_TESTSUITE_XCTEST_RUNNER_NEEDED}
     HANDLE_COMPONENTS)
-
-# Deprecated variables
-if(CORRADE_BUILD_DEPRECATED)
-    set(CORRADE_INCLUDE_DIRS ${CORRADE_INCLUDE_DIR} ${_CORRADE_CONFIGURE_FILE_INCLUDE_DIR})
-endif()
 
 # Finalize the finding process
 include(${CORRADE_USE_MODULE})
