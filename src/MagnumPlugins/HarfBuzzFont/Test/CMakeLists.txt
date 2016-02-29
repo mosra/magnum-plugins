@@ -23,6 +23,5 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
-
-corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp LIBRARIES MagnumHarfBuzzFontTestLib ${GL_TEST_LIBRARIES})
+corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp LIBRARIES MagnumHarfBuzzFontTestLib Magnum::WindowlessApplication)
+target_include_directories(HarfBuzzFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

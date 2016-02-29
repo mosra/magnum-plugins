@@ -32,6 +32,8 @@ if(POLICY CMP0042)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/modules/")
+
+set(CORRADE_USE_PEDANTIC_CXX ON)
 find_package(Magnum REQUIRED)
 
 include(CMakeDependentOption)
@@ -77,6 +79,7 @@ if(CORRADE_TARGET_NACL_NEWLIB OR CORRADE_TARGET_EMSCRIPTEN)
 endif()
 
 if(BUILD_TESTS)
+    find_package(Corrade REQUIRED TestSuite)
     enable_testing()
 endif()
 
@@ -90,8 +93,6 @@ if(BUILD_GL_TESTS)
     else()
         message(FATAL_ERROR "Cannot run tests for OpenGL code on this platform. Set BUILD_GL_TESTS to OFF to skip building them.")
     endif()
-
-    set(GL_TEST_LIBRARIES ${MAGNUM_WINDOWLESSAPPLICATION_LIBRARIES})
 endif()
 
 set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake/MagnumPlugins)

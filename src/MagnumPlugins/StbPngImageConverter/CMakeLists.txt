@@ -23,9 +23,6 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Include the stb_*.h files as a system directory to supress warnings
-include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/src/external/stb)
-
 set(StbPngImageConverter_SRCS
     StbPngImageConverter.cpp)
 
@@ -36,6 +33,11 @@ set(StbPngImageConverter_HEADERS
 add_library(StbPngImageConverterObjects OBJECT
     ${StbPngImageConverter_SRCS}
     ${StbPngImageConverter_HEADERS})
+target_include_directories(StbPngImageConverterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
+# Include the stb_*.h files as a system directory to supress warnings
+target_include_directories(StbPngImageConverterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbPngImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -48,16 +50,17 @@ add_plugin(StbPngImageConverter ${MAGNUM_PLUGINS_IMAGECONVERTER_DEBUG_INSTALL_DI
 if(BUILD_STATIC_PIC)
     set_target_properties(StbPngImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(StbPngImageConverter ${MAGNUM_LIBRARIES})
+target_include_directories(StbPngImageConverter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(StbPngImageConverter Magnum::Magnum)
 
 install(FILES ${StbPngImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbPngImageConverter)
 
 if(BUILD_TESTS)
     add_library(MagnumStbPngImageConverterTestLib STATIC $<TARGET_OBJECTS:StbPngImageConverterObjects>)
-    target_link_libraries(MagnumStbPngImageConverterTestLib ${MAGNUM_LIBRARIES})
+    target_include_directories(MagnumStbPngImageConverterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(MagnumStbPngImageConverterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
 
-# Magnum StbPngImageConverter library for superprojects
-set(MAGNUMPLUGINS_STBPNGIMAGECONVERTER_LIBRARY StbPngImageConverter CACHE INTERNAL "")
+# MagnumPlugins StbPngImageConverter target alias for superprojects
+add_library(MagnumPlugins::StbPngImageConverter ALIAS StbPngImageConverter)

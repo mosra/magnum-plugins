@@ -33,6 +33,9 @@ set(StanfordImporter_HEADERS
 add_library(StanfordImporterObjects OBJECT
     ${StanfordImporter_SRCS}
     ${StanfordImporter_HEADERS})
+target_include_directories(StanfordImporterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StanfordImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -45,16 +48,17 @@ add_plugin(StanfordImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNU
 if(BUILD_STATIC_PIC)
     set_target_properties(StanfordImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(StanfordImporter ${MAGNUM_LIBRARIES})
+target_include_directories(StanfordImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(StanfordImporter Magnum::Magnum)
 
 install(FILES ${StanfordImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumStanfordImporterTestLib STATIC $<TARGET_OBJECTS:StanfordImporterObjects>)
-    target_link_libraries(MagnumStanfordImporterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    target_include_directories(MagnumStanfordImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(MagnumStanfordImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
 
-# Magnum StanfordImporter library for superprojects
-set(MAGNUMPLUGINS_STANFORDIMPORTER_LIBRARY StanfordImporter CACHE INTERNAL "")
+# MagnumPlugins StanfordImporter target alias for superprojects
+add_library(MagnumPlugins::StanfordImporter ALIAS StanfordImporter)

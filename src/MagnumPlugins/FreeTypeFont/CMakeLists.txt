@@ -31,9 +31,6 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 find_package(Freetype REQUIRED)
 set(CMAKE_FIND_FRAMEWORK ${PREV_CMAKE_FIND_FRAMEWORK})
 
-# Avoid warning spam with old-style casts
-include_directories(SYSTEM ${FREETYPE_INCLUDE_DIRS})
-
 if(BUILD_STATIC)
     set(MAGNUM_FREETYPEFONT_BUILD_STATIC 1)
 endif()
@@ -51,7 +48,13 @@ set(FreeTypeFont_HEADERS
 add_library(FreeTypeFontObjects OBJECT
     ${FreeTypeFont_SRCS}
     ${FreeTypeFont_HEADERS})
-set_target_properties(FreeTypeFontObjects PROPERTIES COMPILE_FLAGS "-DFreeTypeFontObjects_EXPORTS")
+target_include_directories(FreeTypeFontObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Text,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
+# Avoid warning spam with old-style casts
+target_include_directories(FreeTypeFontObjects SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
+target_compile_definitions(FreeTypeFontObjects PRIVATE "FreeTypeFontObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(FreeTypeFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -64,11 +67,13 @@ add_plugin(FreeTypeFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGIN
 if(BUILD_STATIC_PIC)
     set_target_properties(FreeTypeFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
+target_include_directories(FreeTypeFont PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(FreeTypeFont
-    ${MAGNUM_TEXT_LIBRARIES}
-    ${MAGNUM_TEXTURETOOLS_LIBRARIES}
-    ${MAGNUM_LIBRARIES}
+    Magnum::Magnum
+    Magnum::Text
+    Magnum::TextureTools
     ${FREETYPE_LIBRARIES})
 
 install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
@@ -77,10 +82,13 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGI
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)
     add_library(MagnumFreeTypeFontTestLib STATIC $<TARGET_OBJECTS:FreeTypeFontObjects>)
+    target_include_directories(MagnumFreeTypeFontTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
     target_link_libraries(MagnumFreeTypeFontTestLib
-        ${MAGNUM_TEXT_LIBRARIES}
-        ${MAGNUM_TEXTURETOOLS_LIBRARIES}
-        ${MAGNUM_LIBRARIES}
+        Magnum::Magnum
+        Magnum::Text
+        Magnum::TextureTools
         ${FREETYPE_LIBRARIES})
 endif()
 
@@ -88,5 +96,5 @@ if(BUILD_GL_TESTS)
     add_subdirectory(Test)
 endif()
 
-# Magnum FreeTypeFont library for superprojects
-set(MAGNUMPLUGINS_FREETYPEFONT_LIBRARY FreeTypeFont CACHE INTERNAL "")
+# MagnumPlugins FreeTypeFont target alias for superprojects
+add_library(MagnumPlugins::FreeTypeFont ALIAS FreeTypeFont)

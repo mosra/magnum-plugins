@@ -25,8 +25,6 @@
 
 find_package(PNG REQUIRED)
 
-include_directories(${PNG_INCLUDE_DIRS})
-
 set(PngImporter_SRCS
     PngImporter.cpp)
 
@@ -37,6 +35,12 @@ set(PngImporter_HEADERS
 add_library(PngImporterObjects OBJECT
     ${PngImporter_SRCS}
     ${PngImporter_HEADERS})
+target_include_directories(PngImporterObjects
+    PUBLIC
+        $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+        ${PROJECT_SOURCE_DIR}/src
+    PRIVATE
+        ${PNG_INCLUDE_DIRS})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(PngImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -49,18 +53,17 @@ add_plugin(PngImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLU
 if(BUILD_STATIC_PIC)
     set_target_properties(PngImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(PngImporter
-    ${MAGNUM_LIBRARIES}
-    ${PNG_LIBRARIES})
+target_include_directories(PngImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(PngImporter Magnum::Magnum ${PNG_LIBRARIES})
 
 install(FILES ${PngImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumPngImporterTestLib STATIC $<TARGET_OBJECTS:PngImporterObjects>)
-    target_link_libraries(MagnumPngImporterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    target_include_directories(MagnumPngImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(MagnumPngImporterTestLib Magnum::Magnum ${PNG_LIBRARIES})
     add_subdirectory(Test)
 endif()
 
-# Magnum PngImporter library for superprojects
-set(MAGNUMPLUGINS_PNGIMPORTER_LIBRARY PngImporter CACHE INTERNAL "")
+# MagnumPlugins PngImporter target alias for superprojects
+add_library(MagnumPlugins::PngImporter ALIAS PngImporter)

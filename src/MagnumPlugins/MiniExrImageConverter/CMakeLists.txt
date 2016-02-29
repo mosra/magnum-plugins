@@ -23,9 +23,6 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Include the stb_*.h files as a system directory to supress warnings
-include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/src/external/miniexr)
-
 set(MiniExrImageConverter_SRCS
     MiniExrImageConverter.cpp)
 
@@ -36,6 +33,11 @@ set(MiniExrImageConverter_HEADERS
 add_library(MiniExrImageConverterObjects OBJECT
     ${MiniExrImageConverter_SRCS}
     ${MiniExrImageConverter_HEADERS})
+target_include_directories(MiniExrImageConverterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
+# Include the stb_*.h files as a system directory to supress warnings
+target_include_directories(MiniExrImageConverterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/miniexr)
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(MiniExrImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -48,16 +50,17 @@ add_plugin(MiniExrImageConverter ${MAGNUM_PLUGINS_IMAGECONVERTER_DEBUG_INSTALL_D
 if(BUILD_STATIC_PIC)
     set_target_properties(MiniExrImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(MiniExrImageConverter ${MAGNUM_LIBRARIES})
+target_include_directories(MiniExrImageConverter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(MiniExrImageConverter Magnum::Magnum)
 
 install(FILES ${MiniExrImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
 
 if(BUILD_TESTS)
     add_library(MagnumMiniExrImageConverterTestLib STATIC $<TARGET_OBJECTS:MiniExrImageConverterObjects>)
-    target_link_libraries(MagnumMiniExrImageConverterTestLib ${MAGNUM_LIBRARIES})
+    target_include_directories(MagnumMiniExrImageConverterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(MagnumMiniExrImageConverterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
 
-# Magnum MiniExrImageConverter library for superprojects
-set(MAGNUMPLUGINS_MINIEXRIMAGECONVERTER_LIBRARY MiniExrImageConverter CACHE INTERNAL "")
+# MagnumPlugins MiniExrImageConverter target alias for superprojects
+add_library(MagnumPlugins::MiniExrImageConverter ALIAS MiniExrImageConverter)

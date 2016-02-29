@@ -26,6 +26,5 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
-
 corrade_add_test(JpegImporterTest JpegImporterTest.cpp LIBRARIES MagnumJpegImporterTestLib)
+target_include_directories(JpegImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

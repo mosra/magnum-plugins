@@ -26,14 +26,13 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
-
-corrade_add_test(OpenGexImporterTest Test.cpp LIBRARIES ${MAGNUM_LIBRARIES} MagnumOpenGexImporterTestLib)
+corrade_add_test(OpenGexImporterTest Test.cpp LIBRARIES Magnum::Magnum MagnumOpenGexImporterTestLib)
+target_include_directories(OpenGexImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # On Win32 we need to avoid dllimporting OpenGexImporter symbols, because it
 # would search for the symbols in some DLL even though they were linked
 # statically.However it apparently doesn't matter that they were dllexported
 # when building the static library. EH.
 if(WIN32)
-    set_target_properties(OpenGexImporterTest PROPERTIES COMPILE_FLAGS "-DMAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
+    target_compile_definitions(OpenGexImporterTest PRIVATE "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
 endif()

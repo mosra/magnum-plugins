@@ -26,9 +26,6 @@
 find_package(Magnum REQUIRED MeshTools)
 find_package(Qt4 REQUIRED)
 
-# Silence pedantic warnings in Qt headers
-include_directories(SYSTEM ${QT_INCLUDE_DIR})
-
 set(ColladaImporter_SRCS
     ColladaImporter.cpp)
 
@@ -45,6 +42,12 @@ add_library(ColladaImporterObjects OBJECT
     ${ColladaImporter_SRCS}
     ${ColladaImporter_HEADERS}
     ${ColladaImporter_PRIVATE_HEADERS})
+target_include_directories(ColladaImporterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:AnyImageImporter,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
+# Supress warnings from Qt includes
+target_include_directories(ColladaImporterObjects SYSTEM PRIVATE ${QT_INCLUDE_DIR})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(ColladaImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -57,13 +60,14 @@ add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM
 if(BUILD_STATIC_PIC)
     set_target_properties(ColladaImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
+target_include_directories(ColladaImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+# Supress warnings from Qt includes
+target_include_directories(ColladaImporter SYSTEM PRIVATE ${QT_INCLUDE_DIR})
 target_link_libraries(ColladaImporter
-    ${MAGNUM_LIBRARIES}
-    ${MAGNUM_MESHTOOLS_LIBRARIES}
+    Magnum::Magnum
+    Magnum::MeshTools
     ${QT_QTCORE_LIBRARY}
     ${QT_QTXMLPATTERNS_LIBRARY})
-
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(ColladaImporter AnyImageImporter)
 endif()
@@ -72,14 +76,17 @@ install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_IN
 
 if(BUILD_TESTS)
     add_library(MagnumColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
+    target_include_directories(MagnumColladaImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    # Supress warnings from Qt includes
+    target_include_directories(MagnumColladaImporterTestLib SYSTEM PUBLIC ${QT_INCLUDE_DIR})
     target_link_libraries(MagnumColladaImporterTestLib
-        ${MAGNUM_LIBRARIES}
-        ${MAGNUM_MESHTOOLS_LIBRARIES}
+        Magnum::Magnum
+        Magnum::MeshTools
         ${QT_QTCORE_LIBRARY}
         ${QT_QTXMLPATTERNS_LIBRARY}
         MagnumAnyImageImporterTestLib)
     add_subdirectory(Test)
 endif()
 
-# Magnum ColladaImporter library for superprojects
-set(MAGNUMPLUGINS_COLLADAIMPORTER_LIBRARY ColladaImporter CACHE INTERNAL "")
+# MagnumPlugins ColladaImporter target alias for superprojects
+add_library(MagnumPlugins::ColladaImporter ALIAS ColladaImporter)

@@ -25,8 +25,6 @@
 
 find_package(JPEG REQUIRED)
 
-include_directories(${JPEG_INCLUDE_DIR})
-
 set(JpegImporter_SRCS
     JpegImporter.cpp)
 
@@ -37,6 +35,10 @@ set(JpegImporter_HEADERS
 add_library(JpegImporterObjects OBJECT
     ${JpegImporter_SRCS}
     ${JpegImporter_HEADERS})
+target_include_directories(JpegImporterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(JpegImporterObjects PRIVATE ${JPEG_INCLUDE_DIR})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(JpegImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -49,18 +51,19 @@ add_plugin(JpegImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PL
 if(BUILD_STATIC_PIC)
     set_target_properties(JpegImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
+target_include_directories(JpegImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(JpegImporter
-    ${MAGNUM_LIBRARIES}
+    Magnum::Magnum
     ${JPEG_LIBRARIES})
 
 install(FILES ${JpegImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumJpegImporterTestLib STATIC $<TARGET_OBJECTS:JpegImporterObjects>)
-    target_link_libraries(MagnumJpegImporterTestLib ${MAGNUM_LIBRARIES} ${JPEG_LIBRARIES})
+    target_include_directories(MagnumJpegImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(MagnumJpegImporterTestLib Magnum::Magnum ${JPEG_LIBRARIES})
     add_subdirectory(Test)
 endif()
 
-# Magnum JpegImporter library for superprojects
-set(MAGNUMPLUGINS_JPEGIMPORTER_LIBRARY JpegImporter CACHE INTERNAL "")
+# MagnumPlugins JpegImporter target alias for superprojects
+add_library(MagnumPlugins::JpegImporter ALIAS JpegImporter)

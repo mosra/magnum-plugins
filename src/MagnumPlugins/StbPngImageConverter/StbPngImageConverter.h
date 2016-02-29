@@ -47,9 +47,7 @@ This plugin is built if `WITH_STBPNGIMAGECONVERTER` is enabled when building
 Magnum Plugins. To use dynamic plugin, you need to load `StbPngImageConverter`
 plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use static plugin, you need
 to request `StbPngImageConverter` component of `MagnumPlugins` package in CMake
-and link to `${MAGNUMPLUGINS_STBPNGIMAGECONVERTER_LIBRARIES}`. To use this as a
-dependency of another plugin, you additionally need to add
-`${MAGNUMPLUGINS_STBPNGIMAGECONVERTER_INCLUDE_DIRS}` to include path.
+and link to `MagnumPlugins::StbPngImageConverter` target.
 
 This plugins provides `PngImageConverter` plugin, but note that this plugin
 may generate slightly larger files and the performance might be worse than when

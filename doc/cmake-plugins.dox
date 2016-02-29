@@ -49,13 +49,11 @@ separate them with semicolons.
 
 Basic usage is:
 
-    find_package(MagnumPlugins [REQUIRED])
+    find_package(MagnumPlugins REQUIRED)
 
 This command tries to find Magnum plugins and then defines:
 
--   `MAGNUMPLUGINS_FOUND` -- Whether Magnum plugins were found
--   `MAGNUMPLUGINS_INCLUDE_DIRS` -- Magnum plugins include dir and include dirs
-    of global dependencies
+-   `MagnumPlugins_FOUND` -- Whether Magnum plugins were found
 
 This command will not try to find any actual plugin. The plugins are:
 
@@ -96,9 +94,8 @@ Example usage with specifying the plugins is:
 
 For each plugin is then defined:
 
--   `MAGNUMPLUGINS_*_FOUND` -- Whether the plugin was found
--   `MAGNUMPLUGINS_*_LIBRARIES` -- Plugin library and dependent libraries
--   `MAGNUMPLUGINS_*_INCLUDE_DIRS` -- Include dirs of plugin dependencies
+-   `MagnumPlugins_*_FOUND` -- Whether the plugin was found
+-   `MagnumPlugins::*` -- Plugin imported target
 
 The package is found if either debug or release version of each requested
 plugin is found. If both debug and release plugins are found, proper version is
@@ -106,9 +103,12 @@ chosen based on actual build configuration of the project (i.e. `Debug` build
 is linked to debug plugins, `Release` build to release plugins). See @ref cmake
 for more information about autodetection of `MAGNUM_PLUGINS_DIR`.
 
-If @ref MAGNUM_BUILD_DEPRECATED is defined, `MAGNUMPLUGINS_INCLUDE_DIRS`
-contains include dir for plugins (i.e. for includes without `MagnumPlugins/`
-prefix) and include dirs of dependencies.
+Workflows without imported targets are deprecated and the following variables
+are included just for backwards compatibility and only if
+@ref MAGNUM_BUILD_DEPRECATED is enabled:
+
+-   `MAGNUMPLUGINS_*_LIBRARIES` -- Expands to `MagnumPlugins::*` target. Use
+    `MagnumPlugins::*` target directly instead.
 
 See also @ref cmake "Magnum usage with CMake" for more information.
 

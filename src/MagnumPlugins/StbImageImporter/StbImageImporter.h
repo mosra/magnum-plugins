@@ -57,9 +57,7 @@ This plugin is built if `WITH_STBIMAGEIMPORTER` is enabled when building
 Magnum Plugins. To use dynamic plugin, you need to load `StbImageImporter`
 plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to
 request `StbImageImporter` component of `MagnumPlugins` package in CMake and
-link to `${MAGNUMPLUGINS_STBIMAGEIMPORTER_LIBRARIES}`. To use this as a
-dependency of another plugin, you additionally need to add
-`${MAGNUMPLUGINS_STBIMAGEIMPORTER_INCLUDE_DIRS}` to include path.
+link to `MagnumPlugins::StbImageImporter` target.
 
 This plugins provides `BmpImporter`, `GifImporter`, `HdrImporter`,
 `JpegImporter`, `PgmImporter`, `PicImporter`, `PngImporter`, `PpmImporter`,

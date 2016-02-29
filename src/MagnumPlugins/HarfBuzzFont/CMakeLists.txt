@@ -27,9 +27,6 @@ find_package(Magnum REQUIRED Text)
 find_package(Freetype REQUIRED)
 find_package(HarfBuzz REQUIRED)
 
-# Avoid warning spam with old-style casts
-include_directories(SYSTEM ${FREETYPE_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS})
-
 set(HarfBuzzFont_SRCS
     HarfBuzzFont.cpp)
 
@@ -40,6 +37,14 @@ set(HarfBuzzFont_HEADERS
 add_library(HarfBuzzFontObjects OBJECT
     ${HarfBuzzFont_SRCS}
     ${HarfBuzzFont_HEADERS})
+target_include_directories(HarfBuzzFontObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Text,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
+# Avoid warning spam with old-style casts
+target_include_directories(HarfBuzzFontObjects SYSTEM PRIVATE
+    ${FREETYPE_INCLUDE_DIRS}
+    $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:FreeTypeFont,INTERFACE_INCLUDE_DIRECTORIES>)
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -49,15 +54,17 @@ add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGIN
     HarfBuzzFont.conf
     $<TARGET_OBJECTS:HarfBuzzFontObjects>
     pluginRegistration.cpp)
+target_include_directories(HarfBuzzFont PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    $<TARGET_PROPERTY:FreeTypeFont,INTERFACE_INCLUDE_DIRECTORIES>)
 if(BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
 target_link_libraries(HarfBuzzFont
-    ${MAGNUM_LIBRARIES}
-    ${MAGNUM_TEXT_LIBRARIES}
+    Magnum::Magnum
+    Magnum::Text
     ${FREETYPE_LIBRARIES}
-    ${HARFBUZZ_LIBRARIES})
+    HarfBuzz::HarfBuzz)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(HarfBuzzFont FreeTypeFont)
 endif()
@@ -66,14 +73,15 @@ install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 
 if(BUILD_GL_TESTS)
     add_library(MagnumHarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
+    target_include_directories(MagnumHarfBuzzFontTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumHarfBuzzFontTestLib
-        ${MAGNUM_LIBRARIES}
-        ${MAGNUM_TEXT_LIBRARIES}
+        Magnum::Magnum
+        Magnum::Text
         ${FREETYPE_LIBRARIES}
-        ${HARFBUZZ_LIBRARIES}
+        HarfBuzz::HarfBuzz
         MagnumFreeTypeFontTestLib)
     add_subdirectory(Test)
 endif()
 
-# Magnum HarfBuzzFont library for superprojects
-set(MAGNUMPLUGINS_HARFBUZZFONT_LIBRARY HarfBuzzFont CACHE INTERNAL "")
+# MagnumPlugins HarfBuzzFont target alias for superprojects
+add_library(MagnumPlugins::HarfBuzzFont ALIAS HarfBuzzFont)

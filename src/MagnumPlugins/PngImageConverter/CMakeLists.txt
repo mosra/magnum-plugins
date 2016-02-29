@@ -25,8 +25,6 @@
 
 find_package(PNG REQUIRED)
 
-include_directories(${PNG_INCLUDE_DIRS})
-
 set(PngImageConverter_SRCS
     PngImageConverter.cpp)
 
@@ -37,6 +35,13 @@ set(PngImageConverter_HEADERS
 add_library(PngImageConverterObjects OBJECT
     ${PngImageConverter_SRCS}
     ${PngImageConverter_HEADERS})
+target_include_directories(PngImageConverterObjects
+    PUBLIC
+        $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+        ${PROJECT_SOURCE_DIR}/src
+    PRIVATE
+        ${PNG_INCLUDE_DIRS})
+target_include_directories(PngImageConverterObjects PRIVATE ${PNG_INCLUDE_DIRS})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(PngImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -49,18 +54,16 @@ add_plugin(PngImageConverter ${MAGNUM_PLUGINS_IMAGECONVERTER_DEBUG_INSTALL_DIR} 
 if(BUILD_STATIC_PIC)
     set_target_properties(PngImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(PngImageConverter
-    ${MAGNUM_LIBRARIES}
-    ${PNG_LIBRARIES})
+target_include_directories(PngImageConverter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(PngImageConverter Magnum::Magnum ${PNG_LIBRARIES})
 
 install(FILES ${PngImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImageConverter)
 
 if(BUILD_TESTS)
     add_library(MagnumPngImageConverterTestLib STATIC $<TARGET_OBJECTS:PngImageConverterObjects>)
-    target_link_libraries(MagnumPngImageConverterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    target_link_libraries(MagnumPngImageConverterTestLib Magnum::Magnum ${PNG_LIBRARIES})
     add_subdirectory(Test)
 endif()
 
-# Magnum PngImageConverter library for superprojects
-set(MAGNUMPLUGINS_STBPNGIMAGECONVERTER_LIBRARY PngImageConverter CACHE INTERNAL "")
+# MagnumPlugins PngImageConverter target alias for superprojects
+add_library(MagnumPlugins::PngImageConverter ALIAS PngImageConverter)

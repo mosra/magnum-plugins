@@ -49,7 +49,11 @@ add_library(OpenGexImporterObjects OBJECT
     ${OpenGexImporter_SRCS}
     ${OpenGexImporter_HEADERS}
     ${OpenGexImporter_PRIVATE_HEADERS})
-set_target_properties(OpenGexImporterObjects PROPERTIES COMPILE_FLAGS "-DOpenGexImporterObjects_EXPORTS")
+target_include_directories(OpenGexImporterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
+target_compile_definitions(OpenGexImporterObjects PRIVATE "OpenGexImporterObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -62,10 +66,8 @@ add_plugin(OpenGexImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM
 if(BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(OpenGexImporter
-    ${MAGNUM_LIBRARIES})
-
+target_include_directories(OpenGexImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(OpenGexImporter Magnum::Magnum)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(OpenGexImporter AnyImageImporter)
 endif()
@@ -80,17 +82,20 @@ if(BUILD_TESTS)
     # dllexported when building the static library. EH. And because the
     # -DOpenGexImporterObjects_EXPORTS is no longer set in this case, we need
     # to avoid dllimporting OpenGexImporter symbols as well.
-    if(WIN32)
+    if(CORRADE_TARGET_WINDOWS)
         add_library(MagnumOpenGexImporterTestLib STATIC
             ${OpenGexImporter_SRCS}
             ${OpenGexImporter_HEADERS}
             ${OpenGexImporter_PRIVATE_HEADERS})
-        set_target_properties(MagnumOpenGexImporterTestLib PROPERTIES COMPILE_FLAGS "-DMAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC -DMAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
+        target_compile_definitions(MagnumOpenGexImporterTestLib PRIVATE
+            "MAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC"
+            "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
     else()
         add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
     endif()
+    target_include_directories(MagnumOpenGexImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumOpenGexImporterTestLib
-        ${MAGNUM_LIBRARIES}
+        Magnum::Magnum
         MagnumAnyImageImporterTestLib)
 
     add_subdirectory(Test)
@@ -98,5 +103,5 @@ endif()
 
 add_subdirectory(OpenDdl)
 
-# Magnum OpenGexImporter library for superprojects
-set(MAGNUMPLUGINS_OPENGEXIMPORTER_LIBRARY OpenGexImporter CACHE INTERNAL "")
+# MagnumPlugins OpenGexImporter target alias for superprojects
+add_library(MagnumPlugins::OpenGexImporter ALIAS OpenGexImporter)

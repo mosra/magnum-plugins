@@ -26,9 +26,6 @@
 
 find_package(Magnum REQUIRED Audio)
 
-include_directories(${MAGNUM_AUDIO_INCLUDE_DIRS})
-include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/src/external/stb)
-
 set(StbVorbisAudioImporter_SRCS
     StbVorbisImporter.cpp)
 
@@ -39,6 +36,11 @@ set(StbVorbisAudioImporter_HEADERS
 add_library(StbVorbisAudioImporterObjects OBJECT
     ${StbVorbisAudioImporter_SRCS}
     ${StbVorbisAudioImporter_HEADERS})
+target_include_directories(StbVorbisAudioImporterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Audio,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
+# Include the stb_*.h files as a system directory to supress warnings
+target_include_directories(StbVorbisAudioImporterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbVorbisAudioImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -51,16 +53,17 @@ add_plugin(StbVorbisAudioImporter ${MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_INSTALL_D
 if(BUILD_STATIC_PIC)
     set_target_properties(StbVorbisAudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(StbVorbisAudioImporter ${MAGNUM_LIBRARIES} ${MAGNUM_AUDIO_LIBRARIES})
+target_include_directories(StbVorbisAudioImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(StbVorbisAudioImporter Magnum::Magnum Magnum::Audio)
 
 install(FILES ${StbVorbisAudioImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbVorbisAudioImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumStbVorbisAudioImporterTestLib STATIC $<TARGET_OBJECTS:StbVorbisAudioImporterObjects>)
-    target_link_libraries(MagnumStbVorbisAudioImporterTestLib ${MAGNUM_LIBRARIES} ${MAGNUM_AUDIO_LIBRARIES})
+    target_include_directories(MagnumStbVorbisAudioImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(MagnumStbVorbisAudioImporterTestLib Magnum::Magnum Magnum::Audio)
     add_subdirectory(Test)
 endif()
 
-# Magnum StbVorbisAudioImporter library for superprojects
-set(MAGNUMPLUGINS_STBVORBISAUDIOIMPORTER_LIBRARY StbVorbisAudioImporter CACHE INTERNAL "")
+# MagnumPlugins StbVorbisAudioImporter target alias for superprojects
+add_library(MagnumPlugins::StbVorbisAudioImporter ALIAS StbVorbisAudioImporter)

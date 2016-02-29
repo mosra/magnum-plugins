@@ -1,13 +1,16 @@
-# - Find HarfBuzz
+#.rst:
+# Find HarfBuzz
+# -------------
 #
-# This module tries to find HarfBuzz library and then defines:
-#  HARFBUZZ_FOUND          - True if HarfBuzz library is found
-#  HARFBUZZ_INCLUDE_DIRS   - Include dirs
-#  HARFBUZZ_LIBRARIES      - HarfBuzz libraries
+# Finds the HarfBuzz library. This module defines:
+#
+#  HarfBuzz_FOUND           - True if HarfBuzz library is found
+#  HarfBuzz::HarfBuzz       - HarfBuzz imported target
 #
 # Additionally these variables are defined for internal usage:
-#  HARFBUZZ_INCLUDE_DIR    - Include dir (w/o dependencies)
-#  HARFBUZZ_LIBRARY        - HarfBuzz library (w/o dependencies)
+#
+#  HARFBUZZ_LIBRARY         - HarfBuzz library
+#  HARFBUZZ_INCLUDE_DIR     - Include dir
 #
 
 #
@@ -41,18 +44,20 @@ find_library(HARFBUZZ_LIBRARY NAMES harfbuzz)
 # Include dir
 find_path(HARFBUZZ_INCLUDE_DIR
     NAMES hb.h
-    PATH_SUFFIXES harfbuzz
-)
+    PATH_SUFFIXES harfbuzz)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args("HarfBuzz" DEFAULT_MSG
+find_package_handle_standard_args(HarfBuzz DEFAULT_MSG
     HARFBUZZ_LIBRARY
-    HARFBUZZ_INCLUDE_DIR
-)
-
-set(HARFBUZZ_INCLUDE_DIRS ${HARFBUZZ_INCLUDE_DIR})
-set(HARFBUZZ_LIBRARIES ${HARFBUZZ_LIBRARY})
+    HARFBUZZ_INCLUDE_DIR)
 
 mark_as_advanced(FORCE
     HARFBUZZ_LIBRARY
     HARFBUZZ_INCLUDE_DIR)
+
+if(NOT TARGET HarfBuzz::HarfBuzz)
+    add_library(HarfBuzz::HarfBuzz UNKNOWN IMPORTED)
+    set_target_properties(HarfBuzz::HarfBuzz PROPERTIES
+        IMPORTED_LOCATION ${HARFBUZZ_LIBRARY}
+        INTERFACE_INCLUDE_DIRECTORIES ${HARFBUZZ_INCLUDE_DIR})
+endif()

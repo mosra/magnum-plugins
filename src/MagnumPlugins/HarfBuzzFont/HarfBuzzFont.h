@@ -48,11 +48,8 @@ is built if `WITH_HARFBUZZFONT` is enabled when building Magnum Plugins. To
 use dynamic plugin, you need to load `HarfBuzzFont` plugin from
 `MAGNUM_PLUGINS_FONT_DIR`. To use static plugin, you need to request
 `HarfBuzzFont` component of `MagnumPlugins` package in CMake and link to
-`${MAGNUMPLUGINS_HARFBUZZFONT_LIBRARIES}`. To use this as a dependency of
-another plugin, you additionally need to add
-`${MAGNUMPLUGINS_HARFBUZZFONT_INCLUDE_DIRS}` to include path. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+`MagnumPlugins::HarfBuzzFont` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 */
 class HarfBuzzFont: public FreeTypeFont {
     public:

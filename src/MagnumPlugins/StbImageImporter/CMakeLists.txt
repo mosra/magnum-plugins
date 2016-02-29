@@ -23,9 +23,6 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Include the stb_*.h files as a system directory to supress warnings
-include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/src/external/stb)
-
 set(StbImageImporter_SRCS
     StbImageImporter.cpp)
 
@@ -36,6 +33,11 @@ set(StbImageImporter_HEADERS
 add_library(StbImageImporterObjects OBJECT
     ${StbImageImporter_SRCS}
     ${StbImageImporter_HEADERS})
+target_include_directories(StbImageImporterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
+# Include the stb_*.h files as a system directory to supress warnings
+target_include_directories(StbImageImporterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -48,16 +50,17 @@ add_plugin(StbImageImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNU
 if(BUILD_STATIC_PIC)
     set_target_properties(StbImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(StbImageImporter ${MAGNUM_LIBRARIES})
+target_include_directories(StbImageImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(StbImageImporter Magnum::Magnum)
 
 install(FILES ${StbImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumStbImageImporterTestLib STATIC $<TARGET_OBJECTS:StbImageImporterObjects>)
-    target_link_libraries(MagnumStbImageImporterTestLib ${MAGNUM_LIBRARIES})
+    target_include_directories(MagnumStbImageImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(MagnumStbImageImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
 
-# Magnum StbImageImporter library for superprojects
-set(MAGNUMPLUGINS_STBIMAGEIMPORTER_LIBRARY StbImageImporter CACHE INTERNAL "")
+# MagnumPlugins StbImageImporter target alias for superprojects
+add_library(MagnumPlugins::StbImageImporter ALIAS StbImageImporter)

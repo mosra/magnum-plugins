@@ -44,11 +44,8 @@ This plugin is built if `WITH_STANFORDIMPORTER` is enabled when building
 Magnum Plugins. To use dynamic plugin, you need to load `StanfordImporter`
 plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to
 request `StanfordImporter` component of `MagnumPlugins` package in CMake and
-link to `${MAGNUMPLUGINS_STANFORDIMPORTER_LIBRARIES}`. To use this as a
-dependency of another plugin, you additionally need to add
-`${MAGNUMPLUGINS_STANFORDIMPORTER_INCLUDE_DIRS}` to include path. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+link to `MagnumPlugins::StanfordImporter` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 */
 class StanfordImporter: public AbstractImporter {
     public:

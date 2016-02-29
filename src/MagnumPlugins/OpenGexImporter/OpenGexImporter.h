@@ -49,11 +49,8 @@ This plugin depends on @ref AnyImageImporter plugin. It is built if
 plugin, you need to load `OpenGexImporter` plugin from
 `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
 `OpenGexImporter` component of `MagnumPlugins` package in CMake and link to
-`${MAGNUMPLUGINS_OPENGEXIMPORTER_LIBRARIES}`. To use this as a dependency of
-another plugin, you additionally need to add
-`${MAGNUMPLUGINS_OPENGEXIMPORTER_INCLUDE_DIRS}` to include path. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+`MagnumPlugins::OpenGexImporter`. See @ref building-plugins, @ref cmake-plugins
+and @ref plugins for more information.
 
 ### Behavior and limitations
 

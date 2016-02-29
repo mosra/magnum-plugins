@@ -34,6 +34,9 @@ set(DdsImporter_HEADERS
 add_library(DdsImporterObjects OBJECT
     ${DdsImporter_SRCS}
     ${DdsImporter_HEADERS})
+target_include_directories(DdsImporterObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
+    ${PROJECT_SOURCE_DIR}/src)
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DdsImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -46,17 +49,17 @@ add_plugin(DdsImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLU
 if(BUILD_STATIC_PIC)
     set_target_properties(DdsImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-
-target_link_libraries(DdsImporter
-    ${MAGNUM_LIBRARIES})
+target_include_directories(DdsImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(DdsImporter Magnum::Magnum)
 
 install(FILES ${DdsImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumDdsImporterTestLib STATIC $<TARGET_OBJECTS:DdsImporterObjects>)
-    target_link_libraries(MagnumDdsImporterTestLib ${MAGNUM_LIBRARIES})
+    target_include_directories(MagnumDdsImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(MagnumDdsImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
 
-# Magnum DdsImporter library for superprojects
-set(MAGNUMPLUGINS_DDSIMPORTER_LIBRARY DdsImporter CACHE INTERNAL "")
+# MagnumPlugins DdsImporter target alias for superprojects
+add_library(MagnumPlugins::DdsImporter ALIAS DdsImporter)

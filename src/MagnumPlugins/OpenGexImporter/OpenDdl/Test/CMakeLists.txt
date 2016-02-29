@@ -23,13 +23,13 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-corrade_add_test(OpenDdlParsersTest ParsersTest.cpp LIBRARIES ${MAGNUM_LIBRARIES} MagnumOpenGexImporterTestLib)
-corrade_add_test(OpenDdlTest Test.cpp LIBRARIES ${MAGNUM_LIBRARIES} MagnumOpenGexImporterTestLib)
+corrade_add_test(OpenDdlParsersTest ParsersTest.cpp LIBRARIES Magnum::Magnum MagnumOpenGexImporterTestLib)
+corrade_add_test(OpenDdlTest Test.cpp LIBRARIES Magnum::Magnum MagnumOpenGexImporterTestLib)
 
 # On Win32 we need to avoid dllimporting OpenGexImporter symbols, because it
 # would search for the symbols in some DLL even though they were linked
 # statically.However it apparently doesn't matter that they were dllexported
 # when building the static library. EH.
 if(WIN32)
-    set_target_properties(OpenDdlTest PROPERTIES COMPILE_FLAGS "-DMAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
+    target_compile_definitions(OpenDdlTest PRIVATE "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
 endif()

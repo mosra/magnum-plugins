@@ -47,12 +47,9 @@ values.
 This plugin depends on **libPNG** library and is built if `WITH_PNGIMAGECONVERTER`
 is enabled when building Magnum Plugins. To use dynamic plugin, you need to load
 `PngImageConverter` plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use
-static plugin, you need to request `PngImageConverter` component of `MagnumPlugins`
-package in CMake and link to `${MAGNUMPLUGINS_PNGIMAGECONVERTER_LIBRARIES}`. To
-use this as a dependency of another plugin, you additionally need to add
-`${MAGNUMPLUGINS_PNGIMAGECONVERTER_INCLUDE_DIRS}` to include path.
-
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+static plugin, you need to request `PngImageConverter` component of
+`MagnumPlugins` package in CMake and link to `MagnumPlugins::PngImageConverter`
+target. See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 */
 class PngImageConverter: public AbstractImageConverter {
