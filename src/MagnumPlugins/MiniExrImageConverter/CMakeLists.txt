@@ -55,7 +55,7 @@ install(FILES ${MiniExrImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCL
 
 if(BUILD_TESTS)
     add_library(MagnumMiniExrImageConverterTestLib STATIC $<TARGET_OBJECTS:MiniExrImageConverterObjects>)
-    target_link_libraries(MagnumMiniExrImageConverterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    target_link_libraries(MagnumMiniExrImageConverterTestLib ${MAGNUM_LIBRARIES})
     add_subdirectory(Test)
 endif()
 

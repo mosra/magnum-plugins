@@ -55,7 +55,7 @@ install(FILES ${StbPngImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLU
 
 if(BUILD_TESTS)
     add_library(MagnumStbPngImageConverterTestLib STATIC $<TARGET_OBJECTS:StbPngImageConverterObjects>)
-    target_link_libraries(MagnumStbPngImageConverterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    target_link_libraries(MagnumStbPngImageConverterTestLib ${MAGNUM_LIBRARIES})
     add_subdirectory(Test)
 endif()
 

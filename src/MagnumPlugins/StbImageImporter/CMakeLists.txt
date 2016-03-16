@@ -55,7 +55,7 @@ install(FILES ${StbImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_I
 
 if(BUILD_TESTS)
     add_library(MagnumStbImageImporterTestLib STATIC $<TARGET_OBJECTS:StbImageImporterObjects>)
-    target_link_libraries(MagnumStbImageImporterTestLib ${MAGNUM_LIBRARIES} ${PNG_LIBRARIES})
+    target_link_libraries(MagnumStbImageImporterTestLib ${MAGNUM_LIBRARIES})
     add_subdirectory(Test)
 endif()
 
