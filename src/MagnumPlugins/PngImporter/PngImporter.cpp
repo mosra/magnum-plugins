@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <png.h>
 #include <Corrade/Utility/Debug.h>
+#include <Corrade/Utility/Endianness.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Trade/ImageData.h>
@@ -182,6 +183,13 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
 
     /* Cleanup */
     png_destroy_read_struct(&file, &info, nullptr);
+
+    /* Endianness correction for 16 bit depth */
+    if(type == PixelType::UnsignedShort) {
+        Containers::ArrayView<UnsignedShort> data16{reinterpret_cast<UnsignedShort*>(data.data()), data.size()/2};
+        for(UnsignedShort& i: data16)
+            Utility::Endianness::bigEndianInPlace(i);
+    }
 
     /* Always using the default 4-byte alignment */
     return Trade::ImageData2D{format, type, size, std::move(data)};
