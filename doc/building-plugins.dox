@@ -74,6 +74,8 @@ By default no plugins are built and you need to select them manually:
     plugin.
 -   `WITH_OPENGEXIMPORTER` -- @ref Trade::OpenGexImporter "OpenGexImporter"
     plugin.
+-   `WITH_PNGIMAGECONVERTER` -- @ref Trade::PngImageConverter "PngImageConverter"
+    plugin.
 -   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
 -   `WITH_STANFORDIMPORTER` -- @ref Trade::StanfordImporter "StanfordImporter"
     plugin.

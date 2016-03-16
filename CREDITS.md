@@ -12,8 +12,9 @@ Third-party components
     licensed under BSD license
 *   The `MiniExrImageConverter` plugin uses **miniexr** public domain library --
     https://github.com/aras-p/miniexr
-*   The `PngImporter` plugin uses **libPNG** library -- http://www.libpng.org/pub/png/libpng.html,
-    licensed under [libPNG license](http://libpng.org/pub/png/src/libpng-LICENSE.txt)
+*   The `PngImporter` and `PngImageConverter` plugin uses **libPNG** library --
+    http://www.libpng.org/pub/png/libpng.html, licensed under
+    [libPNG license](http://libpng.org/pub/png/src/libpng-LICENSE.txt)
 *   The `StbImageImporter` plugin uses **stb_image** public domain library --
     https://github.com/nothings/stb
 *   The `StbPngImageConverter` plugin uses **stb_image_write** public domain

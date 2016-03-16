@@ -18,6 +18,7 @@
 #  JpegImporter     - JPEG importer
 #  MiniExrImageConverter - OpenEXR image converter using miniexr
 #  OpenGexImporter  - OpenGEX importer
+#  PngImageConverter - PNG image converter
 #  PngImporter      - PNG importer
 #  StanfordImporter - Stanford PLY importer
 #  StbImageImporter - Image importer using stb_image
@@ -234,6 +235,17 @@ foreach(component ${MagnumPlugins_FIND_COMPONENTS})
 
     # MiniExrImageConverter has no dependencies
     # OpenGexImporter has no dependencies
+
+    # PngImageConverter plugin dependencies
+    if(${component} STREQUAL PngImageConverter)
+        find_package(PNG)
+        if(PNG_FOUND)
+            set(_MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES ${PNG_LIBRARIES})
+            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
+        else()
+            unset(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY)
+        endif()
+    endif()
 
     # PngImporter plugin dependencies
     if(${component} STREQUAL PngImporter)
