@@ -49,7 +49,7 @@ Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D&
     #endif
 
     if(image.type() != PixelType::HalfFloat) {
-        Error() << "Trade::MiniExrImageConverter::exportToData(): unsupported color type" << image.type();
+        Error() << "Trade::MiniExrImageConverter::exportToData(): unsupported pixel type" << image.type();
         return nullptr;
     }
 
@@ -58,7 +58,7 @@ Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D&
         case PixelFormat::RGB: components = 3; break;
         case PixelFormat::RGBA: components = 4; break;
         default:
-            Error() << "Trade::MiniExrImageConverter::exportToData(): unsupported color format" << image.format();
+            Error() << "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format" << image.format();
             return nullptr;
     }
 

@@ -78,7 +78,7 @@ void StbPngImageConverterTest::wrongFormat() {
 
     const auto data = StbPngImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
-    CORRADE_COMPARE(out.str(), "Trade::StbPngImageConverter::exportToData(): unsupported color format PixelFormat::DepthComponent\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbPngImageConverter::exportToData(): unsupported pixel format PixelFormat::DepthComponent\n");
 }
 
 void StbPngImageConverterTest::wrongType() {
@@ -89,7 +89,7 @@ void StbPngImageConverterTest::wrongType() {
 
     const auto data = StbPngImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
-    CORRADE_COMPARE(out.str(), "Trade::StbPngImageConverter::exportToData(): unsupported color type PixelType::Float\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbPngImageConverter::exportToData(): unsupported pixel type PixelType::Float\n");
 }
 
 void StbPngImageConverterTest::data() {

@@ -51,7 +51,7 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& 
     #endif
 
     if(image.type() != PixelType::UnsignedByte) {
-        Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color type" << image.type();
+        Error() << "Trade::StbPngImageConverter::exportToData(): unsupported pixel type" << image.type();
         return nullptr;
     }
 
@@ -76,7 +76,7 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& 
         case PixelFormat::RGB: components = 3; break;
         case PixelFormat::RGBA: components = 4; break;
         default:
-            Error() << "Trade::StbPngImageConverter::exportToData(): unsupported color format" << image.format();
+            Error() << "Trade::StbPngImageConverter::exportToData(): unsupported pixel format" << image.format();
             return nullptr;
     }
 

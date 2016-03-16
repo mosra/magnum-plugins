@@ -85,7 +85,7 @@ void MiniExrImageConverterTest::wrongFormat() {
 
     const auto data = MiniExrImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
-    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported color format PixelFormat::Red\n");
+    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format PixelFormat::Red\n");
 }
 
 void MiniExrImageConverterTest::wrongType() {
@@ -96,7 +96,7 @@ void MiniExrImageConverterTest::wrongType() {
 
     const auto data = MiniExrImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
-    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported color type PixelType::Float\n");
+    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel type PixelType::Float\n");
 }
 
 void MiniExrImageConverterTest::rgb() {
