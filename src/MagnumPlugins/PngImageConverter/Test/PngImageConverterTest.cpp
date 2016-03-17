@@ -123,6 +123,13 @@ void PngImageConverterTest::data() {
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
     CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
+
+    /* The image has four-byte aligned rows, clear the padding to deterministic
+       values */
+    CORRADE_COMPARE(converted->data().size(), 24);
+    converted->data()[6] = converted->data()[7] = converted->data()[14] =
+         converted->data()[15] = converted->data()[22] = converted->data()[23] = 0;
+
     CORRADE_COMPARE_AS(converted->data(),
         Containers::ArrayView<const char>{ConvertedData},
         TestSuite::Compare::Container);
