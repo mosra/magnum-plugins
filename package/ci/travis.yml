@@ -38,9 +38,11 @@ before_install:
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX=g++-4.7; fi
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install harfbuzz; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PLATFORM_GL_API=GLX; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PLATFORM_GL_API=CGL; fi
 
 # HarfBuzz (cached)
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install harfbuzz; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! -e "$HOME/harfbuzz/include" ]; then wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-1.0.3.tar.bz2 && tar xf harfbuzz-1.0.3.tar.bz2 && cd harfbuzz-1.0.3 && ./configure --prefix=$HOME/harfbuzz && make -j install && cd ..; fi
 
 # Corrade
@@ -55,13 +57,11 @@ install:
 - cd ..
 
 # Magnum
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then export WINDOWLESSAPPLICATION=-DWITH_WINDOWLESSGLXAPPLICATION=ON; fi
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then export WINDOWLESSAPPLICATION=-DWITH_WINDOWLESSCGLAPPLICATION=ON; fi
 - git clone --depth 1 git://github.com/mosra/magnum.git
 - cd magnum
 - mkdir build
 - cd build
-- cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/deps -DCMAKE_INSTALL_RPATH=$HOME/deps/lib -DWITH_AUDIO=ON -DWITH_DEBUGTOOLS=OFF -DWITH_PRIMITIVES=OFF -DWITH_SCENEGRAPH=OFF -DWITH_SHADERS=OFF -DWITH_SHAPES=OFF -DWITH_TEXT=ON -DWITH_TEXTURETOOLS=ON $WINDOWLESSAPPLICATION -DCMAKE_BUILD_TYPE=Release
+- cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/deps -DCMAKE_INSTALL_RPATH=$HOME/deps/lib -DWITH_AUDIO=ON -DWITH_DEBUGTOOLS=OFF -DWITH_PRIMITIVES=OFF -DWITH_SCENEGRAPH=OFF -DWITH_SHADERS=OFF -DWITH_SHAPES=OFF -DWITH_TEXT=ON -DWITH_TEXTURETOOLS=ON -DWITH_WINDOWLESS${PLATFORM_GL_API}APPLICATION=ON -DCMAKE_BUILD_TYPE=Release
 - cmake --build .
 - cmake --build . --target install
 - cd ..
