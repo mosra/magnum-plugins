@@ -55,8 +55,8 @@ install:
 - cd ..
 
 # Magnum
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then export WINDOWLESSAPPLICATION=-DWINDOWLESSGLXAPPLICATION=ON; fi
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then export WINDOWLESSAPPLICATION=-DWINDOWLESSCGLAPPLICATION=ON; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then export WINDOWLESSAPPLICATION=-DWITH_WINDOWLESSGLXAPPLICATION=ON; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then export WINDOWLESSAPPLICATION=-DWITH_WINDOWLESSCGLAPPLICATION=ON; fi
 - git clone --depth 1 git://github.com/mosra/magnum.git
 - cd magnum
 - mkdir build
