@@ -119,6 +119,13 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES FreeTypeFont)
     endif()
 
+    # Mark the dependencies as required if the component is also required
+    if(MagnumPlugins_FIND_REQUIRED_${_component})
+        foreach(_dependency ${_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES})
+            set(MagnumPlugins_FIND_REQUIRED_${_dependency} TRUE)
+        endforeach()
+    endif()
+
     list(APPEND _MAGNUMPLUGINS_ADDITIONAL_COMPONENTS ${_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES})
 endforeach()
 
