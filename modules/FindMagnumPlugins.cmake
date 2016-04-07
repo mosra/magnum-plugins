@@ -298,7 +298,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             foreach(_dependency ${_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES Magnum:${_dependency})
-            endif()
+            endforeach()
 
             # Add inter-project dependencies
             foreach(_dependency ${_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES})
