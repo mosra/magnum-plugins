@@ -153,7 +153,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     else()
         # Plugin components
         if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
-            add_library(Magnum::${_component} UNKNOWN IMPORTED)
+            add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
 
             # AudioImporter plugin specific name suffixes
             if(_component MATCHES ".+AudioImporter$")
@@ -286,7 +286,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # Find plugin includes
         if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
             find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
-                NAMES ${_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES}
+                NAMES ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES}
                 HINTS ${MAGNUMPLUGINS_INCLUDE_DIR}/MagnumPlugins/${_component})
             mark_as_advanced(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
         endif()
@@ -308,7 +308,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Decide if the plugin was found
-        if(_component MATCHES ${_MAGNUM_PLUGIN_COMPONENTS} AND _MAGNUM_${_COMPONENT}_INCLUDE_DIR AND (MAGNUM_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUM_${_COMPONENT}_LIBRARY_RELEASE))
+        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR AND (MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE))
             set(MagnumPlugins_${_component}_FOUND TRUE)
         else()
             set(MagnumPlugins_${_component}_FOUND FALSE)
