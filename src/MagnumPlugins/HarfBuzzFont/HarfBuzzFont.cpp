@@ -63,7 +63,7 @@ bool HarfBuzzFont::doIsOpened() const {
     return FreeTypeFont::doIsOpened();
 }
 
-std::pair<Float, Float> HarfBuzzFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) {
+auto HarfBuzzFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
     /* Open FreeType font */
     auto ret = FreeTypeFont::doOpenSingleData(data, size);
 

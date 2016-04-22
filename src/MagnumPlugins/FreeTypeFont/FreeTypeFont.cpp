@@ -79,7 +79,7 @@ auto FreeTypeFont::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return ftFont; }
 
-std::pair<Float, Float> FreeTypeFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) {
+auto FreeTypeFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
     /* We need to preserve the data for whole FT_Face lifetime */
     _data = Containers::Array<unsigned char>(data.size());
     std::copy(data.begin(), data.end(), _data.begin());
@@ -87,7 +87,10 @@ std::pair<Float, Float> FreeTypeFont::doOpenSingleData(const Containers::ArrayVi
     CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
     if(FT_New_Memory_Face(library, _data.begin(), _data.size(), 0, &ftFont) != 0) return {};
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
-    return {size, ftFont->size->metrics.height/64.0f};
+    return {size,
+            ftFont->size->metrics.ascender/64.0f,
+            ftFont->size->metrics.descender/64.0f,
+            ftFont->size->metrics.height/64.0f};
 }
 
 void FreeTypeFont::doClose() {
