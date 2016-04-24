@@ -36,8 +36,6 @@ if(POLICY CMP0028)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/modules/")
-
-set(CORRADE_USE_PEDANTIC_CXX ON)
 find_package(Magnum REQUIRED)
 
 include(CMakeDependentOption)
