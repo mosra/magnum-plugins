@@ -28,6 +28,7 @@
 #  StanfordImporter             - Stanford PLY importer
 #  StbImageImporter             - Image importer using stb_image
 #  StbPngImageConverter         - PNG image converter using stb_image_write
+#  StbTrueTypeFont              - TrueType font using stb_truetype
 #  StbVorbisAudioImporter       - OGG audio importer using stb_vorbis
 #
 # Example usage with specifying the plugins is::
@@ -139,7 +140,7 @@ endif()
 
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
-set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AnyAudioImporter|AnyImageConverter|AnyImageImporter|AnySceneImporter|ColladaImporter|DdsImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageImporter|StbPngImageConverter|StbVorbisAudioImporter)$")
+set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AnyAudioImporter|AnyImageConverter|AnyImageImporter|AnySceneImporter|ColladaImporter|DdsImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageImporter|StbPngImageConverter|StbTrueTypeFont|StbVorbisAudioImporter)$")
 
 # Find all components
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
@@ -281,6 +282,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # StanfordImporter has no dependencies
         # StbImageImporter has no dependencies
         # StbPngImageConverter has no dependencies
+        # StbTrueTypeFont has no dependencies
         # StbVorbisAudioImporter has no dependencies
 
         # Find plugin includes

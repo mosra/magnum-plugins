@@ -57,6 +57,7 @@ option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
 option(WITH_STANFORDIMPORTER "Build StanfordImporter plugin" OFF)
 option(WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
 option(WITH_STBPNGIMAGECONVERTER "Build StbPngImageConverter plugin" OFF)
+option(WITH_STBTRUETYPEFONT "Build StbTrueTypeFont plugin" OFF)
 option(WITH_STBVORBISAUDIOIMPORTER "Build StbVorbisAudioImporter plugin" OFF)
 
 include(CMakeDependentOption)

@@ -19,6 +19,8 @@ Third-party components
     https://github.com/nothings/stb
 *   The `StbPngImageConverter` plugin uses **stb_image_write** public domain
     library -- https://github.com/nothings/stb
+*   The `StbTrueTypeFont` plugin uses **stb_truetype** public domain library --
+    https://github.com/nothings/stb
 *   The `StbVorbisAudioImporter` plugin uses **stb_vorbis** public domain
     library -- https://github.com/nothings/stb
 
