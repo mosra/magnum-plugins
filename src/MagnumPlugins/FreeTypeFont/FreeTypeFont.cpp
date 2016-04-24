@@ -85,6 +85,7 @@ auto FreeTypeFont::doOpenSingleData(const Containers::ArrayView<const char> data
     std::copy(data.begin(), data.end(), _data.begin());
 
     CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
+    /** @todo ability to specify different font in TTC collection */
     if(FT_New_Memory_Face(library, _data.begin(), _data.size(), 0, &ftFont) != 0) return {};
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 100, 100) == 0);
     return {size,
@@ -108,8 +109,7 @@ Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2(ftFont->glyph->advance.x, ftFont->glyph->advance.y)/64.0f;
 }
 
-void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& characters)
-{
+void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) {
     /** @bug Crash when atlas is too small */
 
     /* Get glyph codes from characters */

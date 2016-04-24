@@ -23,7 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED Text TextureTools)
+find_package(Magnum REQUIRED Text)
 
 # On OSX avoid finding Freetype which is bundled with Mono
 set(PREV_CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK})
@@ -73,7 +73,6 @@ target_include_directories(FreeTypeFont PUBLIC
 target_link_libraries(FreeTypeFont
     Magnum::Magnum
     Magnum::Text
-    Magnum::TextureTools
     ${FREETYPE_LIBRARIES})
 
 install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
@@ -88,7 +87,6 @@ if(BUILD_TESTS)
     target_link_libraries(MagnumFreeTypeFontTestLib
         Magnum::Magnum
         Magnum::Text
-        Magnum::TextureTools
         ${FREETYPE_LIBRARIES})
 endif()
 
