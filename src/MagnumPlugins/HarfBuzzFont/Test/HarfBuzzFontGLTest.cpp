@@ -73,25 +73,25 @@ void HarfBuzzFontGLTest::layout() {
     std::tie(position, textureCoordinates) = layouter->renderGlyph(0, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D({0.78125f, 1.0625f}, {1.28125f, 4.8125f}));
     CORRADE_COMPARE(textureCoordinates, Range2D({0, 0.03125f}, {0.0625f, 0.5f}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.702637f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.51123f, 0.0f));
 
     /* 'a' (not in cache) */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(1, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D());
     CORRADE_COMPARE(textureCoordinates, Range2D());
-    CORRADE_COMPARE(cursorPosition, Vector2(0.35498f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.258301f, 0.0f));
 
     /* 'v' (not in cache) */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(2, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D());
     CORRADE_COMPARE(textureCoordinates, Range2D());
-    CORRADE_COMPARE(cursorPosition, Vector2(0.34375f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
 
     /* 'e' */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(3, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D({0.78125f, 0.375f}, {2.28125f, 1.25f}));
     CORRADE_COMPARE(textureCoordinates, Range2D({0.0625f, 0.015625f}, {0.25f, 0.125f}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.358398f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.260742f, 0.0f));
 }
 
 }}}

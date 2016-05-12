@@ -59,11 +59,11 @@ void FreeTypeFontGLTest::properties() {
     FreeTypeFont font;
     CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
     CORRADE_COMPARE(font.size(), 16.0f);
-    CORRADE_COMPARE(font.ascent(), 20.0f);
-    CORRADE_COMPARE(font.descent(), -5.0f);
-    CORRADE_COMPARE(font.lineHeight(), 26.0f);
+    CORRADE_COMPARE(font.ascent(), 15.0f);
+    CORRADE_COMPARE(font.descent(), -4.0f);
+    CORRADE_COMPARE(font.lineHeight(), 19.0f);
     CORRADE_COMPARE(font.glyphId(U'W'), 58);
-    CORRADE_COMPARE(font.glyphAdvance(58), Vector2(23.0f, 0.0f));
+    CORRADE_COMPARE(font.glyphAdvance(58), Vector2(17.0f, 0.0f));
 }
 
 void FreeTypeFontGLTest::layout() {
@@ -86,25 +86,25 @@ void FreeTypeFontGLTest::layout() {
     std::tie(position, textureCoordinates) = layouter->renderGlyph(0, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D({0.78125f, 1.0625f}, {1.28125f, 4.8125f}));
     CORRADE_COMPARE(textureCoordinates, Range2D({0, 0.03125f}, {0.0625f, 0.5f}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.71875f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.53125f, 0.0f));
 
     /* 'a' (not in cache) */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(1, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D());
     CORRADE_COMPARE(textureCoordinates, Range2D());
-    CORRADE_COMPARE(cursorPosition, Vector2(0.34375f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
 
     /* 'v' (not in cache) */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(2, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D());
     CORRADE_COMPARE(textureCoordinates, Range2D());
-    CORRADE_COMPARE(cursorPosition, Vector2(0.34375f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
 
     /* 'e' */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(3, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D({0.78125f, 0.375f}, {2.28125f, 1.25f}));
     CORRADE_COMPARE(textureCoordinates, Range2D({0.0625f, 0.015625f}, {0.25f, 0.125f}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.375f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.28125f, 0.0f));
 }
 
 void FreeTypeFontGLTest::fillGlyphCache() {
