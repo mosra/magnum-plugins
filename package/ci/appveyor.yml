@@ -23,13 +23,13 @@ install:
 - cinst ninja
 
 # OpenAL
-- appveyor DownloadFile http://kcat.strangesoft.net/openal-binaries/openal-soft-1.17.0-bin.zip
-- 7z x openal-soft-1.17.0-bin.zip
-- ren openal-soft-1.17.0-bin openal
+- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.17.2-bin.zip appveyor DownloadFile http://kcat.strangesoft.net/openal-binaries/openal-soft-1.17.2-bin.zip
+- 7z x openal-soft-1.17.2-bin.zip
+- ren openal-soft-1.17.2-bin openal
 - ren openal\bin\Win32\soft_oal.dll OpenAL32.dll
 
 # LibJPEG Turbo
-- appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.2.0/libjpeg-turbo-1.2.0.tar.gz
+- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.2.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.2.0/libjpeg-turbo-1.2.0.tar.gz
 - 7z x libjpeg-turbo-1.2.0.tar.gz
 - 7z x libjpeg-turbo-1.2.0.tar
 - ren libjpeg-turbo-1.2.0 libjpeg-turbo
@@ -63,6 +63,10 @@ install:
 - cmake --build . --target install
 - cd ..
 - cd ..
+
+cache:
+- openal-soft-1.17.2-bin.zip
+- libjpeg-turbo-1.2.0.tar.gz
 
 build_script:
 - mkdir build
