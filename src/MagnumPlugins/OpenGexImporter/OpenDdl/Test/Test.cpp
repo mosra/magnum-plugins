@@ -43,6 +43,7 @@ struct Test: TestSuite::Tester {
     void primitiveExpectedListStart();
     void primitiveExpectedListEnd();
     void primitiveExpectedSeparator();
+    void primitiveExpectedNext();
 
     void primitiveSubArray();
     void primitiveSubArrayEmpty();
@@ -50,6 +51,8 @@ struct Test: TestSuite::Tester {
     void primitiveSubArrayInvalidSize();
     void primitiveSubArrayExpectedArraySizeEnd();
     void primitiveSubArrayExpectedSubSeparator();
+    void primitiveSubArrayExpectedSubNext();
+    void primitiveSubArrayExpectedNext();
     void primitiveSubArrayExpectedSubListEnd();
     void primitiveSubArrayExpectedSeparator();
 
@@ -110,6 +113,7 @@ Test::Test() {
               &Test::primitiveExpectedListStart,
               &Test::primitiveExpectedListEnd,
               &Test::primitiveExpectedSeparator,
+              &Test::primitiveExpectedNext,
 
               &Test::primitiveSubArray,
               &Test::primitiveSubArrayEmpty,
@@ -117,6 +121,8 @@ Test::Test() {
               &Test::primitiveSubArrayInvalidSize,
               &Test::primitiveSubArrayExpectedArraySizeEnd,
               &Test::primitiveSubArrayExpectedSubSeparator,
+              &Test::primitiveSubArrayExpectedSubNext,
+              &Test::primitiveSubArrayExpectedNext,
               &Test::primitiveSubArrayExpectedSubListEnd,
               &Test::primitiveSubArrayExpectedSeparator,
 
@@ -231,6 +237,15 @@ void Test::primitiveExpectedSeparator() {
     CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected , character on line 1\n");
 }
 
+void Test::primitiveExpectedNext() {
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    Document d;
+    CORRADE_VERIFY(!d.parse(CharacterLiteral{"float { 35,"}, {}, {}));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected float literal on line 1\n");
+}
+
 void Test::primitiveSubArray() {
     Document d;
     CORRADE_VERIFY(d.parse(CharacterLiteral{"unsigned_int8[2] { {0xca, 0xfe}, {0xba, 0xbe} }"}, {}, {}));
@@ -292,6 +307,24 @@ void Test::primitiveSubArrayExpectedSubSeparator() {
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[2] { {0xca, 0xfe} {0xba"}, {}, {}));
     CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected , character on line 1\n");
+}
+
+void Test::primitiveSubArrayExpectedSubNext() {
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    Document d;
+    CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[3] { {0xca, 0xfe,"}, {}, {}));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected unsigned_int8 literal on line 1\n");
+}
+
+void Test::primitiveSubArrayExpectedNext() {
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    Document d;
+    CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[2] { {0xca, 0xfe},"}, {}, {}));
+    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected { character on line 1\n");
 }
 
 void Test::primitiveSubArrayExpectedSubListEnd() {
