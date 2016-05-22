@@ -513,6 +513,8 @@ template<Type type> std::pair<const char*, std::size_t> dataArrayList(const Cont
             i = Implementation::whitespace(data.suffix(i));
         }
 
+        if(!i) return {};
+
         if(i == data.end() || *i != '}') {
             error = {Implementation::ParseErrorType::ExpectedListEnd, i};
             return {};
