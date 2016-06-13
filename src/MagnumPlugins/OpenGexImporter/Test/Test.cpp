@@ -49,6 +49,8 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
+using namespace Magnum::Math::Literals;
+
 struct OpenGexImporterTest: public TestSuite::Tester {
     explicit OpenGexImporterTest();
 

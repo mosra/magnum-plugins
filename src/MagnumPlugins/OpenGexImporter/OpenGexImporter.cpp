@@ -49,6 +49,8 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Magnum::Math::Literals;
+
 struct OpenGexImporter::Document {
     OpenDdl::Document document;
 
