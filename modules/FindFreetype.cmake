@@ -9,6 +9,7 @@
 # ::
 #
 #   FREETYPE_LIBRARIES, the library to link against
+#   FREETYPE_DEPENDENCY_LIBRARIES, freetype's dependencies, if needed
 #   FREETYPE_FOUND, if false, do not try to link to FREETYPE
 #   FREETYPE_INCLUDE_DIRS, where to find headers.
 #   FREETYPE_VERSION_STRING, the version of freetype found (since CMake 2.8.8)
@@ -22,22 +23,48 @@
 # ./configure --prefix=$FREETYPE_DIR used in building FREETYPE.
 
 #=============================================================================
-# Copyright 2007-2009 Kitware, Inc.
-#
-# Distributed under the OSI-approved BSD License (the "License");
-# see accompanying file Copyright.txt for details.
-#
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the License for more information.
+# CMake - Cross Platform Makefile Generator
+# Copyright 2000-2016 Kitware, Inc.
+# Copyright 2000-2011 Insight Software Consortium
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# 
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# 
+# * Neither the names of Kitware, Inc., the Insight Software Consortium,
+#   nor the names of their contributors may be used to endorse or promote
+#   products derived from this software without specific prior written
+#   permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
-# (To distribute this file outside of CMake, substitute the full
-#  License text for the above reference.)
+
 
 # Created by Eric Wing.
 # Modifications by Alexander Neundorf.
 # This file has been renamed to "FindFreetype.cmake" instead of the correct
 # "FindFreeType.cmake" in order to be compatible with the one from KDE4, Alex.
+
+# This version is modified for Magnum, and was forked from
+# https://github.com/Kitware/CMake/blob/b213a7f6ab0d4aa18e7b704bf1cf4994fae77254/Modules/FindFreetype.cmake
 
 # Ugh, FreeType seems to use some #include trickery which
 # makes this harder than it should be. It looks like they
@@ -106,7 +133,7 @@ if(NOT FREETYPE_LIBRARY)
     PATH_SUFFIXES
       lib
   )
-  include(${CMAKE_CURRENT_LIST_DIR}/SelectLibraryConfigurations.cmake)
+  include(SelectLibraryConfigurations)
   select_library_configurations(FREETYPE)
 endif()
 
@@ -145,10 +172,9 @@ if(FREETYPE_INCLUDE_DIR_freetype2 AND FREETYPE_H)
   endforeach()
 endif()
 
-
 # handle the QUIETLY and REQUIRED arguments and set FREETYPE_FOUND to TRUE if
 # all listed variables are TRUE
-include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
+include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(
   Freetype
@@ -158,6 +184,59 @@ find_package_handle_standard_args(
   VERSION_VAR
     FREETYPE_VERSION_STRING
 )
+
+if(FREETYPE_FOUND)
+  # Determine if Freetype was built as static or shared
+  set(FREETYPE_SHARED OFF)
+  foreach(_path ${FREETYPE_LIBRARIES})
+    string(FIND ${_path} "/" _result REVERSE)
+    string(SUBSTRING ${_path} ${_result} -1 _name)
+    foreach(_hint dll so dylib)
+      string(FIND ${_name} ${_hint} _result)
+      if(NOT _result EQUAL -1)
+        set(FREETYPE_SHARED ON)
+        break()
+      endif()
+    endforeach()
+  endforeach()
+
+  # If Freetype was built static, we need to link its optional dependencies
+  if(NOT FREETYPE_SHARED)
+    # We can read which dependencies Freetype was built with from ftoption.h
+    file(READ "${FREETYPE_INCLUDE_DIR_freetype2}/freetype/config/ftoption.h" _ftoption_h)
+    foreach(_dep ZLIB BZip2 PNG HarfBuzz)
+      string(TOUPPER ${_dep} _DEP)
+      set(_require_dep OFF)
+
+      # Use regex to check if a depdency is needed
+      # Example of when a dependency was used to build Freetype:
+      # #define FT_CONFIG_OPTION_USE_BZIP2
+      # Example of when a dependency was not used to build Freetype:
+      # /* #define FT_CONFIG_OPTION_USE_HARFBUZZ */
+      # We want to match the first and not the second
+      set(_match_before "\n[ \t]*\\#define[ \t]*FT_CONFIG_OPTION")
+      set(_match_after "[ \t]*\n")
+      string(REGEX MATCH "${_match_before}_USE_${_DEP}${_match_after}" _use_dep "${_ftoption_h}")
+      if("${_dep}" STREQUAL "ZLIB")
+        # Special handling
+        string(REGEX MATCH "${_match_before}_SYSTEM_${_DEP}${_match_after}" _sys_dep "${_ftoption_h}")
+        if(NOT "${_use_dep}" STREQUAL "" AND NOT "${_sys_dep}" STREQUAL "")
+          set(_require_dep ON)
+        endif()
+      else()
+        if(NOT "${_use_dep}" STREQUAL "")
+          set(_require_dep ON)
+        endif()
+      endif()
+
+      # Require the dependency only if Freetype was built with it
+      if(_require_dep)
+        find_package(${_dep} QUIET REQUIRED)
+        list(APPEND FREETYPE_DEPENDENCY_LIBRARIES ${${_DEP}_LIBRARIES})
+      endif()
+    endforeach()
+  endif()
+endif()
 
 mark_as_advanced(
   FREETYPE_INCLUDE_DIR_freetype2

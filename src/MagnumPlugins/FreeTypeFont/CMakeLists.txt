@@ -73,7 +73,8 @@ target_include_directories(FreeTypeFont PUBLIC
 target_link_libraries(FreeTypeFont
     Magnum::Magnum
     Magnum::Text
-    ${FREETYPE_LIBRARIES})
+    ${FREETYPE_LIBRARIES}
+    ${FREETYPE_DEPENDENCY_LIBRARIES})
 
 install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
@@ -87,7 +88,8 @@ if(BUILD_TESTS)
     target_link_libraries(MagnumFreeTypeFontTestLib
         Magnum::Magnum
         Magnum::Text
-        ${FREETYPE_LIBRARIES})
+        ${FREETYPE_LIBRARIES}
+        ${FREETYPE_DEPENDENCY_LIBRARIES})
 endif()
 
 if(BUILD_GL_TESTS)
