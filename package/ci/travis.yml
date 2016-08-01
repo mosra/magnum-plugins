@@ -1,8 +1,36 @@
 # kate: indent-width 2;
 
-os:
-- linux
-- osx
+language: cpp
+
+matrix:
+  include:
+  - os: linux
+    compiler: gcc
+    env:
+    - TARGET=desktop
+    # Otherwise the job gets killed (probably because using too much memory)
+    - JOBS_LIMIT=4
+  - os: osx
+    compiler: clang
+    env: TARGET=desktop
+  - os: osx
+    osx_image: xcode7.3
+    env:
+    - TARGET=ios-simulator
+    - TARGET_GLES2=ON
+  - os: osx
+    osx_image: xcode7.3
+    env:
+    - TARGET=ios-simulator
+    - TARGET_GLES2=OFF
+  - os: osx
+    env:
+    - TARGET=emscripten
+    - TARGET_GLES2=ON
+  - os: osx
+    env:
+    - TARGET=emscripten
+    - TARGET_GLES2=OFF
 
 addons:
   apt:
@@ -35,36 +63,18 @@ before_install:
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX=g++-4.7; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PLATFORM_GL_API=GLX; fi
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PLATFORM_GL_API=CGL; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then export PLATFORM_GL_API=CGL; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "ios-simulator" ]; then gem install xcpretty; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then brew install emscripten && export LLVM=/usr/local/opt/emscripten/libexec/llvm/bin && emcc; fi
 
 # HarfBuzz (cached)
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install harfbuzz; fi
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! -e "$HOME/harfbuzz/include" ]; then wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-1.0.3.tar.bz2 && tar xf harfbuzz-1.0.3.tar.bz2 && cd harfbuzz-1.0.3 && ./configure --prefix=$HOME/harfbuzz && make -j install && cd ..; fi
-
-# Corrade
-- git clone --depth 1 git://github.com/mosra/corrade.git
-- cd corrade
-- mkdir build
-- cd build
-- cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/deps -DCMAKE_INSTALL_RPATH=$HOME/deps/lib -DCMAKE_BUILD_TYPE=Release
-- cmake --build .
-- cmake --build . --target install
-- cd ..
-- cd ..
-
-# Magnum
-- git clone --depth 1 git://github.com/mosra/magnum.git
-- cd magnum
-- mkdir build
-- cd build
-- cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/deps -DCMAKE_INSTALL_RPATH=$HOME/deps/lib -DWITH_AUDIO=ON -DWITH_DEBUGTOOLS=OFF -DWITH_PRIMITIVES=OFF -DWITH_SCENEGRAPH=OFF -DWITH_SHADERS=OFF -DWITH_SHAPES=OFF -DWITH_TEXT=ON -DWITH_TEXTURETOOLS=ON -DWITH_WINDOWLESS${PLATFORM_GL_API}APPLICATION=ON -DCMAKE_BUILD_TYPE=Release
-- cmake --build .
-- cmake --build . --target install
-- cd ..
-- cd ..
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then brew install harfbuzz; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ] && [ ! -e "$HOME/harfbuzz/include" ]; then wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-1.0.3.tar.bz2 && tar xf harfbuzz-1.0.3.tar.bz2 && cd harfbuzz-1.0.3 && ./configure --prefix=$HOME/harfbuzz && make -j install && cd ..; fi
 
 script:
-- mkdir build && cd build
-- cmake .. -DCMAKE_PREFIX_PATH="$HOME/deps;$HOME/harfbuzz" -DWITH_ANYAUDIOIMPORTER=ON -DWITH_ANYIMAGECONVERTER=ON -DWITH_ANYIMAGEIMPORTER=ON -DWITH_ANYSCENEIMPORTER=ON -DWITH_COLLADAIMPORTER=OFF -DWITH_DDSIMPORTER=ON -DWITH_FREETYPEFONT=ON -DWITH_HARFBUZZFONT=ON -DWITH_JPEGIMPORTER=ON -DWITH_MINIEXRIMAGECONVERTER=ON -DWITH_OPENGEXIMPORTER=ON -DWITH_PNGIMAGECONVERTER=ON -DWITH_PNGIMPORTER=ON -DWITH_STANFORDIMPORTER=ON -DWITH_STBIMAGEIMPORTER=ON -DWITH_STBPNGIMAGECONVERTER=ON -DWITH_STBTRUETYPEFONT=ON -DWITH_STBVORBISAUDIOIMPORTER=ON -DBUILD_TESTS=ON -DBUILD_GL_TESTS=ON -DCMAKE_BUILD_TYPE=Release
-- cmake --build .
-- ctest --output-on-failure -E GLTest
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then ./package/ci/travis-desktop.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then ./package/ci/travis-desktop.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "ios-simulator" ]; then ./package/ci/travis-ios-simulator.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then ./package/ci/travis-emscripten.sh; fi
+# Travis somehow is not able to gather all output, try to force it using this
+- sync
