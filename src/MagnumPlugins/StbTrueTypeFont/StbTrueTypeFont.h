@@ -69,7 +69,7 @@ class StbTrueTypeFont: public AbstractFont {
 
     private:
         struct Font;
-        struct Layouter;
+        class Layouter;
 
         Features doFeatures() const override;
         bool doIsOpened() const override;
