@@ -30,7 +30,14 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++11-narrowing"
+#endif
 #include "miniexr.h"
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
 namespace Magnum { namespace Trade {
 
