@@ -37,8 +37,14 @@ build() {
         -DWITH_STBIMAGEIMPORTER=ON \
         -DWITH_STBPNGIMAGECONVERTER=ON \
         -DWITH_STBTRUETYPEFONT=ON \
-        -DWITH_STBVORBISAUDIOIMPORTER=ON
-    make
+        -DWITH_STBVORBISAUDIOIMPORTER=OFF \
+        -DBUILD_TESTS=ON
+    make -j4
+}
+
+check() {
+    cd "$_rootdir/build-emscripten"
+    CORRADE_TEST_COLOR=ON ctest --output-on-failure
 }
 
 package() {
