@@ -650,7 +650,7 @@ void OpenGexImporterTest::meshMetrics() {
 void OpenGexImporterTest::meshInvalidPrimitive() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer.mesh3DCount(), 6);
+    CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -661,7 +661,7 @@ void OpenGexImporterTest::meshInvalidPrimitive() {
 void OpenGexImporterTest::meshUnsupportedSize() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer.mesh3DCount(), 6);
+    CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -672,7 +672,7 @@ void OpenGexImporterTest::meshUnsupportedSize() {
 void OpenGexImporterTest::meshNoPositions() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer.mesh3DCount(), 6);
+    CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -683,7 +683,7 @@ void OpenGexImporterTest::meshNoPositions() {
 void OpenGexImporterTest::meshMismatchedSizes() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer.mesh3DCount(), 6);
+    CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -694,7 +694,7 @@ void OpenGexImporterTest::meshMismatchedSizes() {
 void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer.mesh3DCount(), 6);
+    CORRADE_COMPARE(importer.mesh3DCount(), 5);
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -705,12 +705,12 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
 #ifndef MAGNUM_TARGET_WEBGL
 void OpenGexImporterTest::meshUnsupportedIndexType() {
     OpenGexImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer.mesh3DCount(), 6);
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid-int64.ogex")));
+    CORRADE_COMPARE(importer.mesh3DCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer.mesh3D(5));
+    CORRADE_VERIFY(!importer.mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices\n");
 }
 #endif

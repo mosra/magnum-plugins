@@ -31,14 +31,6 @@ GeometryObject /*invalidIndexSubArraySize*/ {
     Mesh (primitive = "lines") {
         VertexArray (attrib = "position") { float { } }
 
-        IndexArray { unsigned_int64[3] { } }
-    }
-}
-
-GeometryObject /*unsupportedIndexType*/ {
-    Mesh {
-        VertexArray (attrib = "position") { float { } }
-
-        IndexArray { unsigned_int64[3] { } }
+        IndexArray { unsigned_int32[3] { } }
     }
 }
