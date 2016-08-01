@@ -23,8 +23,18 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(CORRADE_TARGET_EMSCRIPTEN)
+    set(STANFORDIMPORTER_TEST_DIR "")
+else()
+    set(STANFORDIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
 corrade_add_test(StanfordImporterTest Test.cpp LIBRARIES MagnumStanfordImporterTestLib)
 target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+if(CORRADE_TARGET_EMSCRIPTEN)
+    emscripten_embed_file(StanfordImporterTest . "/")
+endif()

@@ -23,8 +23,21 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(CORRADE_TARGET_EMSCRIPTEN)
+    set(PNGIMPORTER_TEST_DIR "")
+    set(JPEGIMPORTER_TEST_DIR "")
+else()
+    set(PNGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test)
+    set(JPEGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test)
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
 corrade_add_test(StbImageImporterTest StbImageImporterTest.cpp LIBRARIES MagnumStbImageImporterTestLib)
 target_include_directories(StbImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+if(CORRADE_TARGET_EMSCRIPTEN)
+    emscripten_embed_file(StbImageImporterTest ../../PngImporter/Test "/")
+    emscripten_embed_file(StbImageImporterTest ../../JpegImporter/Test "/")
+endif()

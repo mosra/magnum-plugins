@@ -81,6 +81,10 @@ if(CORRADE_TARGET_NACL_NEWLIB OR CORRADE_TARGET_EMSCRIPTEN)
     set(BUILD_STATIC ON)
 endif()
 
+if(CORRADE_TARGET_EMSCRIPTEN)
+    include(UseEmscripten)
+endif()
+
 if(BUILD_TESTS)
     find_package(Corrade REQUIRED TestSuite)
     if(CORRADE_TARGET_IOS)

@@ -23,8 +23,18 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(CORRADE_TARGET_EMSCRIPTEN)
+    set(MINIEXRIMAGECONVERTER_TEST_DIR "")
+else()
+    set(MINIEXRIMAGECONVERTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
 corrade_add_test(MiniExrImageConverterTest MiniExrImageConverterTest.cpp LIBRARIES MagnumMiniExrImageConverterTestLib)
 target_include_directories(MiniExrImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+if(CORRADE_TARGET_EMSCRIPTEN)
+    emscripten_embed_file(MiniExrImageConverterTest . "/")
+endif()

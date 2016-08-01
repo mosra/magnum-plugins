@@ -23,6 +23,12 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(CORRADE_TARGET_EMSCRIPTEN)
+    set(OPENGEXIMPORTER_TEST_DIR "")
+else()
+    set(OPENGEXIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
@@ -35,4 +41,8 @@ target_include_directories(OpenGexImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DI
 # when building the static library. EH.
 if(WIN32)
     target_compile_definitions(OpenGexImporterTest PRIVATE "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
+endif()
+
+if(CORRADE_TARGET_EMSCRIPTEN)
+    emscripten_embed_file(OpenGexImporterTest . "/")
 endif()
