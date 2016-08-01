@@ -202,9 +202,7 @@ const std::initializer_list<Validation::Structure> structureInfo{
                                    #endif
                                    /** @todo Half */
                                    Type::Float,
-                                   #ifndef MAGNUM_TARGET_GLES
                                    Type::Double,
-                                   #endif
                                    Type::String,
                                    Type::Reference,
                                    Type::Type}, 0, 0,
@@ -363,10 +361,7 @@ const std::initializer_list<Validation::Structure> structureInfo{
                                    {morph, PropertyType::UnsignedInt, OptionalProperty}},
                         Primitives{/** @todo half */
                                    Type::Float,
-                                   #ifndef MAGNUM_TARGET_GLES
-                                   Type::Double
-                                   #endif
-                                   }, 1, 0,
+                                   Type::Double}, 1, 0,
                         Structures{{Extension, {}}}}};
 
 }}}

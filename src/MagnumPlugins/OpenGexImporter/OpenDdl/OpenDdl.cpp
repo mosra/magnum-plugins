@@ -51,9 +51,7 @@ Debug& operator<<(Debug& debug, const Type value) {
         #endif
         /** @todo Half */
         _c(Float)
-        #ifndef MAGNUM_TARGET_GLES
         _c(Double)
-        #endif
         _c(String)
         _c(Reference)
         _c(Type)
@@ -80,9 +78,7 @@ Debug& operator<<(Debug& debug, const PropertyType value) {
         #endif
         /** @todo Half */
         _c(Float)
-        #ifndef MAGNUM_TARGET_GLES
         _c(Double)
-        #endif
         _c(String)
         _c(Reference)
         _c(Type)
@@ -270,9 +266,7 @@ bool Document::parse(Containers::ArrayView<const char> data, const std::initiali
                     #endif
                     /** @todo Half */
                     _c(Float, float)
-                    #ifndef MAGNUM_TARGET_GLES
                     _c(Double, double)
-                    #endif
                     _c(String, string)
                     _c(Reference, ref)
                     _c(Type, type)
@@ -412,9 +406,7 @@ template<class T> struct ExtractFloatingPointDataListItem {
     template<> struct ExtractDataListItem<Type::T>: ExtractFloatingPointDataListItem<T> {};
 /** @todo Half */
 _c(Float)
-#ifndef MAGNUM_TARGET_GLES
 _c(Double)
-#endif
 #undef _c
 
 template<> struct ExtractDataListItem<Type::String> {
@@ -619,9 +611,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
             #endif
             /** @todo Half */
             _c(Float)
-            #ifndef MAGNUM_TARGET_GLES
             _c(Double)
-            #endif
             _c(String)
             _c(Type)
             #undef _c
@@ -1143,9 +1133,7 @@ bool Property::isTypeCompatibleWith(PropertyType type) const {
 
         /** @todo Half */
         case PropertyType::Float:
-        #ifndef MAGNUM_TARGET_GLES
         case PropertyType::Double:
-        #endif
             /** @todo Implement extracting float properties from binary */
             return _data.get().type == Implementation::InternalPropertyType::Float;
 

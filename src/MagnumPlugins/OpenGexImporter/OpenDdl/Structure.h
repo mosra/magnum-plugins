@@ -384,9 +384,7 @@ namespace Implementation {
     #endif
     /** @todo Half */
     _c(Float)
-    #ifndef MAGNUM_TARGET_GLES
     _c(Double)
-    #endif
     #undef _c
     #endif
 }

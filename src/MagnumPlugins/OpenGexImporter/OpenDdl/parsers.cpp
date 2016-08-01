@@ -284,9 +284,13 @@ namespace {
 
 template<class> struct IntegralType;
 template<> struct IntegralType<Float> { typedef UnsignedInt Type; };
-#ifndef MAGNUM_TARGET_GLES
-template<> struct IntegralType<Double> { typedef UnsignedLong Type; };
-#endif
+template<> struct IntegralType<Double> {
+    #ifndef MAGNUM_TARGET_WEBGL
+    typedef UnsignedLong Type;
+    #else
+    typedef UnsignedInt Type;
+    #endif
+};
 template<class T> using IntegralTypeFor = typename IntegralType<T>::Type;
 
 template<class> struct ExtractToType;
@@ -327,11 +331,9 @@ template<class T> using ExtractedType = typename ExtractToType<T>::Type;
 template<> struct ExtractToType<Float> {
     static Float extract(const std::string& buffer) { return std::stof(buffer); }
 };
-#ifndef MAGNUM_TARGET_GLES
 template<> struct ExtractToType<Double> {
     static Double extract(const std::string& buffer) { return std::stod(buffer); }
 };
-#endif
 
 template<class> constexpr Type typeFor();
 #define _c(T) template<> constexpr Type typeFor<T>() { return Type::T; }
@@ -346,9 +348,7 @@ _c(UnsignedLong)
 _c(Long)
 #endif
 _c(Float)
-#ifndef MAGNUM_TARGET_GLES
 _c(Double)
-#endif
 #undef _c
 #ifdef CORRADE_TARGET_APPLE
 #if LONG_MAX == 0x7FFFFFFFFFFFFFFF
@@ -576,9 +576,7 @@ template<class T> std::pair<const char*, T> floatingPointLiteral(const Container
 }
 
 template std::pair<const char*, Float> floatingPointLiteral<Float>(Containers::ArrayView<const char>, std::string&, ParseError&);
-#ifndef MAGNUM_TARGET_GLES
 template std::pair<const char*, Double> floatingPointLiteral<Double>(Containers::ArrayView<const char>, std::string&, ParseError&);
-#endif
 
 std::pair<const char*, std::string> stringLiteral(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Propagate errors */
@@ -687,9 +685,7 @@ std::pair<const char*, Type> possiblyTypeLiteral(const Containers::ArrayView<con
     #endif
     /** @todo Half */
     _c(float, Float)
-    #ifndef MAGNUM_TARGET_GLES
     _c(double, Double)
-    #endif
     _c(string, String)
     _c(ref, Reference)
     _c(type, Type)

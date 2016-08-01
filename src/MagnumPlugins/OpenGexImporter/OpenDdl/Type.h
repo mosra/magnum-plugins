@@ -89,14 +89,8 @@ enum class Type: UnsignedInt {
     /** Float (32 bit). Stored in @ref Magnum::Float "Float" type. */
     Float,
 
-    #ifndef MAGNUM_TARGET_GLES
-    /**
-     * Double (64 bit). Stored in @ref Magnum::Double "Double" type.
-     * @requires_gl Only single-precision types are available in OpenGL ES and
-     *      WebGL.
-     */
+    /** Double (64 bit). Stored in @ref Magnum::Double "Double" type. */
     Double,
-    #endif
 
     /** UTF-8 string. Stored in `std::string` type. */
     String,
@@ -163,14 +157,8 @@ enum class PropertyType: UnsignedByte {
     /** Float (32 bit). Stored in @ref Magnum::Float "Float" type. */
     Float,
 
-    #ifndef MAGNUM_TARGET_GLES
-    /**
-     * Double (64 bit). Stored as if it is @ref PropertyType::Float.
-     * @requires_gl Only single-precision types are available in OpenGL ES and
-     *      WebGL.
-     */
+    /** Double (64 bit). Stored as if it is @ref PropertyType::Float. */
     Double,
-    #endif
 
     /** UTF-8 string. Stored in `std::string` type. */
     String,

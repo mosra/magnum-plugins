@@ -469,10 +469,8 @@ template<class Result, std::size_t originalSize> std::vector<Result> extractVert
         /** @todo half */
         case OpenDdl::Type::Float:
             return extractVertexData3<Result, Math::Vector<originalSize, Float>>(vertexArray);
-        #ifndef MAGNUM_TARGET_GLES
         case OpenDdl::Type::Double:
             return extractVertexData3<Result, Math::Vector<originalSize, Double>>(vertexArray);
-        #endif
         default: CORRADE_ASSERT_UNREACHABLE();
     }
 
@@ -541,11 +539,9 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
         const OpenDdl::Structure vertexArrayData = vertexArray.firstChild();
 
         /* Sanity checks (would be too bloaty to do in actual templated code) */
-        if(vertexArrayData.type() != OpenDdl::Type::Float
-           #ifndef MAGNUM_TARGET_GLES
-           && vertexArrayData.type() != OpenDdl::Type::Double
-           #endif
-        ) {
+        if(vertexArrayData.type() != OpenDdl::Type::Float &&
+           vertexArrayData.type() != OpenDdl::Type::Double)
+        {
             Error() << "Trade::OpenGexImporter::mesh3D(): unsupported vertex array type" << vertexArrayData.type();
             return std::nullopt;
         }

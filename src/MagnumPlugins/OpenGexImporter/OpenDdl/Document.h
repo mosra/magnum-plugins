@@ -451,9 +451,7 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
         #endif
         /** @todo Half */
         std::vector<Float> _floats;
-        #ifndef MAGNUM_TARGET_GLES
         std::vector<Double> _doubles;
-        #endif
         std::vector<std::string> _strings;
         std::vector<std::size_t> _references;
         std::vector<Type> _types;
@@ -482,9 +480,7 @@ _c(Long, _longs)
 #endif
 /** @todo Half */
 _c(Float, _floats)
-#ifndef MAGNUM_TARGET_GLES
 _c(Double, _doubles)
-#endif
 _c(std::string, _strings)
 _c(Type, _types)
 #undef _c
@@ -506,9 +502,7 @@ _c(Long, Long)
 #endif
 /** @todo Half */
 _c(Float, Float)
-#ifndef MAGNUM_TARGET_GLES
 _c(Double, Double)
-#endif
 _c(String, std::string)
 _c(Type, Type)
 #undef _c
