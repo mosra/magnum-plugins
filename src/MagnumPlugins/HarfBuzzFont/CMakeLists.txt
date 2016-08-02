@@ -72,7 +72,9 @@ endif()
 install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
 if(BUILD_GL_TESTS)
-    add_library(MagnumHarfBuzzFontTestLib STATIC $<TARGET_OBJECTS:HarfBuzzFontObjects>)
+    add_library(MagnumHarfBuzzFontTestLib STATIC
+        $<TARGET_OBJECTS:HarfBuzzFontObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumHarfBuzzFontTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumHarfBuzzFontTestLib
         Magnum::Magnum

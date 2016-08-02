@@ -91,7 +91,9 @@ if(BUILD_TESTS)
             "MAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC"
             "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
     else()
-        add_library(MagnumOpenGexImporterTestLib STATIC $<TARGET_OBJECTS:OpenGexImporterObjects>)
+        add_library(MagnumOpenGexImporterTestLib STATIC
+            $<TARGET_OBJECTS:OpenGexImporterObjects>
+            ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     endif()
     target_include_directories(MagnumOpenGexImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumOpenGexImporterTestLib

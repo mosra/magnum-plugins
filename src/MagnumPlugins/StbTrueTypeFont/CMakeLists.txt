@@ -66,7 +66,9 @@ install(FILES ${StbTrueTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_IN
 
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)
-    add_library(MagnumStbTrueTypeFontTestLib STATIC $<TARGET_OBJECTS:StbTrueTypeFontObjects>)
+    add_library(MagnumStbTrueTypeFontTestLib STATIC
+        $<TARGET_OBJECTS:StbTrueTypeFontObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumStbTrueTypeFontTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)

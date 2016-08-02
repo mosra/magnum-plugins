@@ -81,7 +81,9 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGI
 
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)
-    add_library(MagnumFreeTypeFontTestLib STATIC $<TARGET_OBJECTS:FreeTypeFontObjects>)
+    add_library(MagnumFreeTypeFontTestLib STATIC
+        $<TARGET_OBJECTS:FreeTypeFontObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumFreeTypeFontTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)

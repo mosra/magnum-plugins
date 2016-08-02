@@ -56,7 +56,9 @@ target_link_libraries(MiniExrImageConverter Magnum::Magnum)
 install(FILES ${MiniExrImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
 
 if(BUILD_TESTS)
-    add_library(MagnumMiniExrImageConverterTestLib STATIC $<TARGET_OBJECTS:MiniExrImageConverterObjects>)
+    add_library(MagnumMiniExrImageConverterTestLib STATIC
+        $<TARGET_OBJECTS:MiniExrImageConverterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumMiniExrImageConverterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumMiniExrImageConverterTestLib Magnum::Magnum)
     add_subdirectory(Test)

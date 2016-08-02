@@ -56,7 +56,9 @@ target_link_libraries(StbPngImageConverter Magnum::Magnum)
 install(FILES ${StbPngImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbPngImageConverter)
 
 if(BUILD_TESTS)
-    add_library(MagnumStbPngImageConverterTestLib STATIC $<TARGET_OBJECTS:StbPngImageConverterObjects>)
+    add_library(MagnumStbPngImageConverterTestLib STATIC
+        $<TARGET_OBJECTS:StbPngImageConverterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumStbPngImageConverterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumStbPngImageConverterTestLib Magnum::Magnum)
     add_subdirectory(Test)

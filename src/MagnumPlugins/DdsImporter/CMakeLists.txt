@@ -55,7 +55,9 @@ target_link_libraries(DdsImporter Magnum::Magnum)
 install(FILES ${DdsImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumDdsImporterTestLib STATIC $<TARGET_OBJECTS:DdsImporterObjects>)
+    add_library(MagnumDdsImporterTestLib STATIC
+        $<TARGET_OBJECTS:DdsImporterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumDdsImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumDdsImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)

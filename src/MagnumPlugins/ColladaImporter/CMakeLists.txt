@@ -75,7 +75,9 @@ endif()
 install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumColladaImporterTestLib STATIC $<TARGET_OBJECTS:ColladaImporterObjects>)
+    add_library(MagnumColladaImporterTestLib STATIC
+        $<TARGET_OBJECTS:ColladaImporterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumColladaImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     # Supress warnings from Qt includes
     target_include_directories(MagnumColladaImporterTestLib SYSTEM PUBLIC ${QT_INCLUDE_DIR})

@@ -59,7 +59,9 @@ target_link_libraries(PngImporter Magnum::Magnum ${PNG_LIBRARIES})
 install(FILES ${PngImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumPngImporterTestLib STATIC $<TARGET_OBJECTS:PngImporterObjects>)
+    add_library(MagnumPngImporterTestLib STATIC
+        $<TARGET_OBJECTS:PngImporterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumPngImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumPngImporterTestLib Magnum::Magnum ${PNG_LIBRARIES})
     add_subdirectory(Test)

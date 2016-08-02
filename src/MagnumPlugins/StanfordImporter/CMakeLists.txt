@@ -54,7 +54,9 @@ target_link_libraries(StanfordImporter Magnum::Magnum)
 install(FILES ${StanfordImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumStanfordImporterTestLib STATIC $<TARGET_OBJECTS:StanfordImporterObjects>)
+    add_library(MagnumStanfordImporterTestLib STATIC
+        $<TARGET_OBJECTS:StanfordImporterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumStanfordImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumStanfordImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)

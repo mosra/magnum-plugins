@@ -59,7 +59,9 @@ target_link_libraries(StbVorbisAudioImporter Magnum::Magnum Magnum::Audio)
 install(FILES ${StbVorbisAudioImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbVorbisAudioImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumStbVorbisAudioImporterTestLib STATIC $<TARGET_OBJECTS:StbVorbisAudioImporterObjects>)
+    add_library(MagnumStbVorbisAudioImporterTestLib STATIC
+        $<TARGET_OBJECTS:StbVorbisAudioImporterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumStbVorbisAudioImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumStbVorbisAudioImporterTestLib Magnum::Magnum Magnum::Audio)
     add_subdirectory(Test)

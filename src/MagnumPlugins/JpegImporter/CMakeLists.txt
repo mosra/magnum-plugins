@@ -59,7 +59,9 @@ target_link_libraries(JpegImporter
 install(FILES ${JpegImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumJpegImporterTestLib STATIC $<TARGET_OBJECTS:JpegImporterObjects>)
+    add_library(MagnumJpegImporterTestLib STATIC
+        $<TARGET_OBJECTS:JpegImporterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumJpegImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumJpegImporterTestLib Magnum::Magnum ${JPEG_LIBRARIES})
     add_subdirectory(Test)

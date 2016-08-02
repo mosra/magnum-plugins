@@ -56,7 +56,9 @@ target_link_libraries(StbImageImporter Magnum::Magnum)
 install(FILES ${StbImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageImporter)
 
 if(BUILD_TESTS)
-    add_library(MagnumStbImageImporterTestLib STATIC $<TARGET_OBJECTS:StbImageImporterObjects>)
+    add_library(MagnumStbImageImporterTestLib STATIC
+        $<TARGET_OBJECTS:StbImageImporterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     target_include_directories(MagnumStbImageImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(MagnumStbImageImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
