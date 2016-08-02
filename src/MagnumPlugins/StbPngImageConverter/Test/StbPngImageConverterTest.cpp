@@ -82,7 +82,13 @@ void StbPngImageConverterTest::wrongFormat() {
 }
 
 void StbPngImageConverterTest::wrongType() {
-    ImageView2D image{PixelFormat::Red, PixelType::Float, {}, nullptr};
+    ImageView2D image{
+        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
+        PixelFormat::Red,
+        #else
+        PixelFormat::Luminance,
+        #endif
+        PixelType::Float, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
