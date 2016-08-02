@@ -78,14 +78,24 @@ MiniExrImageConverterTest::MiniExrImageConverterTest() {
 }
 
 void MiniExrImageConverterTest::wrongFormat() {
-    ImageView2D image{PixelFormat::Red, PixelType::HalfFloat, {}, nullptr};
+    ImageView2D image{
+        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
+        PixelFormat::Red,
+        #else
+        PixelFormat::Luminance,
+        #endif
+        PixelType::HalfFloat, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
 
     const auto data = MiniExrImageConverter{}.exportToData(image);
     CORRADE_VERIFY(!data);
+    #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
     CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format PixelFormat::Red\n");
+    #else
+    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format PixelFormat::Luminance\n");
+    #endif
 }
 
 void MiniExrImageConverterTest::wrongType() {
