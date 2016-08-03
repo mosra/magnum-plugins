@@ -81,14 +81,13 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& 
     }
 
     /* Data properties */
-    std::size_t offset;
-    Math::Vector2<std::size_t> dataSize;
+    Math::Vector2<std::size_t> offset, dataSize;
     std::tie(offset, dataSize, std::ignore) = image.dataProperties();
 
     /* Reverse rows in image data */
     Containers::Array<unsigned char> reversedData{image.data().size()};
     for(Int y = 0; y != image.size().y(); ++y) {
-        std::copy(image.data<unsigned char>() + offset + y*dataSize.x(), image.data<unsigned char>() + offset + (y + 1)*dataSize.x(), reversedData + (image.size().y() - y - 1)*dataSize.x());
+        std::copy(image.data<unsigned char>() + offset.sum() + y*dataSize.x(), image.data<unsigned char>() + offset.sum() + (y + 1)*dataSize.x(), reversedData + (image.size().y() - y - 1)*dataSize.x());
     }
 
     Int size;
