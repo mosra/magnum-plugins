@@ -43,7 +43,7 @@ rem Build LibJPEG Turbo
 cd libjpeg-turbo
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DWITH_JPEG8=ON -DWITH_SIMD=OFF -G Ninja
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DWITH_JPEG8=ON -DWITH_SIMD=OFF -G "MinGW Makefiles"
 cmake --build .
 cmake --build . --target install
 cd .. && cd ..
