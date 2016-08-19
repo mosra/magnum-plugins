@@ -10,8 +10,13 @@ environment:
   matrix:
   - TARGET: desktop
     COMPILER: msvc
+    ARCHITECTURE: x86
+  - TARGET: desktop
+    COMPILER: msvc
+    ARCHITECTURE: amd64
   - TARGET: desktop
     COMPILER: mingw
+    ARCHITECTURE: amd64
 
 notifications:
 - provider: Webhook
@@ -28,8 +33,8 @@ install:
 # OpenAL
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.17.2-bin.zip appveyor DownloadFile http://kcat.strangesoft.net/openal-binaries/openal-soft-1.17.2-bin.zip
 - IF NOT "%TARGET%" == "rt" 7z x openal-soft-1.17.2-bin.zip && ren openal-soft-1.17.2-bin openal && echo [General] > %APPDATA%/alsoft.ini & echo drivers=null >> %APPDATA%/alsoft.ini
-- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" ren openal\bin\Win32\soft_oal.dll OpenAL32.dll
-- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" ren openal\bin\Win64\soft_oal.dll OpenAL32.dll
+- IF "%ARCHITECTURE%" == "x86" ren openal\bin\Win32\soft_oal.dll OpenAL32.dll
+- IF "%ARCHITECTURE%" == "amd64" ren openal\bin\Win64\soft_oal.dll OpenAL32.dll
 
 # LibJPEG Turbo
 - IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.2.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.2.0/libjpeg-turbo-1.2.0.tar.gz
@@ -38,7 +43,8 @@ install:
 - ren libjpeg-turbo-1.2.0 libjpeg-turbo
 
 build_script:
-- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" call package\ci\appveyor-desktop.bat
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" IF "%ARCHITECTURE%" == "amd64" call package\ci\appveyor-desktop-amd64.bat
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" IF "%ARCHITECTURE%" == "x86" call package\ci\appveyor-desktop.bat
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" call package\ci\appveyor-desktop-mingw.bat
 
 cache:
