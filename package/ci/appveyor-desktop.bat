@@ -57,6 +57,3 @@ cmake . -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/Deploy -DBUILD_TESTS=OFF
 cmake --build . --target install
 cd ../Deploy
 7z a ../magnum-plugins.zip *
-
-rem Test
-ctest -V -E GLTest || exit /b

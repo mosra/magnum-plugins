@@ -44,3 +44,11 @@ build_script:
 cache:
 - openal-soft-1.17.2-bin.zip
 - libjpeg-turbo-1.2.0.tar.gz
+
+test_script:
+- cd %APPVEYOR_BUILD_FOLDER%/build
+- SET fail=0
+- ctest --output-on-failure -E GLTest || SET fail=1 & ver > nul
+- cd %APPVEYOR_BUILD_FOLDER%
+- appveyor PushArtifact magnum-plugins.zip
+- exit %fail%
