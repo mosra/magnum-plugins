@@ -15,6 +15,8 @@ cmake --build . --target install || exit /b
 cd .. && cd ..
 
 rem Build Magnum
+git clone --depth 1 git://github.com/mosra/magnum.git || exit /b
+cd magnum || exit /b
 mkdir build && cd build || exit /b
 cmake .. ^
     -DCMAKE_BUILD_TYPE=Release ^
