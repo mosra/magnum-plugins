@@ -25,6 +25,7 @@
 
 #include "StbImageImporter.h"
 
+#include <algorithm>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -104,9 +105,11 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
         default: CORRADE_ASSERT_UNREACHABLE();
     }
 
-    /* Wrap the data in an array with custom deleter (we can't use delete[]) */
-    Containers::Array<char> imageData{reinterpret_cast<char*>(data), std::size_t(size.product()*components),
-        [](char* data, std::size_t) { stbi_image_free(data); }};
+    /* Copy the data into array with default deleter (we can't use custom
+       deleter to avoid dangling function pointer call when the plugin is
+       unloaded sooner than the array is deleted) */
+    Containers::Array<char> imageData{std::size_t(size.product()*components)};
+    std::copy_n(reinterpret_cast<char*>(data), imageData.size(), imageData.begin());
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;

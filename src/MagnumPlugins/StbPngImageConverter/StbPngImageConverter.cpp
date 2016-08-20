@@ -25,6 +25,7 @@
 
 #include "StbPngImageConverter.h"
 
+#include <algorithm>
 #include <Corrade/Containers/Array.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -94,9 +95,11 @@ Containers::Array<char> StbPngImageConverter::doExportToData(const ImageView2D& 
     unsigned char* const data = stbi_write_png_to_mem(reversedData, dataSize.x(), image.size().x(), image.size().y(), components, &size);
     CORRADE_INTERNAL_ASSERT(data);
 
-    /* Wrap the data in an array with custom deleter (we can't use delete[]) */
-    Containers::Array<char> fileData{reinterpret_cast<char*>(data), std::size_t(size),
-        [](char* data, std::size_t) { std::free(data); }};
+    /* Copy the data into array with default deleter (we can't use custom
+       deleter to avoid dangling function pointer call when the plugin is
+       unloaded sooner than the array is deleted) */
+    Containers::Array<char> fileData{std::size_t(size)};
+    std::copy_n(reinterpret_cast<char*>(data), fileData.size(), fileData.begin());
 
     return fileData;
 }
