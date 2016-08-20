@@ -43,7 +43,6 @@ auto StbVorbisImporter::doFeatures() const -> Features { return Feature::OpenDat
 bool StbVorbisImporter::doIsOpened() const { return _data; }
 
 void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
-
     Int numChannels, frequency;
     Short* decodedData = nullptr;
 
