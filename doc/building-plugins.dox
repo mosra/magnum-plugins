@@ -123,11 +123,10 @@ plugins, for example), modify the last entry in `debian/rules`.
 
 @subsection building-plugins-brew Homebrew formulas
 
-OS X Homebrew formulas are in `package/homebrew` directory. Download the `*.rb`
-file, put it into your Formulas directory and install it using the following
-command:
+OS X Homebrew formulas are in `package/homebrew` directory. Either use the
+`*.rb` files directly or use the tap at https://github.com/mosra/homebrew-magnum:
 
-    brew install --HEAD magnum-plugins
+    brew install --HEAD mosra/magnum/magnum-plugins
 
 @section building-plugins-ci Continuous Integration
 
