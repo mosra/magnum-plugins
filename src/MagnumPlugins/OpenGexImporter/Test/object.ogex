@@ -14,7 +14,7 @@ Node {
 
 BoneNode {
     LightNode {
-        ObjectRef { ref { null } }
+        ObjectRef { ref { %myLight } }
     }
 }
 
@@ -25,3 +25,5 @@ GeometryObject %myMesh {
         VertexArray (attrib = "position") { float {} }
     }
 }
+
+LightObject %myLight (type = "spot") {}

@@ -64,6 +64,7 @@ struct OpenGexImporter::Document {
 
     std::vector<OpenDdl::Structure> nodes,
         cameras,
+        lights,
         meshes,
         materials,
         textures;
@@ -174,10 +175,13 @@ void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
     for(const OpenDdl::Structure geometry: d->document.childrenOf(OpenGex::GeometryObject))
         d->meshes.push_back(geometry);
 
-    /* Gather all light textures */
-    for(const OpenDdl::Structure lightObject: d->document.childrenOf(OpenGex::LightObject))
-        for(const OpenDdl::Structure texture: lightObject.childrenOf(OpenGex::Texture))
+    /* Gather all lights and light textures */
+    for(const OpenDdl::Structure light: d->document.childrenOf(OpenGex::LightObject)) {
+        d->lights.push_back(light);
+
+        for(const OpenDdl::Structure texture: light.childrenOf(OpenGex::Texture))
             d->textures.push_back(texture);
+    }
 
     /* Gather all materials */
     {
@@ -436,8 +440,15 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
 
     /* Light object */
     } else if(node.identifier() == OpenGex::LightNode) {
-        /** @todo actually extract the ID when lights are supported */
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, 0, &node}};
+        /* Light ID */
+        const auto light = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
+        if(!light) {
+            Error() << "Trade::OpenGexImporter::object3D(): null light reference";
+            return nullptr;
+        }
+        const UnsignedInt lightId = structureId(_d->lights, *light);
+
+        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, lightId, &node}};
     }
 
     /* Bone or empty object otherwise */

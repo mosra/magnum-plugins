@@ -1,0 +1,11 @@
+LightNode {
+    ObjectRef { ref { %myOtherLight } }
+}
+
+LightNode {
+    ObjectRef { ref { null } }
+}
+
+LightObject %myLight (type = "infinite") {}
+
+LightObject %myOtherLight (type = "point") {}
