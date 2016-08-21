@@ -64,8 +64,11 @@ and @ref plugins for more information.
 -   Additional material references after the first one for given geometry node
     are ignored.
 -   Geometry node visibility, shadow and motion blur properties are ignored.
--   Camera and light object data are not supported yet, bone node is parsed as
-    @ref Trade::ObjectInstanceType3D::Empty.
+
+#### Light import
+
+-   Light attenuation properties are not yet supported.
+-   Light textures are not yet supported.
 
 #### Mesh import
 
@@ -167,6 +170,9 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImport
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
+
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doLightCount() const override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::optional<LightData> doLight(UnsignedInt id) override;
 
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;

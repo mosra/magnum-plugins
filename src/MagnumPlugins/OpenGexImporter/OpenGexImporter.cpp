@@ -34,6 +34,7 @@
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
@@ -456,6 +457,78 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
     return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, &node}};
 }
 
+namespace {
+
+template<class Result, std::size_t originalSize> Result extractColorData2(const OpenDdl::Structure floatArray) {
+    return Result::pad(*reinterpret_cast<const Math::Vector<originalSize, Float>*>(floatArray.asArray<Float>().data()));
+}
+
+template<class Result> Result extractColorData(const OpenDdl::Structure floatArray) {
+    switch(floatArray.subArraySize()) {
+        case 3: return extractColorData2<Result, 3>(floatArray);
+        case 4: return extractColorData2<Result, 4>(floatArray);
+    }
+
+    CORRADE_ASSERT_UNREACHABLE();
+}
+
+}
+
+UnsignedInt OpenGexImporter::doLightCount() const {
+    return _d->lights.size();
+}
+
+std::optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
+    const OpenDdl::Structure& light = _d->lights[id];
+
+    Color3 lightColor{1.0f};
+    Float lightIntensity{1.0f};
+    LightData::Type lightType;
+    const auto type = light.propertyOf(OpenGex::type);
+    if(type.as<std::string>() == "infinite")
+        lightType = LightData::Type::Infinite;
+    else if(type.as<std::string>() == "point")
+        lightType = LightData::Type::Point;
+    else if(type.as<std::string>() == "spot")
+        lightType = LightData::Type::Spot;
+    else {
+        Error() << "Trade::OpenGexImporter::light(): invalid type";
+        return std::nullopt;
+    }
+
+    for(const OpenDdl::Structure color: light.childrenOf(OpenGex::Color)) {
+        const OpenDdl::Structure floatArray = color.firstChild();
+        if(floatArray.subArraySize() != 3 && floatArray.subArraySize() != 4) {
+            Error() << "Trade::OpenGexImporter::light(): invalid color structure";
+            return std::nullopt;
+        }
+
+        const auto attrib = color.propertyOf(OpenGex::attrib);
+        if(attrib.as<std::string>() == "color") {
+            lightColor = extractColorData<Color3>(floatArray);
+        } else {
+            Error() << "Trade::OpenGexImporter::light(): invalid color";
+            return std::nullopt;
+        }
+    }
+
+    for(const OpenDdl::Structure param: light.childrenOf(OpenGex::Param)) {
+        const OpenDdl::Structure data = param.firstChild();
+
+        const auto attrib = param.propertyOf(OpenGex::attrib);
+        if(attrib.as<std::string>() == "intensity")
+            lightIntensity = data.as<Float>();
+        else {
+            Error() << "Trade::OpenGexImporter::light(): invalid parameter";
+            return std::nullopt;
+        }
+    }
+
+    /** @todo parse the Atten structure */
+
+    return LightData{lightType, lightColor, lightIntensity, &light};
+}
+
 UnsignedInt OpenGexImporter::doMesh3DCount() const {
     return _d->meshes.size();
 }
@@ -645,23 +718,6 @@ Int OpenGexImporter::doMaterialForName(const std::string& name) {
 std::string OpenGexImporter::doMaterialName(const UnsignedInt id) {
     const auto name = _d->materials[id].findFirstChildOf(OpenGex::Name);
     return name ? name->firstChild().as<std::string>() : "";
-}
-
-namespace {
-
-template<class Result, std::size_t originalSize> Result extractColorData2(const OpenDdl::Structure floatArray) {
-    return Result::pad(*reinterpret_cast<const Math::Vector<originalSize, Float>*>(floatArray.asArray<Float>().data()));
-}
-
-template<class Result> Result extractColorData(const OpenDdl::Structure floatArray) {
-    switch(floatArray.subArraySize()) {
-        case 3: return extractColorData2<Result, 3>(floatArray);
-        case 4: return extractColorData2<Result, 4>(floatArray);
-    }
-
-    CORRADE_ASSERT_UNREACHABLE();
-}
-
 }
 
 std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const UnsignedInt id) {

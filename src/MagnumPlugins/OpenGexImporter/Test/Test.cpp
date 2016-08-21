@@ -38,6 +38,7 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/CameraData.h>
+#include <Magnum/Trade/LightData.h>
 
 #include "MagnumPlugins/OpenGexImporter/OpenGex.h"
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
@@ -73,6 +74,9 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void objectScaling();
     void objectTransformationConcatentation();
     void objectTransformationMetrics();
+
+    void light();
+    void lightInvalid();
 
     void mesh();
     void meshIndexed();
@@ -122,6 +126,9 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::objectScaling,
               &OpenGexImporterTest::objectTransformationConcatentation,
               &OpenGexImporterTest::objectTransformationMetrics,
+
+              &OpenGexImporterTest::light,
+              &OpenGexImporterTest::lightInvalid,
 
               &OpenGexImporterTest::mesh,
               &OpenGexImporterTest::meshIndexed,
@@ -585,6 +592,65 @@ void OpenGexImporterTest::objectTransformationMetrics() {
         std::unique_ptr<Trade::ObjectData3D> matrix = importer.object3D(6);
         CORRADE_VERIFY(matrix);
         CORRADE_COMPARE(matrix->transformation(), Matrix4::scaling({1.0f, 5.5f, -2.0f}));
+    }
+}
+
+void OpenGexImporterTest::light() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "light.ogex")));
+    CORRADE_COMPARE(importer.lightCount(), 3);
+
+    /* Infinite light, everything specified */
+    {
+        std::optional<Trade::LightData> light = importer.light(0);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Infinite);
+        CORRADE_COMPARE(light->color(), (Color3{0.7f, 1.0f, 0.1f}));
+        CORRADE_COMPARE(light->intensity(), 3.0f);
+
+    /* Point light, default color */
+    } {
+        std::optional<Trade::LightData> light = importer.light(1);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->color(), (Color3{1.0f, 1.0f, 1.0f}));
+        CORRADE_COMPARE(light->intensity(), 0.5f);
+
+    /* Spot light, default intensity */
+    } {
+        std::optional<Trade::LightData> light = importer.light(2);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->color(), (Color3{0.1f, 0.0f, 0.1f}));
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+    }
+}
+
+void OpenGexImporterTest::lightInvalid() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "light-invalid.ogex")));
+    CORRADE_COMPARE(importer.lightCount(), 4);
+
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer.light(0));
+        CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::light(): invalid type\n");
+    } {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer.light(1));
+        CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::light(): invalid parameter\n");
+    } {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer.light(2));
+        CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::light(): invalid color\n");
+    } {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer.light(3));
+        CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::light(): invalid color structure\n");
     }
 }
 
