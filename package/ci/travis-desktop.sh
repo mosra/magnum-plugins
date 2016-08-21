@@ -35,6 +35,7 @@ cd ../..
 
 mkdir build && cd build
 cmake .. \
+    -DCMAKE_CXX_FLAGS=$COVERAGE \
     -DCMAKE_PREFIX_PATH="$HOME/deps;$HOME/harfbuzz" \
     -DCMAKE_BUILD_TYPE=Release \
     -DWITH_ANYAUDIOIMPORTER=ON \

@@ -61,6 +61,8 @@ before_install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
 
 install:
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then pip install --user cpp-coveralls && export COVERAGE="--coverage"; fi
+
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX=g++-4.7; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PLATFORM_GL_API=GLX; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then export PLATFORM_GL_API=CGL; fi
@@ -78,3 +80,7 @@ script:
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then ./package/ci/travis-emscripten.sh; fi
 # Travis somehow is not able to gather all output, try to force it using this
 - sync
+
+after_success:
+# Ignoring all stuff that needs GL context and thus can't be run on Travis
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then coveralls --gcov /usr/bin/gcov-4.7 -E ".*/(Test|corrade/build|magnum/build|magnum-plugins/build|external)/.*" --gcov-options '\-lp'; fi
