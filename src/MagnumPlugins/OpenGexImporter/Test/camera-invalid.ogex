@@ -1,0 +1,3 @@
+CameraObject {
+    Param (attrib = "FoV") { float { 0.97 } }
+}

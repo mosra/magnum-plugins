@@ -61,6 +61,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
 
     void camera();
     void cameraMetrics();
+    void cameraInvalid();
 
     void object();
     void objectCamera();
@@ -109,6 +110,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
 
               &OpenGexImporterTest::camera,
               &OpenGexImporterTest::cameraMetrics,
+              &OpenGexImporterTest::cameraInvalid,
 
               &OpenGexImporterTest::object,
               &OpenGexImporterTest::objectCamera,
@@ -204,7 +206,7 @@ Metric (key = "distance") { string { "0.5" } }
 void OpenGexImporterTest::camera() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera.ogex")));
-    CORRADE_COMPARE(importer.cameraCount(), 3);
+    CORRADE_COMPARE(importer.cameraCount(), 2);
 
     /* Everything specified */
     {
@@ -213,21 +215,15 @@ void OpenGexImporterTest::camera() {
         CORRADE_COMPARE(camera->fov(), 0.97_radf);
         CORRADE_COMPARE(camera->near(), 1.5f);
         CORRADE_COMPARE(camera->far(), 150.0f);
-    }
 
     /* Nothing specified (defaults) */
-    {
+    } {
         std::optional<Trade::CameraData> camera = importer.camera(1);
         CORRADE_VERIFY(camera);
         CORRADE_COMPARE(camera->fov(), Rad{35.0_degf});
         CORRADE_COMPARE(camera->near(), 0.01f);
         CORRADE_COMPARE(camera->far(), 100.0f);
     }
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer.camera(2));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::camera(): invalid parameter\n");
 }
 
 void OpenGexImporterTest::cameraMetrics() {
@@ -240,6 +236,17 @@ void OpenGexImporterTest::cameraMetrics() {
     CORRADE_COMPARE(camera->fov(), 0.97_radf);
     CORRADE_COMPARE(camera->near(), 1.5f);
     CORRADE_COMPARE(camera->far(), 150.0f);
+}
+
+void OpenGexImporterTest::cameraInvalid() {
+    OpenGexImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera-invalid.ogex")));
+    CORRADE_COMPARE(importer.cameraCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer.camera(0));
+    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::camera(): invalid parameter\n");
 }
 
 void OpenGexImporterTest::object() {
