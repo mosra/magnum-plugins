@@ -1,0 +1,17 @@
+LightObject (type = "invalid") {}
+
+LightObject (type = "point") {
+    Param (attrib = "direction") {
+        float { 1.0 }
+    }
+}
+
+LightObject (type = "spot") {
+    Color (attrib = "ambient") {
+        float[3] {}
+    }
+}
+
+LightObject (type = "infinite") {
+    Color (attrib = "color") { float[2] { { 0.0, 0.0 } } }
+}
