@@ -102,6 +102,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
 
     void image();
     void imageInvalid();
+    void imageUnique();
 
     void extension();
 };
@@ -154,6 +155,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
 
               &OpenGexImporterTest::image,
               &OpenGexImporterTest::imageInvalid,
+              &OpenGexImporterTest::imageUnique,
 
               &OpenGexImporterTest::extension});
 }
@@ -936,6 +938,56 @@ void OpenGexImporterTest::imageInvalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer.image2D(1));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n");
+}
+
+void OpenGexImporterTest::imageUnique() {
+    PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
+
+    if(manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("TgaImporter plugin not found, cannot test");
+
+    OpenGexImporter importer{manager};
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-unique.ogex")));
+    CORRADE_COMPARE(importer.textureCount(), 5);
+    CORRADE_COMPARE(importer.image2DCount(), 3);
+
+    /* Verify mapping from textures to unique images */
+    {
+        std::optional<TextureData> texture0 = importer.texture(0);
+        CORRADE_VERIFY(texture0);
+        CORRADE_VERIFY(texture0->image() <= 2);
+
+        std::optional<TextureData> texture4 = importer.texture(4);
+        CORRADE_VERIFY(texture4);
+        CORRADE_COMPARE(texture4->image(), texture0->image());
+
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer.image2D(texture0->image()));
+        CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex1.tga\n");
+    } {
+        std::optional<TextureData> texture1 = importer.texture(1);
+        CORRADE_VERIFY(texture1);
+        CORRADE_VERIFY(texture1->image() <= 2);
+
+        std::optional<TextureData> texture3 = importer.texture(3);
+        CORRADE_VERIFY(texture3);
+        CORRADE_COMPARE(texture3->image(), texture1->image());
+
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer.image2D(texture1->image()));
+        CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex2.tga\n");
+    } {
+        std::optional<TextureData> texture2 = importer.texture(2);
+        CORRADE_VERIFY(texture2);
+        CORRADE_VERIFY(texture2->image() <= 2);
+
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer.image2D(texture2->image()));
+        CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex3.tga\n");
+    }
 }
 
 void OpenGexImporterTest::extension() {

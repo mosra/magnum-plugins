@@ -1,0 +1,27 @@
+Material {
+    Texture (attrib = "diffuse") { /* 1 */
+        string { "/tex2.tga" }
+    }
+}
+
+LightObject (type = "spot") {
+    Texture (attrib = "projection") { /* 0 */
+        string { "/tex1.tga" }
+    }
+}
+
+Material {
+    Texture (attrib = "diffuse") { /* 2 */
+        string { "/tex3.tga" }
+    }
+
+    Texture (attrib = "specular") { /* 3 */
+        string { "/tex2.tga" }
+    }
+}
+
+Material {
+    Texture (attrib = "diffuse") { /* 4 */
+        string { "/tex1.tga" }
+    }
+}
