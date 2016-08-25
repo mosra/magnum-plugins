@@ -277,7 +277,8 @@ bool Document::parse(Containers::ArrayView<const char> data, const std::initiali
                     _c(Reference, ref)
                     _c(Type, type)
                     #undef _c
-                    case Type::Custom: CORRADE_ASSERT_UNREACHABLE();
+                    case Type::Custom:
+                        CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                 }
 
                 e << "literal";
@@ -286,7 +287,7 @@ bool Document::parse(Containers::ArrayView<const char> data, const std::initiali
             }
 
             case Implementation::ParseErrorType::NoError:
-                CORRADE_ASSERT_UNREACHABLE();
+                CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
         e << "on line" << line;
@@ -626,7 +627,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
                 std::tie(i, dataSize) = dataArrayList<Type::Reference>(data.suffix(i), *this, references, buffer, subArraySize, error);
                 break;
             case Type::Custom:
-                CORRADE_ASSERT_UNREACHABLE();
+                CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
         /* Propagate errors */
@@ -1150,7 +1151,7 @@ bool Property::isTypeCompatibleWith(PropertyType type) const {
             return _data.get().type == Implementation::InternalPropertyType(UnsignedByte(type));
     }
 
-    CORRADE_ASSERT_UNREACHABLE();
+    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 std::optional<Structure> Property::asReference() const {

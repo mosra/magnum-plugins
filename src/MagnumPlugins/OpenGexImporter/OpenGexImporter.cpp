@@ -398,7 +398,7 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
 
             matrix = Matrix4::scaling(_d->yUp ? v : fixScalingZUp(v));
 
-        } else CORRADE_ASSERT_UNREACHABLE();
+        } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
         transformation = transformation*matrix;
     }
@@ -469,7 +469,7 @@ template<class Result> Result extractColorData(const OpenDdl::Structure floatArr
         case 4: return extractColorData2<Result, 4>(floatArray);
     }
 
-    CORRADE_ASSERT_UNREACHABLE();
+    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 }
@@ -555,7 +555,7 @@ template<class Result, std::size_t originalSize> std::vector<Result> extractVert
             return extractVertexData3<Result, Math::Vector<originalSize, Float>>(vertexArray);
         case OpenDdl::Type::Double:
             return extractVertexData3<Result, Math::Vector<originalSize, Double>>(vertexArray);
-        default: CORRADE_ASSERT_UNREACHABLE();
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
 }
@@ -573,7 +573,7 @@ template<class Result> std::vector<Result> extractVertexData(const OpenDdl::Stru
             return extractVertexData2<Result, 4>(vertexArray);
     }
 
-    CORRADE_ASSERT_UNREACHABLE();
+    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 template<class T> std::vector<UnsignedInt> extractIndices(const OpenDdl::Structure indexArray) {
@@ -701,7 +701,7 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
                 return std::nullopt;
             #endif
 
-            default: CORRADE_ASSERT_UNREACHABLE();
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     }
 

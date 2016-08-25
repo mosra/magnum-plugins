@@ -463,7 +463,7 @@ template<class T> std::tuple<const char*, T, Int> integralLiteral(const Containe
             break;
         }
 
-        default: CORRADE_ASSERT_UNREACHABLE();
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Decimal literal  */
     } else {
@@ -529,7 +529,7 @@ template<class T> std::pair<const char*, T> floatingPointLiteral(const Container
                 break;
             }
 
-            default: CORRADE_ASSERT_UNREACHABLE();
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
         const T floatValue = reinterpret_cast<T&>(integralValue);
@@ -758,7 +758,7 @@ std::pair<const char*, InternalPropertyType> propertyValue(const Containers::Arr
             case 256: return {i, InternalPropertyType::Character};
         }
 
-        CORRADE_ASSERT_UNREACHABLE();
+        CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     /* Null reference literal */

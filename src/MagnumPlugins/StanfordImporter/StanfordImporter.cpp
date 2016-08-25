@@ -123,7 +123,7 @@ std::size_t sizeOf(Type type) {
         #undef _c
     }
 
-    CORRADE_ASSERT_UNREACHABLE();
+    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 template<FileFormat format, class T> struct EndianSwap;
@@ -154,7 +154,7 @@ template<class T, FileFormat format> T extractAndSkip(const char*& buffer, const
         #undef _c
     }
 
-    CORRADE_ASSERT_UNREACHABLE();
+    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 template<class T> inline T extractAndSkip(const char*& buffer, const FileFormat fileFormat, const Type type) {

@@ -102,7 +102,7 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
 
         case 3: format = PixelFormat::RGB; break;
         case 4: format = PixelFormat::RGBA; break;
-        default: CORRADE_ASSERT_UNREACHABLE();
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     /* Copy the data into array with default deleter (we can't use custom
