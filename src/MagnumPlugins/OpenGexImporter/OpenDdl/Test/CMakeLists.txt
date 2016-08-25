@@ -25,6 +25,7 @@
 
 corrade_add_test(OpenDdlParsersTest ParsersTest.cpp LIBRARIES Magnum::Magnum MagnumOpenGexImporterTestLib)
 corrade_add_test(OpenDdlTest Test.cpp LIBRARIES Magnum::Magnum MagnumOpenGexImporterTestLib)
+corrade_add_test(OpenDdlTypeTest TypeTest.cpp LIBRARIES Magnum::Magnum MagnumOpenGexImporterTestLib)
 
 # On Win32 we need to avoid dllimporting OpenGexImporter symbols, because it
 # would search for the symbols in some DLL even though they were linked

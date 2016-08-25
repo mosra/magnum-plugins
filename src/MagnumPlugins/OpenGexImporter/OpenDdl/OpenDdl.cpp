@@ -37,6 +37,7 @@ namespace Magnum { namespace OpenDdl {
 
 Debug& operator<<(Debug& debug, const Type value) {
     switch(value) {
+        /* LCOV_EXCL_START */
         #define _c(value) case Type::value: return debug << "OpenDdl::Type::" #value;
         _c(Bool)
         _c(UnsignedByte)
@@ -57,13 +58,15 @@ Debug& operator<<(Debug& debug, const Type value) {
         _c(Type)
         _c(Custom)
         #undef _c
+        /* LCOV_EXCL_STOP */
     }
 
-    return debug << "OpenDdl::Type::(invalid)";
+    return debug << "OpenDdl::Type(" << Debug::nospace << reinterpret_cast<void*>(UnsignedInt(value)) << Debug::nospace << ")";
 }
 
 Debug& operator<<(Debug& debug, const PropertyType value) {
     switch(value) {
+        /* LCOV_EXCL_START */
         #define _c(value) case PropertyType::value: return debug << "OpenDdl::PropertyType::" #value;
         _c(Bool)
         _c(UnsignedByte)
@@ -83,14 +86,16 @@ Debug& operator<<(Debug& debug, const PropertyType value) {
         _c(Reference)
         _c(Type)
         #undef _c
+        /* LCOV_EXCL_STOP */
     }
 
-    return debug << "OpenDdl::PropertyType::(invalid)";
+    return debug << "OpenDdl::PropertyType(" << Debug::nospace << reinterpret_cast<void*>(UnsignedByte(value)) << Debug::nospace << ")";
 }
 
 namespace Implementation {
     Debug& operator<<(Debug& debug, const InternalPropertyType value) {
         switch(value) {
+            /* LCOV_EXCL_START */
             #define _c(value) case InternalPropertyType::value: return debug << "OpenDdl::Implementation::InternalPropertyType::" #value;
             _c(Bool)
             _c(Integral)
@@ -101,9 +106,10 @@ namespace Implementation {
             _c(Binary)
             _c(Character)
             #undef _c
+            /* LCOV_EXCL_STOP */
         }
 
-        return debug << "OpenDdl::Implementation::InternalPropertyType::(invalid)";
+        return debug << "OpenDdl::Implementation::InternalPropertyType(" << Debug::nospace << reinterpret_cast<void*>(UnsignedByte(value)) << Debug::nospace << ")";
     }
 }
 
