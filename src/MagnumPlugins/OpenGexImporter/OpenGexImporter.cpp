@@ -72,6 +72,9 @@ struct OpenGexImporter::Document {
 
     std::unordered_map<std::string, Int> nodesForName,
         materialsForName;
+
+    std::unordered_map<std::string, UnsignedInt> imagesForName;
+    std::vector<std::string> images;
 };
 
 namespace {
@@ -167,6 +170,16 @@ void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
+    /* Common code for light and material textures */
+    auto gatherTexture = [this, &d](const OpenDdl::Structure& texture) {
+        d->textures.push_back(texture);
+
+        /* Add the filename to the list, if not already */
+        const std::string filename = texture.firstChildOf(OpenDdl::Type::String).as<std::string>();
+        if(d->imagesForName.emplace(filename, d->images.size()).second)
+            d->images.emplace_back(filename);
+    };
+
     /* Gather all cameras */
     for(const OpenDdl::Structure camera: d->document.childrenOf(OpenGex::CameraObject))
         d->cameras.push_back(camera);
@@ -181,7 +194,7 @@ void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
         d->lights.push_back(light);
 
         for(const OpenDdl::Structure texture: light.childrenOf(OpenGex::Texture))
-            d->textures.push_back(texture);
+            gatherTexture(texture);
     }
 
     /* Gather all materials */
@@ -193,7 +206,7 @@ void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
             /* Gather all material textures */
             for(const OpenDdl::Structure texture: material.childrenOf(OpenGex::Texture))
-                d->textures.push_back(texture);
+                gatherTexture(texture);
         }
     }
 
@@ -786,19 +799,17 @@ std::optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt id) {
 
     /** @todo texture coordinate transformations */
 
-    return TextureData{TextureData::Type::Texture2D, Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Mipmap::Linear, Sampler::Wrapping::ClampToEdge, id, &texture};
+    return TextureData{TextureData::Type::Texture2D, Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Mipmap::Linear, Sampler::Wrapping::ClampToEdge, _d->imagesForName[texture.firstChildOf(OpenDdl::Type::String).as<std::string>()], &texture};
 }
 
-UnsignedInt OpenGexImporter::doImage2DCount() const { return _d->textures.size(); }
+UnsignedInt OpenGexImporter::doImage2DCount() const { return _d->images.size(); }
 
 std::optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id) {
     CORRADE_ASSERT(_d->filePath, "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from filesystem", {});
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
-    const OpenDdl::Structure texture = _d->textures[id];
-
     AnyImageImporter imageImporter{static_cast<PluginManager::Manager<AbstractImporter>&>(*manager())};
-    if(!imageImporter.openFile(Utility::Directory::join(*_d->filePath, texture.firstChildOf(OpenDdl::Type::String).as<std::string>())))
+    if(!imageImporter.openFile(Utility::Directory::join(*_d->filePath, _d->images[id])))
         return std::nullopt;
 
     return imageImporter.image2D(0);

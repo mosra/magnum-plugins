@@ -94,6 +94,9 @@ and @ref plugins for more information.
     is always @ref Sampler::Wrapping::ClampToEdge, minification and
     magnification is @ref Sampler::Filter::Linear and mipmap selection is
     @ref Sampler::Mipmap::Linear.
+-   If multiple textures have the same image filename string, given image is
+    present in the image list only once. Note that only a simple string
+    comparison is used without any path normalization.
 
 ### Access to internal importer state
 
