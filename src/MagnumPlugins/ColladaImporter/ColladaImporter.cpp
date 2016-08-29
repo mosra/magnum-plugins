@@ -43,6 +43,8 @@
 #include <Magnum/Trade/TextureData.h>
 
 #include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
+#include "MagnumPlugins/ColladaImporter/ColladaType.h"
+#include "MagnumPlugins/ColladaImporter/Utility.h"
 
 namespace Magnum { namespace Trade {
 

@@ -31,9 +31,6 @@
 
 #include <Magnum/Trade/AbstractImporter.h>
 
-#include "MagnumPlugins/ColladaImporter/ColladaType.h"
-#include "MagnumPlugins/ColladaImporter/Utility.h"
-
 #include "MagnumPlugins/ColladaImporter/configure.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -50,6 +47,7 @@
 #endif
 
 class QCoreApplication;
+class QString;
 
 namespace Magnum { namespace Trade {
 

@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <QtCore/QString>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
