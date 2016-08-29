@@ -3,7 +3,7 @@ LightObject (type = "infinite") {
         float { 3.0 }
     }
 
-    Color (attrib = "color") {
+    Color (attrib = "light") {
         float[3] { { 0.7, 1.0, 0.1 } }
     }
 }
@@ -15,7 +15,7 @@ LightObject (type = "point") {
 }
 
 LightObject (type = "spot") {
-    Color (attrib = "color") {
+    Color (attrib = "light") {
         float[4] { { 0.1, 0.0, 0.1, 1.0 } }
     }
 }

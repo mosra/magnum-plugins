@@ -517,7 +517,7 @@ std::optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
         }
 
         const auto attrib = color.propertyOf(OpenGex::attrib);
-        if(attrib.as<std::string>() == "color") {
+        if(attrib.as<std::string>() == "light") {
             lightColor = extractColorData<Color3>(floatArray);
         } else {
             Error() << "Trade::OpenGexImporter::light(): invalid color";
