@@ -31,6 +31,21 @@
 
 #include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"
 
+#include "MagnumPlugins/HarfBuzzFont/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_HARFBUZZFONT_BUILD_STATIC
+    #if defined(HarfBuzzFont_EXPORTS) || defined(HarfBuzzFontObjects_EXPORTS)
+        #define MAGNUM_HARFBUZZFONT_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_HARFBUZZFONT_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_HARFBUZZFONT_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_HARFBUZZFONT_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 #ifndef DOXYGEN_GENERATING_OUTPUT
 struct hb_font_t;
 #endif
@@ -51,7 +66,7 @@ use dynamic plugin, you need to load `HarfBuzzFont` plugin from
 `MagnumPlugins::HarfBuzzFont` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 */
-class HarfBuzzFont: public FreeTypeFont {
+class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
     public:
         /** @brief Default constructor */
         explicit HarfBuzzFont();
@@ -62,11 +77,11 @@ class HarfBuzzFont: public FreeTypeFont {
         ~HarfBuzzFont();
 
     private:
-        Features doFeatures() const override;
-        bool doIsOpened() const override;
-        Metrics doOpenSingleData(Containers::ArrayView<const char> data, Float size) override;
-        void doClose() override;
-        std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        MAGNUM_HARFBUZZFONT_LOCAL Features doFeatures() const override;
+        MAGNUM_HARFBUZZFONT_LOCAL bool doIsOpened() const override;
+        MAGNUM_HARFBUZZFONT_LOCAL Metrics doOpenSingleData(Containers::ArrayView<const char> data, Float size) override;
+        MAGNUM_HARFBUZZFONT_LOCAL void doClose() override;
+        MAGNUM_HARFBUZZFONT_LOCAL std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 
         hb_font_t* hbFont;
 };

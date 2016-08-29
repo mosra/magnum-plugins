@@ -32,6 +32,21 @@
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
+#include "MagnumPlugins/JpegImporter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_JPEGIMPORTER_BUILD_STATIC
+    #if defined(JpegImporter_EXPORTS) || defined(JpegImporterObjects_EXPORTS)
+        #define MAGNUM_JPEGIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_JPEGIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_JPEGIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_JPEGIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -56,7 +71,7 @@ In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported and in
 WebGL 1.0, grayscale images use @ref PixelFormat::Luminance instead of
 @ref PixelFormat::Red.
 */
-class JpegImporter: public AbstractImporter {
+class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit JpegImporter();
@@ -67,15 +82,14 @@ class JpegImporter: public AbstractImporter {
         ~JpegImporter();
 
     private:
-        Features doFeatures() const override;
-        bool doIsOpened() const override;
-        void doClose() override;
-        void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_JPEGIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_JPEGIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_JPEGIMPORTER_LOCAL void doClose() override;
+        MAGNUM_JPEGIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
 
-        UnsignedInt doImage2DCount() const override;
-        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_JPEGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_JPEGIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
-    private:
         Containers::Array<unsigned char> _in;
 };
 

@@ -31,6 +31,21 @@
 
 #include <Magnum/Trade/AbstractImageConverter.h>
 
+#include "MagnumPlugins/PngImageConverter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC
+    #if defined(PngImageConverter_EXPORTS) || defined(PngImageConverterObjects_EXPORTS)
+        #define MAGNUM_PNGIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_PNGIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_PNGIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_PNGIMAGECONVERTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -52,7 +67,7 @@ static plugin, you need to request `PngImageConverter` component of
 target. See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 */
-class PngImageConverter: public AbstractImageConverter {
+class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageConverter {
     public:
         /** @brief Default constructor */
         explicit PngImageConverter();
@@ -61,8 +76,8 @@ class PngImageConverter: public AbstractImageConverter {
         explicit PngImageConverter(PluginManager::AbstractManager& manager, std::string plugin);
 
     private:
-        Features doFeatures() const override;
-        Containers::Array<char> doExportToData(const ImageView2D& image) override;
+        MAGNUM_PNGIMAGECONVERTER_LOCAL Features doFeatures() const override;
+        MAGNUM_PNGIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
 };
 
 }}

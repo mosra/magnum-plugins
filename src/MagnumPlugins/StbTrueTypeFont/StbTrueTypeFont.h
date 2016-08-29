@@ -33,6 +33,21 @@
 #include <Corrade/Utility/VisibilityMacros.h>
 #include <Magnum/Text/AbstractFont.h>
 
+#include "MagnumPlugins/StbTrueTypeFont/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_STBTRUETYPEFONT_BUILD_STATIC
+    #if defined(StbTrueTypeFont_EXPORTS) || defined(StbTrueTypeFontObjects_EXPORTS)
+        #define MAGNUM_STBTRUETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_STBTRUETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_STBTRUETYPEFONT_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_STBTRUETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Text {
 
 /**
@@ -57,7 +72,7 @@ same size.
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 */
-class StbTrueTypeFont: public AbstractFont {
+class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
     public:
         /** @brief Default constructor */
         explicit StbTrueTypeFont();
@@ -71,14 +86,14 @@ class StbTrueTypeFont: public AbstractFont {
         struct Font;
         class Layouter;
 
-        Features doFeatures() const override;
-        bool doIsOpened() const override;
-        Metrics doOpenSingleData(Containers::ArrayView<const char> data, Float size) override;
-        void doClose() override;
-        UnsignedInt doGlyphId(char32_t character) override;
-        Vector2 doGlyphAdvance(UnsignedInt glyph) override;
-        void doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) override;
-        std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL Features doFeatures() const override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL bool doIsOpened() const override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL Metrics doOpenSingleData(Containers::ArrayView<const char> data, Float size) override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL void doClose() override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL UnsignedInt doGlyphId(char32_t character) override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL Vector2 doGlyphAdvance(UnsignedInt glyph) override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL void doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 
         std::unique_ptr<Font> _font;
 };

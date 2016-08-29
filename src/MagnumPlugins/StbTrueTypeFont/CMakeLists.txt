@@ -25,6 +25,13 @@
 
 find_package(Magnum REQUIRED Text)
 
+if(BUILD_STATIC)
+    set(MAGNUM_STBTRUETYPEFONT_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(StbTrueTypeFont_SRCS
     StbTrueTypeFont.cpp)
 
@@ -39,6 +46,7 @@ target_include_directories(StbTrueTypeFontObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Text,INTERFACE_INCLUDE_DIRECTORIES>
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
+target_compile_definitions(StbTrueTypeFontObjects PRIVATE "StbTrueTypeFontObjects_EXPORTS")
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbTrueTypeFontObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
@@ -63,6 +71,7 @@ target_link_libraries(StbTrueTypeFont
     ${FREETYPE_LIBRARIES})
 
 install(FILES ${StbTrueTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
 
 # The lib is needed by non-GL tests
 if(BUILD_TESTS)

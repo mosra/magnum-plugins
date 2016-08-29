@@ -25,3 +25,10 @@
 
 corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp LIBRARIES MagnumHarfBuzzFontTestLib Magnum::WindowlessApplication)
 target_include_directories(HarfBuzzFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+# On Win32 we need to avoid dllimporting HarfBuzzFont symbols, because it would
+# search for the symbols in some DLL even when they were linked statically.
+# However it apparently doesn't matter that they were dllexported when building
+# the static library. EH.
+if(WIN32)
+    target_compile_definitions(HarfBuzzFontGLTest PRIVATE "MAGNUM_HARFBUZZFONT_BUILD_STATIC")
+endif()

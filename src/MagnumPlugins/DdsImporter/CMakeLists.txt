@@ -24,6 +24,13 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(BUILD_STATIC)
+    set(MAGNUM_DDSIMPORTER_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(DdsImporter_SRCS
     DdsImporter.cpp)
 
@@ -36,7 +43,9 @@ add_library(DdsImporterObjects OBJECT
     ${DdsImporter_HEADERS})
 target_include_directories(DdsImporterObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src)
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
+target_compile_definitions(DdsImporterObjects PRIVATE "DdsImporterObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DdsImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -49,16 +58,21 @@ add_plugin(DdsImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PLU
 if(BUILD_STATIC_PIC)
     set_target_properties(DdsImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(DdsImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(DdsImporter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(DdsImporter Magnum::Magnum)
 
 install(FILES ${DdsImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumDdsImporterTestLib STATIC
         $<TARGET_OBJECTS:DdsImporterObjects>
         ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumDdsImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_include_directories(MagnumDdsImporterTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
     target_link_libraries(MagnumDdsImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()

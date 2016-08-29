@@ -26,6 +26,13 @@
 
 find_package(Magnum REQUIRED Audio)
 
+if(BUILD_STATIC)
+    set(MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(StbVorbisAudioImporter_SRCS
     StbVorbisImporter.cpp)
 
@@ -38,7 +45,9 @@ add_library(StbVorbisAudioImporterObjects OBJECT
     ${StbVorbisAudioImporter_HEADERS})
 target_include_directories(StbVorbisAudioImporterObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Audio,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src)
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
+target_compile_definitions(StbVorbisAudioImporterObjects PRIVATE "StbVorbisAudioImporterObjects_EXPORTS")
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbVorbisAudioImporterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
@@ -53,16 +62,21 @@ add_plugin(StbVorbisAudioImporter ${MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_INSTALL_D
 if(BUILD_STATIC_PIC)
     set_target_properties(StbVorbisAudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(StbVorbisAudioImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(StbVorbisAudioImporter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(StbVorbisAudioImporter Magnum::Magnum Magnum::Audio)
 
 install(FILES ${StbVorbisAudioImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbVorbisAudioImporter)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbVorbisAudioImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumStbVorbisAudioImporterTestLib STATIC
         $<TARGET_OBJECTS:StbVorbisAudioImporterObjects>
         ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumStbVorbisAudioImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_include_directories(MagnumStbVorbisAudioImporterTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
     target_link_libraries(MagnumStbVorbisAudioImporterTestLib Magnum::Magnum Magnum::Audio)
     add_subdirectory(Test)
 endif()

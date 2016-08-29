@@ -29,3 +29,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 
 corrade_add_test(StbVorbisAudioImporterTest StbVorbisImporterTest.cpp LIBRARIES MagnumStbVorbisAudioImporterTestLib)
 target_include_directories(StbVorbisAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+# On Win32 we need to avoid dllimporting StbVorbisAudioImporter symbols,
+# because it would search for the symbols in some DLL even when they were
+# linked statically. However it apparently doesn't matter that they were
+# dllexported when building the static library. EH.
+if(WIN32)
+    target_compile_definitions(StbVorbisAudioImporterTest PRIVATE "MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC")
+endif()

@@ -25,6 +25,13 @@
 
 find_package(PNG REQUIRED)
 
+if(BUILD_STATIC)
+    set(MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(PngImageConverter_SRCS
     PngImageConverter.cpp)
 
@@ -39,9 +46,10 @@ target_include_directories(PngImageConverterObjects
     PUBLIC
         $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
         ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src
     PRIVATE
         ${PNG_INCLUDE_DIRS})
-target_include_directories(PngImageConverterObjects PRIVATE ${PNG_INCLUDE_DIRS})
+target_compile_definitions(PngImageConverterObjects PRIVATE "PngImageConverterObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(PngImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -54,7 +62,9 @@ add_plugin(PngImageConverter ${MAGNUM_PLUGINS_IMAGECONVERTER_DEBUG_INSTALL_DIR} 
 if(BUILD_STATIC_PIC)
     set_target_properties(PngImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(PngImageConverter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(PngImageConverter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(PngImageConverter Magnum::Magnum ${PNG_LIBRARIES})
 
 install(FILES ${PngImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImageConverter)
@@ -63,6 +73,9 @@ if(BUILD_TESTS)
     add_library(MagnumPngImageConverterTestLib STATIC
         $<TARGET_OBJECTS:PngImageConverterObjects>
         ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
+    target_include_directories(MagnumPngImageConverterTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
     target_link_libraries(MagnumPngImageConverterTestLib Magnum::Magnum ${PNG_LIBRARIES})
     add_subdirectory(Test)
 endif()

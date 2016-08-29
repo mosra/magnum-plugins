@@ -34,6 +34,21 @@
 
 #include "Magnum/Audio/AbstractImporter.h"
 
+#include "MagnumPlugins/StbVorbisAudioImporter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC
+    #if defined(StbVorbisAudioImporter_EXPORTS) || defined(StbVorbisAudioImporterObjects_EXPORTS)
+        #define MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Audio {
 
 /**
@@ -57,7 +72,7 @@ than when using plugin dedicated for given format.
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 */
-class StbVorbisImporter: public AbstractImporter {
+class MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT StbVorbisImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit StbVorbisImporter();
@@ -66,14 +81,14 @@ class StbVorbisImporter: public AbstractImporter {
         explicit StbVorbisImporter(PluginManager::AbstractManager& manager, std::string plugin);
 
     private:
-        Features doFeatures() const override;
-        bool doIsOpened() const override;
-        void doOpenData(Containers::ArrayView<const char> data) override;
-        void doClose() override;
+        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL void doClose() override;
 
-        Buffer::Format doFormat() const override;
-        UnsignedInt doFrequency() const override;
-        Containers::Array<char> doData() override;
+        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL Buffer::Format doFormat() const override;
+        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL UnsignedInt doFrequency() const override;
+        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL Containers::Array<char> doData() override;
 
         Containers::Array<char> _data;
         Buffer::Format _format;

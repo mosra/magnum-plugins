@@ -25,6 +25,13 @@
 
 find_package(JPEG REQUIRED)
 
+if(BUILD_STATIC)
+    set(MAGNUM_JPEGIMPORTER_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(JpegImporter_SRCS
     JpegImporter.cpp)
 
@@ -37,7 +44,9 @@ add_library(JpegImporterObjects OBJECT
     ${JpegImporter_HEADERS})
 target_include_directories(JpegImporterObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src)
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
+target_compile_definitions(JpegImporterObjects PRIVATE "JpegImporterObjects_EXPORTS")
 target_include_directories(JpegImporterObjects PRIVATE ${JPEG_INCLUDE_DIR})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(JpegImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -51,18 +60,23 @@ add_plugin(JpegImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM_PL
 if(BUILD_STATIC_PIC)
     set_target_properties(JpegImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(JpegImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(JpegImporter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(JpegImporter
     Magnum::Magnum
     ${JPEG_LIBRARIES})
 
 install(FILES ${JpegImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumJpegImporterTestLib STATIC
         $<TARGET_OBJECTS:JpegImporterObjects>
         ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumJpegImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_include_directories(MagnumJpegImporterTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
     target_link_libraries(MagnumJpegImporterTestLib Magnum::Magnum ${JPEG_LIBRARIES})
     add_subdirectory(Test)
 endif()

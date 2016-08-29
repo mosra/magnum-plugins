@@ -27,6 +27,13 @@ find_package(Magnum REQUIRED Text)
 find_package(Freetype REQUIRED)
 find_package(HarfBuzz REQUIRED)
 
+if(BUILD_STATIC)
+    set(MAGNUM_HARFBUZZFONT_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(HarfBuzzFont_SRCS
     HarfBuzzFont.cpp)
 
@@ -39,12 +46,14 @@ add_library(HarfBuzzFontObjects OBJECT
     ${HarfBuzzFont_HEADERS})
 target_include_directories(HarfBuzzFontObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Text,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src)
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 # Avoid warning spam with old-style casts
 target_include_directories(HarfBuzzFontObjects SYSTEM PRIVATE
     ${FREETYPE_INCLUDE_DIRS}
     $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:FreeTypeFont,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(HarfBuzzFontObjects PRIVATE "HarfBuzzFontObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -56,6 +65,7 @@ add_plugin(HarfBuzzFont ${MAGNUM_PLUGINS_FONT_DEBUG_INSTALL_DIR} ${MAGNUM_PLUGIN
     pluginRegistration.cpp)
 target_include_directories(HarfBuzzFont PUBLIC
     ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src
     $<TARGET_PROPERTY:FreeTypeFont,INTERFACE_INCLUDE_DIRECTORIES>)
 if(BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -70,12 +80,15 @@ if(CORRADE_TARGET_WINDOWS)
 endif()
 
 install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
 if(BUILD_GL_TESTS)
     add_library(MagnumHarfBuzzFontTestLib STATIC
         $<TARGET_OBJECTS:HarfBuzzFontObjects>
         ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumHarfBuzzFontTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_include_directories(MagnumHarfBuzzFontTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
     target_link_libraries(MagnumHarfBuzzFontTestLib
         Magnum::Magnum
         Magnum::Text

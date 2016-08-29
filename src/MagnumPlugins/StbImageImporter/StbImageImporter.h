@@ -32,6 +32,21 @@
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
+#include "MagnumPlugins/StbImageImporter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC
+    #if defined(StbImageImporter_EXPORTS) || defined(StbImageImporterObjects_EXPORTS)
+        #define MAGNUM_STBIMAGEIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_STBIMAGEIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_STBIMAGEIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_STBIMAGEIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -83,7 +98,7 @@ In OpenGL ES 2.0 if @es_extension{EXT,texture_rg} is not supported and in WebGL
 @todo Properly support floating-point HDR images
 @todo Enable ARM NEON when I'm able to test that
 */
-class StbImageImporter: public AbstractImporter {
+class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit StbImageImporter();
@@ -94,15 +109,14 @@ class StbImageImporter: public AbstractImporter {
         ~StbImageImporter();
 
     private:
-        Features doFeatures() const override;
-        bool doIsOpened() const override;
-        void doClose() override;
-        void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_STBIMAGEIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_STBIMAGEIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_STBIMAGEIMPORTER_LOCAL void doClose() override;
+        MAGNUM_STBIMAGEIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
 
-        UnsignedInt doImage2DCount() const override;
-        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_STBIMAGEIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_STBIMAGEIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
-    private:
         Containers::Array<unsigned char> _in;
 };
 

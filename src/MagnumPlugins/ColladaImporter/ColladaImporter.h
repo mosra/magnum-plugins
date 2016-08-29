@@ -34,6 +34,21 @@
 #include "MagnumPlugins/ColladaImporter/ColladaType.h"
 #include "MagnumPlugins/ColladaImporter/Utility.h"
 
+#include "MagnumPlugins/ColladaImporter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_COLLADAIMPORTER_BUILD_STATIC
+    #if defined(ColladaImporter_EXPORTS) || defined(ColladaImporterObjects_EXPORTS)
+        #define MAGNUM_COLLADAIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_COLLADAIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_COLLADAIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_COLLADAIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 class QCoreApplication;
 
 namespace Magnum { namespace Trade {
@@ -55,7 +70,7 @@ use dynamic plugin, you need to load `ColladaImporter` plugin from
 `MagnumPlugins::ColladaImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 */
-class ColladaImporter: public AbstractImporter {
+class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
     public:
         /**
          * @brief Default constructor
@@ -84,42 +99,42 @@ class ColladaImporter: public AbstractImporter {
     private:
         struct Document;
 
-        Features doFeatures() const override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Features doFeatures() const override;
 
-        bool doIsOpened() const override;
-        void doOpenFile(const std::string& filename) override;
-        void doClose() override;
+        MAGNUM_COLLADAIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_COLLADAIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL void doClose() override;
 
-        Int doDefaultScene() override;
-        UnsignedInt doSceneCount() const override;
-        Int doSceneForName(const std::string& name) override;
-        std::string doSceneName(UnsignedInt id) override;
-        std::optional<SceneData> doScene(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Int doDefaultScene() override;
+        MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Int doSceneForName(const std::string& name) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::string doSceneName(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::optional<SceneData> doScene(UnsignedInt id) override;
 
-        UnsignedInt doObject3DCount() const override;
-        Int doObject3DForName(const std::string& name) override;
-        std::string doObject3DName(UnsignedInt id) override;
-        std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
 
-        UnsignedInt doMesh3DCount() const override;
-        Int doMesh3DForName(const std::string& name) override;
-        std::string doMesh3DName(UnsignedInt id) override;
-        std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Int doMesh3DForName(const std::string& name) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::string doMesh3DName(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
-        UnsignedInt doMaterialCount() const override;
-        Int doMaterialForName(const std::string& name) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
         std::string doMaterialName(UnsignedInt id) override;
-        std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
 
-        UnsignedInt doTextureCount() const override;
-        Int doTextureForName(const std::string& name) override;
-        std::string doTextureName(UnsignedInt id) override;
-        std::optional<TextureData> doTexture(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Int doTextureForName(const std::string& name) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::string doTextureName(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::optional<TextureData> doTexture(UnsignedInt id) override;
 
-        UnsignedInt doImage2DCount() const override;
-        Int doImage2DForName(const std::string& name) override;
-        std::string doImage2DName(UnsignedInt id) override;
-        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Int doImage2DForName(const std::string& name) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::string doImage2DName(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
         /**
          * @brief Offset of attribute in mesh index array
@@ -128,7 +143,7 @@ class ColladaImporter: public AbstractImporter {
          * @param id                Attribute ID, if there are more than one
          *      attribute with the same name
          */
-        UnsignedInt attributeOffset(UnsignedInt meshId, const QString& attribute, UnsignedInt id = 0);
+        MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt attributeOffset(UnsignedInt meshId, const QString& attribute, UnsignedInt id = 0);
 
         /**
          * @brief Build attribute array
@@ -142,9 +157,9 @@ class ColladaImporter: public AbstractImporter {
          * @param indexCombinations Index combinations for building the array
          * @return Resulting array
          */
-        template<class T> std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, UnsignedInt stride, const std::vector<UnsignedInt>& interleavedIndexArrays);
+        template<class T> MAGNUM_COLLADAIMPORTER_LOCAL std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, UnsignedInt stride, const std::vector<UnsignedInt>& interleavedIndexArrays);
 
-        std::string instanceName(const QString& name, const QString& instanceTag);
+        MAGNUM_COLLADAIMPORTER_LOCAL std::string instanceName(const QString& name, const QString& instanceTag);
 
         /** @brief Default namespace declaration for XQuery */
         static const QString namespaceDeclaration;

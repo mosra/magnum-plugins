@@ -32,6 +32,21 @@
 #include <memory>
 #include <Magnum/Trade/AbstractImporter.h>
 
+#include "MagnumPlugins/StanfordImporter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_STANFORDIMPORTER_BUILD_STATIC
+    #if defined(StanfordImporter_EXPORTS) || defined(StanfordImporterObjects_EXPORTS)
+        #define MAGNUM_STANFORDIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_STANFORDIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_STANFORDIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_STANFORDIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -47,7 +62,7 @@ request `StanfordImporter` component of `MagnumPlugins` package in CMake and
 link to `MagnumPlugins::StanfordImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 */
-class StanfordImporter: public AbstractImporter {
+class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit StanfordImporter();
@@ -58,15 +73,15 @@ class StanfordImporter: public AbstractImporter {
         ~StanfordImporter();
 
     private:
-        Features doFeatures() const override;
+        MAGNUM_STANFORDIMPORTER_LOCAL Features doFeatures() const override;
 
-        bool doIsOpened() const override;
-        void doOpenData(Containers::ArrayView<const char> data) override;
-        void doOpenFile(const std::string& filename) override;
-        void doClose() override;
+        MAGNUM_STANFORDIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_STANFORDIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_STANFORDIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        MAGNUM_STANFORDIMPORTER_LOCAL void doClose() override;
 
-        UnsignedInt doMesh3DCount() const override;
-        std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
+        MAGNUM_STANFORDIMPORTER_LOCAL std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
         std::unique_ptr<std::istream> _in;
 };

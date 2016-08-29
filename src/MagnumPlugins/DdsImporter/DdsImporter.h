@@ -32,6 +32,21 @@
 
 #include <Magnum/Trade/AbstractImporter.h>
 
+#include "MagnumPlugins/DdsImporter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_DDSIMPORTER_BUILD_STATIC
+    #if defined(DdsImporter_EXPORTS) || defined(DdsImporterObjects_EXPORTS)
+        #define MAGNUM_DDSIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_DDSIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_DDSIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_DDSIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -62,7 +77,7 @@ Note: Mipmaps are currently imported under separate image data ids. You may
 access them via @ref image2D(UnsignedInt)/@ref image3D(UnsignedInt) which will
 return the n-th mip, a bigger n indicating a smaller mip.
 */
-class DdsImporter: public AbstractImporter {
+class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
     public:
         /** @brief Default constructor */
         explicit DdsImporter();
@@ -73,16 +88,16 @@ class DdsImporter: public AbstractImporter {
         ~DdsImporter();
 
     private:
-        Features doFeatures() const override;
-        bool doIsOpened() const override;
-        void doClose() override;
-        void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_DDSIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_DDSIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_DDSIMPORTER_LOCAL void doClose() override;
+        MAGNUM_DDSIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
 
-        UnsignedInt doImage2DCount() const override;
-        std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_DDSIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
-        UnsignedInt doImage3DCount() const override;
-        std::optional<ImageData3D> doImage3D(UnsignedInt id) override;
+        MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage3DCount() const override;
+        MAGNUM_DDSIMPORTER_LOCAL std::optional<ImageData3D> doImage3D(UnsignedInt id) override;
 
     private:
         struct File;

@@ -31,6 +31,21 @@
 
 #include <Magnum/Trade/AbstractImageConverter.h>
 
+#include "MagnumPlugins/MiniExrImageConverter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC
+    #if defined(MiniExrImageConverter_EXPORTS) || defined(MiniExrImageConverterObjects_EXPORTS)
+        #define MAGNUM_MINIEXRIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_MINIEXRIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_MINIEXRIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_MINIEXRIMAGECONVERTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -53,7 +68,7 @@ using plugin dedicated for given format.
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 */
-class MiniExrImageConverter: public AbstractImageConverter {
+class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:
         /** @brief Default constructor */
         explicit MiniExrImageConverter();
@@ -62,8 +77,8 @@ class MiniExrImageConverter: public AbstractImageConverter {
         explicit MiniExrImageConverter(PluginManager::AbstractManager& manager, std::string plugin);
 
     private:
-        Features doFeatures() const override;
-        Containers::Array<char> doExportToData(const ImageView2D& image) override;
+        MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Features doFeatures() const override;
+        MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
 };
 
 }}

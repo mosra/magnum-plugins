@@ -26,6 +26,13 @@
 find_package(Magnum REQUIRED MeshTools)
 find_package(Qt4 REQUIRED)
 
+if(BUILD_STATIC)
+    set(MAGNUM_COLLADAIMPORTER_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(ColladaImporter_SRCS
     ColladaImporter.cpp)
 
@@ -45,7 +52,9 @@ add_library(ColladaImporterObjects OBJECT
 target_include_directories(ColladaImporterObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:AnyImageImporter,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src)
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
+target_compile_definitions(ColladaImporterObjects PRIVATE "ColladaImporterObjects_EXPORTS")
 # Supress warnings from Qt includes
 target_include_directories(ColladaImporterObjects SYSTEM PRIVATE ${QT_INCLUDE_DIR})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
@@ -60,7 +69,9 @@ add_plugin(ColladaImporter ${MAGNUM_PLUGINS_IMPORTER_DEBUG_INSTALL_DIR} ${MAGNUM
 if(BUILD_STATIC_PIC)
     set_target_properties(ColladaImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(ColladaImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(ColladaImporter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 # Supress warnings from Qt includes
 target_include_directories(ColladaImporter SYSTEM PRIVATE ${QT_INCLUDE_DIR})
 target_link_libraries(ColladaImporter
@@ -73,12 +84,15 @@ if(CORRADE_TARGET_WINDOWS)
 endif()
 
 install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
 
 if(BUILD_TESTS)
     add_library(MagnumColladaImporterTestLib STATIC
         $<TARGET_OBJECTS:ColladaImporterObjects>
         ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumColladaImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_include_directories(MagnumColladaImporterTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
     # Supress warnings from Qt includes
     target_include_directories(MagnumColladaImporterTestLib SYSTEM PUBLIC ${QT_INCLUDE_DIR})
     target_link_libraries(MagnumColladaImporterTestLib

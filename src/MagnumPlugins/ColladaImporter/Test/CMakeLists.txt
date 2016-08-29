@@ -30,3 +30,10 @@ corrade_add_test(ColladaImporterTypeTest ColladaTypeTest.cpp LIBRARIES MagnumCol
 corrade_add_test(ColladaImporterUtilityTest UtilityTest.cpp LIBRARIES MagnumColladaImporterTestLib)
 corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp LIBRARIES MagnumColladaImporterTestLib)
 target_include_directories(ColladaImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+# On Win32 we need to avoid dllimporting ColladaImporter symbols, because it
+# would search for the symbols in some DLL even when they were linked
+# statically. However it apparently doesn't matter that they were dllexported
+# when building the static library. EH.
+if(WIN32)
+    target_compile_definitions(ColladaImporterTest PRIVATE "MAGNUM_COLLADAIMPORTER_BUILD_STATIC")
+endif()

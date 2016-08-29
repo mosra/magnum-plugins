@@ -24,3 +24,10 @@
 #
 
 corrade_add_test(PngImageConverterTest PngImageConverterTest.cpp LIBRARIES MagnumPngImageConverterTestLib MagnumPngImporterTestLib)
+# On Win32 we need to avoid dllimporting PngImageConverter symbols, because it
+# would search for the symbols in some DLL even when they were linked
+# statically. However it apparently doesn't matter that they were dllexported
+# when building the static library. EH.
+if(WIN32)
+    target_compile_definitions(PngImageConverterTest PRIVATE "MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC")
+endif()

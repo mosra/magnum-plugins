@@ -24,3 +24,12 @@
 #
 
 corrade_add_test(StbPngImageConverterTest StbPngImageConverterTest.cpp LIBRARIES MagnumStbPngImageConverterTestLib MagnumStbImageImporterTestLib)
+# On Win32 we need to avoid dllimporting StbPngImageConverter and
+# StbImageImporter symbols, because it would search for the symbols in some DLL
+# even when they were linked statically. However it apparently doesn't matter
+# that they were dllexported when building the static library. EH.
+if(WIN32)
+    target_compile_definitions(StbPngImageConverterTest PRIVATE
+        "MAGNUM_STBPNGIMAGECONVERTER_BUILD_STATIC"
+        "MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC")
+endif()

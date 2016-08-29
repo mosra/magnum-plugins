@@ -31,6 +31,21 @@
 
 #include <Magnum/Trade/AbstractImageConverter.h>
 
+#include "MagnumPlugins/StbPngImageConverter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_STBPNGIMAGECONVERTER_BUILD_STATIC
+    #if defined(StbPngImageConverter_EXPORTS) || defined(StbPngImageConverterObjects_EXPORTS)
+        #define MAGNUM_STBPNGIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_STBPNGIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_STBPNGIMAGECONVERTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_STBPNGIMAGECONVERTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#endif
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -56,7 +71,7 @@ using plugin dedicated for given format.
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 */
-class StbPngImageConverter: public AbstractImageConverter {
+class MAGNUM_STBPNGIMAGECONVERTER_EXPORT StbPngImageConverter: public AbstractImageConverter {
     public:
         /** @brief Default constructor */
         explicit StbPngImageConverter();
@@ -65,8 +80,8 @@ class StbPngImageConverter: public AbstractImageConverter {
         explicit StbPngImageConverter(PluginManager::AbstractManager& manager, std::string plugin);
 
     private:
-        Features doFeatures() const override;
-        Containers::Array<char> doExportToData(const ImageView2D& image) override;
+        MAGNUM_STBPNGIMAGECONVERTER_LOCAL Features doFeatures() const override;
+        MAGNUM_STBPNGIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
 };
 
 }}

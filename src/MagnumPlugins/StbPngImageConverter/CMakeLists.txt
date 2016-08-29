@@ -23,6 +23,13 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(BUILD_STATIC)
+    set(MAGNUM_STBPNGIMAGECONVERTER_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 set(StbPngImageConverter_SRCS
     StbPngImageConverter.cpp)
 
@@ -35,7 +42,9 @@ add_library(StbPngImageConverterObjects OBJECT
     ${StbPngImageConverter_HEADERS})
 target_include_directories(StbPngImageConverterObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src)
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
+target_compile_definitions(StbPngImageConverterObjects PRIVATE "StbPngImageConverterObjects_EXPORTS")
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbPngImageConverterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
@@ -50,16 +59,21 @@ add_plugin(StbPngImageConverter ${MAGNUM_PLUGINS_IMAGECONVERTER_DEBUG_INSTALL_DI
 if(BUILD_STATIC_PIC)
     set_target_properties(StbPngImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(StbPngImageConverter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(StbPngImageConverter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(StbPngImageConverter Magnum::Magnum)
 
 install(FILES ${StbPngImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbPngImageConverter)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbPngImageConverter)
 
 if(BUILD_TESTS)
     add_library(MagnumStbPngImageConverterTestLib STATIC
         $<TARGET_OBJECTS:StbPngImageConverterObjects>
         ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumStbPngImageConverterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_include_directories(MagnumStbPngImageConverterTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
     target_link_libraries(MagnumStbPngImageConverterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
