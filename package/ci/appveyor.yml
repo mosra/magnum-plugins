@@ -1,12 +1,19 @@
 # kate: indent-width 2;
 
-version: '{branch}-{build}'
-
-skip_tags: true
-shallow_clone: true
 clone_depth: 1
 
 os: Visual Studio 2015
+
+environment:
+  matrix:
+  - TARGET: desktop
+    COMPILER: msvc
+  - TARGET: desktop
+    COMPILER: mingw
+  - TARGET: rt
+    TARGET_GLES2: ON
+  - TARGET: rt
+    TARGET_GLES2: OFF
 
 notifications:
 - provider: Webhook
@@ -16,73 +23,21 @@ notifications:
   on_build_status_changed: true
 
 install:
-- call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat"
-- set PATH=C:/Sys/bin;C:/tools/ninja;%APPVEYOR_BUILD_FOLDER%/openal/bin/Win32;%PATH%
-
-# Ninja
 - cinst ninja
+- set PATH=C:/Sys/bin;C:/tools/ninja;%PATH%
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" cinst mingw /f >nul
 
 # OpenAL
-- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.17.2-bin.zip appveyor DownloadFile http://kcat.strangesoft.net/openal-binaries/openal-soft-1.17.2-bin.zip
-- 7z x openal-soft-1.17.2-bin.zip
-- ren openal-soft-1.17.2-bin openal
-- ren openal\bin\Win32\soft_oal.dll OpenAL32.dll
+- IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.17.2-bin.zip appveyor DownloadFile http://kcat.strangesoft.net/openal-binaries/openal-soft-1.17.2-bin.zip
+- IF NOT "%TARGET%" == "rt" 7z x openal-soft-1.17.2-bin.zip && ren openal-soft-1.17.2-bin openal && echo [General] > %APPDATA%/alsoft.ini & echo drivers=null >> %APPDATA%/alsoft.ini
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" ren openal\bin\Win32\soft_oal.dll OpenAL32.dll
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" ren openal\bin\Win64\soft_oal.dll OpenAL32.dll
 
-# LibJPEG Turbo
-- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.2.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.2.0/libjpeg-turbo-1.2.0.tar.gz
-- 7z x libjpeg-turbo-1.2.0.tar.gz
-- 7z x libjpeg-turbo-1.2.0.tar
-- ren libjpeg-turbo-1.2.0 libjpeg-turbo
-- cd libjpeg-turbo
-- mkdir build
-- cd build
-- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DWITH_JPEG8=ON -DWITH_SIMD=OFF -G Ninja
-- cmake --build .
-- cmake --build . --target install
-- cd ..
-- cd ..
-
-# Corrade
-- git clone --depth 1 git://github.com/mosra/corrade.git
-- cd corrade
-- mkdir build
-- cd build
-- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -G Ninja
-- cmake --build .
-- cmake --build . --target install
-- cd ..
-- cd ..
-
-# Magnum
-- git clone --depth 1 git://github.com/mosra/magnum.git
-- cd magnum
-- mkdir build
-- cd build
-- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal -DWITH_AUDIO=ON -DWITH_DEBUGTOOLS=OFF -DWITH_PRIMITIVES=OFF -DWITH_SCENEGRAPH=OFF -DWITH_SHADERS=OFF -DWITH_SHAPES=OFF -DWITH_TEXT=ON -DWITH_TEXTURETOOLS=ON -DWITH_WINDOWLESSWGLAPPLICATION=ON -G Ninja
-- cmake --build .
-- cmake --build . --target install
-- cd ..
-- cd ..
+build_script:
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" call package\ci\appveyor-desktop.bat
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" call package\ci\appveyor-desktop-mingw.bat
+- IF "%TARGET%" == "rt" call package\ci\appveyor-rt.bat
 
 cache:
 - openal-soft-1.17.2-bin.zip
-- libjpeg-turbo-1.2.0.tar.gz
-
-build_script:
-- mkdir build
-- cd build
-- cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/Sys -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal -DWITH_ANYAUDIOIMPORTER=ON -DWITH_ANYIMAGECONVERTER=ON -DWITH_ANYIMAGEIMPORTER=ON -DWITH_ANYSCENEIMPORTER=ON -DWITH_DDSIMPORTER=ON -DWITH_FREETYPEFONT=OFF -DWITH_HARFBUZZFONT=OFF -DWITH_JPEGIMPORTER=ON -DWITH_MINIEXRIMAGECONVERTER=ON -DWITH_OPENGEXIMPORTER=ON -DWITH_PNGIMAGECONVERTER=OFF -DWITH_PNGIMPORTER=OFF -DWITH_STANFORDIMPORTER=ON -DWITH_STBIMAGEIMPORTER=ON -DWITH_STBPNGIMAGECONVERTER=ON -DWITH_STBTRUETYPEFONT=ON -DWITH_STBVORBISAUDIOIMPORTER=ON -DBUILD_TESTS=ON -DBUILD_GL_TESTS=ON -G Ninja
-- cmake --build .
-- cmake --build . --target install
-- cmake . -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/Deploy -DBUILD_TESTS=OFF
-- cmake --build . --target install
-- cd ../Deploy
-- 7z a ../magnum-plugins.zip *
-
-test_script:
-- cd %APPVEYOR_BUILD_FOLDER%/build
-- SET fail=0
-- ctest --output-on-failure -E GLTest || SET fail=1 & ver > nul
-- cd %APPVEYOR_BUILD_FOLDER%
-- appveyor PushArtifact magnum-plugins.zip
-- exit %fail%
+- libjpeg-turbo-1.5.0.tar.gz
