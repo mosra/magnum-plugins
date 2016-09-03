@@ -82,5 +82,4 @@ script:
 - sync
 
 after_success:
-# Ignoring all stuff that needs GL context and thus can't be run on Travis
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then coveralls --gcov /usr/bin/gcov-4.7 -E ".*/(Test|corrade/build|magnum/build|magnum-plugins/build|external)/.*" --gcov-options '\-lp'; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then coveralls --gcov /usr/bin/gcov-4.7 -E ".*/(Test|corrade/src|corrade/build|magnum/src|magnum/build|magnum-plugins/build|external)/.*" --gcov-options '\-lp'; fi
