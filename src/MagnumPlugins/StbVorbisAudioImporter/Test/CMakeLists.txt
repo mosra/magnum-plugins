@@ -24,6 +24,12 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(CORRADE_TARGET_EMSCRIPTEN)
+    set(STBVORBISAUDIOIMPORTER_TEST_DIR "")
+else()
+    set(STBVORBISAUDIOIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
@@ -35,4 +41,11 @@ target_include_directories(StbVorbisAudioImporterTest PRIVATE ${CMAKE_CURRENT_BI
 # dllexported when building the static library. EH.
 if(WIN32)
     target_compile_definitions(StbVorbisAudioImporterTest PRIVATE "MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC")
+endif()
+
+if(CORRADE_TARGET_EMSCRIPTEN)
+    emscripten_embed_file(StbVorbisAudioImporterTest mono16.ogg "/mono16.ogg")
+    emscripten_embed_file(StbVorbisAudioImporterTest stereo8.ogg "/stereo8.ogg")
+    emscripten_embed_file(StbVorbisAudioImporterTest unsupportedChannelCount.ogg "/unsupportedChannelCount.ogg")
+    emscripten_embed_file(StbVorbisAudioImporterTest wrongSignature.ogg "/wrongSignature.ogg")
 endif()
