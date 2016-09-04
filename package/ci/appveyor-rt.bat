@@ -65,7 +65,7 @@ cmake --build . --config Release --target install -- /m /v:m || exit /b
 cd .. && cd ..
 
 rem Crosscompile
-mkdir build && cd build || exit /b
+mkdir build-rt && cd build-rt || exit /b
 cmake .. ^
     -DCMAKE_BUILD_TYPE=Release ^
     -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/deps ^

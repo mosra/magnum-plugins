@@ -39,7 +39,7 @@ cd ../..
 # Crosscompile Magnum
 git clone --depth 1 git://github.com/mosra/magnum.git
 cd magnum
-mkdir build-emscripten && cd build-emscripten
+mkdir build-ios && cd build-ios
 cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=../../toolchains/generic/iOS.cmake \
     -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk \
