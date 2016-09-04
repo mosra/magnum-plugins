@@ -27,6 +27,8 @@ namespace Magnum {
 /** @page cmake-plugins Plugin usage with CMake
 @brief Guide how to find and use static Magnum plugins with CMake build system
 
+@tableofcontents
+
 If you are going to use dynamic plugins (the default) via plugin manager, they
 don't need to be handled via CMake. The manager will look for them at runtime
 at specified location and loads them dynamically. However, if they are built as
@@ -112,6 +114,21 @@ are included just for backwards compatibility and only if
     `MagnumPlugins::*` target directly instead.
 
 See also @ref cmake "Magnum usage with CMake" for more information.
+
+@section cmake-plugins-modules Other CMake modules
+
+The `modules/` directory contains more useful CMake modules:
+
+-   `FindFreetype.cmake` -- CMake module for finding FreeType. This is a forked
+    version of the upstream module that works properly with static builds of
+    FreeType, linking all its dependencies. Copy this to your module
+    directory if you built the @ref Text::FreeTypeFont plugin as static and it
+    was also linked to a static FreeType build.
+-   `FindHarfBuzz.cmake` -- CMake module for finding HarfBuzz. Copy this to
+    your module directory if you want to find and link to
+    @ref Text::HarfBuzzFont.
+
+See also @ref cmake-modules "relevant section for the main Magnum project".
 
 */
 }
