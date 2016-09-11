@@ -54,7 +54,7 @@ void AnyImporter::doOpenFile(const std::string& filename) {
     else if(Utility::String::endsWith(filename, ".wav"))
         plugin = "WavAudioImporter";
     else if(Utility::String::endsWith(filename, ".flac"))
-	plugin = "FlacAudioImporter";
+        plugin = "FlacAudioImporter";
     else {
         Error() << "Audio::AnyImporter::openFile(): cannot determine type of file" << filename;
         return;

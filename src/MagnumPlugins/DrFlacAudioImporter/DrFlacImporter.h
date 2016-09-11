@@ -52,10 +52,10 @@
 namespace Magnum { namespace Audio {
 
 /**
-@brief OGG audio importer plugin using stb_vorbis
+@brief FLAC audio importer plugin using dr_flac
 
-Supports mono and stereo files with 16 bits per channel. The files are
-imported with @ref Buffer::Format::Mono16 or @ref Buffer::Format::Stereo16,
+Supports mono and stereo files with 8/16 bits per channel. The files are
+imported with @ref Buffer::Format::Mono8/16 or @ref Buffer::Format::Stereo8/16,
 respectively.
 
 This plugin is built if `WITH_DRFLACAUDIOIMPORTER` is enabled when building
@@ -65,9 +65,8 @@ dependency of another plugin, you need to request `DrFlacAudioImporter`
 component of `MagnumPlugins` package in CMake and link to
 `MagnumPlugins::DrFlacAudioImporter`.
 
-This plugins provides `VorbisAudioImporter`, but note that this plugin doesn't
-have complete support for all format quirks and the performance might be worse
-than when using plugin dedicated for given format.
+This plugins provides `FlacAudioImporter`, but note that this plugin doesn't
+handle CRC checks, corrupt or perverse FLAC streams, or broadcast streams.
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
@@ -79,6 +78,9 @@ class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter 
 
         /** @brief Plugin manager constructor */
         explicit DrFlacImporter(PluginManager::AbstractManager& manager, std::string plugin);
+
+       /** @brief Destructor */
+       ~DrFlacImporter();
 
     private:
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL Features doFeatures() const override;
@@ -93,7 +95,7 @@ class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter 
         Containers::Array<char> _data;
         Buffer::Format _format;
         UnsignedInt _frequency;
-	void* _handle;
+        struct drflac* _handle;
 };
 
 }}
