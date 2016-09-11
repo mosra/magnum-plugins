@@ -35,14 +35,9 @@
 
 namespace Magnum { namespace Audio {
 
-DrFlacImporter::DrFlacImporter() : _handle(nullptr) {}
+DrFlacImporter::DrFlacImporter() = default;
 
 DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
-
-DrFlacImporter::~DrFlacImporter()
-{
-    doClose();
-}
 
 auto DrFlacImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
@@ -50,22 +45,19 @@ bool DrFlacImporter::doIsOpened() const { return _data; }
 
 void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
 
-    _handle = drflac_open_memory(reinterpret_cast<const UnsignedByte*>(data.data()), data.size());
+    drflac* _handle = drflac_open_memory(reinterpret_cast<const UnsignedByte*>(data.data()), data.size());
 
     if(_handle == NULL) {
         Error() << "Audio::DrFlacImporter::openData(): failed to open and decode FLAC data";
         return;
     }
 
-    int32_t* decodedData = _handle->pDecodedSamples;
     uint64_t samples = _handle->totalSampleCount;
     uint32_t frequency = _handle->sampleRate;
     uint8_t numChannels = _handle->channels;
     uint8_t bitsPerSample = _handle->bitsPerSample;
 
     _frequency = frequency;
-
-    Containers::Array<char> tempData{reinterpret_cast<char*>(decodedData), size_t(samples*numChannels*2)};
 
     if(numChannels == 1 && bitsPerSample == 8)
         _format = Buffer::Format::Mono8;
@@ -79,20 +71,20 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
         Error() << "Audio::DrFlacImporter::openData(): unsupported channel count"
                 << numChannels << "with" << bitsPerSample
                 << "bits per sample";
-        doClose();
+
+        drflac_close(_handle);
         return;
     }
 
+    Containers::Array<char> tempData(samples*numChannels*2);
+    std::copy(decodedData, decodedData + (samples*numChannels*2), tempData.begin());
+
+    drflac_close(_handle);
     _data = std::move(tempData);
     return;
 }
 
-void DrFlacImporter::doClose() {
-    if(_handle) drflac_close((drflac*)_handle);
-
-    _handle = nullptr;
-    _data = nullptr;
-}
+void DrFlacImporter::doClose() { _data = nullptr; }
 
 Buffer::Format DrFlacImporter::doFormat() const { return _format; }
 

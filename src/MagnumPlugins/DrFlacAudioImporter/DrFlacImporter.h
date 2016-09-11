@@ -95,7 +95,6 @@ class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter 
         Containers::Array<char> _data;
         Buffer::Format _format;
         UnsignedInt _frequency;
-        struct drflac* _handle;
 };
 
 }}
