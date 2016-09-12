@@ -3,7 +3,7 @@
 #
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016
 #             Vladimír Vondruš <mosra@centrum.cz>
-#   Copyright © 2015 Jonathan Hale <squareys@googlemail.com>
+#   Copyright © 2016 Alice Margatroid <loveoverwhelming@gmail.com>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -70,16 +70,16 @@ target_link_libraries(DrFlacAudioImporter Magnum::Magnum Magnum::Audio)
 install(FILES ${DrFlacAudioImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrFlacAudioImporter)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrFlacAudioImporter)
 
-#if(BUILD_TESTS)
-#    add_library(MagnumDrFlacAudioImporterTestLib STATIC
-#        $<TARGET_OBJECTS:DrFlacAudioImporterObjects>
-#        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-#    target_include_directories(MagnumDrFlacAudioImporterTestLib PUBLIC
-#        ${PROJECT_SOURCE_DIR}/src
-#        ${PROJECT_BINARY_DIR}/src)
-#    target_link_libraries(MagnumDrFlacAudioImporterTestLib Magnum::Magnum Magnum::Audio)
-#    add_subdirectory(Test)
-#endif()
+if(BUILD_TESTS)
+    add_library(MagnumDrFlacAudioImporterTestLib STATIC
+        $<TARGET_OBJECTS:DrFlacAudioImporterObjects>
+        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
+    target_include_directories(MagnumDrFlacAudioImporterTestLib PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src)
+    target_link_libraries(MagnumDrFlacAudioImporterTestLib Magnum::Magnum Magnum::Audio)
+    add_subdirectory(Test)
+endif()
 
 # MagnumPlugins DrFlacAudioImporter target alias for superprojects
 add_library(MagnumPlugins::DrFlacAudioImporter ALIAS DrFlacAudioImporter)

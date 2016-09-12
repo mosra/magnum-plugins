@@ -3,7 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016
               Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2015 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2016 Alice Margatroid <loveoverwhelming@gmail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -76,10 +76,11 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    Containers::Array<char> tempData(samples*numChannels*2);
-    std::copy(decodedData, decodedData + (samples*numChannels*2), tempData.begin());
+    Containers::Array<char> tempData(samples * sizeof(int32_t));
 
+    drflac_read_s32(_handle, samples, (int32_t*)tempData.begin());
     drflac_close(_handle);
+
     _data = std::move(tempData);
     return;
 }

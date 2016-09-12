@@ -24,7 +24,4 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "MagnumPlugins/DrFlacAudioImporter/DrFlacImporter.h"
-
-CORRADE_PLUGIN_REGISTER(DrFlacAudioImporter, Magnum::Audio::DrFlacImporter,
-    "cz.mosra.magnum.Audio.AbstractImporter/0.1")
+#define DRFLACAUDIOIMPORTER_TEST_DIR "${DRFLACAUDIOIMPORTER_TEST_DIR}"

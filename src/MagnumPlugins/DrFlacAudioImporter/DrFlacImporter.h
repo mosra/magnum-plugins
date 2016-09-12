@@ -5,7 +5,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016
               Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2015 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2016 Alice Margatroid <loveoverwhelming@gmail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -78,9 +78,6 @@ class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter 
 
         /** @brief Plugin manager constructor */
         explicit DrFlacImporter(PluginManager::AbstractManager& manager, std::string plugin);
-
-       /** @brief Destructor */
-       ~DrFlacImporter();
 
     private:
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL Features doFeatures() const override;
