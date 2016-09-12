@@ -86,6 +86,8 @@ This command will not try to find any actual plugin. The plugins are:
 -   `StbTrueTypeFont` -- @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin
 -   `StbVorbisAudioImporter` -- @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
     plugin
+-   `DrFlacAudioImporter` -- @ref Audio::DrFlacImporter "DrFlacAudioImporter"
+    plugin
 
 Note that each plugin class contains more detailed information about
 dependencies, availability on particular platform and also guide how to enable
