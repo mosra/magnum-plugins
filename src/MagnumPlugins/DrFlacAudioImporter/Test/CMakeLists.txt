@@ -40,7 +40,7 @@ target_include_directories(DrFlacAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINAR
 # linked statically. However it apparently doesn't matter that they were
 # dllexported when building the static library. EH.
 if(WIN32)
-    target_compile_definitions(DrFlacAudioImporterTest PRIVATE "MAGNUM_DrFlacAUDIOIMPORTER_BUILD_STATIC")
+    target_compile_definitions(DrFlacAudioImporterTest PRIVATE "MAGNUM_DRFLACAUDIOIMPORTER_BUILD_STATIC")
 endif()
 
 if(CORRADE_TARGET_EMSCRIPTEN)
