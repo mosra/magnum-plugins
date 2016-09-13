@@ -18,6 +18,7 @@
 #  AnySceneImporter             - Any scene importer
 #  ColladaImporter              - Collada importer
 #  DdsImporter                  - DDS importer
+#  DrFlacAudioImporter          - FLAC audio importer plugin using dr_flac
 #  FreeTypeFont                 - FreeType font
 #  HarfBuzzFont                 - HarfBuzz font
 #  JpegImporter                 - JPEG importer
@@ -144,7 +145,7 @@ endif()
 
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
-set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AnyAudioImporter|AnyImageConverter|AnyImageImporter|AnySceneImporter|ColladaImporter|DdsImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageImporter|StbPngImageConverter|StbTrueTypeFont|StbVorbisAudioImporter)$")
+set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AnyAudioImporter|AnyImageConverter|AnyImageImporter|AnySceneImporter|ColladaImporter|DdsImporter|DrFlacAudioImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageImporter|StbPngImageConverter|StbTrueTypeFont|StbVorbisAudioImporter)$")
 
 # Find all components
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
@@ -243,6 +244,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # DdsImporter has no dependencies
+        # DrFlacAudioImporter has no dependencies
 
         # FreeTypeFont plugin dependencies
         if(_component STREQUAL FreeTypeFont)
