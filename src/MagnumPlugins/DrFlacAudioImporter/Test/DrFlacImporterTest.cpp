@@ -76,7 +76,6 @@ void DrFlacImporterTest::stereo16() {
     CORRADE_COMPARE(importer.frequency(), 44100);
 }
 
-
 }}}
 
 CORRADE_TEST_MAIN(Magnum::Audio::Test::DrFlacImporterTest)

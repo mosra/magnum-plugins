@@ -44,18 +44,16 @@ auto DrFlacImporter::doFeatures() const -> Features { return Feature::OpenData; 
 bool DrFlacImporter::doIsOpened() const { return _data; }
 
 void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
-
-    drflac* _handle = drflac_open_memory(reinterpret_cast<const UnsignedByte*>(data.data()), data.size());
-
-    if(_handle == NULL) {
+    drflac* handle = drflac_open_memory(data.data(), data.size());
+    if(!handle) {
         Error() << "Audio::DrFlacImporter::openData(): failed to open and decode FLAC data";
         return;
     }
 
-    uint64_t samples = _handle->totalSampleCount;
-    uint32_t frequency = _handle->sampleRate;
-    uint8_t numChannels = _handle->channels;
-    uint8_t bitsPerSample = _handle->bitsPerSample;
+    uint64_t samples = handle->totalSampleCount;
+    uint32_t frequency = handle->sampleRate;
+    uint8_t numChannels = handle->channels;
+    uint8_t bitsPerSample = handle->bitsPerSample;
 
     _frequency = frequency;
 
@@ -72,14 +70,14 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
                 << numChannels << "with" << bitsPerSample
                 << "bits per sample";
 
-        drflac_close(_handle);
+        drflac_close(handle);
         return;
     }
 
-    Containers::Array<char> tempData(samples * sizeof(int32_t));
+    Containers::Array<char> tempData(samples*sizeof(int32_t));
 
-    drflac_read_s32(_handle, samples, (int32_t*)tempData.begin());
-    drflac_close(_handle);
+    drflac_read_s32(handle, samples, reinterpret_cast<int32_t*>(tempData.begin()));
+    drflac_close(handle);
 
     _data = std::move(tempData);
     return;
