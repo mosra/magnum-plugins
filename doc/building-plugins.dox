@@ -66,6 +66,8 @@ By default no plugins are built and you need to select them manually:
     plugin. Enables also building of @ref Trade::TgaImporter "TgaImporter"
     plugin.
 -   `WITH_DDSIMPORTER` -- @ref Trade::DdsImporter "DdsImporter" plugin.
+-   `WITH_DRFLACAUDIOIMPORTER` -- @ref Audio::DrFlacImporter "DrFlacAudioImporter"
+    plugin.
 -   `WITH_FREETYPEFONT` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin.
 -   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
     Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.
@@ -86,8 +88,6 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_STBTRUETYPEFONT` -- @ref Text::StbTrueTypeFont "StbTrueTypeFont"
     plugin.
 -   `WITH_STBVORBISAUDIOIMPORTER` -- @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
-    plugin.
--   `WITH_DRFLACAUDIOIMPORTER` -- @ref Audio::DrFlacImporter "DrFlacAudioImporter"
     plugin.
 
 Note that each plugin class contains more detailed information about
