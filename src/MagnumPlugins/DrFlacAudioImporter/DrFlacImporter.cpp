@@ -35,22 +35,21 @@
 
 namespace Magnum { namespace Audio {
 
+#define bvf(value) Buffer::Format::value
 namespace {
-
-    typedef Buffer B;
 
     // number of channels = 8
     // number of bits = 5
-    const B::Format  flacFormatTable[9][5] = {
-        { B::Format::Mono8,   B::Format::Mono8,   B::Format::Mono16,   B::Format::MonoFloat,   B::Format::MonoDouble   },   // None
-        { B::Format::Mono8,   B::Format::Mono8,   B::Format::Mono16,   B::Format::MonoFloat,   B::Format::MonoDouble   },   // Mono
-        { B::Format::Stereo8, B::Format::Stereo8, B::Format::Stereo16, B::Format::StereoFloat, B::Format::StereoDouble },   // Stereo
-        { B::Format::Quad8, B::Format::Quad8, B::Format::Quad16, B::Format::Quad32, B::Format::Quad32 },                    // Not a thing
-        { B::Format::Quad8, B::Format::Quad8, B::Format::Quad16, B::Format::Quad32, B::Format::Quad32 },                    // Quad
-        { B::Format::Quad8, B::Format::Quad8, B::Format::Quad16, B::Format::Quad32, B::Format::Quad32 },                    // Also not a thing
-        { B::Format::Surround51Channel8, B::Format::Surround51Channel8, B::Format::Surround51Channel16, B::Format::Surround51Channel32, B::Format::Surround51Channel32 }, // 5.1
-        { B::Format::Surround61Channel8, B::Format::Surround61Channel8, B::Format::Surround61Channel16, B::Format::Surround61Channel32, B::Format::Surround61Channel32 }, // 6.1
-        { B::Format::Surround71Channel8, B::Format::Surround71Channel8, B::Format::Surround71Channel16, B::Format::Surround71Channel32, B::Format::Surround71Channel32 }  // 7.1
+    const Buffer::Format  flacFormatTable[9][5] = {
+        { bvf(Mono8),   bvf(Mono8),   bvf(Mono16),   bvf(MonoFloat),   bvf(MonoDouble)   },   // None
+        { bvf(Mono8),   bvf(Mono8),   bvf(Mono16),   bvf(MonoFloat),   bvf(MonoDouble)   },   // Mono
+        { bvf(Stereo8), bvf(Stereo8), bvf(Stereo16), bvf(StereoFloat), bvf(StereoDouble) },   // Stereo
+        { bvf(Quad8), bvf(Quad8), bvf(Quad16), bvf(Quad32), bvf(Quad32) },                    // Not a thing
+        { bvf(Quad8), bvf(Quad8), bvf(Quad16), bvf(Quad32), bvf(Quad32) },                    // Quad
+        { bvf(Quad8), bvf(Quad8), bvf(Quad16), bvf(Quad32), bvf(Quad32) },                    // Also not a thing
+        { bvf(Surround51Channel8), bvf(Surround51Channel8), bvf(Surround51Channel16), bvf(Surround51Channel32), bvf(Surround51Channel32) }, // 5.1
+        { bvf(Surround61Channel8), bvf(Surround61Channel8), bvf(Surround61Channel16), bvf(Surround61Channel32), bvf(Surround61Channel32) }, // 6.1
+        { bvf(Surround71Channel8), bvf(Surround71Channel8), bvf(Surround71Channel16), bvf(Surround71Channel32), bvf(Surround71Channel32) }  // 7.1
     };
 
     Containers::Array<char> convert32PCM(const Containers::Array<char>& container, UnsignedInt samples, UnsignedInt size) {
@@ -70,6 +69,7 @@ namespace {
         return convertData;
     }
 }
+#undef bvf
 
 DrFlacImporter::DrFlacImporter() = default;
 
