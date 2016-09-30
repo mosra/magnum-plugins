@@ -35,6 +35,42 @@
 
 namespace Magnum { namespace Audio {
 
+namespace {
+
+    typedef Buffer B;
+
+    // number of channels = 8
+    // number of bits = 5
+    const B::Format  flacFormatTable[9][5] = {
+        { B::Format::Mono8,   B::Format::Mono8,   B::Format::Mono16,   B::Format::MonoFloat,   B::Format::MonoDouble   },   // None
+        { B::Format::Mono8,   B::Format::Mono8,   B::Format::Mono16,   B::Format::MonoFloat,   B::Format::MonoDouble   },   // Mono
+        { B::Format::Stereo8, B::Format::Stereo8, B::Format::Stereo16, B::Format::StereoFloat, B::Format::StereoDouble },   // Stereo
+        { B::Format::Quad8, B::Format::Quad8, B::Format::Quad16, B::Format::Quad32, B::Format::Quad32 },                    // Not a thing
+        { B::Format::Quad8, B::Format::Quad8, B::Format::Quad16, B::Format::Quad32, B::Format::Quad32 },                    // Quad
+        { B::Format::Quad8, B::Format::Quad8, B::Format::Quad16, B::Format::Quad32, B::Format::Quad32 },                    // Also not a thing
+        { B::Format::Surround51Channel8, B::Format::Surround51Channel8, B::Format::Surround51Channel16, B::Format::Surround51Channel32, B::Format::Surround51Channel32 }, // 5.1
+        { B::Format::Surround61Channel8, B::Format::Surround61Channel8, B::Format::Surround61Channel16, B::Format::Surround61Channel32, B::Format::Surround61Channel32 }, // 6.1
+        { B::Format::Surround71Channel8, B::Format::Surround71Channel8, B::Format::Surround71Channel16, B::Format::Surround71Channel32, B::Format::Surround71Channel32 }  // 7.1
+    };
+
+    Containers::Array<char> convert32PCM(const Containers::Array<char>& container, UnsignedInt samples, UnsignedInt size) {
+        Containers::Array<char> convertData(samples*size);
+
+        UnsignedInt skip = -1, index = 0;
+        for(char item : container) {
+            ++skip;
+
+            if(skip > 3) skip = 0;
+            if(skip < 4 - size) continue;
+
+            convertData[index] = item;
+            ++index;
+        }
+
+        return convertData;
+    }
+}
+
 DrFlacImporter::DrFlacImporter() = default;
 
 DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
@@ -51,21 +87,14 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
     }
 
     uint64_t samples = handle->totalSampleCount;
-    uint32_t frequency = handle->sampleRate;
     uint8_t numChannels = handle->channels;
     uint8_t bitsPerSample = handle->bitsPerSample;
 
-    _frequency = frequency;
+    // Normalize bit amounts to multiples of 8, rounding up
+    UnsignedInt normalizedBitsPerSample = (bitsPerSample / 8) + ((bitsPerSample % 8) ? 1 : 0);
 
-    if(numChannels == 1 && bitsPerSample == 8)
-        _format = Buffer::Format::Mono8;
-    else if(numChannels == 1 && bitsPerSample == 16)
-        _format = Buffer::Format::Mono16;
-    else if(numChannels == 2 && bitsPerSample == 8)
-        _format = Buffer::Format::Stereo8;
-    else if(numChannels == 2 && bitsPerSample == 16)
-        _format = Buffer::Format::Stereo16;
-    else {
+    if(numChannels == 0 || numChannels == 3 || numChannels == 5 || numChannels > 8 ||
+       normalizedBitsPerSample == 0 || normalizedBitsPerSample > 2) {
         Error() << "Audio::DrFlacImporter::openData(): unsupported channel count"
                 << numChannels << "with" << bitsPerSample
                 << "bits per sample";
@@ -74,12 +103,30 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    Containers::Array<char> tempData(samples*sizeof(int32_t));
+    _frequency = handle->sampleRate;
+    _format = flacFormatTable[numChannels][normalizedBitsPerSample];
 
-    drflac_read_s32(handle, samples, reinterpret_cast<int32_t*>(tempData.begin()));
+    Containers::Array<char> tempData(samples*sizeof(Int));
+    drflac_read_s32(handle, samples, reinterpret_cast<Int*>(tempData.begin()));
     drflac_close(handle);
 
-    _data = std::move(tempData);
+    switch(normalizedBitsPerSample)
+    {
+        case 1: {
+            _data = convert32PCM(tempData, samples, sizeof(UnsignedByte));
+
+            // Convert to unsigned
+            for(char& item : _data) {
+                item = item - 128;
+            }
+            break;
+        }
+        case 2: {
+            _data = convert32PCM(tempData, samples, sizeof(Short));
+            break;
+        }
+    }
+
     return;
 }
 

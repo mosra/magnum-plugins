@@ -46,5 +46,11 @@ endif()
 if(CORRADE_TARGET_EMSCRIPTEN)
     emscripten_embed_file(DrFlacAudioImporterTest mono8.flac "/mono8.flac")
     emscripten_embed_file(DrFlacAudioImporterTest mono16.flac "/mono16.flac")
+
+    emscripten_embed_file(DrFlacAudioImporterTest stereo8.flac "/stereo8.flac")
     emscripten_embed_file(DrFlacAudioImporterTest stereo16.flac "/stereo16.flac")
+
+    emscripten_embed_file(DrFlacAudioImporterTest quad16.flac "/quad16.flac")
+
+    emscripten_embed_file(DrFlacAudioImporterTest surround51Channel16.flac "/surround51Channel16.flac")
 endif()
