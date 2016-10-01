@@ -52,6 +52,7 @@ namespace {
         { bvf(Surround71Channel8), bvf(Surround71Channel8), bvf(Surround71Channel16), bvf(Surround71Channel32), bvf(Surround71Channel32) }  // 7.1
     };
 
+    // Converts 32-bit PCM into lower bit levels by skipping bytes
     Containers::Array<char> convert32PCM(const Containers::Array<char>& container, UnsignedInt samples, UnsignedInt size) {
         Containers::Array<char> convertData(samples*size);
 
@@ -90,11 +91,12 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
     uint8_t numChannels = handle->channels;
     uint8_t bitsPerSample = handle->bitsPerSample;
 
-    // Normalize bit amounts to multiples of 8, rounding up
-    UnsignedInt normalizedBitsPerSample = (bitsPerSample / 8) + ((bitsPerSample % 8) ? 1 : 0);
+    // FLAC supports any bitspersample from 4 to 64, but DrFlac always gives us 32-bit samples
+    // So we normalize bit amounts to multiples of 8, rounding up
+    UnsignedInt normalizedBytesPerSample = (bitsPerSample + 7)/8;
 
     if(numChannels == 0 || numChannels == 3 || numChannels == 5 || numChannels > 8 ||
-       normalizedBitsPerSample == 0 || normalizedBitsPerSample > 2) {
+       normalizedBytesPerSample == 0 || normalizedBytesPerSample > 2) {
         Error() << "Audio::DrFlacImporter::openData(): unsupported channel count"
                 << numChannels << "with" << bitsPerSample
                 << "bits per sample";
@@ -104,13 +106,13 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
     }
 
     _frequency = handle->sampleRate;
-    _format = flacFormatTable[numChannels][normalizedBitsPerSample];
+    _format = flacFormatTable[numChannels][normalizedBytesPerSample];
 
     Containers::Array<char> tempData(samples*sizeof(Int));
     drflac_read_s32(handle, samples, reinterpret_cast<Int*>(tempData.begin()));
     drflac_close(handle);
 
-    switch(normalizedBitsPerSample)
+    switch(normalizedBytesPerSample)
     {
         case 1: {
             _data = convert32PCM(tempData, samples, sizeof(UnsignedByte));
