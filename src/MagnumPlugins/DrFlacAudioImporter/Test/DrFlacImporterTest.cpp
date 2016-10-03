@@ -59,17 +59,17 @@ DrFlacImporterTest::DrFlacImporterTest() {
     addTests({
               &DrFlacImporterTest::mono8,
               &DrFlacImporterTest::mono16,
-//              &DrFlacImporterTest::mono24,
+              &DrFlacImporterTest::mono24,
 
               &DrFlacImporterTest::stereo8,
               &DrFlacImporterTest::stereo16,
-//              &DrFlacImporterTest::stereo24,
+              &DrFlacImporterTest::stereo24,
 
               &DrFlacImporterTest::quad16,
-//              &DrFlacImporterTest::quad24,
+              &DrFlacImporterTest::quad24,
 
-              &DrFlacImporterTest::surround51Channel16
-//              &DrFlacImporterTest::surround51Channel24
+              &DrFlacImporterTest::surround51Channel16,
+              &DrFlacImporterTest::surround51Channel24
             });
 }
 
@@ -102,10 +102,10 @@ void DrFlacImporterTest::mono24() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono24.flac")));
 
     CORRADE_COMPARE(importer.format(), Buffer::Format::MonoFloat);
-    CORRADE_COMPARE(importer.frequency(), 96000);
+    CORRADE_COMPARE(importer.frequency(), 48000);
 
-    CORRADE_COMPARE_AS(importer.data().slice(0,64),
-        Containers::Array<char>::from('\x1d', '\x10', '\x71', '\xc5').slice(0,4),
+    CORRADE_COMPARE_AS(importer.data().prefix(4),
+        Containers::Array<char>::from(0, -56, 15, -70).prefix(4),
         TestSuite::Compare::Container);
 }
 
@@ -140,8 +140,11 @@ void DrFlacImporterTest::stereo24() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
-    CORRADE_COMPARE_AS(importer.data(),
-        Containers::Array<char>::from('\x1d', '\x10', '\x71', '\xc5'),
+    CORRADE_COMPARE_AS(importer.data().prefix(32),
+        Containers::Array<char>::from(0, 0, 0, 0, 0, 0, 0, 0,
+                                      0, 0, 0, 0, 0, 0, 0, 0,
+                                      0, 0, 0, 56, 0, 0, -128, 56, 0,
+                                      0, -64, -72, 0, 0, 0, 0).prefix(32),
         TestSuite::Compare::Container);
 }
 
