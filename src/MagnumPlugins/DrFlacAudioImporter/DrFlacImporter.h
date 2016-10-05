@@ -54,9 +54,7 @@ namespace Magnum { namespace Audio {
 /**
 @brief FLAC audio importer plugin using dr_flac
 
-Supports mono and stereo files with 8/16 bits per channel. The files are
-imported with @ref Buffer::Format::Mono8 / @ref Buffer::Format::Mono16 or
-@ref Buffer::Format::Stereo8 / @ref Buffer::Format::Stereo16, respectively.
+Supports mono, stereo, and surround sound files with 8/16/24/32 bits per channel.
 
 This plugin is built if `WITH_DRFLACAUDIOIMPORTER` is enabled when building
 Magnum. To use dynamic plugin, you need to load `DrFlacAudioImporter` plugin
