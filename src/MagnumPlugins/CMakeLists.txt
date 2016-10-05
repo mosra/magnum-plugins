@@ -107,3 +107,8 @@ endif()
 if(WITH_DRFLACAUDIOIMPORTER)
     add_subdirectory(DrFlacAudioImporter)
 endif()
+
+if(WITH_DRWAVAUDIOIMPORTER)
+    add_subdirectory(DrWavAudioImporter)
+endif()
+
