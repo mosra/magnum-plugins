@@ -68,6 +68,8 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_DDSIMPORTER` -- @ref Trade::DdsImporter "DdsImporter" plugin.
 -   `WITH_DRFLACAUDIOIMPORTER` -- @ref Audio::DrFlacImporter "DrFlacAudioImporter"
     plugin.
+-   `WITH_DRWAVAUDIOIMPORTER` -- @ref Audio::DrWavImporter "DrWavAudioImporter"
+    plugin.
 -   `WITH_FREETYPEFONT` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin.
 -   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
     Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.

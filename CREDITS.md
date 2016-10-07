@@ -5,6 +5,8 @@ Third-party components
     licensed under [LGPLv2 license](http://www.gnu.org/licenses/lgpl-2.1.html)
 -   The `DrFlacAudioImporter` plugin uses **dr_flac** public domain library --
     https://mackron.github.io/dr_flac
+-   The `DrWavAudioImporter` plugin uses **dr_wav** public domain library --
+    https://mackron.github.io/dr_wav
 *   The `FreeTypeFont` plugin uses **FreeType** library -- http://freetype.org/,
     licensed under [FTL](http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT)
     or [GPLv2](http://www.gnu.org/licenses/gpl-2.0.html) license
@@ -30,7 +32,7 @@ Contributors to Magnum Plugins library
 --------------------------------------
 
 *   Alice Margatroid ([@Alicemargatroid](https://github.com/Alicemargatroid)) --
-    `DrFlacAudioImporter` plugin
+    `DrFlacAudioImporter` and `DrWavAudioImporter` plugin
 *   Jonathan Hale ([@Squareys](https://github.com/Squareys)) --
     `StbVorbisAudioImporter` plugin
 *   Konstantinos Chatzilygeroudis ([@costashatz](https://github.com/costashatz)) --
