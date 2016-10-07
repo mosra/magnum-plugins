@@ -78,11 +78,11 @@ constexpr const Buffer::Format MuLawFormatTable[2][1] = {
 #undef _v
 
 /* Converts 32-bit PCM into lower bit levels by skipping bytes */
-Containers::Array<char> convert32Pcm(const Containers::Array<char>& container, UnsignedInt samples, UnsignedInt size) {
+Containers::Array<char> convert32Pcm(const Containers::ArrayView<const char> container, const UnsignedInt samples, const UnsignedInt size) {
     Containers::Array<char> convertData(samples*size);
 
     UnsignedInt skip = -1, index = 0;
-    for(char item : container) {
+    for(char item: container) {
         ++skip;
 
         if(skip > 3) skip = 0;
@@ -96,7 +96,7 @@ Containers::Array<char> convert32Pcm(const Containers::Array<char>& container, U
 }
 
 /* Reads generic audio into most compatible format; also adjusts format */
-Containers::Array<char> read32fPcm(drwav* handle, UnsignedInt samples, UnsignedInt numChannels, Buffer::Format& format) {
+Containers::Array<char> read32fPcm(drwav* const handle, const UnsignedInt samples, const UnsignedInt numChannels, Buffer::Format& format) {
     format = IeeeFormatTable[numChannels-1][0];
 
     Containers::Array<char> tempData(samples*sizeof(Float));
@@ -106,7 +106,7 @@ Containers::Array<char> read32fPcm(drwav* handle, UnsignedInt samples, UnsignedI
 }
 
 /* Reads raw data; be sure size is exact! */
-Containers::Array<char> readRaw(drwav* handle, UnsignedInt samples, UnsignedInt size) {
+Containers::Array<char> readRaw(drwav* const handle, const UnsignedInt samples, const UnsignedInt size) {
     Containers::Array<char> tempData(samples*size);
     drwav_read_raw(handle, samples*size, reinterpret_cast<void*>(tempData.begin()));
 
@@ -128,23 +128,23 @@ auto DrWavImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
 bool DrWavImporter::doIsOpened() const { return _data; }
 
-void DrWavImporter::doOpenData(Containers::ArrayView<const char> data) {
+void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
     std::unique_ptr<drwav, DrWavDeleter> handle(drwav_open_memory(data.data(), data.size()));
     if(!handle) {
         Error() << "Audio::DrWavImporter::openData(): failed to open and decode WAV data";
         return;
     }
 
-    std::uint64_t samples = handle->totalSampleCount;
-    std::uint32_t frequency = handle->sampleRate;
-    std::uint8_t numChannels = handle->channels;
-    std::uint8_t bitsPerSample = handle->bitsPerSample;
+    const std::uint64_t samples = handle->totalSampleCount;
+    const std::uint32_t frequency = handle->sampleRate;
+    const std::uint8_t numChannels = handle->channels;
+    const std::uint8_t bitsPerSample = handle->bitsPerSample;
 
     /* If the bits per sample is exact, we can read data raw */
-    Int notExactBitsPerSample = ((bitsPerSample % 8) ? 1 : 0);
+    const Int notExactBitsPerSample = ((bitsPerSample % 8) ? 1 : 0);
 
     /* Normalize bit amounts to multiples of 8, rounding up */
-    UnsignedInt normalizedBytesPerSample = (bitsPerSample / 8) + notExactBitsPerSample;
+    const UnsignedInt normalizedBytesPerSample = (bitsPerSample / 8) + notExactBitsPerSample;
 
     if(numChannels == 0 || numChannels == 3 || numChannels == 5 || numChannels > 8 ||
        normalizedBytesPerSample == 0 || normalizedBytesPerSample > 8) {
