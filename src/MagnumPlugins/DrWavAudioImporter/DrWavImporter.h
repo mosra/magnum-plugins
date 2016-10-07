@@ -69,9 +69,9 @@ Supports mono, stereo and surround files of the following formats:
     @ref Buffer::Format::Quad32, @ref Buffer::Format::Surround51Channel32,
     @ref Buffer::Format::Surround61Channel32 or @ref Buffer::Format::Surround71Channel32
 -   64-bit IEEE Float, imported as @ref Buffer::Format::MonoDouble,
-    @ref Buffer::Format::StereoDouble, @ref Buffer::Format::Quad64,
-    @ref Buffer::Format::Surround51Channel64, @ref Buffer::Format::Surround61Channel64
-    or @ref Buffer::Format::Surround71Channel64
+    @ref Buffer::Format::StereoDouble, @ref Buffer::Format::Quad32,
+    @ref Buffer::Format::Surround51Channel32, @ref Buffer::Format::Surround61Channel32
+    or @ref Buffer::Format::Surround71Channel32
 -   A-Law, imported as @ref Buffer::Format::MonoALaw / @ref Buffer::Format::StereoALaw
 -   μ-Law, imported as @ref Buffer::Format::MonoMuLaw / @ref Buffer::Format::StereoMuLaw
 
