@@ -49,27 +49,42 @@ if(CORRADE_TARGET_EMSCRIPTEN)
 
     emscripten_embed_file(DrWavAudioImporterTest invalidPadding.wav "/invalidPadding.wav")
     emscripten_embed_file(DrWavAudioImporterTest invalidLength.wav "/invalidLength.wav")
+
     emscripten_embed_file(DrWavAudioImporterTest invalidDataChunk.wav "/invalidDataChunk.wav")
     emscripten_embed_file(DrWavAudioImporterTest invalidFactChunk.wav "/invalidFactChunk.wav")
 
+    emscripten_embed_file(DrWavAudioImporterTest mono4.wav "/mono4.wav")
     emscripten_embed_file(DrWavAudioImporterTest mono8.wav "/mono8.wav")
-    emscripten_embed_file(DrWavAudioImporterTest mono8.wav "/mono8junk.wav")
-
+    emscripten_embed_file(DrWavAudioImporterTest mono8junk.wav "/mono8junk.wav")
     emscripten_embed_file(DrWavAudioImporterTest mono8ALaw.wav "/mono8ALaw.wav")
     emscripten_embed_file(DrWavAudioImporterTest mono8MuLaw.wav "/mono8MuLaw.wav")
     emscripten_embed_file(DrWavAudioImporterTest mono16.wav "/mono16.wav")
+    emscripten_embed_file(DrWavAudioImporterTest mono24.wav "/mono24.wav")
 
+    emscripten_embed_file(DrWavAudioImporterTest stereo4.wav "/stereo4.wav")
     emscripten_embed_file(DrWavAudioImporterTest stereo8.wav "/stereo8.wav")
     emscripten_embed_file(DrWavAudioImporterTest stereo8ALaw.wav "/stereo8ALaw.wav")
     emscripten_embed_file(DrWavAudioImporterTest stereo8MuLaw.wav "/stereo8MuLaw.wav")
     emscripten_embed_file(DrWavAudioImporterTest stereo12.wav "/stereo12.wav")
     emscripten_embed_file(DrWavAudioImporterTest stereo16.wav "/stereo16.wav")
     emscripten_embed_file(DrWavAudioImporterTest stereo24.wav "/stereo24.wav")
+    emscripten_embed_file(DrWavAudioImporterTest stereo32.wav "/stereo32.wav")
 
     emscripten_embed_file(DrWavAudioImporterTest mono32f.wav "/mono32f.wav")
     emscripten_embed_file(DrWavAudioImporterTest stereo32f.wav "/stereo32f.wav")
-
     emscripten_embed_file(DrWavAudioImporterTest stereo64f.wav "/stereo64f.wav")
 
-    emscripten_embed_file(DrWavAudioImporterTest surround616.wav "/surround616.wav")
+    emscripten_embed_file(DrWavAudioImporterTest surround51Channel16.wav "/surround51Channel16.wav")
+    emscripten_embed_file(DrWavAudioImporterTest surround71Channel24.wav "/surround71Channel24.wav")
+
+    emscripten_embed_file(DrWavAudioImporterTest extension8.wav "/extension8.wav")
+    emscripten_embed_file(DrWavAudioImporterTest extension8ALaw.wav "/extensionALaw.wav")
+    emscripten_embed_file(DrWavAudioImporterTest extension8MuLaw.wav "/extensionMuLaw.wav")
+    emscripten_embed_file(DrWavAudioImporterTest extension12.wav "/extension12.wav")
+    emscripten_embed_file(DrWavAudioImporterTest extension16.wav "/extension16.wav")
+    emscripten_embed_file(DrWavAudioImporterTest extension24.wav "/extension24.wav")
+    emscripten_embed_file(DrWavAudioImporterTest extension32.wav "/extension32.wav")
+
+    emscripten_embed_file(DrWavAudioImporterTest extension32f.wav "/extension32f.wav")
+    emscripten_embed_file(DrWavAudioImporterTest extension64f.wav "/extension64f.wav")
 endif()
