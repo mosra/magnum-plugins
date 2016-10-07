@@ -376,7 +376,11 @@ void DrWavImporterTest::stereo32() {
     DrWavImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo32.wav")));
 
-//    CORRADE_COMPARE(importer.format(), Buffer::Format::StereoDouble);
+    {
+        CORRADE_EXPECT_FAIL("Importing 32-bit format as Double is not yet implemented.");
+        CORRADE_COMPARE(importer.format(), Buffer::Format::StereoDouble);
+    }
+    CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
     CORRADE_COMPARE_AS(importer.data().prefix(32),
@@ -510,7 +514,11 @@ void DrWavImporterTest::extensions32() {
     DrWavImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extension32.wav")));
 
-//    CORRADE_COMPARE(importer.format(), Buffer::Format::StereoDouble);
+    {
+        CORRADE_EXPECT_FAIL("Importing 32-bit format as Double is not yet implemented.");
+        CORRADE_COMPARE(importer.format(), Buffer::Format::StereoDouble);
+    }
+    CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
     CORRADE_COMPARE_AS(importer.data().prefix(32),
