@@ -40,8 +40,8 @@ namespace Magnum { namespace Audio {
 namespace {
 
 #define _v(value) Buffer::Format::value
-/* Number of channels = 8, number of bits = 5 */
-constexpr const Buffer::Format PcmFormatTable[8][5] = {
+/* Number of channels = 1-8, number of bits = 1-5 */
+constexpr const Buffer::Format PcmFormatTable[8][4] = {
     {_v(Mono8),   _v(Mono16),   _v(MonoFloat),   _v(MonoDouble)}, /* Mono */
     {_v(Stereo8), _v(Stereo16), _v(StereoFloat), _v(StereoDouble)}, /* Stereo */
     {Buffer::Format{}, Buffer::Format{}, Buffer::Format{}, Buffer::Format{}}, /* Not a thing */
@@ -52,7 +52,7 @@ constexpr const Buffer::Format PcmFormatTable[8][5] = {
     {_v(Surround71Channel8), _v(Surround71Channel16), _v(Surround71Channel32), _v(Surround71Channel32)}  /* 7.1 */
 };
 
-/* Number of channels = 8, divisible by 32 = 2 */
+/* Number of channels = 1-8, divisible by 32 = 1 or 2 */
 constexpr const Buffer::Format IeeeFormatTable[8][2] = {
     {_v(MonoFloat), _v(MonoDouble)},                    /* Mono */
     {_v(StereoFloat), _v(StereoDouble)},                /* Stereo */
