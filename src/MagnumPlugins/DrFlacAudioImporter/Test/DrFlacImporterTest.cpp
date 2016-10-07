@@ -67,7 +67,7 @@ DrFlacImporterTest::DrFlacImporterTest() {
               &DrFlacImporterTest::stereo16,
               &DrFlacImporterTest::stereo24,
 
-//              &DrFlacImporterTest::quad16,
+              &DrFlacImporterTest::quad16,
               &DrFlacImporterTest::quad24,
 
               &DrFlacImporterTest::surround51Channel16,
