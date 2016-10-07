@@ -57,4 +57,6 @@ if(CORRADE_TARGET_EMSCRIPTEN)
 
     emscripten_embed_file(DrFlacAudioImporterTest surround51Channel16.flac "/surround51Channel16.flac")
     emscripten_embed_file(DrFlacAudioImporterTest surround51Channel24.flac "/surround51Channel24.flac")
+
+    emscripten_embed_file(DrFlacAudioImporterTest surround71Channel24.flac "/surround71Channel24.flac")
 endif()

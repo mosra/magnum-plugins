@@ -53,6 +53,8 @@ class DrFlacImporterTest: public TestSuite::Tester {
 
         void surround51Channel16();
         void surround51Channel24();
+
+        void surround71Channel24();
 };
 
 DrFlacImporterTest::DrFlacImporterTest() {
@@ -65,11 +67,13 @@ DrFlacImporterTest::DrFlacImporterTest() {
               &DrFlacImporterTest::stereo16,
               &DrFlacImporterTest::stereo24,
 
-              &DrFlacImporterTest::quad16,
+//              &DrFlacImporterTest::quad16,
               &DrFlacImporterTest::quad24,
 
               &DrFlacImporterTest::surround51Channel16,
-              &DrFlacImporterTest::surround51Channel24
+              &DrFlacImporterTest::surround51Channel24,
+
+              &DrFlacImporterTest::surround71Channel24
             });
 }
 
@@ -177,6 +181,14 @@ void DrFlacImporterTest::surround51Channel24() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "surround51Channel24.flac")));
 
     CORRADE_COMPARE(importer.format(), Buffer::Format::Surround51Channel32);
+    CORRADE_COMPARE(importer.frequency(), 48000);
+}
+
+void DrFlacImporterTest::surround71Channel24() {
+    DrFlacImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "surround71Channel24.flac")));
+
+    CORRADE_COMPARE(importer.format(), Buffer::Format::Surround71Channel32);
     CORRADE_COMPARE(importer.frequency(), 48000);
 }
 
