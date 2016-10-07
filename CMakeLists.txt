@@ -69,15 +69,6 @@ cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "BU
 option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
 cmake_dependent_option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ON "BUILD_STATIC" OFF)
 
-# Check compiler compatibility
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7.0")
-    message(FATAL_ERROR "Compatibility branch of Magnum Plugins is needed for use with GCC < 4.7. See the documentation for more information.")
-elseif(MSVC)
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0")
-        message(FATAL_ERROR "Compatibility branch of Magnum Plugins is needed for use with MSVC < 2015. See the documentation for more information.")
-    endif()
-endif()
-
 # Newlib toolchain supports only static linking
 if(CORRADE_TARGET_NACL_NEWLIB OR CORRADE_TARGET_EMSCRIPTEN)
     set(BUILD_STATIC ON)
