@@ -54,7 +54,26 @@ namespace Magnum { namespace Audio {
 /**
 @brief WAV audio importer plugin using dr_wav
 
-Supports mono/stereo/surround files with 8/12/16/24/32 bits per channel.
+Supports mono, stereo and surround files of the following formats:
+
+-   8 bit-per-channel PCM, imported as @ref Buffer::Format::Mono8,
+    @ref Buffer::Format::Stereo8, @ref Buffer::Format::Quad8,
+    @ref Buffer::Format::Surround51Channel8, @ref Buffer::Format::Surround61Channel8
+    or @ref Buffer::Format::Surround71Channel8
+-   12 and 16 bit-per-channel PCM, imported as @ref Buffer::Format::Mono16,
+    @ref Buffer::Format::Stereo16, @ref Buffer::Format::Quad16,
+    @ref Buffer::Format::Surround51Channel16, @ref Buffer::Format::Surround61Channel16
+    or @ref Buffer::Format::Surround71Channel16
+-   24 and 32 bit-per-channel PCM and 32-bit IEEE Float, imported as
+    @ref Buffer::Format::MonoFloat, @ref Buffer::Format::StereoFloat,
+    @ref Buffer::Format::Quad32, @ref Buffer::Format::Surround51Channel32,
+    @ref Buffer::Format::Surround61Channel32 or @ref Buffer::Format::Surround71Channel32
+-   64-bit IEEE Float, imported as @ref Buffer::Format::MonoDouble,
+    @ref Buffer::Format::StereoDouble, @ref Buffer::Format::Quad64,
+    @ref Buffer::Format::Surround51Channel64, @ref Buffer::Format::Surround61Channel64
+    or @ref Buffer::Format::Surround71Channel64
+-   A-Law, imported as @ref Buffer::Format::MonoALaw / @ref Buffer::Format::StereoALaw
+-   μ-Law, imported as @ref Buffer::Format::MonoMuLaw / @ref Buffer::Format::StereoMuLaw
 
 This plugin is built if `WITH_DRWAVAUDIOIMPORTER` is enabled when building
 Magnum. To use dynamic plugin, you need to load `DrWavAudioImporter` plugin
