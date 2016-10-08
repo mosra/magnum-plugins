@@ -335,4 +335,3 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(MagnumPlugins
     REQUIRED_VARS MAGNUMPLUGINS_INCLUDE_DIR
     HANDLE_COMPONENTS)
-
