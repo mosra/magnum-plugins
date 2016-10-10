@@ -47,7 +47,7 @@ target_include_directories(JpegImporterObjects PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 target_compile_definitions(JpegImporterObjects PRIVATE "JpegImporterObjects_EXPORTS")
-target_include_directories(JpegImporterObjects PRIVATE ${JPEG_INCLUDE_DIR})
+target_include_directories(JpegImporterObjects SYSTEM PRIVATE ${JPEG_INCLUDE_DIR})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(JpegImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
