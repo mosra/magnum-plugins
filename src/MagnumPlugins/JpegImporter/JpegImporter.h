@@ -52,7 +52,7 @@ namespace Magnum { namespace Trade {
 /**
 @brief JPEG importer plugin
 
-Supports RGB or grayscale images with 8 bits per channel.
+Supports RGB, RGBA or grayscale images with 8 or 12 bits per channel.
 
 This plugin depends on **libJPEG** library and is built if `WITH_JPEGIMPORTER`
 is enabled when building Magnum Plugins. To use dynamic plugin, you need to
@@ -62,13 +62,13 @@ package in CMake and link to `MagnumPlugins::JpegImporter`. See
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref PixelFormat::RGB or @ref PixelFormat::Red.
-Grayscale images require extension @extension{ARB,texture_rg}. All imported
-images use default @ref PixelStorage parameters. In case libJPEG is built as
-8-bit (the default), images are imported as @ref PixelType::UnsignedByte.
-Otherwise, if libJPEG is built as 12-bit, images are imported as
-@ref PixelType::UnsignedShort, with pixel values being in the most significant
-bits.
+The images are imported with @ref PixelFormat::RGB, @ref PixelFormat::RGBA or
+@ref PixelFormat::Red. Grayscale images require extension
+@extension{ARB,texture_rg}. All imported images use default @ref PixelStorage
+parameters. In case libJPEG is built as 8-bit (the default), 8-bit images are
+imported as @ref PixelType::UnsignedByte and 12-bit images can't be imported.
+Otherwise, if libJPEG is built as 12-bit, 12-bit images are imported as @ref PixelType::UnsignedShort, with pixel values being in the most significant bits,
+and importing 8-bit images results in an error.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported and in
 WebGL 1.0, grayscale images use @ref PixelFormat::Luminance instead of
