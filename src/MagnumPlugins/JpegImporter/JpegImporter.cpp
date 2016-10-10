@@ -124,7 +124,14 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
             format = PixelFormat::RGB;
             break;
 
-        /** @todo RGBA (only in libjpeg-turbo and probably ignored) */
+        #if JCS_ALPHA_EXTENSIONS == 1
+        case JCS_EXT_RGBA:
+            CORRADE_INTERNAL_ASSERT(file.out_color_components == 3);
+            format = PixelFormat::RGBA;
+            break;
+        #endif
+
+        /** @todo RGB565, other RGBA and extension formats? */
 
         default:
             Error() << "Trade::JpegImporter::image2D(): unsupported color space" << file.out_color_space;
