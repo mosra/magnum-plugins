@@ -31,8 +31,8 @@
 #include <Magnum/Trade/ImageData.h>
 
 /* On Windows we need to circumvent conflicting definition of INT32 in
-   <windows.h> (included by glLoadGen from OpenGL.h). Problem with libjpeg-tubo
-   only, libjpeg solves that already somehow. */
+   <windows.h> (included from OpenGL headers). Problem with libjpeg-tubo only,
+   libjpeg solves that already somehow. */
 #ifdef CORRADE_TARGET_WINDOWS
 #define XMD_H
 #endif
