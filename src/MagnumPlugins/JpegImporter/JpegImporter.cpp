@@ -67,7 +67,6 @@ UnsignedInt JpegImporter::doImage2DCount() const { return 1; }
 std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Initialize structures */
     jpeg_decompress_struct file;
-    Containers::Array<JSAMPROW> rows;
     Containers::Array<char> data;
 
     /* Fugly error handling stuff */
@@ -130,11 +129,10 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     data = Containers::Array<char>{stride*std::size_t(size.y())};
 
     /* Read image row by row */
-    rows = Containers::Array<JSAMPROW>{std::size_t(size.y())};
-    for(Int i = 0; i != size.y(); ++i)
-        rows[i] = reinterpret_cast<JSAMPROW>(data.data()) + (size.y() - i - 1)*stride;
-    while(file.output_scanline < file.output_height)
-        jpeg_read_scanlines(&file, rows + file.output_scanline, file.output_height - file.output_scanline);
+    while(file.output_scanline < file.output_height) {
+        JSAMPROW row = reinterpret_cast<JSAMPROW>(data.data() + (size.y() - file.output_scanline - 1)*stride);
+        jpeg_read_scanlines(&file, &row, 1);
+    }
 
     /* Cleanup */
     jpeg_finish_decompress(&file);
