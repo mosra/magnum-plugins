@@ -114,14 +114,13 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
 
     /* Write header */
     png_set_IHDR(file, info, image.size().x(), image.size().y(),
-            bitDepth, colorType, PNG_INTERLACE_NONE,
-            PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+        bitDepth, colorType, PNG_INTERLACE_NONE,
+        PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info(file, info);
 
     /* Data properties */
     Math::Vector2<std::size_t> offset, dataSize;
     std::tie(offset, dataSize, std::ignore) = image.dataProperties();
-
 
     /* Write rows in reverse order, properly take data properties into account */
     if(bitDepth == 8) {
