@@ -97,8 +97,15 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
 
     /* Image size and type */
     const Vector2i size(file.output_width, file.output_height);
-    static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
+
+    /* 8-bit JPEG library */
+    #if BITS_IN_JSAMPLE == 8
     constexpr PixelType type = PixelType::UnsignedByte;
+    #elif BITS_IN_JSAMPLE == 12
+    constexpr PixelType type = PixelType::UnsignedShort;
+    #else
+    #error only 8-bit-per-sample and 12-bit-per-sample libJPEG builds are supported
+    #endif
 
     /* Image format */
     PixelFormat format = {};
@@ -124,8 +131,9 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
             return std::nullopt;
     }
 
-    /* Initialize data array, align rows to four bytes */
-    const std::size_t stride = ((size.x()*file.out_color_components*BITS_IN_JSAMPLE/8 + 3)/4)*4;
+    /* Initialize data array, align rows to four bytes. The stride is in bytes,
+       regardless of JSAMPLE size. */
+    const std::size_t stride = ((size.x()*file.out_color_components*sizeof(JSAMPLE) + 3)/4)*4;
     data = Containers::Array<char>{stride*std::size_t(size.y())};
 
     /* Read image row by row */
@@ -133,6 +141,13 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
         JSAMPROW row = reinterpret_cast<JSAMPROW>(data.data() + (size.y() - file.output_scanline - 1)*stride);
         jpeg_read_scanlines(&file, &row, 1);
     }
+
+    #if BITS_IN_JSAMPLE == 12
+    /* In case of 12bit file, shift the pixel values so the values are in most
+       significant bits. */
+    for(UnsignedShort& i: Containers::ArrayView<UnsignedShort>{reinterpret_cast<UnsignedShort*>(data.begin()), data.size()/2})
+        i <<= 4;
+    #endif
 
     /* Cleanup */
     jpeg_finish_decompress(&file);

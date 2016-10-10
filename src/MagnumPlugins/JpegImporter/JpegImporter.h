@@ -62,10 +62,13 @@ package in CMake and link to `MagnumPlugins::JpegImporter`. See
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref PixelType::UnsignedByte and @ref PixelFormat::RGB
-or @ref PixelFormat::Red, respectively. Grayscale images require extension
-@extension{ARB,texture_rg}. All imported images use default @ref PixelStorage
-parameters.
+The images are imported with @ref PixelFormat::RGB or @ref PixelFormat::Red.
+Grayscale images require extension @extension{ARB,texture_rg}. All imported
+images use default @ref PixelStorage parameters. In case libJPEG is built as
+8-bit (the default), images are imported as @ref PixelType::UnsignedByte.
+Otherwise, if libJPEG is built as 12-bit, images are imported as
+@ref PixelType::UnsignedShort, with pixel values being in the most significant
+bits.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported and in
 WebGL 1.0, grayscale images use @ref PixelFormat::Luminance instead of
