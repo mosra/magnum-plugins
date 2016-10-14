@@ -26,6 +26,7 @@
 
 #include "DrWavImporter.h"
 
+#include <memory>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
@@ -33,14 +34,12 @@
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 
-#include <memory>
-
 namespace Magnum { namespace Audio {
 
 namespace {
 
 #define _v(value) Buffer::Format::value
-/* Number of channels = 1-8, number of bits = 1-5 */
+/* Number of channels = 1-8, number of bytes = 1-4 */
 constexpr const Buffer::Format PcmFormatTable[8][4] = {
     {_v(Mono8),   _v(Mono16),   _v(MonoFloat),   _v(MonoDouble)}, /* Mono */
     {_v(Stereo8), _v(Stereo16), _v(StereoFloat), _v(StereoDouble)}, /* Stereo */
@@ -187,7 +186,7 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
             /* Convert 8 bit data to unsigned */
             if(normalizedBytesPerSample == 1)
-                for(char& item : _data) item = item - 128;
+                for(char& item: _data) item = item - 128;
             return;
         }
 
