@@ -48,13 +48,13 @@ target_include_directories(DrFlacAudioImporterObjects PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 target_compile_definitions(DrFlacAudioImporterObjects PRIVATE "DrFlacAudioImporterObjects_EXPORTS")
-# Include the stb_*.h files as a system directory to supress warnings
+# Include the dr_*.h files as a system directory to supress warnings
 target_include_directories(DrFlacAudioImporterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/dr)
 if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DrFlacAudioImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
-# DrFlacImporter plugin
+# DrFlacAudioImporter plugin
 add_plugin(DrFlacAudioImporter
     "${MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"

@@ -54,7 +54,24 @@ namespace Magnum { namespace Audio {
 /**
 @brief FLAC audio importer plugin using dr_flac
 
-Supports mono, stereo, and surround sound files with 8/16/24/32 bits per channel.
+Supports mono, stereo and surround sound files of the following formats:
+
+-   8 bit-per-channel, imported as @ref Buffer::Format::Mono8,
+    @ref Buffer::Format::Stereo8, @ref Buffer::Format::Quad8,
+    @ref Buffer::Format::Surround51Channel8, @ref Buffer::Format::Surround61Channel8
+    or @ref Buffer::Format::Surround71Channel8
+-   16 bit-per-channel, imported as @ref Buffer::Format::Mono16,
+    @ref Buffer::Format::Stereo16, @ref Buffer::Format::Quad16,
+    @ref Buffer::Format::Surround51Channel16, @ref Buffer::Format::Surround61Channel16
+    or @ref Buffer::Format::Surround71Channel16
+-   24 bit-per-channel, imported as
+    @ref Buffer::Format::MonoFloat, @ref Buffer::Format::StereoFloat,
+    @ref Buffer::Format::Quad32, @ref Buffer::Format::Surround51Channel32,
+    @ref Buffer::Format::Surround61Channel32 or @ref Buffer::Format::Surround71Channel32
+-   32 bit-per-channel, imported as
+    @ref Buffer::Format::MonoDouble, @ref Buffer::Format::StereoDouble,
+    @ref Buffer::Format::Quad32, @ref Buffer::Format::Surround51Channel32,
+    @ref Buffer::Format::Surround61Channel32 or @ref Buffer::Format::Surround71Channel32
 
 This plugin is built if `WITH_DRFLACAUDIOIMPORTER` is enabled when building
 Magnum. To use dynamic plugin, you need to load `DrFlacAudioImporter` plugin

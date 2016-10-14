@@ -54,7 +54,7 @@ namespace Magnum { namespace Audio {
 /**
 @brief WAV audio importer plugin using dr_wav
 
-Supports mono, stereo and surround files of the following formats:
+Supports mono, stereo and surround sound files of the following formats:
 
 -   8 bit-per-channel PCM, imported as @ref Buffer::Format::Mono8,
     @ref Buffer::Format::Stereo8, @ref Buffer::Format::Quad8,
