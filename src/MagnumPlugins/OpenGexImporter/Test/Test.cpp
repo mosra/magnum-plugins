@@ -26,6 +26,7 @@
 #include <sstream>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Quaternion.h>
@@ -955,7 +956,7 @@ void OpenGexImporterTest::imageUnique() {
     {
         std::optional<TextureData> texture0 = importer.texture(0);
         CORRADE_VERIFY(texture0);
-        CORRADE_VERIFY(texture0->image() <= 2);
+        CORRADE_COMPARE_AS(texture0->image(), 2, TestSuite::Compare::LessOrEqual);
 
         std::optional<TextureData> texture4 = importer.texture(4);
         CORRADE_VERIFY(texture4);
@@ -968,7 +969,7 @@ void OpenGexImporterTest::imageUnique() {
     } {
         std::optional<TextureData> texture1 = importer.texture(1);
         CORRADE_VERIFY(texture1);
-        CORRADE_VERIFY(texture1->image() <= 2);
+        CORRADE_COMPARE_AS(texture1->image(), 2, TestSuite::Compare::LessOrEqual);
 
         std::optional<TextureData> texture3 = importer.texture(3);
         CORRADE_VERIFY(texture3);
@@ -981,7 +982,7 @@ void OpenGexImporterTest::imageUnique() {
     } {
         std::optional<TextureData> texture2 = importer.texture(2);
         CORRADE_VERIFY(texture2);
-        CORRADE_VERIFY(texture2->image() <= 2);
+        CORRADE_COMPARE_AS(texture2->image(), 2, TestSuite::Compare::LessOrEqual);
 
         std::ostringstream out;
         Error redirectError{&out};
