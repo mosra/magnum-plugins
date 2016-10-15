@@ -10,6 +10,18 @@ matrix:
     - TARGET=desktop
     # Otherwise the job gets killed (probably because using too much memory)
     - JOBS_LIMIT=4
+  - os: linux
+    compiler: gcc
+    env:
+    - TARGET=desktop-gles
+    - TARGET_GLES2=ON
+    - JOBS_LIMIT=4
+  - os: linux
+    compiler: gcc
+    env:
+    - TARGET=desktop-gles
+    - TARGET_GLES2=OFF
+    - JOBS_LIMIT=4
   - os: osx
     compiler: clang
     env: TARGET=desktop
@@ -61,7 +73,7 @@ cache:
   - $HOME/harfbuzz
 
 install:
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then pip install --user cpp-coveralls && export COVERAGE="--coverage"; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ]; then pip install --user cpp-coveralls && export COVERAGE="--coverage"; fi
 
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX=g++-4.7; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PLATFORM_GL_API=GLX; fi
@@ -74,10 +86,11 @@ install:
 
 # HarfBuzz (cached)
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then brew install harfbuzz; fi
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ] && [ ! -e "$HOME/harfbuzz/include" ]; then wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-1.0.3.tar.bz2 && tar xf harfbuzz-1.0.3.tar.bz2 && cd harfbuzz-1.0.3 && ./configure --prefix=$HOME/harfbuzz && make -j install && cd ..; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" && ( "$TARGET" == "desktop" || "$TARGET" == "desktop-gles" ) && ! -e "$HOME/harfbuzz/include" ]; then wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-1.0.3.tar.bz2 && tar xf harfbuzz-1.0.3.tar.bz2 && cd harfbuzz-1.0.3 && ./configure --prefix=$HOME/harfbuzz && make -j install && cd ..; fi
 
 script:
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then ./package/ci/travis-desktop.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ]; then ./package/ci/travis-desktop.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop-gles" ]; then ./package/ci/travis-desktop-gles.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then ./package/ci/travis-desktop.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "ios-simulator" ]; then ./package/ci/travis-ios-simulator.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then ./package/ci/travis-emscripten.sh; fi
@@ -85,4 +98,4 @@ script:
 - sync
 
 after_success:
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then coveralls --gcov /usr/bin/gcov-4.7 -i src/ -E ".*/(Test|external)/.*" --gcov-options '\-lp'; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ]; then coveralls --gcov /usr/bin/gcov-4.7 -i src/ -E ".*/(Test|external)/.*" --gcov-options '\-lp' > /dev/null; fi
