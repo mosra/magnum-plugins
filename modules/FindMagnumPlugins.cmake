@@ -22,6 +22,7 @@
 #  DrWavAudioImporter           - WAV audio importer plugin using dr_wav
 #  FreeTypeFont                 - FreeType font
 #  HarfBuzzFont                 - HarfBuzz font
+#  JpegImageConverter           - JPEG image converter
 #  JpegImporter                 - JPEG importer
 #  MiniExrImageConverter        - OpenEXR image converter using miniexr
 #  OpenGexImporter              - OpenGEX importer

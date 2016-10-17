@@ -64,6 +64,10 @@ if(WITH_HARFBUZZFONT)
     add_subdirectory(HarfBuzzFont)
 endif()
 
+if(WITH_JPEGIMAGECONVERTER)
+    add_subdirectory(JpegImageConverter)
+endif()
+
 if(WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
