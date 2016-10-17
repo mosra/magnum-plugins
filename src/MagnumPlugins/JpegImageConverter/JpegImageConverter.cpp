@@ -85,6 +85,16 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
             components = 3;
             colorSpace = JCS_RGB;
             break;
+
+        #if JCS_ALPHA_EXTENSIONS == 1
+        case PixelFormat::RGBA:
+            components = 4;
+            colorSpace = JCS_EXT_RGBA;
+            break;
+        #endif
+
+        /** @todo RGB565 and other extension formats? */
+
         default:
             Error() << "Trade::JpegImageConverter::exportToData(): unsupported pixel format" << image.format();
             return nullptr;
