@@ -65,6 +65,8 @@ Supported formats for uncompressed data:
 
 -   OpenEXR (`*.exr`), converted with any plugin that provides
     `OpenExrImageConverter`
+-   JPG (`*.jpg`), converted with @ref JpegImageConverter or any other plugin
+    that provides it
 -   PNG (`*.png`), converted with @ref PngImageConverter or any other plugin
     that provides it
 -   TGA (`*.tga`), converted with @ref TgaImageConverter or any other plugin

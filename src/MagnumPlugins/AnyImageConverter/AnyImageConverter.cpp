@@ -50,6 +50,8 @@ bool AnyImageConverter::doExportToFile(const ImageView2D& image, const std::stri
     std::string plugin;
     if(Utility::String::endsWith(filename, ".exr"))
         plugin = "OpenExrImageConverter";
+    else if(Utility::String::endsWith(filename, ".jpg") || Utility::String::endsWith(filename, ".jpeg"))
+        plugin = "JpegImageConverter";
     else if(Utility::String::endsWith(filename, ".png"))
         plugin = "PngImageConverter";
     else if(Utility::String::endsWith(filename, ".tga"))
