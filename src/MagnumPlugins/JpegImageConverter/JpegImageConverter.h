@@ -51,8 +51,11 @@ namespace Magnum { namespace Trade {
 /**
 @brief JPEG image converter plugin
 
-Supports images with format @ref PixelFormat::Red or @ref PixelFormat::RGB and
-type @ref PixelType::UnsignedByte. On OpenGL ES 2.0 and WebGL 1.0 accepts also
+Supports images with format @ref PixelFormat::Red or @ref PixelFormat::RGB. In
+case libJPEG is built as 8-bit (the default), supports images of type
+@ref PixelType::UnsignedByte. Otherwise, if libJPEG is built as 12-bit, images
+supports images of type @ref PixelType::UnsignedShort, with pixel values being
+in the most significant bits. On OpenGL ES 2.0 and WebGL 1.0 accepts also
 @ref PixelFormat::Luminance instead of @ref PixelFormat::Red. Does *not*
 support non-default @ref PixelStorage::swapBytes() values.
 

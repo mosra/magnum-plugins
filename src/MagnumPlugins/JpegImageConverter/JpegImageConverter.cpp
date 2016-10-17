@@ -55,11 +55,19 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
     }
     #endif
 
-    static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
+    #if BITS_IN_JSAMPLE == 8
     if(image.type() != PixelType::UnsignedByte) {
         Error() << "Trade::JpegImageConverter::exportToData(): cannot convert image of type" << image.type() << "into 8-bit JPEG";
         return nullptr;
     }
+    #elif BITS_IN_JSAMPLE == 12
+    if(image.type() != PixelType::UnsignedShort) {
+        Error() << "Trade::JpegImageConverter::exportToData(): cannot convert image of type" << image.type() << "into 12-bit JPEG";
+        return nullptr;
+    }
+    #else
+    #error only 8-bit-per-sample and 12-bit-per-sample libJPEG builds are supported
+    #endif
 
     Int components;
     J_COLOR_SPACE colorSpace;
@@ -147,7 +155,22 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
     Math::Vector2<std::size_t> offset, dataSize;
     std::tie(offset, dataSize, std::ignore) = image.dataProperties();
 
+    /* For 16bit images we need to downscale to 12bit */
+    #if BITS_IN_JSAMPLE == 12
+    const std::size_t rowSize = image.pixelSize()*image.size().x()/2;
+    Containers::Array<UnsignedShort> row{rowSize};
+    #elif BITS_IN_JSAMPLE != 8
+    #error only 8-bit-per-sample and 12-bit-per-sample libJPEG builds are supported
+    #endif
     while(info.next_scanline < info.image_height) {
+        #if BITS_IN_JSAMPLE == 12
+        std::copy_n(image.data<UnsignedShort>() + (offset.sum() + (image.size().y() - y - 1)*dataSize.x())/2, rowSize, row.data());
+        for(UnsignedShort& i: row)
+            i >>= 4;
+        #elif BITS_IN_JSAMPLE != 8
+        #error only 8-bit-per-sample and 12-bit-per-sample libJPEG builds are supported
+        #endif
+
         /* libJPEG HAVE YOU EVER HEARD ABOUT CONST ARGUMENTS?! IT'S NOT 1978
            ANYMORE */
         JSAMPROW row = reinterpret_cast<JSAMPROW>(const_cast<char*>(image.data() + (image.size().y() - info.next_scanline - 1)*dataSize.x()));
