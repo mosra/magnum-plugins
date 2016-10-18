@@ -26,6 +26,7 @@
 #include "JpegImageConverter.h"
 
 #include <csetjmp>
+#include <algorithm>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Magnum/ImageView.h>
@@ -174,7 +175,7 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
     #endif
     while(info.next_scanline < info.image_height) {
         #if BITS_IN_JSAMPLE == 12
-        std::copy_n(image.data<UnsignedShort>() + (offset.sum() + (image.size().y() - y - 1)*dataSize.x())/2, rowSize, row.data());
+        std::copy_n(image.data<UnsignedShort>() + (offset.sum() + (image.size().y() - info.next_scanline - 1)*dataSize.x())/2, rowSize, row.data());
         for(UnsignedShort& i: row)
             i >>= 4;
         #elif BITS_IN_JSAMPLE != 8
