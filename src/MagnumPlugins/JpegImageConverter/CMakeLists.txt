@@ -50,6 +50,7 @@ target_include_directories(JpegImageConverterObjects
     PRIVATE
         ${JPEG_INCLUDE_DIRS})
 target_compile_definitions(JpegImageConverterObjects PRIVATE "JpegImageConverterObjects_EXPORTS")
+target_include_directories(JpegImageConverterObjects SYSTEM PRIVATE ${JPEG_INCLUDE_DIR})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(JpegImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
