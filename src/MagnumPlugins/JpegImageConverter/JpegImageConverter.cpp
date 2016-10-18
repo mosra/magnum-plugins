@@ -135,8 +135,8 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
     info.dest->init_destination = [](j_compress_ptr info) {
         auto& destinationManager = *reinterpret_cast<DestinationManager*>(info->dest);
         destinationManager.output.resize(1); /* It crashes if the buffer has zero free space */
-        info->dest->next_output_byte = reinterpret_cast<JSAMPLE*>(&destinationManager.output[0]);
-        info->dest->free_in_buffer = destinationManager.output.size()/sizeof(JSAMPLE);
+        info->dest->next_output_byte = reinterpret_cast<JOCTET*>(&destinationManager.output[0]);
+        info->dest->free_in_buffer = destinationManager.output.size();
     };
     info.dest->term_destination = [](j_compress_ptr info) {
         auto& destinationManager = *reinterpret_cast<DestinationManager*>(info->dest);
@@ -146,8 +146,8 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
         auto& destinationManager = *reinterpret_cast<DestinationManager*>(info->dest);
         const std::size_t oldSize = destinationManager.output.size();
         destinationManager.output.resize(oldSize*2); /* Double capacity each time it is exceeded */
-        info->dest->next_output_byte = reinterpret_cast<JSAMPLE*>(&destinationManager.output[0] + oldSize);
-        info->dest->free_in_buffer = (destinationManager.output.size() - oldSize)/sizeof(JSAMPLE);
+        info->dest->next_output_byte = reinterpret_cast<JOCTET*>(&destinationManager.output[0] + oldSize);
+        info->dest->free_in_buffer = destinationManager.output.size() - oldSize;
         return true;
     };
 
