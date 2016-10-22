@@ -30,6 +30,7 @@
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
 
+#define STB_VORBIS_NO_STDIO 1
 #include "stb_vorbis.c"
 
 namespace Magnum { namespace Audio {
