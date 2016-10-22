@@ -69,7 +69,7 @@ void StbVorbisImporterTest::unsupportedChannelCount() {
 
     StbVorbisImporter importer;
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
-    CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): unsupported channel count 6 with 16 bits per sample\n");
+    CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): unsupported channel count 5 with 16 bits per sample\n");
 }
 
 void StbVorbisImporterTest::mono16() {

@@ -61,12 +61,19 @@ void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
         [](char* data, size_t) { std::free(data); }};
     _frequency = frequency;
 
-    /* Decide about format */
+    /** @todo Buffer::Format::*Float32 when extension support is done */
     if(numChannels == 1)
         _format = Buffer::Format::Mono16;
     else if(numChannels == 2)
         _format = Buffer::Format::Stereo16;
-    /** @todo Buffer::Format::*Float32 when extension support is done */
+    else if(numChannels == 4)
+        _format = Buffer::Format::Quad16;
+    else if(numChannels == 6)
+        _format = Buffer::Format::Surround51Channel16;
+    else if(numChannels == 7)
+        _format = Buffer::Format::Surround61Channel16;
+    else if(numChannels == 8)
+        _format = Buffer::Format::Surround71Channel16;
     else {
         Error() << "Audio::StbVorbisImporter::openData(): unsupported channel count"
                 << numChannels << "with" << 16 << "bits per sample";
