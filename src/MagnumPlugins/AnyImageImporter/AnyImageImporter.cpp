@@ -68,10 +68,16 @@ void AnyImageImporter::doOpenFile(const std::string& filename) {
         plugin = "Jp2Importer";
     else if(Utility::String::endsWith(filename, ".mng"))
         plugin = "MngImporter";
-    else if(Utility::String::endsWith(filename, ".pgm")
-         || Utility::String::endsWith(filename, ".pbm")
-         || Utility::String::endsWith(filename, ".pnm"))
+    else if(Utility::String::endsWith(filename, ".pal"))
+        plugin = "PalImporter";
+    else if(Utility::String::endsWith(filename, ".pbm"))
+        plugin = "PbmImporter";
+    else if(Utility::String::endsWith(filename, ".pgm"))
         plugin = "PgmImporter";
+    else if(Utility::String::endsWith(filename, ".pnm"))
+        plugin = "PnmImporter";
+    else if(Utility::String::endsWith(filename, ".pcx"))
+        plugin = "PcxImporter";
     else if(Utility::String::endsWith(filename, ".pic"))
         plugin = "PicImporter";
     else if(Utility::String::endsWith(filename, ".png"))
@@ -82,6 +88,11 @@ void AnyImageImporter::doOpenFile(const std::string& filename) {
         plugin = "PsdImporter";
     else if(Utility::String::endsWith(filename, ".raw"))
         plugin = "RawImporter";
+    else if(Utility::String::endsWith(filename, ".sgi")
+         || Utility::String::endsWith(filename, ".bw")
+         || Utility::String::endsWith(filename, ".rgb")
+         || Utility::String::endsWith(filename, ".rgba"))
+        plugin = "SgiImporter";
     else if(Utility::String::endsWith(filename, ".tif")
          || Utility::String::endsWith(filename, ".tiff"))
         plugin = "TiffImporter";
