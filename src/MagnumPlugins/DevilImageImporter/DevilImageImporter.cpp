@@ -23,63 +23,67 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "StbImageImporter.h"
+#include "DevilImageImporter.h"
 
 #include <algorithm>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 
+#include <IL/il.h>
+#include <IL/ilu.h>
+
 #ifdef MAGNUM_TARGET_GLES2
 #include <Magnum/Context.h>
 #include <Magnum/Extensions.h>
 #endif
 
-#define STBI_NO_STDIO
-#define STBI_NO_LINEAR
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_STATIC
-#define STBI_ASSERT CORRADE_INTERNAL_ASSERT
-/* Not defining malloc/free, because there's no equivalent for realloc in C++ */
-#include "stb_image.h"
-
 namespace Magnum { namespace Trade {
 
-StbImageImporter::StbImageImporter() = default;
+DevilImageImporter::DevilImageImporter() = default;
 
-StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
+DevilImageImporter::DevilImageImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
 
-StbImageImporter::~StbImageImporter() = default;
+DevilImageImporter::~DevilImageImporter() { close(); }
 
-auto StbImageImporter::doFeatures() const -> Features { return Feature::OpenData; }
+auto DevilImageImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool StbImageImporter::doIsOpened() const { return _in; }
+bool DevilImageImporter::doIsOpened() const { return _in; }
 
-void StbImageImporter::doClose() {
-    _in = nullptr;
+void DevilImageImporter::doClose() { _in = nullptr; }
+
+void DevilImageImporter::doOpenData(const Containers::ArrayView<const char> data) {
+    _in = Containers::Array<unsigned char>(data.size());
+    std::copy(data.begin(), data.end(), _in.begin());
 }
 
-void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    _in = Containers::Array<unsigned char>{data.size()};
-    std::copy(data.begin(), data.end(), _in.data());
-}
+UnsignedInt DevilImageImporter::doImage2DCount() const { return 1; }
 
-UnsignedInt StbImageImporter::doImage2DCount() const { return 1; }
+std::optional<ImageData2D> DevilImageImporter::doImage2D(UnsignedInt) {
+    ILuint imgID = 0;
+    ilGenImages( 1, &imgID );
+    ilBindImage( imgID );
 
-std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
-    Vector2i size;
-    Int components;
-
-    stbi_set_flip_vertically_on_load(true);
-    stbi_uc* const data = stbi_load_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0);
-    if(!data) {
-        Error() << "Trade::StbImageImporter::image2D(): cannot open the image:" << stbi_failure_reason();
+    ILboolean success = ilLoadL(IL_TYPE_UNKNOWN, _in, _in.size());
+    if(success == IL_FALSE) {
+        Error() << "Trade::DevilImageImporter::image2D(): cannot open the image:" << ilGetError();
         return std::nullopt;
     }
 
+    ILubyte *data = ilGetData();
+
+    Vector2i size;
+    size.x() = ilGetInteger(IL_IMAGE_WIDTH);
+    size.y() = ilGetInteger(IL_IMAGE_HEIGHT);
+
+    ILint ilFormat = ilGetInteger(IL_IMAGE_FORMAT);
+    int components = 0;
+
+    bool rgba_needed = false;
     PixelFormat format;
-    switch(components) {
-        case 1:
+    switch(ilFormat) {
+        // GREY
+        case IL_LUMINANCE:
             #ifndef MAGNUM_TARGET_GLES2
             format = PixelFormat::Red;
             #elif !defined(MAGNUM_TARGET_WEBGL)
@@ -88,8 +92,12 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
             #else
             format = PixelFormat::Luminance;
             #endif
+
+            components = 1;
             break;
-        case 2:
+
+        // GREY ALPHA
+        case IL_LUMINANCE_ALPHA:
             #ifndef MAGNUM_TARGET_GLES2
             format = PixelFormat::RG;
             #elif !defined(MAGNUM_TARGET_WEBGL)
@@ -98,11 +106,68 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
             #else
             format = PixelFormat::LuminanceAlpha;
             #endif
+
+            components = 2;
             break;
 
-        case 3: format = PixelFormat::RGB; break;
-        case 4: format = PixelFormat::RGBA; break;
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        // BGR
+        case IL_BGR:
+            #ifndef MAGNUM_TARGET_GLES
+            format = PixelFormat::BGR;
+            #elif
+            rgba_needed = true;
+            #endif
+
+            components = 3;
+            break;
+
+        // BGRA
+        case IL_BGRA:
+            #ifndef MAGNUM_TARGET_GLES
+            format = PixelFormat::BGRA;
+            #elif
+            rgba_needed = true;
+            #endif
+
+            components = 4;
+            break;
+
+        // RGB
+        case IL_RGB:
+            format = PixelFormat::RGB;
+
+            components = 3;
+            break;
+
+        // RGBA
+        case IL_RGBA:
+            format = PixelFormat::RGBA;
+
+            components = 4;
+            break;
+
+        // Convert to RGBA
+        default: rgba_needed = true;
+    }
+
+    /* If the format isn't one we recognize, convert to RGBA */
+    if(rgba_needed) {
+        success = ilConvertImage( IL_RGBA, IL_UNSIGNED_BYTE );
+        if(success == IL_FALSE) {
+            Error() << "Trade::DevilImageImporter::image2D(): cannot convert image: " << ilGetError();
+            return std::nullopt;
+        }
+
+        format = PixelFormat::RGBA;
+        components = 4;
+    }
+
+
+    /* Flip the image to match OpenGL's conventions */
+    ILinfo ImageInfo;
+    iluGetImageInfo(&ImageInfo);
+    if( ImageInfo.Origin == IL_ORIGIN_UPPER_LEFT ) {
+        iluFlipImage();
     }
 
     /* Copy the data into array with default deleter (we can't use custom
@@ -111,8 +176,8 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     Containers::Array<char> imageData{std::size_t(size.product()*components)};
     std::copy_n(reinterpret_cast<char*>(data), imageData.size(), imageData.begin());
 
-    int what = (size.x()*components)%4;
-    Warning() << "Rounding: " << size.x() << " " << components << " " << what;
+    /* Release the texture back to DevIL */
+    ilDeleteImages(1, &imgID);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
