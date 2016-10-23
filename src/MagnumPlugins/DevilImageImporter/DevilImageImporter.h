@@ -50,11 +50,11 @@
 namespace Magnum { namespace Trade {
 
 /**
-@brief JPEG importer plugin
+@brief DevIL Image importer plugin
 
-Supports RGB or grayscale images with 8 bits per channel.
+Supports a large variety of image file types at high speed
 
-This plugin depends on **libJPEG** library and is built if `WITH_DEVILIMAGEIMPORTER`
+This plugin depends on **DevIL** library and is built if `WITH_DEVILIMAGEIMPORTER`
 is enabled when building Magnum Plugins. To use dynamic plugin, you need to
 load `DevilImageImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
 plugin, you need to request `DevilImageImporter` component of `MagnumPlugins`
@@ -62,10 +62,14 @@ package in CMake and link to `MagnumPlugins::DevilImageImporter`. See
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref PixelType::UnsignedByte and @ref PixelFormat::RGB
-or @ref PixelFormat::Red, respectively. Grayscale images require extension
-@extension{ARB,texture_rg}. All imported images use default @ref PixelStorage
-parameters.
+The images are imported with @ref PixelType::UnsignedByte and a suitable PixelFormat type.
+Supported types are @ref PixelFormat::Red, @ref PixelFormat::Luminance, @ref PixelFormat::RG,
+@ref PixelFormat::LuminanceAlpha, @ref PixelFormat::RGB, @ref PixelFormat::BGR,
+@ref PixelFormat::RGBA, and @ref PixelFormat::BGRA.
+All other formats will be converted to @ref PixelFormat::RGBA
+
+Grayscale images require extension @extension{ARB,texture_rg}.
+All imported images use default @ref PixelStorage parameters.
 
 In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported and in
 WebGL 1.0, grayscale images use @ref PixelFormat::Luminance instead of
