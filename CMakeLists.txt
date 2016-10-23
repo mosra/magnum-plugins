@@ -61,6 +61,7 @@ option(WITH_STBTRUETYPEFONT "Build StbTrueTypeFont plugin" OFF)
 option(WITH_STBVORBISAUDIOIMPORTER "Build StbVorbisAudioImporter plugin" OFF)
 option(WITH_DRFLACAUDIOIMPORTER "Build DrFlacAudioImporter plugin" OFF)
 option(WITH_DRWAVAUDIOIMPORTER "Build DrWavAudioImporter plugin" OFF)
+option(WITH_DEVILIMAGEIMPORTER "Build DevILImageImporter plugin" OFF)
 
 include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests" OFF)

@@ -112,3 +112,7 @@ if(WITH_DRWAVAUDIOIMPORTER)
     add_subdirectory(DrWavAudioImporter)
 endif()
 
+if(WITH_DEVILIMAGEIMPORTER)
+    add_subdirectory(DevilImageImporter)
+endif()
+
