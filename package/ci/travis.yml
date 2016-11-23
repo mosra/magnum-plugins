@@ -59,6 +59,7 @@ addons:
     - libopenal-dev
     - libpng12-dev
     - libqt4-dev
+    - libdevil-dev
 
 notifications:
   webhooks:
@@ -81,6 +82,7 @@ install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then export PLATFORM_GL_API=CGL; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then export WITH_COLLADAIMPORTER=OFF; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then brew install devil; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "ios-simulator" ]; then gem install xcpretty; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then brew install emscripten && export LLVM=/usr/local/opt/emscripten/libexec/llvm/bin && emcc; fi
 

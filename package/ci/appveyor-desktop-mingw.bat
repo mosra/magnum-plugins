@@ -1,6 +1,6 @@
 rem Workaround for CMake not wanting sh.exe on PATH for MinGW. AARGH.
 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-set PATH=C:\tools\mingw64\bin;%APPVEYOR_BUILD_FOLDER%/openal/bin/Win64;%APPVEYOR_BUILD_FOLDER%\deps\bin;%PATH%
+set PATH=C:\tools\mingw64\bin;%APPVEYOR_BUILD_FOLDER%/openal/bin/Win64;%APPVEYOR_BUILD_FOLDER%\deps\bin;%APPVEYOR_BUILD_FOLDER%\devil;%PATH%
 
 rem Build LibJPEG
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.5.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.5.0/libjpeg-turbo-1.5.0.tar.gz || exit /b
@@ -61,12 +61,13 @@ mkdir build && cd build || exit /b
 cmake .. ^
     -DCMAKE_BUILD_TYPE=Release ^
     -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
-    -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal ^
+    -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal;%APPVEYOR_BUILD_FOLDER%/devil ^
     -DWITH_ANYAUDIOIMPORTER=ON ^
     -DWITH_ANYIMAGECONVERTER=ON ^
     -DWITH_ANYIMAGEIMPORTER=ON ^
     -DWITH_ANYSCENEIMPORTER=ON ^
     -DWITH_DDSIMPORTER=ON ^
+    -DWITH_DEVILIMAGEIMPORTER=ON ^
     -DWITH_DRFLACAUDIOIMPORTER=ON ^
     -DWITH_DRWAVAUDIOIMPORTER=ON ^
     -DWITH_FREETYPEFONT=OFF ^

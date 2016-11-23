@@ -19,6 +19,7 @@ IUSE=""
 RDEPEND="
 	dev-libs/magnum
 	dev-qt/qtcore
+	media-libs/devil
 	media-libs/freetype
 	media-libs/harfbuzz
 	virtual/jpeg
@@ -37,6 +38,7 @@ src_configure() {
 		-DWITH_ANYSCENEIMPORTER=ON
 		-DWITH_COLLADAIMPORTER=ON
 		-DWITH_DDSIMPORTER=ON
+		-DWITH_DEVILIMAGEIMPORTER=ON
 		-DWITH_DRFLACAUDIOIMPORTER=ON
 		-DWITH_DRWAVAUDIOIMPORTER=ON
 		-DWITH_FREETYPEFONT=ON

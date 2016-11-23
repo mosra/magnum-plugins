@@ -37,6 +37,10 @@ install:
 - IF "%TARGET%" == "desktop" ren openal\bin\Win64\soft_oal.dll OpenAL32.dll
 - IF "%TARGET%" == "desktop-gles" ren openal\bin\Win64\soft_oal.dll OpenAL32.dll
 
+# DevIL
+- IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\DevIL-SDK-x64-1.7.8.zip appveyor DownloadFile http://downloads.sourceforge.net/openil/DevIL-SDK-x64-1.7.8.zip
+- IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move *.lib lib\ && cd ..
+
 build_script:
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" call package\ci\appveyor-desktop.bat
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" call package\ci\appveyor-desktop-mingw.bat
@@ -46,3 +50,4 @@ build_script:
 cache:
 - openal-soft-1.17.2-bin.zip
 - libjpeg-turbo-1.5.0.tar.gz
+- DevIL-SDK-x64-1.7.8.zip
