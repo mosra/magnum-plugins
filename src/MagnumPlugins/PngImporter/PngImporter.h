@@ -52,8 +52,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief PNG importer plugin
 
-Supports RGB, RGBA or grayscale images with 8 and 16 bits per channel. Palleted
-images and images with transparency mask are automatically converted to RGB(A).
+Supports Portable Network Graphics (`*.png`) RGB, RGBA or grayscale images with
+8 and 16 bits per channel. Palleted images and images with transparency mask
+are automatically converted to RGB(A).
 
 This plugin depends on **libPNG** library and is built if `WITH_PNGIMPORTER`
 is enabled when building Magnum Plugins. To use dynamic plugin, you need to

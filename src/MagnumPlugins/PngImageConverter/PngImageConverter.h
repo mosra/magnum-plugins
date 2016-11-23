@@ -51,13 +51,13 @@ namespace Magnum { namespace Trade {
 /**
 @brief PNG image converter plugin
 
-Supports images with format @ref PixelFormat::Red, @ref PixelFormat::RG,
-@ref PixelFormat::RGB or @ref PixelFormat::RGBA and type
-@ref PixelType::UnsignedByte or @ref PixelType::UnsignedShort. On OpenGL ES 2.0
-and WebGL 1.0 accepts also @ref PixelFormat::Luminance instead of
-@ref PixelFormat::Red and @ref PixelFormat::LuminanceAlpha instead of
-@ref PixelFormat::RG. Does *not* support non-default @ref PixelStorage::swapBytes()
-values.
+Creates Portable Network Graphics (`*.png`) files from images with format
+@ref PixelFormat::Red, @ref PixelFormat::RG, @ref PixelFormat::RGB or
+@ref PixelFormat::RGBA and type @ref PixelType::UnsignedByte or
+@ref PixelType::UnsignedShort. On OpenGL ES 2.0 and WebGL 1.0 accepts also
+@ref PixelFormat::Luminance instead of @ref PixelFormat::Red and
+@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::RG. Does *not*
+support non-default @ref PixelStorage::swapBytes() values.
 
 This plugin depends on **libPNG** library and is built if `WITH_PNGIMAGECONVERTER`
 is enabled when building Magnum Plugins. To use dynamic plugin, you need to load

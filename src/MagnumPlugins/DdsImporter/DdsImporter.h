@@ -52,7 +52,8 @@ namespace Magnum { namespace Trade {
 /**
 @brief DDS image importer plugin
 
-Supports the following formats:
+Supports DirectDraw Surface images (`*.dds`) in the following formats:
+
 -   DDS uncompressed RGB, RGBA, BGR, BGRA, grayscale
 -   DDS compressed DXT1, DXT3, DXT5
 

@@ -54,16 +54,16 @@ namespace Magnum { namespace Trade {
 
 Supports the following formats:
 
--   BMP, only non-1bpp, no RLE
--   GIF
--   HDR
--   JPEG, except for arithmetic encoding
--   PGM
--   PIC
--   PNG
--   PPM
--   PSD, only composited view
--   TGA
+-   Windows Bitmap (`*.bmp`), only non-1bpp, no RLE
+-   Graphics Interchange Format (`*.gif`)
+-   Radiance HDR (`*.hdr`)
+-   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`), except for arithmetic encoding
+-   Portable Graymap (`*.pgm`)
+-   Softimage PIC (`*.pic`)
+-   Portable Network Graphics (`*.png`)
+-   Portable Pixmap (`*.ppm`)
+-   Adobe Photoshop (`*.psd`), only composited view
+-   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`)
 
 Creates RGB, RGBA, grayscale or grayscale + alpha images with 8 bits per
 channel. Palleted images are automatically converted to RGB(A).

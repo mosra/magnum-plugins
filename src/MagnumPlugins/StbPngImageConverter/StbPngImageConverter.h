@@ -51,12 +51,13 @@ namespace Magnum { namespace Trade {
 /**
 @brief PNG image converter plugin using stb_image_write
 
-Supports images with format @ref PixelFormat::Red, @ref PixelFormat::RG,
-@ref PixelFormat::RGB or @ref PixelFormat::RGBA and type
-@ref PixelType::UnsignedByte. On OpenGL ES 2.0 and WebGL 1.0 accepts also
-@ref PixelFormat::Luminance instead of @ref PixelFormat::Red and
-@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::RG. Does *not*
-support non-default @ref PixelStorage::swapBytes() values.
+Creates Portable Network Graphics (`*.png`) files from images with format
+@ref PixelFormat::Red, @ref PixelFormat::RG, @ref PixelFormat::RGB or
+@ref PixelFormat::RGBA and type @ref PixelType::UnsignedByte. On OpenGL ES 2.0
+and WebGL 1.0 accepts also @ref PixelFormat::Luminance instead of
+@ref PixelFormat::Red and @ref PixelFormat::LuminanceAlpha instead of
+@ref PixelFormat::RG. Does *not* support non-default
+@ref PixelStorage::swapBytes() values.
 
 This plugin is built if `WITH_STBPNGIMAGECONVERTER` is enabled when building
 Magnum Plugins. To use dynamic plugin, you need to load `StbPngImageConverter`
