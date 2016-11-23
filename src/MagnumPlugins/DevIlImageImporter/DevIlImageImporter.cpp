@@ -115,7 +115,7 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
         case IL_BGR:
             #ifndef MAGNUM_TARGET_GLES
             format = PixelFormat::BGR;
-            #elif
+            #else
             rgba_needed = true;
             #endif
 
@@ -126,7 +126,7 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
         case IL_BGRA:
             #ifndef MAGNUM_TARGET_GLES
             format = PixelFormat::BGRA;
-            #elif
+            #else
             rgba_needed = true;
             #endif
 
