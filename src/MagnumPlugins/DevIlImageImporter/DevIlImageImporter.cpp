@@ -83,7 +83,7 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
     bool rgba_needed = false;
     PixelFormat format;
     switch(ilFormat) {
-        // GREY
+        /* Grayscale */
         case IL_LUMINANCE:
             #ifndef MAGNUM_TARGET_GLES2
             format = PixelFormat::Red;
@@ -97,7 +97,7 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
             components = 1;
             break;
 
-        // GREY ALPHA
+        /* Grayscale + alpha */
         case IL_LUMINANCE_ALPHA:
             #ifndef MAGNUM_TARGET_GLES2
             format = PixelFormat::RG;
@@ -111,7 +111,7 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
             components = 2;
             break;
 
-        // BGR
+        /* BGR */
         case IL_BGR:
             #ifndef MAGNUM_TARGET_GLES
             format = PixelFormat::BGR;
@@ -122,7 +122,7 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
             components = 3;
             break;
 
-        // BGRA
+        /* BGRA */
         case IL_BGRA:
             #ifndef MAGNUM_TARGET_GLES
             format = PixelFormat::BGRA;
@@ -133,27 +133,27 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
             components = 4;
             break;
 
-        // RGB
+        /* RGB */
         case IL_RGB:
             format = PixelFormat::RGB;
 
             components = 3;
             break;
 
-        // RGBA
+        /* RGBA */
         case IL_RGBA:
             format = PixelFormat::RGBA;
 
             components = 4;
             break;
 
-        // Convert to RGBA
+        /* Convert to RGBA */
         default: rgba_needed = true;
     }
 
     /* If the format isn't one we recognize, convert to RGBA */
     if(rgba_needed) {
-        success = ilConvertImage( IL_RGBA, IL_UNSIGNED_BYTE );
+        success = ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
         if(success == IL_FALSE) {
             Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image: " << ilGetError();
             return std::nullopt;
@@ -163,17 +163,14 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
         components = 4;
     }
 
-
     /* Flip the image to match OpenGL's conventions */
+    /** @todo use our own routine to avoid linking to ILU */
     ILinfo ImageInfo;
     iluGetImageInfo(&ImageInfo);
-    if( ImageInfo.Origin == IL_ORIGIN_UPPER_LEFT ) {
+    if(ImageInfo.Origin == IL_ORIGIN_UPPER_LEFT)
         iluFlipImage();
-    }
 
-    /* Copy the data into array with default deleter (we can't use custom
-       deleter to avoid dangling function pointer call when the plugin is
-       unloaded sooner than the array is deleted) */
+    /* Copy the data into array that is owned by us and not by IL */
     Containers::Array<char> imageData{std::size_t(size.product()*components)};
     std::copy_n(reinterpret_cast<char*>(data), imageData.size(), imageData.begin());
 

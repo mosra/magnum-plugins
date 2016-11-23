@@ -246,8 +246,6 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # DdsImporter has no dependencies
-        # DrFlacAudioImporter has no dependencies
-        # DrWavAudioImporter has no dependencies
 
         # DevIlImageImporter plugin dependencies
         if(_component STREQUAL DevIlImageImporter)
@@ -255,6 +253,9 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES ${IL_LIBRARIES} ${ILU_LIBRARIES})
         endif()
+
+        # DrFlacAudioImporter has no dependencies
+        # DrWavAudioImporter has no dependencies
 
         # FreeTypeFont plugin dependencies
         if(_component STREQUAL FreeTypeFont)

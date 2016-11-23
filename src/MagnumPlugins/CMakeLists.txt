@@ -56,6 +56,18 @@ if(WITH_DDSIMPORTER)
 	add_subdirectory(DdsImporter)
 endif()
 
+if(WITH_DEVILIMAGEIMPORTER)
+    add_subdirectory(DevIlImageImporter)
+endif()
+
+if(WITH_DRFLACAUDIOIMPORTER)
+    add_subdirectory(DrFlacAudioImporter)
+endif()
+
+if(WITH_DRWAVAUDIOIMPORTER)
+    add_subdirectory(DrWavAudioImporter)
+endif()
+
 if(WITH_FREETYPEFONT)
     add_subdirectory(FreeTypeFont)
 endif()
@@ -103,16 +115,3 @@ endif()
 if(WITH_STBVORBISAUDIOIMPORTER)
     add_subdirectory(StbVorbisAudioImporter)
 endif()
-
-if(WITH_DRFLACAUDIOIMPORTER)
-    add_subdirectory(DrFlacAudioImporter)
-endif()
-
-if(WITH_DRWAVAUDIOIMPORTER)
-    add_subdirectory(DrWavAudioImporter)
-endif()
-
-if(WITH_DEVILIMAGEIMPORTER)
-    add_subdirectory(DevIlImageImporter)
-endif()
-
