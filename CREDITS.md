@@ -32,7 +32,8 @@ Contributors to Magnum Plugins library
 --------------------------------------
 
 *   Alice Margatroid ([@Alicemargatroid](https://github.com/Alicemargatroid)) --
-    `DrFlacAudioImporter` and `DrWavAudioImporter` plugin
+    `DrFlacAudioImporter` and `DrWavAudioImporter` plugin, surround sound
+    support in `StbVorbisAudioImporter`
 *   Jonathan Hale ([@Squareys](https://github.com/Squareys)) --
     `StbVorbisAudioImporter` plugin
 *   Konstantinos Chatzilygeroudis ([@costashatz](https://github.com/costashatz)) --
