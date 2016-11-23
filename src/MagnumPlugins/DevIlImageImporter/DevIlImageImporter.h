@@ -53,28 +53,83 @@ namespace Magnum { namespace Trade {
 /**
 @brief DevIL Image importer plugin
 
-Supports a large variety of image file types at high speed
+Supports a large variety of image file types, including (note that the list is
+incomplete):
+
+-   Windows Bitmap (`*.bmp`)
+-   Dr. Halo (`*.cut`)
+-   Multi-PCX (`*.dcx`)
+-   Dicom (`*.dicom`, `*.dcm`)
+-   DirectDraw Surface (`*.dds`)
+-   OpenEXR (`*.exr)
+-   Flexible Image Transport System (`*.fits`, `*.fit`)
+-   Heavy Metal: FAKK 2 (`*.ftx`)
+-   Graphics Interchange Format (`*.gif`)
+-   Radiance HDR (`*.hdr`)
+-   Macintosh icon (`*.icns`)
+-   Windows icon/cursor (`*.ico`, `*.cur`)
+-   Interchange File Format (`*.iff`)
+-   Infinity Ward Image (`*.iwi`)
+-   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`)
+-   JPEG 2000 (`*.jp2`)
+-   Interlaced Bitmap (`*.lbm`)
+-   Homeworld texture (`*.lif`)
+-   Half-Life Model (`*.mdl`)
+-   Multiple-image Network Graphics (`*.mng`)
+-   MPEG-1 Audio Layer 3 (`*.mp3`)
+-   PaintShop Pro Palette (`*.pal`)
+-   Halo Palette (`*.pal`)
+-   Kodak PhotoCD (`*.pcd`)
+-   ZSoft PCX (`*.pcx`)
+-   Softimage PIC (`*.pic`)
+-   Portable Network Graphics (`*.png`)
+-   Portable Anymap (`*.pbm`, `*.pgm`, `*.ppm`, `*.pnm`)
+-   Alias PIX (`*.pix`)
+-   Adobe Photoshop (`*.psd`)
+-   PaintShop Pro (`*.psp`)
+-   Pixar (`*.pxr`)
+-   Raw data (`*.raw`)
+-   Homeworld 2 Texture (`*.rot`)
+-   Silicon Graphics (`*.sgi`, `*.bw`, `*.rgb`, `*.rgba`)
+-   Creative Assembly Texture (`*.texture`)
+-   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`)
+-   Tagged Image File Format (`*.tif`, `*.tiff`)
+-   Gamecube Texture (`*.tpl`)
+-   Unreal Texture (`*.utx`)
+-   Quake 2 Texture (`*.wal`)
+-   Valve Texture Format (`*.vtf`)
+-   HD Photo (`*.wdp`, `*.hdp`)
+-   X Pixel Map (`*.xpm`)
+-   Doom graphics
 
 This plugin depends on **DevIL** library and is built if `WITH_DEVILIMAGEIMPORTER`
 is enabled when building Magnum Plugins. To use dynamic plugin, you need to
 load `DevIlImageImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
 plugin, you need to request `DevIlImageImporter` component of `MagnumPlugins`
-package in CMake and link to `MagnumPlugins::DevIlImageImporter`. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+package in CMake and link to `MagnumPlugins::DevIlImageImporter`.
+
+This plugins provides `BmpImporter`, `DdsImporter`, `GifImporter`, `HdrImporter`,
+`Jp2Importer`, `JpegImporter`, `MngImporter`, `PcxImporter`, `PbmImporter`,
+`PgmImporter`, `PicImporter`, `PngImporter`, `PnmImporter`, `PpmImporter`,
+`PsdImporter`, `SgiImporter`, `TgaImporter` and `TiffImporter` plugins.
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref PixelType::UnsignedByte and a suitable PixelFormat type.
-Supported types are @ref PixelFormat::Red, @ref PixelFormat::Luminance, @ref PixelFormat::RG,
-@ref PixelFormat::LuminanceAlpha, @ref PixelFormat::RGB, @ref PixelFormat::BGR,
-@ref PixelFormat::RGBA, and @ref PixelFormat::BGRA.
-All other formats will be converted to @ref PixelFormat::RGBA
+The images are imported with @ref PixelType::UnsignedByte and a suitable
+@ref PixelFormat type. Supported types are @ref PixelFormat::Red, @ref PixelFormat::RG,
+@ref PixelFormat::RGB, @ref PixelFormat::BGR, @ref PixelFormat::RGBA and
+@ref PixelFormat::BGRA. All other formats will be converted to @ref PixelFormat::RGBA.
 
-Grayscale images require extension @extension{ARB,texture_rg}.
-All imported images use default @ref PixelStorage parameters.
+Grayscale images require extension @extension{ARB,texture_rg}. In OpenGL ES and
+WebGL, BGR and BGRA formats are converted to @ref PixelFormat::RGBA. In OpenGL
+ES 2.0, if @es_extension{EXT,texture_rg} is not supported and in WebGL 1.0,
+grayscale and grayscale + alpha images use @ref PixelFormat::Luminance /
+@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::Red /
+@ref PixelFormat::RG.
 
-In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported and in
-WebGL 1.0, grayscale images use @ref PixelFormat::Luminance instead of
-@ref PixelFormat::Red.
+Images are imported with default @ref PixelStorage parameters except for
+alignment, which may be changed to `1` if the data require it.
 */
 class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImporter {
     public:
