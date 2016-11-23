@@ -86,9 +86,9 @@ information.
 The images are imported with @ref PixelType::UnsignedByte type and
 @ref PixelFormat::RGB, @ref PixelFormat::RGBA, @ref PixelFormat::Red for
 grayscale or @ref PixelFormat::RG for grayscale + alpha. Grayscale and
-grayscale + alpha images require extension @extension{ARB,texture_rg}. Imported
-images are imported with default @ref PixelStorage parameters except for
-alignment, which may be changed to `1` if the data require it.
+grayscale + alpha images require extension @extension{ARB,texture_rg}. Images
+are imported with default @ref PixelStorage parameters except for alignment,
+which may be changed to `1` if the data require it.
 
 In OpenGL ES 2.0 if @es_extension{EXT,texture_rg} is not supported and in WebGL
 1.0, grayscale images use @ref PixelFormat::Luminance instead of
