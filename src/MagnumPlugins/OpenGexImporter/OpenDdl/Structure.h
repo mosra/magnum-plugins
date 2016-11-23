@@ -406,7 +406,7 @@ Structure::as() const {
 template<class T> Containers::ArrayView<const T> Structure::asArray() const {
     CORRADE_ASSERT(Implementation::isStructureType<T>(type()),
         "OpenDdl::Structure::asArray(): not of given type", nullptr);
-    return {&_document.get().data<T>()[0] + _data.get().primitive.begin, _data.get().primitive.size};
+    return {_document.get().data<T>().data() + _data.get().primitive.begin, _data.get().primitive.size};
 }
 
 namespace Implementation {
