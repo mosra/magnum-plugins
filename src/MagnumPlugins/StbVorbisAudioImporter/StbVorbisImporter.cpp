@@ -62,7 +62,7 @@ void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
         [](char* data, size_t) { std::free(data); }};
     _frequency = frequency;
 
-    /** @todo Buffer::Format::*Float32 when extension support is done */
+    /** @todo Floating-point formats */
     if(numChannels == 1)
         _format = Buffer::Format::Mono16;
     else if(numChannels == 2)
