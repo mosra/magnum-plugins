@@ -65,6 +65,9 @@
 
 # This version is modified for Magnum, and was forked from
 # https://github.com/Kitware/CMake/blob/b213a7f6ab0d4aa18e7b704bf1cf4994fae77254/Modules/FindFreetype.cmake
+# The file was modified to detect if Freetype was built as static or shared,
+# and if so, detect which dependencies it was built with and require them with
+# find_package, finally exposing them for linking through a new variable.
 
 # Ugh, FreeType seems to use some #include trickery which
 # makes this harder than it should be. It looks like they
