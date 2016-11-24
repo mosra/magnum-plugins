@@ -21,7 +21,7 @@
 #    ILUT_LIBRARIES - the name of the ILUT library. Full path. This part of the
 #                     library interfaces with OpenGL. It is not strictly needed
 #                     in applications.
-#    IL_INCLUDE_DIR - where to find the il.h, ilu.h and ilut.h files.
+#    IL_INCLUDE_DIR - where to find the IL/il.h, IL/ilu.h and IL/ilut.h files.
 #    IL_FOUND -       this is set to TRUE if all the above variables were set.
 #                     This will be set to false if ILU or ILUT are not found,
 #                     even if they are not needed. In most systems, if one
@@ -29,27 +29,53 @@
 #                     way the DevIL developers release it.
 
 #=============================================================================
-# Copyright 2008-2009 Kitware, Inc.
-# Copyright 2008 Christopher Harvey
+# CMake - Cross Platform Makefile Generator
+# Copyright 2000-2016 Kitware, Inc.
+# Copyright 2000-2011 Insight Software Consortium
+# All rights reserved.
 #
-# Distributed under the OSI-approved BSD License (the "License");
-# see accompanying file Copyright.txt for details.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
 #
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the License for more information.
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+# * Neither the names of Kitware, Inc., the Insight Software Consortium,
+#   nor the names of their contributors may be used to endorse or promote
+#   products derived from this software without specific prior written
+#   permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
-# (To distribute this file outside of CMake, substitute the full
-#  License text for the above reference.)
+
+# This version is modified for Magnum and was forked from
+# https://github.com/Kitware/CMake/blob/v3.6.1/Modules/FindDevIL.cmake
+# The file is modified to have IL_INCLUDE_DIR without the IL/ part (because
+# internal IL headers include with the IL prefix and thus we need to add one
+# level up to the include path).
 
 # TODO: Add version support.
 # Tested under Linux and Windows (MSVC)
 
-include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
+include(FindPackageHandleStandardArgs)
 
-find_path(IL_INCLUDE_DIR il.h
-  PATH_SUFFIXES include IL
-  DOC "The path to the directory that contains il.h"
+find_path(IL_INCLUDE_DIR IL/il.h
+  DOC "The path to the directory that contains IL/il.h"
 )
 
 #message("IL_INCLUDE_DIR is ${IL_INCLUDE_DIR}")

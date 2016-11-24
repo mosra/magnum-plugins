@@ -48,10 +48,15 @@ target_include_directories(DevIlImageImporterObjects PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 target_compile_definitions(DevIlImageImporterObjects PRIVATE "DevIlImageImporterObjects_EXPORTS")
-# IL_INCLUDE_DIR is "The path to the directory that contains il.h", but ilu.h
-# includes IL/il.h, so IL_INCLUDE_DIR is basically useless and we need to go
-# one level up. Apparently nobody ever used this module.
-target_include_directories(DevIlImageImporterObjects SYSTEM PRIVATE ${IL_INCLUDE_DIR}/..)
+# IL_INCLUDE_DIR in the upstream FindDevIL.cmake is "The path to the directory
+# that contains il.h", but ilu.h includes IL/il.h, so IL_INCLUDE_DIR is
+# basically useless and we need to go one level up. However, just saying
+# ${IL_INCLUDE_DIR}/.. here wouldn't work, because this directory is included
+# as system and saying `-isystem /usr/include` hits
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70129 on GCC 6+. Because of
+# that, I had to fork FindDevIL.cmake (see modules/ directory) to provide
+# IL_INCLUDE_DIR without the IL/ subdirectory.
+target_include_directories(DevIlImageImporterObjects SYSTEM PRIVATE ${IL_INCLUDE_DIR})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DevIlImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
