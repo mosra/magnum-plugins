@@ -67,7 +67,11 @@
 # https://github.com/Kitware/CMake/blob/v3.6.1/Modules/FindDevIL.cmake
 # The file is modified to have IL_INCLUDE_DIR without the IL/ part (because
 # internal IL headers include with the IL prefix and thus we need to add one
-# level up to the include path).
+# level up to the include path). Besides that, the FPHSA() macro now takes
+# DevIL instead of IL as a name so it can properly abort with a failure when
+# the library is not found. On ArchLinux the `devil` package doesn't include
+# ILUT, causing this module to fail. We don't use that anyway, so I just
+# removed that library from the finding routine.
 
 # TODO: Add version support.
 # Tested under Linux and Windows (MSVC)
@@ -104,6 +108,6 @@ find_library(ILU_LIBRARIES
 
 #message("ILU_LIBRARIES is ${ILU_LIBRARIES}")
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(IL DEFAULT_MSG
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(DevIL DEFAULT_MSG
                                   IL_LIBRARIES ILU_LIBRARIES
-                                  ILUT_LIBRARIES IL_INCLUDE_DIR)
+                                  IL_INCLUDE_DIR)
