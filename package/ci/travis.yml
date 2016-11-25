@@ -1,5 +1,20 @@
 # kate: indent-width 2;
 
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - kubuntu-backports
+    packages:
+    - g++-4.7
+    - cmake
+    - libfreetype6-dev
+    - libjpeg-dev
+    - libopenal-dev
+    - libpng12-dev
+    - libqt4-dev
+    - libdevil-dev
+
 matrix:
   include:
   - language: cpp
@@ -9,6 +24,28 @@ matrix:
     - TARGET=desktop
     # Otherwise the job gets killed (probably because using too much memory)
     - JOBS_LIMIT=4
+  - language: cpp
+    os: linux
+    compiler: clang
+    env:
+    - TARGET=desktop-sanitizers
+    - CMAKE_CXX_FLAGS=-fsanitize=address
+    - JOBS_LIMIT=4
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-precise-3.8
+        - kubuntu-backports
+        packages:
+        - clang-3.8
+        - cmake
+        - libfreetype6-dev
+        - libjpeg-dev
+        - libopenal-dev
+        - libpng12-dev
+        - libqt4-dev
+        - libdevil-dev
   - language: cpp
     os: linux
     compiler: gcc
@@ -76,21 +113,6 @@ matrix:
       - android-19
       - sys-img-armeabi-v7a-android-19
 
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    - kubuntu-backports
-    packages:
-    - g++-4.7
-    - cmake
-    - libfreetype6-dev
-    - libjpeg-dev
-    - libopenal-dev
-    - libpng12-dev
-    - libqt4-dev
-    - libdevil-dev
-
 notifications:
   webhooks:
     urls:
@@ -104,9 +126,10 @@ cache:
   - $HOME/harfbuzz
 
 install:
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ]; then pip install --user cpp-coveralls && export COVERAGE="--coverage"; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ]; then pip install --user cpp-coveralls && export CMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS --coverage"; fi
 
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX=g++-4.7; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! "$TARGET" == "desktop-sanitizers" ]; then export CXX=g++-4.7; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop-sanitizers" ]; then export CXX=clang++-3.8; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PLATFORM_GL_API=GLX; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export WITH_COLLADAIMPORTER=ON; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "android" ]; then wget -nc http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin && chmod +x android-*.bin && ./android-*.bin -y | grep -v Extracting; fi
@@ -119,10 +142,10 @@ install:
 
 # HarfBuzz (cached)
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then brew install harfbuzz; fi
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-gles" ] ) && [ ! -e "$HOME/harfbuzz/include" ]; then wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-1.0.3.tar.bz2 && tar xf harfbuzz-1.0.3.tar.bz2 && cd harfbuzz-1.0.3 && ./configure --prefix=$HOME/harfbuzz && make -j install && cd ..; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] || [ "$TARGET" == "desktop-gles" ] ) && [ ! -e "$HOME/harfbuzz/include" ]; then wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-1.0.3.tar.bz2 && tar xf harfbuzz-1.0.3.tar.bz2 && cd harfbuzz-1.0.3 && ./configure --prefix=$HOME/harfbuzz && make -j install && cd ..; fi
 
 script:
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ]; then ./package/ci/travis-desktop.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/travis-desktop.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop-gles" ]; then ./package/ci/travis-desktop-gles.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "android" ]; then ./package/ci/travis-android-arm.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then ./package/ci/travis-desktop.sh; fi
