@@ -165,7 +165,7 @@ void StbTrueTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& 
         #ifndef MAGNUM_TARGET_GLES2
         PixelFormat::Red,
         #elif !defined(MAGNUM_TARGET_WEBGL)
-        Context::current() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
+        Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
         PixelFormat::Red : PixelFormat::Luminance,
         #else
         PixelFormat::Luminance,
