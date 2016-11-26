@@ -26,7 +26,12 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(StbTrueTypeFontGLTest StbTrueTypeFontGLTest.cpp LIBRARIES MagnumStbTrueTypeFontTestLib Magnum::WindowlessApplication)
+corrade_add_test(StbTrueTypeFontGLTest StbTrueTypeFontGLTest.cpp
+    LIBRARIES
+        MagnumStbTrueTypeFontTestLib
+        Magnum::WindowlessApplication
+    FILES
+        ../../FreeTypeFont/Test/Oxygen.ttf)
 target_include_directories(StbTrueTypeFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting StbTrueTypeFont symbols, because it
 # would search for the symbols in some DLL even when they were linked

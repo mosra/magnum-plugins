@@ -23,7 +23,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Corrade/Utility/Directory.h>
 #include <Magnum/Test/AbstractOpenGLTester.h>
 #include <Magnum/Text/GlyphCache.h>
 
@@ -49,7 +48,7 @@ StbTrueTypeFontGLTest::StbTrueTypeFontGLTest() {
 
 void StbTrueTypeFontGLTest::properties() {
     StbTrueTypeFont font;
-    CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
 
     CORRADE_COMPARE(font.size(), 16.0f);
     CORRADE_COMPARE(font.glyphId(U'W'), 58);
@@ -71,7 +70,7 @@ void StbTrueTypeFontGLTest::properties() {
 
 void StbTrueTypeFontGLTest::layout() {
     StbTrueTypeFont font;
-    CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
 
     /* Fill the cache with some fake glyphs */
     GlyphCache cache(Vector2i(256));
@@ -136,7 +135,7 @@ void StbTrueTypeFontGLTest::layout() {
 
 void StbTrueTypeFontGLTest::fillGlyphCache() {
     StbTrueTypeFont font;
-    CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
 
     /* Just testing that nothing crashes, asserts or errors */
     GlyphCache cache{Vector2i{256}};

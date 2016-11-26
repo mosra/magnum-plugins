@@ -26,7 +26,12 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(PngImporterTest PngImporterTest.cpp LIBRARIES MagnumPngImporterTestLib)
+corrade_add_test(PngImporterTest PngImporterTest.cpp
+    LIBRARIES MagnumPngImporterTestLib
+    FILES
+        gray.png
+        rgb.png
+        rgba.png)
 target_include_directories(PngImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting PngImporter symbols, because it would
 # search for the symbols in some DLL even when they were linked statically.

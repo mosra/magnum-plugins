@@ -24,8 +24,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(CORRADE_TARGET_EMSCRIPTEN)
-    set(DRFLACAUDIOIMPORTER_TEST_DIR "")
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(DRFLACAUDIOIMPORTER_TEST_DIR ".")
 else()
     set(DRFLACAUDIOIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
@@ -33,7 +33,24 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(DrFlacAudioImporterTest DrFlacImporterTest.cpp LIBRARIES MagnumDrFlacAudioImporterTestLib)
+corrade_add_test(DrFlacAudioImporterTest DrFlacImporterTest.cpp
+    LIBRARIES MagnumDrFlacAudioImporterTestLib
+    FILES
+        mono8.flac
+        mono16.flac
+        mono24.flac
+
+        stereo8.flac
+        stereo16.flac
+        stereo24.flac
+
+        quad16.flac
+        quad24.flac
+
+        surround51Channel16.flac
+        surround51Channel24.flac
+
+        surround71Channel24.flac)
 target_include_directories(DrFlacAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting DrFlacAudioImporter symbols,
 # because it would search for the symbols in some DLL even when they were
@@ -41,22 +58,4 @@ target_include_directories(DrFlacAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINAR
 # dllexported when building the static library. EH.
 if(WIN32)
     target_compile_definitions(DrFlacAudioImporterTest PRIVATE "MAGNUM_DRFLACAUDIOIMPORTER_BUILD_STATIC")
-endif()
-
-if(CORRADE_TARGET_EMSCRIPTEN)
-    emscripten_embed_file(DrFlacAudioImporterTest mono8.flac "/mono8.flac")
-    emscripten_embed_file(DrFlacAudioImporterTest mono16.flac "/mono16.flac")
-    emscripten_embed_file(DrFlacAudioImporterTest mono24.flac "/mono24.flac")
-
-    emscripten_embed_file(DrFlacAudioImporterTest stereo8.flac "/stereo8.flac")
-    emscripten_embed_file(DrFlacAudioImporterTest stereo16.flac "/stereo16.flac")
-    emscripten_embed_file(DrFlacAudioImporterTest stereo24.flac "/stereo24.flac")
-
-    emscripten_embed_file(DrFlacAudioImporterTest quad16.flac "/quad16.flac")
-    emscripten_embed_file(DrFlacAudioImporterTest quad24.flac "/quad24.flac")
-
-    emscripten_embed_file(DrFlacAudioImporterTest surround51Channel16.flac "/surround51Channel16.flac")
-    emscripten_embed_file(DrFlacAudioImporterTest surround51Channel24.flac "/surround51Channel24.flac")
-
-    emscripten_embed_file(DrFlacAudioImporterTest surround71Channel24.flac "/surround71Channel24.flac")
 endif()

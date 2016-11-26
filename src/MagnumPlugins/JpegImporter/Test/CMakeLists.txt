@@ -26,7 +26,11 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(JpegImporterTest JpegImporterTest.cpp LIBRARIES MagnumJpegImporterTestLib)
+corrade_add_test(JpegImporterTest JpegImporterTest.cpp
+    LIBRARIES MagnumJpegImporterTestLib
+    FILES
+        gray.jpg
+        rgb.jpg)
 target_include_directories(JpegImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting JpegImporter symbols, because it would
 # search for the symbols in some DLL even when they were linked statically.

@@ -28,7 +28,20 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 
 corrade_add_test(ColladaImporterTypeTest ColladaTypeTest.cpp LIBRARIES MagnumColladaImporterTestLib)
 corrade_add_test(ColladaImporterUtilityTest UtilityTest.cpp LIBRARIES MagnumColladaImporterTestLib)
-corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp LIBRARIES MagnumColladaImporterTestLib)
+corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp
+    LIBRARIES MagnumColladaImporterTestLib
+    FILES
+        ColladaImporterTestFiles/image.dae
+        ColladaImporterTestFiles/image.tga
+        ColladaImporterTestFiles/material.dae
+        ColladaImporterTestFiles/mesh.dae
+        ColladaImporterTestFiles/object-multiple-materials.dae
+        ColladaImporterTestFiles/object-no-material.dae
+        ColladaImporterTestFiles/openWrongNamespace.dae
+        ColladaImporterTestFiles/openWrongVersion.dae
+        ColladaImporterTestFiles/parseSource.dae
+        ColladaImporterTestFiles/scene.dae
+        ColladaImporterTestFiles/texture.dae)
 target_include_directories(ColladaImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting ColladaImporter symbols, because it
 # would search for the symbols in some DLL even when they were linked

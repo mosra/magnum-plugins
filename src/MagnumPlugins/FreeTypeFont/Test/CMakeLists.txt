@@ -23,10 +23,21 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(TTF_FILE Oxygen.ttf)
+else()
+    set(TTF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Oxygen.ttf)
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(FreeTypeFontGLTest FreeTypeFontGLTest.cpp LIBRARIES MagnumFreeTypeFontTestLib Magnum::WindowlessApplication)
+corrade_add_test(FreeTypeFontGLTest FreeTypeFontGLTest.cpp
+    LIBRARIES
+        MagnumFreeTypeFontTestLib
+        Magnum::WindowlessApplication
+    FILES
+        Oxygen.ttf)
 target_include_directories(FreeTypeFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting FreeTypeFont symbols, because it would
 # search for the symbols in some DLL even though they were linked statically.

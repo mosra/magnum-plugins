@@ -23,4 +23,4 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#define FREETYPEFONT_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../FreeTypeFont/Test"
+#define TTF_FILE "${TTF_FILE}"

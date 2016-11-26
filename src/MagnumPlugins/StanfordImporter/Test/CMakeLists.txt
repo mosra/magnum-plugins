@@ -23,8 +23,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(CORRADE_TARGET_EMSCRIPTEN)
-    set(STANFORDIMPORTER_TEST_DIR "")
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(STANFORDIMPORTER_TEST_DIR ".")
 else()
     set(STANFORDIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
@@ -32,7 +32,30 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(StanfordImporterTest Test.cpp LIBRARIES MagnumStanfordImporterTestLib)
+corrade_add_test(StanfordImporterTest Test.cpp
+    LIBRARIES MagnumStanfordImporterTestLib
+    FILES
+        big-endian.ply
+        common.ply
+        crlf.ply
+        empty.ply
+        ignored-vertex-components.ply
+        incomplete-face.ply
+        incomplete-vertex.ply
+        invalid-face-index-type.ply
+        invalid-face-size.ply
+        invalid-face-size-type.ply
+        invalid-format.ply
+        invalid-signature.ply
+        invalid-vertex-property.ply
+        invalid-vertex-type.ply
+        missing-format.ply
+        short-file.ply
+        unexpected-property.ply
+        unknown-element.ply
+        unknown-face-property.ply
+        unknown-line.ply
+        unsupported-format.ply)
 target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting StanfordImporter symbols, because it
 # would search for the symbols in some DLL even when they were linked
@@ -40,9 +63,4 @@ target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_D
 # when building the static library. EH.
 if(WIN32)
     target_compile_definitions(StanfordImporterTest PRIVATE "MAGNUM_STANFORDIMPORTER_BUILD_STATIC")
-endif()
-
-
-if(CORRADE_TARGET_EMSCRIPTEN)
-    emscripten_embed_file(StanfordImporterTest . "/")
 endif()

@@ -23,8 +23,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(CORRADE_TARGET_EMSCRIPTEN)
-    set(MINIEXRIMAGECONVERTER_TEST_DIR "")
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(MINIEXRIMAGECONVERTER_TEST_DIR ".")
 else()
     set(MINIEXRIMAGECONVERTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
@@ -32,7 +32,9 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(MiniExrImageConverterTest MiniExrImageConverterTest.cpp LIBRARIES MagnumMiniExrImageConverterTestLib)
+corrade_add_test(MiniExrImageConverterTest MiniExrImageConverterTest.cpp
+    LIBRARIES MagnumMiniExrImageConverterTestLib
+    FILES image.exr)
 target_include_directories(MiniExrImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting MiniExrImageConverter symbols, because
 # it would search for the symbols in some DLL even when they were linked
@@ -40,8 +42,4 @@ target_include_directories(MiniExrImageConverterTest PRIVATE ${CMAKE_CURRENT_BIN
 # when building the static library. EH.
 if(WIN32)
     target_compile_definitions(MiniExrImageConverterTest PRIVATE "MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC")
-endif()
-
-if(CORRADE_TARGET_EMSCRIPTEN)
-    emscripten_embed_file(MiniExrImageConverterTest . "/")
 endif()

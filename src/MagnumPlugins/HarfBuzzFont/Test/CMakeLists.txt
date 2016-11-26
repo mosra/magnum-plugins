@@ -22,8 +22,21 @@
 #   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #   DEALINGS IN THE SOFTWARE.
 #
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(TTF_FILE Oxygen.ttf)
+else()
+    set(TTF_FILE ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/FreeTypeFont/Test/Oxygen.ttf)
+endif()
 
-corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp LIBRARIES MagnumHarfBuzzFontTestLib Magnum::WindowlessApplication)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
+corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp
+    LIBRARIES
+        MagnumHarfBuzzFontTestLib
+        Magnum::WindowlessApplication
+    FILES
+        ../../FreeTypeFont/Test/Oxygen.ttf)
 target_include_directories(HarfBuzzFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting HarfBuzzFont symbols, because it would
 # search for the symbols in some DLL even when they were linked statically.

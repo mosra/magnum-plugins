@@ -24,8 +24,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(CORRADE_TARGET_EMSCRIPTEN)
-    set(DDSIMPORTER_TEST_DIR "")
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(DDSIMPORTER_TEST_DIR ".")
 else()
     set(DDSIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
@@ -33,7 +33,18 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(DdsImporterTest DdsImporterTest.cpp LIBRARIES MagnumDdsImporterTestLib)
+corrade_add_test(DdsImporterTest DdsImporterTest.cpp
+    LIBRARIES MagnumDdsImporterTestLib
+    FILES
+        rgba_dxt1.dds
+        rgba_dxt3.dds
+        rgba_dxt5.dds
+        rgb_uncompressed.dds
+        rgb_uncompressed_mips.dds
+        rgb_uncompressed_volume.dds
+        unknown_compression.dds
+        unknown_format.dds
+        wrong_signature.dds)
 target_include_directories(DdsImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting DdsImporter symbols, because it would
 # search for the symbols in some DLL even when they were linked statically.
@@ -41,8 +52,4 @@ target_include_directories(DdsImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # the static library. EH.
 if(WIN32)
     target_compile_definitions(DdsImporterTest PRIVATE "MAGNUM_DDSIMPORTER_BUILD_STATIC")
-endif()
-
-if(CORRADE_TARGET_EMSCRIPTEN)
-    emscripten_embed_file(DdsImporterTest . "/")
 endif()

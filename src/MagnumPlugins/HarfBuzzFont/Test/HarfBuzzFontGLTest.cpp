@@ -23,13 +23,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Corrade/Utility/Directory.h>
 #include <Magnum/Test/AbstractOpenGLTester.h>
 #include <Magnum/Text/GlyphCache.h>
 
 #include "MagnumPlugins/HarfBuzzFont/HarfBuzzFont.h"
 
-#include "../../FreeTypeFont/Test/configure.h"
+#include "configure.h"
 
 namespace Magnum { namespace Text { namespace Test {
 
@@ -53,7 +52,7 @@ HarfBuzzFontGLTest::~HarfBuzzFontGLTest() {
 
 void HarfBuzzFontGLTest::layout() {
     HarfBuzzFont font;
-    CORRADE_VERIFY(font.openFile(Utility::Directory::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
 
     /* Fill the cache with some fake glyphs */
     GlyphCache cache(Vector2i(256));

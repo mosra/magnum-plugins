@@ -24,9 +24,9 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(CORRADE_TARGET_EMSCRIPTEN)
-    set(PNGIMPORTER_TEST_DIR "")
-    set(JPEGIMPORTER_TEST_DIR "")
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(PNGIMPORTER_TEST_DIR ".")
+    set(JPEGIMPORTER_TEST_DIR ".")
 else()
     set(PNGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test)
     set(JPEGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test)
@@ -35,7 +35,14 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(DevIlImageImporterTest DevIlImageImporterTest.cpp LIBRARIES MagnumDevIlImageImporterTestLib)
+corrade_add_test(DevIlImageImporterTest DevIlImageImporterTest.cpp
+    LIBRARIES MagnumDevIlImageImporterTestLib
+    FILES
+        ../../PngImporter/Test/gray.png
+        ../../PngImporter/Test/rgb.png
+        ../../PngImporter/Test/rgba.png
+        ../../JpegImporter/Test/gray.jpg
+        ../../JpegImporter/Test/rgb.jpg)
 target_include_directories(DevIlImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting DevIlImageImporter symbols, because it
 # would search for the symbols in some DLL even when they were linked
@@ -43,9 +50,4 @@ target_include_directories(DevIlImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY
 # when building the static library. EH.
 if(WIN32)
     target_compile_definitions(DevIlImageImporterTest PRIVATE "MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC")
-endif()
-
-if(CORRADE_TARGET_EMSCRIPTEN)
-    emscripten_embed_file(DevIlImageImporterTest ../../PngImporter/Test "/")
-    emscripten_embed_file(DevIlImageImporterTest ../../JpegImporter/Test "/")
 endif()
