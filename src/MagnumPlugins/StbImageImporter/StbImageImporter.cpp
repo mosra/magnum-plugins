@@ -105,11 +105,12 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
         default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
-    /* Copy the data into array with default deleter (we can't use custom
-       deleter to avoid dangling function pointer call when the plugin is
-       unloaded sooner than the array is deleted) */
+    /* Copy the data into array with default deleter and free the original (we
+       can't use custom deleter to avoid dangling function pointer call when
+       the plugin is unloaded sooner than the array is deleted) */
     Containers::Array<char> imageData{std::size_t(size.product()*components)};
     std::copy_n(reinterpret_cast<char*>(data), imageData.size(), imageData.begin());
+    stbi_image_free(data);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
