@@ -299,7 +299,11 @@ template<class> struct ExtractToType;
 template<> struct ExtractToType<UnsignedLong> {
     typedef UnsignedLong Type;
     static UnsignedLong extract(const std::string& buffer, Int base) {
+        #ifndef CORRADE_TARGET_ANDROID
         return std::stoul(buffer, nullptr, base);
+        #else
+        return std::strtoul(buffer.data(), nullptr, base);
+        #endif
     }
 };
 template<> struct ExtractToType<UnsignedByte>: ExtractToType<UnsignedLong> {};
@@ -317,7 +321,11 @@ template<> struct ExtractToType<long>: ExtractToType<UnsignedLong> {};
 template<> struct ExtractToType<UnsignedInt> {
     typedef UnsignedInt Type;
     static UnsignedInt extract(const std::string& buffer, Int base) {
+        #ifndef CORRADE_TARGET_ANDROID
         return std::stoi(buffer, nullptr, base);
+        #else
+        return std::strtol(buffer.data(), nullptr, base);
+        #endif
     }
 };
 template<> struct ExtractToType<UnsignedByte>: ExtractToType<UnsignedInt> {};
@@ -329,10 +337,23 @@ template<> struct ExtractToType<Int>: ExtractToType<UnsignedInt> {};
 template<class T> using ExtractedType = typename ExtractToType<T>::Type;
 
 template<> struct ExtractToType<Float> {
-    static Float extract(const std::string& buffer) { return std::stof(buffer); }
+    static Float extract(const std::string& buffer) {
+        #ifndef CORRADE_TARGET_ANDROID
+        return std::stof(buffer);
+        #else
+        /* Not exposed into std:: namespace on Android (but std::strtod() is?!!) */
+        return strtof(buffer.data(), nullptr);
+        #endif
+    }
 };
 template<> struct ExtractToType<Double> {
-    static Double extract(const std::string& buffer) { return std::stod(buffer); }
+    static Double extract(const std::string& buffer) {
+        #ifndef CORRADE_TARGET_ANDROID
+        return std::stod(buffer);
+        #else
+        return std::strtod(buffer.data(), nullptr);
+        #endif
+    }
 };
 
 template<class> constexpr Type typeFor();
