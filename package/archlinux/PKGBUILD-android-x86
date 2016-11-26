@@ -1,0 +1,52 @@
+# Author: mosra <mosra@centrum.cz>
+pkgname=android-x86-magnum-plugins
+pkgver=dev
+pkgrel=1
+pkgdesc="Plugins for Magnum OpenGL graphics engine (Android x86)"
+arch=('any')
+url="http://mosra.cz/blog/magnum.php"
+license=('MIT')
+depends=('android-x86-magnum')
+makedepends=('cmake' 'ninja' 'android-ndk' 'corrade')
+options=('!strip' '!buildflags')
+
+_rootdir=$startdir/../../
+
+build() {
+    if [ ! -d "$_rootdir/build-android-x86" ] ; then
+        mkdir "$_rootdir/build-android-x86"
+        cd "$_rootdir/build-android-x86"
+
+        cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/Android-x86.cmake" \
+            -G Ninja
+    fi
+
+    cd "$_rootdir/build-android-x86"
+
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/opt/android-ndk/platforms/android-19/arch-x86/usr \
+        -DWITH_ANYAUDIOIMPORTER=OFF \
+        -DWITH_ANYIMAGECONVERTER=ON \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_DDSIMPORTER=ON \
+        -DWITH_DEVILIMAGEIMPORTER=OFF \
+        -DWITH_DRFLACAUDIOIMPORTER=OFF \
+        -DWITH_DRWAVAUDIOIMPORTER=OFF \
+        -DWITH_MINIEXRIMAGECONVERTER=ON \
+        -DWITH_OPENGEXIMPORTER=ON \
+        -DWITH_STANFORDIMPORTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBPNGIMAGECONVERTER=ON \
+        -DWITH_STBTRUETYPEFONT=ON \
+        -DWITH_STBVORBISAUDIOIMPORTER=OFF \
+        -DBUILD_TESTS=ON
+    ninja
+}
+
+package() {
+    cd "$_rootdir/build-android-x86"
+    DESTDIR="$pkgdir/" ninja install/strip
+}
