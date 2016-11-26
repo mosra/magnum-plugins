@@ -36,11 +36,6 @@
 #include "Magnum/Math/Vector4.h"
 #include "Magnum/Trade/MeshData3D.h"
 
-/** @todo remove when Android and NaCl is sane */
-#if defined(CORRADE_TARGET_ANDROID) || defined(CORRADE_TARGET_NACL_NEWLIB)
-#include <sstream>
-#endif
-
 namespace Magnum { namespace Trade {
 
 StanfordImporter::StanfordImporter() = default;
@@ -264,11 +259,6 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         return std::nullopt;
     }
 
-    /** @todo remove when Android and NaCl is sane */
-    #if defined(CORRADE_TARGET_ANDROID) || defined(CORRADE_TARGET_NACL_NEWLIB)
-    std::stringstream converter;
-    #endif
-
     /* Parse rest of the header */
     UnsignedInt stride{}, vertexCount{}, faceCount{};
     Array3D<Type> componentTypes;
@@ -289,23 +279,19 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             if(tokens[0] == "element") {
                 /* Vertex elements */
                 if(tokens.size() == 3 && tokens[1] == "vertex") {
-                    /** @todo remove when Android and NaCl is sane */
-                    #if !defined(CORRADE_TARGET_ANDROID) && !defined(CORRADE_TARGET_NACL_NEWLIB)
+                    #ifndef CORRADE_TARGET_ANDROID
                     vertexCount = std::stoi(tokens[2]);
                     #else
-                    converter.str(tokens[2]);
-                    converter >> vertexCount;
+                    vertexCount = std::strtoul(tokens[2].data(), nullptr, 10);
                     #endif
                     propertyType = PropertyType::Vertex;
 
                 /* Face elements */
                 } else if(tokens.size() == 3 &&tokens[1] == "face") {
-                    /** @todo remove when Android and NaCl is sane */
-                    #if !defined(CORRADE_TARGET_ANDROID) && !defined(CORRADE_TARGET_NACL_NEWLIB)
+                    #ifndef CORRADE_TARGET_ANDROID
                     faceCount = std::stoi(tokens[2]);
                     #else
-                    converter.str(tokens[2]);
-                    converter >> faceCount;
+                    faceCount = std::strtoul(tokens[2].data(), nullptr, 10);
                     #endif
                     propertyType = PropertyType::Face;
 
