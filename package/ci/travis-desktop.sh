@@ -69,4 +69,4 @@ cmake .. \
     -DBUILD_GL_TESTS=ON
 make -j${JOBS_LIMIT}
 make install # for Any*Importer tests
-ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -E GLTest
+ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer.conf" CORRADE_TEST_COLOR=ON ctest -V -E GLTest
