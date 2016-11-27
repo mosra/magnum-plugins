@@ -23,6 +23,12 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(TTF_FILE Oxygen.ttf)
+else()
+    set(TTF_FILE ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/FreeTypeFont/Test/Oxygen.ttf)
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
