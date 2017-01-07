@@ -62,8 +62,8 @@ UnsignedInt DevIlImageImporter::doImage2DCount() const { return 1; }
 
 std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
     ILuint imgID = 0;
-    ilGenImages( 1, &imgID );
-    ilBindImage( imgID );
+    ilGenImages(1, &imgID);
+    ilBindImage(imgID);
 
     ILboolean success = ilLoadL(IL_TYPE_UNKNOWN, _in, _in.size());
     if(success == IL_FALSE) {
