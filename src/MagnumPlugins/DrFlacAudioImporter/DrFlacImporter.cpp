@@ -30,7 +30,7 @@
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
 
-#include <Magnum/Math/Functions.h>
+#include <Magnum/Math/Packing.h>
 
 #define DR_FLAC_IMPLEMENTATION
 #include "dr_flac.h"
@@ -129,7 +129,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
             Containers::Array<Double> doubleData(samples);
 
             for(std::size_t i = 0; i < samples; ++i) {
-                doubleData[i] = Math::normalize<Double>(tempData[i]);
+                doubleData[i] = Math::unpack<Double>(tempData[i]);
             }
 
             const char* doubleBegin = reinterpret_cast<const char*>(doubleData.begin());
@@ -143,7 +143,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
             Containers::Array<Float> floatData(samples);
 
             for(std::size_t i = 0; i < samples; ++i) {
-                floatData[i] = Math::normalize<Float>(tempData[i]);
+                floatData[i] = Math::unpack<Float>(tempData[i]);
             }
 
             const char* floatBegin = reinterpret_cast<const char*>(floatData.begin());
@@ -175,7 +175,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
             const UnsignedInt s2 = _data[i*3 + 2];
 
             const Int intData = Int((s0 << 8) | (s1 << 16) | (s2 << 24));
-            floatData[i] = Math::normalize<Float>(intData);
+            floatData[i] = Math::unpack<Float>(intData);
         }
 
         const char* const floatBegin = reinterpret_cast<const char*>(floatData.begin());
