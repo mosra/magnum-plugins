@@ -60,7 +60,7 @@ class StbTrueTypeFont::Layouter: public AbstractLayouter {
 
 StbTrueTypeFont::StbTrueTypeFont() = default;
 
-StbTrueTypeFont::StbTrueTypeFont(PluginManager::AbstractManager& manager, std::string plugin): AbstractFont{manager, std::move(plugin)} {}
+StbTrueTypeFont::StbTrueTypeFont(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractFont{manager, plugin} {}
 
 StbTrueTypeFont::~StbTrueTypeFont() = default;
 

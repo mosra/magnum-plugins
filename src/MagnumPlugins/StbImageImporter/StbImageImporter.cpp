@@ -47,7 +47,7 @@ namespace Magnum { namespace Trade {
 
 StbImageImporter::StbImageImporter() = default;
 
-StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
+StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 StbImageImporter::~StbImageImporter() = default;
 

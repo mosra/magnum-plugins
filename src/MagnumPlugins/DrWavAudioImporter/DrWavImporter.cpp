@@ -121,7 +121,7 @@ struct DrWavDeleter {
 
 DrWavImporter::DrWavImporter() = default;
 
-DrWavImporter::DrWavImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
+DrWavImporter::DrWavImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 auto DrWavImporter::doFeatures() const -> Features { return Feature::OpenData; }
 

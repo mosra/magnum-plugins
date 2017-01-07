@@ -40,7 +40,7 @@ namespace Magnum { namespace Trade {
 
 StanfordImporter::StanfordImporter() = default;
 
-StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
+StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 StanfordImporter::~StanfordImporter() = default;
 

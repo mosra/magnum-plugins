@@ -104,7 +104,7 @@ class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
         explicit StbImageImporter();
 
         /** @brief Plugin manager constructor */
-        explicit StbImageImporter(PluginManager::AbstractManager& manager, std::string plugin);
+        explicit StbImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
         ~StbImageImporter();
 

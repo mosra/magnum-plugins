@@ -43,7 +43,7 @@ namespace Magnum { namespace Trade {
 
 MiniExrImageConverter::MiniExrImageConverter() = default;
 
-MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImageConverter(manager, std::move(plugin)) {}
+MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
 auto MiniExrImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 

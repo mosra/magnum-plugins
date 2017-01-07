@@ -38,7 +38,7 @@ namespace Magnum { namespace Audio {
 
 StbVorbisImporter::StbVorbisImporter() = default;
 
-StbVorbisImporter::StbVorbisImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
+StbVorbisImporter::StbVorbisImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 auto StbVorbisImporter::doFeatures() const -> Features { return Feature::OpenData; }
 

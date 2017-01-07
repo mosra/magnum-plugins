@@ -96,7 +96,7 @@ OpenGexImporter::OpenGexImporter() = default;
 
 OpenGexImporter::OpenGexImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager) {}
 
-OpenGexImporter::OpenGexImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, plugin) {}
+OpenGexImporter::OpenGexImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin) {}
 
 OpenGexImporter::~OpenGexImporter() = default;
 

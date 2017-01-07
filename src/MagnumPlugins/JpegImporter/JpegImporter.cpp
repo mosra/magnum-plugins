@@ -47,7 +47,7 @@ namespace Magnum { namespace Trade {
 
 JpegImporter::JpegImporter() = default;
 
-JpegImporter::JpegImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
+JpegImporter::JpegImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 JpegImporter::~JpegImporter() { close(); }
 

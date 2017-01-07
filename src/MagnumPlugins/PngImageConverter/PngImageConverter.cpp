@@ -36,7 +36,7 @@ namespace Magnum { namespace Trade {
 
 PngImageConverter::PngImageConverter() = default;
 
-PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImageConverter(manager, std::move(plugin)) {}
+PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
 auto PngImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 

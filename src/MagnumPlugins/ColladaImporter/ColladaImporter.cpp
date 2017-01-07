@@ -82,7 +82,7 @@ ColladaImporter::ColladaImporter(): d(nullptr), zero(0), app(qApp ? nullptr : ne
 
 ColladaImporter::ColladaImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager}, d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
-ColladaImporter::ColladaImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
+ColladaImporter::ColladaImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin}, d(nullptr), zero(0), app(qApp ? nullptr : new QCoreApplication(zero, nullptr)) {}
 
 ColladaImporter::~ColladaImporter() {
     close();

@@ -84,7 +84,7 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         explicit FreeTypeFont();
 
         /** @brief Plugin manager constructor */
-        explicit FreeTypeFont(PluginManager::AbstractManager& manager, std::string plugin);
+        explicit FreeTypeFont(PluginManager::AbstractManager& manager, const std::string& plugin);
 
         ~FreeTypeFont();
 

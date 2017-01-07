@@ -87,7 +87,7 @@ class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
         explicit ColladaImporter(PluginManager::Manager<AbstractImporter>& manager);
 
         /** @brief Plugin manager constructor */
-        explicit ColladaImporter(PluginManager::AbstractManager& manager, std::string plugin);
+        explicit ColladaImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
         ~ColladaImporter();
 

@@ -42,7 +42,7 @@ namespace Magnum { namespace Trade {
 
 PngImporter::PngImporter() = default;
 
-PngImporter::PngImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
+PngImporter::PngImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 PngImporter::~PngImporter() = default;
 

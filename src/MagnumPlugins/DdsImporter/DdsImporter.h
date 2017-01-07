@@ -84,7 +84,7 @@ class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
         explicit DdsImporter();
 
         /** @brief Plugin manager constructor */
-        explicit DdsImporter(PluginManager::AbstractManager& manager, std::string plugin);
+        explicit DdsImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
         ~DdsImporter();
 

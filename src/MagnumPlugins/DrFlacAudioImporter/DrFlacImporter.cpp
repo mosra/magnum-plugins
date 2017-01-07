@@ -79,7 +79,7 @@ struct DrFlacDeleter {
 
 DrFlacImporter::DrFlacImporter() = default;
 
-DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImporter(manager, std::move(plugin)) {}
+DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 auto DrFlacImporter::doFeatures() const -> Features { return Feature::OpenData; }
 

@@ -73,7 +73,7 @@ class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageCon
         explicit PngImageConverter();
 
         /** @brief Plugin manager constructor */
-        explicit PngImageConverter(PluginManager::AbstractManager& manager, std::string plugin);
+        explicit PngImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
     private:
         MAGNUM_PNGIMAGECONVERTER_LOCAL Features doFeatures() const override;

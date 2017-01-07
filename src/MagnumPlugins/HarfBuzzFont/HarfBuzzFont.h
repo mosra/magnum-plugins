@@ -72,7 +72,7 @@ class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
         explicit HarfBuzzFont();
 
         /** @brief Plugin manager constructor */
-        explicit HarfBuzzFont(PluginManager::AbstractManager& manager, std::string plugin);
+        explicit HarfBuzzFont(PluginManager::AbstractManager& manager, const std::string& plugin);
 
         ~HarfBuzzFont();
 
