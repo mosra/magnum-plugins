@@ -40,8 +40,11 @@ struct StbImageImporterTest: TestSuite::Tester {
 
     void grayPng();
     void grayJpeg();
+
     void rgbPng();
     void rgbJpeg();
+    void rgbHdr();
+
     void rgbaPng();
 
     void useTwice();
@@ -50,8 +53,11 @@ struct StbImageImporterTest: TestSuite::Tester {
 StbImageImporterTest::StbImageImporterTest() {
     addTests({&StbImageImporterTest::grayPng,
               &StbImageImporterTest::grayJpeg,
+
               &StbImageImporterTest::rgbPng,
               &StbImageImporterTest::rgbJpeg,
+              &StbImageImporterTest::rgbHdr,
+
               &StbImageImporterTest::rgbaPng,
 
               &StbImageImporterTest::useTwice});
@@ -136,6 +142,24 @@ void StbImageImporterTest::rgbJpeg() {
         '\xc9', '\xff', '\x76',
         '\xdf', '\xad', '\xb6'),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+}
+
+void StbImageImporterTest::rgbHdr() {
+    StbImageImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
+
+    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->type(), PixelType::Float);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
+    CORRADE_COMPARE_AS((Containers::ArrayView<const float>{image->data<float>(), image->data().size()/4}),
+        Containers::Array<const float>::from(
+            1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
+            3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
+            5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f),
+        TestSuite::Compare::Container);
 }
 
 void StbImageImporterTest::rgbaPng() {

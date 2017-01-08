@@ -36,7 +36,6 @@
 #endif
 
 #define STBI_NO_STDIO
-#define STBI_NO_LINEAR
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #define STBI_ASSERT CORRADE_INTERNAL_ASSERT
@@ -71,7 +70,20 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     Int components;
 
     stbi_set_flip_vertically_on_load(true);
-    stbi_uc* const data = stbi_load_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0);
+
+    stbi_uc* data;
+    std::size_t channelSize;
+    PixelType type;
+    if(stbi_is_hdr_from_memory(_in, _in.size())) {
+        data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0));
+        channelSize = 4;
+        type = PixelType::Float;
+    } else {
+        data = stbi_load_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0);
+        channelSize = 1;
+        type = PixelType::UnsignedByte;
+    }
+
     if(!data) {
         Error() << "Trade::StbImageImporter::image2D(): cannot open the image:" << stbi_failure_reason();
         return std::nullopt;
@@ -108,16 +120,16 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     /* Copy the data into array with default deleter and free the original (we
        can't use custom deleter to avoid dangling function pointer call when
        the plugin is unloaded sooner than the array is deleted) */
-    Containers::Array<char> imageData{std::size_t(size.product()*components)};
+    Containers::Array<char> imageData{std::size_t(size.product()*components*channelSize)};
     std::copy_n(reinterpret_cast<char*>(data), imageData.size(), imageData.begin());
     stbi_image_free(data);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    if((size.x()*components)%4 != 0)
+    if((size.x()*components*channelSize)%4 != 0)
         storage.setAlignment(1);
 
-    return Trade::ImageData2D{storage, format, PixelType::UnsignedByte, size, std::move(imageData)};
+    return Trade::ImageData2D{storage, format, type, size, std::move(imageData)};
 }
 
 }}

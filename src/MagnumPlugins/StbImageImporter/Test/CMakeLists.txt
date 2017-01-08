@@ -26,9 +26,11 @@
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(PNGIMPORTER_TEST_DIR ".")
     set(JPEGIMPORTER_TEST_DIR ".")
+    set(STBIMAGEIMPORTER_TEST_DIR ".")
 else()
     set(PNGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test)
     set(JPEGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test)
+    set(STBIMAGEIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
@@ -41,7 +43,8 @@ corrade_add_test(StbImageImporterTest StbImageImporterTest.cpp
         ../../PngImporter/Test/rgb.png
         ../../PngImporter/Test/rgba.png
         ../../JpegImporter/Test/gray.jpg
-        ../../JpegImporter/Test/rgb.jpg)
+        ../../JpegImporter/Test/rgb.jpg
+        rgb.hdr)
 target_include_directories(StbImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting StbImageImporter symbols, because it
 # would search for the symbols in some DLL even when they were linked
