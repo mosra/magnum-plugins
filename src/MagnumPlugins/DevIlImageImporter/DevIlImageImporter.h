@@ -61,7 +61,7 @@ incomplete):
 -   Multi-PCX (`*.dcx`)
 -   Dicom (`*.dicom`, `*.dcm`)
 -   DirectDraw Surface (`*.dds`)
--   OpenEXR (`*.exr)
+-   OpenEXR (`*.exr`)
 -   Flexible Image Transport System (`*.fits`, `*.fit`)
 -   Heavy Metal: FAKK 2 (`*.ftx`)
 -   Graphics Interchange Format (`*.gif`)
