@@ -108,10 +108,11 @@ load `DevIlImageImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use stat
 plugin, you need to request `DevIlImageImporter` component of `MagnumPlugins`
 package in CMake and link to `MagnumPlugins::DevIlImageImporter`.
 
-This plugins provides `BmpImporter`, `DdsImporter`, `GifImporter`, `HdrImporter`,
-`Jp2Importer`, `JpegImporter`, `MngImporter`, `PcxImporter`, `PbmImporter`,
-`PgmImporter`, `PicImporter`, `PngImporter`, `PnmImporter`, `PpmImporter`,
-`PsdImporter`, `SgiImporter`, `TgaImporter` and `TiffImporter` plugins.
+This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
+`GifImporter`, `HdrImporter`, `JpegImporter`, `Jpeg2000Importer`,
+`MngImporter`, `PcxImporter`, `PbmImporter`, `PgmImporter`, `PicImporter`,
+`PngImporter`, `PnmImporter`, `PpmImporter`, `PsdImporter`, `SgiImporter`,
+`TgaImporter` and `TiffImporter` plugins.
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
