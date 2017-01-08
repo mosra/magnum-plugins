@@ -23,7 +23,7 @@ Third-party components
     [libPNG license](http://libpng.org/pub/png/src/libpng-LICENSE.txt)
 *   The `StbImageImporter` plugin uses **stb_image** public domain library --
     https://github.com/nothings/stb
-*   The `StbPngImageConverter` plugin uses **stb_image_write** public domain
+*   The `StbImageConverter` plugin uses **stb_image_write** public domain
     library -- https://github.com/nothings/stb
 *   The `StbTrueTypeFont` plugin uses **stb_truetype** public domain library --
     https://github.com/nothings/stb

@@ -100,12 +100,12 @@ if(WITH_STANFORDIMPORTER)
     add_subdirectory(StanfordImporter)
 endif()
 
-if(WITH_STBIMAGEIMPORTER)
-    add_subdirectory(StbImageImporter)
+if(WITH_STBIMAGECONVERTER)
+    add_subdirectory(StbImageConverter)
 endif()
 
-if(WITH_STBPNGIMAGECONVERTER)
-    add_subdirectory(StbPngImageConverter)
+if(WITH_STBIMAGEIMPORTER)
+    add_subdirectory(StbImageImporter)
 endif()
 
 if(WITH_STBTRUETYPEFONT)

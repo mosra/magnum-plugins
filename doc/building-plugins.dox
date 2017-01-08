@@ -85,9 +85,9 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
 -   `WITH_STANFORDIMPORTER` -- @ref Trade::StanfordImporter "StanfordImporter"
     plugin.
--   `WITH_STBIMAGEIMPORTER` -- @ref Trade::StbImageImporter "StbImageImporter"
+-   `WITH_STBIMAGECONVERTER` -- @ref Trade::StbImageConverter "StbImageConverter"
     plugin.
--   `WITH_STBPNGIMAGECONVERTER` -- @ref Trade::StbPngImageConverter "StbPngImageConverter"
+-   `WITH_STBIMAGEIMPORTER` -- @ref Trade::StbImageImporter "StbImageImporter"
     plugin.
 -   `WITH_STBTRUETYPEFONT` -- @ref Text::StbTrueTypeFont "StbTrueTypeFont"
     plugin.

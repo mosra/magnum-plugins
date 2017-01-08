@@ -23,4 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#cmakedefine MAGNUM_STBPNGIMAGECONVERTER_BUILD_STATIC
+#include "MagnumPlugins/StbImageConverter/StbImageConverter.h"
+
+CORRADE_PLUGIN_REGISTER(StbImageConverter, Magnum::Trade::StbImageConverter,
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1")
