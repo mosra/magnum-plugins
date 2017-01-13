@@ -35,7 +35,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 corrade_add_test(FreeTypeFontGLTest FreeTypeFontGLTest.cpp
     LIBRARIES
         MagnumFreeTypeFontTestLib
-        Magnum::WindowlessApplication
+        Magnum::OpenGLTester
     FILES
         Oxygen.ttf)
 target_include_directories(FreeTypeFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

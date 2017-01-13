@@ -23,7 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Magnum/Test/AbstractOpenGLTester.h>
+#include <Magnum/OpenGLTester.h>
 #include <Magnum/Text/GlyphCache.h>
 
 #include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"
@@ -32,7 +32,7 @@
 
 namespace Magnum { namespace Text { namespace Test {
 
-struct FreeTypeFontGLTest: Magnum::Test::AbstractOpenGLTester {
+struct FreeTypeFontGLTest: OpenGLTester {
     explicit FreeTypeFontGLTest();
 
     ~FreeTypeFontGLTest();
@@ -124,4 +124,4 @@ void FreeTypeFontGLTest::fillGlyphCache() {
 
 }}}
 
-MAGNUM_GL_TEST_MAIN(Magnum::Text::Test::FreeTypeFontGLTest)
+CORRADE_TEST_MAIN(Magnum::Text::Test::FreeTypeFontGLTest)

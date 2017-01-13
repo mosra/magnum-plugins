@@ -23,7 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Magnum/Test/AbstractOpenGLTester.h>
+#include <Magnum/OpenGLTester.h>
 #include <Magnum/Text/GlyphCache.h>
 
 #include "MagnumPlugins/StbTrueTypeFont/StbTrueTypeFont.h"
@@ -32,7 +32,7 @@
 
 namespace Magnum { namespace Text { namespace Test {
 
-struct StbTrueTypeFontGLTest: Magnum::Test::AbstractOpenGLTester {
+struct StbTrueTypeFontGLTest: OpenGLTester {
     explicit StbTrueTypeFontGLTest();
 
     void properties();
@@ -151,4 +151,4 @@ void StbTrueTypeFontGLTest::fillGlyphCache() {
 
 }}}
 
-MAGNUM_GL_TEST_MAIN(Magnum::Text::Test::StbTrueTypeFontGLTest)
+CORRADE_TEST_MAIN(Magnum::Text::Test::StbTrueTypeFontGLTest)

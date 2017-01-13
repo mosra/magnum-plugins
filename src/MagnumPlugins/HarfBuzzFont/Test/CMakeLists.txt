@@ -35,7 +35,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp
     LIBRARIES
         MagnumHarfBuzzFontTestLib
-        Magnum::WindowlessApplication
+        Magnum::OpenGLTester
     FILES
         ../../FreeTypeFont/Test/Oxygen.ttf)
 target_include_directories(HarfBuzzFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

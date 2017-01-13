@@ -23,7 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Magnum/Test/AbstractOpenGLTester.h>
+#include <Magnum/OpenGLTester.h>
 #include <Magnum/Text/GlyphCache.h>
 
 #include "MagnumPlugins/HarfBuzzFont/HarfBuzzFont.h"
@@ -32,7 +32,7 @@
 
 namespace Magnum { namespace Text { namespace Test {
 
-struct HarfBuzzFontGLTest: Magnum::Test::AbstractOpenGLTester {
+struct HarfBuzzFontGLTest: OpenGLTester {
     explicit HarfBuzzFontGLTest();
 
     ~HarfBuzzFontGLTest();
@@ -95,4 +95,4 @@ void HarfBuzzFontGLTest::layout() {
 
 }}}
 
-MAGNUM_GL_TEST_MAIN(Magnum::Text::Test::HarfBuzzFontGLTest)
+CORRADE_TEST_MAIN(Magnum::Text::Test::HarfBuzzFontGLTest)
