@@ -847,6 +847,8 @@ template<class T> std::vector<T> ColladaImporter::parseSource(const QString& id)
     return output;
 }
 
+/* Doxygen got confused by the templates and thinks this is undocumented */
+#ifndef DOXYGEN_GENERATING_OUTPUT
 template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, UnsignedInt stride, const std::vector<UnsignedInt>& interleavedIndexArrays) {
     QString tmp;
 
@@ -866,6 +868,7 @@ template<class T> std::vector<T> ColladaImporter::buildAttributeArray(UnsignedIn
 
     return array;
 }
+#endif
 
 std::string ColladaImporter::instanceName(const QString& name, const QString& instanceTag) {
     QString tmp;

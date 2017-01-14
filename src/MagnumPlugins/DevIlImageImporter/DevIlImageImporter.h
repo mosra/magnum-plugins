@@ -118,9 +118,10 @@ See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
 The images are imported with @ref PixelType::UnsignedByte and a suitable
-@ref PixelFormat type. Supported types are @ref PixelFormat::Red, @ref PixelFormat::RG,
-@ref PixelFormat::RGB, @ref PixelFormat::BGR, @ref PixelFormat::RGBA and
-@ref PixelFormat::BGRA. All other formats will be converted to @ref PixelFormat::RGBA.
+@ref Magnum::PixelFormat "PixelFormat" type. Supported types are
+@ref PixelFormat::Red, @ref PixelFormat::RG, @ref PixelFormat::RGB,
+@ref PixelFormat::BGR, @ref PixelFormat::RGBA and @ref PixelFormat::BGRA. All
+other formats will be converted to @ref PixelFormat::RGBA.
 
 Grayscale images require extension @extension{ARB,texture_rg}. In OpenGL ES and
 WebGL, BGR and BGRA formats are converted to @ref PixelFormat::RGBA. In OpenGL

@@ -97,7 +97,7 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
         /**
          * @brief Output file format
          *
-         * @see @ref StbImageConverter(Format), @ref format()
+         * @see @ref StbImageConverter(Format)
          */
         enum class Format: Int {
             /* 0 used for invalid value */
