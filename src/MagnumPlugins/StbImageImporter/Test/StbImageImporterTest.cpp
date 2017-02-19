@@ -77,9 +77,9 @@ void StbImageImporterTest::grayPng() {
     CORRADE_COMPARE(image->format(), PixelFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff'),
+        '\x88', '\x00', '\xff'}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -97,9 +97,9 @@ void StbImageImporterTest::grayJpeg() {
     CORRADE_COMPARE(image->format(), PixelFormat::Luminance);
     #endif
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff'),
+        '\x88', '\x00', '\xff'}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -113,13 +113,13 @@ void StbImageImporterTest::rgbPng() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5'),
+        '\xde', '\xad', '\xb5'}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -134,13 +134,13 @@ void StbImageImporterTest::rgbJpeg() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xca', '\xfe', '\x76',
         '\xdf', '\xad', '\xb6',
         '\xca', '\xfe', '\x76',
         '\xe0', '\xad', '\xb6',
         '\xc9', '\xff', '\x76',
-        '\xdf', '\xad', '\xb6'),
+        '\xdf', '\xad', '\xb6'}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -154,12 +154,12 @@ void StbImageImporterTest::rgbHdr() {
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->type(), PixelType::Float);
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
-    CORRADE_COMPARE_AS((Containers::ArrayView<const float>{image->data<float>(), image->data().size()/4}),
-        Containers::Array<const float>::from(
+    CORRADE_COMPARE_AS((Containers::ArrayView<float>{image->data<float>(), image->data().size()/4}),
+        (Containers::Array<float>{Containers::InPlaceInit, {
             1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
             3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
-            5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f),
-        TestSuite::Compare::Container);
+            5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f}}),
+        TestSuite::Compare::Container<Containers::ArrayView<const float>>);
 }
 
 void StbImageImporterTest::rgbaPng() {
@@ -172,13 +172,13 @@ void StbImageImporterTest::rgbaPng() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xde', '\xad', '\xb5', '\xff',
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
-        '\xde', '\xad', '\xb5', '\xff'),
+        '\xde', '\xad', '\xb5', '\xff'}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
