@@ -23,15 +23,16 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "Document.h"
-#include "Property.h"
-#include "Structure.h"
-#include "Validation.h"
-#include "parsers.h"
-
 #include <algorithm>
 #include <tuple>
 #include <Corrade/Utility/Debug.h>
+
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Structure.h"
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/Validation.h"
+
+#include "MagnumPlugins/OpenGexImporter/OpenDdl/parsers.h"
 
 namespace Magnum { namespace OpenDdl {
 
