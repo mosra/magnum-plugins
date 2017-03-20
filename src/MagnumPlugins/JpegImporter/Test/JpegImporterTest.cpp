@@ -70,9 +70,9 @@ void JpegImporterTest::gray() {
     CORRADE_COMPARE(image->data().size(), 8);
     image->data()[3] = image->data()[7] = 0;
 
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xff', '\x88', '\x00', 0,
-        '\x88', '\x00', '\xff', 0),
+        '\x88', '\x00', '\xff', 0}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -93,14 +93,14 @@ void JpegImporterTest::rgb() {
          image->data()[21] = image->data()[22] = image->data()[23] = 0;
 
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xca', '\xfe', '\x76',
         '\xdf', '\xad', '\xb6',
         '\xca', '\xfe', '\x76', 0, 0, 0,
 
         '\xe0', '\xad', '\xb6',
         '\xc9', '\xff', '\x76',
-        '\xdf', '\xad', '\xb6', 0, 0, 0),
+        '\xdf', '\xad', '\xb6', 0, 0, 0}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 

@@ -185,7 +185,7 @@ void Test::primitive() {
     CORRADE_COMPARE(s.arraySize(), 3);
     CORRADE_COMPARE(s.subArraySize(), 0);
     CORRADE_COMPARE_AS(s.asArray<Short>(),
-        Containers::Array<Short>::from(35, -0x0c, 45),
+        (Containers::Array<Short>{Containers::InPlaceInit, {35, -0x0c, 45}}),
         TestSuite::Compare::Container);
 }
 
@@ -258,7 +258,7 @@ void Test::primitiveSubArray() {
     CORRADE_COMPARE(s.arraySize(), 4);
     CORRADE_COMPARE(s.subArraySize(), 2);
     CORRADE_COMPARE_AS(s.asArray<UnsignedByte>(),
-        Containers::Array<UnsignedByte>::from(0xca, 0xfe, 0xba, 0xbe),
+        (Containers::Array<UnsignedByte>{Containers::InPlaceInit, {0xca, 0xfe, 0xba, 0xbe}}),
         TestSuite::Compare::Container);
 }
 
@@ -585,7 +585,7 @@ Hierarchic %node821 {}
     CORRADE_VERIFY(!string.findNext());
     CORRADE_COMPARE(string.type(), Type::String);
     CORRADE_COMPARE_AS(root->firstChildOf(Type::String).asArray<std::string>(),
-        Containers::Array<std::string>::from("hello", "world"),
+        (Containers::Array<std::string>{Containers::InPlaceInit, {"hello", "world"}}),
         TestSuite::Compare::Container);
 
     CORRADE_VERIFY(!root->findNextOf(RootStructure));
@@ -608,7 +608,7 @@ Hierarchic %node821 {}
     CORRADE_COMPARE(hASomeData->type(), Type::Short);
     CORRADE_COMPARE(hASomeData->subArraySize(), 2);
     CORRADE_COMPARE_AS(hASomeData->asArray<Short>(),
-        Containers::Array<Short>::from(0, 1, 2, 3),
+        (Containers::Array<Short>{Containers::InPlaceInit, {0, 1, 2, 3}}),
         TestSuite::Compare::Container);
 
     std::optional<Structure> hierarchicB = hierarchicA->findFirstChildOf(HierarchicStructure);
@@ -631,7 +631,7 @@ Hierarchic %node821 {}
     CORRADE_COMPARE(hBSomeData->type(), Type::Int);
     CORRADE_COMPARE(hBSomeData->subArraySize(), 2);
     CORRADE_COMPARE_AS(hBSomeData->asArray<Int>(),
-        Containers::Array<Int>::from(3, 4, 5, 6),
+        (Containers::Array<Int>{Containers::InPlaceInit, {3, 4, 5, 6}}),
         TestSuite::Compare::Container);
 
     std::optional<Structure> hierarchicC = hierarchicA->findNextOf(HierarchicStructure);

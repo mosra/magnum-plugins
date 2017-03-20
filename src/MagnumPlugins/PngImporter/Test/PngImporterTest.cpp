@@ -72,9 +72,10 @@ void PngImporterTest::gray() {
     CORRADE_COMPARE(image->data().size(), 8);
     image->data()[3] = image->data()[7] = 0;
 
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
-        '\xff', '\x88', '\x00', 0,
-        '\x88', '\x00', '\xff', 0),
+    CORRADE_COMPARE_AS(image->data(),
+        (Containers::Array<char>{Containers::InPlaceInit, {
+            '\xff', '\x88', '\x00', 0,
+            '\x88', '\x00', '\xff', 0}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -94,14 +95,15 @@ void PngImporterTest::rgb() {
     image->data()[9] = image->data()[10] = image->data()[11] =
          image->data()[21] = image->data()[22] = image->data()[23] = 0;
 
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77', 0, 0, 0,
+    CORRADE_COMPARE_AS(image->data(),
+        (Containers::Array<char>{Containers::InPlaceInit, {
+            '\xca', '\xfe', '\x77',
+            '\xde', '\xad', '\xb5',
+            '\xca', '\xfe', '\x77', 0, 0, 0,
 
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5', 0, 0, 0),
+            '\xde', '\xad', '\xb5',
+            '\xca', '\xfe', '\x77',
+            '\xde', '\xad', '\xb5', 0, 0, 0}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
@@ -114,13 +116,14 @@ void PngImporterTest::rgba() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::Array<char>::from(
-        '\xde', '\xad', '\xb5', '\xff',
-        '\xca', '\xfe', '\x77', '\xff',
-        '\x00', '\x00', '\x00', '\x00',
-        '\xca', '\xfe', '\x77', '\xff',
-        '\x00', '\x00', '\x00', '\x00',
-        '\xde', '\xad', '\xb5', '\xff'),
+    CORRADE_COMPARE_AS(image->data(),
+        (Containers::Array<char>{Containers::InPlaceInit, {
+            '\xde', '\xad', '\xb5', '\xff',
+            '\xca', '\xfe', '\x77', '\xff',
+            '\x00', '\x00', '\x00', '\x00',
+            '\xca', '\xfe', '\x77', '\xff',
+            '\x00', '\x00', '\x00', '\x00',
+            '\xde', '\xad', '\xb5', '\xff'}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
