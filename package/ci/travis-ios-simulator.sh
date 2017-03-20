@@ -32,7 +32,7 @@ cmake .. \
     -DWITH_INTERCONNECT=OFF \
     -DBUILD_STATIC=ON \
     -G Xcode
-cmake --build . --config Release --target install | xcpretty
+cmake --build . --config Release --target install | xcpretty && exit ${PIPESTATUS[0]}
 cd ../..
 
 # Crosscompile Magnum
@@ -58,7 +58,7 @@ cmake .. \
     -DTARGET_GLES2=$TARGET_GLES2 \
     -DBUILD_STATIC=ON \
     -G Xcode
-cmake --build . --config Release --target install | xcpretty
+cmake --build . --config Release --target install | xcpretty && exit ${PIPESTATUS[0]}
 cd ../..
 
 # Crosscompile
@@ -94,7 +94,7 @@ cmake .. \
     -DBUILD_TESTS=ON \
     -DBUILD_GL_TESTS=ON \
     -G Xcode
-cmake --build . --config Release | xcpretty
+cmake --build . --config Release | xcpretty && exit ${PIPESTATUS[0]}
 
 # TODO: find a better way to avoid
 # Library not loaded: /System/Library/Frameworks/OpenGLES.framework/OpenGLES
