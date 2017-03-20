@@ -69,7 +69,7 @@ and @ref PixelFormat::RGB, @ref PixelFormat::RGBA or @ref PixelFormat::Red,
 respectively. Grayscale images require extension @extension{ARB,texture_rg}.
 All imported images use default @ref PixelStorage parameters.
 
-In OpenGL ES 2.0, if @es_extension{EXT,texture_rg} is not supported and in
+In OpenGL ES 2.0, if @extension{EXT,texture_rg} is not supported and in
 WebGL 1.0, grayscale images use @ref PixelFormat::Luminance instead of
 @ref PixelFormat::Red.
 */

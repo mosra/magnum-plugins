@@ -125,7 +125,7 @@ other formats will be converted to @ref PixelFormat::RGBA.
 
 Grayscale images require extension @extension{ARB,texture_rg}. In OpenGL ES and
 WebGL, BGR and BGRA formats are converted to @ref PixelFormat::RGBA. In OpenGL
-ES 2.0, if @es_extension{EXT,texture_rg} is not supported and in WebGL 1.0,
+ES 2.0, if @extension{EXT,texture_rg} is not supported and in WebGL 1.0,
 grayscale and grayscale + alpha images use @ref PixelFormat::Luminance /
 @ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::Red /
 @ref PixelFormat::RG.
