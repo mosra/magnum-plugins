@@ -202,6 +202,7 @@ void DrWavImporterTest::invalidFactChunk() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::Mono16);
     CORRADE_COMPARE(importer.frequency(), 22050);
 
+    CORRADE_COMPARE(importer.data().size(), 3724);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             -27, -11, -1, -9, 24, -6, 127, -5}}),
@@ -224,6 +225,7 @@ void DrWavImporterTest::mono8() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::Mono8);
     CORRADE_COMPARE(importer.frequency(), 22050);
 
+    CORRADE_COMPARE(importer.data().size(), 2136);
     CORRADE_COMPARE_AS(importer.data().prefix(4),
         (Containers::Array<char>{Containers::InPlaceInit, {127, 127, 127, 127}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
@@ -245,6 +247,7 @@ void DrWavImporterTest::mono8ALaw() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::MonoALaw);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 23808);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             87, 84, 85, 85, 85, -43, -43, -43}}),
@@ -258,6 +261,7 @@ void DrWavImporterTest::mono8MuLaw() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::MonoMuLaw);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 23808);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             -5, -3, -1, -2, -1, 127, 127, 126}}),
@@ -284,6 +288,7 @@ void DrWavImporterTest::mono24() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::MonoFloat);
     CORRADE_COMPARE(importer.frequency(), 48000);
 
+    CORRADE_COMPARE(importer.data().size(), 3696);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, -56, 15, -70, 0, 116, -68, -70}}),
@@ -319,6 +324,7 @@ void DrWavImporterTest::stereo8ALaw() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoALaw);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 46986);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             -43, -43, -43, -43, -43, -43, 85, -43}}),
@@ -332,6 +338,7 @@ void DrWavImporterTest::stereo8MuLaw() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoMuLaw);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 46986);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             -1, -1, -1, -1, -1, -1, 127, -1}}),
@@ -373,6 +380,7 @@ void DrWavImporterTest::stereo24() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 187944);
     CORRADE_COMPARE_AS(importer.data().prefix(32),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0,
@@ -393,6 +401,7 @@ void DrWavImporterTest::stereo32() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 187944);
     CORRADE_COMPARE_AS(importer.data().prefix(32),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -423,6 +432,7 @@ void DrWavImporterTest::mono32f() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::MonoFloat);
     CORRADE_COMPARE(importer.frequency(), 48000);
 
+    CORRADE_COMPARE(importer.data().size(), 3920);
     CORRADE_COMPARE_AS(importer.data().prefix(16),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 108, 57, -103, 59, 3, 63, 42, 60, -33, -81, -120, 60}}),
@@ -436,6 +446,7 @@ void DrWavImporterTest::stereo32f() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 44100);
 
+    CORRADE_COMPARE(importer.data().size(), 1352);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             17, -77, -103, 56, 5, 50, 72, 56}}),
@@ -449,6 +460,7 @@ void DrWavImporterTest::stereo64f() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoDouble);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 375888);
     CORRADE_COMPARE_AS(importer.data().prefix(64),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -465,6 +477,7 @@ void DrWavImporterTest::extensionsALaw() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoALaw);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 46986);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             -43, -43, -43, -43, -43, -43, 85, -43}}),
@@ -478,6 +491,7 @@ void DrWavImporterTest::extensionsMuLaw() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoMuLaw);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 46986);
     CORRADE_COMPARE_AS(importer.data().prefix(8),
         (Containers::Array<char>{Containers::InPlaceInit, {
             -1, -1, -1, -1, -1, -1, 127, -1}}),
@@ -491,6 +505,7 @@ void DrWavImporterTest::extensions12() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::Stereo16);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 93972);
     CORRADE_COMPARE_AS(importer.data().prefix(16),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, -3, -1, 0, 0}}),
@@ -504,6 +519,7 @@ void DrWavImporterTest::extensions16() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::Stereo16);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 93972);
     CORRADE_COMPARE_AS(importer.data().prefix(16),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, -3, -1, 0, 0}}),
@@ -517,6 +533,7 @@ void DrWavImporterTest::extensions24() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 187944);
     CORRADE_COMPARE_AS(importer.data().prefix(32),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -535,6 +552,7 @@ void DrWavImporterTest::extensions32() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 187944);
     CORRADE_COMPARE_AS(importer.data().prefix(32),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -549,6 +567,7 @@ void DrWavImporterTest::extensions32f() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 187944);
     CORRADE_COMPARE_AS(importer.data().prefix(32),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -563,6 +582,7 @@ void DrWavImporterTest::extensions64f() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoDouble);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 375888);
     CORRADE_COMPARE_AS(importer.data().prefix(64),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

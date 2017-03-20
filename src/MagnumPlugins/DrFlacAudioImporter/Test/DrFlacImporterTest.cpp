@@ -84,6 +84,7 @@ void DrFlacImporterTest::mono8() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::Mono8);
     CORRADE_COMPARE(importer.frequency(), 22050);
 
+    CORRADE_COMPARE(importer.data().size(), 2136);
     CORRADE_COMPARE_AS(importer.data().prefix(4),
         (Containers::Array<char>{Containers::InPlaceInit, {127, 127, 127, 127}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
@@ -108,6 +109,7 @@ void DrFlacImporterTest::mono24() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::MonoFloat);
     CORRADE_COMPARE(importer.frequency(), 48000);
 
+    CORRADE_COMPARE(importer.data().size(), 3696);
     CORRADE_COMPARE_AS(importer.data().prefix(4),
         (Containers::Array<char>{Containers::InPlaceInit, {0, -56, 15, -70}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
@@ -144,6 +146,7 @@ void DrFlacImporterTest::stereo24() {
     CORRADE_COMPARE(importer.format(), Buffer::Format::StereoFloat);
     CORRADE_COMPARE(importer.frequency(), 8000);
 
+    CORRADE_COMPARE(importer.data().size(), 187944);
     CORRADE_COMPARE_AS(importer.data().prefix(32),
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, 0, 0, 0, 0, 0, 0, 0,
