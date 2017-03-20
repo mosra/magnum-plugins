@@ -32,7 +32,7 @@
 #include <Corrade/Utility/Endianness.h>
 #include <Magnum/Array.h>
 #include <Magnum/Mesh.h>
-#include <Magnum/Math/Vector4.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Trade/MeshData3D.h>
 
 namespace Magnum { namespace Trade {
@@ -425,7 +425,7 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         }
     }
 
-    return MeshData3D{MeshPrimitive::Triangles, std::move(indices), {std::move(positions)}, {}, {}};
+    return MeshData3D{MeshPrimitive::Triangles, std::move(indices), {std::move(positions)}, {}, {}, {}, nullptr};
 }
 
 }}

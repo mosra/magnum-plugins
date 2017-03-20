@@ -520,7 +520,7 @@ std::optional<MeshData3D> ColladaImporter::doMesh3D(const UnsignedInt id) {
         else Warning() << "Trade::ColladaImporter::mesh3D():" << '"' + attribute.toStdString() + '"' << "input semantic not supported";
     }
 
-    return MeshData3D(MeshPrimitive::Triangles, std::move(indices), {std::move(vertices)}, std::move(normals), std::move(textureCoords2D));
+    return MeshData3D{MeshPrimitive::Triangles, std::move(indices), {std::move(vertices)}, std::move(normals), std::move(textureCoords2D), {}, nullptr};
 }
 
 UnsignedInt ColladaImporter::doMaterialCount() const { return d->materials.size(); }

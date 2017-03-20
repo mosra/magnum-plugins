@@ -718,7 +718,7 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
         }
     }
 
-    return MeshData3D{primitive, indices, positions, normals, textureCoordinates, &mesh};
+    return MeshData3D{primitive, indices, positions, normals, textureCoordinates, {}, &mesh};
 }
 
 UnsignedInt OpenGexImporter::doMaterialCount() const { return _d->materials.size(); }
