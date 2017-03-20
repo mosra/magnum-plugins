@@ -66,12 +66,12 @@ class DrWavImporterTest: public TestSuite::Tester {
         void stereo24();
         void stereo32();
 
+        void surround51Channel16();
+        void surround71Channel24();
+
         void mono32f();
         void stereo32f();
         void stereo64f();
-
-        void surround51Channel16();
-        void surround71Channel24();
 
         void extensionsALaw();
         void extensionsMuLaw();
@@ -388,6 +388,22 @@ void DrWavImporterTest::stereo32() {
         TestSuite::Compare::Container);
 }
 
+void DrWavImporterTest::surround51Channel16() {
+    DrWavImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "surround51Channel16.wav")));
+
+    CORRADE_COMPARE(importer.format(), Buffer::Format::Surround51Channel16);
+    CORRADE_COMPARE(importer.frequency(), 48000);
+}
+
+void DrWavImporterTest::surround71Channel24() {
+    DrWavImporter importer;
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "surround71Channel24.wav")));
+
+    CORRADE_COMPARE(importer.format(), Buffer::Format::Surround71Channel32);
+    CORRADE_COMPARE(importer.frequency(), 48000);
+}
+
 void DrWavImporterTest::mono32f() {
     DrWavImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono32f.wav")));
@@ -429,22 +445,6 @@ void DrWavImporterTest::stereo64f() {
                                       0, 0, 0, 0, 0, 0, 24, -65,
                                       0, 0, 0, 0, 0, 0, 0, 0).prefix(64),
                                       TestSuite::Compare::Container);
-}
-
-void DrWavImporterTest::surround51Channel16() {
-    DrWavImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "surround51Channel16.wav")));
-
-    CORRADE_COMPARE(importer.format(), Buffer::Format::Surround51Channel16);
-    CORRADE_COMPARE(importer.frequency(), 48000);
-}
-
-void DrWavImporterTest::surround71Channel24() {
-    DrWavImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "surround71Channel24.wav")));
-
-    CORRADE_COMPARE(importer.format(), Buffer::Format::Surround71Channel32);
-    CORRADE_COMPARE(importer.frequency(), 48000);
 }
 
 void DrWavImporterTest::extensionsALaw() {
