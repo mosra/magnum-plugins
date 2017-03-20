@@ -69,6 +69,7 @@ cmake .. \
     -DWITH_STBVORBISAUDIOIMPORTER=ON \
     -DBUILD_TESTS=ON \
     -DBUILD_GL_TESTS=ON
-make -j${JOBS_LIMIT}
+# Otherwise the job gets killed (probably because using too much memory)
+make -j4
 make install # for Any*Importer tests
 CORRADE_TEST_COLOR=ON ctest -V -E GLTest

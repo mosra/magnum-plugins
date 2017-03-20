@@ -91,6 +91,7 @@ cmake .. \
     -DWITH_STBTRUETYPEFONT=ON \
     -DWITH_STBVORBISAUDIOIMPORTER=ON \
     -DBUILD_TESTS=ON
+# Otherwise the job gets killed (probably because using too much memory)
 make -j4
 
 # Test

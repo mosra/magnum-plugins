@@ -82,7 +82,8 @@ ANDROID_NDK=$TRAVIS_BUILD_DIR/android-ndk-r10e cmake .. \
     -DWITH_STBTRUETYPEFONT=ON \
     -DWITH_STBVORBISAUDIOIMPORTER=OFF \
     -DBUILD_TESTS=ON
-make -j${JOBS_LIMIT}
+# Otherwise the job gets killed (probably because using too much memory)
+make -j4
 
 # Start simulator and run tests
 echo no | android create avd --force -n test -t android-19 --abi armeabi-v7a
