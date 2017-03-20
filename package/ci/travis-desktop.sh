@@ -9,7 +9,8 @@ cmake .. \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DCMAKE_INSTALL_RPATH=$HOME/deps/lib \
     -DCMAKE_BUILD_TYPE=Debug \
-    -DWITH_INTERCONNECT=OFF
+    -DWITH_INTERCONNECT=OFF \
+    -DBUILD_DEPRECATED=$BUILD_DEPRECATED
 make -j install
 cd ../..
 
@@ -33,7 +34,8 @@ cmake .. \
     -DWITH_OPENGLTESTER=ON \
     -DWITH_OBJIMPORTER=ON \
     -DWITH_TGAIMPORTER=ON \
-    -DWITH_WAVAUDIOIMPORTER=ON # for Any*Importer tests
+    -DWITH_WAVAUDIOIMPORTER=ON `# for Any*Importer tests` \
+    -DBUILD_DEPRECATED=$BUILD_DEPRECATED
 make -j install
 cd ../..
 
