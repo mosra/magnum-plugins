@@ -32,8 +32,7 @@
  */
 
 #include <Corrade/Containers/Array.h>
-
-#include "Magnum/Audio/AbstractImporter.h"
+#include <Magnum/Audio/AbstractImporter.h>
 
 #include "MagnumPlugins/StbVorbisAudioImporter/configure.h"
 

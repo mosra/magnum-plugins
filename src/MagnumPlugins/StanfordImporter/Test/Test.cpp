@@ -26,9 +26,9 @@
 #include <sstream>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
+#include <Magnum/Math/Vector3.h>
+#include <Magnum/Trade/MeshData3D.h>
 
-#include "Magnum/Math/Vector3.h"
-#include "Magnum/Trade/MeshData3D.h"
 #include "MagnumPlugins/StanfordImporter/StanfordImporter.h"
 
 #include "configure.h"

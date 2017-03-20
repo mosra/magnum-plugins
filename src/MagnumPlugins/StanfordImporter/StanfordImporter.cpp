@@ -30,11 +30,10 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Utility/String.h>
 #include <Corrade/Utility/Endianness.h>
-
-#include "Magnum/Array.h"
-#include "Magnum/Mesh.h"
-#include "Magnum/Math/Vector4.h"
-#include "Magnum/Trade/MeshData3D.h"
+#include <Magnum/Array.h>
+#include <Magnum/Mesh.h>
+#include <Magnum/Math/Vector4.h>
+#include <Magnum/Trade/MeshData3D.h>
 
 namespace Magnum { namespace Trade {
 

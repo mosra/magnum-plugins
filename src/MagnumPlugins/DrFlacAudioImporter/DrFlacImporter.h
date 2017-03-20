@@ -31,8 +31,7 @@
  */
 
 #include <Corrade/Containers/Array.h>
-
-#include "Magnum/Audio/AbstractImporter.h"
+#include <Magnum/Audio/AbstractImporter.h>
 
 #include "MagnumPlugins/DrFlacAudioImporter/configure.h"
 
