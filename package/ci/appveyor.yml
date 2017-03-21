@@ -57,3 +57,5 @@ cache:
 - libjpeg-turbo-1.5.0.tar.gz
 - DevIL-SDK-x64-1.7.8.zip
 - x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z
+- libpng-1.6.21.zip
+- source-archive.zip

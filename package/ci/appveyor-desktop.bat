@@ -1,5 +1,5 @@
 call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x64 || exit /b
-set PATH=%APPVEYOR_BUILD_FOLDER%/openal/bin/Win64;%APPVEYOR_BUILD_FOLDER%\deps\bin;%APPVEYOR_BUILD_FOLDER%\devil;%PATH%
+set PATH=%APPVEYOR_BUILD_FOLDER%/openal/bin/Win64;%APPVEYOR_BUILD_FOLDER%\deps\bin;%APPVEYOR_BUILD_FOLDER%\devil;%APPVEYOR_BUILD_FOLDER%\libpng\bin;%PATH%
 
 rem Build LibJPEG
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.5.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.5.0/libjpeg-turbo-1.5.0.tar.gz || exit /b
@@ -15,6 +15,37 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug ^
     -G Ninja || exit /b
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
+
+rem Build libPNG
+IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libpng-1.6.21.zip appveyor DownloadFile https://github.com/winlibs/libpng/archive/libpng-1.6.21.zip || exit /b
+IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\source-archive.zip appveyor DownloadFile https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/zlib-win64/source-archive.zip || exit /b
+
+7z x libpng-1.6.21.zip || exit /b
+cd libpng-libpng-1.6.21 || exit /b
+copy scripts\pnglibconf.h.prebuilt pnglibconf.h || exit /b
+cd projects\vstudio2015 || exit /b
+7z x ..\..\..\source-archive.zip || exit /b
+ren zlib-win64 zlib-1.2.8 || exit /b
+
+cd zlib || exit /b
+msbuild /p:SolutionDir=%APPVEYOR_BUILD_FOLDER%\libpng-libpng-1.6.21\projects\vstudio2015 /p:Configuration=Release || exit /b
+
+cd ..\libpng || exit /b
+msbuild /p:SolutionDir=%APPVEYOR_BUILD_FOLDER%\libpng-libpng-1.6.21\projects\vstudio2015 /p:Configuration=Release || exit /b
+
+cd %APPVEYOR_BUILD_FOLDER% || exit /b
+mkdir libpng || exit /b
+mkdir libpng\bin || exit /b
+mkdir libpng\lib || exit /b
+mkdir libpng\include || exit /b
+copy libpng-libpng-1.6.21\projects\vstudio2015X64\Release\libpng.dll libpng\bin\libpng.dll || exit /b
+copy libpng-libpng-1.6.21\projects\vstudio2015X64\Release\libpng.lib libpng\lib\libpng.lib || exit /b
+copy libpng-libpng-1.6.21\projects\vstudio2015X64\Release\zlib.lib libpng\lib\zlib.lib || exit /b
+copy libpng-libpng-1.6.21\png.h libpng\include\ || exit /b
+copy libpng-libpng-1.6.21\png.h libpng\include\ || exit /b
+copy libpng-libpng-1.6.21\pngconf.h libpng\include\ || exit /b
+copy libpng-libpng-1.6.21\pnglibconf.h libpng\include\ || exit /b
+copy libpng-libpng-1.6.21\projects\vstudio2015\zlib-1.2.8\zlib.h libpng\include\ || exit /b
 
 rem Build Corrade
 git clone --depth 1 git://github.com/mosra/corrade.git || exit /b
@@ -60,7 +91,7 @@ mkdir build && cd build || exit /b
 cmake .. ^
     -DCMAKE_BUILD_TYPE=Debug ^
     -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
-    -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal;;%APPVEYOR_BUILD_FOLDER%/devil ^
+    -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal;%APPVEYOR_BUILD_FOLDER%/devil;%APPVEYOR_BUILD_FOLDER%/libpng ^
     -DWITH_ANYAUDIOIMPORTER=ON ^
     -DWITH_ANYIMAGECONVERTER=ON ^
     -DWITH_ANYIMAGEIMPORTER=ON ^
@@ -74,8 +105,8 @@ cmake .. ^
     -DWITH_JPEGIMPORTER=ON ^
     -DWITH_MINIEXRIMAGECONVERTER=ON ^
     -DWITH_OPENGEXIMPORTER=ON ^
-    -DWITH_PNGIMAGECONVERTER=OFF ^
-    -DWITH_PNGIMPORTER=OFF ^
+    -DWITH_PNGIMAGECONVERTER=ON ^
+    -DWITH_PNGIMPORTER=ON ^
     -DWITH_STANFORDIMPORTER=ON ^
     -DWITH_STBIMAGECONVERTER=ON ^
     -DWITH_STBIMAGEIMPORTER=ON ^
