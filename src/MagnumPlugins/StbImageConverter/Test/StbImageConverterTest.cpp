@@ -139,8 +139,7 @@ void StbImageConverterTest::rgBmp() {
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
     CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(converted->data(),
-        Containers::ArrayView<const char>{ConvertedRgData},
-        TestSuite::Compare::Container);
+        Containers::arrayView(ConvertedRgData), TestSuite::Compare::Container);
 }
 
 namespace {
@@ -178,8 +177,8 @@ void StbImageConverterTest::grayscaleHdr() {
     /* R gets converted to RRR */
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
     CORRADE_COMPARE(converted->type(), PixelType::Float);
-    CORRADE_COMPARE_AS((Containers::ArrayView<const float>{converted->data<float>(), converted->data().size()/4}),
-        Containers::ArrayView<const float>{ConvertedGrayscaleData},
+    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
+        Containers::arrayView(ConvertedGrayscaleData),
         TestSuite::Compare::Container);
 }
 
@@ -216,7 +215,7 @@ void StbImageConverterTest::rgbPng() {
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
     CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
     CORRADE_COMPARE_AS(converted->data(),
-        Containers::ArrayView<const char>{ConvertedRgbData},
+        Containers::arrayView(ConvertedRgbData),
         TestSuite::Compare::Container);
 }
 
@@ -242,8 +241,7 @@ void StbImageConverterTest::rgbaTga() {
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGBA);
     CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(converted->data(),
-        Containers::ArrayView<const char>{RgbaData},
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(RgbaData),
         TestSuite::Compare::Container);
 }
 

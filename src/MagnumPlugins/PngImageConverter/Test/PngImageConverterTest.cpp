@@ -130,8 +130,7 @@ void PngImageConverterTest::data() {
     converted->data()[6] = converted->data()[7] = converted->data()[14] =
          converted->data()[15] = converted->data()[22] = converted->data()[23] = 0;
 
-    CORRADE_COMPARE_AS(converted->data(),
-        Containers::ArrayView<const char>{ConvertedData},
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedData),
         TestSuite::Compare::Container);
 }
 
@@ -146,9 +145,8 @@ void PngImageConverterTest::data16() {
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
     CORRADE_COMPARE(converted->type(), PixelType::UnsignedShort);
-    CORRADE_COMPARE_AS(
-        (Containers::ArrayView<const UnsignedShort>{converted->data<UnsignedShort>(), converted->data().size()/2}),
-        Containers::ArrayView<const UnsignedShort>{ConvertedData16},
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(converted->data()),
+        Containers::arrayView(ConvertedData16),
         TestSuite::Compare::Container);
 }
 

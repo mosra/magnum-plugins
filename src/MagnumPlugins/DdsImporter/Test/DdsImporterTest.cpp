@@ -116,7 +116,7 @@ void DdsImporterTest::rgb() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
         TestSuite::Compare::Container);
 }
 
@@ -140,7 +140,7 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 
     /* check mip 0 */
@@ -151,7 +151,7 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_COMPARE(mip->size(), Vector2i{1});
     CORRADE_COMPARE(mip->format(), PixelFormat::RGB);
     CORRADE_COMPARE(mip->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(mip->data(), Containers::ArrayView<const char>(mipPixels),
+    CORRADE_COMPARE_AS(mip->data(), Containers::arrayView(mipPixels),
             TestSuite::Compare::Container);
 }
 
@@ -189,7 +189,7 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
         TestSuite::Compare::Container);
 }
 
@@ -205,7 +205,7 @@ void DdsImporterTest::dxt1() {
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt1);
-    CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 }
 
@@ -221,7 +221,7 @@ void DdsImporterTest::dxt3() {
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt3);
-    CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 }
 
@@ -237,7 +237,7 @@ void DdsImporterTest::dxt5() {
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt5);
-    CORRADE_COMPARE_AS(image->data(), Containers::ArrayView<const char>(pixels),
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 }
 
