@@ -388,11 +388,11 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         Containers::Array<char> buffer{stride};
         for(std::size_t i = 0; i != vertexCount; ++i) {
             _in->read(buffer, stride);
-            positions.push_back({
+            positions.emplace_back(
                 extract<Float>(buffer + componentOffsets.x(), fileFormat, componentTypes.x()),
                 extract<Float>(buffer + componentOffsets.y(), fileFormat, componentTypes.y()),
                 extract<Float>(buffer + componentOffsets.z(), fileFormat, componentTypes.z())
-            });
+            );
         }
     }
 

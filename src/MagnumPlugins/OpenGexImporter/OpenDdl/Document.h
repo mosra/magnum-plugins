@@ -428,7 +428,7 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
 
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::size_t dereference(std::size_t originatingStructure, Containers::ArrayView<const char> reference) const;
 
-        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool validateLevel(std::optional<Structure> first, Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool validateLevel(const std::optional<Structure>& first, Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool validateStructure(Structure structure, const Validation::Structure& validation, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
 
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL const char* structureName(Int identifier) const;

@@ -116,7 +116,7 @@ namespace Implementation {
 
 Document::Document() {
     /* First string is reserved for empty names */
-    _strings.push_back(std::string{});
+    _strings.emplace_back();
 }
 
 Document::~Document() = default;
@@ -782,7 +782,7 @@ bool Document::validate(const Validation::Structures allowedRootStructures, cons
     return validateLevel(findFirstChild(), {allowedRootStructures.begin(), allowedRootStructures.size()}, {structures.begin(), structures.size()}, countsBuffer);
 }
 
-bool Document::validateLevel(const std::optional<Structure> first, const Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, const Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const {
+bool Document::validateLevel(const std::optional<Structure>& first, const Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, const Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const {
     counts.assign(allowedStructures.size(), 0);
 
     /* Count number of custom structures in this level */
