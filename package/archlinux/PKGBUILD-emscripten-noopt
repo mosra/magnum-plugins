@@ -1,0 +1,59 @@
+# Author: mosra <mosra@centrum.cz>
+pkgname=emscripten-magnum-plugins
+pkgver=dev
+pkgrel=1
+pkgdesc="Plugins for Magnum OpenGL graphics engine (Emscripten, w/o optimizations)"
+arch=('any')
+url="http://mosra.cz/blog/magnum.php"
+license=('MIT')
+depends=('emscripten-magnum')
+makedepends=('cmake' 'emscripten' 'corrade' 'ninja')
+options=(!strip !buildflags)
+
+_rootdir=$startdir/../../
+
+build() {
+    if [ ! -d "$_rootdir/build-emscripten-noopt" ] ; then
+        mkdir "$_rootdir/build-emscripten-noopt"
+        cd "$_rootdir/build-emscripten-noopt"
+
+        cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/Emscripten.cmake" \
+            -G Ninja
+    fi
+
+    cd "$_rootdir/build-emscripten-noopt"
+
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \
+        -DCMAKE_CXX_FLAGS_RELEASE="-DNDEBUG -O1" \
+        -DCMAKE_EXE_LINKER_FLAGS_RELEASE="-O1" \
+        -DWITH_ANYAUDIOIMPORTER=ON \
+        -DWITH_ANYIMAGECONVERTER=ON \
+        -DWITH_ANYIMAGEIMPORTER=ON \
+        -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_DDSIMPORTER=ON \
+        -DWITH_DEVILIMAGEIMPORTER=OFF \
+        -DWITH_DRFLACAUDIOIMPORTER=ON \
+        -DWITH_DRWAVAUDIOIMPORTER=ON \
+        -DWITH_MINIEXRIMAGECONVERTER=ON \
+        -DWITH_OPENGEXIMPORTER=ON \
+        -DWITH_STANFORDIMPORTER=ON \
+        -DWITH_STBIMAGECONVERTER=ON \
+        -DWITH_STBIMAGEIMPORTER=ON \
+        -DWITH_STBTRUETYPEFONT=ON \
+        -DWITH_STBVORBISAUDIOIMPORTER=ON \
+        -DBUILD_TESTS=ON
+    ninja
+}
+
+check() {
+    cd "$_rootdir/build-emscripten-noopt"
+    CORRADE_TEST_COLOR=ON ctest --output-on-failure
+}
+
+package() {
+    cd "$_rootdir/build-emscripten-noopt"
+    DESTDIR="$pkgdir/" ninja install
+}
