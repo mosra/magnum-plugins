@@ -10,8 +10,7 @@ addons:
     - libpng12-dev
     - libqt4-dev
     - libdevil-dev
-    # TODO: https://github.com/travis-ci/apt-package-whitelist/issues/4128
-    #- libharfbuzz-dev
+    - libharfbuzz-dev
 
 matrix:
   include:
@@ -47,8 +46,7 @@ matrix:
         - libpng12-dev
         - libqt4-dev
         - libdevil-dev
-        # TODO: https://github.com/travis-ci/apt-package-whitelist/issues/4128
-        #- libharfbuzz-dev
+        - libharfbuzz-dev
   - language: cpp
     os: linux
     dist: trusty
@@ -136,7 +134,7 @@ notifications:
 
 cache:
   directories:
-  - $HOME/harfbuzz
+  - $HOME/cmake
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop" ] && [ "$BUILD_DEPRECATED" != "OFF" ]; then pip install --user urllib3[secure] && pip install --user cpp-coveralls && export CMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS --coverage"; fi
@@ -161,10 +159,8 @@ install:
 # works. Replace with just `brew install emscripten` when sane again
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/53f53f6498ba0f507c443dd4f0c6217937f1ddf2/Formula/emscripten.rb && export LLVM=/usr/local/opt/emscripten/libexec/llvm/bin && emcc; fi
 
-# HarfBuzz (cached)
+# HarfBuzz
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then brew install harfbuzz; fi
-# TODO: https://github.com/travis-ci/apt-package-whitelist/issues/4128
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] || [ "$TARGET" == "desktop-gles" ] ) && [ ! -e "$HOME/harfbuzz/include" ]; then wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-1.0.3.tar.bz2 && tar xf harfbuzz-1.0.3.tar.bz2 && cd harfbuzz-1.0.3 && ./configure --prefix=$HOME/harfbuzz && make -j install && cd ..; fi
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/travis-desktop.sh; fi
