@@ -42,5 +42,6 @@ Contributors to Magnum Plugins library
     Debian package
 *   Olga Turanksaya ([@olga-python](https://github.com/olga-python)) -- Gentoo
     ebuild
+*   [@sigman78](https://github.com/sigman78) -- Initial MSVC 2017 port
 
 Big thanks to everyone involved!
