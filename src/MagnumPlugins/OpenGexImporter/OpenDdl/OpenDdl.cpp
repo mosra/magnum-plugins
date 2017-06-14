@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <tuple>
+#include <memory>
 #include <Corrade/Utility/Debug.h>
 
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
