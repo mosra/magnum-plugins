@@ -64,7 +64,9 @@
 #
 #  CORRADE_GCC47_COMPATIBILITY  - Defined if compiled with compatibility mode
 #   for GCC 4.7
-#  CORRADE_MSVC2015_COMPATIBILITY  - Defined if compiled with compatibility
+#  CORRADE_MSVC2017_COMPATIBILITY - Defined if compiled with compatibility
+#   mode for MSVC 2017
+#  CORRADE_MSVC2015_COMPATIBILITY - Defined if compiled with compatibility
 #   mode for MSVC 2015
 #  CORRADE_BUILD_DEPRECATED     - Defined if compiled with deprecated APIs
 #   included
@@ -158,7 +160,8 @@
 # generates resource data using given configuration file in current build
 # directory. Argument name is name under which the resources can be explicitly
 # loaded. Variable ``<name>`` contains compiled resource filename, which is
-# then used for compiling library / executable. Example usage::
+# then used for compiling library / executable. On CMake >= 3.1 the
+# `resources.conf` file can contain UTF-8-encoded filenames. Example usage::
 #
 #  corrade_add_resource(app_resources resources.conf)
 #  add_executable(app source1 source2 ... ${app_resources})
@@ -236,8 +239,8 @@
 #
 #   This file is part of Corrade.
 #
-#   Copyright © 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016
-#             Vladimír Vondruš <mosra@centrum.cz>
+#   Copyright © 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
+#               2017 Vladimír Vondruš <mosra@centrum.cz>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -282,6 +285,7 @@ file(READ ${_CORRADE_CONFIGURE_FILE} _corradeConfigure)
 set(_corradeFlags
     GCC47_COMPATIBILITY
     MSVC2015_COMPATIBILITY
+    MSVC2017_COMPATIBILITY
     BUILD_DEPRECATED
     BUILD_STATIC
     TARGET_UNIX
@@ -303,20 +307,6 @@ foreach(_corradeFlag ${_corradeFlags})
         set(CORRADE_${_corradeFlag} 1)
     endif()
 endforeach()
-
-# XCTest runner file
-if(CORRADE_TESTSUITE_TARGET_XCTEST)
-    find_file(CORRADE_TESTSUITE_XCTEST_RUNNER XCTestRunner.mm.in
-        PATH_SUFFIXES share/corrade/TestSuite)
-    set(CORRADE_TESTSUITE_XCTEST_RUNNER_NEEDED CORRADE_TESTSUITE_XCTEST_RUNNER)
-endif()
-
-# ADB runner file
-if(CORRADE_TARGET_ANDROID)
-    find_file(CORRADE_TESTSUITE_ADB_RUNNER AdbRunner.sh
-        PATH_SUFFIXES share/corrade/TestSuite)
-    set(CORRADE_TESTSUITE_ADB_RUNNER_NEEDED CORRADE_TESTSUITE_ADB_RUNNER)
-endif()
 
 # CMake module dir
 find_path(_CORRADE_MODULE_DIR
@@ -430,7 +420,21 @@ foreach(_component ${Corrade_FIND_COMPONENTS})
                     INTERFACE_LINK_LIBRARIES ${CMAKE_DL_LIBS})
             endif()
 
-        # No special setup for TestSuite library
+        # TestSuite library has some additional files
+        elseif(_component STREQUAL TestSuite)
+            # XCTest runner file
+            if(CORRADE_TESTSUITE_TARGET_XCTEST)
+                find_file(CORRADE_TESTSUITE_XCTEST_RUNNER XCTestRunner.mm.in
+                    PATH_SUFFIXES share/corrade/TestSuite)
+                set(CORRADE_TESTSUITE_XCTEST_RUNNER_NEEDED CORRADE_TESTSUITE_XCTEST_RUNNER)
+            endif()
+
+            # ADB runner file
+            if(CORRADE_TARGET_ANDROID)
+                find_file(CORRADE_TESTSUITE_ADB_RUNNER AdbRunner.sh
+                    PATH_SUFFIXES share/corrade/TestSuite)
+                set(CORRADE_TESTSUITE_ADB_RUNNER_NEEDED CORRADE_TESTSUITE_ADB_RUNNER)
+            endif()
 
         # Utility library (contains all setup that is used by others)
         elseif(_component STREQUAL Utility)
