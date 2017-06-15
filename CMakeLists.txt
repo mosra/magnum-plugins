@@ -92,7 +92,7 @@ if(BUILD_GL_TESTS)
     find_package(Magnum REQUIRED OpenGLTester)
 endif()
 
-set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake/MagnumPlugins)
+set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR share/cmake/MagnumPlugins)
 
 add_subdirectory(modules)
 add_subdirectory(src)
