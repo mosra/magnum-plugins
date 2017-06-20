@@ -53,6 +53,7 @@ target_include_directories(DrFlacAudioImporterObjects SYSTEM PRIVATE ${PROJECT_S
 if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DrFlacAudioImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(DrFlacAudioImporterObjects PROPERTIES FOLDER "MagnumPlugins/DrFlacAudioImporter")
 
 # DrFlacAudioImporter plugin
 add_plugin(DrFlacAudioImporter
@@ -79,6 +80,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumDrFlacAudioImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumDrFlacAudioImporterTestLib PROPERTIES FOLDER "MagnumPlugins/DrFlacAudioImporter")
     target_link_libraries(MagnumDrFlacAudioImporterTestLib Magnum::Magnum Magnum::Audio)
     add_subdirectory(Test)
 endif()

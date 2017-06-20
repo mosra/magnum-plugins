@@ -46,3 +46,4 @@ target_include_directories(HarfBuzzFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR
 if(WIN32)
     target_compile_definitions(HarfBuzzFontGLTest PRIVATE "MAGNUM_HARFBUZZFONT_BUILD_STATIC")
 endif()
+set_target_properties(HarfBuzzFontGLTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont/Test")

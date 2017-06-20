@@ -86,3 +86,4 @@ target_include_directories(DrWavAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY
 if(WIN32)
     target_compile_definitions(DrWavAudioImporterTest PRIVATE "MAGNUM_DRWAVAUDIOIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(DrWavAudioImporterTest PROPERTIES FOLDER "MagnumPlugins/DrWavAudioImporter/Test")

@@ -57,6 +57,7 @@ target_compile_definitions(HarfBuzzFontObjects PRIVATE "HarfBuzzFontObjects_EXPO
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(HarfBuzzFontObjects PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont")
 
 # HarfBuzzFont plugin
 add_plugin(HarfBuzzFont
@@ -91,6 +92,7 @@ if(BUILD_GL_TESTS)
     target_include_directories(MagnumHarfBuzzFontTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumHarfBuzzFontTestLib PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont")
     target_link_libraries(MagnumHarfBuzzFontTestLib
         Magnum::Magnum
         Magnum::Text

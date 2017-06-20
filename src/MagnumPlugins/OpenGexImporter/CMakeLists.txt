@@ -57,6 +57,7 @@ target_compile_definitions(OpenGexImporterObjects PRIVATE "OpenGexImporterObject
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(OpenGexImporterObjects PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter")
 
 # OpenGexImporter plugin
 add_plugin(OpenGexImporter
@@ -98,6 +99,7 @@ if(BUILD_TESTS)
             ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
     endif()
     target_include_directories(MagnumOpenGexImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    set_target_properties(MagnumOpenGexImporterTestLib PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter")
     target_link_libraries(MagnumOpenGexImporterTestLib
         Magnum::Magnum
         MagnumAnyImageImporterTestLib)

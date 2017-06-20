@@ -64,3 +64,4 @@ target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_D
 if(WIN32)
     target_compile_definitions(StanfordImporterTest PRIVATE "MAGNUM_STANFORDIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(StanfordImporterTest PROPERTIES FOLDER "MagnumPlugins/StanfordImporter/Test")

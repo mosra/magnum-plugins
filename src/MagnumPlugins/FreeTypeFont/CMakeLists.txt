@@ -58,6 +58,7 @@ target_compile_definitions(FreeTypeFontObjects PRIVATE "FreeTypeFontObjects_EXPO
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(FreeTypeFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(FreeTypeFontObjects PROPERTIES FOLDER "MagnumPlugins/FreeTypeFont")
 
 # FreeTypeFont plugin
 add_plugin(FreeTypeFont
@@ -89,6 +90,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumFreeTypeFontTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumFreeTypeFontTestLib PROPERTIES FOLDER "MagnumPlugins/FreeTypeFont")
     target_link_libraries(MagnumFreeTypeFontTestLib
         Magnum::Magnum
         Magnum::Text

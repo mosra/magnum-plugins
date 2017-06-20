@@ -38,6 +38,7 @@ set(OpenGexImporterOpenDdl_PRIVATE_HEADERS
 add_custom_target(OpenGexImporterOpenDdl SOURCES
     ${OpenGexImporterOpenDdl_HEADERS}
     ${OpenGexImporterOpenDdl_PRIVATE_HEADERS})
+set_target_properties(OpenGexImporterOpenDdl PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter/OpenDdl")
 
 install(FILES ${OpenGexImporterOpenDdl_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter/OpenDdl)
 

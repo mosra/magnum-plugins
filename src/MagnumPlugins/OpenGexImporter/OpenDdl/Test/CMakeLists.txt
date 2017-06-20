@@ -34,3 +34,9 @@ corrade_add_test(OpenDdlTypeTest TypeTest.cpp LIBRARIES Magnum::Magnum MagnumOpe
 if(WIN32)
     target_compile_definitions(OpenDdlTest PRIVATE "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
 endif()
+
+set_target_properties(
+    OpenDdlParsersTest
+    OpenDdlTest
+    OpenDdlTypeTest
+    PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter/OpenDdl/Test")

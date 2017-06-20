@@ -51,3 +51,4 @@ target_include_directories(DevIlImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY
 if(WIN32)
     target_compile_definitions(DevIlImageImporterTest PRIVATE "MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(DevIlImageImporterTest PROPERTIES FOLDER "MagnumPlugins/DevIlImageImporter/Test")

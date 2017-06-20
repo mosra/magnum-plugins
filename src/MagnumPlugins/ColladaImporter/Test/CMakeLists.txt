@@ -50,3 +50,4 @@ target_include_directories(ColladaImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DI
 if(WIN32)
     target_compile_definitions(ColladaImporterTest PRIVATE "MAGNUM_COLLADAIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(ColladaImporterTest PROPERTIES FOLDER "MagnumPlugins/ColladaImporter/Test")

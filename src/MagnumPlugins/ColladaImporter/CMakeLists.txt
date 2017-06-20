@@ -60,6 +60,7 @@ target_include_directories(ColladaImporterObjects SYSTEM PRIVATE ${QT_INCLUDE_DI
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(ColladaImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(ColladaImporterObjects PROPERTIES FOLDER "MagnumPlugins/ColladaImporter")
 
 # ColladaImporter plugin
 add_plugin(ColladaImporter
@@ -97,6 +98,7 @@ if(BUILD_TESTS)
         ${PROJECT_BINARY_DIR}/src)
     # Supress warnings from Qt includes
     target_include_directories(MagnumColladaImporterTestLib SYSTEM PUBLIC ${QT_INCLUDE_DIR})
+    set_target_properties(MagnumColladaImporterTestLib PROPERTIES FOLDER "MagnumPlugins/ColladaImporter")
     target_link_libraries(MagnumColladaImporterTestLib
         Magnum::Magnum
         Magnum::MeshTools

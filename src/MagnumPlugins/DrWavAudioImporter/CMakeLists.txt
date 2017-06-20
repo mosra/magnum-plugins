@@ -53,6 +53,7 @@ target_include_directories(DrWavAudioImporterObjects SYSTEM PRIVATE ${PROJECT_SO
 if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DrWavAudioImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(DrWavAudioImporterObjects PROPERTIES FOLDER "MagnumPlugins/DrWavAudioImporter")
 
 # DrWavAudioImporter plugin
 add_plugin(DrWavAudioImporter
@@ -79,6 +80,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumDrWavAudioImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumDrWavAudioImporterTestLib PROPERTIES FOLDER "MagnumPlugins/DrWavAudioImporter")
     target_link_libraries(MagnumDrWavAudioImporterTestLib Magnum::Magnum Magnum::Audio)
     add_subdirectory(Test)
 endif()

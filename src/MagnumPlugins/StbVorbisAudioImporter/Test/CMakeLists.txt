@@ -48,3 +48,4 @@ target_include_directories(StbVorbisAudioImporterTest PRIVATE ${CMAKE_CURRENT_BI
 if(WIN32)
     target_compile_definitions(StbVorbisAudioImporterTest PRIVATE "MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(StbVorbisAudioImporterTest PROPERTIES FOLDER "MagnumPlugins/StbVorbisAudioImporter/Test")

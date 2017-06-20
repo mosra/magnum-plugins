@@ -31,3 +31,4 @@ corrade_add_test(PngImageConverterTest PngImageConverterTest.cpp LIBRARIES Magnu
 if(WIN32)
     target_compile_definitions(PngImageConverterTest PRIVATE "MAGNUM_PNGIMPORTER_BUILD_STATIC" "MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC")
 endif()
+set_target_properties(PngImageConverterTest PROPERTIES FOLDER "MagnumPlugins/PngImageConverter/Test")

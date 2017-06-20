@@ -46,3 +46,4 @@ target_include_directories(FreeTypeFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR
 if(WIN32)
     target_compile_definitions(FreeTypeFontGLTest PRIVATE "MAGNUM_FREETYPEFONT_BUILD_STATIC")
 endif()
+set_target_properties(FreeTypeFontGLTest PROPERTIES FOLDER "MagnumPlugins/FreeTypeFont/Test")

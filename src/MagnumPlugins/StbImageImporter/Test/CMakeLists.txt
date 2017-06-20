@@ -53,3 +53,4 @@ target_include_directories(StbImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_D
 if(WIN32)
     target_compile_definitions(StbImageImporterTest PRIVATE "MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(StbImageImporterTest PROPERTIES FOLDER "MagnumPlugins/StbImageImporter/Test")

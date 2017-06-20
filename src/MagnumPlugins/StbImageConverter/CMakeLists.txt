@@ -50,6 +50,7 @@ target_include_directories(StbImageConverterObjects SYSTEM PRIVATE ${PROJECT_SOU
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(StbImageConverterObjects PROPERTIES FOLDER "MagnumPlugins/StbImageConverter")
 
 # StbImageConverter plugin
 add_plugin(StbImageConverter
@@ -76,6 +77,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumStbImageConverterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumStbImageConverterTestLib PROPERTIES FOLDER "MagnumPlugins/StbImageConverter")
     target_link_libraries(MagnumStbImageConverterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()

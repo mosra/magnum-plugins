@@ -48,6 +48,7 @@ target_compile_definitions(StanfordImporterObjects PRIVATE "StanfordImporterObje
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StanfordImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(StanfordImporterObjects PROPERTIES FOLDER "MagnumPlugins/StanfordImporter")
 
 # StanfordImporter plugin
 add_plugin(StanfordImporter
@@ -74,6 +75,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumStanfordImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumStanfordImporterTestLib PROPERTIES FOLDER "MagnumPlugins/StanfordImporter")
     target_link_libraries(MagnumStanfordImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()

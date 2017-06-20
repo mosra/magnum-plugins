@@ -70,3 +70,4 @@ target_include_directories(OpenGexImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DI
 if(WIN32)
     target_compile_definitions(OpenGexImporterTest PRIVATE "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(OpenGexImporterTest PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter/Test")

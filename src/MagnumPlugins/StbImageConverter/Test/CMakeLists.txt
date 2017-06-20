@@ -33,3 +33,4 @@ if(WIN32)
         "MAGNUM_STBIMAGECONVERTER_BUILD_STATIC"
         "MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(StbImageConverterTest PROPERTIES FOLDER "MagnumPlugins/StbImageConverter/Test")

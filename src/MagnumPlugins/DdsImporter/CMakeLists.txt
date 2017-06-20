@@ -49,6 +49,7 @@ target_compile_definitions(DdsImporterObjects PRIVATE "DdsImporterObjects_EXPORT
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DdsImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(DdsImporterObjects PROPERTIES FOLDER "MagnumPlugins/DdsImporter")
 
 # DdsImporter plugin
 add_plugin(DdsImporter
@@ -75,6 +76,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumDdsImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumDdsImporterTestLib PROPERTIES FOLDER "MagnumPlugins/DdsImporter")
     target_link_libraries(MagnumDdsImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()

@@ -50,6 +50,7 @@ target_include_directories(StbImageImporterObjects SYSTEM PRIVATE ${PROJECT_SOUR
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(StbImageImporterObjects PROPERTIES FOLDER "MagnumPlugins/StbImageImporter")
 
 # StbImageImporter plugin
 add_plugin(StbImageImporter
@@ -76,6 +77,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumStbImageImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumStbImageImporterTestLib PROPERTIES FOLDER "MagnumPlugins/StbImageImporter")
     target_link_libraries(MagnumStbImageImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()

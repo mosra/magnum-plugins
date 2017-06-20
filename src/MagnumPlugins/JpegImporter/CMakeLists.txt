@@ -51,6 +51,7 @@ target_include_directories(JpegImporterObjects SYSTEM PRIVATE ${JPEG_INCLUDE_DIR
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(JpegImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(JpegImporterObjects PROPERTIES FOLDER "MagnumPlugins/JpegImporter")
 
 # JpegImporter plugin
 add_plugin(JpegImporter
@@ -79,6 +80,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumJpegImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumJpegImporterTestLib PROPERTIES FOLDER "MagnumPlugins/JpegImporter")
     target_link_libraries(MagnumJpegImporterTestLib Magnum::Magnum ${JPEG_LIBRARIES})
     add_subdirectory(Test)
 endif()

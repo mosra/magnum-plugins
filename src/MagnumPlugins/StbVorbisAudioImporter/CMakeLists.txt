@@ -53,6 +53,7 @@ target_include_directories(StbVorbisAudioImporterObjects SYSTEM PRIVATE ${PROJEC
 if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbVorbisAudioImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(StbVorbisAudioImporterObjects PROPERTIES FOLDER "MagnumPlugins/StbVorbisAudioImporter")
 
 # StbVorbisAudioImporter plugin
 add_plugin(StbVorbisAudioImporter
@@ -79,6 +80,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumStbVorbisAudioImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumStbVorbisAudioImporterTestLib PROPERTIES FOLDER "MagnumPlugins/StbVorbisAudioImporter")
     target_link_libraries(MagnumStbVorbisAudioImporterTestLib Magnum::Magnum Magnum::Audio)
     add_subdirectory(Test)
 endif()

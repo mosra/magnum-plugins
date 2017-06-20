@@ -41,6 +41,9 @@ if(POLICY CMP0028)
     cmake_policy(SET CMP0028 NEW)
 endif()
 
+# Use folders for nice tree in Visual Studio and XCode
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/modules/")
 find_package(Magnum REQUIRED)
 

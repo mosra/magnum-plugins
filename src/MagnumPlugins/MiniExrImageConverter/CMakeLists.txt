@@ -50,6 +50,7 @@ target_include_directories(MiniExrImageConverterObjects SYSTEM PRIVATE ${PROJECT
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(MiniExrImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(MiniExrImageConverterObjects PROPERTIES FOLDER "MagnumPlugins/MiniExrImageConverter")
 
 # MiniExrImageConverter plugin
 add_plugin(MiniExrImageConverter
@@ -76,6 +77,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumMiniExrImageConverterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumMiniExrImageConverterTestLib PROPERTIES FOLDER "MagnumPlugins/MiniExrImageConverter")
     target_link_libraries(MagnumMiniExrImageConverterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()

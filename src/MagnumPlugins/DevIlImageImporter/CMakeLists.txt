@@ -57,6 +57,7 @@ target_compile_definitions(DevIlImageImporterObjects PRIVATE "DevIlImageImporter
 # that, I had to fork FindDevIL.cmake (see modules/ directory) to provide
 # IL_INCLUDE_DIR without the IL/ subdirectory.
 target_include_directories(DevIlImageImporterObjects SYSTEM PRIVATE ${IL_INCLUDE_DIR})
+set_target_properties(DevIlImageImporterObjects PROPERTIES FOLDER "MagnumPlugins/DevIlImageImporter")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DevIlImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -88,6 +89,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumDevIlImageImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumDevIlImageImporterTestLib PROPERTIES FOLDER "MagnumPlugins/DevIlImageImporter")
     target_link_libraries(MagnumDevIlImageImporterTestLib Magnum::Magnum ${IL_LIBRARIES} ${ILU_LIBRARIES})
     add_subdirectory(Test)
 endif()

@@ -59,3 +59,4 @@ target_include_directories(DrFlacAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINAR
 if(WIN32)
     target_compile_definitions(DrFlacAudioImporterTest PRIVATE "MAGNUM_DRFLACAUDIOIMPORTER_BUILD_STATIC")
 endif()
+set_target_properties(DrFlacAudioImporterTest PROPERTIES FOLDER "MagnumPlugins/DrFlacAudioImporter/Test")

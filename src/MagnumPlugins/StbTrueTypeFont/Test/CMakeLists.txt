@@ -46,3 +46,4 @@ target_include_directories(StbTrueTypeFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_
 if(WIN32)
     target_compile_definitions(StbTrueTypeFontGLTest PRIVATE "MAGNUM_STBTRUETYPEFONT_BUILD_STATIC")
 endif()
+set_target_properties(StbTrueTypeFontGLTest PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont/Test")

@@ -53,6 +53,7 @@ target_compile_definitions(PngImporterObjects PRIVATE "PngImporterObjects_EXPORT
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(PngImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(PngImporterObjects PROPERTIES FOLDER "MagnumPlugins/PngImporter")
 
 # PngImporter plugin
 add_plugin(PngImporter
@@ -79,6 +80,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumPngImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumPngImporterTestLib PROPERTIES FOLDER "MagnumPlugins/PngImporter")
     target_link_libraries(MagnumPngImporterTestLib Magnum::Magnum ${PNG_LIBRARIES})
     add_subdirectory(Test)
 endif()

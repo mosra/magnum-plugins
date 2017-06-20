@@ -52,6 +52,7 @@ target_include_directories(StbTrueTypeFontObjects SYSTEM PRIVATE ${PROJECT_SOURC
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbTrueTypeFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+set_target_properties(StbTrueTypeFontObjects PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont")
 
 # StbTrueTypeFont plugin
 add_plugin(StbTrueTypeFont
@@ -83,6 +84,7 @@ if(BUILD_TESTS)
     target_include_directories(MagnumStbTrueTypeFontTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src)
+    set_target_properties(MagnumStbTrueTypeFontTestLib PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont")
     target_link_libraries(MagnumStbTrueTypeFontTestLib
         Magnum::Magnum
         Magnum::Text

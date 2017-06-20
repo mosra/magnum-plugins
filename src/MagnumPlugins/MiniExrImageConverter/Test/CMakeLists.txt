@@ -43,3 +43,4 @@ target_include_directories(MiniExrImageConverterTest PRIVATE ${CMAKE_CURRENT_BIN
 if(WIN32)
     target_compile_definitions(MiniExrImageConverterTest PRIVATE "MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC")
 endif()
+set_target_properties(MiniExrImageConverterTest PROPERTIES FOLDER "MagnumPlugins/MiniExrImageConverter/Test")
