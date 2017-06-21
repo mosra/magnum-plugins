@@ -72,9 +72,9 @@ build_script:
 - IF "%TARGET%" == "rt" call package\ci\appveyor-rt.bat
 
 cache:
-- openal-soft-1.17.2-bin.zip
-- libjpeg-turbo-1.5.0.tar.gz
-- DevIL-SDK-x64-1.7.8.zip
-- x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z
-- libpng-1.6.21.zip
-- source-archive.zip
+- openal-soft-1.17.2-bin.zip -> package/ci/appveyor-cache-reset.txt
+- libjpeg-turbo-1.5.0.tar.gz -> package/ci/appveyor-cache-reset.txt
+- DevIL-SDK-x64-1.7.8.zip -> package/ci/appveyor-cache-reset.txt
+- x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z -> package/ci/appveyor-cache-reset.txt
+- libpng-1.6.21.zip -> package/ci/appveyor-cache-reset.txt
+- source-archive.zip -> package/ci/appveyor-cache-reset.txt # zlib
