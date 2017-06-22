@@ -3,6 +3,7 @@
 addons:
   apt:
     packages:
+    - libgl1-mesa-dev
     - g++-4.7
     - libfreetype6-dev
     - libjpeg-dev
@@ -39,6 +40,7 @@ matrix:
         sources:
         - llvm-toolchain-trusty
         packages:
+        - libgl1-mesa-dev
         - clang-3.8
         - libfreetype6-dev
         - libjpeg-dev
