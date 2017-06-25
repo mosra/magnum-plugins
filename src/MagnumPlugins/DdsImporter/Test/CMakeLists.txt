@@ -33,18 +33,16 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(DdsImporterTest DdsImporterTest.cpp
-    LIBRARIES MagnumDdsImporterTestLib
-    FILES
-        rgba_dxt1.dds
-        rgba_dxt3.dds
-        rgba_dxt5.dds
-        rgb_uncompressed.dds
-        rgb_uncompressed_mips.dds
-        rgb_uncompressed_volume.dds
-        unknown_compression.dds
-        unknown_format.dds
-        wrong_signature.dds)
+corrade_add_resource(DDS_TEST_FILES_RESOURCE
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources.conf)
+corrade_add_resource(DXT10_TEST_FILES_RESOURCE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dxt10TestFiles/resources.conf)
+
+corrade_add_test(DdsImporterTest
+    DdsImporterTest.cpp
+    ${DDS_TEST_FILES_RESOURCE}
+    ${DXT10_TEST_FILES_RESOURCE}
+    LIBRARIES MagnumDdsImporterTestLib)
 target_include_directories(DdsImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # On Win32 we need to avoid dllimporting DdsImporter symbols, because it would
 # search for the symbols in some DLL even when they were linked statically.
