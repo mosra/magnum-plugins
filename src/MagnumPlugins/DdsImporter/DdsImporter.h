@@ -90,8 +90,9 @@ grayscale. BGR and BGRA images are converted to @ref PixelFormat::RGB,
 imported with @ref CompressedPixelFormat::RGBAS3tcDxt1,
 @ref CompressedPixelFormat::RGBAS3tcDxt3 and @ref CompressedPixelFormat::RGBAS3tcDxt5.
 
-In In OpenGL ES 2.0 grayscale images use @ref PixelFormat::Luminance instead
-of @ref PixelFormat::Red.
+In OpenGL ES 2.0 and WebGL 1.0, single- and two-component images use
+@ref PixelFormat::Luminance and @ref PixelFormat::LuminanceAlpha instead
+of @ref PixelFormat::Red / @ref PixelFormat::RG.
 
 Note: Mipmaps are currently imported under separate image data ids. You may
 access them via @ref image2D(UnsignedInt)/@ref image3D(UnsignedInt) which will
