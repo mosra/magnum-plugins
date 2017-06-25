@@ -84,7 +84,7 @@ void HarfBuzzFontGLTest::layout() {
     std::tie(position, textureCoordinates) = layouter->renderGlyph(2, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D());
     CORRADE_COMPARE(textureCoordinates, Range2D());
-    CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.249512f, 0.0f));
 
     /* 'e' */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(3, cursorPosition = {}, rectangle);
