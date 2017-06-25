@@ -40,13 +40,13 @@ namespace Magnum { namespace Trade { namespace Test {
 namespace {
 
 enum: std::size_t {
-#ifndef MAGNUM_TARGET_GLES2
-    Files2dCount = 46,
-    Files3dCount = 12,
-#else
-    Files2dCount = 19,
-    Files3dCount = 5,
-#endif
+    #ifndef MAGNUM_TARGET_GLES2
+    Files2DCount = 46,
+    Files3DCount = 12,
+    #else
+    Files2DCount = 19,
+    Files3DCount = 5,
+    #endif
 };
 
 #ifndef MAGNUM_TARGET_GLES2
@@ -61,7 +61,7 @@ constexpr struct {
     const char* filename;
     PixelFormat format;
     PixelType type;
-} files2d[Files2dCount] = {
+} Files2D[Files2DCount] = {
     {"2D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA, PixelType::HalfFloat},
     {"2D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA, PixelType::UnsignedShort},
     {"2D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA, PixelType::Float},
@@ -81,7 +81,7 @@ constexpr struct {
     {"2DMips_R8G8B8A8_UNORM.dds", PixelFormat::RGBA, PixelType::UnsignedByte},
     {"2DMips_R8G8B8A8_UNORM_SRGB.dds", PixelFormat::RGBA, PixelType::UnsignedByte},
     {"2DMips_R8G8_UNORM.dds", PixelFormat_RG, PixelType::UnsignedByte},
-#ifndef MAGNUM_TARGET_GLES2
+    #ifndef MAGNUM_TARGET_GLES2
     {"2D_R16G16B16A16_SNORM.dds", PixelFormat::RGBA, PixelType::Short},
     {"2D_R8G8B8A8_SNORM.dds", PixelFormat::RGBA, PixelType::Byte},
     {"2D_R16G16B16A16_SINT.dds", PixelFormat::RGBAInteger, PixelType::Short},
@@ -108,29 +108,29 @@ constexpr struct {
     {"2DMips_R32_SINT.dds", PixelFormat::RedInteger, PixelType::Int},
     {"2DMips_R32_UINT.dds", PixelFormat::RedInteger, PixelType::UnsignedInt},
     {"2DMips_R8G8B8A8_SINT.dds", PixelFormat::RGBAInteger, PixelType::Byte},
-    {"2DMips_R8G8B8A8_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedByte},
-#endif
+    {"2DMips_R8G8B8A8_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedByte}
+    #endif
 };
 
 constexpr struct {
     const char* filename;
     PixelFormat format;
     PixelType type;
-} files3d[Files3dCount] = {
+} Files3D[Files3DCount] = {
     {"3D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA, PixelType::HalfFloat},
     {"3D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA, PixelType::UnsignedShort},
     {"3D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA, PixelType::Float},
     {"3D_R32G32B32_FLOAT.dds", PixelFormat::RGB, PixelType::Float},
     {"3D_R32G32_FLOAT.dds", PixelFormat_RG, PixelType::Float},
-#ifndef MAGNUM_TARGET_GLES2
+    #ifndef MAGNUM_TARGET_GLES2
     {"3D_R16G16B16A16_SNORM.dds", PixelFormat::RGBA, PixelType::Short},
     {"3D_R16G16B16A16_SINT.dds", PixelFormat::RGBAInteger, PixelType::Short},
     {"3D_R16G16B16A16_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedShort},
     {"3D_R32G32B32A32_SINT.dds", PixelFormat::RGBAInteger, PixelType::Int},
     {"3D_R32G32B32A32_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedInt},
     {"3D_R32G32B32_SINT.dds", PixelFormat::RGBInteger, PixelType::Int},
-    {"3D_R32G32B32_UINT.dds", PixelFormat::RGBInteger, PixelType::UnsignedInt},
-#endif
+    {"3D_R32G32B32_UINT.dds", PixelFormat::RGBInteger, PixelType::UnsignedInt}
+    #endif
 };
 
 }
@@ -151,11 +151,12 @@ struct DdsImporterTest: TestSuite::Tester {
     void dxt3();
     void dxt5();
 
-    void dxt10formats2d();
-    void dxt10formats3d();
-    void dxt10data();
-    void dxt10tooShort();
-    void dxt10unsupportedFormat();
+    void dxt10Formats2D();
+    void dxt10Formats3D();
+
+    void dxt10Data();
+    void dxt10TooShort();
+    void dxt10UnsupportedFormat();
 
     void useTwice();
 };
@@ -172,16 +173,16 @@ DdsImporterTest::DdsImporterTest() {
 
               &DdsImporterTest::dxt1,
               &DdsImporterTest::dxt3,
-              &DdsImporterTest::dxt5,
+              &DdsImporterTest::dxt5});
 
-              &DdsImporterTest::dxt10data,
-              &DdsImporterTest::dxt10tooShort,
-              &DdsImporterTest::dxt10unsupportedFormat,
+    addInstancedTests({&DdsImporterTest::dxt10Formats2D}, Files2DCount);
+    addInstancedTests({&DdsImporterTest::dxt10Formats3D}, Files3DCount);
+
+    addTests({&DdsImporterTest::dxt10Data,
+              &DdsImporterTest::dxt10TooShort,
+              &DdsImporterTest::dxt10UnsupportedFormat,
 
               &DdsImporterTest::useTwice});
-
-    addInstancedTests({&DdsImporterTest::dxt10formats2d}, Files2dCount);
-    addInstancedTests({&DdsImporterTest::dxt10formats3d}, Files3dCount);
 }
 
 void DdsImporterTest::unknownCompression() {
@@ -384,8 +385,8 @@ void DdsImporterTest::dxt5() {
             TestSuite::Compare::Container);
 }
 
-void DdsImporterTest::dxt10formats2d() {
-    const auto& file = files2d[testCaseInstanceId()];
+void DdsImporterTest::dxt10Formats2D() {
+    const auto& file = Files2D[testCaseInstanceId()];
 
     setTestCaseDescription(file.filename);
 
@@ -401,8 +402,8 @@ void DdsImporterTest::dxt10formats2d() {
     CORRADE_COMPARE(image->type(), file.type);
 }
 
-void DdsImporterTest::dxt10formats3d() {
-    const auto& file = files3d[testCaseInstanceId()];
+void DdsImporterTest::dxt10Formats3D() {
+    const auto& file = Files3D[testCaseInstanceId()];
 
     setTestCaseDescription(file.filename);
 
@@ -418,7 +419,7 @@ void DdsImporterTest::dxt10formats3d() {
     CORRADE_COMPARE(image->type(), file.type);
 }
 
-void DdsImporterTest::dxt10data() {
+void DdsImporterTest::dxt10Data() {
     Utility::Resource resource{"Dxt10TestFiles"};
 
     DdsImporter importer;
@@ -438,7 +439,7 @@ void DdsImporterTest::dxt10data() {
             TestSuite::Compare::Container);
 }
 
-void DdsImporterTest::dxt10tooShort() {
+void DdsImporterTest::dxt10TooShort() {
     Utility::Resource resource{"DdsTestFiles"};
 
     std::ostringstream out;
@@ -449,7 +450,7 @@ void DdsImporterTest::dxt10tooShort() {
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header\n");
 }
 
-void DdsImporterTest::dxt10unsupportedFormat() {
+void DdsImporterTest::dxt10UnsupportedFormat() {
     std::ostringstream out;
     Error redirectError{&out};
 

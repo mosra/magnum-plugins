@@ -257,9 +257,7 @@ enum class DxgiFormat: UnsignedInt {
     V408 = 132,
 };
 
-/*
- * @return string from given fourcc integer.
- */
+/* String from given fourcc integer */
 inline std::string fourcc(UnsignedInt enc) {
     char c[5] = { '\0' };
     c[0] = enc >> 0 & 0xFF;
@@ -288,29 +286,29 @@ void swizzlePixels(const PixelFormat format, Containers::Array<char>& data) {
 std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
     switch(format) {
         /* RGBA32 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R32G32B32A32Typeless:
         case DxgiFormat::R32G32B32A32UInt:
             return {PixelFormat::RGBAInteger, PixelType::UnsignedInt};
         case DxgiFormat::R32G32B32A32SInt:
             return {PixelFormat::RGBAInteger, PixelType::Int};
-#endif
+        #endif
         case DxgiFormat::R32G32B32A32Float:
             return {PixelFormat::RGBA, PixelType::Float};
 
         /* RGB32 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R32G32B32Typeless:
         case DxgiFormat::R32G32B32UInt:
             return {PixelFormat::RGBInteger, PixelType::UnsignedInt};
         case DxgiFormat::R32G32B32SInt:
             return {PixelFormat::RGBInteger, PixelType::Int};
-#endif
+        #endif
         case DxgiFormat::R32G32B32Float:
             return {PixelFormat::RGB, PixelType::Float};
 
         /* RGBA16 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R16G16B16A16Typeless:
         case DxgiFormat::R16G16B16A16UInt:
             return {PixelFormat::RGBAInteger, PixelType::UnsignedShort};
@@ -318,20 +316,20 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
             return {PixelFormat::RGBAInteger, PixelType::Short};
         case DxgiFormat::R16G16B16A16SNorm:
             return {PixelFormat::RGBA, PixelType::Short};
-#endif
+        #endif
         case DxgiFormat::R16G16B16A16Float:
             return {PixelFormat::RGBA, PixelType::HalfFloat};
         case DxgiFormat::R16G16B16A16UNorm:
             return {PixelFormat::RGBA, PixelType::UnsignedShort};
 
         /* RG32 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R32G32Typeless:
         case DxgiFormat::R32G32UInt:
             return {PixelFormat::RGInteger, PixelType::UnsignedInt};
         case DxgiFormat::R32G32SInt:
             return {PixelFormat::RGInteger, PixelType::Int};
-#endif
+        #endif
         case DxgiFormat::R32G32Float:
             return {
                 #ifndef MAGNUM_TARGET_GLES2
@@ -342,7 +340,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
                 , PixelType::Float};
 
         /* RGBA8 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R8G8B8A8Typeless:
         case DxgiFormat::R8G8B8A8UInt:
             return {PixelFormat::RGBAInteger, PixelType::UnsignedByte};
@@ -350,13 +348,13 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
             return {PixelFormat::RGBAInteger, PixelType::Byte};
         case DxgiFormat::R8G8B8A8SNorm:
             return {PixelFormat::RGBA, PixelType::Byte};
-#endif
+        #endif
         case DxgiFormat::R8G8B8A8UNorm:
         case DxgiFormat::R8G8B8A8UNormSRGB:
             return {PixelFormat::RGBA, PixelType::UnsignedByte}; /** @todo Propagate sRGB property */
 
         /* RG16 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R16G16Typeless:
         case DxgiFormat::R16G16UInt:
             return {PixelFormat::RGInteger, PixelType::UnsignedShort};
@@ -364,7 +362,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
             return {PixelFormat::RGInteger, PixelType::Short};
         case DxgiFormat::R16G16SNorm:
             return {PixelFormat::RG, PixelType::Short};
-#endif
+        #endif
         case DxgiFormat::R16G16Float:
             return {
                 #ifndef MAGNUM_TARGET_GLES2
@@ -383,13 +381,13 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
                 , PixelType::UnsignedShort};
 
         /* R32 and D32 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R32Typeless:
         case DxgiFormat::R32UInt:
             return {PixelFormat::RedInteger, PixelType::UnsignedInt};
         case DxgiFormat::R32SInt:
             return {PixelFormat::RedInteger, PixelType::Int};
-#endif
+        #endif
         case DxgiFormat::R32Float:
             return {
                 #ifndef MAGNUM_TARGET_GLES2
@@ -402,7 +400,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
             return {PixelFormat::DepthComponent, PixelType::Float};
 
         /* RG8 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R8G8Typeless:
         case DxgiFormat::R8G8UInt:
             return {PixelFormat::RGInteger, PixelType::UnsignedByte};
@@ -410,7 +408,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
             return {PixelFormat::RGInteger, PixelType::Byte};
         case DxgiFormat::R8G8SNorm:
             return {PixelFormat::RG, PixelType::Byte};
-#endif
+        #endif
         case DxgiFormat::R8G8UNorm:
             return {
                 #ifndef MAGNUM_TARGET_GLES2
@@ -421,7 +419,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
                 , PixelType::UnsignedByte};
 
         /* R16 and D16 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R16Typeless:
         case DxgiFormat::R16UInt:
             return {PixelFormat::RedInteger, PixelType::UnsignedShort};
@@ -429,7 +427,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
             return {PixelFormat::RedInteger, PixelType::Short};
         case DxgiFormat::R16SNorm:
             return {PixelFormat::Red, PixelType::Short};
-#endif
+        #endif
         case DxgiFormat::R16Float:
             return {
                 #ifndef MAGNUM_TARGET_GLES2
@@ -450,7 +448,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
                 , PixelType::UnsignedShort};
 
         /* R8 and A8 Formats */
-#ifndef MAGNUM_TARGET_GLES2
+        #ifndef MAGNUM_TARGET_GLES2
         case DxgiFormat::R8Typeless:
         case DxgiFormat::R8UInt:
             return {PixelFormat::RedInteger, PixelType::UnsignedByte};
@@ -458,7 +456,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
             return {PixelFormat::RedInteger, PixelType::Byte};
         case DxgiFormat::R8SNorm:
             return {PixelFormat::Red, PixelType::Byte};
-#endif
+        #endif
         case DxgiFormat::A8UNorm:
         case DxgiFormat::R8UNorm:
             return {
@@ -475,9 +473,7 @@ std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
     };
 }
 
-/*
- * Dds file header struct.
- */
+/* DDS file header struct */
 struct DdsHeader {
     UnsignedInt size;
     DdsDescriptionFlags flags;
@@ -507,9 +503,7 @@ struct DdsHeader {
 
 static_assert(sizeof(DdsHeader) + 4 == 128, "Improper size of DdsHeader struct");
 
-/*
- * Dds file header extension for DXGI pixel formats
- */
+/* DDS file header extension for DXGI pixel formats */
 struct DdsHeaderDxt10 {
     DxgiFormat dxgiFormat;
     DdsDimension resourceDimension;
@@ -526,11 +520,9 @@ struct DdsImporter::File {
         Containers::ArrayView<char> data;
     };
 
-    /*
-     * Returns the new offset of an image in an array for current pixel type
-     * or 0 if the file is not large enough.
-     * (Offset is always at least sizeof(DdsHeader) in healthy cases.)
-     */
+    /* Returns the new offset of an image in an array for current pixel type
+       or 0 if the file is not large enough.
+       (Offset is always at least sizeof(DdsHeader) in healthy cases.) */
     std::size_t addImageDataOffset(const Vector3i& dims, std::size_t offset);
 
     Containers::Array<char> in;
@@ -582,13 +574,13 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     f->in = Containers::Array<char>(data.size());
     std::copy(data.begin(), data.end(), f->in.begin());
 
-    constexpr size_t magicNumberSize = 4;
+    constexpr size_t MagicNumberSize = 4;
     /* read magic number to verify this is a dds file. */
-    if(strncmp(f->in.prefix(magicNumberSize).data(), "DDS ", magicNumberSize) != 0) {
+    if(strncmp(f->in.prefix(MagicNumberSize).data(), "DDS ", MagicNumberSize) != 0) {
         Error() << "Trade::DdsImporter::openData(): wrong file signature";
         return;
     }
-    std::size_t offset = magicNumberSize;
+    std::size_t offset = MagicNumberSize;
 
     /* read in DDS header */
     const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.suffix(offset).data());
