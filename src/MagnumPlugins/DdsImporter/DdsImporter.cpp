@@ -111,8 +111,150 @@ enum class DdsCompressionType: UnsignedInt {
     DXT4 = 0x34545844,
     /* MAKEFOURCC('D','X','T','5'). */
     DXT5 = 0x35545844,
-    /* MAKEFOURCC('D','X','1','0'), not supported. */
+    /* MAKEFOURCC('D','X','1','0'). */
     DXT10 = 0x30315844
+};
+
+enum class DdsDimension: UnsignedInt {
+    Unknown = 0,
+    /* 1 is unused (= D3D10 Resource Dimension Buffer) */
+    Texture1D = 2,
+    Texture2D = 3,
+    Texture3D = 4,
+};
+
+enum class DdsAlphaMode: UnsignedInt {
+    Unknown = 0,
+    Straight = 1,
+    Premultiplied = 2,
+    Opaque = 3,
+    Custom = 4,
+};
+
+enum class DdsMiscFlag: UnsignedInt {
+    TextureCube = 4,
+};
+
+enum class DxgiFormat: UnsignedInt {
+    Unknown = 0,
+    R32G32B32A32Typeless = 1,
+    R32G32B32A32Float = 2,
+    R32G32B32A32UInt = 3,
+    R32G32B32A32SInt = 4,
+    R32G32B32Typeless = 5,
+    R32G32B32Float = 6,
+    R32G32B32UInt = 7,
+    R32G32B32SInt = 8,
+    R16G16B16A16Typeless = 9,
+    R16G16B16A16Float = 10,
+    R16G16B16A16UNorm = 11,
+    R16G16B16A16UInt = 12,
+    R16G16B16A16SNorm = 13,
+    R16G16B16A16SInt = 14,
+    R32G32Typeless = 15,
+    R32G32Float = 16,
+    R32G32UInt = 17,
+    R32G32SInt = 18,
+    R32G8X24Typeless = 19,
+    D32FloatS8X24UInt = 20,
+    R32FloatX8X24Typeless = 21,
+    X32TypelessG8X24UInt = 22,
+    R10G10B10A2Typeless = 23,
+    R10G10B10A2UNorm = 24,
+    R10G10B10A2UInt = 25,
+    R11G11B10Float = 26,
+    R8G8B8A8Typeless = 27,
+    R8G8B8A8UNorm = 28,
+    R8G8B8A8UNormSRGB = 29,
+    R8G8B8A8UInt = 30,
+    R8G8B8A8SNorm = 31,
+    R8G8B8A8SInt = 32,
+    R16G16Typeless = 33,
+    R16G16Float = 34,
+    R16G16UNorm = 35,
+    R16G16UInt = 36,
+    R16G16SNorm = 37,
+    R16G16SInt = 38,
+    R32Typeless = 39,
+    D32Float = 40,
+    R32Float = 41,
+    R32UInt = 42,
+    R32SInt = 43,
+    R24G8Typeless = 44,
+    D24UNormS8UInt = 45,
+    R24UNormX8Typeless = 46,
+    X24TypelessG8UInt = 47,
+    R8G8Typeless = 48,
+    R8G8UNorm = 49,
+    R8G8UInt = 50,
+    R8G8SNorm = 51,
+    R8G8SInt = 52,
+    R16Typeless = 53,
+    R16Float = 54,
+    D16UNorm = 55,
+    R16UNorm = 56,
+    R16UInt = 57,
+    R16SNorm = 58,
+    R16SInt = 59,
+    R8Typeless = 60,
+    R8UNorm = 61,
+    R8UInt = 62,
+    R8SNorm = 63,
+    R8SInt = 64,
+    A8UNorm = 65,
+    R1UNorm = 66,
+    R9G9B9E5SharedExp = 67,
+    R8G8B8G8UNorm = 68,
+    G8R8G8B8UNorm = 69,
+    BC1Typeless = 70,
+    BC1UNorm = 71,
+    BC1UNormSRGB = 72,
+    BC2Typeless = 73,
+    BC2UNorm = 74,
+    BC2UNormSRGB = 75,
+    BC3Typeless = 76,
+    BC3UNorm = 77,
+    BC3UNormSRGB = 78,
+    BC4Typeless = 79,
+    BC4UNorm = 80,
+    BC4SNorm = 81,
+    BC5Typeless = 82,
+    BC5UNorm = 83,
+    BC5SNorm = 84,
+    B5G6R5UNorm = 85,
+    B5G5R5A1UNorm = 86,
+    B8G8R8A8UNorm = 87,
+    B8G8R8X8UNorm = 88,
+    R10G10B10XRBIASA2UNorm = 89,
+    B8G8R8A8Typeless = 90,
+    B8G8R8A8UNormSRGB = 91,
+    B8G8R8X8Typeless = 92,
+    B8G8R8X8UNormSRGB = 93,
+    BC6HTypeless = 94,
+    BC6HUF16 = 95,
+    BC6HSF16 = 96,
+    BC7Typeless = 97,
+    BC7UNorm = 98,
+    BC7UNormSRGB = 99,
+    AYUV = 100,
+    Y410 = 101,
+    Y416 = 102,
+    NV12 = 103,
+    P010 = 104,
+    P016 = 105,
+    Opaque420 = 106,
+    YUY2 = 107,
+    Y210 = 108,
+    Y216 = 109,
+    NV11 = 110,
+    AI44 = 111,
+    IA44 = 112,
+    P8 = 113,
+    A8P8 = 114,
+    B4G4R4A4UNorm = 115,
+    P208 = 130,
+    V208 = 131,
+    V408 = 132,
 };
 
 /*
@@ -141,6 +283,196 @@ void swizzlePixels(const PixelFormat format, Containers::Array<char>& data) {
             [](Math::Vector4<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r', 'a'>(pixel); });
 
     } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
+
+std::pair<PixelFormat, PixelType> dxgiToGl(DxgiFormat format) {
+    switch(format) {
+        /* RGBA32 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R32G32B32A32Typeless:
+        case DxgiFormat::R32G32B32A32UInt:
+            return {PixelFormat::RGBAInteger, PixelType::UnsignedInt};
+        case DxgiFormat::R32G32B32A32SInt:
+            return {PixelFormat::RGBAInteger, PixelType::Int};
+#endif
+        case DxgiFormat::R32G32B32A32Float:
+            return {PixelFormat::RGBA, PixelType::Float};
+
+        /* RGB32 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R32G32B32Typeless:
+        case DxgiFormat::R32G32B32UInt:
+            return {PixelFormat::RGBInteger, PixelType::UnsignedInt};
+        case DxgiFormat::R32G32B32SInt:
+            return {PixelFormat::RGBInteger, PixelType::Int};
+#endif
+        case DxgiFormat::R32G32B32Float:
+            return {PixelFormat::RGB, PixelType::Float};
+
+        /* RGBA16 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R16G16B16A16Typeless:
+        case DxgiFormat::R16G16B16A16UInt:
+            return {PixelFormat::RGBAInteger, PixelType::UnsignedShort};
+        case DxgiFormat::R16G16B16A16SInt:
+            return {PixelFormat::RGBAInteger, PixelType::Short};
+        case DxgiFormat::R16G16B16A16SNorm:
+            return {PixelFormat::RGBA, PixelType::Short};
+#endif
+        case DxgiFormat::R16G16B16A16Float:
+            return {PixelFormat::RGBA, PixelType::HalfFloat};
+        case DxgiFormat::R16G16B16A16UNorm:
+            return {PixelFormat::RGBA, PixelType::UnsignedShort};
+
+        /* RG32 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R32G32Typeless:
+        case DxgiFormat::R32G32UInt:
+            return {PixelFormat::RGInteger, PixelType::UnsignedInt};
+        case DxgiFormat::R32G32SInt:
+            return {PixelFormat::RGInteger, PixelType::Int};
+#endif
+        case DxgiFormat::R32G32Float:
+            return {
+                #ifndef MAGNUM_TARGET_GLES2
+                PixelFormat::RG
+                #else
+                PixelFormat::LuminanceAlpha
+                #endif
+                , PixelType::Float};
+
+        /* RGBA8 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R8G8B8A8Typeless:
+        case DxgiFormat::R8G8B8A8UInt:
+            return {PixelFormat::RGBAInteger, PixelType::UnsignedByte};
+        case DxgiFormat::R8G8B8A8SInt:
+            return {PixelFormat::RGBAInteger, PixelType::Byte};
+        case DxgiFormat::R8G8B8A8SNorm:
+            return {PixelFormat::RGBA, PixelType::Byte};
+#endif
+        case DxgiFormat::R8G8B8A8UNorm:
+        case DxgiFormat::R8G8B8A8UNormSRGB:
+            return {PixelFormat::RGBA, PixelType::UnsignedByte}; /** @todo Propagate sRGB property */
+
+        /* RG16 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R16G16Typeless:
+        case DxgiFormat::R16G16UInt:
+            return {PixelFormat::RGInteger, PixelType::UnsignedShort};
+        case DxgiFormat::R16G16SInt:
+            return {PixelFormat::RGInteger, PixelType::Short};
+        case DxgiFormat::R16G16SNorm:
+            return {PixelFormat::RG, PixelType::Short};
+#endif
+        case DxgiFormat::R16G16Float:
+            return {
+                #ifndef MAGNUM_TARGET_GLES2
+                PixelFormat::RG
+                #else
+                PixelFormat::LuminanceAlpha
+                #endif
+                , PixelType::HalfFloat};
+        case DxgiFormat::R16G16UNorm:
+            return {
+                #ifndef MAGNUM_TARGET_GLES2
+                PixelFormat::RG
+                #else
+                PixelFormat::LuminanceAlpha
+                #endif
+                , PixelType::UnsignedShort};
+
+        /* R32 and D32 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R32Typeless:
+        case DxgiFormat::R32UInt:
+            return {PixelFormat::RedInteger, PixelType::UnsignedInt};
+        case DxgiFormat::R32SInt:
+            return {PixelFormat::RedInteger, PixelType::Int};
+#endif
+        case DxgiFormat::R32Float:
+            return {
+                #ifndef MAGNUM_TARGET_GLES2
+                PixelFormat::Red
+                #else
+                PixelFormat::Luminance
+                #endif
+                , PixelType::Float};
+        case DxgiFormat::D32Float:
+            return {PixelFormat::DepthComponent, PixelType::Float};
+
+        /* RG8 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R8G8Typeless:
+        case DxgiFormat::R8G8UInt:
+            return {PixelFormat::RGInteger, PixelType::UnsignedByte};
+        case DxgiFormat::R8G8SInt:
+            return {PixelFormat::RGInteger, PixelType::Byte};
+        case DxgiFormat::R8G8SNorm:
+            return {PixelFormat::RG, PixelType::Byte};
+#endif
+        case DxgiFormat::R8G8UNorm:
+            return {
+                #ifndef MAGNUM_TARGET_GLES2
+                PixelFormat::RG
+                #else
+                PixelFormat::LuminanceAlpha
+                #endif
+                , PixelType::UnsignedByte};
+
+        /* R16 and D16 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R16Typeless:
+        case DxgiFormat::R16UInt:
+            return {PixelFormat::RedInteger, PixelType::UnsignedShort};
+        case DxgiFormat::R16SInt:
+            return {PixelFormat::RedInteger, PixelType::Short};
+        case DxgiFormat::R16SNorm:
+            return {PixelFormat::Red, PixelType::Short};
+#endif
+        case DxgiFormat::R16Float:
+            return {
+                #ifndef MAGNUM_TARGET_GLES2
+                PixelFormat::Red
+                #else
+                PixelFormat::Luminance
+                #endif
+                , PixelType::HalfFloat};
+        case DxgiFormat::D16UNorm:
+            return {PixelFormat::DepthComponent, PixelType::UnsignedShort};
+        case DxgiFormat::R16UNorm:
+            return {
+                #ifndef MAGNUM_TARGET_GLES2
+                PixelFormat::Red
+                #else
+                PixelFormat::Luminance
+                #endif
+                , PixelType::UnsignedShort};
+
+        /* R8 and A8 Formats */
+#ifndef MAGNUM_TARGET_GLES2
+        case DxgiFormat::R8Typeless:
+        case DxgiFormat::R8UInt:
+            return {PixelFormat::RedInteger, PixelType::UnsignedByte};
+        case DxgiFormat::R8SInt:
+            return {PixelFormat::RedInteger, PixelType::Byte};
+        case DxgiFormat::R8SNorm:
+            return {PixelFormat::Red, PixelType::Byte};
+#endif
+        case DxgiFormat::A8UNorm:
+        case DxgiFormat::R8UNorm:
+            return {
+                #ifndef MAGNUM_TARGET_GLES2
+                PixelFormat::Red
+                #else
+                PixelFormat::Luminance
+                #endif
+                , PixelType::UnsignedByte};
+
+        default:
+            /* Error unsupported format. */
+            return {PixelFormat(-1), PixelType(-1)};
+    };
 }
 
 /*
@@ -175,6 +507,17 @@ struct DdsHeader {
 
 static_assert(sizeof(DdsHeader) + 4 == 128, "Improper size of DdsHeader struct");
 
+/*
+ * Dds file header extension for DXGI pixel formats
+ */
+struct DdsHeaderDxt10 {
+    DxgiFormat dxgiFormat;
+    DdsDimension resourceDimension;
+    DdsMiscFlag miscFlag;
+    UnsignedInt arraySize;
+    DdsAlphaMode miscFlags2;
+};
+
 }
 
 struct DdsImporter::File {
@@ -183,6 +526,11 @@ struct DdsImporter::File {
         Containers::ArrayView<char> data;
     };
 
+    /*
+     * Returns the new offset of an image in an array for current pixel type
+     * or 0 if the file is not large enough.
+     * (Offset is always at least sizeof(DdsHeader) in healthy cases.)
+     */
     std::size_t addImageDataOffset(const Vector3i& dims, std::size_t offset);
 
     Containers::Array<char> in;
@@ -191,8 +539,7 @@ struct DdsImporter::File {
     bool volume;
     bool needsSwizzle;
 
-    /* components per pixel */
-    UnsignedInt components;
+    PixelType pixelType;
     union {
         PixelFormat uncompressed;
         CompressedPixelFormat compressed;
@@ -201,15 +548,19 @@ struct DdsImporter::File {
     std::vector<ImageDataOffset> imageData;
 };
 
-std::size_t DdsImporter::File::addImageDataOffset(const Vector3i& dims, const std::size_t offset)
-{
+std::size_t DdsImporter::File::addImageDataOffset(const Vector3i& dims, const std::size_t offset) {
     const std::size_t size = compressed ?
         (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((pixelFormat.compressed == CompressedPixelFormat::RGBAS3tcDxt1) ? 8 : 16)) :
-        dims.product()*components;
+        dims.product()*PixelStorage::pixelSize(pixelFormat.uncompressed, pixelType);
 
-    imageData.push_back({dims, in.slice(offset, offset + size)});
+    const size_t end = offset + size;
+    if(in.size() < end) {
+        return 0;
+    }
 
-    return offset + size;
+    imageData.push_back({dims, in.slice(offset, end)});
+
+    return end;
 }
 
 DdsImporter::DdsImporter() = default;
@@ -237,9 +588,13 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
         Error() << "Trade::DdsImporter::openData(): wrong file signature";
         return;
     }
+    std::size_t offset = magicNumberSize;
 
     /* read in DDS header */
-    const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.suffix(magicNumberSize).data());
+    const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.suffix(offset).data());
+    offset += sizeof(DdsHeader);
+
+    bool hasDxt10Extension = false;
 
     /* check if image is a 2D or 3D texture */
     f->volume = ((ddsh.caps2 & DdsCap2::Volume) && (ddsh.depth > 0));
@@ -259,13 +614,34 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
             case DdsCompressionType::DXT5:
                 f->pixelFormat.compressed = CompressedPixelFormat::RGBAS3tcDxt5;
                 break;
+            case DdsCompressionType::DXT10: {
+                    hasDxt10Extension = true;
+
+                    if(f->in.suffix(offset).size() < sizeof(DdsHeaderDxt10)) {
+                        Error() << "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header";
+                        return;
+                    }
+                    const DdsHeaderDxt10& dxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.suffix(offset).data());
+                    offset += sizeof(DdsHeaderDxt10);
+
+                    std::tie(f->pixelFormat.uncompressed, f->pixelType) = dxgiToGl(dxt10.dxgiFormat);
+                    if(f->pixelFormat.uncompressed == PixelFormat(-1)) {
+                        Error() << "Trade::DdsImporter::openData(): unsupported DXGI format" << UnsignedInt(dxt10.dxgiFormat);
+                        return;
+                    }
+                    f->compressed = false;
+                    f->needsSwizzle = false;
+                }
+                break;
             default:
                 Error() << "Trade::DdsImporter::openData(): unknown compression" << fourcc(ddsh.ddspf.fourCC);
                 return;
         }
-        f->components = 4;
-        f->compressed = true;
-        f->needsSwizzle = false;
+
+        if(!hasDxt10Extension) {
+            f->compressed = true;
+            f->needsSwizzle = false;
+        }
 
     /* RGBA */
     } else if(ddsh.ddspf.rgbBitCount == 32 &&
@@ -274,7 +650,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
               ddsh.ddspf.bBitMask == 0x00FF0000 &&
               ddsh.ddspf.aBitMask == 0xFF000000) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA;
-        f->components = 4;
+        f->pixelType = PixelType::UnsignedByte;
         f->compressed = false;
         f->needsSwizzle = false;
 
@@ -285,7 +661,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
               ddsh.ddspf.bBitMask == 0x000000FF &&
               ddsh.ddspf.aBitMask == 0xFF000000) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA;
-        f->components = 4;
+        f->pixelType = PixelType::UnsignedByte;
         f->compressed = false;
         f->needsSwizzle = true;
 
@@ -295,7 +671,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
               ddsh.ddspf.gBitMask == 0x0000FF00 &&
               ddsh.ddspf.bBitMask == 0x00FF0000) {
         f->pixelFormat.uncompressed = PixelFormat::RGB;
-        f->components = 3;
+        f->pixelType = PixelType::UnsignedByte;
         f->compressed = false;
         f->needsSwizzle = false;
 
@@ -305,7 +681,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
               ddsh.ddspf.gBitMask == 0x0000FF00 &&
               ddsh.ddspf.bBitMask == 0x000000FF) {
         f->pixelFormat.uncompressed = PixelFormat::RGB;
-        f->components = 3;
+        f->pixelType = PixelType::UnsignedByte;
         f->compressed = false;
         f->needsSwizzle = true;
 
@@ -316,7 +692,6 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
         #else
         f->pixelFormat.uncompressed = PixelFormat::Luminance;
         #endif
-        f->components = 1;
         f->compressed = false;
         f->needsSwizzle = false;
 
@@ -332,13 +707,16 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* load all surfaces for the image (6 surfaces for cubemaps) */
     const UnsignedInt numImages = isCubemap ? 6 : 1;
-    std::size_t offset = sizeof(DdsHeader) + magicNumberSize;
     for(UnsignedInt n = 0; n < numImages; ++n) {
         Vector3i mipSize{size};
 
         /* load all mipmaps for current surface */
-        for(UnsignedInt i = 0; i < numMipmaps; i++) {
+        for(UnsignedInt i = 0; i < numMipmaps; ++i) {
             offset = f->addImageDataOffset(mipSize, offset);
+            if(offset == 0) {
+                Error() << "Trade::DdsImporter::openData(): not enough image data";
+                return;
+            }
 
             /* shrink to next power of 2 */
             mipSize = Math::max(mipSize >> 1, Vector3i{1});
@@ -367,10 +745,10 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, PixelType::UnsignedByte))%4 != 0)
+    if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, _f->pixelType))%4 != 0)
         storage.setAlignment(1);
 
-    return ImageData2D{storage, _f->pixelFormat.uncompressed, PixelType::UnsignedByte, dataOffset.dimensions.xy(), std::move(data)};
+    return ImageData2D{storage, _f->pixelFormat.uncompressed, _f->pixelType, dataOffset.dimensions.xy(), std::move(data)};
 }
 
 UnsignedInt DdsImporter::doImage3DCount() const { return _f->volume ? _f->imageData.size() : 0; }
@@ -391,10 +769,10 @@ std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, PixelType::UnsignedByte))%4 != 0)
+    if((dataOffset.dimensions.x()*PixelStorage::pixelSize(_f->pixelFormat.uncompressed, _f->pixelType))%4 != 0)
         storage.setAlignment(1);
 
-    return ImageData3D{storage, _f->pixelFormat.uncompressed, PixelType::UnsignedByte, dataOffset.dimensions, std::move(data)};
+    return ImageData3D{storage, _f->pixelFormat.uncompressed, _f->pixelType, dataOffset.dimensions, std::move(data)};
 }
 
 }}

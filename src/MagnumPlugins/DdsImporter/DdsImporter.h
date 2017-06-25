@@ -56,6 +56,25 @@ Supports DirectDraw Surface images (`*.dds`) in the following formats:
 
 -   DDS uncompressed RGB, RGBA, BGR, BGRA, grayscale
 -   DDS compressed DXT1, DXT3, DXT5
+-   DDS DXT10 with the following DXGI formats (`TYPELESS` formats are loaded as
+    either @ref PixelType::UnsignedByte, @ref PixelType::UnsignedShort or
+    @ref PixelType::UnsignedInt):
+    - `R32G32B32A32_(TYPELESS|UINT|SINT|FLOAT)`
+    - `R32G32B32_(TYPELESS|UINT|SINT|FLOAT)`
+    - `R32G32_(TYPELESS|UINT|SINT|FLOAT)`
+    - `R32_(TYPELESS|UINT|SINT|FLOAT)`
+    - `D32_FLOAT`
+    - `R16G16B16A16_(TYPELESS|UINT|SINT|FLOAT|UNORM|SNORM)`
+    - `R16G16B16_(TYPELESS|UINT|SINT|FLOAT|UNORM|SNORM)`
+    - `R16G16_(TYPELESS|UINT|SINT|FLOAT|UNORM|SNORM)`
+    - `R16_(TYPELESS|UINT|SINT|FLOAT|UNORM|SNORM)`
+    - `D16_UNORM`
+    - `R8G8B8A8_(TYPELESS|UINT|SINT|UNORM|UNORM_SRGB|SNORM)` (Notion of sRGB
+       is discarded)
+    - `R8G8B8_(TYPELESS|UINT|SINT|UNORM|SNORM)`
+    - `R8G8_(TYPELESS|UINT|SINT|UNORM|SNORM)`
+    - `R8_(TYPELESS|UINT|SINT|UNORM|SNORM)`
+    - `A8_UNORM` (Loaded as @ref PixelFormat::Red)
 
 This plugin is built if `WITH_DDSIMPORTER` is enabled when building
 Magnum Plugins. To use dynamic plugin, you need to load `DdsImporter`
