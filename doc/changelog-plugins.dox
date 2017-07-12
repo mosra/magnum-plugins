@@ -1,0 +1,141 @@
+/*
+    This file is part of Magnum.
+
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
+              Vladimír Vondruš <mosra@centrum.cz>
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+*/
+
+namespace Magnum {
+
+/** @page changelog-plugins Plugins changelog
+
+@tableofcontents
+
+@section changelog-plugins-latest Changes since 2015-05 snapshot
+
+## De­pen­den­cy changes
+
+-   Dropped support for the old MinGW32 (only MinGW-w64 is supported now)
+-   Bumped minimal CMake version to 2.8.12
+-   Removed support for macOS 10.8 and older
+-   Dropped the `compatibility` branch and all support for MSVC 2013 and GCC <
+    4.7
+
+## New features
+
+-   MSVC 2015 and MSVC 2017 support in `master` branch
+-   ANGLE ES2/ES3 support, ability to create desktop GLES contexts on Windows
+-   Windows Phone/Store support via ANGLE
+-   iOS support
+-   WebGL 2.0 support
+-   New plugins:
+    -   @ref Trade::AnyImageConverter "AnyImageConverter"
+    -   @ref Audio::AnyImporter "AnyAudioImporter"
+    -   @ref Trade::DdsImporter "DdsImporter"
+    -   @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
+    -   @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
+    -   @ref Trade::PngImageConverter "PngImageConverter"
+    -   @ref Text::StbTrueTypeFont "StbTrueTypeFont"
+    -   @ref Audio::DrFlacImporter "DrFlacAudioImporter"
+    -   @ref Audio::DrWavImporter "DrWavAudioImporter"
+    -   @ref Trade::DevIlImageImporter "DevIlImageImporter"
+-   Camera and light data import in @ref Trade::OpenGexImporter "OpenGexImporter"
+-   Support for OpenGEX extensions in @ref Trade::OpenGexImporter "OpenGexImporter"
+    using `importerState()` getters
+
+## Changes and improvements
+
+-   @ref Trade::OpenGexImporter "OpenGexImporter" is working on Android now
+-   @ref Trade::PngImporter "PngImporter" and @ref Trade::JpegImporter "JpegImporter"
+    always import images with rows aligned to four bytes
+-   @ref Trade::StbImageImporter "StbImageImporter" properly specifies
+    @ref PixelStorage alignment for imported images
+-   @ref Trade::PngImporter "PngImporter" properly handles endianness in 16bpp
+    images
+-   @ref Text::FreeTypeFont "FreeTypeFont" and @ref Text::HarfBuzzFont "HarfBuzzFont"
+    report font ascent and descent properties now
+-   Usage of @ref Double in @ref Trade::OpenGexImporter "OpenGexImporter" is
+    not restricted to desktop GL anymore
+-   @ref Trade::OpenGexImporter "OpenGexImporter" presents only an unique list
+    of images, instead of duplicating them per texture
+
+## Build system
+
+-   Continuous testing for Linux, macOS, Windows MSVC, Windows MinGW, Windows RT,
+    iOS, Android and Emscripten on [Travis CI](https://travis-ci.org/mosra/magnum-plugins)
+    and [AppVeyor CI](https://ci.appveyor.com/project/mosra/magnum-plugins), with code
+    coverage on [coveralls.io](https://coveralls.io/github/mosra/magnum-plugins);
+    replacing the unmaintained and outdated Jenkins configuration
+-   Support for CMake subprojects. You can now clone Magnum Plugins into a
+    subdirectory in your project and add it using `add_subdirectory()`. The
+    `find_package()` command will then use the CMake subproject instead of
+    looking for it in system-wide locations.
+-   Reworked CMake buildsystem to use the new imported target workflow, see
+    @ref cmake-plugins for more information
+-   CMake targets are now organized in folders for better development
+    experience in IDEs such as Visual Studio or Xcode
+-   Added @ref building-plugins-brew "Homebrew package"
+-   Ability to build OpenGL tests also on Windows and macOS (see `BUILD_GL_TESTS`
+    @ref building-plugins "CMake option")
+-   `MACOSX_RPATH` is now enabled by default on CMake 3.0+
+-   Enabling only C++ in CMake `project()` call, if possible, to speed up
+    initial CMake run
+-   Unconditionally exporting symbols of all plugins to make them usable as
+    dependencies
+
+## Bug fixes
+
+-   @ref Trade::OpenGexImporter "OpenGexImporter" crashed on file ending
+    unexpectedly after array comma
+-   @ref Trade::StanfordImporter "StanfordImporter" had string-to-number
+    conversion broken on Android
+-   Plugged huge data leaks in @ref Trade::StbImageImporter "StbImageImporter"
+    and @ref Trade::StbImageConverter "StbImageConverter"
+
+## Potential compatibility breakages
+
+-   `StbPngImageConverter` was renamed to @ref Trade::StbImageConverter "StbImageConverter",
+    supporting more than just PNG now. Loading it via `StbPngImageConverter`
+    continues to work.
+
+@section changelog-plugins-2015-05 2015-05 snapshot
+
+See the [release notes and full changelog](http://blog.magnum.graphics/announcements/may-2015-updates/#magnum-plugins).
+
+@section changelog-plugins-2014-06 2014-06 snapshot
+
+See the [release notes and full changelog](http://blog.magnum.graphics/announcements/june-2014-updates/#magnum-plugins).
+
+@section changelog-plugins-2014-01 2014-01 snapshot
+
+See the [release notes and full changelog](http://blog.magnum.graphics/announcements/january-2014-updates/#magnum-plugins).
+
+@section changelog-plugins-2013-10 2013-10 snapshot
+
+See the [release notes and full changelog](http://blog.magnum.graphics/announcements/october-2013-updates/#magnum-plugins).
+
+@section changelog-plugins-initial Initial release
+
+See the [Magnum project announcement](http://blog.magnum.graphics/announcements/introducing-magnum/).
+
+*/
+
+}
