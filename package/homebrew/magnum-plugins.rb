@@ -2,7 +2,7 @@
 
 class MagnumPlugins < Formula
   desc "Plugins for Magnum graphics engine"
-  homepage "https://github.com/mosra/magnum"
+  homepage "http://magnum.graphics"
   head "git://github.com/mosra/magnum-plugins.git"
 
   depends_on "cmake"
