@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_lights>
+    <light id="Spot-light" name="Spot">
+      <technique_common>
+        <spot>
+          <color sid="color">0.12 0.24 0.36</color>
+          <constant_attenuation>1</constant_attenuation>
+          <linear_attenuation>0</linear_attenuation>
+          <quadratic_attenuation>0.001599967</quadratic_attenuation>
+          <falloff_angle sid="fall_off_angle">45</falloff_angle>
+          <falloff_exponent sid="fall_off_exponent">0.15</falloff_exponent>
+        </spot>
+      </technique_common>
+    </light>
+    <light id="Point-light" name="Point">
+      <technique_common>
+        <point>
+          <color sid="color">0.5 0.25 0.05</color>
+          <constant_attenuation>1</constant_attenuation>
+          <linear_attenuation>0</linear_attenuation>
+          <quadratic_attenuation>0.001599967</quadratic_attenuation>
+        </point>
+      </technique_common>
+    </light>
+    <light id="Sun-light" name="Sun">
+      <technique_common>
+        <directional>
+          <color sid="color">1.00 0.15 0.45</color>
+        </directional>
+      </technique_common>
+    </light>
+  </library_lights>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Spot" name="Spot" type="NODE">
+        <matrix sid="transform">0.664463 -0.2214413 0.7137595 -1 0.2418447 0.9674125 0.07499469 2 -0.7071068 0.1227878 0.6963642 3 0 0 0 1</matrix>
+        <instance_light url="#Spot-light"/>
+      </node>
+      <node id="Point" name="Point" type="NODE">
+        <matrix sid="transform">1 0 0 1 0 1 0 2 0 0 1 3 0 0 0 1</matrix>
+        <instance_light url="#Point-light"/>
+      </node>
+      <node id="Sun" name="Sun" type="NODE">
+        <matrix sid="transform">0.8137977 -0.4409696 0.3785223 1 0.4698463 0.8825641 0.01802832 -2 -0.3420201 0.1631759 0.9254166 3 0 0 0 1</matrix>
+        <instance_light url="#Sun-light"/>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
