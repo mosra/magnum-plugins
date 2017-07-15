@@ -82,6 +82,7 @@ and @ref plugins for more information.
 - Textures with mapping mode/wrapping `aiTextureMapMode_Decal` are loaded with
   @ref Sampler::Wrapping::ClampToEdge
 - Assimp does not appear to load any filtering information
+- Raw embedded image data is not supported
 
 #### Bone import
 

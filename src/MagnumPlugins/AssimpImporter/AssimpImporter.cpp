@@ -498,16 +498,8 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
 
         /* Uncompressed image data */
         } else {
-            const Vector2i dimensions{Int(texture->mHeight), Int(texture->mWidth)};
-            std::size_t size = dimensions.product();
-            Containers::Array<char> data{Containers::NoInit, size*4};
-
-            auto pixelData = Containers::arrayCast<Color4ub>(Containers::arrayView(texture->pcData, size));
-            std::transform(pixelData.begin(), pixelData.end(),
-                Containers::arrayCast<Color4ub>(data).begin(),
-                [](const Color4ub& pxl) { return Math::swizzle<'z', 'y', 'x', 'w'>(pxl); });
-
-            return ImageData2D(PixelFormat::RGBA, PixelType::UnsignedByte, dimensions, std::move(data), texture);
+            Error() << "Trade::AssimpImporter::image2D(): Uncompressed embedded image data is not supported.";
+            return std::nullopt;
         }
 
     /* Load external texture */
