@@ -50,6 +50,10 @@ if(WITH_ANYSCENEIMPORTER)
     add_subdirectory(AnySceneImporter)
 endif()
 
+if(WITH_ASSIMPIMPORTER)
+    add_subdirectory(AssimpImporter)
+endif()
+
 if(WITH_COLLADAIMPORTER)
     add_subdirectory(ColladaImporter)
 endif()
