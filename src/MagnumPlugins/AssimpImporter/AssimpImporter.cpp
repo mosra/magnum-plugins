@@ -364,13 +364,12 @@ std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedI
     /* Put things together */
     const aiMaterial* mat = _f->_scene->mMaterials[id];
 
+    /* Verify that shading mode is either unknown or Phong (not supporting
+       anything else ATM) */
     aiShadingMode shadingMode;
-
-    if(mat->Get(AI_MATKEY_SHADING_MODEL, shadingMode) == AI_SUCCESS) {
-        if(shadingMode != aiShadingMode_Phong) {
-            Error() << "Trade::AssimpImporter::material(): Unsupported shading mode";
-            return {};
-        }
+    if(mat->Get(AI_MATKEY_SHADING_MODEL, shadingMode) == AI_SUCCESS && shadingMode != aiShadingMode_Phong) {
+        Error() << "Trade::AssimpImporter::material(): unsupported shading mode" << shadingMode;
+        return {};
     }
 
     PhongMaterialData::Flags flags;
