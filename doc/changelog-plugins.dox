@@ -49,6 +49,7 @@ namespace Magnum {
 -   New plugins:
     -   @ref Trade::AnyImageConverter "AnyImageConverter"
     -   @ref Audio::AnyImporter "AnyAudioImporter"
+    -   @ref Trade::AssimpImporter "AssimpImporter"
     -   @ref Trade::DdsImporter "DdsImporter"
     -   @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
     -   @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
