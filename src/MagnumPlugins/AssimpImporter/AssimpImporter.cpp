@@ -65,7 +65,7 @@ template<> struct VectorConverter<3, Float, aiColor3D> {
 namespace Magnum { namespace Trade {
 
 struct AssimpImporter::File {
-    std::optional<std::string> _filePath;
+    std::string _filePath;
     Assimp::Importer _importer;
     const aiScene* _scene = nullptr;
     std::vector<aiNode*> _nodes;
@@ -506,11 +506,7 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
     /* Load external texture */
     } else {
         AnyImageImporter importer{*manager()};
-        if(_f->_filePath) {
-            importer.openFile(Utility::Directory::join(*_f->_filePath, path));
-        } else {
-            importer.openFile(path);
-        }
+        importer.openFile(Utility::Directory::join(_f->_filePath, path));
         return importer.image2D(0);
     }
 }
