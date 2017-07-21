@@ -16,6 +16,7 @@
 #  AnyImageConverter            - Any image converter
 #  AnyImageImporter             - Any image importer
 #  AnySceneImporter             - Any scene importer
+#  AssimpImporter               - Assimp importer
 #  ColladaImporter              - Collada importer
 #  DdsImporter                  - DDS importer
 #  DevIlImageImporter           - Image importer using DevIL
@@ -119,7 +120,9 @@ set(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS )
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${_component} _COMPONENT)
 
-    if(_component STREQUAL ColladaImporter)
+    if(_component STREQUAL AssimpImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
+    elseif(_component STREQUAL ColladaImporter)
         set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
     elseif(_component STREQUAL OpenGexImporter)
         set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
@@ -147,7 +150,7 @@ endif()
 
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
-set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AnyAudioImporter|AnyImageConverter|AnyImageImporter|AnySceneImporter|ColladaImporter|DdsImporter|DevIlImageImporter|DrFlacAudioImporter|DrWavAudioImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageConverter|StbImageImporter|StbTrueTypeFont|StbVorbisAudioImporter)$")
+set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AnyAudioImporter|AnyImageConverter|AnyImageImporter|AnySceneImporter|AssimpImporter|ColladaImporter|DdsImporter|DevIlImageImporter|DrFlacAudioImporter|DrWavAudioImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageConverter|StbImageImporter|StbTrueTypeFont|StbVorbisAudioImporter)$")
 
 # Find all components
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
@@ -235,6 +238,13 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # AnyAudioImporter has no dependencies
         # AnyImageImporter has no dependencies
         # AnySceneImporter has no dependencies
+
+        # AssimpImporter plugin dependencies
+        if(_component STREQUAL AssimpImporter)
+            find_package(AssimpImporter)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES Assimp::Assimp)
+        endif()
 
         # ColladaImporter plugin dependencies
         if(_component STREQUAL ColladaImporter)
