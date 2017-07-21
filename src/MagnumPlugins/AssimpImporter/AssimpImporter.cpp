@@ -92,6 +92,7 @@ bool AssimpImporter::doIsOpened() const { return _f && _f->_scene; }
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(!_f) {
         _f.reset(new File);
+        /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
         _f->_scene = _f->_importer.ReadFileFromMemory(data.data(), data.size(), aiProcess_Triangulate|aiProcess_SortByPType|aiProcess_JoinIdenticalVertices);
     }
 
@@ -165,6 +166,7 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 void AssimpImporter::doOpenFile(const std::string& filename) {
     _f.reset(new File);
+    /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
     _f->_scene = _f->_importer.ReadFile(filename, aiProcess_Triangulate|aiProcess_SortByPType|aiProcess_JoinIdenticalVertices);
     _f->_filePath = Utility::Directory::path(filename);
 
