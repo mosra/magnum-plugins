@@ -48,49 +48,61 @@ It is built if `WITH_ASSIMPIMPORTER` is enabled when building Magnum Plugins.
 To use dynamic plugin, you need to load `AssimpImporter` plugin from
 `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
 `AssimpImporter` component of `MagnumPlugins` package in CMake and link to
-`MagnumPlugins::AssimpImporter`. See @ref building-plugins, @ref cmake-plugins
-and @ref plugins for more information.
+`MagnumPlugins::AssimpImporter`.
+
+This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
+`BvhImporter`, `CsmImporter`, `ColladaImporter`, `DirectXImporter`,
+`DxfImporter`, `FbxImporter`, `GltfImporter`, `IfcImporter`,
+`IrrlichtImporter`, `LightWaveImporter`, `ModoImporter`, `MilkshapeImporter`,
+`ObjImporter`, `OgreImporter`, `OpenGexImporter`, `StanfordImporter`,
+`StlImporter`, `TrueSpaceImporter`, `UnrealImporter`, `ValveImporter` and
+`XglImporter` plugins.
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 ### Behaviour and limitations
 
 #### Material import
 
-- Only materials with shading mode `aiShadingMode_Phong` are supported
-- Only the first diffuse/specular/ambient texture is loaded
+-   Only materials with shading mode `aiShadingMode_Phong` are supported
+-   Only the first diffuse/specular/ambient texture is loaded
 
 #### Light import
 
-- The following properties are ignored:
-    - Angle inner/outer cone
-    - Linear/quadratic/constant attenuation
-    - Ambient/specular color
-- Assimp does not load a property which can be mapped to @ref LightData::intensity()
-- `aiLightSource_UNDEFINED` light type is unsupported
+-   The following properties are ignored:
+    -   Angle inner/outer cone
+    -   Linear/quadratic/constant attenuation
+    -   Ambient/specular color
+-   Assimp does not load a property which can be mapped to
+    @ref LightData::intensity()
+-   Light types other than `aiLightSource_DIRECTIONAL`, `aiLightSource_POINT`
+    and `aiLightSource_SPOT` are unsupported
 
 #### Camera import
 
-- Aspect and up vector properties are ignored
+-   Aspect and up vector properties are ignored
 
 #### Mesh import
 
-- Only the first mesh of a `aiNode` is loaded
-- Only triangle meshes are loaded
-- Texture coordinate layers with other than two components are skipped
+-   Only the first mesh of a `aiNode` is loaded
+-   Only triangle meshes are loaded
+-   Texture coordinate layers with other than two components are skipped
 
 #### Texture import
 
-- Textures with mapping mode/wrapping `aiTextureMapMode_Decal` are loaded with
-  @ref Sampler::Wrapping::ClampToEdge
-- Assimp does not appear to load any filtering information
-- Raw embedded image data is not supported
+-   Textures with mapping mode/wrapping `aiTextureMapMode_Decal` are loaded
+    with @ref Sampler::Wrapping::ClampToEdge
+-   Assimp does not appear to load any filtering information
+-   Raw embedded image data is not supported
 
 #### Bone import
 
-- Not supported
+-   Not supported
 
 #### Animation import
 
-- Not supported
+-   Not supported
 
 ### Access to internal importer state
 

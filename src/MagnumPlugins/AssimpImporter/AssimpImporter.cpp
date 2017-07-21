@@ -92,7 +92,7 @@ bool AssimpImporter::doIsOpened() const { return _f && _f->_scene; }
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(!_f) {
         _f.reset(new File);
-        _f->_scene = _f->_importer.ReadFileFromMemory(data.data(), data.size(), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
+        _f->_scene = _f->_importer.ReadFileFromMemory(data.data(), data.size(), aiProcess_Triangulate|aiProcess_SortByPType|aiProcess_JoinIdenticalVertices);
     }
 
     if(!_f->_scene) {
@@ -113,8 +113,9 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
             _f->_materialIndicesForName[name] = i;
         }
 
-        _f->_textureIndices[mat] = textureIndex; /* Store first possible texture index for this material */
-        for(auto type : {aiTextureType_AMBIENT, aiTextureType_DIFFUSE, aiTextureType_SPECULAR}) {
+        /* Store first possible texture index for this material */
+        _f->_textureIndices[mat] = textureIndex;
+        for(auto type: {aiTextureType_AMBIENT, aiTextureType_DIFFUSE, aiTextureType_SPECULAR}) {
             if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) == AI_SUCCESS) {
                 std::string path = texturePath.C_Str();
                 _f->_textures.emplace_back(mat, type);
@@ -123,14 +124,15 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
-    aiNode* root = _f->_scene->mRootNode;
     /* If no nodes, nothing more to do */
+    aiNode* root = _f->_scene->mRootNode;
     if(!root) return;
 
-    _f->_nodes.reserve(root->mNumChildren+1); /* Children + root itself */
+    /* Children + root itself */
+    _f->_nodes.reserve(root->mNumChildren + 1);
     _f->_nodes.push_back(root);
 
-    _f->_nodeIndices.reserve(root->mNumChildren+1);
+    _f->_nodeIndices.reserve(root->mNumChildren + 1);
 
     /* Insert may invalidate iterators, so we use indices here. */
     for(std::size_t i = 0; i < _f->_nodes.size(); ++i) {
@@ -163,7 +165,7 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 void AssimpImporter::doOpenFile(const std::string& filename) {
     _f.reset(new File);
-    _f->_scene = _f->_importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
+    _f->_scene = _f->_importer.ReadFile(filename, aiProcess_Triangulate|aiProcess_SortByPType|aiProcess_JoinIdenticalVertices);
     _f->_filePath = Utility::Directory::path(filename);
 
     doOpenData({});
@@ -183,9 +185,9 @@ std::optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
 
     std::vector<UnsignedInt> children;
     children.reserve(root->mNumChildren);
-    for (int i = 0; i < root->mNumChildren; ++i) {
+    for(std::size_t i = 0; i < root->mNumChildren; ++i)
         children.push_back(_f->_nodeIndices[root->mChildren[i]]);
-    }
+
     return SceneData{{}, std::move(children), root};
 }
 
@@ -216,12 +218,11 @@ std::unique_ptr<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
     /** @todo support for bone nodes */
     const aiNode* node = _f->_nodes[id];
 
-    /** Gather child indices */
+    /* Gather child indices */
     std::vector<UnsignedInt> children;
     children.reserve(node->mNumChildren);
-    for(auto child : Containers::arrayView(node->mChildren, node->mNumChildren)) {
+    for(auto child: Containers::arrayView(node->mChildren, node->mNumChildren))
         children.push_back(_f->_nodeIndices[child]);
-    }
 
     const Matrix4 transformation = Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation));
 
@@ -233,8 +234,10 @@ std::unique_ptr<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
             const aiMesh* mesh = _f->_scene->mMeshes[index];
             return std::unique_ptr<MeshObjectData3D>(new MeshObjectData3D(children, transformation, index, mesh->mMaterialIndex, node));
         }
+
         return std::unique_ptr<ObjectData3D>{new ObjectData3D(children, transformation, type, index, node)};
     }
+
     return std::unique_ptr<ObjectData3D>{new ObjectData3D(children, transformation, node)};
 }
 
@@ -294,7 +297,7 @@ std::optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
     auto vertexArray = Containers::arrayCast<Vector3>(Containers::arrayView(mesh->mVertices, mesh->mNumVertices));
     positions.front().assign(vertexArray.begin(), vertexArray.end());
 
-    if (mesh->HasNormals()) {
+    if(mesh->HasNormals()) {
         normals.emplace_back();
         auto normalArray = Containers::arrayCast<Vector3>(Containers::arrayView(mesh->mNormals, mesh->mNumVertices));
         normals.front().assign(normalArray.begin(), normalArray.end());
@@ -302,23 +305,24 @@ std::optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
 
     /** @todo only first uv layer (or "channel") supported) */
     textureCoordinates.reserve(mesh->GetNumUVChannels());
-    for (std::size_t layer = 0; layer < mesh->GetNumUVChannels(); ++layer) {
+    for(std::size_t layer = 0; layer < mesh->GetNumUVChannels(); ++layer) {
         if(mesh->mNumUVComponents[layer] != 2) {
-            /* @todo Only 2 dimensional texture coordinates supported in MeshData3D */
+            /** @todo Only 2 dimensional texture coordinates supported in MeshData3D */
             Warning() << "Trade::AssimpImporter::mesh3D(): Skipping texture coordinate layer" << layer << "which has" << mesh->mNumUVComponents[layer] << "components per coordinate. Only two dimensional texture coordinates are supported.";
             continue;
         }
+
         textureCoordinates.emplace_back();
         auto& texCoords = textureCoordinates[layer];
         texCoords.reserve(mesh->mNumVertices);
         for(std::size_t i = 0; i < mesh->mNumVertices; ++i) {
-            /** GCC 4.7 has a problem with .x/.y here */
+            /* GCC 4.7 has a problem with .x/.y here */
             texCoords.emplace_back(mesh->mTextureCoords[layer][i][0], mesh->mTextureCoords[layer][i][1]);
         }
     }
 
     colors.reserve(mesh->GetNumColorChannels());
-    for (std::size_t layer = 0; layer < mesh->GetNumColorChannels(); ++layer) {
+    for(std::size_t layer = 0; layer < mesh->GetNumColorChannels(); ++layer) {
         colors.emplace_back();
         auto colorArray = Containers::arrayCast<Color4>(Containers::arrayView(mesh->mColors[layer], mesh->mNumVertices));
         colors[layer].assign(colorArray.begin(), colorArray.end());
@@ -344,7 +348,7 @@ UnsignedInt AssimpImporter::doMaterialCount() const { return _f->_scene->mNumMat
 
 Int AssimpImporter::doMaterialForName(const std::string& name) {
     auto found = _f->_materialIndicesForName.find(name);
-    return (found != _f->_materialIndicesForName.end()) ? (*found).second : -1;
+    return found != _f->_materialIndicesForName.end() ? found->second : -1;
 }
 
 std::string AssimpImporter::doMaterialName(const UnsignedInt id) {
@@ -373,30 +377,31 @@ std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedI
     aiString texturePath;
     aiColor3D color;
 
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), texturePath) == AI_SUCCESS) {
+    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), texturePath) == AI_SUCCESS)
         flags |= PhongMaterialData::Flag::AmbientTexture;
-    }
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texturePath) == AI_SUCCESS) {
+    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texturePath) == AI_SUCCESS)
         flags |= PhongMaterialData::Flag::DiffuseTexture;
-    }
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), texturePath) == AI_SUCCESS) {
+    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), texturePath) == AI_SUCCESS)
         flags |= PhongMaterialData::Flag::SpecularTexture;
-    }
-    /* @todo many more types supported in assimp */
+    /** @todo many more types supported in assimp */
 
-    mat->Get(AI_MATKEY_SHININESS, shininess); /* Key always present, default 0.0f */
+    /* Key always present, default 0.0f */
+    mat->Get(AI_MATKEY_SHININESS, shininess);
 
     std::unique_ptr<PhongMaterialData> data{new PhongMaterialData(flags, shininess, mat)};
 
-    mat->Get(AI_MATKEY_COLOR_AMBIENT, color); /* Key always present, default black */
+    /* Key always present, default black */
+    mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
     if(!(flags & PhongMaterialData::Flag::AmbientTexture))
         data->ambientColor() = Color3(color);
 
-    mat->Get(AI_MATKEY_COLOR_DIFFUSE, color); /* Key always present, default black */
+    /* Key always present, default black */
+    mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
     if(!(flags & PhongMaterialData::Flag::DiffuseTexture))
         data->diffuseColor() = Color3(color);
 
-    mat->Get(AI_MATKEY_COLOR_SPECULAR, color); /* Key always present, default black */
+    /* Key always present, default black */
+    mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
     if(!(flags & PhongMaterialData::Flag::SpecularTexture))
         data->specularColor() = Color3(color);
 
@@ -406,10 +411,6 @@ std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedI
 UnsignedInt AssimpImporter::doTextureCount() const { return _f->_textures.size(); }
 
 std::optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id) {
-    /* Load texture wrapping property */
-    Sampler::Wrapping wrappingU = Sampler::Wrapping::ClampToEdge;
-    Sampler::Wrapping wrappingV = Sampler::Wrapping::ClampToEdge;
-
     auto toWrapping = [](aiTextureMapMode mapMode) {
         switch (mapMode) {
         case aiTextureMapMode_Wrap:
@@ -430,15 +431,15 @@ std::optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id) {
     aiTextureMapMode mapMode;
     const aiMaterial* mat = _f->_textures[id].first;
     const aiTextureType type = _f->_textures[id].second;
-    if(mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mapMode) == AI_SUCCESS) {
+    Sampler::Wrapping wrappingU = Sampler::Wrapping::ClampToEdge;
+    Sampler::Wrapping wrappingV = Sampler::Wrapping::ClampToEdge;
+    if(mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mapMode) == AI_SUCCESS)
         wrappingU = toWrapping(mapMode);
-    }
-    if(mat->Get(AI_MATKEY_MAPPINGMODE_V(type, 0), mapMode) == AI_SUCCESS) {
+    if(mat->Get(AI_MATKEY_MAPPINGMODE_V(type, 0), mapMode) == AI_SUCCESS)
         wrappingV = toWrapping(mapMode);
-    }
 
     return TextureData{TextureData::Type::Texture2D,
-        Sampler::Filter::Linear, Sampler::Filter::Linear, {Sampler::Mipmap::Linear},
+        Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Mipmap::Linear,
         {wrappingU, wrappingV, Sampler::Wrapping::ClampToEdge}, id, &_f->_textures[id]};
 }
 
@@ -462,13 +463,13 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
         const std::string indexStr = path.substr(1);
         const char* str = indexStr.c_str();
 
-        const Int index = Int(strtol(str, &err, 10));
+        const Int index = Int(std::strtol(str, &err, 10));
         if(err == nullptr || err == str) {
             Error() << "Trade::AssimpImporter::image2D(): Embedded texture path did not contain a valid integer string.";
             return std::nullopt;
         }
-        const aiTexture* texture = _f->_scene->mTextures[index];
 
+        const aiTexture* texture = _f->_scene->mTextures[index];
         if(texture->mHeight == 0) {
             /* Compressed image data */
             auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
@@ -487,12 +488,12 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
                 return std::nullopt;
             }
 
-            std::unique_ptr<Trade::AbstractImporter> importer =
-                static_cast<PluginManager::Manager<Trade::AbstractImporter>&>(*manager()).loadAndInstantiate(importerName);
+            std::unique_ptr<Trade::AbstractImporter> importer = manager()->loadAndInstantiate(importerName);
             if(!importer) {
                 Error() << "Trade::AssimpImporter::image2D(): Could not find importer for embedded data.";
                 return std::nullopt;
             }
+
             importer->openData(textureData);
             return importer->image2D(0);
 
@@ -504,7 +505,7 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
 
     /* Load external texture */
     } else {
-        AnyImageImporter importer{static_cast<PluginManager::Manager<AbstractImporter>&>(*manager())};
+        AnyImageImporter importer{*manager()};
         if(_f->_filePath) {
             importer.openFile(Utility::Directory::join(*_f->_filePath, path));
         } else {
