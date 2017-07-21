@@ -450,6 +450,8 @@ std::optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id) {
 UnsignedInt AssimpImporter::doImage2DCount() const { return _f->_textures.size(); }
 
 std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
+    CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+
     const aiMaterial* mat;
     aiTextureType type;
     std::tie(mat, type) = _f->_textures[id];
