@@ -6,7 +6,7 @@ pkgdesc="Plugins for Magnum OpenGL graphics engine (mingw-w64)"
 arch=('any')
 url="http://magnum.graphics"
 license=('MIT')
-depends=('mingw-w64-crt' 'mingw-w64-magnum' 'mingw-w64-freetype' 'mingw-w64-libjpeg' 'mingw-w64-libpng')
+depends=('mingw-w64-crt' 'mingw-w64-magnum' 'mingw-w64-freetype' 'mingw-w64-libjpeg' 'mingw-w64-libpng' 'mingw-w64-assimp')
 makedepends=('mingw-w64-gcc' 'cmake' 'corrade' 'ninja')
 options=('!buildflags' '!strip' 'staticlibs')
 
@@ -24,6 +24,7 @@ build() {
         -DWITH_ANYIMAGECONVERTER=ON \
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_ASSIMPIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
         -DWITH_DEVILIMAGEIMPORTER=OFF \
         -DWITH_DRFLACAUDIOIMPORTER=ON \
@@ -55,6 +56,7 @@ build() {
         -DWITH_ANYIMAGECONVERTER=ON \
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_ASSIMPIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
         -DWITH_DRFLACAUDIOIMPORTER=ON \
         -DWITH_DRWAVAUDIOIMPORTER=ON \

@@ -6,7 +6,7 @@ pkgdesc="Plugins for Magnum graphics engine (Git version)"
 arch=('i686' 'x86_64')
 url="http://magnum.graphics"
 license=('MIT')
-depends=('magnum-git' 'devil' 'libpng' 'libjpeg' 'freetype2')
+depends=('magnum-git' 'devil' 'libpng' 'libjpeg' 'freetype2' 'assimp')
 makedepends=('cmake' 'git')
 provides=('magnum-plugins')
 conflicts=('magnum-plugins')
@@ -29,6 +29,7 @@ build() {
         -DWITH_ANYIMAGECONVERTER=ON \
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_ASSIMPIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
         -DWITH_DEVILIMAGEIMPORTER=ON \
         -DWITH_DRFLACAUDIOIMPORTER=ON \
