@@ -258,8 +258,7 @@ std::optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
     } else if(l->mType == aiLightSource_SPOT) {
         lightType = LightData::Type::Spot;
     } else {
-        /* aiLightSource_UNDEFINED */
-        Error() << "Trade::AssimpImporter::light(): Undefined light type, aiLightSource_UNDEFINED, is not supported.";
+        Error() << "Trade::AssimpImporter::light(): light type" << l->mType << "is not supported";
         return {};
     }
 
@@ -285,7 +284,7 @@ std::optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
     } else if(mesh->mPrimitiveTypes == aiPrimitiveType_TRIANGLE) {
         primitive = MeshPrimitive::Triangles;
     } else {
-        Error() << "Trade::AssimpImporter::mesh3D(): Unsupported aiPrimitiveType.";
+        Error() << "Trade::AssimpImporter::mesh3D(): unsupported aiPrimitiveType" << mesh->mPrimitiveTypes;
         return std::nullopt;
     }
 
@@ -310,7 +309,7 @@ std::optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
     for(std::size_t layer = 0; layer < mesh->GetNumUVChannels(); ++layer) {
         if(mesh->mNumUVComponents[layer] != 2) {
             /** @todo Only 2 dimensional texture coordinates supported in MeshData3D */
-            Warning() << "Trade::AssimpImporter::mesh3D(): Skipping texture coordinate layer" << layer << "which has" << mesh->mNumUVComponents[layer] << "components per coordinate. Only two dimensional texture coordinates are supported.";
+            Warning() << "Trade::AssimpImporter::mesh3D(): skipping texture coordinate layer" << layer << "which has" << mesh->mNumUVComponents[layer] << "components per coordinate. Only two dimensional texture coordinates are supported.";
             continue;
         }
 
@@ -337,8 +336,8 @@ std::optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
     for(std::size_t faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
         const aiFace& face = mesh->mFaces[faceIndex];
 
-        CORRADE_ASSERT(face.mNumIndices <= 3, "Trade::AssimpImporter::mesh3D(): Triangulation while loading should have ensured <= 3 vertices per primitive.", {});
-        for(int i = 0; i < face.mNumIndices; ++i) {
+        CORRADE_ASSERT(face.mNumIndices <= 3, "Trade::AssimpImporter::mesh3D(): triangulation while loading should have ensured <= 3 vertices per primitive", {});
+        for(std::size_t i = 0; i < face.mNumIndices; ++i) {
             indices.push_back(face.mIndices[i]);
         }
     }
@@ -415,18 +414,22 @@ UnsignedInt AssimpImporter::doTextureCount() const { return _f->_textures.size()
 std::optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id) {
     auto toWrapping = [](aiTextureMapMode mapMode) {
         switch (mapMode) {
-        case aiTextureMapMode_Wrap:
-            return Sampler::Wrapping::Repeat;
-        case aiTextureMapMode_Decal:
-            Warning() << "Trade::AssimpImporter::texture(): no wrapping enum to match aiTextureMapMode_Decal, using Sampler::Wrapping::ClampToEdge.";
-            return Sampler::Wrapping::ClampToEdge;
-        case aiTextureMapMode_Clamp:
-            return Sampler::Wrapping::ClampToEdge;
-        case aiTextureMapMode_Mirror:
-            return Sampler::Wrapping::MirroredRepeat;
-        default:
-            Warning() << "Trade::AssimpImporter::texture(): unknow aiTextureMapMode, using Sampler::Wrapping::ClampToEdge.";
-            return Sampler::Wrapping::ClampToEdge;
+            case aiTextureMapMode_Wrap:
+                return Sampler::Wrapping::Repeat;
+            case aiTextureMapMode_Decal:
+                Warning() << "Trade::AssimpImporter::texture(): no wrapping "
+                    "enum to match aiTextureMapMode_Decal, using "
+                    "Sampler::Wrapping::ClampToEdge";
+                return Sampler::Wrapping::ClampToEdge;
+            case aiTextureMapMode_Clamp:
+                return Sampler::Wrapping::ClampToEdge;
+            case aiTextureMapMode_Mirror:
+                return Sampler::Wrapping::MirroredRepeat;
+            default:
+                Warning() << "Trade::AssimpImporter::texture(): unknown "
+                    "aiTextureMapMode" << mapMode << Debug::nospace << ", "
+                    "using Sampler::Wrapping::ClampToEdge";
+                return Sampler::Wrapping::ClampToEdge;
         }
     };
 
@@ -454,7 +457,7 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
 
     aiString texturePath;
     if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) != AI_SUCCESS) {
-        Error() << "Trade::AssimpImporter::image2D(): Error getting path for texture with id" << id;
+        Error() << "Trade::AssimpImporter::image2D(): error getting path for texture" << id;
         return std::nullopt;
     }
 
@@ -467,7 +470,7 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
 
         const Int index = Int(std::strtol(str, &err, 10));
         if(err == nullptr || err == str) {
-            Error() << "Trade::AssimpImporter::image2D(): Embedded texture path did not contain a valid integer string.";
+            Error() << "Trade::AssimpImporter::image2D(): embedded texture path did not contain a valid integer string";
             return std::nullopt;
         }
 
@@ -486,13 +489,13 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
             } else if(texture->CheckFormat("png") || std::strncmp(textureData.suffix(1).data(), "PNG", 3) == 0) {
                 importerName = "PngImporter";
             } else {
-                Error() << "Trade::AssimpImporter::image2D(): Could not detect filetype of embedded data.";
+                Error() << "Trade::AssimpImporter::image2D(): could not detect filetype of embedded data";
                 return std::nullopt;
             }
 
             std::unique_ptr<Trade::AbstractImporter> importer = manager()->loadAndInstantiate(importerName);
             if(!importer) {
-                Error() << "Trade::AssimpImporter::image2D(): Could not find importer for embedded data.";
+                Error() << "Trade::AssimpImporter::image2D(): could not find importer for embedded data";
                 return std::nullopt;
             }
 
@@ -501,7 +504,7 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
 
         /* Uncompressed image data */
         } else {
-            Error() << "Trade::AssimpImporter::image2D(): Uncompressed embedded image data is not supported.";
+            Error() << "Trade::AssimpImporter::image2D(): uncompressed embedded image data is not supported";
             return std::nullopt;
         }
 

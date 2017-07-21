@@ -184,7 +184,7 @@ void AssimpImporterTest::lightUndefined() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer.light(0));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): Undefined light type, aiLightSource_UNDEFINED, is not supported.\n");
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): light type 4 is not supported\n");
 }
 
 void AssimpImporterTest::material() {
