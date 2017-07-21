@@ -808,7 +808,7 @@ std::optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id) {
     CORRADE_ASSERT(_d->filePath, "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from filesystem", {});
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
-    AnyImageImporter imageImporter{static_cast<PluginManager::Manager<AbstractImporter>&>(*manager())};
+    AnyImageImporter imageImporter{*manager()};
     if(!imageImporter.openFile(Utility::Directory::join(*_d->filePath, _d->images[id])))
         return std::nullopt;
 
