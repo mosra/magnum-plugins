@@ -26,8 +26,8 @@
 
 #include "AssimpImporter.h"
 
+#include <cstring>
 #include <algorithm>
-#include <cstring> /* std::memcpy */
 #include <unordered_map>
 
 #include <Corrade/Containers/ArrayView.h>
