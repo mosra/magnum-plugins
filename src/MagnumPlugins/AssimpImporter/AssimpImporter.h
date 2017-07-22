@@ -40,7 +40,47 @@ namespace Magnum { namespace Trade {
 /**
 @brief Assimp importer
 
-Imports various formats using [Assimp](http://assimp.org).
+Imports various formats using [Assimp](http://assimp.org), in particular:
+
+-   Autodesk FBX (`*.fbx`)
+-   COLLADA (`*.dae`)
+-   glTF (`*.gltf`, `*.glb`)
+-   Blender 3D (`*.blend`)
+-   3ds Max 3DS and ASE (`*.3ds`, `*.ase`)
+-   Wavefront OBJ (`*.obj`)
+-   Industry Foundation Classes (IFC/Step) (`*.ifc`)
+-   XGL (`*.xgl`, `*.zgl`)
+-   Stanford PLY (`*.ply`)
+-   AutoCAD DXF (`*.dxf`)
+-   LightWave, LightWave Scene (`*.lwo`, `*.lws`)
+-   Modo (`*.lxo`)
+-   Stereolithography (`*.stl`)
+-   DirectX X (`*.x`)
+-   AC3D (`*.ac`)
+-   Milkshape 3D (`*.ms3d`)
+-   TrueSpace (`*.cob`, `*.scn`)
+-   Biovision BVH (`*.bvh`)
+-   CharacterStudio Motion (`*.csm`)
+-   Ogre XML (`*.xml`)
+-   Irrlicht Mesh and Scene (`*.irrmesh`, `*.irr`)
+-   Quake I (`*.mdl`)
+-   Quake II (`*.md2`)
+-   Quake III Mesh (`*.md3`)
+-   Quake III Map/BSP (`*.pk3`)
+-   Return to Castle Wolfenstein (`*.mdc`)
+-   Doom 3 (`*.md5*`)
+-   Valve Model (`*.smd`, `*.vta`)
+-   Open Game Engine Exchange (`*.ogex`)
+-   Unreal (`*.3d`)
+-   BlitzBasic 3D (`*.b3d`)
+-   Quick3D (`*.q3d`, `*.q3s`)
+-   Neutral File Format (`*.nff`)
+-   Sense8 WorldToolKit (`*.nff`)
+-   Object File Format (`*.off`)
+-   PovRAY Raw (`*.raw`)
+-   Terragen Terrain (`*.ter`)
+-   3D GameStudio (3DGS), 3D GameStudio (3DGS) Terrain (`*.mdl`, `*.hmp`)
+-   Izware Nendo (`*.ndo`)
 
 Supports importing of scene, object, camera, mesh, texture and image data.
 
@@ -122,6 +162,7 @@ importer state methods:
     -   @ref ImageData2D::importerState() may return `aiTexture`, if texture was embedded
         into the loaded file.
 
+@todo There are more formats mentioned at http://assimp.sourceforge.net/main_features_formats.html, add aliases for them?
 */
 class MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
     public:
