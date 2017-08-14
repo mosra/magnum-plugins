@@ -1,6 +1,6 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=emscripten-magnum-plugins
-pkgver=dev
+pkgver=dev.noopt
 pkgrel=1
 pkgdesc="Plugins for Magnum OpenGL graphics engine (Emscripten, w/o optimizations)"
 arch=('any')
@@ -19,6 +19,7 @@ build() {
 
         cmake .. \
             -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/Emscripten.cmake" \
+            -DCMAKE_PREFIX_PATH=/usr/lib/emscripten/system \
             -G Ninja
     fi
 
