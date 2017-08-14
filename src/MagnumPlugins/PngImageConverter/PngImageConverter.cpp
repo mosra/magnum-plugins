@@ -41,6 +41,9 @@ PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, co
 auto PngImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 
 Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& image) {
+    CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
+        "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, nullptr);
+
     #ifndef MAGNUM_TARGET_GLES
     if(image.storage().swapBytes()) {
         Error() << "Trade::PngImageConverter::exportToData(): pixel byte swap is not supported";

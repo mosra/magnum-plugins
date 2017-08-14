@@ -60,6 +60,9 @@ void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
 std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
+    CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
+        "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, std::nullopt);
+
     /* Verify file signature */
     if(png_sig_cmp(_in, 0, Math::min<std::size_t>(8, _in.size())) != 0) {
         Error() << "Trade::PngImporter::image2D(): wrong file signature";
