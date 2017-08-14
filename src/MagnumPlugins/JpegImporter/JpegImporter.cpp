@@ -91,8 +91,11 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     jpeg_create_decompress(&file);
     jpeg_mem_src(&file, _in.begin(), _in.size());
 
-    /* Read file header, start decompression */
-    jpeg_read_header(&file, true);
+    /* Read file header, start decompression. On macOS (Travis, with Xcode 7.3)
+       the compilation fails because "no known conversion from 'bool' to
+       'boolean' for 2nd argument" (boolean is an enum instead of a typedef to
+       int there) so doing the conversion implicitly. */
+    jpeg_read_header(&file, boolean(true));
     jpeg_start_decompress(&file);
 
     /* Image size and type */
