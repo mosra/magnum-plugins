@@ -80,9 +80,8 @@ cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "BU
 option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
 cmake_dependent_option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ON "BUILD_STATIC" OFF)
 
-# Newlib toolchain supports only static linking, dynamic linking is
-# meaningless on Emscripten and too inconvenient on Android
-if(CORRADE_TARGET_NACL_NEWLIB OR CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+# Dynamic linking is meaningless on Emscripten and too inconvenient on Android
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(BUILD_STATIC ON)
 endif()
 
