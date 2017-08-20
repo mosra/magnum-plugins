@@ -25,7 +25,7 @@
 
 find_package(Magnum REQUIRED Text)
 
-# On OSX avoid finding Freetype which is bundled with Mono
+# On macOS avoid finding Freetype which is bundled with Mono
 set(PREV_CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK})
 set(CMAKE_FIND_FRAMEWORK LAST)
 find_package(Freetype REQUIRED)

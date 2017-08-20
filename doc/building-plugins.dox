@@ -131,7 +131,7 @@ plugins, for example), modify the last entry in `debian/rules`.
 
 @subsection building-plugins-brew Homebrew formulas
 
-OS X Homebrew formulas are in `package/homebrew` directory. Either use the
+macOS Homebrew formulas are in `package/homebrew` directory. Either use the
 `*.rb` files directly or use the tap at https://github.com/mosra/homebrew-magnum:
 
     brew install --HEAD mosra/magnum/magnum-plugins
@@ -140,7 +140,7 @@ OS X Homebrew formulas are in `package/homebrew` directory. Either use the
 
 @subsection building-plugins-ci-travis Travis
 
-In `package/ci/` there is a `travis.yml` file with Linux GCC 4.7, OSX Clang,
+In `package/ci/` there is a `travis.yml` file with Linux GCC 4.7, macOS Clang,
 Linux desktop GLES2/GLES3, iOS GLES2/GLES3, Emscripten WebGL1/WebGL2, Android
 GLES2/GLES3, AddressSanitizer and ThreadSanitizer configuration. Online at
 https://travis-ci.org/mosra/magnum-plugins. The Linux build has code coverage
