@@ -1,21 +1,21 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=emscripten-magnum-plugins
-pkgver=dev.wasm
+pkgver=dev.wasm.webgl2
 pkgrel=1
-pkgdesc="Plugins for Magnum OpenGL graphics engine (Emscripten, wasm)"
+pkgdesc="Plugins for Magnum OpenGL graphics engine (Emscripten WebGL 2, wasm)"
 arch=('any')
 url="http://magnum.graphics"
 license=('MIT')
-depends=('emscripten-magnum=dev.wasm')
+depends=('emscripten-magnum=dev.wasm.webgl2')
 makedepends=('cmake' 'emscripten' 'corrade' 'ninja')
 options=(!strip !buildflags)
 
 _rootdir=$startdir/../../
 
 build() {
-    if [ ! -d "$_rootdir/build-emscripten-wasm" ] ; then
-        mkdir "$_rootdir/build-emscripten-wasm"
-        cd "$_rootdir/build-emscripten-wasm"
+    if [ ! -d "$_rootdir/build-emscripten-wasm-webgl2" ] ; then
+        mkdir "$_rootdir/build-emscripten-wasm-webgl2"
+        cd "$_rootdir/build-emscripten-wasm-webgl2"
 
         cmake .. \
             -DCMAKE_TOOLCHAIN_FILE="$_rootdir/toolchains/generic/Emscripten-wasm.cmake" \
@@ -23,7 +23,7 @@ build() {
             -G Ninja
     fi
 
-    cd "$_rootdir/build-emscripten-wasm"
+    cd "$_rootdir/build-emscripten-wasm-webgl2"
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
@@ -48,11 +48,11 @@ build() {
 }
 
 check() {
-    cd "$_rootdir/build-emscripten-wasm"
+    cd "$_rootdir/build-emscripten-wasm-webgl2"
     CORRADE_TEST_COLOR=ON ctest --output-on-failure
 }
 
 package() {
-    cd "$_rootdir/build-emscripten-wasm"
+    cd "$_rootdir/build-emscripten-wasm-webgl2"
     DESTDIR="$pkgdir/" ninja install
 }
