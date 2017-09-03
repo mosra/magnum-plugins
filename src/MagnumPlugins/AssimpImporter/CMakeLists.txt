@@ -48,6 +48,8 @@ target_include_directories(AssimpImporterObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
+target_include_directories(AssimpImporterObjects SYSTEM PRIVATE
+    $<TARGET_PROPERTY:Assimp::Assimp,INTERFACE_INCLUDE_DIRECTORIES>)
 target_compile_definitions(AssimpImporterObjects PRIVATE "AssimpImporterObjects_EXPORTS")
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(AssimpImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
