@@ -51,6 +51,7 @@ target_include_directories(AssimpImporterObjects PUBLIC
 target_include_directories(AssimpImporterObjects SYSTEM PRIVATE
     $<TARGET_PROPERTY:Assimp::Assimp,INTERFACE_INCLUDE_DIRECTORIES>)
 target_compile_definitions(AssimpImporterObjects PRIVATE "AssimpImporterObjects_EXPORTS")
+target_include_directories(AssimpImporterObjects SYSTEM PRIVATE ${ASSIMP_INCLUDE_DIR})
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(AssimpImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
