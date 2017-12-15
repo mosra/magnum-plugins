@@ -28,6 +28,7 @@ namespace Magnum {
 @brief Guide how to download and build plugins for Magnum engine.
 
 @tableofcontents
+@m_footernavigation
 
 Plugins provide additional capability for Magnum engine in terms of importing
 and exporting various media file formats. They are not needed for essential
@@ -54,46 +55,46 @@ installed to `magnum-d` subdirectory, similarly to what is done when
 
 By default no plugins are built and you need to select them manually:
 
--   `WITH_ANYAUDIOIMPORTER` -- @ref Audio::AnyImporter "AnyAudioImporter"
+-   `WITH_ANYAUDIOIMPORTER` --- @ref Audio::AnyImporter "AnyAudioImporter"
     plugin.
--   `WITH_ANYIMAGECONVERTER` -- @ref Trade::AnyImageConverter "AnyImageConverter"
+-   `WITH_ANYIMAGECONVERTER` --- @ref Trade::AnyImageConverter "AnyImageConverter"
     plugin.
--   `WITH_ANYIMAGEIMPORTER` -- @ref Trade::AnyImageImporter "AnyImageImporter"
+-   `WITH_ANYIMAGEIMPORTER` --- @ref Trade::AnyImageImporter "AnyImageImporter"
     plugin.
--   `WITH_ANYSCENEIMPORTER` -- @ref Trade::AnySceneImporter "AnySceneImporter"
+-   `WITH_ANYSCENEIMPORTER` --- @ref Trade::AnySceneImporter "AnySceneImporter"
     plugin.
--   `WITH_ASSIMPIMPORTER` -- @ref Trade::AssimpImporter "AssimpImporter"
+-   `WITH_ASSIMPIMPORTER` --- @ref Trade::AssimpImporter "AssimpImporter"
     plugin.
--   `WITH_COLLADAIMPORTER` -- @ref Trade::ColladaImporter "ColladaImporter"
+-   `WITH_COLLADAIMPORTER` --- @ref Trade::ColladaImporter "ColladaImporter"
     plugin. Enables also building of @ref Trade::TgaImporter "TgaImporter"
     plugin.
--   `WITH_DDSIMPORTER` -- @ref Trade::DdsImporter "DdsImporter" plugin.
--   `WITH_DEVILIMAGEIMPORTER` -- @ref Trade::DevIlImageImporter "DevIlImageImporter"
+-   `WITH_DDSIMPORTER` --- @ref Trade::DdsImporter "DdsImporter" plugin.
+-   `WITH_DEVILIMAGEIMPORTER` --- @ref Trade::DevIlImageImporter "DevIlImageImporter"
     plugin.
--   `WITH_DRFLACAUDIOIMPORTER` -- @ref Audio::DrFlacImporter "DrFlacAudioImporter"
+-   `WITH_DRFLACAUDIOIMPORTER` --- @ref Audio::DrFlacImporter "DrFlacAudioImporter"
     plugin.
--   `WITH_DRWAVAUDIOIMPORTER` -- @ref Audio::DrWavImporter "DrWavAudioImporter"
+-   `WITH_DRWAVAUDIOIMPORTER` --- @ref Audio::DrWavImporter "DrWavAudioImporter"
     plugin.
--   `WITH_FREETYPEFONT` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin.
--   `WITH_HARFBUZZFONT` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
+-   `WITH_FREETYPEFONT` --- @ref Text::FreeTypeFont "FreeTypeFont" plugin.
+-   `WITH_HARFBUZZFONT` --- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin.
     Enables also building of @ref Text::FreeTypeFont "FreeTypeFont" plugin.
--   `WITH_JPEGIMPORTER` -- @ref Trade::JpegImporter "JpegImporter" plugin.
--   `WITH_MINIEXRIMAGECONVERTER` -- @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
+-   `WITH_JPEGIMPORTER` --- @ref Trade::JpegImporter "JpegImporter" plugin.
+-   `WITH_MINIEXRIMAGECONVERTER` --- @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
     plugin.
--   `WITH_OPENGEXIMPORTER` -- @ref Trade::OpenGexImporter "OpenGexImporter"
+-   `WITH_OPENGEXIMPORTER` --- @ref Trade::OpenGexImporter "OpenGexImporter"
     plugin.
--   `WITH_PNGIMAGECONVERTER` -- @ref Trade::PngImageConverter "PngImageConverter"
+-   `WITH_PNGIMAGECONVERTER` --- @ref Trade::PngImageConverter "PngImageConverter"
     plugin.
--   `WITH_PNGIMPORTER` -- @ref Trade::PngImporter "PngImporter" plugin.
--   `WITH_STANFORDIMPORTER` -- @ref Trade::StanfordImporter "StanfordImporter"
+-   `WITH_PNGIMPORTER` --- @ref Trade::PngImporter "PngImporter" plugin.
+-   `WITH_STANFORDIMPORTER` --- @ref Trade::StanfordImporter "StanfordImporter"
     plugin.
--   `WITH_STBIMAGECONVERTER` -- @ref Trade::StbImageConverter "StbImageConverter"
+-   `WITH_STBIMAGECONVERTER` --- @ref Trade::StbImageConverter "StbImageConverter"
     plugin.
--   `WITH_STBIMAGEIMPORTER` -- @ref Trade::StbImageImporter "StbImageImporter"
+-   `WITH_STBIMAGEIMPORTER` --- @ref Trade::StbImageImporter "StbImageImporter"
     plugin.
--   `WITH_STBTRUETYPEFONT` -- @ref Text::StbTrueTypeFont "StbTrueTypeFont"
+-   `WITH_STBTRUETYPEFONT` --- @ref Text::StbTrueTypeFont "StbTrueTypeFont"
     plugin.
--   `WITH_STBVORBISAUDIOIMPORTER` -- @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
+-   `WITH_STBVORBISAUDIOIMPORTER` --- @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
     plugin.
 
 Note that each plugin class contains more detailed information about
@@ -107,8 +108,8 @@ build. The package is also in AUR under the same name.
 
 There are also a few development PKGBUILDs in `package/archlinux`, which allow
 you to build and install the package directly from source tree without
-downloading anything. The native PKGBUILDs also contain `check()` function
-which will run all unit tests before packaging.
+downloading anything. The native PKGBUILDs also contain @cb{.sh} check() @ce
+function which will run all unit tests before packaging.
 
 @section building-plugins-gentoo Gentoo ebuilds
 
@@ -122,8 +123,10 @@ installed and in addition also `dpkg-dev` and `debhelper` packages. Building is
 easy, just change directory to package root, link or copy `package/debian`
 directory there and run `dpkg-buildpackage`:
 
-    ln -s package/debian .
-    dpkg-buildpackage
+@code{.sh}
+ln -s package/debian .
+dpkg-buildpackage
+@endcode
 
 This will compile binary and development packages, which will then appear in
 parent directory. If you need to modify CMake flags (enabling/disabling some
@@ -132,9 +135,11 @@ plugins, for example), modify the last entry in `debian/rules`.
 @subsection building-plugins-brew Homebrew formulas
 
 macOS Homebrew formulas are in `package/homebrew` directory. Either use the
-`*.rb` files directly or use the tap at https://github.com/mosra/homebrew-magnum:
+`*.rb` files directly or use the tap at https://github.com/mosra/homebrew-magnum :
 
-    brew install --HEAD mosra/magnum/magnum-plugins
+@code{.sh}
+brew install --HEAD mosra/magnum/magnum-plugins
+@endcode
 
 @section building-plugins-ci Continuous Integration
 
@@ -151,6 +156,5 @@ reports available online at https://coveralls.io/github/mosra/magnum-plugins.
 In `package/ci/` there is `appveyor.yml` file with Windows desktop MSVC, MinGW,
 Windows desktop GLES2/GLES3 and Windows RT GLES2/GLES3 configuration. Online at
 https://ci.appveyor.com/project/mosra/magnum-plugins.
-
 */
 }

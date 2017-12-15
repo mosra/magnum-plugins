@@ -28,6 +28,7 @@ namespace Magnum {
 @brief Guide how to find and use static Magnum plugins with CMake build system
 
 @tableofcontents
+@m_footernavigation
 
 If you are going to use dynamic plugins (the default) via plugin manager, they
 don't need to be handled via CMake. The manager will look for them at runtime
@@ -51,47 +52,49 @@ separate them with semicolons.
 
 Basic usage is:
 
-    find_package(MagnumPlugins REQUIRED)
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED)
+@endcode
 
 This command tries to find Magnum plugins and then defines:
 
--   `MagnumPlugins_FOUND` -- Whether Magnum plugins were found
+-   `MagnumPlugins_FOUND` --- Whether Magnum plugins were found
 
 This command will not try to find any actual plugin. The plugins are:
 
--   `AnyAudioImporter` -- @ref Audio::AnyImporter "AnyAudioImporter" plugin
--   `AnyImageConverter` -- @ref Trade::AnyImageConverter "AnyImageConverter"
+-   `AnyAudioImporter` --- @ref Audio::AnyImporter "AnyAudioImporter" plugin
+-   `AnyImageConverter` --- @ref Trade::AnyImageConverter "AnyImageConverter"
     plugin
--   `AnyImageImporter` -- @ref Trade::AnyImageImporter "AnyImageImporter"
+-   `AnyImageImporter` --- @ref Trade::AnyImageImporter "AnyImageImporter"
     plugin
--   `AnySceneImporter` -- @ref Trade::AnySceneImporter "AnySceneImporter"
+-   `AnySceneImporter` --- @ref Trade::AnySceneImporter "AnySceneImporter"
     plugin
--   `AssimpImporter` -- @ref Trade::AssimpImporter "AssimpImporter" plugin
--   `ColladaImporter` -- @ref Trade::ColladaImporter "ColladaImporter" plugin
--   `DdsImporter` -- @ref Trade::DdsImporter "DdsImporter" plugin
--   `DevIlImageImporter` -- @ref Trade::DevIlImageImporter "DevIlImageImporter"
+-   `AssimpImporter` --- @ref Trade::AssimpImporter "AssimpImporter" plugin
+-   `ColladaImporter` --- @ref Trade::ColladaImporter "ColladaImporter" plugin
+-   `DdsImporter` --- @ref Trade::DdsImporter "DdsImporter" plugin
+-   `DevIlImageImporter` --- @ref Trade::DevIlImageImporter "DevIlImageImporter"
     plugin
--   `DrFlacAudioImporter` -- @ref Audio::DrFlacImporter "DrFlacAudioImporter"
+-   `DrFlacAudioImporter` --- @ref Audio::DrFlacImporter "DrFlacAudioImporter"
     plugin
--   `DrWavAudioImporter` -- @ref Audio::DrWavImporter "DrWavAudioImporter"
+-   `DrWavAudioImporter` --- @ref Audio::DrWavImporter "DrWavAudioImporter"
     plugin
--   `FreeTypeFont` -- @ref Text::FreeTypeFont "FreeTypeFont" plugin
--   `HarfBuzzFont` -- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin
--   `JpegImporter` -- @ref Trade::JpegImporter "JpegImporter" plugin
--   `MiniExrImageConverter` -- @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
+-   `FreeTypeFont` --- @ref Text::FreeTypeFont "FreeTypeFont" plugin
+-   `HarfBuzzFont` --- @ref Text::HarfBuzzFont "HarfBuzzFont" plugin
+-   `JpegImporter` --- @ref Trade::JpegImporter "JpegImporter" plugin
+-   `MiniExrImageConverter` --- @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
     plugin
--   `OpenGexImporter` -- @ref Trade::OpenGexImporter "OpenGexImporter" plugin
--   `PngImageConverter` -- @ref Trade::PngImageConverter "PngImageConverter"
+-   `OpenGexImporter` --- @ref Trade::OpenGexImporter "OpenGexImporter" plugin
+-   `PngImageConverter` --- @ref Trade::PngImageConverter "PngImageConverter"
     plugin
--   `PngImporter` -- @ref Trade::PngImporter "PngImporter" plugin
--   `StanfordImporter` -- @ref Trade::StanfordImporter "StanfordImporter"
+-   `PngImporter` --- @ref Trade::PngImporter "PngImporter" plugin
+-   `StanfordImporter` --- @ref Trade::StanfordImporter "StanfordImporter"
     plugin
--   `StbImageConverter` -- @ref Trade::StbImageConverter "StbImageConverter"
+-   `StbImageConverter` --- @ref Trade::StbImageConverter "StbImageConverter"
     plugin
--   `StbImageImporter` -- @ref Trade::StbImageImporter "StbImageImporter"
+-   `StbImageImporter` --- @ref Trade::StbImageImporter "StbImageImporter"
     plugin
--   `StbTrueTypeFont` -- @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin
--   `StbVorbisAudioImporter` -- @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
+-   `StbTrueTypeFont` --- @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin
+-   `StbVorbisAudioImporter` --- @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
     plugin
 
 Note that each plugin class contains more detailed information about
@@ -100,12 +103,14 @@ given library in build and use it with CMake.
 
 Example usage with specifying the plugins is:
 
-    find_package(MagnumPlugins REQUIRED FreeTypeFont PngImporter)
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED FreeTypeFont PngImporter)
+@endcode
 
 For each plugin is then defined:
 
--   `MagnumPlugins_*_FOUND` -- Whether the plugin was found
--   `MagnumPlugins::*` -- Plugin imported target
+-   `MagnumPlugins_*_FOUND` --- Whether the plugin was found
+-   `MagnumPlugins::*` --- Plugin imported target
 
 The package is found if either debug or release version of each requested
 plugin is found. If both debug and release plugins are found, proper version is
@@ -117,7 +122,7 @@ Workflows without imported targets are deprecated and the following variables
 are included just for backwards compatibility and only if
 @ref MAGNUM_BUILD_DEPRECATED is enabled:
 
--   `MAGNUMPLUGINS_*_LIBRARIES` -- Expands to `MagnumPlugins::*` target. Use
+-   `MAGNUMPLUGINS_*_LIBRARIES` --- Expands to `MagnumPlugins::*` target. Use
     `MagnumPlugins::*` target directly instead.
 
 See also @ref cmake "Magnum usage with CMake" for more information.
@@ -126,16 +131,15 @@ See also @ref cmake "Magnum usage with CMake" for more information.
 
 The `modules/` directory contains more useful CMake modules:
 
--   `FindFreetype.cmake` -- CMake module for finding FreeType. This is a forked
+-   `FindFreetype.cmake` --- CMake module for finding FreeType. This is a forked
     version of the upstream module that works properly with static builds of
     FreeType, linking all its dependencies. Copy this to your module
     directory if you built the @ref Text::FreeTypeFont plugin as static and it
     was also linked to a static FreeType build.
--   `FindHarfBuzz.cmake` -- CMake module for finding HarfBuzz. Copy this to
+-   `FindHarfBuzz.cmake` --- CMake module for finding HarfBuzz. Copy this to
     your module directory if you want to find and link to
     @ref Text::HarfBuzzFont.
 
 See also @ref cmake-modules "relevant section for the main Magnum project".
-
 */
 }
