@@ -42,7 +42,7 @@ auto PngImageConverter::doFeatures() const -> Features { return Feature::Convert
 
 Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& image) {
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
-        "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, nullptr);
+        "Trade::PngImageConverter::exportToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, nullptr);
 
     #ifndef MAGNUM_TARGET_GLES
     if(image.storage().swapBytes()) {
