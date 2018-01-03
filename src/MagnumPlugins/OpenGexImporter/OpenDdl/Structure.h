@@ -56,11 +56,6 @@ See @ref Document for more information.
     however you like without worrying about performance.
 */
 class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
-    friend Document;
-    friend Property;
-    friend Implementation::StructureIterator;
-    friend Implementation::StructureOfIterator;
-
     public:
         /**
          * @brief Equality operator
@@ -357,6 +352,13 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         template<class ...T> Implementation::StructureOfList<sizeof...(T)+1> childrenOf(Int identifier, T... identifiers) const; /**< @overload */
 
     private:
+        #ifndef DOXYGEN_GENERATING_OUTPUT /* https://bugzilla.gnome.org/show_bug.cgi?id=776986 */
+        friend Document;
+        friend Property;
+        friend Implementation::StructureIterator;
+        friend Implementation::StructureOfIterator;
+        #endif
+
         explicit Structure(const Document& document, const Document::StructureData& data) noexcept: _document{document}, _data{data} {}
 
         std::reference_wrapper<const Document> _document;

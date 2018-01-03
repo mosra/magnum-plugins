@@ -52,9 +52,6 @@ See @ref Document for more information.
 @see @ref Structure::properties()
 */
 class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Property {
-    friend Structure;
-    friend Implementation::PropertyIterator;
-
     public:
         /**
          * @brief Property identifier
@@ -90,6 +87,11 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Property {
         std::optional<Structure> asReference() const;
 
     private:
+        #ifndef DOXYGEN_GENERATING_OUTPUT /* https://bugzilla.gnome.org/show_bug.cgi?id=776986 */
+        friend Structure;
+        friend Implementation::PropertyIterator;
+        #endif
+
         explicit Property(const Document& document, std::size_t i) noexcept: _document{document}, _data{document._properties[i]} {}
 
         std::reference_wrapper<const Document> _document;
