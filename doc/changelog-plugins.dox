@@ -31,7 +31,7 @@ namespace Magnum {
 
 @section changelog-plugins-latest Changes since 2015-05 snapshot
 
-## Dependency changes
+@subsection changelog-plugins-latest-dependencies Dependency changes
 
 -   Completely removed NaCl support (see https://blog.chromium.org/2017/05/goodbye-pnacl-hello-webassembly.html)
 -   Dropped support for the old MinGW32 (only MinGW-w64 is supported now)
@@ -40,7 +40,7 @@ namespace Magnum {
 -   Dropped the `compatibility` branch and all support for MSVC 2013 and GCC <
     4.7
 
-## New features
+@subsection changelog-plugins-latest-new New features
 
 -   MSVC 2015 and MSVC 2017 support in `master` branch
 -   ANGLE ES2/ES3 support, ability to create desktop GLES contexts on Windows
@@ -64,7 +64,7 @@ namespace Magnum {
 -   Support for OpenGEX extensions in @ref Trade::OpenGexImporter "OpenGexImporter"
     using `importerState()` getters
 
-## Changes and improvements
+@subsection changelog-plugins-latest-changes Changes and improvements
 
 -   @ref Trade::OpenGexImporter "OpenGexImporter" is working on Android now
 -   @ref Trade::PngImporter "PngImporter" and @ref Trade::JpegImporter "JpegImporter"
@@ -80,7 +80,7 @@ namespace Magnum {
 -   @ref Trade::OpenGexImporter "OpenGexImporter" presents only an unique list
     of images, instead of duplicating them per texture
 
-## Build system
+@subsection changelog-plugins-latest-buildsystem Build system
 
 -   Continuous testing for Linux, macOS, Windows MSVC, Windows MinGW, Windows RT,
     iOS, Android and Emscripten on [Travis CI](https://travis-ci.org/mosra/magnum-plugins)
@@ -104,7 +104,7 @@ namespace Magnum {
 -   Unconditionally exporting symbols of all plugins to make them usable as
     dependencies
 
-## Bug fixes
+@subsection changelog-plugins-latest-bugfixes Bug fixes
 
 -   @ref Trade::OpenGexImporter "OpenGexImporter" crashed on file ending
     unexpectedly after array comma
@@ -113,7 +113,7 @@ namespace Magnum {
 -   Plugged huge data leaks in @ref Trade::StbImageImporter "StbImageImporter"
     and @ref Trade::StbImageConverter "StbImageConverter"
 
-## Potential compatibility breakages
+@subsection changelog-plugins-latest-compatibility Potential compatibility breakages
 
 -   `StbPngImageConverter` was renamed to @ref Trade::StbImageConverter "StbImageConverter",
     supporting more than just PNG now. Loading it via `StbPngImageConverter`
