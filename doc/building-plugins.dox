@@ -101,6 +101,11 @@ Note that each plugin class contains more detailed information about
 dependencies, availability on particular platform and also guide how to enable
 given library in build and use it with CMake.
 
+@section building-plugins-doc Building Plugins documentation
+
+The documentation is built as part of of the main Magnum documentation. Clone
+the projects next to each other and continue as described in @ref building-doc.
+
 @section building-plugins-arch Building ArchLinux packages
 
 In `package/archlinux` directory is currently one package for Git development
