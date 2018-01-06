@@ -25,9 +25,10 @@
 
 namespace Magnum {
 
-/** @page changelog-plugins Plugins changelog
+/** @page changelog-plugins Plugins
 
 @tableofcontents
+@m_footernavigation
 
 @section changelog-plugins-latest Changes since 2015-05 snapshot
 
@@ -88,9 +89,9 @@ namespace Magnum {
     coverage on [coveralls.io](https://coveralls.io/github/mosra/magnum-plugins);
     replacing the unmaintained and outdated Jenkins configuration
 -   Support for CMake subprojects. You can now clone Magnum Plugins into a
-    subdirectory in your project and add it using `add_subdirectory()`. The
-    `find_package()` command will then use the CMake subproject instead of
-    looking for it in system-wide locations.
+    subdirectory in your project and add it using @cmake add_subdirectory() @ce.
+    The @cmake find_package() @ce command will then use the CMake subproject
+    instead of looking for it in system-wide locations.
 -   Reworked CMake buildsystem to use the new imported target workflow, see
     @ref cmake-plugins for more information
 -   CMake targets are now organized in folders for better development
@@ -99,8 +100,11 @@ namespace Magnum {
 -   Ability to build OpenGL tests also on Windows and macOS (see `BUILD_GL_TESTS`
     @ref building-plugins "CMake option")
 -   `MACOSX_RPATH` is now enabled by default on CMake 3.0+
--   Enabling only C++ in CMake `project()` call, if possible, to speed up
-    initial CMake run
+-   Enabling only C++ in CMake @cmake project() @ce call, if possible, to speed
+    up initial CMake run
+-   Removed our copy of `FindFreetype.cmake` which attempted to link to all
+    dependencies of FreeType if it discovered that it's built as static. But
+    it got out of sync with upstream and the detection was broken on MSVC.
 -   Unconditionally exporting symbols of all plugins to make them usable as
     dependencies
 
@@ -118,6 +122,11 @@ namespace Magnum {
 -   `StbPngImageConverter` was renamed to @ref Trade::StbImageConverter "StbImageConverter",
     supporting more than just PNG now. Loading it via `StbPngImageConverter`
     continues to work.
+
+@subsection changelog-plugins-latest-documentation Documentation
+
+-   New documentation theme powered by [m.css](http://mcss.mosra.cz) and
+    related massive updates of *everything*
 
 @section changelog-plugins-2015-05 2015-05 snapshot
 
