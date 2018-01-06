@@ -26,6 +26,69 @@
 /** @dir magnum-plugins/src/MagnumPlugins
  * @brief Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
  */
+/** @dir MagnumPlugins/AnyAudioImporter
+ * @brief Plugin @ref Magnum::Audio::AnyImporter
+ */
+/** @dir MagnumPlugins/AnyImageConverter
+ * @brief Plugin @ref Magnum::Trade::AnyImageConverter
+ */
+/** @dir MagnumPlugins/AnyImageImporter
+ * @brief Plugin @ref Magnum::Trade::AnyImageImporter
+ */
+/** @dir MagnumPlugins/AnySceneImporter
+ * @brief Plugin @ref Magnum::Trade::AnySceneImporter
+ */
+/** @dir MagnumPlugins/AssimpImporter
+ * @brief Plugin @ref Magnum::Trade::AssimpImporter
+ */
+/** @dir MagnumPlugins/ColladaImporter
+ * @brief Plugin @ref Magnum::Trade::ColladaImporter
+ */
+/** @dir MagnumPlugins/DdsImporter
+ * @brief Plugin @ref Magnum::Trade::DdsImporter
+ */
+/** @dir MagnumPlugins/DevIlImageImporter
+ * @brief Plugin @ref Magnum::Trade::DevIlImageImporter
+ */
+/** @dir MagnumPlugins/DrFlacAudioImporter
+ * @brief Plugin @ref Magnum::Audio::DrFlacImporter
+ */
+/** @dir MagnumPlugins/DrWavAudioImporter
+ * @brief Plugin @ref Magnum::Audio::DrWavImporter
+ */
+/** @dir MagnumPlugins/FreeTypeFont
+ * @brief Plugin @ref Magnum::Text::FreeTypeFont
+ */
+/** @dir MagnumPlugins/HarfBuzzFont
+ * @brief Plugin @ref Magnum::Text::HarfBuzzFont
+ */
+/** @dir MagnumPlugins/JpegImporter
+ * @brief Plugin @ref Magnum::Trade::JpegImporter
+ */
+/** @dir MagnumPlugins/MiniExrImageConverter
+ * @brief Plugin @ref Magnum::Trade::MiniExrImageConverter
+ */
+/** @dir MagnumPlugins/OpenGexImporter
+ * @brief Plugin @ref Magnum::Trade::OpenGexImporter
+ */
+/** @dir MagnumPlugins/PngImageConverter
+ * @brief Plugin @ref Magnum::Trade::PngImageConverter
+ */
+/** @dir MagnumPlugins/StanfordImporter
+ * @brief Plugin @ref Magnum::Trade::StanfordImporter
+ */
+/** @dir MagnumPlugins/StbImageConverter
+ * @brief Plugin @ref Magnum::Trade::StbImageConverter
+ */
+/** @dir MagnumPlugins/StbImageImporter
+ * @brief Plugin @ref Magnum::Trade::StbImageImporter
+ */
+/** @dir MagnumPlugins/StbTrueTypeFont
+ * @brief Plugin @ref Magnum::Text::StbTrueTypeFont
+ */
+/** @dir MagnumPlugins/StbVorbisAudioImporter
+ * @brief Plugin @ref Magnum::Audio::StbVorbisImporter
+ */
 
 /** @dir magnum-plugins/src/MagnumPlugins/OpenGexImporter/OpenDdl
  * @brief Namespace @ref Magnum::OpenDdl, @ref Magnum::OpenDdl::Validation
