@@ -57,7 +57,7 @@ void PngImporterTest::gray() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     #ifndef MAGNUM_TARGET_GLES2
@@ -83,7 +83,7 @@ void PngImporterTest::rgb() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
@@ -111,7 +111,7 @@ void PngImporterTest::rgba() {
     PngImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA);
@@ -133,11 +133,11 @@ void PngImporterTest::useTwice() {
 
     /* Verify that the file is rewound for second use */
     {
-        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     } {
-        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }

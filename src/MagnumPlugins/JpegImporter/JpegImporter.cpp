@@ -64,7 +64,7 @@ void JpegImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 UnsignedInt JpegImporter::doImage2DCount() const { return 1; }
 
-std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
+Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Initialize structures */
     jpeg_decompress_struct file;
     Containers::Array<char> data;
@@ -84,7 +84,7 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
         Error() << "Trade::JpegImporter::image2D(): error while reading JPEG file";
 
         jpeg_destroy_decompress(&file);
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     /* Open file */
@@ -124,7 +124,7 @@ std::optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
 
         default:
             Error() << "Trade::JpegImporter::image2D(): unsupported color space" << file.out_color_space;
-            return std::nullopt;
+            return Containers::NullOpt;
     }
 
     /* Initialize data array, align rows to four bytes */

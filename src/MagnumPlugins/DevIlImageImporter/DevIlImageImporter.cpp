@@ -60,7 +60,7 @@ void DevIlImageImporter::doOpenData(const Containers::ArrayView<const char> data
 
 UnsignedInt DevIlImageImporter::doImage2DCount() const { return 1; }
 
-std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
+Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
     ILuint imgID = 0;
     ilGenImages(1, &imgID);
     ilBindImage(imgID);
@@ -68,7 +68,7 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
     ILboolean success = ilLoadL(IL_TYPE_UNKNOWN, _in, _in.size());
     if(success == IL_FALSE) {
         Error() << "Trade::DevIlImageImporter::image2D(): cannot open the image:" << ilGetError();
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     ILubyte *data = ilGetData();
@@ -156,7 +156,7 @@ std::optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
         success = ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
         if(success == IL_FALSE) {
             Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image: " << ilGetError();
-            return std::nullopt;
+            return Containers::NullOpt;
         }
 
         format = PixelFormat::RGBA;

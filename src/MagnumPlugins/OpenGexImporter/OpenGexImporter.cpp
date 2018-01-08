@@ -61,7 +61,7 @@ struct OpenGexImporter::Document {
     Float timeMultiplier = 1.0f;
     bool yUp = false;
 
-    std::optional<std::string> filePath;
+    Containers::Optional<std::string> filePath;
 
     std::vector<OpenDdl::Structure> nodes,
         cameras,
@@ -232,7 +232,7 @@ Int OpenGexImporter::doDefaultScene() { return 0; }
 
 UnsignedInt OpenGexImporter::doSceneCount() const { return 1; }
 
-std::optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
+Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
     /* Just gather all nodes that have no parent */
     Int i = 0;
     std::vector<UnsignedInt> children;
@@ -248,7 +248,7 @@ UnsignedInt OpenGexImporter::doCameraCount() const {
     return _d->cameras.size();
 }
 
-std::optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
+Containers::Optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
     const OpenDdl::Structure& camera = _d->cameras[id];
 
     Rad fov = Rad{Constants::nan()};
@@ -266,7 +266,7 @@ std::optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
             far = data.as<Float>()*_d->distanceMultiplier;
         else {
             Error() << "Trade::OpenGexImporter::camera(): invalid parameter";
-            return std::nullopt;
+            return Containers::NullOpt;
         }
     }
 
@@ -491,7 +491,7 @@ UnsignedInt OpenGexImporter::doLightCount() const {
     return _d->lights.size();
 }
 
-std::optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
+Containers::Optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
     const OpenDdl::Structure& light = _d->lights[id];
 
     Color3 lightColor{1.0f};
@@ -506,14 +506,14 @@ std::optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
         lightType = LightData::Type::Spot;
     else {
         Error() << "Trade::OpenGexImporter::light(): invalid type";
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     for(const OpenDdl::Structure color: light.childrenOf(OpenGex::Color)) {
         const OpenDdl::Structure floatArray = color.firstChild();
         if(floatArray.subArraySize() != 3 && floatArray.subArraySize() != 4) {
             Error() << "Trade::OpenGexImporter::light(): invalid color structure";
-            return std::nullopt;
+            return Containers::NullOpt;
         }
 
         const auto attrib = color.propertyOf(OpenGex::attrib);
@@ -521,7 +521,7 @@ std::optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
             lightColor = extractColorData<Color3>(floatArray);
         } else {
             Error() << "Trade::OpenGexImporter::light(): invalid color";
-            return std::nullopt;
+            return Containers::NullOpt;
         }
     }
 
@@ -533,7 +533,7 @@ std::optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
             lightIntensity = data.as<Float>();
         else {
             Error() << "Trade::OpenGexImporter::light(): invalid parameter";
-            return std::nullopt;
+            return Containers::NullOpt;
         }
     }
 
@@ -596,13 +596,13 @@ template<class T> std::vector<UnsignedInt> extractIndices(const OpenDdl::Structu
 
 }
 
-std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
+Containers::Optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
     const OpenDdl::Structure& mesh = _d->meshes[id].firstChildOf(OpenGex::Mesh);
 
     /* Primitive type, triangles by default */
     std::size_t indexArraySubArraySize = 3;
     MeshPrimitive primitive = MeshPrimitive::Triangles;
-    if(const std::optional<OpenDdl::Property> primitiveProperty = mesh.findPropertyOf(OpenGex::primitive)) {
+    if(const Containers::Optional<OpenDdl::Property> primitiveProperty = mesh.findPropertyOf(OpenGex::primitive)) {
         auto&& primitiveString = primitiveProperty->as<std::string>();
         if(primitiveString == "points") {
             primitive = MeshPrimitive::Points;
@@ -619,7 +619,7 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
         } else if(primitiveString != "triangles") {
             /** @todo quads */
             Error() << "Trade::OpenGexImporter::mesh3D(): unsupported primitive" << primitiveString;
-            return std::nullopt;
+            return Containers::NullOpt;
         }
     }
 
@@ -640,11 +640,11 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
            vertexArrayData.type() != OpenDdl::Type::Double)
         {
             Error() << "Trade::OpenGexImporter::mesh3D(): unsupported vertex array type" << vertexArrayData.type();
-            return std::nullopt;
+            return Containers::NullOpt;
         }
         if(vertexArrayData.subArraySize() > 4) {
             Error() << "Trade::OpenGexImporter::mesh3D(): unsupported vertex array vector size" << vertexArrayData.subArraySize();
-            return std::nullopt;
+            return Containers::NullOpt;
         }
 
         /* Vertex positions */
@@ -668,7 +668,7 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
     /* Sanity checks */
     if(positions.empty()) {
         Error() << "Trade::OpenGexImporter::mesh3D(): no vertex position array found";
-        return std::nullopt;
+        return Containers::NullOpt;
     }
     std::size_t count = 0;
     for(auto&& a: positions) {
@@ -685,17 +685,17 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
     }
     if(count == std::numeric_limits<std::size_t>::max()) {
         Error() << "Trade::OpenGexImporter::mesh3D(): mismatched vertex array sizes";
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     /* Index array */
     std::vector<UnsignedInt> indices;
-    if(const std::optional<OpenDdl::Structure> indexArray = mesh.findFirstChildOf(OpenGex::IndexArray)) {
+    if(const Containers::Optional<OpenDdl::Structure> indexArray = mesh.findFirstChildOf(OpenGex::IndexArray)) {
         const OpenDdl::Structure indexArrayData = indexArray->firstChild();
 
         if(indexArrayData.subArraySize() != indexArraySubArraySize) {
             Error() << "Trade::OpenGexImporter::mesh3D(): invalid index array subarray size" << indexArrayData.subArraySize() << "for" << primitive;
-            return std::nullopt;
+            return Containers::NullOpt;
         }
 
         switch(indexArrayData.type()) {
@@ -711,7 +711,7 @@ std::optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
             #ifndef MAGNUM_TARGET_WEBGL
             case OpenDdl::Type::UnsignedLong:
                 Error() << "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices";
-                return std::nullopt;
+                return Containers::NullOpt;
             #endif
 
             default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -789,12 +789,12 @@ std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsigned
 
 UnsignedInt OpenGexImporter::doTextureCount() const { return _d->textures.size(); }
 
-std::optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt id) {
+Containers::Optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt id) {
     const OpenDdl::Structure& texture = _d->textures[id];
 
     if(const auto texcoord = texture.findPropertyOf(OpenGex::texcoord)) if(texcoord->as<Int>() != 0) {
         Error() << "Trade::OpenGexImporter::texture(): unsupported texture coordinate set";
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     /** @todo texture coordinate transformations */
@@ -804,13 +804,13 @@ std::optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt id) {
 
 UnsignedInt OpenGexImporter::doImage2DCount() const { return _d->images.size(); }
 
-std::optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id) {
+Containers::Optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id) {
     CORRADE_ASSERT(_d->filePath, "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from filesystem", {});
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
     AnyImageImporter imageImporter{*manager()};
     if(!imageImporter.openFile(Utility::Directory::join(*_d->filePath, _d->images[id])))
-        return std::nullopt;
+        return Containers::NullOpt;
 
     return imageImporter.image2D(0);
 }

@@ -129,7 +129,7 @@ enum: std::size_t {
     NullReference = ~std::size_t{}
 };
 
-bool checkReferencePrefix(std::optional<Structure> s, Containers::ArrayView<const char> prefix) {
+bool checkReferencePrefix(Containers::Optional<Structure> s, Containers::ArrayView<const char> prefix) {
     const bool isLocal = !prefix.empty() && prefix[0] == '%';
 
     while(!prefix.empty()) {
@@ -169,7 +169,7 @@ std::size_t Document::dereference(const std::size_t originatingStructure, const 
     if(leafName.begin() == reference.begin() && reference[0] == '%') {
         const std::size_t parentIndex = _structures[originatingStructure].parent;
         std::size_t i = parentIndex == NoParent ? 0 : _structures[parentIndex].custom.firstChild;
-        for(std::optional<Structure> s{Structure{*this, _structures[i]}}; s; i = s->_data.get().next, s = s->findNext())
+        for(Containers::Optional<Structure> s{Structure{*this, _structures[i]}}; s; i = s->_data.get().next, s = s->findNext())
             if(Implementation::equals(leafName, {s->name().data(), s->name().size()})) return i;
     }
 
@@ -783,11 +783,11 @@ bool Document::validate(const Validation::Structures allowedRootStructures, cons
     return validateLevel(findFirstChild(), {allowedRootStructures.begin(), allowedRootStructures.size()}, {structures.begin(), structures.size()}, countsBuffer);
 }
 
-bool Document::validateLevel(const std::optional<Structure>& first, const Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, const Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const {
+bool Document::validateLevel(const Containers::Optional<Structure>& first, const Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, const Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const {
     counts.assign(allowedStructures.size(), 0);
 
     /* Count number of custom structures in this level */
-    for(std::optional<Structure> it = first; it; it = it->findNext()) {
+    for(Containers::Optional<Structure> it = first; it; it = it->findNext()) {
         const Structure s = *it;
 
         if(!s.isCustom() || s.identifier() == UnknownIdentifier) continue;
@@ -823,7 +823,7 @@ bool Document::validateLevel(const std::optional<Structure>& first, const Contai
     }
 
     /* Descend into substructures (breadth-first) */
-    for(std::optional<Structure> it = first; it; it = it->findNext()) {
+    for(Containers::Optional<Structure> it = first; it; it = it->findNext()) {
         const Structure s = *it;
 
         if(!s.isCustom() || s.identifier() == UnknownIdentifier) continue;
@@ -927,12 +927,12 @@ Document::StructureData::StructureData(const Int type, const std::size_t name, c
 }
 #endif
 
-std::optional<Structure> Document::findFirstChild() const {
-    return _structures.empty() ? std::nullopt : std::make_optional(Structure{*this, _structures.front()});
+Containers::Optional<Structure> Document::findFirstChild() const {
+    return _structures.empty() ? Containers::NullOpt : Containers::optional(Structure{*this, _structures.front()});
 }
 
 Structure Document::firstChild() const {
-    const std::optional<Structure> s = findFirstChild();
+    const Containers::Optional<Structure> s = findFirstChild();
     CORRADE_ASSERT(s, "OpenDdl::Document::firstChild(): the document is empty", *s);
     return *s;
 }
@@ -941,39 +941,39 @@ Implementation::StructureList Document::children() const {
     return Implementation::StructureList{findFirstChild()};
 }
 
-std::optional<Structure> Document::findFirstChildOf(const Type type) const {
-    for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
+Containers::Optional<Structure> Document::findFirstChildOf(const Type type) const {
+    for(Containers::Optional<Structure> s = findFirstChild(); s; s = s->findNext())
         if(!s->isCustom() && s->type() == type) return s;
-    return std::nullopt;
+    return Containers::NullOpt;
 }
 
-std::optional<Structure> Document::findFirstChildOf(const Int identifier) const {
-    for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
+Containers::Optional<Structure> Document::findFirstChildOf(const Int identifier) const {
+    for(Containers::Optional<Structure> s = findFirstChild(); s; s = s->findNext())
         if(s->isCustom() && s->identifier() == identifier) return s;
-    return std::nullopt;
+    return Containers::NullOpt;
 }
 
-std::optional<Structure> Document::findFirstChildOf(const std::initializer_list<Int> identifiers) const {
+Containers::Optional<Structure> Document::findFirstChildOf(const std::initializer_list<Int> identifiers) const {
     return findFirstChildOf({identifiers.begin(), identifiers.size()});
 }
 
-std::optional<Structure> Document::findFirstChildOf(const Containers::ArrayView<const Int> identifiers) const {
+Containers::Optional<Structure> Document::findFirstChildOf(const Containers::ArrayView<const Int> identifiers) const {
     /* Shortcut with less branching */
     if(identifiers.size() == 1) return findFirstChildOf(identifiers[0]);
 
-    for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
+    for(Containers::Optional<Structure> s = findFirstChild(); s; s = s->findNext())
         if(s->isCustom()) for(const Int identifier: identifiers) if(s->identifier() == identifier) return s;
-    return std::nullopt;
+    return Containers::NullOpt;
 }
 
 Structure Document::firstChildOf(const Type type) const {
-    const std::optional<Structure> s = findFirstChildOf(type);
+    const Containers::Optional<Structure> s = findFirstChildOf(type);
     CORRADE_ASSERT(s, "OpenDdl::Document::firstChildOf(): no such child", *s);
     return *s;
 }
 
 Structure Document::firstChildOf(const Int identifier) const {
-    const std::optional<Structure> s = findFirstChildOf(identifier);
+    const Containers::Optional<Structure> s = findFirstChildOf(identifier);
     CORRADE_ASSERT(s, "OpenDdl::Document::firstChildOf(): no such child", *s);
     return *s;
 }
@@ -993,18 +993,18 @@ std::size_t Structure::subArraySize() const {
     return _data.get().primitive.subArraySize;
 }
 
-std::optional<Structure> Structure::asReference() const {
+Containers::Optional<Structure> Structure::asReference() const {
     CORRADE_ASSERT(arraySize() == 1, "OpenDdl::Structure::asReference(): not a single value", {});
     CORRADE_ASSERT(type() == Type::Reference, "OpenDdl::Structure::asReference(): not of reference type", {});
     const std::size_t reference = _document.get()._references[_data.get().primitive.begin];
-    return reference == NullReference ? std::nullopt :
-        std::make_optional(Structure{_document, _document.get()._structures[reference]});
+    return reference == NullReference ? Containers::NullOpt :
+        Containers::optional(Structure{_document, _document.get()._structures[reference]});
 }
 
-Containers::Array<std::optional<Structure>> Structure::asReferenceArray() const {
+Containers::Array<Containers::Optional<Structure>> Structure::asReferenceArray() const {
     CORRADE_ASSERT(type() == Type::Reference, "OpenDdl::Structure::asReferenceArray(): not of reference type", nullptr);
 
-    Containers::Array<std::optional<Structure>> out(_data.get().primitive.size);
+    Containers::Array<Containers::Optional<Structure>> out(_data.get().primitive.size);
     for(std::size_t i = 0; i != _data.get().primitive.size; ++i)
         if(const std::size_t reference = _document.get()._references[_data.get().primitive.begin + i])
             out[i] = Structure{_document, _document.get()._structures[reference]};
@@ -1012,26 +1012,26 @@ Containers::Array<std::optional<Structure>> Structure::asReferenceArray() const 
     return out;
 }
 
-std::optional<Structure> Structure::parent() const {
-    return _data.get().parent == NoParent ? std::nullopt :
-        std::make_optional(Structure{_document, _document.get()._structures[_data.get().parent]});
+Containers::Optional<Structure> Structure::parent() const {
+    return _data.get().parent == NoParent ? Containers::NullOpt :
+        Containers::optional(Structure{_document, _document.get()._structures[_data.get().parent]});
 }
 
-std::optional<Structure> Structure::findNextOf(const Int identifier) const {
-    std::optional<Structure> s = *this;
+Containers::Optional<Structure> Structure::findNextOf(const Int identifier) const {
+    Containers::Optional<Structure> s = *this;
     while((s = s->findNext()))
         if(s->isCustom() && s->identifier() == identifier) return s;
-    return std::nullopt;
+    return Containers::NullOpt;
 }
 
-std::optional<Structure> Structure::findNextOf(const Containers::ArrayView<const Int> identifiers) const {
+Containers::Optional<Structure> Structure::findNextOf(const Containers::ArrayView<const Int> identifiers) const {
     /* Shortcut with less branching */
     if(identifiers.size() == 1) return findNextOf(identifiers[0]);
 
-    std::optional<Structure> s = *this;
+    Containers::Optional<Structure> s = *this;
     while((s = s->findNext()))
         if(s->isCustom()) for(const Int identifier: identifiers) if(s->identifier() == identifier) return s;
-    return std::nullopt;
+    return Containers::NullOpt;
 }
 
 Int Structure::propertyCount() const {
@@ -1045,8 +1045,8 @@ Implementation::PropertyList Structure::properties() const {
     return Implementation::PropertyList{_document, _data.get().custom.propertiesBegin, _data.get().custom.propertiesSize};
 }
 
-std::optional<Property> Structure::findPropertyOf(const Int identifier) const {
-    std::optional<Property> found;
+Containers::Optional<Property> Structure::findPropertyOf(const Int identifier) const {
+    Containers::Optional<Property> found;
     CORRADE_ASSERT(isCustom(), "OpenDdl::Structure::findPropertyOf(): not a custom structure", {});
     for(std::size_t i = 0; i != _data.get().custom.propertiesSize; ++i) {
         const std::size_t j = _data.get().custom.propertiesBegin + i;
@@ -1056,7 +1056,7 @@ std::optional<Property> Structure::findPropertyOf(const Int identifier) const {
 }
 
 Property Structure::propertyOf(const Int identifier) const {
-    const std::optional<Property> p = findPropertyOf(identifier);
+    const Containers::Optional<Property> p = findPropertyOf(identifier);
     CORRADE_ASSERT(p, "OpenDdl::Structure::propertyOf(): no such property", *p);
     return *p;
 }
@@ -1066,13 +1066,13 @@ bool Structure::hasChildren() const {
     return _data.get().custom.firstChild;
 }
 
-std::optional<Structure> Structure::findFirstChild() const {
+Containers::Optional<Structure> Structure::findFirstChild() const {
     CORRADE_ASSERT(isCustom(), "OpenDdl::Structure::firstChild(): not a custom structure", {});
-    return hasChildren() ? std::make_optional(Structure{_document, _document.get()._structures[_data.get().custom.firstChild]}) : std::nullopt;
+    return hasChildren() ? Containers::optional(Structure{_document, _document.get()._structures[_data.get().custom.firstChild]}) : Containers::NullOpt;
 }
 
 Structure Structure::firstChild() const {
-    const std::optional<Structure> s = findFirstChild();
+    const Containers::Optional<Structure> s = findFirstChild();
     CORRADE_ASSERT(s, "OpenDdl::Structure::firstChild(): no children", *s);
     return *s;
 }
@@ -1083,35 +1083,35 @@ Implementation::StructureList Structure::children() const {
     return Implementation::StructureList{findFirstChild()};
 }
 
-std::optional<Structure> Structure::findFirstChildOf(const Type type) const  {
-    for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
+Containers::Optional<Structure> Structure::findFirstChildOf(const Type type) const  {
+    for(Containers::Optional<Structure> s = findFirstChild(); s; s = s->findNext())
         if(!s->isCustom() && s->type() == type) return s;
-    return std::nullopt;
+    return Containers::NullOpt;
 }
 
-std::optional<Structure> Structure::findFirstChildOf(const Int identifier) const  {
-    for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
+Containers::Optional<Structure> Structure::findFirstChildOf(const Int identifier) const  {
+    for(Containers::Optional<Structure> s = findFirstChild(); s; s = s->findNext())
         if(s->isCustom() && s->identifier() == identifier) return s;
-    return std::nullopt;
+    return Containers::NullOpt;
 }
 
-std::optional<Structure> Structure::findFirstChildOf(const Containers::ArrayView<const Int> identifiers) const {
+Containers::Optional<Structure> Structure::findFirstChildOf(const Containers::ArrayView<const Int> identifiers) const {
     /* Shortcut with less branching */
     if(identifiers.size() == 1) return findFirstChildOf(identifiers[0]);
 
-    for(std::optional<Structure> s = findFirstChild(); s; s = s->findNext())
+    for(Containers::Optional<Structure> s = findFirstChild(); s; s = s->findNext())
         if(s->isCustom()) for(const Int identifier: identifiers) if(s->identifier() == identifier) return s;
-    return std::nullopt;
+    return Containers::NullOpt;
 }
 
 Structure Structure::firstChildOf(const Type type) const {
-    std::optional<Structure> const s = findFirstChildOf(type);
+    Containers::Optional<Structure> const s = findFirstChildOf(type);
     CORRADE_ASSERT(s, "OpenDdl::Structure::firstChildOf(): no such child", *s);
     return *s;
 }
 
 Structure Structure::firstChildOf(const Int identifier) const {
-    std::optional<Structure> const s = findFirstChildOf(identifier);
+    Containers::Optional<Structure> const s = findFirstChildOf(identifier);
     CORRADE_ASSERT(s, "OpenDdl::Structure::firstChildOf(): no such child", *s);
     return *s;
 }
@@ -1156,11 +1156,11 @@ bool Property::isTypeCompatibleWith(PropertyType type) const {
     CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
-std::optional<Structure> Property::asReference() const {
+Containers::Optional<Structure> Property::asReference() const {
     CORRADE_ASSERT(isTypeCompatibleWith(PropertyType::Reference), "OpenDdl::Property::asReference(): not of reference type", {});
     const std::size_t reference = _document.get()._references[_data.get().position];
-    return reference == NullReference ? std::nullopt :
-        std::make_optional(Structure{_document, _document.get()._structures[reference]});
+    return reference == NullReference ? Containers::NullOpt :
+        Containers::optional(Structure{_document, _document.get()._structures[reference]});
 }
 
 namespace Validation {

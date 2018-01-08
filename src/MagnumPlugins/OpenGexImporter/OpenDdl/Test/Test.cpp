@@ -463,13 +463,13 @@ void Test::customProperty() {
     CORRADE_COMPARE(s.name(), "%some_name");
     CORRADE_COMPARE(s.propertyCount(), 2);
 
-    std::optional<Property> p1 = s.propertyOf(BooleanProperty);
+    Containers::Optional<Property> p1 = s.propertyOf(BooleanProperty);
     CORRADE_VERIFY(p1);
     CORRADE_VERIFY(p1->isTypeCompatibleWith(PropertyType::Bool));
     CORRADE_COMPARE(p1->identifier(), BooleanProperty);
     CORRADE_COMPARE(p1->as<bool>(), true);
 
-    std::optional<Property> p2 = s.propertyOf(SomeProperty);
+    Containers::Optional<Property> p2 = s.propertyOf(SomeProperty);
     CORRADE_VERIFY(p2);
     CORRADE_VERIFY(p2->isTypeCompatibleWith(PropertyType::Float));
     CORRADE_COMPARE(p2->identifier(), SomeProperty);
@@ -495,7 +495,7 @@ void Test::customPropertyUnknown() {
     CORRADE_VERIFY(s.isCustom());
     CORRADE_COMPARE(s.propertyCount(), 1);
 
-    std::optional<Property> p1 = s.findPropertyOf(UnknownIdentifier);
+    Containers::Optional<Property> p1 = s.findPropertyOf(UnknownIdentifier);
     CORRADE_VERIFY(p1);
     CORRADE_VERIFY(p1->isTypeCompatibleWith(PropertyType::Reference));
     CORRADE_COMPARE(p1->identifier(), UnknownIdentifier);
@@ -568,11 +568,11 @@ Hierarchic %node821 {}
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
     CORRADE_VERIFY(!d.isEmpty());
 
-    std::optional<Structure> root = d.findFirstChildOf(RootStructure);
+    Containers::Optional<Structure> root = d.findFirstChildOf(RootStructure);
     CORRADE_VERIFY(root);
     CORRADE_VERIFY(!root->parent());
     CORRADE_VERIFY(root->isCustom());
-    std::optional<Property> rootSomeProperty = root->findPropertyOf(SomeProperty);
+    Containers::Optional<Property> rootSomeProperty = root->findPropertyOf(SomeProperty);
     CORRADE_VERIFY(rootSomeProperty);
     CORRADE_COMPARE(rootSomeProperty->identifier(), SomeProperty);
     CORRADE_VERIFY(rootSomeProperty->isTypeCompatibleWith(PropertyType::Float));
@@ -591,18 +591,18 @@ Hierarchic %node821 {}
     CORRADE_VERIFY(!root->findNextOf(RootStructure));
     CORRADE_VERIFY(!root->findPropertyOf(BooleanProperty));
 
-    std::optional<Structure> hierarchicA = d.findFirstChildOf(HierarchicStructure);
+    Containers::Optional<Structure> hierarchicA = d.findFirstChildOf(HierarchicStructure);
     CORRADE_VERIFY(hierarchicA);
     CORRADE_VERIFY(!hierarchicA->parent());
     CORRADE_VERIFY(hierarchicA->isCustom());
     CORRADE_COMPARE(hierarchicA->identifier(), HierarchicStructure);
     CORRADE_COMPARE(hierarchicA->name(), "%node819");
-    std::optional<Structure> hASome = hierarchicA->findFirstChildOf(SomeStructure);
+    Containers::Optional<Structure> hASome = hierarchicA->findFirstChildOf(SomeStructure);
     CORRADE_VERIFY(hASome);
     CORRADE_VERIFY(hASome->parent() == hierarchicA);
     CORRADE_VERIFY(hASome->isCustom());
     CORRADE_VERIFY(!hASome->findNext());
-    std::optional<Structure> hASomeData = hASome->findFirstChild();
+    Containers::Optional<Structure> hASomeData = hASome->findFirstChild();
     CORRADE_VERIFY(hASomeData);
     CORRADE_VERIFY(hASomeData->parent() && *hASomeData->parent() == *hASome);
     CORRADE_COMPARE(hASomeData->type(), Type::Short);
@@ -611,21 +611,21 @@ Hierarchic %node821 {}
         (Containers::Array<Short>{Containers::InPlaceInit, {0, 1, 2, 3}}),
         TestSuite::Compare::Container);
 
-    std::optional<Structure> hierarchicB = hierarchicA->findFirstChildOf(HierarchicStructure);
+    Containers::Optional<Structure> hierarchicB = hierarchicA->findFirstChildOf(HierarchicStructure);
     CORRADE_VERIFY(hierarchicB);
     CORRADE_VERIFY(hierarchicB->parent() == hierarchicA);
     CORRADE_VERIFY(hierarchicB->isCustom());
     CORRADE_COMPARE(hierarchicB->name(), "%node820");
-    std::optional<Property> hBbooleanProperty = hierarchicB->findPropertyOf(BooleanProperty);
+    Containers::Optional<Property> hBbooleanProperty = hierarchicB->findPropertyOf(BooleanProperty);
     CORRADE_VERIFY(hBbooleanProperty);
     CORRADE_VERIFY(hBbooleanProperty->isTypeCompatibleWith(PropertyType::Bool));
     CORRADE_COMPARE(hBbooleanProperty->as<bool>(), true);
-    std::optional<Structure> hBSome = hierarchicB->findFirstChildOf(SomeStructure);
+    Containers::Optional<Structure> hBSome = hierarchicB->findFirstChildOf(SomeStructure);
     CORRADE_VERIFY(hBSome);
     CORRADE_VERIFY(hBSome->parent() == hierarchicB);
     CORRADE_VERIFY(hBSome->isCustom());
     CORRADE_VERIFY(!hBSome->findNext());
-    std::optional<Structure> hBSomeData = hBSome->findFirstChild();
+    Containers::Optional<Structure> hBSomeData = hBSome->findFirstChild();
     CORRADE_VERIFY(hBSomeData);
     CORRADE_VERIFY(hBSomeData->parent() == hBSome);
     CORRADE_COMPARE(hBSomeData->type(), Type::Int);
@@ -634,7 +634,7 @@ Hierarchic %node821 {}
         (Containers::Array<Int>{Containers::InPlaceInit, {3, 4, 5, 6}}),
         TestSuite::Compare::Container);
 
-    std::optional<Structure> hierarchicC = hierarchicA->findNextOf(HierarchicStructure);
+    Containers::Optional<Structure> hierarchicC = hierarchicA->findNextOf(HierarchicStructure);
     CORRADE_VERIFY(hierarchicC);
     CORRADE_VERIFY(!hierarchicC->parent());
     CORRADE_VERIFY(hierarchicC->isCustom());
@@ -1112,11 +1112,11 @@ Root {
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::optional<Structure> b0 = d.firstChildOf(RootStructure).firstChild().asReference();
+    Containers::Optional<Structure> b0 = d.firstChildOf(RootStructure).firstChild().asReference();
     CORRADE_VERIFY(b0);
     CORRADE_COMPARE(b0->name(), "%b0");
 
-    std::optional<Structure> b1 = d.firstChildOf(HierarchicStructure).firstChild().asReference();
+    Containers::Optional<Structure> b1 = d.firstChildOf(HierarchicStructure).firstChild().asReference();
     CORRADE_VERIFY(b1);
     CORRADE_COMPARE(b1->name(), "$b1");
 }
@@ -1137,11 +1137,11 @@ Root {
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::optional<Structure> b0 = d.firstChildOf(RootStructure).propertyOf(ReferenceProperty).asReference();
+    Containers::Optional<Structure> b0 = d.firstChildOf(RootStructure).propertyOf(ReferenceProperty).asReference();
     CORRADE_VERIFY(b0);
     CORRADE_COMPARE(b0->name(), "%b0");
 
-    std::optional<Structure> b1 = d.firstChildOf(HierarchicStructure).propertyOf(ReferenceProperty).asReference();
+    Containers::Optional<Structure> b1 = d.firstChildOf(HierarchicStructure).propertyOf(ReferenceProperty).asReference();
     CORRADE_VERIFY(b1);
     CORRADE_COMPARE(b1->name(), "$b1");
 }
@@ -1201,7 +1201,7 @@ bool %local4 {}
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    Containers::Array<std::optional<Structure>> topLevel =
+    Containers::Array<Containers::Optional<Structure>> topLevel =
         d.firstChildOf(Type::Reference).asReferenceArray();
     CORRADE_COMPARE(topLevel.size(), 4);
 
@@ -1223,7 +1223,7 @@ bool %local4 {}
     CORRADE_COMPARE(topLevel[3]->type(), Type::Byte);
 
 
-    Containers::Array<std::optional<Structure>> local =
+    Containers::Array<Containers::Optional<Structure>> local =
         d.firstChildOf(RootStructure).firstChildOf(Type::Reference).asReferenceArray();
     CORRADE_COMPARE(local.size(), 3);
 

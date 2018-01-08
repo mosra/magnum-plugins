@@ -129,7 +129,7 @@ void AssimpImporterTest::camera() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
 
     CORRADE_COMPARE(importer.cameraCount(), 1);
-    std::optional<Trade::CameraData> camera = importer.camera(0);
+    Containers::Optional<Trade::CameraData> camera = importer.camera(0);
     CORRADE_VERIFY(camera);
     CORRADE_COMPARE(camera->fov(), 49.13434_degf);
     CORRADE_COMPARE(camera->near(), 0.123f);
@@ -159,7 +159,7 @@ void AssimpImporterTest::light() {
         {1.0f, 0.15f, 0.45f}};
 
     for (int i : {0, 1, 2}) {
-        std::optional<Trade::LightData> light = importer.light(i);
+        Containers::Optional<Trade::LightData> light = importer.light(i);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), types[i]);
         CORRADE_COMPARE(light->color(), colors[i]);
@@ -222,7 +222,7 @@ void AssimpImporterTest::mesh() {
 
     CORRADE_COMPARE(importer.mesh3DCount(), 1);
 
-    std::optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
@@ -256,7 +256,7 @@ void AssimpImporterTest::pointMesh() {
 
     CORRADE_COMPARE(importer.mesh3DCount(), 1);
 
-    std::optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
@@ -280,7 +280,7 @@ void AssimpImporterTest::lineMesh() {
 
     CORRADE_COMPARE(importer.mesh3DCount(), 1);
 
-    std::optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
@@ -304,7 +304,7 @@ void AssimpImporterTest::scene() {
 
     CORRADE_COMPARE(importer.sceneCount(), 1);
     CORRADE_COMPARE(importer.defaultScene(), 0);
-    std::optional<Trade::SceneData> data = importer.scene(0);
+    Containers::Optional<Trade::SceneData> data = importer.scene(0);
     CORRADE_VERIFY(data);
 
     CORRADE_COMPARE(data->children2D(), {});
@@ -346,7 +346,7 @@ void AssimpImporterTest::texture() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae")));
 
     CORRADE_COMPARE(importer.textureCount(), 1);
-    std::optional<Trade::TextureData> texture = importer.texture(0);
+    Containers::Optional<Trade::TextureData> texture = importer.texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
@@ -356,7 +356,7 @@ void AssimpImporterTest::texture() {
     CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
 
     CORRADE_COMPARE(importer.image2DCount(), 1);
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     const char pixels[] = {
@@ -380,7 +380,7 @@ void AssimpImporterTest::embeddedTexture() {
         CORRADE_SKIP("Current version of assimp cannot load embedded textures from blender files.");
 
     CORRADE_COMPARE(importer.textureCount(), 1);
-    std::optional<Trade::TextureData> texture = importer.texture(0);
+    Containers::Optional<Trade::TextureData> texture = importer.texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
@@ -390,7 +390,7 @@ void AssimpImporterTest::embeddedTexture() {
     CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
 
     CORRADE_COMPARE(importer.image2DCount(), 1);
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     const char pixels[] = {

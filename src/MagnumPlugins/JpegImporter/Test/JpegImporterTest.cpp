@@ -55,7 +55,7 @@ void JpegImporterTest::gray() {
     JpegImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     #ifndef MAGNUM_TARGET_GLES2
@@ -80,7 +80,7 @@ void JpegImporterTest::rgb() {
     JpegImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
@@ -110,11 +110,11 @@ void JpegImporterTest::useTwice() {
 
     /* Verify that the file is rewinded for second use */
     {
-        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     } {
-        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }

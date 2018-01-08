@@ -182,7 +182,7 @@ Int AssimpImporter::doDefaultScene() { return _f->_scene->mRootNode ? 0 : -1; }
 
 UnsignedInt AssimpImporter::doSceneCount() const { return _f->_scene->mRootNode ? 1 : 0; }
 
-std::optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
+Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
     const aiNode* root = _f->_scene->mRootNode;
 
     std::vector<UnsignedInt> children;
@@ -197,7 +197,7 @@ UnsignedInt AssimpImporter::doCameraCount() const {
     return _f->_scene->mNumCameras;
 }
 
-std::optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
+Containers::Optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
     const aiCamera* cam = _f->_scene->mCameras[id];
     /** @todo aspect and up vector are not used... */
     return CameraData(Rad(cam->mHorizontalFOV), cam->mClipPlaneNear, cam->mClipPlaneFar, cam);
@@ -247,7 +247,7 @@ UnsignedInt AssimpImporter::doLightCount() const {
     return _f->_scene->mNumLights;
 }
 
-std::optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
+Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
     const aiLight* l = _f->_scene->mLights[id];
 
     LightData::Type lightType;
@@ -272,7 +272,7 @@ UnsignedInt AssimpImporter::doMesh3DCount() const {
     return _f->_scene->mNumMeshes;
 }
 
-std::optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
+Containers::Optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
     const aiMesh* mesh = _f->_scene->mMeshes[id];
 
     /* Primitive */
@@ -285,7 +285,7 @@ std::optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
         primitive = MeshPrimitive::Triangles;
     } else {
         Error() << "Trade::AssimpImporter::mesh3D(): unsupported aiPrimitiveType" << mesh->mPrimitiveTypes;
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     /* Mesh data */
@@ -410,7 +410,7 @@ std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedI
 
 UnsignedInt AssimpImporter::doTextureCount() const { return _f->_textures.size(); }
 
-std::optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id) {
+Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id) {
     auto toWrapping = [](aiTextureMapMode mapMode) {
         switch (mapMode) {
             case aiTextureMapMode_Wrap:
@@ -449,7 +449,7 @@ std::optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id) {
 
 UnsignedInt AssimpImporter::doImage2DCount() const { return _f->_textures.size(); }
 
-std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
+Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
     CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
     const aiMaterial* mat;
@@ -459,7 +459,7 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
     aiString texturePath;
     if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) != AI_SUCCESS) {
         Error() << "Trade::AssimpImporter::image2D(): error getting path for texture" << id;
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     std::string path = texturePath.C_Str();
@@ -472,7 +472,7 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
         const Int index = Int(std::strtol(str, &err, 10));
         if(err == nullptr || err == str) {
             Error() << "Trade::AssimpImporter::image2D(): embedded texture path did not contain a valid integer string";
-            return std::nullopt;
+            return Containers::NullOpt;
         }
 
         const aiTexture* texture = _f->_scene->mTextures[index];
@@ -491,13 +491,13 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
                 importerName = "PngImporter";
             } else {
                 Error() << "Trade::AssimpImporter::image2D(): could not detect filetype of embedded data";
-                return std::nullopt;
+                return Containers::NullOpt;
             }
 
             std::unique_ptr<Trade::AbstractImporter> importer = manager()->loadAndInstantiate(importerName);
             if(!importer) {
                 Error() << "Trade::AssimpImporter::image2D(): could not find importer for embedded data";
-                return std::nullopt;
+                return Containers::NullOpt;
             }
 
             importer->openData(textureData);
@@ -506,7 +506,7 @@ std::optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
         /* Uncompressed image data */
         } else {
             Error() << "Trade::AssimpImporter::image2D(): uncompressed embedded image data is not supported";
-            return std::nullopt;
+            return Containers::NullOpt;
         }
 
     /* Load external texture */

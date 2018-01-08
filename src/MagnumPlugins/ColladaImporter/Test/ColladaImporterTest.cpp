@@ -124,7 +124,7 @@ void ColladaImporterTest::scene() {
 
     CORRADE_COMPARE(importer.sceneName(0), "Scene");
     CORRADE_COMPARE(importer.sceneForName("Scene"), 0);
-    std::optional<SceneData> scene = importer.scene(0);
+    Containers::Optional<SceneData> scene = importer.scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 2}));
 
@@ -205,7 +205,7 @@ void ColladaImporterTest::mesh() {
     /* Vertex only mesh */
     CORRADE_COMPARE(importer.mesh3DName(1), "MeshVertexOnly");
     CORRADE_COMPARE(importer.mesh3DForName("MeshVertexOnly"), 1);
-    std::optional<MeshData3D> mesh = importer.mesh3D(1);
+    Containers::Optional<MeshData3D> mesh = importer.mesh3D(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
@@ -395,7 +395,7 @@ void ColladaImporterTest::texture() {
     {
         CORRADE_COMPARE(importer.textureName(2), "Sampler");
         CORRADE_COMPARE(importer.textureForName("Sampler"), 2);
-        const std::optional<TextureData> texture = importer.texture(2);
+        const Containers::Optional<TextureData> texture = importer.texture(2);
         CORRADE_VERIFY(texture);
 
         CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
@@ -410,7 +410,7 @@ void ColladaImporterTest::texture() {
     {
         CORRADE_COMPARE(importer.textureName(3), "SamplerDefaults");
         CORRADE_COMPARE(importer.textureForName("SamplerDefaults"), 3);
-        const std::optional<TextureData> texture = importer.texture(3);
+        const Containers::Optional<TextureData> texture = importer.texture(3);
         CORRADE_VERIFY(texture);
 
         CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
@@ -442,7 +442,7 @@ void ColladaImporterTest::image() {
 
     CORRADE_COMPARE(importer.image2DName(1), "Image");
     CORRADE_COMPARE(importer.image2DForName("Image"), 1);
-    std::optional<ImageData2D> image = importer.image2D(1);
+    Containers::Optional<ImageData2D> image = importer.image2D(1);
     CORRADE_VERIFY(image);
 
     /* Check only size, as it is good enough proof that it is working */

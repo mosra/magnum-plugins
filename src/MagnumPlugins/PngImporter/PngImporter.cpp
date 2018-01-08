@@ -59,14 +59,14 @@ void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
-std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
+Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
-        "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, std::nullopt);
+        "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, Containers::NullOpt);
 
     /* Verify file signature */
     if(png_sig_cmp(_in, 0, Math::min<std::size_t>(8, _in.size())) != 0) {
         Error() << "Trade::PngImporter::image2D(): wrong file signature";
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     /* Structures for reading the file */
@@ -83,7 +83,7 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         Error() << "Trade::PngImporter::image2D(): error while reading PNG file";
 
         png_destroy_read_struct(&file, &info, nullptr);
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     /* Input starts right after the header */
@@ -152,7 +152,7 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported color type" << colorType;
             png_destroy_read_struct(&file, &info, nullptr);
-            return std::nullopt;
+            return Containers::NullOpt;
     }
 
     /* Convert transparency mask to alpha */
@@ -171,7 +171,7 @@ std::optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported bit depth" << bits;
             png_destroy_read_struct(&file, &info, nullptr);
-            return std::nullopt;
+            return Containers::NullOpt;
     }
 
     /* Initialize data array, align rows to four bytes */

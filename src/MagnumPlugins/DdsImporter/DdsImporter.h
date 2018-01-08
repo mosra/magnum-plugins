@@ -118,10 +118,10 @@ class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
         MAGNUM_DDSIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
 
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_DDSIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_DDSIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage3DCount() const override;
-        MAGNUM_DDSIMPORTER_LOCAL std::optional<ImageData3D> doImage3D(UnsignedInt id) override;
+        MAGNUM_DDSIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id) override;
 
     private:
         struct File;

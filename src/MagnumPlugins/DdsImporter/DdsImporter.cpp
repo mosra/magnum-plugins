@@ -749,7 +749,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 UnsignedInt DdsImporter::doImage2DCount() const {  return _f->volume ? 0 : _f->imageData.size(); }
 
-std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
+Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     const File::ImageDataOffset& dataOffset = _f->imageData[id];
 
     /* copy image data */
@@ -773,7 +773,7 @@ std::optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
 
 UnsignedInt DdsImporter::doImage3DCount() const { return _f->volume ? _f->imageData.size() : 0; }
 
-std::optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
+Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
     const File::ImageDataOffset& dataOffset = _f->imageData[id];
 
     /* copy image data */

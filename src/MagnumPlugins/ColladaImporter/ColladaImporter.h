@@ -110,7 +110,7 @@ class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doSceneForName(const std::string& name) override;
         MAGNUM_COLLADAIMPORTER_LOCAL std::string doSceneName(UnsignedInt id) override;
-        MAGNUM_COLLADAIMPORTER_LOCAL std::optional<SceneData> doScene(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
@@ -120,7 +120,7 @@ class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doMesh3DForName(const std::string& name) override;
         MAGNUM_COLLADAIMPORTER_LOCAL std::string doMesh3DName(UnsignedInt id) override;
-        MAGNUM_COLLADAIMPORTER_LOCAL std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
@@ -130,12 +130,12 @@ class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doTextureForName(const std::string& name) override;
         MAGNUM_COLLADAIMPORTER_LOCAL std::string doTextureName(UnsignedInt id) override;
-        MAGNUM_COLLADAIMPORTER_LOCAL std::optional<TextureData> doTexture(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doImage2DForName(const std::string& name) override;
         MAGNUM_COLLADAIMPORTER_LOCAL std::string doImage2DName(UnsignedInt id) override;
-        MAGNUM_COLLADAIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
         /**
          * @brief Offset of attribute in mesh index array

@@ -81,10 +81,10 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Property {
          * @brief Reference property data
          *
          * The property type must be @ref Type::Reference. Returns referenced
-         * structure or `std::nullopt` if the reference is `null`.
+         * structure or @ref Containers::Optional if the reference is `null`.
          * @see @ref isTypeCompatibleWith()
          */
-        std::optional<Structure> asReference() const;
+        Containers::Optional<Structure> asReference() const;
 
     private:
         #ifndef DOXYGEN_GENERATING_OUTPUT /* https://bugzilla.gnome.org/show_bug.cgi?id=776986 */

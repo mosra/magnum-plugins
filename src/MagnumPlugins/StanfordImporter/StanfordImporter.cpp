@@ -202,7 +202,7 @@ inline void extractQuad(std::vector<UnsignedInt>& indices, const char* const buf
 
 }
 
-std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
+Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     _in->seekg(0);
 
     /* Check file signature */
@@ -212,7 +212,7 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         header = Utility::String::rtrim(std::move(header));
         if(header != "ply") {
             Error() << "Trade::StanfordImporter::mesh3D(): invalid file signature" << header;
-            return std::nullopt;
+            return Containers::NullOpt;
         }
     }
 
@@ -229,12 +229,12 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 
             if(tokens[0] != "format") {
                 Error() << "Trade::StanfordImporter::mesh3D(): expected format line";
-                return std::nullopt;
+                return Containers::NullOpt;
             }
 
             if(tokens.size() != 3) {
                 Error() << "Trade::StanfordImporter::mesh3D(): invalid format line" << line;
-                return std::nullopt;
+                return Containers::NullOpt;
             }
 
             if(tokens[2] == "1.0") {
@@ -248,14 +248,14 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             }
 
             Error() << "Trade::StanfordImporter::mesh3D(): unsupported file format" << tokens[1] << tokens[2];
-            return std::nullopt;
+            return Containers::NullOpt;
         }
     }
 
     /* Check format line consistency */
     if(fileFormat == FileFormat{}) {
         Error() << "Trade::StanfordImporter::mesh3D(): missing format line";
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     /* Parse rest of the header */
@@ -297,7 +297,7 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
                 /* Something else */
                 } else {
                     Error() << "Trade::StanfordImporter::mesh3D(): unknown element" << tokens[1];
-                    return std::nullopt;
+                    return Containers::NullOpt;
                 }
 
             /* Element properties */
@@ -306,14 +306,14 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
                 if(propertyType == PropertyType::Vertex) {
                     if(tokens.size() != 3) {
                         Error() << "Trade::StanfordImporter::mesh3D(): invalid vertex property line" << line;
-                        return std::nullopt;
+                        return Containers::NullOpt;
                     }
 
                     /* Component type */
                     const Type componentType = parseType(tokens[1]);
                     if(componentType == Type{}) {
                         Error() << "Trade::StanfordImporter::mesh3D(): invalid vertex component type" << tokens[1];
-                        return std::nullopt;
+                        return Containers::NullOpt;
                     }
 
                     /* Component */
@@ -336,25 +336,25 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
                 } else if(propertyType == PropertyType::Face) {
                     if(tokens.size() != 5 || tokens[1] != "list" || tokens[4] != "vertex_indices") {
                         Error() << "Trade::StanfordImporter::mesh3D(): unknown face property line" << line;
-                        return std::nullopt;
+                        return Containers::NullOpt;
                     }
 
                     /* Face size type */
                     if((faceSizeType = parseType(tokens[2])) == Type{}) {
                         Error() << "Trade::StanfordImporter::mesh3D(): invalid face size type" << tokens[2];
-                        return std::nullopt;
+                        return Containers::NullOpt;
                     }
 
                     /* Face index type */
                     if((faceIndexType = parseType(tokens[3])) == Type{}) {
                         Error() << "Trade::StanfordImporter::mesh3D(): invalid face index type" << tokens[3];
-                        return std::nullopt;
+                        return Containers::NullOpt;
                     }
 
                 /* Unexpected property line */
                 } else if(propertyType != PropertyType::Ignored) {
                     Error() << "Trade::StanfordImporter::mesh3D(): unexpected property line";
-                    return std::nullopt;
+                    return Containers::NullOpt;
                 }
 
             /* Header end */
@@ -364,7 +364,7 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             /* Something else */
             } else {
                 Error() << "Trade::StanfordImporter::mesh3D(): unknown line" << line;
-                return std::nullopt;
+                return Containers::NullOpt;
             }
         }
 
@@ -374,11 +374,11 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     /* Check header consistency */
     if((componentOffsets < Vector3i{0}).any()) {
         Error() << "Trade::StanfordImporter::mesh3D(): incomplete vertex specification";
-        return std::nullopt;
+        return Containers::NullOpt;
     }
     if(faceSizeType == Type{} || faceIndexType == Type{}) {
         Error() << "Trade::StanfordImporter::mesh3D(): incomplete face specification";
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     /* Parse vertices */
@@ -411,13 +411,13 @@ std::optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             const UnsignedInt faceSize = extract<UnsignedInt>(buffer, fileFormat, faceSizeType);
             if(faceSize < 3 || faceSize > 4) {
                 Error() << "Trade::StanfordImporter::mesh3D(): unsupported face size" << faceSize;
-                return std::nullopt;
+                return Containers::NullOpt;
             }
 
             /* Parse face indices */
             if(!_in->read(buffer, faceIndexTypeSize*faceSize)) {
                 Error() << "Trade::StanfordImporter::mesh3D(): file is too short";
-                return std::nullopt;
+                return Containers::NullOpt;
             }
             faceSize == 3 ?
                 extractTriangle(indices, buffer, fileFormat, faceIndexType) :

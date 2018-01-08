@@ -84,7 +84,7 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         MAGNUM_STANFORDIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
-        MAGNUM_STANFORDIMPORTER_LOCAL std::optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
         std::unique_ptr<std::istream> _in;
 };

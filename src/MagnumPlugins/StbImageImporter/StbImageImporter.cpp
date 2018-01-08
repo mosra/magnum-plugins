@@ -65,7 +65,7 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
 
 UnsignedInt StbImageImporter::doImage2DCount() const { return 1; }
 
-std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
+Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     Vector2i size;
     Int components;
 
@@ -86,7 +86,7 @@ std::optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
 
     if(!data) {
         Error() << "Trade::StbImageImporter::image2D(): cannot open the image:" << stbi_failure_reason();
-        return std::nullopt;
+        return Containers::NullOpt;
     }
 
     PixelFormat format;

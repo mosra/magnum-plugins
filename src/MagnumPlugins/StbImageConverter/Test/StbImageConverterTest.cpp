@@ -131,7 +131,7 @@ void StbImageConverterTest::rgBmp() {
 
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openData(data));
-    std::optional<Trade::ImageData2D> converted = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -170,7 +170,7 @@ void StbImageConverterTest::grayscaleHdr() {
 
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openData(data));
-    std::optional<Trade::ImageData2D> converted = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -208,7 +208,7 @@ void StbImageConverterTest::rgbPng() {
 
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openData(data));
-    std::optional<Trade::ImageData2D> converted = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -235,7 +235,7 @@ void StbImageConverterTest::rgbaTga() {
 
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openData(data));
-    std::optional<Trade::ImageData2D> converted = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));

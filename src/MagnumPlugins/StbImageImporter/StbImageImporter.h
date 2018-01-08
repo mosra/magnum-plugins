@@ -118,7 +118,7 @@ class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
         MAGNUM_STBIMAGEIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
 
         MAGNUM_STBIMAGEIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_STBIMAGEIMPORTER_LOCAL std::optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_STBIMAGEIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
         Containers::Array<unsigned char> _in;
 };

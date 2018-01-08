@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 #include <Corrade/Containers/ArrayView.h>
-#include <MagnumExternal/Optional/optional.hpp>
+#include <Corrade/Containers/Optional.h>
 
 #include "MagnumPlugins/OpenGexImporter/visibility.h"
 #include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
@@ -141,7 +141,7 @@ traverse the document using IDs from the enums:
 @code
 for(OpenDdl::Structure geometryObject: d.childrenOf(OpenGex::GeometryObject)) {
     // Decide about primitive
-    if(std::optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
+    if(Containers::Optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
         if(!primitive->isTypeCompatibleWith(OpenDdl::Type::String)) {
             // error ...
         }
@@ -157,7 +157,7 @@ for(OpenDdl::Structure geometryObject: d.childrenOf(OpenGex::GeometryObject)) {
     }
 
     // Parse vertex array
-    if(std::optional<OpenDdl::Structure> vertexArray = geometryObject.findFirstChildOf(OpenGex::VertexArray)) {
+    if(Containers::Optional<OpenDdl::Structure> vertexArray = geometryObject.findFirstChildOf(OpenGex::VertexArray)) {
         if(!vertexArray->hasChildren() || vertexArray->firstChild().type() != OpenDdl::Type::Float) {
             // error ...
         }
@@ -240,7 +240,7 @@ instead of using @ref Structure::findFirstChildOf(),
 @ref Structure::findPropertyOf() etc. and checking return value all the time:
 @code
 // Decide about primitive
-if(std::optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
+if(Containers::Optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
     auto&& str = primitive->as<std::string>();
     if(str == "triangles") {
         // ...
@@ -322,11 +322,11 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
         /**
          * @brief Find first top-level structure in the document
          *
-         * Returns `std::nullopt` if the document is empty.
+         * Returns @ref Containers::Optional if the document is empty.
          * @see @ref isEmpty(), @ref findFirstChildOf(), @ref firstChild(),
          *      @ref Structure::findFirstChild(), @ref Structure::findNext()
          */
-        std::optional<Structure> findFirstChild() const;
+        Containers::Optional<Structure> findFirstChild() const;
 
         /**
          * @brief First top-level structure in the document
@@ -353,24 +353,24 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
         /**
          * @brief Find first custom top-level structure of given type
          *
-         * Returns `std::nullopt` if there is no such structure.
+         * Returns @ref Containers::Optional if there is no such structure.
          * @see @ref findFirstChild(), @ref firstChildOf(),
          *      @ref Structure::findFirstChildOf(), @ref Structure::findNextOf()
          */
-        std::optional<Structure> findFirstChildOf(Type type) const;
+        Containers::Optional<Structure> findFirstChildOf(Type type) const;
 
         /**
          * @brief Find first custom top-level structure of given identifier
          *
-         * Returns `std::nullopt` if there is no such structure.
+         * Returns @ref Containers::Optional if there is no such structure.
          * @see @ref findFirstChild(), @ref firstChildOf(),
          *      @ref Structure::findFirstChildOf(), @ref Structure::findNextOf()
          */
-        std::optional<Structure> findFirstChildOf(Int identifier) const;
+        Containers::Optional<Structure> findFirstChildOf(Int identifier) const;
 
         /** @overload */
-        std::optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const;
-        std::optional<Structure> findFirstChildOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
+        Containers::Optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const;
+        Containers::Optional<Structure> findFirstChildOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
 
         /**
          * @brief First custom top-level structure of given type
@@ -428,7 +428,7 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
 
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::size_t dereference(std::size_t originatingStructure, Containers::ArrayView<const char> reference) const;
 
-        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool validateLevel(const std::optional<Structure>& first, Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool validateLevel(const Containers::Optional<Structure>& first, Containers::ArrayView<const std::pair<Int, std::pair<Int, Int>>> allowedStructures, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL bool validateStructure(Structure structure, const Validation::Structure& validation, Containers::ArrayView<const Validation::Structure> structures, std::vector<Int>& counts) const;
 
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL const char* structureName(Int identifier) const;

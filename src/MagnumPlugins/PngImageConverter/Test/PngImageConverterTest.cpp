@@ -117,7 +117,7 @@ void PngImageConverterTest::data() {
 
     PngImporter importer;
     CORRADE_VERIFY(importer.openData(data));
-    std::optional<Trade::ImageData2D> converted = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -139,7 +139,7 @@ void PngImageConverterTest::data16() {
 
     PngImporter importer;
     CORRADE_VERIFY(importer.openData(data));
-    std::optional<Trade::ImageData2D> converted = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));

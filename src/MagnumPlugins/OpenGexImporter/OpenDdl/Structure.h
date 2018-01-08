@@ -141,10 +141,10 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          *
          * The structure must not be custom, must be of @ref Type::Reference
          * and the array must have exactly one item. Returns referenced
-         * structure or `std::nullopt` if the reference is `null`.
+         * structure or @ref Containers::Optional if the reference is `null`.
          * @see @ref isCustom(), @ref type(), @ref arraySize()
          */
-        std::optional<Structure> asReference() const;
+        Containers::Optional<Structure> asReference() const;
 
         /**
          * @brief Structure data array
@@ -158,52 +158,52 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          * @brief Reference structure data array
          *
          * The structure must not be custom and must be of @ref Type::Reference.
-         * For each item returns referenced structure or `std::nullopt` if the
+         * For each item returns referenced structure or @ref Containers::Optional if the
          * reference is `null`.
          * @see @ref isCustom(), @ref type(), @ref arraySize()
          */
-        Containers::Array<std::optional<Structure>> asReferenceArray() const;
+        Containers::Array<Containers::Optional<Structure>> asReferenceArray() const;
 
         /**
          * @brief Parent structure
          *
-         * Returns `std::nullopt` if the structure is top-level.
+         * Returns @ref Containers::Optional if the structure is top-level.
          */
-        std::optional<Structure> parent() const;
+        Containers::Optional<Structure> parent() const;
 
         /**
          * @brief Find next sibling structure
          *
-         * Returns `std::nullopt` if the structure is last in given level.
+         * Returns @ref Containers::Optional if the structure is last in given level.
          * @see @ref findNextOf(), @ref firstChild()
          */
-        std::optional<Structure> findNext() const {
-            return _data.get().next ? std::make_optional(Structure{_document, _document.get()._structures[_data.get().next]}) : std::nullopt;
+        Containers::Optional<Structure> findNext() const {
+            return _data.get().next ? Containers::optional(Structure{_document, _document.get()._structures[_data.get().next]}) : Containers::NullOpt;
         }
 
         /**
          * @brief Find next custom sibling structure of given identifier
          *
-         * Returns `std::nullopt` if there is no such structure.
+         * Returns @ref Containers::Optional if there is no such structure.
          * @see @ref findNext(), @ref findNextSame(), @ref findFirstChildOf()
          */
-        std::optional<Structure> findNextOf(Int identifier) const;
+        Containers::Optional<Structure> findNextOf(Int identifier) const;
 
         /** @overload */
-        std::optional<Structure> findNextOf(std::initializer_list<Int> identifiers) const {
+        Containers::Optional<Structure> findNextOf(std::initializer_list<Int> identifiers) const {
             return findNextOf({identifiers.begin(), identifiers.size()});
         }
-        std::optional<Structure> findNextOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
+        Containers::Optional<Structure> findNextOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
 
         /**
          * @brief Find next custom sibling structure of the same identifier
          *
          * The structure must be custom. Equivalent to calling
          * `structure.findNextOf(structure.identifier())`. Returns
-         * `std::nullopt` if there is no such structure.
+         * @ref Containers::Optional if there is no such structure.
          * @see @ref isCustom(), @ref findNext(), @ref findNextOf()
          */
-        std::optional<Structure> findNextSame() const { return findNextOf(identifier()); }
+        Containers::Optional<Structure> findNextSame() const { return findNextOf(identifier()); }
 
         /**
          * @brief Whether the structure has properties
@@ -238,11 +238,11 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Find custom structure property of given identifier
          *
-         * The structure must be custom. Returns `std::nullopt` if the
+         * The structure must be custom. Returns @ref Containers::Optional if the
          * structure doesn't contain any property of given identifier.
          * @see @ref isCustom(), @ref propertyOf()
          */
-        std::optional<Property> findPropertyOf(Int identifier) const;
+        Containers::Optional<Property> findPropertyOf(Int identifier) const;
 
         /**
          * @brief Custom structure property of given identifier
@@ -264,12 +264,12 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Find first child structure
          *
-         * The structure must be custom. Returns `std::nullopt` if the
+         * The structure must be custom. Returns @ref Containers::Optional if the
          * structure has no children.
          * @see @ref isCustom(), @ref firstChild(), @ref findNext(),
          *      @ref findFirstChildOf(), @ref parent()
          */
-        std::optional<Structure> findFirstChild() const;
+        Containers::Optional<Structure> findFirstChild() const;
 
         /**
          * @brief First child structure
@@ -297,26 +297,26 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Find first custom child structure of given type
          *
-         * The structure must be custom. Returns `std::nullopt` if there is no
+         * The structure must be custom. Returns @ref Containers::Optional if there is no
          * such structure.
          * @see @ref isCustom(), @ref firstChildOf()
          */
-        std::optional<Structure> findFirstChildOf(Type type) const;
+        Containers::Optional<Structure> findFirstChildOf(Type type) const;
 
         /**
          * @brief Find first custom child structure of given identifier
          *
-         * The structure must be custom. Returns `std::nullopt` if there is no
+         * The structure must be custom. Returns @ref Containers::Optional if there is no
          * such structure.
          * @see @ref isCustom(), @ref firstChildOf(), @ref findNextOf()
          */
-        std::optional<Structure> findFirstChildOf(Int identifier) const;
+        Containers::Optional<Structure> findFirstChildOf(Int identifier) const;
 
         /** @overload */
-        std::optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const {
+        Containers::Optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const {
             return findFirstChildOf({identifiers.begin(), identifiers.size()});
         }
-        std::optional<Structure> findFirstChildOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
+        Containers::Optional<Structure> findFirstChildOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
 
         /**
          * @brief First custom child structure of given type
@@ -415,7 +415,7 @@ namespace Implementation {
 
 class StructureIterator {
     public:
-        explicit StructureIterator(std::optional<Structure> item) noexcept: _item{item} {}
+        explicit StructureIterator(Containers::Optional<Structure> item) noexcept: _item{item} {}
 
         Structure operator*() const { return *_item; }
         bool operator!=(const StructureIterator& other) const {
@@ -428,25 +428,25 @@ class StructureIterator {
         }
 
     private:
-        std::optional<Structure> _item;
+        Containers::Optional<Structure> _item;
 };
 
 class StructureList {
     public:
-        explicit StructureList(std::optional<Structure> first) noexcept: _first{first} {}
+        explicit StructureList(Containers::Optional<Structure> first) noexcept: _first{first} {}
 
         StructureIterator begin() const { return StructureIterator{_first}; }
         StructureIterator cbegin() const { return begin(); }
-        StructureIterator end() const { return StructureIterator{std::nullopt}; }
+        StructureIterator end() const { return StructureIterator{Containers::NullOpt}; }
         StructureIterator cend() const { return end(); }
 
     private:
-        std::optional<Structure> _first;
+        Containers::Optional<Structure> _first;
 };
 
 class StructureOfIterator {
     public:
-        explicit StructureOfIterator(std::optional<Structure> item, Containers::ArrayView<const Int> identifiers) noexcept: _item{item}, _identifiers(identifiers) {}
+        explicit StructureOfIterator(Containers::Optional<Structure> item, Containers::ArrayView<const Int> identifiers) noexcept: _item{item}, _identifiers(identifiers) {}
 
         Structure operator*() const { return *_item; }
         bool operator!=(const StructureOfIterator& other) const {
@@ -458,23 +458,23 @@ class StructureOfIterator {
         }
 
     private:
-        std::optional<Structure> _item;
+        Containers::Optional<Structure> _item;
         Containers::ArrayView<const Int> _identifiers;
 };
 
 template<std::size_t size> class StructureOfList {
     public:
-        template<class ...T> explicit StructureOfList(std::optional<Structure> first, T... identifiers) noexcept: _first{first}, _identifiers{identifiers...} {
+        template<class ...T> explicit StructureOfList(Containers::Optional<Structure> first, T... identifiers) noexcept: _first{first}, _identifiers{identifiers...} {
             static_assert(sizeof...(T) == size, "Invalid identifier count");
         }
 
         StructureOfIterator begin() const { return StructureOfIterator{_first, _identifiers}; }
         StructureOfIterator cbegin() const { return begin(); }
-        StructureOfIterator end() const { return StructureOfIterator{std::nullopt, _identifiers}; }
+        StructureOfIterator end() const { return StructureOfIterator{Containers::NullOpt, _identifiers}; }
         StructureOfIterator cend() const { return end(); }
 
     private:
-        std::optional<Structure> _first;
+        Containers::Optional<Structure> _first;
         Int _identifiers[size];
 };
 

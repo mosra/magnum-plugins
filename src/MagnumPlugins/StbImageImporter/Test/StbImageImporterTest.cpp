@@ -67,7 +67,7 @@ void StbImageImporterTest::grayPng() {
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -87,7 +87,7 @@ void StbImageImporterTest::grayJpeg() {
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -107,7 +107,7 @@ void StbImageImporterTest::rgbPng() {
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -127,7 +127,7 @@ void StbImageImporterTest::rgbJpeg() {
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -148,7 +148,7 @@ void StbImageImporterTest::rgbHdr() {
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
@@ -166,7 +166,7 @@ void StbImageImporterTest::rgbaPng() {
     StbImageImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    std::optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -188,11 +188,11 @@ void StbImageImporterTest::useTwice() {
 
     /* Verify that the file is rewound for second use */
     {
-        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     } {
-        std::optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }

@@ -220,7 +220,7 @@ void OpenGexImporterTest::camera() {
 
     /* Everything specified */
     {
-        std::optional<Trade::CameraData> camera = importer.camera(0);
+        Containers::Optional<Trade::CameraData> camera = importer.camera(0);
         CORRADE_VERIFY(camera);
         CORRADE_COMPARE(camera->fov(), 0.97_radf);
         CORRADE_COMPARE(camera->near(), 1.5f);
@@ -228,7 +228,7 @@ void OpenGexImporterTest::camera() {
 
     /* Nothing specified (defaults) */
     } {
-        std::optional<Trade::CameraData> camera = importer.camera(1);
+        Containers::Optional<Trade::CameraData> camera = importer.camera(1);
         CORRADE_VERIFY(camera);
         CORRADE_COMPARE(camera->fov(), Rad{35.0_degf});
         CORRADE_COMPARE(camera->near(), 0.01f);
@@ -241,7 +241,7 @@ void OpenGexImporterTest::cameraMetrics() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera-metrics.ogex")));
     CORRADE_COMPARE(importer.cameraCount(), 1);
 
-    std::optional<Trade::CameraData> camera = importer.camera(0);
+    Containers::Optional<Trade::CameraData> camera = importer.camera(0);
     CORRADE_VERIFY(camera);
     CORRADE_COMPARE(camera->fov(), 0.97_radf);
     CORRADE_COMPARE(camera->near(), 1.5f);
@@ -265,7 +265,7 @@ void OpenGexImporterTest::object() {
     CORRADE_COMPARE(importer.sceneCount(), 1);
     CORRADE_COMPARE(importer.object3DCount(), 5);
 
-    std::optional<Trade::SceneData> scene = importer.scene(0);
+    Containers::Optional<Trade::SceneData> scene = importer.scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 3}));
 
@@ -605,7 +605,7 @@ void OpenGexImporterTest::light() {
 
     /* Infinite light, everything specified */
     {
-        std::optional<Trade::LightData> light = importer.light(0);
+        Containers::Optional<Trade::LightData> light = importer.light(0);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Infinite);
         CORRADE_COMPARE(light->color(), (Color3{0.7f, 1.0f, 0.1f}));
@@ -613,7 +613,7 @@ void OpenGexImporterTest::light() {
 
     /* Point light, default color */
     } {
-        std::optional<Trade::LightData> light = importer.light(1);
+        Containers::Optional<Trade::LightData> light = importer.light(1);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Point);
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 1.0f, 1.0f}));
@@ -621,7 +621,7 @@ void OpenGexImporterTest::light() {
 
     /* Spot light, default intensity */
     } {
-        std::optional<Trade::LightData> light = importer.light(2);
+        Containers::Optional<Trade::LightData> light = importer.light(2);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.1f, 0.0f, 0.1f}));
@@ -661,7 +661,7 @@ void OpenGexImporterTest::mesh() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
-    std::optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::TriangleStrip);
     CORRADE_VERIFY(!mesh->isIndexed());
@@ -686,7 +686,7 @@ void OpenGexImporterTest::meshIndexed() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
-    std::optional<Trade::MeshData3D> mesh = importer.mesh3D(1);
+    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
     CORRADE_VERIFY(mesh->isIndexed());
@@ -703,7 +703,7 @@ void OpenGexImporterTest::meshEnlargeShrink() {
     OpenGexImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
-    std::optional<Trade::MeshData3D> mesh = importer.mesh3D(2);
+    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(2);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
     CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
@@ -723,7 +723,7 @@ void OpenGexImporterTest::meshMetrics() {
     OpenGexImporter importer;
 
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-metrics.ogex")));
-    std::optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
     CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
@@ -890,7 +890,7 @@ void OpenGexImporterTest::texture() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
     CORRADE_COMPARE(importer.textureCount(), 2);
 
-    std::optional<Trade::TextureData> texture = importer.texture(1);
+    Containers::Optional<Trade::TextureData> texture = importer.texture(1);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
@@ -920,7 +920,7 @@ void OpenGexImporterTest::image() {
     CORRADE_COMPARE(importer.image2DCount(), 2);
 
     /* Check only size, as it is good enough proof that it is working */
-    std::optional<Trade::ImageData2D> image = importer.image2D(1);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(1);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
 }
@@ -954,11 +954,11 @@ void OpenGexImporterTest::imageUnique() {
 
     /* Verify mapping from textures to unique images */
     {
-        std::optional<TextureData> texture0 = importer.texture(0);
+        Containers::Optional<TextureData> texture0 = importer.texture(0);
         CORRADE_VERIFY(texture0);
         CORRADE_COMPARE_AS(texture0->image(), 2, TestSuite::Compare::LessOrEqual);
 
-        std::optional<TextureData> texture4 = importer.texture(4);
+        Containers::Optional<TextureData> texture4 = importer.texture(4);
         CORRADE_VERIFY(texture4);
         CORRADE_COMPARE(texture4->image(), texture0->image());
 
@@ -967,11 +967,11 @@ void OpenGexImporterTest::imageUnique() {
         CORRADE_VERIFY(!importer.image2D(texture0->image()));
         CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex1.tga\n");
     } {
-        std::optional<TextureData> texture1 = importer.texture(1);
+        Containers::Optional<TextureData> texture1 = importer.texture(1);
         CORRADE_VERIFY(texture1);
         CORRADE_COMPARE_AS(texture1->image(), 2, TestSuite::Compare::LessOrEqual);
 
-        std::optional<TextureData> texture3 = importer.texture(3);
+        Containers::Optional<TextureData> texture3 = importer.texture(3);
         CORRADE_VERIFY(texture3);
         CORRADE_COMPARE(texture3->image(), texture1->image());
 
@@ -980,7 +980,7 @@ void OpenGexImporterTest::imageUnique() {
         CORRADE_VERIFY(!importer.image2D(texture1->image()));
         CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex2.tga\n");
     } {
-        std::optional<TextureData> texture2 = importer.texture(2);
+        Containers::Optional<TextureData> texture2 = importer.texture(2);
         CORRADE_VERIFY(texture2);
         CORRADE_COMPARE_AS(texture2->image(), 2, TestSuite::Compare::LessOrEqual);
 
@@ -998,7 +998,7 @@ void OpenGexImporterTest::extension() {
     /* Version info */
     {
         CORRADE_VERIFY(importer.importerState());
-        std::optional<OpenDdl::Structure> version = static_cast<const OpenDdl::Document*>(importer.importerState())->findFirstChildOf(OpenGex::Extension);
+        Containers::Optional<OpenDdl::Structure> version = static_cast<const OpenDdl::Document*>(importer.importerState())->findFirstChildOf(OpenGex::Extension);
         CORRADE_VERIFY(version);
         CORRADE_VERIFY(version->findPropertyOf(OpenGex::applic));
         CORRADE_COMPARE(version->propertyOf(OpenGex::applic).as<std::string>(), "Magnum");
@@ -1014,7 +1014,7 @@ void OpenGexImporterTest::extension() {
         std::unique_ptr<ObjectData3D> cameraObject = importer.object3D(1);
         CORRADE_VERIFY(cameraObject);
         CORRADE_VERIFY(cameraObject->importerState());
-        std::optional<OpenDdl::Structure> cameraName = static_cast<const OpenDdl::Structure*>(cameraObject->importerState())->findFirstChildOf(OpenGex::Extension);
+        Containers::Optional<OpenDdl::Structure> cameraName = static_cast<const OpenDdl::Structure*>(cameraObject->importerState())->findFirstChildOf(OpenGex::Extension);
         CORRADE_VERIFY(cameraName);
         CORRADE_VERIFY(cameraName->findPropertyOf(OpenGex::applic));
         CORRADE_COMPARE(cameraName->propertyOf(OpenGex::applic).as<std::string>(), "Magnum");
@@ -1027,10 +1027,10 @@ void OpenGexImporterTest::extension() {
     /* Camera aperture */
     {
         CORRADE_COMPARE(importer.cameraCount(), 1);
-        std::optional<CameraData> camera = importer.camera(0);
+        Containers::Optional<CameraData> camera = importer.camera(0);
         CORRADE_VERIFY(camera);
         CORRADE_VERIFY(camera->importerState());
-        std::optional<OpenDdl::Structure> cameraObject = static_cast<const OpenDdl::Structure*>(camera->importerState())->findFirstChildOf(OpenGex::Extension);
+        Containers::Optional<OpenDdl::Structure> cameraObject = static_cast<const OpenDdl::Structure*>(camera->importerState())->findFirstChildOf(OpenGex::Extension);
         CORRADE_VERIFY(cameraObject);
         CORRADE_VERIFY(cameraObject->findPropertyOf(OpenGex::applic));
         CORRADE_COMPARE(cameraObject->propertyOf(OpenGex::applic).as<std::string>(), "Magnum");
