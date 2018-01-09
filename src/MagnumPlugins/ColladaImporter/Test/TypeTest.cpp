@@ -29,26 +29,26 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-struct ColladaTypeTest: TestSuite::Tester {
-    explicit ColladaTypeTest();
+struct ColladaImporterTypeTest: TestSuite::Tester {
+    explicit ColladaImporterTypeTest();
 
     void gluint();
     void glfloat();
 };
 
-ColladaTypeTest::ColladaTypeTest() {
-    addTests({&ColladaTypeTest::gluint,
-              &ColladaTypeTest::glfloat});
+ColladaImporterTypeTest::ColladaImporterTypeTest() {
+    addTests({&ColladaImporterTypeTest::gluint,
+              &ColladaImporterTypeTest::glfloat});
 }
 
-void ColladaTypeTest::gluint() {
+void ColladaImporterTypeTest::gluint() {
     CORRADE_COMPARE(Implementation::ColladaType<UnsignedInt>::fromString("123456"), 123456);
 }
 
-void ColladaTypeTest::glfloat() {
+void ColladaImporterTypeTest::glfloat() {
     CORRADE_COMPARE(Implementation::ColladaType<Float>::fromString("3.14"), 3.14f);
 }
 
 }}}
 
-CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaTypeTest)
+CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaImporterTypeTest)

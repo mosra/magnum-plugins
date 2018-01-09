@@ -30,19 +30,19 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-struct UtilityTest: TestSuite::Tester {
-    explicit UtilityTest();
+struct ColladaImporterUtilityTest: TestSuite::Tester {
+    explicit ColladaImporterUtilityTest();
 
     void parseVector();
     void parseArray();
 };
 
-UtilityTest::UtilityTest() {
-    addTests({&UtilityTest::parseVector,
-              &UtilityTest::parseArray});
+ColladaImporterUtilityTest::ColladaImporterUtilityTest() {
+    addTests({&ColladaImporterUtilityTest::parseVector,
+              &ColladaImporterUtilityTest::parseArray});
 }
 
-void UtilityTest::parseVector() {
+void ColladaImporterUtilityTest::parseVector() {
     /* Extremely spaceless */
     CORRADE_COMPARE((Implementation::Utility::parseVector<Math::Vector<1, Float>>("3.14")[0]), 3.14f);
 
@@ -67,7 +67,7 @@ void UtilityTest::parseVector() {
     CORRADE_COMPARE(from, 9);
 }
 
-void UtilityTest::parseArray() {
+void ColladaImporterUtilityTest::parseArray() {
     /* Extremely spaceless */
     CORRADE_COMPARE(Implementation::Utility::parseArray<Float>("3.14", 1), (std::vector<Float>{3.14f}));
 
@@ -81,4 +81,4 @@ void UtilityTest::parseArray() {
 
 }}}
 
-CORRADE_TEST_MAIN(Magnum::Trade::Test::UtilityTest)
+CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaImporterUtilityTest)

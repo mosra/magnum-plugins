@@ -26,7 +26,7 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-corrade_add_test(ColladaImporterTypeTest ColladaTypeTest.cpp LIBRARIES MagnumColladaImporterTestLib)
+corrade_add_test(ColladaImporterTypeTest TypeTest.cpp LIBRARIES MagnumColladaImporterTestLib)
 corrade_add_test(ColladaImporterUtilityTest UtilityTest.cpp LIBRARIES MagnumColladaImporterTestLib)
 corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp
     LIBRARIES MagnumColladaImporterTestLib
