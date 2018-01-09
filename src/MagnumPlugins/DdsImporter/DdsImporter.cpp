@@ -54,7 +54,14 @@ enum class DdsDescriptionFlag: UnsignedInt {
 };
 
 typedef Corrade::Containers::EnumSet<DdsDescriptionFlag> DdsDescriptionFlags;
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 CORRADE_ENUMSET_OPERATORS(DdsDescriptionFlags)
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 /* Direct Draw Surface pixel format */
 enum class DdsPixelFormatFlag: UnsignedInt {
@@ -65,7 +72,14 @@ enum class DdsPixelFormatFlag: UnsignedInt {
 };
 
 typedef Corrade::Containers::EnumSet<DdsPixelFormatFlag> DdsPixelFormatFlags;
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 CORRADE_ENUMSET_OPERATORS(DdsPixelFormatFlags)
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 /* Specifies the complexity of the surfaces stored */
 enum class DdsCap1: UnsignedInt {
@@ -79,7 +93,14 @@ enum class DdsCap1: UnsignedInt {
 };
 
 typedef Corrade::Containers::EnumSet<DdsCap1> DdsCaps1;
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 CORRADE_ENUMSET_OPERATORS(DdsCaps1)
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 /** Additional detail about the surfaces stored */
 enum class DdsCap2: UnsignedInt {
@@ -95,7 +116,14 @@ enum class DdsCap2: UnsignedInt {
 };
 
 typedef Corrade::Containers::EnumSet<DdsCap2> DdsCaps2;
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 CORRADE_ENUMSET_OPERATORS(DdsCaps2)
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 /*
  * Compressed texture type.
