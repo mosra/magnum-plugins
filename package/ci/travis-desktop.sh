@@ -72,4 +72,8 @@ cmake .. \
 # Otherwise the job gets killed (probably because using too much memory)
 make -j4
 make install # for Any*Importer tests
-ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer.conf" CORRADE_TEST_COLOR=ON ctest -V -E GLTest
+
+# Run ColladaImporter tests separately because I have to suppress calloc()
+# there, which would match kinda everything (since 2018-09-01 on Travis CI)
+ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer.conf" CORRADE_TEST_COLOR=ON ctest -V -E "GLTest|Collada"
+ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer-qt.conf" CORRADE_TEST_COLOR=ON ctest -V -R Collada
