@@ -75,12 +75,13 @@ Supports mono, stereo and surround sound files of the following formats:
     @ref Buffer::Format::Quad32, @ref Buffer::Format::Surround51Channel32,
     @ref Buffer::Format::Surround61Channel32 or @ref Buffer::Format::Surround71Channel32
 
-This plugin is built if `WITH_DRFLACAUDIOIMPORTER` is enabled when building
-Magnum. To use dynamic plugin, you need to load `DrFlacAudioImporter` plugin
-from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use static plugin or use this as a
-dependency of another plugin, you need to request `DrFlacAudioImporter`
-component of `MagnumPlugins` package in CMake and link to
-`MagnumPlugins::DrFlacAudioImporter`.
+This plugin depends on the @ref Audio library and is built if
+`WITH_DRFLACAUDIOIMPORTER` is enabled when building Magnum. To use as a dynamic
+plugin, you need to load the @cpp "DrFlacAudioImporter" @ce plugin from
+`MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
+dependency of another plugin with CMake, you need to request the
+`DrFlacAudioImporter` component of the `MagnumPlugins` package and link to the
+`MagnumPlugins::DrFlacAudioImporter` target.
 
 This plugins provides `FlacAudioImporter`, but note that this plugin doesn't
 handle CRC checks, corrupt or perverse FLAC streams, or broadcast streams.

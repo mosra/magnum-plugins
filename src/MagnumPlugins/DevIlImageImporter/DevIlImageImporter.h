@@ -105,11 +105,13 @@ incomplete):
 -   X Pixel Map (`*.xpm`)
 -   Doom graphics
 
-This plugin depends on **DevIL** library and is built if `WITH_DEVILIMAGEIMPORTER`
-is enabled when building Magnum Plugins. To use dynamic plugin, you need to
-load `DevIlImageImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
-plugin, you need to request `DevIlImageImporter` component of `MagnumPlugins`
-package in CMake and link to `MagnumPlugins::DevIlImageImporter`.
+This plugin depends on the @ref Trade and [DevIL](http://openil.sourceforge.net/)
+libraries and is built if `WITH_DEVILIMAGEIMPORTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, you need to load the
+@cpp "DevIlImageImporter" @ce plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use
+as a static plugin or as a dependency of another plugin with CMake, you need to
+request the `DevIlImageImporter` component of the `MagnumPlugins` package in
+CMake and link to the `MagnumPlugins::DevIlImageImporter` target.
 
 This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
 `GifImporter`, `HdrImporter`, `JpegImporter`, `Jpeg2000Importer`,

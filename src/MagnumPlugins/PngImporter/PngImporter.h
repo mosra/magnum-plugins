@@ -59,13 +59,14 @@ Supports Portable Network Graphics (`*.png`) RGB, RGBA or grayscale images with
 8 and 16 bits per channel. Palleted images and images with transparency mask
 are automatically converted to RGB(A).
 
-This plugin depends on **libPNG** library and is built if `WITH_PNGIMPORTER`
-is enabled when building Magnum Plugins. To use dynamic plugin, you need to
-load `PngImporter` plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static
-plugin, you need to request `PngImporter` component of `MagnumPlugins`
-package in CMake and link to `MagnumPlugins::PngImporter` target. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
+libraries and is built if `WITH_PNGIMPORTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, you need to load the @cpp "PngImporter" @ce
+plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a
+dependency of another plugin with CMake, you need to request the `PngImporter`
+component of the `MagnumPlugins` package and link to the
+`MagnumPlugins::PngImporter` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 The images are imported with @ref PixelType::UnsignedByte / @ref PixelType::UnsignedShort
 and @ref PixelFormat::RGB, @ref PixelFormat::RGBA or @ref PixelFormat::Red,

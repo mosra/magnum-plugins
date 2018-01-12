@@ -96,7 +96,7 @@ namespace Magnum {
     @ref cmake-plugins for more information
 -   CMake targets are now organized in folders for better development
     experience in IDEs such as Visual Studio or Xcode
--   Added @ref building-plugins-brew "Homebrew package"
+-   Added a @ref building-plugins-packages-brew "Homebrew package"
 -   Ability to build OpenGL tests also on Windows and macOS (see `BUILD_GL_TESTS`
     @ref building-plugins "CMake option")
 -   `MACOSX_RPATH` is now enabled by default on CMake 3.0+

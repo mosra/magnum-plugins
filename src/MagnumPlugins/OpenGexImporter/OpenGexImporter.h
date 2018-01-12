@@ -44,40 +44,41 @@ format.
 
 Supports importing of scene, object, camera, mesh, texture and image data.
 
-This plugin depends on @ref AnyImageImporter plugin. It is built if
-`WITH_OPENGEXIMPORTER` is enabled when building Magnum Plugins. To use dynamic
-plugin, you need to load `OpenGexImporter` plugin from
-`MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
-`OpenGexImporter` component of `MagnumPlugins` package in CMake and link to
-`MagnumPlugins::OpenGexImporter`. See @ref building-plugins, @ref cmake-plugins
-and @ref plugins for more information.
+This plugin depends on the @ref Trade library and the @ref AnyImageImporter
+plugin. It is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, you need to load
+the @cpp "OpenGexImporter" @ce plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To
+use as a static plugin or as a dependency of another plugin with CMake, you
+need to request the `OpenGexImporter` component of the `MagnumPlugins` package
+and link to the `MagnumPlugins::OpenGexImporter` target. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more information.
 
-### Behavior and limitations
+@section Trade-OpenGexImporter-limitations Behavior and limitations
 
 -   `half` data type results in parsing error.
 -   On OpenGL ES, usage of double type and on WebGL additionally also usage of
     64bit integer types results in parsing error.
 
-#### Scene hierarchy import
+@subsection Trade-OpenGexImporter-limitations-scenes Scene hierarchy import
 
 -   Object-only transformations are not supported.
 -   Additional material references after the first one for given geometry node
     are ignored.
 -   Geometry node visibility, shadow and motion blur properties are ignored.
 
-#### Light import
+@subsection Trade-OpenGexImporter-limitations-lights Light import
 
 -   Light attenuation properties are not yet supported.
 -   Light textures are not yet supported.
 
-#### Mesh import
+@subsection Trade-OpenGexImporter-limitations-meshes Mesh import
 
 -   64bit indices are not supported.
 -   Quads are not supported.
 -   Additional mesh LoDs after the first one are ignored.
 -   `w` coordinate for vertex positions and normals is ignored if present.
 
-#### Material import
+@subsection Trade-OpenGexImporter-limitations-materials Material import
 
 -   Two-sided property is ignored.
 -   All materials are imported as @ref Trade::PhongMaterialData with ambient
@@ -86,7 +87,7 @@ and @ref plugins for more information.
 -   `emission`, `opacity` and `transparency` attributes are not supported.
 -   `normal` textures are not supported.
 
-#### Texture import
+@subsection Trade-OpenGexImporter-limitations-textures Texture import
 
 -   Texture coordinate transformation is ignored.
 -   Textures using other than the first coordinate set are not supported.
@@ -98,9 +99,9 @@ and @ref plugins for more information.
     present in the image list only once. Note that only a simple string
     comparison is used without any path normalization.
 
-### Access to internal importer state
+@subsection Trade-OpenGexImporter-state Access to internal importer state
 
-Generic importer for OpenDDL files is implemented in @ref OpenDdl::Document
+Generic importer for OpenDDL files is implemented in the @ref OpenDdl::Document
 class available as part of this plugin and access to it is provided through
 importer-specific data accessors:
 

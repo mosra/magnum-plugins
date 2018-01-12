@@ -79,11 +79,13 @@ Supports DirectDraw Surface images (`*.dds`) in the following formats:
     -   `R8_(TYPELESS|UINT|SINT|UNORM|SNORM)`
     -   `A8_UNORM` (Loaded as @ref PixelFormat::Red)
 
-This plugin is built if `WITH_DDSIMPORTER` is enabled when building
-Magnum Plugins. To use dynamic plugin, you need to load `DdsImporter`
-plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to
-request `DdsImporter` component of `MagnumPlugins` package in CMake and
-link to `MagnumPlugins::DdsImporter` target. See @ref building-plugins,
+This plugin depends on the @ref Trade library and is built if
+`WITH_DDSIMPORTER` is enabled when building Magnum Plugins. To use as a dynamic
+plugin, you need to load the @cpp "DdsImporter" @ce plugin from
+`MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a dependency of
+another plugin with CMake, you need to request the `DdsImporter` component of
+the `MagnumPlugins` package in CMake and link to the
+`MagnumPlugins::DdsImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 
 The images are imported with @ref PixelType::UnsignedByte type and

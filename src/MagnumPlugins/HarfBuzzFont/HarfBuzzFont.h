@@ -61,13 +61,16 @@ namespace Magnum { namespace Text {
 Improves @ref FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz)
 text layouting capabilities, such as kerning, ligatures etc.
 
-This plugin depends on **HarfBuzz** library and @ref FreeTypeFont plugin. It
-is built if `WITH_HARFBUZZFONT` is enabled when building Magnum Plugins. To
-use dynamic plugin, you need to load `HarfBuzzFont` plugin from
-`MAGNUM_PLUGINS_FONT_DIR`. To use static plugin, you need to request
-`HarfBuzzFont` component of `MagnumPlugins` package in CMake and link to
-`MagnumPlugins::HarfBuzzFont` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
+This plugin depends on the @ref Text and
+[HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz) libraries and the
+@ref FreeTypeFont plugin. It is built if `WITH_HARFBUZZFONT` is enabled when
+building Magnum Plugins. To use as a dynamic plugin, you need to load the
+@cpp "HarfBuzzFont" @ce plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use as a
+static plugin or as a dependency of another plugin with CMake, you need to
+request the `HarfBuzzFont` component of the `MagnumPlugins` package and link to
+the `MagnumPlugins::HarfBuzzFont` target. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
     public:

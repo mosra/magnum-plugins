@@ -64,11 +64,13 @@ namespace Magnum { namespace Text {
 The font can be created either from file or from memory location of format
 supported by [FreeType](http://www.freetype.org/) library.
 
-This plugin depends on **FreeType** library and is built if `WITH_FREETYPEFONT`
-is enabled when building Magnum Plugins. To use dynamic plugin, you need to
-load `FreeTypeFont` plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use static
-plugin, you need to request `FreeTypeFont` component of `MagnumPlugins`
-package in CMake and link to `MagnumPlugins::FreeTypeFont` target.
+This plugin depends on the @ref Text and [FreeType](http://www.freetype.org)
+libraries and is built if `WITH_FREETYPEFONT` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, you need to load the
+@cpp "FreeTypeFont" @ce plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use as a
+static plugin or as a dependency of another plugin with CMake, you need to
+request the `FreeTypeFont` component of the `MagnumPlugins` package and link to
+the `MagnumPlugins::FreeTypeFont` target.
 
 This plugin provides `TrueTypeFont` plugin.
 

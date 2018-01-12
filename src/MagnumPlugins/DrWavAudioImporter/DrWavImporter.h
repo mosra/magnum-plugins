@@ -77,12 +77,12 @@ Supports mono, stereo and surround sound files of the following formats:
 -   A-Law, imported as @ref Buffer::Format::MonoALaw / @ref Buffer::Format::StereoALaw
 -   μ-Law, imported as @ref Buffer::Format::MonoMuLaw / @ref Buffer::Format::StereoMuLaw
 
-This plugin is built if `WITH_DRWAVAUDIOIMPORTER` is enabled when building
-Magnum. To use dynamic plugin, you need to load `DrWavAudioImporter` plugin
-from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use static plugin or use this as a
-dependency of another plugin, you need to request `DrWavAudioImporter`
-component of `MagnumPlugins` package in CMake and link to
-`MagnumPlugins::DrWavAudioImporter`.
+This plugin depends on the @ref Audio library and is built if
+`WITH_DRWAVAUDIOIMPORTER` is enabled when building Magnum. To use as a dynamic
+plugin, you need to load the @cpp "DrWavAudioImporter" @ce plugin from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
+dependency of another plugin with CMake, you need to request the
+`DrWavAudioImporter` component of the `MagnumPlugins` package and link to the
+`MagnumPlugins::DrWavAudioImporter` target.
 
 This plugins provides `WavAudioImporter`, but note that this plugin doesn't
 handle some errata such as JUNK blocks in strange places.

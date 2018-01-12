@@ -63,12 +63,13 @@ files are imported with @ref Buffer::Format::Mono16, @ref Buffer::Format::Stereo
 @ref Buffer::Format::Surround61Channel16 and @ref Buffer::Format::Surround71Channel16,
 respectively.
 
-This plugin is built if `WITH_STBVORBISAUDIOIMPORTER` is enabled when building
-Magnum. To use dynamic plugin, you need to load `StbVorbisAudioImporter` plugin
-from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use static plugin or use this as a
-dependency of another plugin, you need to request `StbVorbisAudioImporter`
-component of `MagnumPlugins` package in CMake and link to
-`MagnumPlugins::StbVorbisAudioImporter`.
+This plugin depends on the @ref Audio library and is built if
+`WITH_STBVORBISAUDIOIMPORTER` is enabled when building Magnum Plugins. To use
+as a dynamic plugin, you need to load the @cpp "StbVorbisAudioImporter" @ce
+plugin from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as
+a dependency of another plugin with CMake, you need to request the
+`StbVorbisAudioImporter` component of the `MagnumPlugins` package and link to
+the `MagnumPlugins::StbVorbisAudioImporter` target.
 
 This plugins provides `VorbisAudioImporter`, but note that this plugin doesn't
 have complete support for all format quirks and the performance might be worse

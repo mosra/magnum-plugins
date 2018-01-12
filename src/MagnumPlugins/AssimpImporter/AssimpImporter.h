@@ -84,11 +84,13 @@ Imports various formats using [Assimp](http://assimp.org), in particular:
 
 Supports importing of scene, object, camera, mesh, texture and image data.
 
-It is built if `WITH_ASSIMPIMPORTER` is enabled when building Magnum Plugins.
-To use dynamic plugin, you need to load `AssimpImporter` plugin from
-`MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
-`AssimpImporter` component of `MagnumPlugins` package in CMake and link to
-`MagnumPlugins::AssimpImporter`.
+This plugin depends on the @ref Trade and [Assimp](http://assimp.org) libraries
+and is built if `WITH_ASSIMPIMPORTER` is enabled when building Magnum Plugins.
+To use as a dynamic plugin, you need to load the @cpp "AssimpImporter" @ce
+plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a
+dependency of another plugin with CMake, you need to request the
+`AssimpImporter` component of the `MagnumPlugins` package and link to the
+`MagnumPlugins::AssimpImporter` target.
 
 This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
 `BvhImporter`, `CsmImporter`, `ColladaImporter`, `DirectXImporter`,
@@ -101,14 +103,14 @@ This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-### Behaviour and limitations
+@section Trade-AssimpImporter-limitations Behavior and limitations
 
-#### Material import
+@subsection Trade-AssimpImporter-limitations-materials Material import
 
 -   Only materials with shading mode `aiShadingMode_Phong` are supported
 -   Only the first diffuse/specular/ambient texture is loaded
 
-#### Light import
+@subsection Trade-AssimpImporter-limitations-lights Light import
 
 -   The following properties are ignored:
     -   Angle inner/outer cone
@@ -119,34 +121,34 @@ information.
 -   Light types other than `aiLightSource_DIRECTIONAL`, `aiLightSource_POINT`
     and `aiLightSource_SPOT` are unsupported
 
-#### Camera import
+@subsection Trade-AssimpImporter-limitations-cameras Camera import
 
 -   Aspect and up vector properties are ignored
 
-#### Mesh import
+@subsection Trade-AssimpImporter-limitations-meshes Mesh import
 
 -   Only the first mesh of a `aiNode` is loaded
 -   Only triangle meshes are loaded
 -   Texture coordinate layers with other than two components are skipped
 
-#### Texture import
+@subsection Trade-AssimpImporter-limitations-textures Texture import
 
 -   Textures with mapping mode/wrapping `aiTextureMapMode_Decal` are loaded
     with @ref Sampler::Wrapping::ClampToEdge
 -   Assimp does not appear to load any filtering information
 -   Raw embedded image data is not supported
 
-#### Bone import
+@subsection Trade-AssimpImporter-limitations-bones Bone import
 
 -   Not supported
 
-#### Animation import
+@subsection Trade-AssimpImporter-limitations-animations Animation import
 
 -   Not supported
 
-### Access to internal importer state
+@section Trade-AssimpImporter-state Access to internal importer state
 
-The assimp structures used to import data from a file can be accessed through
+The Assimp structures used to import data from a file can be accessed through
 importer state methods:
 
 -   Calling @ref importerState() returns pointer to the imported `aiScene`

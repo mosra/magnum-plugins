@@ -62,12 +62,14 @@ Creates Portable Network Graphics (`*.png`) files from images with format
 @ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::RG. Does *not*
 support non-default @ref PixelStorage::swapBytes() values.
 
-This plugin depends on **libPNG** library and is built if `WITH_PNGIMAGECONVERTER`
-is enabled when building Magnum Plugins. To use dynamic plugin, you need to load
-`PngImageConverter` plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use
-static plugin, you need to request `PngImageConverter` component of
-`MagnumPlugins` package in CMake and link to `MagnumPlugins::PngImageConverter`
-target. See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
+libraries and is built if `WITH_PNGIMAGECONVERTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, you need to load the
+@cpp "PngImageConverter" @ce plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`.
+To use as a static plugin or as a dependency of another plugin with CMake, you
+need to request the `PngImageConverter` component of the `MagnumPlugins`
+package and link to the `MagnumPlugins::PngImageConverter` target. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 */
 class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageConverter {

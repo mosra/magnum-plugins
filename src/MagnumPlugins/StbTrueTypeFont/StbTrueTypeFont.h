@@ -59,10 +59,12 @@ namespace Magnum { namespace Text {
 The font can be created either from file or from memory location of format
 supported by [StbTrueType](http://www.freetype.org/) library.
 
-This plugin is built if `WITH_STBTRUETYPEFONT` is enabled when building Magnum
-Plugins. To use dynamic plugin, you need to load `StbTrueTypeFont` plugin from
-`MAGNUM_PLUGINS_FONT_DIR`. To use static plugin, you need to request
-`StbTrueTypeFont` component of `MagnumPlugins` package in CMake and link to
+This plugin depends on the @ref Text library and is built if `WITH_STBTRUETYPEFONT`
+is enabled when building Magnum Plugins and depends on the @ref Text library.
+To use as a dynamic plugin, you need to load the @cpp "StbTrueTypeFont" @ce
+plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use as a static plugin or as a
+dependency of another plugin with CMake, you need to request the
+`StbTrueTypeFont` component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::StbTrueTypeFont` target.
 
 This plugin provides `TrueTypeFont` plugin, but please note that this plugin

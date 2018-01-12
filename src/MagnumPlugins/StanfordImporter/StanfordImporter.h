@@ -58,11 +58,13 @@ namespace Magnum { namespace Trade {
 Supports little and big endian binary format (ASCII files are not supported),
 triangle/quad meshes. Only vertex positions are imported.
 
-This plugin is built if `WITH_STANFORDIMPORTER` is enabled when building
-Magnum Plugins. To use dynamic plugin, you need to load `StanfordImporter`
-plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to
-request `StanfordImporter` component of `MagnumPlugins` package in CMake and
-link to `MagnumPlugins::StanfordImporter` target. See @ref building-plugins,
+This plugin depends on the @ref Trade library and is built if
+`WITH_STANFORDIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, you need to load the @cpp "StanfordImporter" @ce plugin from
+`MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a dependency of
+another plugin with CMake, you need to request the `StanfordImporter` component
+of the `MagnumPlugins` package and link to the
+`MagnumPlugins::StanfordImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 */
 class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {

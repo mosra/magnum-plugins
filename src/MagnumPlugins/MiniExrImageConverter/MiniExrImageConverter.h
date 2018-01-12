@@ -58,11 +58,13 @@ Supports images with format @ref PixelFormat::RGB or @ref PixelFormat::RGBA and
 type @ref PixelType::HalfFloat. Does *not* support non-default
 @ref PixelStorage::swapBytes() values.
 
-This plugin is built if `WITH_MINIEXRIMAGECONVERTER` is enabled when building
-Magnum Plugins. To use dynamic plugin, you need to load `MiniExrImageConverter`
-plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use static plugin, you need
-to request `MiniExrImageConverter` component of `MagnumPlugins` package in
-CMake and link to `MagnumPlugins::MiniExrImageConverter` target.
+This plugin depends on the @ref Trade library and is built if
+`WITH_MINIEXRIMAGECONVERTER` is enabled when building Magnum Plugins. To use as
+a dynamic plugin, you need to load the @cpp "MiniExrImageConverter" @ce plugin
+from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use as a static plugin or as a
+dependency of another plugin with CMake, you need to request the
+`MiniExrImageConverter` component of the `MagnumPlugins` package and link to
+the `MagnumPlugins::MiniExrImageConverter` target.
 
 This plugins provides `OpenExrImageConverter` plugin, but note that this plugin
 generates only uncompressed files and the performance might be worse than when

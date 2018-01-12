@@ -77,13 +77,17 @@ support non-default @ref PixelStorage::swapBytes() values, the image data must
 be tightly packed (except for PNG output, which is able to handle custom row
 strides).
 
-This plugin is built if `WITH_STBIMAGECONVERTER` is enabled when building
-Magnum Plugins. To use dynamic plugin, you need to load `*ImageConverter`
-plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use static plugin, you need
-to request `StbImageConverter` component of `MagnumPlugins` package in CMake
-and link to `MagnumPlugins::StbImageConverter` target. Note that you need to
-load one of the alias names instead of just `StbImageConverter` in order to
-specify one of the output formats.
+This plugin depends on the @ref Trade library and is built if
+`WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, you need to load one of the @cpp "StbBmpImageConverter" @ce,
+@cpp "StbHdrImageConverter" @ce, @cpp "StbPngImageConverter" @ce,
+@cpp "StbTgaImageConverter" @ce plugins from
+`MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. If you would load the plugin as just
+@cpp "StbImageConverter" @ce, it won't be able to guess the desired output
+format. To use as a static plugin or as a dependency of another plugin with
+CMake, you need to request the `StbImageConverter` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::StbImageConverter`
+target.
 
 Besides `StbBmpImageConverter`, `StbHdrImageConverter`, `StbPngImageConverter`
 and `StbTgaImageConverter` aliases this plugin provides also
@@ -105,10 +109,10 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
         enum class Format: Int {
             /* 0 used for invalid value */
 
-            Bmp = 1,    /**< @brief Output BMP images */
-            Hdr,        /**< @brief Output HDR images */
-            Png,        /**< @brief Output PNG images */
-            Tga         /**< @brief Output TGA images */
+            Bmp = 1,    /**< Output BMP images */
+            Hdr,        /**< Output HDR images */
+            Png,        /**< Output PNG images */
+            Tga         /**< Output TGA images */
         };
 
         /**

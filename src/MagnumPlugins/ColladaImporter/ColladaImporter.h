@@ -63,13 +63,27 @@ Imports the XML-based [COLLADA](https://collada.org/) format. Supports triangle
 and quad meshes, images (delegated to @ref AnyImageImporter), Phong material
 data, texture properties and scene hierarchy.
 
-This plugin depends on **Qt 4** library and @ref AnyImageImporter plugin. It is
-built if `WITH_COLLADAIMPORTER` is enabled when building Magnum Plugins. To
-use dynamic plugin, you need to load `ColladaImporter` plugin from
-`MAGNUM_PLUGINS_IMPORTER_DIR`. To use static plugin, you need to request
-`ColladaImporter` component of `MagnumPlugins` package in CMake and link to
+This plugin depends on the @ref Trade, @ref MeshTools and [Qt 4](https://qt.io)
+libraries and the @ref AnyImageImporter plugin. It is built if
+`WITH_COLLADAIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, you need to load the @cpp "ColladaImporter" @ce plugin from
+`MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a dependency of
+another plugin with CMake, you need to request the `ColladaImporter` component
+of the `MagnumPlugins` package in CMake and link to the
 `MagnumPlugins::ColladaImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
+
+@section Trade-ColladaImporter-limitations Behavior and limitations
+
+@subsection Trade-ColladaImporter-limitations-meshes Mesh import
+
+-   Only quad and triangle meshes are supported
+-   More than one polygon list in a single mesh is not supported
+-   Only vertex positions, normals and 2D texture coordinates are supported
+
+@subsection Trade-ColladaImporter-limitations-materials Material import
+
+-   Only the `COMMON` effect profile is supported
 */
 class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
     public:
@@ -94,7 +108,10 @@ class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
 
         ~ColladaImporter();
 
-        /** @brief Parse &lt;source&gt; element */
+    #ifdef DOXYGEN_GENERATING_OUTPUT
+    private:
+    #endif
+        /* Parse the &lt;source&gt; element */
         template<class T> std::vector<T> parseSource(const QString& id);
 
     private:
@@ -137,41 +154,24 @@ class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
         MAGNUM_COLLADAIMPORTER_LOCAL std::string doImage2DName(UnsignedInt id) override;
         MAGNUM_COLLADAIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
-        /**
-         * @brief Offset of attribute in mesh index array
-         * @param meshId            Mesh ID
-         * @param attribute         Attribute
-         * @param id                Attribute ID, if there are more than one
-         *      attribute with the same name
-         */
+        /* Offset of attribute in mesh index array */
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt attributeOffset(UnsignedInt meshId, const QString& attribute, UnsignedInt id = 0);
 
-        /**
-         * @brief Build attribute array
-         * @param meshId            Mesh ID
-         * @param attribute         Attribute
-         * @param id                Attribute ID, if there are more than one
-         *      attribute with the same name
-         * @param originalIndices   Array with original interleaved indices
-         * @param stride            Distance between two successive original
-         *      indices
-         * @param indexCombinations Index combinations for building the array
-         * @return Resulting array
-         */
+        /* Build attribute array */
         template<class T> MAGNUM_COLLADAIMPORTER_LOCAL std::vector<T> buildAttributeArray(UnsignedInt meshId, const QString& attribute, UnsignedInt id, UnsignedInt stride, const std::vector<UnsignedInt>& interleavedIndexArrays);
 
         MAGNUM_COLLADAIMPORTER_LOCAL std::string instanceName(const QString& name, const QString& instanceTag);
 
-        /** @brief Default namespace declaration for XQuery */
+        /* Default namespace declaration for XQuery */
         static const QString namespaceDeclaration;
 
-        /** @brief Currently opened document */
+        /* Currently opened document */
         Document* d;
 
-        /** @brief QCoreApplication needs pointer to 'argc', faking it by pointing here */
+        /* QCoreApplication needs pointer to 'argc', faking it by pointing here */
         int zero;
 
-        /** @brief QCoreApplication, which must be started in order to use QXmlQuery */
+        /* QCoreApplication, which must be started in order to use QXmlQuery */
         QCoreApplication* app;
 };
 

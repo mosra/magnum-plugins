@@ -98,10 +98,34 @@
 
 Parser for [OpenDDL](http://openddl.org) file format. See
 @ref OpenDdl::Document for more information.
+
+This library is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
+Plugins. To use this library with CMake, you need to request the `OpenGexImporter`
+component of the `MagnumPlugins` package and link to the
+`MagnumPlugins::OpenGexImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED OpenGexImporter)
+
+# ...
+target_link_libraries(your-app MagnumPlugins::OpenGexImporter)
+@endcode
 */
 /** @namespace Magnum::OpenDdl::Validation
 @brief OpenDDL document validation
 
 Validation of OpenDDL documents. See @ref OpenDdl::Document::validate() for
 more information.
+
+This library is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
+Plugins. To use this library with CMake, you need to request the `OpenGexImporter`
+component of the `MagnumPlugins` package and link to the
+`MagnumPlugins::OpenGexImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED OpenGexImporter)
+
+# ...
+target_link_libraries(your-app MagnumPlugins::OpenGexImporter)
+@endcode
 */
