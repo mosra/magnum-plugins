@@ -24,67 +24,10 @@ SUPPORTED PLATFORMS
 BUILDING MAGNUM PLUGINS
 =======================
 
-You can either use packaging scripts, which are stored in the
-[package/](https://github.com/mosra/magnum-plugins/tree/master/package)
-subdirectory, or compile and install everything manually. The building process
-is similar to Magnum itself — see the
+The building process is similar to Magnum itself. See the
 [building documentation](http://doc.magnum.graphics/magnum/building-plugins.html)
-for more comprehensive guide for building, packaging and crosscompiling.
-
-Minimal dependencies
---------------------
-
--   C++ compiler with good C++11 support. Compilers which are tested to have
-    everything needed are **GCC** >= 4.7, **Clang** >= 3.1 and **MSVC** >= 2015.
-    On Windows you can also use **MinGW-w64**.
--   **CMake** >= 2.8.12
--   **Corrade**, **Magnum** — The engine itself
-
-Compilation, installation
--------------------------
-
-The libraries can be built and installed using these commands:
-
-```sh
-git clone git://github.com/mosra/magnum-plugins && cd magnum-plugins
-mkdir -p build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=/usr ..
-make -j
-make install # sudo may be required
-```
-
-None of the libraries are built by default, see CMake options or the full
-[building documentation](http://doc.magnum.graphics/magnum/building-plugins.html)
-for more information about particular libraries and their dependencies.
-
-Building and running unit tests
--------------------------------
-
-If you want to build also unit tests (which are not built by default), pass
-`-DBUILD_TESTS=ON` to CMake. Unit tests use Corrade's TestSuite framework and
-can be run using
-
-```sh
-ctest --output-on-failure
-```
-
-in build directory. Everything should pass ;)
-
-Building documentation
-----------------------
-
-The documentation is written using [Doxygen](https://doxygen.org) and is built
-as part of of the main Magnum documentation. Clone the projects next to each
-other and build the docs using the following:
-
-```sh
-cd ../magnum # to the directory where Magnum Doxyfile is
-doxygen
-```
-
-You might need to create the `build/` directory if it doesn't exist yet.
-Resulting HTML documentation will be in the `build/doc/` directory. Snapshot of
-the documentation is [also available for online viewing](http://doc.magnum.graphics/).
+for a comprehensive guide for building, packaging and crosscompiling  — we
+provide packages for many platforms, including Windows, Linux and macOS.
 
 CONTACT & SUPPORT
 =================
