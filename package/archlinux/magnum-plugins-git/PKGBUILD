@@ -1,8 +1,8 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=magnum-plugins-git
-pkgver=snapshot.2015.05.r374.gb0a6d6e
+pkgver=snapshot.2015.05.r487.g5beea61
 pkgrel=1
-pkgdesc="Plugins for Magnum graphics engine (Git version)"
+pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (Git version)"
 arch=('i686' 'x86_64')
 url="http://magnum.graphics"
 license=('MIT')

@@ -2,7 +2,7 @@
 pkgname=emscripten-magnum-plugins
 pkgver=dev
 pkgrel=1
-pkgdesc="Plugins for Magnum OpenGL graphics engine (Emscripten)"
+pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (Emscripten)"
 arch=('any')
 url="http://magnum.graphics"
 license=('MIT')

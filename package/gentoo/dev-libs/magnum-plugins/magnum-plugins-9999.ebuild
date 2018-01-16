@@ -8,7 +8,7 @@ EGIT_REPO_URI="git://github.com/mosra/magnum-plugins.git"
 
 inherit cmake-utils git-r3
 
-DESCRIPTION="Plugins for Magnum OpenGL graphics engine"
+DESCRIPTION="Plugins for the Magnum C++11/C++14 graphics engine"
 HOMEPAGE="http://magnum.graphics"
 
 LICENSE="MIT"

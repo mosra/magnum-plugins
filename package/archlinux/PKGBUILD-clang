@@ -2,7 +2,7 @@
 pkgname=magnum-plugins
 pkgver=dev.clang
 pkgrel=1
-pkgdesc="Plugins for Magnum OpenGL graphics engine (built with clang)"
+pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (built with clang)"
 arch=('i686' 'x86_64')
 url="http://magnum.graphics"
 license=('MIT')

@@ -2,7 +2,7 @@
 pkgname=emscripten-magnum-plugins
 pkgver=dev.wasm.webgl2
 pkgrel=1
-pkgdesc="Plugins for Magnum OpenGL graphics engine (Emscripten WebGL 2, wasm)"
+pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (Emscripten WebGL 2, wasm)"
 arch=('any')
 url="http://magnum.graphics"
 license=('MIT')
