@@ -51,6 +51,9 @@
 #include <assimp/DefaultLogger.hpp>
 #endif
 #include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 #include <assimp/version.h>
 
 #include "configure.h"
@@ -86,6 +89,9 @@ struct AssimpImporterTest: public TestSuite::Tester {
     void scene();
     void texture();
     void embeddedTexture();
+
+    void openState();
+    void openStateTexture();
 };
 
 AssimpImporterTest::AssimpImporterTest() {
@@ -108,7 +114,10 @@ AssimpImporterTest::AssimpImporterTest() {
 
               &AssimpImporterTest::scene,
               &AssimpImporterTest::texture,
-              &AssimpImporterTest::embeddedTexture});
+              &AssimpImporterTest::embeddedTexture,
+
+              &AssimpImporterTest::openState,
+              &AssimpImporterTest::openStateTexture});
 }
 
 void AssimpImporterTest::open() {
@@ -378,6 +387,83 @@ void AssimpImporterTest::embeddedTexture() {
     /* @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 303)
         CORRADE_SKIP("Current version of assimp cannot load embedded textures from blender files.");
+
+    CORRADE_COMPARE(importer.textureCount(), 1);
+    Containers::Optional<Trade::TextureData> texture = importer.texture(0);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture->wrapping(),
+        Array3D<Sampler::Wrapping>(Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::ClampToEdge));
+    CORRADE_COMPARE(texture->image(), 0);
+    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
+
+    CORRADE_COMPARE(importer.image2DCount(), 1);
+    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i{1});
+    const char pixels[] = {
+        '\xb3', '\x69', '\x00', '\xff'
+    };
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::openState() {
+    Assimp::Importer _importer;
+    const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
+    CORRADE_VERIFY(sc != nullptr);
+
+    AssimpImporter importer;
+    importer.openState(sc);
+    CORRADE_VERIFY(importer.isOpened());
+
+    CORRADE_COMPARE(importer.sceneCount(), 1);
+    CORRADE_COMPARE(importer.defaultScene(), 0);
+    Containers::Optional<Trade::SceneData> data = importer.scene(0);
+    CORRADE_VERIFY(data);
+
+    CORRADE_COMPARE(data->children2D(), {});
+    CORRADE_COMPARE(data->children3D(), {1});
+
+    std::unique_ptr<Trade::ObjectData3D> explicitRootObject = importer.object3D(1);
+    CORRADE_COMPARE(explicitRootObject->children(), {2});
+    CORRADE_COMPARE(explicitRootObject->instanceType(), ObjectInstanceType3D::Empty);
+    CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
+
+    std::unique_ptr<Trade::ObjectData3D> childObject = importer.object3D(2);
+    CORRADE_COMPARE(childObject->transformation(),
+                    Matrix4({0.813798f, -0.44097f, 0.378522f, 1.0f},
+                            {0.469846f, 0.882564f, 0.0180283f, 2.0f},
+                            {-0.34202f, 0.163176f, 0.925417f, 3.0f},
+                            {0.0f, 0.0f, 0.0f, 1.0f}));
+
+    CORRADE_COMPARE(importer.object3DForName("Root"), 1);
+    CORRADE_COMPARE(importer.object3DForName("Child"), 2);
+    CORRADE_COMPARE(importer.object3DName(1), "Root");
+    CORRADE_COMPARE(importer.object3DName(2), "Child");
+
+    CORRADE_COMPARE(importer.object3DForName("Ghost"), -1);
+}
+
+void AssimpImporterTest::openStateTexture() {
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    /* @todo Possibly works with earlier versions (definitely not 3.0) */
+    if(version < 303)
+        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+
+
+    PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
+
+    if(manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Assimp::Importer _importer;
+    const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
+    CORRADE_VERIFY(sc != nullptr);
+
+    AssimpImporter importer{manager};
+    importer.openState(sc, ASSIMPIMPORTER_TEST_DIR);
+    CORRADE_VERIFY(importer.isOpened());
 
     CORRADE_COMPARE(importer.textureCount(), 1);
     Containers::Optional<Trade::TextureData> texture = importer.texture(0);

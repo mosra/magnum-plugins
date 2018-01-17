@@ -163,6 +163,8 @@ importer state methods:
     -   @ref LightData::importerState() returns `aiLight`
     -   @ref ImageData2D::importerState() may return `aiTexture`, if texture was embedded
         into the loaded file.
+-   @ref openState() expects a pointer to an Assimp scene (i.e., `const aiScene*`)
+    and optionally a path (in order to be able to load textures, if needed)
 
 @todo There are more formats mentioned at http://assimp.sourceforge.net/main_features_formats.html, add aliases for them?
 */
@@ -196,6 +198,7 @@ class MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter
 
         MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL void doOpenState(const void* state, const std::string& filePath) override;
         MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL void doClose() override;
 

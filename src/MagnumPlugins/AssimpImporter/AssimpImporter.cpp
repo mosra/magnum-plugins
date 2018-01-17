@@ -85,7 +85,7 @@ AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const st
 
 AssimpImporter::~AssimpImporter() = default;
 
-auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData; }
+auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData | Feature::OpenState; }
 
 bool AssimpImporter::doIsOpened() const { return _f && _f->_scene; }
 
@@ -162,6 +162,14 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
             _f->_nodeInstances[lightNode] = {ObjectInstanceType3D::Light, i};
         }
     }
+}
+
+void AssimpImporter::doOpenState(const void* state, const std::string& filePath) {
+    _f.reset(new File);
+    _f->_scene = static_cast<const aiScene*>(state);
+    _f->_filePath = filePath;
+
+    doOpenData({});
 }
 
 void AssimpImporter::doOpenFile(const std::string& filename) {
