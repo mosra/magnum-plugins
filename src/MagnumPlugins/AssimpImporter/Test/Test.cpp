@@ -186,7 +186,7 @@ void AssimpImporterTest::lightUndefined() {
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 303)
+    if(version < 302)
         CORRADE_SKIP("Current version of assimp cannot load lights with undefined light type yet.");
 
     std::ostringstream out;
@@ -215,7 +215,7 @@ void AssimpImporterTest::material() {
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* Ancient assimp version add "-material" suffix */
-    if(version < 303) {
+    if(version < 302) {
         CORRADE_COMPARE(importer.materialForName("Material-material"), 0);
         CORRADE_COMPARE(importer.materialName(0), "Material-material");
     } else {
@@ -248,7 +248,7 @@ void AssimpImporterTest::mesh() {
             {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}}));
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* Skip for assimp < 3.3, which loads some incorrect alpha value for the last color */
-    if(version >= 303) {
+    if(version >= 302) {
         CORRADE_COMPARE(mesh->colors(0), (std::vector<Color4>{
             {1.0f, 0.25f, 0.24f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.1f, 0.2f, 0.3f, 1.0f}}));
     }
@@ -342,7 +342,7 @@ void AssimpImporterTest::scene() {
 void AssimpImporterTest::texture() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 303)
+    if(version < 302)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
 
@@ -385,7 +385,7 @@ void AssimpImporterTest::embeddedTexture() {
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 303)
+    if(version < 302)
         CORRADE_SKIP("Current version of assimp cannot load embedded textures from blender files.");
 
     CORRADE_COMPARE(importer.textureCount(), 1);
@@ -448,7 +448,7 @@ void AssimpImporterTest::openState() {
 void AssimpImporterTest::openStateTexture() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 303)
+    if(version < 302)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
 
