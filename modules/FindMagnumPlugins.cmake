@@ -270,16 +270,34 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # FreeTypeFont plugin dependencies
         if(_component STREQUAL FreeTypeFont)
             find_package(Freetype)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
+            # Need to handle special cases where both debug and release
+            # libraries are available (in form of debug;A;optimized;B in
+            # FREETYPE_LIBRARIES), thus appending them one by one
+            if(FREETYPE_LIBRARY_DEBUG AND FREETYPE_LIBRARY_RELEASE)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${FREETYPE_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${FREETYPE_LIBRARY_DEBUG}>")
+            else()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
+            endif()
         endif()
 
         # HarfBuzzFont plugin dependencies
         if(_component STREQUAL HarfBuzzFont)
             find_package(Freetype)
             find_package(HarfBuzz)
+            # Need to handle special cases where both debug and release
+            # libraries are available (in form of debug;A;optimized;B in
+            # FREETYPE_LIBRARIES), thus appending them one by one
+            if(FREETYPE_LIBRARY_DEBUG AND FREETYPE_LIBRARY_RELEASE)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${FREETYPE_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${FREETYPE_LIBRARY_DEBUG}>")
+            else()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
+            endif()
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES} ${HARFBUZZ_LIBRARIES})
+                INTERFACE_LINK_LIBRARIES ${HARFBUZZ_LIBRARIES})
         endif()
 
         # JpegImporter plugin dependencies
@@ -295,15 +313,31 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # PngImageConverter plugin dependencies
         if(_component STREQUAL PngImageConverter)
             find_package(PNG)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES ${PNG_LIBRARIES})
+            # Need to handle special cases where both debug and release
+            # libraries are available (in form of debug;A;optimized;B in
+            # PNG_LIBRARIES), thus appending them one by one
+            if(PNG_LIBRARY_DEBUG AND PNG_LIBRARY_RELEASE)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${PNG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${PNG_LIBRARY_DEBUG}>")
+            else()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES ${PNG_LIBRARIES})
+            endif()
         endif()
 
         # PngImporter plugin dependencies
         if(_component STREQUAL PngImporter)
             find_package(PNG)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES ${PNG_LIBRARIES})
+            # Need to handle special cases where both debug and release
+            # libraries are available (in form of debug;A;optimized;B in
+            # PNG_LIBRARIES), thus appending them one by one
+            if(PNG_LIBRARY_DEBUG AND PNG_LIBRARY_RELEASE)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${PNG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${PNG_LIBRARY_DEBUG}>")
+            else()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES ${PNG_LIBRARIES})
+            endif()
         endif()
 
         # StanfordImporter has no dependencies
