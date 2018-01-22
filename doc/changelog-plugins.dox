@@ -107,6 +107,8 @@ namespace Magnum {
     it got out of sync with upstream and the detection was broken on MSVC.
 -   Unconditionally exporting symbols of all plugins to make them usable as
     dependencies
+-   `FindMagnumPlugins.cmake` now correctly handles cases where both debug and
+    release libraries of libPNG or FreeType are available
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
@@ -127,6 +129,8 @@ namespace Magnum {
 
 -   New documentation theme powered by [m.css](http://mcss.mosra.cz) and
     related massive updates of *everything*
+-   The @ref building-examples documentation now prefers package installation
+    instead of manual build
 
 @section changelog-plugins-2015-05 2015-05 snapshot
 
