@@ -1,0 +1,122 @@
+{
+    "accessors" : [
+        {
+            "bufferView" : 0, 
+            "componentType" : 5123, 
+            "count" : 3, 
+            "max" : [
+                2
+            ], 
+            "min" : [
+                0
+            ], 
+            "type" : "SCALAR"
+        }, 
+        {
+            "bufferView" : 1, 
+            "componentType" : 5126, 
+            "count" : 3, 
+            "max" : [
+                0.6856166124343872, 
+                1.0624043941497803, 
+                0.291010320186615
+            ], 
+            "min" : [
+                -0.5848886370658875, 
+                -1.0295608043670654, 
+                -0.2770037055015564
+            ], 
+            "type" : "VEC3"
+        }, 
+        {
+            "bufferView" : 2, 
+            "componentType" : 5126, 
+            "count" : 3, 
+            "max" : [
+                0.4390820562839508, 
+                0.06416241824626923, 
+                0.8961530327796936
+            ], 
+            "min" : [
+                0.4390820562839508, 
+                0.06416241824626923, 
+                0.8961530327796936
+            ], 
+            "type" : "VEC3"
+        }
+    ], 
+    "asset" : {
+        "generator" : "Khronos Blender glTF 2.0 exporter", 
+        "version" : "2.0"
+    }, 
+    "bufferViews" : [
+        {
+            "buffer" : 0, 
+            "byteLength" : 6, 
+            "byteOffset" : 0, 
+            "target" : 34963
+        }, 
+        {
+            "buffer" : 0, 
+            "byteLength" : 36, 
+            "byteOffset" : 8, 
+            "target" : 34962
+        }, 
+        {
+            "buffer" : 0, 
+            "byteLength" : 36, 
+            "byteOffset" : 44, 
+            "target" : 34962
+        }
+    ], 
+    "buffers" : [
+        {
+            "byteLength" : 80, 
+            "uri" : "mesh.bin"
+        }
+    ], 
+    "meshes" : [
+        {
+            "name" : "Mesh", 
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2, 
+                        "POSITION" : 1
+                    }, 
+                    "indices" : 0
+                }
+            ]
+        }
+    ], 
+    "nodes" : [
+        {
+            "mesh" : 0, 
+            "name" : "Mesh"
+        }, 
+        {
+            "name" : "Sun", 
+            "rotation" : [
+                -0.17890803515911102, 
+                0.2391258329153061, 
+                -0.10653585195541382, 
+                0.9483992457389832
+            ], 
+            "translation" : [
+                1.6413490772247314, 
+                1.3488967418670654, 
+                1.5866162776947021
+            ]
+        }
+    ], 
+    "scene" : 0, 
+    "scenes" : [
+        {
+            "name" : "Scene", 
+            "nodes" : [
+                1, 
+                0
+            ]
+        }
+    ]
+}

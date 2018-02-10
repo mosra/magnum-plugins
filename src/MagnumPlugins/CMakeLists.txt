@@ -121,3 +121,7 @@ endif()
 if(WITH_STBVORBISAUDIOIMPORTER)
     add_subdirectory(StbVorbisAudioImporter)
 endif()
+
+if(WITH_TINYGLTFIMPORTER)
+    add_subdirectory(TinyGltfImporter)
+endif()

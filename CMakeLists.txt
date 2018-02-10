@@ -59,7 +59,7 @@ find_package(Magnum REQUIRED)
 include(CMakeDependentOption)
 
 # Plugins to build
-cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER;NOT WITH_OPENGEXIMPORTER;NOT WITH_ASSIMPIMPORTER" ON)
+cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER;NOT WITH_OPENGEXIMPORTER;NOT WITH_ASSIMPIMPORTER;NOT WITH_TINYGLTFIMPORTER" ON)
 option(WITH_ANYAUDIOIMPORTER "Build AnyAudioImporter plugin" OFF)
 option(WITH_ANYIMAGECONVERTER "Build AnyImageConverter plugin" OFF)
 option(WITH_ANYSCENEIMPORTER "Build AnySceneImporter plugin" OFF)
@@ -78,7 +78,7 @@ option(WITH_PNGIMAGECONVERTER "Build PngImageConverter plugin" OFF)
 option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
 option(WITH_STANFORDIMPORTER "Build StanfordImporter plugin" OFF)
 option(WITH_STBIMAGECONVERTER "Build StbImageConverter plugin" OFF)
-option(WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
+cmake_dependent_option(WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF "NOT WITH_TINYGLTFIMPORTER" ON)
 option(WITH_STBTRUETYPEFONT "Build StbTrueTypeFont plugin" OFF)
 option(WITH_STBVORBISAUDIOIMPORTER "Build StbVorbisAudioImporter plugin" OFF)
 

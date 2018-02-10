@@ -1,0 +1,193 @@
+{
+    "asset" : {
+        "generator" : "Khronos Blender glTF 2.0 exporter", 
+        "version" : "2.0"
+    }, 
+    "extensions" : {
+        "KHR_lights_cmn" : {
+            "lights" : [
+                {
+                    "color" : [
+                        0.062826968729496, 
+                        0.8879325985908508, 
+                        1.0
+                    ], 
+                    "name" : "Point", 
+                    "positional" : {
+                        "quadraticAttenuation" : 0.04
+                    }, 
+                    "profile" : "CMN", 
+                    "type" : "point"
+                }, 
+                {
+                    "color" : [
+                        0.28446972370147705, 
+                        0.19345591962337494, 
+                        1.0
+                    ], 
+                    "name" : "Spot", 
+                    "positional" : {
+                        "quadraticAttenuation" : 0.04, 
+                        "spot" : {
+                            "innerAngle" : 0.3337942263919169, 
+                            "outerAngle" : 0.39269909262657166
+                        }
+                    }, 
+                    "profile" : "CMN", 
+                    "type" : "spot"
+                }, 
+                {
+                    "color" : [
+                        1.0, 
+                        0.08723420649766922, 
+                        0.14454050362110138
+                    ], 
+                    "name" : "Sun", 
+                    "profile" : "CMN", 
+                    "type" : "directional"
+                }, 
+                {
+                    "color" : [
+                        0.0, 
+                        0.0, 
+                        0.0
+                    ], 
+                    "name" : "Ambient_Scene", 
+                    "type" : "ambient"
+                }
+            ]
+        }
+    }, 
+    "extensionsRequired" : [
+        "KHR_lights_cmn"
+    ], 
+    "extensionsUsed" : [
+        "KHR_lights_cmn"
+    ], 
+    "nodes" : [
+        {
+            "extensions" : {
+                "KHR_lights_cmn" : {
+                    "light" : 0
+                }
+            }, 
+            "name" : "Correction_Point", 
+            "rotation" : [
+                -0.7071067690849304, 
+                -0.0, 
+                0.0, 
+                0.7071067690849304
+            ]
+        }, 
+        {
+            "children" : [
+                0
+            ], 
+            "name" : "Point", 
+            "rotation" : [
+                -0.4864211082458496, 
+                -0.17759281396865845, 
+                0.005294919945299625, 
+                0.8554690480232239
+            ], 
+            "scale" : [
+                0.9999999403953552, 
+                1.0, 
+                1.0
+            ], 
+            "translation" : [
+                1.3028278350830078, 
+                1.0092096328735352, 
+                -1.7507438659667969
+            ]
+        }, 
+        {
+            "extensions" : {
+                "KHR_lights_cmn" : {
+                    "light" : 1
+                }
+            }, 
+            "name" : "Correction_Spot", 
+            "rotation" : [
+                -0.7071067690849304, 
+                -0.0, 
+                0.0, 
+                0.7071067690849304
+            ]
+        }, 
+        {
+            "children" : [
+                2
+            ], 
+            "name" : "Spot", 
+            "rotation" : [
+                0.11484380811452866, 
+                -0.34380921721458435, 
+                -0.28743016719818115, 
+                0.8865607976913452
+            ], 
+            "scale" : [
+                0.9999999403953552, 
+                1.0, 
+                1.0
+            ], 
+            "translation" : [
+                2.060462474822998, 
+                3.1128854751586914, 
+                1.107168436050415
+            ]
+        }, 
+        {
+            "extensions" : {
+                "KHR_lights_cmn" : {
+                    "light" : 2
+                }
+            }, 
+            "name" : "Correction_Sun", 
+            "rotation" : [
+                -0.7071067690849304, 
+                -0.0, 
+                0.0, 
+                0.7071067690849304
+            ]
+        }, 
+        {
+            "children" : [
+                4
+            ], 
+            "name" : "Sun", 
+            "rotation" : [
+                0.19329622387886047, 
+                -0.5661998987197876, 
+                0.2138575166463852, 
+                0.7722172141075134
+            ], 
+            "scale" : [
+                0.9999999403953552, 
+                1.0, 
+                1.0
+            ], 
+            "translation" : [
+                -1.8081282377243042, 
+                2.6104657649993896, 
+                -0.7166545391082764
+            ]
+        }
+    ], 
+    "scene" : 0, 
+    "scenes" : [
+        {
+            "extensions" : {
+                "KHR_lights_cmn" : {
+                    "light" : 3
+                }
+            }, 
+            "name" : "Scene", 
+            "nodes" : [
+                3, 
+                5, 
+                1
+            ]
+        }
+    ]
+}

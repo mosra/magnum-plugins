@@ -1,0 +1,95 @@
+{
+    "asset" : {
+        "generator" : "Khronos Blender glTF 2.0 exporter",
+        "version" : "2.0"
+    },
+    "cameras" : [
+        {
+            "name" : "camera_orthographic",
+            "orthographic" : {
+                "xmag" : 7.314285755157471,
+                "ymag" : 7.314285755157471,
+                "zfar" : 100.0,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "orthographic"
+        },
+        {
+            "name" : "camera_perspective",
+            "perspective" : {
+                "aspectRatio" : 1.7777777777777777,
+                "yfov" : 0.5033799372418416,
+                "zfar" : 94.69999694824219,
+                "znear" : 1.9999998807907104
+            },
+            "type" : "perspective"
+        }
+    ],
+    "nodes" : [
+        {
+            "camera" : 0,
+            "name" : "Correction_camera_orthographic",
+            "rotation" : [
+                -0.7071067690849304,
+                -0.0,
+                0.0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                0
+            ],
+            "name" : "camera_orthographic",
+            "rotation" : [
+                0.42742669582366943,
+                0.496640682220459,
+                -0.30768609046936035,
+                0.6899157762527466
+            ],
+            "translation" : [
+                8.67481517791748,
+                7.024806976318359,
+                3.709653377532959
+            ]
+        },
+        {
+            "camera" : 1,
+            "name" : "Correction_camera_perspective",
+            "rotation" : [
+                -0.7071067690849304,
+                -0.0,
+                0.0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                2
+            ],
+            "name" : "camera_perspective",
+            "rotation" : [
+                0.483536034822464,
+                0.33687159419059753,
+                -0.20870360732078552,
+                0.7804827094078064
+            ],
+            "translation" : [
+                7.481131553649902,
+                5.34366512298584,
+                6.5076398849487305
+            ]
+        }
+    ],
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                4,
+                1,
+                3
+            ]
+        }
+    ]
+}
