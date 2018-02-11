@@ -79,14 +79,15 @@ data of the originating document, thus you must ensure that the document is
 available for whole lifetime of these instances. On the other hand this allows
 you to copy and store these instances without worrying about performance.
 
-## Usage
+@section Magnum-OpenDdl-Document-usage Usage
 
 To avoid needless allocations and string comparisons when using the parsed
 document, all structure and property names are represented as integer IDs. To
 parse a file, you first need to build a list of string names with their
 corresponding IDs for both structure and property names. The following example
 is a subset of the [OpenGEX](http://www.opengex.org) file format:
-@code
+
+@code{.cpp}
 namespace OpenGex {
 
 enum: Int {
@@ -128,17 +129,19 @@ const std::initializer_list<OpenDdl::CharacterLiteral> properties{
 
 Each enum value has corresponding string representation and the string
 identifiers are then passed to @ref parse():
-@code
+
+@code{.cpp}
 OpenDdl::Document d;
 bool parsed = d.parse(data, OpenGex::structures, OpenGex::properties);
 @endcode
 
 If the file contains structures or properties which are not included in the
 identifer lists, these are parsed with @ref UnknownIdentifier ID. If the
-document has syntax errors, the function returns `false` and prints detailed
-diagnostics on @ref Corrade::Utility::Error output. After parsing you can
-traverse the document using IDs from the enums:
-@code
+document has syntax errors, the function returns @cpp false @ce and prints
+detailed diagnostics on @ref Corrade::Utility::Error output. After parsing you
+can traverse the document using IDs from the enums:
+
+@code{.cpp}
 for(OpenDdl::Structure geometryObject: d.childrenOf(OpenGex::GeometryObject)) {
     // Decide about primitive
     if(Containers::Optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
@@ -177,9 +180,10 @@ rough and checks only proper document hierarchy, allowed structure and property
 types, structure count and presence of required properties, but that's often
 enough to avoid most of the redundant checks. You define which structures can
 appear at document level and then for each structure what properties and which
-substructures it can have. Again an (very stripped down) subset of OpenGEX
+substructures it can have. Again a (very stripped down) subset of OpenGEX
 specification:
-@code
+
+@code{.cpp}
 namespace OpenGex {
 
 using namespace OpenDdl::Validation;
@@ -230,15 +234,17 @@ You then pass it to @ref validate() and check the return value. As with
 @ref parse(), structures with @ref UnknownIdentifier ID are ignored and if the
 validation fails, detailed diagnostics is printed on @ref Corrade::Utility::Error
 output:
-@code
+
+@code{.cpp}
 bool valid = d.validate(OpenGex::rootStructures, OpenGex::structureInfo);
 @endcode
 
 If the document is valid, you can access child structures and properties
-directly with e.g. @ref Structure::firstChildOf(), @ref Structure::propertyOf() etc.
-instead of using @ref Structure::findFirstChildOf(),
+directly with e.g. @ref Structure::firstChildOf(), @ref Structure::propertyOf()
+etc. instead of using @ref Structure::findFirstChildOf(),
 @ref Structure::findPropertyOf() etc. and checking return value all the time:
-@code
+
+@code{.cpp}
 // Decide about primitive
 if(Containers::Optional<OpenDdl::Property> primitive = geometryObject.findPropertyOf(OpenGex::primitive)) {
     auto&& str = primitive->as<std::string>();
@@ -265,8 +271,7 @@ Containers::ArrayView<const Float> data = vertexArray.firstChild().asArray<Float
 // ...
 @endcode
 
-@requires_gl On OpenGL ES and WebGL the `double` type is not recognized.
-    Additionally, due to JavaScript limitations, on WebGL the `unsigned_int64`
+@requires_gles Due to JavaScript limitations, on WebGL the `unsigned_int64`
     and `int64` types are not recognized.
 */
 class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
@@ -322,7 +327,7 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
         /**
          * @brief Find first top-level structure in the document
          *
-         * Returns @ref Containers::Optional if the document is empty.
+         * Returns @ref Corrade::Containers::NullOpt if the document is empty.
          * @see @ref isEmpty(), @ref findFirstChildOf(), @ref firstChild(),
          *      @ref Structure::findFirstChild(), @ref Structure::findNext()
          */
@@ -341,11 +346,13 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
          * @brief Top-level structures
          *
          * The returned list can be traversed using common range-based for:
-         * @code
+         *
+         * @code{.cpp}
          * for(Structure s: document.children()) {
          *     // ...
          * }
          * @endcode
+         *
          * @see @ref childrenOf(), @ref Structure::children()
          */
         Implementation::StructureList children() const;
@@ -353,7 +360,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
         /**
          * @brief Find first custom top-level structure of given type
          *
-         * Returns @ref Containers::Optional if there is no such structure.
+         * Returns @ref Corrade::Containers::NullOpt if there is no such
+         * structure.
          * @see @ref findFirstChild(), @ref firstChildOf(),
          *      @ref Structure::findFirstChildOf(), @ref Structure::findNextOf()
          */
@@ -362,7 +370,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
         /**
          * @brief Find first custom top-level structure of given identifier
          *
-         * Returns @ref Containers::Optional if there is no such structure.
+         * Returns @ref Corrade::Containers::NullOpt if there is no such
+         * structure.
          * @see @ref findFirstChild(), @ref firstChildOf(),
          *      @ref Structure::findFirstChildOf(), @ref Structure::findNextOf()
          */
@@ -394,11 +403,13 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Document {
          * @brief Top-level structures of given identifier
          *
          * The returned list can be traversed using common range-based for:
-         * @code
+         *
+         * @code{.cpp}
          * for(Structure s: document.childrenOf(...)) {
          *     // ...
          * }
          * @endcode
+         *
          * @see @ref children(), @ref Structure::childrenOf()
          * @todo This is ugly because it does not use { } like all the others
          */

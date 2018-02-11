@@ -72,7 +72,8 @@ constexpr RequiredPropertyType OptionalProperty{false};
 @brief Property specification
 
 Example usage (excerpt from OpenGEX specification of `Animation` structure):
-@code
+
+@code{.cpp}
 Properties{{clip, PropertyType::UnsignedInt, OptionalProperty},
            {begin, PropertyType::Float, OptionalProperty},
            {end, PropertyType::Float, OptionalProperty}}
@@ -113,8 +114,8 @@ typedef std::initializer_list<Property> Properties;
 @brief List of allowed structures for validation
 
 First value is structure identifier, the pair specifies minimal and maximal
-allowed count of structures with given identifier. Maximal count set to `0`
-means that there is no upper limit.
+allowed count of structures with given identifier. Maximal count set to
+@cpp 0 @ce means that there is no upper limit.
 
 See @ref Validation::Structure for example usage.
 */
@@ -131,7 +132,8 @@ typedef std::initializer_list<Type> Primitives;
 @brief Structure spec for validation
 
 Example usage (excerpt from OpenGEX specification of `Texture` structure):
-@code
+
+@code{.cpp}
 {Texture,
     // Requiring string attrib property, optional integer texcoord property
     Properties{{attrib, PropertyType::String, RequiredProperty},
@@ -161,9 +163,10 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          * @param primitiveCount        Expected primitive sub-structure count
          * @param primitiveArraySize    Expected primitive array size
          *
-         * Setting @p primitiveCount to `0` means that there is no requirement
-         * on primitive array count. Setting @p primitiveArraySize to `0` means
-         * that there is no requirement on primitive array size.
+         * Setting @p primitiveCount to @cpp 0 @ce means that there is no
+         * requirement on primitive array count. Setting @p primitiveArraySize
+         * to @cpp 0 @ce means that there is no requirement on primitive array
+         * size.
          */
         /*implicit*/ Structure(Int identifier, Properties properties, Primitives primitives, std::size_t primitiveCount, std::size_t primitiveArraySize, Structures structures = {});
 

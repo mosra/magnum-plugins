@@ -60,8 +60,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Equality operator
          *
-         * Returns `true` if the two instances refer to the same structure in
-         * the same document.
+         * Returns @cpp true @ce if the two instances refer to the same
+         * structure in the same document.
          */
         bool operator==(const Structure& other) const {
             return &_document.get() == &other._document.get() &&
@@ -114,8 +114,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Subarray size
          *
-         * The structure must not be custom. If the array has no subarrays, `0`
-         * is returned.
+         * The structure must not be custom. If the array has no subarrays,
+         * @cpp 0 @ce is returned.
          * @see @ref isCustom()
          */
         std::size_t subArraySize() const;
@@ -141,7 +141,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          *
          * The structure must not be custom, must be of @ref Type::Reference
          * and the array must have exactly one item. Returns referenced
-         * structure or @ref Containers::Optional if the reference is `null`.
+         * structure or @ref Corrade::Containers::NullOpt if the reference is
+         * `null`.
          * @see @ref isCustom(), @ref type(), @ref arraySize()
          */
         Containers::Optional<Structure> asReference() const;
@@ -158,8 +159,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          * @brief Reference structure data array
          *
          * The structure must not be custom and must be of @ref Type::Reference.
-         * For each item returns referenced structure or @ref Containers::Optional if the
-         * reference is `null`.
+         * For each item returns referenced structure or
+         * @ref Corrade::Containers::NullOpt if the reference is `null`.
          * @see @ref isCustom(), @ref type(), @ref arraySize()
          */
         Containers::Array<Containers::Optional<Structure>> asReferenceArray() const;
@@ -167,14 +168,16 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Parent structure
          *
-         * Returns @ref Containers::Optional if the structure is top-level.
+         * Returns @ref Corrade::Containers::NullOpt if the structure is
+         * top-level.
          */
         Containers::Optional<Structure> parent() const;
 
         /**
          * @brief Find next sibling structure
          *
-         * Returns @ref Containers::Optional if the structure is last in given level.
+         * Returns @ref Corrade::Containers::NullOpt if the structure is last
+         * in given level.
          * @see @ref findNextOf(), @ref firstChild()
          */
         Containers::Optional<Structure> findNext() const {
@@ -184,7 +187,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Find next custom sibling structure of given identifier
          *
-         * Returns @ref Containers::Optional if there is no such structure.
+         * Returns @ref Corrade::Containers::NullOpt if there is no such
+         * structure.
          * @see @ref findNext(), @ref findNextSame(), @ref findFirstChildOf()
          */
         Containers::Optional<Structure> findNextOf(Int identifier) const;
@@ -199,8 +203,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          * @brief Find next custom sibling structure of the same identifier
          *
          * The structure must be custom. Equivalent to calling
-         * `structure.findNextOf(structure.identifier())`. Returns
-         * @ref Containers::Optional if there is no such structure.
+         * @cpp structure.findNextOf(structure.identifier()) @ce. Returns
+         * @ref Corrade::Containers::NullOpt if there is no such structure.
          * @see @ref isCustom(), @ref findNext(), @ref findNextOf()
          */
         Containers::Optional<Structure> findNextSame() const { return findNextOf(identifier()); }
@@ -226,11 +230,13 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          *
          * The structure must be custom. The returned list can be traversed
          * using common range-based for:
-         * @code
+         *
+         * @code{.cpp}
          * for(Property p: structure.properties()) {
          *     // ...
          * }
          * @endcode
+         *
          * @see @ref isCustom(), @ref children()
          */
         Implementation::PropertyList properties() const;
@@ -238,8 +244,9 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Find custom structure property of given identifier
          *
-         * The structure must be custom. Returns @ref Containers::Optional if the
-         * structure doesn't contain any property of given identifier.
+         * The structure must be custom. Returns
+         * @ref Corrade::Containers::NullOpt if the structure doesn't contain
+         * any property of given identifier.
          * @see @ref isCustom(), @ref propertyOf()
          */
         Containers::Optional<Property> findPropertyOf(Int identifier) const;
@@ -264,8 +271,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Find first child structure
          *
-         * The structure must be custom. Returns @ref Containers::Optional if the
-         * structure has no children.
+         * The structure must be custom. Returns
+         * @ref Corrade::Containers::NullOpt if the structure has no children.
          * @see @ref isCustom(), @ref firstChild(), @ref findNext(),
          *      @ref findFirstChildOf(), @ref parent()
          */
@@ -285,11 +292,13 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          *
          * The structure must be custom. The returned list can be traversed
          * using common range-based for:
-         * @code
+         *
+         * @code{.cpp}
          * for(Structure p: structure.children()) {
          *     // ...
          * }
          * @endcode
+         *
          * @see @ref isCustom(), @ref childrenOf(), @ref Document::children()
          */
         Implementation::StructureList children() const;
@@ -297,8 +306,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Find first custom child structure of given type
          *
-         * The structure must be custom. Returns @ref Containers::Optional if there is no
-         * such structure.
+         * The structure must be custom. Returns
+         * @ref Corrade::Containers::NullOpt if there is no such structure.
          * @see @ref isCustom(), @ref firstChildOf()
          */
         Containers::Optional<Structure> findFirstChildOf(Type type) const;
@@ -306,8 +315,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
         /**
          * @brief Find first custom child structure of given identifier
          *
-         * The structure must be custom. Returns @ref Containers::Optional if there is no
-         * such structure.
+         * The structure must be custom. Returns
+         * @ref Corrade::Containers::NullOpt if there is no such structure.
          * @see @ref isCustom(), @ref firstChildOf(), @ref findNextOf()
          */
         Containers::Optional<Structure> findFirstChildOf(Int identifier) const;
@@ -341,11 +350,13 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
          *
          * The structure must be custom. The returned list can be traversed
          * using common range-based for:
-         * @code
+         *
+         * @code{.cpp}
          * for(Structure p: structure.childrenOf(...)) {
          *     // ...
          * }
          * @endcode
+         *
          * @see @ref isCustom(), @ref children(), @ref Document::childrenOf()
          */
         Implementation::StructureOfList<1> childrenOf(Int identifier) const;

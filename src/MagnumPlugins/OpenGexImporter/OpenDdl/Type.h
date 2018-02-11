@@ -39,7 +39,7 @@ namespace Magnum { namespace OpenDdl {
 @see @ref Structure::type()
 */
 enum class Type: UnsignedInt {
-    /** Boolean. Stored in `bool` type. */
+    /** Boolean. Stored in @cpp bool @ce type. */
     Bool,
 
     /**
@@ -92,10 +92,10 @@ enum class Type: UnsignedInt {
     /** Double (64 bit). Stored in @ref Magnum::Double "Double" type. */
     Double,
 
-    /** UTF-8 string. Stored in `std::string` type. */
+    /** UTF-8 string. Stored in @ref std::string type. */
     String,
 
-    /** ASCII reference string. Stored in `std::string` type. */
+    /** ASCII reference string. Stored in @ref std::string type. */
     Reference,
 
     /** Type enumeration. Stored in @ref Type type. */
@@ -117,7 +117,7 @@ subset of types. The remaining types are just for use in
 for more information.
 */
 enum class PropertyType: UnsignedByte {
-    /** Boolean. Stored in `bool` type. */
+    /** Boolean. Stored in @cpp bool @ce type. */
     Bool,
 
     /** Unsigned byte (8 bit). Stored as if it is @ref PropertyType::Int. */
@@ -160,10 +160,10 @@ enum class PropertyType: UnsignedByte {
     /** Double (64 bit). Stored as if it is @ref PropertyType::Float. */
     Double,
 
-    /** UTF-8 string. Stored in `std::string` type. */
+    /** UTF-8 string. Stored in @ref std::string type. */
     String,
 
-    /** ASCII reference string. Stored in `std::string` type. */
+    /** ASCII reference string. Stored in @ref std::string type. */
     Reference,
 
     /** Type enumeration. Stored in @ref Type type. */
@@ -175,9 +175,7 @@ Debug& operator<<(Debug& debug, PropertyType value);
 
 enum: Int {
     /**
-     * @brief Unknown identifier
-     *
-     * Identifier which was not in identifier list passed to
+     * Identifier which was not in the identifier list passed to
      * @ref Document::parse().
      * @see @ref Structure::identifier(), @ref Property::identifier()
      */

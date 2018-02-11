@@ -81,7 +81,8 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Property {
          * @brief Reference property data
          *
          * The property type must be @ref Type::Reference. Returns referenced
-         * structure or @ref Containers::Optional if the reference is `null`.
+         * structure or @ref Corrade::Containers::NullOpt if the reference is
+         * `null`.
          * @see @ref isTypeCompatibleWith()
          */
         Containers::Optional<Structure> asReference() const;
