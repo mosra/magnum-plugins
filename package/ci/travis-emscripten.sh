@@ -14,8 +14,9 @@ cmake .. \
     -DCMAKE_INSTALL_RPATH=$HOME/deps-native/lib \
     -DWITH_INTERCONNECT=OFF \
     -DWITH_PLUGINMANAGER=OFF \
-    -DWITH_TESTSUITE=OFF
-make -j install
+    -DWITH_TESTSUITE=OFF \
+    -G Ninja
+ninja install
 cd ..
 
 # Crosscompile Corrade
@@ -28,8 +29,9 @@ cmake .. \
     -DCMAKE_CXX_FLAGS_RELEASE="-DNDEBUG -O1" \
     -DCMAKE_EXE_LINKER_FLAGS_RELEASE="-O1" \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
-    -DWITH_INTERCONNECT=OFF
-make -j install
+    -DWITH_INTERCONNECT=OFF \
+    -G Ninja
+ninja install
 cd ../..
 
 # Crosscompile Magnum
@@ -54,8 +56,9 @@ cmake .. \
     -DWITH_SHAPES=OFF \
     -DWITH_TEXT=ON \
     -DWITH_TEXTURETOOLS=ON \
-    -DTARGET_GLES2=$TARGET_GLES2
-make -j install
+    -DTARGET_GLES2=$TARGET_GLES2 \
+    -G Ninja
+ninja install
 cd ../..
 
 # Crosscompile
@@ -91,9 +94,10 @@ cmake .. \
     -DWITH_STBIMAGEIMPORTER=ON \
     -DWITH_STBTRUETYPEFONT=ON \
     -DWITH_STBVORBISAUDIOIMPORTER=ON \
-    -DBUILD_TESTS=ON
+    -DBUILD_TESTS=ON \
+    -G Ninja
 # Otherwise the job gets killed (probably because using too much memory)
-make -j4
+ninja -j4
 
 # Test
 CORRADE_TEST_COLOR=ON ctest -V

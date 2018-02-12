@@ -10,8 +10,9 @@ cmake .. \
     -DCMAKE_INSTALL_RPATH=$HOME/deps/lib \
     -DCMAKE_BUILD_TYPE=Debug \
     -DWITH_INTERCONNECT=OFF \
-    -DBUILD_DEPRECATED=$BUILD_DEPRECATED
-make -j install
+    -DBUILD_DEPRECATED=$BUILD_DEPRECATED \
+    -G Ninja
+ninja install
 cd ../..
 
 # Magnum
@@ -35,8 +36,9 @@ cmake .. \
     -DWITH_OBJIMPORTER=ON \
     -DWITH_TGAIMPORTER=ON \
     -DWITH_WAVAUDIOIMPORTER=ON `# for Any*Importer tests` \
-    -DBUILD_DEPRECATED=$BUILD_DEPRECATED
-make -j install
+    -DBUILD_DEPRECATED=$BUILD_DEPRECATED \
+    -G Ninja
+ninja install
 cd ../..
 
 mkdir build && cd build
@@ -68,10 +70,11 @@ cmake .. \
     -DWITH_STBTRUETYPEFONT=ON \
     -DWITH_STBVORBISAUDIOIMPORTER=ON \
     -DBUILD_TESTS=ON \
-    -DBUILD_GL_TESTS=ON
+    -DBUILD_GL_TESTS=ON \
+    -G Ninja
 # Otherwise the job gets killed (probably because using too much memory)
-make -j4
-make install # for Any*Importer tests
+ninja -j4
+ninja install # for Any*Importer tests
 
 # Run ColladaImporter tests separately because I have to suppress calloc()
 # there, which would match kinda everything (since 2018-09-01 on Travis CI)

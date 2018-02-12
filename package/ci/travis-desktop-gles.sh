@@ -9,8 +9,9 @@ cmake .. \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DCMAKE_INSTALL_RPATH=$HOME/deps/lib \
     -DCMAKE_BUILD_TYPE=Release \
-    -DWITH_INTERCONNECT=OFF
-make -j install
+    -DWITH_INTERCONNECT=OFF \
+    -G Ninja
+ninja install
 cd ../..
 
 # Magnum
@@ -36,8 +37,9 @@ cmake .. \
     -DWITH_OPENGLTESTER=ON \
     -DWITH_OBJIMPORTER=ON \
     -DWITH_TGAIMPORTER=ON \
-    -DWITH_WAVAUDIOIMPORTER=ON # for Any*Importer tests
-make -j install
+    -DWITH_WAVAUDIOIMPORTER=ON `# for Any*Importer tests` \
+    -G Ninja
+ninja install
 cd ../..
 
 mkdir build && cd build
@@ -68,8 +70,9 @@ cmake .. \
     -DWITH_STBTRUETYPEFONT=ON \
     -DWITH_STBVORBISAUDIOIMPORTER=ON \
     -DBUILD_TESTS=ON \
-    -DBUILD_GL_TESTS=ON
+    -DBUILD_GL_TESTS=ON \
+    -G Ninja
 # Otherwise the job gets killed (probably because using too much memory)
-make -j4
-make install # for Any*Importer tests
+ninja -j4
+ninja install # for Any*Importer tests
 CORRADE_TEST_COLOR=ON ctest -V -E GLTest

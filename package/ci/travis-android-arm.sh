@@ -15,8 +15,9 @@ cmake .. \
     -DCMAKE_INSTALL_RPATH=$HOME/deps-native/lib \
     -DWITH_INTERCONNECT=OFF \
     -DWITH_PLUGINMANAGER=OFF \
-    -DWITH_TESTSUITE=OFF
-make -j install
+    -DWITH_TESTSUITE=OFF \
+    -G Ninja
+ninja install
 cd ..
 
 # Crosscompile Corrade
@@ -26,8 +27,9 @@ ANDROID_NDK=$TRAVIS_BUILD_DIR/android-ndk-r10e cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
-    -DWITH_INTERCONNECT=OFF
-make -j install
+    -DWITH_INTERCONNECT=OFF \
+    -G Ninja
+ninja install
 cd ../..
 
 # Crosscompile Magnum
@@ -49,8 +51,9 @@ ANDROID_NDK=$TRAVIS_BUILD_DIR/android-ndk-r10e cmake .. \
     -DWITH_SHAPES=OFF \
     -DWITH_TEXT=ON \
     -DWITH_TEXTURETOOLS=ON \
-    -DTARGET_GLES2=$TARGET_GLES2
-make -j install
+    -DTARGET_GLES2=$TARGET_GLES2 \
+    -G Ninja
+ninja install
 cd ../..
 
 # Crosscompile
@@ -82,9 +85,10 @@ ANDROID_NDK=$TRAVIS_BUILD_DIR/android-ndk-r10e cmake .. \
     -DWITH_STBIMAGEIMPORTER=ON \
     -DWITH_STBTRUETYPEFONT=ON \
     -DWITH_STBVORBISAUDIOIMPORTER=OFF \
-    -DBUILD_TESTS=ON
+    -DBUILD_TESTS=ON \
+    -G Ninja
 # Otherwise the job gets killed (probably because using too much memory)
-make -j4
+ninja -j4
 
 # Start simulator and run tests
 echo no | android create avd --force -n test -t android-19 --abi armeabi-v7a
