@@ -85,8 +85,8 @@ namespace Magnum {
 
 -   Continuous testing for Linux, macOS, Windows MSVC, Windows MinGW, Windows RT,
     iOS, Android and Emscripten on [Travis CI](https://travis-ci.org/mosra/magnum-plugins)
-    and [AppVeyor CI](https://ci.appveyor.com/project/mosra/magnum-plugins), with code
-    coverage on [coveralls.io](https://coveralls.io/github/mosra/magnum-plugins);
+    and [AppVeyor CI](https://ci.appveyor.com/project/mosra/magnum-plugins),
+    with code coverage on [codecov.io](https://codecov.io/gh/mosra/magnum-plugins);
     replacing the unmaintained and outdated Jenkins configuration
 -   Support for CMake subprojects. You can now clone Magnum Plugins into a
     subdirectory in your project and add it using @cmake add_subdirectory() @ce.
