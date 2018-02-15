@@ -30,9 +30,9 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@section changelog-plugins-latest Changes since 2015-05 snapshot
+@section changelog-plugins-2018-02 2018.02
 
-@subsection changelog-plugins-latest-dependencies Dependency changes
+@subsection changelog-plugins-2018-02-dependencies Dependency changes
 
 -   Completely removed NaCl support (see https://blog.chromium.org/2017/05/goodbye-pnacl-hello-webassembly.html)
 -   Dropped support for the old MinGW32 (only MinGW-w64 is supported now)
@@ -41,9 +41,11 @@ namespace Magnum {
 -   Dropped the `compatibility` branch and all support for MSVC 2013 and GCC <
     4.7
 
-@subsection changelog-plugins-latest-new New features
+@subsection changelog-plugins-2018-02-new New features
 
--   MSVC 2015 and MSVC 2017 support in `master` branch
+-   MSVC 2015 and MSVC 2017 support in `master` branch (see
+    [mosra/magnum-plugins#32](https://github.com/mosra/magnum-plugins/issues/32),
+    [mosra/magnum-plugins#33](https://github.com/mosra/magnum-plugins/pull/33))
 -   ANGLE ES2/ES3 support, ability to create desktop GLES contexts on Windows
 -   Windows Phone/Store support via ANGLE
 -   iOS support
@@ -52,22 +54,37 @@ namespace Magnum {
 -   New plugins:
     -   @ref Trade::AnyImageConverter "AnyImageConverter"
     -   @ref Audio::AnyImporter "AnyAudioImporter"
-    -   @ref Trade::AssimpImporter "AssimpImporter"
-    -   @ref Trade::DdsImporter "DdsImporter"
-    -   @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
+    -   @ref Trade::AssimpImporter "AssimpImporter" (see
+        [mosra/magnum-plugins#31](https://github.com/mosra/magnum-plugins/pull/31),
+        [mosra/magnum-plugins#35](https://github.com/mosra/magnum-plugins/pull/35),
+        [mosra/magnum-plugins#37](https://github.com/mosra/magnum-plugins/pull/37),
+        [mosra/magnum-plugins#39](https://github.com/mosra/magnum-plugins/issues/39))
+    -   @ref Trade::DdsImporter "DdsImporter" (see
+        [mosra/magnum-plugins#7](https://github.com/mosra/magnum-plugins/pull/7),
+        [mosra/magnum-plugins#34](https://github.com/mosra/magnum-plugins/pull/34))
+    -   @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" (see
+        [mosra/magnum-plugins#8](https://github.com/mosra/magnum-plugins/pull/8),
+        [mosra/magnum-plugins#22](https://github.com/mosra/magnum-plugins/pull/22))
     -   @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
     -   @ref Trade::PngImageConverter "PngImageConverter"
-    -   @ref Text::StbTrueTypeFont "StbTrueTypeFont"
-    -   @ref Audio::DrFlacImporter "DrFlacAudioImporter"
-    -   @ref Audio::DrWavImporter "DrWavAudioImporter"
-    -   @ref Trade::DevIlImageImporter "DevIlImageImporter"
+    -   @ref Text::StbTrueTypeFont "StbTrueTypeFont" (see
+        [mosra/magnum-plugins#12](https://github.com/mosra/magnum-plugins/pull/12))
+    -   @ref Audio::DrFlacImporter "DrFlacAudioImporter" (see
+        [mosra/magnum-plugins#18](https://github.com/mosra/magnum-plugins/pull/18),
+        [mosra/magnum-plugins#19](https://github.com/mosra/magnum-plugins/pull/19),
+        [mosra/magnum-plugins#20](https://github.com/mosra/magnum-plugins/pull/20))
+    -   @ref Audio::DrWavImporter "DrWavAudioImporter" (see
+        [mosra/magnum-plugins#21](https://github.com/mosra/magnum-plugins/pull/21))
+    -   @ref Trade::DevIlImageImporter "DevIlImageImporter" (see
+        [mosra/magnum-plugins#23](https://github.com/mosra/magnum-plugins/pull/23))
 -   Camera and light data import in @ref Trade::OpenGexImporter "OpenGexImporter"
 -   Support for OpenGEX extensions in @ref Trade::OpenGexImporter "OpenGexImporter"
     using `importerState()` getters
 
-@subsection changelog-plugins-latest-changes Changes and improvements
+@subsection changelog-plugins-2018-02-changes Changes and improvements
 
 -   @ref Trade::OpenGexImporter "OpenGexImporter" is working on Android now
+    (see [mosra/magnum#95](https://github.com/mosra/magnum/issues/95))
 -   @ref Trade::PngImporter "PngImporter" and @ref Trade::JpegImporter "JpegImporter"
     always import images with rows aligned to four bytes
 -   @ref Trade::StbImageImporter "StbImageImporter" properly specifies
@@ -80,14 +97,20 @@ namespace Magnum {
     not restricted to desktop GL anymore
 -   @ref Trade::OpenGexImporter "OpenGexImporter" presents only an unique list
     of images, instead of duplicating them per texture
+-   @ref Trade::PngImporter "PngImporter" and @ref Trade::PngImageConverter "PngImageConverter"
+    now gracefully handle library version mismatches (see
+    [mosra/magnum#215](https://github.com/mosra/magnum/issues/215))
+-   Various code modernization improvements (see
+    [mosra/magnum-plugins#30](https://github.com/mosra/magnum-plugins/pull/30))
 
-@subsection changelog-plugins-latest-buildsystem Build system
+@subsection changelog-plugins-2018-02-buildsystem Build system
 
 -   Continuous testing for Linux, macOS, Windows MSVC, Windows MinGW, Windows RT,
     iOS, Android and Emscripten on [Travis CI](https://travis-ci.org/mosra/magnum-plugins)
     and [AppVeyor CI](https://ci.appveyor.com/project/mosra/magnum-plugins),
     with code coverage on [codecov.io](https://codecov.io/gh/mosra/magnum-plugins);
-    replacing the unmaintained and outdated Jenkins configuration
+    replacing the unmaintained and outdated Jenkins configuration (see
+    [mosra/magnum-plugins#15](https://github.com/mosra/magnum-plugins/pull/15))
 -   Support for CMake subprojects. You can now clone Magnum Plugins into a
     subdirectory in your project and add it using @cmake add_subdirectory() @ce.
     The @cmake find_package() @ce command will then use the CMake subproject
@@ -104,53 +127,191 @@ namespace Magnum {
     up initial CMake run
 -   Removed our copy of `FindFreetype.cmake` which attempted to link to all
     dependencies of FreeType if it discovered that it's built as static. But
-    it got out of sync with upstream and the detection was broken on MSVC.
+    it got out of sync with upstream and the detection was broken on MSVC. See
+    [mosra/magnum-plugins#13](https://github.com/mosra/magnum-plugins/pull/13),
+    [mosra/magnum-plugins#36](https://github.com/mosra/magnum-plugins/issues/36).
+-   Fixed discovery of audio importer plugins from `FindMagnumPlugins.cmake`
+    (see [mosra/magnum-plugins#10](https://github.com/mosra/magnum-plugins/pull/10))
 -   Unconditionally exporting symbols of all plugins to make them usable as
     dependencies
 -   `FindMagnumPlugins.cmake` now correctly handles cases where both debug and
     release libraries of libPNG or FreeType are available
+-   Various fixes to `FindMagnumPlugins.cmake` (see
+    [mosra/magnum-plugins#11](https://github.com/mosra/magnum-plugins/pull/11))
 
-@subsection changelog-plugins-latest-bugfixes Bug fixes
+@subsection changelog-plugins-2018-02-bugfixes Bug fixes
 
 -   @ref Trade::OpenGexImporter "OpenGexImporter" crashed on file ending
-    unexpectedly after array comma
+    unexpectedly after array comma (see
+    [mosra/magnum#144](https://github.com/mosra/magnum/issues/144))
+-   Fixed @ref Trade::OpenGexImporter "OpenGexImporter" light import (see
+    [mosra/magnum-plugins#16](https://github.com/mosra/magnum-plugins/pull/16))
 -   @ref Trade::StanfordImporter "StanfordImporter" had string-to-number
     conversion broken on Android
 -   Plugged huge data leaks in @ref Trade::StbImageImporter "StbImageImporter"
     and @ref Trade::StbImageConverter "StbImageConverter"
+-   Various compilation fixes (see
+    [mosra/magnum-examples#9](https://github.com/mosra/magnum-examples/issues/9))
 
-@subsection changelog-plugins-latest-compatibility Potential compatibility breakages
+@subsection changelog-plugins-2018-02-compatibility Potential compatibility breakages
 
 -   `StbPngImageConverter` was renamed to @ref Trade::StbImageConverter "StbImageConverter",
     supporting more than just PNG now. Loading it via `StbPngImageConverter`
-    continues to work.
+    continues to work. See [mosra/magnum-plugins#24](https://github.com/mosra/magnum-plugins/issues/24).
 
-@subsection changelog-plugins-latest-documentation Documentation
+@subsection changelog-plugins-2018-02-documentation Documentation
 
 -   New documentation theme powered by [m.css](http://mcss.mosra.cz) and
     related massive updates of *everything*
 -   The @ref building-examples documentation now prefers package installation
     instead of manual build
 
-@section changelog-plugins-2015-05 2015-05 snapshot
+@section changelog-plugins-2015-05 2015.05
 
-See the [release notes and full changelog](http://blog.magnum.graphics/announcements/may-2015-updates/#magnum-plugins).
+Released 2015-05-09, tagged as
+[v2015.05](https://github.com/mosra/magnum-plugins/releases/tag/v2015.05). See
+the [release announcement](http://blog.magnum.graphics/announcements/may-2015-updates/)
+for a high-level overview.
 
-@section changelog-plugins-2014-06 2014-06 snapshot
+@subsection changelog-plugins-2015-05-new New features
 
-See the [release notes and full changelog](http://blog.magnum.graphics/announcements/june-2014-updates/#magnum-plugins).
+-   New @ref OpenDdl::Document "OpenDDL parser" and
+    @ref Trade::OpenGexImporter "OpenGexImporter" plugin for importing
+    `OpenGEX`_ files (see [mosra/magnum#44](https://github.com/mosra/magnum/issues/44))
+-   New @ref Trade::StanfordImporter "StanfordImporter" plugin for importing
+    Stanford (`*.ply`) files.
+-   New @ref Trade::StbImageImporter "StbImageImporter" plugin for importing
+    BMP, GIF, HDR, JPEG, PIC, PNG, PSD, TGA and more formats using
+    [stb_image](https://github.com/nothings/stb)
+-   New @ref Trade::StbImageConverter "StbPngImageConverter" plugin for
+    exporting PNG files using [stb_image_write](https://github.com/nothings/stb)
+-   New @ref Trade::AnyImageImporter "AnyImageImporter" plugin that detects
+    image file type and delegates the loading to plugin dedicated for given
+    format (see [mosra/magnum#61](https://github.com/mosra/magnum/issues/61)).
+-   New @ref Trade::AnySceneImporter "AnySceneImporter" plugin that detects
+    scene file type and delegates the loading to plugin dedicated for given
+    format.
+-   Plugin aliases, as explained above.
 
-@section changelog-plugins-2014-01 2014-01 snapshot
+@subsection changelog-plugins-2015-05-compatibility Potential compatibility breakages, removed APIs
 
-See the [release notes and full changelog](http://blog.magnum.graphics/announcements/january-2014-updates/#magnum-plugins).
+-   All functionality @ref changelog-plugins-2014-01 "deprecated in 2014.01 snapshot"
+    has been removed, namely removed deprecated ability to use relative
+    includes (e.g. @cpp #include <PngImporter/PngImporter.h> @ce), use absolute
+    paths (@cpp #include <MagnumPlugins/PngImporter/PngImporter.h> @ce) instead.
 
-@section changelog-plugins-2013-10 2013-10 snapshot
+@subsection changelog-plugins-2015-05-buildsystem Build system
 
-See the [release notes and full changelog](http://blog.magnum.graphics/announcements/october-2013-updates/#magnum-plugins).
+-   CMake now always installs `FindMagnumPlugins.cmake` to library-specific
+    location, making it usable without providing own copy of the file in
+    depending projects. The `WITH_FIND_MODULE` option is no longer needed.
+-   Displaying all header files, plugin metadata files and resource files in
+    project view to make use of some IDEs less painful (such as QtCreator).
+-   FindMagnumPlugins.cmake was not really working (see
+    [mosra/magnum-plugins#4](https://github.com/mosra/magnum-plugins/pull/4))
+-   Workaround to find proper FreeType when Mono is installed on macOS (see
+    [mosra/magnum-plugins#6](https://github.com/mosra/magnum-plugins/pull/6))
+-   Gentoo ebuild (see
+    [mosra/magnum-plugins#5](https://github.com/mosra/magnum-plugins/issues/5)).
 
-@section changelog-plugins-initial Initial release
+@section changelog-plugins-2014-06 2014.06
 
-See the [Magnum project announcement](http://blog.magnum.graphics/announcements/introducing-magnum/).
+Released 2014-06-30, tagged as
+[v2014.06](https://github.com/mosra/magnum-plugins/releases/tag/v2014.06). See
+the [release announcement](http://blog.magnum.graphics/announcements/june-2014-updates/)
+for a high-level overview.
+
+@subsection changelog-plugins-2014-06-dependencies Dependency changes
+
+-   Minimal required GCC version is now 4.7. Support for GCC 4.6 has been moved
+    to the `compatibility` branch.
+
+@subsection changelog-plugins-2014-06-changes Changes
+
+-   Libraries and plugins in debug build configuration are installed to
+    different locations, making it possible to have debug and release libraries
+    installed alongside each other.
+
+@section changelog-plugins-2014-01 2014.01
+
+Released 2014-01-21, tagged as
+[v2014.01](https://github.com/mosra/magnum-plugins/releases/tag/v2014.01). See
+the [release announcement](http://blog.magnum.graphics/announcements/january-2014-updates/)
+for a high-level overview.
+
+@subsection changelog-plugins-2014-01-dependencies Dependency changes
+
+No dependency changes in this release.
+
+@subsection changelog-plugins-2014-01-new New features
+
+-   All classes in documentation are now shown with corresponding
+    @cpp #include @ce path
+
+@subsection changelog-plugins-2014-01-changes Changes
+
+-   @ref Text::MagnumFont "MagnumFont",
+    @ref Text::MagnumFontConverter "MagnumFontConverter",
+    @ref Trade::TgaImporter "TgaImporter",
+    @ref Trade::TgaImageConverter "TgaImageConverter" and
+    @ref Audio::WavImporter "WavAudioImporter" plugins were moved to core
+    Magnum repository
+-   Various documentation updates and improvements
+
+@subsection changelog-plugins-2014-01-bugfixes Bug fixes
+
+-   Fixed various compilation errors on various compilers (see
+    [mosra/magnum-plugins#3](https://github.com/mosra/magnum-plugins/pull/3))
+
+@subsection changelog-plugins-2014-01-internal Internal changes
+
+-   Using Jenkins Continuous Integration to maintain compilable and bug-free
+    state of the project more easily. Currently GCC 4.8, 4.7, 4.6, 4.5, 4.4,
+    Clang 3.3, Clang 3.3 with libc++, Emscripten, x86-32/x86-64 Native Client
+    and MinGW32 compilers are tested with both shared and static libraries.
+    Separately testing builds with deprecated features enabled and disabled.
+    Also explicitly testing desktop OpenGL, OpenGL ES 2.0, desktop OpenGL ES
+    2.0 emulation, OpenGL ES 3.0 and desktop OpenGL ES 3.0 emulation.
+-   All files from `src/` directory were moved to `src/MagnumPlugins`
+    (required to make inter-project includes absolute, as mentioned above)
+
+@section changelog-plugins-2013-10 2013.10
+
+Released 2013-10-30, tagged as
+[v2013.10](https://github.com/mosra/magnum-plugins/releases/tag/v2013.10). See
+the [release announcement](http://blog.magnum.graphics/announcements/october-2013-updates/)
+for a high-level overview.
+
+@subsection changelog-plugins-2013-10-dependencies Dependency changes
+
+No dependency changes in this release.
+
+@subsection changelog-plugins-2013-10-new New features
+
+-   Emscripten port of dependency-less @ref Trade::TgaImporter "TgaImporter",
+    @ref Trade::TgaImageConverter "TgaImageConverter" and
+    @ref Text::MagnumFont "MagnumFont" plugins
+
+@subsection changelog-plugins-2013-10-changes Changes
+
+-   Reworked @ref Trade::ColladaImporter "ColladaImporter" internals to avoid
+    double deletions
+-   Documentation updates and improvements to make the library more accessible
+    for newcomers
+-   Various build system updates for better compile times and easier
+    installation
+
+@subsection changelog-plugins-2013-10-bugfixes Bug fixes
+
+-   Fixed compilation of plugins using @ref std::u32string on MinGW
+-   Fixed linker errors on MinGW
+
+@section changelog-plugins-2013-08 2013.08
+
+Released 2013-08-30, tagged as
+[v2013.08](https://github.com/mosra/magnum-plugins/releases/tag/v2013.08). See
+the [project announcement](http://blog.magnum.graphics/announcements/introducing-magnum/)
+for a high-level overview.
 
 */
 
