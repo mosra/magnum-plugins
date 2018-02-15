@@ -136,6 +136,8 @@ namespace Magnum {
     dependencies
 -   `FindMagnumPlugins.cmake` now correctly handles cases where both debug and
     release libraries of libPNG or FreeType are available
+-   Updated the Debian package to depend on current version of libPNG (see
+    [mosra/magnum-plugins#38](https://github.com/mosra/magnum-plugins/issues/38))
 -   Various fixes to `FindMagnumPlugins.cmake` (see
     [mosra/magnum-plugins#11](https://github.com/mosra/magnum-plugins/pull/11))
 
