@@ -105,6 +105,8 @@ Released 2018-02-15, tagged as
     [mosra/magnum#215](https://github.com/mosra/magnum/issues/215))
 -   Various code modernization improvements (see
     [mosra/magnum-plugins#30](https://github.com/mosra/magnum-plugins/pull/30))
+-   @ref Trade::StbImageConverter "StbImageConverter" now supports BMP, HDR and
+    TGA output in addition to PNG
 
 @subsection changelog-plugins-2018-02-buildsystem Build system
 
