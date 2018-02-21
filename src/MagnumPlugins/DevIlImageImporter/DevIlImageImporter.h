@@ -56,8 +56,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief DevIL Image importer plugin
 
-Supports a large variety of image file types, including (note that the list is
-incomplete):
+Supports a large variety of image file types using the
+[DevIL](http://openil.sourceforge.net/) library, including (note that the list
+is incomplete):
 
 -   Windows Bitmap (`*.bmp`)
 -   Dr. Halo (`*.cut`)
