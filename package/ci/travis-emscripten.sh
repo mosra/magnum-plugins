@@ -94,6 +94,7 @@ cmake .. \
     -DWITH_STBIMAGEIMPORTER=ON \
     -DWITH_STBTRUETYPEFONT=ON \
     -DWITH_STBVORBISAUDIOIMPORTER=ON \
+    -DWITH_TINYGLTFIMPORTER=ON \
     -DBUILD_TESTS=ON \
     -G Ninja
 # Otherwise the job gets killed (probably because using too much memory)

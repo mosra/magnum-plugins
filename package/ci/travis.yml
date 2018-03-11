@@ -187,6 +187,8 @@ install:
 # So CMake 2.8.12 is able to find FreeType >= 2.5.
 # https://github.com/Kitware/CMake/commit/7435ae7c97590a0713d86b63add761d5e1607ec1
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! "$TARGET" == "desktop-sanitizers" ]; then export FREETYPE_INCLUDE_DIR_freetype2=-DFREETYPE_INCLUDE_DIR_freetype2=/usr/include/freetype2; fi
+# The json parser library tinygltf depends on does not support gcc < 4.9
+- if [ "$CXX" == "g++-4.7" ]; then export WITH_TINYGLTFIMPORTER=OFF; else export WITH_TINYGLTFIMPORTER=ON; fi
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/travis-desktop.sh; fi
