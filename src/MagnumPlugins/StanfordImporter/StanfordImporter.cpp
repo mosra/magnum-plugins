@@ -278,20 +278,12 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             if(tokens[0] == "element") {
                 /* Vertex elements */
                 if(tokens.size() == 3 && tokens[1] == "vertex") {
-                    #ifndef CORRADE_TARGET_ANDROID
                     vertexCount = std::stoi(tokens[2]);
-                    #else
-                    vertexCount = std::strtoul(tokens[2].data(), nullptr, 10);
-                    #endif
                     propertyType = PropertyType::Vertex;
 
                 /* Face elements */
                 } else if(tokens.size() == 3 &&tokens[1] == "face") {
-                    #ifndef CORRADE_TARGET_ANDROID
                     faceCount = std::stoi(tokens[2]);
-                    #else
-                    faceCount = std::strtoul(tokens[2].data(), nullptr, 10);
-                    #endif
                     propertyType = PropertyType::Face;
 
                 /* Something else */
