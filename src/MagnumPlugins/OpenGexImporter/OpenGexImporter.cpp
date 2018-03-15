@@ -171,7 +171,7 @@ void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     /* Common code for light and material textures */
-    auto gatherTexture = [this, &d](const OpenDdl::Structure& texture) {
+    auto gatherTexture = [&d](const OpenDdl::Structure& texture) {
         d->textures.push_back(texture);
 
         /* Add the filename to the list, if not already */
