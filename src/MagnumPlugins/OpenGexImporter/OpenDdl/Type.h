@@ -179,13 +179,7 @@ enum: Int {
      * @ref Document::parse().
      * @see @ref Structure::identifier(), @ref Property::identifier()
      */
-    UnknownIdentifier =
-        #ifndef CORRADE_TARGET_ANDROID
-        INT16_MAX
-        #else
-        0x7fff /* Not defined on Android for some weird reason */
-        #endif
-        - Int(Type::Custom)
+    UnknownIdentifier = INT16_MAX - Int(Type::Custom)
 };
 
 namespace Implementation {
