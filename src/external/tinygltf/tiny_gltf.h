@@ -1688,10 +1688,9 @@ static bool ParseImage(Image *image, std::string *err, const json &o,
       // Assume external file
       // Keep texture path (for textures that cannot be decoded)
       image->uri = uri;
-#ifdef TINYGLTF_NO_EXTERNAL_IMAGE
-      return true;
-#endif
+#ifndef TINYGLTF_NO_EXTERNAL_IMAGE
       loaded = LoadExternalFile(&img, err, uri, basedir, 0, false);
+#endif
     }
 
     if (!loaded) {
