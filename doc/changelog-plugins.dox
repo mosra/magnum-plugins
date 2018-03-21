@@ -49,6 +49,12 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
+-   The @ref Audio::AnyImporter "AnyAudioImporter", @ref Trade::AnyImageConverter "AnyImageConverter",
+    @ref Trade::AnyImageImporter "AnyImageImporter" and @ref Trade::AnySceneImporter "AnySceneImporter"
+    plugins were moved to the core Magnum repository. If you are using them
+    statically via CMake, you need to update your copies of `FindMagnum.cmake`
+    and `FindMagnumPlugins.cmake` modules. See @ref building and @ref cmake for
+    more information.
 -   Plugins now provide an automatic means of static plugin import via CMake
     targets, no need to call @ref CORRADE_PLUGIN_IMPORT() implicitly anymore.
     See @ref plugins-static for more information.

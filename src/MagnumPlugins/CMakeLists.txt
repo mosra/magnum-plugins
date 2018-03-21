@@ -34,22 +34,6 @@ macro(add_plugin plugin_name debug_install_dirs release_install_dirs metadata_fi
     endif()
 endmacro()
 
-if(WITH_ANYAUDIOIMPORTER)
-    add_subdirectory(AnyAudioImporter)
-endif()
-
-if(WITH_ANYIMAGEIMPORTER)
-    add_subdirectory(AnyImageImporter)
-endif()
-
-if(WITH_ANYIMAGECONVERTER)
-    add_subdirectory(AnyImageConverter)
-endif()
-
-if(WITH_ANYSCENEIMPORTER)
-    add_subdirectory(AnySceneImporter)
-endif()
-
 if(WITH_ASSIMPIMPORTER)
     add_subdirectory(AssimpImporter)
 endif()

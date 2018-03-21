@@ -252,19 +252,9 @@ are installed to the `magnum-d` subdirectory, similarly to what is done when
 
 By default no plugins are built and you need to select them manually:
 
--   `WITH_ANYAUDIOIMPORTER` --- Build the @ref Audio::AnyImporter "AnyAudioImporter"
-    plugin.
--   `WITH_ANYIMAGECONVERTER` --- Build the
-    @ref Trade::AnyImageConverter "AnyImageConverter" plugin.
--   `WITH_ANYIMAGEIMPORTER` --- Build the @ref Trade::AnyImageImporter "AnyImageImporter"
-    plugin.
--   `WITH_ANYSCENEIMPORTER` --- Build the @ref Trade::AnySceneImporter "AnySceneImporter"
-    plugin.
 -   `WITH_ASSIMPIMPORTER` --- Build the @ref Trade::AssimpImporter "AssimpImporter"
-    plugin. Enables also building of the @ref Trade::AnyImageImporter "AnyImageImporter"
     plugin. Depends on [Assimp](http://assimp.org/).
 -   `WITH_COLLADAIMPORTER` --- Build the @ref Trade::ColladaImporter "ColladaImporter"
-    plugin. Enables also building of the @ref Trade::AnyImageImporter "AnyImageImporter"
     plugin. Depends on [Qt4](https://qt.io).
 -   `WITH_DDSIMPORTER` --- Build the @ref Trade::DdsImporter "DdsImporter"
     plugin.
@@ -285,8 +275,7 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_MINIEXRIMAGECONVERTER` --- Build the
     @ref Trade::MiniExrImageConverter "MiniExrImageConverter" plugin.
 -   `WITH_OPENGEXIMPORTER` --- Build the @ref Trade::OpenGexImporter "OpenGexImporter"
-    plugin. Enables also building of the @ref Trade::AnyImageImporter "AnyImageImporter"
-    plugin and the @ref OpenDdl library.
+    plugin. Enables also building of the @ref OpenDdl library.
 -   `WITH_PNGIMAGECONVERTER` --- Build the
     @ref Trade::PngImageConverter "PngImageConverter" plugin. Depends on
     [libPNG](http://www.libpng.org/pub/png/libpng.html).
@@ -305,8 +294,7 @@ By default no plugins are built and you need to select them manually:
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugin.
 -   `WITH_TINYGLTFIMPORTER` --- Build the
     @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin. Enables also
-    building of the @ref Trade::AnyImageImporter "AnyImageImporter" and
-    @ref Trade::StbImageImporter "StbImageImporter" plugins.
+    building of the @ref Trade::StbImageImporter "StbImageImporter" plugin.
 
 Some plugins expose their internal state through separate libraries and you can
 control their build separately:

@@ -26,18 +26,6 @@
 /** @dir magnum-plugins/src/MagnumPlugins
  * @brief Magnum plugins (part of @ref building-plugins "Magnum Plugins library")
  */
-/** @dir MagnumPlugins/AnyAudioImporter
- * @brief Plugin @ref Magnum::Audio::AnyImporter
- */
-/** @dir MagnumPlugins/AnyImageConverter
- * @brief Plugin @ref Magnum::Trade::AnyImageConverter
- */
-/** @dir MagnumPlugins/AnyImageImporter
- * @brief Plugin @ref Magnum::Trade::AnyImageImporter
- */
-/** @dir MagnumPlugins/AnySceneImporter
- * @brief Plugin @ref Magnum::Trade::AnySceneImporter
- */
 /** @dir MagnumPlugins/AssimpImporter
  * @brief Plugin @ref Magnum::Trade::AssimpImporter
  */

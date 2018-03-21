@@ -12,10 +12,6 @@
 #
 # This command will not try to find any actual plugin. The plugins are:
 #
-#  AnyAudioImporter             - Any audio importer
-#  AnyImageConverter            - Any image converter
-#  AnyImageImporter             - Any image importer
-#  AnySceneImporter             - Any scene importer
 #  AssimpImporter               - Assimp importer
 #  ColladaImporter              - Collada importer
 #  DdsImporter                  - DDS importer
@@ -111,6 +107,14 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
     if(_component STREQUAL ColladaImporter)
         set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES MeshTools)
+    elseif(_component STREQUAL AssimpImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES AnyImageImporter)
+    elseif(_component STREQUAL ColladaImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES AnyImageImporter)
+    elseif(_component STREQUAL OpenGexImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES AnyImageImporter)
+    elseif(_component STREQUAL TinyGltfImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES AnyImageImporter)
     endif()
 
     list(APPEND _MAGNUMPLUGINS_DEPENDENCIES ${_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES})
@@ -127,14 +131,8 @@ set(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS )
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${_component} _COMPONENT)
 
-    if(_component STREQUAL AssimpImporter)
-        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
-    elseif(_component STREQUAL ColladaImporter)
-        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
-    elseif(_component STREQUAL OpenGexImporter)
-        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter)
-    elseif(_component STREQUAL TinyGltfImporter)
-        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter StbImageImporter)
+    if(_component STREQUAL TinyGltfImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES StbImageImporter)
     elseif(_component STREQUAL HarfBuzzFont)
         set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES FreeTypeFont)
     elseif(_component STREQUAL OpenGexImporter)
@@ -162,7 +160,7 @@ endif()
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS "^(OpenDdl)$")
-set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AnyAudioImporter|AnyImageConverter|AnyImageImporter|AnySceneImporter|AssimpImporter|ColladaImporter|DdsImporter|DevIlImageImporter|DrFlacAudioImporter|DrWavAudioImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageConverter|StbImageImporter|StbTrueTypeFont|StbVorbisAudioImporter|TinyGltfImporter)$")
+set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AssimpImporter|ColladaImporter|DdsImporter|DevIlImageImporter|DrFlacAudioImporter|DrWavAudioImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageConverter|StbImageImporter|StbTrueTypeFont|StbVorbisAudioImporter|TinyGltfImporter)$")
 
 # Find all components
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
@@ -262,10 +260,6 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                     IMPORTED_LOCATION_DEBUG ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG})
             endif()
         endif()
-
-        # AnyAudioImporter has no dependencies
-        # AnyImageImporter has no dependencies
-        # AnySceneImporter has no dependencies
 
         # AssimpImporter plugin dependencies
         if(_component STREQUAL AssimpImporter)

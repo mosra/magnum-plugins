@@ -59,10 +59,6 @@ find_package(Magnum REQUIRED)
 include(CMakeDependentOption)
 
 # Plugins to build
-cmake_dependent_option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF "NOT WITH_COLLADAIMPORTER;NOT WITH_OPENGEXIMPORTER;NOT WITH_ASSIMPIMPORTER;NOT WITH_TINYGLTFIMPORTER" ON)
-option(WITH_ANYAUDIOIMPORTER "Build AnyAudioImporter plugin" OFF)
-option(WITH_ANYIMAGECONVERTER "Build AnyImageConverter plugin" OFF)
-option(WITH_ANYSCENEIMPORTER "Build AnySceneImporter plugin" OFF)
 option(WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
 option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
 option(WITH_DDSIMPORTER "Build DdsImporter plugin" OFF)
