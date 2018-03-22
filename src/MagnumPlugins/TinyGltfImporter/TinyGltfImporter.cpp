@@ -127,13 +127,11 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
-    for(int i = 0; i < _d->model.nodes.size(); i++) {
+    for(std::size_t i = 0; i < _d->model.nodes.size(); i++)
         _d->nodesForName.emplace(_d->model.nodes[i].name, i);
-    }
 
-    for(int i = 0; i < _d->model.materials.size(); i++) {
+    for(std::size_t i = 0; i < _d->model.materials.size(); i++)
         _d->materialsForName.emplace(_d->model.materials[i].name, i);
-    }
 }
 
 Int TinyGltfImporter::doDefaultScene() {
