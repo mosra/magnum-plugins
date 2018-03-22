@@ -345,7 +345,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         std::copy_n(reinterpret_cast<const UnsignedShort*>(start), idxBufferView.byteLength/sizeof(UnsignedShort), std::back_inserter(indices));
     } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
         std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxBufferView.byteLength/sizeof(UnsignedInt), std::back_inserter(indices));
-    }
+    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     return MeshData3D{meshPrimitive, std::move(indices), {std::move(positions)}, {std::move(normals)}, {}, {}, &mesh};
 }
