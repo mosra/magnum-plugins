@@ -72,13 +72,23 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void material();
 
     void image();
-
-private:
-    std::string extension() {
-        setTestCaseDescription(testCaseInstanceId() == 0 ? "ascii" : "binary");
-        return testCaseInstanceId() == 0 ? "gltf" : "glb";
-    }
 };
+
+namespace {
+
+enum: std::size_t { InstanceDataCount = 2 };
+
+constexpr struct {
+    const char* name;
+    const char* extension;
+    Containers::ArrayView<const char> shortData;
+    const char* shortDataError;
+} InstanceData[InstanceDataCount]{
+    {"ascii", ".gltf", {"?", 1}, "JSON string too short.\n\n"},
+    {"binary", ".glb", {"glTF?", 5}, "Too short data size for glTF Binary.\n"}
+};
+
+}
 
 TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::open,
@@ -100,36 +110,41 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
                        &TinyGltfImporterTest::material,
 
-                       &TinyGltfImporterTest::image}, 2);
+                       &TinyGltfImporterTest::image}, InstanceDataCount);
 }
 
 void TinyGltfImporterTest::open() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
 
-    auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "test-scene." + extension());
+    auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "test-scene" + std::string{data.extension});
     CORRADE_VERIFY(importer.openFile(filename));
     CORRADE_VERIFY(importer.openData(Utility::Directory::read(filename)));
 }
 
 void TinyGltfImporterTest::openError() {
-    TinyGltfImporter importer;
-
-    setTestCaseDescription(testCaseInstanceId() == 0 ? "ascii" : "binary");
-    std::string dataString = testCaseInstanceId() == 0 ? "?" : "glTF?";
-    Containers::ArrayView<const char> data{dataString.data(), dataString.size()};
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
     std::ostringstream out;
     Error redirectError{&out};
-    std::string expected = "Trade::TinyGltfImporter::openFile(): error opening file: ";
-    expected += testCaseInstanceId() == 0 ? "JSON string too short.\n\n" : "Too short data size for glTF Binary.\n";
-    CORRADE_VERIFY(!importer.openData(data));
-    CORRADE_COMPARE(out.str(), expected);
+
+    TinyGltfImporter importer;
+    CORRADE_VERIFY(!importer.openData(data.shortData));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): error opening file: " + std::string{data.shortDataError});
 }
 
 void TinyGltfImporterTest::defaultScene() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
 
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "mesh." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh" + std::string{data.extension})));
 
     Int id = importer.defaultScene();
     CORRADE_VERIFY(id > -1);
@@ -143,8 +158,12 @@ void TinyGltfImporterTest::defaultScene() {
 }
 
 void TinyGltfImporterTest::camera() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "camera" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.cameraCount(), 2);
 
@@ -163,8 +182,12 @@ void TinyGltfImporterTest::camera() {
 }
 
 void TinyGltfImporterTest::light() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "light." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "light" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.lightCount(), 4); /* 3 + 1 (ambient light) */
 
@@ -191,8 +214,12 @@ void TinyGltfImporterTest::light() {
 }
 
 void TinyGltfImporterTest::object() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "object-new." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "object-new" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.object3DCount(), 5);
 
@@ -228,8 +255,12 @@ void TinyGltfImporterTest::object() {
 }
 
 void TinyGltfImporterTest::objectTransformation() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "object-transformation." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "object-transformation" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.object3DCount(), 1);
 
@@ -244,8 +275,12 @@ void TinyGltfImporterTest::objectTransformation() {
 }
 
 void TinyGltfImporterTest::objectTranslation() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "object-translation." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "object-translation" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.object3DCount(), 3);
 
@@ -263,8 +298,12 @@ void TinyGltfImporterTest::objectTranslation() {
 }
 
 void TinyGltfImporterTest::objectRotation() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "object-rotation." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "object-rotation" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.object3DCount(), 3);
 
@@ -282,8 +321,12 @@ void TinyGltfImporterTest::objectRotation() {
 }
 
 void TinyGltfImporterTest::objectScaling() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "object-scaling." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "object-scaling" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.object3DCount(), 3);
 
@@ -301,8 +344,12 @@ void TinyGltfImporterTest::objectScaling() {
 }
 
 void TinyGltfImporterTest::mesh() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "mesh." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.mesh3DCount(), 1);
 
@@ -329,8 +376,12 @@ void TinyGltfImporterTest::mesh() {
 }
 
 void TinyGltfImporterTest::material() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     TinyGltfImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "material." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "material" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer.materialCount(), 2);
 
@@ -368,15 +419,19 @@ void TinyGltfImporterTest::material() {
 }
 
 void TinyGltfImporterTest::image() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
 
     if (manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     TinyGltfImporter importer{manager, "TinyGltfImporter"};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "material." + extension())));
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "material" + std::string{data.extension})));
 
-    const char data[] =
+    const char expected[] =
         "\xa8\xa7\xac\xff\x9d\x9e\xa0\xff\xad\xad\xac\xff\xbb\xbb\xba\xff\xb3\xb4\xb6\xff"
         "\xb0\xb1\xb6\xff\xa0\xa0\xa1\xff\x9f\x9f\xa0\xff\xbc\xbc\xba\xff\xcc\xcc\xcc\xff"
         "\xb2\xb4\xb9\xff\xb8\xb9\xbb\xff\xc1\xc3\xc2\xff\xbc\xbd\xbf\xff\xb8\xb8\xbc\xff";
@@ -387,7 +442,7 @@ void TinyGltfImporterTest::image() {
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA);
     CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(data).prefix(60), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(expected).prefix(60), TestSuite::Compare::Container);
 }
 
 }}}
