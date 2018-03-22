@@ -313,17 +313,17 @@ void TinyGltfImporterTest::mesh() {
     CORRADE_COMPARE(meshObject->positionArrayCount(), 1);
     CORRADE_COMPARE(meshObject->normalArrayCount(), 1);
 
-    CORRADE_COMPARE(meshObject->positions(0), (std::vector<Vector3>{
+    CORRADE_COMPARE_AS(meshObject->positions(0), (std::vector<Vector3>{
         {0.685616612f, -1.02956f, -0.277003706f},
         {-0.00734680891f, 1.0624f, -0.0872567892f},
         {-0.584888637f, -0.268546f, 0.291010320f}
-    }));
+    }), TestSuite::Compare::Container);
     CORRADE_COMPARE(meshObject->normalArrayCount(), 1);
-    CORRADE_COMPARE(meshObject->normals(0), (std::vector<Vector3>{
+    CORRADE_COMPARE_AS(meshObject->normals(0), (std::vector<Vector3>{
         {0.439082f, 0.0641624f, 0.896153f},
         {0.439082f, 0.0641624f, 0.896153f},
         {0.439082f, 0.0641624f, 0.896153f}
-    }));
+    }), TestSuite::Compare::Container);
 
     CORRADE_COMPARE(meshObject->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
 }
