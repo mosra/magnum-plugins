@@ -29,10 +29,8 @@
 #include <algorithm>
 #include <limits>
 #include <unordered_map>
-
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Directory.h>
-
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
@@ -44,7 +42,6 @@
 #include <Magnum/Mesh.h>
 #include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
-
 #include <Magnum/Math/Vector2.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Matrix4.h>
@@ -59,8 +56,8 @@
 /* Opt out of loading external images */
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 
-/* Tinygltf includes some windows headers, avoid including more than ncessary to
- * speed up compilation. */
+/* Tinygltf includes some windows headers, avoid including more than ncessary
+   to speed up compilation. */
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 
@@ -103,7 +100,7 @@ void TinyGltfImporter::doClose() { _d = nullptr; }
 
 void TinyGltfImporter::doOpenFile(const std::string& filename) {
     _d.reset(new Document);
-    _d->filePath = Corrade::Utility::Directory::path(filename);
+    _d->filePath = Utility::Directory::path(filename);
     AbstractImporter::doOpenFile(filename);
 }
 
@@ -112,9 +109,7 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
     std::string err;
     bool ret;
 
-    if(!_d) {
-        _d.reset(new Document);
-    }
+    if(!_d) _d.reset(new Document);
 
     loader.SetImageLoader(&loadImageData, nullptr);
 
@@ -202,10 +197,8 @@ UnsignedInt TinyGltfImporter::doSceneCount() const { return _d->model.scenes.siz
 Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
     std::vector<UnsignedInt> children;
     const tinygltf::Scene& scene = _d->model.scenes[id];
+    for(const Int node: scene.nodes) children.push_back(node);
 
-    for(const int node : scene.nodes) {
-        children.push_back(node);
-    }
     return SceneData{{}, children};
 }
 
@@ -232,13 +225,11 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     std::vector<UnsignedInt> children(node.children.begin(), node.children.end());
 
     Matrix4 transformation;
-
     if(node.rotation.size() == 4) {
         const auto vector = Vector3(node.rotation[0], node.rotation[1], node.rotation[2]);
         const auto scalar = node.rotation[3];
         transformation = Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
     }
-
     if(node.translation.size() == 3) {
         const auto vector = Vector3(node.translation[0], node.translation[1], node.translation[2]);
         Matrix4 translation = Matrix4::translation(vector);
@@ -255,6 +246,7 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         UnsignedInt cameraId = node.camera;
 
         return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId, &node}};
+
     /* node is a mesh */
     } else if(node.mesh >= 0) {
         UnsignedInt meshId = node.mesh;
@@ -262,6 +254,7 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         Int materialId = _d->model.meshes[meshId].primitives[0].material;
 
         return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
+
     /* node is a light */
     } else if(node.extLightsValues.find("light") != node.extLightsValues.end()) {
         UnsignedInt lightId = node.extLightsValues.find("light")->second.number_array[0];
@@ -296,7 +289,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         meshPrimitive = MeshPrimitive::LineLoop;
     } else if(primitive.mode == TINYGLTF_MODE_TRIANGLES) {
         meshPrimitive = MeshPrimitive::Triangles;
-    } else if(primitive.mode == TINYGLTF_MODE_TRIANGLE_FAN){
+    } else if(primitive.mode == TINYGLTF_MODE_TRIANGLE_FAN) {
         meshPrimitive = MeshPrimitive::TriangleFan;
     } else if(primitive.mode == TINYGLTF_MODE_TRIANGLE_STRIP) {
         meshPrimitive = MeshPrimitive::TriangleStrip;
@@ -445,8 +438,9 @@ UnsignedInt TinyGltfImporter::doImage2DCount() const {
 Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt id) {
     CORRADE_ASSERT(manager(), "Trade::TinyGltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
 
-    /* Because we specified an empty callback for loading image data, Image.image,
-     * Image.width, Image.height and Image.component will not be valid and should not be accessed. */
+    /* Because we specified an empty callback for loading image data,
+       Image.image, Image.width, Image.height and Image.component will not be
+       valid and should not be accessed. */
 
     const tinygltf::Image& image = _d->model.images[id];
 
@@ -459,9 +453,7 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
         const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
 
         Containers::ArrayView<const char> data = Containers::arrayCast<const char>(Containers::arrayView(&buffer.data[bufferView.byteOffset], bufferView.byteLength));
-        if(!imageImporter.openData(data)) {
-            return Containers::NullOpt;
-        }
+        if(!imageImporter.openData(data)) return Containers::NullOpt;
 
         return imageImporter.image2D(0);
 
@@ -470,9 +462,7 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
         AnyImageImporter imageImporter{*manager()};
 
         const std::string filepath = Utility::Directory::join(_d->filePath, image.uri);
-        if(!imageImporter.openFile(filepath)) {
-            return Containers::NullOpt;
-        }
+        if(!imageImporter.openFile(filepath)) return Containers::NullOpt;
 
         return imageImporter.image2D(0);
     }

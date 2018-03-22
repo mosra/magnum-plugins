@@ -82,18 +82,25 @@ private:
 
 TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::open,
-              &TinyGltfImporterTest::openError,
-              &TinyGltfImporterTest::defaultScene,
-              &TinyGltfImporterTest::camera,
-              &TinyGltfImporterTest::light,
-              &TinyGltfImporterTest::object,
-              &TinyGltfImporterTest::objectTransformation,
-              &TinyGltfImporterTest::objectTranslation,
-              &TinyGltfImporterTest::objectRotation,
-              &TinyGltfImporterTest::objectScaling,
-              &TinyGltfImporterTest::mesh,
-              &TinyGltfImporterTest::material,
-              &TinyGltfImporterTest::image}, 2);
+                       &TinyGltfImporterTest::openError,
+
+                       &TinyGltfImporterTest::defaultScene,
+
+                       &TinyGltfImporterTest::camera,
+
+                       &TinyGltfImporterTest::light,
+
+                       &TinyGltfImporterTest::object,
+                       &TinyGltfImporterTest::objectTransformation,
+                       &TinyGltfImporterTest::objectTranslation,
+                       &TinyGltfImporterTest::objectRotation,
+                       &TinyGltfImporterTest::objectScaling,
+
+                       &TinyGltfImporterTest::mesh,
+
+                       &TinyGltfImporterTest::material,
+
+                       &TinyGltfImporterTest::image}, 2);
 }
 
 void TinyGltfImporterTest::open() {
@@ -132,9 +139,7 @@ void TinyGltfImporterTest::defaultScene() {
 
     auto scene = importer.scene(id);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{
-            {1}, {0}
-    }));
+    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{1, 0}));
 }
 
 void TinyGltfImporterTest::camera() {
@@ -275,7 +280,6 @@ void TinyGltfImporterTest::objectRotation() {
     CORRADE_VERIFY(object3);
     CORRADE_COMPARE(object3->transformation(), Matrix4::rotation(-35.0_degf, Vector3::xAxis()));
 }
-
 
 void TinyGltfImporterTest::objectScaling() {
     TinyGltfImporter importer;

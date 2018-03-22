@@ -29,7 +29,9 @@
 /** @file
  * @brief Class @ref Magnum::Trade::TinyGltfImporter
  */
+
 #include <Magnum/Trade/AbstractImporter.h>
+
 #include "MagnumPlugins/TinyGltfImporter/visibility.h"
 
 namespace Magnum { namespace Trade {
