@@ -78,21 +78,21 @@ install(FILES ${TinyGltfImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_I
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/TinyGltfImporter)
 
 if(BUILD_TESTS)
-  if(CORRADE_TARGET_WINDOWS)
-      add_library(MagnumTinyGltfImporterTestLib STATIC
-          ${TinyGltfImporter_SRCS}
-          ${TinyGltfImporter_HEADERS})
-      target_include_directories(MagnumTinyGltfImporterTestLib SYSTEM PRIVATE
-          ${PROJECT_SOURCE_DIR}/src/external/tinygltf)
-      target_compile_definitions(MagnumTinyGltfImporterTestLib PRIVATE
-          "MAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC"
-          "MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC"
-          "MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC")
-  else()
-      add_library(MagnumTinyGltfImporterTestLib STATIC
-          $<TARGET_OBJECTS:TinyGltfImporterObjects>
-          ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-  endif()
+    if(CORRADE_TARGET_WINDOWS)
+        add_library(MagnumTinyGltfImporterTestLib STATIC
+            ${TinyGltfImporter_SRCS}
+            ${TinyGltfImporter_HEADERS})
+        target_include_directories(MagnumTinyGltfImporterTestLib SYSTEM PRIVATE
+            ${PROJECT_SOURCE_DIR}/src/external/tinygltf)
+        target_compile_definitions(MagnumTinyGltfImporterTestLib PRIVATE
+            "MAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC"
+            "MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC"
+            "MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC")
+    else()
+        add_library(MagnumTinyGltfImporterTestLib STATIC
+            $<TARGET_OBJECTS:TinyGltfImporterObjects>
+            ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
+    endif()
 
     target_include_directories(MagnumTinyGltfImporterTestLib PUBLIC
         ${PROJECT_SOURCE_DIR}/src
