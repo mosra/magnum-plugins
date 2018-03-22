@@ -300,6 +300,10 @@ By default no plugins are built and you need to select them manually:
     @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin.
 -   `WITH_STBVORBISAUDIOIMPORTER` --- Build the
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugin.
+-   `WITH_TINYGLTFIMPORTER` --- Build the
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin. Enables also
+    building of the @ref Trade::AnyImageImporter "AnyImageImporter" and
+    @ref Trade::StbImageImporter "StbImageImporter" plugins.
 
 Note that each plugin documentation contains more detailed information about
 its dependencies, availability on particular platforms and also a guide how to

@@ -37,6 +37,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief TinyGltf importer plugin
 
+Imports glTF and binary glTF using the [TinyGLTF](https://github.com/syoyo/tinygltf)
+library.
+
 This plugin depends on the @ref Trade library and is built if
 `WITH_TINYGLTFIMPORTER` is enabled when building Magnum Plugins. To use as a
 dynamic plugin, you need to load the @cpp "TinyGltfImporter" @ce plugin from
@@ -46,60 +49,43 @@ of the `MagnumPlugins` package and link to the
 `MagnumPlugins::TinyGltfImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 
+This plugin provides `GltfImporter` and `GlbImporter` plugins.
+
 @section Trade-TinyGltfImporter-limitations Behavior and limitations
 
--   Importer requires no specific json-node at .gltf-File like `accessors` 
-so it can be used to import only lights
-
-@subsection Trade-TinyGltfImporter-limitations-scenes Scene hierarchy import
-
--   Object-only transformations are not supported.
--   Additional material references after the first one for given geometry node
-are ignored.
--   Geometry node visibility, shadow and motion blur properties are ignored.
+-   Importer requires no specific JSON node in glTF file (like `accessors`) so
+    it can be used to import only lights.
 
 @subsection Trade-TinyGltfImporter-limitations-lights Light import
 
--   Light attenuation properties are not yet supported.
--   Light textures are not yet supported.
--   Light intensity is not yet supported (due to gltf extension draft state)
+-   Light intensity is not yet supported due to glTF extension draft state.
 
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 
--   64bit indices are not supported.
--   Quads are not supported.
--   Additional mesh LoDs after the first one are ignored.
--   `w` coordinate for vertex positions and normals is ignored if present.
+-   Texture coordinate attributes are not yet supported.
+-   Multi-material meshes are not supported.
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
 
--   Two-sided property is ignored.
 -   All materials are imported as @ref Trade::PhongMaterialData with ambient
-color always set to `{0.0f, 0.0f, 0.0f}`.
+    color always set to @cpp {0.0f, 0.0f, 0.0f} @ce
 -   Alpha channel of colors is ignored.
--   `emission`, `opacity` and `transparency` attributes are not supported.
--   `normal` textures are not supported.
 
 @subsection Trade-TinyGltfImporter-limitations-textures Texture import
 
--   Texture coordinate transformation is ignored.
--   Textures using other than the first coordinate set are not supported.
 -   Texture type is always @ref Trade::TextureData::Type::Texture2D
 
-@subsection Trade-TinyGltfImporter-state Access to internal importer state
+@section Trade-TinyGltfImporter-state Access to internal importer state
 
-Generic importer for TinyGltf files is implemented with the use of
-the tinygltf-Library and access to it is provided through importer-specific data accessors:
+Access to the underlying TinyGLTF structures it is provided through
+importer-specific data accessors:
 
--   @ref AbstractMaterialData::importerState() returns @ref tinygltf::Material
-structure
--   @ref CameraData::importerState() returns @ref tinygltf::Camera
-structure
--   @ref TextureData::importerState() returns @ref tinygltf::Texture
-structure
--   @ref MeshData3D::importerState() returns @ref tinygltf::Mesh
-structure
--   @ref ObjectData3D::importerState() returns @ref tinygltf::Node
+-   @ref AbstractMaterialData::importerState() returns `tinygltf::Material`
+    structure
+-   @ref CameraData::importerState() returns `tinygltf::Camera` structure
+-   @ref TextureData::importerState() returns `tinygltf::Texture` structure
+-   @ref MeshData3D::importerState() returns `tinygltf::Mesh` structure
+-   @ref ObjectData3D::importerState() returns `tinygltf::Node` structure
 */
 class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
     public:

@@ -348,6 +348,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # StbImageImporter has no dependencies
         # StbTrueTypeFont has no dependencies
         # StbVorbisAudioImporter has no dependencies
+        # TinyGltfImporter has no dependencies
 
         # Find plugin includes
         if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})

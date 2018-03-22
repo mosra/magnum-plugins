@@ -89,6 +89,9 @@
 /** @dir MagnumPlugins/StbVorbisAudioImporter
  * @brief Plugin @ref Magnum::Audio::StbVorbisImporter
  */
+ /** @dir MagnumPlugins/TinyGltfImporter
+ * @brief Plugin @ref Magnum::Trade::TinyGltfImporter
+ */
 
 /** @dir magnum-plugins/src/MagnumPlugins/OpenGexImporter/OpenDdl
  * @brief Namespace @ref Magnum::OpenDdl, @ref Magnum::OpenDdl::Validation
