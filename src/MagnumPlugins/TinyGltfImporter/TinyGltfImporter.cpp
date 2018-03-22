@@ -301,10 +301,6 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     /* LCOV_EXCL_STOP */
 
     /* Vertices */
-    std::vector<std::vector<Vector3>> positions;
-    std::vector<std::vector<Vector2>> textureCoordinates;
-    std::vector<std::vector<Vector3>> normals;
-
     const tinygltf::Accessor& posAccessor = _d->model.accessors[primitive.attributes.find("POSITION")->second];
     const tinygltf::BufferView& posBufferview = _d->model.bufferViews[posAccessor.bufferView];
     const tinygltf::Buffer& posBuffer = _d->model.buffers[posBufferview.buffer];
@@ -314,10 +310,9 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         return Containers::NullOpt;
     }
 
-    std::vector<Vector3> posElement;
+    std::vector<Vector3> positions;
     size_t numPositions = posBufferview.byteLength/sizeof(Vector3);
-    std::copy_n(reinterpret_cast<const Vector3*>(posBuffer.data.data() + posBufferview.byteOffset), numPositions, std::back_inserter(posElement));
-    positions.push_back(std::move(posElement));
+    std::copy_n(reinterpret_cast<const Vector3*>(posBuffer.data.data() + posBufferview.byteOffset), numPositions, std::back_inserter(positions));
 
     const tinygltf::Accessor& normalAccessor = _d->model.accessors[primitive.attributes.find("NORMAL")->second];
     const tinygltf::BufferView& normalBufferview = _d->model.bufferViews[normalAccessor.bufferView];
@@ -328,11 +323,9 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         return Containers::NullOpt;
     }
 
-    std::vector<Vector3> normalElement;
-    size_t numNormals = normalBufferview.byteLength / sizeof(Vector3);
-    std::copy_n(reinterpret_cast<const Vector3*>(normalBuffer.data.data() + normalBufferview.byteOffset), numNormals, std::back_inserter(normalElement));
-
-    normals.push_back(std::move(normalElement));
+    std::vector<Vector3> normals;
+    size_t numNormals = normalBufferview.byteLength/sizeof(Vector3);
+    std::copy_n(reinterpret_cast<const Vector3*>(normalBuffer.data.data() + normalBufferview.byteOffset), numNormals, std::back_inserter(normals));
 
     /* Indices */
     const tinygltf::Accessor& idxAccessor = _d->model.accessors[primitive.indices];
@@ -353,7 +346,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
         std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxBufferView.byteLength/sizeof(UnsignedInt), std::back_inserter(indices));
     }
-    return MeshData3D{meshPrimitive, std::move(indices), positions, normals, textureCoordinates, {}, &mesh};
+
+    return MeshData3D{meshPrimitive, std::move(indices), {std::move(positions)}, {std::move(normals)}, {}, {}, &mesh};
 }
 
 UnsignedInt TinyGltfImporter::doMaterialCount() const {
