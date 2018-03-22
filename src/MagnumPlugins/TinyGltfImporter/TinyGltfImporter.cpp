@@ -65,16 +65,17 @@
 #undef near
 #undef far
 
-
 namespace Magnum { namespace Trade {
 
 using namespace Magnum::Math::Literals;
 
-bool loadImageData(tinygltf::Image *image, std::string *err, int req_width,
-    int req_height, const unsigned char *bytes, int size, void* user_data)
-{
+namespace {
+
+bool loadImageData(tinygltf::Image*, std::string*, int, int, const unsigned char*, int, void*) {
     /* Bypass tinygltf image loading and load the image on demand in image2D instead. */
     return true;
+}
+
 }
 
 struct TinyGltfImporter::Document {
