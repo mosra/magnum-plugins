@@ -280,7 +280,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
 
     const tinygltf::Primitive& primitive = mesh.primitives[0];
 
-    MeshPrimitive meshPrimitive = MeshPrimitive{}; // (default-init to zero)
+    MeshPrimitive meshPrimitive{};
     if(primitive.mode == TINYGLTF_MODE_POINTS) {
         meshPrimitive = MeshPrimitive::Points;
     } else if(primitive.mode == TINYGLTF_MODE_LINE) {
