@@ -151,8 +151,7 @@ Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
     } else if(camera.type == "orthographic") {
         far = camera.orthographic.zfar;
         near = camera.orthographic.znear;
-    } else
-        CORRADE_ASSERT_UNREACHABLE();
+    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     return CameraData{fov, near, far, &camera};
 }
@@ -179,10 +178,12 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     } else if(light.type == "ambient") {
         Error() << "Trade::TinyGltfImporter::light(): unsupported value for light type:" << type;
         return Containers::NullOpt;
+    /* LCOV_EXCL_START */
     } else {
         Error() << "Trade::TinyGltfImporter::light(): invalid value for light type:" << type;
         return Containers::NullOpt;
     }
+    /* LCOV_EXCL_STOP */
 
     return LightData{lightType, lightColor, lightIntensity, &light};
 }
@@ -292,10 +293,12 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         meshPrimitive = MeshPrimitive::TriangleFan;
     } else if(primitive.mode == TINYGLTF_MODE_TRIANGLE_STRIP) {
         meshPrimitive = MeshPrimitive::TriangleStrip;
+    /* LCOV_EXCL_START */
     } else {
         Error{} << "Trade::TinyGltfImporter::mesh3D(): unrecognized primitive" << primitive.mode;
         return Containers::NullOpt;
     }
+    /* LCOV_EXCL_STOP */
 
     /* Vertices */
     std::vector<std::vector<Vector3>> positions;
