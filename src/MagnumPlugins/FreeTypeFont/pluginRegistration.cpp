@@ -23,6 +23,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/PluginManager/AbstractManager.h>
+
 #include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"
 
 CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont,

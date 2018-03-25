@@ -23,6 +23,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/PluginManager/AbstractManager.h>
+
 #include "MagnumPlugins/StbTrueTypeFont/StbTrueTypeFont.h"
 
 CORRADE_PLUGIN_REGISTER(StbTrueTypeFont, Magnum::Text::StbTrueTypeFont,

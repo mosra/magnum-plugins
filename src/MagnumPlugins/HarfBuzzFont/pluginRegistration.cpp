@@ -23,6 +23,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/PluginManager/AbstractManager.h>
+
 #include "MagnumPlugins/HarfBuzzFont/HarfBuzzFont.h"
 
 CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont,
