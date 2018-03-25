@@ -71,6 +71,7 @@ target_include_directories(PngImageConverter PUBLIC
 target_link_libraries(PngImageConverter Magnum::Magnum ${PNG_LIBRARIES})
 
 install(FILES ${PngImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImageConverter)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImageConverter)
 
 if(BUILD_TESTS)
     add_library(MagnumPngImageConverterTestLib STATIC
