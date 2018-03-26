@@ -73,6 +73,14 @@ target_link_libraries(DrWavAudioImporter Magnum::Magnum Magnum::Audio)
 install(FILES ${DrWavAudioImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrWavAudioImporter)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrWavAudioImporter)
 
+# Automatic static plugin import
+if(BUILD_STATIC)
+    install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrWavAudioImporter)
+    if(NOT CMAKE_VERSION VERSION_LESS 3.1)
+        target_sources(DrWavAudioImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
+    endif()
+endif()
+
 if(BUILD_TESTS)
     add_library(MagnumDrWavAudioImporterTestLib STATIC
         $<TARGET_OBJECTS:DrWavAudioImporterObjects>

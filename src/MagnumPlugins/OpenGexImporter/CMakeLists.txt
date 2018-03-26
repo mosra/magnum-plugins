@@ -78,6 +78,14 @@ endif()
 install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 
+# Automatic static plugin import
+if(BUILD_STATIC)
+    install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
+    if(NOT CMAKE_VERSION VERSION_LESS 3.1)
+        target_sources(OpenGexImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
+    endif()
+endif()
+
 if(BUILD_TESTS)
     # On Win32 we need to avoid dllimporting AnyImageImporter symbols, because
     # it would search for the symbols in some DLL even when they were linked

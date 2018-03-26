@@ -85,6 +85,14 @@ endif()
 install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
+# Automatic static plugin import
+if(BUILD_STATIC)
+    install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
+    if(NOT CMAKE_VERSION VERSION_LESS 3.1)
+        target_sources(HarfBuzzFont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
+    endif()
+endif()
+
 if(BUILD_GL_TESTS)
     add_library(MagnumHarfBuzzFontTestLib STATIC
         $<TARGET_OBJECTS:HarfBuzzFontObjects>
