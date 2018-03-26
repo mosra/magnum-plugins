@@ -42,8 +42,10 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-new New features
 
--   New @ref Trade::TinyGltfImporter plugin for importing glTF and binary glTF
-    files
+-   New @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin for importing
+    glTF and binary glTF files
+-   The @ref Trade-AssimpImporter-configuration "AssimpImporter" plugin now
+    supports external configuration for postprocessing
 
 @section changelog-plugins-2018-02 2018.02
 

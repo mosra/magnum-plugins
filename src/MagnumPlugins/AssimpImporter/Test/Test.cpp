@@ -31,6 +31,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Vector3.h>
@@ -92,6 +93,8 @@ struct AssimpImporterTest: public TestSuite::Tester {
 
     void openState();
     void openStateTexture();
+
+    void configurePostprocessFlipUVs();
 };
 
 namespace {
@@ -132,7 +135,9 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::embeddedTexture,
 
               &AssimpImporterTest::openState,
-              &AssimpImporterTest::openStateTexture});
+              &AssimpImporterTest::openStateTexture,
+
+              &AssimpImporterTest::configurePostprocessFlipUVs});
 }
 
 void AssimpImporterTest::open() {
@@ -482,6 +487,22 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::configurePostprocessFlipUVs() {
+    AssimpImporter importer;
+    importer.configuration().group("postprocess")->setValue("FlipUVs", true);
+    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+
+    CORRADE_COMPARE(importer.mesh3DCount(), 1);
+
+    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 1);
+
+    /* The same as in mesh() but with reversed Y */
+    CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
+        {0.5f, 0.0f}, {0.75f, 0.5f}, {0.5f, 0.1f}}));
 }
 
 }}}

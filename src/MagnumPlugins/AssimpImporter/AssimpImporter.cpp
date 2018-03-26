@@ -31,6 +31,7 @@
 #include <unordered_map>
 
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
 
 #include <Magnum/Mesh.h>
@@ -77,9 +78,27 @@ struct AssimpImporter::File {
     std::unordered_map<const aiMaterial*, UnsignedInt> _textureIndices;
 };
 
-AssimpImporter::AssimpImporter() = default;
+namespace {
 
-AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager) {}
+void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
+    /** @todo horrible workaround, fix this properly */
+    Utility::ConfigurationGroup& postprocess = *conf.addGroup("postprocess");
+    postprocess.setValue("JoinIdenticalVertices", true);
+    postprocess.setValue("Triangulate", true);
+    postprocess.setValue("SortByPType", true);
+}
+
+}
+
+AssimpImporter::AssimpImporter() {
+    /** @todo horrible workaround, fix this properly */
+    fillDefaultConfiguration(configuration());
+}
+
+AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager) {
+    /** @todo horrible workaround, fix this properly */
+    fillDefaultConfiguration(configuration());
+}
 
 AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin) {}
 
@@ -89,11 +108,43 @@ auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData |
 
 bool AssimpImporter::doIsOpened() const { return _f && _f->_scene; }
 
+namespace {
+
+UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
+    UnsignedInt flags = 0;
+    const Utility::ConfigurationGroup& postprocess = *conf.group("postprocess");
+    #define _c(val) if(postprocess.value<bool>(#val)) flags |= aiProcess_ ## val;
+        /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
+    _c(JoinIdenticalVertices) /* enabled by default */
+    _c(Triangulate) /* enabled by default */
+    _c(GenNormals)
+    _c(GenSmoothNormals)
+    _c(SplitLargeMeshes)
+    _c(PreTransformVertices)
+    _c(ValidateDataStructure)
+    _c(ImproveCacheLocality)
+    _c(RemoveRedundantMaterials)
+    _c(FixInfacingNormals)
+    _c(SortByPType) /* enabled by default */
+    _c(FindDegenerates)
+    _c(FindInvalidData)
+    _c(GenUVCoords)
+    _c(TransformUVCoords)
+    _c(FindInstances)
+    _c(OptimizeMeshes)
+    _c(OptimizeGraph)
+    _c(FlipUVs)
+    _c(FlipWindingOrder)
+    #undef _c
+    return flags;
+}
+
+}
+
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(!_f) {
         _f.reset(new File);
-        /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
-        _f->_scene = _f->_importer.ReadFileFromMemory(data.data(), data.size(), aiProcess_Triangulate|aiProcess_SortByPType|aiProcess_JoinIdenticalVertices);
+        _f->_scene = _f->_importer.ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration()));
     }
 
     if(!_f->_scene) {
@@ -174,8 +225,7 @@ void AssimpImporter::doOpenState(const void* state, const std::string& filePath)
 
 void AssimpImporter::doOpenFile(const std::string& filename) {
     _f.reset(new File);
-    /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
-    _f->_scene = _f->_importer.ReadFile(filename, aiProcess_Triangulate|aiProcess_SortByPType|aiProcess_JoinIdenticalVertices);
+    _f->_scene = _f->_importer.ReadFile(filename, flagsFromConfiguration(configuration()));
     _f->_filePath = Utility::Directory::path(filename);
 
     doOpenData({});
