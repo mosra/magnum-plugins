@@ -213,7 +213,7 @@ void AssimpImporterTest::material() {
 
     Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
     CORRADE_VERIFY(phongMaterial);
-    CORRADE_VERIFY(phongMaterial->flags() == Trade::PhongMaterialData::Flags{}); /* @todo No debug << operator for the PhongMaterialData::Flag enum */
+    CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flags{});
     CORRADE_COMPARE(phongMaterial->ambientColor(), Color3(0.0f, 0.0f, 0.0f));
     CORRADE_COMPARE(phongMaterial->specularColor(), Color3(0.15f, 0.1f, 0.05f));
     CORRADE_COMPARE(phongMaterial->diffuseColor(), Color3(0.08f, 0.16f, 0.24f));
