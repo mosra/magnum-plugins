@@ -185,7 +185,7 @@ void AssimpImporterTest::lightUndefined() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light-undefined.dae")));
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    /* @todo Possibly works with earlier versions (definitely not 3.0) */
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 302)
         CORRADE_SKIP("Current version of assimp cannot load lights with undefined light type yet.");
 
@@ -241,11 +241,11 @@ void AssimpImporterTest::mesh() {
     CORRADE_COMPARE(mesh->colorArrayCount(), 1);
 
     CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-            {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}}));
+        {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}}));
     CORRADE_COMPARE(mesh->normals(0), (std::vector<Vector3>{
-            {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}));
+        {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}));
     CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
-            {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}}));
+        {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}}));
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* Skip for assimp < 3.3, which loads some incorrect alpha value for the last color */
     if(version >= 302) {
@@ -275,7 +275,7 @@ void AssimpImporterTest::pointMesh() {
     CORRADE_COMPARE(mesh->colorArrayCount(), 0);
 
     CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-            {0.5f, 2.0f, 3.0f}, {2.0f, 3.0f, 5.0f}, {0.0f, 1.5f, 1.0f}}));
+        {0.5f, 2.0f, 3.0f}, {2.0f, 3.0f, 5.0f}, {0.0f, 1.5f, 1.0f}}));
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2, 0}));
 
     std::unique_ptr<Trade::ObjectData3D> meshObject = importer.object3D(1);
@@ -299,7 +299,7 @@ void AssimpImporterTest::lineMesh() {
     CORRADE_COMPARE(mesh->colorArrayCount(), 0);
 
     CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-            {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}}));
+        {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}}));
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1}));
 
     std::unique_ptr<Trade::ObjectData3D> meshObject = importer.object3D(1);
@@ -325,11 +325,11 @@ void AssimpImporterTest::scene() {
     CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
 
     std::unique_ptr<Trade::ObjectData3D> childObject = importer.object3D(2);
-    CORRADE_COMPARE(childObject->transformation(),
-                    Matrix4({0.813798f, -0.44097f, 0.378522f, 1.0f},
-                            {0.469846f, 0.882564f, 0.0180283f, 2.0f},
-                            {-0.34202f, 0.163176f, 0.925417f, 3.0f},
-                            {0.0f, 0.0f, 0.0f, 1.0f}));
+    CORRADE_COMPARE(childObject->transformation(), Matrix4(
+        {0.813798f, -0.44097f, 0.378522f, 1.0f},
+        {0.469846f, 0.882564f, 0.0180283f, 2.0f},
+        {-0.34202f, 0.163176f, 0.925417f, 3.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}));
 
     CORRADE_COMPARE(importer.object3DForName("Root"), 1);
     CORRADE_COMPARE(importer.object3DForName("Child"), 2);
@@ -341,10 +341,9 @@ void AssimpImporterTest::scene() {
 
 void AssimpImporterTest::texture() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    /* @todo Possibly works with earlier versions (definitely not 3.0) */
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 302)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
 
     PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
 
@@ -368,9 +367,7 @@ void AssimpImporterTest::texture() {
     Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
-    const char pixels[] = {
-        '\xb3', '\x69', '\x00', '\xff'
-    };
+    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
 }
 
@@ -384,7 +381,7 @@ void AssimpImporterTest::embeddedTexture() {
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend")));
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    /* @todo Possibly works with earlier versions (definitely not 3.0) */
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 302)
         CORRADE_SKIP("Current version of assimp cannot load embedded textures from blender files.");
 
@@ -402,9 +399,7 @@ void AssimpImporterTest::embeddedTexture() {
     Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
-    const char pixels[] = {
-        '\xb3', '\x69', '\x00', '\xff'
-    };
+    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
 }
 
@@ -431,11 +426,11 @@ void AssimpImporterTest::openState() {
     CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
 
     std::unique_ptr<Trade::ObjectData3D> childObject = importer.object3D(2);
-    CORRADE_COMPARE(childObject->transformation(),
-                    Matrix4({0.813798f, -0.44097f, 0.378522f, 1.0f},
-                            {0.469846f, 0.882564f, 0.0180283f, 2.0f},
-                            {-0.34202f, 0.163176f, 0.925417f, 3.0f},
-                            {0.0f, 0.0f, 0.0f, 1.0f}));
+    CORRADE_COMPARE(childObject->transformation(), Matrix4(
+        {0.813798f, -0.44097f, 0.378522f, 1.0f},
+        {0.469846f, 0.882564f, 0.0180283f, 2.0f},
+        {-0.34202f, 0.163176f, 0.925417f, 3.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}));
 
     CORRADE_COMPARE(importer.object3DForName("Root"), 1);
     CORRADE_COMPARE(importer.object3DForName("Child"), 2);
@@ -447,10 +442,9 @@ void AssimpImporterTest::openState() {
 
 void AssimpImporterTest::openStateTexture() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    /* @todo Possibly works with earlier versions (definitely not 3.0) */
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 302)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
 
     PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
 
@@ -479,9 +473,7 @@ void AssimpImporterTest::openStateTexture() {
     Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
-    const char pixels[] = {
-        '\xb3', '\x69', '\x00', '\xff'
-    };
+    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
 }
 
