@@ -94,6 +94,19 @@ struct AssimpImporterTest: public TestSuite::Tester {
     void openStateTexture();
 };
 
+namespace {
+    enum: std::size_t { LightInstanceCount = 3 };
+
+    constexpr struct {
+        Trade::LightData::Type type;
+        Color3 color;
+    } LightInstanceData[LightInstanceCount]{
+        {Trade::LightData::Type::Spot, {0.12f, 0.24f, 0.36f}},
+        {Trade::LightData::Type::Point, {0.5f, 0.25f, 0.05f}},
+        {Trade::LightData::Type::Infinite, {1.0f, 0.15f, 0.45f}}
+    };
+}
+
 AssimpImporterTest::AssimpImporterTest() {
     #if MAGNUM_TRADE_ASSIMPIMPORTER_DEBUG
     Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
@@ -103,9 +116,11 @@ AssimpImporterTest::AssimpImporterTest() {
 
     addTests({&AssimpImporterTest::open,
 
-              &AssimpImporterTest::camera,
-              &AssimpImporterTest::light,
-              &AssimpImporterTest::lightUndefined,
+              &AssimpImporterTest::camera});
+
+    addInstancedTests({&AssimpImporterTest::light}, LightInstanceCount);
+
+    addTests({&AssimpImporterTest::lightUndefined,
               &AssimpImporterTest::material,
 
               &AssimpImporterTest::mesh,
@@ -152,32 +167,23 @@ void AssimpImporterTest::camera() {
 }
 
 void AssimpImporterTest::light() {
+    auto&& data = LightInstanceData[testCaseInstanceId()];
+
     AssimpImporter importer;
     CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
 
     CORRADE_COMPARE(importer.lightCount(), 3);
     CORRADE_COMPARE(importer.object3DCount(), 4); /* root + 3 light objects */
 
-    constexpr Trade::LightData::Type types[3]{
-        Trade::LightData::Type::Spot,
-        Trade::LightData::Type::Point,
-        Trade::LightData::Type::Infinite};
-    constexpr Color3 colors[3]{
-        {0.12f, 0.24f, 0.36f},
-        {0.5f, 0.25f, 0.05f},
-        {1.0f, 0.15f, 0.45f}};
+    Containers::Optional<Trade::LightData> light = importer.light(testCaseInstanceId());
+    CORRADE_VERIFY(light);
+    CORRADE_COMPARE(light->type(), data.type);
+    CORRADE_COMPARE(light->color(), data.color);
+    CORRADE_COMPARE(light->intensity(), 1.0f);
 
-    for (int i : {0, 1, 2}) {
-        Containers::Optional<Trade::LightData> light = importer.light(i);
-        CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), types[i]);
-        CORRADE_COMPARE(light->color(), colors[i]);
-        CORRADE_COMPARE(light->intensity(), 1.0f);
-
-        std::unique_ptr<Trade::ObjectData3D> lightObject = importer.object3D(i + 1);
-        CORRADE_COMPARE(lightObject->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(lightObject->instance(), i);
-    }
+    std::unique_ptr<Trade::ObjectData3D> lightObject = importer.object3D(testCaseInstanceId() + 1);
+    CORRADE_COMPARE(lightObject->instanceType(), ObjectInstanceType3D::Light);
+    CORRADE_COMPARE(lightObject->instance(), testCaseInstanceId());
 }
 
 void AssimpImporterTest::lightUndefined() {
