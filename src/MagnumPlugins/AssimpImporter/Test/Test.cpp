@@ -253,8 +253,9 @@ void AssimpImporterTest::mesh() {
     CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
         {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}}));
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    /* Skip for assimp < 3.3, which loads some incorrect alpha value for the last color */
-    if(version >= 302) {
+    {
+        CORRADE_EXPECT_FAIL_IF(version < 302,
+            "Assimp < 3.2 loads incorrect alpha value for the last color");
         CORRADE_COMPARE(mesh->colors(0), (std::vector<Color4>{
             {1.0f, 0.25f, 0.24f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.1f, 0.2f, 0.3f, 1.0f}}));
     }
