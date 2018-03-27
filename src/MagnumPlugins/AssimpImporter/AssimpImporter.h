@@ -151,8 +151,9 @@ information.
 Assimp has a versatile set of processing operations applied on imported scenes.
 The @cb{.conf} [postprocess] @ce group of @ref configuration() contains boolean
 toggles that correspond to the [aiPostProcessSteps](http://assimp.sourceforge.net/lib_html/postprocess_8h.html#a64795260b95f5a4b3f3dc1be4f52e410)
-enum. Some of are enabled by default, some not; options for not yet supported
-features are omitted. The full form of the configuration is shown below:
+enum. Some of them are enabled by default, some not; options for not yet
+supported features are omitted. The full form of the configuration is shown
+below:
 
 @snippet MagnumPlugins/AssimpImporter/AssimpImporter.conf configuration
 
