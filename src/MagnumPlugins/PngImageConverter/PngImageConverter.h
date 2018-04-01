@@ -59,8 +59,7 @@ Creates Portable Network Graphics (`*.png`) files from images with format
 @ref PixelFormat::RGBA and type @ref PixelType::UnsignedByte or
 @ref PixelType::UnsignedShort. On OpenGL ES 2.0 and WebGL 1.0 accepts also
 @ref PixelFormat::Luminance instead of @ref PixelFormat::Red and
-@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::RG. Does *not*
-support non-default @ref PixelStorage::swapBytes() values.
+@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::RG.
 
 This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
 libraries and is built if `WITH_PNGIMAGECONVERTER` is enabled when building

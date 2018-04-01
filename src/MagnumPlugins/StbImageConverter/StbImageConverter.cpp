@@ -63,13 +63,6 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
         return nullptr;
     }
 
-    #ifndef MAGNUM_TARGET_GLES
-    if(image.storage().swapBytes()) {
-        Error() << "Trade::StbImageConverter::exportToData(): pixel byte swap is not supported";
-        return nullptr;
-    }
-    #endif
-
     if((_format == Format::Bmp || _format == Format::Png || _format == Format::Tga) &&
         image.type() != PixelType::UnsignedByte)
     {

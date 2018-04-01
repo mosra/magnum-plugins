@@ -48,13 +48,6 @@ MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& man
 auto MiniExrImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 
 Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D& image) {
-    #ifndef MAGNUM_TARGET_GLES
-    if(image.storage().swapBytes()) {
-        Error() << "Trade::MiniExrImageConverter::exportToData(): pixel byte swap is not supported";
-        return nullptr;
-    }
-    #endif
-
     if(image.type() != PixelType::HalfFloat) {
         Error() << "Trade::MiniExrImageConverter::exportToData(): unsupported pixel type" << image.type();
         return nullptr;

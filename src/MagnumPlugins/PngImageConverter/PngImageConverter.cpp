@@ -44,13 +44,6 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
         "Trade::PngImageConverter::exportToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, nullptr);
 
-    #ifndef MAGNUM_TARGET_GLES
-    if(image.storage().swapBytes()) {
-        Error() << "Trade::PngImageConverter::exportToData(): pixel byte swap is not supported";
-        return nullptr;
-    }
-    #endif
-
     Int bitDepth;
     switch(image.type()) {
         case PixelType::UnsignedByte:

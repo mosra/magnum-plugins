@@ -72,10 +72,9 @@ The images must have format @ref PixelFormat::Red, @ref PixelFormat::RG,
 must be @ref PixelType::UnsignedByte, for HDR the type must be
 @ref PixelType::Float. On OpenGL ES 2.0 and WebGL 1.0 accepts also
 @ref PixelFormat::Luminance instead of @ref PixelFormat::Red and
-@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::RG. Does *not*
-support non-default @ref PixelStorage::swapBytes() values, the image data must
-be tightly packed (except for PNG output, which is able to handle custom row
-strides).
+@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::RG. The image
+data must be tightly packed (except for PNG output, which is able to handle
+custom row strides).
 
 This plugin depends on the @ref Trade library and is built if
 `WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
