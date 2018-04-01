@@ -26,7 +26,7 @@
 find_package(Magnum REQUIRED MeshTools)
 find_package(Qt4 REQUIRED)
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_COLLADAIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -57,7 +57,7 @@ target_include_directories(ColladaImporterObjects PUBLIC
 target_compile_definitions(ColladaImporterObjects PRIVATE "ColladaImporterObjects_EXPORTS")
 # Supress warnings from Qt includes
 target_include_directories(ColladaImporterObjects SYSTEM PRIVATE ${QT_INCLUDE_DIR})
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(ColladaImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(ColladaImporterObjects PROPERTIES FOLDER "MagnumPlugins/ColladaImporter")
@@ -90,7 +90,7 @@ install(FILES ${ColladaImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_IN
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/ColladaImporter)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(ColladaImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

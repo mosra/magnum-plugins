@@ -31,7 +31,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 find_package(Freetype REQUIRED)
 set(CMAKE_FIND_FRAMEWORK ${PREV_CMAKE_FIND_FRAMEWORK})
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_FREETYPEFONT_BUILD_STATIC 1)
 endif()
 
@@ -55,7 +55,7 @@ target_include_directories(FreeTypeFontObjects PUBLIC
 # Avoid warning spam with old-style casts
 target_include_directories(FreeTypeFontObjects SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
 target_compile_definitions(FreeTypeFontObjects PRIVATE "FreeTypeFontObjects_EXPORTS")
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(FreeTypeFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(FreeTypeFontObjects PROPERTIES FOLDER "MagnumPlugins/FreeTypeFont")
@@ -83,7 +83,7 @@ install(FILES ${FreeTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(FreeTypeFont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

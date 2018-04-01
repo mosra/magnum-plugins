@@ -24,7 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_DDSIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -46,7 +46,7 @@ target_include_directories(DdsImporterObjects PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 target_compile_definitions(DdsImporterObjects PRIVATE "DdsImporterObjects_EXPORTS")
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(DdsImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(DdsImporterObjects PROPERTIES FOLDER "MagnumPlugins/DdsImporter")
@@ -70,7 +70,7 @@ install(FILES ${DdsImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTAL
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(DdsImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

@@ -87,12 +87,12 @@ include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests" OFF)
 cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "BUILD_TESTS" OFF)
 
-option(BUILD_STATIC "Build static plugins (default are dynamic)" OFF)
-cmake_dependent_option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ON "BUILD_STATIC" OFF)
+option(BUILD_PLUGINS_STATIC "Build static plugins (default are dynamic)" OFF)
+option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ON)
 
 # Dynamic linking is meaningless on Emscripten and too inconvenient on Android
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
-    set(BUILD_STATIC ON)
+    set(BUILD_PLUGINS_STATIC ON)
 endif()
 
 if(CORRADE_TARGET_EMSCRIPTEN)

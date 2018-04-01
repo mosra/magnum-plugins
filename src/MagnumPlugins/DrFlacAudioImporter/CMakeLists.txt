@@ -26,7 +26,7 @@
 
 find_package(Magnum REQUIRED Audio)
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_DRFLACAUDIOIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -74,7 +74,7 @@ install(FILES ${DrFlacAudioImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUD
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrFlacAudioImporter)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrFlacAudioImporter)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(DrFlacAudioImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

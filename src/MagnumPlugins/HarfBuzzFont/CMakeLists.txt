@@ -27,7 +27,7 @@ find_package(Magnum REQUIRED Text)
 find_package(Freetype REQUIRED)
 find_package(HarfBuzz REQUIRED)
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_HARFBUZZFONT_BUILD_STATIC 1)
 endif()
 
@@ -54,7 +54,7 @@ target_include_directories(HarfBuzzFontObjects SYSTEM PRIVATE
     $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:FreeTypeFont,INTERFACE_INCLUDE_DIRECTORIES>)
 target_compile_definitions(HarfBuzzFontObjects PRIVATE "HarfBuzzFontObjects_EXPORTS")
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(HarfBuzzFontObjects PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont")
@@ -86,7 +86,7 @@ install(FILES ${HarfBuzzFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTA
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(HarfBuzzFont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

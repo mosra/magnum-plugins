@@ -23,7 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC 1)
 endif()
 
@@ -47,7 +47,7 @@ target_include_directories(MiniExrImageConverterObjects PUBLIC
 target_compile_definitions(MiniExrImageConverterObjects PRIVATE "MiniExrImageConverterObjects_EXPORTS")
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(MiniExrImageConverterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/miniexr)
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(MiniExrImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(MiniExrImageConverterObjects PROPERTIES FOLDER "MagnumPlugins/MiniExrImageConverter")
@@ -71,7 +71,7 @@ install(FILES ${MiniExrImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCL
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(MiniExrImageConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

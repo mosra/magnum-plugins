@@ -98,6 +98,6 @@ cmake .. ^
     -DWITH_STBTRUETYPEFONT=ON ^
     -DWITH_STBVORBISAUDIOIMPORTER=OFF ^
     -DWITH_TINYGLTFIMPORTER=ON ^
-    -DBUILD_STATIC=ON ^
+    -DBUILD_PLUGINS_STATIC=ON ^
     -G "%GENERATOR%" -A x64 || exit /b
 cmake --build . --config Release -- /m /v:m || exit /b

@@ -25,7 +25,7 @@
 
 find_package(PNG REQUIRED)
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_PNGIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -50,7 +50,7 @@ target_include_directories(PngImporterObjects
     PRIVATE
         ${PNG_INCLUDE_DIRS})
 target_compile_definitions(PngImporterObjects PRIVATE "PngImporterObjects_EXPORTS")
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(PngImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(PngImporterObjects PROPERTIES FOLDER "MagnumPlugins/PngImporter")
@@ -74,7 +74,7 @@ install(FILES ${PngImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTAL
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImporter)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImporter)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(PngImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

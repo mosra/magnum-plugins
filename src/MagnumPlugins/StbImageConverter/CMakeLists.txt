@@ -23,7 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC 1)
 endif()
 
@@ -47,7 +47,7 @@ target_include_directories(StbImageConverterObjects PUBLIC
 target_compile_definitions(StbImageConverterObjects PRIVATE "StbImageConverterObjects_EXPORTS")
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbImageConverterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(StbImageConverterObjects PROPERTIES FOLDER "MagnumPlugins/StbImageConverter")
@@ -71,7 +71,7 @@ install(FILES ${StbImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageConverter)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageConverter)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(StbImageConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

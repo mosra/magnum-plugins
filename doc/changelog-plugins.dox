@@ -59,6 +59,13 @@ namespace Magnum {
     unloaded the FreeType library, making the @ref Text::FreeTypeFont "FreeTypeFont"
     plugin unusable after.
 
+@subsection changelog-plugins-latest-compatibility Potential compatibility breakages
+
+-   Renamed the `BUILD_STATIC` CMake option to `BUILD_PLUGINS_STATIC` for
+    consistency with the core Magnum library and possibility to control the
+    static build better when using subprojects. See @ref building-plugins-features
+    for more information.
+
 @section changelog-plugins-2018-02 2018.02
 
 Released 2018-02-15, tagged as

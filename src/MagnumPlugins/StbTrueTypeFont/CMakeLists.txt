@@ -25,7 +25,7 @@
 
 find_package(Magnum REQUIRED Text)
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_STBTRUETYPEFONT_BUILD_STATIC 1)
 endif()
 
@@ -49,7 +49,7 @@ target_include_directories(StbTrueTypeFontObjects PUBLIC
 target_compile_definitions(StbTrueTypeFontObjects PRIVATE "StbTrueTypeFontObjects_EXPORTS")
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbTrueTypeFontObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(StbTrueTypeFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(StbTrueTypeFontObjects PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont")
@@ -76,7 +76,7 @@ install(FILES ${StbTrueTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_IN
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(StbTrueTypeFont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)

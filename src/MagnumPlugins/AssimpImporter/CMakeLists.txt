@@ -26,7 +26,7 @@
 
 find_package(Assimp REQUIRED)
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -50,7 +50,7 @@ target_include_directories(AssimpImporterObjects PUBLIC
 target_include_directories(AssimpImporterObjects SYSTEM PRIVATE
     $<TARGET_PROPERTY:Assimp::Assimp,INTERFACE_INCLUDE_DIRECTORIES>)
 target_compile_definitions(AssimpImporterObjects PRIVATE "AssimpImporterObjects_EXPORTS")
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(AssimpImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(AssimpImporterObjects PROPERTIES FOLDER "MagnumPlugins/AnyImageImporter")
@@ -77,7 +77,7 @@ install(FILES ${AssimpImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INS
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AssimpImporter)
 
 # Automatic static plugin import
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AssimpImporter)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(AssimpImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
