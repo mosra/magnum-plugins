@@ -31,9 +31,24 @@
  */
 
 #include <Magnum/Trade/AbstractImporter.h>
-#include <Magnum/Trade/ObjectData3D.h>
 
-#include "MagnumPlugins/AssimpImporter/visibility.h"
+#include "MagnumPlugins/AssimpImporter/configure.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_ASSIMPIMPORTER_BUILD_STATIC
+    #if defined(AssimpImporter_EXPORTS) || defined(AssimpImporterObjects_EXPORTS)
+        #define MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#else
+#define MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT
+#define MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL
+#endif
 
 namespace Magnum { namespace Trade {
 

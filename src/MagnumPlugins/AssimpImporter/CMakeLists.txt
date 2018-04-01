@@ -37,8 +37,7 @@ set(AssimpImporter_SRCS
     AssimpImporter.cpp)
 
 set(AssimpImporter_HEADERS
-    AssimpImporter.h
-    visibility.h)
+    AssimpImporter.h)
 
 # Objects shared between plugin and test library
 add_library(AssimpImporterObjects OBJECT
@@ -66,7 +65,9 @@ add_plugin(AssimpImporter
 if(BUILD_STATIC_PIC)
     set_target_properties(AssimpImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(AssimpImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(AssimpImporter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(AssimpImporter Magnum::Magnum Assimp::Assimp)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(AssimpImporter AnyImageImporter)
