@@ -32,9 +32,25 @@
 
 #include <Magnum/Trade/AbstractImporter.h>
 
-#include "MagnumPlugins/TinyGltfImporter/visibility.h"
+#include "MagnumPlugins/TinyGltfImporter/configure.h"
 
 namespace Magnum { namespace Trade {
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC
+    #if defined(TinyGltfImporter_EXPORTS) || defined(TinyGltfImporterObjects_EXPORTS)
+        #define MAGNUM_TINYGLTFIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_TINYGLTFIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_TINYGLTFIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_TINYGLTFIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#else
+#define MAGNUM_TINYGLTFIMPORTER_EXPORT
+#define MAGNUM_TINYGLTFIMPORTER_LOCAL
+#endif
 
 /**
 @brief TinyGltf importer plugin

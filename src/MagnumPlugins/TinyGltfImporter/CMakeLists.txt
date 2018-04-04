@@ -35,8 +35,7 @@ set(TinyGltfImporter_SRCS
     TinyGltfImporter.cpp)
 
 set(TinyGltfImporter_HEADERS
-    TinyGltfImporter.h
-    visibility.h)
+    TinyGltfImporter.h)
 
 # Objects shared between plugin and test library
 add_library(TinyGltfImporterObjects OBJECT
