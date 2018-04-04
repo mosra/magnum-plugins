@@ -52,6 +52,9 @@ namespace Magnum {
 -   Plugins now provide an automatic means of static plugin import via CMake
     targets, no need to call @ref CORRADE_PLUGIN_IMPORT() implicitly anymore.
     See @ref plugins-static for more information.
+-   The @ref OpenDdl parser is now available as a separate library, which means
+    you no longer need to build the @ref Trade::OpenGexImporter plugin as
+    static in order to use it. See @ref plugins-static for more information.
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
@@ -63,8 +66,9 @@ namespace Magnum {
 
 -   Renamed the `BUILD_STATIC` CMake option to `BUILD_PLUGINS_STATIC` for
     consistency with the core Magnum library and possibility to control the
-    static build better when using subprojects. See @ref building-plugins-features
-    for more information.
+    static build better when using subprojects. The `BUILD_STATIC` option now
+    controls just building of extra libraries exposing internal plugin state.
+    See @ref building-plugins-features for more information.
 
 @section changelog-plugins-2018-02 2018.02
 

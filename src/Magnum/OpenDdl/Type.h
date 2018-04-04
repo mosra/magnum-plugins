@@ -31,6 +31,8 @@
 
 #include <Magnum/Magnum.h>
 
+#include "Magnum/OpenDdl/visibility.h"
+
 namespace Magnum { namespace OpenDdl {
 
 /**
@@ -106,7 +108,7 @@ enum class Type: UnsignedInt {
 };
 
 /** @debugoperatorenum{Type} */
-Debug& operator<<(Debug& debug, Type value);
+MAGNUM_OPENDDL_EXPORT Debug& operator<<(Debug& debug, Type value);
 
 /**
 @brief Property type
@@ -171,7 +173,7 @@ enum class PropertyType: UnsignedByte {
 };
 
 /** @debugoperatorenum{PropertyType} */
-Debug& operator<<(Debug& debug, PropertyType value);
+MAGNUM_OPENDDL_EXPORT Debug& operator<<(Debug& debug, PropertyType value);
 
 enum: Int {
     /**
@@ -193,7 +195,7 @@ namespace Implementation {
         Character = 254,
         Binary = 255
     };
-    Debug& operator<<(Debug& debug, InternalPropertyType value);
+    MAGNUM_OPENDDL_EXPORT Debug& operator<<(Debug& debug, InternalPropertyType value);
 }
 
 }}

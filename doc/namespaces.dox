@@ -93,7 +93,10 @@
  * @brief Plugin @ref Magnum::Trade::TinyGltfImporter
  */
 
-/** @dir magnum-plugins/src/MagnumPlugins/OpenGexImporter/OpenDdl
+/** @dir magnum-plugins/src/Magnum
+ * @brief Namespace @ref Magnum (part of @ref building-plugins "Magnum Plugins library")
+ */
+/** @dir magnum-plugins/src/Magnum/OpenDdl
  * @brief Namespace @ref Magnum::OpenDdl, @ref Magnum::OpenDdl::Validation
  */
 /** @namespace Magnum::OpenDdl
@@ -102,16 +105,16 @@
 Parser for [OpenDDL](http://openddl.org) file format. See
 @ref OpenDdl::Document for more information.
 
-This library is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
-Plugins. To use this library with CMake, you need to request the `OpenGexImporter`
+This library is built if `WITH_OPENDDL` is enabled when building Magnum
+Plugins. To use this library with CMake, you need to request the `OpenDdl`
 component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::OpenGexImporter` target:
+`MagnumPlugins::OpenDdl` target:
 
 @code{.cmake}
-find_package(MagnumPlugins REQUIRED OpenGexImporter)
+find_package(MagnumPlugins REQUIRED OpenDdl)
 
 # ...
-target_link_libraries(your-app MagnumPlugins::OpenGexImporter)
+target_link_libraries(your-app MagnumPlugins::OpenDdl)
 @endcode
 */
 /** @namespace Magnum::OpenDdl::Validation
@@ -120,15 +123,15 @@ target_link_libraries(your-app MagnumPlugins::OpenGexImporter)
 Validation of OpenDDL documents. See @ref OpenDdl::Document::validate() for
 more information.
 
-This library is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
-Plugins. To use this library with CMake, you need to request the `OpenGexImporter`
+This library is built if `WITH_OPENDDL` is enabled when building Magnum
+Plugins. To use this library with CMake, you need to request the `OpenDdl`
 component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::OpenGexImporter` target:
+`MagnumPlugins::OpenDdl` target:
 
 @code{.cmake}
-find_package(MagnumPlugins REQUIRED OpenGexImporter)
+find_package(MagnumPlugins REQUIRED OpenDdl)
 
 # ...
-target_link_libraries(your-app MagnumPlugins::OpenGexImporter)
+target_link_libraries(your-app MagnumPlugins::OpenDdl)
 @endcode
 */

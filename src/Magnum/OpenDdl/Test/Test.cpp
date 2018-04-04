@@ -27,10 +27,10 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Structure.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Validation.h"
+#include "Magnum/OpenDdl/Document.h"
+#include "Magnum/OpenDdl/Property.h"
+#include "Magnum/OpenDdl/Structure.h"
+#include "Magnum/OpenDdl/Validation.h"
 
 namespace Magnum { namespace OpenDdl { namespace Test {
 

@@ -36,6 +36,12 @@
 #  StbVorbisAudioImporter       - OGG audio importer using stb_vorbis
 #  TinyGltfImporter             - GLTF importer using tiny_gltf
 #
+# Some plugins expose their internal state through separate libraries. The
+# libraries are:
+#
+#  OpenDdl                      - OpenDDL parser, used as a base for the
+#   OpenGexImporter plugin
+#
 # Example usage with specifying the plugins is::
 #
 #  find_package(MagnumPlugins REQUIRED FreeTypeFont PngImporter)
@@ -131,6 +137,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES AnyImageImporter StbImageImporter)
     elseif(_component STREQUAL HarfBuzzFont)
         set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES FreeTypeFont)
+    elseif(_component STREQUAL OpenGexImporter)
+        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES OpenDdl)
     endif()
 
     # Mark the dependencies as required if the component is also required
@@ -153,6 +161,7 @@ endif()
 
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
+set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS "^(OpenDdl)$")
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AnyAudioImporter|AnyImageConverter|AnyImageImporter|AnySceneImporter|AssimpImporter|ColladaImporter|DdsImporter|DevIlImageImporter|DrFlacAudioImporter|DrWavAudioImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageConverter|StbImageImporter|StbTrueTypeFont|StbVorbisAudioImporter|TinyGltfImporter)$")
 
 # Find all components
@@ -165,6 +174,21 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     if(TARGET MagnumPlugins::${_component})
         set(MagnumPlugins_${_component}_FOUND TRUE)
     else()
+        # Library components
+        if(_component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
+            add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
+
+            # Set library defaults, find the library
+            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX Magnum/${_component})
+            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES ${_component}.h)
+
+            # Try to find both debug and release version
+            find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG Magnum${_component}-d)
+            find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE Magnum${_component})
+            mark_as_advanced(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG
+                MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE)
+        endif()
+
         # Plugin components
         if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
             add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
@@ -196,6 +220,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             endif()
 
             # Don't override the exception for *AudioImporter plugins
+            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX MagnumPlugins/${_component})
             if(NOT _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES)
                 set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES ${_component}.h)
             endif()
@@ -221,8 +246,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             set(CMAKE_FIND_LIBRARY_PREFIXES "${_tmp_prefixes}")
         endif()
 
-        # Library location for libraries/plugins
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
+        # Library location for plugins/libraries
+        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
             if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE)
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     IMPORTED_CONFIGURATIONS RELEASE)
@@ -305,6 +330,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
 
         # MiniExrImageConverter has no dependencies
+        # No special setup for the OpenDdl library
         # OpenGexImporter has no dependencies
 
         # PngImageConverter plugin dependencies
@@ -343,11 +369,11 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # StbVorbisAudioImporter has no dependencies
         # TinyGltfImporter has no dependencies
 
-        # Find plugin includes
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
+        # Find plugin/library includes
+        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
             find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
                 NAMES ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES}
-                HINTS ${MAGNUMPLUGINS_INCLUDE_DIR}/MagnumPlugins/${_component})
+                HINTS ${MAGNUMPLUGINS_INCLUDE_DIR}/${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX})
             mark_as_advanced(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
         endif()
 
@@ -361,7 +387,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             endif()
         endif()
 
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
+        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
             # Link to core Magnum library, add other Magnum dependencies
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Magnum::Magnum)
@@ -377,8 +403,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             endforeach()
         endif()
 
-        # Decide if the plugin was found
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR AND (MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE))
+        # Decide if the plugin/library was found
+        if((_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS}) AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR AND (MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE))
             set(MagnumPlugins_${_component}_FOUND TRUE)
         else()
             set(MagnumPlugins_${_component}_FOUND FALSE)

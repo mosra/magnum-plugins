@@ -33,7 +33,7 @@
 #include <Corrade/Utility/Assert.h>
 #include <Magnum/Magnum.h>
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
+#include "Magnum/OpenDdl/Document.h"
 
 namespace Magnum { namespace OpenDdl {
 
@@ -51,7 +51,7 @@ See @ref Document for more information.
 
 @see @ref Structure::properties()
 */
-class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Property {
+class MAGNUM_OPENDDL_EXPORT Property {
     public:
         /**
          * @brief Property identifier

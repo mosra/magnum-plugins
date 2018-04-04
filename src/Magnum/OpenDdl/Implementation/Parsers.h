@@ -30,7 +30,7 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Magnum/Magnum.h>
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
+#include "Magnum/OpenDdl/OpenDdl.h"
 
 namespace Magnum { namespace OpenDdl { namespace Implementation {
 

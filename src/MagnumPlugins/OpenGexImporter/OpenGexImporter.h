@@ -31,8 +31,23 @@
 
 #include <Magnum/Trade/AbstractImporter.h>
 
-#include "MagnumPlugins/OpenGexImporter/visibility.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/OpenDdl.h"
+#include "Magnum/OpenDdl/OpenDdl.h"
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+#ifndef MAGNUM_OPENGEXIMPORTER_BUILD_STATIC
+    #if defined(OpenGexImporter_EXPORTS) || defined(OpenGexImporterObjects_EXPORTS)
+        #define MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #else
+        #define MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+    #endif
+#else
+    #define MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+#endif
+#define MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#else
+#define MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT
+#define MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL
+#endif
 
 namespace Magnum { namespace Trade {
 

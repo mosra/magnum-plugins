@@ -241,7 +241,9 @@ the plugins as static. If you plan to use the static plugins with shared
 libraries later, enable also position-independent code with `BUILD_STATIC_PIC`.
 Dynamic plugins are loaded by the manager on request at runtime, potentially
 saving memory when the plugin is not needed, static plugins must be linked in
-at compile time.
+at compile time. Some plugins expose their internal state through separate
+libraries, their static build can be controlled using the `BUILD_STATIC`
+option.
 
 Static plugins built in the `Debug` configuration (e.g. with `CMAKE_BUILD_TYPE`
 set to `Debug`) have a `-d` suffix, *dynamic* plugins in `Debug` configuration
@@ -284,7 +286,7 @@ By default no plugins are built and you need to select them manually:
     @ref Trade::MiniExrImageConverter "MiniExrImageConverter" plugin.
 -   `WITH_OPENGEXIMPORTER` --- Build the @ref Trade::OpenGexImporter "OpenGexImporter"
     plugin. Enables also building of the @ref Trade::AnyImageImporter "AnyImageImporter"
-    plugin.
+    plugin and the @ref OpenDdl library.
 -   `WITH_PNGIMAGECONVERTER` --- Build the
     @ref Trade::PngImageConverter "PngImageConverter" plugin. Depends on
     [libPNG](http://www.libpng.org/pub/png/libpng.html).
@@ -295,7 +297,8 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_STBIMAGECONVERTER` --- Build the
     @ref Trade::StbImageConverter "StbImageConverter" plugin.
 -   `WITH_STBIMAGEIMPORTER` --- Build the
-    @ref Trade::StbImageImporter "StbImageImporter" plugin.
+    @ref Trade::StbImageImporter "StbImageImporter" plugin. Enabled
+    automatically if `WITH_TINYGLTFIMPORTER` is enabled.
 -   `WITH_STBTRUETYPEFONT` --- Build the
     @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin.
 -   `WITH_STBVORBISAUDIOIMPORTER` --- Build the
@@ -305,9 +308,16 @@ By default no plugins are built and you need to select them manually:
     building of the @ref Trade::AnyImageImporter "AnyImageImporter" and
     @ref Trade::StbImageImporter "StbImageImporter" plugins.
 
-Note that each plugin documentation contains more detailed information about
-its dependencies, availability on particular platforms and also a guide how to
-enable given plugin for building and how to use it with CMake.
+Some plugins expose their internal state through separate libraries and you can
+control their build separately:
+
+-   `WITH_OPENDDL` --- Build the @ref OpenDdl library. Enabled automatically if
+    `WITH_OPENGEXIMPORTER` is enabled.
+
+Note that each plugin class / library namespace documentation contains more
+detailed information about its dependencies, availability on particular
+platforms and also a guide how to enable given plugin for building and how to
+use it with CMake.
 
 @section building-plugins-doc Building documentation
 

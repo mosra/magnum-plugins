@@ -35,7 +35,7 @@
 #include <functional>
 #include <Corrade/Utility/Assert.h>
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
+#include "Magnum/OpenDdl/Document.h"
 
 namespace Magnum { namespace OpenDdl {
 
@@ -55,7 +55,7 @@ See @ref Document for more information.
     for whole instance lifetime. On the other hand you can copy the instance
     however you like without worrying about performance.
 */
-class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
+class MAGNUM_OPENDDL_EXPORT Structure {
     public:
         /**
          * @brief Equality operator

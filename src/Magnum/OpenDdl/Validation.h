@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_OpenDdlValidation_h
-#define Magnum_Trade_OpenDdlValidation_h
+#ifndef Magnum_OpenDdl_Validation_h
+#define Magnum_OpenDdl_Validation_h
 /*
     This file is part of Magnum.
 
@@ -31,8 +31,8 @@
 
 #include <Corrade/Containers/Array.h>
 
-#include "MagnumPlugins/OpenGexImporter/visibility.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
+#include "Magnum/OpenDdl/visibility.h"
+#include "Magnum/OpenDdl/Type.h"
 
 namespace Magnum { namespace OpenDdl {
 
@@ -152,7 +152,7 @@ Example usage (excerpt from OpenGEX specification of `Texture` structure):
                {Animation, {}}}}
 @endcode
 */
-class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT Structure {
+class MAGNUM_OPENDDL_EXPORT Structure {
     public:
         /**
          * @brief Constructor

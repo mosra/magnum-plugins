@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_OpenGexImporter_visibility_h
-#define Magnum_Trade_OpenGexImporter_visibility_h
+#ifndef Magnum_OpenDdl_visibility_h
+#define Magnum_OpenDdl_visibility_h
 /*
     This file is part of Magnum.
 
@@ -25,20 +25,22 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/Utility/VisibilityMacros.h>
+
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_OPENGEXIMPORTER_BUILD_STATIC
-    #if defined(OpenGexImporter_EXPORTS) || defined(OpenGexImporterObjects_EXPORTS)
-        #define MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+    #ifdef MagnumOpenDdl_EXPORTS
+        #define MAGNUM_OPENDDL_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
-        #define MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+        #define MAGNUM_OPENDDL_EXPORT CORRADE_VISIBILITY_IMPORT
     #endif
 #else
-    #define MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+    #define MAGNUM_OPENDDL_EXPORT CORRADE_VISIBILITY_STATIC
 #endif
-#define MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#define MAGNUM_OPENDDL_LOCAL CORRADE_VISIBILITY_LOCAL
 #else
-#define MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT
-#define MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL
+#define MAGNUM_OPENDDL_EXPORT
+#define MAGNUM_OPENDDL_LOCAL
 #endif
 
 #endif

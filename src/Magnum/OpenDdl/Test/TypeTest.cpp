@@ -26,7 +26,7 @@
 #include <sstream>
 #include <Corrade/TestSuite/Tester.h>
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
+#include "Magnum/OpenDdl/Type.h"
 
 namespace Magnum { namespace OpenDdl { namespace Test {
 

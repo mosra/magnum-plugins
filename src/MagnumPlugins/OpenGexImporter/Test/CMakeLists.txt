@@ -36,6 +36,7 @@ corrade_add_test(OpenGexImporterTest Test.cpp
     LIBRARIES
         Magnum::Magnum
         MagnumOpenGexImporterTestLib
+        MagnumOpenDdl
     FILES
         camera-invalid.ogex
         camera-metrics.ogex

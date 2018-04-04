@@ -26,9 +26,9 @@
 #include <tuple>
 #include <Corrade/TestSuite/Tester.h>
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/parsers.h"
+#include "Magnum/OpenDdl/Document.h"
+#include "Magnum/OpenDdl/Property.h"
+#include "Magnum/OpenDdl/Implementation/Parsers.h"
 
 namespace Magnum { namespace OpenDdl { namespace Test {
 

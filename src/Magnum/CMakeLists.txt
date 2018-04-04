@@ -23,25 +23,6 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-set(OpenGexImporterOpenDdl_HEADERS
-    Document.h
-    OpenDdl.h
-    Property.h
-    Structure.h
-    Type.h
-    Validation.h)
-
-set(OpenGexImporterOpenDdl_PRIVATE_HEADERS
-    parsers.h)
-
-# Force IDEs to display all header files in project view
-add_custom_target(OpenGexImporterOpenDdl SOURCES
-    ${OpenGexImporterOpenDdl_HEADERS}
-    ${OpenGexImporterOpenDdl_PRIVATE_HEADERS})
-set_target_properties(OpenGexImporterOpenDdl PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter/OpenDdl")
-
-install(FILES ${OpenGexImporterOpenDdl_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter/OpenDdl)
-
-if(BUILD_TESTS)
-    add_subdirectory(Test)
+if(WITH_OPENDDL)
+    add_subdirectory(OpenDdl)
 endif()

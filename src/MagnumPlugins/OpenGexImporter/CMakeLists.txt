@@ -31,15 +31,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
 set(OpenGexImporter_SRCS
-    OpenGexImporter.cpp
-
-    OpenDdl/OpenDdl.cpp
-    OpenDdl/parsers.cpp)
+    OpenGexImporter.cpp)
 
 set(OpenGexImporter_HEADERS
     OpenGexImporter.h
-    OpenGex.h
-    visibility.h)
+    OpenGex.h)
 
 set(OpenGexImporter_PRIVATE_HEADERS
     openGexSpec.hpp)
@@ -70,9 +66,9 @@ if(BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(OpenGexImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(OpenGexImporter Magnum::Magnum)
+target_link_libraries(OpenGexImporter PUBLIC Magnum::Magnum MagnumOpenDdl)
 if(CORRADE_TARGET_WINDOWS)
-    target_link_libraries(OpenGexImporter AnyImageImporter)
+    target_link_libraries(OpenGexImporter PUBLIC AnyImageImporter)
 endif()
 
 install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
@@ -110,12 +106,11 @@ if(BUILD_TESTS)
     set_target_properties(MagnumOpenGexImporterTestLib PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter")
     target_link_libraries(MagnumOpenGexImporterTestLib
         Magnum::Magnum
+        MagnumOpenDdl
         MagnumAnyImageImporterTestLib)
 
     add_subdirectory(Test)
 endif()
-
-add_subdirectory(OpenDdl)
 
 # MagnumPlugins OpenGexImporter target alias for superprojects
 add_library(MagnumPlugins::OpenGexImporter ALIAS OpenGexImporter)

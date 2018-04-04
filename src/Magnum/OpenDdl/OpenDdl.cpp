@@ -28,12 +28,12 @@
 #include <memory>
 #include <Corrade/Utility/Debug.h>
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Structure.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Validation.h"
+#include "Magnum/OpenDdl/Document.h"
+#include "Magnum/OpenDdl/Property.h"
+#include "Magnum/OpenDdl/Structure.h"
+#include "Magnum/OpenDdl/Validation.h"
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/parsers.h"
+#include "Magnum/OpenDdl/Implementation/Parsers.h"
 
 namespace Magnum { namespace OpenDdl {
 

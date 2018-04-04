@@ -23,8 +23,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include "Magnum/OpenDdl/Validation.h"
 #include "MagnumPlugins/OpenGexImporter/OpenGex.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Validation.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 namespace Magnum { namespace Trade { namespace OpenGex {

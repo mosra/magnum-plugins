@@ -41,11 +41,11 @@
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
 
+#include "Magnum/OpenDdl/Document.h"
+#include "Magnum/OpenDdl/Property.h"
+#include "Magnum/OpenDdl/Structure.h"
 #include "MagnumPlugins/OpenGexImporter/OpenGex.h"
 #include "MagnumPlugins/OpenGexImporter/OpenGexImporter.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Document.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Property.h"
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Structure.h"
 
 #include "configure.h"
 

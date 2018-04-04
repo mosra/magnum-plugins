@@ -38,6 +38,7 @@ set_directory_properties(PROPERTIES
     CORRADE_CXX_STANDARD 11
     CORRADE_USE_PEDANTIC_FLAGS ON)
 
+add_subdirectory(Magnum)
 add_subdirectory(MagnumPlugins)
 
 # Magnum plugins include dir for superprojects

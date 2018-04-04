@@ -73,6 +73,7 @@ cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WI
 option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
 option(WITH_JPEGIMPORTER "Build JpegImporter plugin" OFF)
 option(WITH_MINIEXRIMAGECONVERTER "Build MiniExrImageConverter plugin" OFF)
+cmake_dependent_option(WITH_OPENDDL "Build OpenDdl library" OFF "NOT WITH_OPENGEXIMPORTER" ON)
 option(WITH_OPENGEXIMPORTER "Build OpenGexImporter plugin" OFF)
 option(WITH_PNGIMAGECONVERTER "Build PngImageConverter plugin" OFF)
 option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
@@ -87,11 +88,13 @@ include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests" OFF)
 cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "BUILD_TESTS" OFF)
 
+option(BUILD_STATIC "Build static libraries (default are dynamic)" OFF)
 option(BUILD_PLUGINS_STATIC "Build static plugins (default are dynamic)" OFF)
 option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ON)
 
 # Dynamic linking is meaningless on Emscripten and too inconvenient on Android
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(BUILD_STATIC ON)
     set(BUILD_PLUGINS_STATIC ON)
 endif()
 
@@ -109,6 +112,12 @@ endif()
 
 if(BUILD_GL_TESTS)
     find_package(Magnum REQUIRED OpenGLTester)
+endif()
+
+if(NOT BUILD_STATIC)
+    set(SHARED_OR_STATIC SHARED)
+else()
+    set(SHARED_OR_STATIC STATIC)
 endif()
 
 set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR share/cmake/MagnumPlugins)

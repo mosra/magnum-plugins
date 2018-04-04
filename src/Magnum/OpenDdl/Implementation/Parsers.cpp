@@ -23,14 +23,14 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "parsers.h"
+#include "Parsers.h"
 
 #include <cstring>
 #include <limits>
 #include <tuple>
 #include <Corrade/Utility/Debug.h>
 
-#include "MagnumPlugins/OpenGexImporter/OpenDdl/Type.h"
+#include "Magnum/OpenDdl/Type.h"
 
 #ifdef CORRADE_TARGET_APPLE
 #include <climits>
