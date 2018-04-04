@@ -30,8 +30,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
-
-#include "MagnumPlugins/MiniExrImageConverter/MiniExrImageConverter.h"
+#include <Magnum/Trade/AbstractImageConverter.h>
 
 #include "configure.h"
 
@@ -45,6 +44,9 @@ struct MiniExrImageConverterTest: TestSuite::Tester {
 
     void rgb();
     void rgba();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImageConverter> _manager{"nonexistent"};
 };
 
 namespace {
@@ -75,6 +77,12 @@ MiniExrImageConverterTest::MiniExrImageConverterTest() {
 
               &MiniExrImageConverterTest::rgb,
               &MiniExrImageConverterTest::rgba});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef MINIEXRIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(MINIEXRIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void MiniExrImageConverterTest::wrongFormat() {
@@ -89,7 +97,7 @@ void MiniExrImageConverterTest::wrongFormat() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    const auto data = MiniExrImageConverter{}.exportToData(image);
+    const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(image);
     CORRADE_VERIFY(!data);
     #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
     CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format PixelFormat::Red\n");
@@ -104,13 +112,13 @@ void MiniExrImageConverterTest::wrongType() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    const auto data = MiniExrImageConverter{}.exportToData(image);
+    const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(image);
     CORRADE_VERIFY(!data);
     CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel type PixelType::Float\n");
 }
 
 void MiniExrImageConverterTest::rgb() {
-    const auto data = MiniExrImageConverter{}.exportToData(Rgb);
+    const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(Rgb);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
@@ -118,7 +126,7 @@ void MiniExrImageConverterTest::rgb() {
 }
 
 void MiniExrImageConverterTest::rgba() {
-    const auto data = MiniExrImageConverter{}.exportToData(Rgba);
+    const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(Rgba);
 
     /* Alpha is ignored, so it is the same file */
     CORRADE_COMPARE_AS((std::string{data, data.size()}),

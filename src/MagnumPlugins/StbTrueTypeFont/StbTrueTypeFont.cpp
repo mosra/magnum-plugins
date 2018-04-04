@@ -26,6 +26,7 @@
 #include "StbTrueTypeFont.h"
 
 #include <algorithm>
+#include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Unicode.h>
 #include <Magnum/Context.h>
 #include <Magnum/Extensions.h>
@@ -209,3 +210,6 @@ std::tuple<Range2D, Range2D, Vector2> StbTrueTypeFont::Layouter::doRenderGlyph(c
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(StbTrueTypeFont, Magnum::Text::StbTrueTypeFont,
+    "cz.mosra.magnum.Text.AbstractFont/0.2.4")

@@ -201,3 +201,6 @@ Containers::Array<char> DrFlacImporter::doData() {
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(DrFlacAudioImporter, Magnum::Audio::DrFlacImporter,
+    "cz.mosra.magnum.Audio.AbstractImporter/0.1")

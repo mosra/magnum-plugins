@@ -27,10 +27,11 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Trade/AbstractImageConverter.h>
+#include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
-#include "MagnumPlugins/PngImageConverter/PngImageConverter.h"
-#include "MagnumPlugins/PngImporter/PngImporter.h"
+#include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test {
 
@@ -42,6 +43,10 @@ struct PngImageConverterTest: TestSuite::Tester {
 
     void data();
     void data16();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
+    PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 };
 
 namespace {
@@ -88,36 +93,48 @@ PngImageConverterTest::PngImageConverterTest() {
 
               &PngImageConverterTest::data,
               &PngImageConverterTest::data16});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef PNGIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_converterManager.load(PNGIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    /* The PngImporter is optional */
+    #ifdef PNGIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_importerManager.load(PNGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void PngImageConverterTest::wrongFormat() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
     ImageView2D image{PixelFormat::DepthComponent, PixelType::UnsignedByte, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
-
-    const auto data = PngImageConverter{}.exportToData(image);
-    CORRADE_VERIFY(!data);
+    CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel format PixelFormat::DepthComponent\n");
 }
 
 void PngImageConverterTest::wrongType() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
     ImageView2D image{PixelFormat::Red, PixelType::Float, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
-
-    const auto data = PngImageConverter{}.exportToData(image);
-    CORRADE_VERIFY(!data);
+    CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel type PixelType::Float\n");
 }
 
 void PngImageConverterTest::data() {
-    const auto data = PngImageConverter{}.exportToData(original);
+    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(original);
+    CORRADE_VERIFY(data);
 
-    PngImporter importer;
-    CORRADE_VERIFY(importer.openData(data));
-    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -135,11 +152,15 @@ void PngImageConverterTest::data() {
 }
 
 void PngImageConverterTest::data16() {
-    const auto data = PngImageConverter{}.exportToData(original16);
+    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(original16);
+    CORRADE_VERIFY(data);
 
-    PngImporter importer;
-    CORRADE_VERIFY(importer.openData(data));
-    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));

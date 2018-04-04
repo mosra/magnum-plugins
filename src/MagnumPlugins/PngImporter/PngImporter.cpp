@@ -199,3 +199,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(PngImporter, Magnum::Trade::PngImporter,
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3")

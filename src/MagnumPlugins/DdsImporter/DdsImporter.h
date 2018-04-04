@@ -36,7 +36,7 @@
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_DDSIMPORTER_BUILD_STATIC
-    #if defined(DdsImporter_EXPORTS) || defined(DdsImporterObjects_EXPORTS)
+    #ifdef DdsImporter_EXPORTS
         #define MAGNUM_DDSIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
         #define MAGNUM_DDSIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT

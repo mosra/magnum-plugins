@@ -27,9 +27,8 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
-
-#include "MagnumPlugins/JpegImporter/JpegImporter.h"
 
 #include "configure.h"
 
@@ -42,6 +41,9 @@ struct JpegImporterTest: TestSuite::Tester {
     void rgb();
 
     void useTwice();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
 JpegImporterTest::JpegImporterTest() {
@@ -49,13 +51,19 @@ JpegImporterTest::JpegImporterTest() {
               &JpegImporterTest::rgb,
 
               &JpegImporterTest::useTwice});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef JPEGIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(JPEGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void JpegImporterTest::gray() {
-    JpegImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     #ifndef MAGNUM_TARGET_GLES2
@@ -77,10 +85,10 @@ void JpegImporterTest::gray() {
 }
 
 void JpegImporterTest::rgb() {
-    JpegImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB);
@@ -105,16 +113,16 @@ void JpegImporterTest::rgb() {
 }
 
 void JpegImporterTest::useTwice() {
-    JpegImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     /* Verify that the file is rewinded for second use */
     {
-        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }

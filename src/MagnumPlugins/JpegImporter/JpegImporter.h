@@ -36,7 +36,7 @@
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_JPEGIMPORTER_BUILD_STATIC
-    #if defined(JpegImporter_EXPORTS) || defined(JpegImporterObjects_EXPORTS)
+    #ifdef JpegImporter_EXPORTS
         #define MAGNUM_JPEGIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
         #define MAGNUM_JPEGIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT

@@ -23,14 +23,35 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-corrade_add_test(StbImageConverterTest StbImageConverterTest.cpp LIBRARIES MagnumStbImageConverterTestLib MagnumStbImageImporterTestLib)
-# On Win32 we need to avoid dllimporting StbImageConverter and
-# StbImageImporter symbols, because it would search for the symbols in some DLL
-# even when they were linked statically. However it apparently doesn't matter
-# that they were dllexported when building the static library. EH.
-if(WIN32)
-    target_compile_definitions(StbImageConverterTest PRIVATE
-        "MAGNUM_STBIMAGECONVERTER_BUILD_STATIC"
-        "MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC")
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+if(NOT BUILD_PLUGINS_STATIC)
+    set(STBIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageConverter>)
+    if(WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
+
+    # First replace ${} variables, then $<> generator expressions
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:StbImageConverterTest>/configure.h
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+else()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+endif()
+
+corrade_add_test(StbImageConverterTest StbImageConverterTest.cpp
+    LIBRARIES Magnum::Magnum)
+if(NOT BUILD_PLUGINS_STATIC)
+    target_include_directories(StbImageConverterTest PRIVATE $<TARGET_FILE_DIR:StbImageConverterTest>)
+else()
+    target_include_directories(StbImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(StbImageConverterTest PRIVATE StbImageConverter)
+    if(WITH_STBIMAGEIMPORTER)
+        target_link_libraries(StbImageConverterTest PRIVATE StbImageImporter)
+    endif()
 endif()
 set_target_properties(StbImageConverterTest PROPERTIES FOLDER "MagnumPlugins/StbImageConverter/Test")

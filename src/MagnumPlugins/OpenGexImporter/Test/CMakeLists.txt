@@ -29,14 +29,28 @@ else()
     set(OPENGEXIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+if(NOT BUILD_PLUGINS_STATIC)
+    set(OPENGEXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:OpenGexImporter>)
+    if(WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
+
+    # First replace ${} variables, then $<> generator expressions
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:OpenGexImporterTest>/configure.h
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+else()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+endif()
 
 corrade_add_test(OpenGexImporterTest Test.cpp
-    LIBRARIES
-        Magnum::Magnum
-        MagnumOpenGexImporterTestLib
-        MagnumOpenDdl
+    LIBRARIES Magnum::Magnum MagnumOpenDdl
     FILES
         camera-invalid.ogex
         camera-metrics.ogex
@@ -63,12 +77,13 @@ corrade_add_test(OpenGexImporterTest Test.cpp
         texture-invalid.ogex
         texture.ogex
         texture-unique.ogex)
-target_include_directories(OpenGexImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-# On Win32 we need to avoid dllimporting OpenGexImporter symbols, because it
-# would search for the symbols in some DLL even though they were linked
-# statically.However it apparently doesn't matter that they were dllexported
-# when building the static library. EH.
-if(WIN32)
-    target_compile_definitions(OpenGexImporterTest PRIVATE "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
+if(NOT BUILD_PLUGINS_STATIC)
+    target_include_directories(OpenGexImporterTest PRIVATE $<TARGET_FILE_DIR:OpenGexImporterTest>)
+else()
+    target_include_directories(OpenGexImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(OpenGexImporterTest PRIVATE OpenGexImporter)
+    if(WITH_STBIMAGEIMPORTER)
+        target_link_libraries(OpenGexImporterTest PRIVATE StbImageImporter)
+    endif()
 endif()
 set_target_properties(OpenGexImporterTest PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter/Test")

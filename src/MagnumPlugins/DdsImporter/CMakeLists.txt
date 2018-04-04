@@ -31,43 +31,23 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(DdsImporter_SRCS
-    DdsImporter.cpp)
-
-set(DdsImporter_HEADERS
-    DdsImporter.h)
-
-# Objects shared between plugin and test library
-add_library(DdsImporterObjects OBJECT
-    ${DdsImporter_SRCS}
-    ${DdsImporter_HEADERS})
-target_include_directories(DdsImporterObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_compile_definitions(DdsImporterObjects PRIVATE "DdsImporterObjects_EXPORTS")
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(DdsImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-set_target_properties(DdsImporterObjects PROPERTIES FOLDER "MagnumPlugins/DdsImporter")
-
 # DdsImporter plugin
 add_plugin(DdsImporter
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     DdsImporter.conf
-    $<TARGET_OBJECTS:DdsImporterObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
+    DdsImporter.cpp
+    DdsImporter.h)
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(DdsImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(DdsImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(DdsImporter Magnum::Magnum)
+target_link_libraries(DdsImporter PUBLIC Magnum::Magnum)
 
-install(FILES ${DdsImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
+install(FILES DdsImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)
 
 # Automatic static plugin import
 if(BUILD_PLUGINS_STATIC)
@@ -78,14 +58,6 @@ if(BUILD_PLUGINS_STATIC)
 endif()
 
 if(BUILD_TESTS)
-    add_library(MagnumDdsImporterTestLib STATIC
-        $<TARGET_OBJECTS:DdsImporterObjects>
-        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumDdsImporterTestLib PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src)
-    set_target_properties(MagnumDdsImporterTestLib PROPERTIES FOLDER "MagnumPlugins/DdsImporter")
-    target_link_libraries(MagnumDdsImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
 

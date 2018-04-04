@@ -23,10 +23,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/PluginManager/Manager.h>
 #include <Magnum/OpenGLTester.h>
+#include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/GlyphCache.h>
-
-#include "MagnumPlugins/HarfBuzzFont/HarfBuzzFont.h"
 
 #include "configure.h"
 
@@ -35,31 +35,33 @@ namespace Magnum { namespace Text { namespace Test {
 struct HarfBuzzFontGLTest: OpenGLTester {
     explicit HarfBuzzFontGLTest();
 
-    ~HarfBuzzFontGLTest();
-
     void layout();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
 };
 
 HarfBuzzFontGLTest::HarfBuzzFontGLTest() {
     addTests({&HarfBuzzFontGLTest::layout});
 
-    FreeTypeFont::initialize();
-}
-
-HarfBuzzFontGLTest::~HarfBuzzFontGLTest() {
-    FreeTypeFont::finalize();
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #if defined(FREETYPEFONT_PLUGIN_FILENAME) && defined(HARFBUZZFONT_PLUGIN_FILENAME)
+    CORRADE_INTERNAL_ASSERT(_manager.load(FREETYPEFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT(_manager.load(HARFBUZZFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void HarfBuzzFontGLTest::layout() {
-    HarfBuzzFont font;
-    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
+    std::unique_ptr<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     /* Fill the cache with some fake glyphs */
     GlyphCache cache(Vector2i(256));
-    cache.insert(font.glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
-    cache.insert(font.glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
+    cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
+    cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
 
-    std::unique_ptr<AbstractLayouter> layouter = font.layout(cache, 0.5f, "Wave");
+    std::unique_ptr<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
     CORRADE_VERIFY(layouter);
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 

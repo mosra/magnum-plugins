@@ -32,23 +32,35 @@ else()
     set(JPEGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test)
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+if(NOT BUILD_PLUGINS_STATIC)
+    set(DEVILIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DevIlImageImporter>)
+
+    # First replace ${} variables, then $<> generator expressions
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:DevIlImageImporterTest>/configure.h
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+else()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+endif()
 
 corrade_add_test(DevIlImageImporterTest DevIlImageImporterTest.cpp
-    LIBRARIES MagnumDevIlImageImporterTestLib
+    LIBRARIES Magnum::Magnum
     FILES
         ../../PngImporter/Test/gray.png
         ../../PngImporter/Test/rgb.png
         ../../PngImporter/Test/rgba.png
         ../../JpegImporter/Test/gray.jpg
         ../../JpegImporter/Test/rgb.jpg)
-target_include_directories(DevIlImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-# On Win32 we need to avoid dllimporting DevIlImageImporter symbols, because it
-# would search for the symbols in some DLL even when they were linked
-# statically. However it apparently doesn't matter that they were dllexported
-# when building the static library. EH.
-if(WIN32)
-    target_compile_definitions(DevIlImageImporterTest PRIVATE "MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC")
+if(NOT BUILD_PLUGINS_STATIC)
+    target_include_directories(DevIlImageImporterTest PRIVATE $<TARGET_FILE_DIR:DevIlImageImporterTest>)
+else()
+    target_include_directories(DevIlImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(DevIlImageImporterTest PRIVATE DevIlImageImporter)
 endif()
 set_target_properties(DevIlImageImporterTest PROPERTIES FOLDER "MagnumPlugins/DevIlImageImporter/Test")

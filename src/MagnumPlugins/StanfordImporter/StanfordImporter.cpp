@@ -421,3 +421,6 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(StanfordImporter, Magnum::Trade::StanfordImporter,
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3")

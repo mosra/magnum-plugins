@@ -36,7 +36,7 @@
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_STANFORDIMPORTER_BUILD_STATIC
-    #if defined(StanfordImporter_EXPORTS) || defined(StanfordImporterObjects_EXPORTS)
+    #ifdef StanfordImporter_EXPORTS
         #define MAGNUM_STANFORDIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
         #define MAGNUM_STANFORDIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT

@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Unicode.h>
 #include <Magnum/Context.h>
 #include <Magnum/Extensions.h>
@@ -207,3 +208,6 @@ std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const Unsi
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont,
+    "cz.mosra.magnum.Text.AbstractFont/0.2.4")

@@ -25,12 +25,11 @@
 */
 
 #include <sstream>
-#include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Array.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
-
-#include "MagnumPlugins/StbVorbisAudioImporter/StbVorbisImporter.h"
+#include <Magnum/Audio/AbstractImporter.h>
 
 #include "configure.h"
 
@@ -45,6 +44,9 @@ class StbVorbisImporterTest: public TestSuite::Tester {
         void unsupportedChannelCount();
         void mono16();
         void stereo8();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
 StbVorbisImporterTest::StbVorbisImporterTest() {
@@ -52,14 +54,20 @@ StbVorbisImporterTest::StbVorbisImporterTest() {
               &StbVorbisImporterTest::unsupportedChannelCount,
               &StbVorbisImporterTest::mono16,
               &StbVorbisImporterTest::stereo8});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef STBVORBISAUDIOIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(STBVORBISAUDIOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void StbVorbisImporterTest::wrongSignature() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    StbVorbisImporter importer;
-    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "wrongSignature.ogg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "wrongSignature.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
 }
 
@@ -67,30 +75,30 @@ void StbVorbisImporterTest::unsupportedChannelCount() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    StbVorbisImporter importer;
-    CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): unsupported channel count 5 with 16 bits per sample\n");
 }
 
 void StbVorbisImporterTest::mono16() {
-    StbVorbisImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
 
-    CORRADE_COMPARE(importer.format(), Buffer::Format::Mono16);
-    CORRADE_COMPARE(importer.frequency(), 96000);
-    CORRADE_COMPARE_AS(importer.data(),
+    CORRADE_COMPARE(importer->format(), Buffer::Format::Mono16);
+    CORRADE_COMPARE(importer->frequency(), 96000);
+    CORRADE_COMPARE_AS(importer->data(),
         (Containers::Array<char>{Containers::InPlaceInit, {
             '\xcd', '\x0a', '\x2b', '\x0a'}}),
         TestSuite::Compare::Container);
 }
 
 void StbVorbisImporterTest::stereo8() {
-    StbVorbisImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "stereo8.ogg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "stereo8.ogg")));
 
-    CORRADE_COMPARE(importer.format(), Buffer::Format::Stereo16);
-    CORRADE_COMPARE(importer.frequency(), 96000);
-    CORRADE_COMPARE_AS(importer.data(),
+    CORRADE_COMPARE(importer->format(), Buffer::Format::Stereo16);
+    CORRADE_COMPARE(importer->frequency(), 96000);
+    CORRADE_COMPARE_AS(importer->data(),
         (Containers::Array<char>{Containers::InPlaceInit, {
             '\x3e', '\x19', '\x1d', '\x17'}}),
         TestSuite::Compare::Container);

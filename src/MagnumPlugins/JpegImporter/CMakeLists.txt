@@ -32,46 +32,26 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(JpegImporter_SRCS
-    JpegImporter.cpp)
-
-set(JpegImporter_HEADERS
-    JpegImporter.h)
-
-# Objects shared between plugin and test library
-add_library(JpegImporterObjects OBJECT
-    ${JpegImporter_SRCS}
-    ${JpegImporter_HEADERS})
-target_include_directories(JpegImporterObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_compile_definitions(JpegImporterObjects PRIVATE "JpegImporterObjects_EXPORTS")
-target_include_directories(JpegImporterObjects SYSTEM PRIVATE ${JPEG_INCLUDE_DIR})
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(JpegImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-set_target_properties(JpegImporterObjects PROPERTIES FOLDER "MagnumPlugins/JpegImporter")
-
 # JpegImporter plugin
 add_plugin(JpegImporter
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     JpegImporter.conf
-    $<TARGET_OBJECTS:JpegImporterObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
+    JpegImporter.cpp
+    JpegImporter.h)
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(JpegImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+target_include_directories(JpegImporter SYSTEM PRIVATE ${JPEG_INCLUDE_DIR})
 target_include_directories(JpegImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(JpegImporter
+target_link_libraries(JpegImporter PUBLIC
     Magnum::Magnum
     ${JPEG_LIBRARIES})
 
-install(FILES ${JpegImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)
+install(FILES JpegImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)
 
 # Automatic static plugin import
 if(BUILD_PLUGINS_STATIC)
@@ -82,14 +62,6 @@ if(BUILD_PLUGINS_STATIC)
 endif()
 
 if(BUILD_TESTS)
-    add_library(MagnumJpegImporterTestLib STATIC
-        $<TARGET_OBJECTS:JpegImporterObjects>
-        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumJpegImporterTestLib PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src)
-    set_target_properties(MagnumJpegImporterTestLib PROPERTIES FOLDER "MagnumPlugins/JpegImporter")
-    target_link_libraries(MagnumJpegImporterTestLib Magnum::Magnum ${JPEG_LIBRARIES})
     add_subdirectory(Test)
 endif()
 

@@ -23,21 +23,33 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+if(NOT BUILD_PLUGINS_STATIC)
+    set(PNGIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:PngImporter>)
+
+    # First replace ${} variables, then $<> generator expressions
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:PngImporterTest>/configure.h
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+else()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+endif()
 
 corrade_add_test(PngImporterTest PngImporterTest.cpp
-    LIBRARIES MagnumPngImporterTestLib
+    LIBRARIES Magnum::Magnum
     FILES
         gray.png
         rgb.png
         rgba.png)
-target_include_directories(PngImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-# On Win32 we need to avoid dllimporting PngImporter symbols, because it would
-# search for the symbols in some DLL even when they were linked statically.
-# However it apparently doesn't matter that they were dllexported when building
-# the static library. EH.
-if(WIN32)
-    target_compile_definitions(PngImporterTest PRIVATE "MAGNUM_PNGIMPORTER_BUILD_STATIC")
+if(NOT BUILD_PLUGINS_STATIC)
+    target_include_directories(PngImporterTest PRIVATE $<TARGET_FILE_DIR:PngImporterTest>)
+else()
+    target_include_directories(PngImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(PngImporterTest PRIVATE PngImporter)
 endif()
 set_target_properties(PngImporterTest PROPERTIES FOLDER "MagnumPlugins/PngImporter/Test")

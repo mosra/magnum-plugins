@@ -36,7 +36,7 @@
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_ASSIMPIMPORTER_BUILD_STATIC
-    #if defined(AssimpImporter_EXPORTS) || defined(AssimpImporterObjects_EXPORTS)
+    #ifdef AssimpImporter_EXPORTS
         #define MAGNUM_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
         #define MAGNUM_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT

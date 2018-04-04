@@ -29,21 +29,36 @@ else()
     set(TTF_FILE ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/FreeTypeFont/Test/Oxygen.ttf)
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+if(NOT BUILD_PLUGINS_STATIC)
+    set(FREETYPEFONT_PLUGIN_FILENAME $<TARGET_FILE:FreeTypeFont>)
+    set(HARFBUZZFONT_PLUGIN_FILENAME $<TARGET_FILE:HarfBuzzFont>)
+
+    # First replace ${} variables, then $<> generator expressions
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:HarfBuzzFontGLTest>/configure.h
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+else()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+endif()
 
 corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp
     LIBRARIES
-        MagnumHarfBuzzFontTestLib
+        Magnum::Text
         Magnum::OpenGLTester
     FILES
         ../../FreeTypeFont/Test/Oxygen.ttf)
-target_include_directories(HarfBuzzFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-# On Win32 we need to avoid dllimporting HarfBuzzFont symbols, because it would
-# search for the symbols in some DLL even when they were linked statically.
-# However it apparently doesn't matter that they were dllexported when building
-# the static library. EH.
-if(WIN32)
-    target_compile_definitions(HarfBuzzFontGLTest PRIVATE "MAGNUM_HARFBUZZFONT_BUILD_STATIC")
+if(NOT BUILD_PLUGINS_STATIC)
+    target_include_directories(HarfBuzzFontGLTest PRIVATE $<TARGET_FILE_DIR:HarfBuzzFontGLTest>)
+else()
+    target_include_directories(HarfBuzzFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(HarfBuzzFontGLTest PRIVATE
+        FreeTypeFont
+        HarfBuzzFont)
 endif()
 set_target_properties(HarfBuzzFontGLTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont/Test")

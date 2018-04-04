@@ -35,7 +35,7 @@
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_COLLADAIMPORTER_BUILD_STATIC
-    #if defined(ColladaImporter_EXPORTS) || defined(ColladaImporterObjects_EXPORTS)
+    #ifdef ColladaImporter_EXPORTS
         #define MAGNUM_COLLADAIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
         #define MAGNUM_COLLADAIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT

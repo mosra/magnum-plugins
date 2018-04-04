@@ -23,10 +23,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/PluginManager/Manager.h>
 #include <Magnum/OpenGLTester.h>
 #include <Magnum/Text/GlyphCache.h>
-
-#include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"
+#include <Magnum/Text/AbstractFont.h>
 
 #include "configure.h"
 
@@ -35,11 +35,12 @@ namespace Magnum { namespace Text { namespace Test {
 struct FreeTypeFontGLTest: OpenGLTester {
     explicit FreeTypeFontGLTest();
 
-    ~FreeTypeFontGLTest();
-
     void properties();
     void layout();
     void fillGlyphCache();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
 };
 
 FreeTypeFontGLTest::FreeTypeFontGLTest() {
@@ -47,34 +48,34 @@ FreeTypeFontGLTest::FreeTypeFontGLTest() {
               &FreeTypeFontGLTest::layout,
               &FreeTypeFontGLTest::fillGlyphCache});
 
-    FreeTypeFont::initialize();
-}
-
-FreeTypeFontGLTest::~FreeTypeFontGLTest() {
-    FreeTypeFont::finalize();
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef FREETYPEFONT_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(FREETYPEFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void FreeTypeFontGLTest::properties() {
-    FreeTypeFont font;
-    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
-    CORRADE_COMPARE(font.size(), 16.0f);
-    CORRADE_COMPARE(font.ascent(), 15.0f);
-    CORRADE_COMPARE(font.descent(), -4.0f);
-    CORRADE_COMPARE(font.lineHeight(), 19.0f);
-    CORRADE_COMPARE(font.glyphId(U'W'), 58);
-    CORRADE_COMPARE(font.glyphAdvance(58), Vector2(17.0f, 0.0f));
+    std::unique_ptr<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
+    CORRADE_COMPARE(font->size(), 16.0f);
+    CORRADE_COMPARE(font->ascent(), 15.0f);
+    CORRADE_COMPARE(font->descent(), -4.0f);
+    CORRADE_COMPARE(font->lineHeight(), 19.0f);
+    CORRADE_COMPARE(font->glyphId(U'W'), 58);
+    CORRADE_COMPARE(font->glyphAdvance(58), Vector2(17.0f, 0.0f));
 }
 
 void FreeTypeFontGLTest::layout() {
-    FreeTypeFont font;
-    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
+    std::unique_ptr<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     /* Fill the cache with some fake glyphs */
     GlyphCache cache(Vector2i(256));
-    cache.insert(font.glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
-    cache.insert(font.glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
+    cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
+    cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
 
-    std::unique_ptr<AbstractLayouter> layouter = font.layout(cache, 0.5f, "Wave");
+    std::unique_ptr<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
     CORRADE_VERIFY(layouter);
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 
@@ -107,12 +108,12 @@ void FreeTypeFontGLTest::layout() {
 }
 
 void FreeTypeFontGLTest::fillGlyphCache() {
-    FreeTypeFont font;
-    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
+    std::unique_ptr<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     /* Just testing that nothing crashes, asserts or errors */
     GlyphCache cache{Vector2i{256}};
-    font.fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyz");
+    font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyz");
 
     MAGNUM_VERIFY_NO_ERROR();
 

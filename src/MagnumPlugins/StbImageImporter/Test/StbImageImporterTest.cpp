@@ -27,9 +27,8 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
-
-#include "MagnumPlugins/StbImageImporter/StbImageImporter.h"
 
 #include "configure.h"
 
@@ -48,6 +47,9 @@ struct StbImageImporterTest: TestSuite::Tester {
     void rgbaPng();
 
     void useTwice();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
 StbImageImporterTest::StbImageImporterTest() {
@@ -61,13 +63,19 @@ StbImageImporterTest::StbImageImporterTest() {
               &StbImageImporterTest::rgbaPng,
 
               &StbImageImporterTest::useTwice});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void StbImageImporterTest::grayPng() {
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -84,10 +92,10 @@ void StbImageImporterTest::grayPng() {
 }
 
 void StbImageImporterTest::grayJpeg() {
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -104,10 +112,10 @@ void StbImageImporterTest::grayJpeg() {
 }
 
 void StbImageImporterTest::rgbPng() {
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -124,10 +132,10 @@ void StbImageImporterTest::rgbPng() {
 }
 
 void StbImageImporterTest::rgbJpeg() {
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -145,10 +153,10 @@ void StbImageImporterTest::rgbJpeg() {
 }
 
 void StbImageImporterTest::rgbHdr() {
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
@@ -163,10 +171,10 @@ void StbImageImporterTest::rgbHdr() {
 }
 
 void StbImageImporterTest::rgbaPng() {
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -183,16 +191,16 @@ void StbImageImporterTest::rgbaPng() {
 }
 
 void StbImageImporterTest::useTwice() {
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Verify that the file is rewound for second use */
     {
-        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }

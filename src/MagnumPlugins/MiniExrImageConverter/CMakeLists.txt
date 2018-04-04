@@ -30,45 +30,25 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(MiniExrImageConverter_SRCS
-    MiniExrImageConverter.cpp)
-
-set(MiniExrImageConverter_HEADERS
-    MiniExrImageConverter.h)
-
-# Objects shared between plugin and test library
-add_library(MiniExrImageConverterObjects OBJECT
-    ${MiniExrImageConverter_SRCS}
-    ${MiniExrImageConverter_HEADERS})
-target_include_directories(MiniExrImageConverterObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_compile_definitions(MiniExrImageConverterObjects PRIVATE "MiniExrImageConverterObjects_EXPORTS")
-# Include the stb_*.h files as a system directory to supress warnings
-target_include_directories(MiniExrImageConverterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/miniexr)
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(MiniExrImageConverterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-set_target_properties(MiniExrImageConverterObjects PROPERTIES FOLDER "MagnumPlugins/MiniExrImageConverter")
-
 # MiniExrImageConverter plugin
 add_plugin(MiniExrImageConverter
     "${MAGNUM_PLUGINS_IMAGECONVERTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMAGECONVERTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMAGECONVERTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMAGECONVERTER_RELEASE_LIBRARY_INSTALL_DIR}"
     MiniExrImageConverter.conf
-    $<TARGET_OBJECTS:MiniExrImageConverterObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
+    MiniExrImageConverter.cpp
+    MiniExrImageConverter.h)
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(MiniExrImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+# Include the files as a system directory to supress warnings
+target_include_directories(MiniExrImageConverter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/miniexr)
 target_include_directories(MiniExrImageConverter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(MiniExrImageConverter Magnum::Magnum)
+target_link_libraries(MiniExrImageConverter PUBLIC Magnum::Magnum)
 
-install(FILES ${MiniExrImageConverter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
+install(FILES MiniExrImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
 
 # Automatic static plugin import
 if(BUILD_PLUGINS_STATIC)
@@ -79,14 +59,6 @@ if(BUILD_PLUGINS_STATIC)
 endif()
 
 if(BUILD_TESTS)
-    add_library(MagnumMiniExrImageConverterTestLib STATIC
-        $<TARGET_OBJECTS:MiniExrImageConverterObjects>
-        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumMiniExrImageConverterTestLib PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src)
-    set_target_properties(MagnumMiniExrImageConverterTestLib PROPERTIES FOLDER "MagnumPlugins/MiniExrImageConverter")
-    target_link_libraries(MagnumMiniExrImageConverterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
 

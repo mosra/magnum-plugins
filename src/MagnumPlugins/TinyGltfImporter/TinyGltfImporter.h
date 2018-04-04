@@ -38,7 +38,7 @@ namespace Magnum { namespace Trade {
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC
-    #if defined(TinyGltfImporter_EXPORTS) || defined(TinyGltfImporterObjects_EXPORTS)
+    #ifdef TinyGltfImporter_EXPORTS
         #define MAGNUM_TINYGLTFIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
         #define MAGNUM_TINYGLTFIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT

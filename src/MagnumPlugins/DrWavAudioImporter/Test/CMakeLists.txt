@@ -29,11 +29,25 @@ else()
     set(DRWAVAUDIOIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+if(NOT BUILD_PLUGINS_STATIC)
+    set(DRWAVAUDIOIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DrWavAudioImporter>)
+
+    # First replace ${} variables, then $<> generator expressions
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:DrWavAudioImporterTest>/configure.h
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+else()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+endif()
 
 corrade_add_test(DrWavAudioImporterTest DrWavImporterTest.cpp
-    LIBRARIES MagnumDrWavAudioImporterTestLib
+    LIBRARIES Magnum::Audio
     FILES
         unsupportedChannelCount.wav
         unsupportedFormat.wav
@@ -78,12 +92,10 @@ corrade_add_test(DrWavAudioImporterTest DrWavImporterTest.cpp
 
         extension32f.wav
         extension64f.wav)
-target_include_directories(DrWavAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-# On Win32 we need to avoid dllimporting DrWavAudioImporter symbols, because it
-# would search for the symbols in some DLL even though they were linked
-# statically. However it apparently doesn't matter that they were dllexported
-# when building the static library. EH.
-if(WIN32)
-    target_compile_definitions(DrWavAudioImporterTest PRIVATE "MAGNUM_DRWAVAUDIOIMPORTER_BUILD_STATIC")
+if(NOT BUILD_PLUGINS_STATIC)
+    target_include_directories(DrWavAudioImporterTest PRIVATE $<TARGET_FILE_DIR:DrWavAudioImporterTest>)
+else()
+    target_include_directories(DrWavAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(DrWavAudioImporterTest PRIVATE DrWavAudioImporter)
 endif()
 set_target_properties(DrWavAudioImporterTest PROPERTIES FOLDER "MagnumPlugins/DrWavAudioImporter/Test")

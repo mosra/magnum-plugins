@@ -23,6 +23,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED AnyImageImporter)
+
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_OPENGEXIMPORTER_BUILD_STATIC 1)
 endif()
@@ -44,39 +46,27 @@ set(OpenGexImporter_HEADERS
 set(OpenGexImporter_PRIVATE_HEADERS
     openGexSpec.hpp)
 
-# Objects shared between plugin and test library
-add_library(OpenGexImporterObjects OBJECT
-    ${OpenGexImporter_SRCS}
-    ${OpenGexImporter_HEADERS}
-    ${OpenGexImporter_PRIVATE_HEADERS})
-target_include_directories(OpenGexImporterObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_compile_definitions(OpenGexImporterObjects PRIVATE "OpenGexImporterObjects_EXPORTS")
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(OpenGexImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-set_target_properties(OpenGexImporterObjects PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter")
-
 # OpenGexImporter plugin
 add_plugin(OpenGexImporter
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     OpenGexImporter.conf
-    $<TARGET_OBJECTS:OpenGexImporterObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
+    ${OpenGexImporter_SRCS}
+    ${OpenGexImporter_HEADERS}
+    ${OpenGexImporter_PRIVATE_HEADERS})
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(OpenGexImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(OpenGexImporter PUBLIC Magnum::Magnum MagnumOpenDdl)
 if(CORRADE_TARGET_WINDOWS)
-    target_link_libraries(OpenGexImporter PUBLIC AnyImageImporter)
+    target_link_libraries(OpenGexImporter PUBLIC Magnum::AnyImageImporter)
+elseif(BUILD_PLUGINS_STATIC)
+    target_link_libraries(OpenGexImporter INTERFACE Magnum::AnyImageImporter)
 endif()
 
-install(FILES ${OpenGexImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
+install(FILES ${OpenGexImporter_HEADERS} ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 
 # Automatic static plugin import
 if(BUILD_PLUGINS_STATIC)
@@ -87,32 +77,6 @@ if(BUILD_PLUGINS_STATIC)
 endif()
 
 if(BUILD_TESTS)
-    # On Win32 we need to avoid dllimporting AnyImageImporter symbols, because
-    # it would search for the symbols in some DLL even when they were linked
-    # statically. However it apparently doesn't matter that they were
-    # dllexported when building the static library. EH. And because the
-    # -DOpenGexImporterObjects_EXPORTS is no longer set in this case, we need
-    # to avoid dllimporting OpenGexImporter symbols as well.
-    if(CORRADE_TARGET_WINDOWS)
-        add_library(MagnumOpenGexImporterTestLib STATIC
-            ${OpenGexImporter_SRCS}
-            ${OpenGexImporter_HEADERS}
-            ${OpenGexImporter_PRIVATE_HEADERS})
-        target_compile_definitions(MagnumOpenGexImporterTestLib PRIVATE
-            "MAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC"
-            "MAGNUM_OPENGEXIMPORTER_BUILD_STATIC")
-    else()
-        add_library(MagnumOpenGexImporterTestLib STATIC
-            $<TARGET_OBJECTS:OpenGexImporterObjects>
-            ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    endif()
-    target_include_directories(MagnumOpenGexImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
-    set_target_properties(MagnumOpenGexImporterTestLib PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter")
-    target_link_libraries(MagnumOpenGexImporterTestLib
-        Magnum::Magnum
-        MagnumOpenDdl
-        MagnumAnyImageImporterTestLib)
-
     add_subdirectory(Test)
 endif()
 

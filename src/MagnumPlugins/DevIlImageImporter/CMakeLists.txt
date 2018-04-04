@@ -33,21 +33,16 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(DevIlImageImporter_SRCS
-    DevIlImageImporter.cpp)
-
-set(DevIlImageImporter_HEADERS
+# DevIlImageImporter plugin
+add_plugin(DevIlImageImporter
+    "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
+    "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
+    DevIlImageImporter.conf
+    DevIlImageImporter.cpp
     DevIlImageImporter.h)
-
-# Objects shared between plugin and test library
-add_library(DevIlImageImporterObjects OBJECT
-    ${DevIlImageImporter_SRCS}
-    ${DevIlImageImporter_HEADERS})
-target_include_directories(DevIlImageImporterObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_compile_definitions(DevIlImageImporterObjects PRIVATE "DevIlImageImporterObjects_EXPORTS")
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+    set_target_properties(DevIlImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 # IL_INCLUDE_DIR in the upstream FindDevIL.cmake is "The path to the directory
 # that contains il.h", but ilu.h includes IL/il.h, so IL_INCLUDE_DIR is
 # basically useless and we need to go one level up. However, just saying
@@ -56,31 +51,16 @@ target_compile_definitions(DevIlImageImporterObjects PRIVATE "DevIlImageImporter
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70129 on GCC 6+. Because of
 # that, I had to fork FindDevIL.cmake (see modules/ directory) to provide
 # IL_INCLUDE_DIR without the IL/ subdirectory.
-target_include_directories(DevIlImageImporterObjects SYSTEM PRIVATE ${IL_INCLUDE_DIR})
-set_target_properties(DevIlImageImporterObjects PROPERTIES FOLDER "MagnumPlugins/DevIlImageImporter")
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(DevIlImageImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-
-# DevIlImageImporter plugin
-add_plugin(DevIlImageImporter
-    "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
-    "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
-    DevIlImageImporter.conf
-    $<TARGET_OBJECTS:DevIlImageImporterObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
-    set_target_properties(DevIlImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
+target_include_directories(DevIlImageImporter SYSTEM PRIVATE ${IL_INCLUDE_DIR})
 target_include_directories(DevIlImageImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(DevIlImageImporter
+target_link_libraries(DevIlImageImporter PUBLIC
     Magnum::Magnum
     ${IL_LIBRARIES} ${ILU_LIBRARIES})
 
-install(FILES ${DevIlImageImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DevIlImageImporter)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DevIlImageImporter)
+install(FILES DevIlImageImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DevIlImageImporter)
 
 # Automatic static plugin import
 if(BUILDPLUGINS_STATIC)
@@ -91,14 +71,6 @@ if(BUILDPLUGINS_STATIC)
 endif()
 
 if(BUILD_TESTS)
-    add_library(MagnumDevIlImageImporterTestLib STATIC
-        $<TARGET_OBJECTS:DevIlImageImporterObjects>
-        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumDevIlImageImporterTestLib PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src)
-    set_target_properties(MagnumDevIlImageImporterTestLib PROPERTIES FOLDER "MagnumPlugins/DevIlImageImporter")
-    target_link_libraries(MagnumDevIlImageImporterTestLib Magnum::Magnum ${IL_LIBRARIES} ${ILU_LIBRARIES})
     add_subdirectory(Test)
 endif()
 

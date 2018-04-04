@@ -29,8 +29,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
-
-#include "MagnumPlugins/DevIlImageImporter/DevIlImageImporter.h"
+#include <Magnum/Trade/AbstractImporter.h>
 
 #include "configure.h"
 
@@ -46,6 +45,9 @@ struct DevIlImageImporterTest: TestSuite::Tester {
     void rgbaPng();
 
     void useTwice();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
 DevIlImageImporterTest::DevIlImageImporterTest() {
@@ -56,13 +58,19 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
               &DevIlImageImporterTest::rgbaPng,
 
               &DevIlImageImporterTest::useTwice});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef DEVILIMAGEIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(DEVILIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void DevIlImageImporterTest::grayPng() {
-    DevIlImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -79,10 +87,10 @@ void DevIlImageImporterTest::grayPng() {
 }
 
 void DevIlImageImporterTest::grayJpeg() {
-    DevIlImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -99,10 +107,10 @@ void DevIlImageImporterTest::grayJpeg() {
 }
 
 void DevIlImageImporterTest::rgbPng() {
-    DevIlImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -119,10 +127,10 @@ void DevIlImageImporterTest::rgbPng() {
 }
 
 void DevIlImageImporterTest::rgbJpeg() {
-    DevIlImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -140,10 +148,10 @@ void DevIlImageImporterTest::rgbJpeg() {
 }
 
 void DevIlImageImporterTest::rgbaPng() {
-    DevIlImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -160,16 +168,16 @@ void DevIlImageImporterTest::rgbaPng() {
 }
 
 void DevIlImageImporterTest::useTwice() {
-    DevIlImageImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Verify that the file is rewound for second use */
     {
-        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }

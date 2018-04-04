@@ -30,8 +30,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
-
-#include "MagnumPlugins/DdsImporter/DdsImporter.h"
+#include <Magnum/Trade/AbstractImporter.h>
 
 #include "configure.h"
 
@@ -159,6 +158,9 @@ struct DdsImporterTest: TestSuite::Tester {
     void dxt10UnsupportedFormat();
 
     void useTwice();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
 DdsImporterTest::DdsImporterTest() {
@@ -183,6 +185,12 @@ DdsImporterTest::DdsImporterTest() {
               &DdsImporterTest::dxt10UnsupportedFormat,
 
               &DdsImporterTest::useTwice});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef DDSIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(DDSIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void DdsImporterTest::unknownCompression() {
@@ -191,8 +199,8 @@ void DdsImporterTest::unknownCompression() {
 
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(!importer.openData(resource.getRaw("unknown_compression.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(!importer->openData(resource.getRaw("unknown_compression.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown compression DXT4\n");
 }
 
@@ -202,8 +210,8 @@ void DdsImporterTest::wrongSignature() {
 
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(!importer.openData(resource.getRaw("wrong_signature.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(!importer->openData(resource.getRaw("wrong_signature.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): wrong file signature\n");
 }
 
@@ -213,8 +221,8 @@ void DdsImporterTest::unknownFormat() {
 
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(!importer.openData(resource.getRaw("unknown_format.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(!importer->openData(resource.getRaw("unknown_format.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown format\n");
 }
 
@@ -224,17 +232,17 @@ void DdsImporterTest::insufficientData() {
 
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     auto data = resource.getRaw("rgb_uncompressed.dds");
-    CORRADE_VERIFY(!importer.openData(data.prefix(data.size()-1)));
+    CORRADE_VERIFY(!importer->openData(data.prefix(data.size()-1)));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): not enough image data\n");
 }
 
 void DdsImporterTest::rgb() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw("rgb_uncompressed.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed.dds")));
 
     const char pixels[] = {'\xde', '\xad', '\xb5',
                            '\xca', '\xfe', '\x77',
@@ -243,7 +251,7 @@ void DdsImporterTest::rgb() {
                            '\xde', '\xad', '\xb5',
                            '\xca', '\xfe', '\x77'};
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -257,8 +265,8 @@ void DdsImporterTest::rgb() {
 void DdsImporterTest::rgbWithMips() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw("rgb_uncompressed_mips.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_mips.dds")));
 
     const char pixels[] = {'\xde', '\xad', '\xb5',
                            '\xca', '\xfe', '\x77',
@@ -269,7 +277,7 @@ void DdsImporterTest::rgbWithMips() {
     const char mipPixels[] = {'\xd4', '\xd5', '\x96'};
 
     /* check image */
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -280,7 +288,7 @@ void DdsImporterTest::rgbWithMips() {
             TestSuite::Compare::Container);
 
     /* check mip 0 */
-    Containers::Optional<Trade::ImageData2D> mip = importer.image2D(1);
+    Containers::Optional<Trade::ImageData2D> mip = importer->image2D(1);
     CORRADE_VERIFY(mip);
     CORRADE_VERIFY(!mip->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -294,8 +302,8 @@ void DdsImporterTest::rgbWithMips() {
 void DdsImporterTest::rgbVolume() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw("rgb_uncompressed_volume.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_volume.dds")));
 
     const char pixels[] = {
         /* slice 0 */
@@ -320,7 +328,7 @@ void DdsImporterTest::rgbVolume() {
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77'};
 
-    Containers::Optional<Trade::ImageData3D> image = importer.image3D(0);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -335,12 +343,12 @@ void DdsImporterTest::rgbVolume() {
 void DdsImporterTest::dxt1() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw("rgba_dxt1.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt1.dds")));
 
     const char pixels[] = {'\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'};
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -352,13 +360,13 @@ void DdsImporterTest::dxt1() {
 void DdsImporterTest::dxt3() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw("rgba_dxt3.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt3.dds")));
 
     const char pixels[] = {'\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff',
                            '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'};
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -370,13 +378,13 @@ void DdsImporterTest::dxt3() {
 void DdsImporterTest::dxt5() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw("rgba_dxt5.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt5.dds")));
 
     const char pixels[] = {'\xff', '\xff', '\x49', '\x92', '\x24', '\x49', '\x92', '\x24',
                            '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'};
 
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -392,9 +400,9 @@ void DdsImporterTest::dxt10Formats2D() {
 
     Utility::Resource resource{"Dxt10TestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw(file.filename)));
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw(file.filename)));
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -409,9 +417,9 @@ void DdsImporterTest::dxt10Formats3D() {
 
     Utility::Resource resource{"Dxt10TestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw(file.filename)));
-    Containers::Optional<Trade::ImageData3D> image = importer.image3D(0);
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw(file.filename)));
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
@@ -422,15 +430,15 @@ void DdsImporterTest::dxt10Formats3D() {
 void DdsImporterTest::dxt10Data() {
     Utility::Resource resource{"Dxt10TestFiles"};
 
-    DdsImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
 
     const char pixels[] = {
         '\xde', '\xad', '\xca', '\xfe',
         '\xde', '\xad', '\xca', '\xfe',
         '\xde', '\xad', '\xca', '\xfe'};
 
-    CORRADE_VERIFY(importer.openData(resource.getRaw("2D_R8G8_UNORM.dds")));
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    CORRADE_VERIFY(importer->openData(resource.getRaw("2D_R8G8_UNORM.dds")));
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -445,8 +453,8 @@ void DdsImporterTest::dxt10TooShort() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(!importer.openData(resource.getRaw("too_short_dxt10.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(!importer->openData(resource.getRaw("too_short_dxt10.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header\n");
 }
 
@@ -456,24 +464,24 @@ void DdsImporterTest::dxt10UnsupportedFormat() {
 
     Utility::Resource resource{"Dxt10TestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(!importer.openData(resource.getRaw("2D_AYUV.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(!importer->openData(resource.getRaw("2D_AYUV.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unsupported DXGI format 100\n");
 }
 
 void DdsImporterTest::useTwice() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    DdsImporter importer;
-    CORRADE_VERIFY(importer.openData(resource.getRaw("rgba_dxt5.dds")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt5.dds")));
 
     /* Verify that the file is rewinded for second use */
     {
-        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }

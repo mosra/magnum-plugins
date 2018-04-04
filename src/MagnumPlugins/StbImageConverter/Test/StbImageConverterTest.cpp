@@ -27,10 +27,11 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Trade/AbstractImageConverter.h>
+#include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
-#include "MagnumPlugins/StbImageConverter/StbImageConverter.h"
-#include "MagnumPlugins/StbImageImporter/StbImageImporter.h"
+#include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test {
 
@@ -42,12 +43,16 @@ struct StbImageConverterTest: TestSuite::Tester {
     void wrongTypeHdr();
     void wrongStorage();
 
-    /** @todo test the string constructor somehow (needs to be properly loaded through plugin manager) */
+    /** @todo test the enum constructor somehow (needs to be not loaded through plugin manager) */
 
     void rgBmp();
     void grayscaleHdr();
     void rgbPng();
     void rgbaTga();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
+    PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 };
 
 StbImageConverterTest::StbImageConverterTest() {
@@ -60,46 +65,60 @@ StbImageConverterTest::StbImageConverterTest() {
               &StbImageConverterTest::grayscaleHdr,
               &StbImageConverterTest::rgbPng,
               &StbImageConverterTest::rgbaTga});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef STBIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_converterManager.load(STBIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    /* The PngImporter is optional */
+    #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_importerManager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void StbImageConverterTest::wrongFormat() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbPngImageConverter");
     ImageView2D image{PixelFormat::DepthComponent, PixelType::UnsignedByte, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!StbImageConverter{StbImageConverter::Format::Png}.exportToData(image));
+    CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): unsupported pixel format PixelFormat::DepthComponent\n");
 }
 
 void StbImageConverterTest::wrongType() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbTgaImageConverter");
     ImageView2D image{PixelFormat::RGBA, PixelType::Float, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!StbImageConverter{StbImageConverter::Format::Tga}.exportToData(image));
+    CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelType::Float is not supported for BMP/PNG/TGA format\n");
 }
 
 void StbImageConverterTest::wrongTypeHdr() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
     ImageView2D image{PixelFormat::RGB, PixelType::UnsignedByte, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!StbImageConverter{StbImageConverter::Format::Hdr}.exportToData(image));
+    CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelType::UnsignedByte is not supported for HDR format\n");
 }
 
 void StbImageConverterTest::wrongStorage() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbBmpImageConverter");
     const ImageView2D image{PixelStorage{}.setSkip({0, 1, 0}),
         PixelFormat::RGB, PixelType::UnsignedByte, {2, 3}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!StbImageConverter{StbImageConverter::Format::Bmp}.exportToData(image));
+    CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): data must be tightly packed for all formats except PNG\n");
 }
 
@@ -126,12 +145,15 @@ namespace {
 }
 
 void StbImageConverterTest::rgBmp() {
-    const auto data = StbImageConverter{StbImageConverter::Format::Bmp}.exportToData(OriginalRg);
+    const auto data = _converterManager.instantiate("StbBmpImageConverter")->exportToData(OriginalRg);
     CORRADE_VERIFY(data);
 
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openData(data));
-    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -165,12 +187,15 @@ namespace {
 }
 
 void StbImageConverterTest::grayscaleHdr() {
-    const auto data = StbImageConverter{StbImageConverter::Format::Hdr}.exportToData(OriginalGrayscale);
+    const auto data = _converterManager.instantiate("StbHdrImageConverter")->exportToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openData(data));
-    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -203,12 +228,15 @@ namespace {
 }
 
 void StbImageConverterTest::rgbPng() {
-    const auto data = StbImageConverter{StbImageConverter::Format::Png}.exportToData(OriginalRgb);
+    const auto data = _converterManager.instantiate("StbPngImageConverter")->exportToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openData(data));
-    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -230,12 +258,15 @@ namespace {
 }
 
 void StbImageConverterTest::rgbaTga() {
-    const auto data = StbImageConverter{StbImageConverter::Format::Tga}.exportToData(OriginalRgba);
+    const auto data = _converterManager.instantiate("StbTgaImageConverter")->exportToData(OriginalRgba);
     CORRADE_VERIFY(data);
 
-    StbImageImporter importer;
-    CORRADE_VERIFY(importer.openData(data));
-    Containers::Optional<Trade::ImageData2D> converted = importer.image2D(0);
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));

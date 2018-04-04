@@ -35,6 +35,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Vector3.h>
+#include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
@@ -44,8 +45,6 @@
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
-
-#include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
 
 #if MAGNUM_TRADE_ASSIMPIMPORTER_DEBUG
 #include <assimp/Logger.hpp>
@@ -95,6 +94,9 @@ struct AssimpImporterTest: TestSuite::Tester {
     void openStateTexture();
 
     void configurePostprocessFlipUVs();
+
+    /* Needs to load AnyImageImporter from system-wide location */
+    PluginManager::Manager<AbstractImporter> _manager;
 };
 
 namespace {
@@ -138,35 +140,45 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::openStateTexture,
 
               &AssimpImporterTest::configurePostprocessFlipUVs});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. It also pulls in the AnyImageImporter dependency. */
+    #ifdef ASSIMPIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(ASSIMPIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    /* The StbImageImporter (for PNG image loading) is optional */
+    #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void AssimpImporterTest::open() {
-    AssimpImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     auto data = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"));
-    CORRADE_VERIFY(importer.openData(data));
+    CORRADE_VERIFY(importer->openData(data));
 
-    importer.close();
-    CORRADE_VERIFY(!importer.isOpened());
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
 
-    CORRADE_VERIFY(!importer.openFile("i-do-not-exists.foo"));
-    CORRADE_VERIFY(!importer.isOpened());
+    CORRADE_VERIFY(!importer->openFile("i-do-not-exists.foo"));
+    CORRADE_VERIFY(!importer->isOpened());
 }
 
 void AssimpImporterTest::camera() {
-    AssimpImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
 
-    CORRADE_COMPARE(importer.cameraCount(), 1);
-    Containers::Optional<Trade::CameraData> camera = importer.camera(0);
+    CORRADE_COMPARE(importer->cameraCount(), 1);
+    Containers::Optional<Trade::CameraData> camera = importer->camera(0);
     CORRADE_VERIFY(camera);
     CORRADE_COMPARE(camera->fov(), 49.13434_degf);
     CORRADE_COMPARE(camera->near(), 0.123f);
     CORRADE_COMPARE(camera->far(), 123.0f);
 
-    CORRADE_COMPARE(importer.object3DCount(), 2);
+    CORRADE_COMPARE(importer->object3DCount(), 2);
 
-    std::unique_ptr<Trade::ObjectData3D> cameraObject = importer.object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> cameraObject = importer->object3D(1);
     CORRADE_COMPARE(cameraObject->instanceType(), ObjectInstanceType3D::Camera);
     CORRADE_COMPARE(cameraObject->instance(), 0);
 }
@@ -174,26 +186,26 @@ void AssimpImporterTest::camera() {
 void AssimpImporterTest::light() {
     auto&& data = LightInstanceData[testCaseInstanceId()];
 
-    AssimpImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
 
-    CORRADE_COMPARE(importer.lightCount(), 3);
-    CORRADE_COMPARE(importer.object3DCount(), 4); /* root + 3 light objects */
+    CORRADE_COMPARE(importer->lightCount(), 3);
+    CORRADE_COMPARE(importer->object3DCount(), 4); /* root + 3 light objects */
 
-    Containers::Optional<Trade::LightData> light = importer.light(testCaseInstanceId());
+    Containers::Optional<Trade::LightData> light = importer->light(testCaseInstanceId());
     CORRADE_VERIFY(light);
     CORRADE_COMPARE(light->type(), data.type);
     CORRADE_COMPARE(light->color(), data.color);
     CORRADE_COMPARE(light->intensity(), 1.0f);
 
-    std::unique_ptr<Trade::ObjectData3D> lightObject = importer.object3D(testCaseInstanceId() + 1);
+    std::unique_ptr<Trade::ObjectData3D> lightObject = importer->object3D(testCaseInstanceId() + 1);
     CORRADE_COMPARE(lightObject->instanceType(), ObjectInstanceType3D::Light);
     CORRADE_COMPARE(lightObject->instance(), testCaseInstanceId());
 }
 
 void AssimpImporterTest::lightUndefined() {
-    AssimpImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light-undefined.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light-undefined.dae")));
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
@@ -203,16 +215,16 @@ void AssimpImporterTest::lightUndefined() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!importer.light(0));
+    CORRADE_VERIFY(!importer->light(0));
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): light type 4 is not supported\n");
 }
 
 void AssimpImporterTest::material() {
-    AssimpImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh-material.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh-material.dae")));
 
-    CORRADE_COMPARE(importer.materialCount(), 1);
-    std::unique_ptr<Trade::AbstractMaterialData> material = importer.material(0);
+    CORRADE_COMPARE(importer->materialCount(), 1);
+    std::unique_ptr<Trade::AbstractMaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
@@ -227,22 +239,22 @@ void AssimpImporterTest::material() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* Ancient assimp version add "-material" suffix */
     if(version < 302) {
-        CORRADE_COMPARE(importer.materialForName("Material-material"), 0);
-        CORRADE_COMPARE(importer.materialName(0), "Material-material");
+        CORRADE_COMPARE(importer->materialForName("Material-material"), 0);
+        CORRADE_COMPARE(importer->materialName(0), "Material-material");
     } else {
-        CORRADE_COMPARE(importer.materialForName("Material"), 0);
-        CORRADE_COMPARE(importer.materialName(0), "Material");
+        CORRADE_COMPARE(importer->materialForName("Material"), 0);
+        CORRADE_COMPARE(importer->materialName(0), "Material");
     }
-    CORRADE_COMPARE(importer.materialForName("Ghost"), -1);
+    CORRADE_COMPARE(importer->materialForName("Ghost"), -1);
 }
 
 void AssimpImporterTest::mesh() {
-    AssimpImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
-    CORRADE_COMPARE(importer.mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
@@ -266,18 +278,18 @@ void AssimpImporterTest::mesh() {
     }
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
 
-    std::unique_ptr<Trade::ObjectData3D> meshObject = importer.object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(1);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
 
 void AssimpImporterTest::pointMesh() {
-    AssimpImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "points.obj")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "points.obj")));
 
-    CORRADE_COMPARE(importer.mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
@@ -290,18 +302,18 @@ void AssimpImporterTest::pointMesh() {
         {0.5f, 2.0f, 3.0f}, {2.0f, 3.0f, 5.0f}, {0.0f, 1.5f, 1.0f}}));
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2, 0}));
 
-    std::unique_ptr<Trade::ObjectData3D> meshObject = importer.object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(1);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
 
 void AssimpImporterTest::lineMesh() {
-    AssimpImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "line.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "line.dae")));
 
-    CORRADE_COMPARE(importer.mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
@@ -314,41 +326,41 @@ void AssimpImporterTest::lineMesh() {
         {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}}));
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1}));
 
-    std::unique_ptr<Trade::ObjectData3D> meshObject = importer.object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(1);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
 
 void AssimpImporterTest::scene() {
-    AssimpImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
 
-    CORRADE_COMPARE(importer.sceneCount(), 1);
-    CORRADE_COMPARE(importer.defaultScene(), 0);
-    Containers::Optional<Trade::SceneData> data = importer.scene(0);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->defaultScene(), 0);
+    Containers::Optional<Trade::SceneData> data = importer->scene(0);
     CORRADE_VERIFY(data);
 
     CORRADE_COMPARE(data->children2D(), {});
     CORRADE_COMPARE(data->children3D(), {1});
 
-    std::unique_ptr<Trade::ObjectData3D> explicitRootObject = importer.object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> explicitRootObject = importer->object3D(1);
     CORRADE_COMPARE(explicitRootObject->children(), {2});
     CORRADE_COMPARE(explicitRootObject->instanceType(), ObjectInstanceType3D::Empty);
     CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
 
-    std::unique_ptr<Trade::ObjectData3D> childObject = importer.object3D(2);
+    std::unique_ptr<Trade::ObjectData3D> childObject = importer->object3D(2);
     CORRADE_COMPARE(childObject->transformation(), Matrix4(
         {0.813798f, -0.44097f, 0.378522f, 1.0f},
         {0.469846f, 0.882564f, 0.0180283f, 2.0f},
         {-0.34202f, 0.163176f, 0.925417f, 3.0f},
         {0.0f, 0.0f, 0.0f, 1.0f}));
 
-    CORRADE_COMPARE(importer.object3DForName("Root"), 1);
-    CORRADE_COMPARE(importer.object3DForName("Child"), 2);
-    CORRADE_COMPARE(importer.object3DName(1), "Root");
-    CORRADE_COMPARE(importer.object3DName(2), "Child");
+    CORRADE_COMPARE(importer->object3DForName("Root"), 1);
+    CORRADE_COMPARE(importer->object3DForName("Child"), 2);
+    CORRADE_COMPARE(importer->object3DName(1), "Root");
+    CORRADE_COMPARE(importer->object3DName(2), "Child");
 
-    CORRADE_COMPARE(importer.object3DForName("Ghost"), -1);
+    CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
 }
 
 void AssimpImporterTest::texture() {
@@ -357,16 +369,14 @@ void AssimpImporterTest::texture() {
     if(version < 302)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
-    PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
-
-    if(manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    AssimpImporter importer{manager};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae")));
 
-    CORRADE_COMPARE(importer.textureCount(), 1);
-    Containers::Optional<Trade::TextureData> texture = importer.texture(0);
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
@@ -375,8 +385,8 @@ void AssimpImporterTest::texture() {
     CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
 
-    CORRADE_COMPARE(importer.image2DCount(), 1);
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -384,21 +394,19 @@ void AssimpImporterTest::texture() {
 }
 
 void AssimpImporterTest::embeddedTexture() {
-    PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
-
-    if(manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    AssimpImporter importer{manager};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend")));
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 302)
         CORRADE_SKIP("Current version of assimp cannot load embedded textures from blender files.");
 
-    CORRADE_COMPARE(importer.textureCount(), 1);
-    Containers::Optional<Trade::TextureData> texture = importer.texture(0);
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
@@ -407,8 +415,8 @@ void AssimpImporterTest::embeddedTexture() {
     CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
 
-    CORRADE_COMPARE(importer.image2DCount(), 1);
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -420,36 +428,36 @@ void AssimpImporterTest::openState() {
     const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
     CORRADE_VERIFY(sc != nullptr);
 
-    AssimpImporter importer;
-    importer.openState(sc);
-    CORRADE_VERIFY(importer.isOpened());
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->openState(sc);
+    CORRADE_VERIFY(importer->isOpened());
 
-    CORRADE_COMPARE(importer.sceneCount(), 1);
-    CORRADE_COMPARE(importer.defaultScene(), 0);
-    Containers::Optional<Trade::SceneData> data = importer.scene(0);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->defaultScene(), 0);
+    Containers::Optional<Trade::SceneData> data = importer->scene(0);
     CORRADE_VERIFY(data);
 
     CORRADE_COMPARE(data->children2D(), {});
     CORRADE_COMPARE(data->children3D(), {1});
 
-    std::unique_ptr<Trade::ObjectData3D> explicitRootObject = importer.object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> explicitRootObject = importer->object3D(1);
     CORRADE_COMPARE(explicitRootObject->children(), {2});
     CORRADE_COMPARE(explicitRootObject->instanceType(), ObjectInstanceType3D::Empty);
     CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
 
-    std::unique_ptr<Trade::ObjectData3D> childObject = importer.object3D(2);
+    std::unique_ptr<Trade::ObjectData3D> childObject = importer->object3D(2);
     CORRADE_COMPARE(childObject->transformation(), Matrix4(
         {0.813798f, -0.44097f, 0.378522f, 1.0f},
         {0.469846f, 0.882564f, 0.0180283f, 2.0f},
         {-0.34202f, 0.163176f, 0.925417f, 3.0f},
         {0.0f, 0.0f, 0.0f, 1.0f}));
 
-    CORRADE_COMPARE(importer.object3DForName("Root"), 1);
-    CORRADE_COMPARE(importer.object3DForName("Child"), 2);
-    CORRADE_COMPARE(importer.object3DName(1), "Root");
-    CORRADE_COMPARE(importer.object3DName(2), "Child");
+    CORRADE_COMPARE(importer->object3DForName("Root"), 1);
+    CORRADE_COMPARE(importer->object3DForName("Child"), 2);
+    CORRADE_COMPARE(importer->object3DName(1), "Root");
+    CORRADE_COMPARE(importer->object3DName(2), "Child");
 
-    CORRADE_COMPARE(importer.object3DForName("Ghost"), -1);
+    CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
 }
 
 void AssimpImporterTest::openStateTexture() {
@@ -458,21 +466,19 @@ void AssimpImporterTest::openStateTexture() {
     if(version < 302)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
-    PluginManager::Manager<AbstractImporter> manager{MAGNUM_PLUGINS_IMPORTER_DIR};
-
-    if(manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Assimp::Importer _importer;
     const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
     CORRADE_VERIFY(sc != nullptr);
 
-    AssimpImporter importer{manager};
-    importer.openState(sc, ASSIMPIMPORTER_TEST_DIR);
-    CORRADE_VERIFY(importer.isOpened());
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->openState(sc, ASSIMPIMPORTER_TEST_DIR);
+    CORRADE_VERIFY(importer->isOpened());
 
-    CORRADE_COMPARE(importer.textureCount(), 1);
-    Containers::Optional<Trade::TextureData> texture = importer.texture(0);
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
@@ -481,8 +487,8 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
 
-    CORRADE_COMPARE(importer.image2DCount(), 1);
-    Containers::Optional<Trade::ImageData2D> image = importer.image2D(0);
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -490,13 +496,13 @@ void AssimpImporterTest::openStateTexture() {
 }
 
 void AssimpImporterTest::configurePostprocessFlipUVs() {
-    AssimpImporter importer;
-    importer.configuration().group("postprocess")->setValue("FlipUVs", true);
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().group("postprocess")->setValue("FlipUVs", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
-    CORRADE_COMPARE(importer.mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer.mesh3D(0);
+    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 1);
 

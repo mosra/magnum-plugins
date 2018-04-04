@@ -152,3 +152,6 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(StbImageConverter, Magnum::Trade::StbImageConverter,
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1")

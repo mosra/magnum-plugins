@@ -23,9 +23,5 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Corrade/PluginManager/AbstractManager.h>
-
-#include "MagnumPlugins/HarfBuzzFont/HarfBuzzFont.h"
-
-CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.2.4")
+#cmakedefine PNGIMAGECONVERTER_PLUGIN_FILENAME "${PNGIMAGECONVERTER_PLUGIN_FILENAME}"
+#cmakedefine PNGIMPORTER_PLUGIN_FILENAME "${PNGIMPORTER_PLUGIN_FILENAME}"

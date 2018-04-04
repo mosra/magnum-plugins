@@ -30,22 +30,34 @@ else()
     set(STBVORBISAUDIOIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+if(NOT BUILD_PLUGINS_STATIC)
+    set(STBVORBISAUDIOIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbVorbisAudioImporter>)
+
+    # First replace ${} variables, then $<> generator expressions
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:StbVorbisAudioImporterTest>/configure.h
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+else()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+endif()
 
 corrade_add_test(StbVorbisAudioImporterTest StbVorbisImporterTest.cpp
-    LIBRARIES MagnumStbVorbisAudioImporterTestLib
+    LIBRARIES Magnum::Audio
     FILES
         mono16.ogg
         stereo8.ogg
         unsupportedChannelCount.ogg
         wrongSignature.ogg)
-target_include_directories(StbVorbisAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-# On Win32 we need to avoid dllimporting StbVorbisAudioImporter symbols,
-# because it would search for the symbols in some DLL even when they were
-# linked statically. However it apparently doesn't matter that they were
-# dllexported when building the static library. EH.
-if(WIN32)
-    target_compile_definitions(StbVorbisAudioImporterTest PRIVATE "MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC")
+if(NOT BUILD_PLUGINS_STATIC)
+    target_include_directories(StbVorbisAudioImporterTest PRIVATE $<TARGET_FILE_DIR:StbVorbisAudioImporterTest>)
+else()
+    target_include_directories(StbVorbisAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(StbVorbisAudioImporterTest PRIVATE StbVorbisAudioImporter)
 endif()
 set_target_properties(StbVorbisAudioImporterTest PROPERTIES FOLDER "MagnumPlugins/StbVorbisAudioImporter/Test")

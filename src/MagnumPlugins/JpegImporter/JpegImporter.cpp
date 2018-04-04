@@ -146,3 +146,6 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(JpegImporter, Magnum::Trade::JpegImporter,
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3")

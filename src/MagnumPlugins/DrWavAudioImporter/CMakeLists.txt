@@ -33,45 +33,25 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(DrWavAudioImporter_SRCS
-    DrWavImporter.cpp)
-
-set(DrWavAudioImporter_HEADERS
-    DrWavImporter.h)
-
-# Objects shared between plugin and test library
-add_library(DrWavAudioImporterObjects OBJECT
-    ${DrWavAudioImporter_SRCS}
-    ${DrWavAudioImporter_HEADERS})
-target_include_directories(DrWavAudioImporterObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Audio,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_compile_definitions(DrWavAudioImporterObjects PRIVATE "DrWavAudioImporterObjects_EXPORTS")
-# Include the dr_*.h files as a system directory to supress warnings
-target_include_directories(DrWavAudioImporterObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/dr)
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(DrWavAudioImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-set_target_properties(DrWavAudioImporterObjects PROPERTIES FOLDER "MagnumPlugins/DrWavAudioImporter")
-
 # DrWavAudioImporter plugin
 add_plugin(DrWavAudioImporter
     "${MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     DrWavAudioImporter.conf
-    $<TARGET_OBJECTS:DrWavAudioImporterObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
+    DrWavImporter.cpp
+    DrWavImporter.h)
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(DrWavAudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+# Include the dr_*.h files as a system directory to supress warnings
+target_include_directories(DrWavAudioImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/dr)
 target_include_directories(DrWavAudioImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(DrWavAudioImporter Magnum::Magnum Magnum::Audio)
+target_link_libraries(DrWavAudioImporter PUBLIC Magnum::Audio)
 
-install(FILES ${DrWavAudioImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrWavAudioImporter)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrWavAudioImporter)
+install(FILES DrWavImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrWavAudioImporter)
 
 # Automatic static plugin import
 if(BUILD_PLUGINS_STATIC)
@@ -82,14 +62,6 @@ if(BUILD_PLUGINS_STATIC)
 endif()
 
 if(BUILD_TESTS)
-    add_library(MagnumDrWavAudioImporterTestLib STATIC
-        $<TARGET_OBJECTS:DrWavAudioImporterObjects>
-        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumDrWavAudioImporterTestLib PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src)
-    set_target_properties(MagnumDrWavAudioImporterTestLib PROPERTIES FOLDER "MagnumPlugins/DrWavAudioImporter")
-    target_link_libraries(MagnumDrWavAudioImporterTestLib Magnum::Magnum Magnum::Audio)
     add_subdirectory(Test)
 endif()
 

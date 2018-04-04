@@ -23,7 +23,5 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "MagnumPlugins/PngImporter/PngImporter.h"
-
-CORRADE_PLUGIN_REGISTER(PngImporter, Magnum::Trade::PngImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+#cmakedefine STBIMAGECONVERTER_PLUGIN_FILENAME "${STBIMAGECONVERTER_PLUGIN_FILENAME}"
+#cmakedefine STBIMAGEIMPORTER_PLUGIN_FILENAME "${STBIMAGEIMPORTER_PLUGIN_FILENAME}"

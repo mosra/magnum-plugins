@@ -837,3 +837,6 @@ std::string ColladaImporter::instanceName(const QString& name, const QString& in
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(ColladaImporter, Magnum::Trade::ColladaImporter,
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3")

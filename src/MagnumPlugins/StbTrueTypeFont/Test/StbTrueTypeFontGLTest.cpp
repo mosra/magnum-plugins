@@ -23,10 +23,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/PluginManager/Manager.h>
 #include <Magnum/OpenGLTester.h>
+#include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/GlyphCache.h>
-
-#include "MagnumPlugins/StbTrueTypeFont/StbTrueTypeFont.h"
 
 #include "configure.h"
 
@@ -38,46 +38,55 @@ struct StbTrueTypeFontGLTest: OpenGLTester {
     void properties();
     void layout();
     void fillGlyphCache();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
 };
 
 StbTrueTypeFontGLTest::StbTrueTypeFontGLTest() {
     addTests({&StbTrueTypeFontGLTest::properties,
               &StbTrueTypeFontGLTest::layout,
               &StbTrueTypeFontGLTest::fillGlyphCache});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef STBTRUETYPEFONT_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(STBTRUETYPEFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void StbTrueTypeFontGLTest::properties() {
-    StbTrueTypeFont font;
-    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
+    std::unique_ptr<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
-    CORRADE_COMPARE(font.size(), 16.0f);
-    CORRADE_COMPARE(font.glyphId(U'W'), 58);
+    CORRADE_COMPARE(font->size(), 16.0f);
+    CORRADE_COMPARE(font->glyphId(U'W'), 58);
 
     {
         CORRADE_EXPECT_FAIL("Font properties don't match FreeType with the same font size.");
-        CORRADE_COMPARE(font.ascent(), 15.0f);
-        CORRADE_COMPARE(font.descent(), -4.0f);
-        CORRADE_COMPARE(font.lineHeight(), 19.0f);
-        CORRADE_COMPARE(font.glyphAdvance(58), Vector2(17.0f, 0.0f));
+        CORRADE_COMPARE(font->ascent(), 15.0f);
+        CORRADE_COMPARE(font->descent(), -4.0f);
+        CORRADE_COMPARE(font->lineHeight(), 19.0f);
+        CORRADE_COMPARE(font->glyphAdvance(58), Vector2(17.0f, 0.0f));
     } {
         /* Test that we are at least consistently wrong */
-        CORRADE_COMPARE(font.ascent(), 17.0112f);
-        CORRADE_COMPARE(font.descent(), -4.32215f);
-        CORRADE_COMPARE(font.lineHeight(), 21.3333f);
-        CORRADE_COMPARE(font.glyphAdvance(58), Vector2(19.0694f, 0.0f));
+        CORRADE_COMPARE(font->ascent(), 17.0112f);
+        CORRADE_COMPARE(font->descent(), -4.32215f);
+        CORRADE_COMPARE(font->lineHeight(), 21.3333f);
+        CORRADE_COMPARE(font->glyphAdvance(58), Vector2(19.0694f, 0.0f));
     }
 }
 
 void StbTrueTypeFontGLTest::layout() {
-    StbTrueTypeFont font;
-    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
+    std::unique_ptr<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     /* Fill the cache with some fake glyphs */
     GlyphCache cache(Vector2i(256));
-    cache.insert(font.glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
-    cache.insert(font.glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
+    cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
+    cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
 
-    std::unique_ptr<AbstractLayouter> layouter = font.layout(cache, 0.5f, "Wave");
+    std::unique_ptr<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
     CORRADE_VERIFY(layouter);
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 
@@ -134,12 +143,12 @@ void StbTrueTypeFontGLTest::layout() {
 }
 
 void StbTrueTypeFontGLTest::fillGlyphCache() {
-    StbTrueTypeFont font;
-    CORRADE_VERIFY(font.openFile(TTF_FILE, 16.0f));
+    std::unique_ptr<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     /* Just testing that nothing crashes, asserts or errors */
     GlyphCache cache{Vector2i{256}};
-    font.fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyz");
+    font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyz");
 
     MAGNUM_VERIFY_NO_ERROR();
 

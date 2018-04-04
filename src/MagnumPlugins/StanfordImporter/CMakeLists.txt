@@ -30,43 +30,23 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(StanfordImporter_SRCS
-    StanfordImporter.cpp)
-
-set(StanfordImporter_HEADERS
-    StanfordImporter.h)
-
-# Objects shared between plugin and test library
-add_library(StanfordImporterObjects OBJECT
-    ${StanfordImporter_SRCS}
-    ${StanfordImporter_HEADERS})
-target_include_directories(StanfordImporterObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_compile_definitions(StanfordImporterObjects PRIVATE "StanfordImporterObjects_EXPORTS")
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(StanfordImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-set_target_properties(StanfordImporterObjects PROPERTIES FOLDER "MagnumPlugins/StanfordImporter")
-
 # StanfordImporter plugin
 add_plugin(StanfordImporter
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     StanfordImporter.conf
-    $<TARGET_OBJECTS:StanfordImporterObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
+    StanfordImporter.cpp
+    StanfordImporter.h)
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(StanfordImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(StanfordImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(StanfordImporter Magnum::Magnum)
+target_link_libraries(StanfordImporter PUBLIC Magnum::Magnum)
 
-install(FILES ${StanfordImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordImporter)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordImporter)
+install(FILES StanfordImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordImporter)
 
 # Automatic static plugin import
 if(BUILD_PLUGINS_STATIC)
@@ -77,14 +57,6 @@ if(BUILD_PLUGINS_STATIC)
 endif()
 
 if(BUILD_TESTS)
-    add_library(MagnumStanfordImporterTestLib STATIC
-        $<TARGET_OBJECTS:StanfordImporterObjects>
-        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumStanfordImporterTestLib PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src)
-    set_target_properties(MagnumStanfordImporterTestLib PROPERTIES FOLDER "MagnumPlugins/StanfordImporter")
-    target_link_libraries(MagnumStanfordImporterTestLib Magnum::Magnum)
     add_subdirectory(Test)
 endif()
 

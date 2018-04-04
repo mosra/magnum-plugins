@@ -24,6 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED AnyImageImporter)
 find_package(Assimp REQUIRED)
 
 if(BUILD_PLUGINS_STATIC)
@@ -33,48 +34,28 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(AssimpImporter_SRCS
-    AssimpImporter.cpp)
-
-set(AssimpImporter_HEADERS
-    AssimpImporter.h)
-
-# Objects shared between plugin and test library
-add_library(AssimpImporterObjects OBJECT
-    ${AssimpImporter_SRCS}
-    ${AssimpImporter_HEADERS})
-target_include_directories(AssimpImporterObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_include_directories(AssimpImporterObjects SYSTEM PRIVATE
-    $<TARGET_PROPERTY:Assimp::Assimp,INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_definitions(AssimpImporterObjects PRIVATE "AssimpImporterObjects_EXPORTS")
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(AssimpImporterObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-set_target_properties(AssimpImporterObjects PROPERTIES FOLDER "MagnumPlugins/AnyImageImporter")
-
 # AssimpImporter plugin
 add_plugin(AssimpImporter
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     AssimpImporter.conf
-    $<TARGET_OBJECTS:AssimpImporterObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
+    AssimpImporter.cpp
+    AssimpImporter.h)
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(AssimpImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(AssimpImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(AssimpImporter Magnum::Magnum Assimp::Assimp)
+target_link_libraries(AssimpImporter PUBLIC Magnum::Magnum Assimp::Assimp)
 if(CORRADE_TARGET_WINDOWS)
-    target_link_libraries(AssimpImporter AnyImageImporter)
+    target_link_libraries(AssimpImporter PUBLIC Magnum::AnyImageImporter)
+elseif(BUILD_PLUGINS_STATIC)
+    target_link_libraries(AssimpImporter INTERFACE Magnum::AnyImageImporter)
 endif()
 
-install(FILES ${AssimpImporter_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AssimpImporter)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AssimpImporter)
+install(FILES AssimpImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AssimpImporter)
 
 # Automatic static plugin import
 if(BUILD_PLUGINS_STATIC)
@@ -85,32 +66,6 @@ if(BUILD_PLUGINS_STATIC)
 endif()
 
 if(BUILD_TESTS)
-    # On Win32 we need to avoid dllimporting AnyImageImporter symbols, because
-    # it would search for the symbols in some DLL even when they were linked
-    # statically. However it apparently doesn't matter that they were
-    # dllexported when building the static library. EH. And because the
-    # -DAssimpImporterObjects_EXPORTS is no longer set in this case, we need
-    # to avoid dllimporting AssimpImporter symbols as well.
-    if(CORRADE_TARGET_WINDOWS)
-        add_library(MagnumAssimpImporterTestLib STATIC
-            ${AssimpImporter_SRCS}
-            ${AssimpImporter_HEADERS}
-            ${AssimpImporter_PRIVATE_HEADERS})
-        target_compile_definitions(MagnumAssimpImporterTestLib PRIVATE
-            "MAGNUM_ANYIMAGEIMPORTER_BUILD_STATIC"
-            "MAGNUM_ASSIMPIMPORTER_BUILD_STATIC")
-    else()
-        add_library(MagnumAssimpImporterTestLib STATIC
-            $<TARGET_OBJECTS:AssimpImporterObjects>
-            ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    endif()
-    target_include_directories(MagnumAssimpImporterTestLib PUBLIC ${PROJECT_SOURCE_DIR}/src)
-    set_target_properties(MagnumAssimpImporterTestLib PROPERTIES FOLDER "MagnumPlugins/AnyImageImporter")
-    target_link_libraries(MagnumAssimpImporterTestLib
-        Magnum::Magnum
-        MagnumAnyImageImporterTestLib
-        Assimp::Assimp)
-
     add_subdirectory(Test)
 endif()
 

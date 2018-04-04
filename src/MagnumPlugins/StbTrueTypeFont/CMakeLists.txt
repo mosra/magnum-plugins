@@ -32,48 +32,25 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
-set(StbTrueTypeFont_SRCS
-    StbTrueTypeFont.cpp)
-
-set(StbTrueTypeFont_HEADERS
-    StbTrueTypeFont.h)
-
-# Objects shared between plugin and test library
-add_library(StbTrueTypeFontObjects OBJECT
-    ${StbTrueTypeFont_SRCS}
-    ${StbTrueTypeFont_HEADERS})
-target_include_directories(StbTrueTypeFontObjects PUBLIC
-    $<TARGET_PROPERTY:Magnum::Text,INTERFACE_INCLUDE_DIRECTORIES>
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
-target_compile_definitions(StbTrueTypeFontObjects PRIVATE "StbTrueTypeFontObjects_EXPORTS")
-# Include the stb_*.h files as a system directory to supress warnings
-target_include_directories(StbTrueTypeFontObjects SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
-if(NOT BUILD_PLUGINS_STATIC OR BUILD_STATIC_PIC)
-    set_target_properties(StbTrueTypeFontObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-set_target_properties(StbTrueTypeFontObjects PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont")
-
 # StbTrueTypeFont plugin
 add_plugin(StbTrueTypeFont
     "${MAGNUM_PLUGINS_FONT_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_FONT_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_FONT_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_FONT_RELEASE_LIBRARY_INSTALL_DIR}"
     StbTrueTypeFont.conf
-    $<TARGET_OBJECTS:StbTrueTypeFontObjects>
-    pluginRegistration.cpp)
-if(BUILD_STATIC_PIC)
+    StbTrueTypeFont.cpp
+    StbTrueTypeFont.h)
+if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(StbTrueTypeFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(StbTrueTypeFont PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(StbTrueTypeFont
-    Magnum::Magnum
-    Magnum::Text
-    Magnum::TextureTools)
+# Include the stb_*.h files as a system directory to supress warnings
+target_include_directories(StbTrueTypeFont SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
+target_link_libraries(StbTrueTypeFont PUBLIC Magnum::Text)
 
-install(FILES ${StbTrueTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
+install(FILES StbTrueTypeFont.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
+    DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
 
 # Automatic static plugin import
 if(BUILD_PLUGINS_STATIC)
@@ -81,22 +58,6 @@ if(BUILD_PLUGINS_STATIC)
     if(NOT CMAKE_VERSION VERSION_LESS 3.1)
         target_sources(StbTrueTypeFont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
     endif()
-endif()
-
-# The lib is needed by non-GL tests
-if(BUILD_TESTS)
-    add_library(MagnumStbTrueTypeFontTestLib STATIC
-        $<TARGET_OBJECTS:StbTrueTypeFontObjects>
-        ${PROJECT_SOURCE_DIR}/src/dummy.cpp) # XCode workaround, see file comment for details
-    target_include_directories(MagnumStbTrueTypeFontTestLib PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src)
-    set_target_properties(MagnumStbTrueTypeFontTestLib PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont")
-    target_link_libraries(MagnumStbTrueTypeFontTestLib
-        Magnum::Magnum
-        Magnum::Text
-        Magnum::TextureTools
-        ${FREETYPE_LIBRARIES})
 endif()
 
 if(BUILD_GL_TESTS)

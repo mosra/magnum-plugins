@@ -27,9 +27,8 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Math/Vector3.h>
+#include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData3D.h>
-
-#include "MagnumPlugins/StanfordImporter/StanfordImporter.h"
 
 #include "configure.h"
 
@@ -65,6 +64,9 @@ struct StanfordImporterTest: TestSuite::Tester {
     void bigEndian();
     void crlf();
     void ignoredVertexComponents();
+
+    /* Explicitly forbid system-wide plugin dependencies */
+    PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
 StanfordImporterTest::StanfordImporterTest() {
@@ -95,165 +97,171 @@ StanfordImporterTest::StanfordImporterTest() {
               &StanfordImporterTest::bigEndian,
               &StanfordImporterTest::crlf,
               &StanfordImporterTest::ignoredVertexComponents});
+
+    /* Load the plugin directly from the build tree. Otherwise it's static and
+       already loaded. */
+    #ifdef STANFORDIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(STANFORDIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void StanfordImporterTest::invalidSignature() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-signature.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-signature.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid file signature bla\n");
 }
 
 void StanfordImporterTest::invalidFormat() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-format.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-format.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid format line format binary_big_endian 1.0 extradata\n");
 }
 
 void StanfordImporterTest::unsupportedFormat() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unsupported-format.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unsupported-format.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unsupported file format ascii 1.0\n");
 }
 
 void StanfordImporterTest::missingFormat() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "missing-format.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "missing-format.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): missing format line\n");
 }
 
 void StanfordImporterTest::unknownLine() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-line.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-line.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown line heh\n");
 }
 
 void StanfordImporterTest::unknownElement() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-element.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-element.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown element edge\n");
 }
 
 void StanfordImporterTest::unexpectedProperty() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unexpected-property.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unexpected-property.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unexpected property line\n");
 }
 
 void StanfordImporterTest::invalidVertexProperty() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-vertex-property.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-vertex-property.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid vertex property line property float x extradata\n");
 }
 
 void StanfordImporterTest::invalidVertexType() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-vertex-type.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-vertex-type.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid vertex component type float16\n");
 }
 
 void StanfordImporterTest::unknownFaceProperty() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-face-property.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-face-property.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown face property line property float x\n");
 }
 
 void StanfordImporterTest::invalidFaceSizeType() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size-type.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size-type.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face size type int128\n");
 }
 
 void StanfordImporterTest::invalidFaceIndexType() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-index-type.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-index-type.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face index type int128\n");
 }
 
 void StanfordImporterTest::incompleteVertex() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "incomplete-vertex.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "incomplete-vertex.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): incomplete vertex specification\n");
 }
 
 void StanfordImporterTest::incompleteFace() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "incomplete-face.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "incomplete-face.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): incomplete face specification\n");
 }
 
 void StanfordImporterTest::invalidFaceSize() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unsupported face size 5\n");
 }
 
 void StanfordImporterTest::shortFile() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "short-file.ply")));
-    CORRADE_VERIFY(!importer.mesh3D(0));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "short-file.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): file is too short\n");
 }
 
@@ -277,55 +285,55 @@ namespace {
 }
 
 void StanfordImporterTest::empty() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "empty.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "empty.ply")));
 
-    auto mesh = importer.mesh3D(0);
+    auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(!mesh->isIndexed());
     CORRADE_VERIFY(mesh->positions(0).empty());
 }
 
 void StanfordImporterTest::common() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
 
-    auto mesh = importer.mesh3D(0);
+    auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), indices);
     CORRADE_COMPARE(mesh->positions(0), positions);
 }
 
 void StanfordImporterTest::bigEndian() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "big-endian.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "big-endian.ply")));
 
-    auto mesh = importer.mesh3D(0);
+    auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), indices);
     CORRADE_COMPARE(mesh->positions(0), positions);
 }
 
 void StanfordImporterTest::crlf() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "crlf.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "crlf.ply")));
 
-    auto mesh = importer.mesh3D(0);
+    auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), indices);
     CORRADE_COMPARE(mesh->positions(0), positions);
 }
 
 void StanfordImporterTest::ignoredVertexComponents() {
-    StanfordImporter importer;
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "ignored-vertex-components.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "ignored-vertex-components.ply")));
 
-    auto mesh = importer.mesh3D(0);
+    auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), indices);
     CORRADE_COMPARE(mesh->positions(0), positions);

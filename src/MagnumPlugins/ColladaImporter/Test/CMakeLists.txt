@@ -23,14 +23,45 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+if(NOT BUILD_PLUGINS_STATIC)
+    set(COLLADAIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:ColladaImporter>)
+    if(WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
 
-corrade_add_test(ColladaImporterTypeTest TypeTest.cpp LIBRARIES MagnumColladaImporterTestLib)
-corrade_add_test(ColladaImporterUtilityTest UtilityTest.cpp LIBRARIES MagnumColladaImporterTestLib)
-target_include_directories(ColladaImporterUtilityTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    # First replace ${} variables, then $<> generator expressions
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:ColladaImporterTest>/configure.h
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+else()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+endif()
+
+corrade_add_test(ColladaImporterTypeTest TypeTest.cpp
+    LIBRARIES
+        Magnum::Magnum
+        ${QT_QTCORE_LIBRARY}
+        ${QT_QTXMLPATTERNS_LIBRARY})
+# Supress warnings from Qt includes
+target_include_directories(ColladaImporterTypeTest SYSTEM PRIVATE ${QT_INCLUDE_DIR})
+target_include_directories(ColladaImporterTypeTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
+corrade_add_test(ColladaImporterUtilityTest UtilityTest.cpp
+    LIBRARIES
+        Magnum::Magnum
+        ${QT_QTCORE_LIBRARY}
+        ${QT_QTXMLPATTERNS_LIBRARY})
+# Supress warnings from Qt includes
+target_include_directories(ColladaImporterUtilityTest SYSTEM PRIVATE ${QT_INCLUDE_DIR})
+target_include_directories(ColladaImporterUtilityTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
 corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp
-    LIBRARIES MagnumColladaImporterTestLib
+    LIBRARIES
+        Magnum::Magnum
     FILES
         ColladaImporterTestFiles/image.dae
         ColladaImporterTestFiles/image.tga
@@ -43,12 +74,19 @@ corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp
         ColladaImporterTestFiles/parseSource.dae
         ColladaImporterTestFiles/scene.dae
         ColladaImporterTestFiles/texture.dae)
-target_include_directories(ColladaImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-# On Win32 we need to avoid dllimporting ColladaImporter symbols, because it
-# would search for the symbols in some DLL even when they were linked
-# statically. However it apparently doesn't matter that they were dllexported
-# when building the static library. EH.
-if(WIN32)
-    target_compile_definitions(ColladaImporterTest PRIVATE "MAGNUM_COLLADAIMPORTER_BUILD_STATIC")
+# Supress warnings from Qt includes
+target_include_directories(ColladaImporterTest SYSTEM PRIVATE ${QT_INCLUDE_DIR})
+target_include_directories(ColladaImporterTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
+if(NOT BUILD_PLUGINS_STATIC)
+    target_include_directories(ColladaImporterTest PRIVATE $<TARGET_FILE_DIR:ColladaImporterTest>)
+    target_include_directories(ColladaImporterUtilityTest PRIVATE $<TARGET_FILE_DIR:ColladaImporterTest>)
+else()
+    target_include_directories(ColladaImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_include_directories(ColladaImporterUtilityTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(ColladaImporterTest PRIVATE
+        ColladaImporter Magnum::AnyImageImporter)
+    if(WITH_STBIMAGEIMPORTER)
+        target_link_libraries(ColladaImporterTest PRIVATE StbImageImporter)
+    endif()
 endif()
 set_target_properties(ColladaImporterTest PROPERTIES FOLDER "MagnumPlugins/ColladaImporter/Test")

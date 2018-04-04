@@ -26,6 +26,7 @@
 #include "HarfBuzzFont.h"
 
 #include <hb-ft.h>
+#include <Corrade/PluginManager/AbstractManager.h>
 #include <Magnum/Text/GlyphCache.h>
 
 namespace Magnum { namespace Text {
@@ -134,3 +135,6 @@ std::tuple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const Unsi
 }
 
 }}
+
+CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont,
+    "cz.mosra.magnum.Text.AbstractFont/0.2.4")
