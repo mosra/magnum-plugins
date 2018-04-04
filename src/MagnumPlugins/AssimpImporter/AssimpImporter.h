@@ -37,17 +37,17 @@
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_ASSIMPIMPORTER_BUILD_STATIC
     #if defined(AssimpImporter_EXPORTS) || defined(AssimpImporterObjects_EXPORTS)
-        #define MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+        #define MAGNUM_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
-        #define MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+        #define MAGNUM_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
     #endif
 #else
-    #define MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+    #define MAGNUM_ASSIMPIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
 #endif
-#define MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#define MAGNUM_ASSIMPIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
 #else
-#define MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT
-#define MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL
+#define MAGNUM_ASSIMPIMPORTER_EXPORT
+#define MAGNUM_ASSIMPIMPORTER_LOCAL
 #endif
 
 namespace Magnum { namespace Trade {
@@ -194,7 +194,7 @@ importer state methods:
 
 @todo There are more formats mentioned at http://assimp.sourceforge.net/main_features_formats.html, add aliases for them?
 */
-class MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
+class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
     public:
         /**
          * @brief Default constructor
@@ -220,44 +220,44 @@ class MAGNUM_TRADE_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter
     private:
         struct File;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Features doFeatures() const override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL bool doIsOpened() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL void doOpenState(const void* state, const std::string& filePath) override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL void doClose() override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenState(const void* state, const std::string& filePath) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL void doClose() override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Int doDefaultScene() override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doDefaultScene() override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL UnsignedInt doLightCount() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doLightCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
-        MAGNUM_TRADE_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;
 
         std::unique_ptr<File> _f;
 };

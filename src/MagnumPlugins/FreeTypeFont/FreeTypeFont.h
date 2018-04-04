@@ -42,18 +42,18 @@ struct FT_FaceRec_;
 typedef FT_FaceRec_*  FT_Face;
 
 #ifndef MAGNUM_FREETYPEFONT_BUILD_STATIC
-    #if defined(FreeTypeFont_EXPORTS) || defined(FreeTypeFontObjects_EXPORTS)
-        #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
+    #ifdef FreeTypeFont_EXPORTS
+        #define MAGNUM_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
-        #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
+        #define MAGNUM_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_IMPORT
     #endif
 #else
-    #define MAGNUM_TEXT_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_STATIC
+    #define MAGNUM_FREETYPEFONT_EXPORT CORRADE_VISIBILITY_STATIC
 #endif
-#define MAGNUM_TEXT_FREETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
+#define MAGNUM_FREETYPEFONT_LOCAL CORRADE_VISIBILITY_LOCAL
 #else
-#define MAGNUM_TEXT_FREETYPEFONT_EXPORT
-#define MAGNUM_TEXT_FREETYPEFONT_LOCAL
+#define MAGNUM_FREETYPEFONT_EXPORT
+#define MAGNUM_FREETYPEFONT_LOCAL
 #endif
 
 namespace Magnum { namespace Text {
@@ -77,7 +77,7 @@ This plugin provides `TrueTypeFont` plugin.
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 */
-class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
+class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     public:
         /** @brief Initialize FreeType library */
         static void initialize();
@@ -106,9 +106,9 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         void doClose() override;
 
     private:
-        static MAGNUM_TEXT_FREETYPEFONT_LOCAL FT_Library library;
+        static MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
 
-        Features MAGNUM_TEXT_FREETYPEFONT_LOCAL doFeatures() const override;
+        Features MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
 
         UnsignedInt doGlyphId(char32_t character) override;
 
@@ -117,7 +117,7 @@ class MAGNUM_TEXT_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         /** @todo Why this can't be defined as local? */
         void doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) override;
 
-        std::unique_ptr<AbstractLayouter> MAGNUM_TEXT_FREETYPEFONT_LOCAL doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        std::unique_ptr<AbstractLayouter> MAGNUM_FREETYPEFONT_LOCAL doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 };
 
 }}
