@@ -34,6 +34,9 @@ Third-party components
     [MIT](https://github.com/syoyo/tinygltf/blob/devel/LICENSE). TinyGLTF
     itself uses Niels Lohmann's JSON library -- https://github.com/nlohmann/json,
     licensed under [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT).
+-   The `FreeTypeFont`, `HarfBuzzFont` and `StbTrueTypeFont` plugin tests use
+    the Oxygen TTF font -- https://cgit.kde.org/oxygen-fonts.git, licensed
+    under [OFL](https://cgit.kde.org/oxygen-fonts.git/tree/COPYING-OFL)
 
 Contributors to Magnum Plugins library
 --------------------------------------
