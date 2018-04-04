@@ -36,59 +36,56 @@
 
 namespace Magnum { namespace Audio { namespace Test {
 
-class DrWavImporterTest: public TestSuite::Tester {
-    public:
-        explicit DrWavImporterTest();
+struct DrWavImporterTest: TestSuite::Tester {
+    explicit DrWavImporterTest();
 
-        void wrongSize();
-        void wrongSignature();
-        void unsupportedFormat();
-        void unsupportedChannelCount();
-        void invalidPadding();
-        void invalidLength();
-        void invalidDataChunk();
-        void invalidFactChunk();
+    void wrongSize();
+    void wrongSignature();
+    void unsupportedFormat();
+    void unsupportedChannelCount();
+    void invalidPadding();
+    void invalidLength();
+    void invalidDataChunk();
+    void invalidFactChunk();
 
-        void mono4();
-        void mono8();
-        void mono8junk();
-        void mono8ALaw();
-        void mono8MuLaw();
-        void mono16();
-        void mono24();
+    void mono4();
+    void mono8();
+    void mono8junk();
+    void mono8ALaw();
+    void mono8MuLaw();
+    void mono16();
+    void mono24();
 
-        void stereo4();
-        void stereo8();
-        void stereo8ALaw();
-        void stereo8MuLaw();
-        void stereo12();
-        void stereo16();
-        void stereo24();
-        void stereo32();
+    void stereo4();
+    void stereo8();
+    void stereo8ALaw();
+    void stereo8MuLaw();
+    void stereo12();
+    void stereo16();
+    void stereo24();
+    void stereo32();
 
-        void surround51Channel16();
-        void surround71Channel24();
+    void surround51Channel16();
+    void surround71Channel24();
 
-        void mono32f();
-        void stereo32f();
-        void stereo64f();
+    void mono32f();
+    void stereo32f();
+    void stereo64f();
 
-        void extensionsALaw();
-        void extensionsMuLaw();
+    void extensionsALaw();
+    void extensionsMuLaw();
 
-        void extensions12();
-        void extensions16();
-        void extensions24();
-        void extensions32();
+    void extensions12();
+    void extensions16();
+    void extensions24();
+    void extensions32();
 
-        void extensions32f();
-        void extensions64f();
-
+    void extensions32f();
+    void extensions64f();
 };
 
 DrWavImporterTest::DrWavImporterTest() {
-    addTests({
-              &DrWavImporterTest::wrongSize,
+    addTests({&DrWavImporterTest::wrongSize,
               &DrWavImporterTest::wrongSignature,
               &DrWavImporterTest::unsupportedFormat,
               &DrWavImporterTest::unsupportedChannelCount,
@@ -131,8 +128,7 @@ DrWavImporterTest::DrWavImporterTest() {
               &DrWavImporterTest::extensions32,
 
               &DrWavImporterTest::extensions32f,
-              &DrWavImporterTest::extensions64f
-    });
+              &DrWavImporterTest::extensions64f});
 }
 
 void DrWavImporterTest::wrongSize() {

@@ -36,30 +36,28 @@
 
 namespace Magnum { namespace Audio { namespace Test {
 
-class DrFlacImporterTest: public TestSuite::Tester {
-    public:
-        explicit DrFlacImporterTest();
+struct DrFlacImporterTest: TestSuite::Tester {
+    explicit DrFlacImporterTest();
 
-        void mono8();
-        void mono16();
-        void mono24();
+    void mono8();
+    void mono16();
+    void mono24();
 
-        void stereo8();
-        void stereo16();
-        void stereo24();
+    void stereo8();
+    void stereo16();
+    void stereo24();
 
-        void quad16();
-        void quad24();
+    void quad16();
+    void quad24();
 
-        void surround51Channel16();
-        void surround51Channel24();
+    void surround51Channel16();
+    void surround51Channel24();
 
-        void surround71Channel24();
+    void surround71Channel24();
 };
 
 DrFlacImporterTest::DrFlacImporterTest() {
-    addTests({
-              &DrFlacImporterTest::mono8,
+    addTests({&DrFlacImporterTest::mono8,
               &DrFlacImporterTest::mono16,
               &DrFlacImporterTest::mono24,
 
@@ -73,8 +71,7 @@ DrFlacImporterTest::DrFlacImporterTest() {
               &DrFlacImporterTest::surround51Channel16,
               &DrFlacImporterTest::surround51Channel24,
 
-              &DrFlacImporterTest::surround71Channel24
-            });
+              &DrFlacImporterTest::surround71Channel24});
 }
 
 void DrFlacImporterTest::mono8() {
