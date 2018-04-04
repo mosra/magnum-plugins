@@ -74,6 +74,22 @@ information.
 */
 class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
     public:
+        /**
+         * @brief Initialize the HarfBuzz library
+         *
+         * Empty in order to avoid @ref FreeTypeFont::initialize() being called
+         * again when initializing this plugin.
+         */
+        static void initialize() {}
+
+        /**
+         * @brief Finalize the HarfBuzz library
+         *
+         * Empty in order to avoid @ref FreeTypeFont::finalize() being called
+         * again when initializing this plugin.
+         */
+        static void finalize() {}
+
         /** @brief Default constructor */
         explicit HarfBuzzFont();
 

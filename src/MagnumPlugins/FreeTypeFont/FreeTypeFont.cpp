@@ -57,16 +57,13 @@ class FreeTypeLayouter: public AbstractLayouter {
 FT_Library FreeTypeFont::library = nullptr;
 
 void FreeTypeFont::initialize() {
-    if(library) return;
-
+    CORRADE_INTERNAL_ASSERT(!library);
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Init_FreeType(&library) == 0);
 }
 
 void FreeTypeFont::finalize() {
-    if(!library) return;
-
+    CORRADE_INTERNAL_ASSERT(library);
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_FreeType(library) == 0);
-    library = nullptr;
 }
 
 FreeTypeFont::FreeTypeFont(): ftFont(nullptr) {}
