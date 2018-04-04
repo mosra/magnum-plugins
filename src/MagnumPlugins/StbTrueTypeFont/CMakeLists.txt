@@ -70,8 +70,7 @@ target_include_directories(StbTrueTypeFont PUBLIC
 target_link_libraries(StbTrueTypeFont
     Magnum::Magnum
     Magnum::Text
-    Magnum::TextureTools
-    ${FREETYPE_LIBRARIES})
+    Magnum::TextureTools)
 
 install(FILES ${StbTrueTypeFont_HEADERS} DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbTrueTypeFont)
