@@ -61,7 +61,7 @@
 
 namespace Magnum { namespace Trade { namespace Test {
 
-using namespace Magnum::Math::Literals;
+using namespace Math::Literals;
 
 #if MAGNUM_TRADE_ASSIMPIMPORTER_DEBUG
 /* Stream implementation for outputting assimp log messages to Debug() */
@@ -73,7 +73,7 @@ public:
 };
 #endif
 
-struct AssimpImporterTest: public TestSuite::Tester {
+struct AssimpImporterTest: TestSuite::Tester {
     explicit AssimpImporterTest();
 
     void open();
