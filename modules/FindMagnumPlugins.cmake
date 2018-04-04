@@ -236,27 +236,24 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set_property(TARGET MagnumPlugins::${_component} PROPERTY
                     IMPORTED_LOCATION_DEBUG ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG})
             endif()
-        endif()
 
         # AnyAudioImporter has no dependencies
         # AnyImageImporter has no dependencies
         # AnySceneImporter has no dependencies
 
         # AssimpImporter plugin dependencies
-        if(_component STREQUAL AssimpImporter)
+        elseif(_component STREQUAL AssimpImporter)
             find_package(AssimpImporter)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
-        endif()
 
         # ColladaImporter plugin dependencies
-        if(_component STREQUAL ColladaImporter)
+        elseif(_component STREQUAL ColladaImporter)
             find_package(Qt4)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_INCLUDE_DIRECTORIES ${QT_INCLUDE_DIR})
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES ${QT_QTCORE_LIBRARY} ${QT_QTXMLPATTERNS_LIBRARY})
-        endif()
 
         # DdsImporter has no dependencies
 
@@ -265,13 +262,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             find_package(DevIL)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES ${IL_LIBRARIES} ${ILU_LIBRARIES})
-        endif()
 
         # DrFlacAudioImporter has no dependencies
         # DrWavAudioImporter has no dependencies
 
         # FreeTypeFont plugin dependencies
-        if(_component STREQUAL FreeTypeFont)
+        elseif(_component STREQUAL FreeTypeFont)
             find_package(Freetype)
             # Need to handle special cases where both debug and release
             # libraries are available (in form of debug;A;optimized;B in
@@ -283,10 +279,9 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
             endif()
-        endif()
 
         # HarfBuzzFont plugin dependencies
-        if(_component STREQUAL HarfBuzzFont)
+        elseif(_component STREQUAL HarfBuzzFont)
             find_package(Freetype)
             find_package(HarfBuzz)
             # Need to handle special cases where both debug and release
@@ -301,20 +296,18 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             endif()
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES ${HARFBUZZ_LIBRARIES})
-        endif()
 
         # JpegImporter plugin dependencies
-        if(_component STREQUAL JpegImporter)
+        elseif(_component STREQUAL JpegImporter)
             find_package(JPEG)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
-        endif()
 
         # MiniExrImageConverter has no dependencies
         # OpenGexImporter has no dependencies
 
         # PngImageConverter plugin dependencies
-        if(_component STREQUAL PngImageConverter)
+        elseif(_component STREQUAL PngImageConverter)
             find_package(PNG)
             # Need to handle special cases where both debug and release
             # libraries are available (in form of debug;A;optimized;B in
@@ -326,10 +319,9 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${PNG_LIBRARIES})
             endif()
-        endif()
 
         # PngImporter plugin dependencies
-        if(_component STREQUAL PngImporter)
+        elseif(_component STREQUAL PngImporter)
             find_package(PNG)
             # Need to handle special cases where both debug and release
             # libraries are available (in form of debug;A;optimized;B in
