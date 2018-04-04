@@ -23,10 +23,16 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QFile>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/Directory.h>
 #include <Magnum/Math/Vector3.h>
 
 #include "MagnumPlugins/ColladaImporter/Utility.h"
+
+#include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test {
 
@@ -35,11 +41,13 @@ struct ColladaImporterUtilityTest: TestSuite::Tester {
 
     void parseVector();
     void parseArray();
+    void parseSource();
 };
 
 ColladaImporterUtilityTest::ColladaImporterUtilityTest() {
     addTests({&ColladaImporterUtilityTest::parseVector,
-              &ColladaImporterUtilityTest::parseArray});
+              &ColladaImporterUtilityTest::parseArray,
+              &ColladaImporterUtilityTest::parseSource});
 }
 
 void ColladaImporterUtilityTest::parseVector() {
@@ -77,6 +85,34 @@ void ColladaImporterUtilityTest::parseArray() {
     /* Different size */
     CORRADE_COMPARE(Implementation::Utility::parseArray<Float>("2.17 3.28", 3), (std::vector<Float>{2.17f, 3.28f, 0.0f}));
     CORRADE_COMPARE(Implementation::Utility::parseArray<Float>("2.17 3.28 5.15", 2), (std::vector<Float>{2.17f, 3.28f}));
+}
+
+void ColladaImporterUtilityTest::parseSource() {
+    int zero = 0;
+    QCoreApplication app{zero, nullptr};
+    const QString namespaceDeclaration =
+        "declare default element namespace \"http://www.collada.org/2005/11/COLLADASchema\";\n";
+    QXmlQuery query;
+
+    /* Open the file and load it into XQuery */
+    QFile file(QString::fromStdString(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "parseSource.dae")));
+    CORRADE_VERIFY(file.open(QIODevice::ReadOnly));
+    CORRADE_VERIFY(query.setFocus(&file));
+
+    std::stringstream debug;
+    Error redirectError{&debug};
+    CORRADE_VERIFY(Implementation::Utility::parseSource<Vector3>(query, namespaceDeclaration, "WrongTotalCount").empty());
+    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::mesh3D(): wrong total count in source \"WrongTotalCount\"\n");
+
+    {
+        CORRADE_EXPECT_FAIL("Swapped coordinates in source are not implemented.");
+        CORRADE_COMPARE(Implementation::Utility::parseSource<Vector3>(query, namespaceDeclaration, "SwappedCoords"), (std::vector<Vector3>{Vector3(0, 1, 2)}));
+    }
+
+    CORRADE_COMPARE(Implementation::Utility::parseSource<Vector3>(query, namespaceDeclaration, "MoreElements"), (std::vector<Vector3>{
+        {0, 1, 2},
+        {3, 4, 5}
+    }));
 }
 
 }}}

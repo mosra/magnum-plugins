@@ -27,6 +27,7 @@
 
 #include <vector>
 #include <QtCore/QString>
+#include <QtXmlPatterns/QXmlQuery>
 
 #include "ColladaType.h"
 
@@ -63,6 +64,9 @@ class Utility {
          * @param count     Count of numbers
          */
         template<class Single> static std::vector<Single> parseArray(const QString& data, std::size_t count);
+
+        /* Parse the <source> element */
+        template<class T> static std::vector<T> parseSource(QXmlQuery& query, const QString& namespaceDeclaration, const QString& id);
 };
 
 template<class Vector> Vector Utility::parseVector(const QString& data, int* from, std::size_t size) {
@@ -92,6 +96,47 @@ template<class Single> std::vector<Single> Utility::parseArray(const QString& da
         output.push_back(ColladaType<Single>::fromString(data.mid(from, to-from)));
         from = (to == -1 ? data.size() : to+1);
     }
+
+    return output;
+}
+
+template<class T> std::vector<T> Utility::parseSource(QXmlQuery& query, const QString& namespaceDeclaration, const QString& id) {
+    std::vector<T> output;
+    QString tmp;
+
+    /* Count of items */
+    query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@count/string()").arg(id));
+    query.evaluateTo(&tmp);
+    UnsignedInt count = ColladaType<UnsignedInt>::fromString(tmp);
+
+    /* Size of each item */
+    query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@stride/string()").arg(id));
+    query.evaluateTo(&tmp);
+    UnsignedInt size = ColladaType<UnsignedInt>::fromString(tmp);
+
+    /* Data source */
+    query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source[@id='%0']/technique_common/accessor/@source/string()").arg(id));
+    query.evaluateTo(&tmp);
+    QString source = tmp.mid(1).trimmed();
+
+    /* Verify total count */
+    query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/@count/string()").arg(source));
+    query.evaluateTo(&tmp);
+    if(ColladaType<UnsignedInt>::fromString(tmp) != count*size) {
+        Error() << "Trade::ColladaImporter::mesh3D(): wrong total count in source" << ('"'+id+'"').toStdString();
+        return output;
+    }
+
+    /** @todo Assert right order of coordinates and type */
+
+    /* Items */
+    query.setQuery((namespaceDeclaration + "/COLLADA/library_geometries/geometry/mesh/source/float_array[@id='%0']/string()").arg(source));
+    query.evaluateTo(&tmp);
+
+    output.reserve(count);
+    Int from = 0;
+    for(std::size_t i = 0; i != count; ++i)
+        output.push_back(Implementation::Utility::parseVector<T>(tmp, &from, size));
 
     return output;
 }

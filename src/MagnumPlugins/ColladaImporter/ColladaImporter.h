@@ -108,12 +108,6 @@ class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
 
         ~ColladaImporter();
 
-    #ifdef DOXYGEN_GENERATING_OUTPUT
-    private:
-    #endif
-        /* Parse the &lt;source&gt; element */
-        template<class T> std::vector<T> parseSource(const QString& id);
-
     private:
         struct Document;
 

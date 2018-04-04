@@ -48,7 +48,6 @@ struct ColladaImporterTest: TestSuite::Tester {
 
     void openWrongNamespace();
     void openWrongVersion();
-    void parseSource();
 
     void scene();
     void objectNoMaterial();
@@ -63,7 +62,6 @@ struct ColladaImporterTest: TestSuite::Tester {
 ColladaImporterTest::ColladaImporterTest() {
     addTests({&ColladaImporterTest::openWrongNamespace,
               &ColladaImporterTest::openWrongVersion,
-              &ColladaImporterTest::parseSource,
 
               &ColladaImporterTest::scene,
               &ColladaImporterTest::objectNoMaterial,
@@ -89,26 +87,6 @@ void ColladaImporterTest::openWrongVersion() {
     Error redirectError{&debug};
     CORRADE_VERIFY(!importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongVersion.dae")));
     CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::openFile(): unsupported version \"1.4.0\"\n");
-}
-
-void ColladaImporterTest::parseSource() {
-    ColladaImporter importer;
-    CORRADE_VERIFY(importer.openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "parseSource.dae")));
-
-    std::stringstream debug;
-    Error redirectError{&debug};
-    CORRADE_VERIFY(importer.parseSource<Vector3>("WrongTotalCount").empty());
-    CORRADE_COMPARE(debug.str(), "Trade::ColladaImporter::mesh3D(): wrong total count in source \"WrongTotalCount\"\n");
-
-    {
-        CORRADE_EXPECT_FAIL("Swapped coordinates in source are not implemented.");
-        CORRADE_COMPARE(importer.parseSource<Vector3>("SwappedCoords"), (std::vector<Vector3>{Vector3(0, 1, 2)}));
-    }
-
-    CORRADE_COMPARE(importer.parseSource<Vector3>("MoreElements"), (std::vector<Vector3>{
-        {0, 1, 2},
-        {3, 4, 5}
-    }));
 }
 
 void ColladaImporterTest::scene() {
