@@ -96,6 +96,9 @@
 /** @dir magnum-plugins/src/Magnum
  * @brief Namespace @ref Magnum (part of @ref building-plugins "Magnum Plugins library")
  */
+/** @dir magnum-plugins/src/MagnumPlugins/OpenGexImporter/OpenDdl
+ * @deprecated Use the `Magnum/OpenDdl` path instead.
+ */
 /** @dir magnum-plugins/src/Magnum/OpenDdl
  * @brief Namespace @ref Magnum::OpenDdl, @ref Magnum::OpenDdl::Validation
  */

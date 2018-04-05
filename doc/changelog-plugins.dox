@@ -62,6 +62,11 @@ namespace Magnum {
     unloaded the FreeType library, making the @ref Text::FreeTypeFont "FreeTypeFont"
     plugin unusable after.
 
+@subsection changelog-plugins-latest-deprecated Deprecated APIs
+
+-   @ref OpenDdl headers in `MagnumPlugins/OpenGexImporter/OpenDdl` are
+    deprecated, include them from the `Magnum/OpenDdl` directory instead.
+
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages
 
 -   Renamed the `BUILD_STATIC` CMake option to `BUILD_PLUGINS_STATIC` for
