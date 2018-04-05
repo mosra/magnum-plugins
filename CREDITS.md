@@ -54,5 +54,7 @@ Contributors to Magnum Plugins library
     ebuild
 -   [@sigman78](https://github.com/sigman78) -- Initial MSVC 2017 port, Vcpkg
     package
+-   Alexander F Rødseth ([@xyproto](https://github.com/xyproto)) -- packages in
+    the ArchLinux community repository
 
 Big thanks to everyone involved!

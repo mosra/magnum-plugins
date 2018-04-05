@@ -112,6 +112,13 @@ There are also Vcpkg packages for
 
 @subsection building-plugins-packages-arch ArchLinux packages
 
+Package for the latest stable release is maintained in the `community` repo.
+Installing is as simple as this:
+
+@code{.sh}
+sudo pacman -S magnum-plugins
+@endcode
+
 In `package/archlinux/magnum-plugins-git` there is a package for Git
 development build. The package is also in AUR as
 [magnum-plugins-git](https://aur.archlinux.org/packages/magnum-plugins-git/).
