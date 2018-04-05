@@ -6,6 +6,6 @@ LightObject (type = "spot") {
 
 Material {
     Texture (attrib = "diffuse") {
-        string { "../../ColladaImporter/Test/ColladaImporterTestFiles/image.tga" }
+        string { "image.tga" }
     }
 }

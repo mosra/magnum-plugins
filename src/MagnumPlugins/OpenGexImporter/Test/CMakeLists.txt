@@ -56,6 +56,7 @@ corrade_add_test(OpenGexImporterTest Test.cpp
         camera-metrics.ogex
         camera.ogex
         extension.ogex
+        image.tga
         light-invalid.ogex
         light.ogex
         material-invalid.ogex
