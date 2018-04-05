@@ -236,13 +236,14 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set_property(TARGET MagnumPlugins::${_component} PROPERTY
                     IMPORTED_LOCATION_DEBUG ${MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG})
             endif()
+        endif()
 
         # AnyAudioImporter has no dependencies
         # AnyImageImporter has no dependencies
         # AnySceneImporter has no dependencies
 
         # AssimpImporter plugin dependencies
-        elseif(_component STREQUAL AssimpImporter)
+        if(_component STREQUAL AssimpImporter)
             find_package(AssimpImporter)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
@@ -258,7 +259,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # DdsImporter has no dependencies
 
         # DevIlImageImporter plugin dependencies
-        if(_component STREQUAL DevIlImageImporter)
+        elseif(_component STREQUAL DevIlImageImporter)
             find_package(DevIL)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES ${IL_LIBRARIES} ${ILU_LIBRARIES})
