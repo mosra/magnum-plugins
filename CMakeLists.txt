@@ -92,6 +92,9 @@ option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ON
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(BUILD_STATIC ON)
     set(BUILD_PLUGINS_STATIC ON)
+# Dynamic plugins are not working on iOS or Windows RT at the moment
+elseif(CORRADE_TARGET_IOS OR CORRADE_TARGET_WINDOWS_RT)
+    set(BUILD_PLUGINS_STATIC ON)
 endif()
 
 if(CORRADE_TARGET_EMSCRIPTEN)
