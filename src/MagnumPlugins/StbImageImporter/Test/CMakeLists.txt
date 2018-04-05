@@ -51,7 +51,7 @@ else()
 endif()
 
 corrade_add_test(StbImageImporterTest StbImageImporterTest.cpp
-    LIBRARIES Magnum::Magnum
+    LIBRARIES Magnum::Trade
     FILES
         ../../PngImporter/Test/gray.png
         ../../PngImporter/Test/rgb.png

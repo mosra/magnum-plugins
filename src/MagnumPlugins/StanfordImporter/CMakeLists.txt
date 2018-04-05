@@ -23,6 +23,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED Trade)
+
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_STANFORDIMPORTER_BUILD_STATIC 1)
 endif()
@@ -43,7 +45,7 @@ endif()
 target_include_directories(StanfordImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(StanfordImporter PUBLIC Magnum::Magnum)
+target_link_libraries(StanfordImporter PUBLIC Magnum::Trade)
 
 install(FILES StanfordImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordImporter)

@@ -56,7 +56,7 @@ corrade_add_test(DdsImporterTest
     DdsImporterTest.cpp
     ${DDS_TEST_FILES_RESOURCE}
     ${DXT10_TEST_FILES_RESOURCE}
-    LIBRARIES Magnum::Magnum)
+    LIBRARIES Magnum::Trade)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(DdsImporterTest PRIVATE $<TARGET_FILE_DIR:DdsImporterTest>)
 else()

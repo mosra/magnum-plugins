@@ -49,7 +49,7 @@ else()
 endif()
 
 corrade_add_test(TinyGltfImporterTest Test.cpp
-    LIBRARIES Magnum::Magnum
+    LIBRARIES Magnum::Trade
     FILES
         test-scene.gltf
         test-scene.glb

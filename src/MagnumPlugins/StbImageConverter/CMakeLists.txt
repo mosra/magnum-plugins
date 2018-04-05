@@ -23,6 +23,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED Trade)
+
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC 1)
 endif()
@@ -45,7 +47,7 @@ target_include_directories(StbImageConverter PUBLIC
     ${PROJECT_BINARY_DIR}/src)
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbImageConverter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
-target_link_libraries(StbImageConverter PUBLIC Magnum::Magnum)
+target_link_libraries(StbImageConverter PUBLIC Magnum::Trade)
 
 install(FILES StbImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageConverter)

@@ -24,6 +24,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED Trade)
+
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_DDSIMPORTER_BUILD_STATIC 1)
 endif()
@@ -44,7 +46,7 @@ endif()
 target_include_directories(DdsImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(DdsImporter PUBLIC Magnum::Magnum)
+target_link_libraries(DdsImporter PUBLIC Magnum::Trade)
 
 install(FILES DdsImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DdsImporter)

@@ -44,7 +44,7 @@ else()
 endif()
 
 corrade_add_test(StbImageConverterTest StbImageConverterTest.cpp
-    LIBRARIES Magnum::Magnum)
+    LIBRARIES Magnum::Trade)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(StbImageConverterTest PRIVATE $<TARGET_FILE_DIR:StbImageConverterTest>)
 else()

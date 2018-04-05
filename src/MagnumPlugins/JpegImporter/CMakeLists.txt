@@ -23,6 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED Trade)
 find_package(JPEG REQUIRED)
 
 if(BUILD_PLUGINS_STATIC)
@@ -47,7 +48,7 @@ target_include_directories(JpegImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(JpegImporter PUBLIC
-    Magnum::Magnum
+    Magnum::Trade
     ${JPEG_LIBRARIES})
 
 install(FILES JpegImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h

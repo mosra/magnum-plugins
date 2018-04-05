@@ -23,7 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED MeshTools AnyImageImporter)
+find_package(Magnum REQUIRED MeshTools Trade AnyImageImporter)
 find_package(Qt4 REQUIRED)
 
 if(BUILD_PLUGINS_STATIC)
@@ -62,7 +62,7 @@ target_include_directories(ColladaImporter PUBLIC
 # Supress warnings from Qt includes
 target_include_directories(ColladaImporter SYSTEM PRIVATE ${QT_INCLUDE_DIR})
 target_link_libraries(ColladaImporter PUBLIC
-    Magnum::Magnum
+    Magnum::Trade
     Magnum::MeshTools
     ${QT_QTCORE_LIBRARY}
     ${QT_QTXMLPATTERNS_LIBRARY})

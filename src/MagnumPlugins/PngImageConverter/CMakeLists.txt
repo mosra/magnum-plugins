@@ -23,6 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED Trade)
 find_package(PNG REQUIRED)
 
 if(BUILD_PLUGINS_STATIC)
@@ -49,7 +50,7 @@ target_include_directories(PngImageConverter
     PRIVATE
         ${PNG_INCLUDE_DIRS})
 target_link_libraries(PngImageConverter PUBLIC
-    Magnum::Magnum
+    Magnum::Trade
     ${PNG_LIBRARIES})
 
 install(FILES PngImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h

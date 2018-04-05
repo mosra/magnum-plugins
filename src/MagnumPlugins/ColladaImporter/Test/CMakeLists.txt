@@ -45,7 +45,7 @@ endif()
 
 corrade_add_test(ColladaImporterTypeTest TypeTest.cpp
     LIBRARIES
-        Magnum::Magnum
+        Magnum::Trade
         ${QT_QTCORE_LIBRARY}
         ${QT_QTXMLPATTERNS_LIBRARY})
 # Supress warnings from Qt includes
@@ -53,7 +53,7 @@ target_include_directories(ColladaImporterTypeTest SYSTEM PRIVATE ${QT_INCLUDE_D
 target_include_directories(ColladaImporterTypeTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
 corrade_add_test(ColladaImporterUtilityTest UtilityTest.cpp
     LIBRARIES
-        Magnum::Magnum
+        Magnum::Trade
         ${QT_QTCORE_LIBRARY}
         ${QT_QTXMLPATTERNS_LIBRARY})
 # Supress warnings from Qt includes
@@ -61,7 +61,7 @@ target_include_directories(ColladaImporterUtilityTest SYSTEM PRIVATE ${QT_INCLUD
 target_include_directories(ColladaImporterUtilityTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
 corrade_add_test(ColladaImporterTest ColladaImporterTest.cpp
     LIBRARIES
-        Magnum::Magnum
+        Magnum::Trade
     FILES
         ColladaImporterTestFiles/image.dae
         ColladaImporterTestFiles/image.tga

@@ -24,6 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED Trade)
 find_package(DevIL REQUIRED)
 
 if(BUILD_PLUGINS_STATIC)
@@ -56,7 +57,7 @@ target_include_directories(DevIlImageImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(DevIlImageImporter PUBLIC
-    Magnum::Magnum
+    Magnum::Trade
     ${IL_LIBRARIES} ${ILU_LIBRARIES})
 
 install(FILES DevIlImageImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h

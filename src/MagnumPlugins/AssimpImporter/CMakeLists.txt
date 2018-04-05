@@ -24,7 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED AnyImageImporter)
+find_package(Magnum REQUIRED Trade AnyImageImporter)
 find_package(Assimp REQUIRED)
 
 if(BUILD_PLUGINS_STATIC)
@@ -47,7 +47,7 @@ endif()
 target_include_directories(AssimpImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(AssimpImporter PUBLIC Magnum::Magnum Assimp::Assimp)
+target_link_libraries(AssimpImporter PUBLIC Magnum::Trade Assimp::Assimp)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(AssimpImporter PUBLIC Magnum::AnyImageImporter)
 elseif(BUILD_PLUGINS_STATIC)

@@ -23,7 +23,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED AnyImageImporter)
+find_package(Magnum REQUIRED Trade AnyImageImporter)
 
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_OPENGEXIMPORTER_BUILD_STATIC 1)
@@ -58,7 +58,7 @@ if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(OpenGexImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(OpenGexImporter PUBLIC Magnum::Magnum MagnumOpenDdl)
+target_link_libraries(OpenGexImporter PUBLIC Magnum::Trade MagnumOpenDdl)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(OpenGexImporter PUBLIC Magnum::AnyImageImporter)
 elseif(BUILD_PLUGINS_STATIC)

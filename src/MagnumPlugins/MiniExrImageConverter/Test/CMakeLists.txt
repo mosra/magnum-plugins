@@ -47,7 +47,7 @@ else()
 endif()
 
 corrade_add_test(MiniExrImageConverterTest MiniExrImageConverterTest.cpp
-    LIBRARIES Magnum::Magnum
+    LIBRARIES Magnum::Trade
     FILES image.exr)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(MiniExrImageConverterTest PRIVATE $<TARGET_FILE_DIR:MiniExrImageConverterTest>)

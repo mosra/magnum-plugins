@@ -47,7 +47,7 @@ else()
 endif()
 
 corrade_add_test(StanfordImporterTest Test.cpp
-    LIBRARIES Magnum::Magnum
+    LIBRARIES Magnum::Trade
     FILES
         big-endian.ply
         common.ply

@@ -50,7 +50,7 @@ else()
 endif()
 
 corrade_add_test(DevIlImageImporterTest DevIlImageImporterTest.cpp
-    LIBRARIES Magnum::Magnum
+    LIBRARIES Magnum::Trade
     FILES
         ../../PngImporter/Test/gray.png
         ../../PngImporter/Test/rgb.png

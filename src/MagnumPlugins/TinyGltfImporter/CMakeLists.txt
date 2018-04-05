@@ -24,7 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED AnyImageImporter)
+find_package(Magnum REQUIRED Trade AnyImageImporter)
 
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC 1)
@@ -48,7 +48,7 @@ target_include_directories(TinyGltfImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}
 target_include_directories(TinyGltfImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(TinyGltfImporter PUBLIC Magnum::Magnum)
+target_link_libraries(TinyGltfImporter PUBLIC Magnum::Trade)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(TinyGltfImporter PUBLIC Magnum::AnyImageImporter StbImageImporter)
 elseif(BUILD_PLUGINS_STATIC)

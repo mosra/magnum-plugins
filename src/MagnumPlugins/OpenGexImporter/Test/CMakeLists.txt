@@ -50,7 +50,7 @@ else()
 endif()
 
 corrade_add_test(OpenGexImporterTest Test.cpp
-    LIBRARIES Magnum::Magnum MagnumOpenDdl
+    LIBRARIES Magnum::Trade MagnumOpenDdl
     FILES
         camera-invalid.ogex
         camera-metrics.ogex

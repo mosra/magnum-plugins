@@ -50,7 +50,7 @@ else()
 endif()
 
 corrade_add_test(AssimpImporterTest Test.cpp
-    LIBRARIES Magnum::Magnum
+    LIBRARIES Magnum::Trade
     FILES
         camera.dae
         diffuse_texture.png

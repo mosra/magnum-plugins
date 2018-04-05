@@ -41,7 +41,7 @@ else()
 endif()
 
 corrade_add_test(PngImporterTest PngImporterTest.cpp
-    LIBRARIES Magnum::Magnum
+    LIBRARIES Magnum::Trade
     FILES
         gray.png
         rgb.png
