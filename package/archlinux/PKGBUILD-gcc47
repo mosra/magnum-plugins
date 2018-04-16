@@ -6,8 +6,8 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (built with GCC 4.7)
 arch=('i686' 'x86_64')
 url="http://magnum.graphics"
 license=('MIT')
-depends=('magnum')
-makedepends=('cmake' 'ninja' 'gcc47' 'qt4' 'devil' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp')
+depends=('magnum' 'qt4' 'devil' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp')
+makedepends=('cmake' 'ninja' 'gcc47')
 options=(!strip)
 provides=('magnum-plugins-git')
 
