@@ -1,22 +1,22 @@
-magnum-plugins (2018.02-1) unstable; urgency=low
+magnum-plugins (2018.02) unstable; urgency=low
 
   * Version 2018.02
 
  -- Vladimír Vondruš <mosra@centrum.cz>  Fri, 16 Feb 2018 00:22:31 +0100
 
-magnum-plugins (2015.05-1) unstable; urgency=low
+magnum-plugins (2015.05) unstable; urgency=low
 
   * Version 2015.05
 
  -- Vladimír Vondruš <mosra@centrum.cz>  Sat, 09 May 2015 11:43:43 +0200
 
-magnum-plugins (2014.06-1) unstable; urgency=low
+magnum-plugins (2014.06) unstable; urgency=low
 
   * Version 2014.06
 
  -- Vladimír Vondruš <mosra@centrum.cz>  Mon, 30 Jun 2014 01:21:04 +0200
 
-magnum-plugins (2014.01-1) unstable; urgency=low
+magnum-plugins (2014.01) unstable; urgency=low
 
   * Version 2014.01
 
