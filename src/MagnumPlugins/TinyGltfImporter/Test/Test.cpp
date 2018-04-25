@@ -116,10 +116,12 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. Besides the explicit StbImageImporter it also pulls in
-       the AnyImageImporter dependency. */
+       the AnyImageImporter dependency. Reset the plugin dir after so it
+       doesn't load anything else from the filesystem. */
     #if defined(STBIMAGEIMPORTER_PLUGIN_FILENAME) && defined(TINYGLTFIMPORTER_PLUGIN_FILENAME)
     CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     CORRADE_INTERNAL_ASSERT(_manager.load(TINYGLTFIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    _manager.setPluginDirectory({});
     #endif
 }
 

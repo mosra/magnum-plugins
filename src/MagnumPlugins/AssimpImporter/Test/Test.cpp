@@ -142,9 +142,12 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::configurePostprocessFlipUVs});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
-       already loaded. It also pulls in the AnyImageImporter dependency. */
+       already loaded. It also pulls in the AnyImageImporter dependency. Reset
+       the plugin dir after so it doesn't load anything else from the
+       filesystem. */
     #ifdef ASSIMPIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(ASSIMPIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    _manager.setPluginDirectory({});
     #endif
     /* The StbImageImporter (for PNG image loading) is optional */
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
