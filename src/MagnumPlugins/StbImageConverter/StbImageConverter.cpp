@@ -63,46 +63,32 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
         return nullptr;
     }
 
-    if((_format == Format::Bmp || _format == Format::Png || _format == Format::Tga) &&
-        image.type() != PixelType::UnsignedByte)
-    {
-        Error() << "Trade::StbImageConverter::exportToData():" << image.type() << "is not supported for BMP/PNG/TGA format";
-        return nullptr;
-    }
-
-    if(_format == Format::Hdr && image.type() != PixelType::Float) {
-        Error() << "Trade::StbImageConverter::exportToData():" << image.type() << "is not supported for HDR format";
-        return nullptr;
-    }
-
     Int components;
-    switch(image.format()) {
-        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        case PixelFormat::Red:
-        #endif
-        #ifdef MAGNUM_TARGET_GLES2
-        case PixelFormat::Luminance:
-        #endif
-            components = 1;
-            break;
-        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        case PixelFormat::RG:
-        #endif
-        #ifdef MAGNUM_TARGET_GLES2
-        case PixelFormat::LuminanceAlpha:
-        #endif
-            components = 2;
-            break;
-        case PixelFormat::RGB: components = 3; break;
-        case PixelFormat::RGBA: components = 4; break;
-        default:
-            Error() << "Trade::StbImageConverter::exportToData(): unsupported pixel format" << image.format();
-            return nullptr;
-    }
+    if(_format == Format::Bmp || _format == Format::Png || _format == Format::Tga) {
+        switch(image.format()) {
+            case PixelFormat::R8Unorm:      components = 1; break;
+            case PixelFormat::RG8Unorm:     components = 2; break;
+            case PixelFormat::RGB8Unorm:    components = 3; break;
+            case PixelFormat::RGBA8Unorm:   components = 4; break;
+            default:
+                Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for BMP/PNG/TGA output";
+                return nullptr;
+        }
+    } else if(_format == Format::Hdr) {
+        switch(image.format()) {
+            case PixelFormat::R32F:         components = 1; break;
+            case PixelFormat::RG32F:        components = 2; break;
+            case PixelFormat::RGB32F:       components = 3; break;
+            case PixelFormat::RGBA32F:      components = 4; break;
+            default:
+                Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for HDR output";
+                return nullptr;
+        }
+    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Data properties */
     Math::Vector2<std::size_t> offset, dataSize;
-    std::tie(offset, dataSize, std::ignore) = image.dataProperties();
+    std::tie(offset, dataSize) = image.dataProperties();
 
     if(_format != Format::Png && dataSize.x() != image.pixelSize()*image.size().x()) {
         Error() << "Trade::StbImageConverter::exportToData(): data must be tightly packed for all formats except PNG";

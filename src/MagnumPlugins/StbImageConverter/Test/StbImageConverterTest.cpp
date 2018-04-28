@@ -39,8 +39,7 @@ struct StbImageConverterTest: TestSuite::Tester {
     explicit StbImageConverterTest();
 
     void wrongFormat();
-    void wrongType();
-    void wrongTypeHdr();
+    void wrongFormatHdr();
     void wrongStorage();
 
     /** @todo test the enum constructor somehow (needs to be not loaded through plugin manager) */
@@ -57,8 +56,7 @@ struct StbImageConverterTest: TestSuite::Tester {
 
 StbImageConverterTest::StbImageConverterTest() {
     addTests({&StbImageConverterTest::wrongFormat,
-              &StbImageConverterTest::wrongType,
-              &StbImageConverterTest::wrongTypeHdr,
+              &StbImageConverterTest::wrongFormatHdr,
               &StbImageConverterTest::wrongStorage,
 
               &StbImageConverterTest::rgBmp,
@@ -78,42 +76,31 @@ StbImageConverterTest::StbImageConverterTest() {
 }
 
 void StbImageConverterTest::wrongFormat() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbPngImageConverter");
-    ImageView2D image{PixelFormat::DepthComponent, PixelType::UnsignedByte, {}, nullptr};
-
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): unsupported pixel format PixelFormat::DepthComponent\n");
-}
-
-void StbImageConverterTest::wrongType() {
     std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbTgaImageConverter");
-    ImageView2D image{PixelFormat::RGBA, PixelType::Float, {}, nullptr};
+    ImageView2D image{PixelFormat::RGBA32F, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelType::Float is not supported for BMP/PNG/TGA format\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelFormat::RGBA32F is not supported for BMP/PNG/TGA output\n");
 }
 
-void StbImageConverterTest::wrongTypeHdr() {
+void StbImageConverterTest::wrongFormatHdr() {
     std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
-    ImageView2D image{PixelFormat::RGB, PixelType::UnsignedByte, {}, nullptr};
+    ImageView2D image{PixelFormat::RGB8Unorm, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelType::UnsignedByte is not supported for HDR format\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelFormat::RGB8Unorm is not supported for HDR output\n");
 }
 
 void StbImageConverterTest::wrongStorage() {
     std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbBmpImageConverter");
     const ImageView2D image{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB, PixelType::UnsignedByte, {2, 3}, nullptr};
+        PixelFormat::RGB8Unorm, {2, 3}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -129,13 +116,7 @@ namespace {
         5, 6, 6, 7
     };
 
-    const ImageView2D OriginalRg{
-        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        PixelFormat::RG,
-        #else
-        PixelFormat::LuminanceAlpha,
-        #endif
-        PixelType::UnsignedByte, {2, 3}, OriginalRgData};
+    const ImageView2D OriginalRg{PixelFormat::RG8Unorm, {2, 3}, OriginalRgData};
 
     constexpr const char ConvertedRgData[] = {
         1, 1, 1, 2, 2, 2,
@@ -158,8 +139,7 @@ void StbImageConverterTest::rgBmp() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     /* RG gets expanded to RRR */
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(converted->data(),
         Containers::arrayView(ConvertedRgData), TestSuite::Compare::Container);
 }
@@ -171,13 +151,7 @@ namespace {
         5.0f, 6.0f
     };
 
-    const ImageView2D OriginalGrayscale{
-        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        PixelFormat::Red,
-        #else
-        PixelFormat::Luminance,
-        #endif
-        PixelType::Float, {2, 3}, OriginalGrayscaleData};
+    const ImageView2D OriginalGrayscale{PixelFormat::R32F, {2, 3}, OriginalGrayscaleData};
 
     constexpr const Float ConvertedGrayscaleData[] = {
         1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
@@ -200,8 +174,7 @@ void StbImageConverterTest::grayscaleHdr() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     /* R gets converted to RRR */
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(converted->type(), PixelType::Float);
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
         Containers::arrayView(ConvertedGrayscaleData),
         TestSuite::Compare::Container);
@@ -218,7 +191,7 @@ namespace {
     };
 
     const ImageView2D OriginalRgb{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB, PixelType::UnsignedByte, {2, 3}, OriginalRgbData};
+        PixelFormat::RGB8Unorm, {2, 3}, OriginalRgbData};
 
     constexpr const char ConvertedRgbData[] = {
         1, 2, 3, 2, 3, 4,
@@ -240,8 +213,7 @@ void StbImageConverterTest::rgbPng() {
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(converted->data(),
         Containers::arrayView(ConvertedRgbData),
         TestSuite::Compare::Container);
@@ -254,7 +226,7 @@ namespace {
         5, 6, 7, 8, 6, 7, 8, 9
     };
 
-    const ImageView2D OriginalRgba{PixelFormat::RGBA, PixelType::UnsignedByte, {2, 3}, RgbaData};
+    const ImageView2D OriginalRgba{PixelFormat::RGBA8Unorm, {2, 3}, RgbaData};
 }
 
 void StbImageConverterTest::rgbaTga() {
@@ -270,8 +242,7 @@ void StbImageConverterTest::rgbaTga() {
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGBA);
-    CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(RgbaData),
         TestSuite::Compare::Container);
 }

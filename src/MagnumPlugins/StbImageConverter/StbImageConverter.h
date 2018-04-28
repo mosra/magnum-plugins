@@ -67,14 +67,13 @@ Creates files in one of the following formats:
     loaded as `StbTgaImageConverter` / `TgaImageConverter` or @ref Format::Tga
     was passed to the constructor
 
-The images must have format @ref PixelFormat::Red, @ref PixelFormat::RG,
-@ref PixelFormat::RGB or @ref PixelFormat::RGBA. For BMP, PNG and TGA the type
-must be @ref PixelType::UnsignedByte, for HDR the type must be
-@ref PixelType::Float. On OpenGL ES 2.0 and WebGL 1.0 accepts also
-@ref PixelFormat::Luminance instead of @ref PixelFormat::Red and
-@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::RG. The image
-data must be tightly packed (except for PNG output, which is able to handle
-custom row strides).
+For BMP, PNG and TGA output the images must have format
+@ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
+@ref PixelFormat::RGB8Unorm or @ref PixelFormat::RGBA8Unorm. For HDR the images
+must have format @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
+@ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. The image data must be
+tightly packed (except for PNG output, which is able to handle custom row
+strides).
 
 This plugin depends on the @ref Trade library and is built if
 `WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
