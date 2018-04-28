@@ -91,7 +91,10 @@ This plugin provides `GltfImporter` and `GlbImporter` plugins.
 
 @subsection Trade-TinyGltfImporter-limitations-textures Texture import
 
--   Texture type is always @ref Trade::TextureData::Type::Texture2D
+-   Texture type is always @ref Trade::TextureData::Type::Texture2D, as glTF
+    doesn't support anything else
+-   Z coordinate of @ref Trade::TextureData::wrapping() is always
+    @ref SamplerWrapping::Repeat
 
 @section Trade-TinyGltfImporter-state Access to internal importer state
 

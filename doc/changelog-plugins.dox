@@ -70,6 +70,10 @@ namespace Magnum {
 -   Unloading the @ref Text::HarfBuzzFont "HarfBuzzFont" plugin also implictly
     unloaded the FreeType library, making the @ref Text::FreeTypeFont "FreeTypeFont"
     plugin unusable after.
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" was improperly loading
+    @ref Trade::TextureData::minificationFilter(),
+    @ref Trade::TextureData::mipmapFilter() and
+    @ref Trade::TextureData::wrapping() properties
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 

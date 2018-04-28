@@ -422,9 +422,71 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
     const tinygltf::Texture& tex = _d->model.textures[id];
     const tinygltf::Sampler& s = _d->model.samplers[tex.sampler];
 
-    return TextureData{TextureData::Type::Texture2D, Sampler::Filter(s.minFilter), Sampler::Filter(s.magFilter),
-        Sampler::Mipmap::Linear, {Sampler::Wrapping(s.wrapR), Sampler::Wrapping(s.wrapS), Sampler::Wrapping(s.wrapT)},
-        UnsignedInt(tex.source), &tex};
+    SamplerFilter minFilter;
+    SamplerMipmap mipmap;
+    switch(s.minFilter) {
+        case TINYGLTF_TEXTURE_FILTER_NEAREST:
+            minFilter = SamplerFilter::Nearest;
+            mipmap = SamplerMipmap::Base;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_LINEAR:
+            minFilter = SamplerFilter::Linear;
+            mipmap = SamplerMipmap::Base;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
+            minFilter = SamplerFilter::Nearest;
+            mipmap = SamplerMipmap::Nearest;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
+            minFilter = SamplerFilter::Nearest;
+            mipmap = SamplerMipmap::Linear;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
+            minFilter = SamplerFilter::Linear;
+            mipmap = SamplerMipmap::Nearest;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
+            minFilter = SamplerFilter::Linear;
+            mipmap = SamplerMipmap::Linear;
+            break;
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
+
+    SamplerFilter magFilter;
+    switch(s.magFilter) {
+        case TINYGLTF_TEXTURE_FILTER_NEAREST:
+            magFilter = SamplerFilter::Nearest;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_LINEAR:
+            magFilter = SamplerFilter::Linear;
+            break;
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
+
+    /* There's wrapR that is a glTF extension and is set to zero. Ignoring that
+       one and hardcoding it to Repeat. */
+    Array3D<SamplerWrapping> wrapping;
+    wrapping.z() = SamplerWrapping::Repeat;
+    for(auto&& wrap: std::initializer_list<std::pair<int, int>>{
+        {s.wrapS, 0}, {s.wrapT, 1}})
+    {
+        switch(wrap.first) {
+            case TINYGLTF_TEXTURE_WRAP_REPEAT:
+                wrapping[wrap.second] = SamplerWrapping::Repeat;
+                break;
+            case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:
+                wrapping[wrap.second] = SamplerWrapping::ClampToEdge;
+                break;
+            case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT:
+                wrapping[wrap.second] = SamplerWrapping::MirroredRepeat;
+                break;
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+    }
+
+    /* As far as I could find, glTF supports only 2D textures at the moment */
+    return TextureData{TextureData::Type::Texture2D, minFilter, magFilter,
+        mipmap, wrapping, UnsignedInt(tex.source), &tex};
 }
 
 UnsignedInt TinyGltfImporter::doImage2DCount() const {
