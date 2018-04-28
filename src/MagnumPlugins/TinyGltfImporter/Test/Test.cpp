@@ -92,6 +92,8 @@ constexpr struct {
 
 }
 
+using namespace Magnum::Math::Literals;
+
 TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::open,
                        &TinyGltfImporterTest::openError,
