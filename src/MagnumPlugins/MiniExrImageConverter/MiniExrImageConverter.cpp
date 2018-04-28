@@ -48,15 +48,10 @@ MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& man
 auto MiniExrImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
 
 Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D& image) {
-    if(image.type() != PixelType::HalfFloat) {
-        Error() << "Trade::MiniExrImageConverter::exportToData(): unsupported pixel type" << image.type();
-        return nullptr;
-    }
-
     Int components;
     switch(image.format()) {
-        case PixelFormat::RGB: components = 3; break;
-        case PixelFormat::RGBA: components = 4; break;
+        case PixelFormat::RGB16F: components = 3; break;
+        case PixelFormat::RGBA16F: components = 4; break;
         default:
             Error() << "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format" << image.format();
             return nullptr;
@@ -64,14 +59,13 @@ Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D&
 
     /* Data properties */
     Math::Vector2<std::size_t> offset, dataSize;
-    std::size_t pixelSize;
-    std::tie(offset, dataSize, pixelSize) = image.dataProperties();
+    std::tie(offset, dataSize) = image.dataProperties();
 
     /* Image data pointer including skip */
     const char* imageData = image.data() + offset.sum();
 
     /* Do Y-flip and tight packing of image data */
-    const std::size_t rowSize = image.size().x()*pixelSize;
+    const std::size_t rowSize = image.size().x()*image.pixelSize();
     const std::size_t rowStride = dataSize.x();
     const std::size_t packedDataSize = rowSize*image.size().y();
     Containers::Array<char> reversedPackedData{packedDataSize};

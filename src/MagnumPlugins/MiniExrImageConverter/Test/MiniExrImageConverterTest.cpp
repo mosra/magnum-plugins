@@ -40,7 +40,6 @@ struct MiniExrImageConverterTest: TestSuite::Tester {
     explicit MiniExrImageConverterTest();
 
     void wrongFormat();
-    void wrongType();
 
     void rgb();
     void rgba();
@@ -60,7 +59,7 @@ namespace {
     };
 
     const ImageView2D Rgb{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB, PixelType::HalfFloat, {1, 3}, RgbData};
+        PixelFormat::RGB16F, {1, 3}, RgbData};
 
     constexpr const char RgbaData[] = {
         1, 2, 3, 2, 3, 4, 9, 9,
@@ -68,12 +67,11 @@ namespace {
         5, 6, 7, 6, 7, 8, 9, 9
     };
 
-    const ImageView2D Rgba{PixelFormat::RGBA, PixelType::HalfFloat, {1, 3}, RgbaData};
+    const ImageView2D Rgba{PixelFormat::RGBA16F, {1, 3}, RgbaData};
 }
 
 MiniExrImageConverterTest::MiniExrImageConverterTest() {
     addTests({&MiniExrImageConverterTest::wrongFormat,
-              &MiniExrImageConverterTest::wrongType,
 
               &MiniExrImageConverterTest::rgb,
               &MiniExrImageConverterTest::rgba});
@@ -86,35 +84,14 @@ MiniExrImageConverterTest::MiniExrImageConverterTest() {
 }
 
 void MiniExrImageConverterTest::wrongFormat() {
-    ImageView2D image{
-        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        PixelFormat::Red,
-        #else
-        PixelFormat::Luminance,
-        #endif
-        PixelType::HalfFloat, {}, nullptr};
+    ImageView2D image{PixelFormat::R16F, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
 
     const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(image);
     CORRADE_VERIFY(!data);
-    #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format PixelFormat::Red\n");
-    #else
-    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format PixelFormat::Luminance\n");
-    #endif
-}
-
-void MiniExrImageConverterTest::wrongType() {
-    ImageView2D image{PixelFormat::RGB, PixelType::Float, {}, nullptr};
-
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(image);
-    CORRADE_VERIFY(!data);
-    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel type PixelType::Float\n");
+    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format PixelFormat::R16F\n");
 }
 
 void MiniExrImageConverterTest::rgb() {
