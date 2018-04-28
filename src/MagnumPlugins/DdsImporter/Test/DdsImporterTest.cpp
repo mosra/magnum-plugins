@@ -39,97 +39,78 @@ namespace Magnum { namespace Trade { namespace Test {
 namespace {
 
 enum: std::size_t {
-    #ifndef MAGNUM_TARGET_GLES2
     Files2DCount = 46,
-    Files3DCount = 12,
-    #else
-    Files2DCount = 19,
-    Files3DCount = 5,
-    #endif
+    Files3DCount = 12
 };
-
-#ifndef MAGNUM_TARGET_GLES2
-constexpr PixelFormat PixelFormat_RG = PixelFormat::RG;
-constexpr PixelFormat PixelFormat_Red = PixelFormat::Red;
-#else
-constexpr PixelFormat PixelFormat_RG = PixelFormat::LuminanceAlpha;
-constexpr PixelFormat PixelFormat_Red = PixelFormat::Luminance;
-#endif
 
 constexpr struct {
     const char* filename;
     PixelFormat format;
-    PixelType type;
 } Files2D[Files2DCount] = {
-    {"2D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA, PixelType::HalfFloat},
-    {"2D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA, PixelType::UnsignedShort},
-    {"2D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA, PixelType::Float},
-    {"2D_R32G32B32_FLOAT.dds", PixelFormat::RGB, PixelType::Float},
-    {"2D_R32G32_FLOAT.dds", PixelFormat_RG, PixelType::Float},
-    {"2D_R8G8B8A8_UNORM.dds", PixelFormat::RGBA, PixelType::UnsignedByte},
-    {"2D_R8G8B8A8_UNORM_SRGB.dds", PixelFormat::RGBA, PixelType::UnsignedByte},
-    {"2D_R8G8_UNORM.dds", PixelFormat_RG, PixelType::UnsignedByte},
-    {"2DMips_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA, PixelType::HalfFloat},
-    {"2DMips_R16G16B16A16_UNORM.dds", PixelFormat::RGBA, PixelType::UnsignedShort},
-    {"2DMips_R16G16_FLOAT.dds", PixelFormat_RG, PixelType::HalfFloat},
-    {"2DMips_R16G16_UNORM.dds", PixelFormat_RG, PixelType::UnsignedShort},
-    {"2DMips_R32_FLOAT.dds", PixelFormat_Red, PixelType::Float},
-    {"2DMips_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA, PixelType::Float},
-    {"2DMips_R32G32B32_FLOAT.dds", PixelFormat::RGB, PixelType::Float},
-    {"2DMips_R32G32_FLOAT.dds", PixelFormat_RG, PixelType::Float},
-    {"2DMips_R8G8B8A8_UNORM.dds", PixelFormat::RGBA, PixelType::UnsignedByte},
-    {"2DMips_R8G8B8A8_UNORM_SRGB.dds", PixelFormat::RGBA, PixelType::UnsignedByte},
-    {"2DMips_R8G8_UNORM.dds", PixelFormat_RG, PixelType::UnsignedByte},
-    #ifndef MAGNUM_TARGET_GLES2
-    {"2D_R16G16B16A16_SNORM.dds", PixelFormat::RGBA, PixelType::Short},
-    {"2D_R8G8B8A8_SNORM.dds", PixelFormat::RGBA, PixelType::Byte},
-    {"2D_R16G16B16A16_SINT.dds", PixelFormat::RGBAInteger, PixelType::Short},
-    {"2D_R16G16B16A16_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedShort},
-    {"2D_R32G32B32A32_SINT.dds", PixelFormat::RGBAInteger, PixelType::Int},
-    {"2D_R32G32B32A32_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedInt},
-    {"2D_R32G32B32_SINT.dds", PixelFormat::RGBInteger, PixelType::Int},
-    {"2D_R32G32B32_UINT.dds", PixelFormat::RGBInteger, PixelType::UnsignedInt},
-    {"2D_R8G8B8A8_SINT.dds", PixelFormat::RGBAInteger, PixelType::Byte},
-    {"2D_R8G8B8A8_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedByte},
-    {"2DMips_R16G16_SNORM.dds", PixelFormat::RG, PixelType::Short},
-    {"2DMips_R16G16B16A16_SNORM.dds", PixelFormat::RGBA, PixelType::Short},
-    {"2DMips_R8G8B8A8_SNORM.dds", PixelFormat::RGBA, PixelType::Byte},
-    {"2DMips_R16G16B16A16_SINT.dds", PixelFormat::RGBAInteger, PixelType::Short},
-    {"2DMips_R16G16B16A16_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedShort},
-    {"2DMips_R16G16_SINT.dds", PixelFormat::RGInteger, PixelType::Short},
-    {"2DMips_R16G16_UINT.dds", PixelFormat::RGInteger, PixelType::UnsignedShort},
-    {"2DMips_R32G32B32A32_SINT.dds", PixelFormat::RGBAInteger, PixelType::Int},
-    {"2DMips_R32G32B32A32_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedInt},
-    {"2DMips_R32G32B32_SINT.dds", PixelFormat::RGBInteger, PixelType::Int},
-    {"2DMips_R32G32B32_UINT.dds", PixelFormat::RGBInteger, PixelType::UnsignedInt},
-    {"2DMips_R32G32_SINT.dds", PixelFormat::RGInteger, PixelType::Int},
-    {"2DMips_R32G32_UINT.dds", PixelFormat::RGInteger, PixelType::UnsignedInt},
-    {"2DMips_R32_SINT.dds", PixelFormat::RedInteger, PixelType::Int},
-    {"2DMips_R32_UINT.dds", PixelFormat::RedInteger, PixelType::UnsignedInt},
-    {"2DMips_R8G8B8A8_SINT.dds", PixelFormat::RGBAInteger, PixelType::Byte},
-    {"2DMips_R8G8B8A8_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedByte}
-    #endif
+    {"2D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA16F},
+    {"2D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA16Unorm},
+    {"2D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA32F},
+    {"2D_R32G32B32_FLOAT.dds", PixelFormat::RGB32F},
+    {"2D_R32G32_FLOAT.dds", PixelFormat::RG32F},
+    {"2D_R8G8B8A8_UNORM.dds", PixelFormat::RGBA8Unorm},
+    {"2D_R8G8B8A8_UNORM_SRGB.dds", PixelFormat::RGBA8Unorm},
+    {"2D_R8G8_UNORM.dds", PixelFormat::RG8Unorm},
+    {"2DMips_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA16F},
+    {"2DMips_R16G16B16A16_UNORM.dds", PixelFormat::RGBA16Unorm},
+    {"2DMips_R16G16_FLOAT.dds", PixelFormat::RG16F},
+    {"2DMips_R16G16_UNORM.dds", PixelFormat::RG16Unorm},
+    {"2DMips_R32_FLOAT.dds", PixelFormat::R32F},
+    {"2DMips_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA32F},
+    {"2DMips_R32G32B32_FLOAT.dds", PixelFormat::RGB32F},
+    {"2DMips_R32G32_FLOAT.dds", PixelFormat::RG32F},
+    {"2DMips_R8G8B8A8_UNORM.dds", PixelFormat::RGBA8Unorm},
+    {"2DMips_R8G8B8A8_UNORM_SRGB.dds", PixelFormat::RGBA8Unorm},
+    {"2DMips_R8G8_UNORM.dds", PixelFormat::RG8Unorm},
+    {"2D_R16G16B16A16_SNORM.dds", PixelFormat::RGBA16Snorm},
+    {"2D_R8G8B8A8_SNORM.dds", PixelFormat::RGBA8Snorm},
+    {"2D_R16G16B16A16_SINT.dds", PixelFormat::RGBA16I},
+    {"2D_R16G16B16A16_UINT.dds", PixelFormat::RGBA16UI},
+    {"2D_R32G32B32A32_SINT.dds", PixelFormat::RGBA32I},
+    {"2D_R32G32B32A32_UINT.dds", PixelFormat::RGBA32UI},
+    {"2D_R32G32B32_SINT.dds", PixelFormat::RGB32I},
+    {"2D_R32G32B32_UINT.dds", PixelFormat::RGB32UI},
+    {"2D_R8G8B8A8_SINT.dds", PixelFormat::RGBA8I},
+    {"2D_R8G8B8A8_UINT.dds", PixelFormat::RGBA8UI},
+    {"2DMips_R16G16_SNORM.dds", PixelFormat::RG16Snorm},
+    {"2DMips_R16G16B16A16_SNORM.dds", PixelFormat::RGBA16Snorm},
+    {"2DMips_R8G8B8A8_SNORM.dds", PixelFormat::RGBA8Snorm},
+    {"2DMips_R16G16B16A16_SINT.dds", PixelFormat::RGBA16I},
+    {"2DMips_R16G16B16A16_UINT.dds", PixelFormat::RGBA16UI},
+    {"2DMips_R16G16_SINT.dds", PixelFormat::RG16I},
+    {"2DMips_R16G16_UINT.dds", PixelFormat::RG16UI},
+    {"2DMips_R32G32B32A32_SINT.dds", PixelFormat::RGBA32I},
+    {"2DMips_R32G32B32A32_UINT.dds", PixelFormat::RGBA32UI},
+    {"2DMips_R32G32B32_SINT.dds", PixelFormat::RGB32I},
+    {"2DMips_R32G32B32_UINT.dds", PixelFormat::RGB32UI},
+    {"2DMips_R32G32_SINT.dds", PixelFormat::RG32I},
+    {"2DMips_R32G32_UINT.dds", PixelFormat::RG32UI},
+    {"2DMips_R32_SINT.dds", PixelFormat::R32I},
+    {"2DMips_R32_UINT.dds", PixelFormat::R32UI},
+    {"2DMips_R8G8B8A8_SINT.dds", PixelFormat::RGBA8I},
+    {"2DMips_R8G8B8A8_UINT.dds", PixelFormat::RGBA8UI}
 };
 
 constexpr struct {
     const char* filename;
     PixelFormat format;
-    PixelType type;
 } Files3D[Files3DCount] = {
-    {"3D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA, PixelType::HalfFloat},
-    {"3D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA, PixelType::UnsignedShort},
-    {"3D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA, PixelType::Float},
-    {"3D_R32G32B32_FLOAT.dds", PixelFormat::RGB, PixelType::Float},
-    {"3D_R32G32_FLOAT.dds", PixelFormat_RG, PixelType::Float},
-    #ifndef MAGNUM_TARGET_GLES2
-    {"3D_R16G16B16A16_SNORM.dds", PixelFormat::RGBA, PixelType::Short},
-    {"3D_R16G16B16A16_SINT.dds", PixelFormat::RGBAInteger, PixelType::Short},
-    {"3D_R16G16B16A16_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedShort},
-    {"3D_R32G32B32A32_SINT.dds", PixelFormat::RGBAInteger, PixelType::Int},
-    {"3D_R32G32B32A32_UINT.dds", PixelFormat::RGBAInteger, PixelType::UnsignedInt},
-    {"3D_R32G32B32_SINT.dds", PixelFormat::RGBInteger, PixelType::Int},
-    {"3D_R32G32B32_UINT.dds", PixelFormat::RGBInteger, PixelType::UnsignedInt}
-    #endif
+    {"3D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA16F},
+    {"3D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA16Unorm},
+    {"3D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA32F},
+    {"3D_R32G32B32_FLOAT.dds", PixelFormat::RGB32F},
+    {"3D_R32G32_FLOAT.dds", PixelFormat::RG32F},
+    {"3D_R16G16B16A16_SNORM.dds", PixelFormat::RGBA16Snorm},
+    {"3D_R16G16B16A16_SINT.dds", PixelFormat::RGBA16I},
+    {"3D_R16G16B16A16_UINT.dds", PixelFormat::RGBA16UI},
+    {"3D_R32G32B32A32_SINT.dds", PixelFormat::RGBA32I},
+    {"3D_R32G32B32A32_UINT.dds", PixelFormat::RGBA32UI},
+    {"3D_R32G32B32_SINT.dds", PixelFormat::RGB32I},
+    {"3D_R32G32B32_UINT.dds", PixelFormat::RGB32UI}
 };
 
 }
@@ -256,8 +237,7 @@ void DdsImporterTest::rgb() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
         TestSuite::Compare::Container);
 }
@@ -282,8 +262,7 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 
@@ -293,8 +272,7 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_VERIFY(!mip->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(mip->size(), Vector2i{1});
-    CORRADE_COMPARE(mip->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(mip->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(mip->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(mip->data(), Containers::arrayView(mipPixels),
             TestSuite::Compare::Container);
 }
@@ -333,8 +311,7 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
         TestSuite::Compare::Container);
 }
@@ -352,7 +329,7 @@ void DdsImporterTest::dxt1() {
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt1);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBAUnorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 }
@@ -370,7 +347,7 @@ void DdsImporterTest::dxt3() {
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt3);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc2RGBAUnorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 }
@@ -388,7 +365,7 @@ void DdsImporterTest::dxt5() {
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::RGBAS3tcDxt5);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc3RGBAUnorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 }
@@ -407,7 +384,6 @@ void DdsImporterTest::dxt10Formats2D() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), file.format);
-    CORRADE_COMPARE(image->type(), file.type);
 }
 
 void DdsImporterTest::dxt10Formats3D() {
@@ -424,7 +400,6 @@ void DdsImporterTest::dxt10Formats3D() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
     CORRADE_COMPARE(image->format(), file.format);
-    CORRADE_COMPARE(image->type(), file.type);
 }
 
 void DdsImporterTest::dxt10Data() {
@@ -442,7 +417,7 @@ void DdsImporterTest::dxt10Data() {
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat_RG);
+    CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
 }

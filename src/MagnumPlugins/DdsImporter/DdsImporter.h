@@ -57,27 +57,49 @@ namespace Magnum { namespace Trade {
 
 Supports DirectDraw Surface images (`*.dds`) in the following formats:
 
--   DDS uncompressed RGB, RGBA, BGR, BGRA, grayscale
--   DDS compressed DXT1, DXT3, DXT5
--   DDS DXT10 with the following DXGI formats (`TYPELESS` formats are loaded as
-    either @ref PixelType::UnsignedByte, @ref PixelType::UnsignedShort or
-    @ref PixelType::UnsignedInt):
-    -   `R32G32B32A32_(TYPELESS|UINT|SINT|FLOAT)`
-    -   `R32G32B32_(TYPELESS|UINT|SINT|FLOAT)`
-    -   `R32G32_(TYPELESS|UINT|SINT|FLOAT)`
-    -   `R32_(TYPELESS|UINT|SINT|FLOAT)`
-    -   `D32_FLOAT`
-    -   `R16G16B16A16_(TYPELESS|UINT|SINT|FLOAT|UNORM|SNORM)`
-    -   `R16G16B16_(TYPELESS|UINT|SINT|FLOAT|UNORM|SNORM)`
-    -   `R16G16_(TYPELESS|UINT|SINT|FLOAT|UNORM|SNORM)`
-    -   `R16_(TYPELESS|UINT|SINT|FLOAT|UNORM|SNORM)`
-    -   `D16_UNORM`
-    -   `R8G8B8A8_(TYPELESS|UINT|SINT|UNORM|UNORM_SRGB|SNORM)` (Notion of sRGB
-         is discarded)
-    -   `R8G8B8_(TYPELESS|UINT|SINT|UNORM|SNORM)`
-    -   `R8G8_(TYPELESS|UINT|SINT|UNORM|SNORM)`
-    -   `R8_(TYPELESS|UINT|SINT|UNORM|SNORM)`
-    -   `A8_UNORM` (Loaded as @ref PixelFormat::Red)
+-   DDS uncompressed RGB, RGBA, BGR, BGRA, grayscale as
+    @ref PixelFormat::RGB8Unorm, @ref PixelFormat::RGBA8Unorm or
+    @ref PixelFormat::R8Unorm, with component swizzling as necessary
+-   DDS compressed DXT1, DXT3, DXT5 as @ref CompressedPixelFormat::Bc1RGBAUnorm,
+    @ref CompressedPixelFormat::Bc2RGBAUnorm and
+    @ref CompressedPixelFormat::Bc3RGBAUnorm, respectively
+-   DDS DXT10 with the following DXGI formats:
+    -   `R8_TYPELESS`, `R8G8_TYPELESS`, `R8G8B8A8_TYPELESS` as
+        @ref PixelFormat::R8UI and its two-/four-component equivalents (no
+        special handling)
+    -   `R8_UINT`, `R8G8_UINT`, `R8G8B8A8_UINT` as @ref PixelFormat::R8UI and
+        its two-/four-component equivalents
+    -   `R8_INT`, `R8G8_INT`, `R8G8B8A8_INT` as @ref PixelFormat::R8I and its
+        two-/four-component equivalents
+    -   `R8_UNORM`, `R8G8_UNORM`, `R8G8B8A8_UNORM` as @ref PixelFormat::R8Unorm
+        and its two-/four-component equivalents
+    -   `A8_UNORM` as @ref PixelFormat::R8Unorm (no special handling)
+    -   `R8G8B8A8_UNORM_SRGB` as @ref PixelFormat::RGBA8Unorm (no special
+        handling)
+    -   `R8_SNORM`, `R8G8_SNORM`, `R8G8B8A8_SNORM` as
+        @ref PixelFormat::R8Snorm and its two-/four-component equivalents
+    -   `R16_TYPELESS`, `R16G16_TYPELESS`, `R16G16B16A16_TYPELESS` as
+        @ref PixelFormat::R16UI and its two-/four-component equivalents (no
+        special handling)
+    -   `R16_UINT`, `R16G16_UINT`, `R16G16B16A16_UINT` as
+        @ref PixelFormat::R16UI and its two-/four-component equivalents
+    -   `R16_INT`, `R16G16_INT`, `R16G16B16A16_INT` as @ref PixelFormat::R16I
+        and its two-/four-component equivalents
+    -   `R16_FLOAT`, `R16G16_FLOAT`, `R16G16B16A16_FLOAT` as
+        @ref PixelFormat::R16F and its two-/four-component equivalents
+    -   `R16_UNORM`, `R16G16_UNORM`, `R16G16B16A16_UNORM` as
+        @ref PixelFormat::R16Unorm and its two-/four-component equivalents
+    -   `R16_SNORM`, `R16G16_SNORM`, `R16G16B16A16_SNORM` as
+        @ref PixelFormat::R16Snorm and its two-/four-component equivalents
+    -   `R32_TYPELESS`, `R32G32_TYPELESS`, `R32G32B32_TYPELESS`,
+        `R32G32B32A32_TYPELESS` as  @ref PixelFormat::R32UI and its
+        two-/three-/four-component equivalents (no special handling)
+    -   `R32_UINT`, `R32G32_UINT`, `R32G32B32_UINT`, `R32G32B32A32_UINT` as
+        @ref PixelFormat::R32UI and its two-/three-/four-component equivalents
+    -   `R32_INT`, `R32G32_INT`, `R32G32B32_INT`, `R32G32B32A32_INT` as
+        @ref PixelFormat::R32I  and its two-/three-/four-component equivalents
+    -   `R32_FLOAT`, `R32G32_FLOAT`, `R32G32B32_FLOAT`, `R32G32B32A32_FLOAT` as
+        @ref PixelFormat::R32F and its two-/three-/four-component equivalents
 
 This plugin depends on the @ref Trade library and is built if
 `WITH_DDSIMPORTER` is enabled when building Magnum Plugins. To use as a dynamic
@@ -87,17 +109,6 @@ another plugin with CMake, you need to request the `DdsImporter` component of
 the `MagnumPlugins` package in CMake and link to the
 `MagnumPlugins::DdsImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
-
-The images are imported with @ref PixelType::UnsignedByte type and
-@ref PixelFormat::RGB, @ref PixelFormat::RGBA, @ref PixelFormat::Red for
-grayscale. BGR and BGRA images are converted to @ref PixelFormat::RGB,
-@ref PixelFormat::RGBA respectively. If the image is compressed, they are
-imported with @ref CompressedPixelFormat::RGBAS3tcDxt1,
-@ref CompressedPixelFormat::RGBAS3tcDxt3 and @ref CompressedPixelFormat::RGBAS3tcDxt5.
-
-In OpenGL ES 2.0 and WebGL 1.0, single- and two-component images use
-@ref PixelFormat::Luminance and @ref PixelFormat::LuminanceAlpha instead
-of @ref PixelFormat::Red / @ref PixelFormat::RG.
 
 Note: Mipmaps are currently imported under separate image data ids. You may
 access them via @ref image2D(UnsignedInt)/@ref image3D(UnsignedInt) which will
