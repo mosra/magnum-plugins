@@ -383,10 +383,10 @@ void AssimpImporterTest::texture() {
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
-        Array3D<Sampler::Wrapping>(Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::ClampToEdge));
+        Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
-    CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -413,10 +413,10 @@ void AssimpImporterTest::embeddedTexture() {
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
-        Array3D<Sampler::Wrapping>(Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::ClampToEdge));
+        Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
-    CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -485,10 +485,10 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
-        Array3D<Sampler::Wrapping>(Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::ClampToEdge));
+        Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
-    CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);

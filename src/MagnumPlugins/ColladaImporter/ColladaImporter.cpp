@@ -667,34 +667,34 @@ std::string ColladaImporter::doTextureName(const UnsignedInt id) {
 
 namespace {
 
-Sampler::Wrapping wrappingFromString(const QString& string) {
+SamplerWrapping wrappingFromString(const QString& string) {
     /* Treat NONE and element not present as default */
-    if(string.isEmpty() || string == "WRAP" || string == "NONE") return Sampler::Wrapping::Repeat;
-    if(string == "MIRROR") return Sampler::Wrapping::MirroredRepeat;
-    if(string == "CLAMP") return Sampler::Wrapping::ClampToEdge;
-    if(string == "BORDER") return Sampler::Wrapping::ClampToBorder;
+    if(string.isEmpty() || string == "WRAP" || string == "NONE") return SamplerWrapping::Repeat;
+    if(string == "MIRROR") return SamplerWrapping::MirroredRepeat;
+    if(string == "CLAMP") return SamplerWrapping::ClampToEdge;
+    if(string == "BORDER") return SamplerWrapping::ClampToBorder;
 
     Error() << "Trade::ColladaImporter::texture(): unknown texture wrapping" << string.toStdString();
-    return Sampler::Wrapping(-1);
+    return SamplerWrapping(-1);
 }
 
-Sampler::Filter filterFromString(const QString& string) {
+SamplerFilter filterFromString(const QString& string) {
     /* Treat NONE and element not present as default */
-    if(string.isEmpty() || string == "NEAREST" || string == "NONE") return Sampler::Filter::Nearest;
-    if(string == "LINEAR") return Sampler::Filter::Linear;
+    if(string.isEmpty() || string == "NEAREST" || string == "NONE") return SamplerFilter::Nearest;
+    if(string == "LINEAR") return SamplerFilter::Linear;
 
     Error() << "Trade::ColladaImporter::texture(): unknown texture filter" << string.toStdString();
-    return Sampler::Filter(-1);
+    return SamplerFilter(-1);
 }
 
-Sampler::Mipmap mipmapFromString(const QString& string) {
+SamplerMipmap mipmapFromString(const QString& string) {
     /* Treat element not present as default */
-    if(string.isEmpty() || string == "NONE") return Sampler::Mipmap::Base;
-    if(string == "NEAREST") return Sampler::Mipmap::Nearest;
-    if(string == "LINEAR") return Sampler::Mipmap::Linear;
+    if(string.isEmpty() || string == "NONE") return SamplerMipmap::Base;
+    if(string == "NEAREST") return SamplerMipmap::Nearest;
+    if(string == "LINEAR") return SamplerMipmap::Linear;
 
     Error() << "Trade::ColladaImporter::texture(): unknown texture mipmap filter" << string.toStdString();
-    return Sampler::Mipmap(-1);
+    return SamplerMipmap(-1);
 }
 
 }
@@ -734,36 +734,36 @@ Containers::Optional<TextureData> ColladaImporter::doTexture(const UnsignedInt i
     /* Texture sampler wrapping */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_s/string()").arg(name));
     d->query.evaluateTo(&tmp);
-    const Sampler::Wrapping wrappingX = wrappingFromString(tmp.trimmed());
-    if(wrappingX == Sampler::Wrapping(-1)) return Containers::NullOpt;
+    const SamplerWrapping wrappingX = wrappingFromString(tmp.trimmed());
+    if(wrappingX == SamplerWrapping(-1)) return Containers::NullOpt;
 
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_t/string()").arg(name));
     d->query.evaluateTo(&tmp);
-    const Sampler::Wrapping wrappingY = wrappingFromString(tmp.trimmed());
-    if(wrappingY == Sampler::Wrapping(-1)) return Containers::NullOpt;
+    const SamplerWrapping wrappingY = wrappingFromString(tmp.trimmed());
+    if(wrappingY == SamplerWrapping(-1)) return Containers::NullOpt;
 
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/wrap_p/string()").arg(name));
     d->query.evaluateTo(&tmp);
-    const Sampler::Wrapping wrappingZ = wrappingFromString(tmp.trimmed());
-    if(wrappingZ == Sampler::Wrapping(-1)) return Containers::NullOpt;
+    const SamplerWrapping wrappingZ = wrappingFromString(tmp.trimmed());
+    if(wrappingZ == SamplerWrapping(-1)) return Containers::NullOpt;
 
     /* Texture minification filter */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/minfilter/string()").arg(name));
     d->query.evaluateTo(&tmp);
-    const Sampler::Filter minificationFilter = filterFromString(tmp.trimmed());
-    if(minificationFilter == Sampler::Filter(-1)) return Containers::NullOpt;
+    const SamplerFilter minificationFilter = filterFromString(tmp.trimmed());
+    if(minificationFilter == SamplerFilter(-1)) return Containers::NullOpt;
 
     /* Texture magnification filter */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/magfilter/string()").arg(name));
     d->query.evaluateTo(&tmp);
-    const Sampler::Filter magnificationFilter = filterFromString(tmp.trimmed());
-    if(magnificationFilter == Sampler::Filter(-1)) return Containers::NullOpt;
+    const SamplerFilter magnificationFilter = filterFromString(tmp.trimmed());
+    if(magnificationFilter == SamplerFilter(-1)) return Containers::NullOpt;
 
     /* Texture mipmap filter */
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_effects/effect/profile_COMMON/newparam[@sid='%0']/*[starts-with(name(), 'sampler')]/mipfilter/string()").arg(name));
     d->query.evaluateTo(&tmp);
-    const Sampler::Mipmap mipmapFilter = mipmapFromString(tmp.trimmed());
-    if(mipmapFilter == Sampler::Mipmap(-1)) return Containers::NullOpt;
+    const SamplerMipmap mipmapFilter = mipmapFromString(tmp.trimmed());
+    if(mipmapFilter == SamplerMipmap(-1)) return Containers::NullOpt;
 
     return TextureData(type, minificationFilter, magnificationFilter, mipmapFilter, {wrappingX, wrappingY, wrappingZ}, image);
 }

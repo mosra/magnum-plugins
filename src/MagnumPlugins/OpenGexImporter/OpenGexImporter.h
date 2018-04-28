@@ -107,9 +107,9 @@ and link to the `MagnumPlugins::OpenGexImporter` target. See
 -   Texture coordinate transformation is ignored.
 -   Textures using other than the first coordinate set are not supported.
 -   Texture type is always @ref Trade::TextureData::Type::Texture2D, wrapping
-    is always @ref Sampler::Wrapping::ClampToEdge, minification and
-    magnification is @ref Sampler::Filter::Linear and mipmap selection is
-    @ref Sampler::Mipmap::Linear.
+    is always @ref SamplerWrapping::ClampToEdge, minification and
+    magnification is @ref SamplerFilter::Linear and mipmap selection is
+    @ref SamplerMipmap::Linear.
 -   If multiple textures have the same image filename string, given image is
     present in the image list only once. Note that only a simple string
     comparison is used without any path normalization.

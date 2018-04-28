@@ -908,9 +908,9 @@ void OpenGexImporterTest::texture() {
 
     Containers::Optional<Trade::TextureData> texture = importer->texture(1);
     CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
-    CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
-    CORRADE_COMPARE(texture->wrapping(), Sampler::Wrapping::ClampToEdge);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->wrapping(), SamplerWrapping::ClampToEdge);
     CORRADE_COMPARE(texture->image(), 1);
 }
 

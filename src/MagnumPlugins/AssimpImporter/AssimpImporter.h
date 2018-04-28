@@ -149,7 +149,7 @@ information.
 @subsection Trade-AssimpImporter-limitations-textures Texture import
 
 -   Textures with mapping mode/wrapping `aiTextureMapMode_Decal` are loaded
-    with @ref Sampler::Wrapping::ClampToEdge
+    with @ref SamplerWrapping::ClampToEdge
 -   Assimp does not appear to load any filtering information
 -   Raw embedded image data is not supported
 

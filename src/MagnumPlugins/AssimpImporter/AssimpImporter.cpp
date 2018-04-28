@@ -472,37 +472,37 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
     auto toWrapping = [](aiTextureMapMode mapMode) {
         switch (mapMode) {
             case aiTextureMapMode_Wrap:
-                return Sampler::Wrapping::Repeat;
+                return SamplerWrapping::Repeat;
             case aiTextureMapMode_Decal:
                 Warning() << "Trade::AssimpImporter::texture(): no wrapping "
                     "enum to match aiTextureMapMode_Decal, using "
-                    "Sampler::Wrapping::ClampToEdge";
-                return Sampler::Wrapping::ClampToEdge;
+                    "SamplerWrapping::ClampToEdge";
+                return SamplerWrapping::ClampToEdge;
             case aiTextureMapMode_Clamp:
-                return Sampler::Wrapping::ClampToEdge;
+                return SamplerWrapping::ClampToEdge;
             case aiTextureMapMode_Mirror:
-                return Sampler::Wrapping::MirroredRepeat;
+                return SamplerWrapping::MirroredRepeat;
             default:
                 Warning() << "Trade::AssimpImporter::texture(): unknown "
                     "aiTextureMapMode" << mapMode << Debug::nospace << ", "
-                    "using Sampler::Wrapping::ClampToEdge";
-                return Sampler::Wrapping::ClampToEdge;
+                    "using SamplerWrapping::ClampToEdge";
+                return SamplerWrapping::ClampToEdge;
         }
     };
 
     aiTextureMapMode mapMode;
     const aiMaterial* mat = _f->_textures[id].first;
     const aiTextureType type = _f->_textures[id].second;
-    Sampler::Wrapping wrappingU = Sampler::Wrapping::ClampToEdge;
-    Sampler::Wrapping wrappingV = Sampler::Wrapping::ClampToEdge;
+    SamplerWrapping wrappingU = SamplerWrapping::ClampToEdge;
+    SamplerWrapping wrappingV = SamplerWrapping::ClampToEdge;
     if(mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mapMode) == AI_SUCCESS)
         wrappingU = toWrapping(mapMode);
     if(mat->Get(AI_MATKEY_MAPPINGMODE_V(type, 0), mapMode) == AI_SUCCESS)
         wrappingV = toWrapping(mapMode);
 
     return TextureData{TextureData::Type::Texture2D,
-        Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Mipmap::Linear,
-        {wrappingU, wrappingV, Sampler::Wrapping::ClampToEdge}, id, &_f->_textures[id]};
+        SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
+        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, id, &_f->_textures[id]};
 }
 
 UnsignedInt AssimpImporter::doImage2DCount() const { return _f->_textures.size(); }

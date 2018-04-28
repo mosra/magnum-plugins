@@ -392,10 +392,10 @@ void ColladaImporterTest::texture() {
         CORRADE_VERIFY(texture);
 
         CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
-        CORRADE_COMPARE(texture->wrapping(), Array3D<Sampler::Wrapping>(Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::MirroredRepeat, Sampler::Wrapping::Repeat));
-        CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
-        CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
-        CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Nearest);
+        CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::MirroredRepeat, SamplerWrapping::Repeat));
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Nearest);
         CORRADE_COMPARE(texture->image(), 1);
     }
 
@@ -407,10 +407,10 @@ void ColladaImporterTest::texture() {
         CORRADE_VERIFY(texture);
 
         CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
-        CORRADE_COMPARE(texture->wrapping(), Array3D<Sampler::Wrapping>(Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat));
-        CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Nearest);
-        CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Nearest);
-        CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Base);
+        CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Nearest);
+        CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Base);
         CORRADE_COMPARE(texture->image(), 0);
     }
 }
