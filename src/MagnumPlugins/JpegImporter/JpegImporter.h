@@ -65,14 +65,8 @@ component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::JpegImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 
-The images are imported with @ref PixelType::UnsignedByte and @ref PixelFormat::RGB
-or @ref PixelFormat::Red, respectively. Grayscale images require extension
-@extension{ARB,texture_rg}. All imported images use default @ref PixelStorage
+The images are imported with @ref PixelFormat::RGB8Unorm or @ref PixelFormat::R8Unorm. All imported images use default @ref PixelStorage
 parameters.
-
-In OpenGL ES 2.0, if @extension{EXT,texture_rg} is not supported and in
-WebGL 1.0, grayscale images use @ref PixelFormat::Luminance instead of
-@ref PixelFormat::Red.
 */
 class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
     public:

@@ -38,11 +38,6 @@
 #endif
 #include <jpeglib.h>
 
-#ifdef MAGNUM_TARGET_GLES2
-#include <Magnum/Context.h>
-#include <Magnum/Extensions.h>
-#endif
-
 namespace Magnum { namespace Trade {
 
 JpegImporter::JpegImporter() = default;
@@ -101,23 +96,17 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     /* Image size and type */
     const Vector2i size(file.output_width, file.output_height);
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
-    constexpr PixelType type = PixelType::UnsignedByte;
 
     /* Image format */
-    PixelFormat format = {};
+    PixelFormat format;
     switch(file.out_color_space) {
         case JCS_GRAYSCALE:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 1);
-            #ifdef MAGNUM_TARGET_GLES2
-            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                PixelFormat::Red : PixelFormat::Luminance;
-            #else
-            format = PixelFormat::Red;
-            #endif
+            format = PixelFormat::R8Unorm;
             break;
         case JCS_RGB:
             CORRADE_INTERNAL_ASSERT(file.out_color_components == 3);
-            format = PixelFormat::RGB;
+            format = PixelFormat::RGB8Unorm;
             break;
 
         /** @todo RGBA (only in libjpeg-turbo and probably ignored) */
@@ -142,7 +131,7 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     jpeg_destroy_decompress(&file);
 
     /* Always using the default 4-byte alignment */
-    return Trade::ImageData2D{format, type, size, std::move(data)};
+    return Trade::ImageData2D{format, size, std::move(data)};
 }
 
 }}
