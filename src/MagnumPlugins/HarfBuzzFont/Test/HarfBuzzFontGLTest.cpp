@@ -24,7 +24,7 @@
 */
 
 #include <Corrade/PluginManager/Manager.h>
-#include <Magnum/OpenGLTester.h>
+#include <Magnum/GL/OpenGLTester.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/GlyphCache.h>
 
@@ -32,7 +32,7 @@
 
 namespace Magnum { namespace Text { namespace Test {
 
-struct HarfBuzzFontGLTest: OpenGLTester {
+struct HarfBuzzFontGLTest: GL::OpenGLTester {
     explicit HarfBuzzFontGLTest();
 
     void layout();

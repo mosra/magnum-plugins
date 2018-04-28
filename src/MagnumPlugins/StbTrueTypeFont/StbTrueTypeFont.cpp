@@ -28,8 +28,6 @@
 #include <algorithm>
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Unicode.h>
-#include <Magnum/Context.h>
-#include <Magnum/Extensions.h>
 #include <Magnum/Image.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Text/GlyphCache.h>
@@ -162,16 +160,7 @@ void StbTrueTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& 
     }
 
     /* Set cache image */
-    Image2D image(
-        #ifndef MAGNUM_TARGET_GLES2
-        PixelFormat::Red,
-        #elif !defined(MAGNUM_TARGET_WEBGL)
-        Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-        PixelFormat::Red : PixelFormat::Luminance,
-        #else
-        PixelFormat::Luminance,
-        #endif
-        PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
+    Image2D image(PixelFormat::R8Unorm, cache.textureSize(), std::move(pixmap));
     cache.setImage({}, image);
 }
 

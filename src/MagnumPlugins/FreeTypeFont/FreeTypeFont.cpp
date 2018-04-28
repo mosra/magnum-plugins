@@ -30,8 +30,6 @@
 #include FT_FREETYPE_H
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Unicode.h>
-#include <Magnum/Context.h>
-#include <Magnum/Extensions.h>
 #include <Magnum/Image.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Text/GlyphCache.h>
@@ -156,12 +154,7 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& cha
     }
 
     /* Set cache image */
-    #ifndef MAGNUM_TARGET_GLES2
-    Image2D image(PixelFormat::Red, PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
-    #else
-    Image2D image(Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-        PixelFormat::Red : PixelFormat::Luminance, PixelType::UnsignedByte, cache.textureSize(), std::move(pixmap));
-    #endif
+    Image2D image(PixelFormat::R8Unorm, cache.textureSize(), std::move(pixmap));
     cache.setImage({}, image);
 }
 

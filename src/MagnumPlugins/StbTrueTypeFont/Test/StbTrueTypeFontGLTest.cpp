@@ -24,7 +24,7 @@
 */
 
 #include <Corrade/PluginManager/Manager.h>
-#include <Magnum/OpenGLTester.h>
+#include <Magnum/GL/OpenGLTester.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/GlyphCache.h>
 
@@ -32,7 +32,7 @@
 
 namespace Magnum { namespace Text { namespace Test {
 
-struct StbTrueTypeFontGLTest: OpenGLTester {
+struct StbTrueTypeFontGLTest: GL::OpenGLTester {
     explicit StbTrueTypeFontGLTest();
 
     void properties();
@@ -150,7 +150,7 @@ void StbTrueTypeFontGLTest::fillGlyphCache() {
     GlyphCache cache{Vector2i{256}};
     font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyz");
 
-    MAGNUM_VERIFY_NO_ERROR();
+    MAGNUM_VERIFY_NO_GL_ERROR();
 
     /* All characters + one "not found" glyph */
     CORRADE_COMPARE(cache.glyphCount(), 27);
