@@ -68,14 +68,11 @@ component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::PngImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 
-The images are imported with @ref PixelType::UnsignedByte / @ref PixelType::UnsignedShort
-and @ref PixelFormat::RGB, @ref PixelFormat::RGBA or @ref PixelFormat::Red,
-respectively. Grayscale images require extension @extension{ARB,texture_rg}.
-All imported images use default @ref PixelStorage parameters.
-
-In OpenGL ES 2.0, if @extension{EXT,texture_rg} is not supported and in
-WebGL 1.0, grayscale images use @ref PixelFormat::Luminance instead of
-@ref PixelFormat::Red.
+The images are imported with @ref PixelFormat::RGB8Unorm /
+@ref PixelFormat::RGB16Unorm, @ref PixelFormat::RGBA8Unorm /
+@ref PixelFormat::RGBA16Unorm or @ref PixelFormat::R8Unorm /
+@ref PixelFormat::R16Unorm. All imported images use default @ref PixelStorage
+parameters.
 */
 class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
     public:

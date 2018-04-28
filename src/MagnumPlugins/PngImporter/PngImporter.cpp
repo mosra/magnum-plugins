@@ -108,19 +108,12 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     /* Image channels and bit depth */
     png_uint_32 bits = png_get_bit_depth(file, info);
     png_uint_32 channels = png_get_channels(file, info);
-    const png_uint_32 colorType = png_get_color_type(file, info);
+    png_uint_32 colorType = png_get_color_type(file, info);
 
-    /* Image format */
-    PixelFormat format;
+    /* Check image format, convert if necessary */
     switch(colorType) {
         /* Types that can be used without conversion */
         case PNG_COLOR_TYPE_GRAY:
-            #ifndef MAGNUM_TARGET_GLES2
-            format = PixelFormat::Red;
-            #else
-            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                PixelFormat::Red : PixelFormat::Luminance;
-            #endif
             CORRADE_INTERNAL_ASSERT(channels == 1);
 
             /* Convert to 8-bit */
@@ -132,12 +125,10 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
             break;
 
         case PNG_COLOR_TYPE_RGB:
-            format = PixelFormat::RGB;
             CORRADE_INTERNAL_ASSERT(channels == 3);
             break;
 
         case PNG_COLOR_TYPE_RGBA:
-            format = PixelFormat::RGBA;
             CORRADE_INTERNAL_ASSERT(channels == 4);
             break;
 
@@ -145,7 +136,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         case PNG_COLOR_TYPE_PALETTE:
             /** @todo test case for this */
             png_set_palette_to_rgb(file);
-            format = PixelFormat::RGB;
+            colorType = PNG_COLOR_TYPE_RGB;
             channels = 3;
             break;
 
@@ -162,18 +153,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         CORRADE_INTERNAL_ASSERT(channels == 4);
     }
 
-    /* Image type */
-    PixelType type;
-    switch(bits) {
-        case 8:  type = PixelType::UnsignedByte;  break;
-        case 16: type = PixelType::UnsignedShort; break;
-
-        default:
-            Error() << "Trade::PngImporter::image2D(): unsupported bit depth" << bits;
-            png_destroy_read_struct(&file, &info, nullptr);
-            return Containers::NullOpt;
-    }
-
     /* Initialize data array, align rows to four bytes */
     const std::size_t stride = ((size.x()*channels*bits/8 + 3)/4)*4;
     data = Containers::Array<char>{stride*std::size_t(size.y())};
@@ -187,15 +166,39 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     /* Cleanup */
     png_destroy_read_struct(&file, &info, nullptr);
 
-    /* Endianness correction for 16 bit depth */
-    if(type == PixelType::UnsignedShort) {
+    /* 8-bit images */
+    PixelFormat format;
+    if(bits == 8) {
+        switch(colorType) {
+            case PNG_COLOR_TYPE_GRAY: format = PixelFormat::R8Unorm; break;
+            case PNG_COLOR_TYPE_RGB:  format = PixelFormat::RGB8Unorm; break;
+            case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA8Unorm; break;
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_IGNORE_LINE */
+        }
+
+    /* 16-bit images */
+    } else if(bits == 16) {
+        switch(colorType) {
+            case PNG_COLOR_TYPE_GRAY: format = PixelFormat::R16Unorm; break;
+            case PNG_COLOR_TYPE_RGB:  format = PixelFormat::RGB16Unorm; break;
+            case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA16Unorm; break;
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_IGNORE_LINE */
+        }
+
+        /* Endianness correction for 16 bit depth */
         Containers::ArrayView<UnsignedShort> data16{reinterpret_cast<UnsignedShort*>(data.data()), data.size()/2};
         for(UnsignedShort& i: data16)
             Utility::Endianness::bigEndianInPlace(i);
+
+    /* Something else */
+    } else {
+        Error() << "Trade::PngImporter::image2D(): unsupported bit depth" << bits;
+        png_destroy_read_struct(&file, &info, nullptr);
+        return Containers::NullOpt;
     }
 
     /* Always using the default 4-byte alignment */
-    return Trade::ImageData2D{format, type, size, std::move(data)};
+    return Trade::ImageData2D{format, size, std::move(data)};
 }
 
 }}
