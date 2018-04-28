@@ -1,0 +1,182 @@
+/*
+    This file is part of Magnum.
+
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018
+              Vladimír Vondruš <mosra@centrum.cz>
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+*/
+
+namespace Magnum {
+
+/** @page changelog-plugins-old Plugins
+
+@tableofcontents
+@m_footernavigation
+
+@section changelog-plugins-2015-05 2015.05
+
+Released 2015-05-09, tagged as
+[v2015.05](https://github.com/mosra/magnum-plugins/releases/tag/v2015.05). See
+the [release announcement](http://blog.magnum.graphics/announcements/may-2015-updates/)
+for a high-level overview.
+
+@subsection changelog-plugins-2015-05-new New features
+
+-   New @ref OpenDdl::Document "OpenDDL parser" and
+    @ref Trade::OpenGexImporter "OpenGexImporter" plugin for importing
+    `OpenGEX`_ files (see [mosra/magnum#44](https://github.com/mosra/magnum/issues/44))
+-   New @ref Trade::StanfordImporter "StanfordImporter" plugin for importing
+    Stanford (`*.ply`) files.
+-   New @ref Trade::StbImageImporter "StbImageImporter" plugin for importing
+    BMP, GIF, HDR, JPEG, PIC, PNG, PSD, TGA and more formats using
+    [stb_image](https://github.com/nothings/stb)
+-   New @ref Trade::StbImageConverter "StbPngImageConverter" plugin for
+    exporting PNG files using [stb_image_write](https://github.com/nothings/stb)
+-   New @ref Trade::AnyImageImporter "AnyImageImporter" plugin that detects
+    image file type and delegates the loading to plugin dedicated for given
+    format (see [mosra/magnum#61](https://github.com/mosra/magnum/issues/61)).
+-   New @ref Trade::AnySceneImporter "AnySceneImporter" plugin that detects
+    scene file type and delegates the loading to plugin dedicated for given
+    format.
+-   Plugin aliases, as explained above.
+
+@subsection changelog-plugins-2015-05-compatibility Potential compatibility breakages, removed APIs
+
+-   All functionality @ref changelog-plugins-2014-01 "deprecated in 2014.01 snapshot"
+    has been removed, namely removed deprecated ability to use relative
+    includes (e.g. @cpp #include <PngImporter/PngImporter.h> @ce), use absolute
+    paths (@cpp #include <MagnumPlugins/PngImporter/PngImporter.h> @ce) instead.
+
+@subsection changelog-plugins-2015-05-buildsystem Build system
+
+-   CMake now always installs `FindMagnumPlugins.cmake` to library-specific
+    location, making it usable without providing own copy of the file in
+    depending projects. The `WITH_FIND_MODULE` option is no longer needed.
+-   Displaying all header files, plugin metadata files and resource files in
+    project view to make use of some IDEs less painful (such as QtCreator).
+-   FindMagnumPlugins.cmake was not really working (see
+    [mosra/magnum-plugins#4](https://github.com/mosra/magnum-plugins/pull/4))
+-   Workaround to find proper FreeType when Mono is installed on macOS (see
+    [mosra/magnum-plugins#6](https://github.com/mosra/magnum-plugins/pull/6))
+-   Gentoo ebuild (see
+    [mosra/magnum-plugins#5](https://github.com/mosra/magnum-plugins/issues/5)).
+
+@section changelog-plugins-2014-06 2014.06
+
+Released 2014-06-30, tagged as
+[v2014.06](https://github.com/mosra/magnum-plugins/releases/tag/v2014.06). See
+the [release announcement](http://blog.magnum.graphics/announcements/june-2014-updates/)
+for a high-level overview.
+
+@subsection changelog-plugins-2014-06-dependencies Dependency changes
+
+-   Minimal required GCC version is now 4.7. Support for GCC 4.6 has been moved
+    to the `compatibility` branch.
+
+@subsection changelog-plugins-2014-06-changes Changes
+
+-   Libraries and plugins in debug build configuration are installed to
+    different locations, making it possible to have debug and release libraries
+    installed alongside each other.
+
+@section changelog-plugins-2014-01 2014.01
+
+Released 2014-01-21, tagged as
+[v2014.01](https://github.com/mosra/magnum-plugins/releases/tag/v2014.01). See
+the [release announcement](http://blog.magnum.graphics/announcements/january-2014-updates/)
+for a high-level overview.
+
+@subsection changelog-plugins-2014-01-dependencies Dependency changes
+
+No dependency changes in this release.
+
+@subsection changelog-plugins-2014-01-new New features
+
+-   All classes in documentation are now shown with corresponding
+    @cpp #include @ce path
+
+@subsection changelog-plugins-2014-01-changes Changes
+
+-   @ref Text::MagnumFont "MagnumFont",
+    @ref Text::MagnumFontConverter "MagnumFontConverter",
+    @ref Trade::TgaImporter "TgaImporter",
+    @ref Trade::TgaImageConverter "TgaImageConverter" and
+    @ref Audio::WavImporter "WavAudioImporter" plugins were moved to core
+    Magnum repository
+-   Various documentation updates and improvements
+
+@subsection changelog-plugins-2014-01-bugfixes Bug fixes
+
+-   Fixed various compilation errors on various compilers (see
+    [mosra/magnum-plugins#3](https://github.com/mosra/magnum-plugins/pull/3))
+
+@subsection changelog-plugins-2014-01-internal Internal changes
+
+-   Using Jenkins Continuous Integration to maintain compilable and bug-free
+    state of the project more easily. Currently GCC 4.8, 4.7, 4.6, 4.5, 4.4,
+    Clang 3.3, Clang 3.3 with libc++, Emscripten, x86-32/x86-64 Native Client
+    and MinGW32 compilers are tested with both shared and static libraries.
+    Separately testing builds with deprecated features enabled and disabled.
+    Also explicitly testing desktop OpenGL, OpenGL ES 2.0, desktop OpenGL ES
+    2.0 emulation, OpenGL ES 3.0 and desktop OpenGL ES 3.0 emulation.
+-   All files from `src/` directory were moved to `src/MagnumPlugins`
+    (required to make inter-project includes absolute, as mentioned above)
+
+@section changelog-plugins-2013-10 2013.10
+
+Released 2013-10-30, tagged as
+[v2013.10](https://github.com/mosra/magnum-plugins/releases/tag/v2013.10). See
+the [release announcement](http://blog.magnum.graphics/announcements/october-2013-updates/)
+for a high-level overview.
+
+@subsection changelog-plugins-2013-10-dependencies Dependency changes
+
+No dependency changes in this release.
+
+@subsection changelog-plugins-2013-10-new New features
+
+-   Emscripten port of dependency-less @ref Trade::TgaImporter "TgaImporter",
+    @ref Trade::TgaImageConverter "TgaImageConverter" and
+    @ref Text::MagnumFont "MagnumFont" plugins
+
+@subsection changelog-plugins-2013-10-changes Changes
+
+-   Reworked @ref Trade::ColladaImporter "ColladaImporter" internals to avoid
+    double deletions
+-   Documentation updates and improvements to make the library more accessible
+    for newcomers
+-   Various build system updates for better compile times and easier
+    installation
+
+@subsection changelog-plugins-2013-10-bugfixes Bug fixes
+
+-   Fixed compilation of plugins using @ref std::u32string on MinGW
+-   Fixed linker errors on MinGW
+
+@section changelog-plugins-2013-08 2013.08
+
+Released 2013-08-30, tagged as
+[v2013.08](https://github.com/mosra/magnum-plugins/releases/tag/v2013.08). See
+the [project announcement](http://blog.magnum.graphics/announcements/introducing-magnum/)
+for a high-level overview.
+
+*/
+
+}
