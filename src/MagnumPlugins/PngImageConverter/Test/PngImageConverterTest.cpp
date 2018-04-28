@@ -39,7 +39,6 @@ struct PngImageConverterTest: TestSuite::Tester {
     explicit PngImageConverterTest();
 
     void wrongFormat();
-    void wrongType();
 
     void data();
     void data16();
@@ -60,7 +59,7 @@ namespace {
     };
 
     const ImageView2D original{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB, PixelType::UnsignedByte, {2, 3}, OriginalData};
+        PixelFormat::RGB8Unorm, {2, 3}, OriginalData};
 
     constexpr const char ConvertedData[] = {
         1, 2, 3, 2, 3, 4, 0, 0,
@@ -78,7 +77,7 @@ namespace {
     };
 
     const ImageView2D original16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
-        PixelFormat::RGB, PixelType::UnsignedShort, {2, 3}, OriginalData16};
+        PixelFormat::RGB16Unorm, {2, 3}, OriginalData16};
 
     constexpr const UnsignedShort ConvertedData16[] = {
         1, 2, 3, 2, 3, 4,
@@ -89,7 +88,6 @@ namespace {
 
 PngImageConverterTest::PngImageConverterTest() {
     addTests({&PngImageConverterTest::wrongFormat,
-              &PngImageConverterTest::wrongType,
 
               &PngImageConverterTest::data,
               &PngImageConverterTest::data16});
@@ -107,22 +105,12 @@ PngImageConverterTest::PngImageConverterTest() {
 
 void PngImageConverterTest::wrongFormat() {
     std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
-    ImageView2D image{PixelFormat::DepthComponent, PixelType::UnsignedByte, {}, nullptr};
+    ImageView2D image{PixelFormat::RG32F, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel format PixelFormat::DepthComponent\n");
-}
-
-void PngImageConverterTest::wrongType() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
-    ImageView2D image{PixelFormat::Red, PixelType::Float, {}, nullptr};
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel type PixelType::Float\n");
+    CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel format PixelFormat::RG32F\n");
 }
 
 void PngImageConverterTest::data() {
@@ -138,8 +126,7 @@ void PngImageConverterTest::data() {
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(converted->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
 
     /* The image has four-byte aligned rows, clear the padding to deterministic
        values */
@@ -164,8 +151,7 @@ void PngImageConverterTest::data16() {
     CORRADE_VERIFY(converted);
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(converted->type(), PixelType::UnsignedShort);
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB16Unorm);
     CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(converted->data()),
         Containers::arrayView(ConvertedData16),
         TestSuite::Compare::Container);

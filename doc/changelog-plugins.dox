@@ -58,8 +58,9 @@ namespace Magnum {
     @ref Trade::StbImageImporter "StbImageImporter" plugins now import images
     with the generic @ref PixelFormat instead of the GL-specific
     @ref GL::PixelFormat / @ref GL::PixelType
--   The @ref Trade::MiniExrImageConverter "MiniExrImageConverter" plugin now
-    accepts the generic @ref PixelFormat instead of GL-specific formats
+-   The @ref Trade::MiniExrImageConverter "MiniExrImageConverter",
+    @ref Trade::PngImageConverter "PngImageConverter" plugins now accept the
+    generic @ref PixelFormat instead of GL-specific formats
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
@@ -98,9 +99,10 @@ namespace Magnum {
 
 -   The @ref Trade::DdsImporter "DdsImporter" plugin no longer recognizes depth
     image formats. This may be re-added again in the future.
--   The @ref Trade::MiniExrImageConverter "MiniExrImageConverter" plugin no
-    longer accepts GL-specific @ref GL::PixelFormat / @ref GL::PixelType
-    formats --- use the generic @ref PixelFormat instead
+-   The @ref Trade::MiniExrImageConverter "MiniExrImageConverter",
+    @ref Trade::PngImageConverter "PngImageConverter" plugins no longer accept
+    GL-specific @ref GL::PixelFormat / @ref GL::PixelType formats --- use the
+    generic @ref PixelFormat instead
 -   Renamed the `BUILD_STATIC` CMake option to `BUILD_PLUGINS_STATIC` for
     consistency with the core Magnum library and possibility to control the
     static build better when using subprojects. The `BUILD_STATIC` option now

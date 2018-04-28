@@ -45,40 +45,38 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
         "Trade::PngImageConverter::exportToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, nullptr);
 
     Int bitDepth;
-    switch(image.type()) {
-        case PixelType::UnsignedByte:
-            bitDepth = 8;
-            break;
-        case PixelType::UnsignedShort:
-            bitDepth = 16;
-            break;
-        default:
-            Error() << "Trade::PngImageConverter::exportToData(): unsupported pixel type" << image.type();
-            return nullptr;
-    }
-
     Int colorType;
     switch(image.format()) {
-        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        case PixelFormat::Red:
-        #endif
-        #ifdef MAGNUM_TARGET_GLES2
-        case PixelFormat::Luminance:
-        #endif
+        case PixelFormat::R8Unorm:
+            bitDepth = 8;
             colorType = PNG_COLOR_TYPE_GRAY;
             break;
-        #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
-        case PixelFormat::RG:
-        #endif
-        #ifdef MAGNUM_TARGET_GLES2
-        case PixelFormat::LuminanceAlpha:
-        #endif
+        case PixelFormat::R16Unorm:
+            bitDepth = 16;
+            colorType = PNG_COLOR_TYPE_GRAY;
+            break;
+        case PixelFormat::RG8Unorm:
+            bitDepth = 8;
             colorType = PNG_COLOR_TYPE_GRAY_ALPHA;
             break;
-        case PixelFormat::RGB:
+        case PixelFormat::RG16Unorm:
+            bitDepth = 16;
+            colorType = PNG_COLOR_TYPE_GRAY_ALPHA;
+            break;
+        case PixelFormat::RGB8Unorm:
+            bitDepth = 8;
             colorType = PNG_COLOR_TYPE_RGB;
             break;
-        case PixelFormat::RGBA:
+        case PixelFormat::RGB16Unorm:
+            bitDepth = 16;
+            colorType = PNG_COLOR_TYPE_RGB;
+            break;
+        case PixelFormat::RGBA8Unorm:
+            bitDepth = 8;
+            colorType = PNG_COLOR_TYPE_RGBA;
+            break;
+        case PixelFormat::RGBA16Unorm:
+            bitDepth = 16;
             colorType = PNG_COLOR_TYPE_RGBA;
             break;
         default:
@@ -116,7 +114,7 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
 
     /* Data properties */
     Math::Vector2<std::size_t> offset, dataSize;
-    std::tie(offset, dataSize, std::ignore) = image.dataProperties();
+    std::tie(offset, dataSize) = image.dataProperties();
 
     /* Write rows in reverse order, properly take data properties into account */
     if(bitDepth == 8) {
