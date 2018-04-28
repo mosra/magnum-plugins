@@ -34,11 +34,6 @@
 #include <IL/il.h>
 #include <IL/ilu.h>
 
-#ifdef MAGNUM_TARGET_GLES2
-#include <Magnum/Context.h>
-#include <Magnum/Extensions.h>
-#endif
-
 namespace Magnum { namespace Trade {
 
 DevIlImageImporter::DevIlImageImporter() = default;
@@ -85,65 +80,37 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
     switch(ilFormat) {
         /* Grayscale */
         case IL_LUMINANCE:
-            #ifndef MAGNUM_TARGET_GLES2
-            format = PixelFormat::Red;
-            #elif !defined(MAGNUM_TARGET_WEBGL)
-            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                PixelFormat::Red : PixelFormat::Luminance;
-            #else
-            format = PixelFormat::Luminance;
-            #endif
-
+            format = PixelFormat::R8Unorm;
             components = 1;
             break;
 
         /* Grayscale + alpha */
         case IL_LUMINANCE_ALPHA:
-            #ifndef MAGNUM_TARGET_GLES2
-            format = PixelFormat::RG;
-            #elif !defined(MAGNUM_TARGET_WEBGL)
-            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                PixelFormat::RG : PixelFormat::LuminanceAlpha;
-            #else
-            format = PixelFormat::LuminanceAlpha;
-            #endif
-
+            format = PixelFormat::RG8Unorm;
             components = 2;
             break;
 
         /* BGR */
         case IL_BGR:
-            #ifndef MAGNUM_TARGET_GLES
-            format = PixelFormat::BGR;
-            #else
             rgba_needed = true;
-            #endif
-
             components = 3;
             break;
 
         /* BGRA */
         case IL_BGRA:
-            #ifndef MAGNUM_TARGET_GLES
-            format = PixelFormat::BGRA;
-            #else
             rgba_needed = true;
-            #endif
-
             components = 4;
             break;
 
         /* RGB */
         case IL_RGB:
-            format = PixelFormat::RGB;
-
+            format = PixelFormat::RGB8Unorm;
             components = 3;
             break;
 
         /* RGBA */
         case IL_RGBA:
-            format = PixelFormat::RGBA;
-
+            format = PixelFormat::RGBA8Unorm;
             components = 4;
             break;
 
@@ -159,7 +126,7 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
             return Containers::NullOpt;
         }
 
-        format = PixelFormat::RGBA;
+        format = PixelFormat::RGBA8Unorm;
         components = 4;
     }
 
@@ -182,7 +149,7 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
     if((size.x()*components)%4 != 0)
         storage.setAlignment(1);
 
-    return Trade::ImageData2D{storage, format, PixelType::UnsignedByte, size, std::move(imageData)};
+    return Trade::ImageData2D{storage, format, size, std::move(imageData)};
 }
 
 }}

@@ -123,21 +123,11 @@ This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref PixelType::UnsignedByte and a suitable
-@ref Magnum::PixelFormat "PixelFormat" type. Supported types are
-@ref PixelFormat::Red, @ref PixelFormat::RG, @ref PixelFormat::RGB,
-@ref PixelFormat::BGR, @ref PixelFormat::RGBA and @ref PixelFormat::BGRA. All
-other formats will be converted to @ref PixelFormat::RGBA.
-
-Grayscale images require extension @extension{ARB,texture_rg}. In OpenGL ES and
-WebGL, BGR and BGRA formats are converted to @ref PixelFormat::RGBA. In OpenGL
-ES 2.0, if @extension{EXT,texture_rg} is not supported and in WebGL 1.0,
-grayscale and grayscale + alpha images use @ref PixelFormat::Luminance /
-@ref PixelFormat::LuminanceAlpha instead of @ref PixelFormat::Red /
-@ref PixelFormat::RG.
-
-Images are imported with default @ref PixelStorage parameters except for
-alignment, which may be changed to `1` if the data require it.
+The images are imported as @ref PixelFormat::R8Unorm,
+@ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. BGR/BGRA and all other formats will be converted to
+@ref PixelFormat::RGBA8Unorm. Images are imported with default
+@ref PixelStorage parameters except for alignment, which may be changed to `1`
+if the data require it.
 */
 class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImporter {
     public:
