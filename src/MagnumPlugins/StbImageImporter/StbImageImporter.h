@@ -88,18 +88,13 @@ when using plugin dedicated for given format.
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-The images are imported with @ref PixelType::UnsignedByte type for all formats
-except HDR and @ref PixelType::Float for HDR; @ref PixelFormat::RGB,
-@ref PixelFormat::RGBA, @ref PixelFormat::Red for grayscale or @ref PixelFormat::RG
-for grayscale + alpha. Grayscale and grayscale + alpha images require extension
-@extension{ARB,texture_rg}. Images are imported with default @ref PixelStorage
-parameters except for alignment, which may be changed to `1` if the data
-require it.
-
-In OpenGL ES 2.0 if @extension{EXT,texture_rg} is not supported and in WebGL
-1.0, grayscale images use @ref PixelFormat::Luminance instead of
-@ref PixelFormat::Red and @ref PixelFormat::LuminanceAlpha instead of
-@ref PixelFormat::RG.
+The images are imported with @ref PixelFormat::RGB8Unorm,
+@ref PixelFormat::RGBA8Unorm, @ref PixelFormat::R8Unorm for grayscale or
+@ref PixelFormat::RG8Unorm for grayscale + alpha for all format except HDR, HDR
+images are imported with @ref PixelFormat::RGB32F, @ref PixelFormat::RGBA32F,
+@ref PixelFormat::R32F or @ref PixelFormat::RG32F. Images are imported with
+default @ref PixelStorage parameters except for alignment, which may be changed
+to @cpp 1 @ce if the data require it.
 
 @todo Enable ARM NEON when I'm able to test that
 */

@@ -79,12 +79,7 @@ void StbImageImporterTest::grayPng() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    #ifndef MAGNUM_TARGET_GLES2
-    CORRADE_COMPARE(image->format(), PixelFormat::Red);
-    #else
-    CORRADE_COMPARE(image->format(), PixelFormat::Luminance);
-    #endif
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
     CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xff', '\x88', '\x00',
         '\x88', '\x00', '\xff'}}),
@@ -99,12 +94,7 @@ void StbImageImporterTest::grayJpeg() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    #ifndef MAGNUM_TARGET_GLES2
-    CORRADE_COMPARE(image->format(), PixelFormat::Red);
-    #else
-    CORRADE_COMPARE(image->format(), PixelFormat::Luminance);
-    #endif
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
     CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xff', '\x88', '\x00',
         '\x88', '\x00', '\xff'}}),
@@ -119,8 +109,7 @@ void StbImageImporterTest::rgbPng() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
@@ -139,8 +128,7 @@ void StbImageImporterTest::rgbJpeg() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     /* Data should be similar to the PNG */
     CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xca', '\xfe', '\x76',
@@ -160,8 +148,7 @@ void StbImageImporterTest::rgbHdr() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(image->type(), PixelType::Float);
-    CORRADE_COMPARE(image->format(), PixelFormat::RGB);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB32F);
     CORRADE_COMPARE_AS((Containers::ArrayView<float>{image->data<float>(), image->data().size()/4}),
         (Containers::Array<float>{Containers::InPlaceInit, {
             1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
@@ -178,8 +165,7 @@ void StbImageImporterTest::rgbaPng() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA);
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xde', '\xad', '\xb5', '\xff',
         '\xca', '\xfe', '\x77', '\xff',

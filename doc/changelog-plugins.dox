@@ -54,9 +54,10 @@ namespace Magnum {
     GL-specific @ref GL::PixelFormat / @ref GL::PixelType or
     @ref GL::CompressedPixelFormat
 -   The @ref Trade::DevIlImageImporter "DevIlImageImporter",
-    @ref Trade::JpegImporter "JpegImporter", @ref Trade::PngImporter "PngImporter"
-    plugins now import images with the generic @ref PixelFormat instead of the
-    GL-specific @ref GL::PixelFormat / @ref GL::PixelType
+    @ref Trade::JpegImporter "JpegImporter", @ref Trade::PngImporter "PngImporter",
+    @ref Trade::StbImageImporter "StbImageImporter" plugins now import images
+    with the generic @ref PixelFormat instead of the GL-specific
+    @ref GL::PixelFormat / @ref GL::PixelType
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

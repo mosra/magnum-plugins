@@ -450,8 +450,7 @@ void TinyGltfImporterTest::image() {
     auto image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA);
-    CORRADE_COMPARE(image->type(), PixelType::UnsignedByte);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(expected).prefix(60), TestSuite::Compare::Container);
 }
 

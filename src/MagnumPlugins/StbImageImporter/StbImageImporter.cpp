@@ -73,48 +73,32 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
 
     stbi_uc* data;
     std::size_t channelSize;
-    PixelType type;
+    PixelFormat format;
     if(stbi_is_hdr_from_memory(_in, _in.size())) {
         data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0));
         channelSize = 4;
-        type = PixelType::Float;
+        switch(components) {
+            case 1: format = PixelFormat::R32F;         break;
+            case 2: format = PixelFormat::RG32F;        break;
+            case 3: format = PixelFormat::RGB32F;       break;
+            case 4: format = PixelFormat::RGBA32F;      break;
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
     } else {
         data = stbi_load_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0);
         channelSize = 1;
-        type = PixelType::UnsignedByte;
+        switch(components) {
+            case 1: format = PixelFormat::R8Unorm;      break;
+            case 2: format = PixelFormat::RG8Unorm;     break;
+            case 3: format = PixelFormat::RGB8Unorm;    break;
+            case 4: format = PixelFormat::RGBA8Unorm;   break;
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
     }
 
     if(!data) {
         Error() << "Trade::StbImageImporter::image2D(): cannot open the image:" << stbi_failure_reason();
         return Containers::NullOpt;
-    }
-
-    PixelFormat format;
-    switch(components) {
-        case 1:
-            #ifndef MAGNUM_TARGET_GLES2
-            format = PixelFormat::Red;
-            #elif !defined(MAGNUM_TARGET_WEBGL)
-            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                PixelFormat::Red : PixelFormat::Luminance;
-            #else
-            format = PixelFormat::Luminance;
-            #endif
-            break;
-        case 2:
-            #ifndef MAGNUM_TARGET_GLES2
-            format = PixelFormat::RG;
-            #elif !defined(MAGNUM_TARGET_WEBGL)
-            format = Context::hasCurrent() && Context::current().isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
-                PixelFormat::RG : PixelFormat::LuminanceAlpha;
-            #else
-            format = PixelFormat::LuminanceAlpha;
-            #endif
-            break;
-
-        case 3: format = PixelFormat::RGB; break;
-        case 4: format = PixelFormat::RGBA; break;
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     /* Copy the data into array with default deleter and free the original (we
@@ -129,7 +113,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     if((size.x()*components*channelSize)%4 != 0)
         storage.setAlignment(1);
 
-    return Trade::ImageData2D{storage, format, type, size, std::move(imageData)};
+    return Trade::ImageData2D{storage, format, size, std::move(imageData)};
 }
 
 }}
