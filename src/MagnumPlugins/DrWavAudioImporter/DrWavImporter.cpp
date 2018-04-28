@@ -38,39 +38,39 @@ namespace Magnum { namespace Audio {
 
 namespace {
 
-#define _v(value) Buffer::Format::value
+#define _v(value) BufferFormat::value
 /* Number of channels = 1-8, number of bytes = 1-4 */
-constexpr const Buffer::Format PcmFormatTable[8][4] = {
+constexpr const BufferFormat PcmFormatTable[8][4] = {
     {_v(Mono8),   _v(Mono16),   _v(MonoFloat),   _v(MonoDouble)}, /* Mono */
     {_v(Stereo8), _v(Stereo16), _v(StereoFloat), _v(StereoDouble)}, /* Stereo */
-    {Buffer::Format{}, Buffer::Format{}, Buffer::Format{}, Buffer::Format{}}, /* Not a thing */
+    {BufferFormat{}, BufferFormat{}, BufferFormat{}, BufferFormat{}}, /* Not a thing */
     {_v(Quad8), _v(Quad16), _v(Quad32), _v(Quad32)},    /* Quad */
-    {Buffer::Format{}, Buffer::Format{}, Buffer::Format{}, Buffer::Format{}}, /* Also not a thing */
+    {BufferFormat{}, BufferFormat{}, BufferFormat{}, BufferFormat{}}, /* Also not a thing */
     {_v(Surround51Channel8), _v(Surround51Channel16), _v(Surround51Channel32), _v(Surround51Channel32)}, /* 5.1 */
     {_v(Surround61Channel8), _v(Surround61Channel16), _v(Surround61Channel32), _v(Surround61Channel32)}, /* 6.1 */
     {_v(Surround71Channel8), _v(Surround71Channel16), _v(Surround71Channel32), _v(Surround71Channel32)}  /* 7.1 */
 };
 
 /* Number of channels = 1-8, divisible by 32 = 1 or 2 */
-constexpr const Buffer::Format IeeeFormatTable[8][2] = {
+constexpr const BufferFormat IeeeFormatTable[8][2] = {
     {_v(MonoFloat), _v(MonoDouble)},                    /* Mono */
     {_v(StereoFloat), _v(StereoDouble)},                /* Stereo */
-    {Buffer::Format{}, Buffer::Format{}},               /* Not a thing */
+    {BufferFormat{}, BufferFormat{}},                   /* Not a thing */
     {_v(Quad32), _v(Quad32)},                           /* Quad */
-    {Buffer::Format{}, Buffer::Format{}},               /* Also not a thing */
+    {BufferFormat{}, BufferFormat{}},                   /* Also not a thing */
     {_v(Surround51Channel32), _v(Surround51Channel32)}, /* 5.1 */
     {_v(Surround61Channel32), _v(Surround61Channel32)}, /* 6.1 */
     {_v(Surround71Channel32), _v(Surround71Channel32)}  /* 7.1 */
 };
 
 /* ALaw is always 8 bits, 1/2 channels */
-constexpr const Buffer::Format ALawFormatTable[2][1] = {
+constexpr const BufferFormat ALawFormatTable[2][1] = {
     {_v(MonoALaw)},
     {_v(StereoALaw)}
 };
 
 /* MuLaw is always 8 bits, 1/2 channels; higher channel support is possible */
-constexpr const Buffer::Format MuLawFormatTable[2][1] = {
+constexpr const BufferFormat MuLawFormatTable[2][1] = {
     {_v(MonoMuLaw)},
     {_v(StereoMuLaw)}
 };
@@ -95,7 +95,7 @@ Containers::Array<char> convert32Pcm(const Containers::ArrayView<const char> con
 }
 
 /* Reads generic audio into most compatible format; also adjusts format */
-Containers::Array<char> read32fPcm(drwav* const handle, const UnsignedInt samples, const UnsignedInt numChannels, Buffer::Format& format) {
+Containers::Array<char> read32fPcm(drwav* const handle, const UnsignedInt samples, const UnsignedInt numChannels, BufferFormat& format) {
     format = IeeeFormatTable[numChannels-1][0];
 
     Containers::Array<char> tempData(samples*sizeof(Float));
@@ -164,7 +164,7 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* PCM has a lot of special cases, as we can read many formats directly */
     if(handle->translatedFormatTag == DR_WAVE_FORMAT_PCM) {
         _format = PcmFormatTable[numChannels-1][normalizedBytesPerSample-1];
-        CORRADE_INTERNAL_ASSERT(_format != Buffer::Format{});
+        CORRADE_INTERNAL_ASSERT(_format != BufferFormat{});
 
         /* If the data is exactly 8 or 16 bits, we can read it raw */
         if(!notExactBitsPerSample && normalizedBytesPerSample < 3) {
@@ -224,7 +224,7 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 void DrWavImporter::doClose() { _data = nullptr; }
 
-Buffer::Format DrWavImporter::doFormat() const { return _format; }
+BufferFormat DrWavImporter::doFormat() const { return _format; }
 
 UnsignedInt DrWavImporter::doFrequency() const { return _frequency; }
 

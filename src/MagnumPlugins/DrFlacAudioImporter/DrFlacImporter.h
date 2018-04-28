@@ -59,22 +59,22 @@ namespace Magnum { namespace Audio {
 Supports mono, stereo and surround sound files of the following formats using
 the [dr_flac](https://github.com/mackron/dr_libs) library:
 
--   8 bit-per-channel, imported as @ref Buffer::Format::Mono8,
-    @ref Buffer::Format::Stereo8, @ref Buffer::Format::Quad8,
-    @ref Buffer::Format::Surround51Channel8, @ref Buffer::Format::Surround61Channel8
-    or @ref Buffer::Format::Surround71Channel8
--   16 bit-per-channel, imported as @ref Buffer::Format::Mono16,
-    @ref Buffer::Format::Stereo16, @ref Buffer::Format::Quad16,
-    @ref Buffer::Format::Surround51Channel16, @ref Buffer::Format::Surround61Channel16
-    or @ref Buffer::Format::Surround71Channel16
+-   8 bit-per-channel, imported as @ref BufferFormat::Mono8,
+    @ref BufferFormat::Stereo8, @ref BufferFormat::Quad8,
+    @ref BufferFormat::Surround51Channel8, @ref BufferFormat::Surround61Channel8
+    or @ref BufferFormat::Surround71Channel8
+-   16 bit-per-channel, imported as @ref BufferFormat::Mono16,
+    @ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
+    @ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
+    or @ref BufferFormat::Surround71Channel16
 -   24 bit-per-channel, imported as
-    @ref Buffer::Format::MonoFloat, @ref Buffer::Format::StereoFloat,
-    @ref Buffer::Format::Quad32, @ref Buffer::Format::Surround51Channel32,
-    @ref Buffer::Format::Surround61Channel32 or @ref Buffer::Format::Surround71Channel32
+    @ref BufferFormat::MonoFloat, @ref BufferFormat::StereoFloat,
+    @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
+    @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
 -   32 bit-per-channel, imported as
-    @ref Buffer::Format::MonoDouble, @ref Buffer::Format::StereoDouble,
-    @ref Buffer::Format::Quad32, @ref Buffer::Format::Surround51Channel32,
-    @ref Buffer::Format::Surround61Channel32 or @ref Buffer::Format::Surround71Channel32
+    @ref BufferFormat::MonoDouble, @ref BufferFormat::StereoDouble,
+    @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
+    @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
 
 This plugin depends on the @ref Audio library and is built if
 `WITH_DRFLACAUDIOIMPORTER` is enabled when building Magnum. To use as a dynamic
@@ -104,12 +104,12 @@ class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter 
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL void doClose() override;
 
-        MAGNUM_DRFLACAUDIOIMPORTER_LOCAL Buffer::Format doFormat() const override;
+        MAGNUM_DRFLACAUDIOIMPORTER_LOCAL BufferFormat doFormat() const override;
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL UnsignedInt doFrequency() const override;
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL Containers::Array<char> doData() override;
 
         Containers::Array<char> _data;
-        Buffer::Format _format;
+        BufferFormat _format;
         UnsignedInt _frequency;
 };
 

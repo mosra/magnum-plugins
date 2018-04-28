@@ -58,9 +58,9 @@ namespace Magnum { namespace Audio {
 @brief OGG audio importer plugin using stb_vorbis
 
 Supports mono, stereo and surround sound files with 16 bits per channel. The
-files are imported with @ref Buffer::Format::Mono16, @ref Buffer::Format::Stereo16,
-@ref Buffer::Format::Quad16, @ref Buffer::Format::Surround51Channel16,
-@ref Buffer::Format::Surround61Channel16 and @ref Buffer::Format::Surround71Channel16,
+files are imported with @ref BufferFormat::Mono16, @ref BufferFormat::Stereo16,
+@ref BufferFormat::Quad16, @ref BufferFormat::Surround51Channel16,
+@ref BufferFormat::Surround61Channel16 and @ref BufferFormat::Surround71Channel16,
 respectively.
 
 This plugin depends on the @ref Audio library and is built if
@@ -92,12 +92,12 @@ class MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT StbVorbisImporter: public AbstractImp
         MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
         MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL void doClose() override;
 
-        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL Buffer::Format doFormat() const override;
+        MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL BufferFormat doFormat() const override;
         MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL UnsignedInt doFrequency() const override;
         MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL Containers::Array<char> doData() override;
 
         Containers::Array<char> _data;
-        Buffer::Format _format;
+        BufferFormat _format;
         UnsignedInt _frequency;
 };
 

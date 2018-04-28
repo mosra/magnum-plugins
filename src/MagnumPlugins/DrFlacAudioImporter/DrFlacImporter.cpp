@@ -39,14 +39,14 @@ namespace Magnum { namespace Audio {
 
 namespace {
 
-#define _v(value) Buffer::Format::value
+#define _v(value) BufferFormat::value
 /* number of channels = 1-8, number of bytes = 1-4 */
-const Buffer::Format  flacFormatTable[8][4] = {
+const BufferFormat flacFormatTable[8][4] = {
     {_v(Mono8),   _v(Mono16),   _v(MonoFloat),   _v(MonoDouble)}, /* Mono */
     {_v(Stereo8), _v(Stereo16), _v(StereoFloat), _v(StereoDouble)}, /* Stereo */
-    {Buffer::Format{}, Buffer::Format{}, Buffer::Format{}, Buffer::Format{}}, /* Not a thing */
+    {BufferFormat{}, BufferFormat{}, BufferFormat{}, BufferFormat{}}, /* Not a thing */
     {_v(Quad8), _v(Quad16), _v(Quad32), _v(Quad32)},    /* Quad */
-    {Buffer::Format{}, Buffer::Format{}, Buffer::Format{}, Buffer::Format{}}, /* Also not a thing */
+    {BufferFormat{}, BufferFormat{}, BufferFormat{}, BufferFormat{}}, /* Also not a thing */
     {_v(Surround51Channel8), _v(Surround51Channel16), _v(Surround51Channel32), _v(Surround51Channel32)}, /* 5.1 */
     {_v(Surround61Channel8), _v(Surround61Channel16), _v(Surround61Channel32), _v(Surround61Channel32)}, /* 6.1 */
     {_v(Surround71Channel8), _v(Surround71Channel16), _v(Surround71Channel32), _v(Surround71Channel32)}  /* 7.1 */
@@ -117,7 +117,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
 
     _frequency = handle->sampleRate;
     _format = flacFormatTable[numChannels-1][normalizedBytesPerSample-1];
-    CORRADE_INTERNAL_ASSERT(_format != Buffer::Format{});
+    CORRADE_INTERNAL_ASSERT(_format != BufferFormat{});
 
     /* 32-bit integers need to be normalized to Double (with a 32 bit mantissa) */
     if(normalizedBytesPerSample == 4) {
@@ -190,7 +190,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
 
 void DrFlacImporter::doClose() { _data = nullptr; }
 
-Buffer::Format DrFlacImporter::doFormat() const { return _format; }
+BufferFormat DrFlacImporter::doFormat() const { return _format; }
 
 UnsignedInt DrFlacImporter::doFrequency() const { return _frequency; }
 

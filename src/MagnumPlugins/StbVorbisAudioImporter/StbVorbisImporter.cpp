@@ -65,17 +65,17 @@ void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
 
     /** @todo Floating-point formats */
     if(numChannels == 1)
-        _format = Buffer::Format::Mono16;
+        _format = BufferFormat::Mono16;
     else if(numChannels == 2)
-        _format = Buffer::Format::Stereo16;
+        _format = BufferFormat::Stereo16;
     else if(numChannels == 4)
-        _format = Buffer::Format::Quad16;
+        _format = BufferFormat::Quad16;
     else if(numChannels == 6)
-        _format = Buffer::Format::Surround51Channel16;
+        _format = BufferFormat::Surround51Channel16;
     else if(numChannels == 7)
-        _format = Buffer::Format::Surround61Channel16;
+        _format = BufferFormat::Surround61Channel16;
     else if(numChannels == 8)
-        _format = Buffer::Format::Surround71Channel16;
+        _format = BufferFormat::Surround71Channel16;
     else {
         Error() << "Audio::StbVorbisImporter::openData(): unsupported channel count"
                 << numChannels << "with" << 16 << "bits per sample";
@@ -89,7 +89,7 @@ void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
 
 void StbVorbisImporter::doClose() { _data = nullptr; }
 
-Buffer::Format StbVorbisImporter::doFormat() const { return _format; }
+BufferFormat StbVorbisImporter::doFormat() const { return _format; }
 
 UnsignedInt StbVorbisImporter::doFrequency() const { return _frequency; }
 

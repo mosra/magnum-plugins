@@ -84,7 +84,7 @@ void StbVorbisImporterTest::mono16() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
 
-    CORRADE_COMPARE(importer->format(), Buffer::Format::Mono16);
+    CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 96000);
     CORRADE_COMPARE_AS(importer->data(),
         (Containers::Array<char>{Containers::InPlaceInit, {
@@ -96,7 +96,7 @@ void StbVorbisImporterTest::stereo8() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "stereo8.ogg")));
 
-    CORRADE_COMPARE(importer->format(), Buffer::Format::Stereo16);
+    CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 96000);
     CORRADE_COMPARE_AS(importer->data(),
         (Containers::Array<char>{Containers::InPlaceInit, {
