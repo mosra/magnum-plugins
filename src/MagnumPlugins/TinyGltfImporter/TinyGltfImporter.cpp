@@ -374,6 +374,12 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
     if(diffuseIt != material.extPBRValues.end()) {
         diffuseTexture = diffuseIt->second.TextureIndex();
         flags |= PhongMaterialData::Flag::DiffuseTexture;
+    } else {
+        diffuseIt = material.values.find("baseColorTexture");
+        if(diffuseIt != material.values.end()) {
+            diffuseTexture = diffuseIt->second.TextureIndex();
+            flags |= PhongMaterialData::Flag::DiffuseTexture;
+        }
     }
 
     auto specularIt = material.extPBRValues.find("specularShininessTexture");
@@ -384,14 +390,13 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
 
     /* Colors */
     Vector3 diffuseColor{1.0f};
-    Vector3 specularColor{0.0f};
-
     auto diffuseFactorIt = material.extPBRValues.find("diffuseFactor");
     if(diffuseFactorIt != material.extPBRValues.end()) {
         const tinygltf::ColorValue& diffuseRaw = diffuseFactorIt->second.ColorFactor();
         diffuseColor = Vector3{float(diffuseRaw[0]), float(diffuseRaw[1]), float(diffuseRaw[2])};
     }
 
+    Vector3 specularColor{0.0f};
     auto specularFactorIt = material.extPBRValues.find("specularFactor");
     if(specularFactorIt != material.extPBRValues.end()) {
         const tinygltf::ColorValue& specularRaw = specularFactorIt->second.ColorFactor();
@@ -400,7 +405,10 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
 
     /* Parameters */
     Float shininess{1.0f};
-    shininess = material.extPBRValues.at("shininessFactor").Factor();
+    auto shininessFactorIt = material.extPBRValues.find("shininessFactor");
+    if(shininessFactorIt != material.extPBRValues.end()) {
+        shininess = shininessFactorIt->second.Factor();
+    }
 
     /* Put things together */
     std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess, &material}};
