@@ -97,29 +97,27 @@
 # Magnum library dependencies
 set(_MAGNUMPLUGINS_DEPENDENCIES )
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
-    string(TOUPPER ${_component} _COMPONENT)
-
     if(_component MATCHES ".+AudioImporter$")
-        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES Audio)
+        set(_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES Audio)
     elseif(_component MATCHES ".+(Importer|ImageConverter)")
-        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES Trade)
+        set(_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES Trade)
     elseif(_component MATCHES ".+(Font|FontConverter)$")
-        set(_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES Text)
+        set(_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES Text)
     endif()
 
     if(_component STREQUAL ColladaImporter)
-        list(APPEND _MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES MeshTools)
+        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES MeshTools)
     elseif(_component STREQUAL AssimpImporter)
-        list(APPEND _MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES AnyImageImporter)
+        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     elseif(_component STREQUAL ColladaImporter)
-        list(APPEND _MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES AnyImageImporter)
+        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     elseif(_component STREQUAL OpenGexImporter)
-        list(APPEND _MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES AnyImageImporter)
+        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     elseif(_component STREQUAL TinyGltfImporter)
-        list(APPEND _MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES AnyImageImporter)
+        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     endif()
 
-    list(APPEND _MAGNUMPLUGINS_DEPENDENCIES ${_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES})
+    list(APPEND _MAGNUMPLUGINS_DEPENDENCIES ${_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES})
 endforeach()
 find_package(Magnum REQUIRED ${_MAGNUMPLUGINS_DEPENDENCIES})
 
@@ -128,27 +126,32 @@ find_path(MAGNUMPLUGINS_INCLUDE_DIR MagnumPlugins
     HINTS ${MAGNUM_INCLUDE_DIR})
 mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 
+# Component distinction (listing them explicitly to avoid mistakes with finding
+# components from other repositories)
+set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
+set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
+    AssimpImporter ColladaImporter DdsImporter DevIlImageImporter
+    DrFlacAudioImporter DrWavAudioImporter FreeTypeFont HarfBuzzFont
+    JpegImporter MiniExrImageConverter OpenGexImporter PngImageConverter
+    PngImporter StanfordImporter StbImageConverter StbImageImporter
+    StbTrueTypeFont StbVorbisAudioImporter TinyGltfImporter)
+
+# Inter-component dependencies
+set(_MAGNUMPLUGINS_TinyGltfImporter_DEPENDENCIES StbImageImporter)
+set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
+set(_MAGNUMPLUGINS_OpenGexImporter_DEPENDENCIES OpenDdl)
+
 # Ensure that all inter-component dependencies are specified as well
 set(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS )
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
-    string(TOUPPER ${_component} _COMPONENT)
-
-    if(_component STREQUAL TinyGltfImporter)
-        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES StbImageImporter)
-    elseif(_component STREQUAL HarfBuzzFont)
-        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES FreeTypeFont)
-    elseif(_component STREQUAL OpenGexImporter)
-        set(_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES OpenDdl)
-    endif()
-
     # Mark the dependencies as required if the component is also required
     if(MagnumPlugins_FIND_REQUIRED_${_component})
-        foreach(_dependency ${_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES})
+        foreach(_dependency ${_MAGNUMPLUGINS_${_component}_DEPENDENCIES})
             set(MagnumPlugins_FIND_REQUIRED_${_dependency} TRUE)
         endforeach()
     endif()
 
-    list(APPEND _MAGNUMPLUGINS_ADDITIONAL_COMPONENTS ${_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES})
+    list(APPEND _MAGNUMPLUGINS_ADDITIONAL_COMPONENTS ${_MAGNUMPLUGINS_${_component}_DEPENDENCIES})
 endforeach()
 
 # Join the lists, remove duplicate components
@@ -159,10 +162,12 @@ if(MagnumPlugins_FIND_COMPONENTS)
     list(REMOVE_DUPLICATES MagnumPlugins_FIND_COMPONENTS)
 endif()
 
-# Component distinction (listing them explicitly to avoid mistakes with finding
-# components from other repositories)
-set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS "^(OpenDdl)$")
-set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS "^(AssimpImporter|ColladaImporter|DdsImporter|DevIlImageImporter|DrFlacAudioImporter|DrWavAudioImporter|FreeTypeFont|HarfBuzzFont|JpegImporter|MiniExrImageConverter|OpenGexImporter|PngImageConverter|PngImporter|StanfordImporter|StbImageConverter|StbImageImporter|StbTrueTypeFont|StbVorbisAudioImporter|TinyGltfImporter)$")
+# Convert components lists to regular expressions so I can use if(MATCHES).
+# TODO: Drop this once CMake 3.3 and if(IN_LIST) can be used
+foreach(_WHAT LIBRARY PLUGIN)
+    string(REPLACE ";" "|" _MAGNUMPLUGINS_${_WHAT}_COMPONENTS "${_MAGNUMPLUGINS_${_WHAT}_COMPONENT_LIST}")
+    set(_MAGNUMPLUGINS_${_WHAT}_COMPONENTS "^(${_MAGNUMPLUGINS_${_WHAT}_COMPONENTS})$")
+endforeach()
 
 # Find all components
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
@@ -387,13 +392,13 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             # Link to core Magnum library, add other Magnum dependencies
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Magnum::Magnum)
-            foreach(_dependency ${_MAGNUMPLUGINS_${_COMPONENT}_MAGNUM_DEPENDENCIES})
+            foreach(_dependency ${_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES Magnum::${_dependency})
             endforeach()
 
             # Add inter-project dependencies
-            foreach(_dependency ${_MAGNUMPLUGINS_${_COMPONENT}_DEPENDENCIES})
+            foreach(_dependency ${_MAGNUMPLUGINS_${_component}_DEPENDENCIES})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES MagnumPlugins::${_dependency})
             endforeach()
