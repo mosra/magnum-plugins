@@ -29,6 +29,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
+#include <Magnum/Array.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Quaternion.h>
@@ -43,6 +44,7 @@
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
+#include <Magnum/Sampler.h>
 
 #include "configure.h"
 
@@ -69,6 +71,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void mesh();
 
     void material();
+    void texture();
 
     void image();
 
@@ -113,6 +116,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::mesh,
 
                        &TinyGltfImporterTest::material,
+                       &TinyGltfImporterTest::texture,
 
                        &TinyGltfImporterTest::image}, InstanceDataCount);
 
@@ -430,6 +434,37 @@ void TinyGltfImporterTest::material() {
 
     CORRADE_COMPARE(importer->materialForName("secondMaterial"), 1);
     CORRADE_COMPARE(importer->materialName(1), "secondMaterial");
+}
+
+void TinyGltfImporterTest::texture() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "texture" + std::string{data.extension})));
+
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    auto material = importer->material(0);
+
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+
+    auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+    CORRADE_COMPARE(phong.diffuseTexture(), 0);
+    CORRADE_COMPARE(phong.shininess(), 1.0);
+
+    auto texture = importer->texture(0);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->image(), 0);
+    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+
+    CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Linear);
+
+    CORRADE_COMPARE(texture->wrapping(), Array3D<Sampler::Wrapping>(Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat));
 }
 
 void TinyGltfImporterTest::image() {
