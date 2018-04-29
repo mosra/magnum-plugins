@@ -17,14 +17,14 @@
             "componentType" : 5126,
             "count" : 3,
             "max" : [
-                0.6856166124343872,
-                1.0624043941497803,
-                0.291010320186615
+                1.0,
+                0.0,
+                1.0
             ],
             "min" : [
-                -0.5848886370658875,
-                -1.0295608043670654,
-                -0.2770037055015564
+                -1.0,
+                0.0,
+                -1.0
             ],
             "type" : "VEC3"
         },
@@ -33,16 +33,36 @@
             "componentType" : 5126,
             "count" : 3,
             "max" : [
-                0.4390820562839508,
-                0.06416241824626923,
-                0.8961530327796936
+                1.0,
+                1.0,
+                1.0,
+                1.0
             ],
             "min" : [
-                0.4390820562839508,
-                0.06416241824626923,
-                0.8961530327796936
+                0.0,
+                0.0,
+                0.0,
+                1.0
             ],
-            "type" : "VEC3"
+            "type" : "VEC4"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 3,
+            "max" : [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "min" : [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "type" : "VEC4"
         }
     ],
     "asset" : {
@@ -64,26 +84,32 @@
         },
         {
             "buffer" : 0,
-            "byteLength" : 36,
+            "byteLength" : 48,
             "byteOffset" : 40,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 88,
             "target" : 34962
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 76,
-            "uri" : "mesh.bin"
+            "byteLength" : 136,
+            "uri" : "data:application/octet-stream;base64,AAECAAAAgD8AAAAAAACAPwAAgL8AAAAAAACAvwAAgL8AAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAgD8AAAAAAACAP4GAAD+BgAA/gYAAPwAAgD8AAIA/AACAPwAAgD8AAIA/AAAAAAAAAAAAAAAAAACAPw=="
         }
     ],
     "meshes" : [
         {
-            "name" : "Mesh",
+            "name" : "Plane",
             "primitives" : [
                 {
                     "attributes" : {
-                        "NORMAL" : 2,
-                        "POSITION" : 1,
-                        "UNKNOWN" : 1
+                        "COLOR_0" : 2,
+                        "COLOR_1" : 3,
+                        "POSITION" : 1
                     },
                     "indices" : 0
                 }
@@ -93,21 +119,7 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "Mesh"
-        },
-        {
-            "name" : "Sun",
-            "rotation" : [
-                -0.17890803515911102,
-                0.2391258329153061,
-                -0.10653585195541382,
-                0.9483992457389832
-            ],
-            "translation" : [
-                1.6413490772247314,
-                1.3488967418670654,
-                1.5866162776947021
-            ]
+            "name" : "Plane"
         }
     ],
     "scene" : 0,
@@ -115,7 +127,6 @@
         {
             "name" : "Scene",
             "nodes" : [
-                1,
                 0
             ]
         }

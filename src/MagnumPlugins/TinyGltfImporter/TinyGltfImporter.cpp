@@ -31,6 +31,7 @@
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
@@ -300,32 +301,76 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     }
     /* LCOV_EXCL_STOP */
 
-    /* Vertices */
-    const tinygltf::Accessor& posAccessor = _d->model.accessors[primitive.attributes.find("POSITION")->second];
-    const tinygltf::BufferView& posBufferview = _d->model.bufferViews[posAccessor.bufferView];
-    const tinygltf::Buffer& posBuffer = _d->model.buffers[posBufferview.buffer];
-
-    if(posAccessor.type != TINYGLTF_TYPE_VEC3) {
-        Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of vertex positions is VEC3";
-        return Containers::NullOpt;
-    }
-
     std::vector<Vector3> positions;
-    size_t numPositions = posBufferview.byteLength/sizeof(Vector3);
-    std::copy_n(reinterpret_cast<const Vector3*>(posBuffer.data.data() + posBufferview.byteOffset), numPositions, std::back_inserter(positions));
-
-    const tinygltf::Accessor& normalAccessor = _d->model.accessors[primitive.attributes.find("NORMAL")->second];
-    const tinygltf::BufferView& normalBufferview = _d->model.bufferViews[normalAccessor.bufferView];
-    const tinygltf::Buffer& normalBuffer = _d->model.buffers[normalBufferview.buffer];
-
-    if(normalAccessor.type != TINYGLTF_TYPE_VEC3) {
-        Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of normal is VEC3";
-        return Containers::NullOpt;
-    }
-
     std::vector<Vector3> normals;
-    size_t numNormals = normalBufferview.byteLength/sizeof(Vector3);
-    std::copy_n(reinterpret_cast<const Vector3*>(normalBuffer.data.data() + normalBufferview.byteOffset), numNormals, std::back_inserter(normals));
+    std::vector<std::vector<Vector2>> textureLayers;
+    std::vector<std::vector<Color4>> colorLayers;
+
+    for (auto& attribute : primitive.attributes) {
+        const tinygltf::Accessor& accessor = _d->model.accessors[attribute.second];
+        const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
+        const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
+
+        if (attribute.first == "POSITION") {
+            if(accessor.type != TINYGLTF_TYPE_VEC3) {
+                Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3";
+                return Containers::NullOpt;
+            }
+
+            const size_t numPositions = bufferView.byteLength/sizeof(Vector3);
+            positions.reserve(numPositions);
+            std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset), numPositions, std::back_inserter(positions));
+
+        } else if (attribute.first == "NORMAL") {
+            if(accessor.type != TINYGLTF_TYPE_VEC3) {
+                Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3";
+                return Containers::NullOpt;
+            }
+
+            const size_t numNormals = bufferView.byteLength/sizeof(Vector3);
+            normals.reserve(numNormals);
+            std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset), numNormals, std::back_inserter(normals));
+
+        /* Texture coordinate attribute ends with _0, _1 ... */
+        } else if (Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
+            if(accessor.type != TINYGLTF_TYPE_VEC2) {
+                Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC2";
+                return Containers::NullOpt;
+            }
+
+            textureLayers.emplace_back();
+            std::vector<Vector2>& textureCoordinates = textureLayers.back();
+
+            const size_t numTextureCoordinates = bufferView.byteLength/sizeof(Vector2);
+            textureCoordinates.reserve(numTextureCoordinates);
+            std::copy_n(reinterpret_cast<const Vector2*>(buffer.data.data() + bufferView.byteOffset), numTextureCoordinates, std::back_inserter(textureCoordinates));
+
+        /* Color attribute ends with _0, _1 ... */
+        } else if (Utility::String::beginsWith(attribute.first, "COLOR")) {
+            std::vector<Color4> colors{};
+
+            if(accessor.type == TINYGLTF_TYPE_VEC3) {
+                const size_t numColors = bufferView.byteLength/sizeof(Vector3);
+                colors.reserve(numColors);
+                std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset), numColors, std::back_inserter(colors));
+
+            } else if(accessor.type == TINYGLTF_TYPE_VEC4) {
+                const size_t numColors = bufferView.byteLength/sizeof(Vector4);
+                colors.reserve(numColors);
+                std::copy_n(reinterpret_cast<const Vector4*>(buffer.data.data() + bufferView.byteOffset), numColors, std::back_inserter(colors));
+
+            } else {
+                Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3 or VEC4";
+                return Containers::NullOpt;
+            }
+
+            colorLayers.emplace_back(std::move(colors));
+
+        } else {
+            Warning() << "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute" << attribute.first;
+            continue;
+        }
+    }
 
     /* Indices */
     const tinygltf::Accessor& idxAccessor = _d->model.accessors[primitive.indices];
@@ -347,7 +392,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxBufferView.byteLength/sizeof(UnsignedInt), std::back_inserter(indices));
     } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
-    return MeshData3D{meshPrimitive, std::move(indices), {std::move(positions)}, {std::move(normals)}, {}, {}, &mesh};
+    return MeshData3D(meshPrimitive, std::move(indices), {std::move(positions)}, {std::move(normals)}, textureLayers, colorLayers, &mesh);
 }
 
 UnsignedInt TinyGltfImporter::doMaterialCount() const {
@@ -523,7 +568,7 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
 
         return imageImporter.image2D(0);
 
-    /* Load external image*/
+    /* Load external image */
     } else {
         AnyImageImporter imageImporter{*manager()};
 

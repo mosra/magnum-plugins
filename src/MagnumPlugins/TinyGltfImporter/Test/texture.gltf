@@ -33,40 +33,6 @@
             "componentType" : 5126,
             "count" : 3,
             "max" : [
-                -0.0,
-                1.0,
-                -0.0
-            ],
-            "min" : [
-                -0.0,
-                1.0,
-                -0.0
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 3,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                0.9805988073348999,
-                0.0,
-                -0.19602563977241516,
-                1.0
-            ],
-            "min" : [
-                0.9805988073348999,
-                0.0,
-                -0.19602563977241516,
-                1.0
-            ],
-            "type" : "VEC4"
-        },
-        {
-            "bufferView" : 4,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
                 0.949910044670105,
                 0.9499099999666214
             ],
@@ -77,7 +43,7 @@
             "type" : "VEC2"
         },
         {
-            "bufferView" : 5,
+            "bufferView" : 3,
             "componentType" : 5126,
             "count" : 3,
             "max" : [
@@ -110,33 +76,21 @@
         },
         {
             "buffer" : 0,
-            "byteLength" : 36,
+            "byteLength" : 24,
             "byteOffset" : 40,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 48,
-            "byteOffset" : 76,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
             "byteLength" : 24,
-            "byteOffset" : 124,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 24,
-            "byteOffset" : 148,
+            "byteOffset" : 64,
             "target" : 34962
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 172,
-            "uri" : "data:application/octet-stream;base64,AAECAAAAgD8AAAAAAACAPwAAgL8AAAAAAACAvwAAgL8AAAAAAACAPwAAAIAAAIA/AAAAgAAAAIAAAIA/AAAAgAAAAIAAAIA/AAAAgIYIez8AAAAA8rpIvgAAgD+GCHs/AAAAAPK6SL4AAIA/hgh7PwAAAADyuki+AACAP04tcz9NLXM/mpmZPiArTT3NzMw9zcxMPwAAAD8AAAA/mpmZPpqZmT7NzEw+4noUPw=="
+            "byteLength" : 88,
+            "uri" : "data:application/octet-stream;base64,AAECAAAAgD8AAAAAAACAPwAAgL8AAAAAAACAvwAAgL8AAAAAAACAP04tcz9NLXM/mpmZPiArTT3NzMw9zcxMPwAAAD8AAAA/mpmZPpqZmT7NzEw+4noUPw=="
         }
     ],
     "images" : [
@@ -167,11 +121,9 @@
             "primitives" : [
                 {
                     "attributes" : {
-                        "NORMAL" : 2,
                         "POSITION" : 1,
-                        "TANGENT" : 3,
-                        "TEXCOORD_0" : 4,
-                        "TEXCOORD_1" : 5
+                        "TEXCOORD_0" : 2,
+                        "TEXCOORD_1" : 3
                     },
                     "indices" : 0,
                     "material" : 0
@@ -205,7 +157,10 @@
         }
     ],
     "samplers" : [
-        {}
+        {
+            "wrapS": 33648,
+            "wrapT": 33071
+        }
     ],
     "scene" : 0,
     "scenes" : [

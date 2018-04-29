@@ -63,6 +63,8 @@ corrade_add_test(TinyGltfImporterTest Test.cpp
         mesh.gltf
         mesh.bin
         mesh.glb
+        mesh-colors.gltf
+        mesh-colors.glb
         object-new.gltf
         object-new.glb
         object-rotation.gltf
@@ -73,6 +75,8 @@ corrade_add_test(TinyGltfImporterTest Test.cpp
         object-transformation.glb
         object-translation.gltf
         object-translation.glb
+        texture.gltf
+        texture.glb
         texture.png
 )
 if(NOT BUILD_PLUGINS_STATIC)

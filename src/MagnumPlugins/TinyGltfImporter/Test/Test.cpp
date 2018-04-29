@@ -69,6 +69,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void objectScaling();
 
     void mesh();
+    void meshColors();
 
     void material();
     void texture();
@@ -114,6 +115,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::objectScaling,
 
                        &TinyGltfImporterTest::mesh,
+                       &TinyGltfImporterTest::meshColors,
 
                        &TinyGltfImporterTest::material,
                        &TinyGltfImporterTest::texture,
@@ -362,6 +364,9 @@ void TinyGltfImporterTest::objectScaling() {
 }
 
 void TinyGltfImporterTest::mesh() {
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
     auto&& data = InstanceData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
@@ -391,6 +396,35 @@ void TinyGltfImporterTest::mesh() {
     }), TestSuite::Compare::Container);
 
     CORRADE_COMPARE(meshObject->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
+
+    /* Test file contains UNKNOWN attribute which is not imported */
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute UNKNOWN\n");
+}
+
+void TinyGltfImporterTest::meshColors() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-colors" + std::string{data.extension})));
+
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+
+    auto meshObject = importer->mesh3D(0);
+    CORRADE_VERIFY(meshObject);
+
+    CORRADE_COMPARE(meshObject->colorArrayCount(), 2);
+    CORRADE_COMPARE_AS(meshObject->colors(0), (std::vector<Color4>{
+        {0.0f, 0.0f, 1.0f, 1.0f},
+        {1.0f, 0.0f, 0.0f, 1.0f},
+        {0.0f, 1.0f, 0.0f, 1.0f}
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(meshObject->colors(1), (std::vector<Color4>{
+        {0.501962f, 0.501962f, 0.501962f, 1.0f},
+        {1.0f, 1.0f, 1.0f, 1.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    }), TestSuite::Compare::Container);
 }
 
 void TinyGltfImporterTest::material() {
@@ -461,10 +495,22 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
 
     CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
-    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Linear);
+    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Nearest);
     CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Linear);
 
-    CORRADE_COMPARE(texture->wrapping(), Array3D<Sampler::Wrapping>(Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat));
+    CORRADE_COMPARE(texture->wrapping(), Array3D<Sampler::Wrapping>(Sampler::Wrapping::MirroredRepeat, Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::Repeat));
+
+    /* Texture coordinates */
+    auto meshObject = importer->mesh3D(0);
+    CORRADE_VERIFY(meshObject);
+
+    CORRADE_COMPARE(meshObject->textureCoords2DArrayCount(), 2);
+    CORRADE_COMPARE_AS(meshObject->textureCoords2D(0), (std::vector<Vector2>{
+        {0.94991f, 0.94991f}, {0.3f, 0.05009f}, {0.1f, 0.8f}
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(meshObject->textureCoords2D(1), (std::vector<Vector2>{
+        {0.5f, 0.5f}, {0.3f, 0.3f}, {0.2f, 0.58f}
+    }), TestSuite::Compare::Container);
 }
 
 void TinyGltfImporterTest::image() {
