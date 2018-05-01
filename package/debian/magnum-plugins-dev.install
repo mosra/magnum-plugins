@@ -1,2 +1,4 @@
+usr/include/Magnum/*
 usr/include/MagnumPlugins/*
+usr/lib*/lib*.so
 usr/share/cmake*
