@@ -122,8 +122,8 @@ endif()
 set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR share/cmake/MagnumPlugins)
 
 # Library version
-set(MAGNUM_LIBRARY_VERSION 1.0)
-set(MAGNUM_LIBRARY_SOVERSION 1)
+set(MAGNUM_LIBRARY_VERSION 2.0)
+set(MAGNUM_LIBRARY_SOVERSION 2)
 
 add_subdirectory(modules)
 add_subdirectory(src)
