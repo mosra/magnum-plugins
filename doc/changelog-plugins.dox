@@ -30,9 +30,12 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@section changelog-plugins-latest Changes since 2018.02
+@section changelog-plugins-2018-04 2018.04
 
-@subsection changelog-plugins-latest-dependencies Dependency changes
+Released 2018-05-01, tagged as
+[v2018.04](https://github.com/mosra/magnum-plugins/releases/tag/v2018.04).
+
+@subsection changelog-plugins-2018-04-dependencies Dependency changes
 
 -   Building for Android now requires CMake 3.7 with builtin Android
     crosscompilation support, the old toolchains were removed. Only the Clang
@@ -40,14 +43,14 @@ namespace Magnum {
     dropped, as it was still missing some important C++11 functionality. See
     @ref building-cross-android for more information.
 
-@subsection changelog-plugins-latest-new New features
+@subsection changelog-plugins-2018-04-new New features
 
 -   New @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin for importing
     glTF and binary glTF files (see [mosra/magnum-plugins#40](https://github.com/mosra/magnum-plugins/pull/40))
 -   The @ref Trade-AssimpImporter-configuration "AssimpImporter" plugin now
     supports external configuration for postprocessing
 
-@subsection changelog-plugins-latest-changes Changes and improvements
+@subsection changelog-plugins-2018-04-changes Changes and improvements
 
 -   The @ref Trade::DdsImporter "DdsImporter" plugin now imports images with
     the generic @ref PixelFormat / @ref CompressedPixelFormat instead of the
@@ -63,7 +66,7 @@ namespace Magnum {
     @ref Trade::StbImageConverter "StbImageConverter" plugins now accept the
     generic @ref PixelFormat instead of GL-specific formats
 
-@subsection changelog-plugins-latest-buildsystem Build system
+@subsection changelog-plugins-2018-04-buildsystem Build system
 
 -   The @ref Audio::AnyImporter "AnyAudioImporter", @ref Trade::AnyImageConverter "AnyImageConverter",
     @ref Trade::AnyImageImporter "AnyImageImporter" and @ref Trade::AnySceneImporter "AnySceneImporter"
@@ -81,7 +84,7 @@ namespace Magnum {
 -   Fixed the Debian package to not include a revision. While just a warning on
     Ubuntu, it's a hard error on Debian. (See [mosra/corrade#44](https://github.com/mosra/corrade/issues/44).)
 
-@subsection changelog-plugins-latest-bugfixes Bug fixes
+@subsection changelog-plugins-2018-04-bugfixes Bug fixes
 
 -   Unloading the @ref Text::HarfBuzzFont "HarfBuzzFont" plugin also implictly
     unloaded the FreeType library, making the @ref Text::FreeTypeFont "FreeTypeFont"
@@ -91,12 +94,12 @@ namespace Magnum {
     @ref Trade::TextureData::mipmapFilter() and
     @ref Trade::TextureData::wrapping() properties
 
-@subsection changelog-plugins-latest-deprecated Deprecated APIs
+@subsection changelog-plugins-2018-04-deprecated Deprecated APIs
 
 -   @ref OpenDdl headers in `MagnumPlugins/OpenGexImporter/OpenDdl` are
     deprecated, include them from the `Magnum/OpenDdl` directory instead.
 
-@subsection changelog-plugins-latest-compatibility Potential compatibility breakages
+@subsection changelog-plugins-2018-04-compatibility Potential compatibility breakages
 
 -   The @ref Trade::DdsImporter "DdsImporter" plugin no longer recognizes depth
     image formats. This may be re-added again in the future.
