@@ -43,7 +43,7 @@ namespace Magnum {
 @subsection changelog-plugins-latest-new New features
 
 -   New @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin for importing
-    glTF and binary glTF files
+    glTF and binary glTF files (see [mosra/magnum-plugins#40](https://github.com/mosra/magnum-plugins/pull/40))
 -   The @ref Trade-AssimpImporter-configuration "AssimpImporter" plugin now
     supports external configuration for postprocessing
 
@@ -79,7 +79,7 @@ namespace Magnum {
     static in order to use it. See @ref building-plugins-features for more
     information.
 -   Fixed the Debian package to not include a revision. While just a warning on
-    Ubuntu, it's a hard error on Debian.
+    Ubuntu, it's a hard error on Debian. (See [mosra/corrade#44](https://github.com/mosra/corrade/issues/44).)
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
