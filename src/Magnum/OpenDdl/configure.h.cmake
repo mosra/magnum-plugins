@@ -1,5 +1,3 @@
-#ifndef Magnum_OpenDdl_visibility_h
-#define Magnum_OpenDdl_visibility_h
 /*
     This file is part of Magnum.
 
@@ -25,24 +23,5 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Corrade/Utility/VisibilityMacros.h>
+#cmakedefine MAGNUM_OPENDDL_BUILD_STATIC
 
-#include "Magnum/OpenDdl/configure.h"
-
-#ifndef DOXYGEN_GENERATING_OUTPUT
-#ifndef MAGNUM_OPENDDL_BUILD_STATIC
-    #if defined(MagnumOpenDdl_EXPORTS) || defined(MagnumOpenDdlObjects_EXPORTS)
-        #define MAGNUM_OPENDDL_EXPORT CORRADE_VISIBILITY_EXPORT
-    #else
-        #define MAGNUM_OPENDDL_EXPORT CORRADE_VISIBILITY_IMPORT
-    #endif
-#else
-    #define MAGNUM_OPENDDL_EXPORT CORRADE_VISIBILITY_STATIC
-#endif
-#define MAGNUM_OPENDDL_LOCAL CORRADE_VISIBILITY_LOCAL
-#else
-#define MAGNUM_OPENDDL_EXPORT
-#define MAGNUM_OPENDDL_LOCAL
-#endif
-
-#endif

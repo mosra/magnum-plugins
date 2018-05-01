@@ -23,6 +23,13 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(BUILD_STATIC)
+    set(MAGNUM_OPENDDL_BUILD_STATIC 1)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
+
 # Internal implementation that needs to be accessed by the test
 add_library(MagnumOpenDdlObjects OBJECT
     Implementation/Parsers.cpp
@@ -31,6 +38,9 @@ target_include_directories(MagnumOpenDdlObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
+if(NOT BUILD_STATIC)
+    target_compile_definitions(MagnumOpenDdlObjects PRIVATE "MagnumOpenDdlsObjects_EXPORTS")
+endif()
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(MagnumOpenDdlObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -67,6 +77,7 @@ install(TARGETS MagnumOpenDdl
     LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
     ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
 install(FILES ${MagnumOpenDdl_HEADERS} DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}/OpenDdl)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}/OpenDdl)
 
 if(BUILD_TESTS)
     add_subdirectory(Test)
