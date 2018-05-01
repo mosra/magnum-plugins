@@ -70,7 +70,9 @@ target_link_libraries(MagnumOpenDdl PUBLIC Magnum::Magnum)
 if(BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(MagnumOpenDdl PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-set_target_properties(MagnumOpenDdl PROPERTIES FOLDER "Magnum/OpenDdl")
+set_target_properties(MagnumOpenDdl PROPERTIES
+    DEBUG_POSTFIX "-d"
+    FOLDER "Magnum/OpenDdl")
 
 install(TARGETS MagnumOpenDdl
     RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
