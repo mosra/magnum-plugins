@@ -80,7 +80,6 @@ This plugin provides `GltfImporter` and `GlbImporter` plugins.
 
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 
--   Texture coordinate attributes are not yet supported.
 -   Multi-material meshes are not supported.
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
@@ -94,7 +93,7 @@ This plugin provides `GltfImporter` and `GlbImporter` plugins.
 -   Texture type is always @ref Trade::TextureData::Type::Texture2D, as glTF
     doesn't support anything else
 -   Z coordinate of @ref Trade::TextureData::wrapping() is always
-    @ref SamplerWrapping::Repeat
+    @ref SamplerWrapping::Repeat, as glTF doesn't support 3D textures
 
 @section Trade-TinyGltfImporter-state Access to internal importer state
 

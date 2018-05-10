@@ -30,6 +30,19 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
+@section changelog-plugins-latest Changes since 2018.04
+
+@subsection changelog-plugins-latest-changes Changes and improvements
+
+-   Texture coordinate and color vertex attribute import in
+    @ref Trade::TinyGltfImporter "TinyGltfImporter"
+    (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
+
+@subsection changelog-plugins-latest-bugfixes Bug fixes
+
+-   Fixed a @ref Trade::TinyGltfImporter "TinyGltfImporter" crash on materials
+    without a PBR extension (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
+
 @section changelog-plugins-2018-04 2018.04
 
 Released 2018-05-01, tagged as
