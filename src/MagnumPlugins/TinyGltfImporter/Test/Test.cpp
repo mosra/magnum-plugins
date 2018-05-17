@@ -494,11 +494,11 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE(texture->image(), 0);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
 
-    CORRADE_COMPARE(texture->magnificationFilter(), Sampler::Filter::Linear);
-    CORRADE_COMPARE(texture->minificationFilter(), Sampler::Filter::Nearest);
-    CORRADE_COMPARE(texture->mipmapFilter(), Sampler::Mipmap::Linear);
+    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
-    CORRADE_COMPARE(texture->wrapping(), Array3D<Sampler::Wrapping>(Sampler::Wrapping::MirroredRepeat, Sampler::Wrapping::ClampToEdge, Sampler::Wrapping::Repeat));
+    CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
 
     /* Texture coordinates */
     auto meshObject = importer->mesh3D(0);
