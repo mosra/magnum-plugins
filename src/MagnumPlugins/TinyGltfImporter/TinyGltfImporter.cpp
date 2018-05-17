@@ -306,12 +306,12 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     std::vector<std::vector<Vector2>> textureLayers;
     std::vector<std::vector<Color4>> colorLayers;
 
-    for (auto& attribute : primitive.attributes) {
+    for(auto& attribute: primitive.attributes) {
         const tinygltf::Accessor& accessor = _d->model.accessors[attribute.second];
         const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
         const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
 
-        if (attribute.first == "POSITION") {
+        if(attribute.first == "POSITION") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
                 Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3";
                 return Containers::NullOpt;
@@ -321,7 +321,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             positions.reserve(numPositions);
             std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset), numPositions, std::back_inserter(positions));
 
-        } else if (attribute.first == "NORMAL") {
+        } else if(attribute.first == "NORMAL") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
                 Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3";
                 return Containers::NullOpt;
@@ -332,7 +332,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset), numNormals, std::back_inserter(normals));
 
         /* Texture coordinate attribute ends with _0, _1 ... */
-        } else if (Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
+        } else if(Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
             if(accessor.type != TINYGLTF_TYPE_VEC2) {
                 Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC2";
                 return Containers::NullOpt;
@@ -346,7 +346,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             std::copy_n(reinterpret_cast<const Vector2*>(buffer.data.data() + bufferView.byteOffset), numTextureCoordinates, std::back_inserter(textureCoordinates));
 
         /* Color attribute ends with _0, _1 ... */
-        } else if (Utility::String::beginsWith(attribute.first, "COLOR")) {
+        } else if(Utility::String::beginsWith(attribute.first, "COLOR")) {
             std::vector<Color4> colors{};
 
             if(accessor.type == TINYGLTF_TYPE_VEC3) {
