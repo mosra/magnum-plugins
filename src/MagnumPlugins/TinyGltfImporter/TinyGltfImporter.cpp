@@ -319,9 +319,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
                 return Containers::NullOpt;
             }
 
-            const size_t numPositions = bufferView.byteLength/sizeof(Vector3);
-            positions.reserve(numPositions);
-            std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset), numPositions, std::back_inserter(positions));
+            positions.reserve(accessor.count);
+            std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(positions));
 
         } else if(attribute.first == "NORMAL") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
@@ -329,9 +328,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
                 return Containers::NullOpt;
             }
 
-            const size_t numNormals = bufferView.byteLength/sizeof(Vector3);
-            normals.reserve(numNormals);
-            std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset), numNormals, std::back_inserter(normals));
+            normals.reserve(accessor.count);
+            std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(normals));
 
         /* Texture coordinate attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
@@ -343,23 +341,20 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             textureLayers.emplace_back();
             std::vector<Vector2>& textureCoordinates = textureLayers.back();
 
-            const size_t numTextureCoordinates = bufferView.byteLength/sizeof(Vector2);
-            textureCoordinates.reserve(numTextureCoordinates);
-            std::copy_n(reinterpret_cast<const Vector2*>(buffer.data.data() + bufferView.byteOffset), numTextureCoordinates, std::back_inserter(textureCoordinates));
+            textureCoordinates.reserve(accessor.count);
+            std::copy_n(reinterpret_cast<const Vector2*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(textureCoordinates));
 
         /* Color attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "COLOR")) {
             std::vector<Color4> colors{};
 
             if(accessor.type == TINYGLTF_TYPE_VEC3) {
-                const size_t numColors = bufferView.byteLength/sizeof(Vector3);
-                colors.reserve(numColors);
-                std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset), numColors, std::back_inserter(colors));
+                colors.reserve(accessor.count);
+                std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(colors));
 
             } else if(accessor.type == TINYGLTF_TYPE_VEC4) {
-                const size_t numColors = bufferView.byteLength/sizeof(Vector4);
-                colors.reserve(numColors);
-                std::copy_n(reinterpret_cast<const Vector4*>(buffer.data.data() + bufferView.byteOffset), numColors, std::back_inserter(colors));
+                colors.reserve(accessor.count);
+                std::copy_n(reinterpret_cast<const Vector4*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(colors));
 
             } else {
                 Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3 or VEC4";
@@ -385,13 +380,13 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     }
 
     std::vector<UnsignedInt> indices;
-    const UnsignedByte* start = idxBuffer.data.data() + idxBufferView.byteOffset;
+    const UnsignedByte* start = idxBuffer.data.data() + idxBufferView.byteOffset + idxAccessor.byteOffset;
     if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-        std::copy_n(start, idxBufferView.byteLength, std::back_inserter(indices));
+        std::copy_n(start, idxAccessor.count, std::back_inserter(indices));
     } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-        std::copy_n(reinterpret_cast<const UnsignedShort*>(start), idxBufferView.byteLength/sizeof(UnsignedShort), std::back_inserter(indices));
+        std::copy_n(reinterpret_cast<const UnsignedShort*>(start), idxAccessor.count, std::back_inserter(indices));
     } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-        std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxBufferView.byteLength/sizeof(UnsignedInt), std::back_inserter(indices));
+        std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxAccessor.count, std::back_inserter(indices));
     } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     return MeshData3D(meshPrimitive, std::move(indices), {std::move(positions)}, {std::move(normals)}, textureLayers, colorLayers, &mesh);
