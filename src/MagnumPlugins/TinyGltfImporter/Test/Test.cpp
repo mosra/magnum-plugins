@@ -55,6 +55,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void open();
     void openError();
+    void openFileError();
 
     void defaultScene();
 
@@ -101,6 +102,7 @@ using namespace Magnum::Math::Literals;
 TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::open,
                        &TinyGltfImporterTest::openError,
+                       &TinyGltfImporterTest::openFileError,
 
                        &TinyGltfImporterTest::defaultScene,
 
@@ -154,7 +156,19 @@ void TinyGltfImporterTest::openError() {
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openData(data.shortData));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): error opening file: " + std::string{data.shortDataError});
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): error opening file: " + std::string{ data.shortDataError });
+}
+
+void TinyGltfImporterTest::openFileError() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(!importer->openFile("nope" + std::string(data.extension)));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): cannot open file nope" + std::string{data.extension} + "\n");
 }
 
 void TinyGltfImporterTest::defaultScene() {

@@ -86,6 +86,8 @@ struct TinyGltfImporter::Document {
 
     std::unordered_map<std::string, Int> nodesForName,
         materialsForName;
+
+    bool open = false;
 };
 
 TinyGltfImporter::TinyGltfImporter() = default;
@@ -96,7 +98,7 @@ TinyGltfImporter::~TinyGltfImporter() = default;
 
 auto TinyGltfImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool TinyGltfImporter::doIsOpened() const { return !!_d; }
+bool TinyGltfImporter::doIsOpened() const { return !!_d && _d->open; }
 
 void TinyGltfImporter::doClose() { _d = nullptr; }
 
@@ -109,20 +111,20 @@ void TinyGltfImporter::doOpenFile(const std::string& filename) {
 void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) {
     tinygltf::TinyGLTF loader;
     std::string err;
-    bool ret;
 
     if(!_d) _d.reset(new Document);
 
     loader.SetImageLoader(&loadImageData, nullptr);
 
+    _d->open = true;
     if(data.size() >= 4 && strncmp(data.data(), "glTF", 4) == 0) {
         std::vector<UnsignedByte> chars(data.begin(), data.end());
-        ret = loader.LoadBinaryFromMemory(&_d->model, &err, chars.data(), data.size(), "", tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, chars.data(), data.size(), "", tinygltf::SectionCheck::NO_REQUIRE);
     } else {
-        ret = loader.LoadASCIIFromString(&_d->model, &err, data.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadASCIIFromString(&_d->model, &err, data.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
     }
 
-    if(!ret) {
+    if(!_d->open) {
         Error() << "Trade::TinyGltfImporter::openFile(): error opening file:" << err;
         doClose();
         return;
