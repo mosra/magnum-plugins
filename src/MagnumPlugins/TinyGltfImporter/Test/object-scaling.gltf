@@ -1,66 +1,10 @@
 {
     "asset" : {
-        "generator" : "Khronos Blender glTF 2.0 exporter",
+        "generator" : "Jonathan Hale <squareys@googlemail.com>",
         "version" : "2.0"
     },
-    "materials" : [
-        {
-            "name" : "Material",
-            "pbrMetallicRoughness" : {
-                "baseColorFactor" : [
-                    0.6400000190734865,
-                    0.6400000190734865,
-                    0.6400000190734865,
-                    1.0
-                ],
-                "metallicFactor" : 0.0
-            }
-        }
-    ],
-    "meshes" : [
-        {
-            "name" : "Cube.002",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "NORMAL" : 2,
-                        "POSITION" : 1
-                    },
-                    "indices" : 0,
-                    "material" : 0
-                }
-            ]
-        },
-        {
-            "name" : "Cube.001",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "NORMAL" : 5,
-                        "POSITION" : 4
-                    },
-                    "indices" : 3,
-                    "material" : 0
-                }
-            ]
-        },
-        {
-            "name" : "Cube",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "NORMAL" : 8,
-                        "POSITION" : 7
-                    },
-                    "indices" : 6,
-                    "material" : 0
-                }
-            ]
-        }
-    ],
     "nodes" : [
         {
-            "mesh" : 2,
             "name" : "Cube",
             "scale" : [
                 1.5,
@@ -69,7 +13,6 @@
             ]
         },
         {
-            "mesh" : 1,
             "name" : "Cube.001",
             "scale" : [
                 1.0,
@@ -78,7 +21,6 @@
             ]
         },
         {
-            "mesh" : 0,
             "name" : "Cube.002",
             "scale" : [
                 1.0,

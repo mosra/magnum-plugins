@@ -74,6 +74,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void material();
     void texture();
+    void textureDefaultSampler();
 
     void image();
 
@@ -121,6 +122,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
                        &TinyGltfImporterTest::material,
                        &TinyGltfImporterTest::texture,
+                       &TinyGltfImporterTest::textureDefaultSampler,
 
                        &TinyGltfImporterTest::image}, InstanceDataCount);
 
@@ -156,7 +158,7 @@ void TinyGltfImporterTest::openError() {
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openData(data.shortData));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): error opening file: " + std::string{ data.shortDataError });
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): error opening file: " + std::string{data.shortDataError});
 }
 
 void TinyGltfImporterTest::openFileError() {
@@ -168,7 +170,7 @@ void TinyGltfImporterTest::openFileError() {
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openFile("nope" + std::string(data.extension)));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): cannot open file nope" + std::string{data.extension} + "\n");
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file nope" + std::string{data.extension} + "\n");
 }
 
 void TinyGltfImporterTest::defaultScene() {
@@ -253,13 +255,13 @@ void TinyGltfImporterTest::object() {
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "object-new" + std::string{data.extension})));
+        "object" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer->object3DCount(), 5);
 
     auto scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4, 1}));
+    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4}));
 
     CORRADE_COMPARE(importer->object3DName(0), "Correction_Camera");
     CORRADE_COMPARE(importer->object3DForName("Correction_Camera"), 0);
@@ -285,7 +287,7 @@ void TinyGltfImporterTest::object() {
 
     auto emptyObject2 = importer->object3D(4);
     CORRADE_COMPARE(emptyObject2->instanceType(), Trade::ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(emptyObject2->children(), (std::vector<UnsignedInt>{3, 3}));
+    CORRADE_COMPARE(emptyObject2->children(), (std::vector<UnsignedInt>{3, 1}));
 }
 
 void TinyGltfImporterTest::objectTransformation() {
@@ -296,7 +298,7 @@ void TinyGltfImporterTest::objectTransformation() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object-transformation" + std::string{data.extension})));
 
-    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 2);
 
     std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
     CORRADE_VERIFY(object);
@@ -305,6 +307,15 @@ void TinyGltfImporterTest::objectTransformation() {
         {-0.707107f, 0.0f, -0.707107f, 0.0f},
         {-0.707107f,  0.0f, 0.707107f, 0},
         {2.82843f, 1.0f, 0.0f, 1.0f}
+    }));
+
+    std::unique_ptr<Trade::ObjectData3D> objectWithMatrix = importer->object3D(1);
+    CORRADE_VERIFY(objectWithMatrix);
+    CORRADE_COMPARE(objectWithMatrix->transformation(), (Matrix4{
+        {-0.99975f, -0.00679829f, 0.0213218f, 0.0f},
+        {0.00167596f, 0.927325f, 0.374254f, 0.0f},
+        {-0.0223165f, 0.374196f, -0.927081f, 0.0f},
+        {-0.0115543f, 0.194711f, -0.478297f, 1.0f}
     }));
 }
 
@@ -525,6 +536,26 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE_AS(meshObject->textureCoords2D(1), (std::vector<Vector2>{
         {0.5f, 0.5f}, {0.3f, 0.3f}, {0.2f, 0.58f}
     }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::textureDefaultSampler() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "texture-default-sampler" + std::string{data.extension})));
+
+    auto texture = importer->texture(0);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->image(), 0);
+    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+
+    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
+
+    CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
 }
 
 void TinyGltfImporterTest::image() {

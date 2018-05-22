@@ -170,7 +170,6 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     Float lightIntensity{1.0f}; /* not supported by tinygltf */
 
     LightData::Type lightType;
-    std::string type = "spot";
 
     if(light.type == "point") {
         lightType = LightData::Type::Point;
@@ -179,11 +178,11 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     } else if(light.type == "directional") {
         lightType = LightData::Type::Infinite;
     } else if(light.type == "ambient") {
-        Error() << "Trade::TinyGltfImporter::light(): unsupported value for light type:" << type;
+        Error() << "Trade::TinyGltfImporter::light(): unsupported value for light type:" << light.type;
         return Containers::NullOpt;
     /* LCOV_EXCL_START */
     } else {
-        Error() << "Trade::TinyGltfImporter::light(): invalid value for light type:" << type;
+        Error() << "Trade::TinyGltfImporter::light(): invalid value for light type:" << light.type;
         return Containers::NullOpt;
     }
     /* LCOV_EXCL_STOP */
@@ -224,41 +223,47 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     CORRADE_INTERNAL_ASSERT(node.rotation.size() == 0 || node.rotation.size() == 4);
     CORRADE_INTERNAL_ASSERT(node.translation.size() == 0 || node.translation.size() == 3);
     CORRADE_INTERNAL_ASSERT(node.scale.size() == 0 || node.scale.size() == 3);
+    /* Ensure we have either a matrix or T-R-S */
+    CORRADE_INTERNAL_ASSERT(node.matrix.size() == 0 ||
+        (node.matrix.size() == 16 && node.translation.size() == 0 && node.rotation.size() == 0 && node.scale.size() == 0));
 
     std::vector<UnsignedInt> children(node.children.begin(), node.children.end());
 
     Matrix4 transformation;
     if(node.rotation.size() == 4) {
-        const auto vector = Vector3(node.rotation[0], node.rotation[1], node.rotation[2]);
+        const Vector3 vector(Vector3d::from(node.rotation.data()));
         const auto scalar = node.rotation[3];
         transformation = Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
     }
     if(node.translation.size() == 3) {
-        const auto vector = Vector3(node.translation[0], node.translation[1], node.translation[2]);
+        const Vector3 vector(Vector3d::from(node.translation.data()));
         Matrix4 translation = Matrix4::translation(vector);
         transformation = transformation*translation;
     }
     if(node.scale.size() == 3) {
-        const auto vector = Vector3(node.scale[0], node.scale[1], node.scale[2]);
+        const Vector3 vector(Vector3d::from(node.scale.data()));
         Matrix4 scale = Matrix4::scaling(vector);
         transformation = transformation*scale;
     }
+    if(node.matrix.size() == 16) {
+        transformation = Matrix4(Matrix4d::from(node.matrix.data()));
+    }
 
-    /* node is a camera */
+    /* Node is a camera */
     if(node.camera >= 0) {
         UnsignedInt cameraId = node.camera;
 
         return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId, &node}};
 
-    /* node is a mesh */
+    /* Node is a mesh */
     } else if(node.mesh >= 0) {
         UnsignedInt meshId = node.mesh;
         /* TODO Multi-material models not supported */
-        Int materialId = _d->model.meshes[meshId].primitives[0].material;
+        Int materialId = _d->model.meshes[meshId].primitives.empty() ? -1 : _d->model.meshes[meshId].primitives[0].material;
 
         return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
 
-    /* node is a light */
+    /* Node is a light */
     } else if(node.extLightsValues.find("light") != node.extLightsValues.end()) {
         UnsignedInt lightId = node.extLightsValues.find("light")->second.number_array[0];
 
@@ -470,6 +475,12 @@ UnsignedInt TinyGltfImporter::doTextureCount() const {
 
 Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt id) {
     const tinygltf::Texture& tex = _d->model.textures[id];
+
+    if(tex.sampler < 0) {
+        /* The specification instructs to use "auto sampling", i.e. it is left to the implementor to decide on the default values... */
+        return TextureData{TextureData::Type::Texture2D, SamplerFilter::Linear, SamplerFilter::Linear,
+            Sampler::Mipmap::Linear, {Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat}, UnsignedInt(tex.source), &tex};
+    }
     const tinygltf::Sampler& s = _d->model.samplers[tex.sampler];
 
     SamplerFilter minFilter;
@@ -534,7 +545,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
         }
     }
 
-    /* As far as I could find, glTF supports only 2D textures at the moment */
+    /* glTF supports only 2D textures */
     return TextureData{TextureData::Type::Texture2D, minFilter, magFilter,
         mipmap, wrapping, UnsignedInt(tex.source), &tex};
 }

@@ -65,8 +65,8 @@ corrade_add_test(TinyGltfImporterTest Test.cpp
         mesh.glb
         mesh-colors.gltf
         mesh-colors.glb
-        object-new.gltf
-        object-new.glb
+        object.gltf
+        object.glb
         object-rotation.gltf
         object-rotation.glb
         object-scaling.gltf
@@ -78,6 +78,8 @@ corrade_add_test(TinyGltfImporterTest Test.cpp
         texture.gltf
         texture.glb
         texture.png
+        texture-default-sampler.gltf
+        texture-default-sampler.glb
 )
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(TinyGltfImporterTest PRIVATE $<TARGET_FILE_DIR:TinyGltfImporterTest>)

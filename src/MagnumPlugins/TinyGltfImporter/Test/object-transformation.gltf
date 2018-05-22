@@ -1,40 +1,10 @@
 {
     "asset" : {
-        "generator" : "Khronos Blender glTF 2.0 exporter",
+        "generator" : "Jonathan Hale <squareys@googlemail.com>",
         "version" : "2.0"
-    }, 
-    "materials" : [
-        {
-            "name" : "Material",
-            "pbrMetallicRoughness" : {
-                "baseColorFactor" : [
-                    0.6400000190734865,
-                    0.6400000190734865,
-                    0.6400000190734865,
-                    1.0
-                ],
-                "metallicFactor" : 0.0
-            }
-        }
-    ],
-    "meshes" : [
-        {
-            "name" : "Cube",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "NORMAL" : 2,
-                        "POSITION" : 1
-                    },
-                    "indices" : 0,
-                    "material" : 0
-                }
-            ]
-        }
-    ],
+    },
     "nodes" : [
         {
-            "mesh" : 0,
             "name" : "Cube",
             "rotation" : [
                 -0.27059808373451233,
@@ -52,6 +22,27 @@
                 -2.0,
                 -2.0
             ]
+        },
+        {
+            "name" : "Cube",
+            "matrix": [
+                -0.99975,
+                -0.00679829,
+                0.0213218,
+                0,
+                0.00167596,
+                0.927325,
+                0.374254,
+                0,
+                -0.0223165,
+                0.374196,
+                -0.927081,
+                0,
+                -0.0115543,
+                0.194711,
+                -0.478297,
+                1
+            ]
         }
     ],
     "scene" : 0,
@@ -59,7 +50,8 @@
         {
             "name" : "Scene",
             "nodes" : [
-                0
+                0,
+                1
             ]
         }
     ]

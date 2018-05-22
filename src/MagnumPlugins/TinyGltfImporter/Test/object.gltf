@@ -1,8 +1,17 @@
 {
     "asset" : {
-        "generator" : "Khronos Blender glTF 2.0 exporter",
+        "generator" : "Jonathan Hale <squareys@googlemail.com>",
         "version" : "2.0"
     },
+    "meshes" : [
+        {
+            "primitives" : [
+                {
+                    "attributes" : {}
+                }
+            ]
+        }
+    ],
     "cameras" : [
         {
             "name" : "Camera",
@@ -63,21 +72,6 @@
             }
         }
     ],
-    "meshes" : [
-        {
-            "name" : "Cube",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "NORMAL" : 2,
-                        "POSITION" : 1
-                    },
-                    "indices" : 0,
-                    "material" : 0
-                }
-            ]
-        }
-    ],
     "nodes" : [
         {
             "camera" : 0,
@@ -107,8 +101,8 @@
             ]
         },
         {
-            "mesh" : 0,
-            "name" : "Cube"
+            "name" : "Cube",
+            "mesh" : 0
         },
         {
             "extensions" : {
@@ -126,8 +120,7 @@
         },
         {
             "children" : [
-                3,
-                3
+                3, 1
             ],
             "name" : "Lamp",
             "rotation" : [
@@ -159,8 +152,7 @@
             "name" : "Scene",
             "nodes" : [
                 2,
-                4,
-                1
+                4
             ]
         }
     ]
