@@ -4,7 +4,7 @@
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2015 - 2017 Syoyo Fujita, Aurélien Chatelain and many
+// Copyright (c) 2015 - 2018 Syoyo Fujita, Aurélien Chatelain and many
 // contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -334,10 +334,11 @@ using ColorValue = std::array<double, 4>;
 
 struct Parameter {
   bool bool_value;
+  bool has_number_value = false;
   std::string string_value;
   std::vector<double> number_array;
   std::map<std::string, double> json_double_value;
-
+  double number_value;
   // context sensitive methods. depending the type of the Parameter you are
   // accessing, these are either valid or not
   // If this parameter represent a texture map in a material, will return the
@@ -357,14 +358,14 @@ struct Parameter {
   /// Material factor, like the roughness or metalness of a material
   /// Returned value is only valid if the parameter represent a texture from a
   /// material
-  double Factor() const { return number_array[0]; }
+  double Factor() const { return number_value; }
 
   /// Return the color of a material
   /// Returned value is only valid if the parameter represent a texture from a
   /// material
   ColorValue ColorFactor() const {
     return {
-        {// this agregate intialize the std::array object, and uses C++11 RVO.
+        {// this agregate intialize the std::array object, an uses C++11 RVO.
          number_array[0], number_array[1], number_array[2],
          (number_array.size() > 3 ? number_array[3] : 1.0)}};
   }
@@ -380,6 +381,7 @@ struct Parameter {
 #endif
 
 typedef std::map<std::string, Parameter> ParameterMap;
+typedef std::map<std::string, Value> ExtensionMap;
 
 struct AnimationChannel {
   int sampler;              // required
@@ -400,12 +402,12 @@ struct AnimationSampler {
   AnimationSampler() : input(-1), output(-1), interpolation("LINEAR") {}
 };
 
-typedef struct {
+struct Animation {
   std::string name;
   std::vector<AnimationChannel> channels;
   std::vector<AnimationSampler> samplers;
   Value extras;
-} Animation;
+};
 
 struct Skin {
   std::string name;
@@ -456,6 +458,7 @@ struct Texture {
   int sampler;
   int source;  // Required (not specified in the spec ?)
   Value extras;
+  ExtensionMap extensions;
 
   Texture() : sampler(-1), source(-1) {}
 };
@@ -468,8 +471,8 @@ struct Material {
 
   ParameterMap values;            // PBR metal/roughness workflow
   ParameterMap additionalValues;  // normal/occlusion/emissive values
-  ParameterMap extCommonValues;   // KHR_common_material extension
-  ParameterMap extPBRValues;
+
+  ExtensionMap extensions;
   Value extras;
 };
 
@@ -555,7 +558,7 @@ struct PerspectiveCamera {
         ,
         znear(0.0f) {}
 
-  ParameterMap extensions;
+  ExtensionMap extensions;
   Value extras;
 };
 
@@ -567,7 +570,7 @@ struct OrthographicCamera {
 
   OrthographicCamera() : xmag(0.0f), ymag(0.0f), zfar(0.0f), znear(0.0f) {}
 
-  ParameterMap extensions;
+  ExtensionMap extensions;
   Value extras;
 };
 
@@ -580,7 +583,7 @@ struct Camera {
 
   Camera() {}
 
-  ParameterMap extensions;
+  ExtensionMap extensions;
   Value extras;
 };
 
@@ -605,14 +608,14 @@ struct Primitive {
   }
 };
 
-typedef struct {
+struct Mesh {
   std::string name;
   std::vector<Primitive> primitives;
   std::vector<double> weights;  // weights to be applied to the Morph Targets
   std::vector<std::map<std::string, int> > targets;
-  ParameterMap extensions;
+  ExtensionMap extensions;
   Value extras;
-} Mesh;
+};
 
 class Node {
  public:
@@ -631,8 +634,8 @@ class Node {
     matrix = rhs.matrix;
     weights = rhs.weights;
 
+    extensions = rhs.extensions;
     extras = rhs.extras;
-    extLightsValues = rhs.extLightsValues;
   }
 
   ~Node() {}
@@ -649,33 +652,33 @@ class Node {
   std::vector<double> matrix;       // length must be 0 or 16
   std::vector<double> weights;  // The weights of the instantiated Morph Target
 
+  ExtensionMap extensions;
   Value extras;
-  ParameterMap extLightsValues;  // KHR_lights_cmn extension
 };
 
-typedef struct {
+struct Buffer {
   std::string name;
   std::vector<unsigned char> data;
   std::string
       uri;  // considered as required here but not in the spec (need to clarify)
   Value extras;
-} Buffer;
+};
 
-typedef struct {
+struct Asset {
   std::string version;  // required
   std::string generator;
   std::string minVersion;
   std::string copyright;
-  ParameterMap extensions;
+  ExtensionMap extensions;
   Value extras;
-} Asset;
+};
 
 struct Scene {
   std::string name;
   std::vector<int> nodes;
 
-  ParameterMap extensions;
-  ParameterMap extras;
+  ExtensionMap extensions;
+  Value extras;
 };
 
 struct Light {
@@ -703,6 +706,7 @@ class Model {
   std::vector<Camera> cameras;
   std::vector<Scene> scenes;
   std::vector<Light> lights;
+  ExtensionMap extensions;
 
   int defaultScene;
   std::vector<std::string> extensionsUsed;
@@ -730,11 +734,23 @@ enum SectionCheck {
 typedef bool (*LoadImageDataFunction)(Image *, std::string *, int, int,
                                       const unsigned char *, int, void *);
 
+///
+/// WriteImageDataFunction type. Signature for custom image writing callbacks.
+///
+typedef bool (*WriteImageDataFunction)(const std::string *, const std::string *,
+                                       Image *, bool, void *);
+
 #ifndef TINYGLTF_NO_STB_IMAGE
 // Declaration of default image loader callback
 bool LoadImageData(Image *image, std::string *err, int req_width,
                    int req_height, const unsigned char *bytes, int size,
                    void *);
+#endif
+
+#ifndef TINYGLTF_NO_STB_IMAGE_WRITE
+// Declaration of default image writer callback
+bool WriteImageData(const std::string *basepath, const std::string *filename,
+                    Image *image, bool embedImages, void *);
 #endif
 
 class TinyGLTF {
@@ -792,15 +808,19 @@ class TinyGLTF {
   ///
   /// Write glTF to file.
   ///
-  bool WriteGltfSceneToFile(
-      Model *model,
-      const std::string &
-          filename /*, bool embedImages, bool embedBuffers, bool writeBinary*/);
+  bool WriteGltfSceneToFile(Model *model, const std::string &filename,
+                            bool embedImages,
+                            bool embedBuffers /*, bool writeBinary*/);
 
   ///
   /// Set callback to use for loading image data
   ///
   void SetImageLoader(LoadImageDataFunction LoadImageData, void *user_data);
+
+  ///
+  /// Set callback to use for writing image data
+  ///
+  void SetImageWriter(WriteImageDataFunction WriteImageData, void *user_data);
 
  private:
   ///
@@ -823,6 +843,14 @@ class TinyGLTF {
       nullptr;
 #endif
   void *load_image_user_data_ = nullptr;
+
+  WriteImageDataFunction WriteImageData =
+#ifndef TINYGLTF_NO_STB_IMAGE_WRITE
+      &tinygltf::WriteImageData;
+#else
+      nullptr;
+#endif
+  void *write_image_user_data_ = nullptr;
 };
 
 #ifdef __clang__
@@ -852,6 +880,7 @@ class TinyGLTF {
 #pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
 #pragma clang diagnostic ignored "-Wpadded"
 #pragma clang diagnostic ignored "-Wc++98-compat"
+#pragma clang diagnostic ignored "-Wc++98-compat-pedantic"
 #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma clang diagnostic ignored "-Wswitch-enum"
 #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
@@ -866,12 +895,28 @@ class TinyGLTF {
 #if __has_warning("-Wcast-qual")
 #pragma clang diagnostic ignored "-Wcast-qual"
 #endif
+#if __has_warning("-Wmissing-variable-declarations")
+#pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
+#if __has_warning("-Wmissing-prototypes")
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+#endif
+#if __has_warning("-Wcast-align")
+#pragma clang diagnostic ignored "-Wcast-align"
+#endif
+#if __has_warning("-Wnewline-eof")
+#pragma clang diagnostic ignored "-Wnewline-eof"
+#endif
 #endif
 
 #include "./json.hpp"
 
 #ifndef TINYGLTF_NO_STB_IMAGE
 #include "./stb_image.h"
+#endif
+
+#ifndef TINYGLTF_NO_STB_IMAGE_WRITE
+#include "./stb_image_write.h"
 #endif
 
 #ifdef __clang__
@@ -1015,12 +1060,11 @@ static std::string FindFile(const std::vector<std::string> &paths,
   return std::string();
 }
 
-// std::string GetFilePathExtension(const std::string& FileName)
-//{
-//    if(FileName.find_last_of(".") != std::string::npos)
-//        return FileName.substr(FileName.find_last_of(".")+1);
-//    return "";
-//}
+static std::string GetFilePathExtension(const std::string &FileName) {
+  if (FileName.find_last_of(".") != std::string::npos)
+    return FileName.substr(FileName.find_last_of(".") + 1);
+  return "";
+}
 
 static std::string GetBaseDir(const std::string &filepath) {
   if (filepath.find_last_of("/\\") != std::string::npos)
@@ -1029,11 +1073,11 @@ static std::string GetBaseDir(const std::string &filepath) {
 }
 
 // https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
-std::string GetBaseFilename(const std::string &filepath) {
+static std::string GetBaseFilename(const std::string &filepath) {
   return filepath.substr(filepath.find_last_of("/\\") + 1);
 }
 
-// std::string base64_encode(unsigned char const* , unsigned int len);
+std::string base64_encode(unsigned char const *, unsigned int len);
 std::string base64_decode(std::string const &s);
 
 /*
@@ -1077,6 +1121,46 @@ static const std::string base64_chars =
 
 static inline bool is_base64(unsigned char c) {
   return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
+std::string base64_encode(unsigned char const *bytes_to_encode,
+                          unsigned int in_len) {
+  std::string ret;
+  int i = 0;
+  int j = 0;
+  unsigned char char_array_3[3];
+  unsigned char char_array_4[4];
+
+  while (in_len--) {
+    char_array_3[i++] = *(bytes_to_encode++);
+    if (i == 3) {
+      char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+      char_array_4[1] =
+          ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+      char_array_4[2] =
+          ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+      char_array_4[3] = char_array_3[2] & 0x3f;
+
+      for (i = 0; (i < 4); i++) ret += base64_chars[char_array_4[i]];
+      i = 0;
+    }
+  }
+
+  if (i) {
+    for (j = i; j < 3; j++) char_array_3[j] = '\0';
+
+    char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+    char_array_4[1] =
+        ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+    char_array_4[2] =
+        ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+
+    for (j = 0; (j < i + 1); j++) ret += base64_chars[char_array_4[j]];
+
+    while ((i++ < 3)) ret += '=';
+  }
+
+  return ret;
 }
 
 std::string base64_decode(std::string const &encoded_string) {
@@ -1255,6 +1339,121 @@ bool LoadImageData(Image *image, std::string *err, int req_width,
 }
 #endif
 
+void TinyGLTF::SetImageWriter(WriteImageDataFunction func, void *user_data) {
+  WriteImageData = func;
+  write_image_user_data_ = user_data;
+}
+
+#ifndef TINYGLTF_NO_STB_IMAGE_WRITE
+static void WriteToMemory_stbi(void *context, void *data, int size) {
+  std::vector<unsigned char> *buffer =
+      reinterpret_cast<std::vector<unsigned char> *>(context);
+
+  unsigned char *pData = reinterpret_cast<unsigned char *>(data);
+
+  buffer->insert(buffer->end(), pData, pData + size);
+}
+
+bool WriteImageData(const std::string *basepath, const std::string *filename,
+                    Image *image, bool embedImages, void *) {
+  const std::string ext = GetFilePathExtension(*filename);
+
+  if (embedImages) {
+    // Write image to memory and embed in output
+    std::string header;
+    std::vector<unsigned char> data;
+
+    if (ext == "png") {
+      stbi_write_png_to_func(WriteToMemory_stbi, &data, image->width,
+                             image->height, image->component, &image->image[0],
+                             0);
+      header = "data:image/png;base64,";
+    } else if (ext == "jpg") {
+      stbi_write_jpg_to_func(WriteToMemory_stbi, &data, image->width,
+                             image->height, image->component, &image->image[0],
+                             100);
+      header = "data:image/jpeg;base64,";
+    } else if (ext == "bmp") {
+      stbi_write_bmp_to_func(WriteToMemory_stbi, &data, image->width,
+                             image->height, image->component, &image->image[0]);
+      header = "data:image/bmp;base64,";
+    }
+
+    if (data.size()) {
+      image->uri =
+          header +
+          base64_encode(&data[0], static_cast<unsigned int>(data.size()));
+    } else {
+      // Throw error?
+    }
+  } else {
+    // Write image to disc
+
+    const std::string imagefilepath = JoinPath(*basepath, *filename);
+    if (ext == "png") {
+      stbi_write_png(imagefilepath.c_str(), image->width, image->height,
+                     image->component, &image->image[0], 0);
+    } else if (ext == "jpg") {
+      // TODO (Bowald): Give user the option to set output quality?
+      const int quality = 100;
+      stbi_write_jpg(imagefilepath.c_str(), image->width, image->height,
+                     image->component, &image->image[0], quality);
+    } else if (ext == "bmp") {
+      stbi_write_bmp(imagefilepath.c_str(), image->width, image->height,
+                     image->component, &image->image[0]);
+    } else {
+      // Throw error? Cant output requested format.
+    }
+    image->uri = *filename;
+  }
+
+  return true;
+}
+#endif
+
+static std::string MimeToExt(const std::string &mimeType) {
+  if (mimeType == "image/jpeg") {
+    return "jpg";
+  } else if (mimeType == "image/png") {
+    return "png";
+  } else if (mimeType == "image/bmp") {
+    return "bmp";
+  } else if (mimeType == "image/gif") {
+    return "gif";
+  }
+
+  return "";
+}
+
+static void UpdateImageObject(Image &image, std::string &baseDir, int index,
+                              bool embedImages,
+                              WriteImageDataFunction *WriteImageData = nullptr,
+                              void *user_data = nullptr) {
+  std::string filename;
+  std::string ext;
+
+  // If image have uri. Use it it as a filename
+  if (image.uri.size()) {
+    filename = GetBaseFilename(image.uri);
+    ext = GetFilePathExtension(filename);
+
+  } else if (image.name.size()) {
+    ext = MimeToExt(image.mimeType);
+    // Otherwise use name as filename
+    filename = image.name + "." + ext;
+  } else {
+    ext = MimeToExt(image.mimeType);
+    // Fallback to index of image as filename
+    filename = std::to_string(index) + "." + ext;
+  }
+
+  // If callback is set, modify image data object
+  if (*WriteImageData != nullptr) {
+    std::string uri;
+    (*WriteImageData)(&baseDir, &filename, &image, embedImages, user_data);
+  }
+}
+
 static bool IsDataURI(const std::string &in) {
   std::string header = "data:application/octet-stream;base64,";
   if (in.find(header) == 0) {
@@ -1295,8 +1494,8 @@ static bool IsDataURI(const std::string &in) {
 }
 
 static bool DecodeDataURI(std::vector<unsigned char> *out,
-                          const std::string &in, size_t reqBytes,
-                          bool checkSize) {
+                          std::string &mime_type, const std::string &in,
+                          size_t reqBytes, bool checkSize) {
   std::string header = "data:application/octet-stream;base64,";
   std::string data;
   if (in.find(header) == 0) {
@@ -1306,6 +1505,7 @@ static bool DecodeDataURI(std::vector<unsigned char> *out,
   if (data.empty()) {
     header = "data:image/jpeg;base64,";
     if (in.find(header) == 0) {
+      mime_type = "image/jpeg";
       data = base64_decode(in.substr(header.size()));  // cut mime string.
     }
   }
@@ -1313,6 +1513,7 @@ static bool DecodeDataURI(std::vector<unsigned char> *out,
   if (data.empty()) {
     header = "data:image/png;base64,";
     if (in.find(header) == 0) {
+      mime_type = "image/png";
       data = base64_decode(in.substr(header.size()));  // cut mime string.
     }
   }
@@ -1320,6 +1521,7 @@ static bool DecodeDataURI(std::vector<unsigned char> *out,
   if (data.empty()) {
     header = "data:image/bmp;base64,";
     if (in.find(header) == 0) {
+      mime_type = "image/bmp";
       data = base64_decode(in.substr(header.size()));  // cut mime string.
     }
   }
@@ -1327,6 +1529,7 @@ static bool DecodeDataURI(std::vector<unsigned char> *out,
   if (data.empty()) {
     header = "data:image/gif;base64,";
     if (in.find(header) == 0) {
+      mime_type = "image/gif";
       data = base64_decode(in.substr(header.size()));  // cut mime string.
     }
   }
@@ -1334,6 +1537,7 @@ static bool DecodeDataURI(std::vector<unsigned char> *out,
   if (data.empty()) {
     header = "data:text/plain;base64,";
     if (in.find(header) == 0) {
+      mime_type = "text/plain";
       data = base64_decode(in.substr(header.size()));
     }
   }
@@ -1361,32 +1565,48 @@ static bool DecodeDataURI(std::vector<unsigned char> *out,
   return true;
 }
 
-static void ParseObjectProperty(Value *ret, const json &o) {
-  tinygltf::Value::Object vo;
-  json::const_iterator it(o.begin());
-  json::const_iterator itEnd(o.end());
-
-  for (; it != itEnd; it++) {
-    json v = it.value();
-
-    if (v.is_boolean()) {
-      vo[it.key()] = tinygltf::Value(v.get<bool>());
-    } else if (v.is_number()) {
-      vo[it.key()] = tinygltf::Value(v.get<double>());
-    } else if (v.is_number_integer()) {
-      vo[it.key()] =
-          tinygltf::Value(static_cast<int>(v.get<int64_t>()));  // truncate
-    } else if (v.is_string()) {
-      vo[it.key()] = tinygltf::Value(v.get<std::string>());
-    } else if (v.is_object()) {
-      tinygltf::Value child_value;
-      ParseObjectProperty(&child_value, v);
-      vo[it.key()] = child_value;
-    }
-    // TODO(syoyo) binary, array
+static bool ParseJsonAsValue(Value *ret, const json &o) {
+  Value val{};
+  switch (o.type()) {
+    case json::value_t::object: {
+      Value::Object value_object;
+      for (auto it = o.begin(); it != o.end(); it++) {
+        Value entry;
+        ParseJsonAsValue(&entry, it.value());
+        if (entry.Type() != NULL_TYPE) value_object[it.key()] = entry;
+      }
+      if (value_object.size() > 0) val = Value(value_object);
+    } break;
+    case json::value_t::array: {
+      Value::Array value_array;
+      for (auto it = o.begin(); it != o.end(); it++) {
+        Value entry;
+        ParseJsonAsValue(&entry, it.value());
+        if (entry.Type() != NULL_TYPE) value_array.push_back(entry);
+      }
+      if (value_array.size() > 0) val = Value(value_array);
+    } break;
+    case json::value_t::string:
+      val = Value(o.get<std::string>());
+      break;
+    case json::value_t::boolean:
+      val = Value(o.get<bool>());
+      break;
+    case json::value_t::number_integer:
+    case json::value_t::number_unsigned:
+      val = Value(static_cast<int>(o.get<int64_t>()));
+      break;
+    case json::value_t::number_float:
+      val = Value(o.get<double>());
+      break;
+    case json::value_t::null:
+    case json::value_t::discarded:
+      // default:
+      break;
   }
+  if (ret) *ret = val;
 
-  (*ret) = tinygltf::Value(vo);
+  return val.Type() != NULL_TYPE;
 }
 
 static bool ParseExtrasProperty(Value *ret, const json &o) {
@@ -1395,14 +1615,7 @@ static bool ParseExtrasProperty(Value *ret, const json &o) {
     return false;
   }
 
-  // FIXME(syoyo) Currently we only support `object` type for extras property.
-  if (!it.value().is_object()) {
-    return false;
-  }
-
-  ParseObjectProperty(ret, it.value());
-
-  return true;
+  return ParseJsonAsValue(ret, it.value());
 }
 
 static bool ParseBooleanProperty(bool *ret, std::string *err, const json &o,
@@ -1645,10 +1858,67 @@ static bool ParseJSONProperty(std::map<std::string, double> *ret,
   return true;
 }
 
+static bool ParseParameterProperty(Parameter *param, std::string *err,
+                                   const json &o, const std::string &prop,
+                                   bool required) {
+  // A parameter value can either be a string or an array of either a boolean or
+  // a number. Booleans of any kind aren't supported here. Granted, it
+  // complicates the Parameter structure and breaks it semantically in the sense
+  // that the client probably works off the assumption that if the string is
+  // empty the vector is used, etc. Would a tagged union work?
+  if (ParseStringProperty(&param->string_value, err, o, prop, false)) {
+    // Found string property.
+    return true;
+  } else if (ParseNumberArrayProperty(&param->number_array, err, o, prop,
+                                      false)) {
+    // Found a number array.
+    return true;
+  } else if (ParseNumberProperty(&param->number_value, err, o, prop, false)) {
+    return param->has_number_value = true;
+  } else if (ParseJSONProperty(&param->json_double_value, err, o, prop,
+                               false)) {
+    return true;
+  } else if (ParseBooleanProperty(&param->bool_value, err, o, prop, false)) {
+    return true;
+  } else {
+    if (required) {
+      if (err) {
+        (*err) += "parameter must be a string or number / number array.\n";
+      }
+    }
+    return false;
+  }
+}
+
+static bool ParseExtensionsProperty(ExtensionMap *ret, std::string *err,
+                                    const json &o) {
+  (void)err;
+
+  json::const_iterator it = o.find("extensions");
+  if (it == o.end()) {
+    return false;
+  }
+  if (!it.value().is_object()) {
+    return false;
+  }
+  ExtensionMap extensions;
+  json::const_iterator extIt = it.value().begin();
+  for (; extIt != it.value().end(); extIt++) {
+    if (!extIt.value().is_object()) continue;
+    ParseJsonAsValue(&extensions[extIt.key()], extIt.value());
+  }
+  if (ret) {
+    (*ret) = extensions;
+  }
+  return true;
+}
+
 static bool ParseAsset(Asset *asset, std::string *err, const json &o) {
   ParseStringProperty(&asset->version, err, o, "version", true, "Asset");
   ParseStringProperty(&asset->generator, err, o, "generator", false, "Asset");
   ParseStringProperty(&asset->minVersion, err, o, "minVersion", false, "Asset");
+
+  ParseExtensionsProperty(&asset->extensions, err, o);
 
   // Unity exporter version is added as extra here
   ParseExtrasProperty(&(asset->extras), o);
@@ -1657,104 +1927,103 @@ static bool ParseAsset(Asset *asset, std::string *err, const json &o) {
 }
 
 static bool ParseImage(Image *image, std::string *err, const json &o,
-                       const std::string &basedir, bool is_binary,
-                       const unsigned char *bin_data, size_t bin_size,
+                       const std::string &basedir,
                        LoadImageDataFunction *LoadImageData = nullptr,
                        void *user_data = nullptr) {
   // A glTF image must either reference a bufferView or an image uri
-  double bufferView = -1;
-  bool isEmbedded =
-      ParseNumberProperty(&bufferView, err, o, "bufferView", false);
 
-  std::string uri;
-  std::string tmp_err;
-  if (!ParseStringProperty(&uri, &tmp_err, o, "uri", false) && !isEmbedded) {
+  // schema says oneOf [`bufferView`, `uri`]
+  // TODO(syoyo): Check the type of each parameters.
+  bool hasBufferView = (o.find("bufferView") != o.end());
+  bool hasURI = (o.find("uri") != o.end());
+
+  if (hasBufferView && hasURI) {
+    // Should not both defined.
     if (err) {
-      (*err) += "`bufferView` or `uri` required for Image.\n";
+      (*err) +=
+          "Only one of `bufferView` or `uri` should be defined, but both are "
+          "defined for Image.\n";
+    }
+    return false;
+  }
+
+  if (!hasBufferView && !hasURI) {
+    if (err) {
+      (*err) += "Neither required `bufferView` nor `uri` defined for Image.\n";
     }
     return false;
   }
 
   ParseStringProperty(&image->name, err, o, "name", false);
 
+  if (hasBufferView) {
+    double bufferView = -1;
+    if (!ParseNumberProperty(&bufferView, err, o, "bufferView", true)) {
+      if (err) {
+        (*err) += "Failed to parse `bufferView` for Image.\n";
+      }
+      return false;
+    }
+
+    std::string mime_type;
+    ParseStringProperty(&mime_type, err, o, "mimeType", false);
+
+    double width = 0.0;
+    ParseNumberProperty(&width, err, o, "width", false);
+
+    double height = 0.0;
+    ParseNumberProperty(&height, err, o, "height", false);
+
+    // Just only save some information here. Loading actual image data from
+    // bufferView is done after this `ParseImage` function.
+    image->bufferView = static_cast<int>(bufferView);
+    image->mimeType = mime_type;
+    image->width = static_cast<int>(width);
+    image->height = static_cast<int>(height);
+
+    return true;
+  }
+
+  // Parse URI & Load image data.
+
+  std::string uri;
+  std::string tmp_err;
+  if (!ParseStringProperty(&uri, &tmp_err, o, "uri", true)) {
+    if (err) {
+      (*err) += "Failed to parse `uri` for Image.\n";
+    }
+    return false;
+  }
+
   std::vector<unsigned char> img;
 
-  if (is_binary) {
-    // Still binary glTF accepts external dataURI. First try external resources.
-    bool loaded = false;
-    if (IsDataURI(uri)) {
-      loaded = DecodeDataURI(&img, uri, 0, false);
-    } else {
-      // Assume external file
-      // Keep texture path (for textures that cannot be decoded)
-      image->uri = uri;
-#ifndef TINYGLTF_NO_EXTERNAL_IMAGE
-      loaded = LoadExternalFile(&img, err, uri, basedir, 0, false);
-#endif
-    }
-
-    if (!loaded) {
-      // load data from (embedded) binary data
-
-      if ((bin_size == 0) || (bin_data == nullptr)) {
-        if (err) {
-          (*err) += "Invalid binary data.\n";
-        }
-        return false;
+  if (IsDataURI(uri)) {
+    if (!DecodeDataURI(&img, image->mimeType, uri, 0, false)) {
+      if (err) {
+        (*err) += "Failed to decode 'uri' for image parameter.\n";
       }
-
-      double buffer_view = -1.0;
-      if (!ParseNumberProperty(&buffer_view, err, o, "bufferView", true,
-                               "Image")) {
-        return false;
-      }
-
-      std::string mime_type;
-      ParseStringProperty(&mime_type, err, o, "mimeType", false);
-
-      double width = 0.0;
-      ParseNumberProperty(&width, err, o, "width", false);
-
-      double height = 0.0;
-      ParseNumberProperty(&height, err, o, "height", false);
-
-      // Just only save some information here. Loading actual image data from
-      // bufferView is done in other place.
-      image->bufferView = static_cast<int>(buffer_view);
-      image->mimeType = mime_type;
-      image->width = static_cast<int>(width);
-      image->height = static_cast<int>(height);
-
-      return true;
+      return false;
     }
   } else {
-    if (IsDataURI(uri)) {
-      if (!DecodeDataURI(&img, uri, 0, false)) {
-        if (err) {
-          (*err) += "Failed to decode 'uri' for image parameter.\n";
-        }
-        return false;
-      }
-    } else {
-      // Assume external file
-      // Keep texture path (for textures that cannot be decoded)
-      image->uri = uri;
+    // Assume external file
+    // Keep texture path (for textures that cannot be decoded)
+    image->uri = uri;
 #ifdef TINYGLTF_NO_EXTERNAL_IMAGE
-      return true;
+    return true;
 #endif
-      if (!LoadExternalFile(&img, err, uri, basedir, 0, false)) {
-        if (err) {
-          (*err) += "Failed to load external 'uri' for image parameter\n";
-        }
-        // If the image cannot be loaded, keep uri as image->uri.
-        return true;
+    if (!LoadExternalFile(&img, err, uri, basedir, 0, false)) {
+      if (err) {
+        (*err) += "Failed to load external 'uri' for image parameter\n";
       }
-      if (img.empty()) {
-        if (err) {
-          (*err) += "Image is empty.\n";
-        }
-        return false;
+      // If the image cannot be loaded, keep uri as image->uri.
+      return true;
+    }
+
+    if (img.empty()) {
+      if (err) {
+        (*err) += "Image is empty.\n";
       }
+      return false;
     }
   }
 
@@ -1779,6 +2048,9 @@ static bool ParseTexture(Texture *texture, std::string *err, const json &o,
 
   texture->sampler = static_cast<int>(sampler);
   texture->source = static_cast<int>(source);
+
+  ParseExtensionsProperty(&texture->extensions, err, o);
+  ParseExtrasProperty(&texture->extras, o);
 
   return true;
 }
@@ -1848,7 +2120,8 @@ static bool ParseBuffer(Buffer *buffer, std::string *err, const json &o,
 
   } else {
     if (IsDataURI(buffer->uri)) {
-      if (!DecodeDataURI(&buffer->data, buffer->uri, bytes, true)) {
+      std::string mime_type;
+      if (!DecodeDataURI(&buffer->data, mime_type, buffer->uri, bytes, true)) {
         if (err) {
           (*err) += "Failed to decode 'uri' : " + buffer->uri + " in Buffer\n";
         }
@@ -2097,44 +2370,10 @@ static bool ParseMesh(Mesh *mesh, std::string *err, const json &o) {
   // Should probably check if has targets and if dimensions fit
   ParseNumberArrayProperty(&mesh->weights, err, o, "weights", false);
 
+  ParseExtensionsProperty(&mesh->extensions, err, o);
   ParseExtrasProperty(&(mesh->extras), o);
 
   return true;
-}
-
-static bool ParseParameterProperty(Parameter *param, std::string *err,
-                                   const json &o, const std::string &prop,
-                                   bool required) {
-  double num_val;
-
-  // A parameter value can either be a string or an array of either a boolean or
-  // a number. Booleans of any kind aren't supported here. Granted, it
-  // complicates the Parameter structure and breaks it semantically in the sense
-  // that the client probably works off the assumption that if the string is
-  // empty the vector is used, etc. Would a tagged union work?
-  if (ParseStringProperty(&param->string_value, err, o, prop, false)) {
-    // Found string property.
-    return true;
-  } else if (ParseNumberArrayProperty(&param->number_array, err, o, prop,
-                                      false)) {
-    // Found a number array.
-    return true;
-  } else if (ParseNumberProperty(&num_val, err, o, prop, false)) {
-    param->number_array.push_back(num_val);
-    return true;
-  } else if (ParseJSONProperty(&param->json_double_value, err, o, prop,
-                               false)) {
-    return true;
-  } else if (ParseBooleanProperty(&param->bool_value, err, o, prop, false)) {
-    return true;
-  } else {
-    if (required) {
-      if (err) {
-        (*err) += "parameter must be a string or number / number array.\n";
-      }
-    }
-    return false;
-  }
 }
 
 static bool ParseLight(Light *light, std::string *err, const json &o) {
@@ -2182,39 +2421,15 @@ static bool ParseNode(Node *node, std::string *err, const json &o) {
     }
   }
 
+  ParseExtensionsProperty(&node->extensions, err, o);
   ParseExtrasProperty(&(node->extras), o);
-
-  json::const_iterator extensions_object = o.find("extensions");
-  if ((extensions_object != o.end()) && extensions_object.value().is_object()) {
-    const json &ext_values_object = extensions_object.value();
-
-    json::const_iterator it(ext_values_object.begin());
-    json::const_iterator itEnd(ext_values_object.end());
-
-    for (; it != itEnd; it++) {
-      if ((it.key().compare("KHR_lights_cmn") == 0) && it.value().is_object()) {
-        const json &light_values_object = it.value();
-
-        json::const_iterator itVal(light_values_object.begin());
-        json::const_iterator itValEnd(light_values_object.end());
-
-        for (; itVal != itValEnd; itVal++) {
-          Parameter param;
-          if (ParseParameterProperty(&param, err, light_values_object,
-                                     itVal.key(), false)) {
-            node->extLightsValues[itVal.key()] = param;
-          }
-        }
-      }
-    }
-  }
 
   return true;
 }
 
 static bool ParseMaterial(Material *material, std::string *err, const json &o) {
   material->values.clear();
-  material->extPBRValues.clear();
+  material->extensions.clear();
   material->additionalValues.clear();
 
   json::const_iterator it(o.begin());
@@ -2236,26 +2451,9 @@ static bool ParseMaterial(Material *material, std::string *err, const json &o) {
           }
         }
       }
-    } else if (it.key() == "extensions") {
-      if (it.value().is_object()) {
-        const json &extension = it.value();
-
-        json::const_iterator extIt = extension.begin();
-        if (!extIt.value().is_object()) continue;
-
-        const json &values_object = extIt.value();
-
-        json::const_iterator itVal(values_object.begin());
-        json::const_iterator itValEnd(values_object.end());
-
-        for (; itVal != itValEnd; itVal++) {
-          Parameter param;
-          if (ParseParameterProperty(&param, err, values_object, itVal.key(),
-                                     false)) {
-            material->extPBRValues[itVal.key()] = param;
-          }
-        }
-      }
+    } else if (it.key() == "extensions" || it.key() == "extras") {
+      // done later, skip, otherwise poorly parsed contents will be saved in the
+      // parametermap and serialized again later
     } else {
       Parameter param;
       if (ParseParameterProperty(&param, err, o, it.key(), false)) {
@@ -2264,6 +2462,7 @@ static bool ParseMaterial(Material *material, std::string *err, const json &o) {
     }
   }
 
+  ParseExtensionsProperty(&material->extensions, err, o);
   ParseExtrasProperty(&(material->extras), o);
 
   return true;
@@ -2444,6 +2643,7 @@ static bool ParsePerspectiveCamera(PerspectiveCamera *camera, std::string *err,
   camera->yfov = float(yfov);
   camera->znear = float(znear);
 
+  ParseExtensionsProperty(&camera->extensions, err, o);
   ParseExtrasProperty(&(camera->extras), o);
 
   // TODO(syoyo): Validate parameter values.
@@ -2474,6 +2674,7 @@ static bool ParseOrthographicCamera(OrthographicCamera *camera,
     return false;
   }
 
+  ParseExtensionsProperty(&camera->extensions, err, o);
   ParseExtrasProperty(&(camera->extras), o);
 
   camera->xmag = float(xmag);
@@ -2549,6 +2750,7 @@ static bool ParseCamera(Camera *camera, std::string *err, const json &o) {
 
   ParseStringProperty(&camera->name, err, o, "name", false);
 
+  ParseExtensionsProperty(&camera->extensions, err, o);
   ParseExtrasProperty(&(camera->extras), o);
 
   return true;
@@ -2671,6 +2873,7 @@ bool TinyGLTF::LoadFromString(Model *model, std::string *err, const char *str,
   model->nodes.clear();
   model->extensionsUsed.clear();
   model->extensionsRequired.clear();
+  model->extensions.clear();
   model->defaultScene = -1;
 
   // 1. Parse Asset
@@ -2847,9 +3050,7 @@ bool TinyGLTF::LoadFromString(Model *model, std::string *err, const char *str,
         }
         const json &o = it->get<json>();
         std::vector<double> nodes;
-        if (!ParseNumberArrayProperty(&nodes, err, o, "nodes", false)) {
-          return false;
-        }
+        ParseNumberArrayProperty(&nodes, err, o, "nodes", false);
 
         Scene scene;
         ParseStringProperty(&scene.name, err, o, "name", false);
@@ -2858,6 +3059,9 @@ bool TinyGLTF::LoadFromString(Model *model, std::string *err, const char *str,
           nodesIds.push_back(static_cast<int>(nodes[i]));
         }
         scene.nodes = nodesIds;
+
+        ParseExtensionsProperty(&scene.extensions, err, o);
+        ParseExtrasProperty(&scene.extras, o);
 
         model->scenes.push_back(scene);
       }
@@ -2919,8 +3123,7 @@ bool TinyGLTF::LoadFromString(Model *model, std::string *err, const char *str,
           return false;
         }
         Image image;
-        if (!ParseImage(&image, err, it.value(), base_dir, is_binary_,
-                        bin_data_, bin_size_, &this->LoadImageData,
+        if (!ParseImage(&image, err, it.value(), base_dir, &this->LoadImageData,
                         load_image_user_data_)) {
           return false;
         }
@@ -3087,6 +3290,9 @@ bool TinyGLTF::LoadFromString(Model *model, std::string *err, const char *str,
   }
 
   // 17. Parse Extensions
+  ParseExtensionsProperty(&model->extensions, err, v);
+
+  // 18. Specific extension implementations
   {
     json::const_iterator rootIt = v.find("extensions");
     if ((rootIt != v.end()) && rootIt.value().is_object()) {
@@ -3298,10 +3504,11 @@ static void SerializeNumberArrayProperty(const std::string &key,
   json vals;
 
   for (unsigned int i = 0; i < value.size(); ++i) {
-    vals.push_back(static_cast<double>(value[i]));
+    vals.push_back(static_cast<T>(value[i]));
   }
-
-  obj[key] = vals;
+  if (!vals.is_null()) {
+    obj[key] = vals;
+  }
 }
 
 static void SerializeStringProperty(const std::string &key,
@@ -3322,27 +3529,63 @@ static void SerializeStringArrayProperty(const std::string &key,
   obj[key] = vals;
 }
 
+static bool ValueToJson(const Value &value, json *ret) {
+  json obj;
+  switch (value.Type()) {
+    case NUMBER_TYPE:
+      obj = json(value.Get<double>());
+      break;
+    case INT_TYPE:
+      obj = json(value.Get<int>());
+      break;
+    case BOOL_TYPE:
+      obj = json(value.Get<bool>());
+      break;
+    case STRING_TYPE:
+      obj = json(value.Get<std::string>());
+      break;
+    case ARRAY_TYPE: {
+      for (unsigned int i = 0; i < value.ArrayLen(); ++i) {
+        Value elementValue = value.Get(int(i));
+        json elementJson;
+        if (ValueToJson(value.Get(int(i)), &elementJson))
+          obj.push_back(elementJson);
+      }
+      break;
+    }
+    case BINARY_TYPE:
+      // TODO
+      // obj = json(value.Get<std::vector<unsigned char>>());
+      return false;
+      break;
+    case OBJECT_TYPE: {
+      Value::Object objMap = value.Get<Value::Object>();
+      for (auto &it : objMap) {
+        json elementJson;
+        if (ValueToJson(it.second, &elementJson)) obj[it.first] = elementJson;
+      }
+      break;
+    }
+    case NULL_TYPE:
+    default:
+      return false;
+  }
+  if (ret) *ret = obj;
+  return true;
+}
+
 static void SerializeValue(const std::string &key, const Value &value,
                            json &obj) {
-  if (value.IsArray()) {
-    json jsonValue;
-    for (unsigned int i = 0; i < value.ArrayLen(); ++i) {
-      Value elementValue = value.Get(int(i));
-      if (elementValue.IsString())
-        jsonValue.push_back(elementValue.Get<std::string>());
-    }
-    obj[key] = jsonValue;
-  } else {
-    json jsonValue;
-    std::vector<std::string> valueKeys = value.Keys();
-    for (unsigned int i = 0; i < valueKeys.size(); ++i) {
-      Value elementValue = value.Get(valueKeys[i]);
-      if (elementValue.IsInt())
-        jsonValue[valueKeys[i]] = static_cast<double>(elementValue.Get<int>());
-    }
+  json ret;
+  if (ValueToJson(value, &ret)) obj[key] = ret;
+}
 
-    obj[key] = jsonValue;
-  }
+static void SerializeGltfBufferData(const std::vector<unsigned char> &data,
+                                    json &o) {
+  std::string header = "data:application/octet-stream;base64,";
+  std::string encodedData =
+      base64_encode(&data[0], static_cast<unsigned int>(data.size()));
+  SerializeStringProperty("uri", header + encodedData, o);
 }
 
 static void SerializeGltfBufferData(const std::vector<unsigned char> &data,
@@ -3361,20 +3604,37 @@ static void SerializeParameterMap(ParameterMap &param, json &o) {
                                            paramIt->second.number_array, o);
     } else if (paramIt->second.json_double_value.size()) {
       json json_double_value;
-
       for (std::map<std::string, double>::iterator it =
                paramIt->second.json_double_value.begin();
            it != paramIt->second.json_double_value.end(); ++it) {
-        json_double_value[it->first] = it->second;
+        if (it->first == "index") {
+          json_double_value[it->first] = paramIt->second.TextureIndex();
+        } else {
+          json_double_value[it->first] = it->second;
+        }
       }
 
       o[paramIt->first] = json_double_value;
     } else if (!paramIt->second.string_value.empty()) {
       SerializeStringProperty(paramIt->first, paramIt->second.string_value, o);
+    } else if (paramIt->second.has_number_value) {
+      o[paramIt->first] = paramIt->second.number_value;
     } else {
       o[paramIt->first] = paramIt->second.bool_value;
     }
   }
+}
+
+static void SerializeExtensionMap(ExtensionMap &extensions, json &o) {
+  if (!extensions.size()) return;
+
+  json extMap;
+  for (ExtensionMap::iterator extIt = extensions.begin();
+       extIt != extensions.end(); ++extIt) {
+    json extension_values;
+    SerializeValue(extIt->first, extIt->second, extMap);
+  }
+  o["extensions"] = extMap;
 }
 
 static void SerializeGltfAccessor(Accessor &accessor, json &o) {
@@ -3464,6 +3724,15 @@ static void SerializeGltfAsset(Asset &asset, json &o) {
   if (asset.extras.Keys().size()) {
     SerializeValue("extras", asset.extras, o);
   }
+
+  SerializeExtensionMap(asset.extensions, o);
+}
+
+static void SerializeGltfBuffer(Buffer &buffer, json &o) {
+  SerializeNumberProperty("byteLength", buffer.data.size(), o);
+  SerializeGltfBufferData(buffer.data, o);
+
+  if (buffer.name.size()) SerializeStringProperty("name", buffer.name, o);
 }
 
 static void SerializeGltfBuffer(Buffer &buffer, json &o,
@@ -3479,16 +3748,25 @@ static void SerializeGltfBuffer(Buffer &buffer, json &o,
 static void SerializeGltfBufferView(BufferView &bufferView, json &o) {
   SerializeNumberProperty("buffer", bufferView.buffer, o);
   SerializeNumberProperty<size_t>("byteLength", bufferView.byteLength, o);
-  SerializeNumberProperty<size_t>("byteStride", bufferView.byteStride, o);
-  SerializeNumberProperty<size_t>("byteOffset", bufferView.byteOffset, o);
-  SerializeNumberProperty("target", bufferView.target, o);
 
+  // byteStride is optional, minimum allowed is 4
+  if (bufferView.byteStride >= 4) {
+    SerializeNumberProperty<size_t>("byteStride", bufferView.byteStride, o);
+  }
+  // byteOffset is optional, default is 0
+  if (bufferView.byteOffset > 0) {
+    SerializeNumberProperty<size_t>("byteOffset", bufferView.byteOffset, o);
+  }
+  // Target is optional, check if it contains a valid value
+  if (bufferView.target == TINYGLTF_TARGET_ARRAY_BUFFER ||
+      bufferView.target == TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER) {
+    SerializeNumberProperty("target", bufferView.target, o);
+  }
   if (bufferView.name.size()) {
     SerializeStringProperty("name", bufferView.name, o);
   }
 }
 
-// Only external textures are serialized for now
 static void SerializeGltfImage(Image &image, json &o) {
   SerializeStringProperty("uri", image.uri, o);
 
@@ -3498,14 +3776,8 @@ static void SerializeGltfImage(Image &image, json &o) {
 }
 
 static void SerializeGltfMaterial(Material &material, json &o) {
-  if (material.extPBRValues.size()) {
-    // Serialize PBR specular/glossiness material
-    json values;
-    SerializeParameterMap(material.extPBRValues, values);
-
-    json extension;
-    o["extensions"] = extension;
-  }
+  if (material.extras.Size()) SerializeValue("extras", material.extras, o);
+  SerializeExtensionMap(material.extensions, o);
 
   if (material.values.size()) {
     json pbrMetallicRoughness;
@@ -3513,7 +3785,6 @@ static void SerializeGltfMaterial(Material &material, json &o) {
     o["pbrMetallicRoughness"] = pbrMetallicRoughness;
   }
 
-  json additionalValues;
   SerializeParameterMap(material.additionalValues, o);
 
   if (material.name.size()) {
@@ -3534,8 +3805,16 @@ static void SerializeGltfMesh(Mesh &mesh, json &o) {
     }
 
     primitive["attributes"] = attributes;
-    SerializeNumberProperty<int>("indices", gltfPrimitive.indices, primitive);
-    SerializeNumberProperty<int>("material", gltfPrimitive.material, primitive);
+
+    // Indicies is optional
+    if (gltfPrimitive.indices > -1) {
+      SerializeNumberProperty<int>("indices", gltfPrimitive.indices, primitive);
+    }
+    // Material is optional
+    if (gltfPrimitive.material > -1) {
+      SerializeNumberProperty<int>("material", gltfPrimitive.material,
+                                   primitive);
+    }
     SerializeNumberProperty<int>("mode", gltfPrimitive.mode, primitive);
 
     // Morph targets
@@ -3599,14 +3878,11 @@ static void SerializeGltfNode(Node &node, json &o) {
     SerializeNumberProperty<int>("camera", node.camera, o);
   }
 
-  if (node.extLightsValues.size()) {
-    json values;
-    SerializeParameterMap(node.extLightsValues, values);
-    json lightsExt;
-    lightsExt["KHR_lights_cmn"] = values;
-    o["extensions"] = lightsExt;
+  if (node.extras.Type() != NULL_TYPE) {
+    SerializeValue("extras", node.extras, o);
   }
 
+  SerializeExtensionMap(node.extensions, o);
   SerializeStringProperty("name", node.name, o);
   SerializeNumberArrayProperty<int>("children", node.children, o);
 }
@@ -3664,6 +3940,10 @@ static void SerializeGltfScene(Scene &scene, json &o) {
   if (scene.name.size()) {
     SerializeStringProperty("name", scene.name, o);
   }
+  if (scene.extras.Keys().size()) {
+    SerializeValue("extras", scene.extras, o);
+  }
+  SerializeExtensionMap(scene.extensions, o);
 }
 
 static void SerializeGltfSkin(Skin &skin, json &o) {
@@ -3678,14 +3958,16 @@ static void SerializeGltfSkin(Skin &skin, json &o) {
 }
 
 static void SerializeGltfTexture(Texture &texture, json &o) {
-  SerializeNumberProperty("sampler", texture.sampler, o);
+  if (texture.sampler > -1) {
+    SerializeNumberProperty("sampler", texture.sampler, o);
+  }
   SerializeNumberProperty("source", texture.source, o);
 
   if (texture.extras.Size()) {
     json extras;
     SerializeValue("extras", texture.extras, o);
-    o["extras"] = extras;
   }
+  SerializeExtensionMap(texture.extensions, o);
 }
 
 static void WriteGltfFile(const std::string &output,
@@ -3694,10 +3976,10 @@ static void WriteGltfFile(const std::string &output,
   gltfFile << content << std::endl;
 }
 
-bool TinyGLTF::WriteGltfSceneToFile(
-    Model *model,
-    const std::string
-        &filename /*, bool embedImages, bool embedBuffers, bool writeBinary*/) {
+bool TinyGLTF::WriteGltfSceneToFile(Model *model, const std::string &filename,
+                                    bool embedImages = false,
+                                    bool embedBuffers = false
+                                    /*, bool writeBinary*/) {
   json output;
 
   // ACCESSORS
@@ -3736,19 +4018,23 @@ bool TinyGLTF::WriteGltfSceneToFile(
   } else {
     binFilename = binFilename + ".bin";
   }
-  std::string binSaveFilePath = GetBaseDir(filename);
-  if (binSaveFilePath.empty()) {
-    binSaveFilePath = "./";
+  std::string baseDir = GetBaseDir(filename);
+  if (baseDir.empty()) {
+    baseDir = "./";
   }
 
-  binSaveFilePath = JoinPath(binSaveFilePath, binFilename);
+  std::string binSaveFilePath = JoinPath(baseDir, binFilename);
 
   // BUFFERS (We expect only one buffer here)
   json buffers;
   for (unsigned int i = 0; i < model->buffers.size(); ++i) {
     json buffer;
-    SerializeGltfBuffer(model->buffers[i], buffer, binSaveFilePath,
-                        binFilename);
+    if (embedBuffers) {
+      SerializeGltfBuffer(model->buffers[i], buffer);
+    } else {
+      SerializeGltfBuffer(model->buffers[i], buffer, binSaveFilePath,
+                          binFilename);
+    }
     buffers.push_back(buffer);
   }
   output["buffers"] = buffers;
@@ -3775,52 +4061,65 @@ bool TinyGLTF::WriteGltfSceneToFile(
   }
 
   // IMAGES
-  json images;
-  for (unsigned int i = 0; i < model->images.size(); ++i) {
-    json image;
-    SerializeGltfImage(model->images[i], image);
-    images.push_back(image);
+  if (model->images.size()) {
+    json images;
+    for (unsigned int i = 0; i < model->images.size(); ++i) {
+      json image;
+
+      UpdateImageObject(model->images[i], baseDir, int(i), embedImages,
+                        &this->WriteImageData, &this->write_image_user_data_);
+      SerializeGltfImage(model->images[i], image);
+      images.push_back(image);
+    }
+    output["images"] = images;
   }
-  output["images"] = images;
 
   // MATERIALS
-  json materials;
-  for (unsigned int i = 0; i < model->materials.size(); ++i) {
-    json material;
-    SerializeGltfMaterial(model->materials[i], material);
-    materials.push_back(material);
+  if (model->materials.size()) {
+    json materials;
+    for (unsigned int i = 0; i < model->materials.size(); ++i) {
+      json material;
+      SerializeGltfMaterial(model->materials[i], material);
+      materials.push_back(material);
+    }
+    output["materials"] = materials;
   }
-  output["materials"] = materials;
 
   // MESHES
-  json meshes;
-  for (unsigned int i = 0; i < model->meshes.size(); ++i) {
-    json mesh;
-    SerializeGltfMesh(model->meshes[i], mesh);
-    meshes.push_back(mesh);
+  if (model->meshes.size()) {
+    json meshes;
+    for (unsigned int i = 0; i < model->meshes.size(); ++i) {
+      json mesh;
+      SerializeGltfMesh(model->meshes[i], mesh);
+      meshes.push_back(mesh);
+    }
+    output["meshes"] = meshes;
   }
-  output["meshes"] = meshes;
 
   // NODES
-  json nodes;
-  for (unsigned int i = 0; i < model->nodes.size(); ++i) {
-    json node;
-    SerializeGltfNode(model->nodes[i], node);
-    nodes.push_back(node);
+  if (model->nodes.size()) {
+    json nodes;
+    for (unsigned int i = 0; i < model->nodes.size(); ++i) {
+      json node;
+      SerializeGltfNode(model->nodes[i], node);
+      nodes.push_back(node);
+    }
+    output["nodes"] = nodes;
   }
-  output["nodes"] = nodes;
 
   // SCENE
   SerializeNumberProperty<int>("scene", model->defaultScene, output);
 
   // SCENES
-  json scenes;
-  for (unsigned int i = 0; i < model->scenes.size(); ++i) {
-    json currentScene;
-    SerializeGltfScene(model->scenes[i], currentScene);
-    scenes.push_back(currentScene);
+  if (model->scenes.size()) {
+    json scenes;
+    for (unsigned int i = 0; i < model->scenes.size(); ++i) {
+      json currentScene;
+      SerializeGltfScene(model->scenes[i], currentScene);
+      scenes.push_back(currentScene);
+    }
+    output["scenes"] = scenes;
   }
-  output["scenes"] = scenes;
 
   // SKINS
   if (model->skins.size()) {
@@ -3834,40 +4133,61 @@ bool TinyGLTF::WriteGltfSceneToFile(
   }
 
   // TEXTURES
-  json textures;
-  for (unsigned int i = 0; i < model->textures.size(); ++i) {
-    json texture;
-    SerializeGltfTexture(model->textures[i], texture);
-    textures.push_back(texture);
+  if (model->textures.size()) {
+    json textures;
+    for (unsigned int i = 0; i < model->textures.size(); ++i) {
+      json texture;
+      SerializeGltfTexture(model->textures[i], texture);
+      textures.push_back(texture);
+    }
+    output["textures"] = textures;
   }
-  output["textures"] = textures;
 
   // SAMPLERS
-  json samplers;
-  for (unsigned int i = 0; i < model->samplers.size(); ++i) {
-    json sampler;
-    SerializeGltfSampler(model->samplers[i], sampler);
-    samplers.push_back(sampler);
+  if (model->samplers.size()) {
+    json samplers;
+    for (unsigned int i = 0; i < model->samplers.size(); ++i) {
+      json sampler;
+      SerializeGltfSampler(model->samplers[i], sampler);
+      samplers.push_back(sampler);
+    }
+    output["samplers"] = samplers;
   }
-  output["samplers"] = samplers;
 
   // CAMERAS
-  json cameras;
-  for (unsigned int i = 0; i < model->cameras.size(); ++i) {
-    json camera;
-    SerializeGltfCamera(model->cameras[i], camera);
-    cameras.push_back(camera);
+  if (model->cameras.size()) {
+    json cameras;
+    for (unsigned int i = 0; i < model->cameras.size(); ++i) {
+      json camera;
+      SerializeGltfCamera(model->cameras[i], camera);
+      cameras.push_back(camera);
+    }
+    output["cameras"] = cameras;
   }
-  output["cameras"] = cameras;
 
-  // LIGHTS
-  json lights;
-  for (unsigned int i = 0; i < model->lights.size(); ++i) {
-    json light;
-    SerializeGltfLight(model->lights[i], light);
-    lights.push_back(light);
+  // EXTENSIONS
+  SerializeExtensionMap(model->extensions, output);
+
+  // LIGHTS as KHR_lights_cmn
+  if (model->lights.size()) {
+    json lights;
+    for (unsigned int i = 0; i < model->lights.size(); ++i) {
+      json light;
+      SerializeGltfLight(model->lights[i], light);
+      lights.push_back(light);
+    }
+    json khr_lights_cmn;
+    khr_lights_cmn["lights"] = lights;
+    json ext_j;
+
+    if (output.find("extensions") != output.end()) {
+      ext_j = output["extensions"];
+    }
+
+    ext_j["KHR_lights_cmn"] = khr_lights_cmn;
+
+    output["extensions"] = ext_j;
   }
-  output["lights"] = lights;
 
   WriteGltfFile(filename, output.dump());
   return true;
