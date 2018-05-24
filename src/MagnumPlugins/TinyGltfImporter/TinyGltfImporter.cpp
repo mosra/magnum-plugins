@@ -252,15 +252,15 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
 
     /* Node is a camera */
     if(node.camera >= 0) {
-        UnsignedInt cameraId = node.camera;
+        const UnsignedInt cameraId = node.camera;
 
         return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId, &node}};
 
     /* Node is a mesh */
     } else if(node.mesh >= 0) {
-        UnsignedInt meshId = node.mesh;
+        const UnsignedInt meshId = node.mesh;
         /* TODO Multi-material models not supported */
-        Int materialId = _d->model.meshes[meshId].primitives.empty() ? -1 : _d->model.meshes[meshId].primitives[0].material;
+        const Int materialId = _d->model.meshes[meshId].primitives.empty() ? -1 : _d->model.meshes[meshId].primitives[0].material;
 
         return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
 
@@ -470,7 +470,7 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
 
     /* Put things together */
     std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess, &material}};
-    data->ambientColor() = Vector3{0.0f};
+    data->ambientColor() = Color3{0.0f};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
     else data->diffuseColor() = diffuseColor.xyz();
