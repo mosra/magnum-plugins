@@ -468,6 +468,8 @@ void TinyGltfImporterTest::material() {
     CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
     auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+    CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
+    CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::SpecularTexture);
     CORRADE_COMPARE(phong.diffuseTexture(), 0);
     CORRADE_COMPARE(phong.specularTexture(), 0);
     CORRADE_COMPARE(phong.shininess(), 12.298039215686275f);
@@ -511,6 +513,7 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
     auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+    CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
     CORRADE_COMPARE(phong.diffuseTexture(), 0);
     CORRADE_COMPARE(phong.shininess(), 1.0);
 

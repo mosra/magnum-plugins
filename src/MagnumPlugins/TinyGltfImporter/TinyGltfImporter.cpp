@@ -54,6 +54,7 @@
 #define TINYGLTF_IMPLEMENTATION
 /* Opt out of tinygltf stb_image dependency */
 #define TINYGLTF_NO_STB_IMAGE
+#define TINYGLTF_NO_STB_IMAGE_WRITE
 /* Opt out of loading external images */
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 
@@ -264,8 +265,9 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
 
     /* Node is a light */
-    } else if(node.extLightsValues.find("light") != node.extLightsValues.end()) {
-        UnsignedInt lightId = node.extLightsValues.find("light")->second.number_array[0];
+    } else if(node.extensions.find("KHR_lights_cmn") != node.extensions.end()) {
+        tinygltf::Value lightValue = node.extensions.at("KHR_lights_cmn").Get("light");
+        const UnsignedInt lightId = UnsignedInt(lightValue.Get<int>());
 
         return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, lightId, &node}};
     }
@@ -416,45 +418,54 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
     /* Textures */
     PhongMaterialData::Flags flags;
     UnsignedInt diffuseTexture{}, specularTexture{};
+    Vector4 diffuseColor{1.0f};
+    Vector3 specularColor{0.0f};
+    Float shininess{1.0f};
 
-    auto diffuseIt = material.extPBRValues.find("diffuseTexture");
-    if(diffuseIt != material.extPBRValues.end()) {
-        diffuseTexture = diffuseIt->second.TextureIndex();
-        flags |= PhongMaterialData::Flag::DiffuseTexture;
-    } else {
-        diffuseIt = material.values.find("baseColorTexture");
-        if(diffuseIt != material.values.end()) {
-            diffuseTexture = diffuseIt->second.TextureIndex();
+    if(material.extensions.find("KHR_materials_cmnBlinnPhong") != material.extensions.end()) {
+        tinygltf::Value cmnBlinnPhongExt = material.extensions.at("KHR_materials_cmnBlinnPhong");
+
+        auto diffuseTextureValue = cmnBlinnPhongExt.Get("diffuseTexture");
+        if(diffuseTextureValue.Type() != tinygltf::NULL_TYPE) {
+            diffuseTexture = UnsignedInt(diffuseTextureValue.Get("index").Get<int>());
             flags |= PhongMaterialData::Flag::DiffuseTexture;
         }
-    }
 
-    auto specularIt = material.extPBRValues.find("specularShininessTexture");
-    if(specularIt != material.extPBRValues.end()) {
-        specularTexture = specularIt->second.TextureIndex();
-        flags |= PhongMaterialData::Flag::SpecularTexture;
-    }
+        auto specularTextureValue = cmnBlinnPhongExt.Get("specularShininessTexture");
+        if(specularTextureValue.Type() != tinygltf::NULL_TYPE) {
+            specularTexture = UnsignedInt(specularTextureValue.Get("index").Get<int>());
+            flags |= PhongMaterialData::Flag::SpecularTexture;
+        }
 
-    /* Colors */
-    Vector3 diffuseColor{1.0f};
-    auto diffuseFactorIt = material.extPBRValues.find("diffuseFactor");
-    if(diffuseFactorIt != material.extPBRValues.end()) {
-        const tinygltf::ColorValue& diffuseRaw = diffuseFactorIt->second.ColorFactor();
-        diffuseColor = Vector3{float(diffuseRaw[0]), float(diffuseRaw[1]), float(diffuseRaw[2])};
-    }
+        /* Colors */
+        auto diffuseFactorValue = cmnBlinnPhongExt.Get("diffuseFactor");
+        if(diffuseFactorValue.Type() != tinygltf::NULL_TYPE) {
+            diffuseColor = Vector4{Vector4d{
+                diffuseFactorValue.Get(0).Get<double>(),
+                diffuseFactorValue.Get(1).Get<double>(),
+                diffuseFactorValue.Get(2).Get<double>(),
+                diffuseFactorValue.Get(3).Get<double>()}};
+        }
 
-    Vector3 specularColor{0.0f};
-    auto specularFactorIt = material.extPBRValues.find("specularFactor");
-    if(specularFactorIt != material.extPBRValues.end()) {
-        const tinygltf::ColorValue& specularRaw = specularFactorIt->second.ColorFactor();
-        specularColor = Vector3{float(specularRaw[0]), float(specularRaw[1]), float(specularRaw[2])};
-    }
+        auto specularColorValue = cmnBlinnPhongExt.Get("specularFactor");
+        if(specularColorValue.Type() != tinygltf::NULL_TYPE) {
+            specularColor = Vector3{Vector3d{
+                specularColorValue.Get(0).Get<double>(),
+                specularColorValue.Get(1).Get<double>(),
+                specularColorValue.Get(2).Get<double>()}};
+        }
 
-    /* Parameters */
-    Float shininess{1.0f};
-    auto shininessFactorIt = material.extPBRValues.find("shininessFactor");
-    if(shininessFactorIt != material.extPBRValues.end()) {
-        shininess = shininessFactorIt->second.Factor();
+        /* Parameters */
+        auto shininessFactorValue = cmnBlinnPhongExt.Get("shininessFactor");
+        if(shininessFactorValue.Type() != tinygltf::NULL_TYPE) {
+            shininess = float(shininessFactorValue.Get<double>());
+        }
+    } else {
+        auto dt = material.values.find("baseColorTexture");
+        if(dt != material.values.end()) {
+            diffuseTexture = dt->second.TextureIndex();
+            flags |= PhongMaterialData::Flag::DiffuseTexture;
+        }
     }
 
     /* Put things together */
@@ -462,7 +473,7 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
     data->ambientColor() = Vector3{0.0f};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
-    else data->diffuseColor() = diffuseColor;
+    else data->diffuseColor() = diffuseColor.xyz();
     if(flags & PhongMaterialData::Flag::SpecularTexture)
         data->specularTexture() = specularTexture;
     else data->specularColor() = specularColor;
