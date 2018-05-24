@@ -4108,7 +4108,9 @@ bool TinyGLTF::WriteGltfSceneToFile(Model *model, const std::string &filename,
   }
 
   // SCENE
-  SerializeNumberProperty<int>("scene", model->defaultScene, output);
+  if (model->defaultScene > -1) {
+    SerializeNumberProperty<int>("scene", model->defaultScene, output);
+  }
 
   // SCENES
   if (model->scenes.size()) {
