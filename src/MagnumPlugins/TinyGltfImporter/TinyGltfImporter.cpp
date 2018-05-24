@@ -120,7 +120,7 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
     _d->open = true;
     if(data.size() >= 4 && strncmp(data.data(), "glTF", 4) == 0) {
         std::vector<UnsignedByte> chars(data.begin(), data.end());
-        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, chars.data(), data.size(), "", tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, chars.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
     } else {
         _d->open = loader.LoadASCIIFromString(&_d->model, &err, data.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
     }
