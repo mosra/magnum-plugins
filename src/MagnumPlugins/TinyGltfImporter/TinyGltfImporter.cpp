@@ -297,6 +297,9 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         meshPrimitive = MeshPrimitive::Lines;
     } else if(primitive.mode == TINYGLTF_MODE_LINE_LOOP) {
         meshPrimitive = MeshPrimitive::LineLoop;
+    } else if(primitive.mode == 3) {
+        /* For some reason tiny_gltf doesn't have a define for this */
+        meshPrimitive = MeshPrimitive::LineStrip;
     } else if(primitive.mode == TINYGLTF_MODE_TRIANGLES) {
         meshPrimitive = MeshPrimitive::Triangles;
     } else if(primitive.mode == TINYGLTF_MODE_TRIANGLE_FAN) {

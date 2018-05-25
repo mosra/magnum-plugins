@@ -70,6 +70,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void objectScaling();
 
     void mesh();
+    void meshPrimitives();
     void meshColors();
     void meshWithStride();
 
@@ -119,6 +120,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::objectScaling,
 
                        &TinyGltfImporterTest::mesh,
+                       &TinyGltfImporterTest::meshPrimitives,
                        &TinyGltfImporterTest::meshColors,
                        &TinyGltfImporterTest::meshWithStride,
 
@@ -426,6 +428,108 @@ void TinyGltfImporterTest::mesh() {
 
     /* Test file contains UNKNOWN attribute which is not imported */
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute UNKNOWN\n");
+}
+
+void TinyGltfImporterTest::meshPrimitives() {
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-primitives" + std::string{data.extension})));
+
+    CORRADE_COMPARE(importer->mesh3DCount(), 6);
+
+    {
+        auto mesh = importer->mesh3D(0);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 2, 1}));
+
+        CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+            {1.0f, 2.0f, 3.0f},
+            {4.0f, 5.0f, 6.0f},
+            {7.0f, 8.0f, 9.0f}
+        }), TestSuite::Compare::Container);
+    }
+    {
+        auto mesh = importer->mesh3D(1);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 2, 1, 3}));
+
+        CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+            {10.0f, 11.0f, 12.0f},
+            {13.0f, 14.0f, 15.0f},
+            {16.0f, 17.0f, 18.0f},
+            {1.9f, 20.0f, 2.1f}
+        }), TestSuite::Compare::Container);
+    }
+    {
+        auto mesh = importer->mesh3D(2);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::LineLoop);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1}));
+
+        CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+            {1.1f, 1.2f, 1.4f},
+            {1.5f, 1.6f, 1.7f},
+            {1.8f, 1.9f, 2.0f}
+        }), TestSuite::Compare::Container);
+    }
+    {
+        auto mesh = importer->mesh3D(3);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::LineStrip);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{2, 1, 0}));
+
+        CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+            {2.1f, 2.2f, 2.4f},
+            {2.5f, 2.6f, 2.7f},
+            {2.8f, 2.9f, 3.0f}
+        }), TestSuite::Compare::Container);
+    }
+    {
+        auto mesh = importer->mesh3D(4);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::TriangleStrip);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{2, 1, 0, 3}));
+
+        CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+            {3.1f, 3.2f, 3.4f},
+            {3.5f, 3.6f, 3.7f},
+            {3.8f, 3.9f, 4.0f},
+            {4.1f, 4.2f, 4.3f}
+        }), TestSuite::Compare::Container);
+    }
+    {
+        auto mesh = importer->mesh3D(5);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::TriangleFan);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{2, 1, 3, 0}));
+
+        CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+            {5.1f, 5.2f, 5.3f},
+            {6.1f, 6.2f, 6.3f},
+            {7.1f, 7.2f, 7.3f},
+            {8.1f, 8.2f, 8.3f}
+        }), TestSuite::Compare::Container);
+    }
 }
 
 void TinyGltfImporterTest::meshColors() {
