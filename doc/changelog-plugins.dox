@@ -38,6 +38,11 @@ namespace Magnum {
     @ref Trade::TinyGltfImporter "TinyGltfImporter"
     (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
 
+@subsection changelog-plugins-latest-buildsystem Build system
+
+-   There's now a PPA for Ubuntu packages. See @ref building-plugins-packages-deb
+    for more information.
+
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
 -   Fixed a @ref Trade::TinyGltfImporter "TinyGltfImporter" crash on materials
