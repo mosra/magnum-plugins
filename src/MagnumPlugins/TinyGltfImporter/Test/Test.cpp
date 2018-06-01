@@ -71,6 +71,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void mesh();
     void meshColors();
+    void meshWithStride();
 
     void material();
     void texture();
@@ -119,6 +120,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
                        &TinyGltfImporterTest::mesh,
                        &TinyGltfImporterTest::meshColors,
+                       &TinyGltfImporterTest::meshWithStride,
 
                        &TinyGltfImporterTest::material,
                        &TinyGltfImporterTest::texture,
@@ -451,6 +453,23 @@ void TinyGltfImporterTest::meshColors() {
         {0.0f, 0.0f, 0.0f, 1.0f}
     }), TestSuite::Compare::Container);
 }
+
+void TinyGltfImporterTest::meshWithStride() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-with-stride" + std::string{data.extension})));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    auto meshObject = importer->mesh3D(0);
+    CORRADE_VERIFY(!meshObject);
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): non-zero strides for buffer views are not supported\n");
+}
+
 
 void TinyGltfImporterTest::material() {
     auto&& data = InstanceData[testCaseInstanceId()];

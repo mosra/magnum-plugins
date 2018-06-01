@@ -320,6 +320,11 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
         const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
 
+        if(bufferView.byteStride != 0) {
+            Error() << "Trade::TinyGltfImporter::mesh3D(): non-zero strides for buffer views are not supported";
+            return  Containers::NullOpt;
+        }
+
         if(attribute.first == "POSITION") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
                 Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3";
@@ -465,6 +470,12 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
         if(dt != material.values.end()) {
             diffuseTexture = dt->second.TextureIndex();
             flags |= PhongMaterialData::Flag::DiffuseTexture;
+        }
+
+        auto baseColorFactorValue = material.values.find("baseColorFactor");
+        if(baseColorFactorValue != material.values.end()) {
+            tinygltf::ColorValue color = baseColorFactorValue->second.ColorFactor();
+            diffuseColor = Vector4{Vector4d::from(color.data())};
         }
     }
 

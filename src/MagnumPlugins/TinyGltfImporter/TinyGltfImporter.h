@@ -81,6 +81,7 @@ This plugin provides `GltfImporter` and `GlbImporter` plugins.
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 
 -   Multi-material meshes are not supported.
+-   Meshes with interleaved vertex data/buffer views with stride are not supported.
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
 
