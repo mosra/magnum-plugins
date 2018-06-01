@@ -69,6 +69,20 @@ of the `MagnumPlugins` package and link to the
 
 This plugin provides `GltfImporter` and `GlbImporter` plugins.
 
+@section Trade-TinyGltfImporter-defaults Default
+
+As glTF leaves the defaults of some properties to the application, the following
+defaults have been chosen for this importer:
+
+-   Sampler
+    -   Minification/magnification/mipmap filter: @ref SamplerFilter::Linear
+    -   Wrapping (all axis): @ref Sampler::Wrapping::Repeat
+-   Material
+    -   Diffuse color: @cpp 0xFFFFFF_rgbf @ce
+    -   Specular color: @cpp 0x000000_rgbf @ce
+    -   Shininess: @cpp 1.0f @ce
+    -   Ambient color: @cpp 0x000000_rgbf @ce
+
 @section Trade-TinyGltfImporter-limitations Behavior and limitations
 
 -   Importer requires no specific JSON node in glTF file (like `accessors`) so
