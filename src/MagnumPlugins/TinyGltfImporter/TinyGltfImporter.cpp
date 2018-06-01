@@ -404,6 +404,9 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxAccessor.count, std::back_inserter(indices));
     } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
+    /* Flip Y axis of texture coordinates */
+    for(std::vector<Vector2>& layer : textureLayers) for(Vector2& c : layer) c.y() = 1.0f - c.y();
+
     return MeshData3D(meshPrimitive, std::move(indices), {std::move(positions)}, {std::move(normals)}, textureLayers, colorLayers, &mesh);
 }
 

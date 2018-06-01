@@ -657,10 +657,10 @@ void TinyGltfImporterTest::texture() {
 
     CORRADE_COMPARE(meshObject->textureCoords2DArrayCount(), 2);
     CORRADE_COMPARE_AS(meshObject->textureCoords2D(0), (std::vector<Vector2>{
-        {0.94991f, 0.94991f}, {0.3f, 0.05009f}, {0.1f, 0.8f}
+        {0.94991f, 0.05009f}, {0.3f, 0.94991f}, {0.1f, 0.2f}
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(meshObject->textureCoords2D(1), (std::vector<Vector2>{
-        {0.5f, 0.5f}, {0.3f, 0.3f}, {0.2f, 0.58f}
+        {0.5f, 0.5f}, {0.3f, 0.7f}, {0.2f, 0.42f}
     }), TestSuite::Compare::Container);
 }
 
