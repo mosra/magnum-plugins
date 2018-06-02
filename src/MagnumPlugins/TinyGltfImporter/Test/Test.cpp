@@ -456,8 +456,7 @@ void TinyGltfImporterTest::meshPrimitives() {
             {4.0f, 5.0f, 6.0f},
             {7.0f, 8.0f, 9.0f}
         }), TestSuite::Compare::Container);
-    }
-    {
+    } {
         auto mesh = importer->mesh3D(1);
         CORRADE_VERIFY(mesh);
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
@@ -471,8 +470,7 @@ void TinyGltfImporterTest::meshPrimitives() {
             {16.0f, 17.0f, 18.0f},
             {1.9f, 20.0f, 2.1f}
         }), TestSuite::Compare::Container);
-    }
-    {
+    } {
         auto mesh = importer->mesh3D(2);
         CORRADE_VERIFY(mesh);
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::LineLoop);
@@ -485,8 +483,7 @@ void TinyGltfImporterTest::meshPrimitives() {
             {1.5f, 1.6f, 1.7f},
             {1.8f, 1.9f, 2.0f}
         }), TestSuite::Compare::Container);
-    }
-    {
+    } {
         auto mesh = importer->mesh3D(3);
         CORRADE_VERIFY(mesh);
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::LineStrip);
@@ -499,8 +496,7 @@ void TinyGltfImporterTest::meshPrimitives() {
             {2.5f, 2.6f, 2.7f},
             {2.8f, 2.9f, 3.0f}
         }), TestSuite::Compare::Container);
-    }
-    {
+    } {
         auto mesh = importer->mesh3D(4);
         CORRADE_VERIFY(mesh);
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::TriangleStrip);
@@ -514,8 +510,7 @@ void TinyGltfImporterTest::meshPrimitives() {
             {3.8f, 3.9f, 4.0f},
             {4.1f, 4.2f, 4.3f}
         }), TestSuite::Compare::Container);
-    }
-    {
+    } {
         auto mesh = importer->mesh3D(5);
         CORRADE_VERIFY(mesh);
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::TriangleFan);
@@ -573,7 +568,6 @@ void TinyGltfImporterTest::meshWithStride() {
     CORRADE_VERIFY(!meshObject);
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): non-zero strides for buffer views are not supported\n");
 }
-
 
 void TinyGltfImporterTest::material() {
     auto&& data = InstanceData[testCaseInstanceId()];

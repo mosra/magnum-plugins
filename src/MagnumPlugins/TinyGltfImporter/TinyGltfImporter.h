@@ -69,16 +69,17 @@ of the `MagnumPlugins` package and link to the
 
 This plugin provides `GltfImporter` and `GlbImporter` plugins.
 
-@section Trade-TinyGltfImporter-defaults Default
+@section Trade-TinyGltfImporter-defaults Defaults
 
-As glTF leaves the defaults of some properties to the application, the following
-defaults have been chosen for this importer:
+As glTF leaves the defaults of some properties to the application, the
+following defaults have been chosen for this importer:
 
 -   Sampler
-    -   Minification/magnification/mipmap filter: @ref SamplerFilter::Linear
-    -   Wrapping (all axis): @ref Sampler::Wrapping::Repeat
+    -   Minification/magnification/mipmap filter: @ref SamplerFilter::Linear,
+        @ref SamplerMipmap::Linear
+    -   Wrapping (all axes): @ref SamplerWrapping::Repeat
 -   Material
-    -   Diffuse color: @cpp 0xFFFFFF_rgbf @ce
+    -   Diffuse color: @cpp 0xffffff_rgbf @ce
     -   Specular color: @cpp 0x000000_rgbf @ce
     -   Shininess: @cpp 1.0f @ce
     -   Ambient color: @cpp 0x000000_rgbf @ce
@@ -86,7 +87,7 @@ defaults have been chosen for this importer:
 @section Trade-TinyGltfImporter-limitations Behavior and limitations
 
 -   Importer requires no specific JSON node in glTF file (like `accessors`) so
-    it can be used to import only lights.
+    it can be used to import only light data, for example.
 
 @subsection Trade-TinyGltfImporter-limitations-lights Light import
 
@@ -95,12 +96,12 @@ defaults have been chosen for this importer:
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 
 -   Multi-material meshes are not supported.
--   Meshes with interleaved vertex data/buffer views with stride are not supported.
+-   Meshes with interleaved vertex data/buffer views are not supported.
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
 
 -   All materials are imported as @ref Trade::PhongMaterialData with ambient
-    color always set to @cpp {0.0f, 0.0f, 0.0f} @ce
+    color always set to @cpp 0x000000_rgbf @ce
 -   Alpha channel of colors is ignored.
 
 @subsection Trade-TinyGltfImporter-limitations-textures Texture import

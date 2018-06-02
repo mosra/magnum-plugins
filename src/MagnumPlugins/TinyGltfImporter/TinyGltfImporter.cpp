@@ -131,10 +131,10 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
-    for(std::size_t i = 0; i < _d->model.nodes.size(); i++)
+    for(std::size_t i = 0; i != _d->model.nodes.size(); ++i)
         _d->nodesForName.emplace(_d->model.nodes[i].name, i);
 
-    for(std::size_t i = 0; i < _d->model.materials.size(); i++)
+    for(std::size_t i = 0; i != _d->model.materials.size(); ++i)
         _d->materialsForName.emplace(_d->model.materials[i].name, i);
 }
 
@@ -405,7 +405,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Flip Y axis of texture coordinates */
-    for(std::vector<Vector2>& layer : textureLayers) for(Vector2& c : layer) c.y() = 1.0f - c.y();
+    for(std::vector<Vector2>& layer: textureLayers)
+        for(Vector2& c: layer) c.y() = 1.0f - c.y();
 
     return MeshData3D(meshPrimitive, std::move(indices), {std::move(positions)}, {std::move(normals)}, textureLayers, colorLayers, &mesh);
 }
@@ -414,7 +415,7 @@ UnsignedInt TinyGltfImporter::doMaterialCount() const {
     return _d->model.materials.size();
 }
 
-Int TinyGltfImporter::doMaterialForName(const std::string& name){
+Int TinyGltfImporter::doMaterialForName(const std::string& name) {
     const auto found = _d->materialsForName.find(name);
     return found == _d->materialsForName.end() ? -1 : found->second;
 }
@@ -505,7 +506,8 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
     const tinygltf::Texture& tex = _d->model.textures[id];
 
     if(tex.sampler < 0) {
-        /* The specification instructs to use "auto sampling", i.e. it is left to the implementor to decide on the default values... */
+        /* The specification instructs to use "auto sampling", i.e. it is left
+           to the implementor to decide on the default values... */
         return TextureData{TextureData::Type::Texture2D, SamplerFilter::Linear, SamplerFilter::Linear,
             Sampler::Mipmap::Linear, {Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat}, UnsignedInt(tex.source), &tex};
     }
@@ -552,8 +554,8 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
         default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
-    /* There's wrapR that is a glTF extension and is set to zero. Ignoring that
-       one and hardcoding it to Repeat. */
+    /* There's wrapR that is a tiny_gltf extension and is set to zero. Ignoring
+       that one and hardcoding it to Repeat. */
     Array3D<SamplerWrapping> wrapping;
     wrapping.z() = SamplerWrapping::Repeat;
     for(auto&& wrap: std::initializer_list<std::pair<int, int>>{
