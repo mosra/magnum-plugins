@@ -295,8 +295,11 @@ std::string TinyGltfImporter::doMesh3DName(const UnsignedInt id) {
 
 Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id) {
     const tinygltf::Mesh& mesh = _d->model.meshes[id];
+
+    /* primitive */
     if(mesh.primitives.size() > 1) {
-        Warning{} << "Trade::TinyGltfImporter::mesh3D(): more than one primitive per mesh is not supported at the moment, only the first will be imported";
+        Error() << "Trade::TinyGltfImporter::mesh3D(): currently only one primitive per mesh is supported";
+        return Containers::NullOpt;
     }
 
     const tinygltf::Primitive& primitive = mesh.primitives[0];
