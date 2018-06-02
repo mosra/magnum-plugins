@@ -407,6 +407,9 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         return Containers::NullOpt;
     }
 
+    /* Interleaved indices should not be a thing */
+    CORRADE_INTERNAL_ASSERT(idxBufferView.byteStride == 0);
+
     std::vector<UnsignedInt> indices;
     const UnsignedByte* start = idxBuffer.data.data() + idxBufferView.byteOffset + idxAccessor.byteOffset;
     if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
