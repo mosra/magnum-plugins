@@ -34,7 +34,7 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
--   Texture coordinate and color vertex attribute import in
+-   Texture coordinate, color vertex attribute and mesh name import in
     @ref Trade::TinyGltfImporter "TinyGltfImporter"
     (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
 

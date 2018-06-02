@@ -404,7 +404,13 @@ void TinyGltfImporterTest::mesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh" + std::string{data.extension})));
 
+    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_COMPARE(importer->object3DName(0), "Node");
+    CORRADE_COMPARE(importer->object3DForName("Node"), 0);
+
     CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->mesh3DName(0), "Mesh");
+    CORRADE_COMPARE(importer->mesh3DForName("Mesh"), 0);
 
     auto meshObject = importer->mesh3D(0);
     CORRADE_VERIFY(meshObject);

@@ -87,6 +87,7 @@ struct TinyGltfImporter::Document {
     tinygltf::Model model;
 
     std::unordered_map<std::string, Int> nodesForName,
+        meshesForName,
         materialsForName;
 
     bool open = false;
@@ -131,6 +132,9 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         doClose();
         return;
     }
+
+    for(std::size_t i = 0; i != _d->model.meshes.size(); ++i)
+        _d->meshesForName.emplace(_d->model.meshes[i].name, i);
 
     for(std::size_t i = 0; i != _d->model.nodes.size(); ++i)
         _d->nodesForName.emplace(_d->model.nodes[i].name, i);
@@ -278,6 +282,15 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
 
 UnsignedInt TinyGltfImporter::doMesh3DCount() const {
     return _d->model.meshes.size();
+}
+
+Int TinyGltfImporter::doMesh3DForName(const std::string& name) {
+    const auto found = _d->meshesForName.find(name);
+    return found == _d->meshesForName.end() ? -1 : found->second;
+}
+
+std::string TinyGltfImporter::doMesh3DName(const UnsignedInt id) {
+    return _d->model.meshes[id].name;
 }
 
 Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id) {
