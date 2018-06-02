@@ -34,9 +34,12 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
--   Texture coordinate, color vertex attribute and mesh name import in
+-   Texture coordinate, color vertex attribute and base object color import in
     @ref Trade::TinyGltfImporter "TinyGltfImporter"
-    (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
+    (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41),
+    [mosra/magnum-plugins#43](https://github.com/mosra/magnum-plugins/pull/43))
+-   Mesh name and trivial multi-primitive mesh loading in
+    @ref Trade::TinyGltfImporter "TinyGltfImporter"
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
@@ -47,6 +50,8 @@ namespace Magnum {
 
 -   Fixed a @ref Trade::TinyGltfImporter "TinyGltfImporter" crash on materials
     without a PBR extension (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now loads external images
+    with `*.glb` files properly
 
 @section changelog-plugins-2018-04 2018.04
 
