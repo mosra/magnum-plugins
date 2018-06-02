@@ -95,7 +95,7 @@ following defaults have been chosen for this importer:
 
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 
--   Multi-material meshes are not supported.
+-   Only the first mesh of a multi-primitive mesh is imported.
 -   Meshes with interleaved vertex data/buffer views are not supported.
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
