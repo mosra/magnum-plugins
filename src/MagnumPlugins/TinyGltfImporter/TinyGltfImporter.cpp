@@ -337,8 +337,10 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
         const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
 
-        if(bufferView.byteStride != 0) {
-            Error() << "Trade::TinyGltfImporter::mesh3D(): non-zero strides for buffer views are not supported";
+        /* Some of the Khronos sample models have explicitly specified stride
+           (without interleaving), don't fail on that */
+        if(bufferView.byteStride != 0 && bufferView.byteStride != std::size_t(tinygltf::GetComponentSizeInBytes(accessor.componentType)*tinygltf::GetTypeSizeInBytes(accessor.type))) {
+            Error() << "Trade::TinyGltfImporter::mesh3D(): interleaved buffer views are not supported";
             return  Containers::NullOpt;
         }
 

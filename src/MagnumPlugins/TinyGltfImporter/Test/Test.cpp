@@ -571,9 +571,12 @@ void TinyGltfImporterTest::meshWithStride() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    auto meshObject = importer->mesh3D(0);
-    CORRADE_VERIFY(!meshObject);
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): non-zero strides for buffer views are not supported\n");
+    /* First has a stride of 12 bytes (no interleaving), shouldn't fail */
+    CORRADE_VERIFY(importer->mesh3D(0));
+
+    /* Second has a stride of 24 bytes, should fail */
+    CORRADE_VERIFY(!importer->mesh3D(1));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): interleaved buffer views are not supported\n");
 }
 
 void TinyGltfImporterTest::material() {
