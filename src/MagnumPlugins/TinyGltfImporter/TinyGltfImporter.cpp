@@ -509,7 +509,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
         /* The specification instructs to use "auto sampling", i.e. it is left
            to the implementor to decide on the default values... */
         return TextureData{TextureData::Type::Texture2D, SamplerFilter::Linear, SamplerFilter::Linear,
-            Sampler::Mipmap::Linear, {Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat, Sampler::Wrapping::Repeat}, UnsignedInt(tex.source), &tex};
+            SamplerMipmap::Linear, {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat}, UnsignedInt(tex.source), &tex};
     }
     const tinygltf::Sampler& s = _d->model.samplers[tex.sampler];
 
