@@ -52,6 +52,8 @@ namespace Magnum {
     without a PBR extension (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now loads external images
     with `*.glb` files properly
+-   Updated `stb_image` to fix `undefined symbol: __cpu_model` error when
+    compiling @ref Trade::StbImageImporter "StbImageImporter" on GCC 5
 
 @section changelog-plugins-2018-04 2018.04
 
