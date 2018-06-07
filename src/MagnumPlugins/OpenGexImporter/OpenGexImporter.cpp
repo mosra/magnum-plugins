@@ -473,7 +473,7 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
 namespace {
 
 template<class Result, std::size_t originalSize> Result extractColorData2(const OpenDdl::Structure floatArray) {
-    return Result::pad(*reinterpret_cast<const Math::Vector<originalSize, Float>*>(floatArray.asArray<Float>().data()));
+    return Result::pad(*reinterpret_cast<const Math::Vector<originalSize, Float>*>(floatArray.asArray<Float>().data()), 1.0f);
 }
 
 template<class Result> Result extractColorData(const OpenDdl::Structure floatArray) {
@@ -751,8 +751,8 @@ std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsigned
     }
 
     /* Colors (used only if matching texture isn't already specified) */
-    Vector3 diffuseColor{1.0f};
-    Vector3 specularColor{0.0f};
+    Color4 diffuseColor{1.0f};
+    Color4 specularColor{1.0f};
     for(const OpenDdl::Structure color: material.childrenOf(OpenGex::Color)) {
         const OpenDdl::Structure floatArray = color.firstChild();
         if(floatArray.subArraySize() != 3 && floatArray.subArraySize() != 4) {
@@ -762,9 +762,9 @@ std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsigned
 
         const auto& attrib = color.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "diffuse")
-            diffuseColor = extractColorData<Vector3>(floatArray);
+            diffuseColor = extractColorData<Color4>(floatArray);
         else if(attrib == "specular")
-            specularColor = extractColorData<Vector3>(floatArray);
+            specularColor = extractColorData<Color4>(floatArray);
     }
 
     /* Parameters */
@@ -777,7 +777,6 @@ std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsigned
 
     /* Put things together */
     std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess, &material}};
-    data->ambientColor() = Vector3{0.0f};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
     else data->diffuseColor() = diffuseColor;

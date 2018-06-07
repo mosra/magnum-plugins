@@ -449,8 +449,8 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
     /* Textures */
     PhongMaterialData::Flags flags;
     UnsignedInt diffuseTexture{}, specularTexture{};
-    Vector4 diffuseColor{1.0f};
-    Vector3 specularColor{0.0f};
+    Color4 diffuseColor{1.0f};
+    Color3 specularColor{1.0f}; /** @todo Why no RGBA? */
     Float shininess{1.0f};
 
     if(material.extensions.find("KHR_materials_cmnBlinnPhong") != material.extensions.end()) {
@@ -507,10 +507,9 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
 
     /* Put things together */
     std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess, &material}};
-    data->ambientColor() = Color3{0.0f};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
-    else data->diffuseColor() = diffuseColor.xyz();
+    else data->diffuseColor() = diffuseColor;
     if(flags & PhongMaterialData::Flag::SpecularTexture)
         data->specularTexture() = specularTexture;
     else data->specularColor() = specularColor;

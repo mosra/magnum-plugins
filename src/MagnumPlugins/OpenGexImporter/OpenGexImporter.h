@@ -97,8 +97,7 @@ and link to the `MagnumPlugins::OpenGexImporter` target. See
 
 -   Two-sided property is ignored.
 -   All materials are imported as @ref Trade::PhongMaterialData with ambient
-    color always set to `{0.0f, 0.0f, 0.0f}`.
--   Alpha channel of colors is ignored.
+    color always set to @cpp 0x000000ff_rgbaf @ce.
 -   `emission`, `opacity` and `transparency` attributes are not supported.
 -   `normal` textures are not supported.
 

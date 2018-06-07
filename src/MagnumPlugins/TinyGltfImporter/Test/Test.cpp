@@ -616,8 +616,8 @@ void TinyGltfImporterTest::material() {
 
     auto&& phong2 = static_cast<const Trade::PhongMaterialData&>(*material2);
 
-    CORRADE_COMPARE(phong2.diffuseColor(), (Color3{0.12716870497418498f, 0.26973092957930156f, 0.6392822360885475f}));
-    CORRADE_COMPARE(phong2.specularColor(), (Color3{0.11348294466733932f, 0.5f, 0.44396162033081055f}));
+    CORRADE_COMPARE(phong2.diffuseColor(), (Color4{0.12716870497418498f, 0.26973092957930156f, 0.6392822360885475f, 0.8f}));
+    CORRADE_COMPARE(phong2.specularColor(), (Color4{0.11348294466733932f, 0.5f, 0.44396162033081055f}));
     CORRADE_COMPARE(phong2.shininess(), 12.298039215686275f);
 
     CORRADE_COMPARE(importer->materialForName("secondMaterial"), 1);
