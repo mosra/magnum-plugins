@@ -43,6 +43,8 @@ namespace Magnum {
 -   @ref Trade::OpenGexImporter "OpenGexImporter" and
     @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly import alpha
     for @ref Trade::PhongMaterialData
+-   @ref Text::HarfBuzzFont "HarfBuzzFont" is now providing `TrueTypeFont`,
+    similarly to other plugins supporting TTF fonts
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

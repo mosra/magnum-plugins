@@ -72,7 +72,7 @@ static plugin or as a dependency of another plugin with CMake, you need to
 request the `FreeTypeFont` component of the `MagnumPlugins` package and link to
 the `MagnumPlugins::FreeTypeFont` target.
 
-This plugin provides `TrueTypeFont` plugin.
+This plugin provides the `TrueTypeFont` plugin.
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
