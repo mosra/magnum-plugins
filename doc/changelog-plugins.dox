@@ -55,6 +55,8 @@ namespace Magnum {
 
 -   Fixed a @ref Trade::TinyGltfImporter "TinyGltfImporter" crash on materials
     without a PBR extension (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
+-   Fixed improper order of applying translation/rotation/scaling node
+    transformations in @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now loads external images
     with `*.glb` files properly
 -   Updated `stb_image` to fix `undefined symbol: __cpu_model` error when

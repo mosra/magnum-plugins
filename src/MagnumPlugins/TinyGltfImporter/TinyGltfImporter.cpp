@@ -235,21 +235,25 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
 
     std::vector<UnsignedInt> children(node.children.begin(), node.children.end());
 
+    /* According to the spec, order is T-R-S: first scale, then rotate, then
+       translate (or translate*rotate*scale multiplication of matrices). Makes
+       most sense, since non-uniform scaling of rotated object is unwanted in
+       99% cases, similarly with rotating or scaling a translated object. Also
+       independently verified by exporting a model with translation, rotation
+       *and* scaling of hierarchic objects. */
     Matrix4 transformation;
+    if(node.translation.size() == 3) {
+        const Vector3 vector(Vector3d::from(node.translation.data()));
+        transformation = Matrix4::translation(vector);
+    }
     if(node.rotation.size() == 4) {
         const Vector3 vector(Vector3d::from(node.rotation.data()));
         const auto scalar = node.rotation[3];
-        transformation = Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
-    }
-    if(node.translation.size() == 3) {
-        const Vector3 vector(Vector3d::from(node.translation.data()));
-        Matrix4 translation = Matrix4::translation(vector);
-        transformation = transformation*translation;
+        transformation = transformation*Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
     }
     if(node.scale.size() == 3) {
         const Vector3 vector(Vector3d::from(node.scale.data()));
-        Matrix4 scale = Matrix4::scaling(vector);
-        transformation = transformation*scale;
+        transformation = transformation*Matrix4::scaling(vector);
     }
     if(node.matrix.size() == 16) {
         transformation = Matrix4(Matrix4d::from(node.matrix.data()));

@@ -311,7 +311,7 @@ void TinyGltfImporterTest::objectTransformation() {
         {0.0f,  1.0f, 0.0f, 0.0f},
         {-0.707107f, 0.0f, -0.707107f, 0.0f},
         {-0.707107f,  0.0f, 0.707107f, 0},
-        {2.82843f, 1.0f, 0.0f, 1.0f}
+        {1.0f, -2.0f, -2.0f, 1.0f}
     }));
 
     std::unique_ptr<Trade::ObjectData3D> objectWithMatrix = importer->object3D(1);
