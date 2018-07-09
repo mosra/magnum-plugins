@@ -64,6 +64,8 @@ corrade_add_test(TinyGltfImporterTest Test.cpp
         material-blinnphong.glb
         material-metallicroughness.gltf
         material-metallicroughness.glb
+        material-specularglossiness.gltf
+        material-specularglossiness.glb
         mesh.gltf
         mesh.bin
         mesh.glb

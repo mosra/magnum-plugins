@@ -32,6 +32,11 @@ namespace Magnum {
 
 @section changelog-plugins-latest Changes since 2018.04
 
+@subsection changelog-plugins-latest-new New features
+
+-   Minimal support for the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
+    extension in @ref Trade::TinyGltfImporter "TinyGltfImporter"
+
 @subsection changelog-plugins-latest-changes Changes and improvements
 
 -   Texture coordinate, color vertex attribute and base object color import in

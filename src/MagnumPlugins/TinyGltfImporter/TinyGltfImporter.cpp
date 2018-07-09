@@ -454,6 +454,7 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
     Color3 specularColor{1.0f}; /** @todo Why no RGBA? */
     Float shininess{1.0f};
 
+    /* Make Blinn/Phong a priority, because there we can import most properties */
     if(material.extensions.find("KHR_materials_cmnBlinnPhong") != material.extensions.end()) {
         tinygltf::Value cmnBlinnPhongExt = material.extensions.at("KHR_materials_cmnBlinnPhong");
 
@@ -492,6 +493,42 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
         if(shininessFactorValue.Type() != tinygltf::NULL_TYPE) {
             shininess = float(shininessFactorValue.Get<double>());
         }
+
+    /* After that there is the PBR Specular/Glosiness */
+    } else if(material.extensions.find("KHR_materials_pbrSpecularGlossiness") != material.extensions.end()) {
+        tinygltf::Value cmnBlinnPhongExt = material.extensions.at("KHR_materials_pbrSpecularGlossiness");
+
+        auto diffuseTextureValue = cmnBlinnPhongExt.Get("diffuseTexture");
+        if(diffuseTextureValue.Type() != tinygltf::NULL_TYPE) {
+            diffuseTexture = UnsignedInt(diffuseTextureValue.Get("index").Get<int>());
+            flags |= PhongMaterialData::Flag::DiffuseTexture;
+        }
+
+        auto specularTextureValue = cmnBlinnPhongExt.Get("specularGlossinessTexture");
+        if(specularTextureValue.Type() != tinygltf::NULL_TYPE) {
+            specularTexture = UnsignedInt(specularTextureValue.Get("index").Get<int>());
+            flags |= PhongMaterialData::Flag::SpecularTexture;
+        }
+
+        /* Colors */
+        auto diffuseFactorValue = cmnBlinnPhongExt.Get("diffuseFactor");
+        if(diffuseFactorValue.Type() != tinygltf::NULL_TYPE) {
+            diffuseColor = Vector4{Vector4d{
+                diffuseFactorValue.Get(0).Get<double>(),
+                diffuseFactorValue.Get(1).Get<double>(),
+                diffuseFactorValue.Get(2).Get<double>(),
+                diffuseFactorValue.Get(3).Get<double>()}};
+        }
+
+        auto specularColorValue = cmnBlinnPhongExt.Get("specularFactor");
+        if(specularColorValue.Type() != tinygltf::NULL_TYPE) {
+            specularColor = Vector3{Vector3d{
+                specularColorValue.Get(0).Get<double>(),
+                specularColorValue.Get(1).Get<double>(),
+                specularColorValue.Get(2).Get<double>()}};
+        }
+
+    /* From the core Metallic/Roughness we get just the base color / texture */
     } else {
         auto dt = material.values.find("baseColorTexture");
         if(dt != material.values.end()) {
