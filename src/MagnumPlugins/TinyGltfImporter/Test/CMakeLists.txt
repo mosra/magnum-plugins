@@ -59,7 +59,6 @@ corrade_add_test(TinyGltfImporterTest Test.cpp
         light.gltf
         light.glb
         material.gltf
-        material.bin
         material.glb
         mesh.gltf
         mesh.bin
