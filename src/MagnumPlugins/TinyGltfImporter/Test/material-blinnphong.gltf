@@ -1,88 +1,73 @@
 {
-    "asset" : {
-        "generator" : "Jonathan Hale <squareys@googlemail.com>",
-        "version" : "2.0"
+    "asset": {
+        "version": "2.0"
     },
-    "extensionsRequired" : [
+    "extensionsRequired": [
         "KHR_materials_cmnBlinnPhong"
     ],
-    "extensionsUsed" : [
+    "extensionsUsed": [
         "KHR_materials_cmnBlinnPhong"
     ],
-    "images" : [
+    "images": [
         {
-            "uri" : "texture.png"
+            "uri": "texture.png"
         }
     ],
-    "materials" : [
+    "materials": [
         {
-            "emissiveFactor" : [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "extensions" : {
-                "KHR_materials_cmnBlinnPhong" : {
-                    "diffuseFactor" : [
-                        0.15896087884902954,
-                        0.33716365694999695,
-                        0.799102783203125,
+            "extensions": {
+                "KHR_materials_cmnBlinnPhong": {
+                    "diffuseFactor": [
+                        0.7,
+                        0.8,
+                        0.9,
                         1.0
                     ],
-                    "diffuseTexture" : {
-                        "index" : 0
+                    "diffuseTexture": {
+                        "index": 0
                     },
-                    "shininessFactor" : 12.298039215686275,
-                    "specularFactor" : [
-                        0.09469437610159526,
-                        0.41721853613853455,
-                        0.37045803467222527
+                    "shininessFactor": 40.5,
+                    "specularFactor": [
+                        0.4,
+                        0.5,
+                        0.6
                     ],
-                    "specularShininessTexture" : {
-                        "index" : 0
+                    "specularShininessTexture": {
+                        "index": 1
                     }
                 }
             },
-            "name" : "awesomeMaterial"
-        },
-        {
-            "emissiveFactor" : [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "extensions" : {
-                "KHR_materials_cmnBlinnPhong" : {
-                    "diffuseFactor" : [
-                        0.12716870497418498,
-                        0.26973092957930156,
-                        0.6392822360885475,
+            "name": "Blinn/Phong with textures"
+        }, {
+            "extensions": {
+                "KHR_materials_cmnBlinnPhong": {
+                    "diffuseFactor": [
+                        0.3,
+                        0.4,
+                        0.5,
                         0.8
                     ],
-                    "shininessFactor" : 12.298039215686275,
-                    "specularFactor" : [
-                        0.11348294466733932,
-                        0.5,
-                        0.44396162033081055
+                    "shininessFactor": 12.7,
+                    "specularFactor": [
+                        0.1,
+                        0.2,
+                        0.6
                     ]
                 }
             },
-            "name" : "secondMaterial"
+            "name": "Blinn/Phong without textures"
         }
     ],
-    "samplers" : [
+    "samplers": [
         {}
     ],
-    "scene" : 0,
-    "scenes" : [
+    "textures": [
         {
-            "name" : "Scene"
-        }
-    ],
-    "textures" : [
-        {
-            "sampler" : 0,
-            "source" : 0
+            "sampler": 0,
+            "source": 0
+        }, {
+            "sampler": 0,
+            "source": 0
         }
     ]
 }

@@ -75,7 +75,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshColors();
     void meshWithStride();
 
-    void material();
+    void materialPbrMetallicRoughness();
+    void materialBlinnPhong();
     void texture();
     void textureDefaultSampler();
 
@@ -125,7 +126,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::meshColors,
                        &TinyGltfImporterTest::meshWithStride,
 
-                       &TinyGltfImporterTest::material,
+                       &TinyGltfImporterTest::materialPbrMetallicRoughness,
+                       &TinyGltfImporterTest::materialBlinnPhong,
                        &TinyGltfImporterTest::texture,
                        &TinyGltfImporterTest::textureDefaultSampler,
 
@@ -579,49 +581,81 @@ void TinyGltfImporterTest::meshWithStride() {
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): interleaved buffer views are not supported\n");
 }
 
-void TinyGltfImporterTest::material() {
+void TinyGltfImporterTest::materialPbrMetallicRoughness() {
     auto&& data = InstanceData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material" + std::string{data.extension})));
+        "material-metallicroughness" + std::string{data.extension})));
 
     CORRADE_COMPARE(importer->materialCount(), 2);
 
-    auto material = importer->material(0);
+    {
+        auto material = importer->material(0);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
-    CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
+        CORRADE_COMPARE(phong.diffuseTexture(), 0);
+        CORRADE_COMPARE(phong.specularColor(), 0xffffff_rgbf);
+        CORRADE_COMPARE(phong.shininess(), 1.0f);
 
-    auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
-    CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
-    CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::SpecularTexture);
-    CORRADE_COMPARE(phong.diffuseTexture(), 0);
-    CORRADE_COMPARE(phong.specularTexture(), 0);
-    CORRADE_COMPARE(phong.shininess(), 12.298039215686275f);
+        CORRADE_COMPARE(importer->materialForName("Metallic/Roughness with textures"), 0);
+        CORRADE_COMPARE(importer->materialName(0), "Metallic/Roughness with textures");
+    } {
+        auto material = importer->material(1);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
-    CORRADE_COMPARE(importer->materialForName("awesomeMaterial"), 0);
-    CORRADE_COMPARE(importer->materialName(0), "awesomeMaterial");
-    CORRADE_COMPARE(importer->textureCount(), 1);
+        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
+        CORRADE_COMPARE(phong.specularColor(), 0xffffff_rgbf);
+        CORRADE_COMPARE(phong.shininess(), 1.0f);
 
-    auto texture = importer->texture(0);
-    CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+        CORRADE_COMPARE(importer->materialForName("Metallic/Roughness without textures"), 1);
+        CORRADE_COMPARE(importer->materialName(1), "Metallic/Roughness without textures");
+    }
+}
 
-    auto material2 = importer->material(1);
-    CORRADE_VERIFY(material2);
-    CORRADE_COMPARE(material2->type(), Trade::MaterialType::Phong);
+void TinyGltfImporterTest::materialBlinnPhong() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
-    auto&& phong2 = static_cast<const Trade::PhongMaterialData&>(*material2);
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "material-blinnphong" + std::string{data.extension})));
 
-    CORRADE_COMPARE(phong2.diffuseColor(), (Color4{0.12716870497418498f, 0.26973092957930156f, 0.6392822360885475f, 0.8f}));
-    CORRADE_COMPARE(phong2.specularColor(), (Color4{0.11348294466733932f, 0.5f, 0.44396162033081055f}));
-    CORRADE_COMPARE(phong2.shininess(), 12.298039215686275f);
+    CORRADE_COMPARE(importer->materialCount(), 2);
 
-    CORRADE_COMPARE(importer->materialForName("secondMaterial"), 1);
-    CORRADE_COMPARE(importer->materialName(1), "secondMaterial");
+    {
+        auto material = importer->material(0);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+
+        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
+        CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phong.diffuseTexture(), 0);
+        CORRADE_COMPARE(phong.specularTexture(), 1);
+        CORRADE_COMPARE(phong.shininess(), 40.5f);
+
+        CORRADE_COMPARE(importer->materialForName("Blinn/Phong with textures"), 0);
+        CORRADE_COMPARE(importer->materialName(0), "Blinn/Phong with textures");
+    } {
+        auto material = importer->material(1);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+
+        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
+        CORRADE_COMPARE(phong.specularColor(), (Color4{0.1f, 0.2f, 0.6f}));
+        CORRADE_COMPARE(phong.shininess(), 12.7f);
+
+        CORRADE_COMPARE(importer->materialForName("Blinn/Phong without textures"), 1);
+        CORRADE_COMPARE(importer->materialName(1), "Blinn/Phong without textures");
+    }
 }
 
 void TinyGltfImporterTest::texture() {
@@ -697,7 +731,7 @@ void TinyGltfImporterTest::image() {
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material" + std::string{data.extension})));
+        "image" + std::string{data.extension})));
 
     const char expected[] =
         "\xa8\xa7\xac\xff\x9d\x9e\xa0\xff\xad\xad\xac\xff\xbb\xbb\xba\xff\xb3\xb4\xb6\xff"

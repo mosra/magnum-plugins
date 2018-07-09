@@ -56,10 +56,14 @@ corrade_add_test(TinyGltfImporterTest Test.cpp
         test-scene.glb
         camera.gltf
         camera.glb
+        image.gltf
+        image.glb
         light.gltf
         light.glb
-        material.gltf
-        material.glb
+        material-blinnphong.gltf
+        material-blinnphong.glb
+        material-metallicroughness.gltf
+        material-metallicroughness.glb
         mesh.gltf
         mesh.bin
         mesh.glb

@@ -1,0 +1,45 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "texture.png"
+        }
+    ],
+    "materials": [
+        {
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [
+                    0.7,
+                    0.8,
+                    0.9,
+                    1.0
+                ],
+                "baseColorTexture": {
+                    "index": 0
+                }
+            },
+            "name": "Metallic/Roughness with textures"
+        }, {
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [
+                    0.3,
+                    0.4,
+                    0.5,
+                    0.8
+                ]
+            },
+            "name": "Metallic/Roughness without textures"
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ]
+}
