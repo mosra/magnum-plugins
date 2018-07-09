@@ -42,8 +42,9 @@ GLB_HEADER_SIZE = 12
 
 def main():
     fileIn = sys.argv[1]
+    fileOut = os.path.splitext(fileIn)[0] + '.glb'
 
-    print("Converting", fileIn);
+    print("Converting to", fileOut)
 
     start_time = time.time()
 
@@ -79,7 +80,7 @@ def main():
         jsonChunkAlign = (4 - (len(jsonData) % 4)) % 4
         jsonChunkLength = len(jsonData) + jsonChunkAlign
 
-        with open(os.path.splitext(fileIn)[0] + ".glb", "wb") as outfile:
+        with open(fileOut, "wb") as outfile:
             gtlf_version = 2
             length = GLB_HEADER_SIZE + CHUNK_HEADER_SIZE + jsonChunkLength
             if hasBin:
