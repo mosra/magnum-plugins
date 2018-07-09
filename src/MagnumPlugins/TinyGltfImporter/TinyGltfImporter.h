@@ -69,25 +69,7 @@ of the `MagnumPlugins` package and link to the
 
 This plugin provides `GltfImporter` and `GlbImporter` plugins.
 
-@section Trade-TinyGltfImporter-defaults Defaults
-
-As glTF leaves the defaults of some properties to the application, the
-following defaults have been chosen for this importer:
-
--   Sampler
-    -   Minification/magnification/mipmap filter: @ref SamplerFilter::Linear,
-        @ref SamplerMipmap::Linear
-    -   Wrapping (all axes): @ref SamplerWrapping::Repeat
--   Material
-    -   Diffuse color: @cpp 0xffffff_rgbf @ce
-    -   Specular color: @cpp 0x000000_rgbf @ce
-    -   Shininess: @cpp 1.0f @ce
-    -   Ambient color: @cpp 0x000000_rgbf @ce
-
 @section Trade-TinyGltfImporter-limitations Behavior and limitations
-
--   Importer requires no specific JSON node in glTF file (like `accessors`) so
-    it can be used to import only light data, for example.
 
 @subsection Trade-TinyGltfImporter-limitations-lights Light import
 
@@ -100,8 +82,41 @@ following defaults have been chosen for this importer:
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
 
--   All materials are imported as @ref Trade::PhongMaterialData with ambient
-    color always set to @cpp 0x000000_rgbf @ce
+-   Subset of all material specs is currently imported as
+    @ref Trade::PhongMaterialData
+-   Ambient color is always @cpp 0x000000_rgbf @ce (never a texture)
+-   For the Metallic/Roughness material spec ([in core](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material),
+    default):
+    -   The `baseColorTexture` field is used for diffuse texture, if present.
+        Otherwise, `baseColorFactor` is used for diffuse color, if present.
+        Otherwise, @cpp 0xffffff_rgbf @ce is used.
+    -   Specular color is always @cpp 0xffffff_rgbf @ce (never a texture)
+    -   Shininess is always @cpp 1.0f @ce
+-   For the Specular/Glossiness material spec
+    ([KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
+    extension):
+    -   The `diffuseTexture` field is used for diffuse texture, if present.
+        Otherwise, `diffuseFactor` is used for diffuse color, if present.
+        Otherwise, @cpp 0xffffff_rgbf @ce is used.
+    -   The `specularGlossinessTexture` field is used for a specular texture,
+        if present (note that only the RGB channels should be used and the
+        alpha channel --- containing glossiness --- should be ignored).
+        Otherwise, `specularFactor` is used for specular color, if present.
+        Otherwise, @cpp 0xffffff_rgbf @ce is used.
+    -   Shininess is always @cpp 1.0f @ce
+-   For the Blinn/Phong material spec (*draft*
+    [KHR_materials_cmnBlinnPhong](https://github.com/KhronosGroup/glTF/tree/gltf2-common-materials/extensions/Khronos/KHR_materials_cmnBlinnPhong)
+    extension):
+    -   The `diffuseTexture` field is used for diffuse texture, if present.
+        Otherwise, `diffuseFactor` is used for diffuse color, if present.
+        Otherwise, @cpp 0xffffff_rgbf @ce is used.
+    -   The `specularShininessTexture` field is used for specular texture, if
+        present (note that only the RGB channels should be used and the alpha
+        channel --- containing snininess --- should be ignored). Otherwise,
+        `specularFactor` is used for diffuse color, if present. Otherwise,
+        @cpp 0xffffff_rgbf @ce is used.
+    -   The `snininessFactor` field is used for snininess, if present.
+        Otherwise @cpp 1.0f @ce is used.
 
 @subsection Trade-TinyGltfImporter-limitations-textures Texture import
 
@@ -109,6 +124,11 @@ following defaults have been chosen for this importer:
     doesn't support anything else
 -   Z coordinate of @ref Trade::TextureData::wrapping() is always
     @ref SamplerWrapping::Repeat, as glTF doesn't support 3D textures
+-   glTF leaves the defaults of sampler properties to the application, the
+    following defaults have been chosen for this importer:
+    -   Minification/magnification/mipmap filter: @ref SamplerFilter::Linear,
+        @ref SamplerMipmap::Linear
+    -   Wrapping (all axes): @ref SamplerWrapping::Repeat
 
 @section Trade-TinyGltfImporter-state Access to internal importer state
 
