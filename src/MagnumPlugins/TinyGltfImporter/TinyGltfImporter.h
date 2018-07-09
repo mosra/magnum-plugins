@@ -102,7 +102,6 @@ following defaults have been chosen for this importer:
 
 -   All materials are imported as @ref Trade::PhongMaterialData with ambient
     color always set to @cpp 0x000000_rgbf @ce
--   Alpha channel of colors is ignored.
 
 @subsection Trade-TinyGltfImporter-limitations-textures Texture import
 
