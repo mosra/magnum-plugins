@@ -83,6 +83,26 @@ bool loadImageData(tinygltf::Image* image, std::string*, int, int, const unsigne
     return true;
 }
 
+std::size_t elementSize(const tinygltf::Accessor& accessor) {
+    /* GetTypeSizeInBytes() is totally bogus and misleading name, it should
+       have been called GetTypeComponentCount but who am I to judge. */
+    return tinygltf::GetComponentSizeInBytes(accessor.componentType)*tinygltf::GetTypeSizeInBytes(accessor.type);
+}
+
+Containers::ArrayView<const char> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
+    const std::size_t bufferElementSize = elementSize(accessor);
+    const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
+    const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
+
+    CORRADE_INTERNAL_ASSERT(bufferView.byteStride == 0 || bufferView.byteStride == bufferElementSize);
+    return {reinterpret_cast<const char*>(buffer.data.data()) + bufferView.byteOffset + accessor.byteOffset, accessor.count*bufferElementSize};
+}
+
+template<class T> Containers::ArrayView<const T> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
+    CORRADE_INTERNAL_ASSERT(elementSize(accessor) == sizeof(T));
+    return Containers::arrayCast<const T>(bufferView(model, accessor));
+}
+
 }
 
 struct TinyGltfImporter::Document {
@@ -423,12 +443,11 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     std::vector<std::vector<Color4>> colorArrays;
     for(auto& attribute: primitive.attributes) {
         const tinygltf::Accessor& accessor = _d->model.accessors[attribute.second];
-        const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
-        const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
+        const tinygltf::BufferView& view = _d->model.bufferViews[accessor.bufferView];
 
         /* Some of the Khronos sample models have explicitly specified stride
            (without interleaving), don't fail on that */
-        if(bufferView.byteStride != 0 && bufferView.byteStride != std::size_t(tinygltf::GetComponentSizeInBytes(accessor.componentType)*tinygltf::GetTypeSizeInBytes(accessor.type))) {
+        if(view.byteStride != 0 && view.byteStride != elementSize(accessor)) {
             Error() << "Trade::TinyGltfImporter::mesh3D(): interleaved buffer views are not supported";
             return  Containers::NullOpt;
         }
@@ -447,7 +466,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             }
 
             positions.reserve(accessor.count);
-            std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(positions));
+            const auto buffer = bufferView<Vector3>(_d->model, accessor);
+            std::copy(buffer.begin(), buffer.end(), std::back_inserter(positions));
 
         } else if(attribute.first == "NORMAL") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
@@ -458,7 +478,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             normalArrays.emplace_back();
             std::vector<Vector3>& normals = normalArrays.back();
             normals.reserve(accessor.count);
-            std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(normals));
+            const auto buffer = bufferView<Vector3>(_d->model, accessor);
+            std::copy(buffer.begin(), buffer.end(), std::back_inserter(normals));
 
         /* Texture coordinate attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
@@ -470,7 +491,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             textureCoordinateArrays.emplace_back();
             std::vector<Vector2>& textureCoordinates = textureCoordinateArrays.back();
             textureCoordinates.reserve(accessor.count);
-            std::copy_n(reinterpret_cast<const Vector2*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(textureCoordinates));
+            const auto buffer = bufferView<Vector2>(_d->model, accessor);
+            std::copy(buffer.begin(), buffer.end(), std::back_inserter(textureCoordinates));
 
         /* Color attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "COLOR")) {
@@ -480,11 +502,13 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
 
             if(accessor.type == TINYGLTF_TYPE_VEC3) {
                 colors.reserve(accessor.count);
-                std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(colors));
+                const auto buffer = bufferView<Color3>(_d->model, accessor);
+                std::copy(buffer.begin(), buffer.end(), std::back_inserter(colors));
 
             } else if(accessor.type == TINYGLTF_TYPE_VEC4) {
                 colors.reserve(accessor.count);
-                std::copy_n(reinterpret_cast<const Vector4*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(colors));
+                const auto buffer = bufferView<Color4>(_d->model, accessor);
+                std::copy(buffer.begin(), buffer.end(), std::back_inserter(colors));
 
             } else {
                 Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3 or VEC4";
@@ -500,25 +524,23 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     /* Indices */
     std::vector<UnsignedInt> indices;
     if(primitive.indices != -1) {
-        const tinygltf::Accessor& idxAccessor = _d->model.accessors[primitive.indices];
-        const tinygltf::BufferView& idxBufferView = _d->model.bufferViews[idxAccessor.bufferView];
-        const tinygltf::Buffer& idxBuffer = _d->model.buffers[idxBufferView.buffer];
+        const tinygltf::Accessor& accessor = _d->model.accessors[primitive.indices];
 
-        if(idxAccessor.type != TINYGLTF_TYPE_SCALAR) {
+        if(accessor.type != TINYGLTF_TYPE_SCALAR) {
             Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of index is SCALAR";
             return Containers::NullOpt;
         }
 
-        /* Interleaved indices should not be a thing */
-        CORRADE_INTERNAL_ASSERT(idxBufferView.byteStride == 0);
-
-        const UnsignedByte* start = idxBuffer.data.data() + idxBufferView.byteOffset + idxAccessor.byteOffset;
-        if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-            std::copy_n(start, idxAccessor.count, std::back_inserter(indices));
-        } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-            std::copy_n(reinterpret_cast<const UnsignedShort*>(start), idxAccessor.count, std::back_inserter(indices));
-        } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-            std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxAccessor.count, std::back_inserter(indices));
+        indices.reserve(accessor.count);
+        if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+            const auto buffer = bufferView<UnsignedByte>(_d->model, accessor);
+            std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
+        } else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+            const auto buffer = bufferView<UnsignedShort>(_d->model, accessor);
+            std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
+        } else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
+            const auto buffer = bufferView<UnsignedInt>(_d->model, accessor);
+            std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
         } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
