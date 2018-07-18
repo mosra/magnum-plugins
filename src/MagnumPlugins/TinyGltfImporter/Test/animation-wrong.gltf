@@ -1,0 +1,150 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "animations": [
+        {
+            "name": "wrong time type",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 1337,
+                        "path": "rotation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 0,
+                    "interpolation": "LINEAR",
+                    "output": 0
+                }
+            ]
+        },
+        {
+            "name": "wrong interpolation type",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 1337,
+                        "path": "rotation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 1,
+                    "interpolation": "QUADRATIC",
+                    "output": 0
+                }
+            ]
+        },
+        {
+            "name": "wrong translation type",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 1337,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 1,
+                    "interpolation": "LINEAR",
+                    "output": 0
+                }
+            ]
+        },
+        {
+            "name": "wrong rotation type",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 1337,
+                        "path": "rotation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 1,
+                    "interpolation": "LINEAR",
+                    "output": 1
+                }
+            ]
+        },
+        {
+            "name": "wrong scaling type",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 1337,
+                        "path": "scale"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 1,
+                    "interpolation": "LINEAR",
+                    "output": 0
+                }
+            ]
+        },
+        {
+            "name": "unsupported path",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 1337,
+                        "path": "color"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 1,
+                    "interpolation": "STEP",
+                    "output": 0
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 0,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 0,
+            "type": "SCALAR"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 0
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 152,
+            "uri": "animation.bin"
+        }
+    ]
+}

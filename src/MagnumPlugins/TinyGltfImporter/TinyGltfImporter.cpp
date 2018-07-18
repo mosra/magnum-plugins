@@ -34,6 +34,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Trade/AnimationData.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
@@ -110,7 +111,9 @@ struct TinyGltfImporter::Document {
 
     tinygltf::Model model;
 
-    Containers::Optional<std::unordered_map<std::string, Int>> camerasForName,
+    Containers::Optional<std::unordered_map<std::string, Int>>
+        animationsForName,
+        camerasForName,
         lightsForName,
         scenesForName,
         nodesForName,
@@ -202,6 +205,165 @@ Int TinyGltfImporter::doCameraForName(const std::string& name) {
 
 std::string TinyGltfImporter::doCameraName(const UnsignedInt id) {
     return _d->model.cameras[id].name;
+}
+
+UnsignedInt TinyGltfImporter::doAnimationCount() const {
+    return _d->model.animations.size();
+}
+
+Int TinyGltfImporter::doAnimationForName(const std::string& name) {
+    if(!_d->animationsForName) {
+        _d->animationsForName.emplace();
+        _d->animationsForName->reserve(_d->model.animations.size());
+        for(std::size_t i = 0; i != _d->model.animations.size(); ++i)
+            _d->animationsForName->emplace(_d->model.animations[i].name, i);
+    }
+
+    const auto found = _d->animationsForName->find(name);
+    return found == _d->animationsForName->end() ? -1 : found->second;
+}
+
+std::string TinyGltfImporter::doAnimationName(UnsignedInt id) {
+    return _d->model.animations[id].name;
+}
+
+Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id) {
+    const tinygltf::Animation& animation = _d->model.animations[id];
+
+    /* First gather the input and output data ranges */
+    std::unordered_map<int, std::pair<Containers::ArrayView<const char>, std::size_t>> samplerData;
+    std::size_t dataSize = 0;
+    for(std::size_t i = 0; i != animation.samplers.size(); ++i) {
+        const tinygltf::AnimationSampler& sampler = animation.samplers[i];
+        const tinygltf::Accessor& input = _d->model.accessors[sampler.input];
+        const tinygltf::Accessor& output = _d->model.accessors[sampler.output];
+
+        /** @todo handle alignment once we do more than just four-byte types */
+
+        /* If the input view is not yet present in the output data buffer, add
+           it */
+        auto inputView = samplerData.find(sampler.input);
+        if(inputView == samplerData.end()) {
+            Containers::ArrayView<const char> view = bufferView(_d->model, input);
+            inputView = samplerData.emplace(sampler.input, std::make_pair(view, dataSize)).first;
+            dataSize += view.size();
+        }
+
+        /* If the output view is not yet present in the output data buffer, add
+           it */
+        auto outputView = samplerData.find(sampler.output);
+        if(outputView == samplerData.end()) {
+            Containers::ArrayView<const char> view = bufferView(_d->model, output);
+            outputView = samplerData.emplace(sampler.output, std::make_pair(view, dataSize)).first;
+            dataSize += view.size();
+        }
+    }
+
+    /* Populate the data array */
+    Containers::Array<char> data{dataSize};
+    for(const std::pair<int, std::pair<Containers::ArrayView<const char>, std::size_t>>& view: samplerData) {
+        CORRADE_INTERNAL_ASSERT(view.second.second + view.second.first.size() <= data.size());
+        std::copy(view.second.first.begin(), view.second.first.end(), data.begin() + view.second.second);
+    }
+
+    /* Import all tracks */
+    Containers::Array<Trade::AnimationTrackData> tracks{animation.channels.size()};
+    for(std::size_t i = 0; i != animation.channels.size(); ++i) {
+        const tinygltf::AnimationChannel& channel = animation.channels[i];
+        const tinygltf::AnimationSampler& sampler = animation.samplers[channel.sampler];
+
+        /* Key properties -- always float time */
+        const tinygltf::Accessor& input = _d->model.accessors[sampler.input];
+        if(input.type != TINYGLTF_TYPE_SCALAR || input.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+            Error{} << "Trade::TinyGltfImporter::animation(): time track has unexpected type" << input.type << Debug::nospace << "/" << Debug::nospace << input.componentType;
+            return Containers::NullOpt;
+        }
+
+        /* View on the key data */
+        const auto inputDataFound = samplerData.find(sampler.input);
+        CORRADE_INTERNAL_ASSERT(inputDataFound != samplerData.end());
+        const auto keys = Containers::arrayCast<const Float>(data.slice(inputDataFound->second.second, inputDataFound->second.second + inputDataFound->second.first.size()));
+
+        /* Interpolation mode */
+        /** @todo handle the dangling interpolator function pointer in trade */
+        Animation::Interpolation interpolation;
+        if(sampler.interpolation == "LINEAR") {
+            interpolation = Animation::Interpolation::Linear;
+        } else if(sampler.interpolation == "STEP") {
+            interpolation = Animation::Interpolation::Constant;
+        } else {
+            Error{} << "Trade::TinyGltfImporter::animation(): unsupported interpolation" << sampler.interpolation;
+            return Containers::NullOpt;
+        }
+
+        /* Decide on value properties */
+        const tinygltf::Accessor& output = _d->model.accessors[sampler.output];
+        AnimationTrackTarget target;
+        AnimationTrackType type;
+        Animation::TrackViewStorage<Float> track;
+
+        /* Translation */
+        if(channel.target_path == "translation") {
+            if(output.type != TINYGLTF_TYPE_VEC3 || output.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                Error{} << "Trade::TinyGltfImporter::animation(): translation track has unexpected type" << output.type << Debug::nospace << "/" << Debug::nospace << output.componentType;
+                return Containers::NullOpt;
+            }
+
+            /* View on the value data */
+            const auto outputDataFound = samplerData.find(sampler.output);
+            CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
+            const auto values = Containers::arrayCast<const Vector3>(data.slice(outputDataFound->second.second, outputDataFound->second.second + outputDataFound->second.first.size()));
+
+            /* Populate track metadata */
+            type = AnimationTrackType::Vector3;
+            target = AnimationTrackTarget::Translation3D;
+            track = Animation::TrackView<Float, Vector3>{keys, values, interpolation, animationInterpolatorFor<Vector3>(interpolation), Animation::Extrapolation::Constant};
+
+        /* Rotation */
+        } else if(channel.target_path == "rotation") {
+            /** @todo rotation can be also normalized (?!) to a vector of 8/16/32bit (signed?!) integers */
+
+            if(output.type != TINYGLTF_TYPE_VEC4 || output.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                Error{} << "Trade::TinyGltfImporter::animation(): rotation track has unexpected type" << output.type << Debug::nospace << "/" << Debug::nospace << output.componentType;
+                return Containers::NullOpt;
+            }
+
+            /* View on the value data */
+            const auto outputDataFound = samplerData.find(sampler.output);
+            CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
+            const auto values = Containers::arrayCast<const Quaternion>(data.slice(outputDataFound->second.second, outputDataFound->second.second + outputDataFound->second.first.size()));
+
+            /* Populate track metadata */
+            type = AnimationTrackType::Quaternion;
+            target = AnimationTrackTarget::Rotation3D;
+            track = Animation::TrackView<Float, Quaternion>{keys, values, interpolation, animationInterpolatorFor<Quaternion>(interpolation), Animation::Extrapolation::Constant};
+
+        /* Scale */
+        } else if(channel.target_path == "scale") {
+            if(output.type != TINYGLTF_TYPE_VEC3 || output.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                Error{} << "Trade::TinyGltfImporter::animation(): scaling track has unexpected type" << output.type << Debug::nospace << "/" << Debug::nospace << output.componentType;
+                return Containers::NullOpt;
+            }
+
+            /* View on the value data */
+            const auto outputDataFound = samplerData.find(sampler.output);
+            CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
+            const auto values = Containers::arrayCast<const Vector3>(data.slice(outputDataFound->second.second, outputDataFound->second.second + outputDataFound->second.first.size()));
+
+            /* Populate track metadata */
+            type = AnimationTrackType::Vector3;
+            target = AnimationTrackTarget::Scaling3D;
+            track = Animation::TrackView<Float, Vector3>{keys, values, interpolation, animationInterpolatorFor<Vector3>(interpolation), Animation::Extrapolation::Constant};
+
+        } else {
+            Error{} << "Trade::TinyGltfImporter::animation(): unsupported track target" << channel.target_path;
+            return Containers::NullOpt;
+        }
+
+        tracks[i] = AnimationTrackData{type, target, UnsignedInt(channel.target_node), track};
+    }
+
+    return AnimationData{std::move(data), std::move(tracks), &animation};
 }
 
 Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {

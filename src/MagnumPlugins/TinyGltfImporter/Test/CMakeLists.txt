@@ -60,6 +60,12 @@ corrade_add_test(TinyGltfImporterTest
     FILES
         empty.gltf
         empty.glb
+        animation.gltf
+        animation.glb
+        animation.bin
+        animation-embedded.gltf
+        animation-embedded.glb
+        animation-wrong.gltf
         camera.gltf
         camera.glb
         # external-data.* packed via a resource

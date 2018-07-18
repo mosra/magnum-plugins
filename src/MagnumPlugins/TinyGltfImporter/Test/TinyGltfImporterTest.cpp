@@ -36,6 +36,7 @@
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/AbstractMaterialData.h>
+#include <Magnum/Trade/AnimationData.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
@@ -57,6 +58,14 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void open();
     void openError();
     void openFileError();
+
+    void animation();
+    void animationWrongTimeType();
+    void animationWrongInterpolationType();
+    void animationWrongTranslationType();
+    void animationWrongRotationType();
+    void animationWrongScalingType();
+    void animationUnsupportedPath();
 
     void camera();
 
@@ -143,6 +152,16 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::openError,
                        &TinyGltfImporterTest::openFileError},
                       Containers::arraySize(OpenErrorData));
+
+    addInstancedTests({&TinyGltfImporterTest::animation},
+                      Containers::arraySize(MultiFileData));
+
+    addTests({&TinyGltfImporterTest::animationWrongTimeType,
+              &TinyGltfImporterTest::animationWrongInterpolationType,
+              &TinyGltfImporterTest::animationWrongTranslationType,
+              &TinyGltfImporterTest::animationWrongRotationType,
+              &TinyGltfImporterTest::animationWrongScalingType,
+              &TinyGltfImporterTest::animationUnsupportedPath});
 
     addInstancedTests({&TinyGltfImporterTest::camera,
 
@@ -232,6 +251,193 @@ void TinyGltfImporterTest::openFileError() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openFile("nope" + std::string{data.suffix}));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file nope" + std::string{data.suffix} + "\n");
+}
+
+void TinyGltfImporterTest::animation() {
+    auto&& data = MultiFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation" + std::string{data.suffix})));
+
+    CORRADE_COMPARE(importer->animationCount(), 2);
+
+    /* Empty animation */
+    {
+        CORRADE_COMPARE(importer->animationName(0), "empty");
+        CORRADE_COMPARE(importer->animationForName("empty"), 0);
+
+        auto animation = importer->animation(0);
+        CORRADE_VERIFY(animation);
+        CORRADE_VERIFY(animation->data().empty());
+        CORRADE_COMPARE(animation->trackCount(), 0);
+
+    /* Translation/rotation/scaling animation */
+    } {
+        CORRADE_COMPARE(importer->animationName(1), "TRS animation");
+        CORRADE_COMPARE(importer->animationForName("TRS animation"), 1);
+
+        auto animation = importer->animation(1);
+        CORRADE_VERIFY(animation);
+        CORRADE_VERIFY(animation->importerState());
+        /* Two rotation keys, four translation and scaling keys with common
+           time track */
+        CORRADE_COMPARE(animation->data().size(),
+            2*(sizeof(Float) + sizeof(Quaternion)) +
+            4*(sizeof(Float) + 2*sizeof(Vector3)));
+        CORRADE_COMPARE(animation->trackCount(), 3);
+
+        /* Rotation, linearly interpolated */
+        CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+        CORRADE_COMPARE(animation->trackResultType(0), AnimationTrackType::Quaternion);
+        CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Rotation3D);
+        CORRADE_COMPARE(animation->trackTargetId(0), 1337);
+        Animation::TrackView<Float, Quaternion> rotation = animation->track<Quaternion>(0);
+        CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
+        CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
+        CORRADE_COMPARE(rotation.after(), Animation::Extrapolation::Constant);
+        const Float rotationKeys[]{
+            1.25f,
+            2.50f
+        };
+        const Quaternion rotationValues[]{
+            Quaternion::rotation(0.0_degf, Vector3::xAxis()),
+            Quaternion::rotation(180.0_degf, Vector3::xAxis())
+        };
+        CORRADE_COMPARE_AS(rotation.keys(), (Containers::StridedArrayView<const Float>{rotationKeys}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(rotation.values(), (Containers::StridedArrayView<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+        CORRADE_COMPARE(rotation.at(1.875f), Quaternion::rotation(90.0_degf, Vector3::xAxis()));
+
+        const Float translationScalingKeys[]{
+            0.0f,
+            1.25f,
+            2.5f,
+            3.75f
+        };
+
+        /* Translation, constant interpolated, sharing keys with scaling */
+        CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackTarget(1), AnimationTrackTarget::Translation3D);
+        CORRADE_COMPARE(animation->trackTargetId(1), 42);
+        Animation::TrackView<Float, Vector3> translation = animation->track<Vector3>(1);
+        CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Constant);
+        CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
+        CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
+        const Vector3 translationData[]{
+            Vector3::yAxis(0.0f),
+            Vector3::yAxis(2.5f),
+            Vector3::yAxis(2.5f),
+            Vector3::yAxis(0.0f)
+        };
+        CORRADE_COMPARE_AS(translation.keys(), (Containers::StridedArrayView<const Float>{translationScalingKeys}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(translation.values(), (Containers::StridedArrayView<const Vector3>{translationData}), TestSuite::Compare::Container);
+        CORRADE_COMPARE(translation.at(1.5f), Vector3::yAxis(2.5f));
+
+        /* Scaling, linearly interpolated, sharing keys with translation */
+        CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackResultType(2), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackTarget(2), AnimationTrackTarget::Scaling3D);
+        CORRADE_COMPARE(animation->trackTargetId(2), 12);
+        Animation::TrackView<Float, Vector3> scaling = animation->track<Vector3>(2);
+        CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
+        CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
+        CORRADE_COMPARE(scaling.after(), Animation::Extrapolation::Constant);
+        const Vector3 scalingData[]{
+            Vector3{1.0f},
+            Vector3::zScale(5.0f),
+            Vector3::zScale(6.0f),
+            Vector3(1.0f),
+        };
+        CORRADE_COMPARE_AS(scaling.keys(), (Containers::StridedArrayView<const Float>{translationScalingKeys}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scaling.values(), (Containers::StridedArrayView<const Vector3>{scalingData}), TestSuite::Compare::Container);
+        CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
+    }
+}
+
+void TinyGltfImporterTest::animationWrongTimeType() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-wrong.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 6);
+    CORRADE_COMPARE(importer->animationName(0), "wrong time type");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->animation(0));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): time track has unexpected type 4/5126\n");
+}
+
+void TinyGltfImporterTest::animationWrongInterpolationType() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-wrong.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 6);
+    CORRADE_COMPARE(importer->animationName(1), "wrong interpolation type");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->animation(1));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): unsupported interpolation QUADRATIC\n");
+}
+
+void TinyGltfImporterTest::animationWrongTranslationType() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-wrong.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 6);
+    CORRADE_COMPARE(importer->animationName(2), "wrong translation type");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->animation(2));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): translation track has unexpected type 4/5126\n");
+}
+
+void TinyGltfImporterTest::animationWrongRotationType() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-wrong.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 6);
+    CORRADE_COMPARE(importer->animationName(3), "wrong rotation type");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->animation(3));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): rotation track has unexpected type 65/5126\n");
+}
+
+void TinyGltfImporterTest::animationWrongScalingType() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-wrong.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 6);
+    CORRADE_COMPARE(importer->animationName(4), "wrong scaling type");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->animation(4));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): scaling track has unexpected type 4/5126\n");
+}
+
+void TinyGltfImporterTest::animationUnsupportedPath() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-wrong.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 6);
+    CORRADE_COMPARE(importer->animationName(5), "unsupported path");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->animation(5));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): unsupported track target color\n");
 }
 
 void TinyGltfImporterTest::camera() {

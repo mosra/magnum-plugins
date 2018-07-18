@@ -85,6 +85,15 @@ freed right after the @ref openData() / @ref openFile() function exits.
 
 Import of skeleton, skin and morph data is not supported at the moment.
 
+@subsection Trade-TinyGltfImporter-limitations-animation Animation import
+
+-   At the moment, only constant and linear animation interpolation can be
+    imported
+-   Skinning and morph targets are not supported
+-   Animation tracks are always imported with
+    @ref Animation::Extrapolation::Constant, because glTF doesn't support
+    anything else
+
 @subsection Trade-TinyGltfImporter-limitations-objects Object import
 
 -   In case object transformation is set via separate
@@ -225,6 +234,11 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL void doClose() override;
+
+        MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doAnimationCount() const override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doAnimationName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doAnimationForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doCameraForName(const std::string& name) override;
