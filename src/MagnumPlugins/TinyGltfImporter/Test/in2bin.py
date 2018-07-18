@@ -26,11 +26,17 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+import os
+import sys
 import struct
 
-for file in ["mesh-primitives.bin"]:
-    with open(file + ".in") as inFile:
-        exec(inFile.read())
+fileIn = sys.argv[1]
+fileOut = os.path.splitext(fileIn)[0]
 
-        with open(file, 'wb') as outFile:
-            outFile.write(struct.pack(type, *input))
+print("Converting to", fileOut)
+
+with open(fileIn) as input:
+    exec(input.read())
+
+    with open(fileOut, 'wb') as output:
+        output.write(struct.pack(type, *input))
