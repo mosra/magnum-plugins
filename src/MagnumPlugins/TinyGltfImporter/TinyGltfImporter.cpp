@@ -407,6 +407,13 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             return  Containers::NullOpt;
         }
 
+        /* At the moment all vertex attributes should have float underlying
+           type */
+        if(accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+            Error() << "Trade::TinyGltfImporter::mesh3D(): vertex attribute has unexpected type" << accessor.componentType;
+            return Containers::NullOpt;
+        }
+
         if(attribute.first == "POSITION") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
                 Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3";
