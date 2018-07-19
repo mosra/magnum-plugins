@@ -151,8 +151,21 @@ this:
 */
 class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
+        /**
+         * @brief Default constructor
+         *
+         * In case you want to open images, use
+         * @ref TinyGltfImporter(PluginManager::Manager<AbstractImporter>&)
+         * instead.
+         */
         explicit TinyGltfImporter();
+
+        /**
+         * @brief Constructor
+         *
+         * The plugin needs access to plugin manager for importing images.
+         */
+        explicit TinyGltfImporter(PluginManager::Manager<AbstractImporter>& manager);
 
         /** @brief Plugin manager constructor */
         explicit TinyGltfImporter(PluginManager::AbstractManager& manager, const std::string& plugin);

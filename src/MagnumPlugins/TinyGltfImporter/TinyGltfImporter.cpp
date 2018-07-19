@@ -97,6 +97,8 @@ TinyGltfImporter::TinyGltfImporter() = default;
 
 TinyGltfImporter::TinyGltfImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
+TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager} {}
+
 TinyGltfImporter::~TinyGltfImporter() = default;
 
 auto TinyGltfImporter::doFeatures() const -> Features { return Feature::OpenData; }

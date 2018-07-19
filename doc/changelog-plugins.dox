@@ -55,6 +55,8 @@ namespace Magnum {
     Stock `libPNG` doesn't support that but there are forks that can do it,
     updated documentation of @ref Trade::PngImporter "PngImporter" to mention
     that.
+-   New @ref Trade::TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<Trade::AbstractImporter>&)
+    constructor for easier usage of statically-built plugins
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
