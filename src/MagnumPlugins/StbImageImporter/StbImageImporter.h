@@ -88,6 +88,8 @@ when using plugin dedicated for given format.
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
+@section Trade-StbImageImporter-limitations Behavior and limitations
+
 The images are imported with @ref PixelFormat::RGB8Unorm,
 @ref PixelFormat::RGBA8Unorm, @ref PixelFormat::R8Unorm for grayscale or
 @ref PixelFormat::RG8Unorm for grayscale + alpha for all format except HDR, HDR
@@ -95,6 +97,12 @@ images are imported with @ref PixelFormat::RGB32F, @ref PixelFormat::RGBA32F,
 @ref PixelFormat::R32F or @ref PixelFormat::RG32F. Images are imported with
 default @ref PixelStorage parameters except for alignment, which may be changed
 to @cpp 1 @ce if the data require it.
+
+@subsection Trade-StbImageImporter-limitations-cgbi Apple CgBI PNGs
+
+CgBI is a proprietary Apple-specific extension to PNG
+([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). The
+importer detects those files and converts BGRA channels back to RGBA.
 
 @todo Enable ARM NEON when I'm able to test that
 */

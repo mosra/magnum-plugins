@@ -68,11 +68,24 @@ component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::PngImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 
+@section Trade-PngImporter-limitations Behavior and limitations
+
 The images are imported with @ref PixelFormat::RGB8Unorm /
 @ref PixelFormat::RGB16Unorm, @ref PixelFormat::RGBA8Unorm /
 @ref PixelFormat::RGBA16Unorm or @ref PixelFormat::R8Unorm /
 @ref PixelFormat::R16Unorm. All imported images use default @ref PixelStorage
 parameters.
+
+@subsection Trade-PngImporter-limitations-cgbi Apple CgBI PNGs
+
+CgBI is a proprietary Apple-specific extension to PNG
+([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). Stock
+`libPNG` doesn't support these, you might want to use some fork that supports
+it, for example https://github.com/jongwook/libpng. Or use @ref StbImageImporter,
+which has the support.
+
+The test for this plugin contains a file that can be used for verifying CgBI
+support.
 */
 class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
     public:

@@ -52,17 +52,29 @@ struct StbImageImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
+namespace {
+
+const struct {
+    const char* name;
+    const char* filename;
+} RgbaPngTestData[]{
+    {"RGBA", "rgba.png"},
+    {"CgBI BGRA", "rgba-iphone.png"}
+};
+
+}
+
 StbImageImporterTest::StbImageImporterTest() {
     addTests({&StbImageImporterTest::grayPng,
               &StbImageImporterTest::grayJpeg,
 
               &StbImageImporterTest::rgbPng,
               &StbImageImporterTest::rgbJpeg,
-              &StbImageImporterTest::rgbHdr,
+              &StbImageImporterTest::rgbHdr});
 
-              &StbImageImporterTest::rgbaPng,
+    addInstancedTests({&StbImageImporterTest::rgbaPng}, Containers::arraySize(RgbaPngTestData));
 
-              &StbImageImporterTest::useTwice});
+    addTests({&StbImageImporterTest::useTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -158,8 +170,11 @@ void StbImageImporterTest::rgbHdr() {
 }
 
 void StbImageImporterTest::rgbaPng() {
+    auto&& data = RgbaPngTestData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);

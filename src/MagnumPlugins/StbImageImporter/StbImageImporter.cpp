@@ -70,6 +70,8 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     Int components;
 
     stbi_set_flip_vertically_on_load(true);
+    /* The docs say this is enabled by default, but it's *not*. Ugh. */
+    stbi_convert_iphone_png_to_rgb(true);
 
     stbi_uc* data;
     std::size_t channelSize;

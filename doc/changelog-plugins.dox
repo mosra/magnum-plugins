@@ -50,6 +50,11 @@ namespace Magnum {
     for @ref Trade::PhongMaterialData
 -   @ref Text::HarfBuzzFont "HarfBuzzFont" is now providing `TrueTypeFont`,
     similarly to other plugins supporting TTF fonts
+-   @ref Trade::StbImageImporter "StbImageImporter" now properly supports Apple
+    proprietary [CgBI PNGs](http://iphonedevwiki.net/index.php/CgBI_file_format).
+    Stock `libPNG` doesn't support that but there are forks that can do it,
+    updated documentation of @ref Trade::PngImporter "PngImporter" to mention
+    that.
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

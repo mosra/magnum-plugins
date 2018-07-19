@@ -47,12 +47,25 @@ struct PngImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
+namespace {
+
+const struct {
+    const char* name;
+    const char* filename;
+} RgbaTestData[]{
+    {"RGBA", "rgba.png"},
+    {"CgBI BGRA", "rgba-iphone.png"}
+};
+
+}
+
 PngImporterTest::PngImporterTest() {
     addTests({&PngImporterTest::gray,
-              &PngImporterTest::rgb,
-              &PngImporterTest::rgba,
+              &PngImporterTest::rgb});
 
-              &PngImporterTest::useTwice});
+    addInstancedTests({&PngImporterTest::rgba}, Containers::arraySize(RgbaTestData));
+
+    addTests({&PngImporterTest::useTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -110,11 +123,21 @@ void PngImporterTest::rgb() {
 }
 
 void PngImporterTest::rgba() {
+    auto&& data = RgbaTestData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
+    {
+        CORRADE_EXPECT_FAIL_IF(testCaseInstanceId() == 1,
+            "Stock libPNG can't handle CgBI.");
+        CORRADE_VERIFY(image);
+    }
+
+    if(!image) CORRADE_SKIP("Loading failed, skipping the rest.");
+
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(),

@@ -45,7 +45,8 @@ corrade_add_test(PngImporterTest PngImporterTest.cpp
     FILES
         gray.png
         rgb.png
-        rgba.png)
+        rgba.png
+        rgba-iphone.png)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(PngImporterTest PRIVATE $<TARGET_FILE_DIR:PngImporterTest>)
 else()
