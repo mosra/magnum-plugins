@@ -60,6 +60,9 @@ namespace Magnum {
 
 -   There's now a PPA for Ubuntu packages. See @ref building-plugins-packages-deb
     for more information.
+-   TinyGLTF headers are now installed alongside the plugin for easier access
+    to importer state. See @ref Trade-TinyGltfImporter-state for more
+    information.
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 

@@ -43,8 +43,10 @@ add_plugin(TinyGltfImporter
 if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(TinyGltfImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-# Suppress warnings in the tinygltf header
-target_include_directories(TinyGltfImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/tinygltf)
+# I could include tinygltf directly, but I want to suppress the warnings from
+# it, so doing it this way. Also: it's PRIVATE, because the file is not (and
+# should *never* be) included in a public header due to its extreme size.
+target_include_directories(TinyGltfImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/MagnumExternal/TinyGltf)
 target_include_directories(TinyGltfImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)

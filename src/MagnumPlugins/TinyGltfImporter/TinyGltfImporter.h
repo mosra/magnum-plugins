@@ -141,6 +141,13 @@ importer-specific data accessors:
 -   @ref TextureData::importerState() returns `tinygltf::Texture` structure
 -   @ref MeshData3D::importerState() returns `tinygltf::Mesh` structure
 -   @ref ObjectData3D::importerState() returns `tinygltf::Node` structure
+
+The TinyGLTF header is installed alsongside the plugin and accessible like
+this:
+
+@code{.cpp}
+#include <MagnumExternal/TinyGLTF/tiny_gltf.h>
+@endcode
 */
 class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
     public:
