@@ -34,6 +34,12 @@
 
 #include "MagnumPlugins/TinyGltfImporter/configure.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+namespace tinygltf {
+    class Model;
+}
+#endif
+
 namespace Magnum { namespace Trade {
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -135,12 +141,20 @@ This plugin provides `GltfImporter` and `GlbImporter` plugins.
 Access to the underlying TinyGLTF structures it is provided through
 importer-specific data accessors:
 
--   @ref AbstractMaterialData::importerState() returns `tinygltf::Material`
+-   @ref importerState() returns pointer to the `tinygltf::Model` structure.
+    If you use this class statically, you get the concrete type instead of
+    a @cpp const void* @ce pointer as returned by
+    @ref AbstractImporter::importerState().
+-   @ref AbstractMaterialData::importerState() returns pointer to the
+    `tinygltf::Material` structure
+-   @ref CameraData::importerState() returns pointer to the `tinygltf::Camera`
     structure
--   @ref CameraData::importerState() returns `tinygltf::Camera` structure
--   @ref TextureData::importerState() returns `tinygltf::Texture` structure
--   @ref MeshData3D::importerState() returns `tinygltf::Mesh` structure
--   @ref ObjectData3D::importerState() returns `tinygltf::Node` structure
+-   @ref TextureData::importerState() returns pointer to the
+    `tinygltf::Texture` structure
+-   @ref MeshData3D::importerState() returns pointer to the `tinygltf::Mesh`
+    structure
+-   @ref ObjectData3D::importerState() returns pointer to the `tinygltf::Node`
+    structure
 
 The TinyGLTF header is installed alsongside the plugin and accessible like
 this:
@@ -171,6 +185,16 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         explicit TinyGltfImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
         ~TinyGltfImporter();
+
+        /**
+         * @brief Importer state
+         *
+         * See @ref Trade-TinyGltfImporter-state "class documentation" for more
+         * information.
+         */
+        const tinygltf::Model* importerState() const {
+            return static_cast<const tinygltf::Model*>(AbstractImporter::importerState());
+        }
 
     private:
         struct Document;
@@ -215,6 +239,8 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(const UnsignedInt id) override;
+
+        MAGNUM_TINYGLTFIMPORTER_LOCAL const void* doImporterState() const override;
 
         std::unique_ptr<Document> _d;
 };

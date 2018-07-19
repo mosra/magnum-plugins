@@ -675,6 +675,10 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
     }
 }
 
+const void* TinyGltfImporter::doImporterState() const {
+    return &_d->model;
+}
+
 }}
 
 CORRADE_PLUGIN_REGISTER(TinyGltfImporter, Magnum::Trade::TinyGltfImporter,
