@@ -33,11 +33,6 @@
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Trade/ImageData.h>
 
-#ifdef MAGNUM_TARGET_GLES2
-#include <Magnum/Context.h>
-#include <Magnum/Extensions.h>
-#endif
-
 namespace Magnum { namespace Trade {
 
 PngImporter::PngImporter() = default;

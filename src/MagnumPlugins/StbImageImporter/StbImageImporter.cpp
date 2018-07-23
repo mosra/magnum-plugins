@@ -30,11 +30,6 @@
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 
-#ifdef MAGNUM_TARGET_GLES2
-#include <Magnum/Context.h>
-#include <Magnum/Extensions.h>
-#endif
-
 #define STBI_NO_STDIO
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
