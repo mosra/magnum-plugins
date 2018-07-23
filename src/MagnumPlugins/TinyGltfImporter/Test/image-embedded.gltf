@@ -1,0 +1,24 @@
+{
+    "asset" : {
+        "version" : "2.0"
+    },
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 70,
+            "byteOffset" : 0
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 70,
+            "uri" : "data:application/octet-stream;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP4z/D/PwAG/gL+0yubzgAAAABJRU5ErkJggg=="
+        }
+    ],
+    "images" : [
+        {
+            "mimeType": "image/png",
+            "bufferView" : 0
+        }
+    ]
+}
