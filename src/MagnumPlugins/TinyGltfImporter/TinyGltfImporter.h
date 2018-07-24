@@ -149,12 +149,16 @@ importer-specific data accessors:
     `tinygltf::Material` structure
 -   @ref CameraData::importerState() returns pointer to the `tinygltf::Camera`
     structure
--   @ref TextureData::importerState() returns pointer to the
-    `tinygltf::Texture` structure
+-   @ref ImageData::importerState() returns pointer to the `tinygltf::Image`
+    structure
 -   @ref MeshData3D::importerState() returns pointer to the `tinygltf::Mesh`
     structure
 -   @ref ObjectData3D::importerState() returns pointer to the `tinygltf::Node`
     structure
+-   @ref SceneData::importerState() returns pointer to the `tinygltf::Scene`
+    structure
+-   @ref TextureData::importerState() returns pointer to the
+    `tinygltf::Texture` structure
 
 The TinyGLTF header is installed alsongside the plugin and accessible like
 this:

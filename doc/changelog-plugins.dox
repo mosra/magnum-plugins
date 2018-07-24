@@ -38,7 +38,8 @@ namespace Magnum {
     extension in @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   The top-level `tinygltf::Model` structure is now exposed through
     @ref Trade::TinyGltfImporter::importerState() for easier access to extra
-    data
+    data, exposing also @ref Trade::SceneData::importerState() and
+    @ref Trade::TextureData::importerState()
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 

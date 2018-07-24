@@ -158,7 +158,15 @@ void TinyGltfImporterTest::open() {
     auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "test-scene" + std::string{data.extension});
     CORRADE_VERIFY(importer->openFile(filename));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_VERIFY(importer->importerState());
+
     CORRADE_VERIFY(importer->openData(Utility::Directory::read(filename)));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_VERIFY(importer->importerState());
+
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
 }
 
 void TinyGltfImporterTest::openError() {
@@ -273,6 +281,7 @@ void TinyGltfImporterTest::object() {
 
     auto scene = importer->scene(0);
     CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->importerState());
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4}));
 
     CORRADE_COMPARE(importer->object3DName(0), "Correction_Camera");
@@ -281,25 +290,32 @@ void TinyGltfImporterTest::object() {
     CORRADE_COMPARE(importer->object3DName(1), "Camera");
     CORRADE_COMPARE(importer->object3DForName("Camera"), 1);
 
-    auto cameraObject = importer->object3D(0);
-    CORRADE_COMPARE(cameraObject->instanceType(), Trade::ObjectInstanceType3D::Camera);
-    CORRADE_VERIFY(cameraObject->children().empty());
-
-    auto emptyObject = importer->object3D(1);
-    CORRADE_COMPARE(emptyObject->instanceType(), Trade::ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(emptyObject->children(), (std::vector<UnsignedInt>{0}));
-
-    auto meshObject = importer->object3D(2);
-    CORRADE_COMPARE(meshObject->instanceType(), Trade::ObjectInstanceType3D::Mesh);
-    CORRADE_VERIFY(meshObject->children().empty());
-
-    auto lightObject = importer->object3D(3);
-    CORRADE_COMPARE(lightObject->instanceType(), Trade::ObjectInstanceType3D::Light);
-    CORRADE_VERIFY(lightObject->children().empty());
-
-    auto emptyObject2 = importer->object3D(4);
-    CORRADE_COMPARE(emptyObject2->instanceType(), Trade::ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(emptyObject2->children(), (std::vector<UnsignedInt>{3, 1}));
+    {
+        auto cameraObject = importer->object3D(0);
+        CORRADE_VERIFY(cameraObject->importerState());
+        CORRADE_COMPARE(cameraObject->instanceType(), Trade::ObjectInstanceType3D::Camera);
+        CORRADE_VERIFY(cameraObject->children().empty());
+    } {
+        auto emptyObject = importer->object3D(1);
+        CORRADE_VERIFY(emptyObject->importerState());
+        CORRADE_COMPARE(emptyObject->instanceType(), Trade::ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(emptyObject->children(), (std::vector<UnsignedInt>{0}));
+    } {
+        auto meshObject = importer->object3D(2);
+        CORRADE_VERIFY(meshObject->importerState());
+        CORRADE_COMPARE(meshObject->instanceType(), Trade::ObjectInstanceType3D::Mesh);
+        CORRADE_VERIFY(meshObject->children().empty());
+    } {
+        auto lightObject = importer->object3D(3);
+        CORRADE_VERIFY(lightObject->importerState());
+        CORRADE_COMPARE(lightObject->instanceType(), Trade::ObjectInstanceType3D::Light);
+        CORRADE_VERIFY(lightObject->children().empty());
+    } {
+        auto emptyObject2 = importer->object3D(4);
+        CORRADE_VERIFY(emptyObject2->importerState());
+        CORRADE_COMPARE(emptyObject2->instanceType(), Trade::ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(emptyObject2->children(), (std::vector<UnsignedInt>{3, 1}));
+    }
 }
 
 void TinyGltfImporterTest::objectTransformation() {
@@ -421,6 +437,7 @@ void TinyGltfImporterTest::mesh() {
 
     auto meshObject = importer->mesh3D(0);
     CORRADE_VERIFY(meshObject);
+    CORRADE_VERIFY(meshObject->importerState());
     CORRADE_COMPARE(meshObject->primitive(), MeshPrimitive::Triangles);
     CORRADE_VERIFY(meshObject->isIndexed());
     CORRADE_COMPARE(meshObject->positionArrayCount(), 1);
@@ -599,6 +616,7 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
     {
         auto material = importer->material(0);
         CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
@@ -612,6 +630,7 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
     } {
         auto material = importer->material(1);
         CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
@@ -637,6 +656,7 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
     {
         auto material = importer->material(0);
         CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
@@ -651,6 +671,7 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
     } {
         auto material = importer->material(1);
         CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
@@ -676,6 +697,7 @@ void TinyGltfImporterTest::materialBlinnPhong() {
     {
         auto material = importer->material(0);
         CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
@@ -690,6 +712,7 @@ void TinyGltfImporterTest::materialBlinnPhong() {
     } {
         auto material = importer->material(1);
         CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
@@ -724,6 +747,7 @@ void TinyGltfImporterTest::texture() {
 
     auto texture = importer->texture(0);
     CORRADE_VERIFY(texture);
+    CORRADE_VERIFY(texture->importerState());
     CORRADE_COMPARE(texture->image(), 0);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
 
@@ -785,6 +809,7 @@ void TinyGltfImporterTest::image() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     auto image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->importerState());
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(expected).prefix(60), TestSuite::Compare::Container);
@@ -806,6 +831,7 @@ void TinyGltfImporterTest::imageEmbedded() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     auto image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->importerState());
     CORRADE_COMPARE(image->size(), Vector2i(1, 1));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(expected).prefix(4), TestSuite::Compare::Container);

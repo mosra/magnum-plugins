@@ -209,7 +209,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
     const tinygltf::Scene& scene = _d->model.scenes[id];
     for(const Int node: scene.nodes) children.push_back(node);
 
-    return SceneData{{}, children};
+    return SceneData{{}, children, &scene};
 }
 
 UnsignedInt TinyGltfImporter::doObject3DCount() const {
@@ -653,25 +653,31 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
 
     /* Load embedded image */
     if(image.uri.empty()) {
-        /* @todo Use AnyImageImporter once it supports openData */
+        /** @todo Use AnyImageImporter once it supports openData */
         StbImageImporter imageImporter;
 
         const tinygltf::BufferView& bufferView = _d->model.bufferViews[image.bufferView];
         const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
 
         Containers::ArrayView<const char> data = Containers::arrayCast<const char>(Containers::arrayView(&buffer.data[bufferView.byteOffset], bufferView.byteLength));
-        if(!imageImporter.openData(data)) return Containers::NullOpt;
 
-        return imageImporter.image2D(0);
+        Containers::Optional<ImageData2D> imageData;
+        if(!imageImporter.openData(data) || !(imageData = imageImporter.image2D(0)))
+            return Containers::NullOpt;
+
+        return ImageData2D{std::move(*imageData), &image};
 
     /* Load external image */
     } else {
         AnyImageImporter imageImporter{*manager()};
 
         const std::string filepath = Utility::Directory::join(_d->filePath, image.uri);
-        if(!imageImporter.openFile(filepath)) return Containers::NullOpt;
 
-        return imageImporter.image2D(0);
+        Containers::Optional<ImageData2D> imageData;
+        if(!imageImporter.openFile(filepath) || !(imageData = imageImporter.image2D(0)))
+            return Containers::NullOpt;
+
+        return ImageData2D{std::move(*imageData), &image};
     }
 }
 
