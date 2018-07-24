@@ -5,6 +5,10 @@
     "images": [
         {
             "uri": "texture.png"
+        },
+        {
+            "name": "Image",
+            "uri": "texture.png"
         }
     ]
 }

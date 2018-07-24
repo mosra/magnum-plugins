@@ -86,9 +86,14 @@ struct TinyGltfImporter::Document {
 
     tinygltf::Model model;
 
-    std::unordered_map<std::string, Int> nodesForName,
+    Containers::Optional<std::unordered_map<std::string, Int>> camerasForName,
+        lightsForName,
+        scenesForName,
+        nodesForName,
         meshesForName,
-        materialsForName;
+        materialsForName,
+        imagesForName,
+        texturesForName;
 
     bool open = false;
 };
@@ -135,18 +140,27 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
-    for(std::size_t i = 0; i != _d->model.meshes.size(); ++i)
-        _d->meshesForName.emplace(_d->model.meshes[i].name, i);
-
-    for(std::size_t i = 0; i != _d->model.nodes.size(); ++i)
-        _d->nodesForName.emplace(_d->model.nodes[i].name, i);
-
-    for(std::size_t i = 0; i != _d->model.materials.size(); ++i)
-        _d->materialsForName.emplace(_d->model.materials[i].name, i);
+    /* Name maps are lazy-loaded because these might not be needed every time */
 }
 
-Int TinyGltfImporter::doDefaultScene() {
-    return _d->model.defaultScene;
+UnsignedInt TinyGltfImporter::doCameraCount() const {
+    return _d->model.cameras.size();
+}
+
+Int TinyGltfImporter::doCameraForName(const std::string& name) {
+    if(!_d->camerasForName) {
+        _d->camerasForName.emplace();
+        _d->camerasForName->reserve(_d->model.cameras.size());
+        for(std::size_t i = 0; i != _d->model.cameras.size(); ++i)
+            _d->camerasForName->emplace(_d->model.cameras[i].name, i);
+    }
+
+    const auto found = _d->camerasForName->find(name);
+    return found == _d->camerasForName->end() ? -1 : found->second;
+}
+
+std::string TinyGltfImporter::doCameraName(const UnsignedInt id) {
+    return _d->model.cameras[id].name;
 }
 
 Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
@@ -167,8 +181,24 @@ Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
     return CameraData{fov, near, far, &camera};
 }
 
-UnsignedInt TinyGltfImporter::doCameraCount() const {
-    return _d->model.cameras.size();
+UnsignedInt TinyGltfImporter::doLightCount() const {
+    return _d->model.lights.size();
+}
+
+Int TinyGltfImporter::doLightForName(const std::string& name) {
+    if(!_d->lightsForName) {
+        _d->lightsForName.emplace();
+        _d->lightsForName->reserve(_d->model.lights.size());
+        for(std::size_t i = 0; i != _d->model.lights.size(); ++i)
+            _d->lightsForName->emplace(_d->model.lights[i].name, i);
+    }
+
+    const auto found = _d->lightsForName->find(name);
+    return found == _d->lightsForName->end() ? -1 : found->second;
+}
+
+std::string TinyGltfImporter::doLightName(const UnsignedInt id) {
+    return _d->model.lights[id].name;
 }
 
 Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
@@ -198,11 +228,27 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     return LightData{lightType, lightColor, lightIntensity, &light};
 }
 
-UnsignedInt TinyGltfImporter::doLightCount() const {
-    return _d->model.lights.size();
+Int TinyGltfImporter::doDefaultScene() {
+    return _d->model.defaultScene;
 }
 
 UnsignedInt TinyGltfImporter::doSceneCount() const { return _d->model.scenes.size(); }
+
+Int TinyGltfImporter::doSceneForName(const std::string& name) {
+    if(!_d->scenesForName) {
+        _d->scenesForName.emplace();
+        _d->scenesForName->reserve(_d->model.scenes.size());
+        for(std::size_t i = 0; i != _d->model.scenes.size(); ++i)
+            _d->scenesForName->emplace(_d->model.scenes[i].name, i);
+    }
+
+    const auto found = _d->scenesForName->find(name);
+    return found == _d->scenesForName->end() ? -1 : found->second;
+}
+
+std::string TinyGltfImporter::doSceneName(const UnsignedInt id) {
+    return _d->model.scenes[id].name;
+}
 
 Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
     std::vector<UnsignedInt> children;
@@ -216,13 +262,20 @@ UnsignedInt TinyGltfImporter::doObject3DCount() const {
     return _d->model.nodes.size();
 }
 
-std::string TinyGltfImporter::doObject3DName(UnsignedInt id) {
-    return _d->model.nodes[id].name;
+Int TinyGltfImporter::doObject3DForName(const std::string& name) {
+    if(!_d->nodesForName) {
+        _d->nodesForName.emplace();
+        _d->nodesForName->reserve(_d->model.nodes.size());
+        for(std::size_t i = 0; i != _d->model.nodes.size(); ++i)
+            _d->nodesForName->emplace(_d->model.nodes[i].name, i);
+    }
+
+    const auto found = _d->nodesForName->find(name);
+    return found == _d->nodesForName->end() ? -1 : found->second;
 }
 
-Int TinyGltfImporter::doObject3DForName(const std::string& name) {
-    const auto found = _d->nodesForName.find(name);
-    return found == _d->nodesForName.end() ? -1 : found->second;
+std::string TinyGltfImporter::doObject3DName(UnsignedInt id) {
+    return _d->model.nodes[id].name;
 }
 
 std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
@@ -291,8 +344,15 @@ UnsignedInt TinyGltfImporter::doMesh3DCount() const {
 }
 
 Int TinyGltfImporter::doMesh3DForName(const std::string& name) {
-    const auto found = _d->meshesForName.find(name);
-    return found == _d->meshesForName.end() ? -1 : found->second;
+    if(!_d->meshesForName) {
+        _d->meshesForName.emplace();
+        _d->meshesForName->reserve(_d->model.meshes.size());
+        for(std::size_t i = 0; i != _d->model.meshes.size(); ++i)
+            _d->meshesForName->emplace(_d->model.meshes[i].name, i);
+    }
+
+    const auto found = _d->meshesForName->find(name);
+    return found == _d->meshesForName->end() ? -1 : found->second;
 }
 
 std::string TinyGltfImporter::doMesh3DName(const UnsignedInt id) {
@@ -438,8 +498,15 @@ UnsignedInt TinyGltfImporter::doMaterialCount() const {
 }
 
 Int TinyGltfImporter::doMaterialForName(const std::string& name) {
-    const auto found = _d->materialsForName.find(name);
-    return found == _d->materialsForName.end() ? -1 : found->second;
+    if(!_d->materialsForName) {
+        _d->materialsForName.emplace();
+        _d->materialsForName->reserve(_d->model.materials.size());
+        for(std::size_t i = 0; i != _d->model.materials.size(); ++i)
+            _d->materialsForName->emplace(_d->model.materials[i].name, i);
+    }
+
+    const auto found = _d->materialsForName->find(name);
+    return found == _d->materialsForName->end() ? -1 : found->second;
 }
 
 std::string TinyGltfImporter::doMaterialName(const UnsignedInt id) {
@@ -560,6 +627,22 @@ UnsignedInt TinyGltfImporter::doTextureCount() const {
     return _d->model.textures.size();
 }
 
+Int TinyGltfImporter::doTextureForName(const std::string& name) {
+    if(!_d->texturesForName) {
+        _d->texturesForName.emplace();
+        _d->texturesForName->reserve(_d->model.textures.size());
+        for(std::size_t i = 0; i != _d->model.textures.size(); ++i)
+            _d->texturesForName->emplace(_d->model.textures[i].name, i);
+    }
+
+    const auto found = _d->texturesForName->find(name);
+    return found == _d->texturesForName->end() ? -1 : found->second;
+}
+
+std::string TinyGltfImporter::doTextureName(const UnsignedInt id) {
+    return _d->model.textures[id].name;
+}
+
 Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt id) {
     const tinygltf::Texture& tex = _d->model.textures[id];
 
@@ -640,6 +723,22 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
 
 UnsignedInt TinyGltfImporter::doImage2DCount() const {
     return _d->model.images.size();
+}
+
+Int TinyGltfImporter::doImage2DForName(const std::string& name) {
+    if(!_d->imagesForName) {
+        _d->imagesForName.emplace();
+        _d->imagesForName->reserve(_d->model.images.size());
+        for(std::size_t i = 0; i != _d->model.images.size(); ++i)
+            _d->imagesForName->emplace(_d->model.images[i].name, i);
+    }
+
+    const auto found = _d->imagesForName->find(name);
+    return found == _d->imagesForName->end() ? -1 : found->second;
+}
+
+std::string TinyGltfImporter::doImage2DName(const UnsignedInt id) {
+    return _d->model.images[id].name;
 }
 
 Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt id) {

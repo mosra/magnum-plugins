@@ -40,6 +40,8 @@ namespace Magnum {
     @ref Trade::TinyGltfImporter::importerState() for easier access to extra
     data, exposing also @ref Trade::SceneData::importerState() and
     @ref Trade::TextureData::importerState()
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now implements mapping
+    between names and IDs for all currently imported data
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 

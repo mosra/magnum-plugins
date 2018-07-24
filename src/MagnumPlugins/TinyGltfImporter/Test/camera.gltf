@@ -4,7 +4,7 @@
     },
     "cameras" : [
         {
-            "name" : "camera_orthographic",
+            "name" : "Orthographic",
             "orthographic" : {
                 "xmag" : 7.314285755157471,
                 "ymag" : 7.314285755157471,
@@ -14,7 +14,7 @@
             "type" : "orthographic"
         },
         {
-            "name" : "camera_perspective",
+            "name" : "Perspective",
             "perspective" : {
                 "aspectRatio" : 1.7777777777777777,
                 "yfov" : 0.5033799372418416,

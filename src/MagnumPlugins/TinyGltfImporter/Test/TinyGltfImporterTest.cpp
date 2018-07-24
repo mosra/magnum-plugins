@@ -223,18 +223,24 @@ void TinyGltfImporterTest::camera() {
 
     CORRADE_COMPARE(importer->cameraCount(), 2);
 
-    /* orthographic */
-    auto cam1 = importer->camera(0);
-    CORRADE_VERIFY(cam1);
-    CORRADE_COMPARE(cam1->near(), 0.1f);
-    CORRADE_COMPARE(cam1->far(), 100.0f);
+    {
+        CORRADE_COMPARE(importer->cameraForName("Orthographic"), 0);
+        CORRADE_COMPARE(importer->cameraName(0), "Orthographic");
 
-    /* perspective */
-    auto cam2 = importer->camera(1);
-    CORRADE_VERIFY(cam2);
-    CORRADE_COMPARE(cam2->fov(), 0.5033799372418416_radf);
-    CORRADE_COMPARE(cam2->near(), 2.0f);
-    CORRADE_COMPARE(cam2->far(), 94.7f);
+        auto cam = importer->camera(0);
+        CORRADE_VERIFY(cam);
+        CORRADE_COMPARE(cam->near(), 0.1f);
+        CORRADE_COMPARE(cam->far(), 100.0f);
+    } {
+        CORRADE_COMPARE(importer->cameraForName("Perspective"), 1);
+        CORRADE_COMPARE(importer->cameraName(1), "Perspective");
+
+        auto cam = importer->camera(1);
+        CORRADE_VERIFY(cam);
+        CORRADE_COMPARE(cam->fov(), 0.5033799372418416_radf);
+        CORRADE_COMPARE(cam->near(), 2.0f);
+        CORRADE_COMPARE(cam->far(), 94.7f);
+    }
 }
 
 void TinyGltfImporterTest::light() {
@@ -247,26 +253,34 @@ void TinyGltfImporterTest::light() {
 
     CORRADE_COMPARE(importer->lightCount(), 4); /* 3 + 1 (ambient light) */
 
-    /* DirectionalLight */
-    auto light1 = importer->light(0);
-    CORRADE_VERIFY(light1);
-    CORRADE_COMPARE(light1->type(), LightData::Type::Point);
-    CORRADE_COMPARE(light1->color(), (Color3{0.062826968729496f, 0.8879325985908508f, 1.0f}));
-    CORRADE_COMPARE(light1->intensity(), 1.0f);
+    {
+        CORRADE_COMPARE(importer->lightForName("Point"), 0);
+        CORRADE_COMPARE(importer->lightName(0), "Point");
 
-    /* SpotLight */
-    auto light2 = importer->light(1);
-    CORRADE_VERIFY(light2);
-    CORRADE_COMPARE(light2->type(), LightData::Type::Spot);
-    CORRADE_COMPARE(light2->color(), (Color3{0.28446972370147705f, 0.19345591962337494f, 1.0f}));
-    CORRADE_COMPARE(light2->intensity(), 1.0f);
+        auto light = importer->light(0);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->color(), (Color3{0.06f, 0.88f, 1.0f}));
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+    } {
+        CORRADE_COMPARE(importer->lightForName("Spot"), 1);
+        CORRADE_COMPARE(importer->lightName(1), "Spot");
 
-    /* DirectionalLight */
-    auto light3 = importer->light(2);
-    CORRADE_VERIFY(light3);
-    CORRADE_COMPARE(light3->type(), LightData::Type::Infinite);
-    CORRADE_COMPARE(light3->color(), (Color3{1.0f, 0.08723420649766922f, 0.14454050362110138f}));
-    CORRADE_COMPARE(light3->intensity(), 1.0f);
+        auto light = importer->light(1);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->color(), (Color3{0.28f, 0.19f, 1.0f}));
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+    } {
+        CORRADE_COMPARE(importer->lightForName("Sun"), 2);
+        CORRADE_COMPARE(importer->lightName(2), "Sun");
+
+        auto light = importer->light(2);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Infinite);
+        CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.08f, 0.14f}));
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+    }
 }
 
 void TinyGltfImporterTest::object() {
@@ -277,18 +291,20 @@ void TinyGltfImporterTest::object() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object" + std::string{data.extension})));
 
-    CORRADE_COMPARE(importer->object3DCount(), 5);
+    CORRADE_COMPARE(importer->sceneCount(), 2);
+    CORRADE_COMPARE(importer->sceneName(1), "Scene");
+    CORRADE_COMPARE(importer->sceneForName("Scene"), 1);
 
-    auto scene = importer->scene(0);
+    auto scene = importer->scene(1);
     CORRADE_VERIFY(scene);
     CORRADE_VERIFY(scene->importerState());
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4}));
 
-    CORRADE_COMPARE(importer->object3DName(0), "Correction_Camera");
-    CORRADE_COMPARE(importer->object3DForName("Correction_Camera"), 0);
-
+    CORRADE_COMPARE(importer->object3DCount(), 5);
     CORRADE_COMPARE(importer->object3DName(1), "Camera");
     CORRADE_COMPARE(importer->object3DForName("Camera"), 1);
+    CORRADE_COMPARE(importer->object3DName(0), "Correction_Camera");
+    CORRADE_COMPARE(importer->object3DForName("Correction_Camera"), 0);
 
     {
         auto cameraObject = importer->object3D(0);
@@ -745,7 +761,11 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE(phong.diffuseTexture(), 0);
     CORRADE_COMPARE(phong.shininess(), 1.0);
 
-    auto texture = importer->texture(0);
+    CORRADE_COMPARE(importer->textureCount(), 2);
+    CORRADE_COMPARE(importer->textureForName("Texture"), 1);
+    CORRADE_COMPARE(importer->textureName(1), "Texture");
+
+    auto texture = importer->texture(1);
     CORRADE_VERIFY(texture);
     CORRADE_VERIFY(texture->importerState());
     CORRADE_COMPARE(texture->image(), 0);
@@ -806,7 +826,10 @@ void TinyGltfImporterTest::image() {
         "\xb0\xb1\xb6\xff\xa0\xa0\xa1\xff\x9f\x9f\xa0\xff\xbc\xbc\xba\xff\xcc\xcc\xcc\xff"
         "\xb2\xb4\xb9\xff\xb8\xb9\xbb\xff\xc1\xc3\xc2\xff\xbc\xbd\xbf\xff\xb8\xb8\xbc\xff";
 
-    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_COMPARE(importer->image2DForName("Image"), 1);
+    CORRADE_COMPARE(importer->image2DName(1), "Image");
+
     auto image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->importerState());

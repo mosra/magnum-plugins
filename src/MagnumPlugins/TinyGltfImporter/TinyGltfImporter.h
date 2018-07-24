@@ -212,20 +212,25 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doCameraForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doCameraName(const UnsignedInt) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doLightForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doLightName(const UnsignedInt) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doLightCount() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doDefaultScene() override;
+
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doSceneForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doSceneName(const UnsignedInt) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
-
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
-
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
@@ -239,9 +244,13 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::unique_ptr<AbstractMaterialData> doMaterial(const UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doTextureForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doTextureName(const UnsignedInt) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(const UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doImage2DForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doImage2DName(const UnsignedInt) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(const UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL const void* doImporterState() const override;

@@ -140,8 +140,11 @@
             ]
         }
     ],
-    "scene" : 0,
+    "scene" : 1,
     "scenes" : [
+        {
+            "nodes": []
+        },
         {
             "extensions" : {
                 "KHR_lights_cmn" : {
