@@ -1,15 +1,20 @@
-# Creating GLB files
+Updating test files
+===================
 
-To convert .gltf files to .glb, use
- * https://glb-packer.glitch.me/
- * or https://sbtron.github.io/makeglb/
+The `*.gltf` files are "golden sources" from which `*.glb` files are created.
+Simply use the bundled `gltf2glb.py` utility:
 
-for example.
+```sh
+./gltf2glb.py file.gltf # creates file.glb with everything packed inside
+```
 
-Or use [gltf-pipeline](https://github.com/AnalyticalGraphicsInc/gltf-pipeline/tree/2.0) via npm:
-and convert all gltf files into glb using:
+The `*.bin` files, if needed, are created from `*.bin.in` templates. The input
+file is a Python source that's `exec()`d by the `in2bin.py` utility. It needs
+to have a `type` variable describing the output binary layout (using Python
+[struct](https://docs.python.org/3.6/library/struct.html) syntax) and an
+`input` array containing a list of floats/integers that match the `type`. After
+that, convert the file like this:
 
-~~~
-find *.gltf | grep -o "^[^\.]*" | xargs -t -I '{}' gltf-pipeline -i '{}'.gltf -o '{}'.glb -b
-mv output/*.glb .
-~~~
+```sh
+./in2bin.py file.bin.in # creates file.bin
+```
