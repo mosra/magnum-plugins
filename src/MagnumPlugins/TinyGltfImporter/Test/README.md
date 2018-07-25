@@ -5,7 +5,7 @@ The `*.gltf` files are "golden sources" from which `*.glb` files are created.
 Simply use the bundled `gltf2glb.py` utility:
 
 ```sh
-./gltf2glb.py file.gltf # creates file.glb with everything packed inside
+./gltf2glb.py file.gltf # creates file.glb with buffers packed inside
 ```
 
 The `*.bin` files, if needed, are created from `*.bin.in` templates. The input
@@ -18,3 +18,21 @@ that, convert the file like this:
 ```sh
 ./in2bin.py file.bin.in # creates file.bin
 ```
+
+Embedding buffers
+-----------------
+
+Tests that use files referencing external binary blobs also have variants that
+test the same, but embedded as a data URI (and then the same, but as a GLB
+file). This is done using the `gltf2embedded.py` utility:
+
+```sh
+./gltf2embedded.py file.gltf # creates file-embedded.gltf with buffers embedded
+./gltf2glb.py file-embedded.gltf # created file-embedded.glb
+```
+
+Batch conversion
+----------------
+
+The `convert.sh` script is a convenience tool that executes all conversion
+routines on all files.
