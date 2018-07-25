@@ -26,12 +26,11 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-import sys
+import argparse
 import os
 import json
 import struct
 import base64
-
 
 CHUNK_TYPE_JSON = 0x4E4F534A
 CHUNK_TYPE_BIN = 0x004E4942
@@ -40,7 +39,12 @@ CHUNK_HEADER_SIZE = 8
 GLB_HEADER_SIZE = 12
 
 def main():
-    fileIn = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input')
+    parser.add_argument('--no-embed', action='store_true')
+    args = parser.parse_args()
+
+    fileIn = args.input
     fileOut = os.path.splitext(fileIn)[0] + '.glb'
 
     print("Converting to", fileOut)
@@ -49,7 +53,7 @@ def main():
         data = json.load(f)
         binData = bytearray()
 
-        if "buffers" in data:
+        if not args.no_embed and "buffers" in data:
             assert(len(data["buffers"]) <= 1)
             for buffer in data["buffers"]:
                 uri = buffer['uri']
