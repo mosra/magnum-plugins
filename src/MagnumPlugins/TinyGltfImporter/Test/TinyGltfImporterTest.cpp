@@ -90,14 +90,12 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
 namespace {
 
-enum: std::size_t { InstanceDataCount = 2 };
-
 constexpr struct {
     const char* name;
     const char* extension;
     Containers::ArrayView<const char> shortData;
     const char* shortDataError;
-} InstanceData[InstanceDataCount]{
+} InstanceData[]{
     {"ascii", ".gltf", {"?", 1}, "JSON string too short.\n\n"},
     {"binary", ".glb", {"glTF?", 5}, "Too short data size for glTF Binary.\n"}
 };
@@ -136,7 +134,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::textureDefaultSampler,
 
                        &TinyGltfImporterTest::image,
-                       &TinyGltfImporterTest::imageEmbedded}, InstanceDataCount);
+                       &TinyGltfImporterTest::imageEmbedded},
+                      Containers::arraySize(InstanceData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. Besides the explicit StbImageImporter it also pulls in
