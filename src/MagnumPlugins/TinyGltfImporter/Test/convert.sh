@@ -13,6 +13,6 @@ for i in image image-buffer mesh-colors mesh-primitives mesh; do
 done
 
 # gltf -> glb
-for i in camera empty image image-embedded image-buffer image-buffer-embedded light material-blinnphong material-metallicroughness material-specularglossiness mesh-colors mesh-colors-embedded mesh-primitives mesh-primitives-embedded mesh-with-stride mesh mesh-embedded object-rotation object-scaling object-transformation object-translation object texture-default-sampler texture; do
+for i in camera empty image image-embedded image-buffer image-buffer-embedded light material-blinnphong material-metallicroughness material-specularglossiness mesh-colors mesh-colors-embedded mesh-primitives mesh-primitives-embedded mesh-with-stride mesh mesh-embedded scene object-transformation texture-default-sampler texture; do
     ./gltf2glb.py ${i}.gltf
 done

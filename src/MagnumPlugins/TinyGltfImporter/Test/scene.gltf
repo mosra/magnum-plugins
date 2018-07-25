@@ -1,0 +1,128 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                }
+            ]
+        }
+    ],
+    "cameras": [
+        {
+            "name": "Camera",
+            "perspective": {
+                "aspectRatio": 1.7777777777777777,
+                "yfov": 0.5033799372418416,
+                "zfar": 100.0,
+                "znear": 0.10000000149011612
+            },
+            "type": "perspective"
+        }
+    ],
+    "extensions": {
+        "KHR_lights_cmn": {
+            "lights": [
+                {
+                    "color": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "name": "Lamp",
+                    "positional": {
+                        "quadraticAttenuation": 0.03333335240683057
+                    },
+                    "profile": "CMN",
+                    "type": "point"
+                },
+                {
+                    "color": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "name": "Ambient_Scene",
+                    "type": "ambient"
+                }
+            ]
+        }
+    },
+    "extensionsRequired": [
+        "KHR_lights_cmn"
+    ],
+    "extensionsUsed": [
+        "KHR_lights_cmn"
+    ],
+    "materials": [
+        {
+            "name": "Material",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [
+                    0.6400000190734865,
+                    0.6400000190734865,
+                    0.6400000190734865,
+                    1.0
+                ],
+                "metallicFactor": 0.0
+            }
+        }
+    ],
+    "nodes": [
+        {
+            "camera": 0,
+            "name": "Camera"
+        },
+        {
+            "children": [
+                0
+            ],
+            "name": "Empty"
+        },
+        {
+            "name": "Mesh",
+            "mesh": 0
+        },
+        {
+            "extensions": {
+                "KHR_lights_cmn": {
+                    "light": 0
+                }
+            },
+            "name": "Light",
+            "rotation": [
+                -0.7071067690849304,
+                -0.0,
+                0.0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children": [
+                3, 1
+            ],
+            "name": "Empty 2"
+        }
+    ],
+    "scene": 1,
+    "scenes": [
+        {
+            "nodes": []
+        },
+        {
+            "extensions": {
+                "KHR_lights_cmn": {
+                    "light": 1
+                }
+            },
+            "name": "Scene",
+            "nodes": [
+                2,
+                4
+            ]
+        }
+    ]
+}

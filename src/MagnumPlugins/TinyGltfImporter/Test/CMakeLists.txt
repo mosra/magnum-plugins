@@ -89,16 +89,10 @@ corrade_add_test(TinyGltfImporterTest TinyGltfImporterTest.cpp
         mesh-colors-embedded.glb
         mesh-with-stride.gltf
         mesh-with-stride.glb
-        object.gltf
-        object.glb
-        object-rotation.gltf
-        object-rotation.glb
-        object-scaling.gltf
-        object-scaling.glb
+        scene.gltf
+        scene.glb
         object-transformation.gltf
         object-transformation.glb
-        object-translation.gltf
-        object-translation.glb
         texture.gltf
         texture.glb
         texture.png

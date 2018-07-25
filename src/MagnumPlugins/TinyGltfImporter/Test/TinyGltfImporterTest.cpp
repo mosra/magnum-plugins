@@ -62,11 +62,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void light();
 
-    void object();
+    void scene();
     void objectTransformation();
-    void objectTranslation();
-    void objectRotation();
-    void objectScaling();
 
     void mesh();
     void meshIndexed();
@@ -148,11 +145,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
                        &TinyGltfImporterTest::light,
 
-                       &TinyGltfImporterTest::object,
-                       &TinyGltfImporterTest::objectTransformation,
-                       &TinyGltfImporterTest::objectTranslation,
-                       &TinyGltfImporterTest::objectRotation,
-                       &TinyGltfImporterTest::objectScaling},
+                       &TinyGltfImporterTest::scene,
+                       &TinyGltfImporterTest::objectTransformation},
                       Containers::arraySize(SingleFileData));
 
     addInstancedTests({&TinyGltfImporterTest::mesh,
@@ -302,13 +296,13 @@ void TinyGltfImporterTest::light() {
     }
 }
 
-void TinyGltfImporterTest::object() {
+void TinyGltfImporterTest::scene() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "object" + std::string{data.suffix})));
+        "scene" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->defaultScene(), 1);
     CORRADE_COMPARE(importer->sceneCount(), 2);
@@ -321,36 +315,42 @@ void TinyGltfImporterTest::object() {
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4}));
 
     CORRADE_COMPARE(importer->object3DCount(), 5);
-    CORRADE_COMPARE(importer->object3DName(1), "Camera");
-    CORRADE_COMPARE(importer->object3DForName("Camera"), 1);
-    CORRADE_COMPARE(importer->object3DName(0), "Correction_Camera");
-    CORRADE_COMPARE(importer->object3DForName("Correction_Camera"), 0);
 
     {
-        auto cameraObject = importer->object3D(0);
-        CORRADE_VERIFY(cameraObject->importerState());
-        CORRADE_COMPARE(cameraObject->instanceType(), Trade::ObjectInstanceType3D::Camera);
-        CORRADE_VERIFY(cameraObject->children().empty());
+        CORRADE_COMPARE(importer->object3DName(0), "Camera");
+        CORRADE_COMPARE(importer->object3DForName("Camera"), 0);
+        auto object = importer->object3D(0);
+        CORRADE_VERIFY(object->importerState());
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Camera);
+        CORRADE_VERIFY(object->children().empty());
     } {
-        auto emptyObject = importer->object3D(1);
-        CORRADE_VERIFY(emptyObject->importerState());
-        CORRADE_COMPARE(emptyObject->instanceType(), Trade::ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(emptyObject->children(), (std::vector<UnsignedInt>{0}));
+        CORRADE_COMPARE(importer->object3DName(1), "Empty");
+        CORRADE_COMPARE(importer->object3DForName("Empty"), 1);
+        auto object = importer->object3D(1);
+        CORRADE_VERIFY(object->importerState());
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{0}));
     } {
-        auto meshObject = importer->object3D(2);
-        CORRADE_VERIFY(meshObject->importerState());
-        CORRADE_COMPARE(meshObject->instanceType(), Trade::ObjectInstanceType3D::Mesh);
-        CORRADE_VERIFY(meshObject->children().empty());
+        CORRADE_COMPARE(importer->object3DName(2), "Mesh");
+        CORRADE_COMPARE(importer->object3DForName("Mesh"), 2);
+        auto object = importer->object3D(2);
+        CORRADE_VERIFY(object->importerState());
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Mesh);
+        CORRADE_VERIFY(object->children().empty());
     } {
-        auto lightObject = importer->object3D(3);
-        CORRADE_VERIFY(lightObject->importerState());
-        CORRADE_COMPARE(lightObject->instanceType(), Trade::ObjectInstanceType3D::Light);
-        CORRADE_VERIFY(lightObject->children().empty());
+        CORRADE_COMPARE(importer->object3DName(3), "Light");
+        CORRADE_COMPARE(importer->object3DForName("Light"), 3);
+        auto object = importer->object3D(3);
+        CORRADE_VERIFY(object->importerState());
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Light);
+        CORRADE_VERIFY(object->children().empty());
     } {
-        auto emptyObject2 = importer->object3D(4);
-        CORRADE_VERIFY(emptyObject2->importerState());
-        CORRADE_COMPARE(emptyObject2->instanceType(), Trade::ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(emptyObject2->children(), (std::vector<UnsignedInt>{3, 1}));
+        CORRADE_COMPARE(importer->object3DName(4), "Empty 2");
+        CORRADE_COMPARE(importer->object3DForName("Empty 2"), 4);
+        auto object = importer->object3D(4);
+        CORRADE_VERIFY(object->importerState());
+        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{3, 1}));
     }
 }
 
@@ -362,94 +362,52 @@ void TinyGltfImporterTest::objectTransformation() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object-transformation" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->object3DCount(), 2);
+    CORRADE_COMPARE(importer->object3DCount(), 5);
 
-    std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
-    CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->transformation(), (Matrix4{
-        {0.0f,  1.0f, 0.0f, 0.0f},
-        {-0.707107f, 0.0f, -0.707107f, 0.0f},
-        {-0.707107f,  0.0f, 0.707107f, 0},
-        {1.0f, -2.0f, -2.0f, 1.0f}
-    }));
-
-    std::unique_ptr<Trade::ObjectData3D> objectWithMatrix = importer->object3D(1);
-    CORRADE_VERIFY(objectWithMatrix);
-    CORRADE_COMPARE(objectWithMatrix->transformation(), (Matrix4{
-        {-0.99975f, -0.00679829f, 0.0213218f, 0.0f},
-        {0.00167596f, 0.927325f, 0.374254f, 0.0f},
-        {-0.0223165f, 0.374196f, -0.927081f, 0.0f},
-        {-0.0115543f, 0.194711f, -0.478297f, 1.0f}
-    }));
-}
-
-void TinyGltfImporterTest::objectTranslation() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "object-translation" + std::string{data.suffix})));
-
-    CORRADE_COMPARE(importer->object3DCount(), 3);
-
-    std::unique_ptr<Trade::ObjectData3D> object1 = importer->object3D(0);
-    CORRADE_VERIFY(object1);
-    CORRADE_COMPARE(object1->transformation(), Matrix4::translation(Vector3::yAxis(-2)));
-
-    std::unique_ptr<Trade::ObjectData3D> object2 = importer->object3D(1);
-    CORRADE_VERIFY(object2);
-    CORRADE_COMPARE(object2->transformation(), Matrix4::translation(Vector3::zAxis(3)));
-
-    std::unique_ptr<Trade::ObjectData3D> object3 = importer->object3D(2);
-    CORRADE_VERIFY(object3);
-    CORRADE_COMPARE(object3->transformation(), Matrix4::translation(Vector3::xAxis(4)));
-}
-
-void TinyGltfImporterTest::objectRotation() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "object-rotation" + std::string{data.suffix})));
-
-    CORRADE_COMPARE(importer->object3DCount(), 3);
-
-    std::unique_ptr<Trade::ObjectData3D> object1 = importer->object3D(0);
-    CORRADE_VERIFY(object1);
-    CORRADE_COMPARE(object1->transformation(), Matrix4::rotation(45.0_degf, Vector3::zAxis()));
-
-    std::unique_ptr<Trade::ObjectData3D> object2 = importer->object3D(1);
-    CORRADE_VERIFY(object2);
-    CORRADE_COMPARE(object2->transformation(), Matrix4::from(Quaternion::rotation(85.0_degf, Vector3::yAxis()).toMatrix(), {}));
-
-    std::unique_ptr<Trade::ObjectData3D> object3 = importer->object3D(2);
-    CORRADE_VERIFY(object3);
-    CORRADE_COMPARE(object3->transformation(), Matrix4::rotation(-35.0_degf, Vector3::xAxis()));
-}
-
-void TinyGltfImporterTest::objectScaling() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "object-scaling" + std::string{data.suffix})));
-
-    CORRADE_COMPARE(importer->object3DCount(), 3);
-
-    std::unique_ptr<Trade::ObjectData3D> object1 = importer->object3D(0);
-    CORRADE_VERIFY(object1);
-    CORRADE_COMPARE(object1->transformation(), Matrix4::scaling({1.5f, 0.5f, 0.75f}));
-
-    std::unique_ptr<Trade::ObjectData3D> object2 = importer->object3D(1);
-    CORRADE_VERIFY(object2);
-    CORRADE_COMPARE(object2->transformation(), Matrix4::scaling(Vector3::zScale(1.75f)));
-
-    std::unique_ptr<Trade::ObjectData3D> object3 = importer->object3D(2);
-    CORRADE_VERIFY(object3);
-    CORRADE_COMPARE(object3->transformation(), Matrix4::scaling(Vector3::yScale(0.5f)));
+    {
+        CORRADE_COMPARE(importer->object3DName(0), "Matrix");
+        auto object = importer->object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(),
+            Matrix4::translation({1.5f, -2.5f, 0.3f})*
+            Matrix4::rotation(45.0_degf, Vector3::yAxis())*
+            Matrix4::scaling({0.9f, 0.5f, 2.3f}));
+        CORRADE_COMPARE(object->transformation(), (Matrix4{
+            {0.636397f, 0.0f, -0.636395f, 0.0f},
+            {0.0f, 0.5f, -0.0f, 0.0f},
+            {1.62634f, 0.0f, 1.62635f, 0.0f},
+            {1.5f, -2.5f, 0.3f, 1.0f}
+        }));
+    } {
+        CORRADE_COMPARE(importer->object3DName(1), "TRS");
+        auto object = importer->object3D(1);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(),
+            Matrix4::translation({1.5f, -2.5f, 0.3f})*
+            Matrix4::rotation(45.0_degf, Vector3::yAxis())*
+            Matrix4::scaling({0.9f, 0.5f, 2.3f}));
+        CORRADE_COMPARE(object->transformation(), (Matrix4{
+            {0.636397f, 0.0f, -0.636395f, 0.0f},
+            {0.0f, 0.5f, -0.0f, 0.0f},
+            {1.62634f,  0.0f, 1.62635f, 0},
+            {1.5f, -2.5f, 0.3f, 1.0f}
+        }));
+    } {
+        CORRADE_COMPARE(importer->object3DName(2), "Translation");
+        auto object = importer->object3D(2);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::translation({1.5f, -2.5f, 0.3f}));
+    } {
+        CORRADE_COMPARE(importer->object3DName(3), "Rotation");
+        auto object = importer->object3D(3);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(45.0_degf, Vector3::yAxis()));
+    } {
+        CORRADE_COMPARE(importer->object3DName(4), "Scaling");
+        auto object = importer->object3D(4);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->transformation(), Matrix4::scaling({0.9f, 0.5f, 2.3f}));
+    }
 }
 
 void TinyGltfImporterTest::mesh() {
