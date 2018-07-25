@@ -71,12 +71,18 @@ corrade_add_test(TinyGltfImporterTest TinyGltfImporterTest.cpp
         mesh.gltf
         mesh.bin
         mesh.glb
+        mesh-embedded.gltf
+        mesh-embedded.glb
         mesh-primitives.gltf
         mesh-primitives.bin
         mesh-primitives.glb
+        mesh-primitives-embedded.gltf
+        mesh-primitives-embedded.glb
         mesh-colors.gltf
         mesh-colors.bin
         mesh-colors.glb
+        mesh-colors-embedded.gltf
+        mesh-colors-embedded.glb
         mesh-with-stride.gltf
         mesh-with-stride.glb
         object.gltf
