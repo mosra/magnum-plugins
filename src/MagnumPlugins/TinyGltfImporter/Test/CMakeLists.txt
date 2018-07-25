@@ -60,6 +60,10 @@ corrade_add_test(TinyGltfImporterTest TinyGltfImporterTest.cpp
         image.glb
         image-embedded.gltf
         image-embedded.glb
+        image-buffer.gltf
+        image-buffer.glb
+        image-buffer-embedded.gltf
+        image-buffer-embedded.glb
         light.gltf
         light.glb
         material-blinnphong.gltf

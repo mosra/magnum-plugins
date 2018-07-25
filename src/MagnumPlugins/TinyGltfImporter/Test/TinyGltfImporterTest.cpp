@@ -81,8 +81,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void texture();
     void textureDefaultSampler();
+
     void image();
-    void imageEmbedded();
 
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -116,6 +116,20 @@ constexpr struct {
     {"ascii embedded", "-embedded.gltf"},
     {"binary external", ".glb"},
     {"binary embedded", "-embedded.glb"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* suffix;
+} ImageData[]{
+    {"ascii external", ".gltf"},
+    {"ascii embedded", "-embedded.gltf"},
+    {"ascii buffer external", "-buffer.gltf"},
+    {"ascii buffer embedded", "-buffer-embedded.gltf"},
+    {"binary external", ".glb"},
+    {"binary embedded", "-embedded.glb"},
+    {"binary buffer external", "-buffer.glb"},
+    {"binary buffer embedded", "-buffer-embedded.glb"}
 };
 
 }
@@ -160,9 +174,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::textureDefaultSampler},
                       Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&TinyGltfImporterTest::image,
-                       &TinyGltfImporterTest::imageEmbedded},
-                      Containers::arraySize(SingleFileData));
+    addInstancedTests({&TinyGltfImporterTest::image},
+                      Containers::arraySize(ImageData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. Besides the explicit StbImageImporter it also pulls in
@@ -872,7 +885,7 @@ void TinyGltfImporterTest::textureDefaultSampler() {
 }
 
 void TinyGltfImporterTest::image() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
+    auto&& data = ImageData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -891,34 +904,12 @@ void TinyGltfImporterTest::image() {
     CORRADE_COMPARE(importer->image2DForName("Image"), 1);
     CORRADE_COMPARE(importer->image2DName(1), "Image");
 
-    auto image = importer->image2D(0);
+    auto image = importer->image2D(1);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->importerState());
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(expected).prefix(60), TestSuite::Compare::Container);
-}
-
-void TinyGltfImporterTest::imageEmbedded() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test");
-
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "image-embedded" + std::string{data.suffix})));
-
-    const char expected[] = "\xff\x00\xff\xff";
-
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-    auto image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(image->importerState());
-    CORRADE_COMPARE(image->size(), Vector2i(1, 1));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(expected).prefix(4), TestSuite::Compare::Container);
 }
 
 }}}

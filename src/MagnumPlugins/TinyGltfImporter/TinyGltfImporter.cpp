@@ -74,8 +74,13 @@ using namespace Magnum::Math::Literals;
 
 namespace {
 
-bool loadImageData(tinygltf::Image*, std::string*, int, int, const unsigned char*, int, void*) {
-    /* Bypass tinygltf image loading and load the image on demand in image2D instead. */
+bool loadImageData(tinygltf::Image* image, std::string*, int, int, const unsigned char* data, int size, void*) {
+    /* In case the image is an embedded URI, copy its decoded value to the data
+       buffer. In all other cases we'll access the referenced buffer or
+       external file directly from the doImage2D() implementation. */
+    if(image->bufferView == -1 && image->uri.empty())
+        image->image.assign(data, data + size);
+
     return true;
 }
 
@@ -764,10 +769,19 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
         /** @todo Use AnyImageImporter once it supports openData */
         StbImageImporter imageImporter;
 
-        const tinygltf::BufferView& bufferView = _d->model.bufferViews[image.bufferView];
-        const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
+        /* The image data are stored in a buffer */
+        Containers::ArrayView<const char> data;
+        if(image.bufferView != -1) {
+            const tinygltf::BufferView& bufferView = _d->model.bufferViews[image.bufferView];
+            const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
 
-        Containers::ArrayView<const char> data = Containers::arrayCast<const char>(Containers::arrayView(&buffer.data[bufferView.byteOffset], bufferView.byteLength));
+            data = Containers::arrayCast<const char>(Containers::arrayView(&buffer.data[bufferView.byteOffset], bufferView.byteLength));
+
+        /* Image data were a data URI, the loadImageData() callback copied them
+           without decoding to the internal data vector */
+        } else {
+            data = Containers::arrayCast<const char>(Containers::arrayView(image.image.data(), image.image.size()));
+        }
 
         Containers::Optional<ImageData2D> imageData;
         if(!imageImporter.openData(data) || !(imageData = imageImporter.image2D(0)))

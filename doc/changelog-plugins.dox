@@ -79,7 +79,7 @@ namespace Magnum {
 -   Fixed improper order of applying translation/rotation/scaling node
     transformations in @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now loads external images
-    with `*.glb` files properly
+    from `*.glb` files and images embedded as URI data properly
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly imports
     non-indexed meshes and meshes without the normal attribute
 -   Updated `stb_image` to fix `undefined symbol: __cpu_model` error when
