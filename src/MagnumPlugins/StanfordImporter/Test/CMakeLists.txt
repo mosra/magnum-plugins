@@ -46,7 +46,7 @@ else()
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
 
-corrade_add_test(StanfordImporterTest Test.cpp
+corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         big-endian.ply

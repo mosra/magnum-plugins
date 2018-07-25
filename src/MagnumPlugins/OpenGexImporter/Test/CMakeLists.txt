@@ -49,7 +49,7 @@ else()
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
 
-corrade_add_test(OpenGexImporterTest Test.cpp
+corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
     LIBRARIES Magnum::Trade MagnumOpenDdl
     FILES
         camera-invalid.ogex

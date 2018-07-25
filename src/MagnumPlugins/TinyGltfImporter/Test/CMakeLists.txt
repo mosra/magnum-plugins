@@ -49,7 +49,7 @@ else()
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
 
-corrade_add_test(TinyGltfImporterTest Test.cpp
+corrade_add_test(TinyGltfImporterTest TinyGltfImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         test-scene.gltf

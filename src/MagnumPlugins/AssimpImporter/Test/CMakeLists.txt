@@ -49,7 +49,7 @@ else()
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
 
-corrade_add_test(AssimpImporterTest Test.cpp
+corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         camera.dae
