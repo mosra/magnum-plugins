@@ -52,8 +52,8 @@ endif()
 corrade_add_test(TinyGltfImporterTest TinyGltfImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
-        test-scene.gltf
-        test-scene.glb
+        empty.gltf
+        empty.glb
         camera.gltf
         camera.glb
         image.gltf

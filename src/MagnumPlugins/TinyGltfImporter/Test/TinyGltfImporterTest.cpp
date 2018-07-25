@@ -155,7 +155,7 @@ void TinyGltfImporterTest::open() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
     auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "test-scene" + std::string{data.extension});
+        "empty" + std::string{data.extension});
     CORRADE_VERIFY(importer->openFile(filename));
     CORRADE_VERIFY(importer->isOpened());
     CORRADE_VERIFY(importer->importerState());
