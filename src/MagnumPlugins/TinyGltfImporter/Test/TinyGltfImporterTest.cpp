@@ -58,8 +58,6 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void openError();
     void openFileError();
 
-    void defaultScene();
-
     void camera();
 
     void light();
@@ -110,8 +108,6 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::open,
                        &TinyGltfImporterTest::openError,
                        &TinyGltfImporterTest::openFileError,
-
-                       &TinyGltfImporterTest::defaultScene,
 
                        &TinyGltfImporterTest::camera,
 
@@ -193,26 +189,6 @@ void TinyGltfImporterTest::openFileError() {
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file nope" + std::string{data.extension} + "\n");
 }
 
-void TinyGltfImporterTest::defaultScene() {
-    auto&& data = InstanceData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh" + std::string{data.extension})));
-
-    Int id = importer->defaultScene();
-    CORRADE_VERIFY(id > -1);
-
-    UnsignedInt count = importer->sceneCount();
-    CORRADE_COMPARE(count, 1);
-
-    auto scene = importer->scene(id);
-    CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{1, 0}));
-}
-
 void TinyGltfImporterTest::camera() {
     auto&& data = InstanceData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -291,6 +267,7 @@ void TinyGltfImporterTest::object() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object" + std::string{data.extension})));
 
+    CORRADE_COMPARE(importer->defaultScene(), 1);
     CORRADE_COMPARE(importer->sceneCount(), 2);
     CORRADE_COMPARE(importer->sceneName(1), "Scene");
     CORRADE_COMPARE(importer->sceneForName("Scene"), 1);
