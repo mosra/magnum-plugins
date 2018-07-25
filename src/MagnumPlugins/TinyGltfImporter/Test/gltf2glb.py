@@ -50,27 +50,19 @@ def main():
         binData = bytearray()
 
         if "buffers" in data:
-            numBuffers = len(data["buffers"])
-            if numBuffers > 1:
-                print("WARNING: Found too many buffers:", str(numBuffers))
-
+            assert(len(data["buffers"]) <= 1)
             for buffer in data["buffers"]:
                 uri = buffer['uri']
-                if uri[-4:] == ".bin":
-                    with open(uri, "rb") as bf:
-                        d = bf.read()
-                elif "base64" in uri: # FIXME: Bad way to detect base64 URL!
+                if uri[:5] == 'data:':
                     d = base64.b64decode(uri.split("base64,")[1])
                 else:
-                    continue
+                    with open(uri, "rb") as bf:
+                        d = bf.read()
                 binData.extend(d)
                 binData.extend(b' '*(4-(len(d)%4)))
 
-        binChunkLength = len(binData)
-        hasBin = binChunkLength != 0
-
-        if hasBin:
-            data["buffers"] = [{"byteLength": binChunkLength}]
+        if binData:
+            data["buffers"] = [{"byteLength": len(binData)}]
 
         jsonData = json.dumps(data, separators=(',', ':')).encode()
         # Append padding bytes so that BIN chunk is aligned to 4 bytes
@@ -80,8 +72,8 @@ def main():
         with open(fileOut, "wb") as outfile:
             gtlf_version = 2
             length = GLB_HEADER_SIZE + CHUNK_HEADER_SIZE + jsonChunkLength
-            if hasBin:
-                length += CHUNK_HEADER_SIZE + binChunkLength
+            if binData:
+                length += CHUNK_HEADER_SIZE + len(binData)
 
             # Write header
             outfile.write(b'glTF')
@@ -93,8 +85,8 @@ def main():
             outfile.write(b' '*jsonChunkAlign)  # padding
 
             # Write BIN chunk
-            if hasBin:
-                outfile.write(struct.pack("<II", binChunkLength, CHUNK_TYPE_BIN))
+            if binData:
+                outfile.write(struct.pack("<II", len(binData), CHUNK_TYPE_BIN))
                 outfile.write(binData)
 
 if __name__ == "__main__":
