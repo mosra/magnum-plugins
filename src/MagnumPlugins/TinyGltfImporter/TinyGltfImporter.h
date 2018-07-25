@@ -77,8 +77,17 @@ This plugin provides `GltfImporter` and `GlbImporter` plugins.
 
 @section Trade-TinyGltfImporter-limitations Behavior and limitations
 
+The plugin supports @ref Feature::OpenData and @ref Feature::FileCallback
+features. The `tiny_gltf` library loads everything during initial import,
+meaning all external file loading callbacks are called with
+@ref ImporterFileCallbackPolicy::LoadTemporary and the resources can be safely
+freed right after the @ref openData() / @ref openFile() function exits.
+
+Import of skeleton, skin and morph data is not supported at the moment.
+
 @subsection Trade-TinyGltfImporter-limitations-lights Light import
 
+-   Light properties besides light type are not imported.
 -   Light intensity is not yet supported due to glTF extension draft state.
 
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
