@@ -30,7 +30,6 @@ import sys
 import os
 import json
 import struct
-import time
 import base64
 
 
@@ -45,8 +44,6 @@ def main():
     fileOut = os.path.splitext(fileIn)[0] + '.glb'
 
     print("Converting to", fileOut)
-
-    start_time = time.time()
 
     with open(fileIn) as f:
         data = json.load(f)
@@ -99,8 +96,6 @@ def main():
             if hasBin:
                 outfile.write(struct.pack("<II", binChunkLength, CHUNK_TYPE_BIN))
                 outfile.write(binData)
-
-    print("Done in", str(1000*(time.time() - start_time)), "ms")
 
 if __name__ == "__main__":
     main()
