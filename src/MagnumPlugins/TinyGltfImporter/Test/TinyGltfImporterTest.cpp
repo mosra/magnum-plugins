@@ -69,6 +69,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void objectScaling();
 
     void mesh();
+    void meshIndexed();
+    void meshUnknownAttribute();
     void meshPrimitives();
     void meshColors();
     void meshWithStride();
@@ -120,6 +122,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::objectScaling,
 
                        &TinyGltfImporterTest::mesh,
+                       &TinyGltfImporterTest::meshIndexed,
+                       &TinyGltfImporterTest::meshUnknownAttribute,
                        &TinyGltfImporterTest::meshPrimitives,
                        &TinyGltfImporterTest::meshColors,
                        &TinyGltfImporterTest::meshWithStride,
@@ -410,9 +414,6 @@ void TinyGltfImporterTest::objectScaling() {
 }
 
 void TinyGltfImporterTest::mesh() {
-    std::ostringstream out;
-    Warning redirectWarning{&out};
-
     auto&& data = InstanceData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
@@ -420,15 +421,38 @@ void TinyGltfImporterTest::mesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh" + std::string{data.extension})));
 
-    CORRADE_COMPARE(importer->object3DCount(), 1);
-    CORRADE_COMPARE(importer->object3DName(0), "Node");
-    CORRADE_COMPARE(importer->object3DForName("Node"), 0);
+    CORRADE_COMPARE(importer->mesh3DCount(), 3);
+    CORRADE_COMPARE(importer->mesh3DName(0), "Non-indexed mesh");
+    CORRADE_COMPARE(importer->mesh3DForName("Non-indexed mesh"), 0);
 
-    CORRADE_COMPARE(importer->mesh3DCount(), 1);
-    CORRADE_COMPARE(importer->mesh3DName(0), "Mesh");
-    CORRADE_COMPARE(importer->mesh3DForName("Mesh"), 0);
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->importerState());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_VERIFY(!mesh->isIndexed());
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(mesh->normalArrayCount(), 0);
 
-    auto meshObject = importer->mesh3D(0);
+    CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+        {1.5f, -1.0f, -0.5f},
+        {-0.5f, 2.5f, 0.75f},
+        {-2.0f, 1.0f, 0.3f}
+    }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::meshIndexed() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh" + std::string{data.extension})));
+
+    CORRADE_COMPARE(importer->mesh3DCount(), 3);
+    CORRADE_COMPARE(importer->mesh3DName(1), "Indexed mesh");
+    CORRADE_COMPARE(importer->mesh3DForName("Indexed mesh"), 1);
+
+    auto meshObject = importer->mesh3D(1);
     CORRADE_VERIFY(meshObject);
     CORRADE_VERIFY(meshObject->importerState());
     CORRADE_COMPARE(meshObject->primitive(), MeshPrimitive::Triangles);
@@ -437,27 +461,53 @@ void TinyGltfImporterTest::mesh() {
     CORRADE_COMPARE(meshObject->normalArrayCount(), 1);
 
     CORRADE_COMPARE_AS(meshObject->positions(0), (std::vector<Vector3>{
-        {0.685616612f, -1.02956f, -0.277003706f},
-        {-0.00734680891f, 1.0624f, -0.0872567892f},
-        {-0.584888637f, -0.268546f, 0.291010320f}
+        {1.5f, -1.0f, -0.5f},
+        {-0.5f, 2.5f, 0.75f},
+        {-2.0f, 1.0f, 0.3f}
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE(meshObject->normalArrayCount(), 1);
     CORRADE_COMPARE_AS(meshObject->normals(0), (std::vector<Vector3>{
-        {0.439082f, 0.0641624f, 0.896153f},
-        {0.439082f, 0.0641624f, 0.896153f},
-        {0.439082f, 0.0641624f, 0.896153f}
+        {0.1f, 0.2f, 0.3f},
+        {0.4f, 0.5f, 0.6f},
+        {0.7f, 0.8f, 0.9f}
     }), TestSuite::Compare::Container);
 
     CORRADE_COMPARE(meshObject->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
-
-    /* Test file contains UNKNOWN attribute which is not imported */
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute UNKNOWN\n");
 }
 
-void TinyGltfImporterTest::meshPrimitives() {
+void TinyGltfImporterTest::meshUnknownAttribute() {
+    auto&& data = InstanceData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh" + std::string{data.extension})));
+
+    CORRADE_COMPARE(importer->mesh3DCount(), 3);
+    CORRADE_COMPARE(importer->mesh3DName(2), "Mesh with unknown attribute");
+    CORRADE_COMPARE(importer->mesh3DForName("Mesh with unknown attribute"), 2);
+
     std::ostringstream out;
     Warning redirectWarning{&out};
 
+    auto meshObject = importer->mesh3D(2);
+
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute UNKNOWN\n");
+
+    CORRADE_VERIFY(meshObject);
+    CORRADE_VERIFY(meshObject->importerState());
+    CORRADE_COMPARE(meshObject->primitive(), MeshPrimitive::Triangles);
+    CORRADE_COMPARE(meshObject->positionArrayCount(), 1);
+    CORRADE_COMPARE(meshObject->normalArrayCount(), 0);
+
+    CORRADE_COMPARE_AS(meshObject->positions(0), (std::vector<Vector3>{
+        {1.5f, -1.0f, -0.5f},
+        {-0.5f, 2.5f, 0.75f},
+        {-2.0f, 1.0f, 0.3f}
+    }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::meshPrimitives() {
     auto&& data = InstanceData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
@@ -561,19 +611,24 @@ void TinyGltfImporterTest::meshColors() {
 
     CORRADE_COMPARE(importer->mesh3DCount(), 1);
 
-    auto meshObject = importer->mesh3D(0);
-    CORRADE_VERIFY(meshObject);
-
-    CORRADE_COMPARE(meshObject->colorArrayCount(), 2);
-    CORRADE_COMPARE_AS(meshObject->colors(0), (std::vector<Color4>{
-        {0.0f, 0.0f, 1.0f, 1.0f},
-        {1.0f, 0.0f, 0.0f, 1.0f},
-        {0.0f, 1.0f, 0.0f, 1.0f}
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(!mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+        {1.5f, -1.0f, -0.5f},
+        {-0.5f, 2.5f, 0.75f},
+        {-2.0f, 1.0f, 0.3f}
     }), TestSuite::Compare::Container);
-    CORRADE_COMPARE_AS(meshObject->colors(1), (std::vector<Color4>{
-        {0.501962f, 0.501962f, 0.501962f, 1.0f},
-        {1.0f, 1.0f, 1.0f, 1.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f}
+    CORRADE_COMPARE(mesh->colorArrayCount(), 2);
+    CORRADE_COMPARE_AS(mesh->colors(0), (std::vector<Color4>{
+        {0.1f, 0.2f, 0.3f, 1.0f},
+        {0.4f, 0.5f, 0.6f, 1.0f},
+        {0.7f, 0.8f, 0.9f, 1.0f}
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(mesh->colors(1), (std::vector<Color4>{
+        {0.1f, 0.2f, 0.3f, 0.4f},
+        {0.5f, 0.6f, 0.7f, 0.8f},
+        {0.9f, 1.0f, 1.1f, 1.2f}
     }), TestSuite::Compare::Container);
 }
 
@@ -592,7 +647,10 @@ void TinyGltfImporterTest::meshWithStride() {
     CORRADE_VERIFY(importer->mesh3D(0));
 
     /* Second has a stride of 24 bytes, should fail */
-    CORRADE_VERIFY(!importer->mesh3D(1));
+    {
+        CORRADE_EXPECT_FAIL("Tnterleaved buffer views are not supported.");
+        CORRADE_VERIFY(importer->mesh3D(1));
+    }
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): interleaved buffer views are not supported\n");
 }
 

@@ -391,10 +391,9 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     /* LCOV_EXCL_STOP */
 
     std::vector<Vector3> positions;
-    std::vector<Vector3> normals;
-    std::vector<std::vector<Vector2>> textureLayers;
-    std::vector<std::vector<Color4>> colorLayers;
-
+    std::vector<std::vector<Vector3>> normalArrays;
+    std::vector<std::vector<Vector2>> textureCoordinateArrays;
+    std::vector<std::vector<Color4>> colorArrays;
     for(auto& attribute: primitive.attributes) {
         const tinygltf::Accessor& accessor = _d->model.accessors[attribute.second];
         const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
@@ -429,6 +428,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
                 return Containers::NullOpt;
             }
 
+            normalArrays.emplace_back();
+            std::vector<Vector3>& normals = normalArrays.back();
             normals.reserve(accessor.count);
             std::copy_n(reinterpret_cast<const Vector3*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(normals));
 
@@ -439,15 +440,16 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
                 return Containers::NullOpt;
             }
 
-            textureLayers.emplace_back();
-            std::vector<Vector2>& textureCoordinates = textureLayers.back();
-
+            textureCoordinateArrays.emplace_back();
+            std::vector<Vector2>& textureCoordinates = textureCoordinateArrays.back();
             textureCoordinates.reserve(accessor.count);
             std::copy_n(reinterpret_cast<const Vector2*>(buffer.data.data() + bufferView.byteOffset + accessor.byteOffset), accessor.count, std::back_inserter(textureCoordinates));
 
         /* Color attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "COLOR")) {
-            std::vector<Color4> colors{};
+            colorArrays.emplace_back();
+            std::vector<Color4>& colors = colorArrays.back();
+            colors.reserve(accessor.count);
 
             if(accessor.type == TINYGLTF_TYPE_VEC3) {
                 colors.reserve(accessor.count);
@@ -462,8 +464,6 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
                 return Containers::NullOpt;
             }
 
-            colorLayers.emplace_back(std::move(colors));
-
         } else {
             Warning() << "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute" << attribute.first;
             continue;
@@ -471,33 +471,35 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     }
 
     /* Indices */
-    const tinygltf::Accessor& idxAccessor = _d->model.accessors[primitive.indices];
-    const tinygltf::BufferView& idxBufferView = _d->model.bufferViews[idxAccessor.bufferView];
-    const tinygltf::Buffer& idxBuffer = _d->model.buffers[idxBufferView.buffer];
+    std::vector<UnsignedInt> indices;
+    if(primitive.indices != -1) {
+        const tinygltf::Accessor& idxAccessor = _d->model.accessors[primitive.indices];
+        const tinygltf::BufferView& idxBufferView = _d->model.bufferViews[idxAccessor.bufferView];
+        const tinygltf::Buffer& idxBuffer = _d->model.buffers[idxBufferView.buffer];
 
-    if(idxAccessor.type != TINYGLTF_TYPE_SCALAR) {
-        Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of index is SCALAR";
-        return Containers::NullOpt;
+        if(idxAccessor.type != TINYGLTF_TYPE_SCALAR) {
+            Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of index is SCALAR";
+            return Containers::NullOpt;
+        }
+
+        /* Interleaved indices should not be a thing */
+        CORRADE_INTERNAL_ASSERT(idxBufferView.byteStride == 0);
+
+        const UnsignedByte* start = idxBuffer.data.data() + idxBufferView.byteOffset + idxAccessor.byteOffset;
+        if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+            std::copy_n(start, idxAccessor.count, std::back_inserter(indices));
+        } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+            std::copy_n(reinterpret_cast<const UnsignedShort*>(start), idxAccessor.count, std::back_inserter(indices));
+        } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
+            std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxAccessor.count, std::back_inserter(indices));
+        } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
-    /* Interleaved indices should not be a thing */
-    CORRADE_INTERNAL_ASSERT(idxBufferView.byteStride == 0);
-
-    std::vector<UnsignedInt> indices;
-    const UnsignedByte* start = idxBuffer.data.data() + idxBufferView.byteOffset + idxAccessor.byteOffset;
-    if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-        std::copy_n(start, idxAccessor.count, std::back_inserter(indices));
-    } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-        std::copy_n(reinterpret_cast<const UnsignedShort*>(start), idxAccessor.count, std::back_inserter(indices));
-    } else if(idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-        std::copy_n(reinterpret_cast<const UnsignedInt*>(start), idxAccessor.count, std::back_inserter(indices));
-    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-
     /* Flip Y axis of texture coordinates */
-    for(std::vector<Vector2>& layer: textureLayers)
+    for(std::vector<Vector2>& layer: textureCoordinateArrays)
         for(Vector2& c: layer) c.y() = 1.0f - c.y();
 
-    return MeshData3D(meshPrimitive, std::move(indices), {std::move(positions)}, {std::move(normals)}, textureLayers, colorLayers, &mesh);
+    return MeshData3D(meshPrimitive, std::move(indices), {std::move(positions)}, std::move(normalArrays), std::move(textureCoordinateArrays), std::move(colorArrays), &mesh);
 }
 
 UnsignedInt TinyGltfImporter::doMaterialCount() const {

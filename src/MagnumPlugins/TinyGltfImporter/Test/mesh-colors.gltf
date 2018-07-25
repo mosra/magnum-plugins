@@ -1,133 +1,63 @@
 {
-    "accessors" : [
-        {
-            "bufferView" : 0,
-            "componentType" : 5121,
-            "count" : 3,
-            "max" : [
-                2
-            ],
-            "min" : [
-                0
-            ],
-            "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 1,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                1.0,
-                0.0,
-                1.0
-            ],
-            "min" : [
-                -1.0,
-                0.0,
-                -1.0
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 2,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                1.0,
-                1.0,
-                1.0,
-                1.0
-            ],
-            "min" : [
-                0.0,
-                0.0,
-                0.0,
-                1.0
-            ],
-            "type" : "VEC4"
-        },
-        {
-            "bufferView" : 3,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                1.0,
-                1.0,
-                1.0,
-                1.0
-            ],
-            "min" : [
-                0.0,
-                0.0,
-                0.0,
-                1.0
-            ],
-            "type" : "VEC4"
-        }
-    ],
-    "asset" : {
-        "generator" : "Khronos Blender glTF 2.0 exporter",
-        "version" : "2.0"
+    "asset": {
+        "version": "2.0"
     },
-    "bufferViews" : [
+    "accessors": [
         {
-            "buffer" : 0,
-            "byteLength" : 3,
-            "byteOffset" : 0,
-            "target" : 34963
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
         },
         {
-            "buffer" : 0,
-            "byteLength" : 36,
-            "byteOffset" : 4,
-            "target" : 34962
+            "bufferView": 1,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
         },
         {
-            "buffer" : 0,
-            "byteLength" : 48,
-            "byteOffset" : 40,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 48,
-            "byteOffset" : 88,
-            "target" : 34962
+            "bufferView": 2,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
         }
     ],
-    "buffers" : [
+    "bufferViews": [
         {
-            "byteLength" : 136,
-            "uri" : "data:application/octet-stream;base64,AAECAAAAgD8AAAAAAACAPwAAgL8AAAAAAACAvwAAgL8AAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAgD8AAAAAAACAP4GAAD+BgAA/gYAAPwAAgD8AAIA/AACAPwAAgD8AAIA/AAAAAAAAAAAAAAAAAACAPw=="
+            "buffer": 0,
+            "byteLength": 36,
+            "byteOffset": 0,
+            "target": 34962
+        },
+        {
+            "buffer": 0,
+            "byteLength": 36,
+            "byteOffset": 36,
+            "target": 34962
+        },
+        {
+            "buffer": 0,
+            "byteLength": 48,
+            "byteOffset": 72,
+            "target": 34962
         }
     ],
-    "meshes" : [
+    "buffers": [
         {
-            "name" : "Plane",
-            "primitives" : [
+            "byteLength": 120,
+            "uri": "mesh-colors.bin"
+        }
+    ],
+    "meshes": [
+        {
+            "primitives": [
                 {
-                    "attributes" : {
-                        "COLOR_0" : 2,
-                        "COLOR_1" : 3,
-                        "POSITION" : 1
-                    },
-                    "indices" : 0
+                    "attributes": {
+                        "COLOR_0": 1,
+                        "COLOR_1": 2,
+                        "POSITION": 0
+                    }
                 }
-            ]
-        }
-    ],
-    "nodes" : [
-        {
-            "mesh" : 0,
-            "name" : "Plane"
-        }
-    ],
-    "scene" : 0,
-    "scenes" : [
-        {
-            "name" : "Scene",
-            "nodes" : [
-                0
             ]
         }
     ]

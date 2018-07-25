@@ -80,6 +80,8 @@ namespace Magnum {
     transformations in @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now loads external images
     with `*.glb` files properly
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly imports
+    non-indexed meshes and meshes without the normal attribute
 -   Updated `stb_image` to fix `undefined symbol: __cpu_model` error when
     compiling @ref Trade::StbImageImporter "StbImageImporter" on GCC 5
 

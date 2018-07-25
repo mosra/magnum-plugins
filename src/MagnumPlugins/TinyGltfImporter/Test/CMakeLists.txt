@@ -75,6 +75,7 @@ corrade_add_test(TinyGltfImporterTest TinyGltfImporterTest.cpp
         mesh-primitives.bin
         mesh-primitives.glb
         mesh-colors.gltf
+        mesh-colors.bin
         mesh-colors.glb
         mesh-with-stride.gltf
         mesh-with-stride.glb

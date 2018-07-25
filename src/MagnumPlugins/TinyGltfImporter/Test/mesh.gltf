@@ -1,109 +1,86 @@
 {
-    "accessors" : [
-        {
-            "bufferView" : 0,
-            "componentType" : 5121,
-            "count" : 3,
-            "max" : [
-                2
-            ],
-            "min" : [
-                0
-            ],
-            "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 1,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                0.6856166124343872,
-                1.0624043941497803,
-                0.291010320186615
-            ],
-            "min" : [
-                -0.5848886370658875,
-                -1.0295608043670654,
-                -0.2770037055015564
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 2,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                0.4390820562839508,
-                0.06416241824626923,
-                0.8961530327796936
-            ],
-            "min" : [
-                0.4390820562839508,
-                0.06416241824626923,
-                0.8961530327796936
-            ],
-            "type" : "VEC3"
-        }
-    ],
-    "asset" : {
-        "generator" : "Khronos Blender glTF 2.0 exporter",
-        "version" : "2.0"
+    "asset": {
+        "version": "2.0"
     },
-    "bufferViews" : [
+    "meshes": [
         {
-            "buffer" : 0,
-            "byteLength" : 3,
-            "byteOffset" : 0,
-            "target" : 34963
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 36,
-            "byteOffset" : 4,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 36,
-            "byteOffset" : 40,
-            "target" : 34962
-        }
-    ],
-    "buffers" : [
-        {
-            "byteLength" : 76,
-            "uri" : "mesh.bin"
-        }
-    ],
-    "meshes" : [
-        {
-            "name" : "Mesh",
-            "primitives" : [
+            "name": "Non-indexed mesh",
+            "primitives": [
                 {
-                    "attributes" : {
-                        "NORMAL" : 2,
-                        "POSITION" : 1,
-                        "UNKNOWN" : 1
+                    "attributes": {
+                        "POSITION": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Indexed mesh",
+            "primitives": [
+                {
+                    "attributes": {
+                        "NORMAL": 2,
+                        "POSITION": 1
                     },
-                    "indices" : 0
+                    "indices": 0
+                }
+            ]
+        },
+        {
+            "name": "Mesh with unknown attribute",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 1,
+                        "UNKNOWN": 1
+                    }
                 }
             ]
         }
     ],
-    "nodes" : [
+    "accessors": [
         {
-            "mesh" : 0,
-            "name" : "Node"
+            "bufferView": 0,
+            "componentType": 5121,
+            "count": 3,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 2,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
         }
     ],
-    "scene" : 0,
-    "scenes" : [
+    "bufferViews": [
         {
-            "name" : "Scene",
-            "nodes" : [
-                1,
-                0
-            ]
+            "buffer": 0,
+            "byteLength": 3,
+            "byteOffset": 0,
+            "target": 34963
+        },
+        {
+            "buffer": 0,
+            "byteLength": 36,
+            "byteOffset": 4,
+            "target": 34962
+        },
+        {
+            "buffer": 0,
+            "byteLength": 36,
+            "byteOffset": 40,
+            "target": 34962
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 76,
+            "uri": "mesh.bin"
         }
     ]
 }
