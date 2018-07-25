@@ -317,47 +317,53 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
        99% cases, similarly with rotating or scaling a translated object. Also
        independently verified by exporting a model with translation, rotation
        *and* scaling of hierarchic objects. */
+    ObjectFlags3D flags;
     Matrix4 transformation;
-    if(node.translation.size() == 3) {
-        const Vector3 vector(Vector3d::from(node.translation.data()));
-        transformation = Matrix4::translation(vector);
-    }
-    if(node.rotation.size() == 4) {
-        const Vector3 vector(Vector3d::from(node.rotation.data()));
-        const auto scalar = node.rotation[3];
-        transformation = transformation*Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
-    }
-    if(node.scale.size() == 3) {
-        const Vector3 vector(Vector3d::from(node.scale.data()));
-        transformation = transformation*Matrix4::scaling(vector);
-    }
+    Vector3 translation;
+    Quaternion rotation;
+    Vector3 scaling{1.0f};
     if(node.matrix.size() == 16) {
         transformation = Matrix4(Matrix4d::from(node.matrix.data()));
+    } else {
+        /* Having TRS is a better property than not having it, so we set this
+           flag even when there is no transformation at all. */
+        flags |= ObjectFlag3D::HasTranslationRotationScaling;
+        if(node.translation.size() == 3)
+            translation = Vector3{Vector3d::from(node.translation.data())};
+        if(node.rotation.size() == 4)
+            rotation = Quaternion{Vector3{Vector3d::from(node.rotation.data())}, Float(node.rotation[3])};
+        if(node.scale.size() == 3)
+            scaling = Vector3{Vector3d::from(node.scale.data())};
     }
 
-    /* Node is a camera */
-    if(node.camera >= 0) {
-        const UnsignedInt cameraId = node.camera;
-
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId, &node}};
-
-    /* Node is a mesh */
-    } else if(node.mesh >= 0) {
+    /* Node is a mesh, have to return a special type */
+    if(node.mesh >= 0) {
         const UnsignedInt meshId = node.mesh;
         /* TODO Multi-material models not supported */
         const Int materialId = _d->model.meshes[meshId].primitives.empty() ? -1 : _d->model.meshes[meshId].primitives[0].material;
 
-        return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
+        return std::unique_ptr<ObjectData3D>{flags & ObjectFlag3D::HasTranslationRotationScaling ?
+            new MeshObjectData3D{children, translation, rotation, scaling, meshId, materialId, &node} : new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
+    }
+
+    /* Unknown nodes are treated as Empty */
+    ObjectInstanceType3D instanceType = ObjectInstanceType3D::Empty;
+    UnsignedInt instanceId = ~UnsignedInt{}; /* -1 */
+
+    /* Node is a camera */
+    if(node.camera >= 0) {
+        instanceType = ObjectInstanceType3D::Camera;
+        instanceId = node.camera;
 
     /* Node is a light */
     } else if(node.extensions.find("KHR_lights_cmn") != node.extensions.end()) {
-        tinygltf::Value lightValue = node.extensions.at("KHR_lights_cmn").Get("light");
-        const UnsignedInt lightId = UnsignedInt(lightValue.Get<int>());
-
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, lightId, &node}};
+        instanceType = ObjectInstanceType3D::Light;
+        instanceId = UnsignedInt(node.extensions.at("KHR_lights_cmn").Get("light").Get<int>());
     }
 
-    return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, &node}};
+    return std::unique_ptr<ObjectData3D>{flags & ObjectFlag3D::HasTranslationRotationScaling ?
+        new ObjectData3D{children, translation, rotation, scaling, instanceType, instanceId, &node} :
+        new ObjectData3D{children, transformation, instanceType, instanceId, &node}};
 }
 
 UnsignedInt TinyGltfImporter::doMesh3DCount() const {

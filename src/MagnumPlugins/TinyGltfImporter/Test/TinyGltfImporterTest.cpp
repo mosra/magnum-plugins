@@ -370,15 +370,18 @@ void TinyGltfImporterTest::objectTransformation() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object-transformation" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->object3DCount(), 5);
+    CORRADE_COMPARE(importer->object3DCount(), 7);
 
     {
         CORRADE_COMPARE(importer->object3DName(0), "Matrix");
         auto object = importer->object3D(0);
         CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instance(), -1);
+        CORRADE_COMPARE(object->flags(), ObjectFlags3D{});
         CORRADE_COMPARE(object->transformation(),
             Matrix4::translation({1.5f, -2.5f, 0.3f})*
-            Matrix4::rotation(45.0_degf, Vector3::yAxis())*
+            Matrix4::rotationY(45.0_degf)*
             Matrix4::scaling({0.9f, 0.5f, 2.3f}));
         CORRADE_COMPARE(object->transformation(), (Matrix4{
             {0.636397f, 0.0f, -0.636395f, 0.0f},
@@ -390,9 +393,12 @@ void TinyGltfImporterTest::objectTransformation() {
         CORRADE_COMPARE(importer->object3DName(1), "TRS");
         auto object = importer->object3D(1);
         CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instance(), -1);
+        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
         CORRADE_COMPARE(object->transformation(),
             Matrix4::translation({1.5f, -2.5f, 0.3f})*
-            Matrix4::rotation(45.0_degf, Vector3::yAxis())*
+            Matrix4::rotationY(45.0_degf)*
             Matrix4::scaling({0.9f, 0.5f, 2.3f}));
         CORRADE_COMPARE(object->transformation(), (Matrix4{
             {0.636397f, 0.0f, -0.636395f, 0.0f},
@@ -401,19 +407,70 @@ void TinyGltfImporterTest::objectTransformation() {
             {1.5f, -2.5f, 0.3f, 1.0f}
         }));
     } {
-        CORRADE_COMPARE(importer->object3DName(2), "Translation");
+        CORRADE_COMPARE(importer->object3DName(2), "Mesh matrix");
         auto object = importer->object3D(2);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::translation({1.5f, -2.5f, 0.3f}));
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 0);
+        CORRADE_COMPARE(object->flags(), ObjectFlags3D{});
+        CORRADE_COMPARE(object->transformation(),
+            Matrix4::translation({1.5f, -2.5f, 0.3f})*
+            Matrix4::rotationY(45.0_degf)*
+            Matrix4::scaling({0.9f, 0.5f, 2.3f}));
+        CORRADE_COMPARE(object->transformation(), (Matrix4{
+            {0.636397f, 0.0f, -0.636395f, 0.0f},
+            {0.0f, 0.5f, -0.0f, 0.0f},
+            {1.62634f, 0.0f, 1.62635f, 0.0f},
+            {1.5f, -2.5f, 0.3f, 1.0f}
+        }));
     } {
-        CORRADE_COMPARE(importer->object3DName(3), "Rotation");
+        CORRADE_COMPARE(importer->object3DName(3), "Mesh TRS");
         auto object = importer->object3D(3);
         CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(45.0_degf, Vector3::yAxis()));
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 0);
+        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(object->transformation(),
+            Matrix4::translation({1.5f, -2.5f, 0.3f})*
+            Matrix4::rotationY(45.0_degf)*
+            Matrix4::scaling({0.9f, 0.5f, 2.3f}));
+        CORRADE_COMPARE(object->transformation(), (Matrix4{
+            {0.636397f, 0.0f, -0.636395f, 0.0f},
+            {0.0f, 0.5f, -0.0f, 0.0f},
+            {1.62634f,  0.0f, 1.62635f, 0},
+            {1.5f, -2.5f, 0.3f, 1.0f}
+        }));
     } {
-        CORRADE_COMPARE(importer->object3DName(4), "Scaling");
+        CORRADE_COMPARE(importer->object3DName(4), "Translation");
         auto object = importer->object3D(4);
         CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instance(), -1);
+        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(object->translation(), (Vector3{1.5f, -2.5f, 0.3f}));
+        CORRADE_COMPARE(object->rotation(), Quaternion{});
+        CORRADE_COMPARE(object->scaling(), Vector3{1.0f});
+        CORRADE_COMPARE(object->transformation(), Matrix4::translation({1.5f, -2.5f, 0.3f}));
+    } {
+        CORRADE_COMPARE(importer->object3DName(5), "Rotation");
+        auto object = importer->object3D(5);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instance(), -1);
+        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(object->rotation(), Quaternion::rotation(45.0_degf, Vector3::yAxis()));
+        CORRADE_COMPARE(object->scaling(), Vector3{1.0f});
+        CORRADE_COMPARE(object->transformation(), Matrix4::rotationY(45.0_degf));
+    } {
+        CORRADE_COMPARE(importer->object3DName(6), "Scaling");
+        auto object = importer->object3D(6);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instance(), -1);
+        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(object->translation(), Vector3{});
+        CORRADE_COMPARE(object->rotation(), Quaternion{});
+        CORRADE_COMPARE(object->scaling(), (Vector3{0.9f, 0.5f, 2.3f}));
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling({0.9f, 0.5f, 2.3f}));
     }
 }

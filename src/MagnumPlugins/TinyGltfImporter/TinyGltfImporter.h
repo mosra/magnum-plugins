@@ -85,6 +85,12 @@ freed right after the @ref openData() / @ref openFile() function exits.
 
 Import of skeleton, skin and morph data is not supported at the moment.
 
+@subsection Trade-TinyGltfImporter-limitations-objects Object import
+
+-   In case object transformation is set via separate
+    translation/rotation/scaling properties in the source file,
+    @ref ObjectData3D is created with @ref ObjectFlag3D::HasTranslationRotationScaling and these separate properties accessible
+
 @subsection Trade-TinyGltfImporter-limitations-lights Light import
 
 -   Light properties besides light type are not imported.

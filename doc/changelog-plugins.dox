@@ -57,6 +57,9 @@ namespace Magnum {
 -   @ref Trade::OpenGexImporter "OpenGexImporter" and
     @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly import alpha
     for @ref Trade::PhongMaterialData
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now exposes the
+    translation/rotation/scaling properties of @ref Trade::ObjectData3D
+    separately if they are separate in the source file
 -   @ref Text::HarfBuzzFont "HarfBuzzFont" is now providing `TrueTypeFont`,
     similarly to other plugins supporting TTF fonts
 -   @ref Trade::StbImageImporter "StbImageImporter" now properly supports Apple
