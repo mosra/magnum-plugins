@@ -40,57 +40,19 @@ struct PngImageConverterTest: TestSuite::Tester {
 
     void wrongFormat();
 
-    void data();
-    void data16();
+    void rgb();
+    void rgb16();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 };
 
-namespace {
-    constexpr const char OriginalData[] = {
-        /* Skip */
-        0, 0, 0, 0, 0, 0, 0, 0,
-
-        1, 2, 3, 2, 3, 4, 0, 0,
-        3, 4, 5, 4, 5, 6, 0, 0,
-        5, 6, 7, 6, 7, 8, 0, 0
-    };
-
-    const ImageView2D original{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB8Unorm, {2, 3}, OriginalData};
-
-    constexpr const char ConvertedData[] = {
-        1, 2, 3, 2, 3, 4, 0, 0,
-        3, 4, 5, 4, 5, 6, 0, 0,
-        5, 6, 7, 6, 7, 8, 0, 0
-    };
-
-    constexpr const UnsignedShort OriginalData16[] = {
-        /* Skip */
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-
-        1, 2, 3, 2, 3, 4, 0, 0, 0, 0,
-        3, 4, 5, 4, 5, 6, 0, 0, 0, 0,
-        5, 6, 7, 6, 7, 8, 0, 0, 0, 0
-    };
-
-    const ImageView2D original16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
-        PixelFormat::RGB16Unorm, {2, 3}, OriginalData16};
-
-    constexpr const UnsignedShort ConvertedData16[] = {
-        1, 2, 3, 2, 3, 4,
-        3, 4, 5, 4, 5, 6,
-        5, 6, 7, 6, 7, 8
-    };
-}
-
 PngImageConverterTest::PngImageConverterTest() {
     addTests({&PngImageConverterTest::wrongFormat,
 
-              &PngImageConverterTest::data,
-              &PngImageConverterTest::data16});
+              &PngImageConverterTest::rgb,
+              &PngImageConverterTest::rgb16});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -113,8 +75,28 @@ void PngImageConverterTest::wrongFormat() {
     CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel format PixelFormat::RG32F\n");
 }
 
-void PngImageConverterTest::data() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(original);
+namespace {
+    constexpr const char OriginalRgbData[] = {
+        /* Skip */
+        0, 0, 0, 0, 0, 0, 0, 0,
+
+        1, 2, 3, 2, 3, 4, 0, 0,
+        3, 4, 5, 4, 5, 6, 0, 0,
+        5, 6, 7, 6, 7, 8, 0, 0
+    };
+
+    const ImageView2D OriginalRgb{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::RGB8Unorm, {2, 3}, OriginalRgbData};
+
+    constexpr const char ConvertedRgbData[] = {
+        1, 2, 3, 2, 3, 4, 0, 0,
+        3, 4, 5, 4, 5, 6, 0, 0,
+        5, 6, 7, 6, 7, 8, 0, 0
+    };
+}
+
+void PngImageConverterTest::rgb() {
+    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -134,12 +116,32 @@ void PngImageConverterTest::data() {
     converted->data()[6] = converted->data()[7] = converted->data()[14] =
          converted->data()[15] = converted->data()[22] = converted->data()[23] = 0;
 
-    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedData),
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbData),
         TestSuite::Compare::Container);
 }
 
-void PngImageConverterTest::data16() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(original16);
+namespace {
+    constexpr const UnsignedShort OriginalRgbData16[] = {
+        /* Skip */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        1, 2, 3, 2, 3, 4, 0, 0, 0, 0,
+        3, 4, 5, 4, 5, 6, 0, 0, 0, 0,
+        5, 6, 7, 6, 7, 8, 0, 0, 0, 0
+    };
+
+    const ImageView2D OriginalRgb16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
+        PixelFormat::RGB16Unorm, {2, 3}, OriginalRgbData16};
+
+    constexpr const UnsignedShort ConvertedRgbData16[] = {
+        1, 2, 3, 2, 3, 4,
+        3, 4, 5, 4, 5, 6,
+        5, 6, 7, 6, 7, 8
+    };
+}
+
+void PngImageConverterTest::rgb16() {
+    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalRgb16);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -153,7 +155,7 @@ void PngImageConverterTest::data16() {
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB16Unorm);
     CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(converted->data()),
-        Containers::arrayView(ConvertedData16),
+        Containers::arrayView(ConvertedRgbData16),
         TestSuite::Compare::Container);
 }
 
