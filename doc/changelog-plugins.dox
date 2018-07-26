@@ -71,6 +71,11 @@ namespace Magnum {
 -   TinyGLTF headers are now installed alongside the plugin for easier access
     to importer state. See @ref Trade-TinyGltfImporter-state for more
     information.
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" no longer depends on
+    @ref Trade::StbImageImporter "StbImageImporter" to import images embedded
+    in buffers or data URIs. Instead it proxies the loading to
+    @ref Trade::AnyImageImporter "AnyImageImporter", the same way as was
+    already done for external files.
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 

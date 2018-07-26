@@ -137,7 +137,6 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     StbTrueTypeFont StbVorbisAudioImporter TinyGltfImporter)
 
 # Inter-component dependencies
-set(_MAGNUMPLUGINS_TinyGltfImporter_DEPENDENCIES StbImageImporter)
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
 set(_MAGNUMPLUGINS_OpenGexImporter_DEPENDENCIES OpenDdl)
 

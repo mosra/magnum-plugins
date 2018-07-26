@@ -52,9 +52,9 @@ target_include_directories(TinyGltfImporter PUBLIC
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(TinyGltfImporter PUBLIC Magnum::Trade)
 if(CORRADE_TARGET_WINDOWS)
-    target_link_libraries(TinyGltfImporter PUBLIC Magnum::AnyImageImporter StbImageImporter)
+    target_link_libraries(TinyGltfImporter PUBLIC Magnum::AnyImageImporter)
 elseif(BUILD_PLUGINS_STATIC)
-    target_link_libraries(TinyGltfImporter INTERFACE Magnum::AnyImageImporter StbImageImporter)
+    target_link_libraries(TinyGltfImporter INTERFACE Magnum::AnyImageImporter)
 endif()
 
 install(FILES TinyGltfImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h

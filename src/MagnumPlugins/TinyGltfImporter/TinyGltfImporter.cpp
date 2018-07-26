@@ -49,7 +49,6 @@
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
 
-#include "MagnumPlugins/StbImageImporter/StbImageImporter.h"
 #include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
 
 #define TINYGLTF_IMPLEMENTATION
@@ -764,13 +763,13 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
 
     const tinygltf::Image& image = _d->model.images[id];
 
+    AnyImageImporter imageImporter{*manager()};
+
     /* Load embedded image */
     if(image.uri.empty()) {
-        /** @todo Use AnyImageImporter once it supports openData */
-        StbImageImporter imageImporter;
+        Containers::ArrayView<const char> data;
 
         /* The image data are stored in a buffer */
-        Containers::ArrayView<const char> data;
         if(image.bufferView != -1) {
             const tinygltf::BufferView& bufferView = _d->model.bufferViews[image.bufferView];
             const tinygltf::Buffer& buffer = _d->model.buffers[bufferView.buffer];
@@ -791,12 +790,8 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
 
     /* Load external image */
     } else {
-        AnyImageImporter imageImporter{*manager()};
-
-        const std::string filepath = Utility::Directory::join(_d->filePath, image.uri);
-
         Containers::Optional<ImageData2D> imageData;
-        if(!imageImporter.openFile(filepath) || !(imageData = imageImporter.image2D(0)))
+        if(!imageImporter.openFile(Utility::Directory::join(_d->filePath, image.uri)) || !(imageData = imageImporter.image2D(0)))
             return Containers::NullOpt;
 
         return ImageData2D{std::move(*imageData), &image};

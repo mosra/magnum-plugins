@@ -322,8 +322,7 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_STBVORBISAUDIOIMPORTER` --- Build the
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugin.
 -   `WITH_TINYGLTFIMPORTER` --- Build the
-    @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin. Enables also
-    building of the @ref Trade::StbImageImporter "StbImageImporter" plugin.
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin.
 
 Some plugins expose their internal state through separate libraries and you can
 control their build separately:
