@@ -54,10 +54,13 @@
 namespace Magnum { namespace Text {
 
 /**
-@brief TrueType font plugin using stb_freetype
+@brief TrueType font plugin using stb_truetype
 
-The font can be created either from file or from memory location of format
-supported by [StbTrueType](http://www.freetype.org/) library.
+Supports opening fonts of the following formats either from file or from memory
+location using the [stb_truetype](https://github.com/nothings/stb) library:
+
+-   TrueType fonts (`*.ttf`)
+-   OpenType / Type 2 fonts (`*.otf`)
 
 This plugin depends on the @ref Text library and is built if `WITH_STBTRUETYPEFONT`
 is enabled when building Magnum Plugins and depends on the @ref Text library.
@@ -67,12 +70,12 @@ dependency of another plugin with CMake, you need to request the
 `StbTrueTypeFont` component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::StbTrueTypeFont` target.
 
-This plugin provides `TrueTypeFont` plugin, but please note that this plugin
-trades the simplicity and portability for various limitations, the most visible
-being the lack of autohinting. That causes the rendered glyphs looking blurry
-compared to @ref FreeTypeFont and because of that the font properties and sizes
-don't exactly match properties of fonts opened with @ref FreeTypeFont using the
-same size.
+This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins, but please
+note that this plugin trades the simplicity and portability for various
+limitations, the most visible being the lack of autohinting. That causes the
+rendered glyphs looking blurry compared to for example @ref FreeTypeFont and
+because of that the font properties and sizes don't exactly match properties of
+fonts opened with @ref FreeTypeFont using the same size.
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.

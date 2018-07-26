@@ -70,7 +70,7 @@ static plugin or as a dependency of another plugin with CMake, you need to
 request the `HarfBuzzFont` component of the `MagnumPlugins` package and link to
 the `MagnumPlugins::HarfBuzzFont` target.
 
-This plugin provides the `TrueTypeFont` plugin.
+This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.

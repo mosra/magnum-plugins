@@ -45,6 +45,11 @@ namespace Magnum {
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now supports
     @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom
     callbacks to load extra files
+-   @ref Text::StbTrueTypeFont "StbTrueTypeFont" was updated with a new version
+    of `stb_vorbis`, supporting also OpenType fonts now
+-   @ref Text::FreeTypeFont "FreeTypeFont", @ref Text::HarfBuzzFont "HarfBuzzFont"
+    and @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugins can now be loaded
+    also using the `OpenTypeFont` alias, in addition to `TrueTypeFont
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
