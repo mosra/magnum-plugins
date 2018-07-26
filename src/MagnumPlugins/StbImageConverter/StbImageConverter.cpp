@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
@@ -40,6 +41,9 @@ namespace Magnum { namespace Trade {
 StbImageConverter::StbImageConverter(Format format): _format{format} {
     /* Passing an invalid Format enum is user error, we'll assert on that in
        the exportToData() function */
+
+    /** @todo horrible workaround, fix this properly */
+    configuration().setValue("jpegQuality", 0.8f);
 }
 
 StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {
@@ -47,6 +51,8 @@ StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, co
         _format = Format::Bmp;
     else if(plugin == "StbHdrImageConverter" || plugin == "HdrImageConverter")
         _format = Format::Hdr;
+    else if(plugin == "StbJpegImageConverter" || plugin == "JpegImageConverter")
+        _format = Format::Jpeg;
     else if(plugin == "StbPngImageConverter" || plugin == "PngImageConverter")
         _format = Format::Png;
     else if(plugin == "StbTgaImageConverter" || plugin == "TgaImageConverter")
@@ -64,14 +70,14 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
     }
 
     Int components;
-    if(_format == Format::Bmp || _format == Format::Png || _format == Format::Tga) {
+    if(_format == Format::Bmp || _format == Format::Jpeg || _format == Format::Png || _format == Format::Tga) {
         switch(image.format()) {
             case PixelFormat::R8Unorm:      components = 1; break;
             case PixelFormat::RG8Unorm:     components = 2; break;
             case PixelFormat::RGB8Unorm:    components = 3; break;
             case PixelFormat::RGBA8Unorm:   components = 4; break;
             default:
-                Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for BMP/PNG/TGA output";
+                Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for BMP/JPEG/PNG/TGA output";
                 return nullptr;
         }
     } else if(_format == Format::Hdr) {
@@ -107,6 +113,11 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
     if(_format == Format::Bmp) {
         if(!stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData)) {
             Error() << "Trade::StbImageConverter::exportToData(): error while writing BMP file";
+            return nullptr;
+        }
+    } else if(_format == Format::Jpeg) {
+        if(!stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, Int(configuration().value<Float>("jpegQuality")*100.0f))) {
+            Error() << "Trade::StbImageConverter::exportToData(): error while writing JPEG file";
             return nullptr;
         }
     } else if(_format == Format::Hdr) {

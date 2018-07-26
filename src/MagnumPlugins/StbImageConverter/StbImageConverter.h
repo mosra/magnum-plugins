@@ -58,21 +58,37 @@ Creates files in one of the following formats using the
 [stb_image_write](https://github.com/nothings/stb) library:
 
 -   Windows Bitmap (`*.bmp`) if the plugin was loaded as `StbBmpImageConverter`
-    / `BmpImageConverter` or @ref Format::Bmp was passed to the constructor
+    / `BmpImageConverter` or @ref Format::Bmp was passed to the constructor.
+    Accepts @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
+    @ref PixelFormat::RGBUnorm and @ref PixelFormat::RGBA8Unorm. Single- and
+    two-channel inputs are converted to three-channel with the the first
+    channel repeated three times (and second ignored), four-channel input
+    loses alpha.
 -   Radiance HDR (`*.hdr`) if the plugin was loaded as `StbHdrImageConverter`
-    / `HdrImageConverter` or @ref Format::Hdr was passed to the constructor
+    / `HdrImageConverter` or @ref Format::Hdr was passed to the constructor.
+    Accepts @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
+    @ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. Single- and
+    two-channel inputs are converted to three-channel with the first channel
+    repeated three times (and second ignored), four-channel input loses alpha.
+-   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) if the plugin was loaded as
+    `StbJpegImageConverter` / `JpegImageConverter` or @ref Format::Jpeg was
+    passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
+    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGBUnorm and
+    @ref PixelFormat::RGBA8Unorm. Single- and two-channel inputs are converted
+    to three-channel with the first channel repeated three times (and second
+    ignored), four-channel input loses alpha.
 -   Portable Network Graphics (`*.png`) if the plugin was loaded as
     `StbPngImageConverter` / `PngImageConverter` or @ref Format::Png was passed
-    to the constructor
+    to the constructor. Accepts @ref PixelFormat::R8Unorm,
+    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGBUnorm and
+    @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
+    input.
 -   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`) if the plugin was
     loaded as `StbTgaImageConverter` / `TgaImageConverter` or @ref Format::Tga
-    was passed to the constructor
-
-For BMP, PNG and TGA output the images must have format
-@ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
-@ref PixelFormat::RGB8Unorm or @ref PixelFormat::RGBA8Unorm. For HDR the images
-must have format @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
-@ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F.
+    was passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
+    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGBUnorm and
+    @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
+    input.
 
 This plugin depends on the @ref Trade library and is built if
 `WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
@@ -86,15 +102,22 @@ CMake, you need to request the `StbImageConverter` component of the
 `MagnumPlugins` package and link to the `MagnumPlugins::StbImageConverter`
 target.
 
-Besides `StbBmpImageConverter`, `StbHdrImageConverter`, `StbPngImageConverter`
-and `StbTgaImageConverter` aliases this plugin provides also
-`BmpImageConverter`, `HdrImageConverter`, `PngImageConverter` and
-`TgaImageConverter` plugins, but note that this plugin may generate slightly
-larger files and the performance might be worse than when using plugins
-dedicated for given format.
+Besides `StbBmpImageConverter`, `StbHdrImageConverter`, `StbJpegImageConverter`,
+`StbPngImageConverter` and `StbTgaImageConverter` aliases this plugin provides
+also `BmpImageConverter`, `HdrImageConverter`, `JpegImageConverter`,
+`PngImageConverter` and `TgaImageConverter` plugins, but note that this plugin
+may generate slightly larger files and the performance might be worse than when
+using plugins dedicated for given format.
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Trade-StbImageConverter-configuration Plugin-specific configuration
+
+For some formats, it's possible to tune various output options through
+@ref configuration(). See below for all options and their default values:
+
+@snippet MagnumPlugins/StbImageConverter/StbImageConverter.conf config
 */
 class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageConverter {
     public:
@@ -107,6 +130,7 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
             /* 0 used for invalid value */
 
             Bmp = 1,    /**< Output BMP images */
+            Jpeg,       /**< Output JPEG images */
             Hdr,        /**< Output HDR images */
             Png,        /**< Output PNG images */
             Tga         /**< Output TGA images */

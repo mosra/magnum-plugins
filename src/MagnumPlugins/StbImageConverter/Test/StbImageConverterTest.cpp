@@ -26,6 +26,7 @@
 #include <sstream>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -48,6 +49,9 @@ struct StbImageConverterTest: TestSuite::Tester {
 
     void hdrGrayscale();
 
+    void jpegRgb80Percent();
+    void jpegGrayscale80Percent();
+
     void pngRgb();
     void pngGrayscale();
 
@@ -66,6 +70,9 @@ StbImageConverterTest::StbImageConverterTest() {
               &StbImageConverterTest::bmpRg,
 
               &StbImageConverterTest::hdrGrayscale,
+
+              &StbImageConverterTest::jpegRgb80Percent,
+              &StbImageConverterTest::jpegGrayscale80Percent,
 
               &StbImageConverterTest::pngRgb,
               &StbImageConverterTest::pngGrayscale,
@@ -91,7 +98,7 @@ void StbImageConverterTest::wrongFormat() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelFormat::RGBA32F is not supported for BMP/PNG/TGA output\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelFormat::RGBA32F is not supported for BMP/JPEG/PNG/TGA output\n");
 }
 
 void StbImageConverterTest::wrongFormatHdr() {
@@ -191,9 +198,133 @@ void StbImageConverterTest::hdrGrayscale() {
 }
 
 namespace {
-    constexpr const char OriginalRgbData[] = {
+    constexpr const char OriginalJpegRgbData[] = {
         /* Skip */
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,
+
+        '\x00', '\x27', '\x48', '\x10', '\x34', '\x54',
+        '\x22', '\x46', '\x60', '\x25', '\x49', '\x63',
+        '\x21', '\x46', '\x63', '\x13', '\x3a', '\x59', 0, 0,
+
+        '\x5b', '\x87', '\xae', '\x85', '\xaf', '\xd5',
+        '\x94', '\xbd', '\xdd', '\x96', '\xbf', '\xdf',
+        '\x91', '\xbc', '\xdf', '\x72', '\x9e', '\xc1', 0, 0,
+
+        '\x3c', '\x71', '\xa7', '\x68', '\x9c', '\xce',
+        '\x8b', '\xbb', '\xe9', '\x92', '\xc3', '\xee',
+        '\x8b', '\xbe', '\xed', '\x73', '\xa7', '\xd6', 0, 0,
+
+        '\x00', '\x34', '\x70', '\x12', '\x4a', '\x83',
+        '\x35', '\x6a', '\x9e', '\x45', '\x7a', '\xac',
+        '\x34', '\x6c', '\x9f', '\x1d', '\x56', '\x8b', 0, 0
+    };
+
+    const ImageView2D OriginalJpegRgb{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::RGB8Unorm, {6, 4}, OriginalJpegRgbData};
+
+    /* Slightly different due to compression artifacts. See the 100% test for
+       a threshold verification. Needs to have a bigger size otherwise the
+       compression makes a total mess. */
+    constexpr const char ConvertedJpegRgbData[] = {
+        '\x03', '\x26', '\x4c', '\x12', '\x36', '\x5a',
+        '\x22', '\x46', '\x68', '\x25', '\x49', '\x69',
+        '\x1c', '\x40', '\x60', '\x11', '\x35', '\x57',
+
+        '\x5f', '\x8a', '\xb5', '\x76', '\xa1', '\xcb',
+        '\x91', '\xbd', '\xe4', '\x99', '\xc5', '\xea',
+        '\x8e', '\xba', '\xdf', '\x7d', '\xa9', '\xd0',
+
+        '\x48', '\x7a', '\xad', '\x66', '\x98', '\xc9',
+        '\x88', '\xbb', '\xe8', '\x94', '\xc7', '\xf2',
+        '\x88', '\xbb', '\xe6', '\x77', '\xaa', '\xd7',
+
+        '\x00', '\x2f', '\x65', '\x17', '\x4f', '\x82',
+        '\x38', '\x70', '\xa1', '\x41', '\x79', '\xa8',
+        '\x32', '\x6a', '\x99', '\x21', '\x59', '\x8a'
+    };
+}
+
+void StbImageConverterTest::jpegRgb80Percent() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+    CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
+
+    const auto data = converter->exportToData(OriginalJpegRgb);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedJpegRgbData),
+        TestSuite::Compare::Container);
+}
+
+namespace {
+    constexpr const char OriginalJpegGrayscaleData[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
+
+        '\x00', '\x10', '\x22', '\x25', '\x21', '\x13', 0, 0,
+        '\x5b', '\x85', '\x94', '\x96', '\x91', '\x72', 0, 0,
+        '\x3c', '\x68', '\x8b', '\x92', '\x8b', '\x73', 0, 0,
+        '\x00', '\x12', '\x35', '\x45', '\x34', '\x1d', 0, 0
+    };
+
+    /* Slightly different due to compression artifacts. See the 100% test for
+       a threshold verification. Needs to have a bigger size otherwise the
+       compression makes a total mess. Also, stb_image_write expands to RGB,
+       so the data are inflated. */
+    constexpr const char ConvertedJpegGrayscaleData[] = {
+        '\x01', '\x01', '\x01', '\x11', '\x11', '\x11',
+        '\x23', '\x23', '\x23', '\x27', '\x27', '\x27',
+        '\x1c', '\x1c', '\x1c', '\x11', '\x11', '\x11',
+
+        '\x65', '\x65', '\x65', '\x7d', '\x7d', '\x7d',
+        '\x97', '\x97', '\x97', '\x9d', '\x9d', '\x9d',
+        '\x8e', '\x8e', '\x8e', '\x7a', '\x7a', '\x7a',
+
+        '\x3f', '\x3f', '\x3f', '\x60', '\x60', '\x60',
+        '\x85', '\x85', '\x85', '\x93', '\x93', '\x93',
+        '\x88', '\x88', '\x88', '\x78', '\x78', '\x78',
+
+        '\x00', '\x00', '\x00', '\x19', '\x19', '\x19',
+        '\x3b', '\x3b', '\x3b', '\x43', '\x43', '\x43',
+        '\x32', '\x32', '\x32', '\x1e', '\x1e', '\x1e'
+    };
+
+    const ImageView2D OriginalJpegGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::R8Unorm, {6, 4}, OriginalJpegGrayscaleData};
+}
+
+void StbImageConverterTest::jpegGrayscale80Percent() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+    CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
+
+    const auto data = converter->exportToData(OriginalJpegGrayscale);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedJpegGrayscaleData),
+        TestSuite::Compare::Container);
+}
+
+namespace {
+    constexpr const char OriginalRgbData[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
 
         1, 2, 3, 2, 3, 4, 0, 0,
         3, 4, 5, 4, 5, 6, 0, 0,
