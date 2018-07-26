@@ -124,9 +124,7 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
             Error() << "Trade::StbImageConverter::exportToData(): error while writing TGA file";
             return nullptr;
         }
-    } else {
-        CORRADE_ASSERT(false, "Trade::StbImageConverter::exportToData(): invalid format" << Int(_format), nullptr);
-    }
+    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Copy the data into array (I would *love* to have a detach() function on
        std::string) */

@@ -40,6 +40,7 @@ struct StbImageConverterTest: TestSuite::Tester {
 
     void wrongFormat();
     void wrongFormatHdr();
+    void wrongOutputFormat();
 
     /** @todo test the enum constructor somehow (needs to be not loaded through plugin manager) */
 
@@ -60,6 +61,7 @@ struct StbImageConverterTest: TestSuite::Tester {
 StbImageConverterTest::StbImageConverterTest() {
     addTests({&StbImageConverterTest::wrongFormat,
               &StbImageConverterTest::wrongFormatHdr,
+              &StbImageConverterTest::wrongOutputFormat,
 
               &StbImageConverterTest::bmpRg,
 
@@ -101,6 +103,17 @@ void StbImageConverterTest::wrongFormatHdr() {
 
     CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelFormat::RGB8Unorm is not supported for HDR output\n");
+}
+
+void StbImageConverterTest::wrongOutputFormat() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbImageConverter");
+    ImageView2D image{PixelFormat::RGB8Unorm, {}, nullptr};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!converter->exportToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): cannot determine output format (plugin loaded as StbImageConverter)\n");
 }
 
 namespace {
