@@ -40,7 +40,6 @@ struct StbImageConverterTest: TestSuite::Tester {
 
     void wrongFormat();
     void wrongFormatHdr();
-    void wrongStorage();
 
     /** @todo test the enum constructor somehow (needs to be not loaded through plugin manager) */
 
@@ -57,7 +56,6 @@ struct StbImageConverterTest: TestSuite::Tester {
 StbImageConverterTest::StbImageConverterTest() {
     addTests({&StbImageConverterTest::wrongFormat,
               &StbImageConverterTest::wrongFormatHdr,
-              &StbImageConverterTest::wrongStorage,
 
               &StbImageConverterTest::rgBmp,
               &StbImageConverterTest::grayscaleHdr,
@@ -97,31 +95,22 @@ void StbImageConverterTest::wrongFormatHdr() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelFormat::RGB8Unorm is not supported for HDR output\n");
 }
 
-void StbImageConverterTest::wrongStorage() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbBmpImageConverter");
-    const ImageView2D image{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB8Unorm, {2, 3}, nullptr};
-
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): data must be tightly packed for all formats except PNG\n");
-}
-
 namespace {
     constexpr const char OriginalRgData[] = {
-        1, 2, 2, 3,
-        3, 4, 4, 5,
-        5, 6, 6, 7
+        0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 1,  2,  3,  4,
+        0, 0, 0, 0, 5,  6,  7,  8,
+        0, 0, 0, 0, 9, 10, 11, 12
     };
 
-    const ImageView2D OriginalRg{PixelFormat::RG8Unorm, {2, 3}, OriginalRgData};
+    const ImageView2D OriginalRg{PixelStorage{}.setSkip({2, 1, 0}).setRowLength(4),
+        PixelFormat::RG8Unorm, {2, 3}, OriginalRgData};
 
     constexpr const char ConvertedRgData[] = {
-        1, 1, 1, 2, 2, 2,
-        3, 3, 3, 4, 4, 4,
-        5, 5, 5, 6, 6, 6
+        1, 1, 1, 3, 3, 3,
+        5, 5, 5, 7, 7, 7,
+        9, 9, 9, 11, 11, 11
     };
 }
 
@@ -220,13 +209,22 @@ void StbImageConverterTest::rgbPng() {
 }
 
 namespace {
-    constexpr const char RgbaData[] = {
+    constexpr const char OriginalRgbaData[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
+
         1, 2, 3, 4, 2, 3, 4, 5,
         3, 4, 5, 6, 4, 5, 6, 7,
         5, 6, 7, 8, 6, 7, 8, 9
     };
 
-    const ImageView2D OriginalRgba{PixelFormat::RGBA8Unorm, {2, 3}, RgbaData};
+    const ImageView2D OriginalRgba{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::RGBA8Unorm, {2, 3}, OriginalRgbaData};
+
+    constexpr const char ConvertedRgbaData[] = {
+        1, 2, 3, 4, 2, 3, 4, 5,
+        3, 4, 5, 6, 4, 5, 6, 7,
+        5, 6, 7, 8, 6, 7, 8, 9
+    };
 }
 
 void StbImageConverterTest::rgbaTga() {
@@ -243,7 +241,7 @@ void StbImageConverterTest::rgbaTga() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(RgbaData),
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbaData),
         TestSuite::Compare::Container);
 }
 

@@ -90,15 +90,13 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
     Math::Vector2<std::size_t> offset, dataSize;
     std::tie(offset, dataSize) = image.dataProperties();
 
-    if(_format != Format::Png && dataSize.x() != image.pixelSize()*image.size().x()) {
-        Error() << "Trade::StbImageConverter::exportToData(): data must be tightly packed for all formats except PNG";
-        return nullptr;
-    }
-
-    /* Reverse rows in image data */
-    Containers::Array<unsigned char> reversedData{image.data().size()};
+    /* Reverse rows in image data. There is stbi_flip_vertically_on_write() but
+       can't use that because the input image might be sparse (having padded
+       rows, for example). The copy makes the data tightly packed. */
+    Containers::Array<unsigned char> reversedData{image.pixelSize()*image.size().product()};
+    std::size_t outputStride = image.pixelSize()*image.size().x();
     for(Int y = 0; y != image.size().y(); ++y) {
-        std::copy(image.data<unsigned char>() + offset.sum() + y*dataSize.x(), image.data<unsigned char>() + offset.sum() + (y + 1)*dataSize.x(), reversedData + (image.size().y() - y - 1)*dataSize.x());
+        std::copy_n(image.data<unsigned char>() + offset.sum() + y*dataSize.x(), outputStride, reversedData + (image.size().y() - y - 1)*outputStride);
     }
 
     std::string data;
@@ -117,7 +115,7 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
             return nullptr;
         }
     } else if(_format == Format::Png) {
-        if(!stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, dataSize.x())) {
+        if(!stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, 0)) {
             Error() << "Trade::StbImageConverter::exportToData(): error while writing PNG file";
             return nullptr;
         }

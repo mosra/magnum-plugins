@@ -54,7 +54,8 @@ namespace Magnum { namespace Trade {
 /**
 @brief Image converter plugin using stb_image_write
 
-Creates files in one of the following formats:
+Creates files in one of the following formats using the
+[stb_image_write](https://github.com/nothings/stb) library:
 
 -   Windows Bitmap (`*.bmp`) if the plugin was loaded as `StbBmpImageConverter`
     / `BmpImageConverter` or @ref Format::Bmp was passed to the constructor
@@ -71,9 +72,7 @@ For BMP, PNG and TGA output the images must have format
 @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
 @ref PixelFormat::RGB8Unorm or @ref PixelFormat::RGBA8Unorm. For HDR the images
 must have format @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
-@ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. The image data must be
-tightly packed (except for PNG output, which is able to handle custom row
-strides).
+@ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F.
 
 This plugin depends on the @ref Trade library and is built if
 `WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
