@@ -57,8 +57,9 @@ namespace Magnum { namespace Audio {
 /**
 @brief OGG audio importer plugin using stb_vorbis
 
-Supports mono, stereo and surround sound files with 16 bits per channel. The
-files are imported with @ref BufferFormat::Mono16, @ref BufferFormat::Stereo16,
+Supports mono, stereo and surround sound files with 16 bits per channel using
+the [stb_vorbis](https://github.com/nothings/stb) library. The files are
+imported with @ref BufferFormat::Mono16, @ref BufferFormat::Stereo16,
 @ref BufferFormat::Quad16, @ref BufferFormat::Surround51Channel16,
 @ref BufferFormat::Surround61Channel16 and @ref BufferFormat::Surround71Channel16,
 respectively.

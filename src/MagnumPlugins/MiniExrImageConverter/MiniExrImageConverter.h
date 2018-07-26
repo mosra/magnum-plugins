@@ -55,7 +55,8 @@ namespace Magnum { namespace Trade {
 @brief OpenEXR image converter plugin using miniexr
 
 Supports images with format @ref PixelFormat::RGB16F or
-@ref PixelFormat::RGBA16F.
+@ref PixelFormat::RGBA16F using the [miniexr](https://github.com/aras-p/miniexr)
+library.
 
 This plugin depends on the @ref Trade library and is built if
 `WITH_MINIEXRIMAGECONVERTER` is enabled when building Magnum Plugins. To use as

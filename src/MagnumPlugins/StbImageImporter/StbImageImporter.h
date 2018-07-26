@@ -55,7 +55,8 @@ namespace Magnum { namespace Trade {
 /**
 @brief Image importer plugin using stb_image
 
-Supports the following formats:
+Supports the following formats using the
+[stb_image](https://github.com/nothings/stb) library:
 
 -   Windows Bitmap (`*.bmp`), only non-1bpp, no RLE
 -   Graphics Interchange Format (`*.gif`)
