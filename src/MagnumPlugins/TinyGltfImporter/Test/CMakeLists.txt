@@ -51,13 +51,18 @@ else()
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
 
-corrade_add_test(TinyGltfImporterTest TinyGltfImporterTest.cpp
+corrade_add_resource(TinyGltfImporterTest_RESOURCES resources.conf)
+
+corrade_add_test(TinyGltfImporterTest
+    TinyGltfImporterTest.cpp
+    ${TinyGltfImporterTest_RESOURCES}
     LIBRARIES Magnum::Trade
     FILES
         empty.gltf
         empty.glb
         camera.gltf
         camera.glb
+        # external-data.* packed via a resource
         image.gltf
         image.glb
         image-embedded.gltf

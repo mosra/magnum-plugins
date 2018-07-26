@@ -81,6 +81,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void image();
 
+    void fileCallbackBuffer();
+    void fileCallbackImage();
+
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -170,6 +173,10 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addInstancedTests({&TinyGltfImporterTest::image},
                       Containers::arraySize(ImageData));
+
+    addInstancedTests({&TinyGltfImporterTest::fileCallbackBuffer,
+                       &TinyGltfImporterTest::fileCallbackImage},
+                      Containers::arraySize(SingleFileData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -843,6 +850,13 @@ void TinyGltfImporterTest::textureDefaultSampler() {
     CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
 }
 
+namespace {
+    constexpr char ExpectedImageData[] =
+        "\xa8\xa7\xac\xff\x9d\x9e\xa0\xff\xad\xad\xac\xff\xbb\xbb\xba\xff\xb3\xb4\xb6\xff"
+        "\xb0\xb1\xb6\xff\xa0\xa0\xa1\xff\x9f\x9f\xa0\xff\xbc\xbc\xba\xff\xcc\xcc\xcc\xff"
+        "\xb2\xb4\xb9\xff\xb8\xb9\xbb\xff\xc1\xc3\xc2\xff\xbc\xbd\xbf\xff\xb8\xb8\xbc\xff";
+}
+
 void TinyGltfImporterTest::image() {
     auto&& data = ImageData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -854,11 +868,6 @@ void TinyGltfImporterTest::image() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "image" + std::string{data.suffix})));
 
-    const char expected[] =
-        "\xa8\xa7\xac\xff\x9d\x9e\xa0\xff\xad\xad\xac\xff\xbb\xbb\xba\xff\xb3\xb4\xb6\xff"
-        "\xb0\xb1\xb6\xff\xa0\xa0\xa1\xff\x9f\x9f\xa0\xff\xbc\xbc\xba\xff\xcc\xcc\xcc\xff"
-        "\xb2\xb4\xb9\xff\xb8\xb9\xbb\xff\xc1\xc3\xc2\xff\xbc\xbd\xbf\xff\xb8\xb8\xbc\xff";
-
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_COMPARE(importer->image2DForName("Image"), 1);
     CORRADE_COMPARE(importer->image2DName(1), "Image");
@@ -868,7 +877,65 @@ void TinyGltfImporterTest::image() {
     CORRADE_VERIFY(image->importerState());
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(expected).prefix(60), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::fileCallbackBuffer() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    Utility::Resource rs{"data"};
+    importer->setFileCallback([](const std::string& filename, ImporterFileCallbackPolicy policy, Utility::Resource& rs) {
+        Debug{} << "Loading" << filename << "with" << policy;
+        return rs.getRaw(filename);
+    }, rs);
+
+    /* Using a different name from the filesystem to avoid false positive
+       when the file gets loaded from a filesystem */
+    CORRADE_VERIFY(importer->openFile("data" + std::string{data.suffix}));
+
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
+    CORRADE_VERIFY(!mesh->isIndexed());
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(mesh->normalArrayCount(), 0);
+
+    CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+        {1.0f, 2.0f, 3.0f}
+    }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::fileCallbackImage() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    Utility::Resource rs{"data"};
+    importer->setFileCallback([](const std::string& filename, ImporterFileCallbackPolicy  policy, Utility::Resource& rs) {
+        Debug{} << "Loading" << filename << "with" << policy;
+        return rs.getRaw(filename);
+    }, rs);
+
+    /* Using a different name from the filesystem to avoid false positive
+       when the file gets loaded from a filesystem */
+    CORRADE_VERIFY(importer->openFile("data" + std::string{data.suffix}));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(5, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
 }
 
 }}}

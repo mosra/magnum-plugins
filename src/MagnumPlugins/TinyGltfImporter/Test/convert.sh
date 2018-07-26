@@ -3,7 +3,7 @@
 set -e
 
 # in -> bin
-for i in mesh-colors mesh-primitives mesh; do
+for i in external-data mesh-colors mesh-primitives mesh; do
     ./in2bin.py ${i}.bin.in
 done
 
@@ -16,3 +16,6 @@ done
 for i in camera empty image image-embedded image-buffer image-buffer-embedded light material-blinnphong material-metallicroughness material-specularglossiness mesh-colors mesh-colors-embedded mesh-primitives mesh-primitives-embedded mesh-with-stride mesh mesh-embedded scene object-transformation texture-default-sampler texture; do
     ./gltf2glb.py ${i}.gltf
 done
+
+# special case
+./gltf2glb.py external-data.gltf --no-embed

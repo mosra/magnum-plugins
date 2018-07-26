@@ -110,7 +110,7 @@ TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<AbstractImporter>& man
 
 TinyGltfImporter::~TinyGltfImporter() = default;
 
-auto TinyGltfImporter::doFeatures() const -> Features { return Feature::OpenData; }
+auto TinyGltfImporter::doFeatures() const -> Features { return Feature::OpenData|Feature::FileCallback; }
 
 bool TinyGltfImporter::doIsOpened() const { return !!_d && _d->open; }
 
@@ -127,6 +127,23 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
     std::string err;
 
     if(!_d) _d.reset(new Document);
+
+    if(fileCallback()) {
+        tinygltf::FsCallbacks callbacks;
+        callbacks.user_data = this;
+        callbacks.FileExists = [](const std::string&, void*) { return true; };
+        callbacks.ExpandFilePath = [](const std::string& path, void*) {
+            return path;
+        };
+        callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string*, const std::string& filename, void* userData) {
+            auto& self = *static_cast<TinyGltfImporter*>(userData);
+            Containers::ArrayView<const char> data = self.fileCallback()(filename, ImporterFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
+            if(!data) return false;
+            out->assign(data.begin(), data.end());
+            return true;
+        };
+        loader.SetFsCallbacks(callbacks);
+    }
 
     loader.SetImageLoader(&loadImageData, nullptr);
 
@@ -764,6 +781,7 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
     const tinygltf::Image& image = _d->model.images[id];
 
     AnyImageImporter imageImporter{*manager()};
+    if(fileCallback()) imageImporter.setFileCallback(fileCallback(), fileCallbackUserData());
 
     /* Load embedded image */
     if(image.uri.empty()) {
