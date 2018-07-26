@@ -43,6 +43,9 @@ struct PngImageConverterTest: TestSuite::Tester {
     void rgb();
     void rgb16();
 
+    void grayscale();
+    void grayscale16();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
@@ -52,7 +55,10 @@ PngImageConverterTest::PngImageConverterTest() {
     addTests({&PngImageConverterTest::wrongFormat,
 
               &PngImageConverterTest::rgb,
-              &PngImageConverterTest::rgb16});
+              &PngImageConverterTest::rgb16,
+
+              &PngImageConverterTest::grayscale,
+              &PngImageConverterTest::grayscale16});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -156,6 +162,91 @@ void PngImageConverterTest::rgb16() {
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB16Unorm);
     CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(converted->data()),
         Containers::arrayView(ConvertedRgbData16),
+        TestSuite::Compare::Container);
+}
+
+namespace {
+    constexpr const char OriginalGrayscaleData[] = {
+        /* Skip */
+        0, 0, 0, 0,
+
+        1, 2, 0, 0,
+        3, 4, 0, 0,
+        5, 6, 0, 0
+    };
+
+    const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::R8Unorm, {2, 3}, OriginalGrayscaleData};
+
+    constexpr const char ConvertedGrayscaleData[] = {
+        1, 2, 0, 0,
+        3, 4, 0, 0,
+        5, 6, 0, 0
+    };
+}
+
+void PngImageConverterTest::grayscale() {
+    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalGrayscale);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+
+    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(converted->format(), PixelFormat::R8Unorm);
+
+    /* The image has four-byte aligned rows, clear the padding to deterministic
+       values */
+    CORRADE_COMPARE(converted->data().size(), 12);
+    converted->data()[2] = converted->data()[3] =
+        converted->data()[6] = converted->data()[7] =
+            converted->data()[10] = converted->data()[11] = 0;
+
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedGrayscaleData),
+        TestSuite::Compare::Container);
+}
+
+namespace {
+    constexpr const UnsignedShort OriginalGrayscaleData16[] = {
+        /* Skip */
+        0, 0, 0, 0,
+
+        1, 2, 0, 0,
+        3, 4, 0, 0,
+        5, 6, 0, 0
+    };
+
+    const ImageView2D OriginalGrayscale16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
+        PixelFormat::R16Unorm, {2, 3}, OriginalGrayscaleData16};
+
+    constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
+        1, 2,
+        3, 4,
+        5, 6
+    };
+}
+
+void PngImageConverterTest::grayscale16() {
+    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalGrayscale16);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+
+    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(converted->format(), PixelFormat::R16Unorm);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(converted->data()),
+        Containers::arrayView(ConvertedGrayscaleData16),
         TestSuite::Compare::Container);
 }
 
