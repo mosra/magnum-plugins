@@ -43,10 +43,14 @@ struct StbImageConverterTest: TestSuite::Tester {
 
     /** @todo test the enum constructor somehow (needs to be not loaded through plugin manager) */
 
-    void rgBmp();
-    void grayscaleHdr();
-    void rgbPng();
-    void rgbaTga();
+    void bmpRg();
+
+    void hdrGrayscale();
+
+    void pngRgb();
+    void pngGrayscale();
+
+    void tgaRgba();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -57,10 +61,14 @@ StbImageConverterTest::StbImageConverterTest() {
     addTests({&StbImageConverterTest::wrongFormat,
               &StbImageConverterTest::wrongFormatHdr,
 
-              &StbImageConverterTest::rgBmp,
-              &StbImageConverterTest::grayscaleHdr,
-              &StbImageConverterTest::rgbPng,
-              &StbImageConverterTest::rgbaTga});
+              &StbImageConverterTest::bmpRg,
+
+              &StbImageConverterTest::hdrGrayscale,
+
+              &StbImageConverterTest::pngRgb,
+              &StbImageConverterTest::pngGrayscale,
+
+              &StbImageConverterTest::tgaRgba});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -114,7 +122,7 @@ namespace {
     };
 }
 
-void StbImageConverterTest::rgBmp() {
+void StbImageConverterTest::bmpRg() {
     const auto data = _converterManager.instantiate("StbBmpImageConverter")->exportToData(OriginalRg);
     CORRADE_VERIFY(data);
 
@@ -134,23 +142,23 @@ void StbImageConverterTest::rgBmp() {
 }
 
 namespace {
-    constexpr const Float OriginalGrayscaleData[] = {
+    constexpr const Float OriginalGrayscale32FData[] = {
         1.0f, 2.0f,
         3.0f, 4.0f,
         5.0f, 6.0f
     };
 
-    const ImageView2D OriginalGrayscale{PixelFormat::R32F, {2, 3}, OriginalGrayscaleData};
+    const ImageView2D OriginalGrayscale32F{PixelFormat::R32F, {2, 3}, OriginalGrayscale32FData};
 
-    constexpr const Float ConvertedGrayscaleData[] = {
+    constexpr const Float ConvertedGrayscale32FData[] = {
         1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
         3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
         5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f
     };
 }
 
-void StbImageConverterTest::grayscaleHdr() {
-    const auto data = _converterManager.instantiate("StbHdrImageConverter")->exportToData(OriginalGrayscale);
+void StbImageConverterTest::hdrGrayscale() {
+    const auto data = _converterManager.instantiate("StbHdrImageConverter")->exportToData(OriginalGrayscale32F);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -165,7 +173,7 @@ void StbImageConverterTest::grayscaleHdr() {
     /* R gets converted to RRR */
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
-        Containers::arrayView(ConvertedGrayscaleData),
+        Containers::arrayView(ConvertedGrayscale32FData),
         TestSuite::Compare::Container);
 }
 
@@ -189,7 +197,7 @@ namespace {
     };
 }
 
-void StbImageConverterTest::rgbPng() {
+void StbImageConverterTest::pngRgb() {
     const auto data = _converterManager.instantiate("StbPngImageConverter")->exportToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
@@ -200,11 +208,47 @@ void StbImageConverterTest::rgbPng() {
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(converted->data(),
         Containers::arrayView(ConvertedRgbData),
+        TestSuite::Compare::Container);
+}
+
+namespace {
+    constexpr const char OriginalGrayscaleData[] = {
+        /* Skip */
+        0, 0, 0, 0,
+
+        1, 2, 0, 0,
+        3, 4, 0, 0,
+        5, 6, 0, 0
+    };
+
+    const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::R8Unorm, {2, 3}, OriginalGrayscaleData};
+
+    constexpr const char ConvertedGrayscaleData[] = {
+        1, 2,
+        3, 4,
+        5, 6
+    };
+}
+
+void StbImageConverterTest::pngGrayscale() {
+    const auto data = _converterManager.instantiate("StbPngImageConverter")->exportToData(OriginalGrayscale);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(converted->format(), PixelFormat::R8Unorm);
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedGrayscaleData),
         TestSuite::Compare::Container);
 }
 
@@ -227,7 +271,7 @@ namespace {
     };
 }
 
-void StbImageConverterTest::rgbaTga() {
+void StbImageConverterTest::tgaRgba() {
     const auto data = _converterManager.instantiate("StbTgaImageConverter")->exportToData(OriginalRgba);
     CORRADE_VERIFY(data);
 
@@ -238,7 +282,6 @@ void StbImageConverterTest::rgbaTga() {
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbaData),
