@@ -117,7 +117,7 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
         destinationManager.output.resize(oldSize*2); /* Double capacity each time it is exceeded */
         info->dest->next_output_byte = reinterpret_cast<JSAMPLE*>(&destinationManager.output[0] + oldSize);
         info->dest->free_in_buffer = (destinationManager.output.size() - oldSize)/sizeof(JSAMPLE);
-        return true;
+        return boolean(true);
     };
 
     /* Fill the info structure */
@@ -127,8 +127,8 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
     info.in_color_space = colorSpace;
 
     jpeg_set_defaults(&info);
-    jpeg_set_quality(&info, Int(configuration().value<Float>("jpegQuality")*100.0f), true);
-    jpeg_start_compress(&info, true);
+    jpeg_set_quality(&info, Int(configuration().value<Float>("jpegQuality")*100.0f), boolean(true));
+    jpeg_start_compress(&info, boolean(true));
 
     /* Data properties */
     Math::Vector2<std::size_t> offset, dataSize;
