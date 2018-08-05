@@ -20,6 +20,7 @@
 #  DrWavAudioImporter           - WAV audio importer plugin using dr_wav
 #  FreeTypeFont                 - FreeType font
 #  HarfBuzzFont                 - HarfBuzz font
+#  JpegImageConverter           - JPEG image converter
 #  JpegImporter                 - JPEG importer
 #  MiniExrImageConverter        - OpenEXR image converter using miniexr
 #  OpenGexImporter              - OpenGEX importer
@@ -132,9 +133,9 @@ set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     AssimpImporter ColladaImporter DdsImporter DevIlImageImporter
     DrFlacAudioImporter DrWavAudioImporter FreeTypeFont HarfBuzzFont
-    JpegImporter MiniExrImageConverter OpenGexImporter PngImageConverter
-    PngImporter StanfordImporter StbImageConverter StbImageImporter
-    StbTrueTypeFont StbVorbisAudioImporter TinyGltfImporter)
+    JpegImageConverter JpegImporter MiniExrImageConverter OpenGexImporter
+    PngImageConverter PngImporter StanfordImporter StbImageConverter
+    StbImageImporter StbTrueTypeFont StbVorbisAudioImporter TinyGltfImporter)
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
