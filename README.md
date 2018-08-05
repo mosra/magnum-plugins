@@ -21,12 +21,19 @@ SUPPORTED PLATFORMS
 -   **Web** ([asm.js](http://asmjs.org/) or [WebAssembly](http://webassembly.org/)),
     through [Emscripten](http://kripken.github.io/emscripten-site/)
 
+WHAT'S NEW?
+===========
+
+Curious about what was added or improved recently? Check out the
+[Changelog](http://doc.magnum.graphics/magnum/changelog-plugins.html#changelog-plugins-latest)
+page in the documentation.
+
 BUILDING MAGNUM PLUGINS
 =======================
 
 The building process is similar to Magnum itself. See the
 [building documentation](http://doc.magnum.graphics/magnum/building-plugins.html)
-for a comprehensive guide for building, packaging and crosscompiling  — we
+for a comprehensive guide for building, packaging and crosscompiling — we
 provide packages for many platforms, including Windows, Linux and macOS.
 
 CONTACT & SUPPORT
