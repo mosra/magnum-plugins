@@ -110,6 +110,7 @@ namespace {
        a threshold verification. Needs to have a bigger size otherwise the
        compression makes a total mess. */
     constexpr const char ConvertedRgbData[] = {
+        #ifndef CORRADE_TARGET_APPLE
         '\x00', '\x29', '\x50', '\x0c', '\x38', '\x5f',
         '\x1c', '\x48', '\x6f', '\x1f', '\x4b', '\x72',
         '\x15', '\x42', '\x69', '\x0a', '\x37', '\x5e', 0, 0,
@@ -125,6 +126,25 @@ namespace {
         '\x01', '\x2d', '\x5c', '\x20', '\x4c', '\x7b',
         '\x3f', '\x6e', '\x9c', '\x48', '\x77', '\xa5',
         '\x39', '\x68', '\x96', '\x28', '\x57', '\x85', 0, 0
+        #else
+        /* libJPEG on macOS is special. This will all go away once I can use
+           DebugTools::CompareImage. */
+        '\x01', '\x27', '\x4e', '\x10', '\x36', '\x5d',
+        '\x20', '\x46', '\x6d', '\x23', '\x49', '\x70',
+        '\x19', '\x40', '\x67', '\x0e', '\x35', '\x5c', 0, 0,
+
+        '\x5f', '\x8a', '\xb5', '\x76', '\xa1', '\xcc',
+        '\x91', '\xbc', '\xe7', '\x99', '\xc4', '\xef',
+        '\x8e', '\xb9', '\xe4', '\x7c', '\xa9', '\xd3', 0, 0,
+
+        '\x4b', '\x79', '\xaa', '\x68', '\x98', '\xc8',
+        '\x8a', '\xba', '\xea', '\x96', '\xc6', '\xf6',
+        '\x8a', '\xba', '\xea', '\x79', '\xa9', '\xd9', 0, 0,
+
+        '\x00', '\x2e', '\x61', '\x1b', '\x4d', '\x80',
+        '\x3c', '\x6e', '\xa1', '\x45', '\x77', '\xaa',
+        '\x36', '\x68', '\x9b', '\x24', '\x58', '\x8a', 0, 0
+        #endif
     };
 }
 
