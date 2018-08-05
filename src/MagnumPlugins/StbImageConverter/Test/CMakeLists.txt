@@ -23,6 +23,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED DebugTools)
+
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
@@ -44,7 +46,7 @@ else()
 endif()
 
 corrade_add_test(StbImageConverterTest StbImageConverterTest.cpp
-    LIBRARIES Magnum::Trade)
+    LIBRARIES Magnum::Trade Magnum::DebugTools)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(StbImageConverterTest PRIVATE $<TARGET_FILE_DIR:StbImageConverterTest>)
 else()

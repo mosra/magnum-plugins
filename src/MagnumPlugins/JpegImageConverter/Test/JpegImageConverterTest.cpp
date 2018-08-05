@@ -28,6 +28,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -42,8 +43,10 @@ struct JpegImageConverterTest: TestSuite::Tester {
     void wrongFormat();
 
     void rgb80Percent();
+    void rgb100Percent();
 
     void grayscale80Percent();
+    void grayscale100Percent();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -54,8 +57,10 @@ JpegImageConverterTest::JpegImageConverterTest() {
     addTests({&JpegImageConverterTest::wrongFormat,
 
               &JpegImageConverterTest::rgb80Percent,
+              &JpegImageConverterTest::rgb100Percent,
 
-              &JpegImageConverterTest::grayscale80Percent});
+              &JpegImageConverterTest::grayscale80Percent,
+              &JpegImageConverterTest::grayscale100Percent});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -177,6 +182,26 @@ void JpegImageConverterTest::rgb80Percent() {
         TestSuite::Compare::Container);
 }
 
+void JpegImageConverterTest::rgb100Percent() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    converter->configuration().setValue("jpegQuality", 1.0f);
+
+    const auto data = converter->exportToData(OriginalRgb);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("JpegImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+
+    /* Expect only minimal difference (single bits) */
+    CORRADE_COMPARE_WITH(*converted, OriginalRgb,
+        (DebugTools::CompareImage{3.1f, 1.4f}));
+}
+
 namespace {
     constexpr const char OriginalGrayscaleData[] = {
         0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
@@ -228,6 +253,26 @@ void JpegImageConverterTest::grayscale80Percent() {
 
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedGrayscaleData),
         TestSuite::Compare::Container);
+}
+
+void JpegImageConverterTest::grayscale100Percent() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    converter->configuration().setValue("jpegQuality", 1.0f);
+
+    const auto data = converter->exportToData(OriginalGrayscale);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("JpegImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+
+    /* Expect only minimal difference (single bits) */
+    CORRADE_COMPARE_WITH(*converted, OriginalGrayscale,
+        (DebugTools::CompareImage{1.0f, 0.085f}));
 }
 
 }}}

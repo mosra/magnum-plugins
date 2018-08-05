@@ -28,6 +28,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -50,7 +51,9 @@ struct StbImageConverterTest: TestSuite::Tester {
     void hdrGrayscale();
 
     void jpegRgb80Percent();
+    void jpegRgb100Percent();
     void jpegGrayscale80Percent();
+    /* Can't grayscale 100% because stb_image_write expands to RGB */
 
     void pngRgb();
     void pngGrayscale();
@@ -72,6 +75,7 @@ StbImageConverterTest::StbImageConverterTest() {
               &StbImageConverterTest::hdrGrayscale,
 
               &StbImageConverterTest::jpegRgb80Percent,
+              &StbImageConverterTest::jpegRgb100Percent,
               &StbImageConverterTest::jpegGrayscale80Percent,
 
               &StbImageConverterTest::pngRgb,
@@ -264,6 +268,26 @@ void StbImageConverterTest::jpegRgb80Percent() {
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedJpegRgbData),
         TestSuite::Compare::Container);
+}
+
+void StbImageConverterTest::jpegRgb100Percent() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+    converter->configuration().setValue("jpegQuality", 1.0f);
+
+    const auto data = converter->exportToData(OriginalJpegRgb);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+
+    /* Expect only minimal difference (single bits) */
+    CORRADE_COMPARE_WITH(*converted, OriginalJpegRgb,
+        (DebugTools::CompareImage{1.0f, 0.39f}));
 }
 
 namespace {
