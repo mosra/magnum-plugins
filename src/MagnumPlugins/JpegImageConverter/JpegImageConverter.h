@@ -54,7 +54,7 @@ namespace Magnum { namespace Trade {
 /**
 @brief JPEG image converter plugin
 
-Creates JPEG (`*.jpg`, `*.jpe', `*.jpeg`) files from images with format
+Creates JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) files from images with format
 @ref PixelFormat::R8Unorm or @ref PixelFormat::RGB8Unorm.
 
 This plugin depends on the @ref Trade and [libJPEG](http://libjpeg.sourceforge.net/)

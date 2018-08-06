@@ -48,7 +48,7 @@ namespace Magnum {
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now supports
     @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom
     callbacks to load extra files
--   @ref Text::StbImageConverter "StbImageConverter" was updated with a new
+-   @ref Trade::StbImageConverter "StbImageConverter" was updated with a new
     version of `stb_image_write`, supporting also JPEG export now
 -   @ref Text::StbTrueTypeFont "StbTrueTypeFont" was updated with a new version
     of `stb_vorbis`, supporting also OpenType fonts now

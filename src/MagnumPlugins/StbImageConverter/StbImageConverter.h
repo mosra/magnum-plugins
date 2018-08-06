@@ -60,7 +60,7 @@ Creates files in one of the following formats using the
 -   Windows Bitmap (`*.bmp`) if the plugin was loaded as `StbBmpImageConverter`
     / `BmpImageConverter` or @ref Format::Bmp was passed to the constructor.
     Accepts @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
-    @ref PixelFormat::RGBUnorm and @ref PixelFormat::RGBA8Unorm. Single- and
+    @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. Single- and
     two-channel inputs are converted to three-channel with the the first
     channel repeated three times (and second ignored), four-channel input
     loses alpha.
@@ -73,20 +73,20 @@ Creates files in one of the following formats using the
 -   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) if the plugin was loaded as
     `StbJpegImageConverter` / `JpegImageConverter` or @ref Format::Jpeg was
     passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
-    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGBUnorm and
+    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
     @ref PixelFormat::RGBA8Unorm. Single- and two-channel inputs are converted
     to three-channel with the first channel repeated three times (and second
     ignored), four-channel input loses alpha.
 -   Portable Network Graphics (`*.png`) if the plugin was loaded as
     `StbPngImageConverter` / `PngImageConverter` or @ref Format::Png was passed
     to the constructor. Accepts @ref PixelFormat::R8Unorm,
-    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGBUnorm and
+    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
     @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
     input.
 -   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`) if the plugin was
     loaded as `StbTgaImageConverter` / `TgaImageConverter` or @ref Format::Tga
     was passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
-    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGBUnorm and
+    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
     @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
     input.
 
