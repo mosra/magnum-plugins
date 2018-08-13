@@ -3,6 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018
               Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2018 Jonathan Hale <squareys@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -24,10 +25,12 @@
 */
 
 #include <sstream>
+#include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Math/Vector3.h>
@@ -107,6 +110,9 @@ struct OpenGexImporterTest: public TestSuite::Tester {
 
     void extension();
 
+    void fileCallbackImage();
+    void fileCallbackImageNotFound();
+
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -161,7 +167,10 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::imageInvalid,
               &OpenGexImporterTest::imageUnique,
 
-              &OpenGexImporterTest::extension});
+              &OpenGexImporterTest::extension,
+
+              &OpenGexImporterTest::fileCallbackImage,
+              &OpenGexImporterTest::fileCallbackImageNotFound});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -1049,6 +1058,51 @@ void OpenGexImporterTest::extension() {
         CORRADE_COMPARE(cameraObject->firstChild().type(), OpenDdl::Type::Float);
         CORRADE_COMPARE(cameraObject->firstChild().as<Float>(), 1.8f);
     }
+}
+
+void OpenGexImporterTest::fileCallbackImage() {
+    if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("TgaImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    std::unordered_map<std::string, Containers::Array<char>> files;
+    files["not/a/path/something.ogex"] = Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"));
+    files["not/a/path/image.tga"] = Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "image.tga"));
+    importer->setFileCallback([](const std::string& filename, Trade::ImporterFileCallbackPolicy policy,
+        std::unordered_map<std::string, Containers::Array<char>>& files) {
+            Debug{} << "Loading" << filename << "with" << policy;
+            return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
+        }, files);
+
+    CORRADE_VERIFY(importer->openFile("not/a/path/something.ogex"));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+
+    /* Check only size, as it is good enough proof that it is working */
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(1);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+}
+
+void OpenGexImporterTest::fileCallbackImageNotFound() {
+    if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("TgaImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy, void*) {
+            return Containers::Optional<Containers::ArrayView<const char>>{};
+        });
+
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"))));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(1));
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file image.tga\n");
 }
 
 }}}

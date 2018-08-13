@@ -55,6 +55,9 @@ namespace Magnum {
 -   @ref Text::FreeTypeFont "FreeTypeFont", @ref Text::HarfBuzzFont "HarfBuzzFont"
     and @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugins can now be loaded
     also using the `OpenTypeFont` alias, in addition to `TrueTypeFont
+-   @ref Trade::OpenGexImporter "OpenGexImporter" now supports
+    @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom
+    callbacks to load extra files
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
