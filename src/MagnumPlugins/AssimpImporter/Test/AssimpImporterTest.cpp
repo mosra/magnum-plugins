@@ -3,7 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018
               Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2017 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2017, 2018 Jonathan Hale <squareys@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,8 @@
 #define MAGNUM_ASSIMPIMPORTER_DEBUG 0
 
 #include <sstream>
+#include <unordered_map>
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
@@ -95,6 +97,8 @@ struct AssimpImporterTest: TestSuite::Tester {
 
     void configurePostprocessFlipUVs();
 
+    void fileCallbackImage();
+
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -139,7 +143,9 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::openState,
               &AssimpImporterTest::openStateTexture,
 
-              &AssimpImporterTest::configurePostprocessFlipUVs});
+              &AssimpImporterTest::configurePostprocessFlipUVs,
+
+              &AssimpImporterTest::fileCallbackImage});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -512,6 +518,35 @@ void AssimpImporterTest::configurePostprocessFlipUVs() {
     /* The same as in mesh() but with reversed Y */
     CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
         {0.5f, 0.0f}, {0.75f, 0.5f}, {0.5f, 0.1f}}));
+}
+
+void AssimpImporterTest::fileCallbackImage() {
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
+    if(version < 302)
+        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    std::unordered_map<std::string, Containers::Array<char>> files;
+    files["not/a/path/something.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"));
+    files["diffuse_texture.png"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "diffuse_texture.png"));
+    importer->setFileCallback([](const std::string& filename, Trade::ImporterFileCallbackPolicy,
+        std::unordered_map<std::string, Containers::Array<char>>& files) {
+            return Containers::ArrayView<const char>(files[filename]);
+        }, files);
+
+    CORRADE_VERIFY(importer->openFile("not/a/path/something.dae"));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    /* Check only size, as it is good enough proof that it is working */
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(1, 1));
 }
 
 }}}

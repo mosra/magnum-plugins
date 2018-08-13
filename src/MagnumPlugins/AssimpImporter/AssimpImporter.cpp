@@ -3,7 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018
               Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2017 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2017, 2018 Jonathan Hale <squareys@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -104,7 +104,7 @@ AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const st
 
 AssimpImporter::~AssimpImporter() = default;
 
-auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData | Feature::OpenState; }
+auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData|Feature::OpenState|Feature::FileCallback; }
 
 bool AssimpImporter::doIsOpened() const { return _f && _f->_scene; }
 
@@ -570,6 +570,7 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
     /* Load external texture */
     } else {
         AnyImageImporter importer{*manager()};
+        if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
         importer.openFile(Utility::Directory::join(_f->_filePath, path));
         return importer.image2D(0);
     }
