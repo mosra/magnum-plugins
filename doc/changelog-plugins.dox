@@ -45,7 +45,8 @@ namespace Magnum {
     @ref Trade::TextureData::importerState()
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now implements mapping
     between names and IDs for all currently imported data
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now supports
+-   @ref Trade::AssimpImporter "AssimpImporter", @ref Trade::OpenGexImporter "OpenGexImporter"
+    and @ref Trade::TinyGltfImporter "TinyGltfImporter" now support
     @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom
     callbacks to load extra files
 -   @ref Trade::StbImageConverter "StbImageConverter" was updated with a new

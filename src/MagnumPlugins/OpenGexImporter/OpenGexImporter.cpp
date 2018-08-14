@@ -3,6 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018
               Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2018 Jonathan Hale <squareys@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -100,7 +101,7 @@ OpenGexImporter::OpenGexImporter(PluginManager::AbstractManager& manager, const 
 
 OpenGexImporter::~OpenGexImporter() = default;
 
-auto OpenGexImporter::doFeatures() const -> Features { return Feature::OpenData; }
+auto OpenGexImporter::doFeatures() const -> Features { return Feature::OpenData|Feature::FileCallback; }
 
 bool OpenGexImporter::doIsOpened() const { return !!_d; }
 
@@ -804,11 +805,14 @@ Containers::Optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt i
 UnsignedInt OpenGexImporter::doImage2DCount() const { return _d->images.size(); }
 
 Containers::Optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id) {
-    CORRADE_ASSERT(_d->filePath, "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from filesystem", {});
+    CORRADE_ASSERT(_d->filePath || fileCallback(), "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from filesystem or if a file callback is present", {});
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
     AnyImageImporter imageImporter{*manager()};
-    if(!imageImporter.openFile(Utility::Directory::join(*_d->filePath, _d->images[id])))
+    if(fileCallback()) imageImporter.setFileCallback(fileCallback(), fileCallbackUserData());
+
+    const std::string imageFile = Utility::Directory::join((_d->filePath) ? *_d->filePath : "", _d->images[id]);
+    if(!imageImporter.openFile(imageFile))
         return Containers::NullOpt;
 
     return imageImporter.image2D(0);
