@@ -178,7 +178,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
     CORRADE_INTERNAL_ASSERT(_manager.load(OPENGEXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     _manager.setPluginDirectory({});
     #endif
-    /* The StbImageImporter (for PNG image loading) is optional */
+    /* The StbImageImporter (for TGA image loading) is optional */
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
