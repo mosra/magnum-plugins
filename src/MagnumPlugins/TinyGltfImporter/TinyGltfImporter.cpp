@@ -74,7 +74,7 @@ using namespace Magnum::Math::Literals;
 
 namespace {
 
-bool loadImageData(tinygltf::Image* image, std::string*, int, int, const unsigned char* data, int size, void*) {
+bool loadImageData(tinygltf::Image* image, std::string*, std::string*, int, int, const unsigned char* data, int size, void*) {
     /* In case the image is an embedded URI, copy its decoded value to the data
        buffer. In all other cases we'll access the referenced buffer or
        external file directly from the doImage2D() implementation. */
@@ -173,9 +173,9 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
     _d->open = true;
     if(data.size() >= 4 && strncmp(data.data(), "glTF", 4) == 0) {
         std::vector<UnsignedByte> chars(data.begin(), data.end());
-        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, chars.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, nullptr, chars.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
     } else {
-        _d->open = loader.LoadASCIIFromString(&_d->model, &err, data.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadASCIIFromString(&_d->model, &err, nullptr, data.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
     }
 
     if(!_d->open) {
