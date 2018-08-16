@@ -104,7 +104,7 @@ constexpr struct {
     Containers::ArrayView<const char> shortData;
     const char* shortDataError;
 } OpenErrorData[]{
-    {"ascii", ".gltf", {"?", 1}, "JSON string too short.\n\n"},
+    {"ascii", ".gltf", {"?", 1}, "JSON string too short.\n"},
     {"binary", ".glb", {"glTF?", 5}, "Too short data size for glTF Binary.\n"}
 };
 
@@ -236,7 +236,7 @@ void TinyGltfImporterTest::openError() {
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openData(data.shortData));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): error opening file: " + std::string{data.shortDataError});
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: " + std::string{data.shortDataError});
 }
 
 void TinyGltfImporterTest::animation() {

@@ -179,7 +179,8 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
     }
 
     if(!_d->open) {
-        Error() << "Trade::TinyGltfImporter::openFile(): error opening file:" << err;
+        Utility::String::rtrimInPlace(err);
+        Error{} << "Trade::TinyGltfImporter::openData(): error opening file:" << err;
         doClose();
         return;
     }
