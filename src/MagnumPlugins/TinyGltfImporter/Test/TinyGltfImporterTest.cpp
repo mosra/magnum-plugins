@@ -57,7 +57,6 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void open();
     void openError();
-    void openFileError();
 
     void animation();
     void animationWrongTimeType();
@@ -149,8 +148,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::open},
                       Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&TinyGltfImporterTest::openError,
-                       &TinyGltfImporterTest::openFileError},
+    addInstancedTests({&TinyGltfImporterTest::openError},
                       Containers::arraySize(OpenErrorData));
 
     addInstancedTests({&TinyGltfImporterTest::animation},
@@ -239,18 +237,6 @@ void TinyGltfImporterTest::openError() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openData(data.shortData));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openFile(): error opening file: " + std::string{data.shortDataError});
-}
-
-void TinyGltfImporterTest::openFileError() {
-    auto&& data = OpenErrorData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(!importer->openFile("nope" + std::string{data.suffix}));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file nope" + std::string{data.suffix} + "\n");
 }
 
 void TinyGltfImporterTest::animation() {
