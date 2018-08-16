@@ -158,11 +158,14 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         callbacks.ExpandFilePath = [](const std::string& path, void*) {
             return path;
         };
-        callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string*, const std::string& filename, void* userData) {
+        callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string* err, const std::string& filename, void* userData) {
             auto& self = *static_cast<TinyGltfImporter*>(userData);
-            Containers::ArrayView<const char> data = self.fileCallback()(filename, ImporterFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
-            if(!data) return false;
-            out->assign(data.begin(), data.end());
+            Containers::Optional<Containers::ArrayView<const char>> data = self.fileCallback()(filename, ImporterFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
+            if(!data) {
+                *err = "file callback failed";
+                return false;
+            }
+            out->assign(data->begin(), data->end());
             return true;
         };
         loader.SetFsCallbacks(callbacks);

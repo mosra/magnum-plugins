@@ -90,7 +90,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void image();
 
     void fileCallbackBuffer();
+    void fileCallbackBufferNotFound();
     void fileCallbackImage();
+    void fileCallbackImageNotFound();
 
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -192,7 +194,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                       Containers::arraySize(ImageData));
 
     addInstancedTests({&TinyGltfImporterTest::fileCallbackBuffer,
-                       &TinyGltfImporterTest::fileCallbackImage},
+                       &TinyGltfImporterTest::fileCallbackBufferNotFound,
+                       &TinyGltfImporterTest::fileCallbackImage,
+                       &TinyGltfImporterTest::fileCallbackImageNotFound},
                       Containers::arraySize(SingleFileData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -1139,12 +1143,12 @@ void TinyGltfImporterTest::fileCallbackBuffer() {
     Utility::Resource rs{"data"};
     importer->setFileCallback([](const std::string& filename, ImporterFileCallbackPolicy policy, Utility::Resource& rs) {
         Debug{} << "Loading" << filename << "with" << policy;
-        return rs.getRaw(filename);
+        return Containers::optional(rs.getRaw(filename));
     }, rs);
 
     /* Using a different name from the filesystem to avoid false positive
        when the file gets loaded from a filesystem */
-    CORRADE_VERIFY(importer->openFile("data" + std::string{data.suffix}));
+    CORRADE_VERIFY(importer->openFile("some/path/data" + std::string{data.suffix}));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 1);
     auto mesh = importer->mesh3D(0);
@@ -1157,6 +1161,24 @@ void TinyGltfImporterTest::fileCallbackBuffer() {
     CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
         {1.0f, 2.0f, 3.0f}
     }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::fileCallbackBufferNotFound() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    importer->setFileCallback([](const std::string&, ImporterFileCallbackPolicy, void*)
+        -> Containers::Optional<Containers::ArrayView<const char>> { return {}; });
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    Utility::Resource rs{"data"};
+    CORRADE_VERIFY(!importer->openData(rs.getRaw("some/path/data" + std::string{data.suffix})));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File read error : data.bin : file callback failed\n");
 }
 
 void TinyGltfImporterTest::fileCallbackImage() {
@@ -1172,12 +1194,12 @@ void TinyGltfImporterTest::fileCallbackImage() {
     Utility::Resource rs{"data"};
     importer->setFileCallback([](const std::string& filename, ImporterFileCallbackPolicy  policy, Utility::Resource& rs) {
         Debug{} << "Loading" << filename << "with" << policy;
-        return rs.getRaw(filename);
+        return Containers::optional(rs.getRaw(filename));
     }, rs);
 
     /* Using a different name from the filesystem to avoid false positive
        when the file gets loaded from a filesystem */
-    CORRADE_VERIFY(importer->openFile("data" + std::string{data.suffix}));
+    CORRADE_VERIFY(importer->openFile("some/path/data" + std::string{data.suffix}));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     auto image = importer->image2D(0);
@@ -1185,6 +1207,35 @@ void TinyGltfImporterTest::fileCallbackImage() {
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::fileCallbackImageNotFound() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    Utility::Resource rs{"data"};
+    importer->setFileCallback([](const std::string& filename, ImporterFileCallbackPolicy, Utility::Resource& rs)
+            -> Containers::Optional<Containers::ArrayView<const char>>
+        {
+            if(filename == "data.bin")
+                return rs.getRaw("some/path/data.bin");
+            return {};
+        }, rs);
+
+    CORRADE_VERIFY(importer->openData(rs.getRaw("some/path/data" + std::string{data.suffix})));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file data.png\n");
 }
 
 }}}
