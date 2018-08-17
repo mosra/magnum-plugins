@@ -144,12 +144,13 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(!_f) {
         _f.reset(new File);
-        _f->_scene = _f->_importer.ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration()));
+        if(!(_f->_scene = _f->_importer.ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration())))) {
+            Error{} << "Trade::AssimpImporter::openData(): loading failed:" << _f->_importer.GetErrorString();
+            return;
+        }
     }
 
-    if(!_f->_scene) {
-        return;
-    }
+    CORRADE_INTERNAL_ASSERT(_f->_scene);
 
     /* Fill hashmaps for index lookup for materials/textures/meshes/nodes */
     _f->_materialIndicesForName.reserve(_f->_scene->mNumMaterials);
@@ -225,8 +226,11 @@ void AssimpImporter::doOpenState(const void* state, const std::string& filePath)
 
 void AssimpImporter::doOpenFile(const std::string& filename) {
     _f.reset(new File);
-    _f->_scene = _f->_importer.ReadFile(filename, flagsFromConfiguration(configuration()));
     _f->_filePath = Utility::Directory::path(filename);
+    if(!(_f->_scene = _f->_importer.ReadFile(filename, flagsFromConfiguration(configuration())))) {
+        Error{} << "Trade::AssimpImporter::openFile(): failed to open" << filename << Debug::nospace << ":" << _f->_importer.GetErrorString();
+        return;
+    }
 
     doOpenData({});
 }

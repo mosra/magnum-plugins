@@ -75,7 +75,10 @@ public:
 struct AssimpImporterTest: TestSuite::Tester {
     explicit AssimpImporterTest();
 
-    void open();
+    void openFile();
+    void openFileFailed();
+    void openData();
+    void openDataFailed();
 
     void camera();
     void light();
@@ -119,7 +122,10 @@ AssimpImporterTest::AssimpImporterTest() {
             Assimp::Logger::Info|Assimp::Logger::Err|Assimp::Logger::Warn|Assimp::Logger::Debugging);
     #endif
 
-    addTests({&AssimpImporterTest::open,
+    addTests({&AssimpImporterTest::openFile,
+              &AssimpImporterTest::openFileFailed,
+              &AssimpImporterTest::openData,
+              &AssimpImporterTest::openDataFailed,
 
               &AssimpImporterTest::camera});
 
@@ -155,17 +161,51 @@ AssimpImporterTest::AssimpImporterTest() {
     #endif
 }
 
-void AssimpImporterTest::open() {
+void AssimpImporterTest::openFile() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 2);
+
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
+}
+
+void AssimpImporterTest::openFileFailed() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openFile("i-do-not-exist.foo"));
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open i-do-not-exist.foo: Unable to open file \"i-do-not-exist.foo\".\n");
+}
+
+void AssimpImporterTest::openData() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     auto data = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"));
     CORRADE_VERIFY(importer->openData(data));
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 3); /* the file has 2 tho (?!) */
+
+    auto obj = importer->object3D(2);
+    Debug{} << obj->transformation();
 
     importer->close();
     CORRADE_VERIFY(!importer->isOpened());
+}
 
-    CORRADE_VERIFY(!importer->openFile("i-do-not-exists.foo"));
-    CORRADE_VERIFY(!importer->isOpened());
+void AssimpImporterTest::openDataFailed() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    constexpr const char data[] = "what";
+    CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): loading failed: No suitable reader found for the file format of file \"$$$___magic___$$$.\".\n");
 }
 
 void AssimpImporterTest::camera() {
