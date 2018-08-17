@@ -67,7 +67,6 @@ namespace Magnum { namespace Trade {
 
 struct AssimpImporter::File {
     std::string filePath;
-    Assimp::Importer importer;
     const aiScene* scene = nullptr;
     std::vector<aiNode*> nodes;
     std::vector<std::pair<const aiMaterial*, aiTextureType>> textures;
@@ -90,17 +89,17 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
 
 }
 
-AssimpImporter::AssimpImporter() {
+AssimpImporter::AssimpImporter(): _importer{new Assimp::Importer} {
     /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
-AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager) {
+AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager), _importer{new Assimp::Importer} {
     /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
-AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin) {}
+AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin), _importer{new Assimp::Importer}  {}
 
 AssimpImporter::~AssimpImporter() = default;
 
@@ -144,8 +143,8 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(!_f) {
         _f.reset(new File);
-        if(!(_f->scene = _f->importer.ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration())))) {
-            Error{} << "Trade::AssimpImporter::openData(): loading failed:" << _f->importer.GetErrorString();
+        if(!(_f->scene = _importer->ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration())))) {
+            Error{} << "Trade::AssimpImporter::openData(): loading failed:" << _importer->GetErrorString();
             return;
         }
     }
@@ -235,8 +234,9 @@ void AssimpImporter::doOpenState(const void* state, const std::string& filePath)
 void AssimpImporter::doOpenFile(const std::string& filename) {
     _f.reset(new File);
     _f->filePath = Utility::Directory::path(filename);
-    if(!(_f->scene = _f->importer.ReadFile(filename, flagsFromConfiguration(configuration())))) {
-        Error{} << "Trade::AssimpImporter::openFile(): failed to open" << filename << Debug::nospace << ":" << _f->importer.GetErrorString();
+
+    if(!(_f->scene = _importer->ReadFile(filename, flagsFromConfiguration(configuration())))) {
+        Error{} << "Trade::AssimpImporter::openFile(): failed to open" << filename << Debug::nospace << ":" << _importer->GetErrorString();
         return;
     }
 
@@ -244,7 +244,7 @@ void AssimpImporter::doOpenFile(const std::string& filename) {
 }
 
 void AssimpImporter::doClose() {
-    _f->importer.FreeScene();
+    _importer->FreeScene();
     _f.reset();
 }
 

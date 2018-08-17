@@ -50,6 +50,12 @@
 #define MAGNUM_ASSIMPIMPORTER_LOCAL
 #endif
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+namespace Assimp {
+    class Importer;
+}
+#endif
+
 namespace Magnum { namespace Trade {
 
 /**
@@ -259,6 +265,7 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
 
         MAGNUM_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;
 
+        std::unique_ptr<Assimp::Importer> _importer;
         std::unique_ptr<File> _f;
 };
 
