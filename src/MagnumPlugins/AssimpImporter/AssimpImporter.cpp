@@ -113,7 +113,7 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
     UnsignedInt flags = 0;
     const Utility::ConfigurationGroup& postprocess = *conf.group("postprocess");
     #define _c(val) if(postprocess.value<bool>(#val)) flags |= aiProcess_ ## val;
-        /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
+    /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
     _c(JoinIdenticalVertices) /* enabled by default */
     _c(Triangulate) /* enabled by default */
     _c(GenNormals)
