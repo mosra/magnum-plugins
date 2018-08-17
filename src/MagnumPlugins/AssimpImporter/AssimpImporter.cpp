@@ -639,29 +639,10 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
             /* Compressed image data */
             auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
 
-            std::string importerName;
-            if(texture->CheckFormat("dds")) {
-                importerName = "DdsImporter";
-            } else if(texture->CheckFormat("jpg")) {
-                importerName = "JpegImporter";
-            } else if(texture->CheckFormat("pcx")) {
-                importerName = "PxcImporter";
-            } else if(texture->CheckFormat("png") || std::strncmp(textureData.suffix(1).data(), "PNG", 3) == 0) {
-                importerName = "PngImporter";
-            } else {
-                Error() << "Trade::AssimpImporter::image2D(): could not detect filetype of embedded data";
+            AnyImageImporter importer{*manager()};
+            if(!importer.openData(textureData))
                 return Containers::NullOpt;
-            }
-
-            std::unique_ptr<Trade::AbstractImporter> importer = manager()->loadAndInstantiate(importerName);
-            if(!importer) {
-                Error() << "Trade::AssimpImporter::image2D(): could not find importer for embedded data";
-                return Containers::NullOpt;
-            }
-
-            if(!importer->openData(textureData))
-                return Containers::NullOpt;
-            return importer->image2D(0);
+            return importer.image2D(0);
 
         /* Uncompressed image data */
         } else {
