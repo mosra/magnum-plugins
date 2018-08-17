@@ -287,6 +287,7 @@ void OpenGexImporterTest::cameraInvalid() {
 void OpenGexImporterTest::object() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object.ogex")));
+    CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 5);
 

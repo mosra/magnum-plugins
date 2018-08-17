@@ -187,6 +187,7 @@ void AssimpImporterTest::openFile() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+    CORRADE_VERIFY(importer->importerState());
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 2);
 
@@ -601,8 +602,8 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_VERIFY(sc != nullptr);
 
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    importer->openState(sc, ASSIMPIMPORTER_TEST_DIR);
-    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_VERIFY(importer->openState(sc, ASSIMPIMPORTER_TEST_DIR));
+    CORRADE_COMPARE(importer->importerState(), sc);
 
     CORRADE_COMPARE(importer->textureCount(), 1);
     Containers::Optional<Trade::TextureData> texture = importer->texture(0);
