@@ -571,7 +571,8 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
                 return Containers::NullOpt;
             }
 
-            importer->openData(textureData);
+            if(!importer->openData(textureData))
+                return Containers::NullOpt;
             return importer->image2D(0);
 
         /* Uncompressed image data */
@@ -583,7 +584,8 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
     /* Load external texture */
     } else {
         AnyImageImporter importer{*manager()};
-        importer.openFile(Utility::Directory::join(_f->filePath, path));
+        if(!importer.openFile(Utility::Directory::join(_f->filePath, path)))
+            return Containers::NullOpt;
         return importer.image2D(0);
     }
 }

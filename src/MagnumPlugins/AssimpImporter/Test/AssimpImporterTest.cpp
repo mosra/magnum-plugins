@@ -92,8 +92,10 @@ struct AssimpImporterTest: TestSuite::Tester {
     void emptyCollada();
     void emptyGltf();
     void scene();
+    void image();
+    void imageNotFound();
+    void embeddedImage();
     void texture();
-    void embeddedTexture();
 
     void openState();
     void openStateTexture();
@@ -143,8 +145,10 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::emptyCollada,
               &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
+              &AssimpImporterTest::image,
+              &AssimpImporterTest::imageNotFound,
+              &AssimpImporterTest::embeddedImage,
               &AssimpImporterTest::texture,
-              &AssimpImporterTest::embeddedTexture,
 
               &AssimpImporterTest::openState,
               &AssimpImporterTest::openStateTexture,
@@ -444,7 +448,7 @@ void AssimpImporterTest::scene() {
     CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
 }
 
-void AssimpImporterTest::texture() {
+void AssimpImporterTest::image() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 302)
@@ -456,16 +460,6 @@ void AssimpImporterTest::texture() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae")));
 
-    CORRADE_COMPARE(importer->textureCount(), 1);
-    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
-    CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
-    CORRADE_COMPARE(texture->wrapping(),
-        Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
-    CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
-
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -474,7 +468,27 @@ void AssimpImporterTest::texture() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
 }
 
-void AssimpImporterTest::embeddedTexture() {
+void AssimpImporterTest::imageNotFound() {
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
+    if(version < 302)
+        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-not-found.dae")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /not-found.png\n");
+}
+
+void AssimpImporterTest::embeddedImage() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
@@ -485,6 +499,26 @@ void AssimpImporterTest::embeddedTexture() {
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 302)
         CORRADE_SKIP("Current version of assimp cannot load embedded textures from blender files.");
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i{1});
+    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::texture() {
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
+    if(version < 302)
+        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae")));
 
     CORRADE_COMPARE(importer->textureCount(), 1);
     Containers::Optional<Trade::TextureData> texture = importer->texture(0);
