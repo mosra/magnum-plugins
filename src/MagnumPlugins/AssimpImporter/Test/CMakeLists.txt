@@ -52,6 +52,8 @@ endif()
 corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
+        empty.dae
+        empty.gltf
         camera.dae
         diffuse_texture.png
         embedded-texture.blend

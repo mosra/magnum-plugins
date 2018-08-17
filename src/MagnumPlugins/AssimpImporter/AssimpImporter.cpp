@@ -177,41 +177,49 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
-    /* If no nodes, nothing more to do */
-    aiNode* root = _f->_scene->mRootNode;
-    if(!root) return;
+    /* For some formats (such as COLLADA) Assimp fails to open the scene if
+       there are no nodes, so there this is always non-null. For other formats
+       (such as glTF) Assimp happily provides a null root node, even thought
+       that's not the documented behavior. */
+    aiNode* const root = _f->_scene->mRootNode;
+    if(root) {
+        /* I would assert here on !root->mNumMeshes to verify I didn't miss
+           anything in the root node, but at least for COLLADA, if the file has
+           no meshes, it adds some bogus one, thinking it's a skeleton-only
+           file and trying to be helpful. Ugh.
+           https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
 
-    /* Children + root itself */
-    _f->_nodes.reserve(root->mNumChildren + 1);
-    _f->_nodes.push_back(root);
+        /* Extract children of the root node, as we treat the root node as the
+           scene here and it has no transformation or anything attached. */
+        _f->_nodes.reserve(root->mNumChildren);
+        _f->_nodes.insert(_f->_nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
+        _f->_nodeIndices.reserve(root->mNumChildren);
 
-    _f->_nodeIndices.reserve(root->mNumChildren + 1);
+        /* Insert may invalidate iterators, so we use indices here. */
+        for(std::size_t i = 0; i < _f->_nodes.size(); ++i) {
+            aiNode* node = _f->_nodes[i];
+            _f->_nodeIndices[node] = UnsignedInt(i);
 
-    /* Insert may invalidate iterators, so we use indices here. */
-    for(std::size_t i = 0; i < _f->_nodes.size(); ++i) {
-        aiNode* node = _f->_nodes[i];
-        _f->_nodeIndices[node] = UnsignedInt(i);
+            _f->_nodes.insert(_f->_nodes.end(), node->mChildren, node->mChildren + node->mNumChildren);
 
-        Containers::ArrayView<aiNode*> children(node->mChildren, node->mNumChildren);
-        _f->_nodes.insert(_f->_nodes.end(), children.begin(), children.end());
-
-        if(node->mNumMeshes > 0) {
-            /** @todo: Support multiple meshes per node */
-            _f->_nodeInstances[node] = {ObjectInstanceType3D::Mesh, node->mMeshes[0]};
+            if(node->mNumMeshes > 0) {
+                /** @todo: Support multiple meshes per node */
+                _f->_nodeInstances[node] = {ObjectInstanceType3D::Mesh, node->mMeshes[0]};
+            }
         }
-    }
 
-    for(std::size_t i = 0; i < _f->_scene->mNumCameras; ++i) {
-        const aiNode* cameraNode = _f->_scene->mRootNode->FindNode(_f->_scene->mCameras[i]->mName);
-        if(cameraNode) {
-            _f->_nodeInstances[cameraNode] = {ObjectInstanceType3D::Camera, i};
+        for(std::size_t i = 0; i < _f->_scene->mNumCameras; ++i) {
+            const aiNode* cameraNode = _f->_scene->mRootNode->FindNode(_f->_scene->mCameras[i]->mName);
+            if(cameraNode) {
+                _f->_nodeInstances[cameraNode] = {ObjectInstanceType3D::Camera, i};
+            }
         }
-    }
 
-    for(std::size_t i = 0; i < _f->_scene->mNumLights; ++i) {
-        const aiNode* lightNode = _f->_scene->mRootNode->FindNode(_f->_scene->mLights[i]->mName);
-        if(lightNode) {
-            _f->_nodeInstances[lightNode] = {ObjectInstanceType3D::Light, i};
+        for(std::size_t i = 0; i < _f->_scene->mNumLights; ++i) {
+            const aiNode* lightNode = _f->_scene->mRootNode->FindNode(_f->_scene->mLights[i]->mName);
+            if(lightNode) {
+                _f->_nodeInstances[lightNode] = {ObjectInstanceType3D::Light, i};
+            }
         }
     }
 }

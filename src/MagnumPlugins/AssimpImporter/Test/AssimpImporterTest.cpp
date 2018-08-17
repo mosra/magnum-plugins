@@ -89,6 +89,8 @@ struct AssimpImporterTest: TestSuite::Tester {
     void pointMesh();
     void lineMesh();
 
+    void emptyCollada();
+    void emptyGltf();
     void scene();
     void texture();
     void embeddedTexture();
@@ -138,6 +140,8 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::pointMesh,
               &AssimpImporterTest::lineMesh,
 
+              &AssimpImporterTest::emptyCollada,
+              &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
               &AssimpImporterTest::texture,
               &AssimpImporterTest::embeddedTexture,
@@ -168,6 +172,12 @@ void AssimpImporterTest::openFile() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 2);
 
+    {
+        /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
+        CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
+        CORRADE_VERIFY(!importer->mesh3DCount());
+    }
+
     importer->close();
     CORRADE_VERIFY(!importer->isOpened());
 }
@@ -188,10 +198,13 @@ void AssimpImporterTest::openData() {
     auto data = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"));
     CORRADE_VERIFY(importer->openData(data));
     CORRADE_COMPARE(importer->sceneCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 3); /* the file has 2 tho (?!) */
+    CORRADE_COMPARE(importer->object3DCount(), 2);
 
-    auto obj = importer->object3D(2);
-    Debug{} << obj->transformation();
+    {
+        /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
+        CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
+        CORRADE_VERIFY(!importer->mesh3DCount());
+    }
 
     importer->close();
     CORRADE_VERIFY(!importer->isOpened());
@@ -219,9 +232,9 @@ void AssimpImporterTest::camera() {
     CORRADE_COMPARE(camera->near(), 0.123f);
     CORRADE_COMPARE(camera->far(), 123.0f);
 
-    CORRADE_COMPARE(importer->object3DCount(), 2);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    std::unique_ptr<Trade::ObjectData3D> cameraObject = importer->object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> cameraObject = importer->object3D(0);
     CORRADE_COMPARE(cameraObject->instanceType(), ObjectInstanceType3D::Camera);
     CORRADE_COMPARE(cameraObject->instance(), 0);
 }
@@ -233,7 +246,7 @@ void AssimpImporterTest::light() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
 
     CORRADE_COMPARE(importer->lightCount(), 3);
-    CORRADE_COMPARE(importer->object3DCount(), 4); /* root + 3 light objects */
+    CORRADE_COMPARE(importer->object3DCount(), 3);
 
     Containers::Optional<Trade::LightData> light = importer->light(testCaseInstanceId());
     CORRADE_VERIFY(light);
@@ -241,7 +254,7 @@ void AssimpImporterTest::light() {
     CORRADE_COMPARE(light->color(), data.color);
     CORRADE_COMPARE(light->intensity(), 1.0f);
 
-    std::unique_ptr<Trade::ObjectData3D> lightObject = importer->object3D(testCaseInstanceId() + 1);
+    std::unique_ptr<Trade::ObjectData3D> lightObject = importer->object3D(testCaseInstanceId());
     CORRADE_COMPARE(lightObject->instanceType(), ObjectInstanceType3D::Light);
     CORRADE_COMPARE(lightObject->instance(), testCaseInstanceId());
 }
@@ -296,6 +309,7 @@ void AssimpImporterTest::mesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
@@ -321,7 +335,7 @@ void AssimpImporterTest::mesh() {
     }
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
 
-    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
@@ -331,6 +345,7 @@ void AssimpImporterTest::pointMesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "points.obj")));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
@@ -345,7 +360,7 @@ void AssimpImporterTest::pointMesh() {
         {0.5f, 2.0f, 3.0f}, {2.0f, 3.0f, 5.0f}, {0.0f, 1.5f, 1.0f}}));
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2, 0}));
 
-    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
@@ -355,6 +370,7 @@ void AssimpImporterTest::lineMesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "line.dae")));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
@@ -369,39 +385,61 @@ void AssimpImporterTest::lineMesh() {
         {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}}));
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1}));
 
-    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(1);
+    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
+}
+
+void AssimpImporterTest::emptyCollada() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    /* Instead of giving out an empty file, assimp fails on opening, but only
+       for COLLADA, not for e.g. glTF. I have a different opinion about the
+       behavior, but whatever. */
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "empty.dae")));
+}
+
+void AssimpImporterTest::emptyGltf() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
+    CORRADE_COMPARE(importer->defaultScene(), -1);
+    CORRADE_COMPARE(importer->sceneCount(), 0);
+    CORRADE_COMPARE(importer->object3DCount(), 0);
+
+    /* No crazy meshes created for an empty glTF file, unlike with COLLADA
+       files that have no meshes */
+    CORRADE_COMPARE(importer->mesh3DCount(), 0);
 }
 
 void AssimpImporterTest::scene() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
 
-    CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->defaultScene(), 0);
-    Containers::Optional<Trade::SceneData> data = importer->scene(0);
-    CORRADE_VERIFY(data);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 2);
 
-    CORRADE_COMPARE(data->children2D(), {});
-    CORRADE_COMPARE(data->children3D(), {1});
+    Containers::Optional<Trade::SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->children3D(), {0});
 
-    std::unique_ptr<Trade::ObjectData3D> explicitRootObject = importer->object3D(1);
-    CORRADE_COMPARE(explicitRootObject->children(), {2});
-    CORRADE_COMPARE(explicitRootObject->instanceType(), ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
+    std::unique_ptr<Trade::ObjectData3D> parent = importer->object3D(0);
+    CORRADE_COMPARE(parent->children(), {1});
+    CORRADE_COMPARE(parent->instanceType(), ObjectInstanceType3D::Empty);
+    CORRADE_COMPARE(parent->transformation(), Matrix4::scaling({1.0f, 2.0f, 3.0f}));
 
-    std::unique_ptr<Trade::ObjectData3D> childObject = importer->object3D(2);
+    std::unique_ptr<Trade::ObjectData3D> childObject = importer->object3D(1);
     CORRADE_COMPARE(childObject->transformation(), (Matrix4{
         {0.813798f, 0.469846f, -0.34202f, 0.0f},
         {-0.44097f, 0.882564f, 0.163176f, 0.0f},
         {0.378522f, 0.0180283f, 0.925417f, 0.0f},
         {1.0f, 2.0f, 3.0f, 1.0f}}));
 
-    CORRADE_COMPARE(importer->object3DForName("Root"), 1);
-    CORRADE_COMPARE(importer->object3DForName("Child"), 2);
-    CORRADE_COMPARE(importer->object3DName(1), "Root");
-    CORRADE_COMPARE(importer->object3DName(2), "Child");
+    CORRADE_COMPARE(importer->object3DForName("Parent"), 0);
+    CORRADE_COMPARE(importer->object3DForName("Child"), 1);
+    CORRADE_COMPARE(importer->object3DName(0), "Parent");
+    CORRADE_COMPARE(importer->object3DName(1), "Child");
 
     CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
 }
@@ -477,30 +515,28 @@ void AssimpImporterTest::openState() {
 
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->defaultScene(), 0);
-    Containers::Optional<Trade::SceneData> data = importer->scene(0);
-    CORRADE_VERIFY(data);
+    CORRADE_COMPARE(importer->object3DCount(), 2);
 
-    CORRADE_COMPARE(data->children2D(), {});
-    CORRADE_COMPARE(data->children3D(), {1});
+    Containers::Optional<Trade::SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->children3D(), {0});
 
-    std::unique_ptr<Trade::ObjectData3D> explicitRootObject = importer->object3D(1);
-    CORRADE_COMPARE(explicitRootObject->children(), {2});
-    CORRADE_COMPARE(explicitRootObject->instanceType(), ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
+    std::unique_ptr<Trade::ObjectData3D> parent = importer->object3D(0);
+    CORRADE_COMPARE(parent->children(), {1});
+    CORRADE_COMPARE(parent->instanceType(), ObjectInstanceType3D::Empty);
+    CORRADE_COMPARE(parent->transformation(), Matrix4::scaling({1.0f, 2.0f, 3.0f}));
 
-    std::unique_ptr<Trade::ObjectData3D> childObject = importer->object3D(2);
+    std::unique_ptr<Trade::ObjectData3D> childObject = importer->object3D(1);
     CORRADE_COMPARE(childObject->transformation(), (Matrix4{
         {0.813798f, 0.469846f, -0.34202f, 0.0f},
         {-0.44097f, 0.882564f, 0.163176f, 0.0f},
         {0.378522f, 0.0180283f, 0.925417f, 0.0f},
         {1.0f, 2.0f, 3.0f, 1.0f}}));
 
-    CORRADE_COMPARE(importer->object3DForName("Root"), 1);
-    CORRADE_COMPARE(importer->object3DForName("Child"), 2);
-    CORRADE_COMPARE(importer->object3DName(1), "Root");
-    CORRADE_COMPARE(importer->object3DName(2), "Child");
-
-    CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
+    CORRADE_COMPARE(importer->object3DForName("Parent"), 0);
+    CORRADE_COMPARE(importer->object3DForName("Child"), 1);
+    CORRADE_COMPARE(importer->object3DName(0), "Parent");
+    CORRADE_COMPARE(importer->object3DName(1), "Child");
 }
 
 void AssimpImporterTest::openStateTexture() {

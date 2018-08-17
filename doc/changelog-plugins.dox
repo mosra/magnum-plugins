@@ -111,6 +111,9 @@ namespace Magnum {
     message on file opening error instead of failing silently
 -   @ref Trade::AssimpImporter "AssimpImporter" incorrectly imported object
     transformation matrices transposed
+-   @ref Trade::AssimpImporter "AssimpImporter" incorrectly imported the scene
+    twice, once as a scene and once as a object that all other objects were
+    parented to
 
 @section changelog-plugins-2018-04 2018.04
 
