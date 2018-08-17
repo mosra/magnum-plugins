@@ -66,16 +66,16 @@ template<> struct VectorConverter<3, Float, aiColor3D> {
 namespace Magnum { namespace Trade {
 
 struct AssimpImporter::File {
-    std::string _filePath;
-    Assimp::Importer _importer;
-    const aiScene* _scene = nullptr;
-    std::vector<aiNode*> _nodes;
-    std::vector<std::pair<const aiMaterial*, aiTextureType>> _textures;
+    std::string filePath;
+    Assimp::Importer importer;
+    const aiScene* scene = nullptr;
+    std::vector<aiNode*> nodes;
+    std::vector<std::pair<const aiMaterial*, aiTextureType>> textures;
 
-    std::unordered_map<const aiNode*, UnsignedInt> _nodeIndices;
-    std::unordered_map<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> _nodeInstances;
-    std::unordered_map<std::string, UnsignedInt> _materialIndicesForName;
-    std::unordered_map<const aiMaterial*, UnsignedInt> _textureIndices;
+    std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
+    std::unordered_map<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> nodeInstances;
+    std::unordered_map<std::string, UnsignedInt> materialIndicesForName;
+    std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
 };
 
 namespace {
@@ -106,7 +106,7 @@ AssimpImporter::~AssimpImporter() = default;
 
 auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData | Feature::OpenState; }
 
-bool AssimpImporter::doIsOpened() const { return _f && _f->_scene; }
+bool AssimpImporter::doIsOpened() const { return _f && _f->scene; }
 
 namespace {
 
@@ -144,34 +144,34 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(!_f) {
         _f.reset(new File);
-        if(!(_f->_scene = _f->_importer.ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration())))) {
-            Error{} << "Trade::AssimpImporter::openData(): loading failed:" << _f->_importer.GetErrorString();
+        if(!(_f->scene = _f->importer.ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration())))) {
+            Error{} << "Trade::AssimpImporter::openData(): loading failed:" << _f->importer.GetErrorString();
             return;
         }
     }
 
-    CORRADE_INTERNAL_ASSERT(_f->_scene);
+    CORRADE_INTERNAL_ASSERT(_f->scene);
 
     /* Fill hashmaps for index lookup for materials/textures/meshes/nodes */
-    _f->_materialIndicesForName.reserve(_f->_scene->mNumMaterials);
+    _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
 
     aiString matName;
     aiString texturePath;
     Int textureIndex = 0;
-    for(std::size_t i = 0; i < _f->_scene->mNumMaterials; ++i) {
-        const aiMaterial* mat = _f->_scene->mMaterials[i];
+    for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
+        const aiMaterial* mat = _f->scene->mMaterials[i];
 
         if(mat->Get(AI_MATKEY_NAME, matName) == AI_SUCCESS) {
             std::string name = matName.C_Str();
-            _f->_materialIndicesForName[name] = i;
+            _f->materialIndicesForName[name] = i;
         }
 
         /* Store first possible texture index for this material */
-        _f->_textureIndices[mat] = textureIndex;
+        _f->textureIndices[mat] = textureIndex;
         for(auto type: {aiTextureType_AMBIENT, aiTextureType_DIFFUSE, aiTextureType_SPECULAR}) {
             if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) == AI_SUCCESS) {
                 std::string path = texturePath.C_Str();
-                _f->_textures.emplace_back(mat, type);
+                _f->textures.emplace_back(mat, type);
                 ++textureIndex;
             }
         }
@@ -181,7 +181,7 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
        there are no nodes, so there this is always non-null. For other formats
        (such as glTF) Assimp happily provides a null root node, even thought
        that's not the documented behavior. */
-    aiNode* const root = _f->_scene->mRootNode;
+    aiNode* const root = _f->scene->mRootNode;
     if(root) {
         /* I would assert here on !root->mNumMeshes to verify I didn't miss
            anything in the root node, but at least for COLLADA, if the file has
@@ -191,34 +191,34 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
         /* Extract children of the root node, as we treat the root node as the
            scene here and it has no transformation or anything attached. */
-        _f->_nodes.reserve(root->mNumChildren);
-        _f->_nodes.insert(_f->_nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
-        _f->_nodeIndices.reserve(root->mNumChildren);
+        _f->nodes.reserve(root->mNumChildren);
+        _f->nodes.insert(_f->nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
+        _f->nodeIndices.reserve(root->mNumChildren);
 
         /* Insert may invalidate iterators, so we use indices here. */
-        for(std::size_t i = 0; i < _f->_nodes.size(); ++i) {
-            aiNode* node = _f->_nodes[i];
-            _f->_nodeIndices[node] = UnsignedInt(i);
+        for(std::size_t i = 0; i < _f->nodes.size(); ++i) {
+            aiNode* node = _f->nodes[i];
+            _f->nodeIndices[node] = UnsignedInt(i);
 
-            _f->_nodes.insert(_f->_nodes.end(), node->mChildren, node->mChildren + node->mNumChildren);
+            _f->nodes.insert(_f->nodes.end(), node->mChildren, node->mChildren + node->mNumChildren);
 
             if(node->mNumMeshes > 0) {
                 /** @todo: Support multiple meshes per node */
-                _f->_nodeInstances[node] = {ObjectInstanceType3D::Mesh, node->mMeshes[0]};
+                _f->nodeInstances[node] = {ObjectInstanceType3D::Mesh, node->mMeshes[0]};
             }
         }
 
-        for(std::size_t i = 0; i < _f->_scene->mNumCameras; ++i) {
-            const aiNode* cameraNode = _f->_scene->mRootNode->FindNode(_f->_scene->mCameras[i]->mName);
+        for(std::size_t i = 0; i < _f->scene->mNumCameras; ++i) {
+            const aiNode* cameraNode = _f->scene->mRootNode->FindNode(_f->scene->mCameras[i]->mName);
             if(cameraNode) {
-                _f->_nodeInstances[cameraNode] = {ObjectInstanceType3D::Camera, i};
+                _f->nodeInstances[cameraNode] = {ObjectInstanceType3D::Camera, i};
             }
         }
 
-        for(std::size_t i = 0; i < _f->_scene->mNumLights; ++i) {
-            const aiNode* lightNode = _f->_scene->mRootNode->FindNode(_f->_scene->mLights[i]->mName);
+        for(std::size_t i = 0; i < _f->scene->mNumLights; ++i) {
+            const aiNode* lightNode = _f->scene->mRootNode->FindNode(_f->scene->mLights[i]->mName);
             if(lightNode) {
-                _f->_nodeInstances[lightNode] = {ObjectInstanceType3D::Light, i};
+                _f->nodeInstances[lightNode] = {ObjectInstanceType3D::Light, i};
             }
         }
     }
@@ -226,17 +226,17 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 void AssimpImporter::doOpenState(const void* state, const std::string& filePath) {
     _f.reset(new File);
-    _f->_scene = static_cast<const aiScene*>(state);
-    _f->_filePath = filePath;
+    _f->scene = static_cast<const aiScene*>(state);
+    _f->filePath = filePath;
 
     doOpenData({});
 }
 
 void AssimpImporter::doOpenFile(const std::string& filename) {
     _f.reset(new File);
-    _f->_filePath = Utility::Directory::path(filename);
-    if(!(_f->_scene = _f->_importer.ReadFile(filename, flagsFromConfiguration(configuration())))) {
-        Error{} << "Trade::AssimpImporter::openFile(): failed to open" << filename << Debug::nospace << ":" << _f->_importer.GetErrorString();
+    _f->filePath = Utility::Directory::path(filename);
+    if(!(_f->scene = _f->importer.ReadFile(filename, flagsFromConfiguration(configuration())))) {
+        Error{} << "Trade::AssimpImporter::openFile(): failed to open" << filename << Debug::nospace << ":" << _f->importer.GetErrorString();
         return;
     }
 
@@ -244,67 +244,67 @@ void AssimpImporter::doOpenFile(const std::string& filename) {
 }
 
 void AssimpImporter::doClose() {
-    _f->_importer.FreeScene();
+    _f->importer.FreeScene();
     _f.reset();
 }
 
-Int AssimpImporter::doDefaultScene() { return _f->_scene->mRootNode ? 0 : -1; }
+Int AssimpImporter::doDefaultScene() { return _f->scene->mRootNode ? 0 : -1; }
 
-UnsignedInt AssimpImporter::doSceneCount() const { return _f->_scene->mRootNode ? 1 : 0; }
+UnsignedInt AssimpImporter::doSceneCount() const { return _f->scene->mRootNode ? 1 : 0; }
 
 Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
-    const aiNode* root = _f->_scene->mRootNode;
+    const aiNode* root = _f->scene->mRootNode;
 
     std::vector<UnsignedInt> children;
     children.reserve(root->mNumChildren);
     for(std::size_t i = 0; i < root->mNumChildren; ++i)
-        children.push_back(_f->_nodeIndices[root->mChildren[i]]);
+        children.push_back(_f->nodeIndices[root->mChildren[i]]);
 
     return SceneData{{}, std::move(children), root};
 }
 
 UnsignedInt AssimpImporter::doCameraCount() const {
-    return _f->_scene->mNumCameras;
+    return _f->scene->mNumCameras;
 }
 
 Containers::Optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
-    const aiCamera* cam = _f->_scene->mCameras[id];
+    const aiCamera* cam = _f->scene->mCameras[id];
     /** @todo aspect and up vector are not used... */
     return CameraData(Rad(cam->mHorizontalFOV), cam->mClipPlaneNear, cam->mClipPlaneFar, cam);
 }
 
 UnsignedInt AssimpImporter::doObject3DCount() const {
-    return _f->_nodes.size();
+    return _f->nodes.size();
 }
 
 Int AssimpImporter::doObject3DForName(const std::string& name) {
-    const aiNode* found = _f->_scene->mRootNode->FindNode(aiString(name));
-    return found ? _f->_nodeIndices[found] : -1;
+    const aiNode* found = _f->scene->mRootNode->FindNode(aiString(name));
+    return found ? _f->nodeIndices[found] : -1;
 }
 
 std::string AssimpImporter::doObject3DName(const UnsignedInt id) {
-    return _f->_nodes[id]->mName.C_Str();
+    return _f->nodes[id]->mName.C_Str();
 }
 
 std::unique_ptr<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
     /** @todo support for bone nodes */
-    const aiNode* node = _f->_nodes[id];
+    const aiNode* node = _f->nodes[id];
 
     /* Gather child indices */
     std::vector<UnsignedInt> children;
     children.reserve(node->mNumChildren);
     for(auto child: Containers::arrayView(node->mChildren, node->mNumChildren))
-        children.push_back(_f->_nodeIndices[child]);
+        children.push_back(_f->nodeIndices[child]);
 
     /* aiMatrix4x4 is always row-major, transpose */
     const Matrix4 transformation = Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation)).transposed();
 
-    auto instance = _f->_nodeInstances.find(node);
-    if(instance != _f->_nodeInstances.end()) {
+    auto instance = _f->nodeInstances.find(node);
+    if(instance != _f->nodeInstances.end()) {
         const ObjectInstanceType3D type = (*instance).second.first;
         const int index = (*instance).second.second;
         if(type == ObjectInstanceType3D::Mesh) {
-            const aiMesh* mesh = _f->_scene->mMeshes[index];
+            const aiMesh* mesh = _f->scene->mMeshes[index];
             return std::unique_ptr<MeshObjectData3D>(new MeshObjectData3D(children, transformation, index, mesh->mMaterialIndex, node));
         }
 
@@ -315,11 +315,11 @@ std::unique_ptr<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
 }
 
 UnsignedInt AssimpImporter::doLightCount() const {
-    return _f->_scene->mNumLights;
+    return _f->scene->mNumLights;
 }
 
 Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
-    const aiLight* l = _f->_scene->mLights[id];
+    const aiLight* l = _f->scene->mLights[id];
 
     LightData::Type lightType;
     if(l->mType == aiLightSource_DIRECTIONAL) {
@@ -340,11 +340,11 @@ Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
 }
 
 UnsignedInt AssimpImporter::doMesh3DCount() const {
-    return _f->_scene->mNumMeshes;
+    return _f->scene->mNumMeshes;
 }
 
 Containers::Optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
-    const aiMesh* mesh = _f->_scene->mMeshes[id];
+    const aiMesh* mesh = _f->scene->mMeshes[id];
 
     /* Primitive */
     MeshPrimitive primitive;
@@ -416,15 +416,15 @@ Containers::Optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) 
     return MeshData3D(primitive, std::move(indices), std::move(positions), std::move(normals), std::move(textureCoordinates), std::move(colors), mesh);
 }
 
-UnsignedInt AssimpImporter::doMaterialCount() const { return _f->_scene->mNumMaterials; }
+UnsignedInt AssimpImporter::doMaterialCount() const { return _f->scene->mNumMaterials; }
 
 Int AssimpImporter::doMaterialForName(const std::string& name) {
-    auto found = _f->_materialIndicesForName.find(name);
-    return found != _f->_materialIndicesForName.end() ? found->second : -1;
+    auto found = _f->materialIndicesForName.find(name);
+    return found != _f->materialIndicesForName.end() ? found->second : -1;
 }
 
 std::string AssimpImporter::doMaterialName(const UnsignedInt id) {
-    const aiMaterial* mat = _f->_scene->mMaterials[id];
+    const aiMaterial* mat = _f->scene->mMaterials[id];
     aiString name;
     mat->Get(AI_MATKEY_NAME, name);
 
@@ -433,7 +433,7 @@ std::string AssimpImporter::doMaterialName(const UnsignedInt id) {
 
 std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedInt id) {
     /* Put things together */
-    const aiMaterial* mat = _f->_scene->mMaterials[id];
+    const aiMaterial* mat = _f->scene->mMaterials[id];
 
     /* Verify that shading mode is either unknown or Phong (not supporting
        anything else ATM) */
@@ -479,7 +479,7 @@ std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedI
     return std::move(data);
 }
 
-UnsignedInt AssimpImporter::doTextureCount() const { return _f->_textures.size(); }
+UnsignedInt AssimpImporter::doTextureCount() const { return _f->textures.size(); }
 
 Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id) {
     auto toWrapping = [](aiTextureMapMode mapMode) {
@@ -504,8 +504,8 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
     };
 
     aiTextureMapMode mapMode;
-    const aiMaterial* mat = _f->_textures[id].first;
-    const aiTextureType type = _f->_textures[id].second;
+    const aiMaterial* mat = _f->textures[id].first;
+    const aiTextureType type = _f->textures[id].second;
     SamplerWrapping wrappingU = SamplerWrapping::ClampToEdge;
     SamplerWrapping wrappingV = SamplerWrapping::ClampToEdge;
     if(mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mapMode) == AI_SUCCESS)
@@ -515,17 +515,17 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
 
     return TextureData{TextureData::Type::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
-        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, id, &_f->_textures[id]};
+        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, id, &_f->textures[id]};
 }
 
-UnsignedInt AssimpImporter::doImage2DCount() const { return _f->_textures.size(); }
+UnsignedInt AssimpImporter::doImage2DCount() const { return _f->textures.size(); }
 
 Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
     CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
     const aiMaterial* mat;
     aiTextureType type;
-    std::tie(mat, type) = _f->_textures[id];
+    std::tie(mat, type) = _f->textures[id];
 
     aiString texturePath;
     if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) != AI_SUCCESS) {
@@ -546,7 +546,7 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
             return Containers::NullOpt;
         }
 
-        const aiTexture* texture = _f->_scene->mTextures[index];
+        const aiTexture* texture = _f->scene->mTextures[index];
         if(texture->mHeight == 0) {
             /* Compressed image data */
             auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
@@ -583,13 +583,13 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
     /* Load external texture */
     } else {
         AnyImageImporter importer{*manager()};
-        importer.openFile(Utility::Directory::join(_f->_filePath, path));
+        importer.openFile(Utility::Directory::join(_f->filePath, path));
         return importer.image2D(0);
     }
 }
 
 const void* AssimpImporter::doImporterState() const {
-    return _f->_scene;
+    return _f->scene;
 }
 
 }}
