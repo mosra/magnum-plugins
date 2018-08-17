@@ -70,6 +70,17 @@ and link to the `MagnumPlugins::OpenGexImporter` target. See
 
 @section Trade-OpenGexImporter-limitations Behavior and limitations
 
+The plugin supports @ref Feature::OpenData and @ref Feature::FileCallback
+features. The importer fully loads the top-level file during initial import,
+meaning there is at most one @ref ImporterFileCallbackPolicy::LoadTemporary
+callback followed by @ref ImporterFileCallbackPolicy::Close and the data can
+freed right after the @ref openData() / @ref openFile() function exits. In case
+of images, the files are loaded on-demand inside @ref image2D() calls with
+@ref ImporterFileCallbackPolicy::LoadTemporary and
+@ref ImporterFileCallbackPolicy::Close is emitted right after the file is fully
+read.
+
+-   Import of animation data is not supported at the moment.
 -   `half` data type results in parsing error.
 -   On OpenGL ES, usage of double type and on WebGL additionally also usage of
     64bit integer types results in parsing error.

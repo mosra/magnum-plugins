@@ -127,6 +127,18 @@ information.
 
 @section Trade-AssimpImporter-limitations Behavior and limitations
 
+The plugin supports @ref Feature::OpenData and @ref Feature::FileCallback
+features. The Assimp library loads everything during initial import, meaning
+all external file loading callbacks are called with
+@ref ImporterFileCallbackPolicy::LoadTemporary and the resources can be safely
+freed right after the @ref openData() / @ref openFile() function exits. In some
+cases, Assimp will explicitly call @ref ImporterFileCallbackPolicy::Close on
+the opened file and then open it again. In case of images, the files are loaded
+on-demand inside @ref image2D() calls with @ref ImporterFileCallbackPolicy::LoadTemporary and @ref ImporterFileCallbackPolicy::Close
+is emitted right after the file is fully read.
+
+Import of animation data is not supported at the moment.
+
 @subsection Trade-AssimpImporter-limitations-materials Material import
 
 -   Only materials with shading mode `aiShadingMode_Phong` are supported
@@ -152,6 +164,9 @@ information.
 -   Only the first mesh of a `aiNode` is loaded
 -   Only triangle meshes are loaded
 -   Texture coordinate layers with other than two components are skipped
+-   For some file formats (such as COLLADA), Assimp may create a dummy
+    "skeleton visualizer" mesh if the file has no mesh data. For others (such
+    as glTF) not.
 
 @subsection Trade-AssimpImporter-limitations-textures Texture import
 
@@ -160,13 +175,11 @@ information.
 -   Assimp does not appear to load any filtering information
 -   Raw embedded image data is not supported
 
-@subsection Trade-AssimpImporter-limitations-bones Bone import
+@subsection Trade-AssimpImporter-limitations-scene Scene import
 
--   Not supported
-
-@subsection Trade-AssimpImporter-limitations-animations Animation import
-
--   Not supported
+-   For some file formats (such as COLLADA), Assimp fails to load the file if
+    it doesn't contain any scene. For some (such as glTF) it will succeed and
+    @ref sceneCount() / @ref object3DCount() will return zero.
 
 @section Trade-AssimpImporter-configuration Plugin-specific configuration
 
