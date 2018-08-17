@@ -109,6 +109,8 @@ namespace Magnum {
     compiling @ref Trade::StbImageImporter "StbImageImporter" on GCC 5
 -   @ref Trade::AssimpImporter "AssimpImporter" now properly prints out an
     message on file opening error instead of failing silently
+-   @ref Trade::AssimpImporter "AssimpImporter" incorrectly imported object
+    transformation matrices transposed
 
 @section changelog-plugins-2018-04 2018.04
 

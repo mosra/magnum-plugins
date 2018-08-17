@@ -392,11 +392,11 @@ void AssimpImporterTest::scene() {
     CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
 
     std::unique_ptr<Trade::ObjectData3D> childObject = importer->object3D(2);
-    CORRADE_COMPARE(childObject->transformation(), Matrix4(
-        {0.813798f, -0.44097f, 0.378522f, 1.0f},
-        {0.469846f, 0.882564f, 0.0180283f, 2.0f},
-        {-0.34202f, 0.163176f, 0.925417f, 3.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f}));
+    CORRADE_COMPARE(childObject->transformation(), (Matrix4{
+        {0.813798f, 0.469846f, -0.34202f, 0.0f},
+        {-0.44097f, 0.882564f, 0.163176f, 0.0f},
+        {0.378522f, 0.0180283f, 0.925417f, 0.0f},
+        {1.0f, 2.0f, 3.0f, 1.0f}}));
 
     CORRADE_COMPARE(importer->object3DForName("Root"), 1);
     CORRADE_COMPARE(importer->object3DForName("Child"), 2);
@@ -489,11 +489,11 @@ void AssimpImporterTest::openState() {
     CORRADE_COMPARE(explicitRootObject->transformation(), Matrix4());
 
     std::unique_ptr<Trade::ObjectData3D> childObject = importer->object3D(2);
-    CORRADE_COMPARE(childObject->transformation(), Matrix4(
-        {0.813798f, -0.44097f, 0.378522f, 1.0f},
-        {0.469846f, 0.882564f, 0.0180283f, 2.0f},
-        {-0.34202f, 0.163176f, 0.925417f, 3.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f}));
+    CORRADE_COMPARE(childObject->transformation(), (Matrix4{
+        {0.813798f, 0.469846f, -0.34202f, 0.0f},
+        {-0.44097f, 0.882564f, 0.163176f, 0.0f},
+        {0.378522f, 0.0180283f, 0.925417f, 0.0f},
+        {1.0f, 2.0f, 3.0f, 1.0f}}));
 
     CORRADE_COMPARE(importer->object3DForName("Root"), 1);
     CORRADE_COMPARE(importer->object3DForName("Child"), 2);

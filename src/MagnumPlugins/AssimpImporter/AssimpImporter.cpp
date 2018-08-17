@@ -288,7 +288,8 @@ std::unique_ptr<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
     for(auto child: Containers::arrayView(node->mChildren, node->mNumChildren))
         children.push_back(_f->_nodeIndices[child]);
 
-    const Matrix4 transformation = Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation));
+    /* aiMatrix4x4 is always row-major, transpose */
+    const Matrix4 transformation = Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation)).transposed();
 
     auto instance = _f->_nodeInstances.find(node);
     if(instance != _f->_nodeInstances.end()) {
