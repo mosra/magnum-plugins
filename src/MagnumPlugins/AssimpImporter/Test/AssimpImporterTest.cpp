@@ -419,6 +419,10 @@ void AssimpImporterTest::emptyCollada() {
 }
 
 void AssimpImporterTest::emptyGltf() {
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    if(version < 401)
+        CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
+
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
