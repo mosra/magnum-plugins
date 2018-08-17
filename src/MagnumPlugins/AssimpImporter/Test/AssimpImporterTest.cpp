@@ -27,6 +27,8 @@
 #define MAGNUM_ASSIMPIMPORTER_DEBUG 0
 
 #include <sstream>
+#include <unordered_map>
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
@@ -102,6 +104,12 @@ struct AssimpImporterTest: TestSuite::Tester {
 
     void configurePostprocessFlipUVs();
 
+    void fileCallback();
+    void fileCallbackNotFound();
+    void fileCallbackReset();
+    void fileCallbackImage();
+    void fileCallbackImageNotFound();
+
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -153,7 +161,13 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::openState,
               &AssimpImporterTest::openStateTexture,
 
-              &AssimpImporterTest::configurePostprocessFlipUVs});
+              &AssimpImporterTest::configurePostprocessFlipUVs,
+
+              &AssimpImporterTest::fileCallback,
+              &AssimpImporterTest::fileCallbackNotFound,
+              &AssimpImporterTest::fileCallbackReset,
+              &AssimpImporterTest::fileCallbackImage,
+              &AssimpImporterTest::fileCallbackImageNotFound});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -622,6 +636,128 @@ void AssimpImporterTest::configurePostprocessFlipUVs() {
     /* The same as in mesh() but with reversed Y */
     CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
         {0.5f, 0.0f}, {0.75f, 0.5f}, {0.5f, 0.1f}}));
+}
+
+void AssimpImporterTest::fileCallback() {
+    /* This should verify also formats with external data (such as glTF),
+       because Assimp is using the same callbacks for all data loading */
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    std::unordered_map<std::string, Containers::Array<char>> files;
+    files["not/a/path/mesh.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae"));
+    importer->setFileCallback([](const std::string& filename, Trade::ImporterFileCallbackPolicy policy,
+        std::unordered_map<std::string, Containers::Array<char>>& files) {
+            Debug{} << "Loading" << filename << "with" << policy;
+            return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
+        }, files);
+
+    CORRADE_VERIFY(importer->openFile("not/a/path/mesh.dae"));
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+
+    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(mesh->normalArrayCount(), 1);
+    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 1);
+
+    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
+        {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}}));
+    CORRADE_COMPARE(mesh->normals(0), (std::vector<Vector3>{
+        {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}));
+    CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
+        {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}}));
+}
+
+void AssimpImporterTest::fileCallbackNotFound() {
+    /* This should verify also formats with external data (such as glTF),
+       because Assimp is using the same callbacks for all data loading */
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy,
+        void*) {
+            return Containers::Optional<Containers::ArrayView<const char>>{};
+        });
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("some-file.dae"));
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
+}
+
+void AssimpImporterTest::fileCallbackReset() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy,
+        void*) {
+            return Containers::Optional<Containers::ArrayView<const char>>{};
+        });
+
+    /* Verify that nothing crashes/leaks here ... and also doesn't double free */
+    importer->setFileCallback(nullptr);
+    CORRADE_VERIFY(true);
+}
+
+void AssimpImporterTest::fileCallbackImage() {
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
+    if(version < 302)
+        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    std::unordered_map<std::string, Containers::Array<char>> files;
+    files["not/a/path/texture.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"));
+    files["not/a/path/diffuse_texture.png"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "diffuse_texture.png"));
+    importer->setFileCallback([](const std::string& filename, Trade::ImporterFileCallbackPolicy policy,
+        std::unordered_map<std::string, Containers::Array<char>>& files) {
+            Debug{} << "Loading" << filename << "with" << policy;
+            return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
+        }, files);
+
+    CORRADE_VERIFY(importer->openFile("not/a/path/texture.dae"));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    /* Check only size, as it is good enough proof that it is working */
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(1, 1));
+}
+
+void AssimpImporterTest::fileCallbackImageNotFound() {
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
+    if(version < 302)
+        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+
+    importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy,
+        void*) {
+            return Containers::Optional<Containers::ArrayView<const char>>{};
+        });
+
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"))));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file diffuse_texture.png\n");
 }
 
 }}}

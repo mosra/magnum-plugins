@@ -51,6 +51,8 @@
 
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
+#include <assimp/IOStream.hpp>
+#include <assimp/IOSystem.hpp>
 #include <assimp/scene.h>
 
 namespace Magnum { namespace Math { namespace Implementation {
@@ -103,9 +105,93 @@ AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const st
 
 AssimpImporter::~AssimpImporter() = default;
 
-auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData | Feature::OpenState; }
+auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData|Feature::OpenState|Feature::FileCallback; }
 
 bool AssimpImporter::doIsOpened() const { return _f && _f->scene; }
+
+namespace {
+
+struct IoStream: Assimp::IOStream {
+    explicit IoStream(std::string filename, Containers::ArrayView<const char> data): filename{std::move(filename)}, _data{data}, _pos{} {}
+
+    /* mimics fread() / fseek() */
+    std::size_t Read(void* buffer, std::size_t size, std::size_t count) override {
+        const Containers::ArrayView<const char> slice = _data.suffix(_pos);
+        const std::size_t maxCount = Math::min(slice.size()/size, count);
+        std::memcpy(buffer, slice.begin(), size*maxCount);
+        _pos += size*maxCount;
+        return maxCount;
+    }
+    aiReturn Seek(std::size_t offset, aiOrigin origin) override {
+        if(origin == aiOrigin_SET && offset < _data.size())
+            _pos = offset;
+        else if(origin == aiOrigin_CUR && _pos + offset < _data.size())
+            _pos += offset;
+        else if(origin == aiOrigin_END && _data.size() + std::ptrdiff_t(offset) < _data.size())
+            _pos = _data.size() + std::ptrdiff_t(offset);
+        else return aiReturn_FAILURE;
+        return aiReturn_SUCCESS;
+    }
+    std::size_t Tell() const override { return _pos; }
+    std::size_t FileSize() const override { return _data.size(); }
+
+    /* We are just a reader */
+    /* LCOV_EXCL_START */
+    std::size_t Write(const void*, std::size_t, std::size_t) override {
+        CORRADE_ASSERT_UNREACHABLE();
+    }
+    void Flush() override {
+        CORRADE_ASSERT_UNREACHABLE();
+    }
+    /* LCOV_EXCL_STOP */
+
+    std::string filename; /* needed for closing properly on the user side */
+    private:
+        Containers::ArrayView<const char> _data;
+        std::size_t _pos;
+};
+
+struct IoSystem: Assimp::IOSystem {
+    explicit IoSystem(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, ImporterFileCallbackPolicy, void*), void* userData): _callback{callback}, _userData{userData} {}
+
+    /* What else? I can't know. */
+    bool Exists(const char*) const override { return true; }
+
+    /* The file callback on user side has to deal with this */
+    char getOsSeparator() const override { return '/'; }
+
+    Assimp::IOStream* Open(const char* file, const char* mode) override {
+        CORRADE_INTERNAL_ASSERT(mode == std::string{"rb"});
+        const Containers::Optional<Containers::ArrayView<const char>> data = _callback(file, ImporterFileCallbackPolicy::LoadTemporary, _userData);
+        if(!data) return {};
+        return new IoStream{file, *data};
+    }
+
+    void Close(Assimp::IOStream* file) override {
+        _callback(static_cast<IoStream*>(file)->filename, ImporterFileCallbackPolicy::Close, _userData);
+        delete file;
+    }
+
+    Containers::Optional<Containers::ArrayView<const char>>(*_callback)(const std::string&, ImporterFileCallbackPolicy, void*);
+    void* _userData;
+};
+
+}
+
+void AssimpImporter::doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, Magnum::Trade::ImporterFileCallbackPolicy, void*), void* userData) {
+    if(callback) {
+        _importer->SetIOHandler(_ourFileCallback = new IoSystem{callback, userData});
+
+    /* Passing nullptr to Assimp will deliberately leak the previous IOSystem
+       instance (whereas passing a non-null instance will delete the previous
+       one). That means we need to keep track of our file callbacks and delete
+       them manually. */
+    } else if(_importer->GetIOHandler() == _ourFileCallback) {
+        delete _ourFileCallback;
+        _importer->SetIOHandler(nullptr);
+        _ourFileCallback = nullptr;
+    }
+}
 
 namespace {
 
@@ -143,6 +229,7 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(!_f) {
         _f.reset(new File);
+        /* File callbacks are set up in doSetFileCallbacks() */
         if(!(_f->scene = _importer->ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration())))) {
             Error{} << "Trade::AssimpImporter::openData(): loading failed:" << _importer->GetErrorString();
             return;
@@ -235,6 +322,7 @@ void AssimpImporter::doOpenFile(const std::string& filename) {
     _f.reset(new File);
     _f->filePath = Utility::Directory::path(filename);
 
+    /* File callbacks are set up in doSetFileCallbacks() */
     if(!(_f->scene = _importer->ReadFile(filename, flagsFromConfiguration(configuration())))) {
         Error{} << "Trade::AssimpImporter::openFile(): failed to open" << filename << Debug::nospace << ":" << _importer->GetErrorString();
         return;
@@ -584,6 +672,7 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
     /* Load external texture */
     } else {
         AnyImageImporter importer{*manager()};
+        if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
         if(!importer.openFile(Utility::Directory::join(_f->filePath, path)))
             return Containers::NullOpt;
         return importer.image2D(0);

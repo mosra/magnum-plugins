@@ -53,6 +53,7 @@
 #ifndef DOXYGEN_GENERATING_OUTPUT
 namespace Assimp {
     class Importer;
+    class IOSystem;
 }
 #endif
 
@@ -227,8 +228,10 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         struct File;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL Features doFeatures() const override;
-
         MAGNUM_ASSIMPIMPORTER_LOCAL bool doIsOpened() const override;
+
+        MAGNUM_ASSIMPIMPORTER_LOCAL void doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, Magnum::Trade::ImporterFileCallbackPolicy, void*), void* userData) override;
+
         MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenState(const void* state, const std::string& filePath) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
@@ -266,6 +269,7 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;
 
         std::unique_ptr<Assimp::Importer> _importer;
+        Assimp::IOSystem* _ourFileCallback;
         std::unique_ptr<File> _f;
 };
 
