@@ -50,6 +50,9 @@
 /** @dir MagnumPlugins/HarfBuzzFont
  * @brief Plugin @ref Magnum::Text::HarfBuzzFont
  */
+/** @dir MagnumPlugins/JpegImageConverter
+ * @brief Plugin @ref Magnum::Trade::JpegImageConverter
+ */
 /** @dir MagnumPlugins/JpegImporter
  * @brief Plugin @ref Magnum::Trade::JpegImporter
  */
@@ -61,6 +64,9 @@
  */
 /** @dir MagnumPlugins/PngImageConverter
  * @brief Plugin @ref Magnum::Trade::PngImageConverter
+ */
+/** @dir MagnumPlugins/PngImporter
+ * @brief Plugin @ref Magnum::Trade::PngImporter
  */
 /** @dir MagnumPlugins/StanfordImporter
  * @brief Plugin @ref Magnum::Trade::StanfordImporter
