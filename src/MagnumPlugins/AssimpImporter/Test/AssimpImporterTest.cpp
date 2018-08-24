@@ -94,6 +94,8 @@ struct AssimpImporterTest: TestSuite::Tester {
     void emptyCollada();
     void emptyGltf();
     void scene();
+    void sceneCollapsedNode();
+
     void image();
     void imageNotFound();
     void embeddedImage();
@@ -153,6 +155,8 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::emptyCollada,
               &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
+              &AssimpImporterTest::sceneCollapsedNode,
+
               &AssimpImporterTest::image,
               &AssimpImporterTest::imageNotFound,
               &AssimpImporterTest::embeddedImage,
@@ -465,6 +469,34 @@ void AssimpImporterTest::scene() {
     CORRADE_COMPARE(importer->object3DName(1), "Child");
 
     CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
+}
+
+void AssimpImporterTest::sceneCollapsedNode() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    /* This collapses all nodes into one. Neither OptimizeGraph nor
+       OptimizeMeshes does that, but this one does it. Um. */
+    importer->configuration().group("postprocess")->setValue("PreTransformVertices", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+
+    CORRADE_COMPARE(importer->defaultScene(), 0);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 1); /* Just the root node */
+
+    Containers::Optional<Trade::SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->children3D(), {0});
+
+    /* Assimp makes some bogus mesh for this one */
+    std::unique_ptr<Trade::ObjectData3D> collapsedNode = importer->object3D(0);
+    CORRADE_COMPARE(collapsedNode->children(), {});
+    CORRADE_COMPARE(collapsedNode->instanceType(), ObjectInstanceType3D::Mesh);
+    CORRADE_COMPARE(collapsedNode->transformation(), Matrix4{});
+
+    /* Name of the scene is used for the root object */
+    CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
+    CORRADE_COMPARE(importer->object3DName(0), "Scene");
 }
 
 void AssimpImporterTest::image() {

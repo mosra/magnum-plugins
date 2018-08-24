@@ -180,6 +180,12 @@ Import of animation data is not supported at the moment.
 -   For some file formats (such as COLLADA), Assimp fails to load the file if
     it doesn't contain any scene. For some (such as glTF) it will succeed and
     @ref sceneCount() / @ref object3DCount() will return zero.
+-   If the root node imported by Assimp has children, it's ignored and only its
+    children are exposed through @ref object3D(). On the other hand, for
+    example in presence of @ref Trade-AssimpImporter-configuration "postprocessing flags"
+    such as `PreTransformVertices`, there's sometimes just a single root node.
+    In that case the single node is imported as a single @ref object3D()
+    instead of being ignored.
 
 @section Trade-AssimpImporter-configuration Plugin-specific configuration
 

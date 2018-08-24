@@ -275,11 +275,21 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
            file and trying to be helpful. Ugh.
            https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
 
-        /* Extract children of the root node, as we treat the root node as the
-           scene here and it has no transformation or anything attached. */
-        _f->nodes.reserve(root->mNumChildren);
-        _f->nodes.insert(_f->nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
-        _f->nodeIndices.reserve(root->mNumChildren);
+        /* If there is more than just a root node, extract children of the root
+           node, as we treat the root node as the scene here and it has no
+           transformation or anything attached. */
+        if(root->mNumChildren) {
+            _f->nodes.reserve(root->mNumChildren);
+            _f->nodes.insert(_f->nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
+            _f->nodeIndices.reserve(root->mNumChildren);
+
+        /* In some pathological cases there's just one root node --- for
+           example the DART integration depends on that. Import it as a single
+           node. */
+        } else {
+            _f->nodes.push_back(root);
+            _f->nodeIndices.reserve(1);
+        }
 
         /* Insert may invalidate iterators, so we use indices here. */
         for(std::size_t i = 0; i < _f->nodes.size(); ++i) {
@@ -344,9 +354,15 @@ Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
     const aiNode* root = _f->scene->mRootNode;
 
     std::vector<UnsignedInt> children;
-    children.reserve(root->mNumChildren);
-    for(std::size_t i = 0; i < root->mNumChildren; ++i)
-        children.push_back(_f->nodeIndices[root->mChildren[i]]);
+    /* In consistency with the distinction in doOpenData(), if the root node
+       has children, add them directly (and treat the root node as the scene) */
+    if(root->mNumChildren) {
+        children.reserve(root->mNumChildren);
+        for(std::size_t i = 0; i < root->mNumChildren; ++i)
+            children.push_back(_f->nodeIndices[root->mChildren[i]]);
+
+    /* Otherwise there's just the root node, which is at index 0 */
+    } else children.push_back(0);
 
     return SceneData{{}, std::move(children), root};
 }
