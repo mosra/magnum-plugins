@@ -495,8 +495,14 @@ void AssimpImporterTest::sceneCollapsedNode() {
     CORRADE_COMPARE(collapsedNode->transformation(), Matrix4{});
 
     /* Name of the scene is used for the root object */
-    CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
-    CORRADE_COMPARE(importer->object3DName(0), "Scene");
+    {
+        const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+        /** @todo Possibly works with other versions (definitely not 3.0) */
+        CORRADE_EXPECT_FAIL_IF(version < 302,
+            "Assimp 3.1 and below doesn't use name of the root node for collapsed nodes.");
+        CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
+        CORRADE_COMPARE(importer->object3DName(0), "Scene");
+    }
 }
 
 void AssimpImporterTest::image() {
