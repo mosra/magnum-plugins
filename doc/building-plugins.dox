@@ -51,8 +51,9 @@ want to have more control. Cross-compiling is very similar to
 @subsection building-plugins-packages-vcpkg Vcpkg packages on Windows
 
 Magnum Plugins are available as a [Vcpkg](https://github.com/Microsoft/vcpkg)
-package. After setting up Vcpkg like described in the README, you can install
-latest stable version of Magnum Plugins with all its dependencies like this:
+package. See @ref building-packages-vcpkg "the Magnum Vcpkg documentation" for
+a more detailed introduction and a troubleshooting guide. Installing latest
+stable version of Magnum Plugins with all its dependencies is done like this:
 
 @code{.bat}
 vcpkg install magnum-plugins
@@ -62,49 +63,23 @@ But often you may want to install the latest Git revision of all Magnum
 projects instead:
 
 @code{.bat}
-vcpkg install corrade --head
-vcpkg install magnum --head
-vcpkg install magnum-plugins --head
+vcpkg install --head corrade magnum magnum-plugins
 @endcode
 
-This by default installs a 32-bit dynamic version of the package, you can use
-@cb{.bat} vcpkg install magnum-plugins:x64-windows @ce or
-@cb{.bat} vcpkg install magnum-plugins:x64-windows-static @ce to install a
-64-bit (static) version instead. You can also use the `VCPKG_DEFAULT_TRIPLET`
-variable to change the default --- see the
-<a href="https://github.com/Microsoft/vcpkg/blob/master/docs/users/triplets.md">Vcpkg triplet documentation</a>
-for more information.
-
-Note that just a subset of plugins isinstalled by default. To opt-in or opt-out
-of additional features, you can use the following syntax; feature names are
-simply names of CMake `WITH_*` options from the @ref building-plugins-features
-section but lowercase. See the
-<a href="https://github.com/Microsoft/vcpkg/blob/master/docs/specifications/feature-packages.md">feature documentation</a>
-for more information.
+Note that just a subset of plugins is installed by default. To opt-in or
+opt-out of additional features, you can use the following syntax; feature names
+are simply names of CMake `WITH_*` options from the @ref building-plugins-features
+section but lowercase, e.g.:
 
 @code{.bat}
 vcpkg install magnum-plugins[assimpimporter,ddsimporter]
 @endcode
 
-Packages installed using Vcpkg can be used straight away in Visual Studio ---
-all you need to do is to @cpp #include @ce the headers you want, the
-buildsystem will do all needed library linking and setup behind the scenes
-automatically. <em>(Cool, isn't it?)</em>
-
-@note If Visual Studio doesn't find the packages, check its verbose output, it
-    might point to a mismatch of the triplet above or broken Vcpkg integration.
-
-In order to make Magnum projects installed using Vcpkg available to CMake-based
-projects, specify the Vcpkg toolchain file on the command line when invoking
-CMake in a fresh build directory, for example:
+To install all features of a package, use `*`, e.g.:
 
 @code{.bat}
-mkdir build && cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake
+vcpkg install magnum-plugins[*]
 @endcode
-
-If you want to pass additional flags to CMake, run @cb{.bat} vcpkg edit magnum-plugins @ce
-and edit `OPTIONS` in @cmake vcpkg_configure_cmake() @ce.
 
 There are also Vcpkg packages for
 @ref building-integration-packages-vcpkg "Magnum Integration" and
