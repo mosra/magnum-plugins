@@ -41,22 +41,33 @@ Third-party components
 Contributors to Magnum Plugins library
 --------------------------------------
 
+Listing only people with code contributions, because otherwise there's too many
+:) Big thanks to everyone involved!
+
 -   Alice Margatroid ([@Alicemargatroid](https://github.com/Alicemargatroid))
     -- `DevilImageImporter`, `DrFlacAudioImporter` and `DrWavAudioImporter`
     plugins, surround sound support in `StbVorbisAudioImporter`
--   Jonathan Hale ([@Squareys](https://github.com/Squareys)) --
-    `AssimpImporter`, `DdsImporter` and `StbVorbisAudioImporter` plugins
--   Tobias Stein ([@NussknackerXXL](https://github.com/NussknackerXXL)) --
-    `TinyGltfImporter` plugin
--   Konstantinos Chatzilygeroudis ([@costashatz](https://github.com/costashatz))
-    -- Debian package
--   Olga Turanksaya ([@olga-python](https://github.com/olga-python)) -- Gentoo
-    ebuild
--   [@sigman78](https://github.com/sigman78) -- Initial MSVC 2017 port, Vcpkg
-    package
 -   Alexander F Rødseth ([@xyproto](https://github.com/xyproto)) -- packages in
     the ArchLinux community repository
+-   Bill Robinson ([@wivlaro](https://github.com/wivlaroú) -- numerous bug
+    reports and fixes
+-   Jonathan Hale ([@Squareys](https://github.com/Squareys)) --
+    `AssimpImporter`, `DdsImporter` and `StbVorbisAudioImporter` plugins
+-   Konstantinos Chatzilygeroudis ([@costashatz](https://github.com/costashatz))
+    -- Debian package
+-   Jonathan Mercier-Ganady ([@Jmgr](https://github.com/Jmgr)) -- build fixes
 -   Nathan Ollerenshaw ([@matjam](https://github.com/matjam)) --- Ubuntu
     package updates, a PPA repository for stable versions
+-   Nicholas "LB" Branden ([@LB--](https://github.com/LB--)) -- buildsystem
+    improvements
+-   Olga Turanksaya ([@olga-python](https://github.com/olga-python)) -- Gentoo
+    ebuild
+-   Séverin Lemaignan ([@severin-lemaignan](https://github.com/severin-lemaignan))
+    -- buildsystem fixes, bugreports
+-   [@sigman78](https://github.com/sigman78) -- Initial MSVC 2017 port, Vcpkg
+    package
+-   Tobias Stein ([@NussknackerXXL](https://github.com/NussknackerXXL)) --
+    `TinyGltfImporter` plugin
 
-Big thanks to everyone involved!
+Is this list missing your name or something's wrong?
+[Let us know!](http://magnum.graphics/contact/)
