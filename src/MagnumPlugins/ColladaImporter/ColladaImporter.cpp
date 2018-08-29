@@ -23,6 +23,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_DO_NOT_WARN_DEPRECATED_COLLADAIMPORTER
+
 #include "ColladaImporter.h"
 
 #include <unordered_map>
@@ -838,5 +840,7 @@ std::string ColladaImporter::instanceName(const QString& name, const QString& in
 
 }}
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 CORRADE_PLUGIN_REGISTER(ColladaImporter, Magnum::Trade::ColladaImporter,
     "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+CORRADE_IGNORE_DEPRECATED_POP

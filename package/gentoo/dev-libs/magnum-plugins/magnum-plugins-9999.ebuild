@@ -14,7 +14,6 @@ IUSE=""
 
 RDEPEND="
 	dev-libs/magnum
-	dev-qt/qtcore
 	media-libs/devil
 	media-libs/freetype
 	media-libs/harfbuzz
@@ -30,7 +29,6 @@ src_configure() {
 		-DCMAKE_INSTALL_PREFIX="${EPREFIX}/usr"
 		-DCMAKE_BUILD_TYPE=Release
 		-DWITH_ASSIMPIMPORTER=ON
-		-DWITH_COLLADAIMPORTER=ON
 		-DWITH_DDSIMPORTER=ON
 		-DWITH_DEVILIMAGEIMPORTER=ON
 		-DWITH_DRFLACAUDIOIMPORTER=ON

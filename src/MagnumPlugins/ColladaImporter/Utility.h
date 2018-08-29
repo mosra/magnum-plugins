@@ -31,6 +31,8 @@
 
 #include "ColladaType.h"
 
+/* No deprecation warning here, since it's a private header */
+
 namespace Magnum { namespace Trade { namespace Implementation {
 
 class Utility {

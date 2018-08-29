@@ -26,8 +26,20 @@
 */
 
 /** @file
- * @brief Class @ref Magnum::Trade::ColladaImporter
- */
+@brief Class @ref Magnum::Trade::ColladaImporter
+
+@deprecated The @ref Magnum::Trade::ColladaImporter "ColladaImporter" plugin is
+    based on an outdated toolkit. Moreover, due to the complexity of the
+    COLLADA format and poor conformance of various exporters it's not feasible
+    to maintain a builtin importer anymore and thus this plugin is scheduled
+    for removal in a future release. Please consider either using
+    @ref Magnum::Trade::AssimpImporter "AssimpImporter" for COLLADA import or
+    switching to simpler and better supported formats such as glTF or OpenGEX
+    using @ref Magnum::Trade::TinyGltfImporter "TinyGltfImporter" or
+    @ref Magnum::Trade::OpenGexImporter "OpenGexImporter". There's also the
+    official [COLLADA2GLTF](https://github.com/KhronosGroup/COLLADA2GLTF)
+    converter.
+*/
 
 #include <Magnum/Trade/AbstractImporter.h>
 
@@ -52,12 +64,30 @@
 class QCoreApplication;
 class QString;
 
+#ifndef MAGNUM_BUILD_DEPRECATED
+#error scheduled for removal, consider switching to AssimpImporter or a different asset format
+#endif
+
+/* I still have a test for this class and it shouldn't pollute the log there */
+#ifndef _MAGNUM_DO_NOT_WARN_DEPRECATED_COLLADAIMPORTER
+CORRADE_DEPRECATED_FILE("scheduled for removal, consider switching to AssimpImporter or a different asset format")
+#endif
+
 namespace Magnum { namespace Trade {
 
 class ColladaMeshData;
 
 /**
 @brief Collada importer plugin
+
+@deprecated This plugin is based on an outdated toolkit. Moreover, due to the
+    complexity of the COLLADA format and poor conformance of various exporters
+    it's not feasible to maintain a builtin importer anymore and thus this
+    plugin is scheduled for removal in a future release. Please consider either
+    using @ref AssimpImporter for COLLADA import or switching to simpler and
+    better supported formats such as glTF or OpenGEX using @ref TinyGltfImporter
+    or @ref OpenGexImporter. There's also the official
+    [COLLADA2GLTF](https://github.com/KhronosGroup/COLLADA2GLTF) converter.
 
 Imports the XML-based [COLLADA](https://collada.org/) format. Supports triangle
 and quad meshes, images (delegated to @ref AnyImageImporter), Phong material
@@ -85,7 +115,7 @@ of the `MagnumPlugins` package in CMake and link to the
 
 -   Only the `COMMON` effect profile is supported
 */
-class MAGNUM_COLLADAIMPORTER_EXPORT ColladaImporter: public AbstractImporter {
+class MAGNUM_COLLADAIMPORTER_EXPORT CORRADE_DEPRECATED("scheduled for removal, consider switching to AssimpImporter or a different asset format") ColladaImporter: public AbstractImporter {
     public:
         /**
          * @brief Default constructor

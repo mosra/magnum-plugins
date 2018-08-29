@@ -24,6 +24,11 @@
 #
 
 find_package(Magnum REQUIRED MeshTools Trade AnyImageImporter)
+
+if(NOT MAGNUM_BUILD_DEPRECATED)
+    message(FATAL_ERROR "ColladaImporter is scheduled for removal, consider switching to AssimpImporter or a different asset format")
+endif()
+
 find_package(Qt4 REQUIRED)
 
 if(BUILD_PLUGINS_STATIC)

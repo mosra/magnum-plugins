@@ -30,8 +30,18 @@
  * @brief Plugin @ref Magnum::Trade::AssimpImporter
  */
 /** @dir MagnumPlugins/ColladaImporter
- * @brief Plugin @ref Magnum::Trade::ColladaImporter
- */
+@brief Plugin @ref Magnum::Trade::ColladaImporter
+
+@deprecated The @ref Magnum::Trade::ColladaImporter "ColladaImporter" plugin is
+    based on an outdated toolkit. Moreover, due to the complexity of the
+    COLLADA format and poor conformance of various exporters it's not feasible
+    to maintain a builtin importer anymore and thus this plugin is scheduled
+    for removal in a future release. Please consider either using
+    @ref Magnum::Trade::AssimpImporter "AssimpImporter" for COLLADA import or
+    switching to simpler and better supported formats such as glTF or OpenGEX
+    using @ref Magnum::Trade::TinyGltfImporter "TinyGltfImporter" or
+    @ref Magnum::Trade::OpenGexImporter "OpenGexImporter".
+*/
 /** @dir MagnumPlugins/DdsImporter
  * @brief Plugin @ref Magnum::Trade::DdsImporter
  */

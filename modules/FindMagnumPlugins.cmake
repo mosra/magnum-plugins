@@ -131,11 +131,14 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
-    AssimpImporter ColladaImporter DdsImporter DevIlImageImporter
+    AssimpImporter DdsImporter DevIlImageImporter
     DrFlacAudioImporter DrWavAudioImporter FreeTypeFont HarfBuzzFont
     JpegImageConverter JpegImporter MiniExrImageConverter OpenGexImporter
     PngImageConverter PngImporter StanfordImporter StbImageConverter
     StbImageImporter StbTrueTypeFont StbVorbisAudioImporter TinyGltfImporter)
+if(MAGNUM_BUILD_DEPRECATED)
+    list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST ColladaImporter)
+endif()
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)

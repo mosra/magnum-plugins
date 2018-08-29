@@ -121,6 +121,19 @@ namespace Magnum {
     `PreTransformVertices` Assimp collapses all nodes into one and then the
     node is imported as a single object.
 
+@subsection corrade-changelog-latest-deprecated Deprecated APIs
+
+-   @ref Trade::ColladaImporter "ColladaImporter" is deprecated because it's
+    based on an outdated toolkit. Moreover, due to the complexity of the
+    COLLADA format and poor conformance of various exporters it's not feasible
+    to maintain a builtin importer anymore and thus this plugin is scheduled
+    for removal in a future release. Please consider either using
+    @ref Trade::AssimpImporter "AssimpImporter" for COLLADA import or switching
+    to simpler and better supported formats such as glTF or OpenGEX using
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" or
+    @ref Trade::OpenGexImporter "OpenGexImporter". There's also the official
+    [COLLADA2GLTF](https://github.com/KhronosGroup/COLLADA2GLTF) converter.
+
 @section changelog-plugins-2018-04 2018.04
 
 Released 2018-05-01, tagged as

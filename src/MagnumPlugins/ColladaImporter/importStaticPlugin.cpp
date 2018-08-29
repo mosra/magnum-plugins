@@ -23,7 +23,17 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/Utility/Macros.h>
+#include <Magnum/configure.h>
+
 #include "MagnumPlugins/ColladaImporter/configure.h"
+
+#ifndef MAGNUM_BUILD_DEPRECATED
+#error scheduled for removal, consider switching to AssimpImporter or a different asset format
+#endif
+
+/* I still have a test for this class and it shouldn't pollute the log there */
+CORRADE_DEPRECATED_FILE("scheduled for removal, consider switching to AssimpImporter or a different asset format")
 
 #ifdef MAGNUM_COLLADAIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
