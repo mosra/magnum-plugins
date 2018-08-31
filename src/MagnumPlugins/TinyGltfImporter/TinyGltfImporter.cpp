@@ -33,7 +33,10 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/String.h>
+#include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/Matrix4.h>
+#include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/AnimationData.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
@@ -41,14 +44,8 @@
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/ImageData.h>
-#include <Magnum/Math/Math.h>
-#include <Magnum/Mesh.h>
 #include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
-#include <Magnum/Math/Vector2.h>
-#include <Magnum/Math/Vector3.h>
-#include <Magnum/Math/Matrix4.h>
-#include <Magnum/Math/Quaternion.h>
 
 #include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
 
