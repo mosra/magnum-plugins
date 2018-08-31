@@ -243,19 +243,17 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
 
         /* If the input view is not yet present in the output data buffer, add
            it */
-        auto inputView = samplerData.find(sampler.input);
-        if(inputView == samplerData.end()) {
+        if(samplerData.find(sampler.input) == samplerData.end()) {
             Containers::ArrayView<const char> view = bufferView(_d->model, input);
-            inputView = samplerData.emplace(sampler.input, std::make_pair(view, dataSize)).first;
+            samplerData.emplace(sampler.input, std::make_pair(view, dataSize));
             dataSize += view.size();
         }
 
         /* If the output view is not yet present in the output data buffer, add
            it */
-        auto outputView = samplerData.find(sampler.output);
-        if(outputView == samplerData.end()) {
+        if(samplerData.find(sampler.output) == samplerData.end()) {
             Containers::ArrayView<const char> view = bufferView(_d->model, output);
-            outputView = samplerData.emplace(sampler.output, std::make_pair(view, dataSize)).first;
+            samplerData.emplace(sampler.output, std::make_pair(view, dataSize));
             dataSize += view.size();
         }
     }
