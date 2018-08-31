@@ -286,7 +286,6 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
         const auto keys = Containers::arrayCast<const Float>(data.slice(inputDataFound->second.second, inputDataFound->second.second + inputDataFound->second.first.size()));
 
         /* Interpolation mode */
-        /** @todo handle the dangling interpolator function pointer in trade */
         Animation::Interpolation interpolation;
         if(sampler.interpolation == "LINEAR") {
             interpolation = Animation::Interpolation::Linear;
