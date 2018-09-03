@@ -252,9 +252,9 @@ UnsignedInt OpenGexImporter::doCameraCount() const {
 Containers::Optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
     const OpenDdl::Structure& camera = _d->cameras[id];
 
-    Rad fov = Rad{Constants::nan()};
-    Float near = Constants::nan();
-    Float far = Constants::nan();
+    Rad fov = 35.0_degf;
+    Float near = 0.01f;
+    Float far = 100.0f;
     for(const OpenDdl::Structure param: camera.childrenOf(OpenGex::Param)) {
         const OpenDdl::Structure data = param.firstChild();
 
@@ -271,7 +271,7 @@ Containers::Optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
         }
     }
 
-    return CameraData{fov, near, far, &camera};
+    return CameraData{CameraType::Perspective3D, fov, 1.0f, near, far, &camera};
 }
 
 UnsignedInt OpenGexImporter::doObject3DCount() const {
@@ -777,7 +777,7 @@ std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsigned
     }
 
     /* Put things together */
-    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess, &material}};
+    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, MaterialAlphaMode::Opaque, 0.5f, shininess, &material}};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
     else data->diffuseColor() = diffuseColor;

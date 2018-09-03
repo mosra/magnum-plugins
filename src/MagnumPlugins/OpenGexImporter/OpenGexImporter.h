@@ -92,6 +92,14 @@ read.
     are ignored.
 -   Geometry node visibility, shadow and motion blur properties are ignored.
 
+@subsection Trade-OpenGexImporter-limitations-camera Camera import
+
+-   Camera type is always @ref CameraType::Perspective3D
+-   Default FoV for cameras that don't have it specified is @cpp 35.0_degf @ce
+-   Default near and far plane for cameras that don't have it specified is
+    @cpp 0.01f @ce and @cpp 100.0f @ce
+-   Aspect ratio is ignored and hardcoded to @cpp 1.0f @ce
+
 @subsection Trade-OpenGexImporter-limitations-lights Light import
 
 -   Light attenuation properties are not yet supported.
@@ -106,7 +114,9 @@ read.
 
 @subsection Trade-OpenGexImporter-limitations-materials Material import
 
--   Two-sided property is ignored.
+-   Alpha mode is always @ref MaterialAlphaMode::Opaque and alpha mask always
+    @cpp 0.5f @ce
+-   Two-sided property is ignored, always set to @cpp false @ce
 -   All materials are imported as @ref Trade::PhongMaterialData with ambient
     color always set to @cpp 0x000000ff_rgbaf @ce.
 -   `emission`, `opacity` and `transparency` attributes are not supported.
