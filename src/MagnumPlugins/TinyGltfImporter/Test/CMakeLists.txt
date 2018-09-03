@@ -112,6 +112,7 @@ corrade_add_test(TinyGltfImporterTest
         scene-nodefault.glb
         object-transformation.gltf
         object-transformation.glb
+        object-transformation-patching.gltf
         texture.gltf
         texture.glb
         texture.png

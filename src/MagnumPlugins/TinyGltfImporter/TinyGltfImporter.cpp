@@ -134,6 +134,7 @@ namespace {
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     /** @todo horrible workaround, fix this properly */
     conf.setValue("optimizeQuaternionShortestPath", true);
+    conf.setValue("normalizeQuaternions", true);
 }
 
 }
@@ -288,6 +289,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
     }
 
     /* Import all tracks */
+    bool hadToRenormalize = false;
     Containers::Array<Trade::AnimationTrackData> tracks{animation.channels.size()};
     for(std::size_t i = 0; i != animation.channels.size(); ++i) {
         const tinygltf::AnimationChannel& channel = animation.channels[i];
@@ -362,6 +364,16 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 }
             }
 
+            /* Normalize the quaternions if not already. Don't attempt to
+               normalize every time to avoid tiny differences, only when the
+               quaternion looks to be off. */
+            if(configuration().value<bool>("normalizeQuaternions")) {
+                for(auto& i: values) if(!i.isNormalized()) {
+                    i = i.normalized();
+                    hadToRenormalize = true;
+                }
+            }
+
             /* Populate track metadata */
             type = AnimationTrackType::Quaternion;
             target = AnimationTrackTarget::Rotation3D;
@@ -391,6 +403,9 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
 
         tracks[i] = AnimationTrackData{type, target, UnsignedInt(channel.target_node), track};
     }
+
+    if(hadToRenormalize)
+        Warning{} << "Trade::TinyGltfImporter::animation(): quaternions in some rotation tracks were renormalized";
 
     return AnimationData{std::move(data), std::move(tracks), &animation};
 }
@@ -560,8 +575,13 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         flags |= ObjectFlag3D::HasTranslationRotationScaling;
         if(node.translation.size() == 3)
             translation = Vector3{Vector3d::from(node.translation.data())};
-        if(node.rotation.size() == 4)
+        if(node.rotation.size() == 4) {
             rotation = Quaternion{Vector3{Vector3d::from(node.rotation.data())}, Float(node.rotation[3])};
+            if(!rotation.isNormalized() && configuration().value<bool>("normalizeQuaternions")) {
+                rotation = rotation.normalized();
+                Warning{} << "Trade::TinyGltfImporter::object3D(): rotation quaternion was renormalized";
+            }
+        }
         if(node.scale.size() == 3)
             scaling = Vector3{Vector3d::from(node.scale.data())};
     }

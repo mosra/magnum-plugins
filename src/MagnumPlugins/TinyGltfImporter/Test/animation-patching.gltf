@@ -21,6 +21,25 @@
                     "output": 1
                 }
             ]
+        },
+        {
+            "name": "Quaternion normalization patching",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 1337,
+                        "path": "rotation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 0,
+                    "interpolation": "LINEAR",
+                    "output": 2
+                }
+            ]
         }
     ],
     "accessors": [
@@ -37,6 +56,13 @@
             "componentType": 5126,
             "count": 9,
             "type": "VEC4"
+        },
+        {
+            "bufferView": 1,
+            "byteOffset": 144,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
         }
     ],
     "bufferViews": [
@@ -48,12 +74,12 @@
         {
             "buffer": 0,
             "byteOffset": 36,
-            "byteLength": 140
+            "byteLength": 188
         }
     ],
     "buffers": [
         {
-            "byteLength": 180,
+            "byteLength": 228,
             "uri": "animation-patching.bin"
         }
     ]

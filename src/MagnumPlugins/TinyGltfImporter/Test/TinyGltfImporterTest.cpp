@@ -66,8 +66,11 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void animationWrongRotationType();
     void animationWrongScalingType();
     void animationUnsupportedPath();
+
     void animationShortestPathOptimizationEnabled();
     void animationShortestPathOptimizationDisabled();
+    void animationQuaternionNormalizationEnabled();
+    void animationQuaternionNormalizationDisabled();
 
     void camera();
 
@@ -77,6 +80,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void sceneEmpty();
     void sceneNoDefault();
     void objectTransformation();
+
+    void objectTransformationQuaternionNormalizationEnabled();
+    void objectTransformationQuaternionNormalizationDisabled();
 
     void mesh();
     void meshIndexed();
@@ -170,7 +176,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::animationUnsupportedPath,
 
               &TinyGltfImporterTest::animationShortestPathOptimizationEnabled,
-              &TinyGltfImporterTest::animationShortestPathOptimizationDisabled});
+              &TinyGltfImporterTest::animationShortestPathOptimizationDisabled,
+              &TinyGltfImporterTest::animationQuaternionNormalizationEnabled,
+              &TinyGltfImporterTest::animationQuaternionNormalizationDisabled});
 
     addInstancedTests({&TinyGltfImporterTest::camera,
 
@@ -181,6 +189,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::sceneNoDefault,
                        &TinyGltfImporterTest::objectTransformation},
                       Containers::arraySize(SingleFileData));
+
+    addTests({&TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled,
+              &TinyGltfImporterTest::objectTransformationQuaternionNormalizationDisabled});
 
     addInstancedTests({&TinyGltfImporterTest::mesh,
                        &TinyGltfImporterTest::meshIndexed,
@@ -449,7 +460,7 @@ void TinyGltfImporterTest::animationShortestPathOptimizationEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-patching.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 1);
+    CORRADE_COMPARE(importer->animationCount(), 2);
     CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
 
     auto animation = importer->animation(0);
@@ -498,7 +509,7 @@ void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-patching.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 1);
+    CORRADE_COMPARE(importer->animationCount(), 2);
     CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
 
     auto animation = importer->animation(0);
@@ -559,6 +570,58 @@ void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
     CORRADE_COMPARE(track.at(Math::slerp, 5.5f).angle(), 67.5_degf);
     CORRADE_COMPARE(track.at(Math::slerp, 6.5f).angle(), 202.5_degf);
     CORRADE_COMPARE(track.at(Math::slerp, 7.5f).angle(), 337.5_degf);
+}
+
+void TinyGltfImporterTest::animationQuaternionNormalizationEnabled() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    /* Enabled by default */
+    CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-patching.gltf")));
+    CORRADE_COMPARE(importer->animationCount(), 2);
+    CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
+
+    Containers::Optional<Trade::AnimationData> animation;
+    std::ostringstream out;
+    {
+        Warning warningRedirection{&out};
+        animation = importer->animation(1);
+    }
+    CORRADE_VERIFY(animation);
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
+    CORRADE_COMPARE(animation->trackCount(), 1);
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+
+    Animation::TrackView<Float, Quaternion> track = animation->track<Quaternion>(0);
+    const Quaternion rotationValues[]{
+        {{0.0f, 0.0f, 0.382683f}, 0.92388f},    // is normalized
+        {{0.0f, 0.0f, 0.707107f}, 0.707107f},   // is not, renormalized
+        {{0.0f, 0.0f, 0.382683f}, 0.92388f},    // is not, renormalized
+    };
+    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::animationQuaternionNormalizationDisabled() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    /* Explicitly disable */
+    CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-patching.gltf")));
+    CORRADE_COMPARE(importer->animationCount(), 2);
+    CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
+
+    auto animation = importer->animation(1);
+    CORRADE_VERIFY(animation);
+    CORRADE_COMPARE(animation->trackCount(), 1);
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+
+    Animation::TrackView<Float, Quaternion> track = animation->track<Quaternion>(0);
+    const Quaternion rotationValues[]{
+        Quaternion{{0.0f, 0.0f, 0.382683f}, 0.92388f},      // is normalized
+        Quaternion{{0.0f, 0.0f, 0.707107f}, 0.707107f}*2,   // is not
+        Quaternion{{0.0f, 0.0f, 0.382683f}, 0.92388f}*2,    // is not
+    };
+    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
 }
 
 void TinyGltfImporterTest::camera() {
@@ -857,6 +920,44 @@ void TinyGltfImporterTest::objectTransformation() {
         CORRADE_COMPARE(object->scaling(), (Vector3{0.9f, 0.5f, 2.3f}));
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling({0.9f, 0.5f, 2.3f}));
     }
+}
+
+void TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    /* Enabled by default */
+    CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "object-transformation-patching.gltf")));
+
+    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_COMPARE(importer->object3DName(0), "Non-normalized rotation");
+
+    std::unique_ptr<Trade::ObjectData3D> object;
+    std::ostringstream out;
+    {
+        Warning warningRedirection{&out};
+        object = importer->object3D(0);
+    }
+    CORRADE_VERIFY(object);
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::object3D(): rotation quaternion was renormalized\n");
+    CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+    CORRADE_COMPARE(object->rotation(), Quaternion::rotation(45.0_degf, Vector3::yAxis()));
+}
+
+void TinyGltfImporterTest::objectTransformationQuaternionNormalizationDisabled() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    /* Explicity disable */
+    importer->configuration().setValue("normalizeQuaternions", false);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "object-transformation-patching.gltf")));
+
+    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_COMPARE(importer->object3DName(0), "Non-normalized rotation");
+
+    auto object = importer->object3D(0);
+    CORRADE_VERIFY(object);
+    CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+    CORRADE_COMPARE(object->rotation(), Quaternion::rotation(45.0_degf, Vector3::yAxis())*2.0f);
 }
 
 void TinyGltfImporterTest::mesh() {
