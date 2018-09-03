@@ -36,6 +36,7 @@
 #include <Corrade/Utility/String.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/CubicHermite.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/AnimationData.h>
@@ -253,11 +254,39 @@ std::string TinyGltfImporter::doAnimationName(UnsignedInt id) {
     return _d->model.animations[id].name;
 }
 
+namespace {
+
+template<class V> void postprocessSplineTrack(const std::size_t timeTrackUsed, const Containers::ArrayView<const Float> keys, const Containers::ArrayView<Math::CubicHermite<V>> values) {
+    /* Already processed, don't do that again */
+    if(timeTrackUsed != ~std::size_t{}) return;
+
+    CORRADE_INTERNAL_ASSERT(keys.size() == values.size());
+    if(keys.size() < 2) return;
+
+    /* Convert the `a` values to `n` and the `b` values to `m` as described in
+       https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#appendix-c-spline-interpolation
+       Unfortunately I was not able to find any concrete name for this, so it's
+       not part of the CubicHermite implementation but is kept here locally. */
+    for(std::size_t i = 0; i < keys.size() - 1; ++i) {
+        const Float timeDifference = keys[i + 1] - keys[i];
+        values[i].outTangent() *= timeDifference;
+        values[i + 1].inTangent() *= timeDifference;
+    }
+}
+
+}
+
 Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id) {
     const tinygltf::Animation& animation = _d->model.animations[id];
 
-    /* First gather the input and output data ranges */
-    std::unordered_map<int, std::pair<Containers::ArrayView<const char>, std::size_t>> samplerData;
+    /* First gather the input and output data ranges. Key is unique accessor ID
+       so we don't duplicate shared data, value is range in the input buffer,
+       offset in the output data and ID of the corresponding key track in case
+       given track is a spline interpolation. The key ID is initialized to ~0
+       and will be used later to check that a spline track was not used with
+       more than one time track, as it needs to be postprocessed for given time
+       track. */
+    std::unordered_map<int, std::tuple<Containers::ArrayView<const char>, std::size_t, std::size_t>> samplerData;
     std::size_t dataSize = 0;
     for(std::size_t i = 0; i != animation.samplers.size(); ++i) {
         const tinygltf::AnimationSampler& sampler = animation.samplers[i];
@@ -270,7 +299,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
            it */
         if(samplerData.find(sampler.input) == samplerData.end()) {
             Containers::ArrayView<const char> view = bufferView(_d->model, input);
-            samplerData.emplace(sampler.input, std::make_pair(view, dataSize));
+            samplerData.emplace(sampler.input, std::make_tuple(view, dataSize, ~std::size_t{}));
             dataSize += view.size();
         }
 
@@ -278,16 +307,25 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
            it */
         if(samplerData.find(sampler.output) == samplerData.end()) {
             Containers::ArrayView<const char> view = bufferView(_d->model, output);
-            samplerData.emplace(sampler.output, std::make_pair(view, dataSize));
+            samplerData.emplace(sampler.output, std::make_tuple(view, dataSize, ~std::size_t{}));
             dataSize += view.size();
         }
     }
 
     /* Populate the data array */
+    /**
+     * @todo Once memory-mapped files are supported, this can all go away
+     *      except when spline tracks are present -- in that case we need to
+     *      postprocess them and can't just use the memory directly.
+     */
     Containers::Array<char> data{dataSize};
-    for(const std::pair<int, std::pair<Containers::ArrayView<const char>, std::size_t>>& view: samplerData) {
-        CORRADE_INTERNAL_ASSERT(view.second.second + view.second.first.size() <= data.size());
-        std::copy(view.second.first.begin(), view.second.first.end(), data.begin() + view.second.second);
+    for(const std::pair<int, std::tuple<Containers::ArrayView<const char>, std::size_t, std::size_t>>& view: samplerData) {
+        Containers::ArrayView<const char> input;
+        std::size_t outputOffset;
+        std::tie(input, outputOffset, std::ignore) = view.second;
+
+        CORRADE_INTERNAL_ASSERT(outputOffset + input.size() <= data.size());
+        std::copy(input.begin(), input.end(), data.begin() + outputOffset);
     }
 
     /* Import all tracks */
@@ -307,12 +345,14 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
         /* View on the key data */
         const auto inputDataFound = samplerData.find(sampler.input);
         CORRADE_INTERNAL_ASSERT(inputDataFound != samplerData.end());
-        const auto keys = Containers::arrayCast<const Float>(data.slice(inputDataFound->second.second, inputDataFound->second.second + inputDataFound->second.first.size()));
+        const auto keys = Containers::arrayCast<const Float>(data.suffix(std::get<1>(inputDataFound->second)).prefix(std::get<0>(inputDataFound->second).size()));
 
         /* Interpolation mode */
         Animation::Interpolation interpolation;
         if(sampler.interpolation == "LINEAR") {
             interpolation = Animation::Interpolation::Linear;
+        } else if(sampler.interpolation == "CUBICSPLINE") {
+            interpolation = Animation::Interpolation::Spline;
         } else if(sampler.interpolation == "STEP") {
             interpolation = Animation::Interpolation::Constant;
         } else {
@@ -323,8 +363,12 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
         /* Decide on value properties */
         const tinygltf::Accessor& output = _d->model.accessors[sampler.output];
         AnimationTrackTarget target;
-        AnimationTrackType type;
+        AnimationTrackType type, resultType;
         Animation::TrackViewStorage<Float> track;
+        const auto outputDataFound = samplerData.find(sampler.output);
+        CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
+        const auto outputData = data.suffix(std::get<1>(outputDataFound->second)).prefix(std::get<0>(outputDataFound->second).size());
+        std::size_t& timeTrackUsed = std::get<2>(outputDataFound->second);
 
         /* Translation */
         if(channel.target_path == "translation") {
@@ -334,14 +378,27 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             }
 
             /* View on the value data */
-            const auto outputDataFound = samplerData.find(sampler.output);
-            CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
-            const auto values = Containers::arrayCast<const Vector3>(data.slice(outputDataFound->second.second, outputDataFound->second.second + outputDataFound->second.first.size()));
-
-            /* Populate track metadata */
-            type = AnimationTrackType::Vector3;
             target = AnimationTrackTarget::Translation3D;
-            track = Animation::TrackView<Float, Vector3>{keys, values, interpolation, animationInterpolatorFor<Vector3>(interpolation), Animation::Extrapolation::Constant};
+            resultType = AnimationTrackType::Vector3;
+            if(interpolation == Animation::Interpolation::Spline) {
+                /* Postprocess the spline track. This can be done only once for
+                   every track -- postprocessSplineTrack() checks that. */
+                const auto values = Containers::arrayCast<CubicHermite3D>(outputData);
+                postprocessSplineTrack(timeTrackUsed, keys, values);
+
+                type = AnimationTrackType::CubicHermite3D;
+                track = Animation::TrackView<Float, CubicHermite3D>{
+                    keys, values, interpolation,
+                    animationInterpolatorFor<CubicHermite3D>(interpolation),
+                    Animation::Extrapolation::Constant};
+            } else {
+                type = AnimationTrackType::Vector3;
+                track = Animation::TrackView<Float, Vector3>{keys,
+                    Containers::arrayCast<const Vector3>(outputData),
+                    interpolation,
+                    animationInterpolatorFor<Vector3>(interpolation),
+                    Animation::Extrapolation::Constant};
+            }
 
         /* Rotation */
         } else if(channel.target_path == "rotation") {
@@ -353,33 +410,48 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             }
 
             /* View on the value data */
-            const auto outputDataFound = samplerData.find(sampler.output);
-            CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
-            const auto values = Containers::arrayCast<Quaternion>(data.slice(outputDataFound->second.second, outputDataFound->second.second + outputDataFound->second.first.size()));
-
-            /* Patch the data to ensure shortest path is always chosen */
-            if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
-                Float flip = 1.0f;
-                for(std::size_t i = 0; i != values.size() - 1; ++i) {
-                    if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
-                    values[i + 1] *= flip;
-                }
-            }
-
-            /* Normalize the quaternions if not already. Don't attempt to
-               normalize every time to avoid tiny differences, only when the
-               quaternion looks to be off. */
-            if(configuration().value<bool>("normalizeQuaternions")) {
-                for(auto& i: values) if(!i.isNormalized()) {
-                    i = i.normalized();
-                    hadToRenormalize = true;
-                }
-            }
-
-            /* Populate track metadata */
-            type = AnimationTrackType::Quaternion;
             target = AnimationTrackTarget::Rotation3D;
-            track = Animation::TrackView<Float, Quaternion>{keys, values, interpolation, animationInterpolatorFor<Quaternion>(interpolation), Animation::Extrapolation::Constant};
+            resultType = AnimationTrackType::Quaternion;
+            if(interpolation == Animation::Interpolation::Spline) {
+                /* Postprocess the spline track. This can be done only once for
+                   every track -- postprocessSplineTrack() checks that. */
+                const auto values = Containers::arrayCast<CubicHermiteQuaternion>(outputData);
+                postprocessSplineTrack(timeTrackUsed, keys, values);
+
+                type = AnimationTrackType::CubicHermiteQuaternion;
+                track = Animation::TrackView<Float, CubicHermiteQuaternion>{
+                    keys, values, interpolation,
+                    animationInterpolatorFor<CubicHermiteQuaternion>(interpolation),
+                    Animation::Extrapolation::Constant};
+            } else {
+                /* Ensure shortest path is always chosen. Not doing this for
+                   spline interpolation, there it would cause war and famine. */
+                const auto values = Containers::arrayCast<Quaternion>(outputData);
+                if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
+                    Float flip = 1.0f;
+                    for(std::size_t i = 0; i != values.size() - 1; ++i) {
+                        if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
+                        values[i + 1] *= flip;
+                    }
+                }
+
+                /* Normalize the quaternions if not already. Don't attempt to
+                   normalize every time to avoid tiny differences, only when
+                   the quaternion looks to be off. Again, not doing this for
+                   splines as it would cause things to go haywire. */
+                if(configuration().value<bool>("normalizeQuaternions")) {
+                    for(auto& i: values) if(!i.isNormalized()) {
+                        i = i.normalized();
+                        hadToRenormalize = true;
+                    }
+                }
+
+                type = AnimationTrackType::Quaternion;
+                track = Animation::TrackView<Float, Quaternion>{
+                    keys, values, interpolation,
+                    animationInterpolatorFor<Quaternion>(interpolation),
+                    Animation::Extrapolation::Constant};
+            }
 
         /* Scale */
         } else if(channel.target_path == "scale") {
@@ -389,21 +461,46 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             }
 
             /* View on the value data */
-            const auto outputDataFound = samplerData.find(sampler.output);
-            CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
-            const auto values = Containers::arrayCast<const Vector3>(data.slice(outputDataFound->second.second, outputDataFound->second.second + outputDataFound->second.first.size()));
-
-            /* Populate track metadata */
-            type = AnimationTrackType::Vector3;
             target = AnimationTrackTarget::Scaling3D;
-            track = Animation::TrackView<Float, Vector3>{keys, values, interpolation, animationInterpolatorFor<Vector3>(interpolation), Animation::Extrapolation::Constant};
+            resultType = AnimationTrackType::Vector3;
+            if(interpolation == Animation::Interpolation::Spline) {
+                /* Postprocess the spline track. This can be done only once for
+                   every track -- postprocessSplineTrack() checks that. */
+                const auto values = Containers::arrayCast<CubicHermite3D>(outputData);
+                postprocessSplineTrack(timeTrackUsed, keys, values);
+
+                type = AnimationTrackType::CubicHermite3D;
+                track = Animation::TrackView<Float, CubicHermite3D>{
+                    keys, values, interpolation,
+                    animationInterpolatorFor<CubicHermite3D>(interpolation),
+                    Animation::Extrapolation::Constant};
+            } else {
+                type = AnimationTrackType::Vector3;
+                track = Animation::TrackView<Float, Vector3>{keys,
+                    Containers::arrayCast<const Vector3>(outputData),
+                    interpolation,
+                    animationInterpolatorFor<Vector3>(interpolation),
+                    Animation::Extrapolation::Constant};
+            }
 
         } else {
             Error{} << "Trade::TinyGltfImporter::animation(): unsupported track target" << channel.target_path;
             return Containers::NullOpt;
         }
 
-        tracks[i] = AnimationTrackData{type, target, UnsignedInt(channel.target_node), track};
+        /* Splines were postprocessed using the corresponding time track. If a
+           spline is not yet marked as postprocessed, mark it. Otherwise check
+           that the spline track is always used with the same time track. */
+        if(interpolation == Animation::Interpolation::Spline) {
+            if(timeTrackUsed == ~std::size_t{})
+                timeTrackUsed = sampler.input;
+            else if(timeTrackUsed != std::size_t(sampler.input)) {
+                Error{} << "Trade::TinyGltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry";
+                return Containers::NullOpt;
+            }
+        }
+
+        tracks[i] = AnimationTrackData{type, resultType, target, UnsignedInt(channel.target_node), track};
     }
 
     if(hadToRenormalize)

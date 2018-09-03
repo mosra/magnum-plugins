@@ -90,12 +90,11 @@ Import of skeleton, skin and morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-limitations-animation Animation import
 
--   At the moment, only constant and linear animation interpolation can be
-    imported
 -   If linear quaternion rotation tracks are not normalized, the importer
     prints a warning and normalizes them. Can be disabled per-animation with
     the @cb{.ini} normalizeQuaternions @ce option, see
-    @ref Trade-TinyGltfImporter-configuration "below".
+    @ref Trade-TinyGltfImporter-configuration "below". This doesn't affect
+    spline-interpolated rotation tracks.
 -   Skinning and morph targets are not supported
 -   Animation tracks are always imported with
     @ref Animation::Extrapolation::Constant, because glTF doesn't support

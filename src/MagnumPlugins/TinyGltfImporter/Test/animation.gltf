@@ -50,6 +50,111 @@
                     "output": 4
                 }
             ]
+        },
+        {
+            "name": "TRS animation, splines",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 3,
+                        "path": "rotation"
+                    }
+                },
+                {
+                    "sampler": 1,
+                    "target": {
+                        "node": 1,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 2,
+                    "target": {
+                        "node": 2,
+                        "path": "scale"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 7
+                },
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 8
+                },
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 9
+                }
+            ]
+        },
+        {
+            "name": "TRS animation, splines, sharing data with the same time track",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 45,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 1,
+                    "target": {
+                        "node": 45,
+                        "path": "scale"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 8
+                },
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 8
+                }
+            ]
+        },
+        {
+            "name": "TRS animation, splines, sharing data with different time track",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 45,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 1,
+                    "target": {
+                        "node": 45,
+                        "path": "scale"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 8
+                },
+                {
+                    "input": 6,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 8
+                }
+            ]
         }
     ],
     "accessors": [
@@ -87,6 +192,41 @@
             "componentType": 5126,
             "count": 4,
             "type": "VEC3"
+        },
+        {
+            "bufferView": 4,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 4,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 4,
+            "byteOffset": 16,
+            "componentType": 5126,
+            "count": 4,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 5,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 12,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 6,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 12,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 7,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 12,
+            "type": "VEC3"
         }
     ],
     "bufferViews": [
@@ -109,11 +249,31 @@
             "buffer": 0,
             "byteOffset": 104,
             "byteLength": 48
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 152,
+            "byteLength": 32
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 184,
+            "byteLength": 192
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 376,
+            "byteLength": 144
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 520,
+            "byteLength": 144
         }
     ],
     "buffers": [
         {
-            "byteLength": 152,
+            "byteLength": 664,
             "uri": "animation.bin"
         }
     ]

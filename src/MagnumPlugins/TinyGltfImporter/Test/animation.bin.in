@@ -1,8 +1,11 @@
 # Data based on AnimatedBox glTF sample model
-type = "<6f 8f 12f 12f"
+type = "<6f8f12f12f 4f4f48f36f36f"
 input = [
-    # time
-    1.25, 2.5, 0.0, 1.25, 2.5, 3.75,
+    # time for rotation
+    1.25, 2.5,
+
+    # time for translation/scaling
+    0.0, 1.25, 2.5, 3.75,
 
     # rotation track
     0.0, 0.0, 0.0, 1.0, # 360° rotation along X
@@ -18,5 +21,68 @@ input = [
     1.0, 1.0, 1.0,
     1.0, 1.0, 5.0,
     1.0, 1.0, 6.0,
-    1.0, 1.0, 1.0
+    1.0, 1.0, 1.0,
+
+    # time for spline interpolation -- *need* to have varying keyframe spacing
+    # to test the cubic hermite postprocessing.
+    0.5, 3.5, 4.0, 5.0,
+
+    # second time track for spline interpolation -- used to test time sharing
+    0.7, 1.1, 3.0, 5.5,
+
+    # rotation values taken from CubicHermiteTest::splerpQuaternion(). The
+    # first and second keyframe should give the same values as there if the
+    # postprocessing is correct, the rest is just random with shuffled around
+    # point values.
+    0, 0, 0, 0, # not used anyway
+    0.780076, 0.0260025, 0.598059, 0.182018,
+    -1.0/3, 0.0/3, 0.3/3, 0.4/3,
+
+    5.0/3, 0.3/3, 1.1/3, 0.5/3,
+    -0.711568, 0.391362, 0.355784, 0.462519,
+    1.5/0.5, 0.3/0.5, 17.0/0.5, -7.0/0.5,
+
+    1.3/0.5, 0.0/0.5, 0.2/0.5, 1.2/0.5,
+    0.598059, 0.182018, 0.0260025, 0.780076,
+    0.1, 0.2, -7.1, 1.7,
+
+    1.3, 0.5, 1.0, 0.0,
+    0.711568, -0.355784, -0.462519, -0.391362,
+    0, 0, 0, 0, # not used anyway
+
+    # translation taken from CubicHermiteTest::splerpVector() and extended. The
+    # first and second keyframe value as there (+ one more dimension) if the
+    # postprocessing is correct.
+    0, 0, 0, # not used anyway
+    3.0, 0.1, 2.5,
+    -1.0/3, 0.0/3, 0.3/3,
+
+    5.0/3, 0.3/3, 1.1/3,
+    -2.0, 1.1, -4.3,
+    1.5/0.5, 0.3/0.5, 17.0/0.5,
+
+    1.3/0.5, 0.0/0.5, 0.2/0.5,
+    1.5, 9.8, -5.1,
+    0.1, 0.2, -7.1,
+
+    1.3, 0.5, 1.0,
+    5.1, 0.1, -7.3,
+    0, 0, 0, # not used anyway
+
+    # scaling is just shuffled translation
+    0, 0, 0, # not used anyway
+    -2.0, 1.1, -4.3,
+    1.5/3, 0.3/3, 17.0/3,
+
+    1.3/3, 0.5/3, 1.0/3,
+    5.1, 0.1, -7.3,
+    -1.0/0.5, 0.0/0.5, 0.3/0.5,
+
+    0.1/0.5, 0.2/0.5, -7.1/0.5,
+    3.0, 0.1, 2.5,
+    5.0, 0.3, 1.1,
+
+    1.3, 0.0, 0.2,
+    1.5, 9.8, -5.1,
+    0, 0, 0, # not used anyway
 ]

@@ -34,7 +34,7 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-new New features
 
--   Initial support for animation data import in
+-   Support for object transformation animation import in
     @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   New @ref Trade::JpegImageConverter plugin for writing JPEG files
 -   Minimal support for the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
