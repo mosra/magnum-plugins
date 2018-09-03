@@ -1,0 +1,25 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "materials": [
+        {
+            "name": "Implicit values"
+        }, {
+            "name": "Alpha mask",
+            "alphaCutoff": 0.369,
+            "alphaMode": "MASK"
+        }, {
+            "name": "Double-sided alpha blend",
+            "doubleSided": true,
+            "alphaMode": "BLEND"
+        }, {
+            "name": "Opaque",
+            "doubleSided": false,
+            "alphaMode": "OPAQUE"
+        }, {
+            "name": "Unknown alpha mode",
+            "alphaMode": "WAT"
+        }
+    ]
+}

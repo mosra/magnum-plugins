@@ -85,6 +85,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void materialPbrMetallicRoughness();
     void materialPbrSpecularGlossiness();
     void materialBlinnPhong();
+    void materialProperties();
 
     void texture();
     void textureDefaultSampler();
@@ -189,6 +190,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
                        &TinyGltfImporterTest::materialPbrSpecularGlossiness,
                        &TinyGltfImporterTest::materialBlinnPhong,
+                       &TinyGltfImporterTest::materialProperties,
 
                        &TinyGltfImporterTest::texture,
                        &TinyGltfImporterTest::textureDefaultSampler},
@@ -1066,6 +1068,66 @@ void TinyGltfImporterTest::materialBlinnPhong() {
 
         CORRADE_COMPARE(importer->materialForName("Blinn/Phong without textures"), 1);
         CORRADE_COMPARE(importer->materialName(1), "Blinn/Phong without textures");
+    }
+}
+
+void TinyGltfImporterTest::materialProperties() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "material-properties" + std::string{data.suffix})));
+
+    CORRADE_COMPARE(importer->materialCount(), 5);
+    {
+        CORRADE_COMPARE(importer->materialName(0), "Implicit values");
+        auto material = importer->material(0);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+
+        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
+        CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Opaque);
+        CORRADE_COMPARE(phong.alphaMask(), 0.5f);
+    } {
+        CORRADE_COMPARE(importer->materialName(1), "Alpha mask");
+        auto material = importer->material(1);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+
+        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
+        CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Mask);
+        CORRADE_COMPARE(phong.alphaMask(), 0.369f);
+    } {
+        CORRADE_COMPARE(importer->materialName(2), "Double-sided alpha blend");
+        auto material = importer->material(2);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+
+        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DoubleSided);
+        CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Blend);
+        CORRADE_COMPARE(phong.alphaMask(), 0.5f);
+    } {
+        CORRADE_COMPARE(importer->materialName(3), "Opaque");
+        auto material = importer->material(3);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+
+        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
+        CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Opaque);
+        CORRADE_COMPARE(phong.alphaMask(), 0.5f);
+    } {
+        CORRADE_COMPARE(importer->materialName(4), "Unknown alpha mode");
+
+        std::ostringstream out;
+        Error redirectError{&out};
+
+        CORRADE_VERIFY(!importer->material(4));
+        CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::material(): unknown alpha mode WAT\n");
     }
 }
 

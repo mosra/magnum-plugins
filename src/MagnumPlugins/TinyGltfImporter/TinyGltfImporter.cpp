@@ -744,8 +744,35 @@ std::string TinyGltfImporter::doMaterialName(const UnsignedInt id) {
 std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const UnsignedInt id) {
     const tinygltf::Material& material = _d->model.materials[id];
 
-    /* Textures */
+    /* Alpha mode and mask, double sided */
     PhongMaterialData::Flags flags;
+    MaterialAlphaMode alphaMode = MaterialAlphaMode::Opaque;
+    Float alphaMask = 0.5f;
+    {
+        auto found = material.additionalValues.find("alphaCutoff");
+        if(found != material.additionalValues.end())
+            alphaMask = found->second.Factor();
+    } {
+        auto found = material.additionalValues.find("alphaMode");
+        if(found != material.additionalValues.end()) {
+            if(found->second.string_value == "OPAQUE")
+                alphaMode = MaterialAlphaMode::Opaque;
+            else if(found->second.string_value == "BLEND")
+                alphaMode = MaterialAlphaMode::Blend;
+            else if(found->second.string_value == "MASK")
+                alphaMode = MaterialAlphaMode::Mask;
+            else {
+                Error{} << "Trade::TinyGltfImporter::material(): unknown alpha mode" << found->second.string_value;
+                return nullptr;
+            }
+        }
+    } {
+        auto found = material.additionalValues.find("doubleSided");
+        if(found != material.additionalValues.end() && found->second.bool_value)
+            flags |= PhongMaterialData::Flag::DoubleSided;
+    }
+
+    /* Textures */
     UnsignedInt diffuseTexture{}, specularTexture{};
     Color4 diffuseColor{1.0f};
     Color3 specularColor{1.0f};
@@ -841,7 +868,7 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
     }
 
     /* Put things together */
-    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, shininess, &material}};
+    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, alphaMode, alphaMask, shininess, &material}};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
     else data->diffuseColor() = diffuseColor;
