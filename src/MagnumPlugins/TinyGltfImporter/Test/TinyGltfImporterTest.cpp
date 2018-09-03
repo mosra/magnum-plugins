@@ -71,6 +71,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void light();
 
     void scene();
+    void sceneEmpty();
+    void sceneNoDefault();
     void objectTransformation();
 
     void mesh();
@@ -168,6 +170,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::light,
 
                        &TinyGltfImporterTest::scene,
+                       &TinyGltfImporterTest::sceneEmpty,
+                       &TinyGltfImporterTest::sceneNoDefault,
                        &TinyGltfImporterTest::objectTransformation},
                       Containers::arraySize(SingleFileData));
 
@@ -508,6 +512,7 @@ void TinyGltfImporterTest::scene() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "scene" + std::string{data.suffix})));
 
+    /* Explicit default scene */
     CORRADE_COMPARE(importer->defaultScene(), 1);
     CORRADE_COMPARE(importer->sceneCount(), 2);
     CORRADE_COMPARE(importer->sceneName(1), "Scene");
@@ -556,6 +561,36 @@ void TinyGltfImporterTest::scene() {
         CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{3, 1}));
     }
+}
+
+void TinyGltfImporterTest::sceneEmpty() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "empty" + std::string{data.suffix})));
+
+    /* There is no scene, can't have any default */
+    CORRADE_COMPARE(importer->defaultScene(), -1);
+    CORRADE_COMPARE(importer->sceneCount(), 0);
+}
+
+void TinyGltfImporterTest::sceneNoDefault() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "scene-nodefault" + std::string{data.suffix})));
+
+    /* There is at least one scene, it's made default */
+    CORRADE_COMPARE(importer->defaultScene(), 0);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+
+    auto scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->children3D().empty());
 }
 
 void TinyGltfImporterTest::objectTransformation() {

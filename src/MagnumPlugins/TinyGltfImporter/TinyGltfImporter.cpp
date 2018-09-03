@@ -430,6 +430,16 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
 }
 
 Int TinyGltfImporter::doDefaultScene() {
+    /* While https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#scenes
+       says that "When scene is undefined, runtime is not required to render
+       anything at load time.", several official sample glTF models (e.g. the
+       AnimatedTriangle) have no "scene" property, so that's a bit stupid
+       behavior to have. As per discussion at https://github.com/KhronosGroup/glTF/issues/815#issuecomment-274286889,
+       if a default scene isn't defined and there is at least one scene, just
+       use the first one. */
+    if(_d->model.defaultScene == -1 && !_d->model.scenes.empty())
+        return 0;
+
     return _d->model.defaultScene;
 }
 

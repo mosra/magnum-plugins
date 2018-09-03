@@ -83,6 +83,8 @@ namespace Magnum {
     that.
 -   @ref Trade::StbImageConverter "StbImageConverter" no longer requires input
     data to be tightly packed, allowing to export image subrectangles
+-   @ref Trade::TinyGltfImporter::defaultScene() now returns the first scene
+    if no default scene is present in the file
 -   New @ref Trade::TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<Trade::AbstractImporter>&)
     constructor for easier usage of statically-built plugins
 

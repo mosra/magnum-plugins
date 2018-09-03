@@ -104,6 +104,8 @@ corrade_add_test(TinyGltfImporterTest
         mesh-with-stride.glb
         scene.gltf
         scene.glb
+        scene-nodefault.gltf
+        scene-nodefault.glb
         object-transformation.gltf
         object-transformation.glb
         texture.gltf

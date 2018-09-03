@@ -97,8 +97,13 @@ Import of skeleton, skin and morph data is not supported at the moment.
     @ref Animation::Extrapolation::Constant, because glTF doesn't support
     anything else
 
-@subsection Trade-TinyGltfImporter-limitations-objects Object import
+@subsection Trade-TinyGltfImporter-limitations-objects Scene and object import
 
+-   If no @cb{.json} "scene" @ce property is present and the file contains at
+    least one scene, @ref defaultScene() returns @cpp 0 @ce instead of
+    @cpp -1 @ce. According to the [glTF 2.0 specification](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#scenes)
+    the importer is free to not render anything, but the suggested behavior
+    would break even some official sample models.
 -   In case object transformation is set via separate
     translation/rotation/scaling properties in the source file,
     @ref ObjectData3D is created with @ref ObjectFlag3D::HasTranslationRotationScaling and these separate properties accessible
