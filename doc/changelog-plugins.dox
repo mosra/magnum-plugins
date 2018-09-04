@@ -47,6 +47,8 @@ namespace Magnum {
     between names and IDs for all currently imported data
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports alpha mode,
     alpha mask and double sided material properties
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports all camera
+    properties together with type and aspect ratio / projection size
 -   @ref Trade::AssimpImporter "AssimpImporter", @ref Trade::OpenGexImporter "OpenGexImporter"
     and @ref Trade::TinyGltfImporter "TinyGltfImporter" now support
     @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom

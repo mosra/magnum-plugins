@@ -4,22 +4,41 @@
     },
     "cameras" : [
         {
-            "name" : "Orthographic",
+            "name" : "Orthographic 4:3",
             "orthographic" : {
-                "xmag" : 7.314285755157471,
-                "ymag" : 7.314285755157471,
+                "xmag" : 2.0,
+                "ymag" : 1.5,
                 "zfar" : 100.0,
-                "znear" : 0.10000000149011612
+                "znear" : 0.01
             },
             "type" : "orthographic"
         },
         {
-            "name" : "Perspective",
+            "name" : "Perspective 1:1 75° hFoV",
             "perspective" : {
-                "aspectRatio" : 1.7777777777777777,
-                "yfov" : 0.5033799372418416,
-                "zfar" : 94.69999694824219,
-                "znear" : 1.9999998807907104
+                "aspectRatio" : 1.0,
+                "yfov" : 1.308996938995747,
+                "zfar" : 150.0,
+                "znear" : 0.1
+            },
+            "type" : "perspective"
+        },
+        {
+            "name" : "Perspective 4:3 75° hFoV",
+            "perspective" : {
+                "aspectRatio" : 0.75,
+                "yfov" : 1.044412773812111,
+                "zfar" : 150.0,
+                "znear" : 0.1
+            },
+            "type" : "perspective"
+        },
+        {
+            "name" : "Perspective 16:9 75° hFoV infinite",
+            "perspective" : {
+                "aspectRatio" : 0.5625,
+                "yfov" : 0.8149313284027269,
+                "znear" : 0.1
             },
             "type" : "perspective"
         }

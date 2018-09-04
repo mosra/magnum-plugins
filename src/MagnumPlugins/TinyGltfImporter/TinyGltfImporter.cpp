@@ -367,19 +367,28 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
 Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
     const tinygltf::Camera& camera = _d->model.cameras[id];
 
-    Float far, near;
-    Rad fov;
+    /* https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#projection-matrices */
 
+    /* Perspective camera. glTF uses vertical FoV and Y/X aspect ratio, so to
+       avoid accidental bugs we will directly calculate the near plane size and
+       use that to create the camera data (instead of passing it the horizontal
+       FoV). Also tinygltf is stupid and uses 0 to denote infinite far plane
+       (wat). */
     if(camera.type == "perspective") {
-        far = camera.perspective.zfar;
-        near = camera.perspective.znear;
-        fov = Rad{camera.perspective.yfov};
-    } else if(camera.type == "orthographic") {
-        far = camera.orthographic.zfar;
-        near = camera.orthographic.znear;
-    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        const Vector2 size = 2.0f*camera.perspective.znear*Math::tan(camera.perspective.yfov*0.5_radf)*Vector2::xScale(1.0f/camera.perspective.aspectRatio);
+        const Float far = camera.perspective.zfar == 0.0f ? Constants::inf() :
+            camera.perspective.zfar;
+        return CameraData{CameraType::Perspective3D, size, camera.perspective.znear, far, &camera};
+    }
 
-    return CameraData{fov, near, far, &camera};
+    /* Orthographic camera. glTF uses a "scale" instead of "size", which means
+       we have to double. */
+    if(camera.type == "orthographic")
+        return CameraData{CameraType::Orthographic3D,
+            Vector2{camera.orthographic.xmag, camera.orthographic.ymag}*2.0f,
+            camera.orthographic.znear, camera.orthographic.zfar, &camera};
+
+    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 UnsignedInt TinyGltfImporter::doLightCount() const {

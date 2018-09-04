@@ -444,25 +444,52 @@ void TinyGltfImporterTest::camera() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "camera" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->cameraCount(), 2);
+    CORRADE_COMPARE(importer->cameraCount(), 4);
 
     {
-        CORRADE_COMPARE(importer->cameraForName("Orthographic"), 0);
-        CORRADE_COMPARE(importer->cameraName(0), "Orthographic");
+        CORRADE_COMPARE(importer->cameraName(0), "Orthographic 4:3");
+        CORRADE_COMPARE(importer->cameraForName("Orthographic 4:3"), 0);
 
         auto cam = importer->camera(0);
         CORRADE_VERIFY(cam);
-        CORRADE_COMPARE(cam->near(), 0.1f);
+        CORRADE_COMPARE(cam->type(), CameraType::Orthographic3D);
+        CORRADE_COMPARE(cam->size(), (Vector2{4.0f, 3.0f}));
+        CORRADE_COMPARE(cam->aspectRatio(), 1.333333f);
+        CORRADE_COMPARE(cam->near(), 0.01f);
         CORRADE_COMPARE(cam->far(), 100.0f);
     } {
-        CORRADE_COMPARE(importer->cameraForName("Perspective"), 1);
-        CORRADE_COMPARE(importer->cameraName(1), "Perspective");
+        CORRADE_COMPARE(importer->cameraName(1), "Perspective 1:1 75° hFoV");
+//         CORRADE_COMPARE(importer->cameraForName("Perspective 1:1 75° hFoV"), 1);
 
         auto cam = importer->camera(1);
         CORRADE_VERIFY(cam);
-        CORRADE_COMPARE(cam->fov(), 0.5033799372418416_radf);
-        CORRADE_COMPARE(cam->near(), 2.0f);
-        CORRADE_COMPARE(cam->far(), 94.7f);
+        CORRADE_COMPARE(cam->type(), CameraType::Perspective3D);
+        CORRADE_COMPARE(cam->fov(), 75.0_degf);
+        CORRADE_COMPARE(cam->aspectRatio(), 1.0f);
+        CORRADE_COMPARE(cam->near(), 0.1f);
+        CORRADE_COMPARE(cam->far(), 150.0f);
+    } {
+        CORRADE_COMPARE(importer->cameraName(2), "Perspective 4:3 75° hFoV");
+        CORRADE_COMPARE(importer->cameraForName("Perspective 4:3 75° hFoV"), 2);
+
+        auto cam = importer->camera(2);
+        CORRADE_VERIFY(cam);
+        CORRADE_COMPARE(cam->type(), CameraType::Perspective3D);
+        CORRADE_COMPARE(cam->fov(), 75.0_degf);
+        CORRADE_COMPARE(cam->aspectRatio(), 4.0f/3.0f);
+        CORRADE_COMPARE(cam->near(), 0.1f);
+        CORRADE_COMPARE(cam->far(), 150.0f);
+    } {
+        CORRADE_COMPARE(importer->cameraName(3), "Perspective 16:9 75° hFoV infinite");
+        CORRADE_COMPARE(importer->cameraForName("Perspective 16:9 75° hFoV infinite"), 3);
+
+        auto cam = importer->camera(3);
+        CORRADE_VERIFY(cam);
+        CORRADE_COMPARE(cam->type(), CameraType::Perspective3D);
+        CORRADE_COMPARE(cam->fov(), 75.0_degf);
+        CORRADE_COMPARE(cam->aspectRatio(), 16.0f/9.0f);
+        CORRADE_COMPARE(cam->near(), 0.1f);
+        CORRADE_COMPARE(cam->far(), Constants::inf());
     }
 }
 

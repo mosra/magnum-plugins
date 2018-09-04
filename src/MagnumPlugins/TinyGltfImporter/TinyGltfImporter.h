@@ -108,6 +108,12 @@ Import of skeleton, skin and morph data is not supported at the moment.
     translation/rotation/scaling properties in the source file,
     @ref ObjectData3D is created with @ref ObjectFlag3D::HasTranslationRotationScaling and these separate properties accessible
 
+@subsection Trade-TinyGltfImporter-limitations-camera Camera import
+
+-   Cameras in glTF are specified with vertical FoV and vertical:horizontal
+    aspect ratio, these values are recalculated for horizontal FoV and
+    horizontal:vertical aspect ratio as is common in Magnum
+
 @subsection Trade-TinyGltfImporter-limitations-lights Light import
 
 -   Light properties besides light type are not imported.
