@@ -374,7 +374,7 @@ UnsignedInt AssimpImporter::doCameraCount() const {
 Containers::Optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
     const aiCamera* cam = _f->scene->mCameras[id];
     /** @todo aspect and up vector are not used... */
-    return CameraData(Rad(cam->mHorizontalFOV), cam->mClipPlaneNear, cam->mClipPlaneFar, cam);
+    return CameraData{CameraType::Perspective3D, Rad(cam->mHorizontalFOV), 1.0f, cam->mClipPlaneNear, cam->mClipPlaneFar, cam};
 }
 
 UnsignedInt AssimpImporter::doObject3DCount() const {
@@ -563,7 +563,7 @@ std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedI
     /* Key always present, default 0.0f */
     mat->Get(AI_MATKEY_SHININESS, shininess);
 
-    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData(flags, shininess, mat)};
+    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData(flags, MaterialAlphaMode::Opaque, 0.5f, shininess, mat)};
 
     /* Key always present, default black */
     mat->Get(AI_MATKEY_COLOR_AMBIENT, color);

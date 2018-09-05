@@ -143,6 +143,7 @@ Import of animation data is not supported at the moment.
 
 -   Only materials with shading mode `aiShadingMode_Phong` are supported
 -   Only the first diffuse/specular/ambient texture is loaded
+-   Two-sided property and alpha mode is not imported
 
 @subsection Trade-AssimpImporter-limitations-lights Light import
 
@@ -157,7 +158,7 @@ Import of animation data is not supported at the moment.
 
 @subsection Trade-AssimpImporter-limitations-cameras Camera import
 
--   Aspect and up vector properties are ignored
+-   Aspect and up vector properties are not imported
 
 @subsection Trade-AssimpImporter-limitations-meshes Mesh import
 
