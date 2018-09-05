@@ -174,6 +174,20 @@ Import of skeleton, skin and morph data is not supported at the moment.
         @ref SamplerMipmap::Linear
     -   Wrapping (all axes): @ref SamplerWrapping::Repeat
 
+@section Trade-TinyGltfImporter-configuration Plugin-specific config
+
+It's possible to tune various output options through @ref configuration(). See
+below for all options and their default values. In particular, the
+enabled-by-default @cb{.ini} optimizeQuaternionShortestPath @ce option makes it
+possible to use the faster
+@ref Math::lerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerp()" /
+@ref Math::slerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerp()"
+functions instead of
+@ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
+@ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()".
+
+@snippet MagnumPlugins/TinyGltfImporter/TinyGltfImporter.conf config
+
 @section Trade-TinyGltfImporter-state Access to internal importer state
 
 Access to the underlying TinyGLTF structures it is provided through

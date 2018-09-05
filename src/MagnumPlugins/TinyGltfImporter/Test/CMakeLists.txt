@@ -65,6 +65,8 @@ corrade_add_test(TinyGltfImporterTest
         animation.bin
         animation-embedded.gltf
         animation-embedded.glb
+        animation-rotation-shortestpath.bin
+        animation-rotation-shortestpath.gltf
         animation-wrong.gltf
         camera.gltf
         camera.glb

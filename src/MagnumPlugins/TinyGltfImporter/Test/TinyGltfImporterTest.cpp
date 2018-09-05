@@ -30,6 +30,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/Array.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
@@ -65,6 +66,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void animationWrongRotationType();
     void animationWrongScalingType();
     void animationUnsupportedPath();
+    void animationShortestPathOptimizationEnabled();
+    void animationShortestPathOptimizationDisabled();
 
     void camera();
 
@@ -164,7 +167,10 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::animationWrongTranslationType,
               &TinyGltfImporterTest::animationWrongRotationType,
               &TinyGltfImporterTest::animationWrongScalingType,
-              &TinyGltfImporterTest::animationUnsupportedPath});
+              &TinyGltfImporterTest::animationUnsupportedPath,
+
+              &TinyGltfImporterTest::animationShortestPathOptimizationEnabled,
+              &TinyGltfImporterTest::animationShortestPathOptimizationDisabled});
 
     addInstancedTests({&TinyGltfImporterTest::camera,
 
@@ -434,6 +440,129 @@ void TinyGltfImporterTest::animationUnsupportedPath() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(5));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): unsupported track target color\n");
+}
+
+void TinyGltfImporterTest::animationShortestPathOptimizationEnabled() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    /* Enabled by default */
+    CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-rotation-shortestpath.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    auto animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+    CORRADE_VERIFY(animation->importerState());
+    CORRADE_COMPARE(animation->trackCount(), 1);
+
+    /* Rotation, linearly interpolated */
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Rotation3D);
+    Animation::TrackView<Float, Quaternion> track = animation->track<Quaternion>(0);
+    const Quaternion rotationValues[]{
+        {{0.0f, 0.0f, 0.92388f}, -0.382683f},   // 0 s: 225°
+        {{0.0f, 0.0f, 0.707107f}, -0.707107f},  // 1 s: 270°
+        {{0.0f, 0.0f, 0.382683f}, -0.92388f},   // 2 s: 315°
+        {{0.0f, 0.0f, 0.0f}, -1.0f},            // 3 s: 360° / 0°
+        {{0.0f, 0.0f, -0.382683f}, -0.92388f},  // 4 s:  45° (flipped)
+        {{0.0f, 0.0f, -0.707107f}, -0.707107f}, // 5 s:  90° (flipped)
+        {{0.0f, 0.0f, -0.92388f}, -0.382683f},  // 6 s: 135° (flipped back)
+        {{0.0f, 0.0f, -1.0f}, 0.0f},            // 7 s: 180° (flipped back)
+        {{0.0f, 0.0f, -0.92388f}, 0.382683f}    // 8 s: 225° (flipped)
+    };
+    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(track.at(Math::slerp, 0.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 1.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 2.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 3.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 4.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 5.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 6.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 7.5f).axis(), -Vector3::zAxis());
+
+    /* Some are negated because of the flipped axis but other than that it's
+       nicely monotonic */
+    CORRADE_COMPARE(track.at(Math::slerp, 0.5f).angle(), 247.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 1.5f).angle(), 292.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 2.5f).angle(), 337.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 3.5f).angle(), 360.0_degf - 22.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 4.5f).angle(), 360.0_degf - 67.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 5.5f).angle(), 360.0_degf - 112.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 6.5f).angle(), 360.0_degf - 157.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 7.5f).angle(), 360.0_degf - 202.5_degf);
+}
+
+void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    /* Explicitly disable */
+    importer->configuration().setValue("optimizeQuaternionShortestPath", false);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-rotation-shortestpath.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    auto animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+    CORRADE_VERIFY(animation->importerState());
+    CORRADE_COMPARE(animation->trackCount(), 1);
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Rotation3D);
+    Animation::TrackView<Float, Quaternion> track = animation->track<Quaternion>(0);
+
+    /* Should be the same as in animation-rotation-shortestpath.bin.in */
+    const Quaternion rotationValues[]{
+        {{0.0f, 0.0f, 0.92388f}, -0.382683f},   // 0 s: 225°
+        {{0.0f, 0.0f, 0.707107f}, -0.707107f},  // 1 s: 270°
+        {{0.0f, 0.0f, 0.382683f}, -0.92388f},   // 2 s: 315°
+        {{0.0f, 0.0f, 0.0f}, -1.0f},            // 3 s: 360° / 0°
+        {{0.0f, 0.0f, 0.382683f}, 0.92388f},    // 4 s:  45° (longer path)
+        {{0.0f, 0.0f, 0.707107f}, 0.707107f},   // 5 s:  90°
+        {{0.0f, 0.0f, -0.92388f}, -0.382683f},  // 6 s: 135° (longer path)
+        {{0.0f, 0.0f, -1.0f}, 0.0f},            // 7 s: 180°
+        {{0.0f, 0.0f, 0.92388f}, -0.382683f}    // 8 s: 225° (longer path)
+    };
+    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 0.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 1.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 2.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 3.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 4.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 5.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 6.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 7.5f).axis(), Vector3::zAxis());
+
+    /* Some are negated because of the flipped axis but other than that it's
+       nicely monotonic because slerpShortestPath() ensures that */
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 0.5f).angle(), 247.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 1.5f).angle(), 292.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 2.5f).angle(), 337.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 3.5f).angle(), 22.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 4.5f).angle(), 67.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 5.5f).angle(), 360.0_degf - 112.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 6.5f).angle(), 360.0_degf - 157.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 7.5f).angle(), 202.5_degf);
+
+    CORRADE_COMPARE(track.at(Math::slerp, 0.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 1.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 2.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 3.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 4.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 5.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 6.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 7.5f).axis(), -Vector3::zAxis(1.00004f)); /* ?! */
+
+    /* Things are a complete chaos when using non-SP slerp */
+    CORRADE_COMPARE(track.at(Math::slerp, 0.5f).angle(), 247.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 1.5f).angle(), 292.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 2.5f).angle(), 337.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 3.5f).angle(), 202.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 4.5f).angle(), 67.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 5.5f).angle(), 67.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 6.5f).angle(), 202.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 7.5f).angle(), 337.5_degf);
 }
 
 void TinyGltfImporterTest::camera() {

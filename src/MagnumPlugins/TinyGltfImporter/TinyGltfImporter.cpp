@@ -31,6 +31,7 @@
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Mesh.h>
@@ -122,11 +123,26 @@ struct TinyGltfImporter::Document {
     bool open = false;
 };
 
-TinyGltfImporter::TinyGltfImporter() = default;
+namespace {
+
+void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
+    /** @todo horrible workaround, fix this properly */
+    conf.setValue("optimizeQuaternionShortestPath", true);
+}
+
+}
+
+TinyGltfImporter::TinyGltfImporter() {
+    /** @todo horrible workaround, fix this properly */
+    fillDefaultConfiguration(configuration());
+}
 
 TinyGltfImporter::TinyGltfImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
-TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager} {}
+TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager} {
+    /** @todo horrible workaround, fix this properly */
+    fillDefaultConfiguration(configuration());
+}
 
 TinyGltfImporter::~TinyGltfImporter() = default;
 
@@ -329,7 +345,16 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             /* View on the value data */
             const auto outputDataFound = samplerData.find(sampler.output);
             CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
-            const auto values = Containers::arrayCast<const Quaternion>(data.slice(outputDataFound->second.second, outputDataFound->second.second + outputDataFound->second.first.size()));
+            const auto values = Containers::arrayCast<Quaternion>(data.slice(outputDataFound->second.second, outputDataFound->second.second + outputDataFound->second.first.size()));
+
+            /* Patch the data to ensure shortest path is always chosen */
+            if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
+                Float flip = 1.0f;
+                for(std::size_t i = 0; i != values.size() - 1; ++i) {
+                    if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
+                    values[i + 1] *= flip;
+                }
+            }
 
             /* Populate track metadata */
             type = AnimationTrackType::Quaternion;
