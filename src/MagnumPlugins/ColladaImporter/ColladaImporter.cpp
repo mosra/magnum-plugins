@@ -621,7 +621,7 @@ std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const Unsigned
         specularTexture = it->second;
     }
 
-    auto material = new PhongMaterialData(flags, shininess);
+    auto material = new PhongMaterialData(flags, MaterialAlphaMode::Opaque, 0.5f, shininess);
 
     /* Ambient texture or color, if not textured */
     if(flags & PhongMaterialData::Flag::AmbientTexture)
