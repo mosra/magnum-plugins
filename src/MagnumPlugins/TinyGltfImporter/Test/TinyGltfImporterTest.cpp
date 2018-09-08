@@ -315,7 +315,7 @@ void TinyGltfImporterTest::animation() {
         CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
         CORRADE_COMPARE(animation->trackResultType(0), AnimationTrackType::Quaternion);
         CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Rotation3D);
-        CORRADE_COMPARE(animation->trackTargetId(0), 1337);
+        CORRADE_COMPARE(animation->trackTargetId(0), 0);
         Animation::TrackView<Float, Quaternion> rotation = animation->track<Quaternion>(0);
         CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
         CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
@@ -343,7 +343,7 @@ void TinyGltfImporterTest::animation() {
         CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
         CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
         CORRADE_COMPARE(animation->trackTarget(1), AnimationTrackTarget::Translation3D);
-        CORRADE_COMPARE(animation->trackTargetId(1), 42);
+        CORRADE_COMPARE(animation->trackTargetId(1), 1);
         Animation::TrackView<Float, Vector3> translation = animation->track<Vector3>(1);
         CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Constant);
         CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
@@ -362,7 +362,7 @@ void TinyGltfImporterTest::animation() {
         CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
         CORRADE_COMPARE(animation->trackResultType(2), AnimationTrackType::Vector3);
         CORRADE_COMPARE(animation->trackTarget(2), AnimationTrackTarget::Scaling3D);
-        CORRADE_COMPARE(animation->trackTargetId(2), 12);
+        CORRADE_COMPARE(animation->trackTargetId(2), 2);
         Animation::TrackView<Float, Vector3> scaling = animation->track<Vector3>(2);
         CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
         CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
@@ -592,7 +592,7 @@ void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::CubicHermite3D);
     CORRADE_COMPARE(animation->trackResultType(0), AnimationTrackType::Vector3);
     CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Translation3D);
-    CORRADE_COMPARE(animation->trackTargetId(0), 45);
+    CORRADE_COMPARE(animation->trackTargetId(0), 3);
     Animation::TrackView<Float, CubicHermite3D> translation = animation->track<CubicHermite3D>(1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
@@ -610,7 +610,7 @@ void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::CubicHermite3D);
     CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
     CORRADE_COMPARE(animation->trackTarget(1), AnimationTrackTarget::Scaling3D);
-    CORRADE_COMPARE(animation->trackTargetId(1), 45);
+    CORRADE_COMPARE(animation->trackTargetId(1), 3);
     Animation::TrackView<Float, CubicHermite3D> scaling = animation->track<CubicHermite3D>(1);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);

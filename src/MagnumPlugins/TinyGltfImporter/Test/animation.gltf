@@ -14,21 +14,21 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "rotation"
                     }
                 },
                 {
                     "sampler": 1,
                     "target": {
-                        "node": 42,
+                        "node": 1,
                         "path": "translation"
                     }
                 },
                 {
                     "sampler": 2,
                     "target": {
-                        "node": 12,
+                        "node": 2,
                         "path": "scale"
                     }
                 }
@@ -100,14 +100,14 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 45,
+                        "node": 3,
                         "path": "translation"
                     }
                 },
                 {
                     "sampler": 1,
                     "target": {
-                        "node": 45,
+                        "node": 3,
                         "path": "scale"
                     }
                 }
@@ -131,14 +131,14 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 45,
+                        "node": 2,
                         "path": "translation"
                     }
                 },
                 {
                     "sampler": 1,
                     "target": {
-                        "node": 45,
+                        "node": 2,
                         "path": "scale"
                     }
                 }
@@ -276,5 +276,11 @@
             "byteLength": 664,
             "uri": "animation.bin"
         }
+    ],
+    "nodes": [
+        {},
+        {},
+        {},
+        {}
     ]
 }

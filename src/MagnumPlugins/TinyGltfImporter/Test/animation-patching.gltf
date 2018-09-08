@@ -9,7 +9,7 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "rotation"
                     }
                 }
@@ -28,7 +28,7 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "rotation"
                     }
                 }
@@ -82,5 +82,8 @@
             "byteLength": 228,
             "uri": "animation-patching.bin"
         }
+    ],
+    "nodes": [
+        {}
     ]
 }
