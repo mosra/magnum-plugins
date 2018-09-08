@@ -454,12 +454,8 @@ void TinyGltfImporterTest::animationShortestPathOptimizationEnabled() {
 
     auto animation = importer->animation(0);
     CORRADE_VERIFY(animation);
-    CORRADE_VERIFY(animation->importerState());
     CORRADE_COMPARE(animation->trackCount(), 1);
-
-    /* Rotation, linearly interpolated */
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Rotation3D);
     Animation::TrackView<Float, Quaternion> track = animation->track<Quaternion>(0);
     const Quaternion rotationValues[]{
         {{0.0f, 0.0f, 0.92388f}, -0.382683f},   // 0 s: 225°
@@ -507,10 +503,8 @@ void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
 
     auto animation = importer->animation(0);
     CORRADE_VERIFY(animation);
-    CORRADE_VERIFY(animation->importerState());
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Rotation3D);
     Animation::TrackView<Float, Quaternion> track = animation->track<Quaternion>(0);
 
     /* Should be the same as in animation-patching.bin.in */
@@ -590,7 +584,6 @@ void TinyGltfImporterTest::camera() {
         CORRADE_COMPARE(cam->far(), 100.0f);
     } {
         CORRADE_COMPARE(importer->cameraName(1), "Perspective 1:1 75° hFoV");
-//         CORRADE_COMPARE(importer->cameraForName("Perspective 1:1 75° hFoV"), 1);
 
         auto cam = importer->camera(1);
         CORRADE_VERIFY(cam);
