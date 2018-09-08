@@ -96,7 +96,9 @@ std::size_t elementSize(const tinygltf::Accessor& accessor) {
 
 Containers::ArrayView<const char> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
     const std::size_t bufferElementSize = elementSize(accessor);
+    CORRADE_INTERNAL_ASSERT(std::size_t(accessor.bufferView) < model.bufferViews.size());
     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
+    CORRADE_INTERNAL_ASSERT(std::size_t(bufferView.buffer) < model.buffers.size());
     const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
 
     CORRADE_INTERNAL_ASSERT(bufferView.byteStride == 0 || bufferView.byteStride == bufferElementSize);
