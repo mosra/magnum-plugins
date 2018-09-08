@@ -57,14 +57,20 @@
 /* Opt out of loading external images */
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 
+#ifdef CORRADE_TARGET_WINDOWS
 /* Tinygltf includes some windows headers, avoid including more than ncessary
-   to speed up compilation. */
-#define WIN32_LEAN_AND_MEAN
+   to speed up compilation. WIN32_LEAN_AND_MEAN and NOMINMAX is already defined
+   by CMake. */
 #define VC_EXTRALEAN
+#endif
 
+/* Include like this instead of "MagnumExternal/TinyGltf/tiny_gltf.h" so we can
+   include it as a system header and suppress warnings */
 #include "tiny_gltf.h"
+#ifdef CORRADE_TARGET_WINDOWS
 #undef near
 #undef far
+#endif
 
 namespace Magnum { namespace Trade {
 
