@@ -3,7 +3,7 @@
 set -e
 
 # in -> bin
-for i in animation animation-rotation-shortestpath external-data mesh-colors mesh-primitives mesh; do
+for i in animation animation-patching external-data mesh-colors mesh-primitives mesh; do
     ./in2bin.py ${i}.bin.in
 done
 

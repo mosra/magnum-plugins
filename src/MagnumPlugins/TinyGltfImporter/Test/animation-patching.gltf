@@ -4,6 +4,7 @@
     },
     "animations": [
         {
+            "name": "Quaternion shortest-path patching",
             "channels": [
                 {
                     "sampler": 0,
@@ -53,7 +54,7 @@
     "buffers": [
         {
             "byteLength": 180,
-            "uri": "animation-rotation-shortestpath.bin"
+            "uri": "animation-patching.bin"
         }
     ]
 }

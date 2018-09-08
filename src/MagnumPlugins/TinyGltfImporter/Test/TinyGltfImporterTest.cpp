@@ -447,9 +447,10 @@ void TinyGltfImporterTest::animationShortestPathOptimizationEnabled() {
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-rotation-shortestpath.gltf")));
+        "animation-patching.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 1);
+    CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
 
     auto animation = importer->animation(0);
     CORRADE_VERIFY(animation);
@@ -499,9 +500,10 @@ void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
     /* Explicitly disable */
     importer->configuration().setValue("optimizeQuaternionShortestPath", false);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-rotation-shortestpath.gltf")));
+        "animation-patching.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 1);
+    CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
 
     auto animation = importer->animation(0);
     CORRADE_VERIFY(animation);
@@ -511,7 +513,7 @@ void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
     CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Rotation3D);
     Animation::TrackView<Float, Quaternion> track = animation->track<Quaternion>(0);
 
-    /* Should be the same as in animation-rotation-shortestpath.bin.in */
+    /* Should be the same as in animation-patching.bin.in */
     const Quaternion rotationValues[]{
         {{0.0f, 0.0f, 0.92388f}, -0.382683f},   // 0 s: 225°
         {{0.0f, 0.0f, 0.707107f}, -0.707107f},  // 1 s: 270°
