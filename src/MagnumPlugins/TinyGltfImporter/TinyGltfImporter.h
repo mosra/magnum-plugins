@@ -90,6 +90,16 @@ Import of skeleton, skin and morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-limitations-animation Animation import
 
+-   Linear quaternion rotation tracks are postprocessed in order to make it
+    possible to use the faster
+    @ref Math::lerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerp()" /
+    @ref Math::slerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerp()"
+    functions instead of
+    @ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
+    @ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()". Can be disabled per-animation with the
+    @cb{.ini} optimizeQuaternionShortestPath @ce option, see
+    @ref Trade-TinyGltfImporter-configuration "below". This doesn't affect
+    spline-interpolated rotation tracks.
 -   If linear quaternion rotation tracks are not normalized, the importer
     prints a warning and normalizes them. Can be disabled per-animation with
     the @cb{.ini} normalizeQuaternions @ce option, see
@@ -184,14 +194,7 @@ Import of skeleton, skin and morph data is not supported at the moment.
 @section Trade-TinyGltfImporter-configuration Plugin-specific config
 
 It's possible to tune various output options through @ref configuration(). See
-below for all options and their default values. In particular, the
-enabled-by-default @cb{.ini} optimizeQuaternionShortestPath @ce option makes it
-possible to use the faster
-@ref Math::lerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerp()" /
-@ref Math::slerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerp()"
-functions instead of
-@ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
-@ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()".
+below for all options and their default values.
 
 @snippet MagnumPlugins/TinyGltfImporter/TinyGltfImporter.conf config
 
