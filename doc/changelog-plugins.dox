@@ -91,6 +91,8 @@ namespace Magnum {
     if no default scene is present in the file
 -   New @ref Trade::TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<Trade::AbstractImporter>&)
     constructor for easier usage of statically-built plugins
+-   Cleaned up some unnecessary memory copies and reallocations in the
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" implementation
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

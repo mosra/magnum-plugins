@@ -198,8 +198,7 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
 
     _d->open = true;
     if(data.size() >= 4 && strncmp(data.data(), "glTF", 4) == 0) {
-        std::vector<UnsignedByte> chars(data.begin(), data.end());
-        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, nullptr, chars.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, nullptr, reinterpret_cast<const unsigned char*>(data.data()), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
     } else {
         _d->open = loader.LoadASCIIFromString(&_d->model, &err, nullptr, data.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
     }
@@ -616,11 +615,13 @@ std::string TinyGltfImporter::doSceneName(const UnsignedInt id) {
 }
 
 Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
-    std::vector<UnsignedInt> children;
     const tinygltf::Scene& scene = _d->model.scenes[id];
+
+    std::vector<UnsignedInt> children;
+    children.reserve(scene.nodes.size());
     for(const Int node: scene.nodes) children.push_back(node);
 
-    return SceneData{{}, children, &scene};
+    return SceneData{{}, std::move(children), &scene};
 }
 
 UnsignedInt TinyGltfImporter::doObject3DCount() const {
@@ -692,7 +693,7 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         const Int materialId = _d->model.meshes[meshId].primitives.empty() ? -1 : _d->model.meshes[meshId].primitives[0].material;
 
         return std::unique_ptr<ObjectData3D>{flags & ObjectFlag3D::HasTranslationRotationScaling ?
-            new MeshObjectData3D{children, translation, rotation, scaling, meshId, materialId, &node} : new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
+            new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, &node} : new MeshObjectData3D{std::move(children), transformation, meshId, materialId, &node}};
     }
 
     /* Unknown nodes are treated as Empty */
@@ -711,8 +712,8 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     }
 
     return std::unique_ptr<ObjectData3D>{flags & ObjectFlag3D::HasTranslationRotationScaling ?
-        new ObjectData3D{children, translation, rotation, scaling, instanceType, instanceId, &node} :
-        new ObjectData3D{children, transformation, instanceType, instanceId, &node}};
+        new ObjectData3D{std::move(children), translation, rotation, scaling, instanceType, instanceId, &node} :
+        new ObjectData3D{std::move(children), transformation, instanceType, instanceId, &node}};
 }
 
 UnsignedInt TinyGltfImporter::doMesh3DCount() const {
