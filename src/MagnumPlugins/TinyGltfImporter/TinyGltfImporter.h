@@ -138,13 +138,33 @@ Import of skeleton, skin and morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 
--   Only the first mesh of a multi-primitive mesh is imported.
 -   Meshes with interleaved vertex data/buffer views are not supported.
+-   Multi-primitive meshes are loaded as follows:
+    -   The @ref mesh3DCount() query returns a number of all *primitives*, not
+        meshes
+    -   Each multi-primitive mesh is split into a sequence of @ref MeshData3D
+        instances following each other
+    -   @ref mesh3DForName() points to the first mesh in given sequence and
+        @ref mesh3DName() returns the same name for all meshes in given
+        sequence
+    -   The @ref object3DCount() query returns a number of all nodes extended
+        with number of extra nodes for each additional mesh primitive
+    -   Each node referencing a multi-primitive mesh is split into a sequence
+        of @ref MeshObjectData3D instances following each other; the extra
+        nodes being a direct and immediate children of the first one with an
+        identity transformation
+    -   @ref object3DForName() points to the first object containing the first
+        primitive, @ref object3DName() returns the same name for all objects in
+        given sequence
+    -   @ref AnimationData instances returned by @ref animation() have their
+        @ref AnimationData::trackTargetId() values patched to account for the
+        extra nodes, always pointing to the first object in the sequence and
+        thus indirectly affecting transformations of the extra nodes
+        represented as its children
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
 
--   Subset of all material specs is currently imported as
-    @ref Trade::PhongMaterialData
+-   Subset of all material specs is currently imported as @ref PhongMaterialData
 -   Ambient color is always @cpp 0x000000_rgbf @ce (never a texture)
 -   For the Metallic/Roughness material spec ([in core](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material),
     default):

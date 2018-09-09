@@ -70,7 +70,7 @@ namespace Magnum {
     @ref Trade::TinyGltfImporter "TinyGltfImporter"
     (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41),
     [mosra/magnum-plugins#43](https://github.com/mosra/magnum-plugins/pull/43))
--   Mesh name and trivial multi-primitive mesh loading in
+-   Mesh name and complete multi-primitive mesh loading in
     @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   @ref Trade::OpenGexImporter "OpenGexImporter" and
     @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly import alpha

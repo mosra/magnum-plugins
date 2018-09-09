@@ -129,6 +129,27 @@ struct TinyGltfImporter::Document {
         imagesForName,
         texturesForName;
 
+    /* Mapping for multi-primitive meshes:
+
+        -   meshMap.size() is the count of meshes reported to the user
+        -   meshSizeOffsets.size() is the count of original meshes in the file
+        -   meshMap[id] is a pair of (original mesh ID, primitive ID)
+        -   meshSizeOffsets[j] points to the first item in meshMap for
+            original mesh ID `j` -- which also translates the original ID to
+            reported ID
+        -   meshSizeOffsets[j + 1] - meshSizeOffsets[j] is count of meshes for
+            original mesh ID `j` (or number of primitives in given mesh)
+    */
+    std::vector<std::pair<std::size_t, std::size_t>> meshMap;
+    std::vector<std::size_t> meshSizeOffsets;
+
+    /* Mapping for nodes having multi-primitive nodes. The same as above, but
+       for nodes. Hierarchy-wise, the subsequent nodes are direct children of
+       the first, have no transformation or other children and point to the
+       subsequent meshes. */
+    std::vector<std::pair<std::size_t, std::size_t>> nodeMap;
+    std::vector<std::size_t> nodeSizeOffsets;
+
     bool open = false;
 };
 
@@ -208,6 +229,35 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         Error{} << "Trade::TinyGltfImporter::openData(): error opening file:" << err;
         doClose();
         return;
+    }
+
+    /* Treat meshes with multiple primitives as separate meshes. Each mesh gets
+       duplicated as many times as is the size of the primitives array. */
+    _d->meshSizeOffsets.emplace_back(0);
+    for(std::size_t i = 0; i != _d->model.meshes.size(); ++i) {
+        CORRADE_INTERNAL_ASSERT(!_d->model.meshes[i].primitives.empty());
+        for(std::size_t j = 0; j != _d->model.meshes[i].primitives.size(); ++j)
+            _d->meshMap.emplace_back(i, j);
+
+        _d->meshSizeOffsets.emplace_back(_d->meshMap.size());
+    }
+
+    /* In order to support multi-primitive meshes, we need to duplicate the
+       nodes as well */
+    _d->nodeSizeOffsets.emplace_back(0);
+    for(std::size_t i = 0; i != _d->model.nodes.size(); ++i) {
+        _d->nodeMap.emplace_back(i, 0);
+
+        const Int mesh = _d->model.nodes[i].mesh;
+        if(mesh != -1) {
+            /* If a node has a mesh with multiple primitives, add nested nodes
+               containing the other primitives after it */
+            const std::size_t count = _d->model.meshes[mesh].primitives.size();
+            for(std::size_t j = 1; j < count; ++j)
+                _d->nodeMap.emplace_back(i, j);
+        }
+
+        _d->nodeSizeOffsets.emplace_back(_d->nodeMap.size());
     }
 
     /* Name maps are lazy-loaded because these might not be needed every time */
@@ -499,7 +549,12 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             }
         }
 
-        tracks[i] = AnimationTrackData{type, resultType, target, UnsignedInt(channel.target_node), track};
+        tracks[i] = AnimationTrackData{type, resultType, target,
+            /* In cases where multi-primitive mesh nodes are split into multipe
+               objects, the animation should affect the first node -- the other
+               nodes are direct children of it and so they get affected too */
+            UnsignedInt(_d->nodeSizeOffsets[channel.target_node]),
+            track};
     }
 
     if(hadToRenormalize)
@@ -617,23 +672,29 @@ std::string TinyGltfImporter::doSceneName(const UnsignedInt id) {
 Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
     const tinygltf::Scene& scene = _d->model.scenes[id];
 
+    /* The scene contains always the top-level nodes, all multi-primitive mesh
+       nodes are children of them */
     std::vector<UnsignedInt> children;
     children.reserve(scene.nodes.size());
-    for(const Int node: scene.nodes) children.push_back(node);
+    for(const std::size_t i: scene.nodes)
+        children.push_back(_d->nodeSizeOffsets[i]);
 
     return SceneData{{}, std::move(children), &scene};
 }
 
 UnsignedInt TinyGltfImporter::doObject3DCount() const {
-    return _d->model.nodes.size();
+    return _d->nodeMap.size();
 }
 
 Int TinyGltfImporter::doObject3DForName(const std::string& name) {
     if(!_d->nodesForName) {
         _d->nodesForName.emplace();
         _d->nodesForName->reserve(_d->model.nodes.size());
-        for(std::size_t i = 0; i != _d->model.nodes.size(); ++i)
-            _d->nodesForName->emplace(_d->model.nodes[i].name, i);
+        for(std::size_t i = 0; i != _d->model.nodes.size(); ++i) {
+            /* A mesh node can be duplicated for as many primitives as the mesh
+               has, point to the first node in the duplicate sequence */
+            _d->nodesForName->emplace(_d->model.nodes[i].name, _d->nodeSizeOffsets[i]);
+        }
     }
 
     const auto found = _d->nodesForName->find(name);
@@ -641,11 +702,23 @@ Int TinyGltfImporter::doObject3DForName(const std::string& name) {
 }
 
 std::string TinyGltfImporter::doObject3DName(UnsignedInt id) {
-    return _d->model.nodes[id].name;
+    /* This returns the same name for all multi-primitive mesh node duplicates */
+    return _d->model.nodes[_d->nodeMap[id].first].name;
 }
 
 std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
-    const tinygltf::Node& node = _d->model.nodes[id];
+    const std::size_t originalNodeId = _d->nodeMap[id].first;
+    const tinygltf::Node& node = _d->model.nodes[originalNodeId];
+
+    /* This is an extra node added for multi-primitive meshes -- return it with
+       no children, identity transformation and just a link to the particular
+       mesh & material combo */
+    const std::size_t nodePrimitiveId = _d->nodeMap[id].second;
+    if(nodePrimitiveId) {
+        const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh] + nodePrimitiveId;
+        const Int materialId = _d->model.meshes[node.mesh].primitives[nodePrimitiveId].material;
+        return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{{}, {}, {}, Vector3{1.0f}, meshId, materialId, &node}};
+    }
 
     CORRADE_INTERNAL_ASSERT(node.rotation.size() == 0 || node.rotation.size() == 4);
     CORRADE_INTERNAL_ASSERT(node.translation.size() == 0 || node.translation.size() == 3);
@@ -654,7 +727,17 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     CORRADE_INTERNAL_ASSERT(node.matrix.size() == 0 ||
         (node.matrix.size() == 16 && node.translation.size() == 0 && node.rotation.size() == 0 && node.scale.size() == 0));
 
-    std::vector<UnsignedInt> children(node.children.begin(), node.children.end());
+    /* Node children: first add extra nodes caused by multi-primitive meshes,
+       after that the usual children. */
+    std::vector<UnsignedInt> children;
+    const std::size_t extraChildrenCount = _d->nodeSizeOffsets[originalNodeId + 1] - _d->nodeSizeOffsets[originalNodeId] - 1;
+    children.reserve(extraChildrenCount + node.children.size());
+    for(std::size_t i = 0; i != extraChildrenCount; ++i) {
+        /** @todo the test should fail with children.push_back(originalNodeId + i + 1); */
+        children.push_back(_d->nodeSizeOffsets[originalNodeId] + i + 1);
+    }
+    for(const std::size_t i: node.children)
+        children.push_back(_d->nodeSizeOffsets[i]);
 
     /* According to the spec, order is T-R-S: first scale, then rotate, then
        translate (or translate*rotate*scale multiplication of matrices). Makes
@@ -686,14 +769,17 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
             scaling = Vector3{Vector3d::from(node.scale.data())};
     }
 
-    /* Node is a mesh, have to return a special type */
+    /* Node is a mesh */
     if(node.mesh >= 0) {
-        const UnsignedInt meshId = node.mesh;
-        /* TODO Multi-material models not supported */
-        const Int materialId = _d->model.meshes[meshId].primitives.empty() ? -1 : _d->model.meshes[meshId].primitives[0].material;
+        /* Multi-primitive nodes are handled above */
+        CORRADE_INTERNAL_ASSERT(_d->nodeMap[id].second == 0);
+        CORRADE_INTERNAL_ASSERT(!_d->model.meshes[node.mesh].primitives.empty());
 
+        const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh];
+        const Int materialId = _d->model.meshes[node.mesh].primitives[0].material;
         return std::unique_ptr<ObjectData3D>{flags & ObjectFlag3D::HasTranslationRotationScaling ?
-            new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, &node} : new MeshObjectData3D{std::move(children), transformation, meshId, materialId, &node}};
+            new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, &node} :
+            new MeshObjectData3D{std::move(children), transformation, meshId, materialId, &node}};
     }
 
     /* Unknown nodes are treated as Empty */
@@ -717,15 +803,18 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
 }
 
 UnsignedInt TinyGltfImporter::doMesh3DCount() const {
-    return _d->model.meshes.size();
+    return _d->meshMap.size();
 }
 
 Int TinyGltfImporter::doMesh3DForName(const std::string& name) {
     if(!_d->meshesForName) {
         _d->meshesForName.emplace();
         _d->meshesForName->reserve(_d->model.meshes.size());
-        for(std::size_t i = 0; i != _d->model.meshes.size(); ++i)
-            _d->meshesForName->emplace(_d->model.meshes[i].name, i);
+        for(std::size_t i = 0; i != _d->model.meshes.size(); ++i) {
+            /* The mesh can be duplicated for as many primitives as it has,
+               point to the first mesh in the duplicate sequence */
+            _d->meshesForName->emplace(_d->model.meshes[i].name, _d->meshSizeOffsets[i]);
+        }
     }
 
     const auto found = _d->meshesForName->find(name);
@@ -733,16 +822,13 @@ Int TinyGltfImporter::doMesh3DForName(const std::string& name) {
 }
 
 std::string TinyGltfImporter::doMesh3DName(const UnsignedInt id) {
-    return _d->model.meshes[id].name;
+    /* This returns the same name for all multi-primitive mesh duplicates */
+    return _d->model.meshes[_d->meshMap[id].first].name;
 }
 
 Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id) {
-    const tinygltf::Mesh& mesh = _d->model.meshes[id];
-    if(mesh.primitives.size() > 1) {
-        Warning{} << "Trade::TinyGltfImporter::mesh3D(): more than one primitive per mesh is not supported at the moment, only the first will be imported";
-    }
-
-    const tinygltf::Primitive& primitive = mesh.primitives[0];
+    const tinygltf::Mesh& mesh = _d->model.meshes[_d->meshMap[id].first];
+    const tinygltf::Primitive& primitive = mesh.primitives[_d->meshMap[id].second];
 
     MeshPrimitive meshPrimitive{};
     if(primitive.mode == TINYGLTF_MODE_POINTS) {

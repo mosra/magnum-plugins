@@ -1,0 +1,178 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "name": "Single-primitive points",
+            "primitives": [
+                {
+                    "mode": 0,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Multi-primitive lines, triangles, triangle strip",
+            "primitives": [
+                {
+                    "mode": 1,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                },
+                {
+                    "mode": 4,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                },
+                {
+                    "mode": 5,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Single-primitive line loop",
+            "primitives": [
+                {
+                    "mode": 2,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Multi-primitive triangle fan, line strip",
+            "primitives": [
+                {
+                    "mode": 6,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                },
+                {
+                    "mode": 3,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                }
+            ]
+        }
+    ],
+    "nodes": [
+        {
+            "name": "Using the second mesh, should have 4 children",
+            "mesh": 1,
+            "children": [
+                4, 1
+            ]
+        },
+        {
+            "name": "Using the first mesh, no children",
+            "mesh": 0
+        },
+        {
+            "name": "Just a non-mesh node"
+        },
+        {
+            "name": "Using the second mesh again, again 2 children",
+            "mesh": 1
+        },
+        {
+            "name": "Using the fourth mesh, 1 child",
+            "mesh": 3
+        }
+    ],
+    "animations": [
+        {
+            "name": "Animation affecting multi-primitive nodes",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 3,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 1,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 2,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 4,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 1,
+                    "interpolation": "LINEAR",
+                    "output": 2
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 0,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5126,
+            "count": 0,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 2,
+            "componentType": 5126,
+            "count": 0,
+            "type": "VEC3"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 0,
+            "byteOffset": 0
+        },
+        {
+            "buffer": 0,
+            "byteLength": 0,
+            "byteOffset": 0
+        },
+        {
+            "buffer": 0,
+            "byteLength": 0,
+            "byteOffset": 0
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 1,
+            "uri": "data:application/octet-stream;base64,Ra=="
+        }
+    ]
+}

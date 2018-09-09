@@ -95,6 +95,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshColors();
     void meshWithStride();
 
+    void meshMultiplePrimitives();
+
     void materialPbrMetallicRoughness();
     void materialPbrSpecularGlossiness();
     void materialBlinnPhong();
@@ -213,6 +215,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     /* There are no external data for this one at the moment */
     addInstancedTests({&TinyGltfImporterTest::meshWithStride},
                       Containers::arraySize(SingleFileData));
+
+    addTests({&TinyGltfImporterTest::meshMultiplePrimitives});
 
     addInstancedTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
                        &TinyGltfImporterTest::materialPbrSpecularGlossiness,
@@ -1381,6 +1385,172 @@ void TinyGltfImporterTest::meshWithStride() {
         CORRADE_VERIFY(importer->mesh3D(1));
     }
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): interleaved buffer views are not supported\n");
+}
+
+void TinyGltfImporterTest::meshMultiplePrimitives() {
+    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-multiple-primitives.gltf")));
+
+    /* Four meshes, but one has three primitives and one two. Distinguishing
+       using the primitive type, hopefully that's enough. */
+    CORRADE_COMPARE(importer->mesh3DCount(), 7);
+    {
+        CORRADE_COMPARE(importer->mesh3DName(0), "Single-primitive points");
+        CORRADE_COMPARE(importer->mesh3DForName("Single-primitive points"), 0);
+        auto mesh = importer->mesh3D(0);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
+    } {
+        CORRADE_COMPARE(importer->mesh3DName(1), "Multi-primitive lines, triangles, triangle strip");
+        CORRADE_COMPARE(importer->mesh3DName(2), "Multi-primitive lines, triangles, triangle strip");
+        CORRADE_COMPARE(importer->mesh3DName(3), "Multi-primitive lines, triangles, triangle strip");
+        CORRADE_COMPARE(importer->mesh3DForName("Multi-primitive lines, triangles, triangle strip"), 1);
+        auto mesh1 = importer->mesh3D(1);
+        CORRADE_VERIFY(mesh1);
+        CORRADE_COMPARE(mesh1->primitive(), MeshPrimitive::Lines);
+        auto mesh2 = importer->mesh3D(2);
+        CORRADE_VERIFY(mesh2);
+        CORRADE_COMPARE(mesh2->primitive(), MeshPrimitive::Triangles);
+        auto mesh3 = importer->mesh3D(3);
+        CORRADE_VERIFY(mesh3);
+        CORRADE_COMPARE(mesh3->primitive(), MeshPrimitive::TriangleStrip);
+    } {
+        CORRADE_COMPARE(importer->mesh3DName(4), "Single-primitive line loop");
+        CORRADE_COMPARE(importer->mesh3DForName("Single-primitive line loop"), 4);
+        auto mesh = importer->mesh3D(4);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::LineLoop);
+    } {
+        CORRADE_COMPARE(importer->mesh3DName(5), "Multi-primitive triangle fan, line strip");
+        CORRADE_COMPARE(importer->mesh3DName(6), "Multi-primitive triangle fan, line strip");
+        CORRADE_COMPARE(importer->mesh3DForName("Multi-primitive triangle fan, line strip"), 5);
+        auto mesh5 = importer->mesh3D(5);
+        CORRADE_VERIFY(mesh5);
+        CORRADE_COMPARE(mesh5->primitive(), MeshPrimitive::TriangleFan);
+        auto mesh6 = importer->mesh3D(6);
+        CORRADE_VERIFY(mesh6);
+        CORRADE_COMPARE(mesh6->primitive(), MeshPrimitive::LineStrip);
+    }
+
+    /* Five objects, but two refer a three-primitive mesh and one refers a
+       two-primitive one */
+    CORRADE_COMPARE(importer->object3DCount(), 10);
+    {
+        CORRADE_COMPARE(importer->object3DName(0), "Using the second mesh, should have 4 children");
+        CORRADE_COMPARE(importer->object3DName(1), "Using the second mesh, should have 4 children");
+        CORRADE_COMPARE(importer->object3DName(2), "Using the second mesh, should have 4 children");
+        CORRADE_COMPARE(importer->object3DForName("Using the second mesh, should have 4 children"), 0);
+        auto object = importer->object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 1);
+        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{1, 2, 8, 3}));
+
+        auto child1 = importer->object3D(1);
+        CORRADE_VERIFY(child1);
+        CORRADE_COMPARE(child1->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(child1->instance(), 2);
+        CORRADE_COMPARE(child1->children(), {});
+        CORRADE_COMPARE(child1->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(child1->translation(), Vector3{});
+        CORRADE_COMPARE(child1->rotation(), Quaternion{});
+        CORRADE_COMPARE(child1->scaling(), Vector3{1.0f});
+
+        auto child2 = importer->object3D(2);
+        CORRADE_VERIFY(child2);
+        CORRADE_COMPARE(child2->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(child2->instance(), 3);
+        CORRADE_COMPARE(child2->children(), {});
+        CORRADE_COMPARE(child2->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(child2->translation(), Vector3{});
+        CORRADE_COMPARE(child2->rotation(), Quaternion{});
+        CORRADE_COMPARE(child2->scaling(), Vector3{1.0f});
+    } {
+        CORRADE_COMPARE(importer->object3DName(3), "Using the first mesh, no children");
+        CORRADE_COMPARE(importer->object3DForName("Using the first mesh, no children"), 3);
+        auto object = importer->object3D(3);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 0);
+        CORRADE_COMPARE(object->children(), {});
+    } {
+        CORRADE_COMPARE(importer->object3DName(4), "Just a non-mesh node");
+        CORRADE_COMPARE(importer->object3DForName("Just a non-mesh node"), 4);
+        auto object = importer->object3D(4);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instance(), -1);
+        CORRADE_COMPARE(object->children(), {});
+    } {
+        CORRADE_COMPARE(importer->object3DName(5), "Using the second mesh again, again 2 children");
+        CORRADE_COMPARE(importer->object3DName(6), "Using the second mesh again, again 2 children");
+        CORRADE_COMPARE(importer->object3DName(7), "Using the second mesh again, again 2 children");
+        CORRADE_COMPARE(importer->object3DForName("Using the second mesh again, again 2 children"), 5);
+        auto object = importer->object3D(5);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 1);
+        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{6, 7}));
+
+        auto child6 = importer->object3D(6);
+        CORRADE_VERIFY(child6);
+        CORRADE_COMPARE(child6->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(child6->instance(), 2);
+        CORRADE_COMPARE(child6->children(), {});
+        CORRADE_COMPARE(child6->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(child6->translation(), Vector3{});
+        CORRADE_COMPARE(child6->rotation(), Quaternion{});
+        CORRADE_COMPARE(child6->scaling(), Vector3{1.0f});
+
+        auto child7 = importer->object3D(7);
+        CORRADE_VERIFY(child7);
+        CORRADE_COMPARE(child7->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(child7->instance(), 3);
+        CORRADE_COMPARE(child7->children(), {});
+        CORRADE_COMPARE(child7->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(child7->translation(), Vector3{});
+        CORRADE_COMPARE(child7->rotation(), Quaternion{});
+        CORRADE_COMPARE(child7->scaling(), Vector3{1.0f});
+    } {
+        CORRADE_COMPARE(importer->object3DName(8), "Using the fourth mesh, 1 child");
+        CORRADE_COMPARE(importer->object3DName(9), "Using the fourth mesh, 1 child");
+        CORRADE_COMPARE(importer->object3DForName("Using the fourth mesh, 1 child"), 8);
+        auto object = importer->object3D(8);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 5);
+        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{9}));
+
+        auto child9 = importer->object3D(9);
+        CORRADE_VERIFY(child9);
+        CORRADE_COMPARE(child9->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(child9->instance(), 6);
+        CORRADE_COMPARE(child9->children(), {});
+        CORRADE_COMPARE(child9->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(child9->translation(), Vector3{});
+        CORRADE_COMPARE(child9->rotation(), Quaternion{});
+        CORRADE_COMPARE(child9->scaling(), Vector3{1.0f});
+    }
+
+    /* Animations -- the instance ID should point to the right expanded nodes */
+    CORRADE_COMPARE(importer->animationCount(), 1);
+    {
+        CORRADE_COMPARE(importer->animationName(0), "Animation affecting multi-primitive nodes");
+        CORRADE_COMPARE(importer->animationForName("Animation affecting multi-primitive nodes"), 0);
+
+        auto animation = importer->animation(0);
+        CORRADE_VERIFY(animation);
+        CORRADE_COMPARE(animation->trackCount(), 4);
+        CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Translation3D);
+        CORRADE_COMPARE(animation->trackTarget(1), AnimationTrackTarget::Translation3D);
+        CORRADE_COMPARE(animation->trackTarget(2), AnimationTrackTarget::Translation3D);
+        CORRADE_COMPARE(animation->trackTarget(3), AnimationTrackTarget::Translation3D);
+        CORRADE_COMPARE(animation->trackTargetId(0), 5); /* not 3 */
+        CORRADE_COMPARE(animation->trackTargetId(1), 3); /* not 1 */
+        CORRADE_COMPARE(animation->trackTargetId(2), 4); /* not 2 */
+        CORRADE_COMPARE(animation->trackTargetId(3), 8); /* not 4 */
+    }
 }
 
 void TinyGltfImporterTest::materialPbrMetallicRoughness() {
