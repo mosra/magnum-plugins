@@ -905,7 +905,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         /* At the moment all vertex attributes should have float underlying
            type */
         if(accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
-            Error() << "Trade::TinyGltfImporter::mesh3D(): vertex attribute has unexpected type" << accessor.componentType;
+            Error() << "Trade::TinyGltfImporter::mesh3D(): vertex attribute" << attribute.first << "has unexpected type" << accessor.componentType;
             return Containers::NullOpt;
         }
 
