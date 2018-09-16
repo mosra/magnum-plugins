@@ -165,7 +165,7 @@ Import of skeleton, skin and morph data is not supported at the moment.
         primitive, @ref object3DName() returns the same name for all objects in
         given sequence
     -   @ref AnimationData instances returned by @ref animation() have their
-        @ref AnimationData::trackTargetId() values patched to account for the
+        @ref AnimationData::trackTarget() values patched to account for the
         extra nodes, always pointing to the first object in the sequence and
         thus indirectly affecting transformations of the extra nodes
         represented as its children

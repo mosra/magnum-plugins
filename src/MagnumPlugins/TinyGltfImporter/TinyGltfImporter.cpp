@@ -442,7 +442,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
 
             /* Decide on value properties */
             const tinygltf::Accessor& output = _d->model.accessors[sampler.output];
-            AnimationTrackTarget target;
+            AnimationTrackTargetType target;
             AnimationTrackType type, resultType;
             Animation::TrackViewStorage<Float> track;
             const auto outputDataFound = samplerData.find(sampler.output);
@@ -458,7 +458,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 }
 
                 /* View on the value data */
-                target = AnimationTrackTarget::Translation3D;
+                target = AnimationTrackTargetType::Translation3D;
                 resultType = AnimationTrackType::Vector3;
                 if(interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once for
@@ -490,7 +490,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 }
 
                 /* View on the value data */
-                target = AnimationTrackTarget::Rotation3D;
+                target = AnimationTrackTargetType::Rotation3D;
                 resultType = AnimationTrackType::Quaternion;
                 if(interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once for
@@ -541,7 +541,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 }
 
                 /* View on the value data */
-                target = AnimationTrackTarget::Scaling3D;
+                target = AnimationTrackTargetType::Scaling3D;
                 resultType = AnimationTrackType::Vector3;
                 if(interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once for
