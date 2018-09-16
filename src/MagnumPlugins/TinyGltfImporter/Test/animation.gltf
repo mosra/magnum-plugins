@@ -64,14 +64,14 @@
                 {
                     "sampler": 1,
                     "target": {
-                        "node": 1,
+                        "node": 4,
                         "path": "translation"
                     }
                 },
                 {
                     "sampler": 2,
                     "target": {
-                        "node": 2,
+                        "node": 5,
                         "path": "scale"
                     }
                 }
@@ -91,68 +91,6 @@
                     "input": 5,
                     "interpolation": "CUBICSPLINE",
                     "output": 9
-                }
-            ]
-        },
-        {
-            "name": "TRS animation, splines, sharing data with the same time track",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 3,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "sampler": 1,
-                    "target": {
-                        "node": 3,
-                        "path": "scale"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "interpolation": "CUBICSPLINE",
-                    "output": 8
-                },
-                {
-                    "input": 5,
-                    "interpolation": "CUBICSPLINE",
-                    "output": 8
-                }
-            ]
-        },
-        {
-            "name": "TRS animation, splines, sharing data with different time track",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 2,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "sampler": 1,
-                    "target": {
-                        "node": 2,
-                        "path": "scale"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "interpolation": "CUBICSPLINE",
-                    "output": 8
-                },
-                {
-                    "input": 6,
-                    "interpolation": "CUBICSPLINE",
-                    "output": 8
                 }
             ]
         }
@@ -278,6 +216,8 @@
         }
     ],
     "nodes": [
+        {},
+        {},
         {},
         {},
         {},

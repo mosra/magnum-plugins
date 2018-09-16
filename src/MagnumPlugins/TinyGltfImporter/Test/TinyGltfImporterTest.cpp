@@ -288,7 +288,7 @@ void TinyGltfImporterTest::animation() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->animationCount(), 5);
+    CORRADE_COMPARE(importer->animationCount(), 3);
 
     /* Empty animation */
     {
@@ -493,7 +493,7 @@ void TinyGltfImporterTest::animationSpline() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation" + std::string{data.suffix})));
-    CORRADE_COMPARE(importer->animationCount(), 5);
+    CORRADE_COMPARE(importer->animationCount(), 3);
     CORRADE_COMPARE(importer->animationName(2), "TRS animation, splines");
 
     auto animation = importer->animation(2);
@@ -537,7 +537,7 @@ void TinyGltfImporterTest::animationSpline() {
     CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::CubicHermite3D);
     CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
     CORRADE_COMPARE(animation->trackTarget(1), AnimationTrackTarget::Translation3D);
-    CORRADE_COMPARE(animation->trackTargetId(1), 1);
+    CORRADE_COMPARE(animation->trackTargetId(1), 4);
     Animation::TrackView<Float, CubicHermite3D> translation = animation->track<CubicHermite3D>(1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
@@ -552,7 +552,7 @@ void TinyGltfImporterTest::animationSpline() {
     CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::CubicHermite3D);
     CORRADE_COMPARE(animation->trackResultType(2), AnimationTrackType::Vector3);
     CORRADE_COMPARE(animation->trackTarget(2), AnimationTrackTarget::Scaling3D);
-    CORRADE_COMPARE(animation->trackTargetId(2), 2);
+    CORRADE_COMPARE(animation->trackTargetId(2), 5);
     Animation::TrackView<Float, CubicHermite3D> scaling = animation->track<CubicHermite3D>(2);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
@@ -580,11 +580,11 @@ void TinyGltfImporterTest::animationSpline() {
 void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 5);
-    CORRADE_COMPARE(importer->animationName(3), "TRS animation, splines, sharing data with the same time track");
+        "animation-splines-sharing.gltf")));
+    CORRADE_COMPARE(importer->animationCount(), 2);
+    CORRADE_COMPARE(importer->animationName(0), "TRS animation, splines, sharing data with the same time track");
 
-    auto animation = importer->animation(3);
+    auto animation = importer->animation(0);
     CORRADE_VERIFY(animation);
     CORRADE_VERIFY(animation->importerState());
     /* Four spline T keys with one common time track, used as S as well */
@@ -596,7 +596,7 @@ void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::CubicHermite3D);
     CORRADE_COMPARE(animation->trackResultType(0), AnimationTrackType::Vector3);
     CORRADE_COMPARE(animation->trackTarget(0), AnimationTrackTarget::Translation3D);
-    CORRADE_COMPARE(animation->trackTargetId(0), 3);
+    CORRADE_COMPARE(animation->trackTargetId(0), 0);
     Animation::TrackView<Float, CubicHermite3D> translation = animation->track<CubicHermite3D>(1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
@@ -614,7 +614,7 @@ void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::CubicHermite3D);
     CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
     CORRADE_COMPARE(animation->trackTarget(1), AnimationTrackTarget::Scaling3D);
-    CORRADE_COMPARE(animation->trackTargetId(1), 3);
+    CORRADE_COMPARE(animation->trackTargetId(1), 0);
     Animation::TrackView<Float, CubicHermite3D> scaling = animation->track<CubicHermite3D>(1);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
@@ -629,13 +629,13 @@ void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
 void TinyGltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 5);
-    CORRADE_COMPARE(importer->animationName(4), "TRS animation, splines, sharing data with different time track");
+        "animation-splines-sharing.gltf")));
+    CORRADE_COMPARE(importer->animationCount(), 2);
+    CORRADE_COMPARE(importer->animationName(1), "TRS animation, splines, sharing data with different time track");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(4));
+    CORRADE_VERIFY(!importer->animation(1));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry\n");
 }
 
