@@ -109,6 +109,14 @@ Import of skeleton, skin and morph data is not supported at the moment.
 -   Animation tracks are always imported with
     @ref Animation::Extrapolation::Constant, because glTF doesn't support
     anything else
+-   It's possible to request all animation clips to be merged into one using
+    the @cb{.ini} mergeAnimationClips @ce option in order to for example
+    preserve cinematic animations when using the Blender glTF exporter (as it
+    otherwise outputs a separate clip for each object). When this option is
+    enabled, @ref animationCount() always report either @cpp 0 @ce or
+    @cpp 1 @ce and the merged animation has no name. With this option enabled,
+    however, it can happen that multiple conflicting tracks affecting the same
+    node are merged in the same clip, causing the animation to misbehave.
 
 @subsection Trade-TinyGltfImporter-limitations-objects Scene and object import
 
