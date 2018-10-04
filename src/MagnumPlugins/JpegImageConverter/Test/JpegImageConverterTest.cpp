@@ -48,6 +48,7 @@ struct JpegImageConverterTest: TestSuite::Tester {
     explicit JpegImageConverterTest();
 
     void wrongFormat();
+    void zeroSize();
 
     void rgb80Percent();
     void rgb100Percent();
@@ -64,6 +65,7 @@ struct JpegImageConverterTest: TestSuite::Tester {
 
 JpegImageConverterTest::JpegImageConverterTest() {
     addTests({&JpegImageConverterTest::wrongFormat,
+              &JpegImageConverterTest::zeroSize,
 
               &JpegImageConverterTest::rgb80Percent,
               &JpegImageConverterTest::rgb100Percent,
@@ -93,6 +95,15 @@ void JpegImageConverterTest::wrongFormat() {
 
     CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): unsupported pixel format PixelFormat::R16F\n");
+}
+
+void JpegImageConverterTest::zeroSize() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): error while writing the file: Empty JPEG image (DNL not supported)\n");
 }
 
 namespace {

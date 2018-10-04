@@ -95,14 +95,16 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
     struct ErrorManager {
         jpeg_error_mgr jpegErrorManager;
         std::jmp_buf setjmpBuffer;
+        char message[JMSG_LENGTH_MAX]{};
     } errorManager;
     info.err = jpeg_std_error(&errorManager.jpegErrorManager);
     errorManager.jpegErrorManager.error_exit = [](j_common_ptr info) {
-        info->err->output_message(info);
-        std::longjmp(reinterpret_cast<ErrorManager*>(info->err)->setjmpBuffer, 1);
+        auto& errorManager = *reinterpret_cast<ErrorManager*>(info->err);
+        info->err->format_message(info, errorManager.message);
+        std::longjmp(errorManager.setjmpBuffer, 1);
     };
     if(setjmp(errorManager.setjmpBuffer)) {
-        Error{} << "Trade::JpegImageConverter::exportToData(): error while writing JPEG file";
+        Error{} << "Trade::JpegImageConverter::exportToData(): error while writing the file:" << errorManager.message;
         jpeg_destroy_compress(&info);
         return nullptr;
     }
