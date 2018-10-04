@@ -64,6 +64,16 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
             components = 3;
             colorSpace = JCS_RGB;
             break;
+        case PixelFormat::RGBA8Unorm:
+            #ifdef JCS_EXTENSIONS
+            components = 4;
+            colorSpace = JCS_EXT_RGBX;
+            Warning{} << "Trade::JpegImageConverter::exportToData(): ignoring alpha channel";
+            break;
+            #else
+            Error{} << "Trade::JpegImageConverter::exportToData(): RGBA input (with alpha ignored) requires libjpeg-turbo";
+            return nullptr;
+            #endif
         default:
             Error() << "Trade::JpegImageConverter::exportToData(): unsupported pixel format" << image.format();
             return nullptr;

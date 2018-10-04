@@ -35,6 +35,13 @@
 
 #include "configure.h"
 
+/* jpeglib.h is needed to query if RGBA output is supported. See
+   JpegImageConverter.cpp for details why the define below is needed. */
+#ifdef CORRADE_TARGET_WINDOWS
+#define XMD_H
+#endif
+#include <jpeglib.h>
+
 namespace Magnum { namespace Trade { namespace Test {
 
 struct JpegImageConverterTest: TestSuite::Tester {
@@ -44,6 +51,8 @@ struct JpegImageConverterTest: TestSuite::Tester {
 
     void rgb80Percent();
     void rgb100Percent();
+
+    void rgba80Percent();
 
     void grayscale80Percent();
     void grayscale100Percent();
@@ -58,6 +67,8 @@ JpegImageConverterTest::JpegImageConverterTest() {
 
               &JpegImageConverterTest::rgb80Percent,
               &JpegImageConverterTest::rgb100Percent,
+
+              &JpegImageConverterTest::rgba80Percent,
 
               &JpegImageConverterTest::grayscale80Percent,
               &JpegImageConverterTest::grayscale100Percent});
@@ -110,6 +121,32 @@ namespace {
 
     const ImageView2D OriginalRgb{PixelStorage{}.setSkip({0, 1, 0}),
         PixelFormat::RGB8Unorm, {6, 4}, OriginalRgbData};
+
+    constexpr const char OriginalRgbaData[] = {
+        /* Skip */
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+
+        '\x00', '\x27', '\x48', 0, '\x10', '\x34', '\x54', 0,
+        '\x22', '\x46', '\x60', 0, '\x25', '\x49', '\x63', 0,
+        '\x21', '\x46', '\x63', 0, '\x13', '\x3a', '\x59', 0,
+
+        '\x5b', '\x87', '\xae', 0, '\x85', '\xaf', '\xd5', 0,
+        '\x94', '\xbd', '\xdd', 0, '\x96', '\xbf', '\xdf', 0,
+        '\x91', '\xbc', '\xdf', 0, '\x72', '\x9e', '\xc1', 0,
+
+        '\x3c', '\x71', '\xa7', 0, '\x68', '\x9c', '\xce', 0,
+        '\x8b', '\xbb', '\xe9', 0, '\x92', '\xc3', '\xee', 0,
+        '\x8b', '\xbe', '\xed', 0, '\x73', '\xa7', '\xd6', 0,
+
+        '\x00', '\x34', '\x70', 0, '\x12', '\x4a', '\x83', 0,
+        '\x35', '\x6a', '\x9e', 0, '\x45', '\x7a', '\xac', 0,
+        '\x34', '\x6c', '\x9f', 0, '\x1d', '\x56', '\x8b', 0
+    };
+
+    const ImageView2D OriginalRgba{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::RGBA8Unorm, {6, 4}, OriginalRgbaData};
 
     /* Slightly different due to compression artifacts. See the 100% test for
        a threshold verification. Needs to have a bigger size otherwise the
@@ -200,6 +237,61 @@ void JpegImageConverterTest::rgb100Percent() {
     /* Expect only minimal difference (single bits) */
     CORRADE_COMPARE_WITH(*converted, OriginalRgb,
         (DebugTools::CompareImage{3.1f, 1.4f}));
+}
+
+void JpegImageConverterTest::rgba80Percent() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
+
+    /* If we don't have libjpeg-turbo, exporting RGBA will fail */
+    #ifndef JCS_EXTENSIONS
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!converter->exportToData(OriginalRgba));
+        CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): RGBA input (with alpha ignored) requires libjpeg-turbo\n");
+    }
+
+    CORRADE_SKIP("libjpeg-turbo is required for RGBA support.");
+    #endif
+
+    /* RGBA should be exported as RGB, with the alpha channel ignored (and a
+       warning about that printed) */
+    std::ostringstream out;
+    Containers::Array<char> data;
+    {
+        Warning redirectWarning{&out};
+        data = converter->exportToData(OriginalRgba);
+    }
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): ignoring alpha channel\n");
+
+    if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("JpegImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
+
+    /* The image has four-byte aligned rows, clear the padding to deterministic
+       values */
+    CORRADE_COMPARE(converted->data().size(), 80);
+    converted->data()[18] = converted->data()[19] =
+        converted->data()[38] = converted->data()[39] =
+            converted->data()[58] = converted->data()[59] =
+                converted->data()[78] = converted->data()[79] = 0;
+
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbData),
+        TestSuite::Compare::Container);
+
+    /* Finally, the output should be exactly the same as when exporting RGB,
+       bit to bit, to ensure we don't produce anything that would cause
+       problems for traditional non-turbo libjpeg */
+    const auto dataRgb = converter->exportToData(OriginalRgb);
+    CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
 }
 
 namespace {

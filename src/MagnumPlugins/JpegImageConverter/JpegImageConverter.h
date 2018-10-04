@@ -55,7 +55,12 @@ namespace Magnum { namespace Trade {
 @brief JPEG image converter plugin
 
 Creates JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) files from images with format
-@ref PixelFormat::R8Unorm or @ref PixelFormat::RGB8Unorm.
+@ref PixelFormat::R8Unorm or @ref PixelFormat::RGB8Unorm. Images in
+@ref PixelFormat::RGBA8Unorm are supported only if you use libJPEG Turbo
+instead of vanilla libJPEG and the alpha channel gets ignored (with a warning
+printed to the console). @ref PixelFormat::RG8Unorm can't be easily supported,
+see @ref StbImageConverter for an alternative with a possibility to export RG
+images as a grayscale JPEG.
 
 This plugin depends on the @ref Trade and [libJPEG](http://libjpeg.sourceforge.net/)
 libraries and is built if `WITH_JPEGIMAGECONVERTER` is enabled when building
