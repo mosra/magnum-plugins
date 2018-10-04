@@ -102,8 +102,7 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
         std::longjmp(reinterpret_cast<ErrorManager*>(info->err)->setjmpBuffer, 1);
     };
     if(setjmp(errorManager.setjmpBuffer)) {
-        Error() << "Trade::JpegImageConverter::doExportToData(): error while writing JPEG file";
-
+        Error{} << "Trade::JpegImageConverter::exportToData(): error while writing JPEG file";
         jpeg_destroy_compress(&info);
         return nullptr;
     }
