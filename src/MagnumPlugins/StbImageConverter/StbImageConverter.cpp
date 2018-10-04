@@ -73,9 +73,17 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
     if(_format == Format::Bmp || _format == Format::Jpeg || _format == Format::Png || _format == Format::Tga) {
         switch(image.format()) {
             case PixelFormat::R8Unorm:      components = 1; break;
-            case PixelFormat::RG8Unorm:     components = 2; break;
+            case PixelFormat::RG8Unorm:
+                if(_format == Format::Bmp || _format == Format::Jpeg)
+                    Warning{} << "Trade::StbImageConverter::exportToData(): ignoring green channel for BMP/JPEG output";
+                components = 2;
+                break;
             case PixelFormat::RGB8Unorm:    components = 3; break;
-            case PixelFormat::RGBA8Unorm:   components = 4; break;
+            case PixelFormat::RGBA8Unorm:
+                if(_format == Format::Bmp || _format == Format::Jpeg)
+                    Warning{} << "Trade::StbImageConverter::exportToData(): ignoring alpha channel for BMP/JPEG output";
+                components = 4;
+                break;
             default:
                 Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for BMP/JPEG/PNG/TGA output";
                 return nullptr;
@@ -83,9 +91,15 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
     } else if(_format == Format::Hdr) {
         switch(image.format()) {
             case PixelFormat::R32F:         components = 1; break;
-            case PixelFormat::RG32F:        components = 2; break;
+            case PixelFormat::RG32F:
+                Warning{} << "Trade::StbImageConverter::exportToData(): ignoring green channel for HDR output";
+                components = 2;
+                break;
             case PixelFormat::RGB32F:       components = 3; break;
-            case PixelFormat::RGBA32F:      components = 4; break;
+            case PixelFormat::RGBA32F:
+                Warning{} << "Trade::StbImageConverter::exportToData(): ignoring alpha channel for HDR output";
+                components = 4;
+                break;
             default:
                 Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for HDR output";
                 return nullptr;

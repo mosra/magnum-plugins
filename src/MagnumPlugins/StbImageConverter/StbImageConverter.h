@@ -90,6 +90,9 @@ Creates files in one of the following formats using the
     @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
     input.
 
+If the conversion results in lost channels (such as saving RGBA to a JPEG,
+losing the alpha in process), a warning is printed to the output.
+
 This plugin depends on the @ref Trade library and is built if
 `WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
 dynamic plugin, you need to load one of the @cpp "StbBmpImageConverter" @ce,

@@ -49,9 +49,13 @@ struct StbImageConverterTest: TestSuite::Tester {
     void bmpRg();
 
     void hdrGrayscale();
+    void hdrRg();
+    void hdrRgb();
+    void hdrRgba();
 
     void jpegRgb80Percent();
     void jpegRgb100Percent();
+    void jpegRgba80Percent();
     void jpegGrayscale80Percent();
     /* Can't grayscale 100% because stb_image_write expands to RGB */
 
@@ -73,9 +77,13 @@ StbImageConverterTest::StbImageConverterTest() {
               &StbImageConverterTest::bmpRg,
 
               &StbImageConverterTest::hdrGrayscale,
+              &StbImageConverterTest::hdrRg,
+              &StbImageConverterTest::hdrRgb,
+              &StbImageConverterTest::hdrRgba,
 
               &StbImageConverterTest::jpegRgb80Percent,
               &StbImageConverterTest::jpegRgb100Percent,
+              &StbImageConverterTest::jpegRgba80Percent,
               &StbImageConverterTest::jpegGrayscale80Percent,
 
               &StbImageConverterTest::pngRgb,
@@ -139,6 +147,7 @@ namespace {
     const ImageView2D OriginalRg{PixelStorage{}.setSkip({2, 1, 0}).setRowLength(4),
         PixelFormat::RG8Unorm, {2, 3}, OriginalRgData};
 
+    /* Blue channel gets lost */
     constexpr const char ConvertedRgData[] = {
         1, 1, 1, 3, 3, 3,
         5, 5, 5, 7, 7, 7,
@@ -147,8 +156,18 @@ namespace {
 }
 
 void StbImageConverterTest::bmpRg() {
-    const auto data = _converterManager.instantiate("StbBmpImageConverter")->exportToData(OriginalRg);
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbBmpImageConverter");
+
+    /* RGBA should be exported as RGB, with the alpha channel ignored (and a
+       warning about that printed) */
+    std::ostringstream out;
+    Containers::Array<char> data;
+    {
+        Warning redirectWarning{&out};
+        data = converter->exportToData(OriginalRg);
+    }
     CORRADE_VERIFY(data);
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): ignoring green channel for BMP/JPEG output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -174,6 +193,14 @@ namespace {
 
     const ImageView2D OriginalGrayscale32F{PixelFormat::R32F, {2, 3}, OriginalGrayscale32FData};
 
+    constexpr const Float OriginalRg32FData[] = {
+        1.0f, 1.5f, 2.0f, 2.5f,
+        3.0f, 3.5f, 4.0f, 4.5f,
+        5.0f, 5.5f, 6.0f, 6.5f
+    };
+
+    const ImageView2D OriginalRg32F{PixelFormat::RG32F, {2, 3}, OriginalRg32FData};
+
     constexpr const Float ConvertedGrayscale32FData[] = {
         1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
         3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
@@ -182,7 +209,8 @@ namespace {
 }
 
 void StbImageConverterTest::hdrGrayscale() {
-    const auto data = _converterManager.instantiate("StbHdrImageConverter")->exportToData(OriginalGrayscale32F);
+    std::unique_ptr<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+    const auto data = converter->exportToData(OriginalGrayscale32F);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -198,6 +226,100 @@ void StbImageConverterTest::hdrGrayscale() {
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
         Containers::arrayView(ConvertedGrayscale32FData),
+        TestSuite::Compare::Container);
+}
+
+void StbImageConverterTest::hdrRg() {
+    std::unique_ptr<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+
+    /* RG should be exported as RRR, with the green channel ignored */
+    std::ostringstream out;
+    Containers::Array<char> data;
+    {
+        Warning redirectWarning{&out};
+        data = converter->exportToData(OriginalRg32F);
+    }
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): ignoring green channel for HDR output\n");
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+
+    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
+    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
+        Containers::arrayView(ConvertedGrayscale32FData),
+        TestSuite::Compare::Container);
+}
+
+namespace {
+    constexpr const Float OriginalRgb32FData[] = {
+        1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f,
+        4.0f, 4.5f, 5.0f, 5.5f, 6.0f, 6.5f,
+        7.0f, 7.5f, 8.0f, 8.5f, 9.0f, 9.5f
+    };
+
+    const ImageView2D OriginalRgb32F{PixelFormat::RGB32F, {2, 3}, OriginalRgb32FData};
+
+    constexpr const Float OriginalRgba32FData[] = {
+        1.0f, 1.5f, 2.0f, 0.0f, 2.5f, 3.0f, 3.5f, 0.0f,
+        4.0f, 4.5f, 5.0f, 0.0f, 5.5f, 6.0f, 6.5f, 0.0f,
+        7.0f, 7.5f, 8.0f, 0.0f, 8.5f, 9.0f, 9.5f, 0.0f
+    };
+
+    const ImageView2D OriginalRgba32F{PixelFormat::RGBA32F, {2, 3}, OriginalRgba32FData};
+}
+
+void StbImageConverterTest::hdrRgb() {
+    std::unique_ptr<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+    const auto data = converter->exportToData(OriginalRgb32F);
+    CORRADE_VERIFY(data);
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+
+    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
+    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
+        Containers::arrayView(OriginalRgb32FData),
+        TestSuite::Compare::Container);
+}
+
+void StbImageConverterTest::hdrRgba() {
+   std::unique_ptr<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+
+    /* RGBA should be exported as RGB, with the alpha channel ignored */
+    std::ostringstream out;
+    Containers::Array<char> data;
+    {
+        Warning redirectWarning{&out};
+        data = converter->exportToData(OriginalRgba32F);
+    }
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): ignoring alpha channel for HDR output\n");
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+
+    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
+    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
+        Containers::arrayView(OriginalRgb32FData),
         TestSuite::Compare::Container);
 }
 
@@ -227,6 +349,32 @@ namespace {
 
     const ImageView2D OriginalJpegRgb{PixelStorage{}.setSkip({0, 1, 0}),
         PixelFormat::RGB8Unorm, {6, 4}, OriginalJpegRgbData};
+
+    constexpr const char OriginalJpegRgbaData[] = {
+        /* Skip */
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+
+        '\x00', '\x27', '\x48', 0, '\x10', '\x34', '\x54', 0,
+        '\x22', '\x46', '\x60', 0, '\x25', '\x49', '\x63', 0,
+        '\x21', '\x46', '\x63', 0, '\x13', '\x3a', '\x59', 0,
+
+        '\x5b', '\x87', '\xae', 0, '\x85', '\xaf', '\xd5', 0,
+        '\x94', '\xbd', '\xdd', 0, '\x96', '\xbf', '\xdf', 0,
+        '\x91', '\xbc', '\xdf', 0, '\x72', '\x9e', '\xc1', 0,
+
+        '\x3c', '\x71', '\xa7', 0, '\x68', '\x9c', '\xce', 0,
+        '\x8b', '\xbb', '\xe9', 0, '\x92', '\xc3', '\xee', 0,
+        '\x8b', '\xbe', '\xed', 0, '\x73', '\xa7', '\xd6', 0,
+
+        '\x00', '\x34', '\x70', 0, '\x12', '\x4a', '\x83', 0,
+        '\x35', '\x6a', '\x9e', 0, '\x45', '\x7a', '\xac', 0,
+        '\x34', '\x6c', '\x9f', 0, '\x1d', '\x56', '\x8b', 0
+    };
+
+    const ImageView2D OriginalJpegRgba{PixelStorage{}.setSkip({0, 1, 0}),
+        PixelFormat::RGBA8Unorm, {6, 4}, OriginalJpegRgbaData};
 
     /* Slightly different due to compression artifacts. See the 100% test for
        a threshold verification. Needs to have a bigger size otherwise the
@@ -288,6 +436,40 @@ void StbImageConverterTest::jpegRgb100Percent() {
     /* Expect only minimal difference (single bits) */
     CORRADE_COMPARE_WITH(*converted, OriginalJpegRgb,
         (DebugTools::CompareImage{1.0f, 0.39f}));
+}
+
+void StbImageConverterTest::jpegRgba80Percent() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+    CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
+
+    /* RGBA should be exported as RGB, with the alpha channel ignored (and a
+       warning about that printed) */
+    std::ostringstream out;
+    Containers::Array<char> data;
+    {
+        Warning redirectWarning{&out};
+        data = converter->exportToData(OriginalJpegRgba);
+    }
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): ignoring alpha channel for BMP/JPEG output\n");
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
+    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedJpegRgbData),
+        TestSuite::Compare::Container);
+
+    /* Finally, the output should be exactly the same as when exporting RGB,
+       bit to bit, to ensure we don't produce anything that would cause
+       problems for traditional non-turbo libjpeg */
+    const auto dataRgb = converter->exportToData(OriginalJpegRgb);
+    CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
 }
 
 namespace {

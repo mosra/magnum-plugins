@@ -87,6 +87,9 @@ namespace Magnum {
     that.
 -   @ref Trade::StbImageConverter "StbImageConverter" no longer requires input
     data to be tightly packed, allowing to export image subrectangles
+-   @ref Trade::StbImageConverter "StbImageConverter" now prints warnings when
+    channels are lost on output due to limitations of the output format (such
+    as alpha channel for JPEGs)
 -   @ref Trade::TinyGltfImporter::defaultScene() now returns the first scene
     if no default scene is present in the file
 -   New @ref Trade::TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<Trade::AbstractImporter>&)
