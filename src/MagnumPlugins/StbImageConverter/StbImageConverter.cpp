@@ -126,27 +126,27 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
 
     if(_format == Format::Bmp) {
         if(!stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData)) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing BMP file";
+            Error() << "Trade::StbImageConverter::exportToData(): error while writing the BMP file";
             return nullptr;
         }
     } else if(_format == Format::Jpeg) {
         if(!stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, Int(configuration().value<Float>("jpegQuality")*100.0f))) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing JPEG file";
+            Error() << "Trade::StbImageConverter::exportToData(): error while writing the JPEG file";
             return nullptr;
         }
     } else if(_format == Format::Hdr) {
         if(!stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(reversedData.begin()))) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing HDR file";
+            Error() << "Trade::StbImageConverter::exportToData(): error while writing the HDR file";
             return nullptr;
         }
     } else if(_format == Format::Png) {
         if(!stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, 0)) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing PNG file";
+            Error() << "Trade::StbImageConverter::exportToData(): error while writing the PNG file";
             return nullptr;
         }
     } else if(_format == Format::Tga) {
         if(!stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData)) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing TGA file";
+            Error() << "Trade::StbImageConverter::exportToData(): error while writing the TGA file";
             return nullptr;
         }
     } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */

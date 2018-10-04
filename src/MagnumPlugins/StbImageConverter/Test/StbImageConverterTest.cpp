@@ -47,22 +47,27 @@ struct StbImageConverterTest: TestSuite::Tester {
     /** @todo test the enum constructor somehow (needs to be not loaded through plugin manager) */
 
     void bmpRg();
+    void bmpNegativeSize();
 
     void hdrGrayscale();
     void hdrRg();
     void hdrRgb();
     void hdrRgba();
+    void hdrZeroSize();
 
     void jpegRgb80Percent();
     void jpegRgb100Percent();
     void jpegRgba80Percent();
     void jpegGrayscale80Percent();
     /* Can't grayscale 100% because stb_image_write expands to RGB */
+    void jpegZeroSize();
 
     void pngRgb();
     void pngGrayscale();
+    void pngNegativeSize();
 
     void tgaRgba();
+    void tgaNegativeSize();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -75,21 +80,26 @@ StbImageConverterTest::StbImageConverterTest() {
               &StbImageConverterTest::wrongOutputFormat,
 
               &StbImageConverterTest::bmpRg,
+              &StbImageConverterTest::bmpNegativeSize,
 
               &StbImageConverterTest::hdrGrayscale,
               &StbImageConverterTest::hdrRg,
               &StbImageConverterTest::hdrRgb,
               &StbImageConverterTest::hdrRgba,
+              &StbImageConverterTest::hdrZeroSize,
 
               &StbImageConverterTest::jpegRgb80Percent,
               &StbImageConverterTest::jpegRgb100Percent,
               &StbImageConverterTest::jpegRgba80Percent,
               &StbImageConverterTest::jpegGrayscale80Percent,
+              &StbImageConverterTest::jpegZeroSize,
 
               &StbImageConverterTest::pngRgb,
               &StbImageConverterTest::pngGrayscale,
+              &StbImageConverterTest::pngNegativeSize,
 
-              &StbImageConverterTest::tgaRgba});
+              &StbImageConverterTest::tgaRgba,
+              &StbImageConverterTest::tgaNegativeSize});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -182,6 +192,16 @@ void StbImageConverterTest::bmpRg() {
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(converted->data(),
         Containers::arrayView(ConvertedRgData), TestSuite::Compare::Container);
+}
+
+void StbImageConverterTest::bmpNegativeSize() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbBmpImageConverter");
+
+    /* Doesn't fail for zero size */
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the BMP file\n");
 }
 
 namespace {
@@ -321,6 +341,15 @@ void StbImageConverterTest::hdrRgba() {
     CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
         Containers::arrayView(OriginalRgb32FData),
         TestSuite::Compare::Container);
+}
+
+void StbImageConverterTest::hdrZeroSize() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB32F, {}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the HDR file\n");
 }
 
 namespace {
@@ -528,6 +557,15 @@ void StbImageConverterTest::jpegGrayscale80Percent() {
         TestSuite::Compare::Container);
 }
 
+void StbImageConverterTest::jpegZeroSize() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the JPEG file\n");
+}
+
 namespace {
     constexpr const char OriginalRgbData[] = {
         0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
@@ -602,6 +640,16 @@ void StbImageConverterTest::pngGrayscale() {
         TestSuite::Compare::Container);
 }
 
+void StbImageConverterTest::pngNegativeSize() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbPngImageConverter");
+
+    /* Doesn't fail for zero size */
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the PNG file\n");
+}
+
 namespace {
     constexpr const char OriginalRgbaData[] = {
         0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
@@ -636,6 +684,16 @@ void StbImageConverterTest::tgaRgba() {
     CORRADE_COMPARE(converted->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbaData),
         TestSuite::Compare::Container);
+}
+
+void StbImageConverterTest::tgaNegativeSize() {
+    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbTgaImageConverter");
+
+    /* Doesn't fail for zero size */
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the TGA file\n");
 }
 
 }}}
