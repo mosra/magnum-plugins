@@ -641,9 +641,19 @@ void StbImageConverterTest::pngGrayscale() {
 }
 
 void StbImageConverterTest::pngNegativeSize() {
+    /* Doesn't fail for zero size. Hard to trigger an error any other way than
+       having a negative size, which results in some petabytes being allocated
+       and thus failing. This, however, triggers AddressSanitizer, so we have
+       to disable this test there. Also, I suspect this test will start causing
+       serious problems once OSes are actually able to allocate petabytes :D */
+    #if defined(__has_feature)
+    #if __has_feature(address_sanitizer)
+    CORRADE_SKIP("This tests the failure by attempting to allocate 0xfffffffffffffffd bytes. That makes AddressSanitizer upset, so not doing that with it.");
+    #endif
+    #endif
+
     std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbPngImageConverter");
 
-    /* Doesn't fail for zero size */
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
