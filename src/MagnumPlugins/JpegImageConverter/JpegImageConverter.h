@@ -72,6 +72,17 @@ package and link to the `MagnumPlugins::JpegImageConverter` target. See
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
+@section Trade-JpegImageConverter-implementations libJPEG implementations
+
+While some systems (such as macOS) still ship only with the vanilla libJPEG,
+you can get a much better performance and/or quality/size ratios by using other
+implementations:
+
+-   [libjpeg-turbo](https://libjpeg-turbo.org/), optimized for compression and
+    decompression speed, though not necessarily the best quality/size ratio
+-   [MozJPEG](https://github.com/mozilla/mozjpeg), optimized for quality/size
+    ratio, though generally much slower than libjpeg-turbo
+
 @section Trade-JpegImageConverter-configuration Plugin-specific config
 
 It's possible to tune various output options through @ref configuration(). See

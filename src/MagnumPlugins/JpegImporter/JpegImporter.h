@@ -67,6 +67,12 @@ component of the `MagnumPlugins` package and link to the
 
 The images are imported with @ref PixelFormat::RGB8Unorm or @ref PixelFormat::R8Unorm. All imported images use default @ref PixelStorage
 parameters.
+
+@section Trade-JpegImporter-implementations libJPEG implementations
+
+While some systems (such as macOS) still ship only with the vanilla libJPEG,
+you can get a much better decoding performance by using
+[libjpeg-turbo](https://libjpeg-turbo.org/).
 */
 class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
     public:
