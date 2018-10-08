@@ -26,7 +26,7 @@
         {
             "name" : "Perspective 4:3 75° hFoV",
             "perspective" : {
-                "aspectRatio" : 0.75,
+                "aspectRatio" : 1.33333333333333,
                 "yfov" : 1.044412773812111,
                 "zfar" : 150.0,
                 "znear" : 0.1
@@ -36,7 +36,7 @@
         {
             "name" : "Perspective 16:9 75° hFoV infinite",
             "perspective" : {
-                "aspectRatio" : 0.5625,
+                "aspectRatio" : 1.77777777777777,
                 "yfov" : 0.8149313284027269,
                 "znear" : 0.1
             },

@@ -602,13 +602,13 @@ Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
 
     /* https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#projection-matrices */
 
-    /* Perspective camera. glTF uses vertical FoV and Y/X aspect ratio, so to
+    /* Perspective camera. glTF uses vertical FoV and X/Y aspect ratio, so to
        avoid accidental bugs we will directly calculate the near plane size and
        use that to create the camera data (instead of passing it the horizontal
        FoV). Also tinygltf is stupid and uses 0 to denote infinite far plane
        (wat). */
     if(camera.type == "perspective") {
-        const Vector2 size = 2.0f*camera.perspective.znear*Math::tan(camera.perspective.yfov*0.5_radf)*Vector2::xScale(1.0f/camera.perspective.aspectRatio);
+        const Vector2 size = 2.0f*camera.perspective.znear*Math::tan(camera.perspective.yfov*0.5_radf)*Vector2::xScale(camera.perspective.aspectRatio);
         const Float far = camera.perspective.zfar == 0.0f ? Constants::inf() :
             camera.perspective.zfar;
         return CameraData{CameraType::Perspective3D, size, camera.perspective.znear, far, &camera};
