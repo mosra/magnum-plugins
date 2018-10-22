@@ -4,7 +4,7 @@ pkgver=dev.wasm.webgl2
 pkgrel=1
 pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (Emscripten WebGL 2, wasm)"
 arch=('any')
-url="http://magnum.graphics"
+url="https://magnum.graphics"
 license=('MIT')
 depends=('emscripten-magnum=dev.wasm.webgl2')
 makedepends=('cmake' 'emscripten' 'corrade' 'ninja')
