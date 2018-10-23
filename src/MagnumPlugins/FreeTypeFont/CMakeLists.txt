@@ -68,7 +68,7 @@ if(BUILD_PLUGINS_STATIC)
     endif()
 endif()
 
-if(BUILD_GL_TESTS)
+if(BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 
