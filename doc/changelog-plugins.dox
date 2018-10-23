@@ -146,6 +146,9 @@ Released 2018-10-23, tagged as
     parented to. However, in presence of postprocessing flags such as
     `PreTransformVertices` Assimp collapses all nodes into one and then the
     node is imported as a single object.
+-   @ref Text::FreeTypeFont "FreeTypeFont" was not handling subsequent calls
+    to @ref Text::FreeTypeFont::initialize() properly (see
+    [mosra/magnum-plugins#49](https://github.com/mosra/magnum-plugins/pull/49))
 
 @subsection corrade-changelog-2018-10-deprecated Deprecated APIs
 
