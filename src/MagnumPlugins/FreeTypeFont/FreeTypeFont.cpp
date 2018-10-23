@@ -63,6 +63,7 @@ void FreeTypeFont::initialize() {
 void FreeTypeFont::finalize() {
     CORRADE_INTERNAL_ASSERT(library);
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_FreeType(library) == 0);
+    library = nullptr;
 }
 
 FreeTypeFont::FreeTypeFont(): ftFont(nullptr) {}
