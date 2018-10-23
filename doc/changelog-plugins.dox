@@ -30,13 +30,20 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@section changelog-plugins-latest Changes since 2018.04
+@anchor changelog-plugins-latest
 
-@subsection changelog-plugins-latest-new New features
+@section changelog-plugins-2018-10 2018.10
+
+Released 2018-10-23, tagged as
+[v2018.10](https://github.com/mosra/magnum-plugins/releases/tag/v2018.10).
+
+@subsection changelog-plugins-2018-10-new New features
 
 -   Support for object transformation animation import in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter"
--   New @ref Trade::JpegImageConverter plugin for writing JPEG files
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" (see
+    [mosra/magnum-plugins#46](https://github.com/mosra/magnum-plugins/pull/46))
+-   New @ref Trade::JpegImageConverter plugin for writing JPEG files (see
+    [mosra/magnum-plugins#26](https://github.com/mosra/magnum-plugins/pull/26))
 -   Minimal support for the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
     extension in @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   The top-level `tinygltf::Model` structure is now exposed through
@@ -54,24 +61,27 @@ namespace Magnum {
     @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom
     callbacks to load extra files
 -   @ref Trade::StbImageConverter "StbImageConverter" was updated with a new
-    version of `stb_image_write`, supporting also JPEG export now
+    version of `stb_image_write`, supporting also JPEG export now (see
+    [mosra/magnum-plugins#26](https://github.com/mosra/magnum-plugins/pull/26))
 -   @ref Text::StbTrueTypeFont "StbTrueTypeFont" was updated with a new version
-    of `stb_vorbis`, supporting also OpenType fonts now
+    of `stb_truetype`, supporting also OpenType fonts now
 -   @ref Text::FreeTypeFont "FreeTypeFont", @ref Text::HarfBuzzFont "HarfBuzzFont"
     and @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugins can now be loaded
     also using the `OpenTypeFont` alias, in addition to `TrueTypeFont
 -   @ref Trade::OpenGexImporter "OpenGexImporter" now supports
     @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom
-    callbacks to load extra files
+    callbacks to load extra files (see
+    [mosra/magnum-plugins#47](https://github.com/mosra/magnum-plugins/pull/47))
 
-@subsection changelog-plugins-latest-changes Changes and improvements
+@subsection changelog-plugins-2018-10-changes Changes and improvements
 
 -   Texture coordinate, color vertex attribute and base object color import in
     @ref Trade::TinyGltfImporter "TinyGltfImporter"
     (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41),
     [mosra/magnum-plugins#43](https://github.com/mosra/magnum-plugins/pull/43))
 -   Mesh name and complete multi-primitive mesh loading in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter"
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" (see
+    [mosra/magnum-plugins#48](https://github.com/mosra/magnum-plugins/issues/48))
 -   @ref Trade::OpenGexImporter "OpenGexImporter" and
     @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly import alpha
     for @ref Trade::PhongMaterialData
@@ -96,11 +106,14 @@ namespace Magnum {
     constructor for easier usage of statically-built plugins
 -   Cleaned up some unnecessary memory copies and reallocations in the
     @ref Trade::TinyGltfImporter "TinyGltfImporter" implementation
+-   Upstreamed local patches to `tiny_gltf` (see
+    [mosra/magnum-plugins#45](https://github.com/mosra/magnum-plugins/pull/45))
 
-@subsection changelog-plugins-latest-buildsystem Build system
+@subsection changelog-plugins-2018-10-buildsystem Build system
 
 -   There's now a PPA for Ubuntu packages. See @ref building-plugins-packages-deb
-    for more information.
+    for more information. See also
+    [mosra/magnum-plugins#44](https://github.com/mosra/magnum-plugins/pull/44).
 -   TinyGLTF headers are now installed alongside the plugin for easier access
     to importer state. See @ref Trade-TinyGltfImporter-state for more
     information.
@@ -110,7 +123,7 @@ namespace Magnum {
     @ref Trade::AnyImageImporter "AnyImageImporter", the same way as was
     already done for external files.
 
-@subsection changelog-plugins-latest-bugfixes Bug fixes
+@subsection changelog-plugins-2018-10-bugfixes Bug fixes
 
 -   Fixed a @ref Trade::TinyGltfImporter "TinyGltfImporter" crash on materials
     without a PBR extension (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
@@ -120,6 +133,8 @@ namespace Magnum {
     from `*.glb` files and images embedded as URI data properly
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly imports
     non-indexed meshes and meshes without the normal attribute
+-   Fixed quite a few critical issues with @ref Trade::TinyGltfImporter "TinyGltfImporter"
+    mesh data import (see [mosra/magnum-plugins#42](https://github.com/mosra/magnum-plugins/issues/42))
 -   Updated `stb_image` to fix `undefined symbol: __cpu_model` error when
     compiling @ref Trade::StbImageImporter "StbImageImporter" on GCC 5
 -   @ref Trade::AssimpImporter "AssimpImporter" now properly prints out an
@@ -132,7 +147,7 @@ namespace Magnum {
     `PreTransformVertices` Assimp collapses all nodes into one and then the
     node is imported as a single object.
 
-@subsection corrade-changelog-latest-deprecated Deprecated APIs
+@subsection corrade-changelog-2018-10-deprecated Deprecated APIs
 
 -   @ref Trade::ColladaImporter "ColladaImporter" is deprecated because it's
     based on an outdated toolkit. Moreover, due to the complexity of the
