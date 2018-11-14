@@ -134,11 +134,12 @@ See also @ref cmake "Magnum usage with CMake" for more information.
 
 The `modules/` directory contains more useful CMake modules:
 
--   `FindFreetype.cmake` --- CMake module for finding FreeType. This is a forked
-    version of the upstream module that works properly with static builds of
-    FreeType, linking all its dependencies. Copy this to your module
-    directory if you built the @ref Text::FreeTypeFont plugin as static and it
-    was also linked to a static FreeType build.
+-   `FindAssimp.cmake` --- CMake module for finding Assimp. Copy this to your
+    module directory if you want to find and link to @ref Trade::AssimpImporter.
+-   `FindDevIL.cmake` --- CMake module for finding DevIL. This is a forked
+    version of the upstream module that doesn't attempt to find the often not
+    distributed ILUT library. Copy this to your module directory if you want to
+    find and link to @ref Trade::DevIlImageImporter.
 -   `FindHarfBuzz.cmake` --- CMake module for finding HarfBuzz. Copy this to
     your module directory if you want to find and link to
     @ref Text::HarfBuzzFont.
