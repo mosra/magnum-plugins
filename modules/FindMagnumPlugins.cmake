@@ -333,7 +333,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                     INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
             endif()
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES ${HARFBUZZ_LIBRARIES})
+                INTERFACE_LINK_LIBRARIES HarfBuzz::HarfBuzz)
 
         # JpegImporter plugin dependencies
         elseif(_component STREQUAL JpegImporter)

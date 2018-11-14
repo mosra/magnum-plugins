@@ -10,7 +10,6 @@
 # Additionally these variables are defined for internal usage:
 #
 #  HARFBUZZ_LIBRARY         - HarfBuzz library
-#  HARFBUZZ_LIBRARIES       - Same as HARFBUZZ_LIBRARY
 #  HARFBUZZ_INCLUDE_DIR     - Include dir
 #
 
@@ -62,5 +61,3 @@ if(NOT TARGET HarfBuzz::HarfBuzz)
         IMPORTED_LOCATION ${HARFBUZZ_LIBRARY}
         INTERFACE_INCLUDE_DIRECTORIES ${HARFBUZZ_INCLUDE_DIR})
 endif()
-
-set(HARFBUZZ_LIBRARIES ${HARFBUZZ_LIBRARY})
