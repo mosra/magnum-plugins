@@ -51,6 +51,8 @@ Listing only people with code contributions, because otherwise there's too many
     the ArchLinux community repository
 -   Bill Robinson ([@wivlaro](https://github.com/wivlaroú) -- numerous bug
     reports and fixes
+-   Fabien Freling ([@ffreling](https://github.com/ffreling)) -- bug reports
+    and fixes
 -   Jonathan Hale ([@Squareys](https://github.com/Squareys)) --
     `AssimpImporter`, `DdsImporter` and `StbVorbisAudioImporter` plugins
 -   Konstantinos Chatzilygeroudis ([@costashatz](https://github.com/costashatz))
