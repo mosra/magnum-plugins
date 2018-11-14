@@ -270,6 +270,9 @@ By default no plugins are built and you need to select them manually:
     @ref Audio::DrFlacImporter "DrFlacAudioImporter" plugin.
 -   `WITH_DRWAVAUDIOIMPORTER` --- Build the
     @ref Audio::DrWavImporter "DrWavAudioImporter" plugin.
+-   `WITH_FAAD2AUDIOIMPORTER` --- Build the
+    @ref Audio::Faad2Importer "Faad2AudioImporter" plugin. Depends on
+    [FAAD2](https://www.audiocoding.com/faad2.html).
 -   `WITH_FREETYPEFONT` --- Build the @ref Text::FreeTypeFont "FreeTypeFont"
     plugin. Depends on [FreeType](http://www.freetype.org/).
 -   `WITH_HARFBUZZFONT` --- Build the @ref Text::HarfBuzzFont "HarfBuzzFont"

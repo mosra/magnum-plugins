@@ -30,7 +30,12 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@anchor changelog-plugins-latest
+@section changelog-plugins-latest Changes since 2018.10
+
+@subsection changelog-plugins-latest-new New features
+
+-   New @ref Audio::Faad2Importer "Faad2AudioImporter" plugin for importing
+    AAC files using [FAAD2](https://www.audiocoding.com/faad2.html)
 
 @section changelog-plugins-2018-10 2018.10
 

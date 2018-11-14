@@ -9,6 +9,9 @@ Third-party components
     -- https://mackron.github.io/dr_flac
 -   The `DrWavAudioImporter` plugin uses the **dr_wav** public domain library
     -- https://mackron.github.io/dr_wav
+-   The `Faad2AudioImporter` plugin uses the **FAAD2** library --
+    https://www.audiocoding.com/faad2.html, licensed under GPLv2 and subject to
+    patent licensing for commercial use. See the website for more information.
 -   The `FreeTypeFont` plugin uses the **FreeType** library -- http://freetype.org/,
     licensed under [FTL](http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT)
     or [GPLv2](http://www.gnu.org/licenses/gpl-2.0.html)

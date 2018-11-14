@@ -58,6 +58,10 @@ if(WITH_DRWAVAUDIOIMPORTER)
     add_subdirectory(DrWavAudioImporter)
 endif()
 
+if(WITH_FAAD2AUDIOIMPORTER)
+    add_subdirectory(Faad2AudioImporter)
+endif()
+
 if(WITH_FREETYPEFONT)
     add_subdirectory(FreeTypeFont)
 endif()

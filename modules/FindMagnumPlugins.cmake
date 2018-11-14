@@ -16,8 +16,9 @@
 #  ColladaImporter              - Collada importer
 #  DdsImporter                  - DDS importer
 #  DevIlImageImporter           - Image importer using DevIL
-#  DrFlacAudioImporter          - FLAC audio importer plugin using dr_flac
-#  DrWavAudioImporter           - WAV audio importer plugin using dr_wav
+#  DrFlacAudioImporter          - FLAC audio importer using dr_flac
+#  DrWavAudioImporter           - WAV audio importer using dr_wav
+#  Faad2AudioImporter           - AAC audio importer using FAAD2
 #  FreeTypeFont                 - FreeType font
 #  HarfBuzzFont                 - HarfBuzz font
 #  JpegImageConverter           - JPEG image converter
@@ -132,10 +133,11 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     AssimpImporter DdsImporter DevIlImageImporter
-    DrFlacAudioImporter DrWavAudioImporter FreeTypeFont HarfBuzzFont
-    JpegImageConverter JpegImporter MiniExrImageConverter OpenGexImporter
-    PngImageConverter PngImporter StanfordImporter StbImageConverter
-    StbImageImporter StbTrueTypeFont StbVorbisAudioImporter TinyGltfImporter)
+    DrFlacAudioImporter DrWavAudioImporter Faad2AudioImporter FreeTypeFont
+    HarfBuzzFont JpegImageConverter JpegImporter MiniExrImageConverter
+    OpenGexImporter PngImageConverter PngImporter StanfordImporter
+    StbImageConverter StbImageImporter StbTrueTypeFont StbVorbisAudioImporter
+    TinyGltfImporter)
 if(MAGNUM_BUILD_DEPRECATED)
     list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST ColladaImporter)
 endif()
@@ -295,6 +297,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # DrFlacAudioImporter has no dependencies
         # DrWavAudioImporter has no dependencies
+
+        # Faad2AudioImporter plugin dependencies
+        elseif(_component STREQUAL Faad2AudioImporter)
+            find_package(FAAD2)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES FAAD2::FAAD2)
 
         # FreeTypeFont plugin dependencies
         elseif(_component STREQUAL FreeTypeFont)

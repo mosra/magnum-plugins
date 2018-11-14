@@ -54,6 +54,9 @@
 /** @dir MagnumPlugins/DrWavAudioImporter
  * @brief Plugin @ref Magnum::Audio::DrWavImporter
  */
+/** @dir MagnumPlugins/Faad2AudioImporter
+ * @brief Plugin @ref Magnum::Audio::Faad2Importer
+ */
 /** @dir MagnumPlugins/FreeTypeFont
  * @brief Plugin @ref Magnum::Text::FreeTypeFont
  */
