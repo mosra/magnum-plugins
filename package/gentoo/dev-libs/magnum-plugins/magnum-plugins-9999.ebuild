@@ -15,6 +15,7 @@ IUSE=""
 RDEPEND="
 	dev-libs/magnum
 	media-libs/devil
+	media-libs/faad2
 	media-libs/freetype
 	media-libs/harfbuzz
 	virtual/jpeg
@@ -33,6 +34,7 @@ src_configure() {
 		-DWITH_DEVILIMAGEIMPORTER=ON
 		-DWITH_DRFLACAUDIOIMPORTER=ON
 		-DWITH_DRWAVAUDIOIMPORTER=ON
+		-DWITH_FAAD2AUDIOIMPORTER=ON
 		-DWITH_FREETYPEFONT=ON
 		-DWITH_HARFBUZZFONT=ON
 		-DWITH_JPEGIMAGECONVERTER=ON

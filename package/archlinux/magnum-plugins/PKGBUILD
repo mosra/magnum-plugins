@@ -8,7 +8,7 @@ pkgdesc='Plugins for the Magnum C++11/C++14 graphics engine'
 arch=('x86_64')
 url='https://magnum.graphics'
 license=('MIT')
-depends=('assimp' 'devil' 'freetype2' 'libjpeg' 'libpng' "magnum>=$pkgver")
+depends=('assimp' 'devil' 'faad2' 'freetype2' 'libjpeg' 'libpng' "magnum>=$pkgver")
 makedepends=('cmake' 'git' 'ninja')
 source=("git+https://github.com/mosra/magnum-plugins#tag=v$pkgver")
 md5sums=('SKIP')
@@ -24,6 +24,7 @@ build() {
     -DWITH_DEVILIMAGEIMPORTER=ON \
     -DWITH_DRFLACAUDIOIMPORTER=ON \
     -DWITH_DRWAVAUDIOIMPORTER=ON \
+    -DWITH_FAAD2AUDIOIMPORTER=ON \
     -DWITH_FREETYPEFONT=ON \
     -DWITH_JPEGIMAGECONVERTER=ON \
     -DWITH_JPEGIMPORTER=ON \

@@ -7,6 +7,7 @@ addons:
     - g++-4.7
     - ninja-build
     - lcov
+    - libfaad-dev
     - libfreetype6-dev
     - libjpeg-dev
     - libopenal-dev
@@ -53,6 +54,7 @@ matrix:
         - libgl1-mesa-dev
         - clang-3.8
         - ninja-build
+        - libfaad-dev
         - libfreetype6-dev
         - libjpeg-dev
         - libopenal-dev
@@ -192,8 +194,8 @@ install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "ios-simulator" ]; then gem install xcpretty; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install emscripten && export LLVM=/usr/local/opt/emscripten/libexec/llvm/bin && emcc; fi
 
-# HarfBuzz, Assimp, DevIL
-- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install harfbuzz assimp devil; fi
+# FAAD2, HarfBuzz, Assimp, DevIL
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install faad2 harfbuzz assimp devil; fi
 
 # So CMake 2.8.12 is able to find FreeType >= 2.5.
 # https://github.com/Kitware/CMake/commit/7435ae7c97590a0713d86b63add761d5e1607ec1

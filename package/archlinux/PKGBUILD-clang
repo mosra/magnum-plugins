@@ -7,7 +7,7 @@ arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
 depends=('magnum')
-makedepends=('cmake' 'clang' 'ninja' 'qt4' 'devil' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp')
+makedepends=('cmake' 'clang' 'ninja' 'qt4' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp')
 options=(!strip)
 provides=('magnum-plugins-git')
 
@@ -40,6 +40,7 @@ build() {
         -DWITH_DEVILIMAGEIMPORTER=ON \
         -DWITH_DRFLACAUDIOIMPORTER=ON \
         -DWITH_DRWAVAUDIOIMPORTER=ON \
+        -DWITH_FAAD2AUDIOIMPORTER=ON \
         -DWITH_FREETYPEFONT=ON \
         -DWITH_HARFBUZZFONT=ON \
         -DWITH_JPEGIMAGECONVERTER=ON \
