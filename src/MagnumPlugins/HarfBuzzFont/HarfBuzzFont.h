@@ -58,6 +58,8 @@ namespace Magnum { namespace Text {
 /**
 @brief HarfBuzz font plugin
 
+@m_keywords{TrueTypeFont OpenTypeFont}
+
 Improves @ref FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz)
 text layouting capabilities, such as kerning, ligatures etc.
 

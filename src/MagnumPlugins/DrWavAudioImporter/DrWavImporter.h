@@ -56,6 +56,8 @@ namespace Magnum { namespace Audio {
 /**
 @brief WAV audio importer plugin using dr_wav
 
+@m_keywords{DrWavAudioImporter WavAudioImporter}
+
 Supports mono, stereo and surround sound files of the following formats using
 the [dr_wav](https://github.com/mackron/dr_libs) library:
 

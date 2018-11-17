@@ -56,6 +56,8 @@ namespace Magnum { namespace Audio {
 /**
 @brief FLAC audio importer plugin using dr_flac
 
+@m_keywords{DrFlacAudioImporter FlacAudioImporter}
+
 Supports mono, stereo and surround sound files of the following formats using
 the [dr_flac](https://github.com/mackron/dr_libs) library:
 

@@ -54,6 +54,11 @@ namespace Magnum { namespace Trade {
 /**
 @brief Image converter plugin using stb_image_write
 
+@m_keywords{StbBmpImageConverter StbHdrImageConverter StbJpegImageConverter}
+@m_keywords{StbPngImageConverter StbTgaImageConverter BmpImageConverter}
+@m_keywords{HdrImageConverter JpegImageConverter PngImageConverter}
+@m_keywords{TgaImageConverter}
+
 Creates files in one of the following formats using the
 [stb_image_write](https://github.com/nothings/stb) library:
 

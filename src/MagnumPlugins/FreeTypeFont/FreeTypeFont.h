@@ -61,6 +61,8 @@ namespace Magnum { namespace Text {
 /**
 @brief FreeType font plugin
 
+@m_keywords{TrueTypeFont OpenTypeFont}
+
 The font can be created either from file or from memory location of format
 supported by [FreeType](http://www.freetype.org/) library.
 

@@ -56,6 +56,8 @@ namespace Magnum { namespace Text {
 /**
 @brief TrueType font plugin using stb_truetype
 
+@m_keywords{TrueTypeFont OpenTypeFont}
+
 Supports opening fonts of the following formats either from file or from memory
 location using the [stb_truetype](https://github.com/nothings/stb) library:
 

@@ -62,6 +62,13 @@ namespace Magnum { namespace Trade {
 /**
 @brief Assimp importer
 
+@m_keywords{3dsImporter Ac3dImporter BlenderImporter BvhImporter CsmImporter}
+@m_keywords{ColladaImporter DirectXImporter DxfImporter FbxImporter}
+@m_keywords{GltfImporter IfcImporter IrrlichtImporter LightWaveImporter}
+@m_keywords{ModoImporter MilkshapeImporter ObjImporter OgreImporter}
+@m_keywords{OpenGexImporter StanfordImporter StlImporter TrueSpaceImporter}
+@m_keywords{UnrealImporter ValveImporter XglImporter}
+
 Imports various formats using [Assimp](http://assimp.org), in particular:
 
 -   Autodesk FBX (`*.fbx`)

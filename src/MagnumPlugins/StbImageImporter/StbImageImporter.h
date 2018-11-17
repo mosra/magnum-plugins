@@ -55,6 +55,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief Image importer plugin using stb_image
 
+@m_keywords{BmpImporter GifImporter HdrImporter JpegImporter PgmImporter}
+@m_keywords{PicImporter PngImporter PpmImporter PsdImporter TgaImporter}
+
 Supports the following formats using the
 [stb_image](https://github.com/nothings/stb) library:
 

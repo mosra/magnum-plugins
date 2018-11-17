@@ -56,6 +56,11 @@ namespace Magnum { namespace Trade {
 /**
 @brief DevIL Image importer plugin
 
+@m_keywords{BmpImporter DdsImporter OpenExrImporter GifImporter HdrImporter}
+@m_keywords{JpegImporter Jpeg2000Importer MngImporter PcxImporter PbmImporter}
+@m_keywords{PgmImporter PicImporter PngImporter PnmImporter PpmImporter}
+@m_keywords{PsdImporter SgiImporter TgaImporter TiffImporter}
+
 Supports a large variety of image file types using the
 [DevIL](http://openil.sourceforge.net/) library, including (note that the list
 is incomplete):
