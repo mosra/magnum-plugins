@@ -84,13 +84,20 @@ plugin, you need to load the @cpp "DrFlacAudioImporter" @ce plugin from
 `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
 dependency of another plugin with CMake, you need to request the
 `DrFlacAudioImporter` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::DrFlacAudioImporter` target.
+`MagnumPlugins::DrFlacAudioImporter` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugins provides `FlacAudioImporter`, but note that this plugin doesn't
 handle CRC checks, corrupt or perverse FLAC streams, or broadcast streams.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-primary}
+
+@thirdparty This plugin makes use of the [dr_flac](https://mackron.github.io/dr_flac)
+    library by David Reid, released into the
+    @m_class{m-label m-primary} **public domain**
+    ([license text](https://github.com/mackron/dr_libs/blob/b5e569af74dab39183bc1d5f8fce53296efcfeee/dr_flac.h#L6232-L6257),
+    [choosealicense.com](https://choosealicense.com/licenses/unlicense/)).
+
 */
 class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter {
     public:

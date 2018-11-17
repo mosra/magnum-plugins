@@ -77,6 +77,17 @@ of the `MagnumPlugins` package and link to the
 
 This plugin provides `GltfImporter` and `GlbImporter` plugins.
 
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the [TinyGLTF](https://github.com/syoyo/tinygltf)
+    library, licensed under @m_class{m-label m-success} **MIT**
+    ([license text](https://github.com/syoyo/tinygltf/blob/devel/LICENSE),
+    [choosealicense.com](https://choosealicense.com/licenses/mit/)).
+    It requires attribution for public use. TinyGLTF itself uses Niels
+    Lohmann's [json.hpp](https://github.com/nlohmann/json), licensed under
+    @m_class{m-label m-success} **MIT** as well
+    ([license text](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)).
+
 @section Trade-TinyGltfImporter-limitations Behavior and limitations
 
 The plugin supports @ref Feature::OpenData and @ref Feature::FileCallback

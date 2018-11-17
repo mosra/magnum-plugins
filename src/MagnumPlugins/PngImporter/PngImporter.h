@@ -68,6 +68,14 @@ component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::PngImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the
+    [libPNG](http://www.libpng.org/pub/png/libpng.html) library, released under
+    the @m_class{m-label m-success} **libPNG** license
+    ([license text](http://libpng.org/pub/png/src/libpng-LICENSE.txt)). It
+    requires attribution for public use.
+
 @section Trade-PngImporter-limitations Behavior and limitations
 
 The images are imported with @ref PixelFormat::RGB8Unorm /

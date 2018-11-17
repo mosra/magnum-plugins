@@ -81,7 +81,8 @@ dynamic plugin, you need to load the @cpp "StbImageImporter" @ce plugin from
 `MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a dependency of
 another plugin with CMake, you need to request the `StbImageImporter` component
 of the `MagnumPlugins` package and link to the
-`MagnumPlugins::StbImageImporter` target.
+`MagnumPlugins::StbImageImporter` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugins provides `BmpImporter`, `GifImporter`, `HdrImporter`,
 `JpegImporter`, `PgmImporter`, `PicImporter`, `PngImporter`, `PpmImporter`,
@@ -89,8 +90,16 @@ This plugins provides `BmpImporter`, `GifImporter`, `HdrImporter`,
 complete support for all format quirks and the performance might be worse than
 when using plugin dedicated for given format.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-primary}
+
+@thirdparty This plugin makes use of the
+    [stb_image](https://github.com/nothings/stb) library by Sean Barrett,
+    released into the @m_class{m-label m-primary} **public domain**
+    ([license text](https://github.com/nothings/stb/blob/e6afb9cbae4064da8c3e69af3ff5c4629579c1d2/stb_image.h#L7444-L7460),
+    [choosealicense.com](https://choosealicense.com/licenses/unlicense/)),
+    or alternatively under @m_class{m-label m-success} **MIT**
+    ([license text](https://github.com/nothings/stb/blob/e6afb9cbae4064da8c3e69af3ff5c4629579c1d2/stb_image.h#L7426-L7442),
+    [choosealicense.com](https://choosealicense.com/licenses/mit/)).
 
 @section Trade-StbImageImporter-limitations Behavior and limitations
 

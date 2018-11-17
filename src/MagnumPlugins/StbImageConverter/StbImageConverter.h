@@ -108,7 +108,8 @@ dynamic plugin, you need to load one of the @cpp "StbBmpImageConverter" @ce,
 format. To use as a static plugin or as a dependency of another plugin with
 CMake, you need to request the `StbImageConverter` component of the
 `MagnumPlugins` package and link to the `MagnumPlugins::StbImageConverter`
-target.
+target. See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 Besides `StbBmpImageConverter`, `StbHdrImageConverter`, `StbJpegImageConverter`,
 `StbPngImageConverter` and `StbTgaImageConverter` aliases this plugin provides
@@ -117,8 +118,16 @@ also `BmpImageConverter`, `HdrImageConverter`, `JpegImageConverter`,
 may generate slightly larger files and the performance might be worse than when
 using plugins dedicated for given format.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-primary}
+
+@thirdparty This plugin makes use of the
+    [stb_image_write](https://github.com/nothings/stb) library by Sean Barrett,
+    released into the @m_class{m-label m-primary} **public domain**
+    ([license text](https://github.com/nothings/stb/blob/e6afb9cbae4064da8c3e69af3ff5c4629579c1d2/stb_image_write.h#L1550-L1566),
+    [choosealicense.com](https://choosealicense.com/licenses/unlicense/)),
+    or alternatively under @m_class{m-label m-success} **MIT**
+    ([license text](https://github.com/nothings/stb/blob/e6afb9cbae4064da8c3e69af3ff5c4629579c1d2/stb_image_write.h#L1532-L1548),
+    [choosealicense.com](https://choosealicense.com/licenses/mit/)).
 
 @section Trade-StbImageConverter-configuration Plugin-specific configuration
 

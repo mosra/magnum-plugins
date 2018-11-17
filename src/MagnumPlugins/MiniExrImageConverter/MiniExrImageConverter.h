@@ -66,14 +66,18 @@ a dynamic plugin, you need to load the @cpp "MiniExrImageConverter" @ce plugin
 from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use as a static plugin or as a
 dependency of another plugin with CMake, you need to request the
 `MiniExrImageConverter` component of the `MagnumPlugins` package and link to
-the `MagnumPlugins::MiniExrImageConverter` target.
+the `MagnumPlugins::MiniExrImageConverter` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugins provides `OpenExrImageConverter` plugin, but note that this plugin
 generates only uncompressed files and the performance might be worse than when
 using plugin dedicated for given format.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-primary}
+
+@thirdparty This plugin makes use of the
+    [miniexr](https://github.com/aras-p/miniexr) library by Aras Pranckevičius, released into the @m_class{m-label m-primary} **public domain**
+    ([choosealicense.com](https://choosealicense.com/licenses/unlicense/)).
 */
 class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:

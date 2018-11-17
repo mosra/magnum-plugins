@@ -72,12 +72,21 @@ Plugins. To use as a dynamic plugin, you need to load the
 @cpp "FreeTypeFont" @ce plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use as a
 static plugin or as a dependency of another plugin with CMake, you need to
 request the `FreeTypeFont` component of the `MagnumPlugins` package and link to
-the `MagnumPlugins::FreeTypeFont` target.
+the `MagnumPlugins::FreeTypeFont` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the [FreeType](http://freetype.org/)
+    library, released under the @m_class{m-label m-success} **FreeType license**
+    ([license text](http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT))
+    or @m_class{m-label m-danger} **GPLv2**
+    ([license text](http://www.gnu.org/licenses/gpl-2.0.html),
+    [choosealicense.com](https://choosealicense.com/licenses/gpl-2.0)). It
+    requires attribution for public use.
+
 */
 class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     public:

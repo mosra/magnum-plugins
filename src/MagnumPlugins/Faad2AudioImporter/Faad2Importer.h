@@ -67,12 +67,19 @@ as a dynamic plugin, you need to load the @cpp "Faad2AudioImporter" @ce
 plugin from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as
 a dependency of another plugin with CMake, you need to request the
 `Faad2AudioImporter` component of the `MagnumPlugins` package and link to
-the `MagnumPlugins::Faad2AudioImporter` target.
+the `MagnumPlugins::Faad2AudioImporter` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugins provides `AacAudioImporter`.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-danger}
+
+@thirdparty This plugin makes use of the [FAAD2](https://www.audiocoding.com/faad2.html)
+    library, licensed under @m_class{m-label m-danger} **GPLv2**
+    ([license text](http://www.opensource.org/licenses/gpl-license.php),
+    [choosealicense.com](https://choosealicense.com/licenses/gpl-2.0/)). It
+    requires attribution and source disclosure for public use. It's subject to
+    patent licensing for commercial use.
 */
 class MAGNUM_FAAD2AUDIOIMPORTER_EXPORT Faad2Importer: public AbstractImporter {
     public:

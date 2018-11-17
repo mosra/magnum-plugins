@@ -70,7 +70,8 @@ To use as a dynamic plugin, you need to load the @cpp "StbTrueTypeFont" @ce
 plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use as a static plugin or as a
 dependency of another plugin with CMake, you need to request the
 `StbTrueTypeFont` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::StbTrueTypeFont` target.
+`MagnumPlugins::StbTrueTypeFont` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins, but please
 note that this plugin trades the simplicity and portability for various
@@ -79,8 +80,16 @@ rendered glyphs looking blurry compared to for example @ref FreeTypeFont and
 because of that the font properties and sizes don't exactly match properties of
 fonts opened with @ref FreeTypeFont using the same size.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-primary}
+
+@thirdparty This plugin makes use of the
+    [stb_truetype](https://github.com/nothings/stb) library by Sean Barrett,
+    released into the @m_class{m-label m-primary} **public domain**
+    ([license text](https://github.com/nothings/stb/blob/e6afb9cbae4064da8c3e69af3ff5c4629579c1d2/stb_truetype.h#L4835-L4851),
+    [choosealicense.com](https://choosealicense.com/licenses/unlicense/)),
+    or alternatively under @m_class{m-label m-success} **MIT**
+    ([license text](https://github.com/nothings/stb/blob/master/stb_truetype.h#L4817-L4833),
+    [choosealicense.com](https://choosealicense.com/licenses/mit/)).
 */
 class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
     public:

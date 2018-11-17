@@ -119,7 +119,8 @@ To use as a dynamic plugin, you need to load the @cpp "AssimpImporter" @ce
 plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a
 dependency of another plugin with CMake, you need to request the
 `AssimpImporter` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::AssimpImporter` target.
+`MagnumPlugins::AssimpImporter` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
 `BvhImporter`, `CsmImporter`, `ColladaImporter`, `DirectXImporter`,
@@ -129,8 +130,13 @@ This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
 `StlImporter`, `TrueSpaceImporter`, `UnrealImporter`, `ValveImporter` and
 `XglImporter` plugins.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the [Assimp](http://assimp.org) library,
+    licensed under @m_class{m-label m-success} **BSD 3-clause**
+    ([license text](http://assimp.org/index.php/license),
+    [choosealicense.com](https://choosealicense.com/licenses/bsd-3-clause/)).
+    It requires attribution for public use.
 
 @section Trade-AssimpImporter-limitations Behavior and limitations
 

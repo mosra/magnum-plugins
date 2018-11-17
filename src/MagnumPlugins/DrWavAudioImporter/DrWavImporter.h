@@ -85,13 +85,20 @@ This plugin depends on the @ref Audio library and is built if
 plugin, you need to load the @cpp "DrWavAudioImporter" @ce plugin from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
 dependency of another plugin with CMake, you need to request the
 `DrWavAudioImporter` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::DrWavAudioImporter` target.
+`MagnumPlugins::DrWavAudioImporter` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugins provides `WavAudioImporter`, but note that this plugin doesn't
 handle some errata such as JUNK blocks in strange places.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-primary}
+
+@thirdparty This plugin makes use of the [dr_wav](https://mackron.github.io/dr_wav)
+    library by David Reid, released into the
+    @m_class{m-label m-primary} **public domain**
+    ([license text](https://github.com/mackron/dr_libs/blob/b5e569af74dab39183bc1d5f8fce53296efcfeee/dr_wav.h#L3702-L3727),
+    [choosealicense.com](https://choosealicense.com/licenses/unlicense/)).
+
 */
 class MAGNUM_DRWAVAUDIOIMPORTER_EXPORT DrWavImporter: public AbstractImporter {
     public:

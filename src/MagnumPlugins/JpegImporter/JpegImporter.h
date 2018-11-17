@@ -65,6 +65,15 @@ component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::JpegImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the [libJPEG](http://ijg.org/) library,
+    released under a custom @m_class{m-label m-success} **Libjpeg license**
+    ([license text](https://jpegclub.org/reference/libjpeg-license/)). It
+    requires attribution for public use. Note that this plugin can be built
+    against any other compatible and possibly differently-licensed libJPEG
+    implementation as well.
+
 The images are imported with @ref PixelFormat::RGB8Unorm or @ref PixelFormat::R8Unorm. All imported images use default @ref PixelStorage
 parameters.
 

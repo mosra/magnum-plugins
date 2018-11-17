@@ -70,12 +70,19 @@ building Magnum Plugins. To use as a dynamic plugin, you need to load the
 @cpp "HarfBuzzFont" @ce plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use as a
 static plugin or as a dependency of another plugin with CMake, you need to
 request the `HarfBuzzFont` component of the `MagnumPlugins` package and link to
-the `MagnumPlugins::HarfBuzzFont` target.
+the `MagnumPlugins::HarfBuzzFont` target. See @ref building-plugins,
+@ref cmake-plugins and @ref plugins for more information.
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the [HarfBuzz](http://harfbuzz.org/)
+    library, licensed under @m_class{m-label m-success} **MIT**
+    ([license text](https://raw.githubusercontent.com/behdad/harfbuzz/master/COPYING),
+    [choosealicense.com](https://choosealicense.com/licenses/mit/)). It
+    requires attribution for public use. In turn it depends on @ref FreeTypeFont
+    and thus FreeType, see its documentation for further license info.
 */
 class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
     public:

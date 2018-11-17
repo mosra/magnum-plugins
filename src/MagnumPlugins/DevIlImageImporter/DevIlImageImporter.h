@@ -117,7 +117,9 @@ Magnum Plugins. To use as a dynamic plugin, you need to load the
 @cpp "DevIlImageImporter" @ce plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use
 as a static plugin or as a dependency of another plugin with CMake, you need to
 request the `DevIlImageImporter` component of the `MagnumPlugins` package in
-CMake and link to the `MagnumPlugins::DevIlImageImporter` target.
+CMake and link to the `MagnumPlugins::DevIlImageImporter` target. See
+@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
 `GifImporter`, `HdrImporter`, `JpegImporter`, `Jpeg2000Importer`,
@@ -125,8 +127,14 @@ This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
 `PngImporter`, `PnmImporter`, `PpmImporter`, `PsdImporter`, `SgiImporter`,
 `TgaImporter` and `TiffImporter` plugins.
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+@m_class{m-block m-warning}
+
+@thirdparty This plugin makes use of the [DevIL](http://openil.sourceforge.net/)
+    library, licensed under @m_class{m-label m-warning} **LGPLv2.1**
+    ([license text](http://openil.sourceforge.net/lgpl.txt),
+    [choosealicense.com](https://choosealicense.com/licenses/lgpl-2.1/)). It
+    requires attribution and either dynamic linking or source disclosure for
+    public use.
 
 The images are imported as @ref PixelFormat::R8Unorm,
 @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. BGR/BGRA and all other formats will be converted to

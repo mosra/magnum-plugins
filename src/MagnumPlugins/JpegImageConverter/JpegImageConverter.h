@@ -72,6 +72,15 @@ package and link to the `MagnumPlugins::JpegImageConverter` target. See
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the [libJPEG](http://ijg.org/) library,
+    released under a custom @m_class{m-label m-success} **Libjpeg license**
+    ([license text](https://jpegclub.org/reference/libjpeg-license/)). It
+    requires attribution for public use. Note that this plugin can be built
+    against any other compatible and possibly differently-licensed libJPEG
+    implementation as well.
+
 @section Trade-JpegImageConverter-implementations libJPEG implementations
 
 While some systems (such as macOS) still ship only with the vanilla libJPEG,

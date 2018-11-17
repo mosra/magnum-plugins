@@ -103,6 +103,15 @@ of the `MagnumPlugins` package in CMake and link to the
 `MagnumPlugins::ColladaImporter` target. See @ref building-plugins,
 @ref cmake-plugins and @ref plugins for more information.
 
+@m_class{m-block m-warning}
+
+@thirdparty This plugin makes use of the [Qt 4](https://qt.io) library,
+    licensed under @m_class{m-label m-warning} **LGPLv2.1**
+    ([license text](http://www.gnu.org/licenses/lgpl-2.1.html),
+    [choosealicense.com](https://choosealicense.com/licenses/lgpl-2.1/)). It
+    requires attribution and either dynamic linking or source disclosure for
+    public use. Commercial licensing options are available too.
+
 @section Trade-ColladaImporter-limitations Behavior and limitations
 
 @subsection Trade-ColladaImporter-limitations-meshes Mesh import
