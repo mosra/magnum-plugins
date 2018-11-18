@@ -29,6 +29,10 @@ else()
     set(FAAD2AUDIOIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+# Using CompareImage for fuzzy comparison of the imported data because older
+# version of FAAD2 import off-by-one.
+find_package(Magnum REQUIRED DebugTools)
+
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
@@ -47,7 +51,7 @@ else()
 endif()
 
 corrade_add_test(Faad2AudioImporterTest Faad2ImporterTest.cpp
-    LIBRARIES Magnum::Audio
+    LIBRARIES Magnum::Audio Magnum::DebugTools
     FILES
         dummy.aac
         mono.aac
