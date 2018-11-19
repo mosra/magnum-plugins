@@ -62,6 +62,17 @@ cmake .. \
 ninja install
 cd ../..
 
+# Crosscompile FAAD2. Basically a copy of the emscripten-faad2 PKGBUILD from
+# https://github.com/mosra/archlinux.
+wget https://downloads.sourceforge.net/sourceforge/faac/faad2-2.8.8.tar.gz
+tar -xzvf faad2-2.8.8.tar.gz
+cd faad2-2.8.8
+emconfigure ./configure --prefix=$HOME/deps
+emmake make install
+mv $HOME/deps/lib/{libfaad.a,faad.bc}
+mv $HOME/deps/lib/{libfaad_drm.a,faad_drm.bc}
+cd ..
+
 # Crosscompile
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
@@ -78,6 +89,7 @@ cmake .. \
     -DWITH_DEVILIMAGEIMPORTER=OFF \
     -DWITH_DRFLACAUDIOIMPORTER=ON \
     -DWITH_DRWAVAUDIOIMPORTER=ON \
+    -DWITH_FAAD2AUDIOIMPORTER=ON \
     -DWITH_FREETYPEFONT=OFF \
     -DWITH_HARFBUZZFONT=OFF \
     -DWITH_JPEGIMAGECONVERTER=OFF \

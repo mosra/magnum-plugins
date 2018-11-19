@@ -6,7 +6,7 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (Emscripten, wasm)"
 arch=('any')
 url="https://magnum.graphics"
 license=('MIT')
-depends=('emscripten-magnum=dev.wasm')
+depends=('emscripten-magnum=dev.wasm' 'emscripten-faad2')
 makedepends=('cmake' 'emscripten' 'corrade' 'ninja')
 options=(!strip !buildflags)
 
@@ -31,6 +31,7 @@ build() {
         -DWITH_DEVILIMAGEIMPORTER=OFF \
         -DWITH_DRFLACAUDIOIMPORTER=ON \
         -DWITH_DRWAVAUDIOIMPORTER=ON \
+        -DWITH_FAAD2AUDIOIMPORTER=ON \
         -DWITH_MINIEXRIMAGECONVERTER=ON \
         -DWITH_OPENGEXIMPORTER=ON \
         -DWITH_STANFORDIMPORTER=ON \
