@@ -48,7 +48,7 @@ Debug& operator<<(Debug& debug, const Type value) {
         _c(Short)
         _c(UnsignedInt)
         _c(Int)
-        #ifndef MAGNUM_TARGET_WEBGL
+        #ifndef CORRADE_TARGET_EMSCRIPTEN
         _c(UnsignedLong)
         _c(Long)
         #endif
@@ -77,7 +77,7 @@ Debug& operator<<(Debug& debug, const PropertyType value) {
         _c(Short)
         _c(UnsignedInt)
         _c(Int)
-        #ifndef MAGNUM_TARGET_WEBGL
+        #ifndef CORRADE_TARGET_EMSCRIPTEN
         _c(UnsignedLong)
         _c(Long)
         #endif
@@ -268,7 +268,7 @@ bool Document::parse(Containers::ArrayView<const char> data, const std::initiali
                     _c(UnsignedShort, unsigned_int16)
                     _c(Int, int32)
                     _c(UnsignedInt, unsigned_int32)
-                    #ifndef MAGNUM_TARGET_WEBGL
+                    #ifndef CORRADE_TARGET_EMSCRIPTEN
                     _c(Long, int64)
                     _c(UnsignedLong, unsigned_int64)
                     #endif
@@ -396,7 +396,7 @@ _c(UnsignedShort)
 _c(Short)
 _c(UnsignedInt)
 _c(Int)
-#ifndef MAGNUM_TARGET_WEBGL
+#ifndef CORRADE_TARGET_EMSCRIPTEN
 _c(UnsignedLong)
 _c(Long)
 #endif
@@ -614,7 +614,7 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
             _c(Short)
             _c(UnsignedInt)
             _c(Int)
-            #ifndef MAGNUM_TARGET_WEBGL
+            #ifndef CORRADE_TARGET_EMSCRIPTEN
             _c(UnsignedLong)
             _c(Long)
             #endif
@@ -1132,7 +1132,7 @@ bool Property::isTypeCompatibleWith(PropertyType type) const {
         case PropertyType::Short:
         case PropertyType::UnsignedInt:
         case PropertyType::Int:
-        #ifndef MAGNUM_TARGET_WEBGL
+        #ifndef CORRADE_TARGET_EMSCRIPTEN
         case PropertyType::UnsignedLong:
         case PropertyType::Long:
         #endif

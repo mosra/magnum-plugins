@@ -456,7 +456,7 @@ class MAGNUM_OPENDDL_EXPORT Document {
         std::vector<UnsignedShort> _unsignedShorts;
         std::vector<Int> _ints;
         std::vector<UnsignedInt> _unsignedInts;
-        #ifndef MAGNUM_TARGET_WEBGL
+        #ifndef CORRADE_TARGET_EMSCRIPTEN
         std::vector<Long> _longs;
         std::vector<UnsignedLong> _unsignedLongs;
         #endif
@@ -485,7 +485,7 @@ _c(UnsignedShort, _unsignedShorts)
 _c(Short, _shorts)
 _c(UnsignedInt, _unsignedInts)
 _c(Int, _ints)
-#ifndef MAGNUM_TARGET_WEBGL
+#ifndef CORRADE_TARGET_EMSCRIPTEN
 _c(UnsignedLong, _unsignedLongs)
 _c(Long, _longs)
 #endif
@@ -507,7 +507,7 @@ _c(UnsignedShort, UnsignedShort)
 _c(Short, Short)
 _c(UnsignedInt, UnsignedInt)
 _c(Int, Int)
-#ifndef MAGNUM_TARGET_WEBGL
+#ifndef CORRADE_TARGET_EMSCRIPTEN
 _c(UnsignedLong, UnsignedLong)
 _c(Long, Long)
 #endif

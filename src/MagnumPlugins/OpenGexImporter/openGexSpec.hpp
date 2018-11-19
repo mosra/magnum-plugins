@@ -136,7 +136,7 @@ const std::initializer_list<Validation::Structure> structureInfo{
     {BoneCountArray,    Primitives{Type::UnsignedByte,
                                    Type::UnsignedShort,
                                    Type::UnsignedInt,
-                                   #ifndef MAGNUM_TARGET_WEBGL
+                                   #ifndef CORRADE_TARGET_EMSCRIPTEN
                                    Type::UnsignedLong
                                    #endif
                                    }, 1, 0,
@@ -144,7 +144,7 @@ const std::initializer_list<Validation::Structure> structureInfo{
     {BoneIndexArray,    Primitives{Type::UnsignedByte,
                                    Type::UnsignedShort,
                                    Type::UnsignedInt,
-                                   #ifndef MAGNUM_TARGET_WEBGL
+                                   #ifndef CORRADE_TARGET_EMSCRIPTEN
                                    Type::UnsignedLong
                                    #endif
                                    }, 1, 0,
@@ -196,7 +196,7 @@ const std::initializer_list<Validation::Structure> structureInfo{
                                    Type::Short,
                                    Type::UnsignedInt,
                                    Type::Int,
-                                   #ifndef MAGNUM_TARGET_WEBGL
+                                   #ifndef CORRADE_TARGET_EMSCRIPTEN
                                    Type::UnsignedLong,
                                    Type::Long,
                                    #endif
@@ -232,7 +232,7 @@ const std::initializer_list<Validation::Structure> structureInfo{
                                    {Morph, {}},
                                    {Extension, {}}}},
     {IndexArray,        Properties{{material, PropertyType::UnsignedInt, OptionalProperty},
-                                   #ifndef MAGNUM_TARGET_WEBGL
+                                   #ifndef CORRADE_TARGET_EMSCRIPTEN
                                    {restart, PropertyType::UnsignedLong, OptionalProperty},
                                    #else
                                    {restart, PropertyType::UnsignedInt, OptionalProperty},
@@ -241,7 +241,7 @@ const std::initializer_list<Validation::Structure> structureInfo{
                         Primitives{Type::UnsignedByte,
                                    Type::UnsignedShort,
                                    Type::UnsignedInt,
-                                   #ifndef MAGNUM_TARGET_WEBGL
+                                   #ifndef CORRADE_TARGET_EMSCRIPTEN
                                    Type::UnsignedLong
                                    #endif
                                    }, 1, 0,

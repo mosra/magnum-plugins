@@ -71,17 +71,19 @@ enum class Type: UnsignedInt {
     /** Signed int (32 bit). Stored in @ref Magnum::Int "Int" type. */
     Int,
 
-    #ifndef MAGNUM_TARGET_WEBGL
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
     /**
      * Unsigned long (64 bit). Stored in @ref Magnum::UnsignedLong "UnsignedLong"
      * type.
-     * @requires_gles 64-bit integers are not available in WebGL.
+     * @partialsupport 64-bit integers are not available on
+     *      @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
      */
     UnsignedLong,
 
     /**
      * Long (64 bit). Stored in @ref Magnum::Long "Long" type.
-     * @requires_gles 64-bit integers are not available in WebGL.
+     * @partialsupport 64-bit integers are not available on
+     *      @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
      */
     Long,
     #endif

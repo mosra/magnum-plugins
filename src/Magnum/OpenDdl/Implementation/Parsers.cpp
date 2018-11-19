@@ -285,7 +285,7 @@ namespace {
 template<class> struct IntegralType;
 template<> struct IntegralType<Float> { typedef UnsignedInt Type; };
 template<> struct IntegralType<Double> {
-    #ifndef MAGNUM_TARGET_WEBGL
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
     typedef UnsignedLong Type;
     #else
     typedef UnsignedInt Type;
@@ -295,7 +295,7 @@ template<class T> using IntegralTypeFor = typename IntegralType<T>::Type;
 
 template<class> struct ExtractToType;
 /** @todo isn't there something better for extracting to unsigned int on webgl? */
-#ifndef MAGNUM_TARGET_WEBGL
+#ifndef CORRADE_TARGET_EMSCRIPTEN
 template<> struct ExtractToType<UnsignedLong> {
     typedef UnsignedLong Type;
     static UnsignedLong extract(const std::string& buffer, Int base) {
@@ -347,7 +347,7 @@ _c(UnsignedShort)
 _c(Short)
 _c(UnsignedInt)
 _c(Int)
-#ifndef MAGNUM_TARGET_WEBGL
+#ifndef CORRADE_TARGET_EMSCRIPTEN
 _c(UnsignedLong)
 _c(Long)
 #endif
@@ -489,7 +489,7 @@ template std::tuple<const char*, Int, Int> integralLiteral<Int>(Containers::Arra
 template std::tuple<const char*, unsigned long, Int> integralLiteral<unsigned long>(Containers::ArrayView<const char>, std::string&, ParseError&);
 template std::tuple<const char*, long, Int> integralLiteral<long>(Containers::ArrayView<const char>, std::string&, ParseError&);
 #endif
-#ifndef MAGNUM_TARGET_WEBGL
+#ifndef CORRADE_TARGET_EMSCRIPTEN
 template std::tuple<const char*, UnsignedLong, Int> integralLiteral<UnsignedLong>(Containers::ArrayView<const char>, std::string&, ParseError&);
 template std::tuple<const char*, Long, Int> integralLiteral<Long>(Containers::ArrayView<const char>, std::string&, ParseError&);
 #endif
@@ -683,7 +683,7 @@ std::pair<const char*, Type> possiblyTypeLiteral(const Containers::ArrayView<con
     _c(int16, Short)
     _c(unsigned_int32, UnsignedInt)
     _c(int32, Int)
-    #ifndef MAGNUM_TARGET_WEBGL
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
     _c(unsigned_int64, UnsignedLong)
     _c(int64, Long)
     #endif

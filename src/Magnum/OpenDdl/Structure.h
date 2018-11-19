@@ -391,7 +391,7 @@ namespace Implementation {
     _c(Short)
     _c(UnsignedInt)
     _c(Int)
-    #ifndef MAGNUM_TARGET_WEBGL
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
     _c(UnsignedLong)
     _c(Long)
     #endif

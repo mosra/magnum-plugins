@@ -92,7 +92,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void meshNoPositions();
     void meshMismatchedSizes();
     void meshInvalidIndexArraySubArraySize();
-    #ifndef MAGNUM_TARGET_WEBGL
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
     void meshUnsupportedIndexType();
     #endif
 
@@ -151,7 +151,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::meshNoPositions,
               &OpenGexImporterTest::meshMismatchedSizes,
               &OpenGexImporterTest::meshInvalidIndexArraySubArraySize,
-              #ifndef MAGNUM_TARGET_WEBGL
+              #ifndef CORRADE_TARGET_EMSCRIPTEN
               &OpenGexImporterTest::meshUnsupportedIndexType,
               #endif
 
@@ -824,7 +824,7 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh3D(): invalid index array subarray size 3 for MeshPrimitive::Lines\n");
 }
 
-#ifndef MAGNUM_TARGET_WEBGL
+#ifndef CORRADE_TARGET_EMSCRIPTEN
 void OpenGexImporterTest::meshUnsupportedIndexType() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid-int64.ogex")));
