@@ -53,7 +53,7 @@ endif()
 corrade_add_test(Faad2AudioImporterTest Faad2ImporterTest.cpp
     LIBRARIES Magnum::Audio Magnum::DebugTools
     FILES
-        dummy.aac
+        error.aac
         mono.aac
         stereo.aac)
 if(NOT BUILD_PLUGINS_STATIC)
