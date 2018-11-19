@@ -325,6 +325,11 @@ template<> struct ExtractToType<Byte>: ExtractToType<UnsignedInt> {};
 template<> struct ExtractToType<UnsignedShort>: ExtractToType<UnsignedInt> {};
 template<> struct ExtractToType<Short>: ExtractToType<UnsignedInt> {};
 template<> struct ExtractToType<Int>: ExtractToType<UnsignedInt> {};
+/* Emscripten 1.38.10 and newer has std::size_t defined as unsigned long, while
+   it was unsigned int before. We should support both cases,
+   integralLiteral<std::size_t>() is used in some places in the parsers. */
+static_assert(sizeof(unsigned long) == 4, "unsigned long is not four bytes on Emscripten");
+template<> struct ExtractToType<unsigned long>: ExtractToType<UnsignedInt> {};
 #endif
 template<class T> using ExtractedType = typename ExtractToType<T>::Type;
 
@@ -350,6 +355,12 @@ _c(Int)
 #ifndef CORRADE_TARGET_EMSCRIPTEN
 _c(UnsignedLong)
 _c(Long)
+#else
+/* Emscripten 1.38.10 and newer has std::size_t defined as unsigned long, while
+   it was unsigned int before. We should support both cases,
+   integralLiteral<std::size_t>() is used in some places in the parsers. */
+static_assert(sizeof(unsigned long) == 4, "unsigned long is not four bytes on Emscripten");
+template<> constexpr Type typeFor<unsigned long>() { return Type::UnsignedInt; }
 #endif
 _c(Float)
 _c(Double)
@@ -492,6 +503,12 @@ template std::tuple<const char*, long, Int> integralLiteral<long>(Containers::Ar
 #ifndef CORRADE_TARGET_EMSCRIPTEN
 template std::tuple<const char*, UnsignedLong, Int> integralLiteral<UnsignedLong>(Containers::ArrayView<const char>, std::string&, ParseError&);
 template std::tuple<const char*, Long, Int> integralLiteral<Long>(Containers::ArrayView<const char>, std::string&, ParseError&);
+#else
+/* Emscripten 1.38.10 and newer has std::size_t defined as unsigned long, while
+   it was unsigned int before. We should support both cases,
+   integralLiteral<std::size_t>() is used in some places in the parsers. */
+static_assert(sizeof(unsigned long) == 4, "unsigned long is not four bytes on Emscripten");
+template std::tuple<const char*, unsigned long, Int> integralLiteral<unsigned long>(Containers::ArrayView<const char>, std::string&, ParseError&);
 #endif
 
 template<class T> std::pair<const char*, T> floatingPointLiteral(const Containers::ArrayView<const char> data, std::string& buffer, ParseError& error) {

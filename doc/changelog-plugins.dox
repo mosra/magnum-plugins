@@ -37,6 +37,13 @@ namespace Magnum {
 -   New @ref Audio::Faad2Importer "Faad2AudioImporter" plugin for importing
     AAC files using [FAAD2](https://www.audiocoding.com/faad2.html)
 
+@subsection changelog-plugins-latest-changes Changes and improvements
+
+-   Fixed compatibility of the @ref OpenDdl library with Emscripten 1.38.10
+    and newer, which defines @ref std::size_t as @cpp unsigned long @ce instead
+    of @cpp unsigned int @ce used previously (it's still a four-byte type,
+    though)
+
 @section changelog-plugins-2018-10 2018.10
 
 Released 2018-10-23, tagged as
