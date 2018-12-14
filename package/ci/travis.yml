@@ -4,7 +4,7 @@ addons:
   apt:
     packages:
     - libgl1-mesa-dev
-    - g++-4.7
+    - g++-4.8
     - ninja-build
     - lcov
     - libfaad-dev
@@ -28,7 +28,7 @@ matrix:
     - JOBID=linux-gl
     - TARGET=desktop
     - CMAKE_CXX_FLAGS="--coverage"
-    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.7"
+    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
   - language: cpp
     os: linux
     dist: trusty
@@ -72,7 +72,7 @@ matrix:
     - TARGET=desktop-gles
     - TARGET_GLES2=ON
     - CMAKE_CXX_FLAGS="--coverage"
-    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.7"
+    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
   - language: cpp
     os: linux
     dist: trusty
@@ -82,7 +82,7 @@ matrix:
     - TARGET=desktop-gles
     - TARGET_GLES2=OFF
     - CMAKE_CXX_FLAGS="--coverage"
-    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.7"
+    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
   - language: cpp
     os: osx
     # The new plugin testing workflow is dynamically loading and unloading them
@@ -172,7 +172,7 @@ cache:
   - $HOME/cmake
 
 install:
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! "$TARGET" == "desktop-sanitizers" ] && [ ! "$TARGET" == "android" ]; then export CXX=g++-4.7; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! "$TARGET" == "desktop-sanitizers" ] && [ ! "$TARGET" == "android" ]; then export CXX=g++-4.8; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop-sanitizers" ]; then export CXX=clang++-3.8; fi
 - if [ "$BUILD_DEPRECATED" != "OFF" ]; then export BUILD_DEPRECATED=ON; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PLATFORM_GL_API=GLX; fi
@@ -200,8 +200,6 @@ install:
 # So CMake 2.8.12 is able to find FreeType >= 2.5.
 # https://github.com/Kitware/CMake/commit/7435ae7c97590a0713d86b63add761d5e1607ec1
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! "$TARGET" == "desktop-sanitizers" ]; then export FREETYPE_INCLUDE_DIR_freetype2=-DFREETYPE_INCLUDE_DIR_freetype2=/usr/include/freetype2; fi
-# The json parser library tinygltf depends on does not support gcc < 4.9
-- if [ "$CXX" == "g++-4.7" ]; then export WITH_TINYGLTFIMPORTER=OFF; else export WITH_TINYGLTFIMPORTER=ON; fi
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/travis-desktop.sh; fi

@@ -32,6 +32,12 @@ namespace Magnum {
 
 @section changelog-plugins-latest Changes since 2018.10
 
+@subsection changelog-plugins-latest-dependencies Dependency changes
+
+-   Minimal supported GCC version is now 4.8.1, GCC 4.7 is not supported
+    anymore. Minimal Clang version is now 3.3, since that's the first version
+    with a complete C++11 support.
+
 @subsection changelog-plugins-latest-new New features
 
 -   New @ref Audio::Faad2Importer "Faad2AudioImporter" plugin for importing
