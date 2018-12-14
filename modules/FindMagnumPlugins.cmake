@@ -63,13 +63,6 @@
 #  MAGNUMPLUGINS_*_LIBRARY_DEBUG - Debug version of given library, if found
 #  MAGNUMPLUGINS_*_LIBRARY_RELEASE - Release version of given library, if found
 #
-# Workflows without imported targets are deprecated and the following variables
-# are included just for backwards compatibility and only if
-# :variable:`MAGNUM_BUILD_DEPRECATED` is enabled:
-#
-#  MAGNUMPLUGINS_*_LIBRARIES    - Expands to ``MagnumPlugins::*` target. Use
-#   ``MagnumPlugins::*`` target directly instead.
-#
 
 #
 #   This file is part of Magnum.
@@ -421,11 +414,6 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         else()
             set(MagnumPlugins_${_component}_FOUND FALSE)
         endif()
-    endif()
-
-    # Deprecated variables
-    if(MAGNUM_BUILD_DEPRECATED AND _component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
-        set(MAGNUMPLUGINS_${_COMPONENT}_LIBRARIES MagnumPlugins::${_component})
     endif()
 endforeach()
 

@@ -123,13 +123,6 @@ chosen based on actual build configuration of the project (i.e. `Debug` build
 is linked to debug plugins, `Release` build to release plugins). See @ref cmake
 for more information about autodetection of `MAGNUM_PLUGINS_DIR`.
 
-Workflows without imported targets are deprecated and the following variables
-are included just for backwards compatibility and only if
-@ref MAGNUM_BUILD_DEPRECATED is enabled:
-
--   `MAGNUMPLUGINS_*_LIBRARIES` --- Expands to `MagnumPlugins::*` target. Use
-    `MagnumPlugins::*` target directly instead.
-
 See also @ref cmake "Magnum usage with CMake" for more information.
 
 @section cmake-plugins-modules Other CMake modules
