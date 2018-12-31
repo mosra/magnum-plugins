@@ -62,6 +62,10 @@ if(WITH_FAAD2AUDIOIMPORTER)
     add_subdirectory(Faad2AudioImporter)
 endif()
 
+if(WITH_FFMPEGAUDIOIMPORTER)
+    add_subdirectory(FfmpegAudioImporter)
+endif()
+
 if(WITH_FREETYPEFONT)
     add_subdirectory(FreeTypeFont)
 endif()

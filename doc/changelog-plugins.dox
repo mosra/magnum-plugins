@@ -46,6 +46,8 @@ namespace Magnum {
 
 -   New @ref Audio::Faad2Importer "Faad2AudioImporter" plugin for importing
     AAC files using [FAAD2](https://www.audiocoding.com/faad2.html)
+-   New @ref Audio::FfmpegImporter "FfmpegAudioImporter" plugin for importing
+    virtually all existing audio formats
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 

@@ -126,11 +126,11 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     AssimpImporter DdsImporter DevIlImageImporter
-    DrFlacAudioImporter DrWavAudioImporter Faad2AudioImporter FreeTypeFont
-    HarfBuzzFont JpegImageConverter JpegImporter MiniExrImageConverter
-    OpenGexImporter PngImageConverter PngImporter StanfordImporter
-    StbImageConverter StbImageImporter StbTrueTypeFont StbVorbisAudioImporter
-    TinyGltfImporter)
+    DrFlacAudioImporter DrWavAudioImporter Faad2AudioImporter
+    FfmpegAudioImporter FreeTypeFont HarfBuzzFont JpegImageConverter
+    JpegImporter MiniExrImageConverter OpenGexImporter PngImageConverter
+    PngImporter StanfordImporter StbImageConverter StbImageImporter
+    StbTrueTypeFont StbVorbisAudioImporter TinyGltfImporter)
 if(MAGNUM_BUILD_DEPRECATED)
     list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST ColladaImporter)
 endif()
@@ -296,6 +296,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             find_package(FAAD2)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES FAAD2::FAAD2)
+
+        # FfmpegAudioImporter plugin dependencies
+        elseif(_component STREQUAL FffmpegAudioImporter)
+            find_package(FFmpeg REQUIRED avcodec avformat avutil)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES FFmpeg::avcodec FFmpeg::avformat FFmpeg::avutil)
 
         # FreeTypeFont plugin dependencies
         elseif(_component STREQUAL FreeTypeFont)
