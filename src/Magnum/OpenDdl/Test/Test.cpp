@@ -136,9 +136,11 @@ Test::Test() {
 
               &Test::customProperty,
               &Test::customPropertyEmpty,
+              &Test::customPropertyUnknown,
               &Test::customPropertyExpectedValueAssignment,
               &Test::customPropertyExpectedSeparator,
               &Test::customPropertyExpectedListEnd,
+              &Test::customPropertyInvalidIdentifier,
               &Test::customPropertyInvalidValue,
 
               &Test::hierarchy,
@@ -484,7 +486,7 @@ void Test::customPropertyEmpty() {
 
 void Test::customPropertyUnknown() {
     Document d;
-    CORRADE_VERIFY(d.parse(CharacterLiteral{"Root (unspecified = %hello) {}"}, structureIdentifiers, propertyIdentifiers));
+    CORRADE_VERIFY(d.parse(CharacterLiteral{"Root (unspecified = \"hello\") {}"}, structureIdentifiers, propertyIdentifiers));
     CORRADE_VERIFY(!d.isEmpty());
 
     Structure s = d.firstChild();
@@ -493,9 +495,9 @@ void Test::customPropertyUnknown() {
 
     Containers::Optional<Property> p1 = s.findPropertyOf(UnknownIdentifier);
     CORRADE_VERIFY(p1);
-    CORRADE_VERIFY(p1->isTypeCompatibleWith(PropertyType::Reference));
+    CORRADE_VERIFY(p1->isTypeCompatibleWith(PropertyType::String));
     CORRADE_COMPARE(p1->identifier(), UnknownIdentifier);
-    CORRADE_COMPARE(p1->as<std::string>(), "%hello");
+    CORRADE_COMPARE(p1->as<std::string>(), "hello");
 }
 
 void Test::customPropertyExpectedSeparator() {
