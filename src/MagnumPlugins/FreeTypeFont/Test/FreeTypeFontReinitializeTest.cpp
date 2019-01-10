@@ -27,7 +27,7 @@
 
 #include "MagnumPlugins/FreeTypeFont/FreeTypeFont.h"
 
-namespace Magnum { namespace Text { namespace Test {
+namespace Magnum { namespace Text { namespace Test { namespace {
 
 struct FreeTypeFontReinitializeTest: TestSuite::Tester {
     explicit FreeTypeFontReinitializeTest();
@@ -48,6 +48,6 @@ void FreeTypeFontReinitializeTest::test() {
     CORRADE_VERIFY(true); /* Yay, nothing crashed! */
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Text::Test::FreeTypeFontReinitializeTest)

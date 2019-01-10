@@ -32,7 +32,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct PngImporterTest: TestSuite::Tester {
     explicit PngImporterTest();
@@ -47,8 +47,6 @@ struct PngImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
-namespace {
-
 const struct {
     const char* name;
     const char* filename;
@@ -56,8 +54,6 @@ const struct {
     {"RGBA", "rgba.png"},
     {"CgBI BGRA", "rgba-iphone.png"}
 };
-
-}
 
 PngImporterTest::PngImporterTest() {
     addTests({&PngImporterTest::gray,
@@ -167,6 +163,6 @@ void PngImporterTest::useTwice() {
     }
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::PngImporterTest)

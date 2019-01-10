@@ -32,7 +32,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct JpegImporterTest: TestSuite::Tester {
     explicit JpegImporterTest();
@@ -122,6 +122,6 @@ void JpegImporterTest::useTwice() {
     }
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::JpegImporterTest)

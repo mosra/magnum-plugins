@@ -51,7 +51,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct TinyGltfImporterTest: TestSuite::Tester {
     explicit TinyGltfImporterTest();
@@ -118,8 +118,6 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
-namespace {
-
 constexpr struct {
     const char* name;
     const char* suffix;
@@ -161,8 +159,6 @@ constexpr struct {
     {"binary buffer external", "-buffer.glb"},
     {"binary buffer embedded", "-buffer-embedded.glb"}
 };
-
-}
 
 using namespace Magnum::Math::Literals;
 
@@ -471,24 +467,22 @@ void TinyGltfImporterTest::animationUnsupportedPath() {
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): unsupported track target color\n");
 }
 
-namespace {
-    constexpr Float AnimationSplineTime1Keys[]{ 0.5f, 3.5f, 4.0f, 5.0f };
+constexpr Float AnimationSplineTime1Keys[]{ 0.5f, 3.5f, 4.0f, 5.0f };
 
-    constexpr CubicHermite3D AnimationSplineTime1TranslationData[]{
-        {{0.0f, 0.0f, 0.0f},
-         {3.0f, 0.1f, 2.5f},
-         {-1.0f, 0.0f, 0.3f}},
-        {{5.0f, 0.3f, 1.1f},
-         {-2.0f, 1.1f, -4.3f},
-         {1.5f, 0.3f, 17.0f}},
-        {{1.3f, 0.0f, 0.2f},
-         {1.5f, 9.8f, -5.1f},
-         {0.1f, 0.2f, -7.1f}},
-        {{1.3f, 0.5f, 1.0f},
-         {5.1f, 0.1f, -7.3f},
-         {0.0f, 0.0f, 0.0f}}
-    };
-}
+constexpr CubicHermite3D AnimationSplineTime1TranslationData[]{
+    {{0.0f, 0.0f, 0.0f},
+     {3.0f, 0.1f, 2.5f},
+     {-1.0f, 0.0f, 0.3f}},
+    {{5.0f, 0.3f, 1.1f},
+     {-2.0f, 1.1f, -4.3f},
+     {1.5f, 0.3f, 17.0f}},
+    {{1.3f, 0.0f, 0.2f},
+     {1.5f, 9.8f, -5.1f},
+     {0.1f, 0.2f, -7.1f}},
+    {{1.3f, 0.5f, 1.0f},
+     {5.1f, 0.1f, -7.3f},
+     {0.0f, 0.0f, 0.0f}}
+};
 
 void TinyGltfImporterTest::animationSpline() {
     auto&& data = MultiFileData[testCaseInstanceId()];
@@ -1903,12 +1897,10 @@ void TinyGltfImporterTest::textureDefaultSampler() {
     CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
 }
 
-namespace {
-    constexpr char ExpectedImageData[] =
-        "\xa8\xa7\xac\xff\x9d\x9e\xa0\xff\xad\xad\xac\xff\xbb\xbb\xba\xff\xb3\xb4\xb6\xff"
-        "\xb0\xb1\xb6\xff\xa0\xa0\xa1\xff\x9f\x9f\xa0\xff\xbc\xbc\xba\xff\xcc\xcc\xcc\xff"
-        "\xb2\xb4\xb9\xff\xb8\xb9\xbb\xff\xc1\xc3\xc2\xff\xbc\xbd\xbf\xff\xb8\xb8\xbc\xff";
-}
+constexpr char ExpectedImageData[] =
+    "\xa8\xa7\xac\xff\x9d\x9e\xa0\xff\xad\xad\xac\xff\xbb\xbb\xba\xff\xb3\xb4\xb6\xff"
+    "\xb0\xb1\xb6\xff\xa0\xa0\xa1\xff\x9f\x9f\xa0\xff\xbc\xbc\xba\xff\xcc\xcc\xcc\xff"
+    "\xb2\xb4\xb9\xff\xb8\xb9\xbb\xff\xc1\xc3\xc2\xff\xbc\xbd\xbf\xff\xb8\xb8\xbc\xff";
 
 void TinyGltfImporterTest::image() {
     auto&& data = ImageData[testCaseInstanceId()];
@@ -2038,6 +2030,6 @@ void TinyGltfImporterTest::fileCallbackImageNotFound() {
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file data.png\n");
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::TinyGltfImporterTest)

@@ -32,7 +32,7 @@
 #include "Magnum/OpenDdl/Structure.h"
 #include "Magnum/OpenDdl/Validation.h"
 
-namespace Magnum { namespace OpenDdl { namespace Test {
+namespace Magnum { namespace OpenDdl { namespace Test { namespace {
 
 struct Test: TestSuite::Tester {
     explicit Test();
@@ -349,8 +349,6 @@ void Test::primitiveSubArrayExpectedSeparator() {
     CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected , character on line 1\n");
 }
 
-namespace {
-
 enum: Int {
     SomeStructure,
     RootStructure,
@@ -374,8 +372,6 @@ const std::initializer_list<CharacterLiteral> propertyIdentifiers {
     "boolean",
     "reference"
 };
-
-}
 
 void Test::custom() {
     Document d;
@@ -1272,6 +1268,6 @@ Root %root {
         "OpenDdl::Document::parse(): reference %local1%local2 was not found\n");
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::OpenDdl::Test::Test)

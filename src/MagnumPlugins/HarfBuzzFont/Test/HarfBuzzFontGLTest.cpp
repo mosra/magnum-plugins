@@ -30,7 +30,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Text { namespace Test {
+namespace Magnum { namespace Text { namespace Test { namespace {
 
 struct HarfBuzzFontGLTest: GL::OpenGLTester {
     explicit HarfBuzzFontGLTest();
@@ -95,6 +95,6 @@ void HarfBuzzFontGLTest::layout() {
     CORRADE_COMPARE(cursorPosition, Vector2(0.260742f, 0.0f));
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Text::Test::HarfBuzzFontGLTest)

@@ -34,7 +34,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct ColladaImporterUtilityTest: TestSuite::Tester {
     explicit ColladaImporterUtilityTest();
@@ -115,6 +115,6 @@ void ColladaImporterUtilityTest::parseSource() {
     }));
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaImporterUtilityTest)

@@ -33,7 +33,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct DevIlImageImporterTest: TestSuite::Tester {
     explicit DevIlImageImporterTest();
@@ -170,6 +170,6 @@ void DevIlImageImporterTest::useTwice() {
     }
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::DevIlImageImporterTest)

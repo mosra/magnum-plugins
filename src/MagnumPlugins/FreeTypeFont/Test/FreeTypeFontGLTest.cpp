@@ -30,7 +30,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Text { namespace Test {
+namespace Magnum { namespace Text { namespace Test { namespace {
 
 struct FreeTypeFontGLTest: GL::OpenGLTester {
     explicit FreeTypeFontGLTest();
@@ -123,6 +123,6 @@ void FreeTypeFontGLTest::fillGlyphCache() {
     /** @todo properly test contents */
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Text::Test::FreeTypeFontGLTest)

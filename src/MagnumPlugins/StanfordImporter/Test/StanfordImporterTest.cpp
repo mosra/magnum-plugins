@@ -32,7 +32,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct StanfordImporterTest: TestSuite::Tester {
     explicit StanfordImporterTest();
@@ -265,24 +265,22 @@ void StanfordImporterTest::shortFile() {
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): file is too short\n");
 }
 
-namespace {
-    /*
-        First face is quad, second is triangle.
+/*
+    First face is quad, second is triangle.
 
-        0--3--4
-        |\ | /
-        | \|/
-        1--2
-    */
-    const std::vector<UnsignedInt> indices{0, 1, 2, 0, 2, 3, 3, 2, 4};
-    const std::vector<Vector3> positions{
-        {1.0f, 3.0f, 2.0f},
-        {1.0f, 1.0f, 2.0f},
-        {3.0f, 3.0f, 2.0f},
-        {3.0f, 1.0f, 2.0f},
-        {5.0f, 3.0f, 9.0f}
-    };
-}
+    0--3--4
+    |\ | /
+    | \|/
+    1--2
+*/
+const std::vector<UnsignedInt> indices{0, 1, 2, 0, 2, 3, 3, 2, 4};
+const std::vector<Vector3> positions{
+    {1.0f, 3.0f, 2.0f},
+    {1.0f, 1.0f, 2.0f},
+    {3.0f, 3.0f, 2.0f},
+    {3.0f, 1.0f, 2.0f},
+    {5.0f, 3.0f, 9.0f}
+};
 
 void StanfordImporterTest::empty() {
     std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
@@ -339,6 +337,6 @@ void StanfordImporterTest::ignoredVertexComponents() {
     CORRADE_COMPARE(mesh->positions(0), positions);
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::StanfordImporterTest)

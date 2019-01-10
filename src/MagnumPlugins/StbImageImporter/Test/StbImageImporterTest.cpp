@@ -32,7 +32,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct StbImageImporterTest: TestSuite::Tester {
     explicit StbImageImporterTest();
@@ -52,8 +52,6 @@ struct StbImageImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
-namespace {
-
 const struct {
     const char* name;
     const char* filename;
@@ -61,8 +59,6 @@ const struct {
     {"RGBA", "rgba.png"},
     {"CgBI BGRA", "rgba-iphone.png"}
 };
-
-}
 
 StbImageImporterTest::StbImageImporterTest() {
     addTests({&StbImageImporterTest::grayPng,
@@ -207,6 +203,6 @@ void StbImageImporterTest::useTwice() {
     }
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::StbImageImporterTest)

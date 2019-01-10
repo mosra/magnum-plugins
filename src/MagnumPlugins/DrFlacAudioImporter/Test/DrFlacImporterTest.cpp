@@ -33,7 +33,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Audio { namespace Test {
+namespace Magnum { namespace Audio { namespace Test { namespace {
 
 struct DrFlacImporterTest: TestSuite::Tester {
     explicit DrFlacImporterTest();
@@ -201,6 +201,6 @@ void DrFlacImporterTest::surround71Channel24() {
     CORRADE_COMPARE(importer->frequency(), 48000);
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Audio::Test::DrFlacImporterTest)

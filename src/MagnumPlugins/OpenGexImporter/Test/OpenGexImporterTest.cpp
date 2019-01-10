@@ -52,7 +52,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 using namespace Magnum::Math::Literals;
 
@@ -1106,6 +1106,6 @@ void OpenGexImporterTest::fileCallbackImageNotFound() {
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file image.tga\n");
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::OpenGexImporterTest)

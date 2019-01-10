@@ -34,7 +34,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct MiniExrImageConverterTest: TestSuite::Tester {
     explicit MiniExrImageConverterTest();
@@ -48,27 +48,25 @@ struct MiniExrImageConverterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImageConverter> _manager{"nonexistent"};
 };
 
-namespace {
-    constexpr const char RgbData[] = {
-        /* Skip */
-        0, 0, 0, 0, 0, 0, 0, 0,
+constexpr const char RgbData[] = {
+    /* Skip */
+    0, 0, 0, 0, 0, 0, 0, 0,
 
-        1, 2, 3, 2, 3, 4, 0, 0,
-        3, 4, 5, 4, 5, 6, 0, 0,
-        5, 6, 7, 6, 7, 8, 0, 0
-    };
+    1, 2, 3, 2, 3, 4, 0, 0,
+    3, 4, 5, 4, 5, 6, 0, 0,
+    5, 6, 7, 6, 7, 8, 0, 0
+};
 
-    const ImageView2D Rgb{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB16F, {1, 3}, RgbData};
+const ImageView2D Rgb{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::RGB16F, {1, 3}, RgbData};
 
-    constexpr const char RgbaData[] = {
-        1, 2, 3, 2, 3, 4, 9, 9,
-        3, 4, 5, 4, 5, 6, 9, 9,
-        5, 6, 7, 6, 7, 8, 9, 9
-    };
+constexpr const char RgbaData[] = {
+    1, 2, 3, 2, 3, 4, 9, 9,
+    3, 4, 5, 4, 5, 6, 9, 9,
+    5, 6, 7, 6, 7, 8, 9, 9
+};
 
-    const ImageView2D Rgba{PixelFormat::RGBA16F, {1, 3}, RgbaData};
-}
+const ImageView2D Rgba{PixelFormat::RGBA16F, {1, 3}, RgbaData};
 
 MiniExrImageConverterTest::MiniExrImageConverterTest() {
     addTests({&MiniExrImageConverterTest::wrongFormat,
@@ -111,6 +109,6 @@ void MiniExrImageConverterTest::rgba() {
         TestSuite::Compare::StringToFile);
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::MiniExrImageConverterTest)

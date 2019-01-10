@@ -27,7 +27,7 @@
 
 #include "MagnumPlugins/ColladaImporter/ColladaType.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct ColladaImporterTypeTest: TestSuite::Tester {
     explicit ColladaImporterTypeTest();
@@ -49,6 +49,6 @@ void ColladaImporterTypeTest::glfloat() {
     CORRADE_COMPARE(Implementation::ColladaType<Float>::fromString("3.14"), 3.14f);
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaImporterTypeTest)

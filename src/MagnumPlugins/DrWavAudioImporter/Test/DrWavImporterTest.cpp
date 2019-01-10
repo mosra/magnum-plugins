@@ -33,7 +33,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Audio { namespace Test {
+namespace Magnum { namespace Audio { namespace Test { namespace {
 
 struct DrWavImporterTest: TestSuite::Tester {
     explicit DrWavImporterTest();
@@ -596,6 +596,6 @@ void DrWavImporterTest::extensions64f() {
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Audio::Test::DrWavImporterTest)

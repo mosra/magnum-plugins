@@ -34,7 +34,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Audio { namespace Test {
+namespace Magnum { namespace Audio { namespace Test { namespace {
 
 class Faad2ImporterTest: public TestSuite::Tester {
     public:
@@ -127,6 +127,6 @@ void Faad2ImporterTest::stereo() {
         (DebugTools::CompareImage{1.0f, 0.625f}));
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Audio::Test::Faad2ImporterTest)

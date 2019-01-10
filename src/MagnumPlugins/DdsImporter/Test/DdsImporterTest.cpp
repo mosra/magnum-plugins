@@ -34,9 +34,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
-
-namespace {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 enum: std::size_t {
     Files2DCount = 46,
@@ -112,8 +110,6 @@ constexpr struct {
     {"3D_R32G32B32_SINT.dds", PixelFormat::RGB32I},
     {"3D_R32G32B32_UINT.dds", PixelFormat::RGB32UI}
 };
-
-}
 
 struct DdsImporterTest: TestSuite::Tester {
     explicit DdsImporterTest();
@@ -462,6 +458,6 @@ void DdsImporterTest::useTwice() {
     }
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::DdsImporterTest)

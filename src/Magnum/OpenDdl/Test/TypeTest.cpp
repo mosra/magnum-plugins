@@ -28,7 +28,7 @@
 
 #include "Magnum/OpenDdl/Type.h"
 
-namespace Magnum { namespace OpenDdl { namespace Test {
+namespace Magnum { namespace OpenDdl { namespace Test { namespace {
 
 struct TypeTest: TestSuite::Tester {
     explicit TypeTest();
@@ -62,6 +62,6 @@ void TypeTest::debugInternalPropertyType() {
     CORRADE_COMPARE(out.str(), "OpenDdl::Implementation::InternalPropertyType::Bool OpenDdl::Implementation::InternalPropertyType(0xbe)\n");
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::OpenDdl::Test::TypeTest)

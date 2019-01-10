@@ -33,7 +33,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Audio { namespace Test {
+namespace Magnum { namespace Audio { namespace Test { namespace {
 
 class StbVorbisImporterTest: public TestSuite::Tester {
     public:
@@ -104,6 +104,6 @@ void StbVorbisImporterTest::stereo8() {
         TestSuite::Compare::Container);
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Audio::Test::StbVorbisImporterTest)

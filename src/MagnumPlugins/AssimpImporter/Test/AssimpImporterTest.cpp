@@ -60,7 +60,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 using namespace Math::Literals;
 
@@ -116,18 +116,16 @@ struct AssimpImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
-namespace {
-    enum: std::size_t { LightInstanceCount = 3 };
+enum: std::size_t { LightInstanceCount = 3 };
 
-    constexpr struct {
-        Trade::LightData::Type type;
-        Color3 color;
-    } LightInstanceData[LightInstanceCount]{
-        {Trade::LightData::Type::Spot, {0.12f, 0.24f, 0.36f}},
-        {Trade::LightData::Type::Point, {0.5f, 0.25f, 0.05f}},
-        {Trade::LightData::Type::Infinite, {1.0f, 0.15f, 0.45f}}
-    };
-}
+constexpr struct {
+    Trade::LightData::Type type;
+    Color3 color;
+} LightInstanceData[LightInstanceCount]{
+    {Trade::LightData::Type::Spot, {0.12f, 0.24f, 0.36f}},
+    {Trade::LightData::Type::Point, {0.5f, 0.25f, 0.05f}},
+    {Trade::LightData::Type::Infinite, {1.0f, 0.15f, 0.45f}}
+};
 
 AssimpImporterTest::AssimpImporterTest() {
     #if MAGNUM_TRADE_ASSIMPIMPORTER_DEBUG
@@ -803,6 +801,6 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file diffuse_texture.png\n");
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::AssimpImporterTest)

@@ -33,7 +33,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct PngImageConverterTest: TestSuite::Tester {
     explicit PngImageConverterTest();
@@ -81,25 +81,23 @@ void PngImageConverterTest::wrongFormat() {
     CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel format PixelFormat::RG32F\n");
 }
 
-namespace {
-    constexpr const char OriginalRgbData[] = {
-        /* Skip */
-        0, 0, 0, 0, 0, 0, 0, 0,
+constexpr const char OriginalRgbData[] = {
+    /* Skip */
+    0, 0, 0, 0, 0, 0, 0, 0,
 
-        1, 2, 3, 2, 3, 4, 0, 0,
-        3, 4, 5, 4, 5, 6, 0, 0,
-        5, 6, 7, 6, 7, 8, 0, 0
-    };
+    1, 2, 3, 2, 3, 4, 0, 0,
+    3, 4, 5, 4, 5, 6, 0, 0,
+    5, 6, 7, 6, 7, 8, 0, 0
+};
 
-    const ImageView2D OriginalRgb{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB8Unorm, {2, 3}, OriginalRgbData};
+const ImageView2D OriginalRgb{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::RGB8Unorm, {2, 3}, OriginalRgbData};
 
-    constexpr const char ConvertedRgbData[] = {
-        1, 2, 3, 2, 3, 4, 0, 0,
-        3, 4, 5, 4, 5, 6, 0, 0,
-        5, 6, 7, 6, 7, 8, 0, 0
-    };
-}
+constexpr const char ConvertedRgbData[] = {
+    1, 2, 3, 2, 3, 4, 0, 0,
+    3, 4, 5, 4, 5, 6, 0, 0,
+    5, 6, 7, 6, 7, 8, 0, 0
+};
 
 void PngImageConverterTest::rgb() {
     const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalRgb);
@@ -126,25 +124,23 @@ void PngImageConverterTest::rgb() {
         TestSuite::Compare::Container);
 }
 
-namespace {
-    constexpr const UnsignedShort OriginalRgbData16[] = {
-        /* Skip */
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+constexpr const UnsignedShort OriginalRgbData16[] = {
+    /* Skip */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
-        1, 2, 3, 2, 3, 4, 0, 0, 0, 0,
-        3, 4, 5, 4, 5, 6, 0, 0, 0, 0,
-        5, 6, 7, 6, 7, 8, 0, 0, 0, 0
-    };
+    1, 2, 3, 2, 3, 4, 0, 0, 0, 0,
+    3, 4, 5, 4, 5, 6, 0, 0, 0, 0,
+    5, 6, 7, 6, 7, 8, 0, 0, 0, 0
+};
 
-    const ImageView2D OriginalRgb16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
-        PixelFormat::RGB16Unorm, {2, 3}, OriginalRgbData16};
+const ImageView2D OriginalRgb16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
+    PixelFormat::RGB16Unorm, {2, 3}, OriginalRgbData16};
 
-    constexpr const UnsignedShort ConvertedRgbData16[] = {
-        1, 2, 3, 2, 3, 4,
-        3, 4, 5, 4, 5, 6,
-        5, 6, 7, 6, 7, 8
-    };
-}
+constexpr const UnsignedShort ConvertedRgbData16[] = {
+    1, 2, 3, 2, 3, 4,
+    3, 4, 5, 4, 5, 6,
+    5, 6, 7, 6, 7, 8
+};
 
 void PngImageConverterTest::rgb16() {
     const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalRgb16);
@@ -165,25 +161,23 @@ void PngImageConverterTest::rgb16() {
         TestSuite::Compare::Container);
 }
 
-namespace {
-    constexpr const char OriginalGrayscaleData[] = {
-        /* Skip */
-        0, 0, 0, 0,
+constexpr const char OriginalGrayscaleData[] = {
+    /* Skip */
+    0, 0, 0, 0,
 
-        1, 2, 0, 0,
-        3, 4, 0, 0,
-        5, 6, 0, 0
-    };
+    1, 2, 0, 0,
+    3, 4, 0, 0,
+    5, 6, 0, 0
+};
 
-    const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::R8Unorm, {2, 3}, OriginalGrayscaleData};
+const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::R8Unorm, {2, 3}, OriginalGrayscaleData};
 
-    constexpr const char ConvertedGrayscaleData[] = {
-        1, 2, 0, 0,
-        3, 4, 0, 0,
-        5, 6, 0, 0
-    };
-}
+constexpr const char ConvertedGrayscaleData[] = {
+    1, 2, 0, 0,
+    3, 4, 0, 0,
+    5, 6, 0, 0
+};
 
 void PngImageConverterTest::grayscale() {
     const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalGrayscale);
@@ -211,25 +205,23 @@ void PngImageConverterTest::grayscale() {
         TestSuite::Compare::Container);
 }
 
-namespace {
-    constexpr const UnsignedShort OriginalGrayscaleData16[] = {
-        /* Skip */
-        0, 0, 0, 0,
+constexpr const UnsignedShort OriginalGrayscaleData16[] = {
+    /* Skip */
+    0, 0, 0, 0,
 
-        1, 2, 0, 0,
-        3, 4, 0, 0,
-        5, 6, 0, 0
-    };
+    1, 2, 0, 0,
+    3, 4, 0, 0,
+    5, 6, 0, 0
+};
 
-    const ImageView2D OriginalGrayscale16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
-        PixelFormat::R16Unorm, {2, 3}, OriginalGrayscaleData16};
+const ImageView2D OriginalGrayscale16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
+    PixelFormat::R16Unorm, {2, 3}, OriginalGrayscaleData16};
 
-    constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
-        1, 2,
-        3, 4,
-        5, 6
-    };
-}
+constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
+    1, 2,
+    3, 4,
+    5, 6
+};
 
 void PngImageConverterTest::grayscale16() {
     const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalGrayscale16);
@@ -250,6 +242,6 @@ void PngImageConverterTest::grayscale16() {
         TestSuite::Compare::Container);
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::PngImageConverterTest)

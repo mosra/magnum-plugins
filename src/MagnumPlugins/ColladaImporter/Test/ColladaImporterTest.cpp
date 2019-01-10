@@ -40,7 +40,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct ColladaImporterTest: TestSuite::Tester {
     explicit ColladaImporterTest();
@@ -440,6 +440,6 @@ void ColladaImporterTest::image() {
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::ColladaImporterTest)

@@ -30,7 +30,7 @@
 #include "Magnum/OpenDdl/Property.h"
 #include "Magnum/OpenDdl/Implementation/Parsers.h"
 
-namespace Magnum { namespace OpenDdl { namespace Test {
+namespace Magnum { namespace OpenDdl { namespace Test { namespace {
 
 struct ParsersTest: TestSuite::Tester {
     explicit ParsersTest();
@@ -814,6 +814,6 @@ void ParsersTest::propertyValueType() {
     CORRADE_COMPARE(typeValue, Type::Float);
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::OpenDdl::Test::ParsersTest)

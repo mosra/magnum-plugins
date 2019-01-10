@@ -30,7 +30,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Text { namespace Test {
+namespace Magnum { namespace Text { namespace Test { namespace {
 
 struct StbTrueTypeFontGLTest: GL::OpenGLTester {
     explicit StbTrueTypeFontGLTest();
@@ -158,6 +158,6 @@ void StbTrueTypeFontGLTest::fillGlyphCache() {
     /** @todo properly test contents */
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Text::Test::StbTrueTypeFontGLTest)

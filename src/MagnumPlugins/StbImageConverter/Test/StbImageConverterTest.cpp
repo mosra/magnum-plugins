@@ -35,7 +35,7 @@
 
 #include "configure.h"
 
-namespace Magnum { namespace Trade { namespace Test {
+namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct StbImageConverterTest: TestSuite::Tester {
     explicit StbImageConverterTest();
@@ -145,25 +145,23 @@ void StbImageConverterTest::wrongOutputFormat() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): cannot determine output format (plugin loaded as StbImageConverter)\n");
 }
 
-namespace {
-    constexpr const char OriginalRgData[] = {
-        0, 0, 0, 0, 0, 0, 0, 0,
+constexpr const char OriginalRgData[] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
 
-        0, 0, 0, 0, 1,  2,  3,  4,
-        0, 0, 0, 0, 5,  6,  7,  8,
-        0, 0, 0, 0, 9, 10, 11, 12
-    };
+    0, 0, 0, 0, 1,  2,  3,  4,
+    0, 0, 0, 0, 5,  6,  7,  8,
+    0, 0, 0, 0, 9, 10, 11, 12
+};
 
-    const ImageView2D OriginalRg{PixelStorage{}.setSkip({2, 1, 0}).setRowLength(4),
-        PixelFormat::RG8Unorm, {2, 3}, OriginalRgData};
+const ImageView2D OriginalRg{PixelStorage{}.setSkip({2, 1, 0}).setRowLength(4),
+    PixelFormat::RG8Unorm, {2, 3}, OriginalRgData};
 
-    /* Blue channel gets lost */
-    constexpr const char ConvertedRgData[] = {
-        1, 1, 1, 3, 3, 3,
-        5, 5, 5, 7, 7, 7,
-        9, 9, 9, 11, 11, 11
-    };
-}
+/* Blue channel gets lost */
+constexpr const char ConvertedRgData[] = {
+    1, 1, 1, 3, 3, 3,
+    5, 5, 5, 7, 7, 7,
+    9, 9, 9, 11, 11, 11
+};
 
 void StbImageConverterTest::bmpRg() {
     std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbBmpImageConverter");
@@ -204,29 +202,27 @@ void StbImageConverterTest::bmpNegativeSize() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the BMP file\n");
 }
 
-namespace {
-    constexpr const Float OriginalGrayscale32FData[] = {
-        1.0f, 2.0f,
-        3.0f, 4.0f,
-        5.0f, 6.0f
-    };
+constexpr const Float OriginalGrayscale32FData[] = {
+    1.0f, 2.0f,
+    3.0f, 4.0f,
+    5.0f, 6.0f
+};
 
-    const ImageView2D OriginalGrayscale32F{PixelFormat::R32F, {2, 3}, OriginalGrayscale32FData};
+const ImageView2D OriginalGrayscale32F{PixelFormat::R32F, {2, 3}, OriginalGrayscale32FData};
 
-    constexpr const Float OriginalRg32FData[] = {
-        1.0f, 1.5f, 2.0f, 2.5f,
-        3.0f, 3.5f, 4.0f, 4.5f,
-        5.0f, 5.5f, 6.0f, 6.5f
-    };
+constexpr const Float OriginalRg32FData[] = {
+    1.0f, 1.5f, 2.0f, 2.5f,
+    3.0f, 3.5f, 4.0f, 4.5f,
+    5.0f, 5.5f, 6.0f, 6.5f
+};
 
-    const ImageView2D OriginalRg32F{PixelFormat::RG32F, {2, 3}, OriginalRg32FData};
+const ImageView2D OriginalRg32F{PixelFormat::RG32F, {2, 3}, OriginalRg32FData};
 
-    constexpr const Float ConvertedGrayscale32FData[] = {
-        1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
-        3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
-        5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f
-    };
-}
+constexpr const Float ConvertedGrayscale32FData[] = {
+    1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
+    3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
+    5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f
+};
 
 void StbImageConverterTest::hdrGrayscale() {
     std::unique_ptr<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
@@ -277,23 +273,21 @@ void StbImageConverterTest::hdrRg() {
         TestSuite::Compare::Container);
 }
 
-namespace {
-    constexpr const Float OriginalRgb32FData[] = {
-        1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f,
-        4.0f, 4.5f, 5.0f, 5.5f, 6.0f, 6.5f,
-        7.0f, 7.5f, 8.0f, 8.5f, 9.0f, 9.5f
-    };
+constexpr const Float OriginalRgb32FData[] = {
+    1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f,
+    4.0f, 4.5f, 5.0f, 5.5f, 6.0f, 6.5f,
+    7.0f, 7.5f, 8.0f, 8.5f, 9.0f, 9.5f
+};
 
-    const ImageView2D OriginalRgb32F{PixelFormat::RGB32F, {2, 3}, OriginalRgb32FData};
+const ImageView2D OriginalRgb32F{PixelFormat::RGB32F, {2, 3}, OriginalRgb32FData};
 
-    constexpr const Float OriginalRgba32FData[] = {
-        1.0f, 1.5f, 2.0f, 0.0f, 2.5f, 3.0f, 3.5f, 0.0f,
-        4.0f, 4.5f, 5.0f, 0.0f, 5.5f, 6.0f, 6.5f, 0.0f,
-        7.0f, 7.5f, 8.0f, 0.0f, 8.5f, 9.0f, 9.5f, 0.0f
-    };
+constexpr const Float OriginalRgba32FData[] = {
+    1.0f, 1.5f, 2.0f, 0.0f, 2.5f, 3.0f, 3.5f, 0.0f,
+    4.0f, 4.5f, 5.0f, 0.0f, 5.5f, 6.0f, 6.5f, 0.0f,
+    7.0f, 7.5f, 8.0f, 0.0f, 8.5f, 9.0f, 9.5f, 0.0f
+};
 
-    const ImageView2D OriginalRgba32F{PixelFormat::RGBA32F, {2, 3}, OriginalRgba32FData};
-}
+const ImageView2D OriginalRgba32F{PixelFormat::RGBA32F, {2, 3}, OriginalRgba32FData};
 
 void StbImageConverterTest::hdrRgb() {
     std::unique_ptr<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
@@ -352,80 +346,78 @@ void StbImageConverterTest::hdrZeroSize() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the HDR file\n");
 }
 
-namespace {
-    constexpr const char OriginalJpegRgbData[] = {
-        /* Skip */
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
+constexpr const char OriginalJpegRgbData[] = {
+    /* Skip */
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
 
-        '\x00', '\x27', '\x48', '\x10', '\x34', '\x54',
-        '\x22', '\x46', '\x60', '\x25', '\x49', '\x63',
-        '\x21', '\x46', '\x63', '\x13', '\x3a', '\x59', 0, 0,
+    '\x00', '\x27', '\x48', '\x10', '\x34', '\x54',
+    '\x22', '\x46', '\x60', '\x25', '\x49', '\x63',
+    '\x21', '\x46', '\x63', '\x13', '\x3a', '\x59', 0, 0,
 
-        '\x5b', '\x87', '\xae', '\x85', '\xaf', '\xd5',
-        '\x94', '\xbd', '\xdd', '\x96', '\xbf', '\xdf',
-        '\x91', '\xbc', '\xdf', '\x72', '\x9e', '\xc1', 0, 0,
+    '\x5b', '\x87', '\xae', '\x85', '\xaf', '\xd5',
+    '\x94', '\xbd', '\xdd', '\x96', '\xbf', '\xdf',
+    '\x91', '\xbc', '\xdf', '\x72', '\x9e', '\xc1', 0, 0,
 
-        '\x3c', '\x71', '\xa7', '\x68', '\x9c', '\xce',
-        '\x8b', '\xbb', '\xe9', '\x92', '\xc3', '\xee',
-        '\x8b', '\xbe', '\xed', '\x73', '\xa7', '\xd6', 0, 0,
+    '\x3c', '\x71', '\xa7', '\x68', '\x9c', '\xce',
+    '\x8b', '\xbb', '\xe9', '\x92', '\xc3', '\xee',
+    '\x8b', '\xbe', '\xed', '\x73', '\xa7', '\xd6', 0, 0,
 
-        '\x00', '\x34', '\x70', '\x12', '\x4a', '\x83',
-        '\x35', '\x6a', '\x9e', '\x45', '\x7a', '\xac',
-        '\x34', '\x6c', '\x9f', '\x1d', '\x56', '\x8b', 0, 0
-    };
+    '\x00', '\x34', '\x70', '\x12', '\x4a', '\x83',
+    '\x35', '\x6a', '\x9e', '\x45', '\x7a', '\xac',
+    '\x34', '\x6c', '\x9f', '\x1d', '\x56', '\x8b', 0, 0
+};
 
-    const ImageView2D OriginalJpegRgb{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB8Unorm, {6, 4}, OriginalJpegRgbData};
+const ImageView2D OriginalJpegRgb{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::RGB8Unorm, {6, 4}, OriginalJpegRgbData};
 
-    constexpr const char OriginalJpegRgbaData[] = {
-        /* Skip */
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
+constexpr const char OriginalJpegRgbaData[] = {
+    /* Skip */
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
 
-        '\x00', '\x27', '\x48', 0, '\x10', '\x34', '\x54', 0,
-        '\x22', '\x46', '\x60', 0, '\x25', '\x49', '\x63', 0,
-        '\x21', '\x46', '\x63', 0, '\x13', '\x3a', '\x59', 0,
+    '\x00', '\x27', '\x48', 0, '\x10', '\x34', '\x54', 0,
+    '\x22', '\x46', '\x60', 0, '\x25', '\x49', '\x63', 0,
+    '\x21', '\x46', '\x63', 0, '\x13', '\x3a', '\x59', 0,
 
-        '\x5b', '\x87', '\xae', 0, '\x85', '\xaf', '\xd5', 0,
-        '\x94', '\xbd', '\xdd', 0, '\x96', '\xbf', '\xdf', 0,
-        '\x91', '\xbc', '\xdf', 0, '\x72', '\x9e', '\xc1', 0,
+    '\x5b', '\x87', '\xae', 0, '\x85', '\xaf', '\xd5', 0,
+    '\x94', '\xbd', '\xdd', 0, '\x96', '\xbf', '\xdf', 0,
+    '\x91', '\xbc', '\xdf', 0, '\x72', '\x9e', '\xc1', 0,
 
-        '\x3c', '\x71', '\xa7', 0, '\x68', '\x9c', '\xce', 0,
-        '\x8b', '\xbb', '\xe9', 0, '\x92', '\xc3', '\xee', 0,
-        '\x8b', '\xbe', '\xed', 0, '\x73', '\xa7', '\xd6', 0,
+    '\x3c', '\x71', '\xa7', 0, '\x68', '\x9c', '\xce', 0,
+    '\x8b', '\xbb', '\xe9', 0, '\x92', '\xc3', '\xee', 0,
+    '\x8b', '\xbe', '\xed', 0, '\x73', '\xa7', '\xd6', 0,
 
-        '\x00', '\x34', '\x70', 0, '\x12', '\x4a', '\x83', 0,
-        '\x35', '\x6a', '\x9e', 0, '\x45', '\x7a', '\xac', 0,
-        '\x34', '\x6c', '\x9f', 0, '\x1d', '\x56', '\x8b', 0
-    };
+    '\x00', '\x34', '\x70', 0, '\x12', '\x4a', '\x83', 0,
+    '\x35', '\x6a', '\x9e', 0, '\x45', '\x7a', '\xac', 0,
+    '\x34', '\x6c', '\x9f', 0, '\x1d', '\x56', '\x8b', 0
+};
 
-    const ImageView2D OriginalJpegRgba{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGBA8Unorm, {6, 4}, OriginalJpegRgbaData};
+const ImageView2D OriginalJpegRgba{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::RGBA8Unorm, {6, 4}, OriginalJpegRgbaData};
 
-    /* Slightly different due to compression artifacts. See the 100% test for
-       a threshold verification. Needs to have a bigger size otherwise the
-       compression makes a total mess. */
-    constexpr const char ConvertedJpegRgbData[] = {
-        '\x03', '\x26', '\x4c', '\x12', '\x36', '\x5a',
-        '\x22', '\x46', '\x68', '\x25', '\x49', '\x69',
-        '\x1c', '\x40', '\x60', '\x11', '\x35', '\x57',
+/* Slightly different due to compression artifacts. See the 100% test for
+   a threshold verification. Needs to have a bigger size otherwise the
+   compression makes a total mess. */
+constexpr const char ConvertedJpegRgbData[] = {
+    '\x03', '\x26', '\x4c', '\x12', '\x36', '\x5a',
+    '\x22', '\x46', '\x68', '\x25', '\x49', '\x69',
+    '\x1c', '\x40', '\x60', '\x11', '\x35', '\x57',
 
-        '\x5f', '\x8a', '\xb5', '\x76', '\xa1', '\xcb',
-        '\x91', '\xbd', '\xe4', '\x99', '\xc5', '\xea',
-        '\x8e', '\xba', '\xdf', '\x7d', '\xa9', '\xd0',
+    '\x5f', '\x8a', '\xb5', '\x76', '\xa1', '\xcb',
+    '\x91', '\xbd', '\xe4', '\x99', '\xc5', '\xea',
+    '\x8e', '\xba', '\xdf', '\x7d', '\xa9', '\xd0',
 
-        '\x48', '\x7a', '\xad', '\x66', '\x98', '\xc9',
-        '\x88', '\xbb', '\xe8', '\x94', '\xc7', '\xf2',
-        '\x88', '\xbb', '\xe6', '\x77', '\xaa', '\xd7',
+    '\x48', '\x7a', '\xad', '\x66', '\x98', '\xc9',
+    '\x88', '\xbb', '\xe8', '\x94', '\xc7', '\xf2',
+    '\x88', '\xbb', '\xe6', '\x77', '\xaa', '\xd7',
 
-        '\x00', '\x2f', '\x65', '\x17', '\x4f', '\x82',
-        '\x38', '\x70', '\xa1', '\x41', '\x79', '\xa8',
-        '\x32', '\x6a', '\x99', '\x21', '\x59', '\x8a'
-    };
-}
+    '\x00', '\x2f', '\x65', '\x17', '\x4f', '\x82',
+    '\x38', '\x70', '\xa1', '\x41', '\x79', '\xa8',
+    '\x32', '\x6a', '\x99', '\x21', '\x59', '\x8a'
+};
 
 void StbImageConverterTest::jpegRgb80Percent() {
     std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
@@ -501,41 +493,39 @@ void StbImageConverterTest::jpegRgba80Percent() {
     CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
 }
 
-namespace {
-    constexpr const char OriginalJpegGrayscaleData[] = {
-        0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
+constexpr const char OriginalJpegGrayscaleData[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
 
-        '\x00', '\x10', '\x22', '\x25', '\x21', '\x13', 0, 0,
-        '\x5b', '\x85', '\x94', '\x96', '\x91', '\x72', 0, 0,
-        '\x3c', '\x68', '\x8b', '\x92', '\x8b', '\x73', 0, 0,
-        '\x00', '\x12', '\x35', '\x45', '\x34', '\x1d', 0, 0
-    };
+    '\x00', '\x10', '\x22', '\x25', '\x21', '\x13', 0, 0,
+    '\x5b', '\x85', '\x94', '\x96', '\x91', '\x72', 0, 0,
+    '\x3c', '\x68', '\x8b', '\x92', '\x8b', '\x73', 0, 0,
+    '\x00', '\x12', '\x35', '\x45', '\x34', '\x1d', 0, 0
+};
 
-    /* Slightly different due to compression artifacts. See the 100% test for
-       a threshold verification. Needs to have a bigger size otherwise the
-       compression makes a total mess. Also, stb_image_write expands to RGB,
-       so the data are inflated. */
-    constexpr const char ConvertedJpegGrayscaleData[] = {
-        '\x01', '\x01', '\x01', '\x11', '\x11', '\x11',
-        '\x23', '\x23', '\x23', '\x27', '\x27', '\x27',
-        '\x1c', '\x1c', '\x1c', '\x11', '\x11', '\x11',
+/* Slightly different due to compression artifacts. See the 100% test for
+   a threshold verification. Needs to have a bigger size otherwise the
+   compression makes a total mess. Also, stb_image_write expands to RGB,
+   so the data are inflated. */
+constexpr const char ConvertedJpegGrayscaleData[] = {
+    '\x01', '\x01', '\x01', '\x11', '\x11', '\x11',
+    '\x23', '\x23', '\x23', '\x27', '\x27', '\x27',
+    '\x1c', '\x1c', '\x1c', '\x11', '\x11', '\x11',
 
-        '\x65', '\x65', '\x65', '\x7d', '\x7d', '\x7d',
-        '\x97', '\x97', '\x97', '\x9d', '\x9d', '\x9d',
-        '\x8e', '\x8e', '\x8e', '\x7a', '\x7a', '\x7a',
+    '\x65', '\x65', '\x65', '\x7d', '\x7d', '\x7d',
+    '\x97', '\x97', '\x97', '\x9d', '\x9d', '\x9d',
+    '\x8e', '\x8e', '\x8e', '\x7a', '\x7a', '\x7a',
 
-        '\x3f', '\x3f', '\x3f', '\x60', '\x60', '\x60',
-        '\x85', '\x85', '\x85', '\x93', '\x93', '\x93',
-        '\x88', '\x88', '\x88', '\x78', '\x78', '\x78',
+    '\x3f', '\x3f', '\x3f', '\x60', '\x60', '\x60',
+    '\x85', '\x85', '\x85', '\x93', '\x93', '\x93',
+    '\x88', '\x88', '\x88', '\x78', '\x78', '\x78',
 
-        '\x00', '\x00', '\x00', '\x19', '\x19', '\x19',
-        '\x3b', '\x3b', '\x3b', '\x43', '\x43', '\x43',
-        '\x32', '\x32', '\x32', '\x1e', '\x1e', '\x1e'
-    };
+    '\x00', '\x00', '\x00', '\x19', '\x19', '\x19',
+    '\x3b', '\x3b', '\x3b', '\x43', '\x43', '\x43',
+    '\x32', '\x32', '\x32', '\x1e', '\x1e', '\x1e'
+};
 
-    const ImageView2D OriginalJpegGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::R8Unorm, {6, 4}, OriginalJpegGrayscaleData};
-}
+const ImageView2D OriginalJpegGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::R8Unorm, {6, 4}, OriginalJpegGrayscaleData};
 
 void StbImageConverterTest::jpegGrayscale80Percent() {
     std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
@@ -566,24 +556,22 @@ void StbImageConverterTest::jpegZeroSize() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the JPEG file\n");
 }
 
-namespace {
-    constexpr const char OriginalRgbData[] = {
-        0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
+constexpr const char OriginalRgbData[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
 
-        1, 2, 3, 2, 3, 4, 0, 0,
-        3, 4, 5, 4, 5, 6, 0, 0,
-        5, 6, 7, 6, 7, 8, 0, 0
-    };
+    1, 2, 3, 2, 3, 4, 0, 0,
+    3, 4, 5, 4, 5, 6, 0, 0,
+    5, 6, 7, 6, 7, 8, 0, 0
+};
 
-    const ImageView2D OriginalRgb{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGB8Unorm, {2, 3}, OriginalRgbData};
+const ImageView2D OriginalRgb{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::RGB8Unorm, {2, 3}, OriginalRgbData};
 
-    constexpr const char ConvertedRgbData[] = {
-        1, 2, 3, 2, 3, 4,
-        3, 4, 5, 4, 5, 6,
-        5, 6, 7, 6, 7, 8
-    };
-}
+constexpr const char ConvertedRgbData[] = {
+    1, 2, 3, 2, 3, 4,
+    3, 4, 5, 4, 5, 6,
+    5, 6, 7, 6, 7, 8
+};
 
 void StbImageConverterTest::pngRgb() {
     const auto data = _converterManager.instantiate("StbPngImageConverter")->exportToData(OriginalRgb);
@@ -603,25 +591,23 @@ void StbImageConverterTest::pngRgb() {
         TestSuite::Compare::Container);
 }
 
-namespace {
-    constexpr const char OriginalGrayscaleData[] = {
-        /* Skip */
-        0, 0, 0, 0,
+constexpr const char OriginalGrayscaleData[] = {
+    /* Skip */
+    0, 0, 0, 0,
 
-        1, 2, 0, 0,
-        3, 4, 0, 0,
-        5, 6, 0, 0
-    };
+    1, 2, 0, 0,
+    3, 4, 0, 0,
+    5, 6, 0, 0
+};
 
-    const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::R8Unorm, {2, 3}, OriginalGrayscaleData};
+const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::R8Unorm, {2, 3}, OriginalGrayscaleData};
 
-    constexpr const char ConvertedGrayscaleData[] = {
-        1, 2,
-        3, 4,
-        5, 6
-    };
-}
+constexpr const char ConvertedGrayscaleData[] = {
+    1, 2,
+    3, 4,
+    5, 6
+};
 
 void StbImageConverterTest::pngGrayscale() {
     const auto data = _converterManager.instantiate("StbPngImageConverter")->exportToData(OriginalGrayscale);
@@ -660,24 +646,22 @@ void StbImageConverterTest::pngNegativeSize() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the PNG file\n");
 }
 
-namespace {
-    constexpr const char OriginalRgbaData[] = {
-        0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
+constexpr const char OriginalRgbaData[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, /* Skip */
 
-        1, 2, 3, 4, 2, 3, 4, 5,
-        3, 4, 5, 6, 4, 5, 6, 7,
-        5, 6, 7, 8, 6, 7, 8, 9
-    };
+    1, 2, 3, 4, 2, 3, 4, 5,
+    3, 4, 5, 6, 4, 5, 6, 7,
+    5, 6, 7, 8, 6, 7, 8, 9
+};
 
-    const ImageView2D OriginalRgba{PixelStorage{}.setSkip({0, 1, 0}),
-        PixelFormat::RGBA8Unorm, {2, 3}, OriginalRgbaData};
+const ImageView2D OriginalRgba{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::RGBA8Unorm, {2, 3}, OriginalRgbaData};
 
-    constexpr const char ConvertedRgbaData[] = {
-        1, 2, 3, 4, 2, 3, 4, 5,
-        3, 4, 5, 6, 4, 5, 6, 7,
-        5, 6, 7, 8, 6, 7, 8, 9
-    };
-}
+constexpr const char ConvertedRgbaData[] = {
+    1, 2, 3, 4, 2, 3, 4, 5,
+    3, 4, 5, 6, 4, 5, 6, 7,
+    5, 6, 7, 8, 6, 7, 8, 9
+};
 
 void StbImageConverterTest::tgaRgba() {
     const auto data = _converterManager.instantiate("StbTgaImageConverter")->exportToData(OriginalRgba);
@@ -706,6 +690,6 @@ void StbImageConverterTest::tgaNegativeSize() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the TGA file\n");
 }
 
-}}}
+}}}}
 
 CORRADE_TEST_MAIN(Magnum::Trade::Test::StbImageConverterTest)
