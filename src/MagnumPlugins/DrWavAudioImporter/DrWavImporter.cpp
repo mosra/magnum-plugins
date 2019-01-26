@@ -26,7 +26,7 @@
 
 #include "DrWavImporter.h"
 
-#include <memory>
+#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
@@ -112,11 +112,6 @@ Containers::Array<char> readRaw(drwav* const handle, const UnsignedInt samples, 
     return tempData;
 }
 
-/* Makes sure the drwav pointer is released appropriately */
-struct DrWavDeleter {
-    void operator()(drwav* handle) { drwav_close(handle); }
-};
-
 }
 
 DrWavImporter::DrWavImporter() = default;
@@ -128,11 +123,12 @@ auto DrWavImporter::doFeatures() const -> Features { return Feature::OpenData; }
 bool DrWavImporter::doIsOpened() const { return _data; }
 
 void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    std::unique_ptr<drwav, DrWavDeleter> handle(drwav_open_memory(data.data(), data.size()));
+    drwav* const handle = drwav_open_memory(data.data(), data.size());
     if(!handle) {
         Error() << "Audio::DrWavImporter::openData(): failed to open and decode WAV data";
         return;
     }
+    Containers::ScopeGuard drwavClose{handle, drwav_close};
 
     const std::uint64_t samples = handle->totalSampleCount;
     const std::uint32_t frequency = handle->sampleRate;
@@ -168,18 +164,18 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
         /* If the data is exactly 8 or 16 bits, we can read it raw */
         if(!notExactBitsPerSample && normalizedBytesPerSample < 3) {
-            _data = readRaw(handle.get(), samples, normalizedBytesPerSample);
+            _data = readRaw(handle, samples, normalizedBytesPerSample);
             return;
 
         /* If the data is approximately 24 bits or has many channels, a float is more than enough */
         } else if(normalizedBytesPerSample == 3 || (normalizedBytesPerSample > 3 && numChannels > 3)) {
-            _data = read32fPcm(handle.get(), samples, numChannels, _format);
+            _data = read32fPcm(handle, samples, numChannels, _format);
             return;
 
         /* If the data is close to 8 or 16 bits, we can convert it from 32-bit PCM */
         } else if(normalizedBytesPerSample == 1 || normalizedBytesPerSample == 2) {
             Containers::Array<char> tempData(samples*sizeof(Int));
-            drwav_read_s32(handle.get(), samples, reinterpret_cast<Int*>(tempData.begin()));
+            drwav_read_s32(handle, samples, reinterpret_cast<Int*>(tempData.begin()));
 
             /* 32-bit PCM can be sliced down to 8 or 16 for direct reading */
             _data = convert32Pcm(tempData, samples, normalizedBytesPerSample);
@@ -196,7 +192,7 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
     } else if(handle->translatedFormatTag == DR_WAVE_FORMAT_ALAW) {
         if(numChannels < 3 && !notExactBitsPerSample && (bitsPerSample == 8 || bitsPerSample == 16) ) {
             _format = ALawFormatTable[numChannels-1][normalizedBytesPerSample-1];
-            _data = readRaw(handle.get(), samples, normalizedBytesPerSample);
+            _data = readRaw(handle, samples, normalizedBytesPerSample);
             return;
         }
 
@@ -204,7 +200,7 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
     } else if(handle->translatedFormatTag == DR_WAVE_FORMAT_MULAW) {
         if(numChannels < 3 && !notExactBitsPerSample && (bitsPerSample == 8 || bitsPerSample == 16) ) {
             _format = MuLawFormatTable[numChannels-1][normalizedBytesPerSample-1];
-            _data = readRaw(handle.get(), samples, normalizedBytesPerSample);
+            _data = readRaw(handle, samples, normalizedBytesPerSample);
             return;
         }
 
@@ -212,13 +208,13 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
     } else if(handle->translatedFormatTag == DR_WAVE_FORMAT_IEEE_FLOAT) {
         if(!notExactBitsPerSample && (bitsPerSample == 32 || bitsPerSample == 64)) {
             _format = IeeeFormatTable[numChannels-1][(normalizedBytesPerSample / 4)-1];
-            _data = readRaw(handle.get(), samples, normalizedBytesPerSample);
+            _data = readRaw(handle, samples, normalizedBytesPerSample);
             return;
         }
     }
 
     /* If we don't know what the format is, read it out as 32 bit float for compatibility */
-    _data = read32fPcm(handle.get(), samples, numChannels, _format);
+    _data = read32fPcm(handle, samples, numChannels, _format);
     return;
 }
 

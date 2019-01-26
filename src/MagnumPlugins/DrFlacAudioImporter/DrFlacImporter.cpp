@@ -26,6 +26,7 @@
 
 #include "DrFlacImporter.h"
 
+#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
@@ -71,10 +72,6 @@ Containers::Array<char> convert32PCM(const Containers::Array<char>& container, c
     return convertData;
 }
 
-struct DrFlacDeleter {
-    void operator()(drflac* handle) { drflac_close(handle); }
-};
-
 }
 
 DrFlacImporter::DrFlacImporter() = default;
@@ -86,11 +83,12 @@ auto DrFlacImporter::doFeatures() const -> Features { return Feature::OpenData; 
 bool DrFlacImporter::doIsOpened() const { return _data; }
 
 void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
-    std::unique_ptr<drflac, DrFlacDeleter> handle(drflac_open_memory(data.data(), data.size()));
+    drflac* const handle = drflac_open_memory(data.data(), data.size());
     if(!handle) {
         Error() << "Audio::DrFlacImporter::openData(): failed to open and decode FLAC data";
         return;
     }
+    Containers::ScopeGuard drflacClose{handle, drflac_close};
 
     const std::uint64_t samples = handle->totalSampleCount;
     const std::uint8_t numChannels = handle->channels;
@@ -122,7 +120,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
     /* 32-bit integers need to be normalized to Double (with a 32 bit mantissa) */
     if(normalizedBytesPerSample == 4) {
         Containers::Array<Int> tempData(samples);
-        drflac_read_s32(handle.get(), samples, reinterpret_cast<Int*>(tempData.begin()));
+        drflac_read_s32(handle, samples, reinterpret_cast<Int*>(tempData.begin()));
 
         /* If the channel is mono/stereo, we can use double samples */
         if(numChannels < 3) {
@@ -157,7 +155,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
     }
 
     Containers::Array<char> tempData(samples*sizeof(Int));
-    drflac_read_s32(handle.get(), samples, reinterpret_cast<Int*>(tempData.begin()));
+    drflac_read_s32(handle, samples, reinterpret_cast<Int*>(tempData.begin()));
 
     _data = convert32PCM(tempData, samples, normalizedBytesPerSample);
 
