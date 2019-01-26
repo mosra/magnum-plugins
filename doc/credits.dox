@@ -40,6 +40,8 @@ namespace Magnum {
     bug reports and fixes
 -   **Fabien Freling** ([\@ffreling](https://github.com/ffreling)) --- bug
     reports and fixes
+-   **Guillaume Jacquemin** ([\@williamjcm](https://github.com/williamjcm)) ---
+    MSYS2 packages
 -   **Jonathan Hale** ([\@Squareys](https://github.com/Squareys)) ---
     @ref Trade::AssimpImporter "AssimpImporter",
     @ref Trade::DdsImporter "DdsImporter" and

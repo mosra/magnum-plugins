@@ -54,6 +54,12 @@ namespace Magnum {
     of @cpp unsigned int @ce used previously (it's still a four-byte type,
     though)
 
+@subsection changelog-plugins-latest-buildsystem Build system
+
+-   The `package/msys` directory now contains `PKGBUILD`s for
+    [MSYS2](https://www.msys2.org/). See @ref building-plugins-packages-msys
+    for more information. See also [mosra/magnum-plugins#50](https://github.com/mosra/magnum-plugins/pull/50).
+
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
 
 -   Removed `MAGNUMPLUGINS_*_LIBRARIES` and `MAGNUMPLUGINS_*_INCLUDE_DIRS`
