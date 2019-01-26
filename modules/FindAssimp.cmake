@@ -47,7 +47,7 @@ if(WIN32)
     elseif(MSVC14)
         set(ASSIMP_MSVC_VERSION "vc140")
     else()
-        message(ERROR "Unsupported MSVC version.")
+        message(SEND_ERROR "Unsupported MSVC version.")
     endif()
 
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
