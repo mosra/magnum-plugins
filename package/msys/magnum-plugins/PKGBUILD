@@ -15,6 +15,7 @@ depends=("${MINGW_PACKAGE_PREFIX}-magnum>=$pkgver"
          "${MINGW_PACKAGE_PREFIX}-assimp"
          "${MINGW_PACKAGE_PREFIX}-devil"
          "${MINGW_PACKAGE_PREFIX}-freetype"
+         "${MINGW_PACKAGE_PREFIX}-harfbuzz"
          "${MINGW_PACKAGE_PREFIX}-libjpeg-turbo"
          "${MINGW_PACKAGE_PREFIX}-libpng")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cmake" "${MINGW_PACKAGE_PREFIX}-ninja" 'git')
@@ -45,6 +46,7 @@ build() {
             -DWITH_DRFLACAUDIOIMPORTER=ON \
             -DWITH_DRWAVAUDIOIMPORTER=ON \
             -DWITH_FREETYPEFONT=ON \
+            -DWITH_HARFBUZZFONT=ON \
             -DWITH_JPEGIMAGECONVERTER=ON \
             -DWITH_JPEGIMPORTER=ON \
             -DWITH_MINIEXRIMAGECONVERTER=ON \
