@@ -28,7 +28,7 @@
 #include <cstring>
 #include <algorithm>
 #include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/ScopedExit.h>
+#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 
@@ -47,7 +47,7 @@ bool Faad2Importer::doIsOpened() const { return !_samples.empty(); }
 void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
     /* Init the library */
     const NeAACDecHandle decoder = NeAACDecOpen();
-    Containers::ScopedExit exit{decoder, NeAACDecClose};
+    Containers::ScopeGuard exit{decoder, NeAACDecClose};
 
     /* Decide what's the sample format. For some reason this doesn't depend on
        the file. */
