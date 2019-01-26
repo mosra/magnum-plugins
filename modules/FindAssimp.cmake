@@ -41,7 +41,7 @@
 
 find_path(ASSIMP_INCLUDE_DIR NAMES assimp/anim.h HINTS include)
 
-if(WIN32)
+if(WIN32 AND MSVC)
     if(MSVC12)
         set(ASSIMP_MSVC_VERSION "vc120")
     elseif(MSVC14)
