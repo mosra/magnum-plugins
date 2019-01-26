@@ -27,6 +27,7 @@
 
 #include <sstream>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
@@ -252,7 +253,7 @@ void TinyGltfImporterTest::open() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
     auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "empty" + std::string{data.suffix});
@@ -275,7 +276,7 @@ void TinyGltfImporterTest::openError() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openData(data.shortData));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: " + std::string{data.shortDataError});
 }
@@ -284,7 +285,7 @@ void TinyGltfImporterTest::animation() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation" + std::string{data.suffix})));
 
@@ -384,7 +385,7 @@ void TinyGltfImporterTest::animation() {
 }
 
 void TinyGltfImporterTest::animationWrongTimeType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-wrong.gltf")));
 
@@ -398,7 +399,7 @@ void TinyGltfImporterTest::animationWrongTimeType() {
 }
 
 void TinyGltfImporterTest::animationWrongInterpolationType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-wrong.gltf")));
 
@@ -412,7 +413,7 @@ void TinyGltfImporterTest::animationWrongInterpolationType() {
 }
 
 void TinyGltfImporterTest::animationWrongTranslationType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-wrong.gltf")));
 
@@ -426,7 +427,7 @@ void TinyGltfImporterTest::animationWrongTranslationType() {
 }
 
 void TinyGltfImporterTest::animationWrongRotationType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-wrong.gltf")));
 
@@ -440,7 +441,7 @@ void TinyGltfImporterTest::animationWrongRotationType() {
 }
 
 void TinyGltfImporterTest::animationWrongScalingType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-wrong.gltf")));
 
@@ -454,7 +455,7 @@ void TinyGltfImporterTest::animationWrongScalingType() {
 }
 
 void TinyGltfImporterTest::animationUnsupportedPath() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-wrong.gltf")));
 
@@ -488,7 +489,7 @@ void TinyGltfImporterTest::animationSpline() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation" + std::string{data.suffix})));
     CORRADE_COMPARE(importer->animationCount(), 3);
@@ -576,7 +577,7 @@ void TinyGltfImporterTest::animationSpline() {
 }
 
 void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-splines-sharing.gltf")));
     CORRADE_COMPARE(importer->animationCount(), 2);
@@ -625,7 +626,7 @@ void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
 }
 
 void TinyGltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-splines-sharing.gltf")));
     CORRADE_COMPARE(importer->animationCount(), 2);
@@ -638,7 +639,7 @@ void TinyGltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
 }
 
 void TinyGltfImporterTest::animationShortestPathOptimizationEnabled() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -687,7 +688,7 @@ void TinyGltfImporterTest::animationShortestPathOptimizationEnabled() {
 }
 
 void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Explicitly disable */
     importer->configuration().setValue("optimizeQuaternionShortestPath", false);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -757,7 +758,7 @@ void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
 }
 
 void TinyGltfImporterTest::animationQuaternionNormalizationEnabled() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -786,7 +787,7 @@ void TinyGltfImporterTest::animationQuaternionNormalizationEnabled() {
 }
 
 void TinyGltfImporterTest::animationQuaternionNormalizationDisabled() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Explicitly disable */
     CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -809,7 +810,7 @@ void TinyGltfImporterTest::animationQuaternionNormalizationDisabled() {
 }
 
 void TinyGltfImporterTest::animationMergeEmpty() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -820,7 +821,7 @@ void TinyGltfImporterTest::animationMergeEmpty() {
 }
 
 void TinyGltfImporterTest::animationMerge() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -907,7 +908,7 @@ void TinyGltfImporterTest::camera() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "camera" + std::string{data.suffix})));
 
@@ -963,7 +964,7 @@ void TinyGltfImporterTest::light() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "light" + std::string{data.suffix})));
 
@@ -1003,7 +1004,7 @@ void TinyGltfImporterTest::scene() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "scene" + std::string{data.suffix})));
 
@@ -1062,7 +1063,7 @@ void TinyGltfImporterTest::sceneEmpty() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "empty" + std::string{data.suffix})));
 
@@ -1075,7 +1076,7 @@ void TinyGltfImporterTest::sceneNoDefault() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "scene-nodefault" + std::string{data.suffix})));
 
@@ -1092,7 +1093,7 @@ void TinyGltfImporterTest::objectTransformation() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object-transformation" + std::string{data.suffix})));
 
@@ -1202,7 +1203,7 @@ void TinyGltfImporterTest::objectTransformation() {
 }
 
 void TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -1211,7 +1212,7 @@ void TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled() 
     CORRADE_COMPARE(importer->object3DCount(), 1);
     CORRADE_COMPARE(importer->object3DName(0), "Non-normalized rotation");
 
-    std::unique_ptr<Trade::ObjectData3D> object;
+    Containers::Pointer<Trade::ObjectData3D> object;
     std::ostringstream out;
     {
         Warning warningRedirection{&out};
@@ -1224,7 +1225,7 @@ void TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled() 
 }
 
 void TinyGltfImporterTest::objectTransformationQuaternionNormalizationDisabled() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Explicity disable */
     importer->configuration().setValue("normalizeQuaternions", false);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -1243,7 +1244,7 @@ void TinyGltfImporterTest::mesh() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh" + std::string{data.suffix})));
 
@@ -1270,7 +1271,7 @@ void TinyGltfImporterTest::meshIndexed() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh" + std::string{data.suffix})));
 
@@ -1305,7 +1306,7 @@ void TinyGltfImporterTest::meshUnknownAttribute() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh" + std::string{data.suffix})));
 
@@ -1337,7 +1338,7 @@ void TinyGltfImporterTest::meshPrimitives() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh-primitives" + std::string{data.suffix})));
 
@@ -1431,7 +1432,7 @@ void TinyGltfImporterTest::meshColors() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh-colors" + std::string{data.suffix})));
 
@@ -1462,7 +1463,7 @@ void TinyGltfImporterTest::meshWithStride() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh-with-stride" + std::string{data.suffix})));
 
@@ -1481,7 +1482,7 @@ void TinyGltfImporterTest::meshWithStride() {
 }
 
 void TinyGltfImporterTest::meshMultiplePrimitives() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh-multiple-primitives.gltf")));
 
@@ -1650,7 +1651,7 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-metallicroughness" + std::string{data.suffix})));
 
@@ -1690,7 +1691,7 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-specularglossiness" + std::string{data.suffix})));
 
@@ -1731,7 +1732,7 @@ void TinyGltfImporterTest::materialBlinnPhong() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-blinnphong" + std::string{data.suffix})));
 
@@ -1772,7 +1773,7 @@ void TinyGltfImporterTest::materialProperties() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-properties" + std::string{data.suffix})));
 
@@ -1832,7 +1833,7 @@ void TinyGltfImporterTest::texture() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "texture" + std::string{data.suffix})));
 
@@ -1881,7 +1882,7 @@ void TinyGltfImporterTest::textureDefaultSampler() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "texture-default-sampler" + std::string{data.suffix})));
 
@@ -1909,7 +1910,7 @@ void TinyGltfImporterTest::image() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "image" + std::string{data.suffix})));
 
@@ -1929,7 +1930,7 @@ void TinyGltfImporterTest::fileCallbackBuffer() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     Utility::Resource rs{"data"};
@@ -1959,7 +1960,7 @@ void TinyGltfImporterTest::fileCallbackBufferNotFound() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     importer->setFileCallback([](const std::string&, ImporterFileCallbackPolicy, void*)
@@ -1980,7 +1981,7 @@ void TinyGltfImporterTest::fileCallbackImage() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     Utility::Resource rs{"data"};
@@ -2008,7 +2009,7 @@ void TinyGltfImporterTest::fileCallbackImageNotFound() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     Utility::Resource rs{"data"};

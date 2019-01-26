@@ -64,7 +64,7 @@ void Faad2ImporterTest::error() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(FAAD2AUDIOIMPORTER_TEST_DIR, "error.aac")));
     {
         CORRADE_EXPECT_FAIL("For some reason it doesn't fail during init if I throw a weird file at it.");
@@ -74,7 +74,7 @@ void Faad2ImporterTest::error() {
 }
 
 void Faad2ImporterTest::mono() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(FAAD2AUDIOIMPORTER_TEST_DIR, "mono.aac")));
 
     {
@@ -103,7 +103,7 @@ void Faad2ImporterTest::mono() {
 }
 
 void Faad2ImporterTest::stereo() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(FAAD2AUDIOIMPORTER_TEST_DIR, "stereo.aac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);

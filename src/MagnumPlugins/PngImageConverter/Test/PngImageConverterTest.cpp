@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Magnum/PixelFormat.h>
@@ -72,7 +73,7 @@ PngImageConverterTest::PngImageConverterTest() {
 }
 
 void PngImageConverterTest::wrongFormat() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
     ImageView2D image{PixelFormat::RG32F, {}, nullptr};
 
     std::ostringstream out;
@@ -106,7 +107,7 @@ void PngImageConverterTest::rgb() {
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
@@ -149,7 +150,7 @@ void PngImageConverterTest::rgb16() {
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
@@ -186,7 +187,7 @@ void PngImageConverterTest::grayscale() {
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
@@ -230,7 +231,7 @@ void PngImageConverterTest::grayscale16() {
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);

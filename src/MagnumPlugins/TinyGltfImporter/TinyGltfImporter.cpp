@@ -31,6 +31,7 @@
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/String.h>
@@ -740,7 +741,7 @@ std::string TinyGltfImporter::doObject3DName(UnsignedInt id) {
     return _d->model.nodes[_d->nodeMap[id].first].name;
 }
 
-std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
+Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     const std::size_t originalNodeId = _d->nodeMap[id].first;
     const tinygltf::Node& node = _d->model.nodes[originalNodeId];
 
@@ -751,7 +752,7 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     if(nodePrimitiveId) {
         const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh] + nodePrimitiveId;
         const Int materialId = _d->model.meshes[node.mesh].primitives[nodePrimitiveId].material;
-        return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{{}, {}, {}, Vector3{1.0f}, meshId, materialId, &node}};
+        return Containers::pointer(new MeshObjectData3D{{}, {}, {}, Vector3{1.0f}, meshId, materialId, &node});
     }
 
     CORRADE_INTERNAL_ASSERT(node.rotation.size() == 0 || node.rotation.size() == 4);
@@ -811,9 +812,9 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
 
         const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh];
         const Int materialId = _d->model.meshes[node.mesh].primitives[0].material;
-        return std::unique_ptr<ObjectData3D>{flags & ObjectFlag3D::HasTranslationRotationScaling ?
+        return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?
             new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, &node} :
-            new MeshObjectData3D{std::move(children), transformation, meshId, materialId, &node}};
+            new MeshObjectData3D{std::move(children), transformation, meshId, materialId, &node});
     }
 
     /* Unknown nodes are treated as Empty */
@@ -831,9 +832,9 @@ std::unique_ptr<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         instanceId = UnsignedInt(node.extensions.at("KHR_lights_cmn").Get("light").Get<int>());
     }
 
-    return std::unique_ptr<ObjectData3D>{flags & ObjectFlag3D::HasTranslationRotationScaling ?
+    return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?
         new ObjectData3D{std::move(children), translation, rotation, scaling, instanceType, instanceId, &node} :
-        new ObjectData3D{std::move(children), transformation, instanceType, instanceId, &node}};
+        new ObjectData3D{std::move(children), transformation, instanceType, instanceId, &node});
 }
 
 UnsignedInt TinyGltfImporter::doMesh3DCount() const {
@@ -1021,7 +1022,7 @@ std::string TinyGltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->model.materials[id].name;
 }
 
-std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const UnsignedInt id) {
+Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const UnsignedInt id) {
     const tinygltf::Material& material = _d->model.materials[id];
 
     /* Alpha mode and mask, double sided */
@@ -1148,13 +1149,16 @@ std::unique_ptr<AbstractMaterialData> TinyGltfImporter::doMaterial(const Unsigne
     }
 
     /* Put things together */
-    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, alphaMode, alphaMask, shininess, &material}};
+    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags, alphaMode, alphaMask, shininess, &material};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
     else data->diffuseColor() = diffuseColor;
     if(flags & PhongMaterialData::Flag::SpecularTexture)
         data->specularTexture() = specularTexture;
     else data->specularColor() = specularColor;
+
+    /* Needs std::move on GCC 4.8 and Clang 3.8 so it can properly upcast the
+       pointer. */
     return std::move(data);
 }
 

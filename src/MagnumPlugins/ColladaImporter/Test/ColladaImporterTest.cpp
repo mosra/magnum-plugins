@@ -25,6 +25,7 @@
 
 #include <sstream>
 #include <QtCore/QString>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
@@ -89,7 +90,7 @@ ColladaImporterTest::ColladaImporterTest() {
 }
 
 void ColladaImporterTest::openWrongNamespace() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     std::stringstream debug;
     Error redirectError{&debug};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongNamespace.dae")));
@@ -97,7 +98,7 @@ void ColladaImporterTest::openWrongNamespace() {
 }
 
 void ColladaImporterTest::openWrongVersion() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     std::stringstream debug;
     Error redirectError{&debug};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "openWrongVersion.dae")));
@@ -105,7 +106,7 @@ void ColladaImporterTest::openWrongVersion() {
 }
 
 void ColladaImporterTest::scene() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "scene.dae")));
 
     CORRADE_COMPARE(importer->defaultScene(), 1);
@@ -123,7 +124,7 @@ void ColladaImporterTest::scene() {
 
     CORRADE_COMPARE(importer->object3DName(0), "Camera");
     CORRADE_COMPARE(importer->object3DForName("Camera"), 0);
-    std::unique_ptr<ObjectData3D> object = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> object = importer->object3D(0);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
     CORRADE_COMPARE(object->instance(), 2);
@@ -163,17 +164,17 @@ void ColladaImporterTest::scene() {
 }
 
 void ColladaImporterTest::objectNoMaterial() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "object-no-material.dae")));
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    std::unique_ptr<ObjectData3D> object = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> object = importer->object3D(0);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(static_cast<MeshObjectData3D*>(object.get())->material(), -1);
 }
 
 void ColladaImporterTest::objectMultipleMaterials() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "object-multiple-materials.dae")));
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
@@ -184,7 +185,7 @@ void ColladaImporterTest::objectMultipleMaterials() {
 }
 
 void ColladaImporterTest::mesh() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "mesh.dae")));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 5);
@@ -304,7 +305,7 @@ void ColladaImporterTest::mesh() {
 }
 
 void ColladaImporterTest::material() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "material.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 5);
@@ -332,7 +333,7 @@ void ColladaImporterTest::material() {
     {
         CORRADE_COMPARE(importer->materialName(3), "MaterialPhong");
         CORRADE_COMPARE(importer->materialForName("MaterialPhong"), 3);
-        const std::unique_ptr<AbstractMaterialData> abstractMaterial = importer->material(3);
+        Containers::Pointer<AbstractMaterialData> abstractMaterial = importer->material(3);
         CORRADE_VERIFY(abstractMaterial);
         CORRADE_VERIFY(abstractMaterial->type() == MaterialType::Phong);
 
@@ -348,7 +349,7 @@ void ColladaImporterTest::material() {
     {
         CORRADE_COMPARE(importer->materialName(4), "MaterialPhongTextured");
         CORRADE_COMPARE(importer->materialForName("MaterialPhongTextured"), 4);
-        const std::unique_ptr<AbstractMaterialData> abstractMaterial = importer->material(4);
+        Containers::Pointer<AbstractMaterialData> abstractMaterial = importer->material(4);
         CORRADE_VERIFY(abstractMaterial);
         CORRADE_VERIFY(abstractMaterial->type() == MaterialType::Phong);
 
@@ -364,7 +365,7 @@ void ColladaImporterTest::material() {
 }
 
 void ColladaImporterTest::texture() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "texture.dae")));
 
     CORRADE_COMPARE(importer->textureCount(), 4);
@@ -419,7 +420,7 @@ void ColladaImporterTest::image() {
     if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("ColladaImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(COLLADAIMPORTER_TEST_DIR, "image.dae")));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);

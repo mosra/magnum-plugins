@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -87,7 +88,7 @@ JpegImageConverterTest::JpegImageConverterTest() {
 }
 
 void JpegImageConverterTest::wrongFormat() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     ImageView2D image{PixelFormat::R16F, {}, nullptr};
 
     std::ostringstream out;
@@ -98,7 +99,7 @@ void JpegImageConverterTest::wrongFormat() {
 }
 
 void JpegImageConverterTest::zeroSize() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -200,7 +201,7 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void JpegImageConverterTest::rgb80Percent() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
     const auto data = converter->exportToData(OriginalRgb);
@@ -209,7 +210,7 @@ void JpegImageConverterTest::rgb80Percent() {
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
@@ -229,7 +230,7 @@ void JpegImageConverterTest::rgb80Percent() {
 }
 
 void JpegImageConverterTest::rgb100Percent() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
     const auto data = converter->exportToData(OriginalRgb);
@@ -238,7 +239,7 @@ void JpegImageConverterTest::rgb100Percent() {
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
@@ -249,7 +250,7 @@ void JpegImageConverterTest::rgb100Percent() {
 }
 
 void JpegImageConverterTest::rgba80Percent() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
     /* If we don't have libjpeg-turbo, exporting RGBA will fail */
@@ -278,7 +279,7 @@ void JpegImageConverterTest::rgba80Percent() {
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
@@ -326,7 +327,7 @@ const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
     PixelFormat::R8Unorm, {6, 4}, OriginalGrayscaleData};
 
 void JpegImageConverterTest::grayscale80Percent() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
     const auto data = converter->exportToData(OriginalGrayscale);
@@ -335,7 +336,7 @@ void JpegImageConverterTest::grayscale80Percent() {
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
@@ -355,7 +356,7 @@ void JpegImageConverterTest::grayscale80Percent() {
 }
 
 void JpegImageConverterTest::grayscale100Percent() {
-    std::unique_ptr<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
     const auto data = converter->exportToData(OriginalGrayscale);
@@ -364,7 +365,7 @@ void JpegImageConverterTest::grayscale100Percent() {
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openData(data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);

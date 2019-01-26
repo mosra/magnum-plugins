@@ -26,6 +26,7 @@
 #include "JpegImporter.h"
 
 #include <csetjmp>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>

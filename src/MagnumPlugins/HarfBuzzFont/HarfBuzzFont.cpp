@@ -80,7 +80,7 @@ void HarfBuzzFont::doClose() {
     FreeTypeFont::doClose();
 }
 
-std::unique_ptr<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
     /* Prepare HarfBuzz buffer */
     hb_buffer_t* const buffer = hb_buffer_create();
     hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
@@ -95,7 +95,7 @@ std::unique_ptr<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache
     hb_glyph_info_t* const glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
     hb_glyph_position_t* const glyphPositions = hb_buffer_get_glyph_positions(buffer, &glyphCount);
 
-    return std::unique_ptr<AbstractLayouter>(new HarfBuzzLayouter(cache, this->size(), size, buffer, glyphInfo, glyphPositions, glyphCount));
+    return Containers::pointer(new HarfBuzzLayouter(cache, this->size(), size, buffer, glyphInfo, glyphPositions, glyphCount));
 }
 
 namespace {

@@ -187,7 +187,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
 }
 
 void OpenGexImporterTest::open() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
     auto s = OpenDdl::CharacterLiteral{R"oddl(
@@ -200,7 +200,7 @@ Metric (key = "up") { string { "z" } }
 }
 
 void OpenGexImporterTest::openParseError() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -213,7 +213,7 @@ void OpenGexImporterTest::openParseError() {
 }
 
 void OpenGexImporterTest::openValidationError() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -226,7 +226,7 @@ Metric (key = "distance") { int32 { 1 } }
 }
 
 void OpenGexImporterTest::openInvalidMetric() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -239,7 +239,7 @@ Metric (key = "distance") { string { "0.5" } }
 }
 
 void OpenGexImporterTest::camera() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera.ogex")));
     CORRADE_COMPARE(importer->cameraCount(), 2);
 
@@ -262,7 +262,7 @@ void OpenGexImporterTest::camera() {
 }
 
 void OpenGexImporterTest::cameraMetrics() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera-metrics.ogex")));
     CORRADE_COMPARE(importer->cameraCount(), 1);
 
@@ -274,7 +274,7 @@ void OpenGexImporterTest::cameraMetrics() {
 }
 
 void OpenGexImporterTest::cameraInvalid() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera-invalid.ogex")));
     CORRADE_COMPARE(importer->cameraCount(), 1);
 
@@ -285,7 +285,7 @@ void OpenGexImporterTest::cameraInvalid() {
 }
 
 void OpenGexImporterTest::object() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object.ogex")));
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
@@ -295,42 +295,42 @@ void OpenGexImporterTest::object() {
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 3}));
 
-    std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+    Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(importer->object3DName(0), "MyNode");
     CORRADE_COMPARE(importer->object3DForName("MyNode"), 0);
     CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Empty);
     CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{1, 2}));
 
-    std::unique_ptr<Trade::ObjectData3D> cameraObject = importer->object3D(1);
+    Containers::Pointer<Trade::ObjectData3D> cameraObject = importer->object3D(1);
     CORRADE_VERIFY(cameraObject);
     CORRADE_COMPARE(cameraObject->instanceType(), Trade::ObjectInstanceType3D::Camera);
 
-    std::unique_ptr<Trade::ObjectData3D> meshObject = importer->object3D(2);
+    Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(2);
     CORRADE_VERIFY(meshObject);
     CORRADE_COMPARE(importer->object3DName(2), "MyGeometryNode");
     CORRADE_COMPARE(importer->object3DForName("MyGeometryNode"), 2);
     CORRADE_COMPARE(meshObject->instanceType(), Trade::ObjectInstanceType3D::Mesh);
     CORRADE_VERIFY(meshObject->children().empty());
 
-    std::unique_ptr<Trade::ObjectData3D> boneObject = importer->object3D(3);
+    Containers::Pointer<Trade::ObjectData3D> boneObject = importer->object3D(3);
     CORRADE_VERIFY(boneObject);
     CORRADE_COMPARE(boneObject->instanceType(), Trade::ObjectInstanceType3D::Empty);
     CORRADE_COMPARE(boneObject->children(), (std::vector<UnsignedInt>{4}));
 
-    std::unique_ptr<Trade::ObjectData3D> lightObject = importer->object3D(4);
+    Containers::Pointer<Trade::ObjectData3D> lightObject = importer->object3D(4);
     CORRADE_VERIFY(lightObject);
     CORRADE_COMPARE(lightObject->instanceType(), Trade::ObjectInstanceType3D::Light);
     CORRADE_VERIFY(lightObject->children().empty());
 }
 
 void OpenGexImporterTest::objectCamera() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-camera.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 2);
 
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Camera);
         CORRADE_COMPARE(object->instance(), 1);
@@ -343,12 +343,12 @@ void OpenGexImporterTest::objectCamera() {
 }
 
 void OpenGexImporterTest::objectLight() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-light.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 2);
 
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Light);
         CORRADE_COMPARE(object->instance(), 1);
@@ -361,12 +361,12 @@ void OpenGexImporterTest::objectLight() {
 }
 
 void OpenGexImporterTest::objectMesh() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-geometry.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 4);
 
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Mesh);
 
@@ -374,14 +374,14 @@ void OpenGexImporterTest::objectMesh() {
         CORRADE_COMPARE(meshObject.instance(), 1);
         CORRADE_COMPARE(meshObject.material(), 2);
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(1);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(1);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Mesh);
 
         auto&& meshObject = static_cast<Trade::MeshObjectData3D&>(*object);
         CORRADE_COMPARE(meshObject.material(), -1);
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(2);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(2);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Mesh);
 
@@ -396,12 +396,12 @@ void OpenGexImporterTest::objectMesh() {
 }
 
 void OpenGexImporterTest::objectTransformation() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 3);
 
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), (Matrix4{
             {3.0f,  0.0f, 0.0f, 0.0f},
@@ -421,37 +421,37 @@ void OpenGexImporterTest::objectTransformation() {
 }
 
 void OpenGexImporterTest::objectTranslation() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-translation.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 8);
 
     /* XYZ */
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::translation({7.5f, -1.5f, 1.0f}));
 
     /* Default, which is also XYZ */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(1);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(1);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::translation({7.5f, -1.5f, 1.0f}));
 
     /* X */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(2);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(2);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::xAxis(7.5f)));
 
     /* Y */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(3);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(3);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::yAxis(-1.5f)));
 
     /* Z */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(4);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(4);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::zAxis(1.0f)));
     }
@@ -469,43 +469,43 @@ void OpenGexImporterTest::objectTranslation() {
 }
 
 void OpenGexImporterTest::objectRotation() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-rotation.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 9);
 
     /* Axis + angle */
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::rotation(90.0_degf, Vector3::zAxis()));
 
     /* Default, which is also axis + angle */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(1);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(1);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::rotation(-90.0_degf, Vector3::zAxis(-1.0f)));
 
     /* Quaternion */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(2);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(2);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::from(Quaternion::rotation(90.0_degf, Vector3::zAxis()).toMatrix(), {}));
 
     /* X */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(3);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(3);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::rotationX(90.0_degf));
 
     /* Y */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(4);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(4);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::rotationY(90.0_degf));
 
     /* Z */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(5);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(5);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(90.0_degf));
     }
@@ -523,37 +523,37 @@ void OpenGexImporterTest::objectRotation() {
 }
 
 void OpenGexImporterTest::objectScaling() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-scaling.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 8);
 
     /* XYZ */
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling({7.5f, -1.5f, 2.0f}));
 
     /* Default, which is also XYZ */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(1);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(1);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling({7.5f, -1.5f, 2.0f}));
 
     /* X */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(2);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(2);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::xScale(7.5f)));
 
     /* Y */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(3);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(3);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::yScale(-1.5f)));
 
     /* Z */
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(4);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(4);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::zScale(2.0f)));
     }
@@ -571,11 +571,11 @@ void OpenGexImporterTest::objectScaling() {
 }
 
 void OpenGexImporterTest::objectTransformationConcatentation() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation-concatenation.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+    Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->transformation(),
         Matrix4::translation({7.5f, -1.5f, 1.0f})*
@@ -584,12 +584,12 @@ void OpenGexImporterTest::objectTransformationConcatentation() {
 }
 
 void OpenGexImporterTest::objectTransformationMetrics() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation-metrics.ogex")));
     CORRADE_COMPARE(importer->object3DCount(), 7);
 
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(0);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(),
             Matrix4::translation({100.0f, 550.0f, 200.0f})*
@@ -600,32 +600,32 @@ void OpenGexImporterTest::objectTransformationMetrics() {
     /* Each pair describes the same transformation using given operation and
        transformation matrix */
     {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(1);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(1);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::translation({100.0f, 550.0f, 200.0f}));
-        std::unique_ptr<Trade::ObjectData3D> matrix = importer->object3D(2);
+        Containers::Pointer<Trade::ObjectData3D> matrix = importer->object3D(2);
         CORRADE_VERIFY(matrix);
         CORRADE_COMPARE(matrix->transformation(), Matrix4::translation({100.0f, 550.0f, 200.0f}));
     } {
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(3);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(3);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(-90.0_degf));
-        std::unique_ptr<Trade::ObjectData3D> matrix = importer->object3D(4);
+        Containers::Pointer<Trade::ObjectData3D> matrix = importer->object3D(4);
         CORRADE_VERIFY(matrix);
         CORRADE_COMPARE(matrix->transformation(), Matrix4::rotationZ(-90.0_degf));
     } {
         /* This won't be multiplied by 100, as the original mesh data are adjusted already */
-        std::unique_ptr<Trade::ObjectData3D> object = importer->object3D(5);
+        Containers::Pointer<Trade::ObjectData3D> object = importer->object3D(5);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling({1.0f, 5.5f, -2.0f}));
-        std::unique_ptr<Trade::ObjectData3D> matrix = importer->object3D(6);
+        Containers::Pointer<Trade::ObjectData3D> matrix = importer->object3D(6);
         CORRADE_VERIFY(matrix);
         CORRADE_COMPARE(matrix->transformation(), Matrix4::scaling({1.0f, 5.5f, -2.0f}));
     }
 }
 
 void OpenGexImporterTest::light() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "light.ogex")));
     CORRADE_COMPARE(importer->lightCount(), 3);
 
@@ -656,7 +656,7 @@ void OpenGexImporterTest::light() {
 }
 
 void OpenGexImporterTest::lightInvalid() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "light-invalid.ogex")));
     CORRADE_COMPARE(importer->lightCount(), 4);
 
@@ -684,7 +684,7 @@ void OpenGexImporterTest::lightInvalid() {
 }
 
 void OpenGexImporterTest::mesh() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
     Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
@@ -709,7 +709,7 @@ void OpenGexImporterTest::mesh() {
 }
 
 void OpenGexImporterTest::meshIndexed() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
     Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(1);
@@ -726,7 +726,7 @@ void OpenGexImporterTest::meshIndexed() {
 }
 
 void OpenGexImporterTest::meshEnlargeShrink() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
     Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(2);
@@ -746,7 +746,7 @@ void OpenGexImporterTest::meshEnlargeShrink() {
 }
 
 void OpenGexImporterTest::meshMetrics() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-metrics.ogex")));
     Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
@@ -770,7 +770,7 @@ void OpenGexImporterTest::meshMetrics() {
 }
 
 void OpenGexImporterTest::meshInvalidPrimitive() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->mesh3DCount(), 5);
 
@@ -781,7 +781,7 @@ void OpenGexImporterTest::meshInvalidPrimitive() {
 }
 
 void OpenGexImporterTest::meshUnsupportedSize() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->mesh3DCount(), 5);
 
@@ -792,7 +792,7 @@ void OpenGexImporterTest::meshUnsupportedSize() {
 }
 
 void OpenGexImporterTest::meshNoPositions() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->mesh3DCount(), 5);
 
@@ -803,7 +803,7 @@ void OpenGexImporterTest::meshNoPositions() {
 }
 
 void OpenGexImporterTest::meshMismatchedSizes() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->mesh3DCount(), 5);
 
@@ -814,7 +814,7 @@ void OpenGexImporterTest::meshMismatchedSizes() {
 }
 
 void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->mesh3DCount(), 5);
 
@@ -826,7 +826,7 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
 
 #ifndef CORRADE_TARGET_EMSCRIPTEN
 void OpenGexImporterTest::meshUnsupportedIndexType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid-int64.ogex")));
     CORRADE_COMPARE(importer->mesh3DCount(), 1);
 
@@ -838,10 +838,10 @@ void OpenGexImporterTest::meshUnsupportedIndexType() {
 #endif
 
 void OpenGexImporterTest::materialDefaults() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
 
-    std::unique_ptr<Trade::AbstractMaterialData> material = importer->material(0);
+    Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
     CORRADE_COMPARE(importer->materialName(0), "");
@@ -854,12 +854,12 @@ void OpenGexImporterTest::materialDefaults() {
 }
 
 void OpenGexImporterTest::materialColors() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
     CORRADE_COMPARE(importer->materialCount(), 4);
 
-    std::unique_ptr<Trade::AbstractMaterialData> material = importer->material(1);
+    Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(1);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
     CORRADE_COMPARE(importer->materialName(1), "colors");
@@ -873,14 +873,14 @@ void OpenGexImporterTest::materialColors() {
 }
 
 void OpenGexImporterTest::materialTextured() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
     CORRADE_COMPARE(importer->materialCount(), 4);
     CORRADE_COMPARE(importer->textureCount(), 4);
 
     {
-        std::unique_ptr<Trade::AbstractMaterialData> material = importer->material(2);
+        Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(2);
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(importer->materialName(2), "diffuse_texture");
 
@@ -888,7 +888,7 @@ void OpenGexImporterTest::materialTextured() {
         CORRADE_VERIFY(phong.flags() == Trade::PhongMaterialData::Flag::DiffuseTexture);
         CORRADE_COMPARE(phong.diffuseTexture(), 1);
     } {
-        std::unique_ptr<Trade::AbstractMaterialData> material = importer->material(3);
+        Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(3);
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(importer->materialName(3), "both_textures");
 
@@ -900,7 +900,7 @@ void OpenGexImporterTest::materialTextured() {
 }
 
 void OpenGexImporterTest::materialInvalidColor() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material-invalid.ogex")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
@@ -911,7 +911,7 @@ void OpenGexImporterTest::materialInvalidColor() {
 }
 
 void OpenGexImporterTest::texture() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
     CORRADE_COMPARE(importer->textureCount(), 2);
@@ -925,7 +925,7 @@ void OpenGexImporterTest::texture() {
 }
 
 void OpenGexImporterTest::textureInvalidCoordinateSet() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
     CORRADE_COMPARE(importer->textureCount(), 2);
 
@@ -939,7 +939,7 @@ void OpenGexImporterTest::image() {
     if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
@@ -953,7 +953,7 @@ void OpenGexImporterTest::imageInvalid() {
     if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
@@ -967,7 +967,7 @@ void OpenGexImporterTest::imageUnique() {
     if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-unique.ogex")));
     CORRADE_COMPARE(importer->textureCount(), 5);
     CORRADE_COMPARE(importer->image2DCount(), 3);
@@ -1012,7 +1012,7 @@ void OpenGexImporterTest::imageUnique() {
 }
 
 void OpenGexImporterTest::extension() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "extension.ogex")));
 
     /* Version info */
@@ -1031,7 +1031,7 @@ void OpenGexImporterTest::extension() {
     /* Camera name */
     {
         CORRADE_COMPARE(importer->object3DCount(), 2);
-        std::unique_ptr<ObjectData3D> cameraObject = importer->object3D(1);
+        Containers::Pointer<ObjectData3D> cameraObject = importer->object3D(1);
         CORRADE_VERIFY(cameraObject);
         CORRADE_VERIFY(cameraObject->importerState());
         Containers::Optional<OpenDdl::Structure> cameraName = static_cast<const OpenDdl::Structure*>(cameraObject->importerState())->findFirstChildOf(OpenGex::Extension);
@@ -1065,7 +1065,7 @@ void OpenGexImporterTest::fileCallbackImage() {
     if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
@@ -1090,7 +1090,7 @@ void OpenGexImporterTest::fileCallbackImageNotFound() {
     if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy, void*) {

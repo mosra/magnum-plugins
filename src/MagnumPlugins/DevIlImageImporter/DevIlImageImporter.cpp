@@ -27,6 +27,7 @@
 #include "DevIlImageImporter.h"
 
 #include <algorithm>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>

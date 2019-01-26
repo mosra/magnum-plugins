@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
@@ -60,7 +61,7 @@ JpegImporterTest::JpegImporterTest() {
 }
 
 void JpegImporterTest::gray() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -80,7 +81,7 @@ void JpegImporterTest::gray() {
 }
 
 void JpegImporterTest::rgb() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -107,7 +108,7 @@ void JpegImporterTest::rgb() {
 }
 
 void JpegImporterTest::useTwice() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     /* Verify that the file is rewinded for second use */

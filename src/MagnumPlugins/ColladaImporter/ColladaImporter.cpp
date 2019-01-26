@@ -31,6 +31,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
@@ -278,7 +279,7 @@ Int ColladaImporter::doObject3DForName(const std::string& name) {
 
 std::string ColladaImporter::doObject3DName(const UnsignedInt id) { return d->objects[id]; }
 
-std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) {
+Containers::Pointer<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) {
     /* Referring to <node>s with numbers somehow doesn't work (i.e. it selects
        many extra elements), we need to refer to them by id attribute instead */
     const auto name = QString::fromStdString(doObject3DName(id));
@@ -348,8 +349,7 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
             return nullptr;
         }
 
-        /** @todo C++14: std::make_unique() */
-        return std::unique_ptr<ObjectData3D>(new ObjectData3D(std::move(children), transformation, ObjectInstanceType3D::Camera, cameraId->second));
+        return Containers::pointer(new ObjectData3D(std::move(children), transformation, ObjectInstanceType3D::Camera, cameraId->second));
 
     /* Light instance */
     } else if(tmp == "instance_light") {
@@ -361,8 +361,7 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
             return nullptr;
         }
 
-        /** @todo C++14: std::make_unique() */
-        return std::unique_ptr<ObjectData3D>(new ObjectData3D(std::move(children), transformation, ObjectInstanceType3D::Light, lightId->second));
+        return Containers::pointer(new ObjectData3D(std::move(children), transformation, ObjectInstanceType3D::Light, lightId->second));
 
     /* Mesh instance */
     } else if(tmp == "instance_geometry") {
@@ -398,12 +397,11 @@ std::unique_ptr<ObjectData3D> ColladaImporter::doObject3D(const UnsignedInt id) 
             }
         }
 
-        /** @todo C++14: std::make_unique() */
-        return std::unique_ptr<ObjectData3D>(new MeshObjectData3D(std::move(children), transformation, meshId, materialId));
+        return Containers::pointer(new MeshObjectData3D(std::move(children), transformation, meshId, materialId));
 
     /* Blender group instance */
     } else if(tmp.isEmpty())
-        return std::unique_ptr<ObjectData3D>(new ObjectData3D(std::move(children), transformation));
+        return Containers::pointer(new ObjectData3D(std::move(children), transformation));
 
     /* Something else */
     Error() << "Trade::ColladaImporter::object3D():" << '"'+tmp.toStdString()+'"' << "instance type not supported";
@@ -535,7 +533,7 @@ std::string ColladaImporter::doMaterialName(const UnsignedInt id) {
     return d->materials[id];
 }
 
-std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const UnsignedInt id) {
+Containers::Pointer<AbstractMaterialData> ColladaImporter::doMaterial(const UnsignedInt id) {
     /* Get effect ID */
     QString effect;
     d->query.setQuery((namespaceDeclaration + "/COLLADA/library_materials/material[%0]/instance_effect/@url/string()").arg(id+1));
@@ -621,7 +619,7 @@ std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const Unsigned
         specularTexture = it->second;
     }
 
-    auto material = new PhongMaterialData(flags, MaterialAlphaMode::Opaque, 0.5f, shininess);
+    Containers::Pointer<PhongMaterialData> material{Containers::InPlaceInit, flags, MaterialAlphaMode::Opaque, 0.5f, shininess};
 
     /* Ambient texture or color, if not textured */
     if(flags & PhongMaterialData::Flag::AmbientTexture)
@@ -652,8 +650,9 @@ std::unique_ptr<AbstractMaterialData> ColladaImporter::doMaterial(const Unsigned
 
     /** @todo Emission, IOR */
 
-    /** @todo C++14: std::make_unique */
-    return std::unique_ptr<AbstractMaterialData>(material);
+    /* Needs std::move on GCC 4.8 and Clang 3.8 so it can properly upcast the
+       pointer. */
+    return std::move(material);
 }
 
 UnsignedInt ColladaImporter::doTextureCount() const { return d->textures.size(); }

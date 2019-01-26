@@ -143,7 +143,7 @@ void DrWavImporterTest::wrongSize() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openData(Containers::Array<char>(43)));
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
@@ -152,7 +152,7 @@ void DrWavImporterTest::wrongSignature() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "wrongSignature.wav")));
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
@@ -161,7 +161,7 @@ void DrWavImporterTest::unsupportedFormat() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "unsupportedFormat.wav")));
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): no samples\n");
 }
@@ -170,13 +170,13 @@ void DrWavImporterTest::unsupportedChannelCount() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.wav")));
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): no samples\n");
 }
 
 void DrWavImporterTest::invalidPadding() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "invalidPadding.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoMuLaw);
@@ -184,7 +184,7 @@ void DrWavImporterTest::invalidPadding() {
 }
 
 void DrWavImporterTest::invalidLength() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "invalidLength.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
@@ -192,7 +192,7 @@ void DrWavImporterTest::invalidLength() {
 }
 
 void DrWavImporterTest::invalidDataChunk() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "invalidDataChunk.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoMuLaw);
@@ -200,7 +200,7 @@ void DrWavImporterTest::invalidDataChunk() {
 }
 
 void DrWavImporterTest::invalidFactChunk() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "invalidFactChunk.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
@@ -217,13 +217,13 @@ void DrWavImporterTest::mono4() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono4.wav")));
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 
 void DrWavImporterTest::mono8() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono8.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono8);
@@ -239,13 +239,13 @@ void DrWavImporterTest::mono8junk() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono8junk.wav")));
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 
 void DrWavImporterTest::mono8ALaw() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono8ALaw.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoALaw);
@@ -259,7 +259,7 @@ void DrWavImporterTest::mono8ALaw() {
 }
 
 void DrWavImporterTest::mono8MuLaw() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono8MuLaw.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoMuLaw);
@@ -273,7 +273,7 @@ void DrWavImporterTest::mono8MuLaw() {
 }
 
 void DrWavImporterTest::mono16() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono16.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
@@ -286,7 +286,7 @@ void DrWavImporterTest::mono16() {
 }
 
 void DrWavImporterTest::mono24() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono24.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoFloat);
@@ -303,13 +303,13 @@ void DrWavImporterTest::stereo4() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo4.wav")));
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 
 void DrWavImporterTest::stereo8() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo8.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo8);
@@ -322,7 +322,7 @@ void DrWavImporterTest::stereo8() {
 }
 
 void DrWavImporterTest::stereo8ALaw() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo8ALaw.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoALaw);
@@ -336,7 +336,7 @@ void DrWavImporterTest::stereo8ALaw() {
 }
 
 void DrWavImporterTest::stereo8MuLaw() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo8MuLaw.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoMuLaw);
@@ -350,7 +350,7 @@ void DrWavImporterTest::stereo8MuLaw() {
 }
 
 void DrWavImporterTest::stereo12() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo12.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
@@ -366,7 +366,7 @@ void DrWavImporterTest::stereo12() {
 }
 
 void DrWavImporterTest::stereo16() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo16.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
@@ -378,7 +378,7 @@ void DrWavImporterTest::stereo16() {
 }
 
 void DrWavImporterTest::stereo24() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo24.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoFloat);
@@ -395,7 +395,7 @@ void DrWavImporterTest::stereo24() {
 }
 
 void DrWavImporterTest::stereo32() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo32.wav")));
 
     {
@@ -414,7 +414,7 @@ void DrWavImporterTest::stereo32() {
 }
 
 void DrWavImporterTest::surround51Channel16() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "surround51Channel16.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Surround51Channel16);
@@ -422,7 +422,7 @@ void DrWavImporterTest::surround51Channel16() {
 }
 
 void DrWavImporterTest::surround71Channel24() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "surround71Channel24.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Surround71Channel32);
@@ -430,7 +430,7 @@ void DrWavImporterTest::surround71Channel24() {
 }
 
 void DrWavImporterTest::mono32f() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono32f.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoFloat);
@@ -444,7 +444,7 @@ void DrWavImporterTest::mono32f() {
 }
 
 void DrWavImporterTest::stereo32f() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo32f.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoFloat);
@@ -458,7 +458,7 @@ void DrWavImporterTest::stereo32f() {
 }
 
 void DrWavImporterTest::stereo64f() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo64f.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoDouble);
@@ -475,7 +475,7 @@ void DrWavImporterTest::stereo64f() {
 }
 
 void DrWavImporterTest::extensionsALaw() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extensionALaw.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoALaw);
@@ -489,7 +489,7 @@ void DrWavImporterTest::extensionsALaw() {
 }
 
 void DrWavImporterTest::extensionsMuLaw() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extensionMuLaw.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoMuLaw);
@@ -503,7 +503,7 @@ void DrWavImporterTest::extensionsMuLaw() {
 }
 
 void DrWavImporterTest::extensions12() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extension12.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
@@ -517,7 +517,7 @@ void DrWavImporterTest::extensions12() {
 }
 
 void DrWavImporterTest::extensions16() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extension16.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
@@ -531,7 +531,7 @@ void DrWavImporterTest::extensions16() {
 }
 
 void DrWavImporterTest::extensions24() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extension24.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoFloat);
@@ -546,7 +546,7 @@ void DrWavImporterTest::extensions24() {
 }
 
 void DrWavImporterTest::extensions32() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extension32.wav")));
 
     {
@@ -565,7 +565,7 @@ void DrWavImporterTest::extensions32() {
 }
 
 void DrWavImporterTest::extensions32f() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extension32f.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoFloat);
@@ -580,7 +580,7 @@ void DrWavImporterTest::extensions32f() {
 }
 
 void DrWavImporterTest::extensions64f() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "extension64f.wav")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoDouble);

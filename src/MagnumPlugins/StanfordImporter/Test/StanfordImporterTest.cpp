@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Math/Vector3.h>
@@ -106,7 +107,7 @@ StanfordImporterTest::StanfordImporterTest() {
 }
 
 void StanfordImporterTest::invalidSignature() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -116,7 +117,7 @@ void StanfordImporterTest::invalidSignature() {
 }
 
 void StanfordImporterTest::invalidFormat() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -126,7 +127,7 @@ void StanfordImporterTest::invalidFormat() {
 }
 
 void StanfordImporterTest::unsupportedFormat() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -136,7 +137,7 @@ void StanfordImporterTest::unsupportedFormat() {
 }
 
 void StanfordImporterTest::missingFormat() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -146,7 +147,7 @@ void StanfordImporterTest::missingFormat() {
 }
 
 void StanfordImporterTest::unknownLine() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -156,7 +157,7 @@ void StanfordImporterTest::unknownLine() {
 }
 
 void StanfordImporterTest::unknownElement() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -166,7 +167,7 @@ void StanfordImporterTest::unknownElement() {
 }
 
 void StanfordImporterTest::unexpectedProperty() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -176,7 +177,7 @@ void StanfordImporterTest::unexpectedProperty() {
 }
 
 void StanfordImporterTest::invalidVertexProperty() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -186,7 +187,7 @@ void StanfordImporterTest::invalidVertexProperty() {
 }
 
 void StanfordImporterTest::invalidVertexType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -196,7 +197,7 @@ void StanfordImporterTest::invalidVertexType() {
 }
 
 void StanfordImporterTest::unknownFaceProperty() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -206,7 +207,7 @@ void StanfordImporterTest::unknownFaceProperty() {
 }
 
 void StanfordImporterTest::invalidFaceSizeType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -216,7 +217,7 @@ void StanfordImporterTest::invalidFaceSizeType() {
 }
 
 void StanfordImporterTest::invalidFaceIndexType() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -226,7 +227,7 @@ void StanfordImporterTest::invalidFaceIndexType() {
 }
 
 void StanfordImporterTest::incompleteVertex() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -236,7 +237,7 @@ void StanfordImporterTest::incompleteVertex() {
 }
 
 void StanfordImporterTest::incompleteFace() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -246,7 +247,7 @@ void StanfordImporterTest::incompleteFace() {
 }
 
 void StanfordImporterTest::invalidFaceSize() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -256,7 +257,7 @@ void StanfordImporterTest::invalidFaceSize() {
 }
 
 void StanfordImporterTest::shortFile() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -283,7 +284,7 @@ const std::vector<Vector3> positions{
 };
 
 void StanfordImporterTest::empty() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "empty.ply")));
 
@@ -294,7 +295,7 @@ void StanfordImporterTest::empty() {
 }
 
 void StanfordImporterTest::common() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
 
@@ -305,7 +306,7 @@ void StanfordImporterTest::common() {
 }
 
 void StanfordImporterTest::bigEndian() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "big-endian.ply")));
 
@@ -316,7 +317,7 @@ void StanfordImporterTest::bigEndian() {
 }
 
 void StanfordImporterTest::crlf() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "crlf.ply")));
 
@@ -327,7 +328,7 @@ void StanfordImporterTest::crlf() {
 }
 
 void StanfordImporterTest::ignoredVertexComponents() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "ignored-vertex-components.ply")));
 

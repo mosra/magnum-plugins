@@ -165,7 +165,7 @@ class MAGNUM_COLLADAIMPORTER_EXPORT CORRADE_DEPRECATED("scheduled for removal, c
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
         MAGNUM_COLLADAIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
-        MAGNUM_COLLADAIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
 
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doMesh3DForName(const std::string& name) override;
@@ -175,7 +175,7 @@ class MAGNUM_COLLADAIMPORTER_EXPORT CORRADE_DEPRECATED("scheduled for removal, c
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
         std::string doMaterialName(UnsignedInt id) override;
-        MAGNUM_COLLADAIMPORTER_LOCAL std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
+        MAGNUM_COLLADAIMPORTER_LOCAL Containers::Pointer<AbstractMaterialData> doMaterial(UnsignedInt id) override;
 
         MAGNUM_COLLADAIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_COLLADAIMPORTER_LOCAL Int doTextureForName(const std::string& name) override;

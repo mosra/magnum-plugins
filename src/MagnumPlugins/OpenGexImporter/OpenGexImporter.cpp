@@ -120,7 +120,7 @@ void gatherNodes(OpenDdl::Structure node, std::vector<OpenDdl::Structure>& nodes
 }
 
 void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    std::unique_ptr<Document> d{new Document};
+    Containers::Pointer<Document> d{Containers::InPlaceInit};
 
     /* Parse the document */
     if(!d->document.parse(data, OpenGex::structures, OpenGex::properties)) return;
@@ -312,7 +312,7 @@ namespace {
     }
 }
 
-std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) {
+Containers::Pointer<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) {
     const OpenDdl::Structure& node = _d->nodes[id];
 
     /* Compute total transformation */
@@ -439,7 +439,7 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
             if(const auto material = materialRef->firstChildOf(OpenDdl::Type::Reference).asReference())
                 materialId = structureId(_d->materials, *material);
 
-        return std::unique_ptr<ObjectData3D>{new MeshObjectData3D{children, transformation, meshId, materialId, &node}};
+        return Containers::pointer(new MeshObjectData3D{children, transformation, meshId, materialId, &node});
 
     /* Camera object */
     } else if(node.identifier() == OpenGex::CameraNode) {
@@ -451,7 +451,7 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
         }
         const UnsignedInt cameraId = structureId(_d->cameras, *camera);
 
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId, &node}};
+        return Containers::pointer(new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId, &node});
 
     /* Light object */
     } else if(node.identifier() == OpenGex::LightNode) {
@@ -463,12 +463,12 @@ std::unique_ptr<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) 
         }
         const UnsignedInt lightId = structureId(_d->lights, *light);
 
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, lightId, &node}};
+        return Containers::pointer(new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, lightId, &node});
     }
 
     /* Bone or empty object otherwise */
     /** @todo support for bone nodes */
-    return std::unique_ptr<ObjectData3D>{new ObjectData3D{children, transformation, &node}};
+    return Containers::pointer(new ObjectData3D{children, transformation, &node});
 }
 
 namespace {
@@ -734,7 +734,7 @@ std::string OpenGexImporter::doMaterialName(const UnsignedInt id) {
     return name ? name->firstChild().as<std::string>() : "";
 }
 
-std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const UnsignedInt id) {
+Containers::Pointer<AbstractMaterialData> OpenGexImporter::doMaterial(const UnsignedInt id) {
     const OpenDdl::Structure& material = _d->materials[id];
 
     /* Textures */
@@ -777,13 +777,16 @@ std::unique_ptr<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsigned
     }
 
     /* Put things together */
-    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData{flags, MaterialAlphaMode::Opaque, 0.5f, shininess, &material}};
+    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags, MaterialAlphaMode::Opaque, 0.5f, shininess, &material};
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
         data->diffuseTexture() = diffuseTexture;
     else data->diffuseColor() = diffuseColor;
     if(flags & PhongMaterialData::Flag::SpecularTexture)
         data->specularTexture() = specularTexture;
     else data->specularColor() = specularColor;
+
+    /* Needs std::move on GCC 4.8 and Clang 3.8 so it can properly upcast the
+       pointer. */
     return std::move(data);
 }
 

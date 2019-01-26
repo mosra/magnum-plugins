@@ -138,8 +138,7 @@ class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
 
     private:
         struct File;
-
-        std::unique_ptr<File> _f;
+        Containers::Pointer<File> _f;
 };
 
 }}

@@ -56,7 +56,7 @@ StbTrueTypeFontGLTest::StbTrueTypeFontGLTest() {
 }
 
 void StbTrueTypeFontGLTest::properties() {
-    std::unique_ptr<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
     CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     CORRADE_COMPARE(font->size(), 16.0f);
@@ -78,7 +78,7 @@ void StbTrueTypeFontGLTest::properties() {
 }
 
 void StbTrueTypeFontGLTest::layout() {
-    std::unique_ptr<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
     CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     /* Fill the cache with some fake glyphs */
@@ -86,7 +86,7 @@ void StbTrueTypeFontGLTest::layout() {
     cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
     cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
 
-    std::unique_ptr<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
+    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
     CORRADE_VERIFY(layouter);
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 
@@ -143,7 +143,7 @@ void StbTrueTypeFontGLTest::layout() {
 }
 
 void StbTrueTypeFontGLTest::fillGlyphCache() {
-    std::unique_ptr<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
     CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     /* Just testing that nothing crashes, asserts or errors */

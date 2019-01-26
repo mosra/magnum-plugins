@@ -29,11 +29,10 @@
 #include <cstring>
 #include <algorithm>
 #include <unordered_map>
-
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
-
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Vector.h>
 #include <Magnum/PixelFormat.h>
@@ -390,7 +389,7 @@ std::string AssimpImporter::doObject3DName(const UnsignedInt id) {
     return _f->nodes[id]->mName.C_Str();
 }
 
-std::unique_ptr<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
+Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
     /** @todo support for bone nodes */
     const aiNode* node = _f->nodes[id];
 
@@ -409,13 +408,13 @@ std::unique_ptr<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
         const int index = (*instance).second.second;
         if(type == ObjectInstanceType3D::Mesh) {
             const aiMesh* mesh = _f->scene->mMeshes[index];
-            return std::unique_ptr<MeshObjectData3D>(new MeshObjectData3D(children, transformation, index, mesh->mMaterialIndex, node));
+            return Containers::pointer(new MeshObjectData3D(children, transformation, index, mesh->mMaterialIndex, node));
         }
 
-        return std::unique_ptr<ObjectData3D>{new ObjectData3D(children, transformation, type, index, node)};
+        return Containers::pointer(new ObjectData3D(children, transformation, type, index, node));
     }
 
-    return std::unique_ptr<ObjectData3D>{new ObjectData3D(children, transformation, node)};
+    return Containers::pointer(new ObjectData3D(children, transformation, node));
 }
 
 UnsignedInt AssimpImporter::doLightCount() const {
@@ -535,7 +534,7 @@ std::string AssimpImporter::doMaterialName(const UnsignedInt id) {
     return name.C_Str();
 }
 
-std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedInt id) {
+Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedInt id) {
     /* Put things together */
     const aiMaterial* mat = _f->scene->mMaterials[id];
 
@@ -563,7 +562,7 @@ std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedI
     /* Key always present, default 0.0f */
     mat->Get(AI_MATKEY_SHININESS, shininess);
 
-    std::unique_ptr<PhongMaterialData> data{new PhongMaterialData(flags, MaterialAlphaMode::Opaque, 0.5f, shininess, mat)};
+    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags, MaterialAlphaMode::Opaque, 0.5f, shininess, mat};
 
     /* Key always present, default black */
     mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
@@ -580,6 +579,8 @@ std::unique_ptr<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedI
     if(!(flags & PhongMaterialData::Flag::SpecularTexture))
         data->specularColor() = Color3(color);
 
+    /* Needs std::move on GCC 4.8 and Clang 3.8 so it can properly upcast the
+       pointer. */
     return std::move(data);
 }
 

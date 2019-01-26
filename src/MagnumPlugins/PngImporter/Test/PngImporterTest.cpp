@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
@@ -71,7 +72,7 @@ PngImporterTest::PngImporterTest() {
 }
 
 void PngImporterTest::gray() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -92,7 +93,7 @@ void PngImporterTest::gray() {
 }
 
 void PngImporterTest::rgb() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -122,7 +123,7 @@ void PngImporterTest::rgba() {
     auto&& data = RgbaTestData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -148,7 +149,7 @@ void PngImporterTest::rgba() {
 }
 
 void PngImporterTest::useTwice() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Verify that the file is rewound for second use */

@@ -208,7 +208,7 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImport
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
-        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
 
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doLightCount() const override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
@@ -219,7 +219,7 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImport
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
-        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL std::unique_ptr<AbstractMaterialData> doMaterial(UnsignedInt id) override;
+        MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Containers::Pointer<AbstractMaterialData> doMaterial(UnsignedInt id) override;
 
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
@@ -229,7 +229,7 @@ class MAGNUM_TRADE_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImport
 
         MAGNUM_TRADE_OPENGEXIMPORTER_LOCAL const void* doImporterState() const override;
 
-        std::unique_ptr<Document> _d;
+        Containers::Pointer<Document> _d;
 };
 
 }}

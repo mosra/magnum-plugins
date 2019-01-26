@@ -68,7 +68,7 @@ auto StbTrueTypeFont::doFeatures() const -> Features { return Feature::OpenData;
 bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 
 auto StbTrueTypeFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
-    std::unique_ptr<Font> font{new Font};
+    Containers::Pointer<Font> font{Containers::InPlaceInit};
 
     /* TrueType fonts are memory-mapped, thus we need to preserve the data for
        the whole plugin lifetime */
@@ -164,7 +164,7 @@ void StbTrueTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& 
     cache.setImage({}, image);
 }
 
-std::unique_ptr<AbstractLayouter> StbTrueTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
     /* Get glyph codes from characters */
     std::vector<Int> glyphs;
     glyphs.reserve(text.size());
@@ -174,7 +174,7 @@ std::unique_ptr<AbstractLayouter> StbTrueTypeFont::doLayout(const GlyphCache& ca
         glyphs.push_back(stbtt_FindGlyphIndex(&_font->info, codepoint));
     }
 
-    return std::unique_ptr<AbstractLayouter>{new Layouter{*_font, cache, this->size(), size, std::move(glyphs)}};
+    return Containers::pointer(new Layouter{*_font, cache, this->size(), size, std::move(glyphs)});
 }
 
 StbTrueTypeFont::Layouter::Layouter(Font& font, const GlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize{fontSize}, _textSize{textSize}, _glyphs{std::move(glyphs)} {}

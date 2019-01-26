@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <png.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Magnum/PixelFormat.h>

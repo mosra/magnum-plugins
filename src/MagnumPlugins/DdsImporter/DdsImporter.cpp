@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <vector>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
@@ -486,7 +487,7 @@ bool DdsImporter::doIsOpened() const { return !!_f; }
 void DdsImporter::doClose() { _f = nullptr; }
 
 void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    std::unique_ptr<File> f{new File};
+    Containers::Pointer<File> f{new File};
 
     /* clear previous data */
     f->in = Containers::Array<char>(data.size());

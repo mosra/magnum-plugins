@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
@@ -80,7 +81,7 @@ StbImageImporterTest::StbImageImporterTest() {
 }
 
 void StbImageImporterTest::grayPng() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -95,7 +96,7 @@ void StbImageImporterTest::grayPng() {
 }
 
 void StbImageImporterTest::grayJpeg() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -110,7 +111,7 @@ void StbImageImporterTest::grayJpeg() {
 }
 
 void StbImageImporterTest::rgbPng() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -129,7 +130,7 @@ void StbImageImporterTest::rgbPng() {
 }
 
 void StbImageImporterTest::rgbJpeg() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -149,7 +150,7 @@ void StbImageImporterTest::rgbJpeg() {
 }
 
 void StbImageImporterTest::rgbHdr() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -169,7 +170,7 @@ void StbImageImporterTest::rgbaPng() {
     auto&& data = RgbaPngTestData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -188,7 +189,7 @@ void StbImageImporterTest::rgbaPng() {
 }
 
 void StbImageImporterTest::useTwice() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Verify that the file is rewound for second use */

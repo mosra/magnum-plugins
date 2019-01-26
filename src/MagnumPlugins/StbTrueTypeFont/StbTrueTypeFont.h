@@ -112,9 +112,9 @@ class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
         MAGNUM_STBTRUETYPEFONT_LOCAL UnsignedInt doGlyphId(char32_t character) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL Vector2 doGlyphAdvance(UnsignedInt glyph) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL void doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) override;
-        MAGNUM_STBTRUETYPEFONT_LOCAL std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL Containers::Pointer<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 
-        std::unique_ptr<Font> _font;
+        Containers::Pointer<Font> _font;
 };
 
 }}

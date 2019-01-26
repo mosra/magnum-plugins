@@ -24,6 +24,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
@@ -67,7 +68,7 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
 }
 
 void DevIlImageImporterTest::grayPng() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -82,7 +83,7 @@ void DevIlImageImporterTest::grayPng() {
 }
 
 void DevIlImageImporterTest::grayJpeg() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -97,7 +98,7 @@ void DevIlImageImporterTest::grayJpeg() {
 }
 
 void DevIlImageImporterTest::rgbPng() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -116,7 +117,7 @@ void DevIlImageImporterTest::rgbPng() {
 }
 
 void DevIlImageImporterTest::rgbJpeg() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -136,7 +137,7 @@ void DevIlImageImporterTest::rgbJpeg() {
 }
 
 void DevIlImageImporterTest::rgbaPng() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -155,7 +156,7 @@ void DevIlImageImporterTest::rgbaPng() {
 }
 
 void DevIlImageImporterTest::useTwice() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Verify that the file is rewound for second use */

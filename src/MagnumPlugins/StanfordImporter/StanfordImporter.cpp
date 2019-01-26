@@ -28,6 +28,7 @@
 #include <fstream>
 #include <sstream>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/String.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Magnum/Array.h>
@@ -51,7 +52,7 @@ void StanfordImporter::doClose() { _in = nullptr; }
 
 void StanfordImporter::doOpenFile(const std::string& filename) {
     /* Open file in *binary* mode to avoid broken binary data (need to handle \r manually) */
-    std::unique_ptr<std::istream> in{new std::ifstream{filename, std::ifstream::binary}};
+    Containers::Pointer<std::ifstream> in{Containers::InPlaceInit, filename, std::ifstream::binary};
     if(!in->good()) {
         Error() << "Trade::ObjImporter::openFile(): cannot open file" << filename;
         return;

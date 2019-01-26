@@ -159,7 +159,7 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& cha
     cache.setImage({}, image);
 }
 
-std::unique_ptr<AbstractLayouter> FreeTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
     /* Get glyph codes from characters */
     std::vector<UnsignedInt> glyphs;
     glyphs.reserve(text.size());
@@ -169,7 +169,7 @@ std::unique_ptr<AbstractLayouter> FreeTypeFont::doLayout(const GlyphCache& cache
         glyphs.push_back(FT_Get_Char_Index(ftFont, codepoint));
     }
 
-    return std::unique_ptr<AbstractLayouter>(new FreeTypeLayouter(ftFont, cache, this->size(), size, std::move(glyphs)));
+    return Containers::pointer(new FreeTypeLayouter(ftFont, cache, this->size(), size, std::move(glyphs)));
 }
 
 namespace {

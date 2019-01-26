@@ -339,7 +339,7 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::unique_ptr<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMesh3DForName(const std::string& name) override;
@@ -349,7 +349,7 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMaterialName(const UnsignedInt) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::unique_ptr<AbstractMaterialData> doMaterial(const UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Pointer<AbstractMaterialData> doMaterial(const UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doTextureForName(const std::string& name) override;
@@ -363,7 +363,7 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL const void* doImporterState() const override;
 
-        std::unique_ptr<Document> _d;
+        Containers::Pointer<Document> _d;
 };
 
 }}

@@ -128,7 +128,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         /** @todo Why this can't be defined as local? */
         void doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) override;
 
-        std::unique_ptr<AbstractLayouter> MAGNUM_FREETYPEFONT_LOCAL doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        Containers::Pointer<AbstractLayouter> MAGNUM_FREETYPEFONT_LOCAL doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
 };
 
 }}

@@ -66,7 +66,7 @@ void StbVorbisImporterTest::wrongSignature() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "wrongSignature.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
 }
@@ -75,13 +75,13 @@ void StbVorbisImporterTest::unsupportedChannelCount() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): unsupported channel count 5 with 16 bits per sample\n");
 }
 
 void StbVorbisImporterTest::mono16() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
@@ -93,7 +93,7 @@ void StbVorbisImporterTest::mono16() {
 }
 
 void StbVorbisImporterTest::stereo8() {
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "stereo8.ogg")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);

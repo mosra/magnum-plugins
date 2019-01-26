@@ -29,7 +29,7 @@
  * @brief Class @ref Magnum::Trade::StanfordImporter
  */
 
-#include <memory>
+#include <Corrade/Containers/Pointer.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "MagnumPlugins/StanfordImporter/configure.h"
@@ -88,7 +88,7 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
         MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
-        std::unique_ptr<std::istream> _in;
+        Containers::Pointer<std::istream> _in;
 };
 
 }}

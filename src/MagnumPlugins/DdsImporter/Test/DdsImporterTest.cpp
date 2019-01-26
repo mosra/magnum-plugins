@@ -25,6 +25,7 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
@@ -176,7 +177,7 @@ void DdsImporterTest::unknownCompression() {
 
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(!importer->openData(resource.getRaw("unknown_compression.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown compression DXT4\n");
 }
@@ -187,7 +188,7 @@ void DdsImporterTest::wrongSignature() {
 
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(!importer->openData(resource.getRaw("wrong_signature.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): wrong file signature\n");
 }
@@ -198,7 +199,7 @@ void DdsImporterTest::unknownFormat() {
 
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(!importer->openData(resource.getRaw("unknown_format.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown format\n");
 }
@@ -209,7 +210,7 @@ void DdsImporterTest::insufficientData() {
 
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     auto data = resource.getRaw("rgb_uncompressed.dds");
     CORRADE_VERIFY(!importer->openData(data.prefix(data.size()-1)));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): not enough image data\n");
@@ -218,7 +219,7 @@ void DdsImporterTest::insufficientData() {
 void DdsImporterTest::rgb() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed.dds")));
 
     const char pixels[] = {'\xde', '\xad', '\xb5',
@@ -241,7 +242,7 @@ void DdsImporterTest::rgb() {
 void DdsImporterTest::rgbWithMips() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_mips.dds")));
 
     const char pixels[] = {'\xde', '\xad', '\xb5',
@@ -276,7 +277,7 @@ void DdsImporterTest::rgbWithMips() {
 void DdsImporterTest::rgbVolume() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_volume.dds")));
 
     const char pixels[] = {
@@ -316,7 +317,7 @@ void DdsImporterTest::rgbVolume() {
 void DdsImporterTest::dxt1() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt1.dds")));
 
     const char pixels[] = {'\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'};
@@ -333,7 +334,7 @@ void DdsImporterTest::dxt1() {
 void DdsImporterTest::dxt3() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt3.dds")));
 
     const char pixels[] = {'\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff',
@@ -351,7 +352,7 @@ void DdsImporterTest::dxt3() {
 void DdsImporterTest::dxt5() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt5.dds")));
 
     const char pixels[] = {'\xff', '\xff', '\x49', '\x92', '\x24', '\x49', '\x92', '\x24',
@@ -373,7 +374,7 @@ void DdsImporterTest::dxt10Formats2D() {
 
     Utility::Resource resource{"Dxt10TestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw(file.filename)));
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -389,7 +390,7 @@ void DdsImporterTest::dxt10Formats3D() {
 
     Utility::Resource resource{"Dxt10TestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw(file.filename)));
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
@@ -401,7 +402,7 @@ void DdsImporterTest::dxt10Formats3D() {
 void DdsImporterTest::dxt10Data() {
     Utility::Resource resource{"Dxt10TestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
 
     const char pixels[] = {
         '\xde', '\xad', '\xca', '\xfe',
@@ -424,7 +425,7 @@ void DdsImporterTest::dxt10TooShort() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(!importer->openData(resource.getRaw("too_short_dxt10.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header\n");
 }
@@ -435,7 +436,7 @@ void DdsImporterTest::dxt10UnsupportedFormat() {
 
     Utility::Resource resource{"Dxt10TestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(!importer->openData(resource.getRaw("2D_AYUV.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unsupported DXGI format 100\n");
 }
@@ -443,7 +444,7 @@ void DdsImporterTest::dxt10UnsupportedFormat() {
 void DdsImporterTest::useTwice() {
     Utility::Resource resource{"DdsTestFiles"};
 
-    std::unique_ptr<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt5.dds")));
 
     /* Verify that the file is rewinded for second use */
