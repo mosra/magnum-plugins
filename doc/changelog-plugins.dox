@@ -59,6 +59,7 @@ namespace Magnum {
 -   The `package/msys` directory now contains `PKGBUILD`s for
     [MSYS2](https://www.msys2.org/). See @ref building-plugins-packages-msys
     for more information. See also [mosra/magnum-plugins#50](https://github.com/mosra/magnum-plugins/pull/50).
+-   The bundled `FindAssimp.cmake` module now works under MinGW as well.
 
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
 
