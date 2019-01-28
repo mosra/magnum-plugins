@@ -32,7 +32,7 @@
 #ifdef _MSC_VER
 #include <algorithm> /* For std::min() */
 #endif
-#include <functional>
+#include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
 
 #include "Magnum/OpenDdl/Document.h"
@@ -372,8 +372,8 @@ class MAGNUM_OPENDDL_EXPORT Structure {
 
         explicit Structure(const Document& document, const Document::StructureData& data) noexcept: _document{document}, _data{data} {}
 
-        std::reference_wrapper<const Document> _document;
-        std::reference_wrapper<const Document::StructureData> _data;
+        Containers::Reference<const Document> _document;
+        Containers::Reference<const Document::StructureData> _data;
 };
 
 namespace Implementation {

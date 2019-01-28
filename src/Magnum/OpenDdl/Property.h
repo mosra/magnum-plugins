@@ -29,7 +29,7 @@
  * @brief Class @ref Magnum::OpenDdl::Property
  */
 
-#include <functional>
+#include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
 #include <Magnum/Magnum.h>
 
@@ -95,8 +95,8 @@ class MAGNUM_OPENDDL_EXPORT Property {
 
         explicit Property(const Document& document, std::size_t i) noexcept: _document{document}, _data{document._properties[i]} {}
 
-        std::reference_wrapper<const Document> _document;
-        std::reference_wrapper<const Document::PropertyData> _data;
+        Containers::Reference<const Document> _document;
+        Containers::Reference<const Document::PropertyData> _data;
 };
 
 namespace Implementation {
@@ -147,7 +147,7 @@ class PropertyIterator {
         }
 
     private:
-        std::reference_wrapper<const Document> _document;
+        Containers::Reference<const Document> _document;
         std::size_t _i;
 };
 
@@ -161,7 +161,7 @@ class PropertyList {
         PropertyIterator cend() const { return end(); }
 
     private:
-        std::reference_wrapper<const Document> _document;
+        Containers::Reference<const Document> _document;
         std::size_t _begin, _end;
 };
 
