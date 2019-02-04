@@ -1,3 +1,9 @@
+magnum-plugins (2019.01) unstable; urgency=low
+
+  * Version 2019.01
+
+ -- Vladimír Vondruš <mosra@centrum.cz>  Mon, 04 Feb 2019 18:07:01 +0100
+
 magnum-plugins (2018.10) unstable; urgency=low
 
   * Version 2018.10
