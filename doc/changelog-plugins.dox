@@ -30,9 +30,14 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@section changelog-plugins-latest Changes since 2018.10
+@anchor changelog-plugins-latest
 
-@subsection changelog-plugins-latest-dependencies Dependency changes
+@section changelog-plugins-2019-01 2019.01
+
+Released 2019-02-04, tagged as
+[v2019.01](https://github.com/mosra/magnum-plugins/releases/tag/v2019.01).
+
+@subsection changelog-plugins-2019-01-dependencies Dependency changes
 
 -   Minimal supported GCC version is now 4.8.1, GCC 4.7 is not supported
     anymore. Minimal Clang version is now 3.3, since that's the first version
@@ -44,26 +49,26 @@ namespace Magnum {
     systems (such as Ubuntu 14.04 or Debian 8). See also
     [mosra/magnum#274](https://github.com/mosra/magnum/issues/274).
 
-@subsection changelog-plugins-latest-new New features
+@subsection changelog-plugins-2019-01-new New features
 
 -   New @ref Audio::Faad2Importer "Faad2AudioImporter" plugin for importing
     AAC files using [FAAD2](https://www.audiocoding.com/faad2.html)
 
-@subsection changelog-plugins-latest-changes Changes and improvements
+@subsection changelog-plugins-2019-01-changes Changes and improvements
 
 -   Fixed compatibility of the @ref OpenDdl library with Emscripten 1.38.10
     and newer, which defines @ref std::size_t as @cpp unsigned long @ce instead
     of @cpp unsigned int @ce used previously (it's still a four-byte type,
     though)
 
-@subsection changelog-plugins-latest-buildsystem Build system
+@subsection changelog-plugins-2019-01-buildsystem Build system
 
 -   The `package/msys` directory now contains `PKGBUILD`s for
     [MSYS2](https://www.msys2.org/). See @ref building-plugins-packages-msys
     for more information. See also [mosra/magnum-plugins#50](https://github.com/mosra/magnum-plugins/pull/50).
 -   The bundled `FindAssimp.cmake` module now works under MinGW as well.
 
-@subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
+@subsection changelog-plugins-2019-01-compatibility Potential compatibility breakages, removed APIs
 
 -   Removed `MAGNUMPLUGINS_*_LIBRARIES` and `MAGNUMPLUGINS_*_INCLUDE_DIRS`
     CMake variables, which were deprecated in favor of `MagnumPlugins::*`
