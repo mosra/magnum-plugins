@@ -48,7 +48,9 @@ target_include_directories(JpegImageConverter
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src
     PRIVATE
-        ${JPEG_INCLUDE_DIRS})
+        # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
+        # imported target instead anyway)
+        ${JPEG_INCLUDE_DIR})
 target_link_libraries(JpegImageConverter PUBLIC
     Magnum::Trade
     ${JPEG_LIBRARIES})

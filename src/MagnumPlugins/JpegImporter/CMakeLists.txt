@@ -43,7 +43,10 @@ add_plugin(JpegImporter
 if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(JpegImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(JpegImporter SYSTEM PRIVATE ${JPEG_INCLUDE_DIR})
+target_include_directories(JpegImporter SYSTEM PRIVATE
+    # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
+    # imported target instead anyway)
+    ${JPEG_INCLUDE_DIR})
 target_include_directories(JpegImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
