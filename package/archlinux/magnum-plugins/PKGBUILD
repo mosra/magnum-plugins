@@ -1,8 +1,8 @@
-# Maintainer: Alexander F Rødseth <xyproto@archlinux.org>
+# Maintainer: Alexander F. Rødseth <xyproto@archlinux.org>
 # Contributor: mosra <mosra@centrum.cz>
 
 pkgname=magnum-plugins
-pkgver=2018.10
+pkgver=2019.01
 pkgrel=1
 pkgdesc='Plugins for the Magnum C++11/C++14 graphics engine'
 arch=('x86_64')
@@ -49,4 +49,3 @@ package() {
 }
 
 # vim: ts=2 sw=2 et:
-# getver: no
