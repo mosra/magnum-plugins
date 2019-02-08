@@ -569,6 +569,15 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
     if(!(flags & PhongMaterialData::Flag::AmbientTexture))
         data->ambientColor() = Color3(color);
 
+    /* Assimp 4.1 forces ambient color to white for STL models. That's just
+       plain wrong, so we force it back to black (and emit a warning, so in the
+       very rare case when someone would actually want white ambient, they'll
+       know it got overriden. https://github.com/assimp/assimp/issues/2059 */
+    if(data->ambientColor() == Color4{1.0f}) {
+        Warning{} << "Trade::AssimpImporter::material(): white ambient detected, forcing back to black";
+        data->ambientColor() = Color3{0.0f};
+    }
+
     /* Key always present, default black */
     mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
     if(!(flags & PhongMaterialData::Flag::DiffuseTexture))

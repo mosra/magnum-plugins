@@ -63,7 +63,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         mesh.dae
         points.obj
         scene.dae
-        texture.dae)
+        texture.dae
+        quad.stl)
 target_link_libraries(AssimpImporterTest PRIVATE Assimp::Assimp)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(AssimpImporterTest PRIVATE $<TARGET_FILE_DIR:AssimpImporterTest>)

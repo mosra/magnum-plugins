@@ -157,6 +157,10 @@ Import of animation data is not supported at the moment.
 -   Only materials with shading mode `aiShadingMode_Phong` are supported
 -   Only the first diffuse/specular/ambient texture is loaded
 -   Two-sided property and alpha mode is not imported
+-   For some reason, Assimp 4.1 imports STL models with ambient set to
+    @cpp 0xffffff_srgbf @ce, which causes all other color information to be
+    discarded. If such a case is detected, the ambient is forced back to
+    @cpp 0x000000_srgbf @ce. See also [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059).
 
 @subsection Trade-AssimpImporter-limitations-lights Light import
 

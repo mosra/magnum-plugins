@@ -87,6 +87,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void light();
     void lightUndefined();
     void material();
+    void materialStlWhiteAmbientPatch();
 
     void mesh();
     void pointMesh();
@@ -146,6 +147,7 @@ AssimpImporterTest::AssimpImporterTest() {
 
     addTests({&AssimpImporterTest::lightUndefined,
               &AssimpImporterTest::material,
+              &AssimpImporterTest::materialStlWhiteAmbientPatch,
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
@@ -324,6 +326,41 @@ void AssimpImporterTest::material() {
         CORRADE_COMPARE(importer->materialName(0), "Material");
     }
     CORRADE_COMPARE(importer->materialForName("Ghost"), -1);
+}
+
+void AssimpImporterTest::materialStlWhiteAmbientPatch() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "quad.stl")));
+
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Pointer<Trade::AbstractMaterialData> material;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        material = importer->material(0);
+    }
+
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    {
+        CORRADE_EXPECT_FAIL_IF(version < 401,
+            "Assimp < 4.1 behaves properly regarding STL material ambient");
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): white ambient detected, forcing back to black\n");
+    }
+
+    auto& phongMaterial = static_cast<Trade::PhongMaterialData&>(*material);
+    CORRADE_COMPARE(phongMaterial.flags(), Trade::PhongMaterialData::Flags{});
+    /* WHY SO COMPLICATED, COME ON */
+    if(version < 401)
+        CORRADE_COMPARE(phongMaterial.ambientColor(), Color3{0.05f});
+    else
+        CORRADE_COMPARE(phongMaterial.ambientColor(), 0x000000_srgbf);
+
+    CORRADE_COMPARE(phongMaterial.specularColor(), 0xffffff_srgbf);
+    CORRADE_COMPARE(phongMaterial.diffuseColor(), 0xffffff_srgbf);
+    CORRADE_COMPARE(phongMaterial.shininess(), 0.0f);
 }
 
 void AssimpImporterTest::mesh() {
