@@ -360,6 +360,7 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
 
     CORRADE_COMPARE(phongMaterial.specularColor(), 0xffffff_srgbf);
     CORRADE_COMPARE(phongMaterial.diffuseColor(), 0xffffff_srgbf);
+    /* This value is not supplied by Assimp for STL models, so we set it to 0 */
     CORRADE_COMPARE(phongMaterial.shininess(), 0.0f);
 }
 

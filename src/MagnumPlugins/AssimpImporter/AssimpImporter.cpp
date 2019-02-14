@@ -547,7 +547,6 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
     }
 
     PhongMaterialData::Flags flags;
-    Float shininess;
     aiString texturePath;
     aiColor3D color;
 
@@ -559,7 +558,9 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
         flags |= PhongMaterialData::Flag::SpecularTexture;
     /** @todo many more types supported in assimp */
 
-    /* Key always present, default 0.0f */
+    /* Shininess is *not* always present (for example in STL models), default
+       to 0 */
+    Float shininess = 0.0f;
     mat->Get(AI_MATKEY_SHININESS, shininess);
 
     Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags, MaterialAlphaMode::Opaque, 0.5f, shininess, mat};

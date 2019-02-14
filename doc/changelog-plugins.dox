@@ -48,6 +48,12 @@ namespace Magnum {
     plugin is not affected by this. See also
     [mosra/magnum-plugins#51](https://github.com/mosra/magnum-plugins/issues/51).
 
+@subsection changelog-plugins-latest-bugfixes Bug fixes
+
+-   @ref Trade::AssimpImporter "AssimpImporter" was returning a random value
+    for material shininess with STL models, now it correctly returns
+    @cpp 0.0f @ce when the shininess value is not present.
+
 @section changelog-plugins-2019-01 2019.01
 
 Released 2019-02-04, tagged as
