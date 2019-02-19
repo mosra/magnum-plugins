@@ -142,7 +142,7 @@ There are also ArchLinux packages for
 directory. Similarly to ArchLinux, there is one package in the
 `package/msys/magnum-plugins` directory, which will download and package latest
 stable release; and then a development `PKGBUILD`, allowing you to package and
-install the currently checked out source tree. Both depend on a corresponding
+install the currently checked out source tree. Both depend on corresponding
 @ref building-corrade-packages-msys "Corrade" and
 @ref building-packages-msys "Magnum" MSYS2 packages. Example usage:
 
@@ -164,6 +164,9 @@ makepkg-mingw -fp PKGBUILD
 which will build both a 32bit and a 64bit version. See the
 [MSYS2 Wiki](https://github.com/msys2/msys2/wiki/Creating-Packages) for more
 information.
+
+There are also MSYS2 packages for
+@ref building-integration-packages-msys "Magnum Integration".
 
 @subsection building-plugins-packages-deb Packages for Debian, Ubuntu and derivatives
 
