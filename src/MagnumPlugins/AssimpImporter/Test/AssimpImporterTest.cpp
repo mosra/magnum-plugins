@@ -358,8 +358,14 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     else
         CORRADE_COMPARE(phongMaterial.ambientColor(), 0x000000_srgbf);
 
-    CORRADE_COMPARE(phongMaterial.specularColor(), 0xffffff_srgbf);
-    CORRADE_COMPARE(phongMaterial.diffuseColor(), 0xffffff_srgbf);
+    /* ASS IMP WHAT?! WHY 3.2 is different from 3.0 and 4.0?! */
+    if(version == 302) {
+        CORRADE_COMPARE(phongMaterial.specularColor(), Color3{0.6f});
+        CORRADE_COMPARE(phongMaterial.diffuseColor(), Color3{0.6f});
+    } else {
+        CORRADE_COMPARE(phongMaterial.specularColor(), 0xffffff_srgbf);
+        CORRADE_COMPARE(phongMaterial.diffuseColor(), 0xffffff_srgbf);
+    }
     /* This value is not supplied by Assimp for STL models, so we set it to 0 */
     CORRADE_COMPARE(phongMaterial.shininess(), 0.0f);
 }
@@ -535,8 +541,8 @@ void AssimpImporterTest::sceneCollapsedNode() {
     {
         const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
         /** @todo Possibly works with other versions (definitely not 3.0) */
-        CORRADE_EXPECT_FAIL_IF(version < 302,
-            "Assimp 3.1 and below doesn't use name of the root node for collapsed nodes.");
+        CORRADE_EXPECT_FAIL_IF(version <= 302,
+            "Assimp 3.2 and below doesn't use name of the root node for collapsed nodes.");
         CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
         CORRADE_COMPARE(importer->object3DName(0), "Scene");
     }
@@ -564,9 +570,9 @@ void AssimpImporterTest::image() {
 
 void AssimpImporterTest::imageNotFound() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
-        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+    /** @todo Possibly fails on more versions (definitely w/ 3.0 and 3.2) */
+    if(version <= 302)
+        CORRADE_SKIP("Assimp <= 3.2 would SEGFAULT on this test.");
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
