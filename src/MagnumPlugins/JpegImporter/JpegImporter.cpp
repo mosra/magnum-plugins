@@ -70,15 +70,16 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     struct ErrorManager {
         jpeg_error_mgr jpegErrorManager;
         std::jmp_buf setjmpBuffer;
+        char message[JMSG_LENGTH_MAX]{};
     } errorManager;
     file.err = jpeg_std_error(&errorManager.jpegErrorManager);
     errorManager.jpegErrorManager.error_exit = [](j_common_ptr info) {
-        info->err->output_message(info);
-        std::longjmp(reinterpret_cast<ErrorManager*>(info->err)->setjmpBuffer, 1);
+        auto& errorManager = *reinterpret_cast<ErrorManager*>(info->err);
+        info->err->format_message(info, errorManager.message);
+        std::longjmp(errorManager.setjmpBuffer, 1);
     };
     if(setjmp(errorManager.setjmpBuffer)) {
-        Error() << "Trade::JpegImporter::image2D(): error while reading JPEG file";
-
+        Error() << "Trade::JpegImporter::image2D(): error while reading JPEG file:" << errorManager.message;
         jpeg_destroy_decompress(&file);
         return Containers::NullOpt;
     }
