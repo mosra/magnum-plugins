@@ -73,7 +73,9 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
     } errorManager;
     file.err = jpeg_std_error(&errorManager.jpegErrorManager);
     errorManager.jpegErrorManager.error_exit = [](j_common_ptr info) {
-        info->err->output_message(info);
+        char buffer[JMSG_LENGTH_MAX];
+        info->err->format_message(info, buffer);
+        Error{} << buffer;
         std::longjmp(reinterpret_cast<ErrorManager*>(info->err)->setjmpBuffer, 1);
     };
     if(setjmp(errorManager.setjmpBuffer)) {
