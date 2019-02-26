@@ -63,6 +63,8 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
 
     ILboolean success = ilLoadL(IL_TYPE_UNKNOWN, _in, _in.size());
     if(success == IL_FALSE) {
+        /* iluGetString() returns empty string for 0x512, which is even more
+           useless than just returning the error ID */
         Error() << "Trade::DevIlImageImporter::image2D(): cannot open the image:" << ilGetError();
         return Containers::NullOpt;
     }
@@ -123,6 +125,8 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
     if(rgba_needed) {
         success = ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
         if(success == IL_FALSE) {
+            /* iluGetString() returns empty string for 0x512, which is even
+               more useless than just returning the error ID */
             Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image: " << ilGetError();
             return Containers::NullOpt;
         }
