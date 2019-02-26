@@ -45,6 +45,9 @@ struct DevIlImageImporterTest: TestSuite::Tester {
     void rgbJpeg();
     void rgbaPng();
 
+    void bgrTga();
+    void bgraTga();
+
     void useTwice();
 
     /* Explicitly forbid system-wide plugin dependencies */
@@ -57,6 +60,9 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
               &DevIlImageImporterTest::rgbPng,
               &DevIlImageImporterTest::rgbJpeg,
               &DevIlImageImporterTest::rgbaPng,
+
+              &DevIlImageImporterTest::bgrTga,
+              &DevIlImageImporterTest::bgraTga,
 
               &DevIlImageImporterTest::useTwice});
 
@@ -152,6 +158,54 @@ void DevIlImageImporterTest::rgbaPng() {
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
         '\xde', '\xad', '\xb5', '\xff'}}),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+}
+
+void DevIlImageImporterTest::bgrTga() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+
+    /* Copy of TgaImporterTest::colorBits24() */
+    constexpr char data[] = {
+        0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 3, 0, 24, 0,
+        1, 2, 3, 2, 3, 4,
+        3, 4, 5, 4, 5, 6,
+        5, 6, 7, 6, 7, 8
+    };
+    CORRADE_VERIFY(importer->openData(data));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+        3, 2, 1, '\xff', 4, 3, 2, '\xff',
+        5, 4, 3, '\xff', 6, 5, 4, '\xff',
+        7, 6, 5, '\xff', 8, 7, 6, '\xff'}}),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+}
+
+void DevIlImageImporterTest::bgraTga() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+
+    /* Copy of TgaImporterTest::colorBits32() */
+    constexpr char data[] = {
+        0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 3, 0, 32, 0,
+        1, 2, 3, 4, 2, 3, 4, 5,
+        3, 4, 5, 6, 4, 5, 6, 7,
+        5, 6, 7, 8, 6, 7, 8, 9
+    };
+    CORRADE_VERIFY(importer->openData(data));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+        3, 2, 1, 4, 4, 3, 2, 5,
+        5, 4, 3, 6, 6, 5, 4, 7,
+        7, 6, 5, 8, 8, 7, 6, 9}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 

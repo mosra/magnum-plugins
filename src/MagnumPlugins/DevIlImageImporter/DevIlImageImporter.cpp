@@ -69,8 +69,6 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
         return Containers::NullOpt;
     }
 
-    ILubyte *data = ilGetData();
-
     Vector2i size;
     size.x() = ilGetInteger(IL_IMAGE_WIDTH);
     size.y() = ilGetInteger(IL_IMAGE_HEIGHT);
@@ -144,7 +142,7 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
 
     /* Copy the data into array that is owned by us and not by IL */
     Containers::Array<char> imageData{std::size_t(size.product()*components)};
-    std::copy_n(reinterpret_cast<char*>(data), imageData.size(), imageData.begin());
+    std::copy_n(reinterpret_cast<char*>(ilGetData()), imageData.size(), imageData.begin());
 
     /* Release the texture back to DevIL */
     ilDeleteImages(1, &imgID);

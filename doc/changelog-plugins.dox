@@ -59,6 +59,8 @@ namespace Magnum {
     @cpp 0.0f @ce when the shininess value is not present.
 -   @ref Trade::StbImageImporter "StbImageImporter" was not correctly handling
     image import failures, randomly hitting unreachable code assertions
+-   Fixed @ref Trade::DevIlImageImporter "DevIlImageImporter" BGR(A)-to-RGB(A)
+    conversion to not return random memory
 
 @section changelog-plugins-2019-01 2019.01
 
