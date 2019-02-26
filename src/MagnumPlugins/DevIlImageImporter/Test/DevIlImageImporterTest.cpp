@@ -175,13 +175,13 @@ void DevIlImageImporterTest::bgrTga() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
-        3, 2, 1, '\xff', 4, 3, 2, '\xff',
-        5, 4, 3, '\xff', 6, 5, 4, '\xff',
-        7, 6, 5, '\xff', 8, 7, 6, '\xff'}}),
+        3, 2, 1, 4, 3, 2,
+        5, 4, 3, 6, 5, 4,
+        7, 6, 5, 8, 7, 6}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 

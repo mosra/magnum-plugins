@@ -137,8 +137,10 @@ This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
     public use.
 
 The images are imported as @ref PixelFormat::R8Unorm,
-@ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. BGR/BGRA and all other formats will be converted to
-@ref PixelFormat::RGBA8Unorm. Images are imported with default
+@ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
+@ref PixelFormat::RGBA8Unorm. BGR/BGRA will be converted to
+@ref PixelFormat::RGB8Unorm / @ref PixelFormat::RGBA8Unorm, all other formats
+to @ref PixelFormat::RGBA8Unorm. Images are imported with default
 @ref PixelStorage parameters except for alignment, which may be changed to `1`
 if the data require it.
 */

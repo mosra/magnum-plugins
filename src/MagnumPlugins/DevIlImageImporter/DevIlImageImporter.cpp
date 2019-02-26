@@ -92,12 +92,14 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
         /* BGR */
         case IL_BGR:
             rgbaNeeded = true;
+            format = PixelFormat::RGB8Unorm;
             components = 3;
             break;
 
         /* BGRA */
         case IL_BGRA:
             rgbaNeeded = true;
+            format = PixelFormat::RGBA8Unorm;
             components = 4;
             break;
 
@@ -113,23 +115,19 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
             components = 4;
             break;
 
-        /* Convert to RGBA */
+        /* No idea, convert to RGBA */
         default:
-            components = 0;
+            format = PixelFormat::RGBA8Unorm;
+            components = 4;
             rgbaNeeded = true;
     }
 
-    /* If the format isn't one we recognize, convert to RGBA */
-    if(rgbaNeeded) {
-        if(!ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE)) {
-            /* iluGetString() returns empty string for 0x512, which is even
-               more useless than just returning the error ID */
-            Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image: " << ilGetError();
-            return Containers::NullOpt;
-        }
-
-        format = PixelFormat::RGBA8Unorm;
-        components = 4;
+    /* If the format isn't one we recognize, convert to RGB(A) */
+    if(rgbaNeeded && !ilConvertImage(components == 3 ? IL_RGB : IL_RGBA, IL_UNSIGNED_BYTE)) {
+        /* iluGetString() returns empty string for 0x512, which is even
+           more useless than just returning the error ID */
+        Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image:" << ilGetError();
+        return Containers::NullOpt;
     }
 
     /* Flip the image to match OpenGL's conventions */

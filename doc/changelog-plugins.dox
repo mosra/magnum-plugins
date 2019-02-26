@@ -43,6 +43,8 @@ namespace Magnum {
     @ref Corrade::Utility::Error, allowing it to be redirected or suppressed
     consistently to other plugin implementations (see
     [mosra/magnum-plugins#53](https://github.com/mosra/magnum-plugins/pull/53))
+-   @ref Trade::DevIlImageImporter "DevIlImageImporter" now converts BGR data
+    to RGB instead of expanding them to RGBA
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
