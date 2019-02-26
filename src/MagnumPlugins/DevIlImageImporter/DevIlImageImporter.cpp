@@ -61,24 +61,22 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
     ilGenImages(1, &imgID);
     ilBindImage(imgID);
 
-    ILboolean success = ilLoadL(IL_TYPE_UNKNOWN, _in, _in.size());
-    if(success == IL_FALSE) {
+    /* So we can use the shorter if(!ilFoo()) */
+    static_assert(!IL_FALSE, "IL_FALSE doesn't have a zero value");
+
+    if(!ilLoadL(IL_TYPE_UNKNOWN, _in, _in.size())) {
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
         Error() << "Trade::DevIlImageImporter::image2D(): cannot open the image:" << ilGetError();
         return Containers::NullOpt;
     }
 
-    Vector2i size;
-    size.x() = ilGetInteger(IL_IMAGE_WIDTH);
-    size.y() = ilGetInteger(IL_IMAGE_HEIGHT);
+    const Vector2i size{ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT)};
 
-    ILint ilFormat = ilGetInteger(IL_IMAGE_FORMAT);
-    int components = 0;
-
-    bool rgba_needed = false;
+    Int components;
+    bool rgbaNeeded = false;
     PixelFormat format;
-    switch(ilFormat) {
+    switch(ilGetInteger(IL_IMAGE_FORMAT)) {
         /* Grayscale */
         case IL_LUMINANCE:
             format = PixelFormat::R8Unorm;
@@ -93,13 +91,13 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
 
         /* BGR */
         case IL_BGR:
-            rgba_needed = true;
+            rgbaNeeded = true;
             components = 3;
             break;
 
         /* BGRA */
         case IL_BGRA:
-            rgba_needed = true;
+            rgbaNeeded = true;
             components = 4;
             break;
 
@@ -116,13 +114,14 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
             break;
 
         /* Convert to RGBA */
-        default: rgba_needed = true;
+        default:
+            components = 0;
+            rgbaNeeded = true;
     }
 
     /* If the format isn't one we recognize, convert to RGBA */
-    if(rgba_needed) {
-        success = ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
-        if(success == IL_FALSE) {
+    if(rgbaNeeded) {
+        if(!ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE)) {
             /* iluGetString() returns empty string for 0x512, which is even
                more useless than just returning the error ID */
             Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image: " << ilGetError();
