@@ -24,6 +24,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -38,6 +39,8 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct DevIlImageImporterTest: TestSuite::Tester {
     explicit DevIlImageImporterTest();
+
+    void invalid();
 
     void grayPng();
     void grayJpeg();
@@ -55,7 +58,9 @@ struct DevIlImageImporterTest: TestSuite::Tester {
 };
 
 DevIlImageImporterTest::DevIlImageImporterTest() {
-    addTests({&DevIlImageImporterTest::grayPng,
+    addTests({&DevIlImageImporterTest::invalid,
+
+              &DevIlImageImporterTest::grayPng,
               &DevIlImageImporterTest::grayJpeg,
               &DevIlImageImporterTest::rgbPng,
               &DevIlImageImporterTest::rgbJpeg,
@@ -71,6 +76,17 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
     #ifdef DEVILIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(DEVILIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void DevIlImageImporterTest::invalid() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    /* The open does just a memory copy, so it doesn't fail */
+    CORRADE_VERIFY(importer->openData("invalid"));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::image2D(): cannot open the image: 1298\n");
 }
 
 void DevIlImageImporterTest::grayPng() {

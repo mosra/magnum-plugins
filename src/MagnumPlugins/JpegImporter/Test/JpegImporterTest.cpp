@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -38,6 +39,8 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct JpegImporterTest: TestSuite::Tester {
     explicit JpegImporterTest();
 
+    void invalid();
+
     void gray();
     void rgb();
 
@@ -48,7 +51,9 @@ struct JpegImporterTest: TestSuite::Tester {
 };
 
 JpegImporterTest::JpegImporterTest() {
-    addTests({&JpegImporterTest::gray,
+    addTests({&JpegImporterTest::invalid,
+
+              &JpegImporterTest::gray,
               &JpegImporterTest::rgb,
 
               &JpegImporterTest::useTwice});
@@ -58,6 +63,17 @@ JpegImporterTest::JpegImporterTest() {
     #ifdef JPEGIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(JPEGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void JpegImporterTest::invalid() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+    /* The open does just a memory copy, so it doesn't fail */
+    CORRADE_VERIFY(importer->openData("invalid"));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::JpegImporter::image2D(): error while reading JPEG file: Not a JPEG file: starts with 0x69 0x6e\n");
 }
 
 void JpegImporterTest::gray() {
