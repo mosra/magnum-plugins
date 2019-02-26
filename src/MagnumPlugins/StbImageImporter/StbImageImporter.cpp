@@ -75,7 +75,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     if(stbi_is_hdr_from_memory(_in, _in.size())) {
         data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0));
         channelSize = 4;
-        switch(components) {
+        if(data) switch(components) {
             case 1: format = PixelFormat::R32F;         break;
             case 2: format = PixelFormat::RG32F;        break;
             case 3: format = PixelFormat::RGB32F;       break;
@@ -85,7 +85,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
     } else {
         data = stbi_load_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0);
         channelSize = 1;
-        switch(components) {
+        if(data) switch(components) {
             case 1: format = PixelFormat::R8Unorm;      break;
             case 2: format = PixelFormat::RG8Unorm;     break;
             case 3: format = PixelFormat::RGB8Unorm;    break;

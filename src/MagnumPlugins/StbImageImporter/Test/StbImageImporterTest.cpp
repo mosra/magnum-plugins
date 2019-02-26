@@ -23,6 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -38,12 +39,15 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct StbImageImporterTest: TestSuite::Tester {
     explicit StbImageImporterTest();
 
+    void invalid();
+
     void grayPng();
     void grayJpeg();
 
     void rgbPng();
     void rgbJpeg();
     void rgbHdr();
+    void rgbHdrInvalid();
 
     void rgbaPng();
 
@@ -62,12 +66,15 @@ const struct {
 };
 
 StbImageImporterTest::StbImageImporterTest() {
-    addTests({&StbImageImporterTest::grayPng,
+    addTests({&StbImageImporterTest::invalid,
+
+              &StbImageImporterTest::grayPng,
               &StbImageImporterTest::grayJpeg,
 
               &StbImageImporterTest::rgbPng,
               &StbImageImporterTest::rgbJpeg,
-              &StbImageImporterTest::rgbHdr});
+              &StbImageImporterTest::rgbHdr,
+              &StbImageImporterTest::rgbHdrInvalid});
 
     addInstancedTests({&StbImageImporterTest::rgbaPng}, Containers::arraySize(RgbaPngTestData));
 
@@ -78,6 +85,17 @@ StbImageImporterTest::StbImageImporterTest() {
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void StbImageImporterTest::invalid() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    /* The open does just a memory copy, so it doesn't fail */
+    CORRADE_VERIFY(importer->openData("invalid"));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): cannot open the image: unknown image type\n");
 }
 
 void StbImageImporterTest::grayPng() {
@@ -164,6 +182,18 @@ void StbImageImporterTest::rgbHdr() {
             3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
             5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f}}),
         TestSuite::Compare::Container<Containers::ArrayView<const float>>);
+}
+
+void StbImageImporterTest::rgbHdrInvalid() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    /* The open does just a memory copy, so it doesn't fail. Supply just the
+       header so the HDR detection succeeds, but the subsequent import fails. */
+    CORRADE_VERIFY(importer->openData("#?RADIANCE\n"));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): cannot open the image: unsupported format\n");
 }
 
 void StbImageImporterTest::rgbaPng() {
