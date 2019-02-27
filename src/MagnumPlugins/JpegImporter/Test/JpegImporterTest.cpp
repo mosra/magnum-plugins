@@ -44,7 +44,8 @@ struct JpegImporterTest: TestSuite::Tester {
     void gray();
     void rgb();
 
-    void useTwice();
+    void openTwice();
+    void importTwice();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
@@ -56,7 +57,8 @@ JpegImporterTest::JpegImporterTest() {
               &JpegImporterTest::gray,
               &JpegImporterTest::rgb,
 
-              &JpegImporterTest::useTwice});
+              &JpegImporterTest::openTwice,
+              &JpegImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -123,11 +125,20 @@ void JpegImporterTest::rgb() {
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
-void JpegImporterTest::useTwice() {
+void JpegImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void JpegImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
-    /* Verify that the file is rewinded for second use */
+    /* Verify that everything is working the same way on second use */
     {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);

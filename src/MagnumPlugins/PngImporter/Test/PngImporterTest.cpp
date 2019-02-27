@@ -46,7 +46,8 @@ struct PngImporterTest: TestSuite::Tester {
     void rgb();
     void rgba();
 
-    void useTwice();
+    void openTwice();
+    void importTwice();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
@@ -101,7 +102,8 @@ PngImporterTest::PngImporterTest() {
     addInstancedTests({&PngImporterTest::rgb}, Containers::arraySize(RgbData));
     addInstancedTests({&PngImporterTest::rgba}, Containers::arraySize(RgbaData));
 
-    addTests({&PngImporterTest::useTwice});
+    addTests({&PngImporterTest::openTwice,
+              &PngImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -205,11 +207,20 @@ void PngImporterTest::rgba() {
     }}), TestSuite::Compare::Container);
 }
 
-void PngImporterTest::useTwice() {
+void PngImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void PngImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
-    /* Verify that the file is rewound for second use */
+    /* Verify that everything is working the same way on second use */
     {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
