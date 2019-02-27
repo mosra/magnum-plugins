@@ -63,6 +63,8 @@ namespace Magnum {
     image import failures, randomly hitting unreachable code assertions
 -   Fixed @ref Trade::DevIlImageImporter "DevIlImageImporter" BGR(A)-to-RGB(A)
     conversion to not return random memory
+-   @ref Trade::PngImporter "PngImporter" now handles too short files
+    gracefully instead of aborting on an assertion
 
 @section changelog-plugins-2019-01 2019.01
 
