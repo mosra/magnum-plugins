@@ -40,6 +40,7 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct PngImporterTest: TestSuite::Tester {
     explicit PngImporterTest();
 
+    void empty();
     void invalid();
 
     void gray();
@@ -96,8 +97,9 @@ constexpr struct {
 };
 
 PngImporterTest::PngImporterTest() {
-    addInstancedTests({&PngImporterTest::invalid}, Containers::arraySize(InvalidData));
+    addTests({&PngImporterTest::empty});
 
+    addInstancedTests({&PngImporterTest::invalid}, Containers::arraySize(InvalidData));
     addInstancedTests({&PngImporterTest::gray}, Containers::arraySize(GrayData));
     addInstancedTests({&PngImporterTest::rgb}, Containers::arraySize(RgbData));
     addInstancedTests({&PngImporterTest::rgba}, Containers::arraySize(RgbaData));
@@ -110,6 +112,17 @@ PngImporterTest::PngImporterTest() {
     #ifdef PNGIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(PNGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void PngImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
+    CORRADE_COMPARE(out.str(), "Trade::PngImporter::openData(): the file is empty\n");
 }
 
 void PngImporterTest::invalid() {

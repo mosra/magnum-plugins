@@ -39,6 +39,7 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct StbImageImporterTest: TestSuite::Tester {
     explicit StbImageImporterTest();
 
+    void empty();
     void invalid();
 
     void grayPng();
@@ -67,7 +68,8 @@ const struct {
 };
 
 StbImageImporterTest::StbImageImporterTest() {
-    addTests({&StbImageImporterTest::invalid,
+    addTests({&StbImageImporterTest::empty,
+              &StbImageImporterTest::invalid,
 
               &StbImageImporterTest::grayPng,
               &StbImageImporterTest::grayJpeg,
@@ -87,6 +89,17 @@ StbImageImporterTest::StbImageImporterTest() {
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void StbImageImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::openData(): the file is empty\n");
 }
 
 void StbImageImporterTest::invalid() {

@@ -50,6 +50,11 @@ namespace Magnum {
     consistently to other plugin implementations
 -   @ref Trade::DevIlImageImporter "DevIlImageImporter" now converts BGR data
     to RGB instead of expanding them to RGBA
+-   @ref Trade::DevIlImageImporter "DevIlImageImporter",
+    @ref Trade::JpegImporter "JpegImporter",
+    @ref Trade::PngImporter "PngImporter" and
+    @ref Trade::StbImageConverter "StbImageImporter" now properly report an
+    error message when opening an empty file
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

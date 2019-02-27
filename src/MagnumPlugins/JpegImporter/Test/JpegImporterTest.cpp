@@ -39,6 +39,7 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct JpegImporterTest: TestSuite::Tester {
     explicit JpegImporterTest();
 
+    void empty();
     void invalid();
 
     void gray();
@@ -52,7 +53,8 @@ struct JpegImporterTest: TestSuite::Tester {
 };
 
 JpegImporterTest::JpegImporterTest() {
-    addTests({&JpegImporterTest::invalid,
+    addTests({&JpegImporterTest::empty,
+              &JpegImporterTest::invalid,
 
               &JpegImporterTest::gray,
               &JpegImporterTest::rgb,
@@ -65,6 +67,17 @@ JpegImporterTest::JpegImporterTest() {
     #ifdef JPEGIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(JPEGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void JpegImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
+    CORRADE_COMPARE(out.str(), "Trade::JpegImporter::openData(): the file is empty\n");
 }
 
 void JpegImporterTest::invalid() {

@@ -54,6 +54,18 @@ bool JpegImporter::doIsOpened() const { return _in; }
 void JpegImporter::doClose() { _in = nullptr; }
 
 void JpegImporter::doOpenData(const Containers::ArrayView<const char> data) {
+    /* Because here we're copying the data and using the _in to check if file
+       is opened, having them nullptr would mean openData() would fail without
+       any error message. It's not possible to do this check on the importer
+       side, because empty file is valid in some formats (OBJ or glTF). We also
+       can't do the full import here because then doImage2D() would need to
+       copy the imported data instead anyway (and the uncompressed size is much
+       larger). This way it'll also work nicely with a future openMemory(). */
+    if(data.empty()) {
+        Error{} << "Trade::JpegImporter::openData(): the file is empty";
+        return;
+    }
+
     _in = Containers::Array<unsigned char>(data.size());
     std::copy(data.begin(), data.end(), _in.begin());
 }

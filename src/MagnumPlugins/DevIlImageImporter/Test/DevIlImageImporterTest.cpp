@@ -40,6 +40,7 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct DevIlImageImporterTest: TestSuite::Tester {
     explicit DevIlImageImporterTest();
 
+    void empty();
     void invalid();
 
     void grayPng();
@@ -59,7 +60,8 @@ struct DevIlImageImporterTest: TestSuite::Tester {
 };
 
 DevIlImageImporterTest::DevIlImageImporterTest() {
-    addTests({&DevIlImageImporterTest::invalid,
+    addTests({&DevIlImageImporterTest::empty,
+              &DevIlImageImporterTest::invalid,
 
               &DevIlImageImporterTest::grayPng,
               &DevIlImageImporterTest::grayJpeg,
@@ -78,6 +80,17 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
     #ifdef DEVILIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(DEVILIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void DevIlImageImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
+    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): the file is empty\n");
 }
 
 void DevIlImageImporterTest::invalid() {
