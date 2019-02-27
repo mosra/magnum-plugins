@@ -201,12 +201,9 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         for(UnsignedShort& i: data16)
             Utility::Endianness::bigEndianInPlace(i);
 
-    /* Something else */
-    } else {
-        Error() << "Trade::PngImporter::image2D(): unsupported bit depth" << bits;
-        png_destroy_read_struct(&file, &info, nullptr);
-        return Containers::NullOpt;
-    }
+    /* https://en.wikipedia.org/wiki/Portable_Network_Graphics#Pixel_format
+       Only 1, 2, 4, 8 or 16 bits per channel, we expand the 1/2/4 to 8 above */
+    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Always using the default 4-byte alignment */
     return Trade::ImageData2D{format, size, std::move(data)};
