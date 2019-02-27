@@ -59,9 +59,10 @@ constexpr struct {
     Containers::ArrayView<const char> data; /** @todo string view once done */
     const char* error;
 } InvalidData[] {
-    {"invalid signature", "invalid", "wrong file signature"},
-    {"short signature", "\x89PNG", "signature too short"},
-    {"only signature", "\x89PNG\x0d\x0a\x1a\x0a", "error: file too short"}
+    /* GCC 4.8 needs the explicit cast :( */
+    {"invalid signature", Containers::arrayView("invalid"), "wrong file signature"},
+    {"short signature", Containers::arrayView("\x89PNG"), "signature too short"},
+    {"only signature", Containers::arrayView("\x89PNG\x0d\x0a\x1a\x0a"), "error: file too short"}
 };
 
 constexpr struct {
