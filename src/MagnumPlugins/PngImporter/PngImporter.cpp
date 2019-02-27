@@ -61,7 +61,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, Containers::NullOpt);
 
     /* Verify file signature */
-    if(png_sig_cmp(_in, 0, Math::min<std::size_t>(8, _in.size())) != 0) {
+    if(png_sig_cmp(_in, 0, Math::min(std::size_t(8), _in.size())) != 0) {
         Error() << "Trade::PngImporter::image2D(): wrong file signature";
         return Containers::NullOpt;
     }
@@ -89,10 +89,10 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     });
 
     /* Input starts right after the header */
-    Containers::ArrayView<unsigned char> input =_in.suffix(8);
+    Containers::ArrayView<unsigned char> input = _in.suffix(8);
 
-    /* Set function for reading from std::istream */
-    png_set_read_fn(file, &input, [](png_structp file, png_bytep data, png_size_t length) {
+    /* Set functions for reading */
+    png_set_read_fn(file, &input, [](const png_structp file, const png_bytep data, const png_size_t length) {
         auto&& input = *reinterpret_cast<Containers::ArrayView<unsigned char>*>(png_get_io_ptr(file));
         std::copy_n(input.begin(), Math::min(length, input.size()), data);
         input = input.suffix(length);
@@ -175,7 +175,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
             case PNG_COLOR_TYPE_GRAY: format = PixelFormat::R8Unorm; break;
             case PNG_COLOR_TYPE_RGB:  format = PixelFormat::RGB8Unorm; break;
             case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA8Unorm; break;
-            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_IGNORE_LINE */
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
     /* 16-bit images */
@@ -184,7 +184,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
             case PNG_COLOR_TYPE_GRAY: format = PixelFormat::R16Unorm; break;
             case PNG_COLOR_TYPE_RGB:  format = PixelFormat::RGB16Unorm; break;
             case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA16Unorm; break;
-            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_IGNORE_LINE */
+            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
         /* Endianness correction for 16 bit depth */
