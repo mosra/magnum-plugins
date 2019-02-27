@@ -73,7 +73,7 @@ void JpegImporterTest::invalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImporter::image2D(): error while reading JPEG file: Not a JPEG file: starts with 0x69 0x6e\n");
+    CORRADE_COMPARE(out.str(), "Trade::JpegImporter::image2D(): error: Not a JPEG file: starts with 0x69 0x6e\n");
 }
 
 void JpegImporterTest::gray() {

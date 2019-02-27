@@ -104,7 +104,7 @@ void JpegImageConverterTest::zeroSize() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): error while writing the file: Empty JPEG image (DNL not supported)\n");
+    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): error: Empty JPEG image (DNL not supported)\n");
 }
 
 constexpr const char OriginalRgbData[] = {

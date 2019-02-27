@@ -79,7 +79,7 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
         std::longjmp(errorManager.setjmpBuffer, 1);
     };
     if(setjmp(errorManager.setjmpBuffer)) {
-        Error() << "Trade::JpegImporter::image2D(): error while reading JPEG file:" << errorManager.message;
+        Error() << "Trade::JpegImporter::image2D(): error:" << errorManager.message;
         jpeg_destroy_decompress(&file);
         return Containers::NullOpt;
     }
