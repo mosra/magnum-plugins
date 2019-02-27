@@ -65,6 +65,8 @@ namespace Magnum {
     conversion to not return random memory
 -   @ref Trade::PngImporter "PngImporter" now handles too short files
     gracefully instead of aborting on an assertion
+-   @ref Trade::PngImporter "PngImporter" now handles paletted images and
+    images with tRNS alpha mask correctly
 
 @section changelog-plugins-2019-01 2019.01
 

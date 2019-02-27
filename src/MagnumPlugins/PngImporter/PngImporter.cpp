@@ -142,6 +142,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
         /* Palette needs to be converted */
         case PNG_COLOR_TYPE_PALETTE:
             png_set_palette_to_rgb(file);
+            bits = png_get_bit_depth(file, info);
             colorType = PNG_COLOR_TYPE_RGB;
             channels = 3;
             break;
@@ -156,7 +157,11 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     if(png_get_valid(file, info, PNG_INFO_tRNS)) {
         png_set_tRNS_to_alpha(file);
         channels += 1;
-        CORRADE_INTERNAL_ASSERT(channels == 4);
+        CORRADE_INTERNAL_ASSERT_OUTPUT(channels == 4);
+        colorType = PNG_COLOR_TYPE_RGBA;
+        /** @todo Why bits = png_get_bit_depth(file, info); doesn't work for
+            non-paletted images with tRNS? Can 16bit images have tRNS? */
+        bits = 8;
     }
 
     /* Initialize data array, align rows to four bytes */
