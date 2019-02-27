@@ -39,6 +39,7 @@
 */
 #include <csetjmp>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
@@ -92,16 +93,21 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     CORRADE_INTERNAL_ASSERT(file);
     png_infop info = png_create_info_struct(file);
     CORRADE_INTERNAL_ASSERT(info);
+    /** @todo a capturing ScopeGuard would be nicer :( */
+    struct PngState {
+        png_structp file;
+        png_infop info;
+    } pngState{file, info};
+    Containers::ScopeGuard pngStateGuard{&pngState, [](PngState* state) {
+        png_destroy_read_struct(&state->file, &state->info, nullptr);
+    }};
     Containers::Array<png_bytep> rows;
     Containers::Array<char> data;
 
     /* Error handling routine. Since we're replacing the png_default_error()
        function, we need to call std::longjmp() ourselves -- otherwise the
        default error handling with stderr printing kicks in. */
-    if(setjmp(png_jmpbuf(file))) {
-        png_destroy_read_struct(&file, &info, nullptr);
-        return Containers::NullOpt;
-    }
+    if(setjmp(png_jmpbuf(file))) return Containers::NullOpt;
     png_set_error_fn(file, nullptr, [](const png_structp file, const png_const_charp message) {
         Error{} << "Trade::PngImporter::image2D(): error:" << message;
         std::longjmp(png_jmpbuf(file), 1);
@@ -170,7 +176,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
 
         default:
             Error() << "Trade::PngImporter::image2D(): unsupported color type" << colorType;
-            png_destroy_read_struct(&file, &info, nullptr);
             return Containers::NullOpt;
     }
 
@@ -199,9 +204,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     for(Int i = 0; i != size.y(); ++i)
         rows[i] = reinterpret_cast<unsigned char*>(data.data()) + (size.y() - i - 1)*stride;
     png_read_image(file, rows);
-
-    /* Cleanup */
-    png_destroy_read_struct(&file, &info, nullptr);
 
     /* 8-bit images */
     PixelFormat format;
