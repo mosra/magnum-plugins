@@ -26,11 +26,11 @@
 #include "PngImporter.h"
 
 #include <csetjmp>
+#include <cstring>
 #include <algorithm>
 #include <png.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Debug.h>
-#include <Corrade/Utility/Endianness.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Trade/ImageData.h>
@@ -168,6 +168,11 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     const std::size_t stride = ((size.x()*channels*bits/8 + 3)/4)*4;
     data = Containers::Array<char>{stride*std::size_t(size.y())};
 
+    /* Endianness correction for 16 bit depth */
+    #ifndef CORRADE_BIG_ENDIAN
+    if(bits == 16) png_set_swap(file);
+    #endif
+
     /* Read image row by row */
     rows = Containers::Array<png_bytep>{std::size_t(size.y())};
     for(Int i = 0; i != size.y(); ++i)
@@ -195,11 +200,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
             case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA16Unorm; break;
             default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
-
-        /* Endianness correction for 16 bit depth */
-        Containers::ArrayView<UnsignedShort> data16{reinterpret_cast<UnsignedShort*>(data.data()), data.size()/2};
-        for(UnsignedShort& i: data16)
-            Utility::Endianness::bigEndianInPlace(i);
 
     /* https://en.wikipedia.org/wiki/Portable_Network_Graphics#Pixel_format
        Only 1, 2, 4, 8 or 16 bits per channel, we expand the 1/2/4 to 8 above */
