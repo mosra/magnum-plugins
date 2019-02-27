@@ -40,6 +40,7 @@ struct PngImageConverterTest: TestSuite::Tester {
     explicit PngImageConverterTest();
 
     void wrongFormat();
+    void zeroSize();
 
     void rgb();
     void rgb16();
@@ -54,6 +55,7 @@ struct PngImageConverterTest: TestSuite::Tester {
 
 PngImageConverterTest::PngImageConverterTest() {
     addTests({&PngImageConverterTest::wrongFormat,
+              &PngImageConverterTest::zeroSize,
 
               &PngImageConverterTest::rgb,
               &PngImageConverterTest::rgb16,
@@ -80,6 +82,19 @@ void PngImageConverterTest::wrongFormat() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->exportToData(image));
     CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel format PixelFormat::RG32F\n");
+}
+
+void PngImageConverterTest::zeroSize() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
+    CORRADE_COMPARE(out.str(),
+        "Trade::PngImageConverter::exportToData(): warning: Image width is zero in IHDR\n"
+        "Trade::PngImageConverter::exportToData(): warning: Image height is zero in IHDR\n"
+        "Trade::PngImageConverter::exportToData(): error: Invalid IHDR data\n");
 }
 
 constexpr const char OriginalRgbData[] = {

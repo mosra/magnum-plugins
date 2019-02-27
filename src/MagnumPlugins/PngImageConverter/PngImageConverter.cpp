@@ -25,6 +25,7 @@
 
 #include "PngImageConverter.h"
 
+#include <csetjmp>
 #include <algorithm>
 #include <png.h>
 #include <Corrade/Containers/Array.h>
@@ -90,14 +91,19 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
     CORRADE_INTERNAL_ASSERT(info);
     std::string output;
 
-    /* Error handling routine */
-    /** @todo Get rid of setjmp (won't work everywhere) */
+    /* Error handling routine. Since we're replacing the png_default_error()
+       function, we need to call std::longjmp() ourselves -- otherwise the
+       default error handling with stderr printing kicks in. */
     if(setjmp(png_jmpbuf(file))) {
-        Error() << "Trade::PngImageConverter::image2D(): error while reading PNG file";
-
         png_destroy_write_struct(&file, &info);
         return nullptr;
     }
+    png_set_error_fn(file, nullptr, [](const png_structp file, const png_const_charp message) {
+        Error{} << "Trade::PngImageConverter::exportToData(): error:" << message;
+        std::longjmp(png_jmpbuf(file), 1);
+    }, [](png_structp, const png_const_charp message) {
+        Warning{} << "Trade::PngImageConverter::exportToData(): warning:" << message;
+    });
 
     png_set_write_fn(file, &output, [](png_structp file, png_bytep data, png_size_t length){
         auto&& output = *reinterpret_cast<std::string*>(png_get_io_ptr(file));
