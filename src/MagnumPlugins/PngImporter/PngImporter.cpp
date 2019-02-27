@@ -136,7 +136,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
 
         /* Palette needs to be converted */
         case PNG_COLOR_TYPE_PALETTE:
-            /** @todo test case for this */
             png_set_palette_to_rgb(file);
             colorType = PNG_COLOR_TYPE_RGB;
             channels = 3;

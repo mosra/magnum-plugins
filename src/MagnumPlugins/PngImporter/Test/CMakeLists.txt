@@ -44,9 +44,12 @@ corrade_add_test(PngImporterTest PngImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         gray.png
+        gray-4bit.png
         rgb.png
+        rgb-palette.png
         rgba.png
-        rgba-iphone.png)
+        rgba-iphone.png
+        rgba-trns.png)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(PngImporterTest PRIVATE $<TARGET_FILE_DIR:PngImporterTest>)
 else()

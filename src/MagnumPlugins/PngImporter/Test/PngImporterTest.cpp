@@ -23,10 +23,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Format.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -38,6 +40,8 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct PngImporterTest: TestSuite::Tester {
     explicit PngImporterTest();
 
+    void invalid();
+
     void gray();
     void rgb();
     void rgba();
@@ -48,19 +52,54 @@ struct PngImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
-const struct {
+constexpr struct {
+    const char* name;
+    Containers::ArrayView<const char> data; /** @todo string view once done */
+    const char* error;
+} InvalidData[] {
+    {"invalid signature", "invalid", "wrong file signature"},
+    {"short signature", "\x89PNG", "signature too short"},
+    {"only signature", "\x89PNG\x0d\x0a\x1a\x0a", "error: file too short"}
+};
+
+constexpr struct {
     const char* name;
     const char* filename;
-} RgbaTestData[]{
+} GrayData[]{
+    {"8bit", "gray.png"},
+    /* convert gray.png -depth 4 -colorspace gray -define png:bit-depth=4 -define png:exclude-chunks=date gray-4bit.png */
+    {"4bit", "gray-4bit.png"},
+};
+
+constexpr struct {
+    const char* name;
+    const char* filename;
+} RgbData[]{
+    {"RGB", "rgb.png"},
+    /* convert rgb.png -define png:exclude-chunks=date png8:palette.png */
+    {"palette", "rgb-palette.png"},
+};
+
+constexpr struct {
+    const char* name;
+    const char* filename;
+} RgbaData[]{
     {"RGBA", "rgba.png"},
-    {"CgBI BGRA", "rgba-iphone.png"}
+    /* See README.md for details on how this file was produced */
+    {"CgBI BGRA", "rgba-iphone.png"},
+    /* convert rgba.png -define png:exclude-chunks=date rgba-trns.png
+       According to http://www.imagemagick.org/Usage/formats/#png_quality,
+       ImageMagick creates a tRNS chunk if the original image has binary (00
+       or FF) alpha. */
+    {"tRNS alpha mask", "rgba-trns.png"},
 };
 
 PngImporterTest::PngImporterTest() {
-    addTests({&PngImporterTest::gray,
-              &PngImporterTest::rgb});
+    addInstancedTests({&PngImporterTest::invalid}, Containers::arraySize(InvalidData));
 
-    addInstancedTests({&PngImporterTest::rgba}, Containers::arraySize(RgbaTestData));
+    addInstancedTests({&PngImporterTest::gray}, Containers::arraySize(GrayData));
+    addInstancedTests({&PngImporterTest::rgb}, Containers::arraySize(RgbData));
+    addInstancedTests({&PngImporterTest::rgba}, Containers::arraySize(RgbaData));
 
     addTests({&PngImporterTest::useTwice});
 
@@ -71,9 +110,27 @@ PngImporterTest::PngImporterTest() {
     #endif
 }
 
-void PngImporterTest::gray() {
+void PngImporterTest::invalid() {
+    auto&& data = InvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    /* The open does just a memory copy, so it doesn't fail */
+    /** @todo use a StringView instead of stripping the null terminator */
+    CORRADE_VERIFY(importer->openData(data.data.prefix(data.data.size() - 1)));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::PngImporter::image2D(): {}\n", data.error));
+}
+
+void PngImporterTest::gray() {
+    auto&& data = GrayData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -85,16 +142,18 @@ void PngImporterTest::gray() {
     CORRADE_COMPARE(image->data().size(), 8);
     image->data()[3] = image->data()[7] = 0;
 
-    CORRADE_COMPARE_AS(image->data(),
-        (Containers::Array<char>{Containers::InPlaceInit, {
-            '\xff', '\x88', '\x00', 0,
-            '\x88', '\x00', '\xff', 0}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
+        '\xff', '\x88', '\x00', 0,
+        '\x88', '\x00', '\xff', 0
+    }}), TestSuite::Compare::Container);
 }
 
 void PngImporterTest::rgb() {
+    auto&& data = RgbData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -107,20 +166,19 @@ void PngImporterTest::rgb() {
     image->data()[9] = image->data()[10] = image->data()[11] =
          image->data()[21] = image->data()[22] = image->data()[23] = 0;
 
-    CORRADE_COMPARE_AS(image->data(),
-        (Containers::Array<char>{Containers::InPlaceInit, {
-            '\xca', '\xfe', '\x77',
-            '\xde', '\xad', '\xb5',
-            '\xca', '\xfe', '\x77', 0, 0, 0,
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77', 0, 0, 0,
 
-            '\xde', '\xad', '\xb5',
-            '\xca', '\xfe', '\x77',
-            '\xde', '\xad', '\xb5', 0, 0, 0}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5', 0, 0, 0
+    }}), TestSuite::Compare::Container);
 }
 
 void PngImporterTest::rgba() {
-    auto&& data = RgbaTestData[testCaseInstanceId()];
+    auto&& data = RgbaData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
@@ -137,15 +195,14 @@ void PngImporterTest::rgba() {
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(image->data(),
-        (Containers::Array<char>{Containers::InPlaceInit, {
-            '\xde', '\xad', '\xb5', '\xff',
-            '\xca', '\xfe', '\x77', '\xff',
-            '\x00', '\x00', '\x00', '\x00',
-            '\xca', '\xfe', '\x77', '\xff',
-            '\x00', '\x00', '\x00', '\x00',
-            '\xde', '\xad', '\xb5', '\xff'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+    CORRADE_COMPARE_AS(image->data(),  Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
+        '\xde', '\xad', '\xb5', '\xff',
+        '\xca', '\xfe', '\x77', '\xff',
+        '\x00', '\x00', '\x00', '\x00',
+        '\xca', '\xfe', '\x77', '\xff',
+        '\x00', '\x00', '\x00', '\x00',
+        '\xde', '\xad', '\xb5', '\xff'
+    }}), TestSuite::Compare::Container);
 }
 
 void PngImporterTest::useTwice() {
