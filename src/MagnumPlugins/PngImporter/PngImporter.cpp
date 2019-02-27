@@ -25,6 +25,7 @@
 
 #include "PngImporter.h"
 
+#include <csetjmp>
 #include <algorithm>
 #include <png.h>
 #include <Corrade/Containers/Optional.h>
@@ -73,14 +74,19 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     Containers::Array<png_bytep> rows;
     Containers::Array<char> data;
 
-    /* Error handling routine */
-    /** @todo Get rid of setjmp (won't work everywhere) */
+    /* Error handling routine. Since we're replacing the png_default_error()
+       function, we need to call std::longjmp() ourselves -- otherwise the
+       default error handling with stderr printing kicks in. */
     if(setjmp(png_jmpbuf(file))) {
-        Error() << "Trade::PngImporter::image2D(): error while reading PNG file";
-
         png_destroy_read_struct(&file, &info, nullptr);
         return Containers::NullOpt;
     }
+    png_set_error_fn(file, nullptr, [](const png_structp file, const png_const_charp message) {
+        Error{} << "Trade::PngImporter::image2D(): error:" << message;
+        std::longjmp(png_jmpbuf(file), 1);
+    }, [](png_structp, const png_const_charp message) {
+        Warning{} << "Trade::PngImporter::image2D(): warning:" << message;
+    });
 
     /* Input starts right after the header */
     Containers::ArrayView<unsigned char> input =_in.suffix(8);
