@@ -25,10 +25,19 @@
 
 #include "PngImporter.h"
 
-#include <csetjmp>
 #include <cstring>
 #include <algorithm>
 #include <png.h>
+/*
+    The <csetjmp> header has to be included *after* png.h, otherwise older
+    versions of libpng (i.e., one used on Travis 16.04 images), complain that
+
+        __pngconf.h__ in libpng already includes setjmp.h
+        __dont__ include it again.
+
+    New versions don't have that anymore: https://github.com/glennrp/libpng/commit/6c2e919c7eb736d230581a4c925fa67bd901fcf8
+*/
+#include <csetjmp>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
