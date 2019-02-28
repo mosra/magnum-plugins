@@ -78,6 +78,7 @@ namespace Magnum {
 -   @ref Trade::PngImporter "PngImporter" now handles paletted images and
     images with tRNS alpha mask correctly
 -   Fixed memory leaks in @ref Trade::PngImporter "PngImporter" error handling
+-   Fixed `FindMagnumPlugins.cmake` to correctly look for the `Assimp` package
 
 @section changelog-plugins-2019-01 2019.01
 

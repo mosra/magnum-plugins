@@ -268,7 +268,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # AssimpImporter plugin dependencies
         if(_component STREQUAL AssimpImporter)
-            find_package(AssimpImporter)
+            find_package(Assimp)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
 
