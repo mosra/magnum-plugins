@@ -94,7 +94,9 @@ if(BUILD_TESTS)
 endif()
 
 if(BUILD_GL_TESTS)
-    find_package(Magnum REQUIRED OpenGLTester)
+    # Not needed by anything at the moment, and we want to keep BUILD_GL_TESTS
+    # enabled on the CIs to catch cases of plugins needing GL again.
+    #find_package(Magnum REQUIRED OpenGLTester)
 endif()
 
 if(NOT BUILD_STATIC)
