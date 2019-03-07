@@ -59,3 +59,7 @@ else()
         HarfBuzzFont)
 endif()
 set_target_properties(HarfBuzzFontTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont/Test")
+# Older HB versions give slightly different results, so we need to check the
+# version in the test
+target_include_directories(HarfBuzzFontTest PRIVATE
+    $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>)

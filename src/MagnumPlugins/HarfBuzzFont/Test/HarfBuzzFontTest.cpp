@@ -27,6 +27,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
+#include <hb.h>
 
 #include "configure.h"
 
@@ -91,7 +92,12 @@ void HarfBuzzFontTest::layout() {
     std::tie(position, textureCoordinates) = layouter->renderGlyph(2, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D());
     CORRADE_COMPARE(textureCoordinates, Range2D());
-    CORRADE_COMPARE(cursorPosition, Vector2(0.249512f, 0.0f));
+
+    /* HarfBuzz 1.7 and higher give this result, 1.0 the other */
+    if(HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107)
+        CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
+    else
+        CORRADE_COMPARE(cursorPosition, Vector2(0.249512f, 0.0f));
 
     /* 'e' */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(3, cursorPosition = {}, rectangle);
