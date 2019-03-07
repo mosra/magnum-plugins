@@ -32,7 +32,7 @@
 #include <Corrade/Utility/Unicode.h>
 #include <Magnum/Image.h>
 #include <Magnum/PixelFormat.h>
-#include <Magnum/Text/GlyphCache.h>
+#include <Magnum/Text/AbstractGlyphCache.h>
 
 namespace Magnum { namespace Text {
 
@@ -40,13 +40,13 @@ namespace {
 
 class FreeTypeLayouter: public AbstractLayouter {
     public:
-        explicit FreeTypeLayouter(FT_Face font, const GlyphCache& cache, const Float fontSize, const Float textSize, std::vector<FT_UInt>&& glyphs);
+        explicit FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<FT_UInt>&& glyphs);
 
     private:
         std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
 
         FT_Face font;
-        const GlyphCache& cache;
+        const AbstractGlyphCache& cache;
         const Float fontSize, textSize;
         const std::vector<FT_UInt> glyphs;
 };
@@ -106,7 +106,7 @@ Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2(ftFont->glyph->advance.x, ftFont->glyph->advance.y)/64.0f;
 }
 
-void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) {
+void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32string& characters) {
     /** @bug Crash when atlas is too small */
 
     /* Get glyph codes from characters */
@@ -159,7 +159,7 @@ void FreeTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& cha
     cache.setImage({}, image);
 }
 
-Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const std::string& text) {
     /* Get glyph codes from characters */
     std::vector<UnsignedInt> glyphs;
     glyphs.reserve(text.size());
@@ -174,7 +174,7 @@ Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const GlyphCache& c
 
 namespace {
 
-FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const GlyphCache& cache, const Float fontSize, const Float textSize, std::vector<FT_UInt>&& glyphs): AbstractLayouter(glyphs.size()), font(font), cache(cache), fontSize(fontSize), textSize(textSize), glyphs(std::move(glyphs)) {}
+FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<FT_UInt>&& glyphs): AbstractLayouter(glyphs.size()), font(font), cache(cache), fontSize(fontSize), textSize(textSize), glyphs(std::move(glyphs)) {}
 
 std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
@@ -204,4 +204,4 @@ std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const Unsi
 }}
 
 CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.2.4")
+    "cz.mosra.magnum.Text.AbstractFont/0.3")

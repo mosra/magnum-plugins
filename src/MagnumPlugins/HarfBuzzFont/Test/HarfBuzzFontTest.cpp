@@ -24,16 +24,16 @@
 */
 
 #include <Corrade/PluginManager/Manager.h>
-#include <Magnum/GL/OpenGLTester.h>
+#include <Corrade/TestSuite/Tester.h>
 #include <Magnum/Text/AbstractFont.h>
-#include <Magnum/Text/GlyphCache.h>
+#include <Magnum/Text/AbstractGlyphCache.h>
 
 #include "configure.h"
 
 namespace Magnum { namespace Text { namespace Test { namespace {
 
-struct HarfBuzzFontGLTest: GL::OpenGLTester {
-    explicit HarfBuzzFontGLTest();
+struct HarfBuzzFontTest: TestSuite::Tester {
+    explicit HarfBuzzFontTest();
 
     void layout();
 
@@ -41,8 +41,8 @@ struct HarfBuzzFontGLTest: GL::OpenGLTester {
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
 };
 
-HarfBuzzFontGLTest::HarfBuzzFontGLTest() {
-    addTests({&HarfBuzzFontGLTest::layout});
+HarfBuzzFontTest::HarfBuzzFontTest() {
+    addTests({&HarfBuzzFontTest::layout});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -52,12 +52,17 @@ HarfBuzzFontGLTest::HarfBuzzFontGLTest() {
     #endif
 }
 
-void HarfBuzzFontGLTest::layout() {
+void HarfBuzzFontTest::layout() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
     CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
 
     /* Fill the cache with some fake glyphs */
-    GlyphCache cache(Vector2i(256));
+    struct: AbstractGlyphCache {
+        using AbstractGlyphCache::AbstractGlyphCache;
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D&) override {}
+    } cache{Vector2i{256}};
     cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
     cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
 
@@ -97,4 +102,4 @@ void HarfBuzzFontGLTest::layout() {
 
 }}}}
 
-CORRADE_TEST_MAIN(Magnum::Text::Test::HarfBuzzFontGLTest)
+CORRADE_TEST_MAIN(Magnum::Text::Test::HarfBuzzFontTest)

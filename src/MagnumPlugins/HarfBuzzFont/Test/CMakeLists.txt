@@ -40,25 +40,22 @@ if(NOT BUILD_PLUGINS_STATIC)
     # First replace ${} variables, then $<> generator expressions
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
-    file(GENERATE OUTPUT $<TARGET_FILE_DIR:HarfBuzzFontGLTest>/configure.h
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:HarfBuzzFontTest>/configure.h
         INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 else()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
 
-corrade_add_test(HarfBuzzFontGLTest HarfBuzzFontGLTest.cpp
-    LIBRARIES
-        Magnum::Text
-        Magnum::OpenGLTester
-    FILES
-        ../../FreeTypeFont/Test/Oxygen.ttf)
+corrade_add_test(HarfBuzzFontTest HarfBuzzFontTest.cpp
+    LIBRARIES Magnum::Text
+    FILES ../../FreeTypeFont/Test/Oxygen.ttf)
 if(NOT BUILD_PLUGINS_STATIC)
-    target_include_directories(HarfBuzzFontGLTest PRIVATE $<TARGET_FILE_DIR:HarfBuzzFontGLTest>)
+    target_include_directories(HarfBuzzFontTest PRIVATE $<TARGET_FILE_DIR:HarfBuzzFontTest>)
 else()
-    target_include_directories(HarfBuzzFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-    target_link_libraries(HarfBuzzFontGLTest PRIVATE
+    target_include_directories(HarfBuzzFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(HarfBuzzFontTest PRIVATE
         FreeTypeFont
         HarfBuzzFont)
 endif()
-set_target_properties(HarfBuzzFontGLTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont/Test")
+set_target_properties(HarfBuzzFontTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont/Test")

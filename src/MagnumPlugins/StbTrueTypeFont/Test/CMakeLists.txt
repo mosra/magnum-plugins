@@ -39,23 +39,20 @@ if(NOT BUILD_PLUGINS_STATIC)
     # First replace ${} variables, then $<> generator expressions
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
-    file(GENERATE OUTPUT $<TARGET_FILE_DIR:StbTrueTypeFontGLTest>/configure.h
+    file(GENERATE OUTPUT $<TARGET_FILE_DIR:StbTrueTypeFontTest>/configure.h
         INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 else()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                    ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
 
-corrade_add_test(StbTrueTypeFontGLTest StbTrueTypeFontGLTest.cpp
-    LIBRARIES
-        Magnum::Text
-        Magnum::OpenGLTester
-    FILES
-        ../../FreeTypeFont/Test/Oxygen.ttf)
+corrade_add_test(StbTrueTypeFontTest StbTrueTypeFontTest.cpp
+    LIBRARIES Magnum::Text
+    FILES ../../FreeTypeFont/Test/Oxygen.ttf)
 if(NOT BUILD_PLUGINS_STATIC)
-    target_include_directories(StbTrueTypeFontGLTest PRIVATE $<TARGET_FILE_DIR:StbTrueTypeFontGLTest>)
+    target_include_directories(StbTrueTypeFontTest PRIVATE $<TARGET_FILE_DIR:StbTrueTypeFontTest>)
 else()
-    target_include_directories(StbTrueTypeFontGLTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-    target_link_libraries(StbTrueTypeFontGLTest PRIVATE StbTrueTypeFont)
+    target_include_directories(StbTrueTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(StbTrueTypeFontTest PRIVATE StbTrueTypeFont)
 endif()
-set_target_properties(StbTrueTypeFontGLTest PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont/Test")
+set_target_properties(StbTrueTypeFontTest PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont/Test")

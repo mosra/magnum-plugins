@@ -115,7 +115,7 @@ class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
         MAGNUM_HARFBUZZFONT_LOCAL bool doIsOpened() const override;
         MAGNUM_HARFBUZZFONT_LOCAL Metrics doOpenSingleData(Containers::ArrayView<const char> data, Float size) override;
         MAGNUM_HARFBUZZFONT_LOCAL void doClose() override;
-        MAGNUM_HARFBUZZFONT_LOCAL Containers::Pointer<AbstractLayouter> doLayout(const GlyphCache& cache, Float size, const std::string& text) override;
+        MAGNUM_HARFBUZZFONT_LOCAL Containers::Pointer<AbstractLayouter> doLayout(const AbstractGlyphCache& cache, Float size, const std::string& text) override;
 
         hb_font_t* hbFont;
 };

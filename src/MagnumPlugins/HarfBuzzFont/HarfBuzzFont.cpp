@@ -27,7 +27,7 @@
 
 #include <hb-ft.h>
 #include <Corrade/PluginManager/AbstractManager.h>
-#include <Magnum/Text/GlyphCache.h>
+#include <Magnum/Text/AbstractGlyphCache.h>
 
 namespace Magnum { namespace Text {
 
@@ -35,14 +35,14 @@ namespace {
 
 class HarfBuzzLayouter: public AbstractLayouter {
     public:
-        explicit HarfBuzzLayouter(const GlyphCache& cache, Float fontSize, Float textSize, hb_buffer_t* buffer, hb_glyph_info_t* glyphInfo, hb_glyph_position_t* glyphPositions, UnsignedInt glyphCount);
+        explicit HarfBuzzLayouter(const AbstractGlyphCache& cache, Float fontSize, Float textSize, hb_buffer_t* buffer, hb_glyph_info_t* glyphInfo, hb_glyph_position_t* glyphPositions, UnsignedInt glyphCount);
 
         ~HarfBuzzLayouter();
 
     private:
         std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(UnsignedInt i) override;
 
-        const GlyphCache& cache;
+        const AbstractGlyphCache& cache;
         const Float fontSize, textSize;
         hb_buffer_t* const buffer;
         hb_glyph_info_t* const glyphInfo;
@@ -80,7 +80,7 @@ void HarfBuzzFont::doClose() {
     FreeTypeFont::doClose();
 }
 
-Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const AbstractGlyphCache& cache, const Float size, const std::string& text) {
     /* Prepare HarfBuzz buffer */
     hb_buffer_t* const buffer = hb_buffer_create();
     hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
@@ -100,7 +100,7 @@ Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const GlyphCache& c
 
 namespace {
 
-HarfBuzzLayouter::HarfBuzzLayouter(const GlyphCache& cache, const Float fontSize, const Float textSize, hb_buffer_t* const buffer, hb_glyph_info_t* const glyphInfo, hb_glyph_position_t* const glyphPositions, const UnsignedInt glyphCount): AbstractLayouter(glyphCount), cache(cache), fontSize(fontSize), textSize(textSize), buffer(buffer), glyphInfo(glyphInfo), glyphPositions(glyphPositions) {}
+HarfBuzzLayouter::HarfBuzzLayouter(const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, hb_buffer_t* const buffer, hb_glyph_info_t* const glyphInfo, hb_glyph_position_t* const glyphPositions, const UnsignedInt glyphCount): AbstractLayouter(glyphCount), cache(cache), fontSize(fontSize), textSize(textSize), buffer(buffer), glyphInfo(glyphInfo), glyphPositions(glyphPositions) {}
 
 HarfBuzzLayouter::~HarfBuzzLayouter() {
     /* Destroy HarfBuzz buffer */
@@ -137,4 +137,4 @@ std::tuple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const Unsi
 }}
 
 CORRADE_PLUGIN_REGISTER(HarfBuzzFont, Magnum::Text::HarfBuzzFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.2.4")
+    "cz.mosra.magnum.Text.AbstractFont/0.3")

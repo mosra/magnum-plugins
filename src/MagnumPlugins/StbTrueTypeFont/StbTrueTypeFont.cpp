@@ -30,7 +30,7 @@
 #include <Corrade/Utility/Unicode.h>
 #include <Magnum/Image.h>
 #include <Magnum/PixelFormat.h>
-#include <Magnum/Text/GlyphCache.h>
+#include <Magnum/Text/AbstractGlyphCache.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
@@ -46,13 +46,13 @@ struct StbTrueTypeFont::Font {
 
 class StbTrueTypeFont::Layouter: public AbstractLayouter {
     public:
-        explicit Layouter(Font& _font, const GlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs);
+        explicit Layouter(Font& _font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs);
 
     private:
         std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
 
         Font& _font;
-        const GlyphCache& _cache;
+        const AbstractGlyphCache& _cache;
         const Float _fontSize, _textSize;
         const std::vector<Int> _glyphs;
 };
@@ -108,7 +108,7 @@ Vector2 StbTrueTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2::xAxis(advance*_font->scale);
 }
 
-void StbTrueTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& characters) {
+void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32string& characters) {
     /* Get glyph codes from characters */
     Containers::Array<Int> glyphIndices{Containers::NoInit, characters.size() + 1};
     glyphIndices[0] = 0;
@@ -164,7 +164,7 @@ void StbTrueTypeFont::doFillGlyphCache(GlyphCache& cache, const std::u32string& 
     cache.setImage({}, image);
 }
 
-Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const GlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const std::string& text) {
     /* Get glyph codes from characters */
     std::vector<Int> glyphs;
     glyphs.reserve(text.size());
@@ -177,7 +177,7 @@ Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const GlyphCache
     return Containers::pointer(new Layouter{*_font, cache, this->size(), size, std::move(glyphs)});
 }
 
-StbTrueTypeFont::Layouter::Layouter(Font& font, const GlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize{fontSize}, _textSize{textSize}, _glyphs{std::move(glyphs)} {}
+StbTrueTypeFont::Layouter::Layouter(Font& font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize{fontSize}, _textSize{textSize}, _glyphs{std::move(glyphs)} {}
 
 std::tuple<Range2D, Range2D, Vector2> StbTrueTypeFont::Layouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
@@ -201,4 +201,4 @@ std::tuple<Range2D, Range2D, Vector2> StbTrueTypeFont::Layouter::doRenderGlyph(c
 }}
 
 CORRADE_PLUGIN_REGISTER(StbTrueTypeFont, Magnum::Text::StbTrueTypeFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.2.4")
+    "cz.mosra.magnum.Text.AbstractFont/0.3")
