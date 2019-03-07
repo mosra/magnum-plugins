@@ -47,6 +47,7 @@ cmake .. \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DWITH_AUDIO=ON \
     -DWITH_DEBUGTOOLS=ON \
+    -DWITH_GL=OFF \
     -DWITH_MESHTOOLS=OFF \
     -DWITH_PRIMITIVES=OFF \
     -DWITH_SCENEGRAPH=OFF \
@@ -54,15 +55,14 @@ cmake .. \
     -DWITH_SHAPES=OFF \
     -DWITH_TEXT=ON \
     -DWITH_TEXTURETOOLS=ON \
-    -DWITH_OPENGLTESTER=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
-    -DTARGET_GLES2=$TARGET_GLES2 \
     -DBUILD_STATIC=ON \
     -G Xcode
 set -o pipefail && cmake --build . --config Release --target install | xcpretty
 cd ../..
 
-# Crosscompile
+# Crosscompile. BUILD_GL_TESTS is enabled just to be sure, it should not be
+# needed by any plugin.
 mkdir build-ios && cd build-ios
 cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=../toolchains/generic/iOS.cmake \
@@ -98,4 +98,4 @@ set -o pipefail && cmake --build . --config Release | xcpretty
 # TODO: find a better way to avoid
 # Library not loaded: /System/Library/Frameworks/OpenGLES.framework/OpenGLES
 # error
-DYLD_FALLBACK_LIBRARY_PATH=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/OpenGLES.framework/ DYLD_FALLBACK_FRAMEWORK_PATH=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks CORRADE_TEST_COLOR=ON ctest -V -C Release -E GLTest
+DYLD_FALLBACK_LIBRARY_PATH=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/OpenGLES.framework/ DYLD_FALLBACK_FRAMEWORK_PATH=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks CORRADE_TEST_COLOR=ON ctest -V -C Release

@@ -49,6 +49,7 @@ cmake .. \
     -DCMAKE_FIND_ROOT_PATH=$HOME/deps \
     -DWITH_AUDIO=ON \
     -DWITH_DEBUGTOOLS=ON \
+    -DWITH_GL=OFF \
     -DWITH_MESHTOOLS=OFF \
     -DWITH_PRIMITIVES=OFF \
     -DWITH_SCENEGRAPH=OFF \
@@ -57,7 +58,6 @@ cmake .. \
     -DWITH_TEXT=ON \
     -DWITH_TEXTURETOOLS=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
-    -DTARGET_GLES2=$TARGET_GLES2 \
     -G Ninja
 ninja install
 cd ../..
@@ -73,7 +73,8 @@ mv $HOME/deps/lib/{libfaad.a,faad.bc}
 mv $HOME/deps/lib/{libfaad_drm.a,faad_drm.bc}
 cd ..
 
-# Crosscompile
+# Crosscompile. BUILD_GL_TESTS is enabled just to be sure, it should not be
+# needed by any plugin.
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
     -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
@@ -105,6 +106,7 @@ cmake .. \
     -DWITH_STBVORBISAUDIOIMPORTER=ON \
     -DWITH_TINYGLTFIMPORTER=ON \
     -DBUILD_TESTS=ON \
+    -DBUILD_GL_TESTS=ON \
     -G Ninja
 # Otherwise the job gets killed (probably because using too much memory)
 ninja -j4

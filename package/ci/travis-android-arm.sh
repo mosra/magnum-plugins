@@ -52,6 +52,7 @@ cmake .. \
     -DCMAKE_FIND_ROOT_PATH=$HOME/deps \
     -DWITH_AUDIO=OFF \
     -DWITH_DEBUGTOOLS=ON \
+    -DWITH_GL=OFF \
     -DWITH_MESHTOOLS=OFF \
     -DWITH_PRIMITIVES=OFF \
     -DWITH_SCENEGRAPH=OFF \
@@ -59,14 +60,13 @@ cmake .. \
     -DWITH_SHAPES=OFF \
     -DWITH_TEXT=ON \
     -DWITH_TEXTURETOOLS=ON \
-    -DWITH_OPENGLTESTER=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
-    -DTARGET_GLES2=$TARGET_GLES2 \
     -G Ninja
 ninja install
 cd ../..
 
-# Crosscompile
+# Crosscompile. BUILD_GL_TESTS is enabled just to be sure, it should not be
+# needed by any plugin.
 mkdir build-android-arm && cd build-android-arm
 cmake .. \
     -DCMAKE_ANDROID_NDK=$TRAVIS_BUILD_DIR/android-ndk-r16b \
@@ -107,4 +107,4 @@ ninja -j4
 echo no | android create avd --force -n test -t android-22 --abi armeabi-v7a
 emulator -avd test -no-audio -no-window &
 android-wait-for-emulator
-CORRADE_TEST_COLOR=ON ctest -V -E GLTest
+CORRADE_TEST_COLOR=ON ctest -V

@@ -72,6 +72,7 @@ cmake .. ^
     -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal ^
     -DWITH_AUDIO=ON ^
     -DWITH_DEBUGTOOLS=ON ^
+    -DWITH_GL=OFF ^
     -DWITH_MESHTOOLS=OFF ^
     -DWITH_PRIMITIVES=OFF ^
     -DWITH_SCENEGRAPH=OFF ^
@@ -79,14 +80,14 @@ cmake .. ^
     -DWITH_SHAPES=OFF ^
     -DWITH_TEXT=ON ^
     -DWITH_TEXTURETOOLS=ON ^
-    -DWITH_OPENGLTESTER=ON ^
     -DWITH_ANYIMAGEIMPORTER=ON ^
     -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b
 cd .. && cd ..
 
-rem Build
+rem Build. BUILD_GL_TESTS is enabled just to be sure, it should not be needed
+rem by any plugin.
 mkdir build && cd build || exit /b
 cmake .. ^
     -DCMAKE_BUILD_TYPE=Debug ^
@@ -119,4 +120,4 @@ cmake --build . --target install || exit /b
 
 rem Test
 set CORRADE_TEST_COLOR=ON
-ctest -V -E GLTest || exit /b
+ctest -V || exit /b

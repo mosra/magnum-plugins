@@ -1,7 +1,6 @@
 addons:
   apt:
     packages:
-    - libgl1-mesa-dev
     - g++-4.8
     - ninja-build
     - lcov
@@ -22,7 +21,7 @@ matrix:
     dist: xenial
     compiler: gcc
     env:
-    - JOBID=linux-gl
+    - JOBID=linux
     - TARGET=desktop
     - CMAKE_CXX_FLAGS="--coverage"
     - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
@@ -61,26 +60,6 @@ matrix:
         - libharfbuzz-dev
         - libassimp-dev
   - language: cpp
-    os: linux
-    dist: xenial
-    compiler: gcc
-    env:
-    - JOBID=linux-gles2
-    - TARGET=desktop-gles
-    - TARGET_GLES2=ON
-    - CMAKE_CXX_FLAGS="--coverage"
-    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
-  - language: cpp
-    os: linux
-    dist: xenial
-    compiler: gcc
-    env:
-    - JOBID=linux-gles3
-    - TARGET=desktop-gles
-    - TARGET_GLES2=OFF
-    - CMAKE_CXX_FLAGS="--coverage"
-    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
-  - language: cpp
     os: osx
     # The new plugin testing workflow is dynamically loading and unloading them
     # in the tests. When that's combined with coverage and LLVM < 5.0.1, all
@@ -94,64 +73,29 @@ matrix:
     osx_image: xcode9.3
     compiler: clang
     env:
-    - JOBID=macos-gl
+    - JOBID=macos
     - TARGET=desktop
     - CMAKE_CXX_FLAGS="--coverage"
   - language: cpp
     os: osx
     osx_image: xcode7.3
     env:
-    - JOBID=ios-gles2
+    - JOBID=ios
     - TARGET=ios-simulator
-    - TARGET_GLES2=ON
-  - language: cpp
-    os: osx
-    osx_image: xcode7.3
-    env:
-    - JOBID=ios-gles3
-    - TARGET=ios-simulator
-    - TARGET_GLES2=OFF
   - language: cpp
     os: osx
     osx_image: xcode9.3
     env:
-    - JOBID=emscripten-webgl1
+    - JOBID=emscripten
     - TARGET=emscripten
-    - TARGET_GLES2=ON
-  - language: cpp
-    os: osx
-    osx_image: xcode9.3
-    env:
-    - JOBID=emscripten-webgl2
-    - TARGET=emscripten
-    - TARGET_GLES2=OFF
   - language: android
     os: linux
     # Setting xenial here will cause it to use 12.04, with GCC 4.6 and other
     # prehistoric nightmares. So staying with 14.04 for the time being.
     dist: trusty
     env:
-    - JOBID=android-gles2
+    - JOBID=android
     - TARGET=android
-    - TARGET_GLES2=ON
-    addons:
-      apt:
-        packages:
-        - ninja-build
-    android:
-      components:
-      - build-tools-22.0.1
-      - android-22
-      - sys-img-armeabi-v7a-android-22
-  - language: android
-    os: linux
-    # Setting xenial here will cause it to use 12.04, with GCC 4.6 and other
-    # prehistoric nightmares. So staying with 14.04 for the time being.
-    dist: trusty
-    env:
-    - JOBID=android-gles3
-    - TARGET=android
-    - TARGET_GLES2=OFF
     addons:
       apt:
         packages:
@@ -201,7 +145,6 @@ install:
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/travis-desktop.sh; fi
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop-gles" ]; then ./package/ci/travis-desktop-gles.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "android" ]; then ./package/ci/travis-android-arm.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then ./package/ci/travis-desktop.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "ios-simulator" ]; then ./package/ci/travis-ios-simulator.sh; fi

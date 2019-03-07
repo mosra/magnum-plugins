@@ -25,6 +25,7 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Debug \
     -DWITH_AUDIO=ON \
     -DWITH_DEBUGTOOLS=ON \
+    -DWITH_GL=OFF \
     -DWITH_MESHTOOLS=$WITH_COLLADAIMPORTER \
     -DWITH_PRIMITIVES=OFF \
     -DWITH_SCENEGRAPH=OFF \
@@ -32,13 +33,14 @@ cmake .. \
     -DWITH_SHAPES=OFF \
     -DWITH_TEXT=ON \
     -DWITH_TEXTURETOOLS=ON \
-    -DWITH_OPENGLTESTER=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
     -DBUILD_DEPRECATED=$BUILD_DEPRECATED \
     -G Ninja
 ninja install
 cd ../..
 
+# Build. BUILD_GL_TESTS is enabled just to be sure, it should not be needed by
+# any plugin.
 mkdir build && cd build
 cmake .. \
     -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS" \
@@ -78,6 +80,6 @@ ninja install # for Any*Importer tests
 # there, which would match kinda everything (since 2018-09-01 on Travis CI).
 # DevIL tests "leak" since testing directly the dlopen()ed dynamic plugin, was
 # not a problem when testing a statically built library.
-ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer.conf" CORRADE_TEST_COLOR=ON ctest -V -E "GLTest|Collada|DevIl"
+ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer.conf" CORRADE_TEST_COLOR=ON ctest -V -E "Collada|DevIl"
 ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer-qt.conf" CORRADE_TEST_COLOR=ON ctest -V -R Collada
 ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer-devil.conf" CORRADE_TEST_COLOR=ON ctest -V -R DevIl

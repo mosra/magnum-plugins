@@ -55,6 +55,7 @@ cmake .. ^
     -DOPENGLES3_INCLUDE_DIR=%APPVEYOR_BUILD_FOLDER%/angle/include ^
     -DWITH_AUDIO=OFF ^
     -DWITH_DEBUGTOOLS=OFF ^
+    -DWITH_GL=OFF ^
     -DWITH_MESHTOOLS=OFF ^
     -DWITH_PRIMITIVES=OFF ^
     -DWITH_SCENEGRAPH=OFF ^
@@ -63,13 +64,13 @@ cmake .. ^
     -DWITH_TEXT=ON ^
     -DWITH_TEXTURETOOLS=ON ^
     -DWITH_ANYIMAGEIMPORTER=ON ^
-    -DTARGET_GLES2=%TARGET_GLES2% ^
     -DBUILD_STATIC=ON ^
     -G "%GENERATOR%" -A x64 || exit /b
 cmake --build . --config Release --target install -- /m /v:m || exit /b
 cd .. && cd ..
 
-rem Crosscompile
+rem Crosscompile. BUILD_GL_TESTS is enabled just to be sure, it should not be
+rem needed by any plugin.
 mkdir build-rt && cd build-rt || exit /b
 cmake .. ^
     -DCMAKE_BUILD_TYPE=Release ^
