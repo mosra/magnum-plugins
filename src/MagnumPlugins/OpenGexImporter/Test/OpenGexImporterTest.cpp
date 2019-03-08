@@ -105,7 +105,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void textureInvalidCoordinateSet();
 
     void image();
-    void imageInvalid();
+    void imageNotFound();
     void imageUnique();
 
     void extension();
@@ -164,7 +164,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::textureInvalidCoordinateSet,
 
               &OpenGexImporterTest::image,
-              &OpenGexImporterTest::imageInvalid,
+              &OpenGexImporterTest::imageNotFound,
               &OpenGexImporterTest::imageUnique,
 
               &OpenGexImporterTest::extension,
@@ -949,7 +949,7 @@ void OpenGexImporterTest::image() {
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
 }
 
-void OpenGexImporterTest::imageInvalid() {
+void OpenGexImporterTest::imageNotFound() {
     if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 

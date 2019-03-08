@@ -98,9 +98,10 @@ struct AssimpImporterTest: TestSuite::Tester {
     void scene();
     void sceneCollapsedNode();
 
-    void image();
-    void imageNotFound();
-    void embeddedImage();
+    void imageEmbedded();
+    void imageExternal();
+    void imageExternalNotFound();
+
     void texture();
 
     void openState();
@@ -158,9 +159,10 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::scene,
               &AssimpImporterTest::sceneCollapsedNode,
 
-              &AssimpImporterTest::image,
-              &AssimpImporterTest::imageNotFound,
-              &AssimpImporterTest::embeddedImage,
+              &AssimpImporterTest::imageEmbedded,
+              &AssimpImporterTest::imageExternal,
+              &AssimpImporterTest::imageExternalNotFound,
+
               &AssimpImporterTest::texture,
 
               &AssimpImporterTest::openState,
@@ -548,7 +550,29 @@ void AssimpImporterTest::sceneCollapsedNode() {
     }
 }
 
-void AssimpImporterTest::image() {
+void AssimpImporterTest::imageEmbedded() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    if(version <= 302)
+        CORRADE_SKIP("Assimp < 3.2 can't load embedded textures in blend files, Assimp 3.2 can't detect blend file format when opening a memory location.");
+
+    /* Open as data, so we verify opening embedded images from data does not
+       cause any problems even when no file callbacks are set */
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend"))));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i{1});
+    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::imageExternal() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
     if(version < 302)
@@ -568,7 +592,7 @@ void AssimpImporterTest::image() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
 }
 
-void AssimpImporterTest::imageNotFound() {
+void AssimpImporterTest::imageExternalNotFound() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly fails on more versions (definitely w/ 3.0 and 3.2) */
     if(version <= 302)
@@ -586,26 +610,6 @@ void AssimpImporterTest::imageNotFound() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /not-found.png\n");
-}
-
-void AssimpImporterTest::embeddedImage() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test");
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend")));
-
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
-        CORRADE_SKIP("Current version of assimp cannot load embedded textures from blender files.");
-
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->size(), Vector2i{1});
-    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::texture() {
