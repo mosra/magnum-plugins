@@ -115,7 +115,7 @@ template<class T> Containers::ArrayView<const T> bufferView(const tinygltf::Mode
 }
 
 struct TinyGltfImporter::Document {
-    std::string filePath;
+    Containers::Optional<std::string> filePath;
 
     tinygltf::Model model;
 
@@ -221,9 +221,9 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
 
     _d->open = true;
     if(data.size() >= 4 && strncmp(data.data(), "glTF", 4) == 0) {
-        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, nullptr, reinterpret_cast<const unsigned char*>(data.data()), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, nullptr, reinterpret_cast<const unsigned char*>(data.data()), data.size(), _d->filePath ? *_d->filePath : "", tinygltf::SectionCheck::NO_REQUIRE);
     } else {
-        _d->open = loader.LoadASCIIFromString(&_d->model, &err, nullptr, data.data(), data.size(), _d->filePath, tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadASCIIFromString(&_d->model, &err, nullptr, data.data(), data.size(), _d->filePath ? *_d->filePath : "", tinygltf::SectionCheck::NO_REQUIRE);
     }
 
     if(!_d->open) {
@@ -1317,8 +1317,13 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
 
     /* Load external image */
     } else {
+        if(!_d->filePath && !fileCallback()) {
+            Error{} << "Trade::TinyGltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present";
+            return {};
+        }
+
         Containers::Optional<ImageData2D> imageData;
-        if(!imageImporter.openFile(Utility::Directory::join(_d->filePath, image.uri)) || !(imageData = imageImporter.image2D(0)))
+        if(!imageImporter.openFile(Utility::Directory::join(_d->filePath ? *_d->filePath : "", image.uri)) || !(imageData = imageImporter.image2D(0)))
             return Containers::NullOpt;
 
         return ImageData2D{std::move(*imageData), &image};

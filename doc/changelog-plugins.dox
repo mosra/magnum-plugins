@@ -34,6 +34,16 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
+-   Calling @ref Trade::AbstractImporter::image2D() "image2D()" in
+    @ref Trade::AssimpImporter "AssimpImporter",
+    @ref Trade::OpenGexImporter "OpenGexImporter" and
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" now behaves consistently
+    in regards to file loading callbacks --- failing with an error if and only
+    if image is not embedded, the file is not opened from a filesystem and file
+    loading callbacks are not set. Previously it could errorneously assert even
+    when loading embedded images, try to look for images on the filesystem when
+    loading in-memory data or fail to open images when a file inside current
+    working directory was opened.
 -   The @ref Trade::AssimpImporter "AssimpImporter" plugin now detects ambient
     color set to @cpp 0xffffff_srgbf @ce and forces it back to
     @cpp 0x000000_srgbf @ce. This is a bug in Assimp 4.1, causing all other

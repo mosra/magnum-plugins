@@ -107,6 +107,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void image();
     void imageNotFound();
     void imageUnique();
+    void imageNoPathNoCallback();
 
     void extension();
 
@@ -166,6 +167,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::image,
               &OpenGexImporterTest::imageNotFound,
               &OpenGexImporterTest::imageUnique,
+              &OpenGexImporterTest::imageNoPathNoCallback,
 
               &OpenGexImporterTest::extension,
 
@@ -1009,6 +1011,17 @@ void OpenGexImporterTest::imageUnique() {
         CORRADE_VERIFY(!importer->image2D(texture2->image()));
         CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex3.tga\n");
     }
+}
+
+void OpenGexImporterTest::imageNoPathNoCallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"))));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void OpenGexImporterTest::extension() {

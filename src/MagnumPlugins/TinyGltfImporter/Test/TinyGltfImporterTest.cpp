@@ -111,6 +111,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void imageEmbedded();
     void imageExternal();
     void imageExternalNotFound();
+    void imageExternalNoPathNoCallback();
 
     void fileCallbackBuffer();
     void fileCallbackBufferNotFound();
@@ -242,7 +243,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::imageExternal},
                       Containers::arraySize(ImageExternalData));
 
-    addTests({&TinyGltfImporterTest::imageExternalNotFound});
+    addTests({&TinyGltfImporterTest::imageExternalNotFound,
+              &TinyGltfImporterTest::imageExternalNoPathNoCallback});
 
     addInstancedTests({&TinyGltfImporterTest::fileCallbackBuffer,
                        &TinyGltfImporterTest::fileCallbackBufferNotFound,
@@ -1973,6 +1975,17 @@ void TinyGltfImporterTest::imageExternalNotFound() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.png\n");
+}
+
+void TinyGltfImporterTest::imageExternalNoPathNoCallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "image.gltf"))));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void TinyGltfImporterTest::fileCallbackBuffer() {

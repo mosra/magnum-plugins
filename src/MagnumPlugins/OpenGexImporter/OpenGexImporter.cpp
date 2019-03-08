@@ -808,13 +808,16 @@ Containers::Optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt i
 UnsignedInt OpenGexImporter::doImage2DCount() const { return _d->images.size(); }
 
 Containers::Optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id) {
-    CORRADE_ASSERT(_d->filePath || fileCallback(), "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from filesystem or if a file callback is present", {});
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+    if(!_d->filePath && !fileCallback()) {
+        Error{} << "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from the filesystem or if a file callback is present";
+        return {};
+    }
 
     AnyImageImporter imageImporter{*manager()};
     if(fileCallback()) imageImporter.setFileCallback(fileCallback(), fileCallbackUserData());
 
-    const std::string imageFile = Utility::Directory::join((_d->filePath) ? *_d->filePath : "", _d->images[id]);
+    const std::string imageFile = Utility::Directory::join(_d->filePath ? *_d->filePath : "", _d->images[id]);
     if(!imageImporter.openFile(imageFile))
         return Containers::NullOpt;
 

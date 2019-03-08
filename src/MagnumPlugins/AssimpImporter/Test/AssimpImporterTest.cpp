@@ -101,6 +101,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void imageEmbedded();
     void imageExternal();
     void imageExternalNotFound();
+    void imageExternalNoPathNoCallback();
 
     void texture();
 
@@ -162,6 +163,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::imageEmbedded,
               &AssimpImporterTest::imageExternal,
               &AssimpImporterTest::imageExternalNotFound,
+              &AssimpImporterTest::imageExternalNoPathNoCallback,
 
               &AssimpImporterTest::texture,
 
@@ -610,6 +612,22 @@ void AssimpImporterTest::imageExternalNotFound() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /not-found.png\n");
+}
+
+void AssimpImporterTest::imageExternalNoPathNoCallback() {
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
+    if(version < 302)
+        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"))));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void AssimpImporterTest::texture() {
