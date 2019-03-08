@@ -80,6 +80,7 @@ corrade_add_test(TinyGltfImporterTest
         image-buffer.glb
         image-buffer-embedded.gltf
         image-buffer-embedded.glb
+        image-notfound.gltf
         light.gltf
         light.glb
         material-blinnphong.gltf

@@ -108,7 +108,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void texture();
     void textureDefaultSampler();
 
-    void image();
+    void imageEmbedded();
+    void imageExternal();
+    void imageExternalNotFound();
 
     void fileCallbackBuffer();
     void fileCallbackBufferNotFound();
@@ -150,15 +152,21 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* suffix;
-} ImageData[]{
-    {"ascii external", ".gltf"},
-    {"ascii embedded", "-embedded.gltf"},
-    {"ascii buffer external", "-buffer.gltf"},
-    {"ascii buffer embedded", "-buffer-embedded.gltf"},
-    {"binary external", ".glb"},
-    {"binary embedded", "-embedded.glb"},
-    {"binary buffer external", "-buffer.glb"},
-    {"binary buffer embedded", "-buffer-embedded.glb"}
+} ImageEmbeddedData[]{
+    {"ascii", "-embedded.gltf"},
+    {"ascii buffer", "-buffer-embedded.gltf"},
+    {"binary", "-embedded.glb"},
+    {"binary buffer", "-buffer-embedded.glb"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* suffix;
+} ImageExternalData[]{
+    {"ascii", ".gltf"},
+    {"ascii buffer", "-buffer.gltf"},
+    {"binary", ".glb"},
+    {"binary buffer", "-buffer.glb"},
 };
 
 using namespace Magnum::Math::Literals;
@@ -228,8 +236,13 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::textureDefaultSampler},
                       Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&TinyGltfImporterTest::image},
-                      Containers::arraySize(ImageData));
+    addInstancedTests({&TinyGltfImporterTest::imageEmbedded},
+                      Containers::arraySize(ImageEmbeddedData));
+
+    addInstancedTests({&TinyGltfImporterTest::imageExternal},
+                      Containers::arraySize(ImageExternalData));
+
+    addTests({&TinyGltfImporterTest::imageExternalNotFound});
 
     addInstancedTests({&TinyGltfImporterTest::fileCallbackBuffer,
                        &TinyGltfImporterTest::fileCallbackBufferNotFound,
@@ -1903,8 +1916,33 @@ constexpr char ExpectedImageData[] =
     "\xb0\xb1\xb6\xff\xa0\xa0\xa1\xff\x9f\x9f\xa0\xff\xbc\xbc\xba\xff\xcc\xcc\xcc\xff"
     "\xb2\xb4\xb9\xff\xb8\xb9\xbb\xff\xc1\xc3\xc2\xff\xbc\xbd\xbf\xff\xb8\xb8\xbc\xff";
 
-void TinyGltfImporterTest::image() {
-    auto&& data = ImageData[testCaseInstanceId()];
+void TinyGltfImporterTest::imageEmbedded() {
+    auto&& data = ImageEmbeddedData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    /* Open as data, so we verify opening embedded images from data does not
+       cause any problems even when no file callbacks are set */
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "image" + std::string{data.suffix}))));
+
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_COMPARE(importer->image2DForName("Image"), 1);
+    CORRADE_COMPARE(importer->image2DName(1), "Image");
+
+    auto image = importer->image2D(1);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->importerState());
+    CORRADE_COMPARE(image->size(), Vector2i(5, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::imageExternal() {
+    auto&& data = ImageExternalData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -1924,6 +1962,17 @@ void TinyGltfImporterTest::image() {
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::imageExternalNotFound() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "image-notfound.gltf")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.png\n");
 }
 
 void TinyGltfImporterTest::fileCallbackBuffer() {
