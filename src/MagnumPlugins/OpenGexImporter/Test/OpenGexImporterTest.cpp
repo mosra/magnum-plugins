@@ -31,6 +31,7 @@
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/String.h>
+#include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Math/Vector3.h>
@@ -1084,7 +1085,7 @@ void OpenGexImporterTest::fileCallbackImage() {
     std::unordered_map<std::string, Containers::Array<char>> files;
     files["not/a/path/something.ogex"] = Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"));
     files["not/a/path/image.tga"] = Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "image.tga"));
-    importer->setFileCallback([](const std::string& filename, Trade::ImporterFileCallbackPolicy policy,
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             Debug{} << "Loading" << filename << "with" << policy;
             return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
@@ -1106,7 +1107,7 @@ void OpenGexImporterTest::fileCallbackImageNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
-    importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy, void*) {
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*) {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
 

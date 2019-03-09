@@ -64,9 +64,9 @@ bool HarfBuzzFont::doIsOpened() const {
     return FreeTypeFont::doIsOpened();
 }
 
-auto HarfBuzzFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
+auto HarfBuzzFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
     /* Open FreeType font */
-    auto ret = FreeTypeFont::doOpenSingleData(data, size);
+    auto ret = FreeTypeFont::doOpenData(data, size);
 
     /* Create Harfbuzz font */
     if(FreeTypeFont::doIsOpened()) hbFont = hb_ft_font_create(ftFont, nullptr);

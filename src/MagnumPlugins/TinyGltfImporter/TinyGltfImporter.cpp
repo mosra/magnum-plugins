@@ -35,6 +35,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/String.h>
+#include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/CubicHermite.h>
@@ -206,7 +207,7 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         };
         callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string* err, const std::string& filename, void* userData) {
             auto& self = *static_cast<TinyGltfImporter*>(userData);
-            Containers::Optional<Containers::ArrayView<const char>> data = self.fileCallback()(filename, ImporterFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
+            Containers::Optional<Containers::ArrayView<const char>> data = self.fileCallback()(filename, InputFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
             if(!data) {
                 *err = "file callback failed";
                 return false;

@@ -33,6 +33,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
+#include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Vector.h>
 #include <Magnum/PixelFormat.h>
@@ -151,7 +152,7 @@ struct IoStream: Assimp::IOStream {
 };
 
 struct IoSystem: Assimp::IOSystem {
-    explicit IoSystem(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, ImporterFileCallbackPolicy, void*), void* userData): _callback{callback}, _userData{userData} {}
+    explicit IoSystem(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData): _callback{callback}, _userData{userData} {}
 
     /* What else? I can't know. */
     bool Exists(const char*) const override { return true; }
@@ -161,23 +162,23 @@ struct IoSystem: Assimp::IOSystem {
 
     Assimp::IOStream* Open(const char* file, const char* mode) override {
         CORRADE_INTERNAL_ASSERT(mode == std::string{"rb"});
-        const Containers::Optional<Containers::ArrayView<const char>> data = _callback(file, ImporterFileCallbackPolicy::LoadTemporary, _userData);
+        const Containers::Optional<Containers::ArrayView<const char>> data = _callback(file, InputFileCallbackPolicy::LoadTemporary, _userData);
         if(!data) return {};
         return new IoStream{file, *data};
     }
 
     void Close(Assimp::IOStream* file) override {
-        _callback(static_cast<IoStream*>(file)->filename, ImporterFileCallbackPolicy::Close, _userData);
+        _callback(static_cast<IoStream*>(file)->filename, InputFileCallbackPolicy::Close, _userData);
         delete file;
     }
 
-    Containers::Optional<Containers::ArrayView<const char>>(*_callback)(const std::string&, ImporterFileCallbackPolicy, void*);
+    Containers::Optional<Containers::ArrayView<const char>>(*_callback)(const std::string&, InputFileCallbackPolicy, void*);
     void* _userData;
 };
 
 }
 
-void AssimpImporter::doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, Magnum::Trade::ImporterFileCallbackPolicy, void*), void* userData) {
+void AssimpImporter::doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData) {
     if(callback) {
         _importer->SetIOHandler(_ourFileCallback = new IoSystem{callback, userData});
 

@@ -33,6 +33,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/Array.h>
+#include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/CubicHermite.h>
@@ -1996,7 +1997,7 @@ void TinyGltfImporterTest::fileCallbackBuffer() {
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     Utility::Resource rs{"data"};
-    importer->setFileCallback([](const std::string& filename, ImporterFileCallbackPolicy policy, Utility::Resource& rs) {
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy, Utility::Resource& rs) {
         Debug{} << "Loading" << filename << "with" << policy;
         return Containers::optional(rs.getRaw(filename));
     }, rs);
@@ -2025,7 +2026,7 @@ void TinyGltfImporterTest::fileCallbackBufferNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
-    importer->setFileCallback([](const std::string&, ImporterFileCallbackPolicy, void*)
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*)
         -> Containers::Optional<Containers::ArrayView<const char>> { return {}; });
 
     std::ostringstream out;
@@ -2047,7 +2048,7 @@ void TinyGltfImporterTest::fileCallbackImage() {
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     Utility::Resource rs{"data"};
-    importer->setFileCallback([](const std::string& filename, ImporterFileCallbackPolicy  policy, Utility::Resource& rs) {
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy  policy, Utility::Resource& rs) {
         Debug{} << "Loading" << filename << "with" << policy;
         return Containers::optional(rs.getRaw(filename));
     }, rs);
@@ -2075,7 +2076,7 @@ void TinyGltfImporterTest::fileCallbackImageNotFound() {
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
     Utility::Resource rs{"data"};
-    importer->setFileCallback([](const std::string& filename, ImporterFileCallbackPolicy, Utility::Resource& rs)
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy, Utility::Resource& rs)
             -> Containers::Optional<Containers::ArrayView<const char>>
         {
             if(filename == "data.bin")

@@ -113,7 +113,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         FT_Face ftFont;
 
         bool doIsOpened() const override;
-        Metrics doOpenSingleData(Containers::ArrayView<const char> data, Float size) override;
+        Metrics doOpenData(Containers::ArrayView<const char> data, Float size) override;
         void doClose() override;
 
     private:

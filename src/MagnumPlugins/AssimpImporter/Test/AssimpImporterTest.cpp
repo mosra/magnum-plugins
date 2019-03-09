@@ -36,6 +36,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
+#include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -755,7 +756,7 @@ void AssimpImporterTest::fileCallback() {
 
     std::unordered_map<std::string, Containers::Array<char>> files;
     files["not/a/path/mesh.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae"));
-    importer->setFileCallback([](const std::string& filename, Trade::ImporterFileCallbackPolicy policy,
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             Debug{} << "Loading" << filename << "with" << policy;
             return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
@@ -787,7 +788,7 @@ void AssimpImporterTest::fileCallbackNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
-    importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy,
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
         void*) {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
@@ -802,7 +803,7 @@ void AssimpImporterTest::fileCallbackReset() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
-    importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy,
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
         void*) {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
@@ -827,7 +828,7 @@ void AssimpImporterTest::fileCallbackImage() {
     std::unordered_map<std::string, Containers::Array<char>> files;
     files["not/a/path/texture.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"));
     files["not/a/path/diffuse_texture.png"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "diffuse_texture.png"));
-    importer->setFileCallback([](const std::string& filename, Trade::ImporterFileCallbackPolicy policy,
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             Debug{} << "Loading" << filename << "with" << policy;
             return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
@@ -854,7 +855,7 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
 
-    importer->setFileCallback([](const std::string&, Trade::ImporterFileCallbackPolicy,
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
         void*) {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });

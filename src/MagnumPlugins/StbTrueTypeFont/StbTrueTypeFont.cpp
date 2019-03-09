@@ -67,7 +67,7 @@ auto StbTrueTypeFont::doFeatures() const -> Features { return Feature::OpenData;
 
 bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 
-auto StbTrueTypeFont::doOpenSingleData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
+auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
     Containers::Pointer<Font> font{Containers::InPlaceInit};
 
     /* TrueType fonts are memory-mapped, thus we need to preserve the data for
