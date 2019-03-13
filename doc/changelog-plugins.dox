@@ -68,6 +68,8 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
+-   @ref building-plugins-packages-msys "MSYS2 packages" are now in official
+    repositories, installable directly via `pacman`
 -   The @ref Trade::JpegImageConverter "JpegImageConverter" plugin was
     mistakenly using the `JPEG_INCLUDE_DIRS` CMake variable which was not
     present on versions before 3.12. The @ref Trade::JpegImporter "JpegImporter"
