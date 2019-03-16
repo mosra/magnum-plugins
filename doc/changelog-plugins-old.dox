@@ -158,8 +158,7 @@ No dependency changes in this release.
 
 @subsection changelog-plugins-2013-10-changes Changes
 
--   Reworked @ref Trade::ColladaImporter "ColladaImporter" internals to avoid
-    double deletions
+-   Reworked `ColladaImporter` internals to avoid double deletions
 -   Documentation updates and improvements to make the library more accessible
     for newcomers
 -   Various build system updates for better compile times and easier

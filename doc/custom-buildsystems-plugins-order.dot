@@ -46,7 +46,6 @@ digraph "Magnum Plugins dependency order" {
     Font [label="*Font" class="m-success"]
 
     AssimpImporter [class="m-success"]
-    ColladaImporter [class="m-dim"]
     FreeTypeFont [class="m-success"]
     HarfBuzzFont [class="m-success"]
     OpenGexImporter [class="m-success"]
@@ -68,9 +67,6 @@ digraph "Magnum Plugins dependency order" {
 
     AssimpImporter -> MagnumTrade
     AssimpImporter -> AnyImageImporter
-    ColladaImporter -> MagnumTrade [class="m-dim"]
-    ColladaImporter -> MagnumMeshTools [class="m-dim"]
-    ColladaImporter -> AnyImageImporter [class="m-dim"]
     FreeTypeFont -> MagnumText
     HarfBuzzFont -> FreeTypeFont
     OpenGexImporter -> MagnumTrade

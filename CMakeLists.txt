@@ -42,7 +42,6 @@ include(CMakeDependentOption)
 
 # Plugins to build
 option(WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
-option(WITH_COLLADAIMPORTER "Build ColladaImporter plugin" OFF)
 option(WITH_DDSIMPORTER "Build DdsImporter plugin" OFF)
 option(WITH_DEVILIMAGEIMPORTER "Build DevIlImageImporter plugin" OFF)
 option(WITH_DRFLACAUDIOIMPORTER "Build DrFlacAudioImporter plugin" OFF)

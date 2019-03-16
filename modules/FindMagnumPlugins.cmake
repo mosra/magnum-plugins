@@ -13,7 +13,6 @@
 # This command will not try to find any actual plugin. The plugins are:
 #
 #  AssimpImporter               - Assimp importer
-#  ColladaImporter              - Collada importer
 #  DdsImporter                  - DDS importer
 #  DevIlImageImporter           - Image importer using DevIL
 #  DrFlacAudioImporter          - FLAC audio importer using dr_flac
@@ -100,11 +99,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         set(_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES Text)
     endif()
 
-    if(_component STREQUAL ColladaImporter)
-        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES MeshTools)
-    elseif(_component STREQUAL AssimpImporter)
-        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
-    elseif(_component STREQUAL ColladaImporter)
+    if(_component STREQUAL AssimpImporter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     elseif(_component STREQUAL OpenGexImporter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
@@ -131,9 +126,6 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     OpenGexImporter PngImageConverter PngImporter StanfordImporter
     StbImageConverter StbImageImporter StbTrueTypeFont StbVorbisAudioImporter
     TinyGltfImporter)
-if(MAGNUM_BUILD_DEPRECATED)
-    list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST ColladaImporter)
-endif()
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
@@ -271,14 +263,6 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             find_package(Assimp)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
-
-        # ColladaImporter plugin dependencies
-        elseif(_component STREQUAL ColladaImporter)
-            find_package(Qt4)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_INCLUDE_DIRECTORIES ${QT_INCLUDE_DIR})
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES ${QT_QTCORE_LIBRARY} ${QT_QTXMLPATTERNS_LIBRARY})
 
         # DdsImporter has no dependencies
 

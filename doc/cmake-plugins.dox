@@ -63,8 +63,6 @@ This command tries to find Magnum plugins and then defines:
 This command will not try to find any actual plugin. The plugins are:
 
 -   `AssimpImporter` --- @ref Trade::AssimpImporter "AssimpImporter" plugin
--   `ColladaImporter` @m_class{m-label m-danger} **deprecated** ---
-    @ref Trade::ColladaImporter "ColladaImporter" plugin
 -   `DdsImporter` --- @ref Trade::DdsImporter "DdsImporter" plugin
 -   `DevIlImageImporter` --- @ref Trade::DevIlImageImporter "DevIlImageImporter"
     plugin

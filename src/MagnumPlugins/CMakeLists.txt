@@ -38,10 +38,6 @@ if(WITH_ASSIMPIMPORTER)
     add_subdirectory(AssimpImporter)
 endif()
 
-if(WITH_COLLADAIMPORTER)
-    add_subdirectory(ColladaImporter)
-endif()
-
 if(WITH_DDSIMPORTER)
 	add_subdirectory(DdsImporter)
 endif()
