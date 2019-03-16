@@ -39,7 +39,7 @@ if(WITH_ASSIMPIMPORTER)
 endif()
 
 if(WITH_DDSIMPORTER)
-	add_subdirectory(DdsImporter)
+    add_subdirectory(DdsImporter)
 endif()
 
 if(WITH_DEVILIMAGEIMPORTER)
