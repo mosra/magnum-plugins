@@ -103,6 +103,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void imageExternal();
     void imageExternalNotFound();
     void imageExternalNoPathNoCallback();
+    void imagePathMtlSpaceAtTheEnd();
 
     void texture();
 
@@ -165,6 +166,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::imageExternal,
               &AssimpImporterTest::imageExternalNotFound,
               &AssimpImporterTest::imageExternalNoPathNoCallback,
+              &AssimpImporterTest::imagePathMtlSpaceAtTheEnd,
 
               &AssimpImporterTest::texture,
 
@@ -629,6 +631,21 @@ void AssimpImporterTest::imageExternalNoPathNoCallback() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+}
+
+void AssimpImporterTest::imagePathMtlSpaceAtTheEnd() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-trailing-space.obj")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i{1});
+    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::texture() {

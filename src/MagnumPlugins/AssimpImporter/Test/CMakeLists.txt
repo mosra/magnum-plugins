@@ -57,6 +57,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         camera.dae
         diffuse_texture.png
         embedded-texture.blend
+        image-filename-trailing-space.mtl
+        image-filename-trailing-space.obj
         light-undefined.dae
         light.dae
         mesh-material.dae
