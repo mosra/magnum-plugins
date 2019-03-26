@@ -33,6 +33,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Vector.h>
@@ -687,7 +688,10 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
 
         AnyImageImporter importer{*manager()};
         if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
-        if(!importer.openFile(Utility::Directory::join(_f->filePath ? *_f->filePath : "", path)))
+        auto fullPath = Utility::String::trim(Utility::Directory::join(
+            _f->filePath ? *_f->filePath : "", path
+        ));
+        if(!importer.openFile(fullPath))
             return Containers::NullOpt;
         return importer.image2D(0);
     }
