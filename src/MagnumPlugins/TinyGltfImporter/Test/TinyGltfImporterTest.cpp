@@ -60,6 +60,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void open();
     void openError();
+    void openExternalDataNotFound();
+    void openExternalDataNoPathNoCallback();
 
     void animation();
     void animationWrongTimeType();
@@ -185,6 +187,10 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::openError},
                       Containers::arraySize(OpenErrorData));
 
+    addInstancedTests({&TinyGltfImporterTest::openExternalDataNotFound,
+                       &TinyGltfImporterTest::openExternalDataNoPathNoCallback},
+                      Containers::arraySize(SingleFileData));
+
     addInstancedTests({&TinyGltfImporterTest::animation},
                       Containers::arraySize(MultiFileData));
 
@@ -302,6 +308,38 @@ void TinyGltfImporterTest::openError() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openData(data.shortData));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: " + std::string{data.shortDataError});
+}
+
+void TinyGltfImporterTest::openExternalDataNotFound() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "buffer-notfound" + std::string{data.suffix});
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openFile(filename));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: \n");
+}
+
+void TinyGltfImporterTest::openExternalDataNoPathNoCallback() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "buffer-notfound" + std::string{data.suffix});
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openData(Utility::Directory::read(filename)));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: \n");
 }
 
 void TinyGltfImporterTest::animation() {

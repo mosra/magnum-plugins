@@ -60,6 +60,8 @@ corrade_add_test(TinyGltfImporterTest
     FILES
         empty.gltf
         empty.glb
+        buffer-notfound.gltf
+        buffer-notfound.glb
         animation.gltf
         animation.glb
         animation.bin

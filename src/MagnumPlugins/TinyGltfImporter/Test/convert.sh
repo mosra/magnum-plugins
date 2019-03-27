@@ -17,5 +17,6 @@ for i in animation animation-embedded camera empty image image-embedded image-bu
     ./gltf2glb.py ${i}.gltf
 done
 
-# special case
+# special cases
+./gltf2glb.py buffer-notfound.gltf --no-embed
 ./gltf2glb.py external-data.gltf --no-embed
