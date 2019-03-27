@@ -323,7 +323,7 @@ void TinyGltfImporterTest::openExternalDataNotFound() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile(filename));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: \n");
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File read error : /nonexistent.bin : file not found\n");
 }
 
 void TinyGltfImporterTest::openExternalDataNoPathNoCallback() {
@@ -339,7 +339,7 @@ void TinyGltfImporterTest::openExternalDataNoPathNoCallback() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openData(Utility::Directory::read(filename)));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: \n");
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File read error : /nonexistent.bin : external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void TinyGltfImporterTest::animation() {

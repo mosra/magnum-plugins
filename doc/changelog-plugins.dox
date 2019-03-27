@@ -65,6 +65,13 @@ namespace Magnum {
     @ref Trade::PngImporter "PngImporter" and
     @ref Trade::StbImageConverter "StbImageImporter" now properly report an
     error message when opening an empty file
+-   Switched @ref Trade::TinyGltfImporter "TinyGltfImporter" to use
+    @ref Corrade::Utility::Directory::read() instead of tiny_gltf's internal
+    APIs for loading external files, making it work correctly for UTF-8 paths
+    on Windows
+-   Better diagnostics in @ref Trade::TinyGltfImporter "TinyGltfImporter" when
+    an external buffer file is not found or when a file loaded from memory
+    attempts to reference an external buffer without file callbacks being set
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

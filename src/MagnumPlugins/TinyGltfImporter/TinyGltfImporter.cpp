@@ -59,6 +59,17 @@
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 /* Opt out of loading external images */
 #define TINYGLTF_NO_EXTERNAL_IMAGE
+/* Opt out of filesystem access, as we handle it ourselves. However that makes
+   it fail to compile as std::ofstream is not define, so we do that here (and
+   newer versions don't seem to fix that either). Enabling filesystem access
+   makes the compilation fail on WinRT 2015 because for some reason
+   ExpandEnvironmentStringsA() is not defined there. Not sure what is that
+   related to since windows.h is included, I assume it's related to the MSVC
+   2015 bug where a duplicated templated alias causes the compiler to forget
+   random symbols, but I couldn't find anything like that in the codebase.
+   Also, this didn't happen before when plugins were built with GL enabled. */
+#define TINYGLTF_NO_FS
+#include <fstream>
 
 #ifdef CORRADE_TARGET_WINDOWS
 /* Tinygltf includes some windows headers, avoid including more than ncessary
@@ -198,16 +209,25 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
 
     if(!_d) _d.reset(new Document);
 
-    if(fileCallback()) {
-        tinygltf::FsCallbacks callbacks;
-        callbacks.user_data = this;
-        callbacks.FileExists = [](const std::string&, void*) { return true; };
-        callbacks.ExpandFilePath = [](const std::string& path, void*) {
-            return path;
-        };
-        callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string* err, const std::string& filename, void* userData) {
+    /* Set up file callbacks */
+    tinygltf::FsCallbacks callbacks;
+    callbacks.user_data = this;
+    /* We don't need any expansion of environment variables in file paths.
+       That should be done in a completely different place and is not something
+       the importer should care about. Further, FileExists and ExpandFilePath
+       is used to search for files in a few different locations. That's also
+       totally useless, since location of dependent files is *clearly* and
+       uniquely defined. Also, tinygltf's path joining is STUPID and so
+       /foo/bar/ + /file.dat gets joined to /foo/bar//file.dat. So we supply
+       an empty path there and handle it here correctly. */
+    callbacks.FileExists = [](const std::string&, void*) { return true; };
+    callbacks.ExpandFilePath = [](const std::string& path, void*) {
+        return path;
+    };
+    if(fileCallback()) callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string* err, const std::string& filename, void* userData) {
             auto& self = *static_cast<TinyGltfImporter*>(userData);
-            Containers::Optional<Containers::ArrayView<const char>> data = self.fileCallback()(filename, InputFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
+            const std::string fullPath = Utility::Directory::join(self._d->filePath ? *self._d->filePath : "", filename);
+            Containers::Optional<Containers::ArrayView<const char>> data = self.fileCallback()(fullPath, InputFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
             if(!data) {
                 *err = "file callback failed";
                 return false;
@@ -215,16 +235,30 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
             out->assign(data->begin(), data->end());
             return true;
         };
-        loader.SetFsCallbacks(callbacks);
-    }
+    else callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string* err, const std::string& filename, void* userData) {
+            auto& self = *static_cast<TinyGltfImporter*>(userData);
+            if(!self._d->filePath) {
+                *err = "external buffers can be imported only when opening files from the filesystem or if a file callback is present";
+                return false;
+            }
+            const std::string fullPath = Utility::Directory::join(*self._d->filePath, filename);
+            if(!Utility::Directory::exists(fullPath)) {
+                *err = "file not found";
+                return false;
+            }
+            Containers::Array<char> data = Utility::Directory::read(fullPath);
+            out->assign(data.begin(), data.end());
+            return true;
+        };
+    loader.SetFsCallbacks(callbacks);
 
     loader.SetImageLoader(&loadImageData, nullptr);
 
     _d->open = true;
     if(data.size() >= 4 && strncmp(data.data(), "glTF", 4) == 0) {
-        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, nullptr, reinterpret_cast<const unsigned char*>(data.data()), data.size(), _d->filePath ? *_d->filePath : "", tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadBinaryFromMemory(&_d->model, &err, nullptr, reinterpret_cast<const unsigned char*>(data.data()), data.size(), "", tinygltf::SectionCheck::NO_REQUIRE);
     } else {
-        _d->open = loader.LoadASCIIFromString(&_d->model, &err, nullptr, data.data(), data.size(), _d->filePath ? *_d->filePath : "", tinygltf::SectionCheck::NO_REQUIRE);
+        _d->open = loader.LoadASCIIFromString(&_d->model, &err, nullptr, data.data(), data.size(), "", tinygltf::SectionCheck::NO_REQUIRE);
     }
 
     if(!_d->open) {
