@@ -119,9 +119,14 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void fileCallbackImage();
     void fileCallbackImageNotFound();
 
+    void utf8filenames();
+
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
+
+/* The external-data.* files are packed in via a resource, filename mapping
+   done in resources.conf */
 
 constexpr struct {
     const char* name;
@@ -252,6 +257,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::fileCallbackImage,
                        &TinyGltfImporterTest::fileCallbackImageNotFound},
                       Containers::arraySize(SingleFileData));
+
+    addTests({&TinyGltfImporterTest::utf8filenames});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -2092,6 +2099,34 @@ void TinyGltfImporterTest::fileCallbackImageNotFound() {
 
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file data.png\n");
+}
+
+void TinyGltfImporterTest::utf8filenames() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "přívodní-šňůra.gltf")));
+
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
+    CORRADE_VERIFY(!mesh->isIndexed());
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(mesh->normalArrayCount(), 0);
+
+    CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+        {1.0f, 2.0f, 3.0f}
+    }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(5, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
 }
 
 }}}}

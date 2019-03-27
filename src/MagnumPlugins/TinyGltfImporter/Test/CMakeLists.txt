@@ -109,6 +109,9 @@ corrade_add_test(TinyGltfImporterTest
         mesh-colors-embedded.glb
         mesh-with-stride.gltf
         mesh-with-stride.glb
+        přívodní-šňůra.gltf
+        přívodní-šňůra.bin
+        přívodní-šňůra.png
         scene.gltf
         scene.glb
         scene-nodefault.gltf

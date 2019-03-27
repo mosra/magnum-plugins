@@ -1,0 +1,43 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "mode": 0,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 12,
+            "byteOffset": 0
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 12,
+            "uri": "přívodní-šňůra.bin"
+        }
+    ],
+    "images": [
+        {
+            "uri": "přívodní-šňůra.png"
+        }
+    ]
+}
