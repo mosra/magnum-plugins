@@ -52,7 +52,8 @@ namespace Magnum {
 -   **Jonathan Mercier-Ganady** ([\@Jmgr](https://github.com/Jmgr)) --- build
     fixes
 -   **Max Schwarz** ([\@xqms](https://github.com/xqms)) --- error reporting
-    improvements in @ref Trade::JpegImporter "JpegImporter"
+    improvements in @ref Trade::JpegImporter "JpegImporter", file parsing
+    robustness in @ref Trade::AssimpImporter "AssimpImporter"
 -   **Nathan Ollerenshaw** ([\@matjam](https://github.com/matjam)) --- Ubuntu
     package updates, a PPA repository for stable versions
 -   **Nicholas "LB" Branden** ([\@LB--](https://github.com/LB--)) ---
