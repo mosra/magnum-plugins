@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 

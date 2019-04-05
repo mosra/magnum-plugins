@@ -25,6 +25,7 @@
 
 #include <tuple>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/DebugStl.h>
 
 #include "Magnum/OpenDdl/Document.h"
 #include "Magnum/OpenDdl/Property.h"

@@ -29,8 +29,9 @@
 #include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Utility/String.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Endianness.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/Array.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Color.h>
