@@ -58,15 +58,14 @@ Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D&
     }
 
     /* Data properties */
-    Math::Vector2<std::size_t> offset, dataSize;
-    std::tie(offset, dataSize) = image.dataProperties();
+    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
 
     /* Image data pointer including skip */
-    const char* imageData = image.data() + offset.sum();
+    const char* imageData = image.data() + dataProperties.first.sum();
 
     /* Do Y-flip and tight packing of image data */
     const std::size_t rowSize = image.size().x()*image.pixelSize();
-    const std::size_t rowStride = dataSize.x();
+    const std::size_t rowStride = dataProperties.second.x();
     const std::size_t packedDataSize = rowSize*image.size().y();
     Containers::Array<char> reversedPackedData{packedDataSize};
     for(std::int_fast32_t y = 0; y != image.size().y(); ++y)

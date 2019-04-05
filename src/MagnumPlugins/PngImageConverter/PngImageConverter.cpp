@@ -128,13 +128,12 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
     png_write_info(file, info);
 
     /* Data properties */
-    Math::Vector2<std::size_t> offset, dataSize;
-    std::tie(offset, dataSize) = image.dataProperties();
+    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
 
     /* Write rows in reverse order, properly take data properties into account */
     if(bitDepth == 8) {
         for(Int y = 0; y != image.size().y(); ++y)
-            png_write_row(file, const_cast<unsigned char*>(image.data<unsigned char>()) + offset.sum() + (image.size().y() - y - 1)*dataSize.x());
+            png_write_row(file, const_cast<unsigned char*>(image.data<unsigned char>()) + dataProperties.first.sum() + (image.size().y() - y - 1)*dataProperties.second.x());
 
     /* For 16 bit depth we need to swap to big endian */
     } else if(bitDepth == 16) {
@@ -142,7 +141,7 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
         png_set_swap(file);
         #endif
         for(Int y = 0; y != image.size().y(); ++y) {
-            png_write_row(file, const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(image.data<UnsignedShort>() + (offset.sum() + (image.size().y() - y - 1)*dataSize.x())/2)));
+            png_write_row(file, const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(image.data<UnsignedShort>() + (dataProperties.first.sum() + (image.size().y() - y - 1)*dataProperties.second.x())/2)));
         }
     }
 

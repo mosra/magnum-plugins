@@ -142,13 +142,12 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
     jpeg_start_compress(&info, boolean(true));
 
     /* Data properties */
-    Math::Vector2<std::size_t> offset, dataSize;
-    std::tie(offset, dataSize) = image.dataProperties();
+    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
 
     while(info.next_scanline < info.image_height) {
         /* libJPEG HAVE YOU EVER HEARD ABOUT CONST ARGUMENTS?! IT'S NOT 1978
            ANYMORE */
-        JSAMPROW row = reinterpret_cast<JSAMPROW>(const_cast<char*>(image.data() + offset.sum() + (image.size().y() - info.next_scanline - 1)*dataSize.x()));
+        JSAMPROW row = reinterpret_cast<JSAMPROW>(const_cast<char*>(image.data() + dataProperties.first.sum() + (image.size().y() - info.next_scanline - 1)*dataProperties.second.x()));
         jpeg_write_scanlines(&info, &row, 1);
     }
 
