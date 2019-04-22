@@ -312,6 +312,20 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES HarfBuzz::HarfBuzz)
 
+        # JpegImageConverter plugin dependencies
+        elseif(_component STREQUAL JpegImageConverter)
+            find_package(JPEG)
+            # Need to handle special cases where both debug and release
+            # libraries are available (in form of debug;A;optimized;B in
+            # JPEG_LIBRARIES), thus appending them one by one
+            if(JPEG_LIBRARY_DEBUG AND JPEG_LIBRARY_RELEASE)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${JPEG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${JPEG_LIBRARY_DEBUG}>")
+            else()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
+            endif()
+
         # JpegImporter plugin dependencies
         elseif(_component STREQUAL JpegImporter)
             find_package(JPEG)
