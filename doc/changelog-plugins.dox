@@ -92,6 +92,8 @@ namespace Magnum {
     a release version of libjpeg is found
 -   Fixed `FindMagnumPlugins.cmake` to correctly handle the `AssimpImporter`,
     and `JpegImageConverter` components
+-   `FindMagnumPlugins.cmake` now correctly finds debug versions of statically
+    built plugins when using Vcpkg
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
