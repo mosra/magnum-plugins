@@ -88,6 +88,10 @@ namespace Magnum {
 -   Upgraded @ref Trade::TinyGltfImporter "TinyGltfImporter" to use json.hpp
     3.3.0, fixing a compile error on some Clang versions (see
     [mosra/magnum-plugins#54](https://github.com/mosra/magnum-plugins/issues/54))
+-   Fixed `FindMagnumPlugins.cmake` to behave correctly when both a debug and
+    a release version of libjpeg is found
+-   Fixed `FindMagnumPlugins.cmake` to correctly handle the `AssimpImporter`,
+    and `JpegImageConverter` components
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
