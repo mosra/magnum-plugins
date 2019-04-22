@@ -94,6 +94,8 @@ namespace Magnum {
     and `JpegImageConverter` components
 -   `FindMagnumPlugins.cmake` now correctly finds debug versions of statically
     built plugins when using Vcpkg
+-   `FindAssimp.cmake` now can optionally link to the IrrXML library (needed
+    for static builds on Vcpkg)
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 

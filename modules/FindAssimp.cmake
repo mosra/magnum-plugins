@@ -58,6 +58,13 @@ if(WIN32 AND MSVC)
 
     find_library(ASSIMP_LIBRARY_RELEASE assimp-${ASSIMP_MSVC_VERSION}-mt.lib PATHS ${ASSIMP_LIBRARY_DIR})
     find_library(ASSIMP_LIBRARY_DEBUG assimp-${ASSIMP_MSVC_VERSION}-mtd.lib PATHS ${ASSIMP_LIBRARY_DIR})
+
+    # Static build of Assimp (built with Vcpkg) depends on IrrXML, find that
+    # one as well. If not found, simply don't link to it --- it might be a
+    # dynamic build, or a static build using system IrrXML. Related issue:
+    # https://github.com/Microsoft/vcpkg/issues/5012
+    find_library(ASSIMP_IRRXML_LIBRARY_RELEASE IrrXML.lib)
+    find_library(ASSIMP_IRRXML_LIBRARY_DEBUG IrrXMLd.lib)
 else()
     find_library(ASSIMP_LIBRARY_RELEASE assimp)
     find_library(ASSIMP_LIBRARY_DEBUG assimpd)
@@ -81,6 +88,16 @@ if(NOT TARGET Assimp::Assimp)
     else()
         set_target_properties(Assimp::Assimp PROPERTIES
             IMPORTED_LOCATION ${ASSIMP_LIBRARY})
+    endif()
+
+    # Link to IrrXML as well, if found. See the comment above for details.
+    if(ASSIMP_IRRXML_LIBRARY_RELEASE)
+        set_property(TARGET Assimp::Assimp APPEND PROPERTY
+            INTERFACE_LINK_LIBRARIES $<$<NOT:$<CONFIG:Debug>>:${ASSIMP_IRRXML_LIBRARY_RELEASE}>)
+    endif()
+    if(ASSIMP_IRRXML_LIBRARY_DEBUG)
+        set_property(TARGET Assimp::Assimp APPEND PROPERTY
+            INTERFACE_LINK_LIBRARIES $<$<CONFIG:Debug>:${ASSIMP_IRRXML_LIBRARY_DEBUG}>)
     endif()
 
     set_target_properties(Assimp::Assimp PROPERTIES
