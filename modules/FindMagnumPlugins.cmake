@@ -315,8 +315,16 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # JpegImporter plugin dependencies
         elseif(_component STREQUAL JpegImporter)
             find_package(JPEG)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
+            # Need to handle special cases where both debug and release
+            # libraries are available (in form of debug;A;optimized;B in
+            # JPEG_LIBRARIES), thus appending them one by one
+            if(JPEG_LIBRARY_DEBUG AND JPEG_LIBRARY_RELEASE)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${JPEG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${JPEG_LIBRARY_DEBUG}>")
+            else()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
+            endif()
 
         # MiniExrImageConverter has no dependencies
         # No special setup for the OpenDdl library
