@@ -50,6 +50,10 @@ if(WITH_DRFLACAUDIOIMPORTER)
     add_subdirectory(DrFlacAudioImporter)
 endif()
 
+if(WITH_DRMP3AUDIOIMPORTER)
+    add_subdirectory(DrMp3AudioImporter)
+endif()
+
 if(WITH_DRWAVAUDIOIMPORTER)
     add_subdirectory(DrWavAudioImporter)
 endif()
