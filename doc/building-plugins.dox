@@ -310,6 +310,8 @@ By default no plugins are built and you need to select them manually:
     [DevIL](http://openil.sourceforge.net/).
 -   `WITH_DRFLACAUDIOIMPORTER` --- Build the
     @ref Audio::DrFlacImporter "DrFlacAudioImporter" plugin.
+-   `WITH_DRMP3AUDIOIMPORTER` --- Build the
+    @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin.
 -   `WITH_DRWAVAUDIOIMPORTER` --- Build the
     @ref Audio::DrWavImporter "DrWavAudioImporter" plugin.
 -   `WITH_FAAD2AUDIOIMPORTER` --- Build the

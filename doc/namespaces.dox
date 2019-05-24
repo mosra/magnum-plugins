@@ -38,6 +38,9 @@
 /** @dir MagnumPlugins/DrFlacAudioImporter
  * @brief Plugin @ref Magnum::Audio::DrFlacImporter
  */
+/** @dir MagnumPlugins/DrMp3AudioImporter
+ * @brief Plugin @ref Magnum::Audio::DrMp3Importer
+ */
 /** @dir MagnumPlugins/DrWavAudioImporter
  * @brief Plugin @ref Magnum::Audio::DrWavImporter
  */
