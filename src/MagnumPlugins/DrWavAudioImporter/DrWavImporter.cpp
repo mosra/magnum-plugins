@@ -209,7 +209,6 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* If we don't know what the format is, read it out as 32 bit float for compatibility */
     _data = read32fPcm(handle, samples, numChannels, _format);
-    return;
 }
 
 void DrWavImporter::doClose() { _data = Containers::NullOpt; }

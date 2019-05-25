@@ -176,8 +176,6 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
         _data = Containers::Array<char>(samples*sizeof(Float));
         std::copy(floatBegin, floatEnd, _data->begin());
     }
-
-    return;
 }
 
 void DrFlacImporter::doClose() { _data = Containers::NullOpt; }

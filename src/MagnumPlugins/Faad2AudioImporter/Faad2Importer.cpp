@@ -100,7 +100,6 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
     }
 
     _samples = std::move(samples);
-    return;
 }
 
 void Faad2Importer::doClose() { _samples.clear(); }

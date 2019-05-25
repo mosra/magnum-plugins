@@ -83,8 +83,6 @@ void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
     }
 
     _data = std::move(tempData);
-
-    return;
 }
 
 void StbVorbisImporter::doClose() { _data = nullptr; }
