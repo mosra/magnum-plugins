@@ -27,6 +27,7 @@
 #include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Audio/AbstractImporter.h>
@@ -80,6 +81,8 @@ void DrMp3ImporterTest::mono16() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44100);
+    CORRADE_COMPARE_AS(importer->data().size(), 6724,
+        TestSuite::Compare::Greater);
     CORRADE_COMPARE_AS(importer->data().slice(6720, 6724),
         (Containers::Array<char>{Containers::InPlaceInit, {50, 3, -100, 9}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
@@ -91,6 +94,8 @@ void DrMp3ImporterTest::stereo16() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 44100);
+    CORRADE_COMPARE_AS(importer->data().size(), 9734,
+        TestSuite::Compare::Greater);
     CORRADE_COMPARE_AS(importer->data().slice(9730, 9734),
         (Containers::Array<char>{Containers::InPlaceInit, {-90, -103, -79, -103}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
