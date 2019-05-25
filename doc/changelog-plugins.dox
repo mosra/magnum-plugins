@@ -32,6 +32,11 @@ namespace Magnum {
 
 @section changelog-plugins-latest Changes since 2019.01
 
+@subsection changelog-plugins-latest-new New features
+
+-   New @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin for importing
+    MP3 files (see [mosra/magnum-plugins#60](https://github.com/mosra/magnum-plugins/pull/60))
+
 @subsection changelog-plugins-latest-changes Changes and improvements
 
 -   Calling @ref Trade::AbstractImporter::image2D() "image2D()" in

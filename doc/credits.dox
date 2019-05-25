@@ -41,7 +41,7 @@ namespace Magnum {
 -   **Fabien Freling** ([\@ffreling](https://github.com/ffreling)) --- bug
     reports and fixes
 -   **Guillaume Jacquemin** ([\@williamjcm](https://github.com/williamjcm)) ---
-    MSYS2 packages
+    MSYS2 packages, @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin
 -   **Jonathan Hale** ([\@Squareys](https://github.com/Squareys)) ---
     @ref Trade::AssimpImporter "AssimpImporter",
     @ref Trade::DdsImporter "DdsImporter" and
