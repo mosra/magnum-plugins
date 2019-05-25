@@ -49,9 +49,9 @@ endif()
 corrade_add_test(DrWavAudioImporterTest DrWavImporterTest.cpp
     LIBRARIES Magnum::Audio
     FILES
-        unsupportedChannelCount.wav
-        unsupportedFormat.wav
         wrongSignature.wav
+        unsupportedChannelCount.wav
+        unsupportedBitRate.wav
 
         invalidPadding.wav
         invalidLength.wav

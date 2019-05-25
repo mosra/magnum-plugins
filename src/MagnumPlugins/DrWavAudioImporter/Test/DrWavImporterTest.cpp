@@ -41,8 +41,8 @@ struct DrWavImporterTest: TestSuite::Tester {
 
     void wrongSize();
     void wrongSignature();
-    void unsupportedFormat();
     void unsupportedChannelCount();
+    void unsupportedBitRate();
     void invalidPadding();
     void invalidLength();
     void invalidDataChunk();
@@ -90,8 +90,8 @@ struct DrWavImporterTest: TestSuite::Tester {
 DrWavImporterTest::DrWavImporterTest() {
     addTests({&DrWavImporterTest::wrongSize,
               &DrWavImporterTest::wrongSignature,
-              &DrWavImporterTest::unsupportedFormat,
               &DrWavImporterTest::unsupportedChannelCount,
+              &DrWavImporterTest::unsupportedBitRate,
 
               &DrWavImporterTest::invalidPadding,
               &DrWavImporterTest::invalidLength,
@@ -158,22 +158,22 @@ void DrWavImporterTest::wrongSignature() {
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 
-void DrWavImporterTest::unsupportedFormat() {
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "unsupportedFormat.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): no samples\n");
-}
-
 void DrWavImporterTest::unsupportedChannelCount() {
     std::ostringstream out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): no samples\n");
+    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): unsupported channel count 3 with 16 bits per sample\n");
+}
+
+void DrWavImporterTest::unsupportedBitRate() {
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "unsupportedBitRate.wav")));
+    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): unsupported channel count 1 with 80 bits per sample\n");
 }
 
 void DrWavImporterTest::invalidPadding() {
