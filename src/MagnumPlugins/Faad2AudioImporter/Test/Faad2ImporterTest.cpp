@@ -41,6 +41,8 @@ class Faad2ImporterTest: public TestSuite::Tester {
     public:
         explicit Faad2ImporterTest();
 
+        void empty();
+
         void error();
         void mono();
         void stereo();
@@ -50,7 +52,9 @@ class Faad2ImporterTest: public TestSuite::Tester {
 };
 
 Faad2ImporterTest::Faad2ImporterTest() {
-    addTests({&Faad2ImporterTest::error,
+    addTests({&Faad2ImporterTest::empty,
+
+              &Faad2ImporterTest::error,
               &Faad2ImporterTest::mono,
               &Faad2ImporterTest::stereo});
 
@@ -61,16 +65,25 @@ Faad2ImporterTest::Faad2ImporterTest() {
     #endif
 }
 
+void Faad2ImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
+    CORRADE_COMPARE(out.str(), "Audio::Faad2Importer::openData(): can't read file header\n");
+}
+
+/* AAC files with zero samples have 0 bytes, so it's the same as above */
+
 void Faad2ImporterTest::error() {
     std::ostringstream out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(FAAD2AUDIOIMPORTER_TEST_DIR, "error.aac")));
-    {
-        CORRADE_EXPECT_FAIL("For some reason it doesn't fail during init if I throw a weird file at it.");
-        CORRADE_COMPARE(out.str(), "Audio::Faad2Importer::openData(): can't read file header\n");
-    }
     CORRADE_COMPARE(out.str(), "Audio::Faad2Importer::openData(): decoding error\n");
 }
 

@@ -39,7 +39,7 @@ namespace Magnum { namespace Audio { namespace Test { namespace {
 struct DrWavImporterTest: TestSuite::Tester {
     explicit DrWavImporterTest();
 
-    void wrongSize();
+    void empty();
     void wrongSignature();
     void unsupportedChannelCount();
     void unsupportedBitRate();
@@ -90,7 +90,7 @@ struct DrWavImporterTest: TestSuite::Tester {
 };
 
 DrWavImporterTest::DrWavImporterTest() {
-    addTests({&DrWavImporterTest::wrongSize,
+    addTests({&DrWavImporterTest::empty,
               &DrWavImporterTest::wrongSignature,
               &DrWavImporterTest::unsupportedChannelCount,
               &DrWavImporterTest::unsupportedBitRate,
@@ -144,12 +144,14 @@ DrWavImporterTest::DrWavImporterTest() {
     #endif
 }
 
-void DrWavImporterTest::wrongSize() {
+void DrWavImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+
     std::ostringstream out;
     Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
-    CORRADE_VERIFY(!importer->openData(Containers::Array<char>(43)));
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
     CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 

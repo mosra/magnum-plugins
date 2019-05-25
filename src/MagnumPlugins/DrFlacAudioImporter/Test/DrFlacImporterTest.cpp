@@ -29,6 +29,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "configure.h"
@@ -37,6 +38,8 @@ namespace Magnum { namespace Audio { namespace Test { namespace {
 
 struct DrFlacImporterTest: TestSuite::Tester {
     explicit DrFlacImporterTest();
+
+    void empty();
 
     void zeroSamples();
 
@@ -61,7 +64,9 @@ struct DrFlacImporterTest: TestSuite::Tester {
 };
 
 DrFlacImporterTest::DrFlacImporterTest() {
-    addTests({&DrFlacImporterTest::zeroSamples,
+    addTests({&DrFlacImporterTest::empty,
+
+              &DrFlacImporterTest::zeroSamples,
 
               &DrFlacImporterTest::mono8,
               &DrFlacImporterTest::mono16,
@@ -84,6 +89,17 @@ DrFlacImporterTest::DrFlacImporterTest() {
     #ifdef DRFLACAUDIOIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(DRFLACAUDIOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void DrFlacImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
+    CORRADE_COMPARE(out.str(), "Audio::DrFlacImporter::openData(): failed to open and decode FLAC data\n");
 }
 
 void DrFlacImporterTest::zeroSamples() {

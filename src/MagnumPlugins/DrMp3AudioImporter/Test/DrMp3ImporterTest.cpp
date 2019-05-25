@@ -30,6 +30,7 @@
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "configure.h"
@@ -38,6 +39,8 @@ namespace Magnum { namespace Audio { namespace Test { namespace {
 
 struct DrMp3ImporterTest: TestSuite::Tester {
     explicit DrMp3ImporterTest();
+
+    void empty();
 
     void zeroSamples();
 
@@ -49,7 +52,9 @@ struct DrMp3ImporterTest: TestSuite::Tester {
 };
 
 DrMp3ImporterTest::DrMp3ImporterTest() {
-    addTests({&DrMp3ImporterTest::zeroSamples,
+    addTests({&DrMp3ImporterTest::empty,
+
+              &DrMp3ImporterTest::zeroSamples,
 
               &DrMp3ImporterTest::mono16,
               &DrMp3ImporterTest::stereo16});
@@ -59,6 +64,17 @@ DrMp3ImporterTest::DrMp3ImporterTest() {
     #ifdef DRMP3AUDIOIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(DRMP3AUDIOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void DrMp3ImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrMp3AudioImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
+    CORRADE_COMPARE(out.str(), "Audio::DrMp3Importer::openData(): failed to open and decode MP3 data\n");
 }
 
 void DrMp3ImporterTest::zeroSamples() {

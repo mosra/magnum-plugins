@@ -40,7 +40,7 @@ class StbVorbisImporterTest: public TestSuite::Tester {
     public:
         explicit StbVorbisImporterTest();
 
-        void wrongSize();
+        void empty();
         void wrongSignature();
         void unsupportedChannelCount();
 
@@ -54,7 +54,8 @@ class StbVorbisImporterTest: public TestSuite::Tester {
 };
 
 StbVorbisImporterTest::StbVorbisImporterTest() {
-    addTests({&StbVorbisImporterTest::wrongSignature,
+    addTests({&StbVorbisImporterTest::empty,
+              &StbVorbisImporterTest::wrongSignature,
               &StbVorbisImporterTest::unsupportedChannelCount,
 
               &StbVorbisImporterTest::zeroSamples,
@@ -67,6 +68,17 @@ StbVorbisImporterTest::StbVorbisImporterTest() {
     #ifdef STBVORBISAUDIOIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(STBVORBISAUDIOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void StbVorbisImporterTest::empty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!importer->openData({&a, 0}));
+    CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
 }
 
 void StbVorbisImporterTest::wrongSignature() {
