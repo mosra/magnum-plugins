@@ -68,8 +68,8 @@ the [dr_mp3](https://github.com/mackron/dr_libs) library:
     or @ref BufferFormat::Surround71Channel16
 
 This plugin depends on the @ref Audio library and is built if
-`WITH_DRMP3AUDIOIMPORTER` is enabled when building Magnum. To use as a dynamic
-plugin, you need to load the @cpp "DrMp3AudioImporter" @ce plugin from
+`WITH_DRMP3AUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, you need to load the @cpp "DrMp3AudioImporter" @ce plugin from
 `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
 dependency of another plugin with CMake, you need to request the
 `DrMp3AudioImporter` component of the `MagnumPlugins` package and link to the

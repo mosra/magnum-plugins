@@ -80,8 +80,8 @@ the [dr_flac](https://github.com/mackron/dr_libs) library:
     @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
 
 This plugin depends on the @ref Audio library and is built if
-`WITH_DRFLACAUDIOIMPORTER` is enabled when building Magnum. To use as a dynamic
-plugin, you need to load the @cpp "DrFlacAudioImporter" @ce plugin from
+`WITH_DRFLACAUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, you need to load the @cpp "DrFlacAudioImporter" @ce plugin from
 `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
 dependency of another plugin with CMake, you need to request the
 `DrFlacAudioImporter` component of the `MagnumPlugins` package and link to the
