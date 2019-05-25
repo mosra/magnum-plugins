@@ -48,6 +48,8 @@ struct DrWavImporterTest: TestSuite::Tester {
     void invalidDataChunk();
     void invalidFactChunk();
 
+    void zeroSamples();
+
     void mono4();
     void mono8();
     void mono8junk();
@@ -97,6 +99,8 @@ DrWavImporterTest::DrWavImporterTest() {
               &DrWavImporterTest::invalidLength,
               &DrWavImporterTest::invalidDataChunk,
               &DrWavImporterTest::invalidFactChunk,
+
+              &DrWavImporterTest::zeroSamples,
 
               &DrWavImporterTest::mono4,
               &DrWavImporterTest::mono8,
@@ -212,6 +216,16 @@ void DrWavImporterTest::invalidFactChunk() {
         (Containers::Array<char>{Containers::InPlaceInit, {
             -27, -11, -1, -9, 24, -6, 127, -5}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+}
+
+void DrWavImporterTest::zeroSamples() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
+
+    /* No error should happen, it should just give an empty buffer back */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "zeroSamples.wav")));
+    CORRADE_COMPARE(importer->format(), BufferFormat::MonoFloat);
+    CORRADE_COMPARE(importer->frequency(), 44000);
+    CORRADE_VERIFY(importer->data().empty());
 }
 
 void DrWavImporterTest::mono4() {

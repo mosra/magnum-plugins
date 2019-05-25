@@ -31,6 +31,7 @@
  */
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "MagnumPlugins/DrWavAudioImporter/configure.h"
@@ -118,7 +119,7 @@ class MAGNUM_DRWAVAUDIOIMPORTER_EXPORT DrWavImporter: public AbstractImporter {
         MAGNUM_DRWAVAUDIOIMPORTER_LOCAL UnsignedInt doFrequency() const override;
         MAGNUM_DRWAVAUDIOIMPORTER_LOCAL Containers::Array<char> doData() override;
 
-        Containers::Array<char> _data;
+        Containers::Optional<Containers::Array<char>> _data;
         BufferFormat _format;
         UnsignedInt _frequency;
 };

@@ -38,6 +38,8 @@ namespace Magnum { namespace Audio { namespace Test { namespace {
 struct DrMp3ImporterTest: TestSuite::Tester {
     explicit DrMp3ImporterTest();
 
+    void zeroSamples();
+
     void mono16();
     void stereo16();
 
@@ -46,7 +48,9 @@ struct DrMp3ImporterTest: TestSuite::Tester {
 };
 
 DrMp3ImporterTest::DrMp3ImporterTest() {
-    addTests({&DrMp3ImporterTest::mono16,
+    addTests({&DrMp3ImporterTest::zeroSamples,
+
+              &DrMp3ImporterTest::mono16,
               &DrMp3ImporterTest::stereo16});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -54,6 +58,20 @@ DrMp3ImporterTest::DrMp3ImporterTest() {
     #ifdef DRMP3AUDIOIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(DRMP3AUDIOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void DrMp3ImporterTest::zeroSamples() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrMp3AudioImporter");
+
+    /* No error should happen, it should just give an empty buffer back */
+    {
+        CORRADE_EXPECT_FAIL("dr_mp3 treats 0 frames as an error, because it returns 0 also for malloc failure and such.");
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRMP3AUDIOIMPORTER_TEST_DIR, "zeroSamples.mp3")));
+        if(!importer->isOpened()) return;
+    }
+    CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
+    CORRADE_COMPARE(importer->frequency(), 44100);
+    CORRADE_VERIFY(importer->data().empty());
 }
 
 void DrMp3ImporterTest::mono16() {

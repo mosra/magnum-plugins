@@ -50,6 +50,8 @@ endif()
 corrade_add_test(DrFlacAudioImporterTest DrFlacImporterTest.cpp
     LIBRARIES Magnum::Audio
     FILES
+        zeroSamples.flac
+
         mono8.flac
         mono16.flac
         mono24.flac

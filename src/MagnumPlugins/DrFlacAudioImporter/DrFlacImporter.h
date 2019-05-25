@@ -31,6 +31,7 @@
  */
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "MagnumPlugins/DrFlacAudioImporter/configure.h"
@@ -117,7 +118,7 @@ class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter 
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL UnsignedInt doFrequency() const override;
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL Containers::Array<char> doData() override;
 
-        Containers::Array<char> _data;
+        Containers::Optional<Containers::Array<char>> _data;
         BufferFormat _format;
         UnsignedInt _frequency;
 };

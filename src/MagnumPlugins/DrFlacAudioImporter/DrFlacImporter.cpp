@@ -80,7 +80,7 @@ DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, const st
 
 auto DrFlacImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool DrFlacImporter::doIsOpened() const { return _data; }
+bool DrFlacImporter::doIsOpened() const { return !!_data; }
 
 void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
     drflac* const handle = drflac_open_memory(data.data(), data.size());
@@ -107,12 +107,6 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    /* Can't load something with no samples */
-    if(samples == 0) {
-        Error() << "Audio::DrFlacImporter::openData(): no samples";
-        return;
-    }
-
     _frequency = handle->sampleRate;
     _format = flacFormatTable[numChannels-1][normalizedBytesPerSample-1];
     CORRADE_INTERNAL_ASSERT(_format != BufferFormat{});
@@ -134,7 +128,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
             const char* doubleEnd = reinterpret_cast<const char*>(doubleData.end());
 
             _data = Containers::Array<char>(samples*sizeof(Double));
-            std::copy(doubleBegin, doubleEnd, _data.begin());
+            std::copy(doubleBegin, doubleEnd, _data->begin());
 
         /* Otherwise, convert to float */
         } else {
@@ -148,7 +142,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
             const char* floatEnd = reinterpret_cast<const char*>(floatData.end());
 
             _data = Containers::Array<char>(samples*sizeof(Float));
-            std::copy(floatBegin, floatEnd, _data.begin());
+            std::copy(floatBegin, floatEnd, _data->begin());
         }
 
         return;
@@ -161,16 +155,16 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
 
     /* 8-bit needs to become unsigned */
     if(normalizedBytesPerSample == 1) {
-        for(char& item: _data) item = item - 128;
+        for(char& item: *_data) item = item - 128;
 
     /* 24-bit needs to become float */
     } else if(normalizedBytesPerSample == 3) {
         Containers::Array<Float> floatData(samples);
 
         for(std::size_t i = 0; i != samples; ++i) {
-            const UnsignedInt s0 = _data[i*3 + 0];
-            const UnsignedInt s1 = _data[i*3 + 1];
-            const UnsignedInt s2 = _data[i*3 + 2];
+            const UnsignedInt s0 = (*_data)[i*3 + 0];
+            const UnsignedInt s1 = (*_data)[i*3 + 1];
+            const UnsignedInt s2 = (*_data)[i*3 + 2];
 
             const Int intData = Int((s0 << 8) | (s1 << 16) | (s2 << 24));
             floatData[i] = Math::unpack<Float>(intData);
@@ -180,21 +174,21 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
         const char* const floatEnd = reinterpret_cast<const char*>(floatData.end());
 
         _data = Containers::Array<char>(samples*sizeof(Float));
-        std::copy(floatBegin, floatEnd, _data.begin());
+        std::copy(floatBegin, floatEnd, _data->begin());
     }
 
     return;
 }
 
-void DrFlacImporter::doClose() { _data = nullptr; }
+void DrFlacImporter::doClose() { _data = Containers::NullOpt; }
 
 BufferFormat DrFlacImporter::doFormat() const { return _format; }
 
 UnsignedInt DrFlacImporter::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrFlacImporter::doData() {
-    Containers::Array<char> copy(_data.size());
-    std::copy(_data.begin(), _data.end(), copy.begin());
+    Containers::Array<char> copy(_data->size());
+    std::copy(_data->begin(), _data->end(), copy.begin());
     return copy;
 }
 

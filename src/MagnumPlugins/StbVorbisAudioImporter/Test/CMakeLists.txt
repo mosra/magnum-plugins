@@ -50,6 +50,8 @@ endif()
 corrade_add_test(StbVorbisAudioImporterTest StbVorbisImporterTest.cpp
     LIBRARIES Magnum::Audio
     FILES
+        zeroSamples.ogg
+
         mono16.ogg
         stereo8.ogg
         unsupportedChannelCount.ogg

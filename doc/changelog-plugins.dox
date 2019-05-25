@@ -80,6 +80,11 @@ namespace Magnum {
 -   Better diagnostics in @ref Trade::TinyGltfImporter "TinyGltfImporter" when
     an external buffer file is not found or when a file loaded from memory
     attempts to reference an external buffer without file callbacks being set
+-   @ref Audio::DrFlacImporter "DrFlacAudioImporter",
+    @ref Audio::DrWavImporter "DrWavAudioImporter" and
+    @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugins no longer
+    treat files with zero samples as errors, but give back an empty buffer
+    instead
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

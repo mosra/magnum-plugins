@@ -120,7 +120,7 @@ DrWavImporter::DrWavImporter(PluginManager::AbstractManager& manager, const std:
 
 auto DrWavImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool DrWavImporter::doIsOpened() const { return _data; }
+bool DrWavImporter::doIsOpened() const { return !!_data; }
 
 void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
     drwav* const handle = drwav_open_memory(data.data(), data.size());
@@ -146,12 +146,6 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
         Error() << "Audio::DrWavImporter::openData(): unsupported channel count"
                 << numChannels << "with" << bitsPerSample
                 << "bits per sample";
-        return;
-    }
-
-    /* Can't load something with no samples */
-    if(samples == 0) {
-        Error() << "Audio::DrWavImporter::openData(): no samples";
         return;
     }
 
@@ -182,7 +176,7 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
             /* Convert 8 bit data to unsigned */
             if(normalizedBytesPerSample == 1)
-                for(char& item: _data) item = item - 128;
+                for(char& item: *_data) item = item - 128;
             return;
         }
 
@@ -218,15 +212,15 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
     return;
 }
 
-void DrWavImporter::doClose() { _data = nullptr; }
+void DrWavImporter::doClose() { _data = Containers::NullOpt; }
 
 BufferFormat DrWavImporter::doFormat() const { return _format; }
 
 UnsignedInt DrWavImporter::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrWavImporter::doData() {
-    Containers::Array<char> copy(_data.size());
-    std::copy(_data.begin(), _data.end(), copy.begin());
+    Containers::Array<char> copy(_data->size());
+    std::copy(_data->begin(), _data->end(), copy.begin());
     return copy;
 }
 

@@ -38,6 +38,8 @@ namespace Magnum { namespace Audio { namespace Test { namespace {
 struct DrFlacImporterTest: TestSuite::Tester {
     explicit DrFlacImporterTest();
 
+    void zeroSamples();
+
     void mono8();
     void mono16();
     void mono24();
@@ -59,7 +61,9 @@ struct DrFlacImporterTest: TestSuite::Tester {
 };
 
 DrFlacImporterTest::DrFlacImporterTest() {
-    addTests({&DrFlacImporterTest::mono8,
+    addTests({&DrFlacImporterTest::zeroSamples,
+
+              &DrFlacImporterTest::mono8,
               &DrFlacImporterTest::mono16,
               &DrFlacImporterTest::mono24,
 
@@ -80,6 +84,16 @@ DrFlacImporterTest::DrFlacImporterTest() {
     #ifdef DRFLACAUDIOIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(DRFLACAUDIOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void DrFlacImporterTest::zeroSamples() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
+
+    /* No error should happen, it should just give an empty buffer back */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "zeroSamples.flac")));
+    CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
+    CORRADE_COMPARE(importer->frequency(), 22050);
+    CORRADE_VERIFY(importer->data().empty());
 }
 
 void DrFlacImporterTest::mono8() {

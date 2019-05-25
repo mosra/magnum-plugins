@@ -62,7 +62,7 @@ DrMp3Importer::DrMp3Importer(PluginManager::AbstractManager& manager, const std:
 
 auto DrMp3Importer::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool DrMp3Importer::doIsOpened() const { return _data; }
+bool DrMp3Importer::doIsOpened() const { return !!_data; }
 
 void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
     drmp3_config config;
@@ -86,12 +86,6 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    /* Can't load something with no samples */
-    if(frameCount == 0) {
-        Error() << "Audio::DrMp3Importer::openData(): no samples";
-        return;
-    }
-
     _frequency = config.outputSampleRate;
     _format = mp3FormatTable[numChannels - 1][1];
     CORRADE_INTERNAL_ASSERT(_format != BufferFormat{});
@@ -100,18 +94,18 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
     const char* const dataEnd = reinterpret_cast<const char*>(decodedData + frameCount);
 
     _data = Containers::Array<char>(frameCount*sizeof(Short));
-    std::copy(dataBegin, dataEnd, _data.begin());
+    std::copy(dataBegin, dataEnd, _data->begin());
 }
 
-void DrMp3Importer::doClose() { _data = nullptr; }
+void DrMp3Importer::doClose() { _data = Containers::NullOpt; }
 
 BufferFormat DrMp3Importer::doFormat() const { return _format; }
 
 UnsignedInt DrMp3Importer::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrMp3Importer::doData() {
-    Containers::Array<char> copy(_data.size());
-    std::copy(_data.begin(), _data.end(), copy.begin());
+    Containers::Array<char> copy(_data->size());
+    std::copy(_data->begin(), _data->end(), copy.begin());
     return copy;
 }
 

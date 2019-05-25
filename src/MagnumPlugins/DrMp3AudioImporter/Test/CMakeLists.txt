@@ -50,6 +50,8 @@ endif()
 corrade_add_test(DrMp3AudioImporterTest DrMp3ImporterTest.cpp
     LIBRARIES Magnum::Audio
     FILES
+        zeroSamples.mp3
+
         mono16.mp3
         stereo16.mp3)
 if(NOT BUILD_PLUGINS_STATIC)

@@ -43,6 +43,9 @@ class StbVorbisImporterTest: public TestSuite::Tester {
         void wrongSize();
         void wrongSignature();
         void unsupportedChannelCount();
+
+        void zeroSamples();
+
         void mono16();
         void stereo8();
 
@@ -53,6 +56,9 @@ class StbVorbisImporterTest: public TestSuite::Tester {
 StbVorbisImporterTest::StbVorbisImporterTest() {
     addTests({&StbVorbisImporterTest::wrongSignature,
               &StbVorbisImporterTest::unsupportedChannelCount,
+
+              &StbVorbisImporterTest::zeroSamples,
+
               &StbVorbisImporterTest::mono16,
               &StbVorbisImporterTest::stereo8});
 
@@ -79,6 +85,16 @@ void StbVorbisImporterTest::unsupportedChannelCount() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): unsupported channel count 5 with 16 bits per sample\n");
+}
+
+void StbVorbisImporterTest::zeroSamples() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+
+    /* No error should happen, it should just give an empty buffer back */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "zeroSamples.ogg")));
+    CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
+    CORRADE_COMPARE(importer->frequency(), 96000);
+    CORRADE_VERIFY(importer->data().empty());
 }
 
 void StbVorbisImporterTest::mono16() {

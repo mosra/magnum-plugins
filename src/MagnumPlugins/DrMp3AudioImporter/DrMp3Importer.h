@@ -31,6 +31,7 @@
  */
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "MagnumPlugins/DrMp3AudioImporter/configure.h"
@@ -107,7 +108,7 @@ class MAGNUM_DRMP3AUDIOIMPORTER_EXPORT DrMp3Importer: public AbstractImporter {
         MAGNUM_DRMP3AUDIOIMPORTER_LOCAL UnsignedInt doFrequency() const override;
         MAGNUM_DRMP3AUDIOIMPORTER_LOCAL Containers::Array<char> doData() override;
 
-        Containers::Array<char> _data;
+        Containers::Optional<Containers::Array<char>> _data;
         BufferFormat _format;
         UnsignedInt _frequency;
 };
