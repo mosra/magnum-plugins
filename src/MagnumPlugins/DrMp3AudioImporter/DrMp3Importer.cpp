@@ -86,12 +86,6 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    /* Can't load something with no samples */
-    if(frameCount == 0) {
-        Error() << "Audio::DrMp3Importer::openData(): no samples";
-        return;
-    }
-
     _frequency = config.outputSampleRate;
     _format = mp3FormatTable[numChannels - 1][1];
     CORRADE_INTERNAL_ASSERT(_format != BufferFormat{});
