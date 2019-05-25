@@ -76,7 +76,7 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    Containers::ScopeGuard drmp3Free{decodedData, drmp3_free};
+    Containers::ScopeGuard drmp3Free{static_cast<void*>(decodedData), drmp3_free};
 
     const std::uint32_t numChannels = config.outputChannels;
 
