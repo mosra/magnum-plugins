@@ -85,6 +85,9 @@ namespace Magnum {
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugins no longer
     treat files with zero samples as errors, but give back an empty buffer
     instead
+-   Updated `dr_wav` for @ref Audio::DrWavImporter "DrWavAudioImporter" to
+    version 0.8.5 which supports a wider range of file types (see
+    [mosra/magnum-plugins#61](https://github.com/mosra/magnum-plugins/pull/61))
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
