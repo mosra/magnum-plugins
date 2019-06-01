@@ -4,6 +4,7 @@
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
               Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2016 Alice Margatroid <loveoverwhelming@gmail.com>
+    Copyright © 2019 Guillaume Jacquemin <williamjcm@users.noreply.github.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -50,15 +51,12 @@ struct DrWavImporterTest: TestSuite::Tester {
 
     void zeroSamples();
 
-    void mono4();
     void mono8();
-    void mono8junk();
     void mono8ALaw();
     void mono8MuLaw();
     void mono16();
     void mono24();
 
-    void stereo4();
     void stereo8();
     void stereo8ALaw();
     void stereo8MuLaw();
@@ -102,15 +100,12 @@ DrWavImporterTest::DrWavImporterTest() {
 
               &DrWavImporterTest::zeroSamples,
 
-              &DrWavImporterTest::mono4,
               &DrWavImporterTest::mono8,
-              &DrWavImporterTest::mono8junk,
               &DrWavImporterTest::mono8ALaw,
               &DrWavImporterTest::mono8MuLaw,
               &DrWavImporterTest::mono16,
               &DrWavImporterTest::mono24,
 
-              &DrWavImporterTest::stereo4,
               &DrWavImporterTest::stereo8,
               &DrWavImporterTest::stereo8ALaw,
               &DrWavImporterTest::stereo8MuLaw,
@@ -170,7 +165,7 @@ void DrWavImporterTest::unsupportedChannelCount() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): unsupported channel count 3 with 16 bits per sample\n");
+    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): unsupported channel count 3 with 8 bits per sample\n");
 }
 
 void DrWavImporterTest::unsupportedBitRate() {
@@ -230,15 +225,6 @@ void DrWavImporterTest::zeroSamples() {
     CORRADE_VERIFY(importer->data().empty());
 }
 
-void DrWavImporterTest::mono4() {
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono4.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
-}
-
 void DrWavImporterTest::mono8() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono8.wav")));
@@ -250,15 +236,6 @@ void DrWavImporterTest::mono8() {
     CORRADE_COMPARE_AS(importer->data().prefix(4),
         (Containers::Array<char>{Containers::InPlaceInit, {127, 127, 127, 127}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
-}
-
-void DrWavImporterTest::mono8junk() {
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "mono8junk.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 
 void DrWavImporterTest::mono8ALaw() {
@@ -314,15 +291,6 @@ void DrWavImporterTest::mono24() {
         (Containers::Array<char>{Containers::InPlaceInit, {
             0, -56, 15, -70, 0, 116, -68, -70}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
-}
-
-void DrWavImporterTest::stereo4() {
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRWAVAUDIOIMPORTER_TEST_DIR, "stereo4.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 
 void DrWavImporterTest::stereo8() {

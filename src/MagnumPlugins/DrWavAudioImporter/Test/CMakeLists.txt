@@ -3,6 +3,7 @@
 #
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
 #             Vladimír Vondruš <mosra@centrum.cz>
+#   Copyright © 2019 Guillaume Jacquemin <williamjcm@users.noreply.github.com>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -60,15 +61,12 @@ corrade_add_test(DrWavAudioImporterTest DrWavImporterTest.cpp
 
         zeroSamples.wav
 
-        mono4.wav
-        mono8junk.wav
         mono8ALaw.wav
         mono8MuLaw.wav
         mono8.wav
         mono16.wav
         mono24.wav
 
-        stereo4.wav
         stereo8.wav
         stereo8ALaw.wav
         stereo8MuLaw.wav
