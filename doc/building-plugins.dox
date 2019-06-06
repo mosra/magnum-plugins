@@ -216,7 +216,7 @@ install Magnum Plugins like this:
 @code{.sh}
 git clone git://github.com/mosra/magnum-plugins && cd magnum-plugins
 cd package/gentoo
-sudo ebuild dev-libs/magnum-plugins/magnum-plugins-99999.ebuild manifest clean merge
+sudo ebuild dev-libs/magnum-plugins/magnum-plugins-9999.ebuild manifest clean merge
 @endcode
 
 If you want to pass additional flags to CMake or
