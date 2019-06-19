@@ -23,8 +23,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 
@@ -34,6 +36,9 @@ namespace Magnum { namespace Text { namespace Test { namespace {
 
 struct FreeTypeFontTest: TestSuite::Tester {
     explicit FreeTypeFontTest();
+
+    void empty();
+    void invalid();
 
     void properties();
     void layout();
@@ -51,7 +56,10 @@ struct DummyGlyphCache: AbstractGlyphCache {
 };
 
 FreeTypeFontTest::FreeTypeFontTest() {
-    addTests({&FreeTypeFontTest::properties,
+    addTests({&FreeTypeFontTest::empty,
+              &FreeTypeFontTest::invalid,
+
+              &FreeTypeFontTest::properties,
               &FreeTypeFontTest::layout,
               &FreeTypeFontTest::fillGlyphCache});
 
@@ -60,6 +68,26 @@ FreeTypeFontTest::FreeTypeFontTest() {
     #ifdef FREETYPEFONT_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(FREETYPEFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void FreeTypeFontTest::empty() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!font->openData({&a, 0}, 16.0f));
+    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::openData(): failed to open the font: 6\n");
+}
+
+void FreeTypeFontTest::invalid() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
+    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::openData(): failed to open the font: 85\n");
 }
 
 void FreeTypeFontTest::properties() {

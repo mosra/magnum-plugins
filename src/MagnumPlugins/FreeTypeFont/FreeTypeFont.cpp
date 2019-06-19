@@ -83,7 +83,10 @@ auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, cons
 
     CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
     /** @todo ability to specify different font in TTC collection */
-    if(FT_New_Memory_Face(library, _data.begin(), _data.size(), 0, &ftFont) != 0) return {};
+    if(FT_Error error = FT_New_Memory_Face(library, _data.begin(), _data.size(), 0, &ftFont)) {
+        Error{} << "Text::FreeTypeFont::openData(): failed to open the font:" << error;
+        return {};
+    }
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 0, 0) == 0);
     return {size,
             ftFont->size->metrics.ascender/64.0f,

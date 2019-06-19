@@ -88,6 +88,8 @@ namespace Magnum {
 -   Updated `dr_wav` for @ref Audio::DrWavImporter "DrWavAudioImporter" to
     version 0.8.5 which supports a wider range of file types (see
     [mosra/magnum-plugins#61](https://github.com/mosra/magnum-plugins/pull/61))
+-   Actually reporting errors from @ref Text::FreeTypeFont "FreeTypeFont"
+    instead of just failing without a message
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
