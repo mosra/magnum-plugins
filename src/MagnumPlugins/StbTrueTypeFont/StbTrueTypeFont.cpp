@@ -75,9 +75,21 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
     font->data = Containers::Array<unsigned char>(data.size());
     std::copy(data.begin(), data.end(), font->data.begin());
 
+    /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file
+       (because of course it doesn't take a size, ffs), check explicitly */
+    if(data.empty()) {
+        Error{} << "Text::StbTrueTypeFont::openData(): the file is empty";
+        return {};
+    }
+
     /** @todo ability to specify different font index in TTC collection */
-    if(!stbtt_InitFont(&font->info, font->data,
-        stbtt_GetFontOffsetForIndex(font->data, 0))) return {};
+    const int offset = stbtt_GetFontOffsetForIndex(font->data, 0);
+    if(offset < 0) {
+        Error{} << "Text::StbTrueTypeFont::openData(): can't get offset of the first font";
+        return {};
+    }
+
+    if(!stbtt_InitFont(&font->info, font->data, offset)) return {};
 
     /* All right, let's move in */
     _font = std::move(font);

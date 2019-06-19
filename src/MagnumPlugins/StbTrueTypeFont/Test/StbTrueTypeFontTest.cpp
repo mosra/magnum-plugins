@@ -23,8 +23,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 
@@ -35,6 +37,9 @@ namespace Magnum { namespace Text { namespace Test { namespace {
 struct StbTrueTypeFontTest: TestSuite::Tester {
     explicit StbTrueTypeFontTest();
 
+    void empty();
+    void invalid();
+
     void properties();
     void layout();
     void fillGlyphCache();
@@ -44,7 +49,10 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
 };
 
 StbTrueTypeFontTest::StbTrueTypeFontTest() {
-    addTests({&StbTrueTypeFontTest::properties,
+    addTests({&StbTrueTypeFontTest::empty,
+              &StbTrueTypeFontTest::invalid,
+
+              &StbTrueTypeFontTest::properties,
               &StbTrueTypeFontTest::layout,
               &StbTrueTypeFontTest::fillGlyphCache});
 
@@ -53,6 +61,26 @@ StbTrueTypeFontTest::StbTrueTypeFontTest() {
     #ifdef STBTRUETYPEFONT_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(STBTRUETYPEFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void StbTrueTypeFontTest::empty() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    char a{};
+    /* Explicitly checking non-null but empty view */
+    CORRADE_VERIFY(!font->openData({&a, 0}, 16.0f));
+    CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::openData(): the file is empty\n");
+}
+
+void StbTrueTypeFontTest::invalid() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
+    CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::openData(): can't get offset of the first font\n");
 }
 
 void StbTrueTypeFontTest::properties() {

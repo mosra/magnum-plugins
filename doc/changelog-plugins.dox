@@ -125,6 +125,9 @@ namespace Magnum {
     images with tRNS alpha mask correctly
 -   Fixed memory leaks in @ref Trade::PngImporter "PngImporter" error handling
 -   Fixed `FindMagnumPlugins.cmake` to correctly look for the `Assimp` package
+-   Fixed handling of corrupted / incomplete data in
+    @ref Text::StbTrueTypeFont "StbTrueTypeFont" (see
+    [mosra/magnum-plugins#29](https://github.com/mosra/magnum-plugins/issues/29))
 
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
 
