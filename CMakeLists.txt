@@ -70,7 +70,15 @@ cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "BU
 
 option(BUILD_STATIC "Build static libraries (default are dynamic)" OFF)
 option(BUILD_PLUGINS_STATIC "Build static plugins (default are dynamic)" OFF)
-option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ON)
+# Disable PIC on Emscripten by default (but still allow it to be enabled
+# explicitly if one so desires). Currently causes linker errors related to
+# __memory_base etc.: https://github.com/emscripten-core/emscripten/issues/8761
+if(CORRADE_TARGET_EMSCRIPTEN)
+    set(ON_EXCEPT_EMSCRIPTEN OFF)
+else()
+    set(ON_EXCEPT_EMSCRIPTEN ON)
+endif()
+option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ${ON_EXCEPT_EMSCRIPTEN})
 
 # Dynamic linking is meaningless on Emscripten and too inconvenient on Android
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)

@@ -111,6 +111,9 @@ namespace Magnum {
     built plugins when using Vcpkg
 -   `FindAssimp.cmake` now can optionally link to the IrrXML library (needed
     for static builds on Vcpkg)
+-   Emscripten builds now have the `-fPIC` option disabled by default as it
+    causes linker errors related to `__memory_base` on 1.38.36 (see also
+    [emscripten-core/emscripten#8761](https://github.com/emscripten-core/emscripten/issues/8761))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
