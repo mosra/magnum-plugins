@@ -52,5 +52,3 @@ cache:
 - openal-soft-1.17.2-bin.zip -> package/ci/appveyor-cache-reset.txt
 - libjpeg-turbo-1.5.0.tar.gz -> package/ci/appveyor-cache-reset.txt
 - DevIL-SDK-x64-1.7.8.zip -> package/ci/appveyor-cache-reset.txt
-- libpng-1.6.21.zip -> package/ci/appveyor-cache-reset.txt
-- source-archive.zip -> package/ci/appveyor-cache-reset.txt # zlib
