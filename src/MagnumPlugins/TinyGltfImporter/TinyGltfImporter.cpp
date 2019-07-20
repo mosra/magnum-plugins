@@ -1193,9 +1193,10 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
         data->specularTexture() = specularTexture;
     else data->specularColor() = specularColor;
 
-    /* Needs std::move on GCC 4.8 and Clang 3.8 so it can properly upcast the
-       pointer. */
-    return std::move(data);
+    /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
+       the pointer. Just std::move() works as well, but that gives a warning
+       on GCC 9. */
+    return Containers::Pointer<AbstractMaterialData>{std::move(data)};
 }
 
 UnsignedInt TinyGltfImporter::doTextureCount() const {

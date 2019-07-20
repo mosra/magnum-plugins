@@ -592,9 +592,10 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
     if(!(flags & PhongMaterialData::Flag::SpecularTexture))
         data->specularColor() = Color3(color);
 
-    /* Needs std::move on GCC 4.8 and Clang 3.8 so it can properly upcast the
-       pointer. */
-    return std::move(data);
+    /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
+       the pointer. Just std::move() works as well, but that gives a warning
+       on GCC 9. */
+    return Containers::Pointer<AbstractMaterialData>{std::move(data)};
 }
 
 UnsignedInt AssimpImporter::doTextureCount() const { return _f->textures.size(); }
