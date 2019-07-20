@@ -31,6 +31,7 @@
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Unicode.h>
 #include <Magnum/Image.h>
+#include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 
