@@ -141,13 +141,15 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
     jpeg_set_quality(&info, Int(configuration().value<Float>("jpegQuality")*100.0f), boolean(true));
     jpeg_start_compress(&info, boolean(true));
 
-    /* Data properties */
+    /* Get data properties and calculate the initial slice based on subimage
+       offset */
     const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
+    Containers::ArrayView<const char> inputData = image.data().suffix(dataProperties.first.sum());
 
     while(info.next_scanline < info.image_height) {
         /* libJPEG HAVE YOU EVER HEARD ABOUT CONST ARGUMENTS?! IT'S NOT 1978
            ANYMORE */
-        JSAMPROW row = reinterpret_cast<JSAMPROW>(const_cast<char*>(image.data() + dataProperties.first.sum() + (image.size().y() - info.next_scanline - 1)*dataProperties.second.x()));
+        JSAMPROW row = reinterpret_cast<JSAMPROW>(const_cast<char*>(inputData.suffix((image.size().y() - info.next_scanline - 1)*dataProperties.second.x()).data()));
         jpeg_write_scanlines(&info, &row, 1);
     }
 

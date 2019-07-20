@@ -127,13 +127,16 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
         PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info(file, info);
 
-    /* Data properties */
+    /* Get data properties and calculate the initial slice based on subimage
+       offset */
     const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
+    auto data = Containers::arrayCast<const unsigned char>(image.data())
+        .suffix(dataProperties.first.sum());
 
-    /* Write rows in reverse order, properly take data properties into account */
+    /* Write rows in reverse order, properly take stride into account */
     if(bitDepth == 8) {
         for(Int y = 0; y != image.size().y(); ++y)
-            png_write_row(file, const_cast<unsigned char*>(image.data<unsigned char>()) + dataProperties.first.sum() + (image.size().y() - y - 1)*dataProperties.second.x());
+            png_write_row(file, const_cast<unsigned char*>(data.suffix((image.size().y() - y - 1)*dataProperties.second.x()).data()));
 
     /* For 16 bit depth we need to swap to big endian */
     } else if(bitDepth == 16) {
@@ -141,7 +144,7 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
         png_set_swap(file);
         #endif
         for(Int y = 0; y != image.size().y(); ++y) {
-            png_write_row(file, const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(image.data<UnsignedShort>() + (dataProperties.first.sum() + (image.size().y() - y - 1)*dataProperties.second.x())/2)));
+            png_write_row(file, const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(data.suffix((image.size().y() - y - 1)*dataProperties.second.x()).data())));
         }
     }
 

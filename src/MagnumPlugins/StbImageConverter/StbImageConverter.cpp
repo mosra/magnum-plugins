@@ -107,9 +107,11 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
         }
     } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
-    /* Data properties */
-    Math::Vector2<std::size_t> offset, dataSize;
-    std::tie(offset, dataSize) = image.dataProperties();
+    /* Get data properties and calculate the initial slice based on subimage
+       offset */
+    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
+    auto inputData = Containers::arrayCast<const unsigned char>(image.data())
+        .suffix(dataProperties.first.sum());
 
     /* Reverse rows in image data. There is stbi_flip_vertically_on_write() but
        can't use that because the input image might be sparse (having padded
@@ -117,7 +119,8 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
     Containers::Array<unsigned char> reversedData{image.pixelSize()*image.size().product()};
     std::size_t outputStride = image.pixelSize()*image.size().x();
     for(Int y = 0; y != image.size().y(); ++y) {
-        std::copy_n(image.data<unsigned char>() + offset.sum() + y*dataSize.x(), outputStride, reversedData + (image.size().y() - y - 1)*outputStride);
+        auto row = inputData.suffix(y*dataProperties.second.x()).prefix(outputStride);
+        std::copy(row.begin(), row.end(), reversedData.suffix((image.size().y() - y - 1)*outputStride).begin());
     }
 
     std::string data;
