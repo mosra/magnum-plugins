@@ -47,6 +47,7 @@ namespace Magnum {
     fixes for @ref Trade::AssimpImporter "AssimpImporter" workarounds
 -   **Jonathan Hale** ([\@Squareys](https://github.com/Squareys)) ---
     @ref Trade::AssimpImporter "AssimpImporter",
+    @ref Trade::BasisImporter "BasisImporter",
     @ref Trade::DdsImporter "DdsImporter" and
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugins,
     improvements to @ref Trade::TinyGltfImporter "TinyGltfImporter"

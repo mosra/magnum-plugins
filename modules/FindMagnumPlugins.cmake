@@ -13,6 +13,7 @@
 # This command will not try to find any actual plugin. The plugins are:
 #
 #  AssimpImporter               - Assimp importer
+#  BasisImporter                - Basis importer
 #  DdsImporter                  - DDS importer
 #  DevIlImageImporter           - Image importer using DevIL
 #  DrFlacAudioImporter          - FLAC audio importer using dr_flac
@@ -69,6 +70,7 @@
 #
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
 #             Vladimír Vondruš <mosra@centrum.cz>
+#   Copyright © 2019 Jonathan Hale <squareys@googlemail.com>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -121,7 +123,7 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
-    AssimpImporter DdsImporter DevIlImageImporter
+    AssimpImporter BasisImporter DdsImporter DevIlImageImporter
     DrFlacAudioImporter DrMp3AudioImporter DrWavAudioImporter Faad2AudioImporter
     FreeTypeFont HarfBuzzFont JpegImageConverter JpegImporter
     MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
@@ -270,6 +272,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             find_package(Assimp)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
+
+        # BasisImporter plugin dependencies
+        if(_component STREQUAL BasisImporter)
+            find_package(BasisUniversal)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES BasisUniversal::Transcoder)
 
         # DdsImporter has no dependencies
 

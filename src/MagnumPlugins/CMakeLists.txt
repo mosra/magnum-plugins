@@ -38,6 +38,10 @@ if(WITH_ASSIMPIMPORTER)
     add_subdirectory(AssimpImporter)
 endif()
 
+if(WITH_BASISIMPORTER)
+    add_subdirectory(BasisImporter)
+endif()
+
 if(WITH_DDSIMPORTER)
     add_subdirectory(DdsImporter)
 endif()
