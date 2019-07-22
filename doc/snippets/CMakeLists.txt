@@ -1,4 +1,4 @@
-﻿#
+#
 #   This file is part of Magnum.
 #
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
@@ -23,6 +23,29 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-if(WITH_TINYGLTFIMPORTER)
-    add_subdirectory(TinyGltf)
+find_package(Corrade REQUIRED PluginManager)
+
+# On MSVC remove /W3, as we are replacing it with /W4
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
+    string(REPLACE "/W3" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
+
+set_directory_properties(PROPERTIES
+    CORRADE_CXX_STANDARD 11
+    CORRADE_USE_PEDANTIC_FLAGS ON)
+
+# Emscripten needs special flag to use WebGL 2
+if(CORRADE_TARGET_EMSCRIPTEN AND NOT TARGET_GLES2)
+    # TODO: give me INTERFACE_LINK_OPTIONS or something, please
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_WEBGL2=1")
+endif()
+
+if(WITH_BASISIMPORTER)
+    add_library(snippets-BasisImporter STATIC
+        MagnumPluginsBasisImporter.cpp)
+    if(BUILD_PLUGINS_STATIC)
+        target_link_libraries(snippets-BasisImporter PRIVATE BasisImporter)
+    endif()
+    target_link_libraries(snippets-BasisImporter PRIVATE Corrade::PluginManager)
+    set_target_properties(snippets-BasisImporter PROPERTIES FOLDER "Magnum/doc/snippets")
 endif()

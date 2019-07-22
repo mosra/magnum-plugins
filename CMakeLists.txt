@@ -42,6 +42,7 @@ include(CMakeDependentOption)
 
 # Plugins to build
 option(WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
+option(WITH_BASISIMPORTER "Build BasisImporter plugin" OFF)
 option(WITH_DDSIMPORTER "Build DdsImporter plugin" OFF)
 option(WITH_DEVILIMAGEIMPORTER "Build DevIlImageImporter plugin" OFF)
 option(WITH_DRFLACAUDIOIMPORTER "Build DrFlacAudioImporter plugin" OFF)
@@ -121,3 +122,8 @@ set(MAGNUM_LIBRARY_SOVERSION 2)
 
 add_subdirectory(modules)
 add_subdirectory(src)
+
+# Build snippets as part of testing
+if(BUILD_TESTS)
+    add_subdirectory(doc/snippets)
+endif()

@@ -29,6 +29,9 @@
 /** @dir MagnumPlugins/AssimpImporter
  * @brief Plugin @ref Magnum::Trade::AssimpImporter
  */
+/** @dir MagnumPlugins/BasisImporter
+ * @brief Plugin @ref Magnum::Trade::BasisImporter
+ */
 /** @dir MagnumPlugins/DdsImporter
  * @brief Plugin @ref Magnum::Trade::DdsImporter
  */
