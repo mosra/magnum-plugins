@@ -37,13 +37,22 @@ static (see @ref building-plugins for more information), they need to be linked
 into the executable and then explicitly imported. Also if you are going to use
 them as dependencies, you need to find the dependency and then link to it.
 
-The logic is in module `FindMagnumPlugins.cmake` distributed in plugin
-repository in `modules/` directory, you are encouraged to copy it into your
-project and add path to the files to `CMAKE_MODULE_PATH`. Otherwise, if CMake
-won't be able to find this file in predefined locations, it will error out even
-if Magnum plugins might be installed on the system. Note that the module file
-is updated as the library evolves, you are encouraged to update your copy from
-time to time to avoid strange building issues.
+The main logic is in the [FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+module distributed in the `modules/` directory of the integration repository,
+you are encouraged to copy it into your project and add path to the files to
+`CMAKE_MODULE_PATH`:
+
+@code{.cmake}
+# Path where FindMagnumPlugins.cmake can be found, adapt as needed
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/modules/" ${CMAKE_MODULE_PATH})
+@endcode
+
+Otherwise, if CMake won't be able to find this file in predefined locations, it
+will error out even if Magnum Plugins might be installed on the system. There
+are other Find modules that you might need for particular features or
+platforms, see the @ref cmake-plugins-modules "list below". Note that the
+module files are updated as the library evolves, you are encouraged to update
+your copies from time to time to avoid strange building issues.
 
 If you installed the library or its dependencies to non-standard location
 (other than `/usr`, e.g. `/home/xyz/projects`), set `CMAKE_PREFIX_PATH` to that
@@ -127,19 +136,24 @@ See also @ref cmake "Magnum usage with CMake" for more information.
 
 @section cmake-plugins-modules Other CMake modules
 
-The `modules/` directory contains more useful CMake modules:
+The `modules/` directory of Magnum Plugins sources contains more useful CMake
+modules. If a plugin requires presence of any of these, it mentions them in its
+usage documentation.
 
--   `FindAssimp.cmake` --- CMake module for finding Assimp. Copy this to your
-    module directory if you want to find and link to @ref Trade::AssimpImporter.
--   `FindDevIL.cmake` --- CMake module for finding DevIL. This is a forked
-    version of the upstream module that doesn't attempt to find the often not
-    distributed ILUT library. Copy this to your module directory if you want to
-    find and link to @ref Trade::DevIlImageImporter.
--   `FindFAAD2.cmake` --- CMake module for finding FAAD2. Copy this to your
-    module directory if you want to find and link to @ref Audio::Faad2Importer.
--   `FindHarfBuzz.cmake` --- CMake module for finding HarfBuzz. Copy this to
-    your module directory if you want to find and link to
-    @ref Text::HarfBuzzFont.
+-   [FindAssimp.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindAssimp.cmake)
+    --- CMake module for finding Assimp. Copy this to your module directory if
+    you want to find and link to @ref Trade::AssimpImporter.
+-   [FindDevIL.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindDevIL.cmake)
+    --- CMake module for finding DevIL. This is a forked version of the upstream
+    module that doesn't attempt to find the often not distributed ILUT library.
+    Copy this to your module directory if you want to find and link to
+    @ref Trade::DevIlImageImporter.
+-   [FindFAAD2.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindFAAD2.cmake)
+    --- CMake module for finding FAAD2. Copy this to your module directory if
+    you want to find and link to @ref Audio::Faad2Importer.
+-   [FindHarfBuzz.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindHarfBuzz.cmake)
+    --- CMake module for finding HarfBuzz. Copy this to your module directory
+    if you want to find and link to @ref Text::HarfBuzzFont.
 
 See also @ref cmake-modules "relevant section for the main Magnum project".
 */
