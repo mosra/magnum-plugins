@@ -43,6 +43,11 @@ install:
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\DevIL-SDK-x64-1.7.8.zip appveyor DownloadFile http://downloads.sourceforge.net/openil/DevIL-SDK-x64-1.7.8.zip
 - IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move *.lib lib\ && cd ..
 
+# Basis Universal
+- set BASIS_VERSION=600232075851c2fa6bd23f7180434aca7814c93a
+- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\basis_universal-%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/%BASIS_VERSION%.zip
+- 7z x %BASIS_VERSION%.zip && ren basis_universal-%BASIS_VERSION% basis_universal
+
 build_script:
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" call package\ci\appveyor-desktop.bat
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" call package\ci\appveyor-desktop-mingw.bat
@@ -52,3 +57,4 @@ cache:
 - openal-soft-1.17.2-bin.zip -> package/ci/appveyor-cache-reset.txt
 - libjpeg-turbo-1.5.0.tar.gz -> package/ci/appveyor-cache-reset.txt
 - DevIL-SDK-x64-1.7.8.zip -> package/ci/appveyor-cache-reset.txt
+- basis_universal-%BASIS_VERSION%.zip -> package/ci/appveyor-cache-reset.txt
