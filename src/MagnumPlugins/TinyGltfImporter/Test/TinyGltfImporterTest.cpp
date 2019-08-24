@@ -1909,7 +1909,7 @@ void TinyGltfImporterTest::texture() {
     auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
     CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
     CORRADE_COMPARE(phong.diffuseTexture(), 0);
-    CORRADE_COMPARE(phong.shininess(), 1.0);
+    CORRADE_COMPARE(phong.shininess(), 1.0f);
 
     CORRADE_COMPARE(importer->textureCount(), 2);
     CORRADE_COMPARE(importer->textureForName("Texture"), 1);
