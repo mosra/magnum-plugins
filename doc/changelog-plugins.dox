@@ -53,7 +53,9 @@ namespace Magnum {
     color set to @cpp 0xffffff_srgbf @ce and forces it back to
     @cpp 0x000000_srgbf @ce. This is a bug in Assimp 4.1, causing all other
     color information to get discarded. See also
-    [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059).
+    [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059),
+    [assimp/assimp#2563](https://github.com/assimp/assimp/pull/2563) and
+    [mosra/magnum-plugins#64](https://github.com/mosra/magnum-plugins/pull/64).
 -   The @ref Trade::AssimpImporter "AssimpImporter" plugin now trims trailing
     space from image paths in order to deal better with OBJ meshes from hell
     (see [mosra/magnum-plugins#58](https://github.com/mosra/magnum-plugins/pull/58))

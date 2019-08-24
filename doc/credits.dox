@@ -43,15 +43,17 @@ namespace Magnum {
 -   **Guillaume Jacquemin** ([\@williamjcm](https://github.com/williamjcm)) ---
     MSYS2 packages, @ref Audio::DrWavImporter "DrWavAudioImporter" updates and
     a new @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin
+-   **Igor Kalevatykh** ([\@ikalevatykh](https://github.com/ikalevatykh)) ---
+    fixes for @ref Trade::AssimpImporter "AssimpImporter" workarounds
 -   **Jonathan Hale** ([\@Squareys](https://github.com/Squareys)) ---
     @ref Trade::AssimpImporter "AssimpImporter",
     @ref Trade::DdsImporter "DdsImporter" and
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugins,
     improvements to @ref Trade::TinyGltfImporter "TinyGltfImporter"
--   **Konstantinos Chatzilygeroudis** ([\@costashatz](https://github.com/costashatz))
-    --- Debian package
 -   **Jonathan Mercier-Ganady** ([\@Jmgr](https://github.com/Jmgr)) --- build
     fixes
+-   **Konstantinos Chatzilygeroudis** ([\@costashatz](https://github.com/costashatz))
+    --- Debian package
 -   **Max Schwarz** ([\@xqms](https://github.com/xqms)) --- error reporting
     improvements in @ref Trade::JpegImporter "JpegImporter", file parsing
     robustness in @ref Trade::AssimpImporter "AssimpImporter"
