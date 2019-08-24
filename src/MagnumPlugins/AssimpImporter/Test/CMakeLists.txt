@@ -66,6 +66,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         points.obj
         scene.dae
         texture.dae
+        texture-ambient.obj
+        texture-ambient.mtl
         quad.stl)
 target_link_libraries(AssimpImporterTest PRIVATE Assimp::Assimp)
 if(NOT BUILD_PLUGINS_STATIC)

@@ -90,6 +90,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void lightUndefined();
     void material();
     void materialStlWhiteAmbientPatch();
+    void materialWhiteAmbientTexture();
 
     void mesh();
     void pointMesh();
@@ -153,6 +154,7 @@ AssimpImporterTest::AssimpImporterTest() {
     addTests({&AssimpImporterTest::lightUndefined,
               &AssimpImporterTest::material,
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
+              &AssimpImporterTest::materialWhiteAmbientTexture,
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
@@ -376,6 +378,30 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     }
     /* This value is not supplied by Assimp for STL models, so we set it to 0 */
     CORRADE_COMPARE(phongMaterial.shininess(), 0.0f);
+}
+
+void AssimpImporterTest::materialWhiteAmbientTexture() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture-ambient.obj")));
+
+    /* ASS IMP reports TWO materials for an OBJ. The parser code is so lazy
+       that it just has the first material totally empty. Wonderful. Lost one
+       hour on this and my hair is even greyer now. */
+    CORRADE_COMPARE(importer->materialCount(), 2);
+
+    Containers::Pointer<Trade::AbstractMaterialData> material;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        material = importer->material(1);
+    }
+
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    CORRADE_COMPARE(static_cast<PhongMaterialData&>(*material).flags(), PhongMaterialData::Flag::AmbientTexture);
+    /* It shouldn't be complaining about white ambient in this case */
+    CORRADE_COMPARE(out.str(), "");
 }
 
 void AssimpImporterTest::mesh() {

@@ -1,0 +1,7 @@
+mtllib texture-ambient.mtl
+
+usemtl Material
+v -1.0 1.0 1.0
+v -1.0 1.0 -1.0
+v 1.0 1.0 1.0
+f 2 1 3
