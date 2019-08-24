@@ -18,8 +18,11 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug ^
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
 
-rem Build libPNG
-vcpkg install libpng:x64-windows
+rem Build libPNG. As of 2019-08-23, vcpkg is broken on the 2015 image and needs
+rem updating. Disabling the libPNG build there for now.
+IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_IF_VCPKG_IS_BROKEN=OFF
+IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_IF_VCPKG_IS_BROKEN=ON
+IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" vcpkg install libpng:x64-windows
 
 rem Build Corrade
 git clone --depth 1 git://github.com/mosra/corrade.git || exit /b
@@ -78,8 +81,8 @@ cmake .. ^
     -DWITH_JPEGIMPORTER=ON ^
     -DWITH_MINIEXRIMAGECONVERTER=ON ^
     -DWITH_OPENGEXIMPORTER=ON ^
-    -DWITH_PNGIMAGECONVERTER=ON ^
-    -DWITH_PNGIMPORTER=ON ^
+    -DWITH_PNGIMAGECONVERTER=%EXCEPT_IF_VCPKG_IS_BROKEN% ^
+    -DWITH_PNGIMPORTER=%EXCEPT_IF_VCPKG_IS_BROKEN% ^
     -DWITH_STANFORDIMPORTER=ON ^
     -DWITH_STBIMAGECONVERTER=ON ^
     -DWITH_STBIMAGEIMPORTER=ON ^
