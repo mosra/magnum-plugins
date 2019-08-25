@@ -34,6 +34,7 @@ build() {
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
             -DWITH_ASSIMPIMPORTER=ON \
+            -DWITH_BASISIMPORTER=OFF \
             -DWITH_DDSIMPORTER=ON \
             -DWITH_DEVILIMAGEIMPORTER=ON \
             -DWITH_DRFLACAUDIOIMPORTER=ON \
