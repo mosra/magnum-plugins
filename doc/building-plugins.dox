@@ -60,12 +60,26 @@ stable version of Magnum Plugins with all its dependencies is done like this:
 vcpkg install magnum-plugins
 @endcode
 
-But often you may want to install the latest Git revision of all Magnum
-projects instead:
+@m_class{m-block m-success}
 
-@code{.bat}
-vcpkg install --head corrade magnum magnum-plugins
-@endcode
+@par Installing latest master
+    The `master` is considered stable for production use and often you may want
+    to prefer it over a potentially outdated tagged release. To do so, use
+    the `--head` option on `magnum-plugins` as well as its dependencies:
+@par
+    @code{.bat}
+    vcpkg install --head corrade magnum magnum-plugins
+    @endcode
+@par
+    Note that `vcpkg upgrade` doesn't work well with `--head` packages (it will
+    go back to latest tagged version instead of updated master), you have to
+    remove `magnum-plugins` as well as their dependencies and install `--head`
+    again:
+@par
+    @code{.bat}
+    vcpkg remove magnum-plugins --recurse
+    vcpkg install --head corrade magnum magnum-plugins
+    @endcode
 
 Note that just a subset of plugins is installed by default. To opt-in or
 opt-out of additional features, you can use the following syntax; feature names
