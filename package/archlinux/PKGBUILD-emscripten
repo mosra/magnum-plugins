@@ -26,6 +26,7 @@ build() {
 
     # For Basis disabling everything we don't support in Magnum + BC7 as its
     # tables are YUUUGE (see the Basis README for details)
+    # WITH_BASISIMAGECONVERTER is disabled as it requires pthreads.
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \

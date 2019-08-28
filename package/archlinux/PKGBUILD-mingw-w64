@@ -51,12 +51,15 @@ build() {
     mkdir -p "$_rootdir/build-mingw-w64-64"
     cd "$_rootdir/build-mingw-w64-64"
 
+    # WITH_BASISIMAGECONVERTER is disabled, since Basis Universal currently does not
+    # support building on MinGW.
     cmake .. \
         -DCMAKE_TOOLCHAIN_FILE=../toolchains/archlinux/basic-mingw-w64-64.cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/x86_64-w64-mingw32 \
         -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=ON \
+        -DWITH_BASISIMAGECONVERTER=OFF \
         -DWITH_BASISIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
         -DWITH_DEVILIMAGEIMPORTER=OFF \

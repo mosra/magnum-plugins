@@ -74,7 +74,7 @@ cd ..
 
 # Crosscompile. BUILD_GL_TESTS is enabled just to be sure, it should not be
 # needed by any plugin.
-# WITH_BASISIMAGECONVETER is disabled as it requires pthreads.
+# WITH_BASISIMAGECONVERTER is disabled as it requires pthreads.
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
     -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \

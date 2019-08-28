@@ -42,6 +42,7 @@ include(CMakeDependentOption)
 
 # Plugins to build
 option(WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
+option(WITH_BASISIMAGECONVERTER "Build BasisImageConverter plugin" OFF)
 option(WITH_BASISIMPORTER "Build BasisImporter plugin" OFF)
 option(WITH_DDSIMPORTER "Build DdsImporter plugin" OFF)
 option(WITH_DEVILIMAGEIMPORTER "Build DevIlImageImporter plugin" OFF)

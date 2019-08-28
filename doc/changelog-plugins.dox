@@ -39,6 +39,8 @@ namespace Magnum {
 -   New @ref Trade::BasisImporter "BasisImporter" plugin for importing
     Basis files (see [mosra/magnum-plugins#62](https://github.com/mosra/magnum-plugins/pull/62));
     support for Basis-encoded textures in @ref Trade::TinyGltfImporter "TinyGltfImporter"
+-   New @ref Trade::BasisImageConverter "BasisImageConverter" plugin for writing
+    Basis files (see [mosra/magnum-plugins#65](https://github.com/mosra/magnum-plugins/pull/65))
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
