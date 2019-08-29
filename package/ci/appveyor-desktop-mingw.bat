@@ -60,6 +60,8 @@ cd .. && cd ..
 
 rem Build. BUILD_GL_TESTS is enabled just to be sure, it should not be needed
 rem by any plugin.
+rem WITH_BASISIMAGECONVERTER is disabled, since Basis Universal currently does not
+rem support building on MinGW.
 mkdir build && cd build || exit /b
 cmake .. ^
     -DCMAKE_CXX_FLAGS="--coverage" ^
@@ -67,6 +69,7 @@ cmake .. ^
     -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
     -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal;%APPVEYOR_BUILD_FOLDER%/devil ^
     -DWITH_ASSIMPIMPORTER=OFF ^
+    -DWITH_BASISIMAGECONVERTER=OFF ^
     -DWITH_BASISIMPORTER=ON -DBASIS_UNIVERSAL_DIR=%APPVEYOR_BUILD_FOLDER%/basis_universal ^
     -DWITH_DDSIMPORTER=ON ^
     -DWITH_DEVILIMAGEIMPORTER=ON ^
