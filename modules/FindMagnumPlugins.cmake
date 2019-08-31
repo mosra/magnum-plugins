@@ -13,6 +13,7 @@
 # This command will not try to find any actual plugin. The plugins are:
 #
 #  AssimpImporter               - Assimp importer
+#  BasisImageConverter          - Basis image converter
 #  BasisImporter                - Basis importer
 #  DdsImporter                  - DDS importer
 #  DevIlImageImporter           - Image importer using DevIL
@@ -123,7 +124,7 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
-    AssimpImporter BasisImporter DdsImporter DevIlImageImporter
+    AssimpImporter BasisImageConverter BasisImporter DdsImporter DevIlImageImporter
     DrFlacAudioImporter DrMp3AudioImporter DrWavAudioImporter Faad2AudioImporter
     FreeTypeFont HarfBuzzFont JpegImageConverter JpegImporter
     MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
@@ -272,6 +273,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             find_package(Assimp)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
+
+        # BasisImageConverter plugin dependencies
+        if(_component STREQUAL BasisImageConverter)
+            find_package(BasisUniversal COMPONENTS Encoder)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES BasisUniversal::Encoder)
 
         # BasisImporter has only compiled-in dependencies, except in case of
         # vcpkg, then we need to link to a library. Use a similar logic as in
