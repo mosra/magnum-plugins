@@ -42,6 +42,7 @@ build() {
             -G'Ninja' \
             -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
             -DWITH_ASSIMPIMPORTER=ON \
+            -DWITH_BASISIMAGECONVERTER=OFF \
             -DWITH_BASISIMPORTER=OFF \
             -DWITH_DDSIMPORTER=ON \
             -DWITH_DEVILIMAGEIMPORTER=ON \
