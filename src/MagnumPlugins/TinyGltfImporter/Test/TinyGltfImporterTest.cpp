@@ -33,6 +33,7 @@
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/Resource.h>
 #include <Magnum/Array.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>

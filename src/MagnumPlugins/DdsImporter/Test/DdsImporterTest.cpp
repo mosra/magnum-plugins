@@ -30,6 +30,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Resource.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/AbstractImporter.h>
