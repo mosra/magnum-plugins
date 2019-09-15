@@ -302,13 +302,13 @@ void swizzlePixels(const PixelFormat format, Containers::Array<char>& data) {
         Debug() << "Trade::DdsImporter: converting from BGR to RGB";
         auto pixels = reinterpret_cast<Math::Vector3<UnsignedByte>*>(data.data());
         std::transform(pixels, pixels + data.size()/sizeof(Math::Vector3<UnsignedByte>), pixels,
-            [](Math::Vector3<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r'>(pixel); });
+            [](Math::Vector3<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r'>(pixel); });
 
     } else if(format == PixelFormat::RGBA8Unorm) {
         Debug() << "Trade::DdsImporter: converting from BGRA to RGBA";
         auto pixels = reinterpret_cast<Math::Vector4<UnsignedByte>*>(data.data());
         std::transform(pixels, pixels + data.size()/sizeof(Math::Vector4<UnsignedByte>), pixels,
-            [](Math::Vector4<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r', 'a'>(pixel); });
+            [](Math::Vector4<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r', 'a'>(pixel); });
 
     } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
