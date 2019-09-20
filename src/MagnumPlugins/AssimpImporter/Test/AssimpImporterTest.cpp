@@ -24,7 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#define MAGNUM_ASSIMPIMPORTER_DEBUG 0
+/* enable when things become *really* dire */
+// #define MAGNUM_ASSIMPIMPORTER_DEBUG
 
 #include <sstream>
 #include <unordered_map>
@@ -51,7 +52,7 @@
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
 
-#if MAGNUM_TRADE_ASSIMPIMPORTER_DEBUG
+#ifdef MAGNUM_ASSIMPIMPORTER_DEBUG
 #include <assimp/Logger.hpp>
 #include <assimp/DefaultLogger.hpp>
 #endif
@@ -67,7 +68,7 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 
 using namespace Math::Literals;
 
-#if MAGNUM_TRADE_ASSIMPIMPORTER_DEBUG
+#ifdef MAGNUM_ASSIMPIMPORTER_DEBUG
 /* Stream implementation for outputting assimp log messages to Debug() */
 class MagnumDebugStream: public Assimp::LogStream {
 public:
@@ -136,7 +137,7 @@ constexpr struct {
 };
 
 AssimpImporterTest::AssimpImporterTest() {
-    #if MAGNUM_TRADE_ASSIMPIMPORTER_DEBUG
+    #ifdef MAGNUM_ASSIMPIMPORTER_DEBUG
     Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
     Assimp::DefaultLogger::get()->attachStream(new MagnumDebugStream,
             Assimp::Logger::Info|Assimp::Logger::Err|Assimp::Logger::Warn|Assimp::Logger::Debugging);
