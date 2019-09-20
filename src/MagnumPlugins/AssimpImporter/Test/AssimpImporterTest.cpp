@@ -417,7 +417,8 @@ void AssimpImporterTest::materialAmbientDiffuseTexture() {
 
     Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
     CORRADE_VERIFY(phongMaterial);
-    CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::AmbientTexture | Trade::PhongMaterialData::DiffuseTexture);
+    CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flag::AmbientTexture |
+        Trade::PhongMaterialData::Flag::DiffuseTexture);
     CORRADE_COMPARE(phongMaterial->ambientTexture(), 0);
     CORRADE_COMPARE(phongMaterial->diffuseTexture(), 1);
 }
