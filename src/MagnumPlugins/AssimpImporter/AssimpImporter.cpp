@@ -550,15 +550,26 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
     }
 
     PhongMaterialData::Flags flags;
-    aiString texturePath;
+    UnsignedInt textureIndices[3];
     aiColor3D color;
 
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), texturePath) == AI_SUCCESS)
+    /* Start from first possible texture index for this material */
+    auto textureIndex = _f->textureIndices[mat];
+    if (textureIndex < _f->textures.size() &&
+        _f->textures[textureIndex] == std::make_pair(mat, aiTextureType_AMBIENT)) {
         flags |= PhongMaterialData::Flag::AmbientTexture;
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texturePath) == AI_SUCCESS)
+        textureIndices[0] = textureIndex++;
+    }
+    if (textureIndex < _f->textures.size() &&
+        _f->textures[textureIndex] == std::make_pair(mat, aiTextureType_DIFFUSE)) {
         flags |= PhongMaterialData::Flag::DiffuseTexture;
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), texturePath) == AI_SUCCESS)
+        textureIndices[1] = textureIndex++;
+    }
+    if (textureIndex < _f->textures.size() &&
+        _f->textures[textureIndex] == std::make_pair(mat, aiTextureType_SPECULAR)) {
         flags |= PhongMaterialData::Flag::SpecularTexture;
+        textureIndices[2] = textureIndex++;
+    }
     /** @todo many more types supported in assimp */
 
     /* Shininess is *not* always present (for example in STL models), default
@@ -568,9 +579,10 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
 
     Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags, MaterialAlphaMode::Opaque, 0.5f, shininess, mat};
 
-    /* Key always present, default black */
-    mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
-    if(!(flags & PhongMaterialData::Flag::AmbientTexture)) {
+    if(flags & PhongMaterialData::Flag::AmbientTexture)
+        data->ambientTexture() = textureIndices[0];
+    else {
+        mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
         data->ambientColor() = Color3(color);
 
         /* Assimp 4.1 forces ambient color to white for STL models. That's just
@@ -584,15 +596,19 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
         }
     }
 
-    /* Key always present, default black */
-    mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-    if(!(flags & PhongMaterialData::Flag::DiffuseTexture))
+    if(flags & PhongMaterialData::Flag::DiffuseTexture)
+        data->diffuseTexture() = textureIndices[1];
+    else {
+        mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
         data->diffuseColor() = Color3(color);
+    }
 
-    /* Key always present, default black */
-    mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
-    if(!(flags & PhongMaterialData::Flag::SpecularTexture))
+    if(flags & PhongMaterialData::Flag::SpecularTexture)
+        data->specularTexture() = textureIndices[2];
+    else {
+        mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
         data->specularColor() = Color3(color);
+    }
 
     /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
        the pointer. Just std::move() works as well, but that gives a warning

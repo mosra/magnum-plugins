@@ -91,6 +91,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void material();
     void materialStlWhiteAmbientPatch();
     void materialWhiteAmbientTexture();
+    void materialAmbientDiffuseTexture();
 
     void mesh();
     void pointMesh();
@@ -155,6 +156,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::material,
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
               &AssimpImporterTest::materialWhiteAmbientTexture,
+              &AssimpImporterTest::materialAmbientDiffuseTexture,
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
@@ -402,6 +404,22 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
     CORRADE_COMPARE(static_cast<PhongMaterialData&>(*material).flags(), PhongMaterialData::Flag::AmbientTexture);
     /* It shouldn't be complaining about white ambient in this case */
     CORRADE_COMPARE(out.str(), "");
+}
+
+void AssimpImporterTest::materialAmbientDiffuseTexture() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture-ambient-diffuse.dae")));
+
+    CORRADE_COMPARE(importer->materialCount(), 1);
+    Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(0);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+    Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
+    CORRADE_VERIFY(phongMaterial);
+    CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::AmbientTexture | Trade::PhongMaterialData::DiffuseTexture);
+    CORRADE_COMPARE(phongMaterial->ambientTexture(), 0);
+    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 1);
 }
 
 void AssimpImporterTest::mesh() {
