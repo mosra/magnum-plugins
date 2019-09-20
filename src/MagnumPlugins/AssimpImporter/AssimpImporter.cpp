@@ -570,7 +570,10 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
 
     /* Key always present, default black */
     mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
-    if(!(flags & PhongMaterialData::Flag::AmbientTexture)) {
+    UnsignedInt firstTextureIndex = _f->textureIndices[mat];
+    if(flags & PhongMaterialData::Flag::AmbientTexture) {
+        data->ambientTexture() = firstTextureIndex++;
+    } else {
         data->ambientColor() = Color3(color);
 
         /* Assimp 4.1 forces ambient color to white for STL models. That's just
@@ -586,12 +589,16 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
 
     /* Key always present, default black */
     mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-    if(!(flags & PhongMaterialData::Flag::DiffuseTexture))
+    if(flags & PhongMaterialData::Flag::DiffuseTexture)
+        data->diffuseTexture() = firstTextureIndex++;
+    else
         data->diffuseColor() = Color3(color);
 
     /* Key always present, default black */
     mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
-    if(!(flags & PhongMaterialData::Flag::SpecularTexture))
+    if(flags & PhongMaterialData::Flag::SpecularTexture)
+        data->specularTexture() = firstTextureIndex++;
+    else
         data->specularColor() = Color3(color);
 
     /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast

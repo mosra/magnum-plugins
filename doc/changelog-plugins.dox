@@ -122,6 +122,9 @@ namespace Magnum {
 -   @ref Trade::AssimpImporter "AssimpImporter" was returning a random value
     for material shininess with STL models, now it correctly returns
     @cpp 0.0f @ce when the shininess value is not present.
+-   For files that had multiple textures,
+    @ref Trade::AssimpImporter "AssimpImporter" was incorrectly importing only
+    the first image, multiple times
 -   @ref Trade::StbImageImporter "StbImageImporter" was not correctly handling
     image import failures, randomly hitting unreachable code assertions
 -   Fixed @ref Trade::DevIlImageImporter "DevIlImageImporter" BGR(A)-to-RGB(A)
