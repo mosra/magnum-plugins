@@ -126,7 +126,9 @@ namespace Magnum {
     @cpp 0.0f @ce when the shininess value is not present.
 -   For files that had multiple textures,
     @ref Trade::AssimpImporter "AssimpImporter" was incorrectly importing only
-    the first image, multiple times
+    the first image, multiple times. Fixed independently also by
+    [mosra/magnum-plugins#66](https://github.com/mosra/magnum-plugins/pull/66)
+    which got submitted three minutes after the change was pushed to `master`.
 -   @ref Trade::StbImageImporter "StbImageImporter" was not correctly handling
     image import failures, randomly hitting unreachable code assertions
 -   Fixed @ref Trade::DevIlImageImporter "DevIlImageImporter" BGR(A)-to-RGB(A)
