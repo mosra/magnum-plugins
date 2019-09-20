@@ -32,6 +32,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -40,6 +41,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -92,6 +94,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void material();
     void materialStlWhiteAmbientPatch();
     void materialWhiteAmbientTexture();
+    void materialMultipleTextures();
 
     void mesh();
     void pointMesh();
@@ -156,6 +159,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::material,
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
               &AssimpImporterTest::materialWhiteAmbientTexture,
+              &AssimpImporterTest::materialMultipleTextures,
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
@@ -403,6 +407,86 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
     CORRADE_COMPARE(static_cast<PhongMaterialData&>(*material).flags(), PhongMaterialData::Flag::AmbientTexture);
     /* It shouldn't be complaining about white ambient in this case */
     CORRADE_COMPARE(out.str(), "");
+}
+
+void AssimpImporterTest::materialMultipleTextures() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "multiple-textures.obj")));
+
+    /* Yes, it's one more than it should be and the first is useless. See
+       materialWhiteAmbientTexture() for why I'm angry at everything all the
+       time */
+    CORRADE_COMPARE(importer->materialCount(), 2 + 1);
+
+    CORRADE_COMPARE(importer->textureCount(), 4);
+    CORRADE_COMPARE(importer->image2DCount(), 4);
+
+    /* Check that texture ID assignment is correct */
+    {
+        Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(importer->materialForName("ambient_diffuse"));
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+        auto& phong = static_cast<PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture);
+        CORRADE_COMPARE(phong.ambientTexture(), 0); /* r.png */
+        CORRADE_COMPARE(phong.diffuseTexture(), 1); /* g.png */
+    } {
+        Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(importer->materialForName("diffuse_specular"));
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+        auto& phong = static_cast<PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phong.diffuseTexture(), 2); /* b.png */
+        CORRADE_COMPARE(phong.specularTexture(), 3); /* y.png */
+    }
+
+    /* Check that image ID assignment is correct */
+    {
+        Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 0);
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture(1);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 1);
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture(2);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 2);
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture(3);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 3);
+    }
+
+    /* Check that correct images are imported */
+    {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+        CORRADE_COMPARE(image->size(), Vector2i(1));
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb); /* r.png */
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+        CORRADE_COMPARE(image->size(), Vector2i(1));
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb); /* g.png */
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(2);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+        CORRADE_COMPARE(image->size(), Vector2i(1));
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x0000ff_rgb); /* b.png */
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(3);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+        CORRADE_COMPARE(image->size(), Vector2i(1));
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xffff00_rgb); /* y.png */
+    }
 }
 
 void AssimpImporterTest::mesh() {

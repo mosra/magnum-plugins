@@ -1,0 +1,9 @@
+newmtl ambient_diffuse
+map_Ka r.png
+map_Kd g.png
+
+newmtl diffuse_specular
+map_Kd b.png
+map_Ks y.png
+
+# kate: hl Wavefront OBJ

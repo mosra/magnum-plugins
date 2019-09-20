@@ -63,6 +63,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         light.dae
         mesh-material.dae
         mesh.dae
+        multiple-textures.mtl r.png g.png b.png y.png
         points.obj
         scene.dae
         texture.dae

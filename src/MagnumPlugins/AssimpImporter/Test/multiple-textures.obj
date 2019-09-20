@@ -1,0 +1,21 @@
+mtllib multiple-textures.mtl
+
+v -1 0 0
+v 1 0 0
+v 0 1 0
+
+v -1 0 1
+v 1 0 1
+v 0 1 1
+
+vt 0 0
+vt 1 0
+vt 0.5 1
+
+usemtl ambient_diffuse
+g ambient_diffuse
+f 1/1 2/2 3/3
+
+usemtl diffuse_specular
+g diffuse_specular
+f 4/1 5/2 6/3
