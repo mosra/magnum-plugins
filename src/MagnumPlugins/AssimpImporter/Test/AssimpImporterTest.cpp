@@ -416,9 +416,10 @@ void AssimpImporterTest::materialMultipleTextures() {
     /* Yes, it's one more than it should be and the first is useless. See
        materialWhiteAmbientTexture() for why I'm angry at everything all the
        time */
-    CORRADE_COMPARE(importer->materialCount(), 2 + 1);
+    CORRADE_COMPARE(importer->materialCount(), 3 + 1);
 
-    CORRADE_COMPARE(importer->textureCount(), 4);
+    /* Seven textures, but using just four distinct images */
+    CORRADE_COMPARE(importer->textureCount(), 7);
     CORRADE_COMPARE(importer->image2DCount(), 4);
 
     /* Check that texture ID assignment is correct */
@@ -440,25 +441,47 @@ void AssimpImporterTest::materialMultipleTextures() {
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
         CORRADE_COMPARE(phong.diffuseTexture(), 2); /* b.png */
         CORRADE_COMPARE(phong.specularTexture(), 3); /* y.png */
+    } {
+        Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(importer->materialForName("all"));
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+        auto& phong = static_cast<PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phong.ambientTexture(), 4); /* y.png */
+        CORRADE_COMPARE(phong.diffuseTexture(), 5); /* r.png */
+        CORRADE_COMPARE(phong.specularTexture(), 6); /* g.png */
     }
 
     /* Check that image ID assignment is correct */
     {
         Containers::Optional<Trade::TextureData> texture = importer->texture(0);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 0);
+        CORRADE_COMPARE(texture->image(), 0); /* r.png */
     } {
         Containers::Optional<Trade::TextureData> texture = importer->texture(1);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 1);
+        CORRADE_COMPARE(texture->image(), 1); /* g.png */
     } {
         Containers::Optional<Trade::TextureData> texture = importer->texture(2);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 2);
+        CORRADE_COMPARE(texture->image(), 2); /* b.png */
     } {
         Containers::Optional<Trade::TextureData> texture = importer->texture(3);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 3);
+        CORRADE_COMPARE(texture->image(), 3); /* y.png */
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture(4);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 3); /* y.png */
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture(5);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 0); /* r.png */
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture(6);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 1); /* g.png */
     }
 
     /* Check that correct images are imported */

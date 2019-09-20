@@ -19,3 +19,7 @@ f 1/1 2/2 3/3
 usemtl diffuse_specular
 g diffuse_specular
 f 4/1 5/2 6/3
+
+usemtl all
+g all
+f 1/1 5/2 3/3

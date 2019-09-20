@@ -59,6 +59,8 @@ namespace Magnum {
 -   The @ref Trade::AssimpImporter "AssimpImporter" plugin now trims trailing
     space from image paths in order to deal better with OBJ meshes from hell
     (see [mosra/magnum-plugins#58](https://github.com/mosra/magnum-plugins/pull/58))
+-   The @ref Trade::AssimpImporter "AssimpImporter" plugin now imports each
+    image just once in case a single image is shared by more than one texture
 -   @ref Trade::JpegImporter "JpegImporter" now prints error info to
     @ref Corrade::Utility::Error, allowing it to be redirected or suppressed
     consistently to other plugin implementations (see

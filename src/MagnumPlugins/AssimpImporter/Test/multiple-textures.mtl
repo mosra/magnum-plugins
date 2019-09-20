@@ -6,4 +6,9 @@ newmtl diffuse_specular
 map_Kd b.png
 map_Ks y.png
 
+newmtl all
+map_Ka y.png
+map_Kd r.png
+map_Ks g.png
+
 # kate: hl Wavefront OBJ

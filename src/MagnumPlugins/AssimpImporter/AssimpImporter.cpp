@@ -73,7 +73,8 @@ struct AssimpImporter::File {
     Containers::Optional<std::string> filePath;
     const aiScene* scene = nullptr;
     std::vector<aiNode*> nodes;
-    std::vector<std::pair<const aiMaterial*, aiTextureType>> textures;
+    std::vector<std::tuple<const aiMaterial*, aiTextureType, UnsignedInt>> textures;
+    std::vector<std::pair<const aiMaterial*, aiTextureType>> images;
 
     std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
     std::unordered_map<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> nodeInstances;
@@ -246,6 +247,7 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     aiString matName;
     aiString texturePath;
     Int textureIndex = 0;
+    std::unordered_map<std::string, UnsignedInt> uniqueImages;
     for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
         const aiMaterial* mat = _f->scene->mMaterials[i];
 
@@ -254,12 +256,16 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
             _f->materialIndicesForName[name] = i;
         }
 
-        /* Store first possible texture index for this material */
+        /* Store first possible texture index for this material, next textures
+           use successive indices. For images ensure we have an unique set so
+           each file isn't imported more than once. */
         _f->textureIndices[mat] = textureIndex;
         for(auto type: {aiTextureType_AMBIENT, aiTextureType_DIFFUSE, aiTextureType_SPECULAR}) {
             if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) == AI_SUCCESS) {
-                std::string path = texturePath.C_Str();
-                _f->textures.emplace_back(mat, type);
+                auto uniqueImage = uniqueImages.emplace(texturePath.C_Str(), _f->images.size());
+                if(uniqueImage.second) _f->images.emplace_back(mat, type);
+
+                _f->textures.emplace_back(mat, type, uniqueImage.first->second);
                 ++textureIndex;
             }
         }
@@ -632,8 +638,8 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
     };
 
     aiTextureMapMode mapMode;
-    const aiMaterial* mat = _f->textures[id].first;
-    const aiTextureType type = _f->textures[id].second;
+    const aiMaterial* mat = std::get<0>(_f->textures[id]);
+    const aiTextureType type = std::get<1>(_f->textures[id]);
     SamplerWrapping wrappingU = SamplerWrapping::ClampToEdge;
     SamplerWrapping wrappingV = SamplerWrapping::ClampToEdge;
     if(mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mapMode) == AI_SUCCESS)
@@ -643,17 +649,17 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
 
     return TextureData{TextureData::Type::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
-        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, id, &_f->textures[id]};
+        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, std::get<2>(_f->textures[id]), &_f->textures[id]};
 }
 
-UnsignedInt AssimpImporter::doImage2DCount() const { return _f->textures.size(); }
+UnsignedInt AssimpImporter::doImage2DCount() const { return _f->images.size(); }
 
 Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
     CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
     const aiMaterial* mat;
     aiTextureType type;
-    std::tie(mat, type) = _f->textures[id];
+    std::tie(mat, type) = _f->images[id];
 
     aiString texturePath;
     if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) != AI_SUCCESS) {
