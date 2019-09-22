@@ -47,7 +47,7 @@ enum: std::size_t {
 constexpr struct {
     const char* filename;
     PixelFormat format;
-} Files2D[Files2DCount] = {
+} Files2D[]{
     {"2D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA16F},
     {"2D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA16Unorm},
     {"2D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA32F},
@@ -99,7 +99,7 @@ constexpr struct {
 constexpr struct {
     const char* filename;
     PixelFormat format;
-} Files3D[Files3DCount] = {
+} Files3D[]{
     {"3D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA16F},
     {"3D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA16Unorm},
     {"3D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA32F},
@@ -157,8 +157,10 @@ DdsImporterTest::DdsImporterTest() {
               &DdsImporterTest::dxt3,
               &DdsImporterTest::dxt5});
 
-    addInstancedTests({&DdsImporterTest::dxt10Formats2D}, Files2DCount);
-    addInstancedTests({&DdsImporterTest::dxt10Formats3D}, Files3DCount);
+    addInstancedTests({&DdsImporterTest::dxt10Formats2D},
+        Containers::arraySize(Files2D));
+    addInstancedTests({&DdsImporterTest::dxt10Formats3D},
+        Containers::arraySize(Files3D));
 
     addTests({&DdsImporterTest::dxt10Data,
               &DdsImporterTest::dxt10TooShort,
