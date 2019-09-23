@@ -92,12 +92,17 @@ With @ref BasisImporter, this format can be chosen in different ways:
 
 The list of valid suffixes is equivalent to enum value names in
 @ref TargetFormat. If you want to be able to change the target format
-dynamically, you may want to set the `format` configuration of the plugin:
+dynamically, you may want to set the `format` configuration of the plugin, as
+shown below. If you instantiate this class directly without a plugin manager,
+you may also use @ref setTargetFormat().
 
 @snippet BasisImporter.cpp target-format-config
 
-If you instantiate this class directly without a plugin manager, you may also
-use @ref setTargetFormat().
+There's many options and you should be generally striving for highest-quality
+format available on given platform. Detailed description of the choices is
+in [Basis Universal README](https://github.com/BinomialLLC/basis_universal#how-to-use-the-system).
+
+@todoc GL extension checking snippet
 
 @m_class{m-block m-success}
 
