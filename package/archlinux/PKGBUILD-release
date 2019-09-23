@@ -7,7 +7,7 @@ arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
 depends=('magnum' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp')
-makedepends=('cmake' 'ninja')
+makedepends=('cmake' 'ninja' 'basis-universal-src')
 options=('!strip')
 provides=('magnum-plugins-git')
 
@@ -20,10 +20,11 @@ build() {
     cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_INSTALL_PREFIX=/usr \
+        -DBASISU_DIR=/opt/basis-universal \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
         -DWITH_ASSIMPIMPORTER=ON \
-        -DWITH_BASISIMPORTER=OFF \
+        -DWITH_BASISIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
         -DWITH_DEVILIMAGEIMPORTER=ON \
         -DWITH_DRFLACAUDIOIMPORTER=ON \
@@ -53,10 +54,11 @@ build() {
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
+        -DBASISU_DIR=/opt/basis-universal \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
         -DWITH_ASSIMPIMPORTER=ON \
-        -DWITH_BASISIMPORTER=OFF \
+        -DWITH_BASISIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
         -DWITH_DEVILIMAGEIMPORTER=ON \
         -DWITH_DRFLACAUDIOIMPORTER=ON \

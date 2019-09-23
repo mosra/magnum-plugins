@@ -7,7 +7,7 @@ arch=('any')
 url="https://magnum.graphics"
 license=('MIT')
 depends=('android-arm64-magnum')
-makedepends=('cmake' 'ninja' 'android-ndk' 'corrade')
+makedepends=('cmake' 'ninja' 'android-ndk' 'corrade' 'basis-universal-src')
 options=('!strip' '!buildflags')
 
 _rootdir=$startdir/../../
@@ -30,10 +30,11 @@ build() {
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
+        -DBASISU_DIR=/opt/basis-universal \
         -DCMAKE_INSTALL_PREFIX=/opt/android-ndk/platforms/android-22/arch-arm64/usr \
         -DMAGNUM_INCLUDE_INSTALL_PREFIX=/opt/android-ndk/sysroot/usr \
         -DWITH_ASSIMPIMPORTER=OFF \
-        -DWITH_BASISIMPORTER=OFF \
+        -DWITH_BASISIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
         -DWITH_DEVILIMAGEIMPORTER=OFF \
         -DWITH_DRFLACAUDIOIMPORTER=OFF \

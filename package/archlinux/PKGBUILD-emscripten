@@ -7,7 +7,7 @@ arch=('any')
 url="https://magnum.graphics"
 license=('MIT')
 depends=('emscripten-magnum=dev' 'emscripten-faad2')
-makedepends=('cmake' 'emscripten' 'corrade' 'ninja')
+makedepends=('cmake' 'emscripten' 'corrade' 'ninja' 'basis-universal-src')
 options=(!strip !buildflags)
 
 _rootdir=$startdir/../../
@@ -27,8 +27,9 @@ build() {
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \
+        -DBASISU_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=OFF \
-        -DWITH_BASISIMPORTER=OFF \
+        -DWITH_BASISIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
         -DWITH_DEVILIMAGEIMPORTER=OFF \
         -DWITH_DRFLACAUDIOIMPORTER=ON \
