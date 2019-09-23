@@ -43,10 +43,10 @@ CompressedPixelFormat textureFormat(BasisTranscodingType type, bool hasAlpha) {
     switch(type) {
         case BasisTranscodingType::Etc1:
         case BasisTranscodingType::Etc2:
-            return (hasAlpha) ? CompressedPixelFormat::Etc2RGBA8Unorm
+            return hasAlpha ? CompressedPixelFormat::Etc2RGBA8Unorm
                 : CompressedPixelFormat::Etc2RGB8Unorm;
         case BasisTranscodingType::Bc1:
-            return (hasAlpha) ? CompressedPixelFormat::Bc1RGBAUnorm
+            return hasAlpha ? CompressedPixelFormat::Bc1RGBAUnorm
                 : CompressedPixelFormat::Bc1RGBUnorm;
         case BasisTranscodingType::Bc3:
             return CompressedPixelFormat::Bc3RGBAUnorm;
@@ -63,7 +63,7 @@ CompressedPixelFormat textureFormat(BasisTranscodingType type, bool hasAlpha) {
     }
 }
 
-const char* FormatNames[]{
+constexpr const char* FormatNames[]{
     "Etc1", "Etc2", "Bc1", "Bc3", "Bc4", "Bc5",
     "Bc7M6OpaqueOnly", "Pvrtc1_4OpaqueOnly"
 };
@@ -85,11 +85,7 @@ namespace Corrade { namespace Utility {
 
 /* Configuration value implementation for BasisTranscodingType */
 template<> struct ConfigurationValue<Magnum::Trade::BasisTranscodingType> {
-
-    static std::string toString(
-        const Magnum::Trade::BasisTranscodingType& value,
-        ConfigurationValueFlags)
-    {
+    static std::string toString(Magnum::Trade::BasisTranscodingType value, ConfigurationValueFlags) {
         #define _c(value) case Magnum::Trade::BasisTranscodingType::value: return #value;
         switch(value) {
             _c(Etc1)
@@ -106,9 +102,7 @@ template<> struct ConfigurationValue<Magnum::Trade::BasisTranscodingType> {
         return "<invalid>";
     }
 
-    static Magnum::Trade::BasisTranscodingType fromString(
-        const std::string& value, ConfigurationValueFlags)
-    {
+    static Magnum::Trade::BasisTranscodingType fromString(const std::string& value, ConfigurationValueFlags) {
         Magnum::Int i = 0;
         for(const char* name: Magnum::Trade::FormatNames) {
             if(value == name) return Magnum::Trade::BasisTranscodingType(i);
@@ -125,10 +119,10 @@ namespace Magnum { namespace Trade {
 
 struct BasisImporter::State {
     /* There is only this type of codebook */
-    basist::etc1_global_selector_codebook _codebook;
-    basist::basisu_transcoder _transcoder{&_codebook};
+    basist::etc1_global_selector_codebook codebook;
+    basist::basisu_transcoder transcoder{&codebook};
 
-    explicit State(): _codebook(basist::g_global_selector_cb_size,
+    explicit State(): codebook(basist::g_global_selector_cb_size,
         basist::g_global_selector_cb) {}
 };
 
@@ -144,13 +138,9 @@ BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const std:
 
     /* Set format configuration from plugin alias */
     if(Corrade::Utility::String::beginsWith(plugin, "BasisImporter")) {
-
-        /* Has type prefix */
-        if(plugin.length() > 13) {
-            /* We can assume the substring results in a valid value
-               as the plugin conf limits it to known suffixes */
-            configuration().setValue("format", plugin.substr(13));
-        }
+        /* Has type prefix. We can assume the substring results in a valid
+           value as the plugin conf limits it to known suffixes */
+        if(plugin.size() > 13) configuration().setValue("format", plugin.substr(13));
     }
 }
 
@@ -175,12 +165,12 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    if(!_state->_transcoder.validate_header(data.data(), data.size())) {
+    if(!_state->transcoder.validate_header(data.data(), data.size())) {
         Error() << "Trade::BasisImporter::openData(): invalid header";
         return;
     }
 
-    if(!_state->_transcoder.start_transcoding(data.data(), data.size())) {
+    if(!_state->transcoder.start_transcoding(data.data(), data.size())) {
         Error() << "Trade::BasisImporter::openData(): bad basis file";
         return;
     }
@@ -190,7 +180,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 }
 
 UnsignedInt BasisImporter::doImage2DCount() const {
-    return _state->_transcoder.get_total_images(_in.data(), _in.size());
+    return _state->transcoder.get_total_images(_in.data(), _in.size());
 }
 
 Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
@@ -198,9 +188,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
 
     const std::string targetFormatStr = configuration().value<std::string>("format");
     if(targetFormatStr.empty()) {
-        Error() << "Trade::BasisImporter::image2D(): no format to transcode "
-            "to was specified. Either load the plugin via one of its BasisImporterEtc1, ... "
-            "aliases, or set the format explicitly via plugin configuration.";
+        Error() << "Trade::BasisImporter::image2D(): no format to transcode to was specified. Either load the plugin via one of its BasisImporterEtc1, ... aliases, or set the format explicitly via plugin configuration.";
         return Containers::NullOpt;
     }
 
@@ -208,42 +196,38 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         configuration().value<BasisTranscodingType>("format");
     if(Int(targetFormat) == -1) {
         Error() << "Trade::BasisImporter::image2D(): invalid transcoding target format"
-            << targetFormatStr.c_str() << Debug::nospace << ", expected to be one of:"
-            << "Etc1, Etc2, Bc1, Bc3, Bc4, Bc5, Bc7M6OpaqueOnly, Pvrtc1_4OpaqueOnly";
+            << targetFormatStr.c_str() << Debug::nospace << ", expected to be one of Etc1, Etc2, Bc1, Bc3, Bc4, Bc5, Bc7M6OpaqueOnly, Pvrtc1_4OpaqueOnly";
         return Containers::NullOpt;
     }
     const basist::transcoder_texture_format format =
         TranscoderTextureFormat[Int(targetFormat)];
-    const UnsignedInt bytes_per_block = basis_get_bytes_per_block(format);
 
     basist::basisu_image_info info;
-    if (!_state->_transcoder.get_image_info(_in.data(), _in.size(), info, index)) {
+    if(!_state->transcoder.get_image_info(_in.data(), _in.size(), info, index)) {
         Error{} << "Trade::BasisImporter::image2D(): unable to get image info";
         return Containers::NullOpt;
     }
     const bool hasAlpha = info.m_alpha_flag;
 
     UnsignedInt origWidth, origHeight, totalBlocks;
-    if (!_state->_transcoder.get_image_level_desc(_in.data(), _in.size(), index,
-            level, origWidth, origHeight, totalBlocks))
-    {
+    if(!_state->transcoder.get_image_level_desc(_in.data(), _in.size(), index, level, origWidth, origHeight, totalBlocks)) {
         Error{} << "Trade::BasisImporter::image2D(): unable to retrieve mip level description";
         return Containers::NullOpt;
     }
 
-    const UnsignedInt requiredSize = totalBlocks*bytes_per_block;
+    const UnsignedInt bytesPerBlock = basis_get_bytes_per_block(format);
+    const UnsignedInt requiredSize = totalBlocks*bytesPerBlock;
     Containers::Array<char> dest{Containers::DefaultInit, requiredSize};
-    const UnsignedInt status = _state->_transcoder.transcode_image_level(
-      _in.data(), _in.size(), index, level, dest.data(), dest.size()/bytes_per_block,
-      static_cast<basist::transcoder_texture_format>(format));
+    const UnsignedInt status = _state->transcoder.transcode_image_level(
+      _in.data(), _in.size(), index, level, dest.data(), dest.size()/bytesPerBlock,
+      basist::transcoder_texture_format(format));
     if(!status) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
         return Containers::NullOpt;
     }
 
     return Trade::ImageData2D(textureFormat(targetFormat, hasAlpha),
-        Vector2i{Int(origWidth), Int(origHeight)},
-        std::move(dest));
+        {Int(origWidth), Int(origHeight)}, std::move(dest));
 }
 
 void BasisImporter::setTargetFormat(BasisTranscodingType format) {

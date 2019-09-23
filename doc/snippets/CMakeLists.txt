@@ -3,6 +3,7 @@
 #
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
 #             Vladimír Vondruš <mosra@centrum.cz>
+#   Copyright © 2019 Jonathan Hale <squareys@googlemail.com>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -23,7 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Corrade REQUIRED PluginManager)
+find_package(Magnum REQUIRED Trade)
 
 # On MSVC remove /W3, as we are replacing it with /W4
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
@@ -42,10 +43,10 @@ endif()
 
 if(WITH_BASISIMPORTER)
     add_library(snippets-BasisImporter STATIC
-        MagnumPluginsBasisImporter.cpp)
+        BasisImporter.cpp)
     if(BUILD_PLUGINS_STATIC)
         target_link_libraries(snippets-BasisImporter PRIVATE BasisImporter)
     endif()
-    target_link_libraries(snippets-BasisImporter PRIVATE Corrade::PluginManager)
+    target_link_libraries(snippets-BasisImporter PRIVATE Magnum::Trade)
     set_target_properties(snippets-BasisImporter PROPERTIES FOLDER "Magnum/doc/snippets")
 endif()

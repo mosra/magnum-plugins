@@ -57,16 +57,9 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgba_2_images.basis
         rgba_2_images_pow2.basis)
 if(NOT BUILD_PLUGINS_STATIC)
-    target_include_directories(BasisImporterTest PRIVATE
-        $<TARGET_FILE_DIR:BasisImporterTest>
-        # Need to include the importer's header for the
-        # ConfigurationValue specification. No need to link
-        # when plugin is dynamic
-        ${PROJECT_BINARY_DIR}/src
-        ${PROJECT_SOURCE_DIR}/src)
+    target_include_directories(BasisImporterTest PRIVATE $<TARGET_FILE_DIR:BasisImporterTest>)
 else()
-    target_include_directories(BasisImporterTest PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR})
+    target_include_directories(BasisImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(BasisImporterTest PRIVATE BasisImporter)
 endif()
 set_target_properties(BasisImporterTest PROPERTIES FOLDER "MagnumPlugins/BasisImporter/Test")

@@ -176,9 +176,7 @@ void BasisImporterTest::unconfigured() {
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode "
-        "to was specified. Either load the plugin via one of its BasisImporterEtc1, ... "
-        "aliases, or set the format explicitly via plugin configuration.\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified. Either load the plugin via one of its BasisImporterEtc1, ... aliases, or set the format explicitly via plugin configuration.\n");
 }
 
 void BasisImporterTest::invalidConfiguredFormat() {
@@ -191,7 +189,7 @@ void BasisImporterTest::invalidConfiguredFormat() {
     importer->configuration().setValue("format", "Banana");
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of: Etc1, Etc2, Bc1, Bc3, Bc4, Bc5, Bc7M6OpaqueOnly, Pvrtc1_4OpaqueOnly\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of Etc1, Etc2, Bc1, Bc3, Bc4, Bc5, Bc7M6OpaqueOnly, Pvrtc1_4OpaqueOnly\n");
 }
 
 void BasisImporterTest::fileTooShort() {
@@ -208,7 +206,8 @@ void BasisImporterTest::fileTooShort() {
     basisData[100] = 100;
     CORRADE_VERIFY(!importer->openData(basisData));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid header\n"
+    CORRADE_COMPARE(out.str(),
+        "Trade::BasisImporter::openData(): invalid header\n"
         "Trade::BasisImporter::openData(): bad basis file\n");
 }
 

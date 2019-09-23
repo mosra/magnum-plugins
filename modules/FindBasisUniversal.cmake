@@ -52,7 +52,7 @@
 #
 
 # Vcpkg distributes imgui as a library with a config file, so try that first --
-# but only if IMGUI_DIR wasn't explicitly passed, in which case we'll look
+# but only if BASISU_DIR wasn't explicitly passed, in which case we'll look
 # there instead
 find_package(basisu CONFIG QUIET)
 if(basisu_FOUND AND NOT BASISU_DIR)
@@ -93,8 +93,8 @@ else()
     mark_as_advanced(BasisUniversalTranscoder_INCLUDE_DIR)
 endif()
 
-list (FIND BasisUniversal_FIND_COMPONENTS "Encoder" _index)
-if (${_index} GREATER -1)
+list(FIND BasisUniversal_FIND_COMPONENTS "Encoder" _index)
+if(${_index} GREATER -1)
     list(APPEND BasisUniversal_FIND_COMPONENTS "Transcoder")
     list(REMOVE_DUPLICATES BasisUniversal_FIND_COMPONENTS)
 endif()
@@ -121,9 +121,8 @@ macro(_basis_setup_source_file source)
     endif()
 endmacro()
 
-
 # Find components
-foreach(_component IN LISTS BasisUniversal_FIND_COMPONENTS)
+foreach(_component ${BasisUniversal_FIND_COMPONENTS})
     if(_component STREQUAL "Encoder")
         if(NOT TARGET BasisUniversal::Encoder)
             find_path(BasisUniversalEncoder_DIR NAMES basisu_frontend.cpp

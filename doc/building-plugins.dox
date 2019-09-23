@@ -304,7 +304,7 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_ASSIMPIMPORTER` --- Build the @ref Trade::AssimpImporter "AssimpImporter"
     plugin. Depends on [Assimp](http://assimp.org/).
 -   `WITH_BASISIMPORTER` --- Build the @ref Trade::BasisImporter "BasisImporter"
-    plugin.
+    plugin. Depends on [Basis Universal](https://github.com/binomialLLC/basis_universal).
 -   `WITH_DDSIMPORTER` --- Build the @ref Trade::DdsImporter "DdsImporter"
     plugin.
 -   `WITH_DEVILIMAGEIMPORTER` --- Build the
