@@ -58,8 +58,7 @@ CompressedPixelFormat textureFormat(BasisImporter::TargetFormat type, bool hasAl
             return CompressedPixelFormat::Bc7RGBAUnorm;
         case BasisImporter::TargetFormat::Pvrtc1_4OpaqueOnly:
             return CompressedPixelFormat::PvrtcRGB4bppUnorm;
-        default:
-            CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 }
 
@@ -204,17 +203,20 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         TranscoderTextureFormat[Int(targetFormat)];
 
     basist::basisu_image_info info;
-    if(!_state->transcoder.get_image_info(_state->in.data(), _state->in.size(), info, index)) {
-        Error{} << "Trade::BasisImporter::image2D(): unable to get image info";
-        return Containers::NullOpt;
-    }
+    /* Header validation etc. is already done in doOpenData() and index is
+       bounds-checked against doImage2DCount() by AbstractImporter, so by
+       looking at the code there's nothing else that could fail and wasn't
+       already caught before. That means we also can't craft any file to cover
+       an error path, so turning this into an assert. When this blows up for
+       someome, we'd most probably need to harden doOpenData() to catch that,
+       not turning this into a graceful error. */
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder.get_image_info(_state->in.data(), _state->in.size(), info, index));
     const bool hasAlpha = info.m_alpha_flag;
 
     UnsignedInt origWidth, origHeight, totalBlocks;
-    if(!_state->transcoder.get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks)) {
-        Error{} << "Trade::BasisImporter::image2D(): unable to retrieve mip level description";
-        return Containers::NullOpt;
-    }
+    /* Same as above, it checks for state we already verified before. If this
+       blows up for someone, we can reconsider. */
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder.get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks));
 
     const UnsignedInt bytesPerBlock = basis_get_bytes_per_block(format);
     const UnsignedInt requiredSize = totalBlocks*bytesPerBlock;
