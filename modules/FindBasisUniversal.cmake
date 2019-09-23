@@ -151,7 +151,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 ${BasisUniversalEncoder_DIR}/basisu_ssim.cpp
                 ${BasisUniversalEncoder_DIR}/lodepng.cpp)
 
-            foreach(_file BasisUniversalEncoder_SOURCES)
+            foreach(_file ${BasisUniversalEncoder_SOURCES})
                 _basis_setup_source_file(${_file})
             endforeach()
 
@@ -185,7 +185,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
             set(BasisUniversalTranscoder_SOURCES
                 ${BasisUniversalTranscoder_DIR}/basisu_transcoder.cpp)
 
-            foreach(_file BasisUniversalTranscoder_SOURCES)
+            foreach(_file ${BasisUniversalTranscoder_SOURCES})
                 _basis_setup_source_file(${_file})
             endforeach()
 
