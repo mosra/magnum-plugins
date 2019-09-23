@@ -122,6 +122,8 @@ struct BasisImporter::State {
     basist::etc1_global_selector_codebook codebook;
     basist::basisu_transcoder transcoder{&codebook};
 
+    Containers::Array<unsigned char> in;
+
     explicit State(): codebook(basist::g_global_selector_cb_size,
         basist::g_global_selector_cb) {}
 };
@@ -148,9 +150,9 @@ BasisImporter::~BasisImporter() = default;
 
 auto BasisImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool BasisImporter::doIsOpened() const { return _in; }
+bool BasisImporter::doIsOpened() const { return _state->in; }
 
-void BasisImporter::doClose() { _in = nullptr; }
+void BasisImporter::doClose() { _state->in = nullptr; }
 
 void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Because here we're copying the data and using the _in to check if file
@@ -175,12 +177,12 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    _in = Containers::Array<unsigned char>(data.size());
-    std::copy(data.begin(), data.end(), _in.begin());
+    _state->in = Containers::Array<unsigned char>(data.size());
+    std::copy(data.begin(), data.end(), _state->in.begin());
 }
 
 UnsignedInt BasisImporter::doImage2DCount() const {
-    return _state->transcoder.get_total_images(_in.data(), _in.size());
+    return _state->transcoder.get_total_images(_state->in.data(), _state->in.size());
 }
 
 Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
@@ -202,14 +204,14 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         TranscoderTextureFormat[Int(targetFormat)];
 
     basist::basisu_image_info info;
-    if(!_state->transcoder.get_image_info(_in.data(), _in.size(), info, index)) {
+    if(!_state->transcoder.get_image_info(_state->in.data(), _state->in.size(), info, index)) {
         Error{} << "Trade::BasisImporter::image2D(): unable to get image info";
         return Containers::NullOpt;
     }
     const bool hasAlpha = info.m_alpha_flag;
 
     UnsignedInt origWidth, origHeight, totalBlocks;
-    if(!_state->transcoder.get_image_level_desc(_in.data(), _in.size(), index, level, origWidth, origHeight, totalBlocks)) {
+    if(!_state->transcoder.get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks)) {
         Error{} << "Trade::BasisImporter::image2D(): unable to retrieve mip level description";
         return Containers::NullOpt;
     }
@@ -218,7 +220,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
     const UnsignedInt requiredSize = totalBlocks*bytesPerBlock;
     Containers::Array<char> dest{Containers::DefaultInit, requiredSize};
     const UnsignedInt status = _state->transcoder.transcode_image_level(
-      _in.data(), _in.size(), index, level, dest.data(), dest.size()/bytesPerBlock,
+      _state->in.data(), _state->in.size(), index, level, dest.data(), dest.size()/bytesPerBlock,
       basist::transcoder_texture_format(format));
     if(!status) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";

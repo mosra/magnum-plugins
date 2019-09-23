@@ -30,7 +30,6 @@
 * @brief Class @ref Magnum::Trade::BasisImporter
 */
 
-#include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "MagnumPlugins/BasisImporter/configure.h"
@@ -205,7 +204,6 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
-        Containers::Array<unsigned char> _in;
         Containers::Pointer<State> _state;
 };
 
