@@ -61,3 +61,5 @@ package() {
     cd "$_rootdir/build-emscripten"
     DESTDIR="$pkgdir/" ninja install
 }
+
+# kate: hl bash

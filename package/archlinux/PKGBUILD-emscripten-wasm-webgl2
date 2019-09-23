@@ -60,3 +60,5 @@ package() {
     cd "$_rootdir/build-emscripten-wasm-webgl2"
     DESTDIR="$pkgdir/" ninja install
 }
+
+# kate: hl bash
