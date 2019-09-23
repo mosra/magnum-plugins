@@ -54,65 +54,6 @@
 namespace Magnum { namespace Trade {
 
 /**
-@brief Type to transcode to
-*/
-enum class BasisTranscodingType : Int {
-    /**
-     * ETC1. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm or
-     * @ref CompressedPixelFormat::Etc2RGBA8Unorm if the image contains an
-     * alpha channel.
-     *
-     * This format is loaded like @ref BasisTranscodingType::Etc2, prefer it
-     * for potentially better quality.
-     */
-    Etc1 = 0,
-
-    /**
-     * ETC2. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm or
-     * @ref CompressedPixelFormat::Etc2RGBA8Unorm if the image contains an
-     * alpha channel.
-     */
-    Etc2 = 1,
-
-    /**
-     * BC1. Loaded as @ref CompressedPixelFormat::Bc1RGBAUnorm or
-     * @ref CompressedPixelFormat::Bc1RGBUnorm if the image contains an alpha
-     * channel.
-     */
-    Bc1 = 2,
-
-    /**
-     * BC2. Loaded as @ref CompressedPixelFormat::Bc3RGBAUnorm. If the image
-     * does not contain an alpha channel, alpha will be set to opaque.
-     */
-    Bc3 = 3,
-
-    /**
-     * BC4. Loaded as @ref CompressedPixelFormat::Bc4RUnorm.
-     */
-    Bc4 = 4,
-
-    /**
-     * BC5. Loaded as @ref CompressedPixelFormat::Bc5RGUnorm.
-     */
-    Bc5 = 5,
-
-    /**
-     * BC7 mode 6 (opaque only). Loaded as
-     * @ref CompressedPixelFormat::Bc7RGBAUnorm, but with alpha values set to
-     * opaque.
-     */
-    Bc7M6OpaqueOnly = 6,
-
-    /**
-     * PVRTC1 4 bpp (opaque only). Loaded as
-     * @ref CompressedPixelFormat::PvrtcRGB4bppUnorm. If the image contains an
-     * alpha channel, it will be dropped.
-     */
-    Pvrtc1_4OpaqueOnly = 7
-};
-
-/**
 @brief Basis Universal importer plugin
 
 @m_keywords{BasisImporterEtc1 BasisImporterEtc2 BasisImporterBc1 BasisImporterBc3}
@@ -151,7 +92,7 @@ With @ref BasisImporter, this format can be chosen in different ways:
 @snippet BasisImporter.cpp target-format-suffix
 
 The list of valid suffixes is equivalent to enum value names in
-@ref BasisTranscodingType. If you want to be able to change the target format
+@ref TargetFormat. If you want to be able to change the target format
 dynamically, you may want to set the `format` configuration of the plugin:
 
 @snippet BasisImporter.cpp target-format-config
@@ -170,6 +111,63 @@ use @ref setTargetFormat().
 class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
     public:
         /**
+         * @brief Type to transcode to
+         *
+         * @see @ref Trade-BasisImporter-target-format, @ref setTargetFormat()
+         */
+        enum class TargetFormat: Int {
+            /**
+             * ETC1. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm or
+             * @ref CompressedPixelFormat::Etc2RGBA8Unorm if the image contains
+             * an alpha channel. This format is loaded like
+             * @ref TargetFormat::Etc2, prefer it for potentially better
+             * quality.
+             */
+            Etc1 = 0,
+
+            /**
+             * ETC2. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm or
+             * @ref CompressedPixelFormat::Etc2RGBA8Unorm if the image contains
+             * an alpha channel.
+             */
+            Etc2 = 1,
+
+            /**
+             * BC1. Loaded as @ref CompressedPixelFormat::Bc1RGBAUnorm or
+             * @ref CompressedPixelFormat::Bc1RGBUnorm if the image contains an
+             * alpha channel.
+             */
+            Bc1 = 2,
+
+            /**
+             * BC2. Loaded as @ref CompressedPixelFormat::Bc3RGBAUnorm. If the
+             * image does not contain an alpha channel, alpha will be set to
+             * opaque.
+             */
+            Bc3 = 3,
+
+            /** BC4. Loaded as @ref CompressedPixelFormat::Bc4RUnorm. */
+            Bc4 = 4,
+
+            /** BC5. Loaded as @ref CompressedPixelFormat::Bc5RGUnorm. */
+            Bc5 = 5,
+
+            /**
+             * BC7 mode 6 (opaque only). Loaded as
+             * @ref CompressedPixelFormat::Bc7RGBAUnorm, but with alpha values
+             * set to opaque.
+             */
+            Bc7M6OpaqueOnly = 6,
+
+            /**
+             * PVRTC1 4 bpp (opaque only). Loaded as
+             * @ref CompressedPixelFormat::PvrtcRGB4bppUnorm. If the image
+             * contains an alpha channel, it will be dropped.
+             */
+            Pvrtc1_4OpaqueOnly = 7
+        };
+
+        /**
          * @brief Initialize Basis transcoder
          *
          * If the class is instantiated directly (not through a plugin
@@ -187,14 +185,14 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         ~BasisImporter();
 
         /** @brief Target format */
-        BasisTranscodingType targetFormat() const;
+        TargetFormat targetFormat() const;
 
         /**
         * @brief Set the target format
         *
         * See @ref Trade-BasisImporter-target-format for more information.
         */
-        void setTargetFormat(BasisTranscodingType format);
+        void setTargetFormat(TargetFormat format);
 
     private:
         struct State;

@@ -38,25 +38,25 @@
 
 namespace Magnum { namespace Trade { namespace {
 
-/* Map BasisTranscodingType to Magnum::CompressedPixelFormat */
-CompressedPixelFormat textureFormat(BasisTranscodingType type, bool hasAlpha) {
+/* Map TargetFormat to Magnum::CompressedPixelFormat */
+CompressedPixelFormat textureFormat(BasisImporter::TargetFormat type, bool hasAlpha) {
     switch(type) {
-        case BasisTranscodingType::Etc1:
-        case BasisTranscodingType::Etc2:
+        case BasisImporter::TargetFormat::Etc1:
+        case BasisImporter::TargetFormat::Etc2:
             return hasAlpha ? CompressedPixelFormat::Etc2RGBA8Unorm
                 : CompressedPixelFormat::Etc2RGB8Unorm;
-        case BasisTranscodingType::Bc1:
+        case BasisImporter::TargetFormat::Bc1:
             return hasAlpha ? CompressedPixelFormat::Bc1RGBAUnorm
                 : CompressedPixelFormat::Bc1RGBUnorm;
-        case BasisTranscodingType::Bc3:
+        case BasisImporter::TargetFormat::Bc3:
             return CompressedPixelFormat::Bc3RGBAUnorm;
-        case BasisTranscodingType::Bc4:
+        case BasisImporter::TargetFormat::Bc4:
             return CompressedPixelFormat::Bc4RUnorm;
-        case BasisTranscodingType::Bc5:
+        case BasisImporter::TargetFormat::Bc5:
             return CompressedPixelFormat::Bc5RGUnorm;
-        case BasisTranscodingType::Bc7M6OpaqueOnly:
+        case BasisImporter::TargetFormat::Bc7M6OpaqueOnly:
             return CompressedPixelFormat::Bc7RGBAUnorm;
-        case BasisTranscodingType::Pvrtc1_4OpaqueOnly:
+        case BasisImporter::TargetFormat::Pvrtc1_4OpaqueOnly:
             return CompressedPixelFormat::PvrtcRGB4bppUnorm;
         default:
             CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -83,10 +83,10 @@ constexpr basist::transcoder_texture_format TranscoderTextureFormat[] = {
 
 namespace Corrade { namespace Utility {
 
-/* Configuration value implementation for BasisTranscodingType */
-template<> struct ConfigurationValue<Magnum::Trade::BasisTranscodingType> {
-    static std::string toString(Magnum::Trade::BasisTranscodingType value, ConfigurationValueFlags) {
-        #define _c(value) case Magnum::Trade::BasisTranscodingType::value: return #value;
+/* Configuration value implementation for BasisImporter::TargetFormat */
+template<> struct ConfigurationValue<Magnum::Trade::BasisImporter::TargetFormat> {
+    static std::string toString(Magnum::Trade::BasisImporter::TargetFormat value, ConfigurationValueFlags) {
+        #define _c(value) case Magnum::Trade::BasisImporter::TargetFormat::value: return #value;
         switch(value) {
             _c(Etc1)
             _c(Etc2)
@@ -102,14 +102,14 @@ template<> struct ConfigurationValue<Magnum::Trade::BasisTranscodingType> {
         return "<invalid>";
     }
 
-    static Magnum::Trade::BasisTranscodingType fromString(const std::string& value, ConfigurationValueFlags) {
+    static Magnum::Trade::BasisImporter::TargetFormat fromString(const std::string& value, ConfigurationValueFlags) {
         Magnum::Int i = 0;
         for(const char* name: Magnum::Trade::FormatNames) {
-            if(value == name) return Magnum::Trade::BasisTranscodingType(i);
+            if(value == name) return Magnum::Trade::BasisImporter::TargetFormat(i);
             ++i;
         }
 
-        return Magnum::Trade::BasisTranscodingType(-1);
+        return Magnum::Trade::BasisImporter::TargetFormat(-1);
     }
 };
 
@@ -192,8 +192,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         return Containers::NullOpt;
     }
 
-    const BasisTranscodingType targetFormat =
-        configuration().value<BasisTranscodingType>("format");
+    const auto targetFormat = configuration().value<TargetFormat>("format");
     if(Int(targetFormat) == -1) {
         Error() << "Trade::BasisImporter::image2D(): invalid transcoding target format"
             << targetFormatStr.c_str() << Debug::nospace << ", expected to be one of Etc1, Etc2, Bc1, Bc3, Bc4, Bc5, Bc7M6OpaqueOnly, Pvrtc1_4OpaqueOnly";
@@ -230,12 +229,12 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         {Int(origWidth), Int(origHeight)}, std::move(dest));
 }
 
-void BasisImporter::setTargetFormat(BasisTranscodingType format) {
+void BasisImporter::setTargetFormat(TargetFormat format) {
     configuration().setValue("format", format);
 }
 
-BasisTranscodingType BasisImporter::targetFormat() const {
-    return configuration().value<BasisTranscodingType>("format");
+BasisImporter::TargetFormat BasisImporter::targetFormat() const {
+    return configuration().value<TargetFormat>("format");
 }
 
 }}
