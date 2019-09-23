@@ -36,6 +36,8 @@ namespace Magnum {
 
 -   New @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin for importing
     MP3 files (see [mosra/magnum-plugins#60](https://github.com/mosra/magnum-plugins/pull/60))
+-   Support for all DXGI compressed formats in
+    @ref Trade::DdsImporter "DdsImporter"
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
@@ -70,6 +72,9 @@ namespace Magnum {
     warning info to @ref Corrade::Utility::Error and
     @ref Corrade::Utility::Warning, allowing it to be redirected to suppressed
     consistently to other plugin implementations
+-   @ref Trade::DdsImporter "DdsImporter" now properly imports uncompressed
+    sRGB formats as the newly-added @ref PixelFormat::RGBA8Srgb instead of
+    @ref PixelFormat::RGBA8Unorm
 -   @ref Trade::DevIlImageImporter "DevIlImageImporter" now converts BGR data
     to RGB instead of expanding them to RGBA
 -   @ref Trade::DevIlImageImporter "DevIlImageImporter",

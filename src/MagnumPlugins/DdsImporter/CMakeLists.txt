@@ -39,7 +39,8 @@ add_plugin(DdsImporter
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     DdsImporter.conf
     DdsImporter.cpp
-    DdsImporter.h)
+    DdsImporter.h
+    DxgiFormat.h)
 if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(DdsImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
