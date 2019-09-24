@@ -221,10 +221,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
     const UnsignedInt bytesPerBlock = basis_get_bytes_per_block(format);
     const UnsignedInt requiredSize = totalBlocks*bytesPerBlock;
     Containers::Array<char> dest{Containers::DefaultInit, requiredSize};
-    const UnsignedInt status = _state->transcoder.transcode_image_level(
-      _state->in.data(), _state->in.size(), index, level, dest.data(), dest.size()/bytesPerBlock,
-      basist::transcoder_texture_format(format));
-    if(!status) {
+    if(!_state->transcoder.transcode_image_level(_state->in.data(), _state->in.size(), index, level, dest.data(), dest.size()/bytesPerBlock, basist::transcoder_texture_format(format))) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
         return Containers::NullOpt;
     }
