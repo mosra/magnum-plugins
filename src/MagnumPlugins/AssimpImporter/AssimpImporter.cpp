@@ -77,9 +77,12 @@ struct AssimpImporter::File {
     std::vector<std::pair<const aiMaterial*, aiTextureType>> images;
 
     std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
-    std::unordered_map<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> nodeInstances;
+    std::unordered_multimap<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> nodeInstances;
     std::unordered_map<std::string, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
+
+    /* List of <OriginalNodeId, NodeInstancesCount, InstanceId> tuples */
+    std::vector<std::tuple<std::size_t, std::size_t, std::size_t>> nodeMap;
 };
 
 namespace {
@@ -289,40 +292,48 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
         if(root->mNumChildren) {
             _f->nodes.reserve(root->mNumChildren);
             _f->nodes.insert(_f->nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
-            _f->nodeIndices.reserve(root->mNumChildren);
 
         /* In some pathological cases there's just one root node --- for
            example the DART integration depends on that. Import it as a single
            node. */
         } else {
             _f->nodes.push_back(root);
-            _f->nodeIndices.reserve(1);
         }
 
         /* Insert may invalidate iterators, so we use indices here. */
         for(std::size_t i = 0; i < _f->nodes.size(); ++i) {
             aiNode* node = _f->nodes[i];
-            _f->nodeIndices[node] = UnsignedInt(i);
 
             _f->nodes.insert(_f->nodes.end(), node->mChildren, node->mChildren + node->mNumChildren);
 
-            if(node->mNumMeshes > 0) {
-                /** @todo: Support multiple meshes per node */
-                _f->nodeInstances[node] = {ObjectInstanceType3D::Mesh, node->mMeshes[0]};
+            for (std::size_t j = 0; j < node->mNumMeshes; ++j) {
+                _f->nodeInstances.emplace(node, std::make_pair(ObjectInstanceType3D::Mesh, node->mMeshes[j]));
             }
         }
 
         for(std::size_t i = 0; i < _f->scene->mNumCameras; ++i) {
             const aiNode* cameraNode = _f->scene->mRootNode->FindNode(_f->scene->mCameras[i]->mName);
             if(cameraNode) {
-                _f->nodeInstances[cameraNode] = {ObjectInstanceType3D::Camera, i};
+                _f->nodeInstances.emplace(cameraNode, std::make_pair(ObjectInstanceType3D::Camera, i));
             }
         }
 
         for(std::size_t i = 0; i < _f->scene->mNumLights; ++i) {
             const aiNode* lightNode = _f->scene->mRootNode->FindNode(_f->scene->mLights[i]->mName);
             if(lightNode) {
-                _f->nodeInstances[lightNode] = {ObjectInstanceType3D::Light, i};
+                _f->nodeInstances.emplace(lightNode, std::make_pair(ObjectInstanceType3D::Light, i));
+            }
+        }
+
+        for (std::size_t i = 0; i < _f->nodes.size(); ++i) {
+            aiNode* node = _f->nodes[i];
+            const auto instanceCount = _f->nodeInstances.count(node);
+
+            _f->nodeMap.emplace_back(i, instanceCount, 0);
+            _f->nodeIndices[_f->nodes[i]] = _f->nodeMap.size() - 1;
+
+            for (std::size_t j = 1; j < instanceCount; ++j) {
+                _f->nodeMap.emplace_back(i, instanceCount, j);
             }
         }
     }
@@ -386,7 +397,7 @@ Containers::Optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
 }
 
 UnsignedInt AssimpImporter::doObject3DCount() const {
-    return _f->nodes.size();
+    return _f->nodeMap.size();
 }
 
 Int AssimpImporter::doObject3DForName(const std::string& name) {
@@ -395,24 +406,37 @@ Int AssimpImporter::doObject3DForName(const std::string& name) {
 }
 
 std::string AssimpImporter::doObject3DName(const UnsignedInt id) {
-    return _f->nodes[id]->mName.C_Str();
+    const auto originalId = std::get<0>(_f->nodeMap[id]);
+    return _f->nodes[originalId]->mName.C_Str();
 }
 
 Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
     /** @todo support for bone nodes */
-    const aiNode* node = _f->nodes[id];
+    std::size_t originalId, instanceCount, instanceId;
+    std::tie(originalId, instanceCount, instanceId) = _f->nodeMap[id];
+    const aiNode* node = _f->nodes[originalId];
 
     /* Gather child indices */
     std::vector<UnsignedInt> children;
-    children.reserve(node->mNumChildren);
+    children.reserve(node->mNumChildren + instanceCount);
     for(auto child: Containers::arrayView(node->mChildren, node->mNumChildren))
         children.push_back(_f->nodeIndices[child]);
+    if (instanceId == 0) {
+        /* Add extra child nodes caused by multi-primitive meshes */
+        for (std::size_t i = 1; i < instanceCount; ++i)
+            children.push_back(id + i);
+    }
 
-    /* aiMatrix4x4 is always row-major, transpose */
-    const Matrix4 transformation = Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation)).transposed();
+    const Matrix4 transformation =
+        instanceId > 0
+            /* identity matrix for multi-primitive meshes */
+            ? Matrix4{}
+            /* aiMatrix4x4 is always row-major, transpose */
+            : Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation)).transposed();
 
-    auto instance = _f->nodeInstances.find(node);
-    if(instance != _f->nodeInstances.end()) {
+    if (instanceCount > 0) {
+        auto instance = _f->nodeInstances.equal_range(node).first;
+        std::advance(instance, instanceId);
         const ObjectInstanceType3D type = (*instance).second.first;
         const int index = (*instance).second.second;
         if(type == ObjectInstanceType3D::Mesh) {
