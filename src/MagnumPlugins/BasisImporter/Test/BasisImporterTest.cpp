@@ -52,14 +52,14 @@ struct BasisImporterTest: TestSuite::Tester {
     void fileTooShort();
     void transcodingFailure();
 
-    void openTwice();
-
     void rgbUncompressed();
     void rgbaUncompressed();
 
     void rgb();
     void rgba();
 
+    void openSameTwice();
+    void openDifferent();
     void importMultipleFormats();
 
     /* Explicitly forbid system-wide plugin dependencies */
@@ -156,7 +156,6 @@ BasisImporterTest::BasisImporterTest() {
               &BasisImporterTest::fileTooShort,
               &BasisImporterTest::transcodingFailure,
 
-              &BasisImporterTest::openTwice,
               &BasisImporterTest::rgbUncompressed,
               &BasisImporterTest::rgbaUncompressed});
 
@@ -164,7 +163,9 @@ BasisImporterTest::BasisImporterTest() {
                        &BasisImporterTest::rgba},
                        Containers::arraySize(FormatData));
 
-    addTests({&BasisImporterTest::importMultipleFormats});
+    addTests({&BasisImporterTest::openSameTwice,
+              &BasisImporterTest::openDifferent,
+              &BasisImporterTest::importMultipleFormats});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -235,17 +236,6 @@ void BasisImporterTest::fileTooShort() {
     CORRADE_COMPARE(out.str(),
         "Trade::BasisImporter::openData(): invalid header\n"
         "Trade::BasisImporter::openData(): bad basis file\n");
-}
-
-
-void BasisImporterTest::openTwice() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
-    CORRADE_VERIFY(importer->openFile(
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
-    CORRADE_VERIFY(importer->openFile(
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
-
-    /* Shouldn't crash, leak or anything */
 }
 
 void BasisImporterTest::transcodingFailure() {
@@ -372,11 +362,39 @@ void BasisImporterTest::rgba() {
     CORRADE_COMPARE(image->size(), formatData.expectedSize.flipped());
 }
 
+void BasisImporterTest::openSameTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterEtc2RGBA");
+    CORRADE_VERIFY(importer->openFile(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
+    CORRADE_VERIFY(importer->openFile(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
+
+    /* Shouldn't crash, leak or anything */
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Unorm);
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+}
+
+void BasisImporterTest::openDifferent() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterEtc2RGBA");
+    CORRADE_VERIFY(importer->openFile(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
+    CORRADE_VERIFY(importer->openFile(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_2_images.basis")));
+
+    /* Shouldn't crash, leak or anything */
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(1);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Unorm);
+    CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
+}
+
 void BasisImporterTest::importMultipleFormats() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
 
-    /* Verify that everything is working the same way on second use */
+    /* Verify that everything is working properly with reused transcoder */
     {
         importer->configuration().setValue("format", "Etc2RGBA");
 
