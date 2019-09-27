@@ -38,16 +38,16 @@
 
 namespace Magnum { namespace Trade { namespace {
 
-/* Map TargetFormat to Magnum::CompressedPixelFormat */
-CompressedPixelFormat textureFormat(BasisImporter::TargetFormat type, bool hasAlpha) {
+/* Map BasisImporter::TargetFormat to CompressedPixelFormat. See the
+   TargetFormat enum for details. */
+CompressedPixelFormat textureFormat(BasisImporter::TargetFormat type) {
     switch(type) {
         case BasisImporter::TargetFormat::Etc1:
+            return CompressedPixelFormat::Etc2RGB8Unorm;
         case BasisImporter::TargetFormat::Etc2:
-            return hasAlpha ? CompressedPixelFormat::Etc2RGBA8Unorm
-                : CompressedPixelFormat::Etc2RGB8Unorm;
+            return CompressedPixelFormat::Etc2RGBA8Unorm;
         case BasisImporter::TargetFormat::Bc1:
-            return hasAlpha ? CompressedPixelFormat::Bc1RGBAUnorm
-                : CompressedPixelFormat::Bc1RGBUnorm;
+            return CompressedPixelFormat::Bc1RGBUnorm;
         case BasisImporter::TargetFormat::Bc3:
             return CompressedPixelFormat::Bc3RGBAUnorm;
         case BasisImporter::TargetFormat::Bc4:
@@ -211,7 +211,6 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
        someome, we'd most probably need to harden doOpenData() to catch that,
        not turning this into a graceful error. */
     CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder.get_image_info(_state->in.data(), _state->in.size(), info, index));
-    const bool hasAlpha = info.m_alpha_flag;
 
     UnsignedInt origWidth, origHeight, totalBlocks;
     /* Same as above, it checks for state we already verified before. If this
@@ -226,7 +225,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         return Containers::NullOpt;
     }
 
-    return Trade::ImageData2D(textureFormat(targetFormat, hasAlpha),
+    return Trade::ImageData2D(textureFormat(targetFormat),
         {Int(origWidth), Int(origHeight)}, std::move(dest));
 }
 

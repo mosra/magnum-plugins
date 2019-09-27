@@ -63,7 +63,6 @@ constexpr struct {
     const char* fileAlpha;
     const char* suffix;
     const CompressedPixelFormat expectedFormat;
-    const CompressedPixelFormat expectedFormatAlpha;
     const Vector2i expectedSize;
 } FormatData[] {
     {
@@ -71,13 +70,11 @@ constexpr struct {
         "rgba_2_images.basis",
         "Etc1",
         CompressedPixelFormat::Etc2RGB8Unorm,
-        CompressedPixelFormat::Etc2RGBA8Unorm,
         {63, 27}
     }, {
         "rgb_2_images.basis",
         "rgba_2_images.basis",
         "Etc2",
-        CompressedPixelFormat::Etc2RGB8Unorm,
         CompressedPixelFormat::Etc2RGBA8Unorm,
         {63, 27}
     }, {
@@ -85,13 +82,11 @@ constexpr struct {
         "rgba_2_images.basis",
         "Bc1",
         CompressedPixelFormat::Bc1RGBUnorm,
-        CompressedPixelFormat::Bc1RGBAUnorm,
         {63, 27}
     }, {
         "rgb_2_images.basis",
         "rgba_2_images.basis",
         "Bc3",
-        CompressedPixelFormat::Bc3RGBAUnorm,
         CompressedPixelFormat::Bc3RGBAUnorm,
         {63, 27}
     }, {
@@ -99,13 +94,11 @@ constexpr struct {
         "rgba_2_images.basis",
         "Bc4",
         CompressedPixelFormat::Bc4RUnorm,
-        CompressedPixelFormat::Bc4RUnorm,
         {63, 27}
     }, {
         "rgb_2_images.basis",
         "rgba_2_images.basis",
         "Bc5",
-        CompressedPixelFormat::Bc5RGUnorm,
         CompressedPixelFormat::Bc5RGUnorm,
         {63, 27}
     }, {
@@ -113,13 +106,11 @@ constexpr struct {
         "rgba_2_images.basis",
         "Bc7M6OpaqueOnly",
         CompressedPixelFormat::Bc7RGBAUnorm,
-        CompressedPixelFormat::Bc7RGBAUnorm,
         {63, 27}
     }, {
         "rgb_2_images_pow2.basis",
         "rgba_2_images_pow2.basis",
         "Pvrtc1_4OpaqueOnly",
-        CompressedPixelFormat::PvrtcRGB4bppUnorm,
         CompressedPixelFormat::PvrtcRGB4bppUnorm,
         {64, 32}
     }
@@ -275,13 +266,13 @@ void BasisImporterTest::rgba() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormatAlpha);
+    CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
     CORRADE_COMPARE(image->size(), formatData.expectedSize);
 
     /* Verify that the 90° rotated second image can be loaded also */
     image = importer->image2D(1);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormatAlpha);
+    CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
     CORRADE_COMPARE(image->size(), formatData.expectedSize.flipped());
 }
 
@@ -295,7 +286,7 @@ void BasisImporterTest::importMultipleFormats() {
 
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
-        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Unorm);
+        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Unorm);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
     } {
         importer->configuration().setValue("format", "Bc1");

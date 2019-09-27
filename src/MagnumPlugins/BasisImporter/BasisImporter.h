@@ -121,25 +121,24 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
          */
         enum class TargetFormat: Int {
             /**
-             * ETC1. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm or
-             * @ref CompressedPixelFormat::Etc2RGBA8Unorm if the image contains
-             * an alpha channel. This format is loaded like
-             * @ref TargetFormat::Etc2, prefer it for potentially better
-             * quality.
+             * ETC1. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm (which
+             * ETC1 is a subset of). If the image contains an alpha channel, it
+             * will be dropped since ETC1 alone doesn't support alpha.
              */
             Etc1 = 0,
 
             /**
-             * ETC2. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm or
-             * @ref CompressedPixelFormat::Etc2RGBA8Unorm if the image contains
-             * an alpha channel.
+             * ETC2. Loaded as @ref CompressedPixelFormat::Etc2RGBA8Unorm. If
+             * the image does not contain an alpha channel, alpha will be set
+             * to opaque.
              */
             Etc2 = 1,
 
             /**
-             * BC1. Loaded as @ref CompressedPixelFormat::Bc1RGBAUnorm or
-             * @ref CompressedPixelFormat::Bc1RGBUnorm if the image contains an
-             * alpha channel.
+             * BC1. Loaded as @ref CompressedPixelFormat::Bc1RGBUnorm. If the
+             * image contains an alpha channel, it will be dropped ---
+             * punchthrough alpha mode of @ref CompressedPixelFormat::Bc1RGBAUnorm
+             * is not supported.
              */
             Bc1 = 2,
 
