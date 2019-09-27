@@ -122,6 +122,7 @@ struct BasisImporter::State {
     basist::basisu_transcoder transcoder{&codebook};
 
     Containers::Array<unsigned char> in;
+    basist::basisu_file_info fileInfo;
 
     explicit State(): codebook(basist::g_global_selector_cb_size,
         basist::g_global_selector_cb) {}
@@ -171,7 +172,10 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    if(!_state->transcoder.start_transcoding(data.data(), data.size())) {
+    /* Save the global file info to avoid calling that again each time we check
+       for image count and whatnot; start transcoding */
+    if(!_state->transcoder.get_file_info(data.data(), data.size(), _state->fileInfo) ||
+       !_state->transcoder.start_transcoding(data.data(), data.size())) {
         Error() << "Trade::BasisImporter::openData(): bad basis file";
         return;
     }
@@ -181,7 +185,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 }
 
 UnsignedInt BasisImporter::doImage2DCount() const {
-    return _state->transcoder.get_total_images(_state->in.data(), _state->in.size());
+    return _state->fileInfo.m_total_images;
 }
 
 Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
