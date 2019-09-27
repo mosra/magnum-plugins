@@ -249,7 +249,6 @@ void BasisImporterTest::rgb() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         formatData.file)));
 
-    /* Verify that everything is working the same way on second use */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
@@ -274,7 +273,6 @@ void BasisImporterTest::rgba() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         formatData.fileAlpha)));
 
-    /* Verify that everything is working the same way on second use */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormatAlpha);
