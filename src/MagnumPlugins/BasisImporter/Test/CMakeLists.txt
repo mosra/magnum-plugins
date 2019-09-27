@@ -24,17 +24,16 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
-# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
-# doesn't support dynamic plugins on iOS, this sorta works around that. Should
-# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
-
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(BASISIMPORTER_TEST_DIR ".")
 else()
     set(BASISIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
+# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
+# doesn't support dynamic plugins on iOS, this sorta works around that. Should
+# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
 if(NOT BUILD_PLUGINS_STATIC)
     set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
 
