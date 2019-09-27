@@ -119,7 +119,9 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
          *
          * @see @ref Trade-BasisImporter-target-format, @ref setTargetFormat()
          */
-        enum class TargetFormat: Int {
+        enum class TargetFormat: UnsignedInt {
+            /* ID kept the same as in Basis itself to make the mapping easy */
+
             /**
              * ETC1. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm (which
              * ETC1 is a subset of). If the image contains an alpha channel, it
@@ -132,7 +134,7 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
              * the image does not contain an alpha channel, alpha will be set
              * to opaque.
              */
-            Etc2 = 1,
+            Etc2 = 5,
 
             /**
              * BC1. Loaded as @ref CompressedPixelFormat::Bc1RGBUnorm. If the
@@ -140,34 +142,34 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
              * punchthrough alpha mode of @ref CompressedPixelFormat::Bc1RGBAUnorm
              * is not supported.
              */
-            Bc1 = 2,
+            Bc1 = 1,
 
             /**
              * BC2. Loaded as @ref CompressedPixelFormat::Bc3RGBAUnorm. If the
              * image does not contain an alpha channel, alpha will be set to
              * opaque.
              */
-            Bc3 = 3,
+            Bc3 = 6,
 
             /** BC4. Loaded as @ref CompressedPixelFormat::Bc4RUnorm. */
-            Bc4 = 4,
+            Bc4 = 2,
 
             /** BC5. Loaded as @ref CompressedPixelFormat::Bc5RGUnorm. */
-            Bc5 = 5,
+            Bc5 = 7,
 
             /**
              * BC7 mode 6 (opaque only). Loaded as
              * @ref CompressedPixelFormat::Bc7RGBAUnorm, but with alpha values
              * set to opaque.
              */
-            Bc7M6OpaqueOnly = 6,
+            Bc7M6OpaqueOnly = 4,
 
             /**
              * PVRTC1 4 bpp (opaque only). Loaded as
              * @ref CompressedPixelFormat::PvrtcRGB4bppUnorm. If the image
              * contains an alpha channel, it will be dropped.
              */
-            Pvrtc1_4OpaqueOnly = 7
+            Pvrtc1_4OpaqueOnly = 3
         };
 
         /**

@@ -40,7 +40,7 @@ namespace Magnum { namespace Trade { namespace {
 
 /* Map BasisImporter::TargetFormat to CompressedPixelFormat. See the
    TargetFormat enum for details. */
-CompressedPixelFormat textureFormat(BasisImporter::TargetFormat type) {
+CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type) {
     switch(type) {
         case BasisImporter::TargetFormat::Etc1:
             return CompressedPixelFormat::Etc2RGB8Unorm;
@@ -63,20 +63,12 @@ CompressedPixelFormat textureFormat(BasisImporter::TargetFormat type) {
 }
 
 constexpr const char* FormatNames[]{
-    "Etc1", "Etc2", "Bc1", "Bc3", "Bc4", "Bc5",
-    "Bc7M6OpaqueOnly", "Pvrtc1_4OpaqueOnly"
+    "Etc1", "Bc1", "Bc4", "Pvrtc1_4OpaqueOnly", "Bc7M6OpaqueOnly",
+    "Etc2", "Bc3", "Bc5"
 };
 
-constexpr basist::transcoder_texture_format TranscoderTextureFormat[] = {
-    basist::transcoder_texture_format::cTFETC1,
-    basist::transcoder_texture_format::cTFETC2,
-    basist::transcoder_texture_format::cTFBC1,
-    basist::transcoder_texture_format::cTFBC3,
-    basist::transcoder_texture_format::cTFBC4,
-    basist::transcoder_texture_format::cTFBC5,
-    basist::transcoder_texture_format::cTFBC7_M6_OPAQUE_ONLY,
-    basist::transcoder_texture_format::cTFPVRTC1_4_OPAQUE_ONLY
-};
+/* Last element has to be on the same index as last enum value */
+static_assert(Containers::arraySize(FormatNames) - 1 == Int(BasisImporter::TargetFormat::Bc5), "bad string format mapping");
 
 }}}
 
@@ -85,18 +77,8 @@ namespace Corrade { namespace Utility {
 /* Configuration value implementation for BasisImporter::TargetFormat */
 template<> struct ConfigurationValue<Magnum::Trade::BasisImporter::TargetFormat> {
     static std::string toString(Magnum::Trade::BasisImporter::TargetFormat value, ConfigurationValueFlags) {
-        #define _c(value) case Magnum::Trade::BasisImporter::TargetFormat::value: return #value;
-        switch(value) {
-            _c(Etc1)
-            _c(Etc2)
-            _c(Bc1)
-            _c(Bc3)
-            _c(Bc4)
-            _c(Bc5)
-            _c(Bc7M6OpaqueOnly)
-            _c(Pvrtc1_4OpaqueOnly)
-        }
-        #undef _c
+        if(Magnum::UnsignedInt(value) < Containers::arraySize(Magnum::Trade::FormatNames))
+            return Magnum::Trade::FormatNames[Magnum::UnsignedInt(value)];
 
         return "<invalid>";
     }
@@ -104,11 +86,11 @@ template<> struct ConfigurationValue<Magnum::Trade::BasisImporter::TargetFormat>
     static Magnum::Trade::BasisImporter::TargetFormat fromString(const std::string& value, ConfigurationValueFlags) {
         Magnum::Int i = 0;
         for(const char* name: Magnum::Trade::FormatNames) {
-            if(value == name) return Magnum::Trade::BasisImporter::TargetFormat(i);
+            if(name && value == name) return Magnum::Trade::BasisImporter::TargetFormat(i);
             ++i;
         }
 
-        return Magnum::Trade::BasisImporter::TargetFormat(-1);
+        return Magnum::Trade::BasisImporter::TargetFormat(~Magnum::UnsignedInt{});
     }
 };
 
@@ -198,13 +180,12 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
     }
 
     const auto targetFormat = configuration().value<TargetFormat>("format");
-    if(Int(targetFormat) == -1) {
+    if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
         Error() << "Trade::BasisImporter::image2D(): invalid transcoding target format"
-            << targetFormatStr.c_str() << Debug::nospace << ", expected to be one of Etc1, Etc2, Bc1, Bc3, Bc4, Bc5, Bc7M6OpaqueOnly, Pvrtc1_4OpaqueOnly";
+            << targetFormatStr.data() << Debug::nospace << ", expected to be one of Etc1, Etc2, Bc1, Bc3, Bc4, Bc5, Bc7M6OpaqueOnly, Pvrtc1_4OpaqueOnly";
         return Containers::NullOpt;
     }
-    const basist::transcoder_texture_format format =
-        TranscoderTextureFormat[Int(targetFormat)];
+    const auto format = basist::transcoder_texture_format(Int(targetFormat));
 
     basist::basisu_image_info info;
     /* Header validation etc. is already done in doOpenData() and index is
@@ -229,7 +210,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         return Containers::NullOpt;
     }
 
-    return Trade::ImageData2D(textureFormat(targetFormat),
+    return Trade::ImageData2D(compressedPixelFormat(targetFormat),
         {Int(origWidth), Int(origHeight)}, std::move(dest));
 }
 
