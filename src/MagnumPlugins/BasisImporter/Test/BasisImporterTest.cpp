@@ -157,13 +157,14 @@ BasisImporterTest::BasisImporterTest() {
               &BasisImporterTest::transcodingFailure,
 
               &BasisImporterTest::openTwice,
-              &BasisImporterTest::importMultipleFormats,
               &BasisImporterTest::rgbUncompressed,
               &BasisImporterTest::rgbaUncompressed});
 
     addInstancedTests({&BasisImporterTest::rgb,
                        &BasisImporterTest::rgba},
                        Containers::arraySize(FormatData));
+
+    addTests({&BasisImporterTest::importMultipleFormats});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
