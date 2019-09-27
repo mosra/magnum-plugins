@@ -29,6 +29,7 @@
 #include <basisu_transcoder.h>
 
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/ConfigurationValue.h>
 #include <Corrade/Utility/Debug.h>
@@ -117,8 +118,7 @@ namespace Magnum { namespace Trade {
 struct BasisImporter::State {
     /* There is only this type of codebook */
     basist::etc1_global_selector_codebook codebook;
-    basist::basisu_transcoder transcoder{&codebook};
-
+    Containers::Optional<basist::basisu_transcoder> transcoder;
     Containers::Array<unsigned char> in;
     basist::basisu_file_info fileInfo;
 
@@ -148,9 +148,17 @@ BasisImporter::~BasisImporter() = default;
 
 auto BasisImporter::doFeatures() const -> Features { return Feature::OpenData; }
 
-bool BasisImporter::doIsOpened() const { return _state->in; }
+bool BasisImporter::doIsOpened() const {
+    /* Both the transcoder and then input data have to be present or both
+       have to be empty */
+    CORRADE_INTERNAL_ASSERT(!_state->transcoder == !_state->in);
+    return _state->in;
+}
 
-void BasisImporter::doClose() { _state->in = nullptr; }
+void BasisImporter::doClose() {
+    _state->transcoder = Containers::NullOpt;
+    _state->in = nullptr;
+}
 
 void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Because here we're copying the data and using the _in to check if file
@@ -165,19 +173,25 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    if(!_state->transcoder.validate_header(data.data(), data.size())) {
+    _state->transcoder.emplace(&_state->codebook);
+    Containers::ScopeGuard transcoderGuard{&_state->transcoder, [](Containers::Optional<basist::basisu_transcoder>* o) {
+        *o = Containers::NullOpt;
+    }};
+    if(!_state->transcoder->validate_header(data.data(), data.size())) {
         Error() << "Trade::BasisImporter::openData(): invalid header";
         return;
     }
 
     /* Save the global file info to avoid calling that again each time we check
        for image count and whatnot; start transcoding */
-    if(!_state->transcoder.get_file_info(data.data(), data.size(), _state->fileInfo) ||
-       !_state->transcoder.start_transcoding(data.data(), data.size())) {
+    if(!_state->transcoder->get_file_info(data.data(), data.size(), _state->fileInfo) ||
+       !_state->transcoder->start_transcoding(data.data(), data.size())) {
         Error() << "Trade::BasisImporter::openData(): bad basis file";
         return;
     }
 
+    /* All good, release the transcoder guard and keep a copy of the data */
+    transcoderGuard.release();
     _state->in = Containers::Array<unsigned char>(data.size());
     std::copy(data.begin(), data.end(), _state->in.begin());
 }
@@ -211,12 +225,12 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
        an error path, so turning this into an assert. When this blows up for
        someome, we'd most probably need to harden doOpenData() to catch that,
        not turning this into a graceful error. */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder.get_image_info(_state->in.data(), _state->in.size(), info, index));
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_info(_state->in.data(), _state->in.size(), info, index));
 
     UnsignedInt origWidth, origHeight, totalBlocks;
     /* Same as above, it checks for state we already verified before. If this
        blows up for someone, we can reconsider. */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder.get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks));
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks));
 
     /* cDecodeFlagsPVRTCWrapAddressing is the default used by
        transcode_image_level() */
@@ -235,7 +249,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         dataSize = basis_get_bytes_per_block(format)*totalBlocks;
     }
     Containers::Array<char> dest{Containers::DefaultInit, dataSize};
-    if(!_state->transcoder.transcode_image_level(_state->in.data(), _state->in.size(), index, level, dest.data(), outputSizeInBlocksOrPixels, basist::transcoder_texture_format(format), flags, rowStride, nullptr, outputRowsInPixels)) {
+    if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), index, level, dest.data(), outputSizeInBlocksOrPixels, basist::transcoder_texture_format(format), flags, rowStride, nullptr, outputRowsInPixels)) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
         return Containers::NullOpt;
     }
