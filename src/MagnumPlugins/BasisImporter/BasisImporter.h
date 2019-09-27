@@ -55,9 +55,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief Basis Universal importer plugin
 
-@m_keywords{BasisImporterEtc1 BasisImporterEtc2 BasisImporterBc1 BasisImporterBc3}
-@m_keywords{BasisImporterBc4 BasisImporterBc5 BasisImporterBc7M6OpaqueOnly}
-@m_keywords{BasisImporterPvrtc1_4OpaqueOnly}
+@m_keywords{BasisImporterEacR BasisImporterEacRG BasisImporterEtc1RGB} @m_keywords{BasisImporterEtc2RGBA BasisImporterBc1RGB BasisImporterBc3RGBA} @m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc7RGB} @m_keywords{BasisImporterBc7RGBA BasisImporterPvrtc1RGB4bpp}
+@m_keywords{BasisImporterPvrtc1RGBA4bpp BasisImporterAstc4x4RGBA}
+@m_keywords{BasisImporterRGBA8}
 
 Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
 (`*.basis`) compressed images by parsing and transcoding files into an
@@ -72,9 +72,11 @@ request the `BasisImporter` component of the `MagnumPlugins` package and link
 to the `MagnumPlugins::BasisImporter` target. See @ref building-plugins,
 @ref plugins for more information.
 
-This plugin provides `BasisImporterEtc1`, `BasisImporterEtc2`,
-`BasisImporterBc1`, `BasisImporterBc3`, `BasisImporterBc4`, `BasisImporterBc5`,
-`BasisImporterBc7M6OpaqueOnly`, `BasisImporterPvrtc1_4OpaqueOnly`.
+This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,
+`BasisImporterEtc1RGB`, `BasisImporterEtc2RGBA`, `BasisImporterBc1RGB`,
+`BasisImporterBc3RGBA`, `BasisImporterBc4R`, `BasisImporterBc5RG`,
+`BasisImporterBc7RGB`, `BasisImporterBc7RGBA`, `BasisImporterPvrtc1RGB4bpp`,
+`BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`, `BasisImporterRGBA8`.
 
 @section Trade-BasisImporter-configuration Plugin-specific configuration
 
@@ -117,59 +119,101 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         /**
          * @brief Type to transcode to
          *
+         * If the image does not contain an alpha channel and the target format
+         * has it, alpha will be set to opaque. Conversely, for output formats
+         * without alpha the channel will be dropped.
          * @see @ref Trade-BasisImporter-target-format, @ref setTargetFormat()
          */
         enum class TargetFormat: UnsignedInt {
             /* ID kept the same as in Basis itself to make the mapping easy */
 
             /**
-             * ETC1. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm (which
-             * ETC1 is a subset of). If the image contains an alpha channel, it
-             * will be dropped since ETC1 alone doesn't support alpha.
+             * ETC1 RGB. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm
+             * (which ETC1 is a subset of). If the image contains an alpha
+             * channel, it will be dropped since ETC1 alone doesn't support
+             * alpha.
              */
-            Etc1 = 0,
+            Etc1RGB = 0,
 
             /**
-             * ETC2. Loaded as @ref CompressedPixelFormat::Etc2RGBA8Unorm. If
-             * the image does not contain an alpha channel, alpha will be set
-             * to opaque.
+             * ETC2 RGBA. Loaded as @ref CompressedPixelFormat::Etc2RGBA8Unorm.
              */
-            Etc2 = 5,
+            Etc2RGBA = 1,
 
             /**
-             * BC1. Loaded as @ref CompressedPixelFormat::Bc1RGBUnorm. If the
-             * image contains an alpha channel, it will be dropped ---
-             * punchthrough alpha mode of @ref CompressedPixelFormat::Bc1RGBAUnorm
+             * BC1 RGB. Loaded as @ref CompressedPixelFormat::Bc1RGBUnorm.
+             * Punchthrough alpha mode of @ref CompressedPixelFormat::Bc1RGBAUnorm
              * is not supported.
              */
-            Bc1 = 1,
+            Bc1RGB = 2,
 
             /**
-             * BC2. Loaded as @ref CompressedPixelFormat::Bc3RGBAUnorm. If the
-             * image does not contain an alpha channel, alpha will be set to
-             * opaque.
+             * BC2 RGBA. Loaded as @ref CompressedPixelFormat::Bc3RGBAUnorm.
              */
-            Bc3 = 6,
+            Bc3RGBA = 3,
 
-            /** BC4. Loaded as @ref CompressedPixelFormat::Bc4RUnorm. */
-            Bc4 = 2,
+            /** BC4 R. Loaded as @ref CompressedPixelFormat::Bc4RUnorm. */
+            Bc4R = 4,
 
-            /** BC5. Loaded as @ref CompressedPixelFormat::Bc5RGUnorm. */
-            Bc5 = 7,
+            /** BC5 RG. Loaded as @ref CompressedPixelFormat::Bc5RGUnorm. */
+            Bc5RG = 5,
 
             /**
-             * BC7 mode 6 (opaque only). Loaded as
+             * BC7 RGB (mode 6). Loaded as
              * @ref CompressedPixelFormat::Bc7RGBAUnorm, but with alpha values
              * set to opaque.
              */
-            Bc7M6OpaqueOnly = 4,
+            Bc7RGB = 6,
 
             /**
-             * PVRTC1 4 bpp (opaque only). Loaded as
-             * @ref CompressedPixelFormat::PvrtcRGB4bppUnorm. If the image
-             * contains an alpha channel, it will be dropped.
+             * BC7 RGBA (mode 5). Loaded as
+             * @ref CompressedPixelFormat::Bc7RGBAUnorm.
              */
-            Pvrtc1_4OpaqueOnly = 3
+            Bc7RGBA = 7,
+
+            /**
+             * PVRTC1 RGB 4 bpp. Loaded as
+             * @ref CompressedPixelFormat::PvrtcRGB4bppUnorm.
+             */
+            PvrtcRGB4bpp = 8,
+
+            /**
+             * PVRTC1 RGBA 4 bpp. Loaded as
+             * @ref CompressedPixelFormat::PvrtcRGBA4bppUnorm.
+             */
+            PvrtcRGBA4bpp = 9,
+
+            /**
+             * ASTC 4x4 RGBA. Loaded as
+             * @ref CompressedPixelFormat::Astc4x4RGBAUnorm.
+             */
+            Astc4x4RGBA = 10,
+
+            /* ATC (11, 12) skipped as Magnum doesn't have enums for those */
+
+            /**
+             * Uncompressed 32-bit RGBA. Loaded as
+             * @ref PixelFormat::RGBA8Unorm.
+             */
+            RGBA8 = 13,
+
+            /* RGB565 / BGR565 / RGBA4444 (14, 15, 16) skipped as Magnum
+               doesn't have generic enums for those */
+
+            /* FXT1 (17), PVRTC2 RGB / RGBA (18, 19) skipped as Magnum doesn't
+               have enums for those */
+
+            /**
+             * EAC unsigned red component. Loaded as
+             * @ref CompressedPixelFormat::EacR11Unorm.
+             */
+            EacR = 20,
+
+            /**
+             * EAC unsigned red and green component. Loaded as
+             * @ref CompressedPixelFormat::EacRG11Unorm.
+             */
+            EacRG = 21,
         };
 
         /**

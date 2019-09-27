@@ -24,6 +24,8 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+find_package(Magnum REQUIRED DebugTools)
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(BASISIMPORTER_TEST_DIR ".")
 else()
@@ -48,13 +50,15 @@ else()
 endif()
 
 corrade_add_test(BasisImporterTest BasisImporterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
         rgb.basis
         rgb_2_images.basis
         rgb_2_images_pow2.basis
         rgba_2_images.basis
-        rgba_2_images_pow2.basis)
+        rgba_2_images_pow2.basis
+        rgb_63x27.png rgb_27x63.png
+        rgba_63x27.png rgba_27x63.png)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(BasisImporterTest PRIVATE $<TARGET_FILE_DIR:BasisImporterTest>)
 else()

@@ -42,33 +42,49 @@ namespace Magnum { namespace Trade { namespace {
    TargetFormat enum for details. */
 CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type) {
     switch(type) {
-        case BasisImporter::TargetFormat::Etc1:
+        case BasisImporter::TargetFormat::Etc1RGB:
             return CompressedPixelFormat::Etc2RGB8Unorm;
-        case BasisImporter::TargetFormat::Etc2:
+        case BasisImporter::TargetFormat::Etc2RGBA:
             return CompressedPixelFormat::Etc2RGBA8Unorm;
-        case BasisImporter::TargetFormat::Bc1:
+        case BasisImporter::TargetFormat::Bc1RGB:
             return CompressedPixelFormat::Bc1RGBUnorm;
-        case BasisImporter::TargetFormat::Bc3:
+        case BasisImporter::TargetFormat::Bc3RGBA:
             return CompressedPixelFormat::Bc3RGBAUnorm;
-        case BasisImporter::TargetFormat::Bc4:
+        case BasisImporter::TargetFormat::Bc4R:
             return CompressedPixelFormat::Bc4RUnorm;
-        case BasisImporter::TargetFormat::Bc5:
+        case BasisImporter::TargetFormat::Bc5RG:
             return CompressedPixelFormat::Bc5RGUnorm;
-        case BasisImporter::TargetFormat::Bc7M6OpaqueOnly:
+        case BasisImporter::TargetFormat::Bc7RGB:
             return CompressedPixelFormat::Bc7RGBAUnorm;
-        case BasisImporter::TargetFormat::Pvrtc1_4OpaqueOnly:
+        case BasisImporter::TargetFormat::Bc7RGBA:
+            return CompressedPixelFormat::Bc7RGBAUnorm;
+        case BasisImporter::TargetFormat::PvrtcRGB4bpp:
             return CompressedPixelFormat::PvrtcRGB4bppUnorm;
+        case BasisImporter::TargetFormat::PvrtcRGBA4bpp:
+            return CompressedPixelFormat::PvrtcRGBA4bppUnorm;
+        case BasisImporter::TargetFormat::Astc4x4RGBA:
+            return CompressedPixelFormat::Astc4x4RGBAUnorm;
+        case BasisImporter::TargetFormat::EacR:
+            return CompressedPixelFormat::EacR11Unorm;
+        case BasisImporter::TargetFormat::EacRG:
+            return CompressedPixelFormat::EacRG11Unorm;
         default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 }
 
 constexpr const char* FormatNames[]{
-    "Etc1", "Bc1", "Bc4", "Pvrtc1_4OpaqueOnly", "Bc7M6OpaqueOnly",
-    "Etc2", "Bc3", "Bc5"
+    "Etc1RGB", "Etc2RGBA",
+    "Bc1RGB", "Bc3RGBA", "Bc4R", "Bc5RG", "Bc7RGB", "Bc7RGBA",
+    "PvrtcRGB4bpp", "PvrtcRGBA4bpp",
+    "Astc4x4RGBA",
+    nullptr, nullptr, /* ATC formats */
+    "RGBA8", nullptr, nullptr, nullptr, /* RGB565 / BGR565 / RGBA4444 */
+    nullptr, nullptr, nullptr,
+    "EacR", "EacRG"
 };
 
 /* Last element has to be on the same index as last enum value */
-static_assert(Containers::arraySize(FormatNames) - 1 == Int(BasisImporter::TargetFormat::Bc5), "bad string format mapping");
+static_assert(Containers::arraySize(FormatNames) - 1 == Int(BasisImporter::TargetFormat::EacRG), "bad string format mapping");
 
 }}}
 
@@ -175,14 +191,14 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
 
     const std::string targetFormatStr = configuration().value<std::string>("format");
     if(targetFormatStr.empty()) {
-        Error() << "Trade::BasisImporter::image2D(): no format to transcode to was specified. Either load the plugin via one of its BasisImporterEtc1, ... aliases, or set the format explicitly via plugin configuration.";
+        Error() << "Trade::BasisImporter::image2D(): no format to transcode to was specified. Either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.";
         return Containers::NullOpt;
     }
 
     const auto targetFormat = configuration().value<TargetFormat>("format");
     if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
         Error() << "Trade::BasisImporter::image2D(): invalid transcoding target format"
-            << targetFormatStr.data() << Debug::nospace << ", expected to be one of Etc1, Etc2, Bc1, Bc3, Bc4, Bc5, Bc7M6OpaqueOnly, Pvrtc1_4OpaqueOnly";
+            << targetFormatStr.data() << Debug::nospace << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
         return Containers::NullOpt;
     }
     const auto format = basist::transcoder_texture_format(Int(targetFormat));
@@ -202,16 +218,32 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
        blows up for someone, we can reconsider. */
     CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder.get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks));
 
-    const UnsignedInt bytesPerBlock = basis_get_bytes_per_block(format);
-    const UnsignedInt requiredSize = totalBlocks*bytesPerBlock;
-    Containers::Array<char> dest{Containers::DefaultInit, requiredSize};
-    if(!_state->transcoder.transcode_image_level(_state->in.data(), _state->in.size(), index, level, dest.data(), dest.size()/bytesPerBlock, basist::transcoder_texture_format(format))) {
+    /* cDecodeFlagsPVRTCWrapAddressing is the default used by
+       transcode_image_level() */
+    const std::uint32_t flags = basist::basisu_transcoder::cDecodeFlagsPVRTCWrapAddressing;
+    Vector2i size{Int(origWidth), Int(origHeight)};
+    UnsignedInt dataSize, rowStride, outputSizeInBlocksOrPixels, outputRowsInPixels;
+    if(targetFormat == BasisImporter::TargetFormat::RGBA8) {
+        rowStride = size.x();
+        outputRowsInPixels = size.y();
+        outputSizeInBlocksOrPixels = size.product();
+        dataSize = 4*outputSizeInBlocksOrPixels;
+    } else {
+        rowStride = 0; /* left up to Basis to calculate */
+        outputRowsInPixels = 0; /* not used for compressed data */
+        outputSizeInBlocksOrPixels = totalBlocks;
+        dataSize = basis_get_bytes_per_block(format)*totalBlocks;
+    }
+    Containers::Array<char> dest{Containers::DefaultInit, dataSize};
+    if(!_state->transcoder.transcode_image_level(_state->in.data(), _state->in.size(), index, level, dest.data(), outputSizeInBlocksOrPixels, basist::transcoder_texture_format(format), flags, rowStride, nullptr, outputRowsInPixels)) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
         return Containers::NullOpt;
     }
 
-    return Trade::ImageData2D(compressedPixelFormat(targetFormat),
-        {Int(origWidth), Int(origHeight)}, std::move(dest));
+    if(targetFormat == BasisImporter::TargetFormat::RGBA8)
+        return Trade::ImageData2D{PixelFormat::RGBA8Unorm, size, std::move(dest)};
+    else
+        return Trade::ImageData2D{compressedPixelFormat(targetFormat), size, std::move(dest)};
 }
 
 void BasisImporter::setTargetFormat(TargetFormat format) {
