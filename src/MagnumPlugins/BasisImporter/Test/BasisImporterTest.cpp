@@ -341,6 +341,14 @@ void BasisImporterTest::rgbaUncompressed() {
 
 void BasisImporterTest::rgb() {
     auto& formatData = FormatData[testCaseInstanceId()];
+
+    #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
+    /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
+       the case. This assumes -DBASISD_SUPPORT_*=0 issupplied globally. */
+    if(formatData.expectedFormat == CompressedPixelFormat::Bc7RGBAUnorm)
+        CORRADE_SKIP("This format is not compiled into Basis.");
+    #endif
+
     const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
     setTestCaseDescription(formatData.suffix);
 
@@ -370,6 +378,14 @@ void BasisImporterTest::rgb() {
 
 void BasisImporterTest::rgba() {
     auto& formatData = FormatData[testCaseInstanceId()];
+
+    #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
+    /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
+       the case. This assumes -DBASISD_SUPPORT_*=0 issupplied globally. */
+    if(formatData.expectedFormat == CompressedPixelFormat::Bc7RGBAUnorm)
+        CORRADE_SKIP("This format is not compiled into Basis.");
+    #endif
+
     const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
     setTestCaseDescription(formatData.suffix);
 

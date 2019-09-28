@@ -24,9 +24,12 @@ build() {
 
     cd "$_rootdir/build-emscripten"
 
+    # For Basis disabling everything we don't support in Magnum + BC7 as its
+    # tables are YUUUGE (see the Basis README for details)
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \
+        -DCMAKE_CXX_FLAGS="-DBASISD_SUPPORT_BC7=0 -DBASISD_SUPPORT_ATC=0 -DBASISD_SUPPORT_FXT1=0 -DBASISD_SUPPORT_PVRTC2=0" \
         -DBASISU_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=OFF \
         -DWITH_BASISIMPORTER=ON \
