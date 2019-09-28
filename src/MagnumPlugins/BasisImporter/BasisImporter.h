@@ -103,8 +103,13 @@ you may also use @ref setTargetFormat().
 There's many options and you should be generally striving for highest-quality
 format available on given platform. Detailed description of the choices is
 in [Basis Universal README](https://github.com/BinomialLLC/basis_universal#how-to-use-the-system).
+As an example, the following code is a decision making used by
+@ref magnum-player "magnum-player" based on availability of corresponding
+OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
 
-@todoc GL extension checking snippet
+@snippet BasisImporter.cpp gl-extension-checks
+
+<b></b>
 
 @m_class{m-block m-warning}
 
