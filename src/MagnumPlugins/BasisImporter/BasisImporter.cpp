@@ -242,6 +242,12 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
     /* cDecodeFlagsPVRTCWrapAddressing is the default used by
        transcode_image_level() */
     const std::uint32_t flags = basist::basisu_transcoder::cDecodeFlagsPVRTCWrapAddressing;
+    if(!_state->fileInfo.m_y_flipped) {
+        /** @todo replace with the flag once the PR is submitted */
+        Warning{} << "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation";
+        //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
+    }
+
     Vector2i size{Int(origWidth), Int(origHeight)};
     UnsignedInt dataSize, rowStride, outputSizeInBlocksOrPixels, outputRowsInPixels;
     if(targetFormat == BasisImporter::TargetFormat::RGBA8) {

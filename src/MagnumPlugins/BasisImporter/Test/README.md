@@ -19,12 +19,13 @@ using the official basis universal
 To convert, run the following commands:
 
 ```sh
-basisu rgb_63x27.png -output_file rgb.basis
+basisu rgb_63x27.png -output_file rgb.basis -y_flip
+basisu rgb_63x27.png -output_file rgb-noflip.basis
 
-basisu rgb_63x27.png rgb_27x63.png -output_file rgb_2_images.basis
-basisu rgba_63x27.png rgba_27x63.png -output_file rgba_2_images.basis -force_alpha
+basisu rgb_63x27.png rgb_27x63.png -output_file rgb_2_images.basis -y_flip
+basisu rgba_63x27.png rgba_27x63.png -output_file rgba_2_images.basis -force_alpha -y_flip
 
 # Required for PVRTC1 target, which requires pow2 dimensions
-basisu rgb_64x32.png rgb_32x64.png -output_file rgb_2_images_pow2.basis
-basisu rgba_64x32.png rgba_32x64.png -output_file rgba_2_images_pow2.basis -force_alpha
+basisu rgb_64x32.png rgb_32x64.png -output_file rgb_2_images_pow2.basis -y_flip
+basisu rgba_64x32.png rgba_32x64.png -output_file rgba_2_images_pow2.basis -force_alpha -y_flip
 ```

@@ -52,7 +52,7 @@ endif()
 corrade_add_test(BasisImporterTest BasisImporterTest.cpp
     LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
-        rgb.basis
+        rgb.basis rgb-noflip.basis
         rgb_2_images.basis
         rgb_2_images_pow2.basis
         rgba_2_images.basis

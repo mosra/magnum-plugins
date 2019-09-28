@@ -54,6 +54,7 @@ struct BasisImporterTest: TestSuite::Tester {
 
     void rgbUncompressed();
     void rgbaUncompressed();
+    void rgbUncompressedNoFlip();
 
     void rgb();
     void rgba();
@@ -157,6 +158,7 @@ BasisImporterTest::BasisImporterTest() {
               &BasisImporterTest::transcodingFailure,
 
               &BasisImporterTest::rgbUncompressed,
+              &BasisImporterTest::rgbUncompressedNoFlip,
               &BasisImporterTest::rgbaUncompressed});
 
     addInstancedTests({&BasisImporterTest::rgb,
@@ -210,10 +212,10 @@ void BasisImporterTest::unconfigured() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>().flipped<0>()),
+    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{49.67f, 8.326f}));
+        (DebugTools::CompareImageToFile{55.67f, 6.589f}));
 
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.\n");
 }
@@ -272,25 +274,57 @@ void BasisImporterTest::rgbUncompressed() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         "rgb_2_images.basis")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        image = importer->image2D(0);
+    }
     CORRADE_VERIFY(image);
+    /* There should be no Y-flip warning as the image is pre-flipped */
+    CORRADE_COMPARE(out.str(), "");
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>().flipped<0>()),
+    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{54.0f, 8.253f}));
+        (DebugTools::CompareImageToFile{55.67f, 6.574f}));
 
     /* Verify that the 90° rotated second image can be loaded also */
     image = importer->image2D(1);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
-    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>().flipped<0>()),
+    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_27x63.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{54.0f, 8.253f}));
+        (DebugTools::CompareImageToFile{81.67f, 9.466f}));
+}
+
+void BasisImporterTest::rgbUncompressedNoFlip() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer);
+    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
+        "RGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        "rgb-noflip.basis")));
+
+    Containers::Optional<Trade::ImageData2D> image;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation\n");
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>().flipped<0>()),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_63x27.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{49.67f, 8.326f}));
 }
 
 void BasisImporterTest::rgbaUncompressed() {
@@ -306,20 +340,20 @@ void BasisImporterTest::rgbaUncompressed() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>().flipped<0>(),
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba_63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{85.25f, 10.24f}));
+        (DebugTools::CompareImageToFile{86.25f, 8.357f}));
 
     /* Verify that the 90° rotated second image can be loaded also */
     image = importer->image2D(1);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>().flipped<0>(),
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba_27x63.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{85.5f, 10.24f}));
+        (DebugTools::CompareImageToFile{87.75f, 9.984f}));
 }
 
 void BasisImporterTest::rgb() {
