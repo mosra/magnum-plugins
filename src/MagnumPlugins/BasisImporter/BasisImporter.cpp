@@ -203,17 +203,18 @@ UnsignedInt BasisImporter::doImage2DCount() const {
 Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
     const UnsignedInt level = 0;
 
-    const std::string targetFormatStr = configuration().value<std::string>("format");
+    std::string targetFormatStr = configuration().value<std::string>("format");
+    TargetFormat targetFormat;
     if(targetFormatStr.empty()) {
-        Error() << "Trade::BasisImporter::image2D(): no format to transcode to was specified. Either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.";
-        return Containers::NullOpt;
-    }
-
-    const auto targetFormat = configuration().value<TargetFormat>("format");
-    if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
-        Error() << "Trade::BasisImporter::image2D(): invalid transcoding target format"
-            << targetFormatStr.data() << Debug::nospace << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
-        return Containers::NullOpt;
+        Warning{} << "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.";
+        targetFormat = TargetFormat::RGBA8;
+    } else {
+        targetFormat = configuration().value<TargetFormat>("format");
+        if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
+            Error() << "Trade::BasisImporter::image2D(): invalid transcoding target format"
+                << targetFormatStr.data() << Debug::nospace << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
+            return Containers::NullOpt;
+        }
     }
     const auto format = basist::transcoder_texture_format(Int(targetFormat));
 

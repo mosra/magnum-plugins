@@ -196,14 +196,26 @@ void BasisImporterTest::invalid() {
 
 void BasisImporterTest::unconfigured() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
-    std::ostringstream out;
-    Error redirectError{&out};
 
     CORRADE_VERIFY(importer->openFile(
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
-    CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified. Either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.\n");
+    std::ostringstream out;
+    Containers::Optional<Trade::ImageData2D> image;
+    {
+        Warning redirectWarning{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>().flipped<0>()),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_63x27.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{49.67f, 8.326f}));
+
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.\n");
 }
 
 void BasisImporterTest::invalidConfiguredFormat() {
