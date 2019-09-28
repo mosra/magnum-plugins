@@ -139,7 +139,7 @@ install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install faad2 harfbuzz assimp devil; fi
 
 # Basis Universal
-- export BASIS_VERSION=600232075851c2fa6bd23f7180434aca7814c93a && wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.zip && unzip -q $BASIS_VERSION; mv basis_universal-$BASIS_VERSION $HOME/basis_universal
+- export BASIS_VERSION=9a63bb66875191ca205c11fcdf3a814a1ff8fde3 && wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.zip && unzip -q $BASIS_VERSION; mv basis_universal-$BASIS_VERSION $HOME/basis_universal
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/travis-desktop.sh; fi
