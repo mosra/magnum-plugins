@@ -74,79 +74,30 @@ constexpr struct {
     const CompressedPixelFormat expectedFormat;
     const Vector2i expectedSize;
 } FormatData[] {
-    {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "Etc1RGB",
-        CompressedPixelFormat::Etc2RGB8Unorm,
-        {63, 27}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "Etc2RGBA",
-        CompressedPixelFormat::Etc2RGBA8Unorm,
-        {63, 27}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "Bc1RGB",
-        CompressedPixelFormat::Bc1RGBUnorm,
-        {63, 27}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "Bc3RGBA",
-        CompressedPixelFormat::Bc3RGBAUnorm,
-        {63, 27}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "Bc4R",
-        CompressedPixelFormat::Bc4RUnorm,
-        {63, 27}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "Bc5RG",
-        CompressedPixelFormat::Bc5RGUnorm,
-        {63, 27}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "Bc7RGB",
-        CompressedPixelFormat::Bc7RGBAUnorm,
-        {63, 27}
-    }, {
-        "rgb_2_images_pow2.basis",
-        "rgba_2_images_pow2.basis",
-        "PvrtcRGB4bpp",
-        CompressedPixelFormat::PvrtcRGB4bppUnorm,
-        {64, 32}
-    }, {
-        "rgb_2_images_pow2.basis",
-        "rgba_2_images_pow2.basis",
-        "PvrtcRGBA4bpp",
-        CompressedPixelFormat::PvrtcRGBA4bppUnorm,
-        {64, 32}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "Astc4x4RGBA",
-        CompressedPixelFormat::Astc4x4RGBAUnorm,
-        {63, 27}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "EacR",
-        CompressedPixelFormat::EacR11Unorm,
-        {63, 27}
-    }, {
-        "rgb_2_images.basis",
-        "rgba_2_images.basis",
-        "EacRG",
-        CompressedPixelFormat::EacRG11Unorm,
-        {63, 27}
-    }
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "Etc1RGB", CompressedPixelFormat::Etc2RGB8Unorm, {63, 27}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "Etc2RGBA", CompressedPixelFormat::Etc2RGBA8Unorm, {63, 27}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "Bc1RGB", CompressedPixelFormat::Bc1RGBUnorm, {63, 27}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "Bc3RGBA", CompressedPixelFormat::Bc3RGBAUnorm, {63, 27}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "Bc4R", CompressedPixelFormat::Bc4RUnorm, {63, 27}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, {63, 27}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "Bc7RGB", CompressedPixelFormat::Bc7RGBAUnorm, {63, 27}},
+    {"rgb-2images-pow2.basis", "rgba-2images-pow2.basis",
+     "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppUnorm, {64, 32}},
+    {"rgb-2images-pow2.basis", "rgba-2images-pow2.basis",
+     "PvrtcRGBA4bpp", CompressedPixelFormat::PvrtcRGBA4bppUnorm, {64, 32}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "Astc4x4RGBA", CompressedPixelFormat::Astc4x4RGBAUnorm, {63, 27}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "EacR", CompressedPixelFormat::EacR11Unorm, {63, 27}},
+    {"rgb-2images.basis", "rgba-2images.basis",
+     "EacRG", CompressedPixelFormat::EacRG11Unorm, {63, 27}}
 };
 
 BasisImporterTest::BasisImporterTest() {
@@ -213,7 +164,7 @@ void BasisImporterTest::unconfigured() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
     CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_63x27.png"),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{55.67f, 6.589f}));
 
@@ -272,7 +223,7 @@ void BasisImporterTest::rgbUncompressed() {
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgb_2_images.basis")));
+        "rgb-2images.basis")));
 
     Containers::Optional<Trade::ImageData2D> image;
     std::ostringstream out;
@@ -287,7 +238,7 @@ void BasisImporterTest::rgbUncompressed() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
     CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_63x27.png"),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{55.67f, 6.574f}));
 
@@ -297,7 +248,7 @@ void BasisImporterTest::rgbUncompressed() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
     CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_27x63.png"),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-27x63.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{81.67f, 9.466f}));
 }
@@ -322,7 +273,7 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
     CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>().flipped<0>()),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_63x27.png"),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{49.67f, 8.326f}));
 }
@@ -333,7 +284,7 @@ void BasisImporterTest::rgbaUncompressed() {
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgba_2_images.basis")));
+        "rgba-2images.basis")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -341,7 +292,7 @@ void BasisImporterTest::rgbaUncompressed() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba_63x27.png"),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{86.25f, 8.357f}));
 
@@ -351,7 +302,7 @@ void BasisImporterTest::rgbaUncompressed() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba_27x63.png"),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{87.75f, 9.984f}));
 }
@@ -433,7 +384,7 @@ void BasisImporterTest::openDifferent() {
     CORRADE_VERIFY(importer->openFile(
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
     CORRADE_VERIFY(importer->openFile(
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb_2_images.basis")));
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-2images.basis")));
 
     /* Shouldn't crash, leak or anything */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(1);

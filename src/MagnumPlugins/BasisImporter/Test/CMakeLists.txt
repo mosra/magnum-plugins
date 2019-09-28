@@ -53,12 +53,10 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
     LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
         rgb.basis rgb-noflip.basis
-        rgb_2_images.basis
-        rgb_2_images_pow2.basis
-        rgba_2_images.basis
-        rgba_2_images_pow2.basis
-        rgb_63x27.png rgb_27x63.png
-        rgba_63x27.png rgba_27x63.png)
+        rgb-2images.basis rgb-2images-pow2.basis
+        rgba-2images.basis rgba-2images-pow2.basis
+        rgb-63x27.png rgb-27x63.png
+        rgba-63x27.png rgba-27x63.png)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(BasisImporterTest PRIVATE $<TARGET_FILE_DIR:BasisImporterTest>)
 else()
