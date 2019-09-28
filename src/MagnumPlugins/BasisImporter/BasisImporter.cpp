@@ -43,6 +43,8 @@ namespace Magnum { namespace Trade { namespace {
    TargetFormat enum for details. */
 CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type) {
     switch(type) {
+        /** @todo sRGB once https://github.com/BinomialLLC/basis_universal/issues/66
+            is fixed */
         case BasisImporter::TargetFormat::Etc1RGB:
             return CompressedPixelFormat::Etc2RGB8Unorm;
         case BasisImporter::TargetFormat::Etc2RGBA:
@@ -51,6 +53,8 @@ CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type) {
             return CompressedPixelFormat::Bc1RGBUnorm;
         case BasisImporter::TargetFormat::Bc3RGBA:
             return CompressedPixelFormat::Bc3RGBAUnorm;
+        /** @todo use bc7/bc4/bc5 based on channel count? needs a bit from the
+            above issue as well */
         case BasisImporter::TargetFormat::Bc4R:
             return CompressedPixelFormat::Bc4RUnorm;
         case BasisImporter::TargetFormat::Bc5RG:
@@ -65,6 +69,8 @@ CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type) {
             return CompressedPixelFormat::PvrtcRGBA4bppUnorm;
         case BasisImporter::TargetFormat::Astc4x4RGBA:
             return CompressedPixelFormat::Astc4x4RGBAUnorm;
+        /** @todo use etc2/eacR/eacRG based on channel count? needs a bit from
+            the above issue as well */
         case BasisImporter::TargetFormat::EacR:
             return CompressedPixelFormat::EacR11Unorm;
         case BasisImporter::TargetFormat::EacRG:
