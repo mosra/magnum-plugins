@@ -26,6 +26,9 @@
 
 find_package(Magnum REQUIRED DebugTools)
 
+# Not required
+find_package(Magnum COMPONENTS AnyImageImporter)
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(BASISIMPORTER_TEST_DIR ".")
 else()
@@ -38,6 +41,9 @@ endif()
 # be revisited when updating Travis to newer Xcode (current has CMake 3.6).
 if(NOT BUILD_PLUGINS_STATIC)
     set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
+    if(WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
 
     # First replace ${} variables, then $<> generator expressions
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
@@ -62,5 +68,11 @@ if(NOT BUILD_PLUGINS_STATIC)
 else()
     target_include_directories(BasisImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(BasisImporterTest PRIVATE BasisImporter)
+    if(Magnum_AnyImageImporter_FOUND)
+        target_link_libraries(BasisImporterTest PRIVATE Magnum::AnyImageImporter)
+    endif()
+    if(WITH_STBIMAGEIMPORTER)
+        target_link_libraries(BasisImporterTest PRIVATE StbImageImporter)
+    endif()
 endif()
 set_target_properties(BasisImporterTest PROPERTIES FOLDER "MagnumPlugins/BasisImporter/Test")

@@ -63,8 +63,8 @@ struct BasisImporterTest: TestSuite::Tester {
     void openDifferent();
     void importMultipleFormats();
 
-    /* Explicitly forbid system-wide plugin dependencies */
-    PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
+    /* Needs to load AnyImageImporter from system-wide location */
+    PluginManager::Manager<AbstractImporter> _manager;
 };
 
 constexpr struct {
@@ -120,6 +120,14 @@ BasisImporterTest::BasisImporterTest() {
               &BasisImporterTest::openDifferent,
               &BasisImporterTest::importMultipleFormats});
 
+    /* Pull in the AnyImageImporter dependency for image comparison, load
+       StbImageImporter from the build tree, if defined. Otherwise it's static
+       and already loaded. */
+    _manager.load("AnyImageImporter");
+    #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
+    _manager.setPluginDirectory({});
+    CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef BASISIMPORTER_PLUGIN_FILENAME
@@ -163,12 +171,18 @@ void BasisImporterTest::unconfigured() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.\n");
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
     CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{55.67f, 6.589f}));
-
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.\n");
+        (DebugTools::CompareImageToFile{_manager, 55.67f, 6.589f}));
 }
 
 void BasisImporterTest::invalidConfiguredFormat() {
@@ -237,20 +251,26 @@ void BasisImporterTest::rgbUncompressed() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    /* Verify that the 90° rotated second image can be loaded also */
+    Containers::Optional<Trade::ImageData2D> image2 = importer->image2D(1);
+    CORRADE_VERIFY(image2);
+    CORRADE_COMPARE(image2->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image2->size(), (Vector2i{27, 63}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
     CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{55.67f, 6.574f}));
-
-    /* Verify that the 90° rotated second image can be loaded also */
-    image = importer->image2D(1);
-    CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
-    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
+        (DebugTools::CompareImageToFile{_manager, 55.67f, 6.574f}));
+    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image2->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-27x63.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{81.67f, 9.466f}));
+        (DebugTools::CompareImageToFile{_manager, 81.67f, 9.466f}));
 }
 
 void BasisImporterTest::rgbUncompressedNoFlip() {
@@ -272,10 +292,16 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
     CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>().flipped<0>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{49.67f, 8.326f}));
+        (DebugTools::CompareImageToFile{_manager, 49.67f, 8.326f}));
 }
 
 void BasisImporterTest::rgbaUncompressed() {
@@ -291,20 +317,26 @@ void BasisImporterTest::rgbaUncompressed() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    /* Verify that the 90° rotated second image can be loaded also */
+    Containers::Optional<Trade::ImageData2D> image2 = importer->image2D(1);
+    CORRADE_VERIFY(image2);
+    CORRADE_COMPARE(image2->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image2->size(), (Vector2i{27, 63}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{86.25f, 8.357f}));
-
-    /* Verify that the 90° rotated second image can be loaded also */
-    image = importer->image2D(1);
-    CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
+        (DebugTools::CompareImageToFile{_manager, 86.25f, 8.357f}));
+    CORRADE_COMPARE_WITH(image2->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{87.75f, 9.984f}));
+        (DebugTools::CompareImageToFile{_manager, 87.75f, 9.984f}));
 }
 
 void BasisImporterTest::rgb() {
