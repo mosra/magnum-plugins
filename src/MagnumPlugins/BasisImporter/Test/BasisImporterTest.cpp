@@ -380,6 +380,9 @@ void BasisImporterTest::rgb() {
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
     CORRADE_COMPARE(image->size(), formatData.expectedSize.flipped());
+    /** @todo remove this once CompressedImage etc. tests for data size on its
+        own / we're able to decode the data ourselves */
+    CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedFormat)*((image->size() + compressedBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedFormat).xy()).product());
 }
 
 void BasisImporterTest::rgba() {
@@ -406,6 +409,9 @@ void BasisImporterTest::rgba() {
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
     CORRADE_COMPARE(image->size(), formatData.expectedSize.flipped());
+    /** @todo remove this once CompressedImage etc. tests for data size on its
+        own / we're able to decode the data ourselves */
+    CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedFormat)*((image->size() + compressedBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedFormat).xy()).product());
 }
 
 void BasisImporterTest::openSameTwice() {
