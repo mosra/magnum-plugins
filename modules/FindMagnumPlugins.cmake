@@ -273,11 +273,17 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
 
-        # BasisImporter plugin dependencies
-        if(_component STREQUAL BasisImporter)
-            find_package(BasisUniversal)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES BasisUniversal::Transcoder)
+        # BasisImporter has only compiled-in dependencies, except in case of
+        # vcpkg, then we need to link to a library. Use a similar logic as in
+        # FindBasisUniversal, so in case an user wants to disable this, they
+        # can point BASIS_UNIVERSAL_DIR to something else (or just anything,
+        # because in that case it'll be a no-op.
+        elseif(_component STREQUAL BasisImporter)
+            find_package(basisu CONFIG QUIET)
+            if(basisu_FOUND AND NOT BASIS_UNIVERSAL_DIR)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES basisu_transcoder)
+            endif()
 
         # DdsImporter has no dependencies
 
