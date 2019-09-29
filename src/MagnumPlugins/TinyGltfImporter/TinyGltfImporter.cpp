@@ -1222,11 +1222,21 @@ std::string TinyGltfImporter::doTextureName(const UnsignedInt id) {
 Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt id) {
     const tinygltf::Texture& tex = _d->model.textures[id];
 
+    /* Image ID */
+    UnsignedInt imageId;
+    if(tex.source != -1) {
+        imageId = UnsignedInt(tex.source);
+    } else {
+        Error{} << "Trade::TinyGltfImporter::texture(): no image source found";
+        return Containers::NullOpt;
+    }
+
+    /* Sampler */
     if(tex.sampler < 0) {
         /* The specification instructs to use "auto sampling", i.e. it is left
            to the implementor to decide on the default values... */
         return TextureData{TextureData::Type::Texture2D, SamplerFilter::Linear, SamplerFilter::Linear,
-            SamplerMipmap::Linear, {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat}, UnsignedInt(tex.source), &tex};
+            SamplerMipmap::Linear, {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat}, imageId, &tex};
     }
     const tinygltf::Sampler& s = _d->model.samplers[tex.sampler];
 
@@ -1294,7 +1304,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
 
     /* glTF supports only 2D textures */
     return TextureData{TextureData::Type::Texture2D, minFilter, magFilter,
-        mipmap, wrapping, UnsignedInt(tex.source), &tex};
+        mipmap, wrapping, imageId, &tex};
 }
 
 UnsignedInt TinyGltfImporter::doImage2DCount() const {

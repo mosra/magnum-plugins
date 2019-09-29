@@ -112,6 +112,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void texture();
     void textureDefaultSampler();
+    void textureMissingSource();
 
     void imageEmbedded();
     void imageExternal();
@@ -250,6 +251,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::texture,
                        &TinyGltfImporterTest::textureDefaultSampler},
                       Containers::arraySize(SingleFileData));
+
+    addTests({&TinyGltfImporterTest::textureMissingSource});
 
     addInstancedTests({&TinyGltfImporterTest::imageEmbedded},
                       Containers::arraySize(ImageEmbeddedData));
@@ -1959,6 +1962,19 @@ void TinyGltfImporterTest::textureDefaultSampler() {
     CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
     CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
+}
+
+void TinyGltfImporterTest::textureMissingSource() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "texture-missing-source.gltf")));
+    CORRADE_COMPARE(importer->textureCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->texture(0));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::texture(): no image source found\n");
 }
 
 constexpr char ExpectedImageData[] =

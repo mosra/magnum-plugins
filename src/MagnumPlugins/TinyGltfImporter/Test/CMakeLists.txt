@@ -125,7 +125,8 @@ corrade_add_test(TinyGltfImporterTest
         texture.glb
         texture.png
         texture-default-sampler.gltf
-        texture-default-sampler.glb)
+        texture-default-sampler.glb
+        texture-missing-source.gltf)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(TinyGltfImporterTest PRIVATE $<TARGET_FILE_DIR:TinyGltfImporterTest>)
 else()
