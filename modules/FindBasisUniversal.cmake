@@ -19,10 +19,10 @@
 # targets are set up as aliases to them.
 #
 # If ``basisu`` is not found, as a fallback it tries to find the C++ sources.
-# You can supply their location via an ``BASISU_DIR`` variable. Once found, the
-# ``BasisUniversal::Encoder`` target is set up to compile the sources of the
-# encoder and ``BasisUniversal::Transcoder`` the sources of the transcoder as
-# static libraries.
+# You can supply their location via an ``BASIS_UNIVERSAL_DIR`` variable. Once
+# found, the ``BasisUniversal::Encoder`` target is set up to compile the
+# sources of the encoder and ``BasisUniversal::Transcoder`` the sources of the
+# transcoder as static libraries.
 #
 
 #
@@ -52,10 +52,10 @@
 #
 
 # Vcpkg distributes imgui as a library with a config file, so try that first --
-# but only if BASISU_DIR wasn't explicitly passed, in which case we'll look
-# there instead
+# but only if BASIS_UNIVERSAL_DIR wasn't explicitly passed, in which case we'll
+# look there instead
 find_package(basisu CONFIG QUIET)
-if(basisu_FOUND AND NOT BASISU_DIR)
+if(basisu_FOUND AND NOT BASIS_UNIVERSAL_DIR)
     if(NOT TARGET BasisUniversal::Transcoder)
         add_library(BasisUniversal::Transcoder INTERFACE IMPORTED)
         set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
@@ -83,12 +83,12 @@ else()
     # CMAKE_FIND_ROOT_PATH_MODE_INCLUDE setting potentially set in
     # toolchains.
     find_path(BasisUniversalEncoder_INCLUDE_DIR NAMES basisu_frontend.h HINTS
-        HINTS "${BASISU_DIR}" "${BASISU_DIR}/encoder"
+        HINTS "${BASIS_UNIVERSAL_DIR}" "${BASIS_UNIVERSAL_DIR}/encoder"
         NO_CMAKE_FIND_ROOT_PATH)
     mark_as_advanced(BasisUniversalEncoder_INCLUDE_DIR)
 
     find_path(BasisUniversalTranscoder_INCLUDE_DIR NAMES basisu_transcoder.h
-        HINTS "${BASISU_DIR}/transcoder" "${BASISU_DIR}"
+        HINTS "${BASIS_UNIVERSAL_DIR}/transcoder" "${BASIS_UNIVERSAL_DIR}"
         NO_CMAKE_FIND_ROOT_PATH)
     mark_as_advanced(BasisUniversalTranscoder_INCLUDE_DIR)
 endif()
@@ -126,14 +126,14 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
     if(_component STREQUAL "Encoder")
         if(NOT TARGET BasisUniversal::Encoder)
             find_path(BasisUniversalEncoder_DIR NAMES basisu_frontend.cpp
-                HINTS "${BASISU_DIR}" "${BASISU_DIR}/encoder"
+                HINTS "${BASIS_UNIVERSAL_DIR}" "${BASIS_UNIVERSAL_DIR}/encoder"
                 NO_CMAKE_FIND_ROOT_PATH)
             if(BasisUniversalEncoder_DIR)
                 set(BasisUniversal_Encoder_FOUND TRUE)
             else()
                 message(SEND_ERROR
                     "Could not find encoder in basis_universal directory.\n"
-                    "Set BASISU_DIR to the root of a directory containing basis_universal source.")
+                    "Set BASIS_UNIVERSAL_DIR to the root of a directory containing basis_universal source.")
             endif()
 
             set(BasisUniversalEncoder_SOURCES
@@ -173,14 +173,14 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
     elseif(_component STREQUAL "Transcoder")
         if(NOT TARGET BasisUniversal::Transcoder)
             find_path(BasisUniversalTranscoder_DIR NAMES basisu_transcoder.cpp
-                HINTS "${BASISU_DIR}/transcoder" "${BASISU_DIR}"
+                HINTS "${BASIS_UNIVERSAL_DIR}/transcoder" "${BASIS_UNIVERSAL_DIR}"
                 NO_CMAKE_FIND_ROOT_PATH)
             if(BasisUniversalTranscoder_DIR)
                 set(BasisUniversal_Transcoder_FOUND TRUE)
             else()
                 message(SEND_ERROR
                     "Could not find transcoder in basis_universal directory.\n"
-                    "Set BASISU_DIR to the root of a directory containing basis_universal source.")
+                    "Set BASIS_UNIVERSAL_DIR to the root of a directory containing basis_universal source.")
             endif()
             set(BasisUniversalTranscoder_SOURCES
                 ${BasisUniversalTranscoder_DIR}/basisu_transcoder.cpp)

@@ -306,8 +306,8 @@ By default no plugins are built and you need to select them manually:
 -   `WITH_BASISIMPORTER` --- Build the @ref Trade::BasisImporter "BasisImporter"
     plugin. Depends on [Basis Universal](https://github.com/binomialLLC/basis_universal)
     --- if you are on Vcpkg, it will "just work", otherwise you need to
-    download the sources and point `BASIS_DIR` to their directory so CMake can
-    find them.
+    download the sources and point `BASIS_UNIVERSAL_DIR` to their directory so
+    CMake can find them.
 -   `WITH_DDSIMPORTER` --- Build the @ref Trade::DdsImporter "DdsImporter"
     plugin.
 -   `WITH_DEVILIMAGEIMPORTER` --- Build the

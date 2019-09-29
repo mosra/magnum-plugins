@@ -20,7 +20,7 @@ build() {
         -DCMAKE_TOOLCHAIN_FILE=../toolchains/archlinux/basic-mingw-w64-32.cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/i686-w64-mingw32 \
-        -DBASISU_DIR=/opt/basis-universal \
+        -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=ON \
         -DWITH_BASISIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \
@@ -54,7 +54,7 @@ build() {
         -DCMAKE_TOOLCHAIN_FILE=../toolchains/archlinux/basic-mingw-w64-64.cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/x86_64-w64-mingw32 \
-        -DBASISU_DIR=/opt/basis-universal \
+        -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=ON \
         -DWITH_BASISIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \

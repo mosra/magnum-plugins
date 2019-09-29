@@ -30,7 +30,7 @@ build() {
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \
         -DCMAKE_CXX_FLAGS="-DBASISD_SUPPORT_BC7=0 -DBASISD_SUPPORT_ATC=0 -DBASISD_SUPPORT_FXT1=0 -DBASISD_SUPPORT_PVRTC2=0" \
-        -DBASISU_DIR=/opt/basis-universal \
+        -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=OFF \
         -DWITH_BASISIMPORTER=ON \
         -DWITH_DDSIMPORTER=ON \

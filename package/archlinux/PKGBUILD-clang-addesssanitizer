@@ -22,7 +22,7 @@ build() {
         -DCMAKE_CXX_FLAGS="-fsanitize=address" \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_INSTALL_PREFIX=/usr \
-        -DBASISU_DIR=/opt/basis-universal \
+        -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
         -DWITH_ASSIMPIMPORTER=ON \
