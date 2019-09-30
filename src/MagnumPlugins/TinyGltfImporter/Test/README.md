@@ -19,6 +19,16 @@ that, convert the file like this:
 ./in2bin.py file.bin.in # creates file.bin
 ```
 
+Basis texture sources
+---------------------
+
+The `texture.basis` file is created from `texture.png` using the following
+command:
+
+```sh
+basisu texture.png -output_file texture.basis -y_flip
+```
+
 Embedding buffers
 -----------------
 

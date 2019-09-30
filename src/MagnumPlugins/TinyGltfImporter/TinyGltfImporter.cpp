@@ -1222,10 +1222,30 @@ std::string TinyGltfImporter::doTextureName(const UnsignedInt id) {
 Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt id) {
     const tinygltf::Texture& tex = _d->model.textures[id];
 
-    /* Image ID */
+    /* Image ID. Try various extensions first. */
     UnsignedInt imageId;
-    if(tex.source != -1) {
+
+    /* Basis textures. This extension is nonstandard and in case of embedded
+       images there's no standardized MIME type either. Fortunately we
+       don't care as we detect the file type based on magic, unfortunately we
+       *have to* use data:application/octet-stream there because TinyGLTF has a
+       whitelist for MIME types:
+       https://github.com/syoyo/tinygltf/blob/7e009041e35b999fd1e47c0f0e42cadcf8f5c31c/tiny_gltf.h#L2706
+       This will all get solved once KTX2 materializes (but then it becomes
+       more complex as well). For reference:
+       https://github.com/BabylonJS/Babylon.js/issues/6636
+       https://github.com/BinomialLLC/basis_universal/issues/52 */
+    if(tex.extensions.find("GOOGLE_texture_basis") != tex.extensions.end()) {
+        /** @todo check for "extensionsRequired" as well? currently not doing
+            that, because I don't see why */
+        tinygltf::Value basis = tex.extensions.at("GOOGLE_texture_basis");
+        imageId = basis.Get("source").Get<int>();
+
+    /* Image source */
+    } else if(tex.source != -1) {
         imageId = UnsignedInt(tex.source);
+
+    /* Well. */
     } else {
         Error{} << "Trade::TinyGltfImporter::texture(): no image source found";
         return Containers::NullOpt;

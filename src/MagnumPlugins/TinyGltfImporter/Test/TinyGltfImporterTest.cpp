@@ -28,6 +28,7 @@
 #include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -119,6 +120,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void imageExternalNotFound();
     void imageExternalNoPathNoCallback();
 
+    void imageBasis();
+
     void fileCallbackBuffer();
     void fileCallbackBufferNotFound();
     void fileCallbackImage();
@@ -179,6 +182,16 @@ constexpr struct {
     {"ascii buffer", "-buffer.gltf"},
     {"binary", ".glb"},
     {"binary buffer", "-buffer.glb"},
+};
+
+constexpr struct {
+    const char* name;
+    const char* suffix;
+} ImageBasisData[]{
+    {"ascii", ".gltf"},
+    {"binary", ".glb"},
+    {"embedded ascii", "-embedded.gltf"},
+    {"embedded binary", "-embedded.glb"},
 };
 
 using namespace Magnum::Math::Literals;
@@ -263,6 +276,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addTests({&TinyGltfImporterTest::imageExternalNotFound,
               &TinyGltfImporterTest::imageExternalNoPathNoCallback});
 
+    addInstancedTests({&TinyGltfImporterTest::imageBasis},
+                      Containers::arraySize(ImageBasisData));
+
     addInstancedTests({&TinyGltfImporterTest::fileCallbackBuffer,
                        &TinyGltfImporterTest::fileCallbackBufferNotFound,
                        &TinyGltfImporterTest::fileCallbackImage,
@@ -277,6 +293,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     #ifdef TINYGLTFIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(TINYGLTFIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     _manager.setPluginDirectory({});
+    #endif
+    #ifdef BASISIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
@@ -2050,6 +2069,36 @@ void TinyGltfImporterTest::imageExternalNoPathNoCallback() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+}
+
+void TinyGltfImporterTest::imageBasis() {
+    auto&& data = ImageBasisData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    /* Import as ASTC */
+    _manager.metadata("BasisImporter")->configuration().setValue("format", "Astc4x4RGBA");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "image-basis" + std::string{data.suffix})));
+
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+
+    auto image = importer->image2D(1);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->size(), Vector2i(5, 3));
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc4x4RGBAUnorm);
+
+    /* The texture refers to the image indirectly via an extension, test the
+       mapping */
+    auto texture = importer->texture(0);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->image(), 1);
 }
 
 void TinyGltfImporterTest::fileCallbackBuffer() {

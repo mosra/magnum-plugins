@@ -1,0 +1,27 @@
+{
+    "textures" : [
+        {
+            "extensions": {
+                "GOOGLE_texture_basis": {
+                    "source": 1
+                }
+            }
+        }
+    ],
+    "images": [
+        {
+            "mimeType": "image/png",
+            "uri": "texture.png"
+        },
+        {
+            "mimeType": "image/x-basis",
+            "uri": "texture.basis"
+        }
+    ],
+    "extensionsUsed": [
+        "GOOGLE_texture_basis"
+    ],
+    "extensionsRequired": [
+        "GOOGLE_texture_basis"
+    ]
+}

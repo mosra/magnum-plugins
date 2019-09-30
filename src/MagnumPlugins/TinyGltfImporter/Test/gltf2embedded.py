@@ -51,9 +51,19 @@ with open(fileIn) as f:
             if 'uri' not in image: continue
             uri = image['uri']
             if uri[:5] != 'data:':
-                assert(uri[-4:] == '.png')
+                if uri.endswith('.png'):
+                    mime = 'image/png'
+                elif uri.endswith('.basis'):
+                    # https://github.com/BabylonJS/Babylon.js/issues/6636 and
+                    # https://github.com/BinomialLLC/basis_universal/issues/52.
+                    # Can't use image/x-basis because TinyGLTF has a whitelist
+                    # of MIME types, FFS.
+                    # https://github.com/syoyo/tinygltf/blob/7e009041e35b999fd1e47c0f0e42cadcf8f5c31c/tiny_gltf.h#L2706
+                    mime = 'application/octet-stream'
+                else:
+                    assert False, ("unsupported file type %s" % uri)
                 with open(uri, "rb") as bf:
-                    image['uri'] = 'data:image/png;base64,' + base64.b64encode(bf.read()).decode('utf-8')
+                    image['uri'] = 'data:{};base64,{}'.format(mime, base64.b64encode(bf.read()).decode('utf-8'))
 
 with open(fileOut, 'wb') as output:
     output.write(json.dumps(data, separators=(',', ':')).encode())

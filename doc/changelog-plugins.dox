@@ -37,7 +37,8 @@ namespace Magnum {
 -   New @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin for importing
     MP3 files (see [mosra/magnum-plugins#60](https://github.com/mosra/magnum-plugins/pull/60))
 -   New @ref Trade::BasisImporter "BasisImporter" plugin for importing
-    Basis files (see [mosra/magnum-plugins#62](https://github.com/mosra/magnum-plugins/pull/62))
+    Basis files (see [mosra/magnum-plugins#62](https://github.com/mosra/magnum-plugins/pull/62));
+    support for Basis-encoded textures in @ref Trade::TinyGltfImporter "TinyGltfImporter"
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 

@@ -222,17 +222,74 @@ Import of skeleton, skin and morph data is not supported at the moment.
     -   The `snininessFactor` field is used for snininess, if present.
         Otherwise @cpp 1.0f @ce is used.
 
-@subsection Trade-TinyGltfImporter-limitations-textures Texture import
+@subsection Trade-TinyGltfImporter-limitations-textures Texture and image import
 
--   Texture type is always @ref Trade::TextureData::Type::Texture2D, as glTF
-    doesn't support anything else
--   Z coordinate of @ref Trade::TextureData::wrapping() is always
-    @ref SamplerWrapping::Repeat, as glTF doesn't support 3D textures
--   glTF leaves the defaults of sampler properties to the application, the
-    following defaults have been chosen for this importer:
-    -   Minification/magnification/mipmap filter: @ref SamplerFilter::Linear,
-        @ref SamplerMipmap::Linear
-    -   Wrapping (all axes): @ref SamplerWrapping::Repeat
+<ul>
+<li>Texture type is always @ref Trade::TextureData::Type::Texture2D, as glTF
+doesn't support anything else</li>
+<li>Z coordinate of @ref Trade::TextureData::wrapping() is always
+@ref SamplerWrapping::Repeat, as glTF doesn't support 3D textures</li>
+<li>
+@m_class{m-nopadb}
+
+glTF leaves the defaults of sampler properties to the application, the
+following defaults have been chosen for this importer:
+
+-   Minification/magnification/mipmap filter: @ref SamplerFilter::Linear,
+    @ref SamplerMipmap::Linear
+-   Wrapping (all axes): @ref SamplerWrapping::Repeat
+</li>
+<li>
+    The importer supports the non-standard `GOOGLE_texture_basis` extension
+    for referencing [Basis Universal](https://github.com/binomialLLC/basis_universal)
+    files, which then get loaded using @ref BasisImporter (or an equivalent
+    alias). The use is like this, [equivalently to Basis own glTF example](https://github.com/BinomialLLC/basis_universal/blob/1cae1d57266e2c95bc011b0bf1ccb9940988c184/webgl/gltf/assets/AgiHqSmall.gltf#L230-L240):
+
+    @code{.json}
+    {
+        ...
+        "textures": [
+            {
+                "extensions": {
+                    "GOOGLE_texture_basis": {
+                        "source": 0
+                    }
+                }
+            }
+        ],
+        "images": [
+            {
+                "mimeType": "image/x-basis",
+                "uri": "texture.basis"
+            }
+        ],
+        "extensionsUsed": [
+            "GOOGLE_texture_basis"
+        ],
+        "extensionsRequired": [
+            "GOOGLE_texture_basis"
+        ]
+    }
+    @endcode
+
+    The MIME type is not standard either and the importer doesn't check its
+    value. However, in case of embedded data URIs, the prefix *has to* be set
+    to `data:application/octet-stream` as TinyGLTF has a whitelist for data URI
+    detection and would treat the URI as a filename otherwise:
+
+    @code{.json}
+    {
+        ...
+        "images": [
+            {
+                "mimeType": "image/x-basis",
+                "uri": "data:application/octet-stream;base64,..."
+            }
+        ]
+    }
+    @endcode
+</li>
+</ul>
 
 @section Trade-TinyGltfImporter-configuration Plugin-specific config
 

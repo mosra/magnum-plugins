@@ -37,6 +37,9 @@ endif()
 # be revisited when updating Travis to newer Xcode (current has CMake 3.6).
 if(NOT BUILD_PLUGINS_STATIC)
     set(TINYGLTFIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:TinyGltfImporter>)
+    if(WITH_BASISIMPORTER)
+        set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
@@ -83,6 +86,10 @@ corrade_add_test(TinyGltfImporterTest
         image-buffer-embedded.gltf
         image-buffer-embedded.glb
         image-notfound.gltf
+        image-basis.gltf
+        image-basis.glb
+        image-basis-embedded.gltf
+        image-basis-embedded.glb
         light.gltf
         light.glb
         material-blinnphong.gltf
@@ -121,6 +128,7 @@ corrade_add_test(TinyGltfImporterTest
         object-transformation.gltf
         object-transformation.glb
         object-transformation-patching.gltf
+        texture.basis
         texture.gltf
         texture.glb
         texture.png
@@ -132,6 +140,9 @@ if(NOT BUILD_PLUGINS_STATIC)
 else()
     target_include_directories(TinyGltfImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(TinyGltfImporterTest PRIVATE TinyGltfImporter)
+    if(WITH_BASISIMPORTER)
+        target_link_libraries(TinyGltfImporterTest PRIVATE BasisImporter)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         target_link_libraries(TinyGltfImporterTest PRIVATE StbImageImporter)
     endif()
