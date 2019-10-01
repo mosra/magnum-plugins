@@ -137,6 +137,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
             endif()
 
             set(BasisUniversalEncoder_SOURCES
+                ${BasisUniversalEncoder_DIR}/basisu_astc_decomp.cpp
                 ${BasisUniversalEncoder_DIR}/basisu_backend.cpp
                 ${BasisUniversalEncoder_DIR}/basisu_basis_file.cpp
                 ${BasisUniversalEncoder_DIR}/basisu_comp.cpp

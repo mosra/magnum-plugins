@@ -239,9 +239,8 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
        blows up for someone, we can reconsider. */
     CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks));
 
-    /* cDecodeFlagsPVRTCWrapAddressing is the default used by
-       transcode_image_level() */
-    const std::uint32_t flags = basist::basisu_transcoder::cDecodeFlagsPVRTCWrapAddressing;
+    /* No flags used by transcode_image_level() by default */
+    const std::uint32_t flags = 0;
     if(!_state->fileInfo.m_y_flipped) {
         /** @todo replace with the flag once the PR is submitted */
         Warning{} << "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation";

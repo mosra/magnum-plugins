@@ -44,7 +44,7 @@ install:
 - IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move *.lib lib\ && cd ..
 
 # Basis Universal
-- set BASIS_VERSION=9a63bb66875191ca205c11fcdf3a814a1ff8fde3
+- set BASIS_VERSION=1cae1d57266e2c95bc011b0bf1ccb9940988c184
 - IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\basis_universal-%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/%BASIS_VERSION%.zip
 - 7z x %BASIS_VERSION%.zip && ren basis_universal-%BASIS_VERSION% basis_universal
 
