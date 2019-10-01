@@ -240,12 +240,9 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
     CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks));
 
     /* No flags used by transcode_image_level() by default */
-    const std::uint32_t flags = 0;
-    if(!_state->fileInfo.m_y_flipped) {
-        /** @todo replace with the flag once the PR is submitted */
-        Warning{} << "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation";
-        //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
-    }
+    std::uint32_t flags = 0;
+    if(!_state->fileInfo.m_y_flipped)
+        flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
 
     Vector2i size{Int(origWidth), Int(origHeight)};
     UnsignedInt dataSize, rowStride, outputSizeInBlocksOrPixels, outputRowsInPixels;
