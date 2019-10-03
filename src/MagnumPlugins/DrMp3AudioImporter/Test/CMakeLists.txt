@@ -33,19 +33,16 @@ endif()
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
-# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+# be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT BUILD_PLUGINS_STATIC)
     set(DRMP3AUDIOIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DrMp3AudioImporter>)
-
-    # First replace ${} variables, then $<> generator expressions
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
-    file(GENERATE OUTPUT $<TARGET_FILE_DIR:DrMp3AudioImporterTest>/configure.h
-        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
-else()
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
+
+# First replace ${} variables, then $<> generator expressions
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
+    INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(DrMp3AudioImporterTest DrMp3ImporterTest.cpp
     LIBRARIES Magnum::Audio
@@ -54,10 +51,8 @@ corrade_add_test(DrMp3AudioImporterTest DrMp3ImporterTest.cpp
 
         mono16.mp3
         stereo16.mp3)
-if(NOT BUILD_PLUGINS_STATIC)
-    target_include_directories(DrMp3AudioImporterTest PRIVATE $<TARGET_FILE_DIR:DrMp3AudioImporterTest>)
-else()
-    target_include_directories(DrMp3AudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(DrMp3AudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+if(BUILD_PLUGINS_STATIC)
     target_link_libraries(DrMp3AudioImporterTest PRIVATE DrMp3AudioImporter)
 endif()
 set_target_properties(DrMp3AudioImporterTest PROPERTIES FOLDER "MagnumPlugins/DrMp3AudioImporter/Test")

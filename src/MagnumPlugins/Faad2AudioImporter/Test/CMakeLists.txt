@@ -36,19 +36,16 @@ find_package(Magnum REQUIRED DebugTools)
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
-# be revisited when updating Travis to newer Xcode (current has CMake 3.6).
+# be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT BUILD_PLUGINS_STATIC)
     set(FAAD2AUDIOIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:Faad2AudioImporter>)
-
-    # First replace ${} variables, then $<> generator expressions
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
-    file(GENERATE OUTPUT $<TARGET_FILE_DIR:Faad2AudioImporterTest>/configure.h
-        INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
-else()
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
-                   ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 endif()
+
+# First replace ${} variables, then $<> generator expressions
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
+file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
+    INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(Faad2AudioImporterTest Faad2ImporterTest.cpp
     LIBRARIES Magnum::Audio Magnum::DebugTools
@@ -56,10 +53,8 @@ corrade_add_test(Faad2AudioImporterTest Faad2ImporterTest.cpp
         error.aac
         mono.aac
         stereo.aac)
-if(NOT BUILD_PLUGINS_STATIC)
-    target_include_directories(Faad2AudioImporterTest PRIVATE $<TARGET_FILE_DIR:Faad2AudioImporterTest>)
-else()
-    target_include_directories(Faad2AudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(Faad2AudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+if(BUILD_PLUGINS_STATIC)
     target_link_libraries(Faad2AudioImporterTest PRIVATE Faad2AudioImporter)
 endif()
 set_target_properties(Faad2AudioImporterTest PROPERTIES FOLDER "MagnumPlugins/Faad2AudioImporter/Test")
