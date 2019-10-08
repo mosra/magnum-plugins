@@ -86,7 +86,6 @@ exposed `basisu` parameters.
 -   `threads` --- configure the number of threads basis should use during
     compression, `0` defaults to the value returned by
     @ref std::thread::hardware_concurrency()
--   `enable_debug_printf` --- enable verbose logging in basis
 
 @m_class{m-block m-success}
 

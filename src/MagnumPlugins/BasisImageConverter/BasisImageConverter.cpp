@@ -111,9 +111,6 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
     basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
     params.m_pSel_codebook = &sel_codebook;
 
-    /* Enable verbose debug output in basis to get reasons for failures */
-    basisu::enable_debug_printf(configuration().value<bool>("enable_debug_printf"));
-
     if(image.size().x() <= 0 || image.size().y() <= 0) {
         Error() << "Trade::BasisImageConverter::exportToData(): source image is empty";
         return {};
