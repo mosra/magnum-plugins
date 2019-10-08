@@ -30,8 +30,9 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Directory.h>
 #include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
@@ -40,8 +41,6 @@
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
-
-#include <Corrade/Utility/Directory.h>
 
 #include "configure.h"
 
@@ -93,7 +92,6 @@ BasisImageConverterTest::BasisImageConverterTest() {
     CORRADE_INTERNAL_ASSERT(_converterManager.load(BASISIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     #ifdef BASISIMPORTER_PLUGIN_FILENAME
-    _manager.setPluginDirectory({});
     CORRADE_INTERNAL_ASSERT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
@@ -159,9 +157,9 @@ void BasisImageConverterTest::r() {
     pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-27x63.png"));
     const auto originalImage = pngImporter->image2D(0);
 
-    /* Use the original image and add a skip of {8, 7} to ensure the converter reads the
-       image data properly. Data size is computed with row alignment to 4 bytes.
-       During copy, we only use R channel to retrieve a R8 image. */
+    /* Use the original image and add a skip of {8, 7} to ensure the converter
+       reads the image data properly. Data size is computed with row alignment
+       to 4 bytes. During copy, we only use R channel to retrieve a R8 image */
     const UnsignedInt dataSize = ((27+8) + 1)*(63+7);
     Image2D imageWithSkip{PixelStorage{}.setSkip({8, 7, 0}),
         PixelFormat::R8Unorm, originalImage->size(), Containers::Array<char>{Containers::ValueInit, dataSize}};
@@ -204,9 +202,10 @@ void BasisImageConverterTest::rg() {
     pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-27x63.png"));
     const auto originalImage = pngImporter->image2D(0);
 
-    /* Use the original image and add a skip of {8, 7} to ensure the converter reads the
-       image data properly. Data size is computed with row alignment to 4 bytes.
-       During copy, we only use R and G channels to retrieve a RG8 image. */
+    /* Use the original image and add a skip of {8, 7} to ensure the converter
+       reads the image data properly. Data size is computed with row alignment
+       to 4 bytes. During copy, we only use R and G channels to retrieve a RG8
+       image. */
     const UnsignedInt dataSize = ((27+8)*2 + 2)*(63+7);
     Image2D imageWithSkip{PixelStorage{}.setSkip({8, 7, 0}),
         PixelFormat::RG8Unorm, originalImage->size(), Containers::Array<char>{Containers::ValueInit, dataSize}};
@@ -248,8 +247,9 @@ void BasisImageConverterTest::rgb() {
     pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-27x63.png"));
     const auto originalImage = pngImporter->image2D(0);
 
-    /* Use the original image and add a skip of {8, 7} to ensure the converter reads the
-       image data properly. Data size is computed with row alignment to 4 bytes. */
+    /* Use the original image and add a skip of {8, 7} to ensure the converter
+       reads the image data properly. Data size is computed with row alignment
+       to 4 bytes. */
     const UnsignedInt dataSize = ((27+8)*3 + 3)*(63+7);
     Image2D imageWithSkip{PixelStorage{}.setSkip({8, 7, 0}),
         PixelFormat::RGB8Unorm, originalImage->size(),
@@ -289,8 +289,8 @@ void BasisImageConverterTest::rgba() {
     pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"));
     const auto originalImage = pngImporter->image2D(0);
 
-    /* Use the original image and add a skip of {8, 7} to ensure the converter reads the
-       image data properly. */
+    /* Use the original image and add a skip of {8, 7} to ensure the converter
+       reads the image data properly. */
     const UnsignedInt dataSize = (27+8)*(63+7)*4;
     Image2D imageWithSkip{PixelStorage{}.setSkip({8, 7, 0}),
         PixelFormat::RGBA8Unorm, originalImage->size(),

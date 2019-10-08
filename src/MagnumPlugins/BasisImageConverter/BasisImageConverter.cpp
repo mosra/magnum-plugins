@@ -28,6 +28,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <thread>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/StridedArrayView.h>
@@ -35,12 +36,9 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/PixelFormat.h>
-
 #include <basisu_enc.h>
 #include <basisu_comp.h>
 #include <basisu_file_headers.h>
-
-#include <thread>
 
 namespace Magnum { namespace Trade {
 
@@ -52,25 +50,24 @@ auto BasisImageConverter::doFeatures() const -> Features { return Feature::Conve
 
 Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& image) {
     /* Check input */
-    if(image.format() != PixelFormat::RGB8Unorm
-        && image.format() != PixelFormat::RGBA8Unorm
-        && image.format() != PixelFormat::RG8Unorm
-        && image.format() != PixelFormat::R8Unorm) {
-        Error() << "Trade::BasisImageConverter::exportToData(): unsupported format" << image.format();
+    if(image.format() != PixelFormat::RGB8Unorm &&
+       image.format() != PixelFormat::RGBA8Unorm &&
+       image.format() != PixelFormat::RG8Unorm &&
+       image.format() != PixelFormat::R8Unorm)
+    {
+        Error{} << "Trade::BasisImageConverter::exportToData(): unsupported format" << image.format();
         return {};
     }
 
-    /* Magnum specific configuration */
+    /* Magnum-specific configuration */
     UnsignedInt threadCount = configuration().value<Int>("threads");
-    if(threadCount == 0) {
-        threadCount = std::thread::hardware_concurrency();
-    }
+    if(threadCount == 0) threadCount = std::thread::hardware_concurrency();
 
     basisu::basis_compressor_params params;
 
     const bool multithreading = threadCount > 1;
     params.m_multithreading = multithreading;
-    basisu::job_pool jpool(threadCount);
+    basisu::job_pool jpool{threadCount};
     params.m_pJob_pool = &jpool;
 
     #define PARAM_CONFIG(name, type) params.m_##name = configuration().value<type>(#name)
@@ -133,10 +130,8 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
 
     /* Get data properties and calculate the initial slice based on subimage
        offset */
-    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties =
-        image.dataProperties();
-    Containers::ArrayView<const char> inputData = image.data().suffix(
-        dataProperties.first.sum());
+    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
+    Containers::ArrayView<const char> inputData = image.data().suffix(dataProperties.first.sum());
 
     basisu::image& basisImage = params.m_source_images.back();
 
@@ -146,52 +141,41 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
     const std::size_t packedDataSize = rowSize*image.size().y();
 
     /* basis image is always RGBA, fill in alpha if necessary */
-    if (image.format() == PixelFormat::RGB8Unorm) {
+    if(image.format() == PixelFormat::RGB8Unorm) {
         const std::size_t width = image.size().x();
         const std::size_t height = image.size().y();
 
-        auto basisView = Containers::arrayCast<Color4ub>(
-            Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
+        auto basisView = Containers::arrayCast<Color4ub>(Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
         for(Int y = 0; y < height; ++y) {
             const auto src = image.pixels<Color3ub>()[height - y -1];
 
             Color4ub* destPixel = basisView.suffix(y*width).begin();
-            for(const Color3ub& pixel: src) {
-                *(destPixel++) = pixel;
-            }
+            for(const Color3ub& pixel: src) *(destPixel++) = pixel;
         }
-
     } else if(image.format() == PixelFormat::RG8Unorm) {
         const std::size_t width = image.size().x();
         const std::size_t height = image.size().y();
 
-        auto basisView = Containers::arrayCast<Color4ub>(
-            Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
+        auto basisView = Containers::arrayCast<Color4ub>(Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
         for(Int y = 0; y < height; ++y) {
-            const auto src = Containers::arrayCast<const Math::Vector2<UnsignedByte>>(inputData
-                .suffix((height - y - 1)*rowStride).prefix(rowSize));
+            const auto src = Containers::arrayCast<const Math::Vector2<UnsignedByte>>(inputData.suffix((height - y - 1)*rowStride).prefix(rowSize));
 
             Color4ub* destPixel = basisView.suffix(y*width).begin();
-            for(const Math::Vector2<UnsignedByte> pixel: src) {
-                destPixel->rgb() = Color3ub{pixel.x()};
-                destPixel->a() = pixel.y();
-                destPixel++;
-            }
+            for(const Math::Vector2<UnsignedByte> pixel: src)
+                *(destPixel++) = Color4ub{pixel.x(), pixel.y()};
         }
     } else if(image.format() == PixelFormat::R8Unorm) {
         const std::size_t width = image.size().x();
         const std::size_t height = image.size().y();
 
-        auto basisView = Containers::arrayCast<Color4ub>(
-            Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
+        auto basisView = Containers::arrayCast<Color4ub>(Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
         for(Int y = 0; y < height; ++y) {
             const auto src = Containers::arrayCast<const UnsignedByte>(inputData
                 .suffix((height - y - 1)*rowStride).prefix(rowSize));
 
             Color4ub* destPixel = basisView.suffix(y*width).begin();
-            for(const UnsignedByte pixel: src) {
-                (destPixel++)->rgb() = Color3ub{pixel};
-            }
+            for(const UnsignedByte pixel: src)
+                *(destPixel++) = Color3ub{pixel};
         }
     } else {
         CORRADE_INTERNAL_ASSERT(image.format() == PixelFormat::RGBA8Unorm);
@@ -199,15 +183,11 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
         const std::size_t width = image.size().x();
         const std::size_t height = image.size().y();
 
-        auto basisView = Containers::arrayCast<Color4ub>(
-            Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
-            ;
+        auto basisView = Containers::arrayCast<Color4ub>(Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
         for(Int y = 0; y < height; ++y) {
             auto basisRow = basisView.suffix(y*width).begin();
             auto row = image.pixels<Color4ub>()[height - y - 1];
-            for(int x = 0; x < width; ++x) {
-                 basisRow[x] = row[x];
-            }
+            for(int x = 0; x < width; ++x) basisRow[x] = row[x];
         }
     }
 
@@ -215,9 +195,7 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
     basis.init(params);
 
     basisu::basis_compressor::error_code errorCode = basis.process();
-    switch(errorCode) {
-        case basisu::basis_compressor::error_code::cECSuccess:
-            break;
+    if(errorCode != basisu::basis_compressor::error_code::cECSuccess) switch(errorCode) {
         case basisu::basis_compressor::error_code::cECFailedReadingSourceImages:
             /* Emitted e.g. when source image is 0-size */
             Error{} << "Trade::BasisImageConverter::exportToData(): source image is invalid";

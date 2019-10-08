@@ -61,16 +61,15 @@ else()
 endif()
 
 corrade_add_test(BasisImageConverterTest BasisImageConverterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgb-27x63.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-27x63.png)
 if(NOT BUILD_PLUGINS_STATIC)
     target_include_directories(BasisImageConverterTest PRIVATE $<TARGET_FILE_DIR:BasisImageConverterTest>)
-    target_link_libraries(BasisImageConverterTest PRIVATE Magnum::DebugTools BasisUniversal::Encoder)
 else()
     target_include_directories(BasisImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-    target_link_libraries(BasisImageConverterTest PRIVATE BasisImageConverter Magnum::DebugTools BasisUniversal::Encoder)
+    target_link_libraries(BasisImageConverterTest PRIVATE BasisImageConverter)
     if(Magnum_AnyImageImporter_FOUND)
         target_link_libraries(BasisImageConverterTest PRIVATE Magnum::AnyImageImporter)
     endif()

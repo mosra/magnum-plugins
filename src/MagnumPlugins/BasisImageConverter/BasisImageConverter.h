@@ -61,8 +61,8 @@ Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
 @ref PixelFormat::RGBA8Unorm.
 
 This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
-and is built if `WITH_BASISIMAGECONVERTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, you need to load the
+libraries and is built if `WITH_BASISIMAGECONVERTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, you need to load the
 @cpp "BasisImageConverter" @ce plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`.
 To use as a static plugin or as a dependency of another plugin with CMake, you
 need to request the `BasisImageConverter` component of the `MagnumPlugins`
@@ -70,23 +70,23 @@ package and link to the `MagnumPlugins::BasisImageConverter` target. See
 @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-@section Trade-BasisImporter-configuration Plugin-specific configuration
+@section Trade-BasisImageConverter-configuration Plugin-specific configuration
 
-Basis compression can be configured to produce better quality or reduce runtime.
-Configuration options expose parameters of the `basisu` tool and match their
-naming. The full form of the configuration is shown below:
+Basis compression can be configured to produce better quality or reduce
+encoding time. Configuration options expose parameters consistently to options
+of the `basisu` tool. The full form of the configuration is shown below:
 
-@snippet MagnumPlugins/BasisImporter/BasisImporter.conf configuration
+@snippet MagnumPlugins/BasisImageConverter/BasisImageConverter.conf configuration_
 
-@subsection Trade-BasisImporter-magnum-configuration Magnum-specific configuration
+@subsection Trade-BasisImageConverter-magnum-configuration Additional magnum-specific configuration
 
 The following options can be configured in addition to the ones that are
 exposed `basisu` parameters.
 
--   `threads`: configure the number of threads basis should use during compression, `0`
-       defaults to the value returned by @ref std::thread::hardware_concurrency().
-
--   `enable_debug_printf`: enable verbose logging in basis
+-   `threads` --- configure the number of threads basis should use during
+    compression, `0` defaults to the value returned by
+    @ref std::thread::hardware_concurrency()
+-   `enable_debug_printf` --- enable verbose logging in basis
 
 @m_class{m-block m-success}
 

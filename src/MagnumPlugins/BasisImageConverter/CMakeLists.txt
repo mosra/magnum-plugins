@@ -44,12 +44,12 @@ add_plugin(BasisImageConverter
 if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(BasisImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(BasisImageConverter
-    PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(BasisImageConverter PUBLIC Magnum::Trade BasisUniversal::Encoder
-    BasisUniversal::Transcoder)
+target_include_directories(BasisImageConverter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
+target_link_libraries(BasisImageConverter PUBLIC
+    Magnum::Trade
+    BasisUniversal::Encoder)
 
 install(FILES BasisImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/BasisImageConverter)
