@@ -125,71 +125,38 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
     }
 
     /* Copy image data into the basis image. There is no way to construct a
-       basis image from existing data as it is based on a std::vector */
+       basis image from existing data as it is based on a std::vector, moreover
+       we need to tightly pack it and flip Y. The `dst` is an Y-flipped view
+       already to make the following loops simpler. */
     params.m_source_images.emplace_back(image.size().x(), image.size().y());
-
-    /* Get data properties and calculate the initial slice based on subimage
-       offset */
-    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
-    Containers::ArrayView<const char> inputData = image.data().suffix(dataProperties.first.sum());
-
-    basisu::image& basisImage = params.m_source_images.back();
-
-    /* Do Y-flip and tight packing of image data */
-    const std::size_t rowSize = image.size().x()*image.pixelSize();
-    const std::size_t rowStride = dataProperties.second.x();
-    const std::size_t packedDataSize = rowSize*image.size().y();
+    auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({params.m_source_images.back().get_ptr(), params.m_source_images.back().get_total_pixels()}, {std::size_t(image.size().y()), std::size_t(image.size().x())})).flipped<0>();
 
     /* basis image is always RGBA, fill in alpha if necessary */
-    if(image.format() == PixelFormat::RGB8Unorm) {
-        const std::size_t width = image.size().x();
-        const std::size_t height = image.size().y();
+    if(image.format() == PixelFormat::RGBA8Unorm) {
+        auto src = image.pixels<Math::Vector4<UnsignedByte>>();
+        for(std::size_t y = 0; y != src.size()[0]; ++y)
+            for(std::size_t x = 0; x != src.size()[1]; ++x)
+                dst[y][x] = src[y][x];
 
-        auto basisView = Containers::arrayCast<Color4ub>(Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
-        for(Int y = 0; y < height; ++y) {
-            const auto src = image.pixels<Color3ub>()[height - y -1];
+    } else if(image.format() == PixelFormat::RGB8Unorm) {
+        auto src = image.pixels<Math::Vector3<UnsignedByte>>();
+        for(std::size_t y = 0; y != src.size()[0]; ++y)
+            for(std::size_t x = 0; x != src.size()[1]; ++x)
+                dst[y][x] = src[y][x]; /* Alpha implicitly 255 */
 
-            Color4ub* destPixel = basisView.suffix(y*width).begin();
-            for(const Color3ub& pixel: src) *(destPixel++) = pixel;
-        }
     } else if(image.format() == PixelFormat::RG8Unorm) {
-        const std::size_t width = image.size().x();
-        const std::size_t height = image.size().y();
+        auto src = image.pixels<Math::Vector2<UnsignedByte>>();
+        for(std::size_t y = 0; y != src.size()[0]; ++y)
+            for(std::size_t x = 0; x != src.size()[1]; ++x)
+                dst[y][x] = Math::gather<'r', 'r', 'r', 'g'>(src[y][x]);
 
-        auto basisView = Containers::arrayCast<Color4ub>(Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
-        for(Int y = 0; y < height; ++y) {
-            const auto src = Containers::arrayCast<const Math::Vector2<UnsignedByte>>(inputData.suffix((height - y - 1)*rowStride).prefix(rowSize));
-
-            Color4ub* destPixel = basisView.suffix(y*width).begin();
-            for(const Math::Vector2<UnsignedByte> pixel: src)
-                *(destPixel++) = Color4ub{pixel.x(), pixel.y()};
-        }
     } else if(image.format() == PixelFormat::R8Unorm) {
-        const std::size_t width = image.size().x();
-        const std::size_t height = image.size().y();
+        auto src = image.pixels<Math::Vector<1, UnsignedByte>>();
+        for(std::size_t y = 0; y != src.size()[0]; ++y)
+            for(std::size_t x = 0; x != src.size()[1]; ++x)
+                dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
 
-        auto basisView = Containers::arrayCast<Color4ub>(Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
-        for(Int y = 0; y < height; ++y) {
-            const auto src = Containers::arrayCast<const UnsignedByte>(inputData
-                .suffix((height - y - 1)*rowStride).prefix(rowSize));
-
-            Color4ub* destPixel = basisView.suffix(y*width).begin();
-            for(const UnsignedByte pixel: src)
-                *(destPixel++) = Color3ub{pixel};
-        }
-    } else {
-        CORRADE_INTERNAL_ASSERT(image.format() == PixelFormat::RGBA8Unorm);
-
-        const std::size_t width = image.size().x();
-        const std::size_t height = image.size().y();
-
-        auto basisView = Containers::arrayCast<Color4ub>(Containers::arrayView<basisu::color_rgba>(basisImage.get_ptr(), width*height));
-        for(Int y = 0; y < height; ++y) {
-            auto basisRow = basisView.suffix(y*width).begin();
-            auto row = image.pixels<Color4ub>()[height - y - 1];
-            for(int x = 0; x < width; ++x) basisRow[x] = row[x];
-        }
-    }
+    } else CORRADE_ASSERT_UNREACHABLE();
 
     basisu::basis_compressor basis;
     basis.init(params);
