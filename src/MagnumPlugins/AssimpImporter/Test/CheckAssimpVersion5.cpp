@@ -23,7 +23,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#cmakedefine ASSIMPIMPORTER_PLUGIN_FILENAME "${ASSIMPIMPORTER_PLUGIN_FILENAME}"
-#cmakedefine STBIMAGEIMPORTER_PLUGIN_FILENAME "${STBIMAGEIMPORTER_PLUGIN_FILENAME}"
-#define ASSIMPIMPORTER_TEST_DIR "${ASSIMPIMPORTER_TEST_DIR}"
-#cmakedefine01 ASSIMP_IS_VERSION_5
+#include <assimp/MathFunctions.h>
+
+int main() {
+    return !(Assimp::Math::getEpsilon<float>() > 0.0f);
+}

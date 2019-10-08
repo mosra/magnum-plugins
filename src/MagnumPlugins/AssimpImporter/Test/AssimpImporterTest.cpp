@@ -360,15 +360,17 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     CORRADE_COMPARE(material->type(), MaterialType::Phong);
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     {
-        CORRADE_EXPECT_FAIL_IF(version < 401,
-            "Assimp < 4.1 behaves properly regarding STL material ambient");
+        /* aiGetVersion*() returns 401 for assimp 5, FFS, so we have to check
+           differently. See CMakeLists.txt for details. */
+        CORRADE_EXPECT_FAIL_IF(version < 401 || ASSIMP_IS_VERSION_5,
+            "Assimp < 4.1 and >= 5.0 behaves properly regarding STL material ambient");
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): white ambient detected, forcing back to black\n");
     }
 
     auto& phongMaterial = static_cast<Trade::PhongMaterialData&>(*material);
     CORRADE_COMPARE(phongMaterial.flags(), Trade::PhongMaterialData::Flags{});
     /* WHY SO COMPLICATED, COME ON */
-    if(version < 401)
+    if(version < 401 || ASSIMP_IS_VERSION_5)
         CORRADE_COMPARE(phongMaterial.ambientColor(), Color3{0.05f});
     else
         CORRADE_COMPARE(phongMaterial.ambientColor(), 0x000000_srgbf);
@@ -948,7 +950,14 @@ void AssimpImporterTest::fileCallbackNotFound() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("some-file.dae"));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
+
+    /* Assimp 5.0 changed the error string. aiGetVersion*() returns 401 for
+       assimp 5, FFS, so we have to check differently. See CMakeLists.txt for
+       details. */
+    if(ASSIMP_IS_VERSION_5)
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
 }
 
 void AssimpImporterTest::fileCallbackReset() {
