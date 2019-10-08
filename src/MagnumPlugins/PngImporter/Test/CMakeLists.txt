@@ -52,3 +52,10 @@ if(BUILD_PLUGINS_STATIC)
     target_link_libraries(PngImporterTest PRIVATE PngImporter)
 endif()
 set_target_properties(PngImporterTest PROPERTIES FOLDER "MagnumPlugins/PngImporter/Test")
+if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+    # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
+    # That's generally okay, *except if* the build is static, the executable
+    # uses a plugin manager and needs to share globals with the plugins (such
+    # as output redirection and so on).
+    set_target_properties(PngImporterTest PROPERTIES ENABLE_EXPORTS ON)
+endif()

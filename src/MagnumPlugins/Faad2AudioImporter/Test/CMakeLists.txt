@@ -58,3 +58,10 @@ if(BUILD_PLUGINS_STATIC)
     target_link_libraries(Faad2AudioImporterTest PRIVATE Faad2AudioImporter)
 endif()
 set_target_properties(Faad2AudioImporterTest PROPERTIES FOLDER "MagnumPlugins/Faad2AudioImporter/Test")
+if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+    # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
+    # That's generally okay, *except if* the build is static, the executable
+    # uses a plugin manager and needs to share globals with the plugins (such
+    # as output redirection and so on).
+    set_target_properties(Faad2AudioImporterTest PROPERTIES ENABLE_EXPORTS ON)
+endif()

@@ -58,3 +58,10 @@ set_target_properties(HarfBuzzFontTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzz
 # version in the test
 target_include_directories(HarfBuzzFontTest PRIVATE
     $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>)
+if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+    # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
+    # That's generally okay, *except if* the build is static, the executable
+    # uses a plugin manager and needs to share globals with the plugins (such
+    # as output redirection and so on).
+    set_target_properties(HarfBuzzFontTest PROPERTIES ENABLE_EXPORTS ON)
+endif()
