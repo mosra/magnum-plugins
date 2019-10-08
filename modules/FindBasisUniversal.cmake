@@ -105,19 +105,13 @@ macro(_basis_setup_source_file source)
     set_property(SOURCE ${source} APPEND PROPERTY COMPILE_DEFINITIONS
         BASISU_NO_ITERATOR_DEBUG_LEVEL)
 
-    # Hide warnings from basis source files
-
-    # GCC- and Clang-specific flags
+    # Hide warnings from basis source files. There's thousands of -Wpedantic
+    # ones which are hard to suppress on old GCCs (which have just -pedantic),
+    # so simply give up and disable all.
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR (CMAKE_CXX_COMPILER_ID MATCHES "(Apple)?Clang"
         AND NOT CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC") OR CORRADE_TARGET_EMSCRIPTEN)
         set_property(SOURCE ${source} APPEND_STRING PROPERTY COMPILE_FLAGS
-            " -Wno-old-style-cast -Wno-zero-as-null-pointer-constant")
-    endif()
-
-    # GCC-specific flags
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set_property(SOURCE ${source} APPEND_STRING PROPERTY COMPILE_FLAGS
-            " -Wno-double-promotion")
+            " -w")
     endif()
 endmacro()
 
