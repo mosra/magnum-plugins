@@ -74,9 +74,11 @@ Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D&
     unsigned char* const data = miniexr_write(image.size().x(), image.size().y(), components, reversedPackedData, &size);
     CORRADE_INTERNAL_ASSERT(data);
 
-    /* Wrap the data in an array with custom deleter (we can't use delete[]) */
-    Containers::Array<char> fileData{reinterpret_cast<char*>(data), std::size_t(size),
-        [](char* data, std::size_t) { std::free(data); }};
+    /* miniexr uses malloc to allocate and since we can't use custom deleters,
+       copy the result into a new-allocated array instead */
+    Containers::Array<char> fileData{size};
+    std::copy_n(data, size, fileData.begin());
+    std::free(data);
 
     return fileData;
 }
