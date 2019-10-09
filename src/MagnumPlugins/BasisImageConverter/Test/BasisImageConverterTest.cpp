@@ -319,7 +319,7 @@ void BasisImageConverterTest::rgba() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 85.25f, 9.84613f}));
+        (DebugTools::CompareImageToFile{_manager, 87.75f, 9.955f}));
 }
 
 }}}}
