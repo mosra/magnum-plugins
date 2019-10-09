@@ -84,9 +84,10 @@ tool. The full form of the configuration is shown below:
 
 @thirdparty This plugin makes use of the
     [Basis Universal GPU Texture Codec](https://github.com/BinomialLLC/basis_universal)
-    library, licensed under @m_class{m-label m-info} **Apache-2.0**
+    library, licensed under @m_class{m-label m-success} **Apache-2.0**
     ([license text](https://opensource.org/licenses/Apache-2.0),
-    [choosealicense.com](https://choosealicense.com/licenses/apache-2.0/)).
+    [choosealicense.com](https://choosealicense.com/licenses/apache-2.0/)). It
+    requires attribution for public use.
 */
 class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImageConverter {
     public:
