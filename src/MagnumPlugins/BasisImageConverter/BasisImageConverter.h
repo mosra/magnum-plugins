@@ -73,19 +73,12 @@ information.
 @section Trade-BasisImageConverter-configuration Plugin-specific configuration
 
 Basis compression can be configured to produce better quality or reduce
-encoding time. Configuration options expose parameters consistently to options
-of the `basisu` tool. The full form of the configuration is shown below:
+encoding time. Configuration options are equivalent to options of the `basisu`
+tool. The full form of the configuration is shown below:
 
 @snippet MagnumPlugins/BasisImageConverter/BasisImageConverter.conf configuration_
 
-@subsection Trade-BasisImageConverter-magnum-configuration Additional magnum-specific configuration
-
-The following options can be configured in addition to the ones that are
-exposed `basisu` parameters.
-
--   `threads` --- configure the number of threads basis should use during
-    compression, `0` defaults to the value returned by
-    @ref std::thread::hardware_concurrency()
+<b></b>
 
 @m_class{m-block m-success}
 

@@ -59,54 +59,69 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
         return {};
     }
 
-    /* Magnum-specific configuration */
+    /* To retain sanity, keep this in the same order and grouping as in the
+       conf file */
+    basisu::basis_compressor_params params;
+    #define PARAM_CONFIG(name, type) params.m_##name = configuration().value<type>(#name)
+    #define PARAM_CONFIG_FIX_NAME(name, type, fixed) params.m_##name = configuration().value<type>(fixed)
+    /* Options */
+    PARAM_CONFIG(quality_level, int);
+    PARAM_CONFIG(perceptual, bool);
+    PARAM_CONFIG(debug, bool);
+    PARAM_CONFIG(debug_images, bool);
+    PARAM_CONFIG(compute_stats, bool);
+    PARAM_CONFIG(compression_level, int);
+
+    /* More options */
+    PARAM_CONFIG(max_endpoint_clusters, int);
+    PARAM_CONFIG(max_selector_clusters, int);
+    PARAM_CONFIG(y_flip, bool);
+    PARAM_CONFIG(check_for_alpha, bool);
+    PARAM_CONFIG(force_alpha, bool);
+    PARAM_CONFIG_FIX_NAME(seperate_rg_to_color_alpha, bool, "separate_rg_to_color_alpha");
+
     UnsignedInt threadCount = configuration().value<Int>("threads");
     if(threadCount == 0) threadCount = std::thread::hardware_concurrency();
-
-    basisu::basis_compressor_params params;
-
     const bool multithreading = threadCount > 1;
     params.m_multithreading = multithreading;
     basisu::job_pool jpool{threadCount};
     params.m_pJob_pool = &jpool;
 
-    #define PARAM_CONFIG(name, type) params.m_##name = configuration().value<type>(#name)
-    PARAM_CONFIG(compression_level, int);
-
-    PARAM_CONFIG(y_flip, bool);
-    PARAM_CONFIG(debug, bool);
-    PARAM_CONFIG(debug_images, bool);
-    PARAM_CONFIG(perceptual, bool);
-    PARAM_CONFIG(no_endpoint_rdo, bool);
-    PARAM_CONFIG(no_selector_rdo, bool);
-    PARAM_CONFIG(read_source_images, bool);
-    PARAM_CONFIG(write_output_basis_files, bool);
-    PARAM_CONFIG(compute_stats, bool);
-    PARAM_CONFIG(check_for_alpha, bool);
-    PARAM_CONFIG(force_alpha, bool);
-    PARAM_CONFIG(seperate_rg_to_color_alpha, bool);
     PARAM_CONFIG(disable_hierarchical_endpoint_codebooks, bool);
 
-    PARAM_CONFIG(hybrid_sel_cb_quality_thresh, float);
-
-    PARAM_CONFIG(global_pal_bits, int);
-    PARAM_CONFIG(global_mod_bits, int);
-
-    PARAM_CONFIG(endpoint_rdo_thresh, float);
-    PARAM_CONFIG(selector_rdo_thresh, float);
-
+    /* Mipmap generation options */
     PARAM_CONFIG(mip_gen, bool);
-    PARAM_CONFIG(mip_renormalize, bool);
-    PARAM_CONFIG(mip_wrapping, bool);
     PARAM_CONFIG(mip_srgb, bool);
     PARAM_CONFIG(mip_scale, float);
-    PARAM_CONFIG(mip_smallest_dimension, int);
     PARAM_CONFIG(mip_filter, std::string);
+    PARAM_CONFIG(mip_renormalize, bool);
+    PARAM_CONFIG(mip_wrapping, bool);
+    PARAM_CONFIG(mip_smallest_dimension, int);
 
-    PARAM_CONFIG(max_endpoint_clusters, int);
-    PARAM_CONFIG(max_selector_clusters, int);
-    PARAM_CONFIG(quality_level, int);
+    /* Backend endpoint/selector RDO codec options */
+    PARAM_CONFIG(no_selector_rdo, bool);
+    PARAM_CONFIG_FIX_NAME(selector_rdo_thresh, float, "selector_rdo_threshold");
+    PARAM_CONFIG(no_endpoint_rdo, bool);
+    PARAM_CONFIG_FIX_NAME(endpoint_rdo_thresh, float, "endpoint_rdo_threshold");
+
+    /* Hierarchical virtual selector codebook options */
+    PARAM_CONFIG_FIX_NAME(global_sel_pal, bool, "global_selector_palette");
+    PARAM_CONFIG_FIX_NAME(auto_global_sel_pal, bool, "auto_global_selector_palette");
+    PARAM_CONFIG_FIX_NAME(no_hybrid_sel_cb, bool, "no_hybrid_selector_codebook");
+    PARAM_CONFIG_FIX_NAME(global_pal_bits, int, "global_palette_bits");
+    PARAM_CONFIG_FIX_NAME(global_mod_bits, int, "global_modifier_bits");
+    PARAM_CONFIG_FIX_NAME(hybrid_sel_cb_quality_thresh, float, "hybrid_sel_codebook_quality_threshold");
+
+    /* Set various fields in the Basis file header */
+    PARAM_CONFIG(userdata0, int);
+    PARAM_CONFIG(userdata1, int);
     #undef PARAM_CONFIG
+    #undef PARAM_CONFIG_FIX_NAME
+
+    /* If these are enabled, the library reads PNGs from a filesystem and then
+       writes basis files there also. DO NOT WANT. */
+    params.m_read_source_images = false;
+    params.m_write_output_basis_files = false;
 
     basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
     params.m_pSel_codebook = &sel_codebook;
