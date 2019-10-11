@@ -49,6 +49,10 @@ target_include_directories(StbVorbisAudioImporter PUBLIC
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbVorbisAudioImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 target_link_libraries(StbVorbisAudioImporter PUBLIC Magnum::Audio)
+set_target_properties(StbVorbisAudioImporter PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters)
 
 install(FILES StbVorbisImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbVorbisAudioImporter)

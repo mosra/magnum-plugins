@@ -49,6 +49,10 @@ target_include_directories(Faad2AudioImporter PUBLIC
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(Faad2AudioImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 target_link_libraries(Faad2AudioImporter PUBLIC Magnum::Audio FAAD2::FAAD2)
+set_target_properties(Faad2AudioImporter PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters)
 
 install(FILES Faad2Importer.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/Faad2AudioImporter)

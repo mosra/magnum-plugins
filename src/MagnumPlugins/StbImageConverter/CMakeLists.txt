@@ -48,6 +48,10 @@ target_include_directories(StbImageConverter PUBLIC
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbImageConverter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 target_link_libraries(StbImageConverter PUBLIC Magnum::Trade)
+set_target_properties(StbImageConverter PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/imageconverters
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/imageconverters
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/imageconverters)
 
 install(FILES StbImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageConverter)
