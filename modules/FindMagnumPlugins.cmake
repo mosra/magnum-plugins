@@ -274,17 +274,18 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
 
-        # BasisImageConverter plugin dependencies
-        if(_component STREQUAL BasisImageConverter)
-            find_package(BasisUniversal COMPONENTS Encoder)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES BasisUniversal::Encoder)
-
-        # BasisImporter has only compiled-in dependencies, except in case of
-        # vcpkg, then we need to link to a library. Use a similar logic as in
-        # FindBasisUniversal, so in case an user wants to disable this, they
-        # can point BASIS_UNIVERSAL_DIR to something else (or just anything,
-        # because in that case it'll be a no-op.
+        # BasisImageConverter / BasisImporter has only compiled-in
+        # dependencies, except in case of vcpkg, then we need to link to a
+        # library. Use a similar logic as in FindBasisUniversal, so in case an
+        # user wants to disable this, they can point BASIS_UNIVERSAL_DIR to
+        # something else (or just anything, because in that case it'll be a
+        # no-op.
+        elseif(_component STREQUAL BasisImageConverter)
+            find_package(basisu CONFIG QUIET)
+            if(basisu_FOUND AND NOT BASIS_UNIVERSAL_DIR)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES basisu_encoder)
+            endif()
         elseif(_component STREQUAL BasisImporter)
             find_package(basisu CONFIG QUIET)
             if(basisu_FOUND AND NOT BASIS_UNIVERSAL_DIR)
