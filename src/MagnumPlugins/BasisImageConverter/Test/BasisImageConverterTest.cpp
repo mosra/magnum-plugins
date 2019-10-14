@@ -283,7 +283,6 @@ void BasisImageConverterTest::rgb() {
         (DebugTools::CompareImageToFile{_manager, 81.0f, 9.46542f}));
 }
 
-
 void BasisImageConverterTest::rgba() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
