@@ -29,6 +29,10 @@ find_package(Magnum REQUIRED DebugTools)
 # Not required
 find_package(Magnum COMPONENTS AnyImageImporter)
 
+# See BasisImageConverter.h for details -- the plugin itself can't be linked to
+# pthread, the app has to be instead
+find_package(Threads REQUIRED)
+
 if(WITH_BASISIMPORTER)
     if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
         set(BASISIMPORTER_TEST_DIR ".")
@@ -63,6 +67,9 @@ corrade_add_test(BasisImageConverterTest BasisImageConverterTest.cpp
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgb-27x63.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-27x63.png)
 target_include_directories(BasisImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+# See BasisImageConverter.h for details -- the plugin itself can't be linked to
+# pthread, the app has to be instead
+target_link_libraries(BasisImageConverterTest PRIVATE Threads::Threads)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(BasisImageConverterTest PRIVATE BasisImageConverter)
     if(Magnum_AnyImageImporter_FOUND)

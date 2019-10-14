@@ -150,15 +150,26 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 _basis_setup_source_file(${_file})
             endforeach()
 
-            find_package(Threads REQUIRED)
-
             add_library(BasisUniversal::Encoder INTERFACE IMPORTED)
             set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                 INTERFACE_INCLUDE_DIRECTORIES ${BasisUniversalEncoder_INCLUDE_DIR})
             set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                 INTERFACE_SOURCES "${BasisUniversalEncoder_SOURCES}")
+            # Explicitly *not* linking this to Threads::Threads because when
+            # done like that, std::thread creation will die on a null function
+            # pointer call (inside __gthread_create, which weakly links to
+            # pthread) in the BasisImageConverter UNLESS the final application
+            # is linked to pthread as well. As far as I tried (four hours
+            # lost), there's no way to check if the weak pthread_create pointer
+            # is null -- tried so far:
+            #  - dlsym(self, "pthread_create") returns non-null
+            #  - dlopen("libpthread.so") returns non-null
+            #  - defining a weakref pthread_create the same way as glibc does
+            #    https://github.com/gcc-mirror/gcc/blob/3e7b85061947bdc7c7465743ba90734566860821/libgcc/gthr-posix.h#L106
+            #    returns non-null
+            # The rest is documented in the BasisImageConverter plugin itself.
             set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES BasisUniversal::Transcoder Threads::Threads)
+                INTERFACE_LINK_LIBRARIES BasisUniversal::Transcoder)
             set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                 INTERFACE_COMPILE_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
         else()

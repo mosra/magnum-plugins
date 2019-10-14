@@ -80,6 +80,23 @@ tool. The full form of the configuration is shown below:
 
 <b></b>
 
+@section Trade-BasisImageConverter-loading Loading the plugin fails undefined symbol: pthread_create
+
+On Linux it may happen that loading the plugin will fail with
+`undefined symbol: pthread_create`. The Basis encoder is optionally
+multithreaded and while linking the dynamic plugin library to `pthread` would
+resolve this particular error, the actual thread creation (if the
+@cb{.conf} threads= @ce option is set to something else than `1`) later would
+crash on a null function pointer call. Unfortunately there's no way to detect
+this case at runtime and fail gracefully, so instead the plugin requires
+* *the application* to link to `pthread` instead. With CMake it can be done
+like this:
+
+@code{.cmake}
+find_package(Threads REQUIRED)
+target_link_libraries(your-application PRIVATE Threads::Threads)
+@endcode
+
 @m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the

@@ -59,6 +59,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void rgb();
     void rgba();
 
+    void rgbaThreads();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
 
@@ -76,7 +78,9 @@ BasisImageConverterTest::BasisImageConverterTest() {
               &BasisImageConverterTest::rg,
 
               &BasisImageConverterTest::rgb,
-              &BasisImageConverterTest::rgba});
+              &BasisImageConverterTest::rgba,
+
+              &BasisImageConverterTest::rgbaThreads});
 
     /* Pull in the AnyImageImporter dependency for image comparison, load
        StbImageImporter from the build tree, if defined. Otherwise it's static
@@ -303,6 +307,53 @@ void BasisImageConverterTest::rgba() {
             destPixels[y][x] = sourcePixels[y][x];
 
     const auto data = _converterManager.instantiate("BasisImageConverter")->exportToData(imageWithSkip);
+    CORRADE_VERIFY(data);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    /* Basis can only load RGBA8 uncompressed data, which corresponds to RGB1
+       from our RGB8 image data. */
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 87.75f, 9.955f}));
+}
+
+void BasisImageConverterTest::rgbaThreads() {
+    /* Same as rgba, except that it's using all available threads instead of
+       no threading. Expecting the exact same output (and no crashes, ofc.) */
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    Containers::Pointer<AbstractImporter> pngImporter =
+        _manager.instantiate("PngImporter");
+    pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"));
+    const auto originalImage = pngImporter->image2D(0);
+
+    /* Use the original image and add a skip of {8, 7} to ensure the converter
+       reads the image data properly. */
+    const UnsignedInt dataSize = (27+8)*(63+7)*4;
+    Image2D imageWithSkip{PixelStorage{}.setSkip({8, 7, 0}),
+        PixelFormat::RGBA8Unorm, originalImage->size(),
+        Containers::Array<char>{Containers::ValueInit, dataSize}};
+
+    auto sourcePixels = originalImage->pixels<Color4ub>();
+    auto destPixels = imageWithSkip.pixels<Color4ub>();
+    for(std::size_t y = 0; y != sourcePixels.size()[0]; ++y)
+        for(std::size_t x = 0; x != sourcePixels.size()[1]; ++x)
+            destPixels[y][x] = sourcePixels[y][x];
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    converter->configuration().setValue("threads", "0");
+    const auto data = converter->exportToData(imageWithSkip);
     CORRADE_VERIFY(data);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
