@@ -43,6 +43,12 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-new New features
 
+-   MSVC 2019 compatibility, following other Magnum projects
+-   When using Magnum as a CMake subproject, it now puts all binaries into a
+    common directory to simplify `PATH` handling and dynamic plugin loading.
+    For more information see @ref cmake-plugins-subproject,
+    [mosra/magnum#357](https://github.com/mosra/magnum/issues/357) and
+    [mosra/magnum-plugins#63](https://github.com/mosra/magnum-plugins/issues/63).
 -   New @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin for importing
     MP3 files (see [mosra/magnum-plugins#60](https://github.com/mosra/magnum-plugins/pull/60))
 -   New @ref Trade::BasisImporter "BasisImporter" plugin for importing
