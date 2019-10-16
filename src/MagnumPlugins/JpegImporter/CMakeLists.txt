@@ -26,14 +26,6 @@
 find_package(Magnum REQUIRED Trade)
 find_package(JPEG REQUIRED)
 
-# Exit early if libJPEG is not recent enough (we need jpeg_mem_src() for
-# loading images from memory). Unfortunately JPEG_VERSION is provided only
-# since CMake 3.12, on older versions we can't check and it'll blow up during
-# compile.
-if(DEFINED JPEG_VERSION AND JPEG_VERSION VERSION_LESS 80)
-    message(FATAL_ERROR "JpegImporter needs libjpeg version 80 but only ${JPEG_VERSION} found, which doesn't have jpeg_mem_src()")
-endif()
-
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_JPEGIMPORTER_BUILD_STATIC 1)
 endif()

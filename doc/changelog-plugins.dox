@@ -124,9 +124,6 @@ namespace Magnum {
     present on versions before 3.12. The @ref Trade::JpegImporter "JpegImporter"
     plugin is not affected by this. See also
     [mosra/magnum-plugins#51](https://github.com/mosra/magnum-plugins/issues/51).
--   The @ref Trade::JpegImporter "JpegImporter" plugin now explicitly checks
-    for libJPEG version and providing a clear error message in case
-    `jpeg_mem_src()` is not available (see [mosra/homebrew-magnum#3](https://github.com/mosra/homebrew-magnum/issues/3))
 -   Upgraded @ref Trade::TinyGltfImporter "TinyGltfImporter" to use json.hpp
     3.3.0, fixing a compile error on some Clang versions (see
     [mosra/magnum-plugins#54](https://github.com/mosra/magnum-plugins/issues/54))

@@ -39,10 +39,6 @@
 #endif
 #include <jpeglib.h>
 
-#if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
-#error This version of libjpeg doesn't support jpeg_mem_src(). Please use a newer one.
-#endif
-
 namespace Magnum { namespace Trade {
 
 JpegImporter::JpegImporter() = default;
