@@ -133,6 +133,8 @@ namespace Magnum {
     and `JpegImageConverter` components
 -   `FindMagnumPlugins.cmake` now correctly finds debug versions of statically
     built plugins when using Vcpkg
+-   Fixed `FindMagnumPlugins.cmake` to correctly link to zlib also when both
+    a debug and a release version of libpng is found
 -   `FindAssimp.cmake` now can optionally link to the IrrXML library (needed
     for static builds on Vcpkg)
 -   Emscripten builds now have the `-fPIC` option disabled by default as it

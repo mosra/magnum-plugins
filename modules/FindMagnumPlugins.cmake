@@ -374,29 +374,19 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # No special setup for the OpenDdl library
         # OpenGexImporter has no dependencies
 
-        # PngImageConverter plugin dependencies
-        elseif(_component STREQUAL PngImageConverter)
+        # PngImageConverter / PngImporter plugin dependencies
+        elseif(_component STREQUAL PngImageConverter OR _component STREQUAL PngImporter)
             find_package(PNG)
             # Need to handle special cases where both debug and release
             # libraries are available (in form of debug;A;optimized;B in
-            # PNG_LIBRARIES), thus appending them one by one
+            # PNG_LIBRARIES), thus appending them one by one. Imported target
+            # that would make this obsolete is unfortunately only since CMake
+            # 3.5. We need to link to zlib explicitly in this case as well
+            # (whereas PNG_LIBRARIES contains that already), fortunately zlib
+            # has an imported target in 3.4 already.
             if(PNG_LIBRARY_DEBUG AND PNG_LIBRARY_RELEASE)
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${PNG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${PNG_LIBRARY_DEBUG}>")
-            else()
-                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES ${PNG_LIBRARIES})
-            endif()
-
-        # PngImporter plugin dependencies
-        elseif(_component STREQUAL PngImporter)
-            find_package(PNG)
-            # Need to handle special cases where both debug and release
-            # libraries are available (in form of debug;A;optimized;B in
-            # PNG_LIBRARIES), thus appending them one by one
-            if(PNG_LIBRARY_DEBUG AND PNG_LIBRARY_RELEASE)
-                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${PNG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${PNG_LIBRARY_DEBUG}>")
+                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${PNG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${PNG_LIBRARY_DEBUG}>" ZLIB::ZLIB)
             else()
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${PNG_LIBRARIES})
