@@ -113,7 +113,7 @@ endif()
 set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR share/cmake/MagnumPlugins)
 
 # Library version
-set(MAGNUM_LIBRARY_VERSION 2.2)
+set(MAGNUM_LIBRARY_VERSION 2.3)
 set(MAGNUM_LIBRARY_SOVERSION 2)
 
 # A single output location. After a decade of saying NO THIS IS A NON-SOLUTION
