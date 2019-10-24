@@ -43,6 +43,8 @@ namespace Magnum {
 -   **Guillaume Jacquemin** ([\@williamjcm](https://github.com/williamjcm)) ---
     MSYS2 packages, @ref Audio::DrWavImporter "DrWavAudioImporter" updates and
     a new @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin
+-   **[\@hunt978](https://github.com/hunt978)** --- fixing
+    @ref Trade::JpegImporter "JpegImporter" build on older CMake versions
 -   **Igor Kalevatykh** ([\@ikalevatykh](https://github.com/ikalevatykh)) ---
     fixes for @ref Trade::AssimpImporter "AssimpImporter" workarounds and bugs
 -   **Jonathan Hale** ([\@Squareys](https://github.com/Squareys)) ---
@@ -67,7 +69,7 @@ namespace Magnum {
     Gentoo ebuild
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports
--   **[\@sigman78](https://github.com/sigman78)** --- Initial MSVC 2017 port,
+-   **[\@sigman78](https://github.com/sigman78)** --- initial MSVC 2017 port,
     Vcpkg package
 -   **Tobias Stein** ([\@NussknackerXXL](https://github.com/NussknackerXXL)) ---
     the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin

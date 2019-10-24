@@ -30,9 +30,14 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@section changelog-plugins-latest Changes since 2019.01
+@anchor changelog-plugins-latest
 
-@subsection changelog-plugins-latest-dependencies Dependency changes
+@section changelog-plugins-2019-10 2019.10
+
+Released 2019-10-24, tagged as
+[v2019.10](https://github.com/mosra/magnum-plugins/releases/tag/v2019.10).
+
+@subsection changelog-plugins-2019-10-dependencies Dependency changes
 
 -   Minimal supported CMake version is now 3.4. Older versions are not
     supported anymore and all workarounds for them were removed. Download a
@@ -41,7 +46,7 @@ namespace Magnum {
     that shouldn't affect any additional distribution compared to the CMake 3.1
     requirement in 2019.01.
 
-@subsection changelog-plugins-latest-new New features
+@subsection changelog-plugins-2019-10-new New features
 
 -   MSVC 2019 compatibility, following other Magnum projects
 -   When using Magnum as a CMake subproject, it now puts all binaries into a
@@ -51,13 +56,14 @@ namespace Magnum {
     [mosra/magnum-plugins#63](https://github.com/mosra/magnum-plugins/issues/63).
 -   New @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin for importing
     MP3 files (see [mosra/magnum-plugins#60](https://github.com/mosra/magnum-plugins/pull/60))
--   New @ref Trade::BasisImporter "BasisImporter" plugin for importing
-    Basis files (see [mosra/magnum-plugins#62](https://github.com/mosra/magnum-plugins/pull/62));
-    support for Basis-encoded textures in @ref Trade::TinyGltfImporter "TinyGltfImporter"
--   New @ref Trade::BasisImageConverter "BasisImageConverter" plugin for writing
-    Basis files (see [mosra/magnum-plugins#65](https://github.com/mosra/magnum-plugins/pull/65))
+-   New @ref Trade::BasisImporter "BasisImporter" and
+    @ref Trade::BasisImageConverter "BasisImageConverter" plugin for importing
+    and converting Basis files, support for Basis-encoded textures in
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" (see [mosra/magnum-plugins#62](https://github.com/mosra/magnum-plugins/pull/62),
+    [mosra/magnum-plugins#65](https://github.com/mosra/magnum-plugins/pull/65)
+    and [mosra/magnum-plugins#69](https://github.com/mosra/magnum-plugins/issues/69))
 
-@subsection changelog-plugins-latest-changes Changes and improvements
+@subsection changelog-plugins-2019-10-changes Changes and improvements
 
 -   Calling @ref Trade::AbstractImporter::image2D() "image2D()" in
     @ref Trade::AssimpImporter "AssimpImporter",
@@ -115,7 +121,7 @@ namespace Magnum {
 -   Actually reporting errors from @ref Text::FreeTypeFont "FreeTypeFont"
     instead of just failing without a message
 
-@subsection changelog-plugins-latest-buildsystem Build system
+@subsection changelog-plugins-2019-10-buildsystem Build system
 
 -   @ref building-plugins-packages-msys "MSYS2 packages" are now in official
     repositories, installable directly via `pacman`
@@ -141,7 +147,7 @@ namespace Magnum {
     causes linker errors related to `__memory_base` on 1.38.36 (see also
     [emscripten-core/emscripten#8761](https://github.com/emscripten-core/emscripten/issues/8761))
 
-@subsection changelog-plugins-latest-bugfixes Bug fixes
+@subsection changelog-plugins-2019-10-bugfixes Bug fixes
 
 -   @ref Trade::AssimpImporter "AssimpImporter" was returning a random value
     for material shininess with STL models, now it correctly returns
@@ -165,7 +171,7 @@ namespace Magnum {
     @ref Text::StbTrueTypeFont "StbTrueTypeFont" (see
     [mosra/magnum-plugins#29](https://github.com/mosra/magnum-plugins/issues/29))
 
-@subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
+@subsection changelog-plugins-2019-10-compatibility Potential compatibility breakages, removed APIs
 
 -   Removed the `ColladaImporter` plugin, deprecated since 2018.10, because it
     was based on an outdated toolkit and, due to the complexity of the COLLADA
