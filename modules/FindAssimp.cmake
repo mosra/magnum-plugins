@@ -66,16 +66,18 @@ if(WIN32 AND MSVC)
 
     find_library(ASSIMP_LIBRARY_RELEASE assimp-${ASSIMP_MSVC_VERSION}-mt.lib PATHS ${ASSIMP_LIBRARY_DIR})
     find_library(ASSIMP_LIBRARY_DEBUG assimp-${ASSIMP_MSVC_VERSION}-mtd.lib PATHS ${ASSIMP_LIBRARY_DIR})
-
-    # Static build of Assimp (built with Vcpkg) depends on IrrXML, find that
-    # one as well. If not found, simply don't link to it --- it might be a
-    # dynamic build, or a static build using system IrrXML. Related issue:
-    # https://github.com/Microsoft/vcpkg/issues/5012
-    find_library(ASSIMP_IRRXML_LIBRARY_RELEASE IrrXML.lib)
-    find_library(ASSIMP_IRRXML_LIBRARY_DEBUG IrrXMLd.lib)
 else()
     find_library(ASSIMP_LIBRARY_RELEASE assimp)
     find_library(ASSIMP_LIBRARY_DEBUG assimpd)
+endif()
+
+# Static build of Assimp (built with Vcpkg, any system) depends on IrrXML, find
+# that one as well. If not found, simply don't link to it --- it might be a
+# dynamic build (on Windows it's a *.lib either way), or a static build using
+# system IrrXML. Related issue: https://github.com/Microsoft/vcpkg/issues/5012
+if(ASSIMP_LIBRARY_DEBUG MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$" OR ASSIMP_LIBRARY_RELEASE MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$")
+    find_library(ASSIMP_IRRXML_LIBRARY_RELEASE IrrXML)
+    find_library(ASSIMP_IRRXML_LIBRARY_DEBUG IrrXMLd)
 endif()
 
 include(SelectLibraryConfigurations)

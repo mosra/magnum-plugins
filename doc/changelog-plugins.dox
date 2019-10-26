@@ -30,7 +30,12 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@anchor changelog-plugins-latest
+@section changelog-latest Changes since 2019.10
+
+@subsection changelog-latest-buildsystem Build system
+
+-   `FindAssimp` is updated to look for IrrXML on all systems, not just
+    Windows, since Vcpkg has the static build the same on all platforms
 
 @section changelog-plugins-2019-10 2019.10
 
