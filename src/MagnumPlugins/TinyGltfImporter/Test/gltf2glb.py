@@ -43,10 +43,11 @@ def pad_size_32b(size): return (4 - size%4)%4
 parser = argparse.ArgumentParser()
 parser.add_argument('input')
 parser.add_argument('--no-embed', action='store_true')
+parser.add_argument('-o', '--output')
 args = parser.parse_args()
 
 file_in = args.input
-file_out = os.path.splitext(file_in)[0] + '.glb'
+file_out = args.output if args.output else os.path.splitext(file_in)[0] + '.glb'
 
 print("Converting to", file_out)
 
