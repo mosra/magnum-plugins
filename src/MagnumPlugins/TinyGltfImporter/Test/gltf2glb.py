@@ -53,27 +53,28 @@ print("Converting to", file_out)
 
 with open(file_in) as f:
     data = json.load(f)
-    bin_data = bytearray()
 
-    if not args.no_embed and "buffers" in data:
-        assert len(data['buffers']) <= 1
-        if data['buffers']:
-            uri = data['buffers'][0]['uri']
-            if uri[:5] == 'data:':
-                d = base64.b64decode(uri.split('base64,')[1])
-            else:
-                with open(uri, 'rb') as bf:
-                    d = bf.read()
-            bin_data.extend(d)
-            bin_data.extend(b' '*pad_size_32b(len(d)))
-            del data['buffers'][0]['uri']
+bin_data = bytearray()
 
-            data['buffers'][0]['byteLength'] = len(bin_data)
+if not args.no_embed and "buffers" in data:
+    assert len(data['buffers']) <= 1
+    if data['buffers']:
+        uri = data['buffers'][0]['uri']
+        if uri[:5] == 'data:':
+            d = base64.b64decode(uri.split('base64,')[1])
+        else:
+            with open(uri, 'rb') as bf:
+                d = bf.read()
+        bin_data.extend(d)
+        bin_data.extend(b' '*pad_size_32b(len(d)))
 
-    json_data = json.dumps(data, separators=(',', ':')).encode('utf-8')
-    # Append padding bytes so that BIN chunk is aligned to 4 bytes
-    json_chunk_align = pad_size_32b(len(json_data))
-    json_chunk_length = len(json_data) + json_chunk_align
+        del data['buffers'][0]['uri']
+        data['buffers'][0]['byteLength'] = len(bin_data)
+
+json_data = json.dumps(data, separators=(',', ':')).encode('utf-8')
+# Append padding bytes so that BIN chunk is aligned to 4 bytes
+json_chunk_align = pad_size_32b(len(json_data))
+json_chunk_length = len(json_data) + json_chunk_align
 
 with open(file_out, 'wb') as outfile:
     length = glb_header.size + chunk_header.size + json_chunk_length
