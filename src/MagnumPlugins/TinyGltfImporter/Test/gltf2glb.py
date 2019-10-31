@@ -38,7 +38,7 @@ CHUNK_TYPE_BIN = 0x004E4942
 glb_header = struct.Struct('<4sII')
 chunk_header = struct.Struct('<II')
 
-def pad_size_32b(size): return 4 - size%4
+def pad_size_32b(size): return (4 - size%4)%4
 
 parser = argparse.ArgumentParser()
 parser.add_argument('input')
