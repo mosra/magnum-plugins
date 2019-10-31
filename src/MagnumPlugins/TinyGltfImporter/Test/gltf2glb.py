@@ -43,6 +43,7 @@ def pad_size_32b(size): return (4 - size%4)%4
 parser = argparse.ArgumentParser()
 parser.add_argument('input')
 parser.add_argument('--no-embed', action='store_true')
+parser.add_argument('--bundle-images', action='store_true')
 parser.add_argument('-o', '--output')
 args = parser.parse_args()
 
@@ -66,10 +67,44 @@ if not args.no_embed and "buffers" in data:
             with open(uri, 'rb') as bf:
                 d = bf.read()
         bin_data.extend(d)
-        bin_data.extend(b' '*pad_size_32b(len(d)))
 
-        del data['buffers'][0]['uri']
-        data['buffers'][0]['byteLength'] = len(bin_data)
+if args.bundle_images:
+    assert "buffers" in data
+    assert not args.no_embed
+
+    for image in data['images']:
+        assert 'bufferView' not in image
+        assert 'uri' in image
+
+        # Set image name and mime type if not already present, so we have
+        # something to extract the file name / extension from in glb2gltf
+        basename, ext = os.path.splitext(image['uri'])
+        if 'mimeType' not in image:
+            if ext == '.jpg': image['mimeType'] = 'image/jpeg'
+            elif ext == '.png': image['mimeType'] = 'image/png'
+            elif ext == '.basis': image['mimeType'] = 'image/x-basis'
+            else: assert False, "Unknown image file extension %s" % ext
+        if 'name' not in image: image['name'] = basename
+
+        # Load the image data, put it into a new buffer view
+        print("Bundling", image['uri'])
+        with open(image['uri'], 'rb') as imf:
+            image_data = imf.read()
+        data['bufferViews'] += [{
+            'buffer': 0,
+            'byteOffset': len(bin_data),
+            'byteLength': len(image_data)
+        }]
+        bin_data += image_data
+        del image['uri']
+        image['bufferView'] = len(data['bufferViews']) - 1
+
+# Pad the buffer, update its length
+if not args.no_embed and 'buffers' in data and data['buffers']:
+    bin_data.extend(b' '*pad_size_32b(len(bin_data)))
+
+    del data['buffers'][0]['uri']
+    data['buffers'][0]['byteLength'] = len(bin_data)
 
 json_data = json.dumps(data, separators=(',', ':')).encode('utf-8')
 # Append padding bytes so that BIN chunk is aligned to 4 bytes
