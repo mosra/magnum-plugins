@@ -35,8 +35,10 @@ import base64
 CHUNK_TYPE_JSON = 0x4E4F534A
 CHUNK_TYPE_BIN = 0x004E4942
 
-CHUNK_HEADER_SIZE = 8
-GLB_HEADER_SIZE = 12
+glb_header = struct.Struct('<4sII')
+chunk_header = struct.Struct('<II')
+
+def pad_size_32b(size): return 4 - size%4
 
 def main():
     parser = argparse.ArgumentParser()
@@ -44,53 +46,51 @@ def main():
     parser.add_argument('--no-embed', action='store_true')
     args = parser.parse_args()
 
-    fileIn = args.input
-    fileOut = os.path.splitext(fileIn)[0] + '.glb'
+    file_in = args.input
+    file_out = os.path.splitext(file_in)[0] + '.glb'
 
-    print("Converting to", fileOut)
+    print("Converting to", file_out)
 
-    with open(fileIn) as f:
+    with open(file_in) as f:
         data = json.load(f)
         binData = bytearray()
 
         if not args.no_embed and "buffers" in data:
-            assert(len(data["buffers"]) <= 1)
-            for buffer in data["buffers"]:
+            assert len(data['buffers']) <= 1
+            for buffer in data['buffers']:
                 uri = buffer['uri']
                 if uri[:5] == 'data:':
-                    d = base64.b64decode(uri.split("base64,")[1])
+                    d = base64.b64decode(uri.split('base64,')[1])
                 else:
-                    with open(uri, "rb") as bf:
+                    with open(uri, 'rb') as bf:
                         d = bf.read()
                 binData.extend(d)
-                binData.extend(b' '*(4-(len(d)%4)))
+                binData.extend(b' '*pad_size_32b(len(d)))
 
         if binData:
-            data["buffers"] = [{"byteLength": len(binData)}]
+            data['buffers'] = [{'byteLength': len(binData)}]
 
-        jsonData = json.dumps(data, separators=(',', ':')).encode()
+        json_data = json.dumps(data, separators=(',', ':')).encode('utf-8')
         # Append padding bytes so that BIN chunk is aligned to 4 bytes
-        jsonChunkAlign = (4 - (len(jsonData) % 4)) % 4
-        jsonChunkLength = len(jsonData) + jsonChunkAlign
+        json_chunk_align = pad_size_32b(len(json_data))
+        json_chunk_length = len(json_data) + json_chunk_align
 
-        with open(fileOut, "wb") as outfile:
-            gtlf_version = 2
-            length = GLB_HEADER_SIZE + CHUNK_HEADER_SIZE + jsonChunkLength
+        with open(file_out, 'wb') as outfile:
+            length = glb_header.size + chunk_header.size + json_chunk_length
             if binData:
-                length += CHUNK_HEADER_SIZE + len(binData)
+                length += chunk_header.size + len(binData)
 
             # Write header
-            outfile.write(b'glTF')
-            outfile.write(struct.pack("<II", gtlf_version, length))
+            outfile.write(glb_header.pack(b'glTF', 2, length))
 
             # Write JSON chunk
-            outfile.write(struct.pack("<II", jsonChunkLength, CHUNK_TYPE_JSON))
-            outfile.write(jsonData)
-            outfile.write(b' '*jsonChunkAlign)  # padding
+            outfile.write(chunk_header.pack(json_chunk_length, CHUNK_TYPE_JSON))
+            outfile.write(json_data)
+            outfile.write(b' '*json_chunk_align)
 
             # Write BIN chunk
             if binData:
-                outfile.write(struct.pack("<II", len(binData), CHUNK_TYPE_BIN))
+                outfile.write(chunk_header.pack(len(binData), CHUNK_TYPE_BIN))
                 outfile.write(binData)
 
 if __name__ == "__main__":
