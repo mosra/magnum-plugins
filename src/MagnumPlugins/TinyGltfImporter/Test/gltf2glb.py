@@ -56,8 +56,8 @@ with open(file_in) as f:
 
     if not args.no_embed and "buffers" in data:
         assert len(data['buffers']) <= 1
-        for buffer in data['buffers']:
-            uri = buffer['uri']
+        if data['buffers']:
+            uri = data['buffers'][0]['uri']
             if uri[:5] == 'data:':
                 d = base64.b64decode(uri.split('base64,')[1])
             else:
@@ -65,9 +65,9 @@ with open(file_in) as f:
                     d = bf.read()
             binData.extend(d)
             binData.extend(b' '*pad_size_32b(len(d)))
+            del data['buffers'][0]['uri']
 
-    if binData:
-        data['buffers'] = [{'byteLength': len(binData)}]
+            data['buffers'][0]['byteLength'] = len(binData)
 
     json_data = json.dumps(data, separators=(',', ':')).encode('utf-8')
     # Append padding bytes so that BIN chunk is aligned to 4 bytes
