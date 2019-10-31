@@ -53,7 +53,7 @@ print("Converting to", file_out)
 
 with open(file_in) as f:
     data = json.load(f)
-    binData = bytearray()
+    bin_data = bytearray()
 
     if not args.no_embed and "buffers" in data:
         assert len(data['buffers']) <= 1
@@ -64,11 +64,11 @@ with open(file_in) as f:
             else:
                 with open(uri, 'rb') as bf:
                     d = bf.read()
-            binData.extend(d)
-            binData.extend(b' '*pad_size_32b(len(d)))
+            bin_data.extend(d)
+            bin_data.extend(b' '*pad_size_32b(len(d)))
             del data['buffers'][0]['uri']
 
-            data['buffers'][0]['byteLength'] = len(binData)
+            data['buffers'][0]['byteLength'] = len(bin_data)
 
     json_data = json.dumps(data, separators=(',', ':')).encode('utf-8')
     # Append padding bytes so that BIN chunk is aligned to 4 bytes
@@ -77,8 +77,8 @@ with open(file_in) as f:
 
 with open(file_out, 'wb') as outfile:
     length = glb_header.size + chunk_header.size + json_chunk_length
-    if binData:
-        length += chunk_header.size + len(binData)
+    if bin_data:
+        length += chunk_header.size + len(bin_data)
 
     # Write header
     outfile.write(glb_header.pack(b'glTF', 2, length))
@@ -89,6 +89,6 @@ with open(file_out, 'wb') as outfile:
     outfile.write(b' '*json_chunk_align)
 
     # Write BIN chunk
-    if binData:
-        outfile.write(chunk_header.pack(len(binData), CHUNK_TYPE_BIN))
-        outfile.write(binData)
+    if bin_data:
+        outfile.write(chunk_header.pack(len(bin_data), CHUNK_TYPE_BIN))
+        outfile.write(bin_data)
