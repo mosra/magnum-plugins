@@ -38,6 +38,7 @@ chunk_header = struct.Struct('<II')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('input')
+parser.add_argument('--extract-images', action='store_true')
 parser.add_argument('-o', '--output')
 args = parser.parse_args()
 
@@ -72,6 +73,56 @@ bin_data = data[chunk_header.size:]
 
 assert len(json_data['buffers']) == 1
 json_data['buffers'][0]['uri'] = file_bin
+
+# Separate images. To make this easy, we expect the images to be stored in
+# a continuous suffix of buffer views.
+if args.extract_images:
+    earliest_image_buffer_view = len(json_data['bufferViews'])
+    earliest_image_buffer_offset = json_data['buffers'][0]['byteLength']
+    for image in json_data['images']:
+        assert 'bufferView' in image
+        assert 'uri' not in image
+
+        if image['mimeType'] == 'image/jpeg': ext = '.jpg'
+        elif image['mimeType'] == 'image/png': ext = '.png'
+        elif image['mimeType'] == 'image/x-basis': ext = '.basis'
+        else: assert False, "Unknown MIME type %s" % image['mimeType']
+
+        # Remember the earliest buffer view used
+        buffer_view_id = image['bufferView']
+        earliest_image_buffer_view = min(buffer_view_id, earliest_image_buffer_view)
+
+        # Expect there's just one buffer, containing everything. Remember the
+        # earliest offset in that buffer
+        buffer_view = json_data['bufferViews'][buffer_view_id]
+        assert buffer_view['buffer'] == 0
+        earliest_image_buffer_offset = min(buffer_view['byteOffset'], earliest_image_buffer_offset)
+
+        # Save the image data
+        image_out = image['name'] + ext
+        print("Extracting", image_out)
+        with open(image_out, 'wb') as imf:
+            imf.write(bin_data[buffer_view['byteOffset']:buffer_view['byteOffset'] + buffer_view['byteLength']])
+
+        # Replace the buffer view reference with a file URI
+        del image['bufferView']
+        image['uri'] = image_out
+
+    # Check that all buffer views before the first image one are before the
+    # first offset as well. I doubt the views will overlap
+    for i in range(earliest_image_buffer_view):
+        assert json_data['bufferViews'][i]['byteOffset'] + json_data['bufferViews'][i]['byteLength'] <= earliest_image_buffer_offset
+
+    # After the earliest buffer views, there should be as many views as there
+    # is images
+    assert earliest_image_buffer_view + len(json_data['images']) == len(json_data['bufferViews'])
+
+    # Cut the binary data before the first image
+    bin_data = bin_data[:earliest_image_buffer_offset]
+    json_data['buffers'][0]['byteLength'] = len(bin_data)
+
+    # Remove now-unneeded buffer views
+    del json_data['bufferViews'][earliest_image_buffer_view:]
 
 with open(file_out, 'wb') as of:
     of.write(json.dumps(json_data, indent=2).encode('utf-8'))
