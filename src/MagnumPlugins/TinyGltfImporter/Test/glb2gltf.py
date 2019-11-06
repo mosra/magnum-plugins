@@ -77,7 +77,7 @@ json_data['buffers'][0]['uri'] = file_bin
 # Separate images. To make this easy, we expect the images to be stored in
 # a continuous suffix of buffer views.
 if args.extract_images:
-    earliest_image_buffer_view = len(json_data['bufferViews'])
+    image_buffer_views = set()
     earliest_image_buffer_offset = json_data['buffers'][0]['byteLength']
     for image in json_data['images']:
         assert 'bufferView' in image
@@ -90,7 +90,7 @@ if args.extract_images:
 
         # Remember the earliest buffer view used
         buffer_view_id = image['bufferView']
-        earliest_image_buffer_view = min(buffer_view_id, earliest_image_buffer_view)
+        image_buffer_views.add(buffer_view_id)
 
         # Expect there's just one buffer, containing everything. Remember the
         # earliest offset in that buffer
@@ -115,19 +115,35 @@ if args.extract_images:
 
     # Check that all buffer views before the first image one are before the
     # first offset as well. I doubt the views will overlap
-    for i in range(earliest_image_buffer_view):
+    for i in range(list(image_buffer_views)[0]):
         assert json_data['bufferViews'][i]['byteOffset'] + json_data['bufferViews'][i]['byteLength'] <= earliest_image_buffer_offset
 
-    # After the earliest buffer views, there should be as many views as there
-    # is images
-    assert earliest_image_buffer_view + len(json_data['images']) == len(json_data['bufferViews'])
+    # Remove image-related buffer views, move back everything after
+    original_offset = 0
+    current_id = 0
+    original_bin_data = bin_data
+    bin_data = bytearray()
+    for i, view in enumerate(json_data['bufferViews']):
+        # A view that we keep, put it to the new bin data
+        if i not in image_buffer_views:
+            # TODO: This will probably mess up with alignment when there are
+            #   data that are not multiples of 4 bytes
+            original_offset = view['byteOffset']
+            view['byteOffset'] = len(bin_data)
+            bin_data += original_bin_data[original_offset:original_offset + view['byteLength']]
 
-    # Cut the binary data before the first image
-    bin_data = bin_data[:earliest_image_buffer_offset]
+            current_id += 1
+
+        # A view that we remove, update subsequent IDs in all accessors
+        else:
+            for a in json_data['accessors']:
+                if a['bufferView'] > current_id: a['bufferView'] -= 1
+
+    # Remove now unused views
+    json_data['bufferViews'] = [view for i, view in enumerate(json_data['bufferViews']) if not i in image_buffer_views]
+
+    # Update with new bin data size
     json_data['buffers'][0]['byteLength'] = len(bin_data)
-
-    # Remove now-unneeded buffer views
-    del json_data['bufferViews'][earliest_image_buffer_view:]
 
 with open(file_out, 'wb') as of:
     of.write(json.dumps(json_data, indent=2).encode('utf-8'))
