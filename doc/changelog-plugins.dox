@@ -30,12 +30,16 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@section changelog-latest Changes since 2019.10
+@section changelog-plugins-latest Changes since 2019.10
 
-@subsection changelog-latest-buildsystem Build system
+@subsection changelog-plugins-latest-buildsystem Build system
 
--   `FindAssimp` is updated to look for IrrXML on all systems, not just
+-   `FindAssimp.cmake` is updated to look for IrrXML on all systems, not just
     Windows, since Vcpkg has the static build the same on all platforms
+-   `FindBasisUniversal.cmake` is updated to work with the Vcpkg package of
+    Basis Universal (and consequently builds of the fork at
+    https://github.com/jherico/basis_universal as well). See
+    [mosra/magnum-plugins#72](https://github.com/mosra/magnum-plugins/pull/72).
 
 @section changelog-plugins-2019-10 2019.10
 
