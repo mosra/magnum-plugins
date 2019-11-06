@@ -98,8 +98,13 @@ if args.extract_images:
         assert buffer_view['buffer'] == 0
         earliest_image_buffer_offset = min(buffer_view['byteOffset'], earliest_image_buffer_offset)
 
-        # Save the image data
-        image_out = image['name'] + ext
+        # Save the image data. If the image doesn't have a name, pick the glb
+        # filename (and assume there's just one image)
+        if 'name' not in image:
+            assert len(json_data['images']) == 1
+            image_out = os.path.splitext(os.path.basename(args.input))[0] + ext
+        else:
+            image_out = image['name'] + ext
         print("Extracting", image_out)
         with open(image_out, 'wb') as imf:
             imf.write(bin_data[buffer_view['byteOffset']:buffer_view['byteOffset'] + buffer_view['byteLength']])
