@@ -462,7 +462,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             /* View on the key data */
             const auto inputDataFound = samplerData.find(sampler.input);
             CORRADE_INTERNAL_ASSERT(inputDataFound != samplerData.end());
-            const auto keys = Containers::arrayCast<const Float>(data.suffix(std::get<1>(inputDataFound->second)).prefix(std::get<0>(inputDataFound->second).size()));
+            const auto keys = Containers::arrayCast<Float>(data.suffix(std::get<1>(inputDataFound->second)).prefix(std::get<0>(inputDataFound->second).size()));
 
             /* Interpolation mode */
             Animation::Interpolation interpolation;
@@ -511,7 +511,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 } else {
                     type = AnimationTrackType::Vector3;
                     track = Animation::TrackView<Float, Vector3>{keys,
-                        Containers::arrayCast<const Vector3>(outputData),
+                        Containers::arrayCast<Vector3>(outputData),
                         interpolation,
                         animationInterpolatorFor<Vector3>(interpolation),
                         Animation::Extrapolation::Constant};
@@ -594,7 +594,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 } else {
                     type = AnimationTrackType::Vector3;
                     track = Animation::TrackView<Float, Vector3>{keys,
-                        Containers::arrayCast<const Vector3>(outputData),
+                        Containers::arrayCast<Vector3>(outputData),
                         interpolation,
                         animationInterpolatorFor<Vector3>(interpolation),
                         Animation::Extrapolation::Constant};
