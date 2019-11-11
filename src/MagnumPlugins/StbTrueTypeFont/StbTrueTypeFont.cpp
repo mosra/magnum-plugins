@@ -35,6 +35,10 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
+#include <math.h>
+/* Use fabsf instead of fabs (double version) for 30% performance
+   improvement on MSVC Debug builds */
+#define STBTT_fabs(x) fabsf(x)
 #include "stb_truetype.h"
 
 namespace Magnum { namespace Text {
