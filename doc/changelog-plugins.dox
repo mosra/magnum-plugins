@@ -32,6 +32,12 @@ namespace Magnum {
 
 @section changelog-plugins-latest Changes since 2019.10
 
+@subsection changelog-plugins-latest-changes Changes and improvements
+
+-   Minor speedup in the @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin by
+    avoiding use of 64-bit floating-point operations (see
+    [mosra/magnum-plugins#73](https://github.com/mosra/magnum-plugins/pull/73))
+
 @subsection changelog-plugins-latest-buildsystem Build system
 
 -   `FindAssimp.cmake` is updated to look for IrrXML on all systems, not just
