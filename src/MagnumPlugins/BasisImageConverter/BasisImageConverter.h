@@ -53,12 +53,13 @@
 namespace Magnum { namespace Trade {
 
 /**
-@brief BASIS image converter plugin
+@brief Basis Universal image converter plugin
 
 Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
 (`*.basis`) files from images with format @ref PixelFormat::R8Unorm,
 @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm or
-@ref PixelFormat::RGBA8Unorm.
+@ref PixelFormat::RGBA8Unorm. Use @ref BasisImporter to import images in this
+format.
 
 This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
 libraries and is built if `WITH_BASISIMAGECONVERTER` is enabled when building

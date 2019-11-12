@@ -62,6 +62,7 @@ namespace Magnum { namespace Trade {
 Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
 (`*.basis`) compressed images by parsing and transcoding files into an
 explicitly specified GPU format (see @ref Trade-BasisImporter-target-format).
+You can use @ref BasisImageConverter to transcode images into this format.
 
 This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
 libraries and is built if `WITH_BASISIMPORTER` is enabled when building Magnum
