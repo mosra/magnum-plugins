@@ -28,6 +28,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::BasisImageConverter
+ * @m_since_{plugins,2019,10}
  */
 
 #include <Magnum/Trade/AbstractImageConverter.h>
@@ -54,6 +55,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief Basis Universal image converter plugin
+@m_since_{plugins,2019,10}
 
 Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
 (`*.basis`) files from images with format @ref PixelFormat::R8Unorm,

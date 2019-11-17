@@ -28,6 +28,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Audio::DrMp3Importer
+ * @m_since_{plugins,2019,10}
  */
 
 #include <Corrade/Containers/Array.h>
@@ -56,6 +57,7 @@ namespace Magnum { namespace Audio {
 
 /**
 @brief MP3 audio importer plugin using dr_mp3
+@m_since_{plugins,2019,10}
 
 @m_keywords{DrMp3AudioImporter Mp3AudioImporter}
 

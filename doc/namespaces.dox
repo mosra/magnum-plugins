@@ -31,9 +31,11 @@
  */
 /** @dir MagnumPlugins/BasisImageConverter
  * @brief Plugin @ref Magnum::Trade::BasisImageConverter
+ * @m_since_{plugins,2019,10}
  */
 /** @dir MagnumPlugins/BasisImporter
  * @brief Plugin @ref Magnum::Trade::BasisImporter
+ * @m_since_{plugins,2019,10}
  */
 /** @dir MagnumPlugins/DdsImporter
  * @brief Plugin @ref Magnum::Trade::DdsImporter
@@ -46,6 +48,7 @@
  */
 /** @dir MagnumPlugins/DrMp3AudioImporter
  * @brief Plugin @ref Magnum::Audio::DrMp3Importer
+ * @m_since_{plugins,2019,10}
  */
 /** @dir MagnumPlugins/DrWavAudioImporter
  * @brief Plugin @ref Magnum::Audio::DrWavImporter

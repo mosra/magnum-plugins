@@ -28,6 +28,7 @@
 
 /** @file
 * @brief Class @ref Magnum::Trade::BasisImporter
+* @m_since_{plugins,2019,10}
 */
 
 #include <Magnum/Trade/AbstractImporter.h>
@@ -54,6 +55,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief Basis Universal importer plugin
+@m_since_{plugins,2019,10}
 
 @m_keywords{BasisImporterEacR BasisImporterEacRG BasisImporterEtc1RGB} @m_keywords{BasisImporterEtc2RGBA BasisImporterBc1RGB BasisImporterBc3RGBA} @m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc7RGB} @m_keywords{BasisImporterBc7RGBA BasisImporterPvrtc1RGB4bpp}
 @m_keywords{BasisImporterPvrtc1RGBA4bpp BasisImporterAstc4x4RGBA}
