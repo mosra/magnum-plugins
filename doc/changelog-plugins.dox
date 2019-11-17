@@ -47,6 +47,12 @@ namespace Magnum {
     https://github.com/jherico/basis_universal as well). See
     [mosra/magnum-plugins#72](https://github.com/mosra/magnum-plugins/pull/72).
 
+@subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
+
+-   Removed @ref OpenDdl headers in `MagnumPlugins/OpenGexImporter/OpenDdl`
+    that were deprecated in 2018.04, include them from the `Magnum/OpenDdl`
+    directory instead.
+
 @section changelog-plugins-2019-10 2019.10
 
 Released 2019-10-24, tagged as
