@@ -35,10 +35,19 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
-#include <math.h>
-/* Use fabsf instead of fabs (double version) for 30% performance
-   improvement on MSVC Debug builds */
+#ifdef _MSC_VER
+#include <cmath>
+/* Using fabsf instead of fabs (double version) for 30% performance
+   improvement on MSVC Debug builds. The others are not so significant. */
+#define STBTT_ifloor(x) static_cast<int>(floorf(x))
+#define STBTT_iceil(x) static_cast<int>(ceilf(x))
+#define STBTT_sqrt(x) sqrtf(x)
+#define STBTT_fmod(x, y) fmodf(x, y)
+#define STBTT_pow(x,y) powf(x, y)
+#define STBTT_cos(x) cosf(x)
+#define STBTT_acos(x) acosf(x)
 #define STBTT_fabs(x) fabsf(x)
+#endif
 #include "stb_truetype.h"
 
 namespace Magnum { namespace Text {
