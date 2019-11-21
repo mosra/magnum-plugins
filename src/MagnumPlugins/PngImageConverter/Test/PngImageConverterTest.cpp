@@ -134,9 +134,10 @@ void PngImageConverterTest::rgb() {
 
     /* The image has four-byte aligned rows, clear the padding to deterministic
        values */
-    CORRADE_COMPARE(converted->data().size(), 24);
-    converted->data()[6] = converted->data()[7] = converted->data()[14] =
-         converted->data()[15] = converted->data()[22] = converted->data()[23] = 0;
+    CORRADE_COMPARE(converted->mutableData().size(), 24);
+    converted->mutableData()[6] = converted->mutableData()[7] =
+        converted->mutableData()[14] = converted->mutableData()[15] =
+            converted->mutableData()[22] = converted->mutableData()[23] = 0;
 
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbData),
         TestSuite::Compare::Container);
@@ -174,7 +175,7 @@ void PngImageConverterTest::rgb16() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB16Unorm);
-    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(converted->data()),
+    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(converted->data()),
         Containers::arrayView(ConvertedRgbData16),
         TestSuite::Compare::Container);
 }
@@ -214,10 +215,10 @@ void PngImageConverterTest::grayscale() {
 
     /* The image has four-byte aligned rows, clear the padding to deterministic
        values */
-    CORRADE_COMPARE(converted->data().size(), 12);
-    converted->data()[2] = converted->data()[3] =
-        converted->data()[6] = converted->data()[7] =
-            converted->data()[10] = converted->data()[11] = 0;
+    CORRADE_COMPARE(converted->mutableData().size(), 12);
+    converted->mutableData()[2] = converted->mutableData()[3] =
+        converted->mutableData()[6] = converted->mutableData()[7] =
+            converted->mutableData()[10] = converted->mutableData()[11] = 0;
 
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedGrayscaleData),
         TestSuite::Compare::Container);
@@ -255,7 +256,7 @@ void PngImageConverterTest::grayscale16() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::R16Unorm);
-    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(converted->data()),
+    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(converted->data()),
         Containers::arrayView(ConvertedGrayscaleData16),
         TestSuite::Compare::Container);
 }

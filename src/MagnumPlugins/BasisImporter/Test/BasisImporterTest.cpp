@@ -183,7 +183,7 @@ void BasisImporterTest::unconfigured() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
-    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
+    CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 55.67f, 6.589f}));
@@ -262,7 +262,7 @@ void BasisImporterTest::rgbUncompressed() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
-    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
+    CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 55.67f, 6.589f}));
@@ -294,7 +294,7 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
-    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>().flipped<0>()),
+    CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>().flipped<0>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 49.67f, 8.326f}));

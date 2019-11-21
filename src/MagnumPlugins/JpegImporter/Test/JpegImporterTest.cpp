@@ -110,7 +110,7 @@ void JpegImporterTest::gray() {
     /* The image has four-byte aligned rows, clear the padding to deterministic
        values */
     CORRADE_COMPARE(image->data().size(), 8);
-    image->data()[3] = image->data()[7] = 0;
+    image->mutableData()[3] = image->mutableData()[7] = 0;
 
     CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
         '\xff', '\x88', '\x00', 0,
@@ -130,8 +130,9 @@ void JpegImporterTest::rgb() {
     /* The image has four-byte aligned rows, clear the padding to deterministic
        values */
     CORRADE_COMPARE(image->data().size(), 24);
-    image->data()[9] = image->data()[10] = image->data()[11] =
-         image->data()[21] = image->data()[22] = image->data()[23] = 0;
+    image->mutableData()[9] = image->mutableData()[10] =
+        image->mutableData()[11] = image->mutableData()[21] =
+            image->mutableData()[22] = image->mutableData()[23] = 0;
 
     /* Data should be similar to the PNG */
     CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {

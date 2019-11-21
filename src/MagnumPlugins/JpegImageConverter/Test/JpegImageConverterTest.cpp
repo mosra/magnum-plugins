@@ -221,11 +221,11 @@ void JpegImageConverterTest::rgb80Percent() {
 
     /* The image has four-byte aligned rows, clear the padding to deterministic
        values */
-    CORRADE_COMPARE(converted->data().size(), 80);
-    converted->data()[18] = converted->data()[19] =
-        converted->data()[38] = converted->data()[39] =
-            converted->data()[58] = converted->data()[59] =
-                converted->data()[78] = converted->data()[79] = 0;
+    CORRADE_COMPARE(converted->mutableData().size(), 80);
+    converted->mutableData()[18] = converted->mutableData()[19] =
+        converted->mutableData()[38] = converted->mutableData()[39] =
+            converted->mutableData()[58] = converted->mutableData()[59] =
+                converted->mutableData()[78] = converted->mutableData()[79] = 0;
 
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbData),
         TestSuite::Compare::Container);
@@ -291,10 +291,10 @@ void JpegImageConverterTest::rgba80Percent() {
     /* The image has four-byte aligned rows, clear the padding to deterministic
        values */
     CORRADE_COMPARE(converted->data().size(), 80);
-    converted->data()[18] = converted->data()[19] =
-        converted->data()[38] = converted->data()[39] =
-            converted->data()[58] = converted->data()[59] =
-                converted->data()[78] = converted->data()[79] = 0;
+    converted->mutableData()[18] = converted->mutableData()[19] =
+        converted->mutableData()[38] = converted->mutableData()[39] =
+            converted->mutableData()[58] = converted->mutableData()[59] =
+                converted->mutableData()[78] = converted->mutableData()[79] = 0;
 
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbData),
         TestSuite::Compare::Container);
@@ -348,10 +348,10 @@ void JpegImageConverterTest::grayscale80Percent() {
     /* The image has four-byte aligned rows, clear the padding to deterministic
        values */
     CORRADE_COMPARE(converted->data().size(), 32);
-    converted->data()[6] = converted->data()[7] =
-        converted->data()[14] = converted->data()[15] =
-            converted->data()[22] = converted->data()[23] =
-                converted->data()[30] = converted->data()[31] = 0;
+    converted->mutableData()[6] = converted->mutableData()[7] =
+        converted->mutableData()[14] = converted->mutableData()[15] =
+            converted->mutableData()[22] = converted->mutableData()[23] =
+                converted->mutableData()[30] = converted->mutableData()[31] = 0;
 
     CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedGrayscaleData),
         TestSuite::Compare::Container);

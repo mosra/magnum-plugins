@@ -193,7 +193,7 @@ void BasisImageConverterTest::r() {
        from our R8 image data. We chose the red channel from the imported image
        to compare to our original data */
     CORRADE_COMPARE_WITH(
-        (Containers::arrayCast<2, UnsignedByte>(image->pixels().prefix(
+        (Containers::arrayCast<2, const UnsignedByte>(image->pixels().prefix(
             {std::size_t(image->size()[1]), std::size_t(image->size()[0]), 1}))),
         imageWithSkip,
         /* There are moderately significant compression artifacts */
@@ -237,7 +237,7 @@ void BasisImageConverterTest::rg() {
        from our RG8 image data. We chose the B and A channels from the imported
        image to compare to our original data */
     CORRADE_COMPARE_WITH(
-        (Containers::arrayCast<2, Math::Vector2<UnsignedByte>>(image->pixels().suffix({0, 0, 2}))),
+        (Containers::arrayCast<2, const Math::Vector2<UnsignedByte>>(image->pixels().suffix({0, 0, 2}))),
         imageWithSkip,
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{22.0f, 0.775f}));
@@ -275,7 +275,7 @@ void BasisImageConverterTest::rgb() {
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
-    CORRADE_COMPARE_WITH(Containers::arrayCast<Color3ub>(image->pixels<Color4ub>()),
+    CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 55.7f, 6.589f}));

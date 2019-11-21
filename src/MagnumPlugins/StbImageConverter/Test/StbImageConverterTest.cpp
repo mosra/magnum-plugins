@@ -243,7 +243,7 @@ void StbImageConverterTest::hdrGrayscale() {
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     /* R gets converted to RRR */
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
-    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(converted->data()),
         Containers::arrayView(ConvertedGrayscale32FData),
         TestSuite::Compare::Container);
 }
@@ -271,7 +271,7 @@ void StbImageConverterTest::hdrRg() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
-    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(converted->data()),
         Containers::arrayView(ConvertedGrayscale32FData),
         TestSuite::Compare::Container);
 }
@@ -307,7 +307,7 @@ void StbImageConverterTest::hdrRgb() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
-    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(converted->data()),
         Containers::arrayView(OriginalRgb32FData),
         TestSuite::Compare::Container);
 }
@@ -335,7 +335,7 @@ void StbImageConverterTest::hdrRgba() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB32F);
-    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(converted->data()),
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(converted->data()),
         Containers::arrayView(OriginalRgb32FData),
         TestSuite::Compare::Container);
 }

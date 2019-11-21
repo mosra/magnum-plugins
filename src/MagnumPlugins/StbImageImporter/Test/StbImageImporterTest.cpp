@@ -192,7 +192,7 @@ void StbImageImporterTest::rgbHdr() {
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB32F);
-    CORRADE_COMPARE_AS(Containers::arrayCast<float>(image->data()),
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()),
         (Containers::Array<float>{Containers::InPlaceInit, {
             1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
             3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,

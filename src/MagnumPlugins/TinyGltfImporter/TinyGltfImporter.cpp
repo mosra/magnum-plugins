@@ -492,7 +492,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             const tinygltf::Accessor& output = _d->model.accessors[sampler.output];
             AnimationTrackTargetType target;
             AnimationTrackType type, resultType;
-            Animation::TrackViewStorage<Float> track;
+            Animation::TrackViewStorage<const Float> track;
             const auto outputDataFound = samplerData.find(sampler.output);
             CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
             const auto outputData = data.suffix(std::get<1>(outputDataFound->second))
@@ -517,13 +517,13 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
                     type = AnimationTrackType::CubicHermite3D;
-                    track = Animation::TrackView<Float, CubicHermite3D>{
+                    track = Animation::TrackView<const Float, const CubicHermite3D>{
                         keys, values, interpolation,
                         animationInterpolatorFor<CubicHermite3D>(interpolation),
                         Animation::Extrapolation::Constant};
                 } else {
                     type = AnimationTrackType::Vector3;
-                    track = Animation::TrackView<Float, Vector3>{keys,
+                    track = Animation::TrackView<const Float, const Vector3>{keys,
                         Containers::arrayCast<Vector3>(outputData),
                         interpolation,
                         animationInterpolatorFor<Vector3>(interpolation),
@@ -550,7 +550,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
                     type = AnimationTrackType::CubicHermiteQuaternion;
-                    track = Animation::TrackView<Float, CubicHermiteQuaternion>{
+                    track = Animation::TrackView<const Float, const CubicHermiteQuaternion>{
                         keys, values, interpolation,
                         animationInterpolatorFor<CubicHermiteQuaternion>(interpolation),
                         Animation::Extrapolation::Constant};
@@ -580,7 +580,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                     }
 
                     type = AnimationTrackType::Quaternion;
-                    track = Animation::TrackView<Float, Quaternion>{
+                    track = Animation::TrackView<const Float, const Quaternion>{
                         keys, values, interpolation,
                         animationInterpolatorFor<Quaternion>(interpolation),
                         Animation::Extrapolation::Constant};
@@ -604,13 +604,13 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
                     type = AnimationTrackType::CubicHermite3D;
-                    track = Animation::TrackView<Float, CubicHermite3D>{
+                    track = Animation::TrackView<const Float, const CubicHermite3D>{
                         keys, values, interpolation,
                         animationInterpolatorFor<CubicHermite3D>(interpolation),
                         Animation::Extrapolation::Constant};
                 } else {
                     type = AnimationTrackType::Vector3;
-                    track = Animation::TrackView<Float, Vector3>{keys,
+                    track = Animation::TrackView<const Float, const Vector3>{keys,
                         Containers::arrayCast<Vector3>(outputData),
                         interpolation,
                         animationInterpolatorFor<Vector3>(interpolation),
