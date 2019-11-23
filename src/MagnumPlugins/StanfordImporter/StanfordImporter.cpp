@@ -55,7 +55,7 @@ void StanfordImporter::doOpenFile(const std::string& filename) {
     /* Open file in *binary* mode to avoid broken binary data (need to handle \r manually) */
     Containers::Pointer<std::ifstream> in{Containers::InPlaceInit, filename, std::ifstream::binary};
     if(!in->good()) {
-        Error() << "Trade::ObjImporter::openFile(): cannot open file" << filename;
+        Error() << "Trade::StanfordImporter::openFile(): cannot open file" << filename;
         return;
     }
 
@@ -107,6 +107,7 @@ Type parseType(const std::string& type) {
 
 std::size_t sizeOf(Type type) {
     switch(type) {
+        /* LCOV_EXCL_START */
         #define _c(type) case Type::type: return sizeof(type);
         _c(UnsignedByte)
         _c(Byte)
@@ -117,6 +118,7 @@ std::size_t sizeOf(Type type) {
         _c(Float)
         _c(Double)
         #undef _c
+        /* LCOV_EXCL_STOP */
     }
 
     CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -138,6 +140,7 @@ template<class T, FileFormat format, class U> inline T extractAndSkip(const char
 
 template<class T, FileFormat format> T extractAndSkip(const char*& buffer, const Type type) {
     switch(type) {
+        /* LCOV_EXCL_START */
         #define _c(type) case Type::type: return extractAndSkip<T, format, type>(buffer);
         _c(UnsignedByte)
         _c(Byte)
@@ -148,6 +151,7 @@ template<class T, FileFormat format> T extractAndSkip(const char*& buffer, const
         _c(Float)
         _c(Double)
         #undef _c
+        /* LCOV_EXCL_STOP */
     }
 
     CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -230,7 +234,7 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
                 continue;
 
             if(tokens[0] != "format") {
-                Error() << "Trade::StanfordImporter::mesh3D(): expected format line";
+                Error{} << "Trade::StanfordImporter::mesh3D(): expected format line, got" << line;
                 return Containers::NullOpt;
             }
 

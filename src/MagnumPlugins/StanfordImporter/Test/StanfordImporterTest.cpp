@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -41,9 +42,10 @@ struct StanfordImporterTest: TestSuite::Tester {
 
     void invalidSignature();
 
-    void invalidFormat();
-    void unsupportedFormat();
-    void missingFormat();
+    void formatInvalid();
+    void formatUnsupported();
+    void formatMissing();
+    void formatTooLate();
 
     void unknownLine();
     void unknownElement();
@@ -59,15 +61,20 @@ struct StanfordImporterTest: TestSuite::Tester {
     void incompleteVertex();
     void incompleteFace();
 
+    void fileDoesNotExist();
+    void fileTooShort();
     void invalidFaceSize();
-    void shortFile();
 
+    void openFile();
+    void openData();
     void empty();
-    void common();
     void bigEndian();
     void crlf();
     void ignoredVertexComponents();
     void ignoredFaceComponents();
+
+    void openTwice();
+    void importTwice();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
@@ -76,9 +83,10 @@ struct StanfordImporterTest: TestSuite::Tester {
 StanfordImporterTest::StanfordImporterTest() {
     addTests({&StanfordImporterTest::invalidSignature,
 
-              &StanfordImporterTest::invalidFormat,
-              &StanfordImporterTest::unsupportedFormat,
-              &StanfordImporterTest::missingFormat,
+              &StanfordImporterTest::formatInvalid,
+              &StanfordImporterTest::formatUnsupported,
+              &StanfordImporterTest::formatMissing,
+              &StanfordImporterTest::formatTooLate,
 
               &StanfordImporterTest::unknownLine,
               &StanfordImporterTest::unknownElement,
@@ -94,15 +102,20 @@ StanfordImporterTest::StanfordImporterTest() {
               &StanfordImporterTest::incompleteVertex,
               &StanfordImporterTest::incompleteFace,
 
+              &StanfordImporterTest::fileDoesNotExist,
+              &StanfordImporterTest::fileTooShort,
               &StanfordImporterTest::invalidFaceSize,
-              &StanfordImporterTest::shortFile,
 
+              &StanfordImporterTest::openFile,
+              &StanfordImporterTest::openData,
               &StanfordImporterTest::empty,
-              &StanfordImporterTest::common,
               &StanfordImporterTest::bigEndian,
               &StanfordImporterTest::crlf,
               &StanfordImporterTest::ignoredVertexComponents,
-              &StanfordImporterTest::ignoredFaceComponents});
+              &StanfordImporterTest::ignoredFaceComponents,
+
+              &StanfordImporterTest::openTwice,
+              &StanfordImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -121,34 +134,44 @@ void StanfordImporterTest::invalidSignature() {
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid file signature bla\n");
 }
 
-void StanfordImporterTest::invalidFormat() {
+void StanfordImporterTest::formatInvalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-format.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "format-invalid.ply")));
     CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid format line format binary_big_endian 1.0 extradata\n");
 }
 
-void StanfordImporterTest::unsupportedFormat() {
+void StanfordImporterTest::formatUnsupported() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unsupported-format.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "format-unsupported.ply")));
     CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unsupported file format ascii 1.0\n");
 }
 
-void StanfordImporterTest::missingFormat() {
+void StanfordImporterTest::formatMissing() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "missing-format.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "format-missing.ply")));
     CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): missing format line\n");
+}
+
+void StanfordImporterTest::formatTooLate() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "format-too-late.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
+    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): expected format line, got element face 1\n");
 }
 
 void StanfordImporterTest::unknownLine() {
@@ -261,6 +284,25 @@ void StanfordImporterTest::incompleteFace() {
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): incomplete face specification\n");
 }
 
+void StanfordImporterTest::fileDoesNotExist() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("nonexistent.ply"));
+    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::openFile(): cannot open file nonexistent.ply\n");
+}
+
+void StanfordImporterTest::fileTooShort() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "short-file.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
+    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): file is too short\n");
+}
+
 void StanfordImporterTest::invalidFaceSize() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
@@ -269,16 +311,6 @@ void StanfordImporterTest::invalidFaceSize() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size.ply")));
     CORRADE_VERIFY(!importer->mesh3D(0));
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unsupported face size 5\n");
-}
-
-void StanfordImporterTest::shortFile() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "short-file.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): file is too short\n");
 }
 
 /*
@@ -298,6 +330,28 @@ const std::vector<Vector3> positions{
     {5.0f, 3.0f, 9.0f}
 };
 
+void StanfordImporterTest::openFile() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
+
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->indices(), indices);
+    CORRADE_COMPARE(mesh->positions(0), positions);
+}
+
+void StanfordImporterTest::openData() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply"))));
+
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->indices(), indices);
+    CORRADE_COMPARE(mesh->positions(0), positions);
+}
+
 void StanfordImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
@@ -307,17 +361,6 @@ void StanfordImporterTest::empty() {
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(!mesh->isIndexed());
     CORRADE_VERIFY(mesh->positions(0).empty());
-}
-
-void StanfordImporterTest::common() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
-
-    auto mesh = importer->mesh3D(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), indices);
-    CORRADE_COMPARE(mesh->positions(0), positions);
 }
 
 void StanfordImporterTest::bigEndian() {
@@ -362,6 +405,31 @@ void StanfordImporterTest::ignoredFaceComponents() {
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), indices);
     CORRADE_COMPARE(mesh->positions(0), positions);
+}
+
+void StanfordImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void StanfordImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
+
+    /* Verify that everything is working the same way on second use */
+    {
+        Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->positions(0), positions);
+    } {
+        Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->positions(0), positions);
+    }
 }
 
 }}}}
