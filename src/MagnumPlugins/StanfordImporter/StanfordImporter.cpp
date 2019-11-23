@@ -261,12 +261,12 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     }
 
     /* Parse rest of the header */
-    UnsignedInt stride{}, vertexCount{}, faceCount{};
+    UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
     Array3D<Type> componentTypes;
     Type faceSizeType{}, faceIndexType{};
     Vector3i componentOffsets{-1};
     {
-        std::size_t componentOffset = 0;
+        std::size_t vertexComponentOffset{};
         std::string line;
         PropertyType propertyType{};
         while(std::getline(*_in, line)) {
@@ -312,36 +312,53 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 
                     /* Component */
                     if(tokens[2] == "x") {
-                        componentOffsets.x() = componentOffset;
+                        componentOffsets.x() = vertexComponentOffset;
                         componentTypes.x() = componentType;
                     } else if(tokens[2] == "y") {
-                        componentOffsets.y() = componentOffset;
+                        componentOffsets.y() = vertexComponentOffset;
                         componentTypes.y() = componentType;
                     } else if(tokens[2] == "z") {
-                        componentOffsets.z() = componentOffset;
+                        componentOffsets.z() = vertexComponentOffset;
                         componentTypes.z() = componentType;
                     }
                     else Debug() << "Trade::StanfordImporter::mesh3D(): ignoring unknown vertex component" << tokens[2];
 
                     /* Add size of current component to total offset */
-                    componentOffset += sizeOf(componentType);
+                    vertexComponentOffset += sizeOf(componentType);
 
                 /* Face element properties */
                 } else if(propertyType == PropertyType::Face) {
-                    if(tokens.size() != 5 || tokens[1] != "list" || tokens[4] != "vertex_indices") {
-                        Error() << "Trade::StanfordImporter::mesh3D(): unknown face property line" << line;
-                        return Containers::NullOpt;
-                    }
+                    /* Face vertex indices */
+                    if(tokens.size() == 5 && tokens[1] == "list" && tokens[4] == "vertex_indices") {
+                        faceIndicesOffset = faceSkip;
+                        faceSkip = 0;
 
-                    /* Face size type */
-                    if((faceSizeType = parseType(tokens[2])) == Type{}) {
-                        Error() << "Trade::StanfordImporter::mesh3D(): invalid face size type" << tokens[2];
-                        return Containers::NullOpt;
-                    }
+                        /* Face size type */
+                        if((faceSizeType = parseType(tokens[2])) == Type{}) {
+                            Error() << "Trade::StanfordImporter::mesh3D(): invalid face size type" << tokens[2];
+                            return Containers::NullOpt;
+                        }
 
-                    /* Face index type */
-                    if((faceIndexType = parseType(tokens[3])) == Type{}) {
-                        Error() << "Trade::StanfordImporter::mesh3D(): invalid face index type" << tokens[3];
+                        /* Face index type */
+                        if((faceIndexType = parseType(tokens[3])) == Type{}) {
+                            Error() << "Trade::StanfordImporter::mesh3D(): invalid face index type" << tokens[3];
+                            return Containers::NullOpt;
+                        }
+
+                    /* Ignore unknown properties */
+                    } else if(tokens.size() == 3) {
+                        const Type faceType = parseType(tokens[1]);
+                        if(faceType == Type{}) {
+                            Error{} << "Trade::StanfordImporter::mesh3D(): invalid face component type" << tokens[1];
+                            return Containers::NullOpt;
+                        }
+
+                        Debug{} << "Trade::StanfordImporter::mesh3D(): ignoring unknown face component" << tokens[2];
+                        faceSkip += sizeOf(faceType);
+
+                    /* Fail on unknwon lines */
+                    } else {
+                        Error() << "Trade::StanfordImporter::mesh3D(): invalid face property line" << line;
                         return Containers::NullOpt;
                     }
 
@@ -362,7 +379,7 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             }
         }
 
-        stride = componentOffset;
+        vertexStride = vertexComponentOffset;
     }
 
     /* Check header consistency */
@@ -379,9 +396,9 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     std::vector<Vector3> positions;
     positions.reserve(vertexCount);
     {
-        Containers::Array<char> buffer{stride};
+        Containers::Array<char> buffer{vertexStride};
         for(std::size_t i = 0; i != vertexCount; ++i) {
-            _in->read(buffer, stride);
+            _in->read(buffer, vertexStride);
             positions.emplace_back(
                 extract<Float>(buffer + componentOffsets.x(), fileFormat, componentTypes.x()),
                 extract<Float>(buffer + componentOffsets.y(), fileFormat, componentTypes.y()),
@@ -400,6 +417,8 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         const UnsignedInt faceSizeTypeSize = sizeOf(faceSizeType);
         const UnsignedInt faceIndexTypeSize = sizeOf(faceIndexType);
         for(std::size_t i = 0; i != faceCount; ++i) {
+            _in->ignore(faceIndicesOffset);
+
             /* Get face size */
             _in->read(buffer, faceSizeTypeSize);
             const UnsignedInt faceSize = extract<UnsignedInt>(buffer, fileFormat, faceSizeType);
@@ -416,6 +435,8 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             faceSize == 3 ?
                 extractTriangle(indices, buffer, fileFormat, faceIndexType) :
                 extractQuad(indices, buffer, fileFormat, faceIndexType);
+
+            _in->ignore(faceSkip);
         }
     }
 

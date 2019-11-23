@@ -50,12 +50,15 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         common.ply
         crlf.ply
         empty.ply
+        ignored-face-components.ply
         ignored-vertex-components.ply
         incomplete-face.ply
         incomplete-vertex.ply
         invalid-face-index-type.ply
         invalid-face-size.ply
         invalid-face-size-type.ply
+        invalid-face-property.ply
+        invalid-face-type.ply
         invalid-format.ply
         invalid-signature.ply
         invalid-vertex-property.ply
@@ -64,7 +67,6 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         short-file.ply
         unexpected-property.ply
         unknown-element.ply
-        unknown-face-property.ply
         unknown-line.ply
         unsupported-format.ply)
 target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)

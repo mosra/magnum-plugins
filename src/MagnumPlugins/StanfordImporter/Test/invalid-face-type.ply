@@ -1,4 +1,4 @@
 ply
 format binary_little_endian 1.0
-element face 25
-property float x
+element face 15
+property float16 x

@@ -51,7 +51,8 @@ struct StanfordImporterTest: TestSuite::Tester {
     void unexpectedProperty();
     void invalidVertexProperty();
     void invalidVertexType();
-    void unknownFaceProperty();
+    void invalidFaceProperty();
+    void invalidFaceType();
     void invalidFaceSizeType();
     void invalidFaceIndexType();
 
@@ -66,6 +67,7 @@ struct StanfordImporterTest: TestSuite::Tester {
     void bigEndian();
     void crlf();
     void ignoredVertexComponents();
+    void ignoredFaceComponents();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
@@ -84,7 +86,8 @@ StanfordImporterTest::StanfordImporterTest() {
               &StanfordImporterTest::unexpectedProperty,
               &StanfordImporterTest::invalidVertexProperty,
               &StanfordImporterTest::invalidVertexType,
-              &StanfordImporterTest::unknownFaceProperty,
+              &StanfordImporterTest::invalidFaceProperty,
+              &StanfordImporterTest::invalidFaceType,
               &StanfordImporterTest::invalidFaceSizeType,
               &StanfordImporterTest::invalidFaceIndexType,
 
@@ -98,7 +101,8 @@ StanfordImporterTest::StanfordImporterTest() {
               &StanfordImporterTest::common,
               &StanfordImporterTest::bigEndian,
               &StanfordImporterTest::crlf,
-              &StanfordImporterTest::ignoredVertexComponents});
+              &StanfordImporterTest::ignoredVertexComponents,
+              &StanfordImporterTest::ignoredFaceComponents});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -197,14 +201,24 @@ void StanfordImporterTest::invalidVertexType() {
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid vertex component type float16\n");
 }
 
-void StanfordImporterTest::unknownFaceProperty() {
+void StanfordImporterTest::invalidFaceProperty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-face-property.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-property.ply")));
     CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown face property line property float x\n");
+    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face property line property float x extradata\n");
+}
+
+void StanfordImporterTest::invalidFaceType() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-type.ply")));
+    CORRADE_VERIFY(!importer->mesh3D(0));
+    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face component type float16\n");
 }
 
 void StanfordImporterTest::invalidFaceSizeType() {
@@ -332,6 +346,17 @@ void StanfordImporterTest::ignoredVertexComponents() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "ignored-vertex-components.ply")));
+
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->indices(), indices);
+    CORRADE_COMPARE(mesh->positions(0), positions);
+}
+
+void StanfordImporterTest::ignoredFaceComponents() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "ignored-face-components.ply")));
 
     auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
