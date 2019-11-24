@@ -47,6 +47,7 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         big-endian.ply
+        colors.ply
         common.ply
         crlf.ply
         empty.ply

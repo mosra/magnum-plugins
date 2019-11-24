@@ -168,6 +168,43 @@ template<class T> inline T extract(const char* const buffer, const FileFormat fi
     return extractAndSkip<T>(mutableBuffer, fileFormat, type);
 }
 
+template<class T, FileFormat format, class U> inline T extractNormalizedAndSkip(const char*& buffer) {
+    return Math::unpack<T, U>(extractAndSkip<T, format, U>(buffer));
+}
+
+template<class T, FileFormat format> T extractNormalizedAndSkip(const char*& buffer, const Type type) {
+    switch(type) {
+        /* Floats are not denormalized. For coverage ensure at least one of the
+           integer variants and at least one of the floating-point variants is
+           covered */
+        #define _c(type) case Type::type: return extractNormalizedAndSkip<T, format, type>(buffer);
+        _c(UnsignedByte)        /* LCOV_EXCL_LINE */
+        _c(Byte)                /* LCOV_EXCL_LINE */
+        _c(UnsignedShort)
+        _c(Short)               /* LCOV_EXCL_LINE */
+        _c(UnsignedInt)         /* LCOV_EXCL_LINE */
+        _c(Int)                 /* LCOV_EXCL_LINE */
+        #undef _c
+        #define _c(type) case Type::type: return extractAndSkip<T, format, type>(buffer);
+        _c(Float)
+        _c(Double)              /* LCOV_EXCL_LINE */
+        #undef c
+    }
+
+    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
+
+template<class T> inline T extractNormalizedAndSkip(const char*& buffer, const FileFormat fileFormat, const Type type) {
+    return fileFormat == FileFormat::LittleEndian ?
+        extractNormalizedAndSkip<T, FileFormat::LittleEndian>(buffer, type) :
+        extractNormalizedAndSkip<T, FileFormat::BigEndian>(buffer, type);
+}
+
+template<class T> inline T extractNormalized(const char* const buffer, const FileFormat fileFormat, const Type type) {
+    const char* mutableBuffer = buffer;
+    return extractNormalizedAndSkip<T>(mutableBuffer, fileFormat, type);
+}
+
 inline void extractTriangle(std::vector<UnsignedInt>& indices, const char* const buffer, const FileFormat fileFormat, const Type indexType) {
     const char* position = buffer;
 
@@ -266,9 +303,9 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 
     /* Parse rest of the header */
     UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
-    Array3D<Type> componentTypes;
+    Array3D<Type> positionTypes, colorTypes;
     Type faceSizeType{}, faceIndexType{};
-    Vector3i componentOffsets{-1};
+    Vector3i positionOffsets{-1}, colorOffsets{-1};
     {
         std::size_t vertexComponentOffset{};
         std::string line;
@@ -316,16 +353,24 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 
                     /* Component */
                     if(tokens[2] == "x") {
-                        componentOffsets.x() = vertexComponentOffset;
-                        componentTypes.x() = componentType;
+                        positionOffsets.x() = vertexComponentOffset;
+                        positionTypes.x() = componentType;
                     } else if(tokens[2] == "y") {
-                        componentOffsets.y() = vertexComponentOffset;
-                        componentTypes.y() = componentType;
+                        positionOffsets.y() = vertexComponentOffset;
+                        positionTypes.y() = componentType;
                     } else if(tokens[2] == "z") {
-                        componentOffsets.z() = vertexComponentOffset;
-                        componentTypes.z() = componentType;
-                    }
-                    else Debug() << "Trade::StanfordImporter::mesh3D(): ignoring unknown vertex component" << tokens[2];
+                        positionOffsets.z() = vertexComponentOffset;
+                        positionTypes.z() = componentType;
+                    } else if(tokens[2] == "red") {
+                        colorOffsets.x() = vertexComponentOffset;
+                        colorTypes.x() = componentType;
+                    } else if(tokens[2] == "green") {
+                        colorOffsets.y() = vertexComponentOffset;
+                        colorTypes.y() = componentType;
+                    } else if(tokens[2] == "blue") {
+                        colorOffsets.z() = vertexComponentOffset;
+                        colorTypes.z() = componentType;
+                    } else Debug{} << "Trade::StanfordImporter::mesh3D(): ignoring unknown vertex component" << tokens[2];
 
                     /* Add size of current component to total offset */
                     vertexComponentOffset += sizeOf(componentType);
@@ -387,7 +432,7 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     }
 
     /* Check header consistency */
-    if((componentOffsets < Vector3i{0}).any()) {
+    if((positionOffsets < Vector3i{0}).any()) {
         Error() << "Trade::StanfordImporter::mesh3D(): incomplete vertex specification";
         return Containers::NullOpt;
     }
@@ -398,15 +443,25 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 
     /* Parse vertices */
     std::vector<Vector3> positions;
+    std::vector<std::vector<Color4>> colors;
     positions.reserve(vertexCount);
+    if((colorOffsets > Vector3i{0}).any()) {
+        colors.emplace_back();
+        colors.back().reserve(vertexCount);
+    }
     {
         Containers::Array<char> buffer{vertexStride};
         for(std::size_t i = 0; i != vertexCount; ++i) {
             _in->read(buffer, vertexStride);
             positions.emplace_back(
-                extract<Float>(buffer + componentOffsets.x(), fileFormat, componentTypes.x()),
-                extract<Float>(buffer + componentOffsets.y(), fileFormat, componentTypes.y()),
-                extract<Float>(buffer + componentOffsets.z(), fileFormat, componentTypes.z())
+                extract<Float>(buffer + positionOffsets.x(), fileFormat, positionTypes.x()),
+                extract<Float>(buffer + positionOffsets.y(), fileFormat, positionTypes.y()),
+                extract<Float>(buffer + positionOffsets.z(), fileFormat, positionTypes.z())
+            );
+            if((colorOffsets > Vector3i{0}).any()) colors.back().emplace_back(
+                colorOffsets.x() != -1 ? extractNormalized<Float>(buffer + colorOffsets.x(), fileFormat, colorTypes.x()) : 0.0f,
+                colorOffsets.y() != -1 ? extractNormalized<Float>(buffer + colorOffsets.y(), fileFormat, colorTypes.y()) : 0.0f,
+                colorOffsets.z() != -1 ? extractNormalized<Float>(buffer + colorOffsets.z(), fileFormat, colorTypes.z()) : 0.0f
             );
         }
     }
@@ -444,7 +499,7 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         }
     }
 
-    return MeshData3D{MeshPrimitive::Triangles, std::move(indices), {std::move(positions)}, {}, {}, {}, nullptr};
+    return MeshData3D{MeshPrimitive::Triangles, std::move(indices), {std::move(positions)}, {}, {}, colors, nullptr};
 }
 
 }}

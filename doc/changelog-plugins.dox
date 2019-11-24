@@ -32,6 +32,10 @@ namespace Magnum {
 
 @section changelog-plugins-latest Changes since 2019.10
 
+@subsection changelog-plugins-latest-new New features
+
+-   Vertex color import in @ref Trade::StanfordImporter "StanfordImporter"
+
 @subsection changelog-plugins-latest-changes Changes and improvements
 
 -   @ref Trade::StanfordImporter "StanfordImporter" learned to ignore unknown

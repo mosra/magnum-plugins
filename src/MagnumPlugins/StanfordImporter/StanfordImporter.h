@@ -56,8 +56,9 @@ namespace Magnum { namespace Trade {
 @brief Stanford PLY importer plugin
 
 Supports little and big endian binary format (ASCII files are not supported),
-triangle/quad meshes. Only vertex positions are imported, you can generate the
-normals using either @ref MeshTools::generateFlatNormals() /
+triangle/quad meshes (edge properties are not supported). Vertex positions and
+vertex colors (if any) are imported, you can generate the normals using either
+@ref MeshTools::generateFlatNormals() /
 @ref MeshTools::generateSmoothNormals() or by passing
 @ref MeshTools::CompileFlag::GenerateFlatNormals /
 @ref MeshTools::CompileFlag::GenerateSmoothNormals to

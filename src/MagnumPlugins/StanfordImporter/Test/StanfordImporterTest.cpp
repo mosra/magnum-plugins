@@ -29,6 +29,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData3D.h>
@@ -68,6 +69,7 @@ struct StanfordImporterTest: TestSuite::Tester {
     void openFile();
     void openData();
     void empty();
+    void colors();
     void bigEndian();
     void crlf();
     void ignoredVertexComponents();
@@ -109,6 +111,7 @@ StanfordImporterTest::StanfordImporterTest() {
               &StanfordImporterTest::openFile,
               &StanfordImporterTest::openData,
               &StanfordImporterTest::empty,
+              &StanfordImporterTest::colors,
               &StanfordImporterTest::bigEndian,
               &StanfordImporterTest::crlf,
               &StanfordImporterTest::ignoredVertexComponents,
@@ -329,6 +332,13 @@ const std::vector<Vector3> Positions{
     {3.0f, 1.0f, 2.0f},
     {5.0f, 3.0f, 9.0f}
 };
+const std::vector<Color4> Colors{
+    {0.8f, 0.2f, 0.399222f},
+    {0.6f, 0.666667f, 0.996887f},
+    {0.0f, 0.0666667f, 0.93048f},
+    {0.733333f, 0.866667f, 0.133593f},
+    {0.266667f, 0.333333f, 0.465629f}
+};
 
 void StanfordImporterTest::openFile() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
@@ -339,6 +349,7 @@ void StanfordImporterTest::openFile() {
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), Indices);
     CORRADE_COMPARE(mesh->positions(0), Positions);
+    CORRADE_VERIFY(!mesh->hasColors());
 }
 
 void StanfordImporterTest::openData() {
@@ -350,6 +361,7 @@ void StanfordImporterTest::openData() {
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), Indices);
     CORRADE_COMPARE(mesh->positions(0), Positions);
+    CORRADE_VERIFY(!mesh->hasColors());
 }
 
 void StanfordImporterTest::empty() {
@@ -363,6 +375,19 @@ void StanfordImporterTest::empty() {
     CORRADE_VERIFY(mesh->positions(0).empty());
 }
 
+void StanfordImporterTest::colors() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "colors.ply")));
+
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->indices(), Indices);
+    CORRADE_COMPARE(mesh->positions(0), Positions);
+    CORRADE_VERIFY(mesh->hasColors());
+    CORRADE_COMPARE(mesh->colors(0), Colors);
+}
+
 void StanfordImporterTest::bigEndian() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
@@ -372,6 +397,8 @@ void StanfordImporterTest::bigEndian() {
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), Indices);
     CORRADE_COMPARE(mesh->positions(0), Positions);
+    CORRADE_VERIFY(mesh->hasColors());
+    CORRADE_COMPARE(mesh->colors(0), Colors);
 }
 
 void StanfordImporterTest::crlf() {
@@ -383,6 +410,7 @@ void StanfordImporterTest::crlf() {
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), Indices);
     CORRADE_COMPARE(mesh->positions(0), Positions);
+    CORRADE_VERIFY(!mesh->hasColors());
 }
 
 void StanfordImporterTest::ignoredVertexComponents() {
@@ -394,6 +422,7 @@ void StanfordImporterTest::ignoredVertexComponents() {
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), Indices);
     CORRADE_COMPARE(mesh->positions(0), Positions);
+    CORRADE_VERIFY(!mesh->hasColors());
 }
 
 void StanfordImporterTest::ignoredFaceComponents() {
@@ -405,6 +434,7 @@ void StanfordImporterTest::ignoredFaceComponents() {
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->indices(), Indices);
     CORRADE_COMPARE(mesh->positions(0), Positions);
+    CORRADE_VERIFY(!mesh->hasColors());
 }
 
 void StanfordImporterTest::openTwice() {
