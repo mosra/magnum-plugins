@@ -321,8 +321,8 @@ void StanfordImporterTest::invalidFaceSize() {
     | \|/
     1--2
 */
-const std::vector<UnsignedInt> indices{0, 1, 2, 0, 2, 3, 3, 2, 4};
-const std::vector<Vector3> positions{
+const std::vector<UnsignedInt> Indices{0, 1, 2, 0, 2, 3, 3, 2, 4};
+const std::vector<Vector3> Positions{
     {1.0f, 3.0f, 2.0f},
     {1.0f, 1.0f, 2.0f},
     {3.0f, 3.0f, 2.0f},
@@ -337,8 +337,8 @@ void StanfordImporterTest::openFile() {
 
     auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), indices);
-    CORRADE_COMPARE(mesh->positions(0), positions);
+    CORRADE_COMPARE(mesh->indices(), Indices);
+    CORRADE_COMPARE(mesh->positions(0), Positions);
 }
 
 void StanfordImporterTest::openData() {
@@ -348,8 +348,8 @@ void StanfordImporterTest::openData() {
 
     auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), indices);
-    CORRADE_COMPARE(mesh->positions(0), positions);
+    CORRADE_COMPARE(mesh->indices(), Indices);
+    CORRADE_COMPARE(mesh->positions(0), Positions);
 }
 
 void StanfordImporterTest::empty() {
@@ -370,8 +370,8 @@ void StanfordImporterTest::bigEndian() {
 
     auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), indices);
-    CORRADE_COMPARE(mesh->positions(0), positions);
+    CORRADE_COMPARE(mesh->indices(), Indices);
+    CORRADE_COMPARE(mesh->positions(0), Positions);
 }
 
 void StanfordImporterTest::crlf() {
@@ -381,8 +381,8 @@ void StanfordImporterTest::crlf() {
 
     auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), indices);
-    CORRADE_COMPARE(mesh->positions(0), positions);
+    CORRADE_COMPARE(mesh->indices(), Indices);
+    CORRADE_COMPARE(mesh->positions(0), Positions);
 }
 
 void StanfordImporterTest::ignoredVertexComponents() {
@@ -392,8 +392,8 @@ void StanfordImporterTest::ignoredVertexComponents() {
 
     auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), indices);
-    CORRADE_COMPARE(mesh->positions(0), positions);
+    CORRADE_COMPARE(mesh->indices(), Indices);
+    CORRADE_COMPARE(mesh->positions(0), Positions);
 }
 
 void StanfordImporterTest::ignoredFaceComponents() {
@@ -403,8 +403,8 @@ void StanfordImporterTest::ignoredFaceComponents() {
 
     auto mesh = importer->mesh3D(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), indices);
-    CORRADE_COMPARE(mesh->positions(0), positions);
+    CORRADE_COMPARE(mesh->indices(), Indices);
+    CORRADE_COMPARE(mesh->positions(0), Positions);
 }
 
 void StanfordImporterTest::openTwice() {
@@ -424,11 +424,11 @@ void StanfordImporterTest::importTwice() {
     {
         Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
         CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->positions(0), positions);
+        CORRADE_COMPARE(mesh->positions(0), Positions);
     } {
         Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
         CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->positions(0), positions);
+        CORRADE_COMPARE(mesh->positions(0), Positions);
     }
 }
 
