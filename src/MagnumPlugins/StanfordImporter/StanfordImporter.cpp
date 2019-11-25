@@ -133,7 +133,11 @@ template<class T> struct EndianSwap<FileFormat::BigEndian, T> {
 };
 
 template<class T, FileFormat format, class U> inline T extractAndSkip(const char*& buffer) {
-    const auto result = T(EndianSwap<format, U>{}(*reinterpret_cast<const U*>(buffer)));
+    /* do a memcpy() instead of *reinterpret_cast, as that'll correctly handle
+       unaligned loads as well */
+    U dest;
+    std::memcpy(&dest, buffer, sizeof(U));
+    const auto result = T(EndianSwap<format, U>{}(dest));
     buffer += sizeof(U);
     return result;
 }

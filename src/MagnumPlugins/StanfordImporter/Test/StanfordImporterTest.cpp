@@ -70,6 +70,7 @@ struct StanfordImporterTest: TestSuite::Tester {
     void openData();
     void empty();
     void colors();
+    void unaligned();
     void bigEndian();
     void crlf();
     void ignoredVertexComponents();
@@ -112,6 +113,7 @@ StanfordImporterTest::StanfordImporterTest() {
               &StanfordImporterTest::openData,
               &StanfordImporterTest::empty,
               &StanfordImporterTest::colors,
+              &StanfordImporterTest::unaligned,
               &StanfordImporterTest::bigEndian,
               &StanfordImporterTest::crlf,
               &StanfordImporterTest::ignoredVertexComponents,
@@ -386,6 +388,23 @@ void StanfordImporterTest::colors() {
     CORRADE_COMPARE(mesh->positions(0), Positions);
     CORRADE_VERIFY(mesh->hasColors());
     CORRADE_COMPARE(mesh->colors(0), Colors);
+}
+
+void StanfordImporterTest::unaligned() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unaligned.ply")));
+
+    auto mesh = importer->mesh3D(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
+        0x01234567, 0x89abcdef, 0x01234567,
+        0x01234567, 0x89abcdef, 0x01234567
+    }));
+    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
+        {Float(0x12), Float(0x3456789a), 12345678901234567890.0f},
+        {Float(0xbc), Float(0xdef01234), 98765432109876543210.0f}
+    }));
 }
 
 void StanfordImporterTest::bigEndian() {

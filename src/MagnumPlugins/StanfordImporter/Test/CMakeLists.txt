@@ -68,6 +68,7 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         invalid-vertex-property.ply
         invalid-vertex-type.ply
         short-file.ply
+        unaligned.ply
         unexpected-property.ply
         unknown-element.ply
         unknown-line.ply)
