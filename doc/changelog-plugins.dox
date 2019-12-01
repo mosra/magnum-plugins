@@ -52,6 +52,9 @@ namespace Magnum {
     Basis Universal (and consequently builds of the fork at
     https://github.com/jherico/basis_universal as well). See
     [mosra/magnum-plugins#72](https://github.com/mosra/magnum-plugins/pull/72).
+-   Disabling file I/O APIs in the @ref Audio::DrFlacImporter "DrFlacAudioImporter"
+    as they weren't used and unnecessarily pulled in `windows.h`. See also
+    [mosra/magnum-plugins#74]https://github.com/mosra/magnum-plugins/pull/74).
 
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
 

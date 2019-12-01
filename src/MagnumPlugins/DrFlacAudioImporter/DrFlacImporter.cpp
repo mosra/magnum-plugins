@@ -34,6 +34,7 @@
 #include <Magnum/Math/Packing.h>
 
 #define DR_FLAC_IMPLEMENTATION
+#define DR_FLAC_NO_STDIO /* Otherwise it includes windows.h, ugh */
 #include "dr_flac.h"
 
 namespace Magnum { namespace Audio {
