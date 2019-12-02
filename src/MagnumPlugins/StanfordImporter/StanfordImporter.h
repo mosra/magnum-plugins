@@ -29,7 +29,7 @@
  * @brief Class @ref Magnum::Trade::StanfordImporter
  */
 
-#include <Corrade/Containers/Pointer.h>
+#include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "MagnumPlugins/StanfordImporter/configure.h"
@@ -114,13 +114,12 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
 
         MAGNUM_STANFORDIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_STANFORDIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
-        MAGNUM_STANFORDIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_STANFORDIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
         MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
 
-        Containers::Pointer<std::istream> _in;
+        Containers::Array<char> _in;
 };
 
 }}

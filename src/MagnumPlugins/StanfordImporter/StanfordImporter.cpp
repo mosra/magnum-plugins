@@ -25,8 +25,6 @@
 
 #include "StanfordImporter.h"
 
-#include <fstream>
-#include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -51,19 +49,21 @@ bool StanfordImporter::doIsOpened() const { return !!_in; }
 
 void StanfordImporter::doClose() { _in = nullptr; }
 
-void StanfordImporter::doOpenFile(const std::string& filename) {
-    /* Open file in *binary* mode to avoid broken binary data (need to handle \r manually) */
-    Containers::Pointer<std::ifstream> in{Containers::InPlaceInit, filename, std::ifstream::binary};
-    if(!in->good()) {
-        Error() << "Trade::StanfordImporter::openFile(): cannot open file" << filename;
+void StanfordImporter::doOpenData(const Containers::ArrayView<const char> data) {
+    /* Because here we're copying the data and using the _in to check if file
+       is opened, having them nullptr would mean openData() would fail without
+       any error message. It's not possible to do this check on the importer
+       side, because empty file is valid in some formats (OBJ or glTF). We also
+       can't do the full import here because then doImage2D() would need to
+       copy the imported data instead anyway (and the uncompressed size is much
+       larger). This way it'll also work nicely with a future openMemory(). */
+    if(data.empty()) {
+        Error{} << "Trade::StanfordImporter::openData(): the file is empty";
         return;
     }
 
-    _in = std::move(in);
-}
-
-void StanfordImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    _in.reset(new std::istringstream{{data, data.size()}});
+    _in = Containers::Array<char>{Containers::NoInit, data.size()};
+    std::memcpy(_in, data, data.size());
 }
 
 UnsignedInt StanfordImporter::doMesh3DCount() const { return 1; }
@@ -247,16 +247,27 @@ inline void extractQuad(std::vector<UnsignedInt>& indices, const char* const buf
     });
 }
 
+std::string extractLine(Containers::ArrayView<const char>& in) {
+    for(const char& i: in) if(i == '\n') {
+        std::size_t end = &i - in;
+        auto out = in.prefix(end);
+        in = in.suffix(end + 1);
+        return {out.begin(), out.end()};
+    }
+
+    auto out = in;
+    in = {};
+    return {out.begin(), out.end()};
+}
+
 }
 
 Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
-    _in->seekg(0);
+    Containers::ArrayView<const char> in = _in;
 
     /* Check file signature */
     {
-        std::string header;
-        std::getline(*_in, header);
-        header = Utility::String::rtrim(std::move(header));
+        std::string header = Utility::String::rtrim(extractLine(in));
         if(header != "ply") {
             Error() << "Trade::StanfordImporter::mesh3D(): invalid file signature" << header;
             return Containers::NullOpt;
@@ -266,8 +277,8 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     /* Parse format line */
     FileFormat fileFormat{};
     {
-        std::string line;
-        while(std::getline(*_in, line)) {
+        while(in) {
+            const std::string line = extractLine(in);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
             /* Skip empty lines and comments */
@@ -312,9 +323,9 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     Vector3i positionOffsets{-1}, colorOffsets{-1};
     {
         std::size_t vertexComponentOffset{};
-        std::string line;
         PropertyType propertyType{};
-        while(std::getline(*_in, line)) {
+        while(in) {
+            const std::string line = extractLine(in);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
             /* Skip empty lines and comments */
@@ -454,9 +465,15 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
         colors.back().reserve(vertexCount);
     }
     {
-        Containers::Array<char> buffer{vertexStride};
         for(std::size_t i = 0; i != vertexCount; ++i) {
-            _in->read(buffer, vertexStride);
+            if(in.size() < vertexStride) {
+                Error() << "Trade::StanfordImporter::mesh3D(): incomplete vertex data";
+                return Containers::NullOpt;
+            }
+
+            Containers::ArrayView<const char> buffer = in.prefix(vertexStride);
+            in = in.suffix(vertexStride);
+
             positions.emplace_back(
                 extract<Float>(buffer + positionOffsets.x(), fileFormat, positionTypes.x()),
                 extract<Float>(buffer + positionOffsets.y(), fileFormat, positionTypes.y()),
@@ -474,16 +491,19 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     std::vector<UnsignedInt> indices;
     indices.reserve(faceCount*3);
     {
-        /* Assuming max four four-byte indices per face */
-        char buffer[4*4];
-
         const UnsignedInt faceSizeTypeSize = sizeOf(faceSizeType);
         const UnsignedInt faceIndexTypeSize = sizeOf(faceIndexType);
         for(std::size_t i = 0; i != faceCount; ++i) {
-            _in->ignore(faceIndicesOffset);
+            if(in.size() < faceIndicesOffset + faceSizeTypeSize) {
+                Error() << "Trade::StanfordImporter::mesh3D(): incomplete index data";
+                return Containers::NullOpt;
+            }
+
+            in = in.suffix(faceIndicesOffset);
 
             /* Get face size */
-            _in->read(buffer, faceSizeTypeSize);
+            Containers::ArrayView<const char> buffer = in.prefix(faceSizeTypeSize);
+            in = in.suffix(faceSizeTypeSize);
             const UnsignedInt faceSize = extract<UnsignedInt>(buffer, fileFormat, faceSizeType);
             if(faceSize < 3 || faceSize > 4) {
                 Error() << "Trade::StanfordImporter::mesh3D(): unsupported face size" << faceSize;
@@ -491,15 +511,17 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             }
 
             /* Parse face indices */
-            if(!_in->read(buffer, faceIndexTypeSize*faceSize)) {
-                Error() << "Trade::StanfordImporter::mesh3D(): file is too short";
+            if(in.size() < faceIndexTypeSize*faceSize + faceSkip) {
+                Error() << "Trade::StanfordImporter::mesh3D(): incomplete face data";
                 return Containers::NullOpt;
             }
+
+            buffer = in.prefix(faceIndexTypeSize*faceSize);
+            in = in.suffix(faceIndexTypeSize*faceSize + faceSkip);
+
             faceSize == 3 ?
                 extractTriangle(indices, buffer, fileFormat, faceIndexType) :
                 extractQuad(indices, buffer, fileFormat, faceIndexType);
-
-            _in->ignore(faceSkip);
         }
     }
 

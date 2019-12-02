@@ -29,6 +29,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -62,7 +63,7 @@ struct StanfordImporterTest: TestSuite::Tester {
     void incompleteVertex();
     void incompleteFace();
 
-    void fileDoesNotExist();
+    void fileEmpty();
     void fileTooShort();
     void invalidFaceSize();
 
@@ -81,6 +82,15 @@ struct StanfordImporterTest: TestSuite::Tester {
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
+};
+
+constexpr struct {
+    std::size_t prefix;
+    const char* message;
+} ShortFileData[]{
+    {0x0f4, "incomplete vertex data"},
+    {0x108, "incomplete index data"},
+    {0x10f, "incomplete face data"}
 };
 
 StanfordImporterTest::StanfordImporterTest() {
@@ -105,9 +115,12 @@ StanfordImporterTest::StanfordImporterTest() {
               &StanfordImporterTest::incompleteVertex,
               &StanfordImporterTest::incompleteFace,
 
-              &StanfordImporterTest::fileDoesNotExist,
-              &StanfordImporterTest::fileTooShort,
-              &StanfordImporterTest::invalidFaceSize,
+              &StanfordImporterTest::fileEmpty});
+
+    addInstancedTests({&StanfordImporterTest::fileTooShort},
+        Containers::arraySize(ShortFileData));
+
+    addTests({&StanfordImporterTest::invalidFaceSize,
 
               &StanfordImporterTest::openFile,
               &StanfordImporterTest::openData,
@@ -289,23 +302,28 @@ void StanfordImporterTest::incompleteFace() {
     CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): incomplete face specification\n");
 }
 
-void StanfordImporterTest::fileDoesNotExist() {
+void StanfordImporterTest::fileEmpty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile("nonexistent.ply"));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::openFile(): cannot open file nonexistent.ply\n");
+    CORRADE_VERIFY(!importer->openData(nullptr));
+    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::openData(): the file is empty\n");
 }
 
 void StanfordImporterTest::fileTooShort() {
+    auto&& data = ShortFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.message);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "short-file.ply"));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "short-file.ply")));
+    CORRADE_VERIFY(importer->openData(file.prefix(data.prefix)));
     CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): file is too short\n");
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::mesh3D(): {}\n", data.message));
 }
 
 void StanfordImporterTest::invalidFaceSize() {
