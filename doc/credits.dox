@@ -38,6 +38,8 @@ namespace Magnum {
     packages in the ArchLinux community repository
 -   **Bill Robinson** ([\@wivlaro](https://github.com/wivlaroú) --- numerous
     bug reports and fixes
+-   **[\@DJQuardaboff](https://github.com/DJQuardaboff)** --- Investigation
+    into undoing horrible crimes done by windows.h
 -   **Fabien Freling** ([\@ffreling](https://github.com/ffreling)) --- bug
     reports and fixes
 -   **Guillaume Jacquemin** ([\@williamjcm](https://github.com/williamjcm)) ---

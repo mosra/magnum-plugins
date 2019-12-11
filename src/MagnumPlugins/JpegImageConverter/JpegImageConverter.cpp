@@ -31,12 +31,24 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
+#ifdef CORRADE_TARGET_WINDOWS
 /* On Windows we need to circumvent conflicting definition of INT32 in
    <windows.h> (included from OpenGL headers). Problem with libjpeg-tubo only,
    libjpeg solves that already somehow. */
-#ifdef CORRADE_TARGET_WINDOWS
 #define XMD_H
+
+/* In case of MSYS2 MinGW packages, jmorecfg.h for some reason includes
+   shlwapi.h, which includes objbase.h and rpc.h which in turn does the dreaded
+   #define interface struct, breaking CORRADE_PLUGIN_REGISTER() on builds that
+   enable BUILD_PLUGINS_STATIC. This is not reproducible with plain MinGW and
+   hand-compiled libjpeg nor MSVC, so really specific to this patch:
+   https://github.com/msys2/MINGW-packages/blob/e9badcb5e7ee88e87f6cb6a23b6e0ba69468135b/mingw-w64-libjpeg-turbo/0001-header-compat.mingw.patch
+   Defining NOSHLWAPI makes the shlwapi.h header a no-op, fixing this issue. */
+#ifdef __MINGW32__
+#define NOSHLWAPI
 #endif
+#endif
+
 #include <jpeglib.h>
 
 namespace Magnum { namespace Trade {
