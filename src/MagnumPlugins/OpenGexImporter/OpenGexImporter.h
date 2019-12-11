@@ -33,6 +33,8 @@
 
 #include "Magnum/OpenDdl/OpenDdl.h"
 
+#include "MagnumPlugins/OpenGexImporter/configure.h"
+
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_OPENGEXIMPORTER_BUILD_STATIC
     #ifdef OpenGexImporter_EXPORTS
