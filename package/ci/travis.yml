@@ -57,6 +57,16 @@ matrix:
         - libharfbuzz-dev
         - libassimp-dev
   - language: cpp
+    os: linux
+    dist: xenial
+    compiler: gcc
+    env:
+    - JOBID=linux-static
+    - TARGET=desktop
+    - CMAKE_CXX_FLAGS="--coverage"
+    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
+    - BUILD_STATIC=ON
+  - language: cpp
     os: osx
     # The new plugin testing workflow is dynamically loading and unloading them
     # in the tests. When that's combined with coverage and LLVM < 5.0.1, all
@@ -73,6 +83,16 @@ matrix:
     - JOBID=macos
     - TARGET=desktop
     - CMAKE_CXX_FLAGS="--coverage"
+  - language: cpp
+    os: osx
+    # See above
+    osx_image: xcode9.3
+    compiler: clang
+    env:
+    - JOBID=macos-static
+    - TARGET=desktop
+    - CMAKE_CXX_FLAGS="--coverage"
+    - BUILD_STATIC=ON
   - language: cpp
     os: osx
     osx_image: xcode7.3
@@ -119,6 +139,7 @@ install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! "$TARGET" == "desktop-sanitizers" ] && [ ! "$TARGET" == "android" ]; then export CXX=g++-4.8; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop-sanitizers" ]; then export CXX=clang++-3.8; fi
 - if [ "$BUILD_DEPRECATED" != "OFF" ]; then export BUILD_DEPRECATED=ON; fi
+- if [ "$BUILD_STATIC" != "ON" ]; then export BUILD_STATIC=OFF; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PLATFORM_GL_API=GLX; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "android" ]; then wget -nc https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip && unzip -q android-*.zip; fi
 # Download CMake 3.4.3 to ensure we're still compatible with it (Travis has

@@ -11,6 +11,7 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Debug \
     -DWITH_INTERCONNECT=OFF \
     -DBUILD_DEPRECATED=$BUILD_DEPRECATED \
+    -DBUILD_STATIC=$BUILD_STATIC \
     -G Ninja
 ninja install
 cd ../..
@@ -34,6 +35,8 @@ cmake .. \
     -DWITH_TEXTURETOOLS=ON \
     -DWITH_ANYIMAGEIMPORTER=ON \
     -DBUILD_DEPRECATED=$BUILD_DEPRECATED \
+    -DBUILD_STATIC=$BUILD_STATIC \
+    -DBUILD_PLUGINS_STATIC=$BUILD_STATIC \
     -G Ninja
 ninja install
 cd ../..
@@ -72,6 +75,8 @@ cmake .. \
     -DWITH_TINYGLTFIMPORTER=ON \
     -DBUILD_TESTS=ON \
     -DBUILD_GL_TESTS=ON \
+    -DBUILD_STATIC=$BUILD_STATIC \
+    -DBUILD_PLUGINS_STATIC=$BUILD_STATIC \
     -G Ninja
 # Otherwise the job gets killed (probably because using too much memory)
 ninja -j4
