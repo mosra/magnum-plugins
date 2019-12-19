@@ -1945,7 +1945,7 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
 
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
     CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
