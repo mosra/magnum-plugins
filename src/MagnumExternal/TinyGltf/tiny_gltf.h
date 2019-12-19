@@ -196,7 +196,7 @@ typedef enum {
   OBJECT_TYPE = 7
 } Type;
 
-static inline int32_t GetComponentSizeInBytes(uint32_t componentType) {
+inline int32_t GetComponentSizeInBytes(uint32_t componentType) {
   if (componentType == TINYGLTF_COMPONENT_TYPE_BYTE) {
     return 1;
   } else if (componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
@@ -219,7 +219,7 @@ static inline int32_t GetComponentSizeInBytes(uint32_t componentType) {
   }
 }
 
-static inline int32_t GetNumComponentsInType(uint32_t ty) {
+inline int32_t GetNumComponentsInType(uint32_t ty) {
   if (ty == TINYGLTF_TYPE_SCALAR) {
     return 1;
   } else if (ty == TINYGLTF_TYPE_VEC2) {
