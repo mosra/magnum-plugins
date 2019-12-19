@@ -93,7 +93,7 @@ using namespace Magnum::Math::Literals;
 
 namespace {
 
-bool loadImageData(tinygltf::Image* image, std::string*, std::string*, int, int, const unsigned char* data, int size, void*) {
+bool loadImageData(tinygltf::Image* image, const int, std::string*, std::string*, int, int, const unsigned char* data, int size, void*) {
     /* In case the image is an embedded URI, copy its decoded value to the data
        buffer. In all other cases we'll access the referenced buffer or
        external file directly from the doImage2D() implementation. */
@@ -104,9 +104,7 @@ bool loadImageData(tinygltf::Image* image, std::string*, std::string*, int, int,
 }
 
 std::size_t elementSize(const tinygltf::Accessor& accessor) {
-    /* GetTypeSizeInBytes() is totally bogus and misleading name, it should
-       have been called GetTypeComponentCount but who am I to judge. */
-    return tinygltf::GetComponentSizeInBytes(accessor.componentType)*tinygltf::GetTypeSizeInBytes(accessor.type);
+    return tinygltf::GetComponentSizeInBytes(accessor.componentType)*tinygltf::GetNumComponentsInType(accessor.type);
 }
 
 Containers::ArrayView<const char> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
@@ -648,15 +646,15 @@ Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
         const Vector2 size = 2.0f*camera.perspective.znear*Math::tan(camera.perspective.yfov*0.5_radf)*Vector2::xScale(camera.perspective.aspectRatio);
         const Float far = camera.perspective.zfar == 0.0f ? Constants::inf() :
             camera.perspective.zfar;
-        return CameraData{CameraType::Perspective3D, size, camera.perspective.znear, far, &camera};
+        return CameraData{CameraType::Perspective3D, size, Float(camera.perspective.znear), far, &camera};
     }
 
     /* Orthographic camera. glTF uses a "scale" instead of "size", which means
        we have to double. */
     if(camera.type == "orthographic")
         return CameraData{CameraType::Orthographic3D,
-            Vector2{camera.orthographic.xmag, camera.orthographic.ymag}*2.0f,
-            camera.orthographic.znear, camera.orthographic.zfar, &camera};
+            Vector2{Float(camera.orthographic.xmag), Float(camera.orthographic.ymag)}*2.0f,
+            Float(camera.orthographic.znear), Float(camera.orthographic.zfar), &camera};
 
     CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
@@ -908,8 +906,7 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         meshPrimitive = MeshPrimitive::Lines;
     } else if(primitive.mode == TINYGLTF_MODE_LINE_LOOP) {
         meshPrimitive = MeshPrimitive::LineLoop;
-    } else if(primitive.mode == 3) {
-        /* For some reason tiny_gltf doesn't have a define for this */
+    } else if(primitive.mode == TINYGLTF_MODE_LINE_STRIP) {
         meshPrimitive = MeshPrimitive::LineStrip;
     } else if(primitive.mode == TINYGLTF_MODE_TRIANGLES) {
         meshPrimitive = MeshPrimitive::Triangles;
@@ -1287,7 +1284,15 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
             minFilter = SamplerFilter::Linear;
             mipmap = SamplerMipmap::Linear;
             break;
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        case -1:
+            /* glTF 2.0 spec does not define a default value for 'minFilter' and
+               `magFilter`. In this case tinygltf sets it to -1
+               (see https://github.com/syoyo/tinygltf/issues/186) */
+            minFilter = SamplerFilter::Linear;
+            mipmap = SamplerMipmap::Linear;
+            break;
+        default:
+            CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     SamplerFilter magFilter;
@@ -1298,7 +1303,14 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
         case TINYGLTF_TEXTURE_FILTER_LINEAR:
             magFilter = SamplerFilter::Linear;
             break;
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        case -1:
+            /* glTF 2.0 spec does not define a default value for 'minFilter' and
+               `magFilter`. In this case tinygltf sets it to -1
+               (see https://github.com/syoyo/tinygltf/issues/186) */
+            magFilter = SamplerFilter::Linear;
+            break;
+        default:
+            CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     /* There's wrapR that is a tiny_gltf extension and is set to zero. Ignoring
