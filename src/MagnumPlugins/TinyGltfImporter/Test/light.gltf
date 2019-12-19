@@ -3,7 +3,7 @@
         "version" : "2.0"
     },
     "extensions" : {
-        "KHR_lights_cmn" : {
+        "KHR_lights_punctual" : {
             "lights" : [
                 {
                     "color" : [
@@ -12,10 +12,7 @@
                         1.0
                     ],
                     "name" : "Point",
-                    "positional" : {
-                        "quadraticAttenuation" : 0.04
-                    },
-                    "profile" : "CMN",
+                    "range" : 10.0,
                     "type" : "point"
                 },
                 {
@@ -25,13 +22,11 @@
                         1.0
                     ],
                     "name" : "Spot",
-                    "positional" : {
-                        "quadraticAttenuation" : 0.04,
-                        "spot" : {
-                            "innerAngle" : 0.3337942263919169,
-                            "outerAngle" : 0.39269909262657166
-                        }
+                    "spot" : {
+                        "innerConeAngle" : 0.3337942263919169,
+                        "outerConeAngle" : 0.39269909262657166
                     },
+                    "intensity": 2.1,
                     "profile" : "CMN",
                     "type" : "spot"
                 },
@@ -58,9 +53,9 @@
         }
     },
     "extensionsRequired" : [
-        "KHR_lights_cmn"
+        "KHR_lights_punctual"
     ],
     "extensionsUsed" : [
-        "KHR_lights_cmn"
+        "KHR_lights_punctual"
     ]
 }

@@ -154,10 +154,9 @@ Import of skeleton, skin and morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-limitations-lights Light import
 
--   Currently, the importer only supports the historical `KHR_lights_cmn`
-    extension, supported by the original Khronos Blender glTF Exporter.
-    -   Light properties besides light type are not imported.
-    -   Light intensity is not yet supported due to glTF extension draft state.
+-   The importer supports the [KHR_lights_punctual](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual)
+    extension, supported by the official glTF Exporter in Blender 2.8.x.
+    -   Only light properties color, intensity and type are imported.
 
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 

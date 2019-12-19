@@ -24,7 +24,7 @@
         }
     ],
     "extensions": {
-        "KHR_lights_cmn": {
+        "KHR_lights_punctual": {
             "lights": [
                 {
                     "color": [
@@ -33,10 +33,6 @@
                         1.0
                     ],
                     "name": "Lamp",
-                    "positional": {
-                        "quadraticAttenuation": 0.03333335240683057
-                    },
-                    "profile": "CMN",
                     "type": "point"
                 },
                 {
@@ -52,10 +48,10 @@
         }
     },
     "extensionsRequired": [
-        "KHR_lights_cmn"
+        "KHR_lights_punctual"
     ],
     "extensionsUsed": [
-        "KHR_lights_cmn"
+        "KHR_lights_punctual"
     ],
     "materials": [
         {
@@ -88,7 +84,7 @@
         },
         {
             "extensions": {
-                "KHR_lights_cmn": {
+                "KHR_lights_punctual": {
                     "light": 0
                 }
             },
@@ -114,7 +110,7 @@
         },
         {
             "extensions": {
-                "KHR_lights_cmn": {
+                "KHR_lights_punctual": {
                     "light": 1
                 }
             },

@@ -683,7 +683,7 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     const tinygltf::Light& light = _d->model.lights[id];
 
     Color3 lightColor{float(light.color[0]), float(light.color[1]), float(light.color[2])};
-    Float lightIntensity{1.0f}; /* not supported by tinygltf */
+    Float lightIntensity{Float(light.intensity)};
 
     LightData::Type lightType;
 
@@ -861,9 +861,9 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         instanceId = node.camera;
 
     /* Node is a light */
-    } else if(node.extensions.find("KHR_lights_cmn") != node.extensions.end()) {
+    } else if(node.extensions.find("KHR_lights_punctual") != node.extensions.end()) {
         instanceType = ObjectInstanceType3D::Light;
-        instanceId = UnsignedInt(node.extensions.at("KHR_lights_cmn").Get("light").Get<int>());
+        instanceId = UnsignedInt(node.extensions.at("KHR_lights_punctual").Get("light").Get<int>());
     }
 
     return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?

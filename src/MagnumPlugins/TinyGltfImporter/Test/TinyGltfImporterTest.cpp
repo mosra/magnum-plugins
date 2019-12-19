@@ -1072,7 +1072,7 @@ void TinyGltfImporterTest::light() {
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.28f, 0.19f, 1.0f}));
-        CORRADE_COMPARE(light->intensity(), 1.0f);
+        CORRADE_COMPARE(light->intensity(), 2.1f);
     } {
         CORRADE_COMPARE(importer->lightForName("Sun"), 2);
         CORRADE_COMPARE(importer->lightName(2), "Sun");
