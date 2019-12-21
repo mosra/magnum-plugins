@@ -1281,18 +1281,14 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
             mipmap = SamplerMipmap::Nearest;
             break;
         case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
-            minFilter = SamplerFilter::Linear;
-            mipmap = SamplerMipmap::Linear;
-            break;
+        /* glTF 2.0 spec does not define a default value for 'minFilter' and
+           `magFilter`. In this case tinygltf sets it to -1
+           (see https://github.com/syoyo/tinygltf/issues/186) */
         case -1:
-            /* glTF 2.0 spec does not define a default value for 'minFilter' and
-               `magFilter`. In this case tinygltf sets it to -1
-               (see https://github.com/syoyo/tinygltf/issues/186) */
             minFilter = SamplerFilter::Linear;
             mipmap = SamplerMipmap::Linear;
             break;
-        default:
-            CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     SamplerFilter magFilter;
@@ -1301,16 +1297,13 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
             magFilter = SamplerFilter::Nearest;
             break;
         case TINYGLTF_TEXTURE_FILTER_LINEAR:
-            magFilter = SamplerFilter::Linear;
-            break;
+        /* glTF 2.0 spec does not define a default value for 'minFilter' and
+           `magFilter`. In this case tinygltf sets it to -1
+           (see https://github.com/syoyo/tinygltf/issues/186) */
         case -1:
-            /* glTF 2.0 spec does not define a default value for 'minFilter' and
-               `magFilter`. In this case tinygltf sets it to -1
-               (see https://github.com/syoyo/tinygltf/issues/186) */
             magFilter = SamplerFilter::Linear;
             break;
-        default:
-            CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     /* There's wrapR that is a tiny_gltf extension and is set to zero. Ignoring
