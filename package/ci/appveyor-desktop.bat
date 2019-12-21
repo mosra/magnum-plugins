@@ -3,6 +3,12 @@ if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" call "C:/Program File
 if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x64 || exit /b
 set PATH=%APPVEYOR_BUILD_FOLDER%/openal/bin/Win64;%APPVEYOR_BUILD_FOLDER%\deps\bin;%APPVEYOR_BUILD_FOLDER%\devil;C:\Tools\vcpkg\installed\x64-windows\bin;%PATH%
 
+rem need to explicitly specify a 64-bit target, otherwise CMake+Ninja can't
+rem figure that out -- https://gitlab.kitware.com/cmake/cmake/issues/16259
+rem for TestSuite we need to enable exceptions explicitly with /EH as these are
+rem currently disabled -- https://github.com/catchorg/Catch2/issues/1113
+if "%COMPILER%" == "msvc-clang" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc" -DCMAKE_CXX_FLAGS="-m64 /EHsc"
+
 rem Build LibJPEG
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.5.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.5.0/libjpeg-turbo-1.5.0.tar.gz || exit /b
 7z x libjpeg-turbo-1.5.0.tar.gz || exit /b
@@ -14,7 +20,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug ^
     -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
     -DWITH_JPEG8=ON ^
     -DWITH_SIMD=OFF ^
-    -G Ninja || exit /b
+    %COMPILER_EXTRA% -G Ninja || exit /b
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
 
@@ -34,7 +40,7 @@ cmake .. ^
     -DWITH_INTERCONNECT=OFF ^
     -DUTILITY_USE_ANSI_COLORS=ON ^
     -DBUILD_STATIC=%BUILD_STATIC% ^
-    -G Ninja || exit /b
+    %COMPILER_EXTRA% -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b
 cd .. && cd ..
@@ -59,7 +65,7 @@ cmake .. ^
     -DWITH_ANYIMAGEIMPORTER=ON ^
     -DBUILD_STATIC=%BUILD_STATIC% ^
     -DBUILD_PLUGINS_STATIC=%BUILD_STATIC% ^
-    -G Ninja || exit /b
+    %COMPILER_EXTRA% -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b
 cd .. && cd ..
@@ -97,7 +103,7 @@ cmake .. ^
     -DBUILD_GL_TESTS=ON ^
     -DBUILD_STATIC=%BUILD_STATIC% ^
     -DBUILD_PLUGINS_STATIC=%BUILD_STATIC% ^
-    -G Ninja || exit /b
+    %COMPILER_EXTRA% -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b
 
