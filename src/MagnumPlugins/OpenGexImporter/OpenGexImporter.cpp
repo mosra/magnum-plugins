@@ -55,7 +55,8 @@ namespace Magnum { namespace Trade {
 using namespace Magnum::Math::Literals;
 
 struct OpenGexImporter::Document {
-    OpenDdl::Document document;
+    /* Clang-CL otherwise complains that Document has no implicit constructor */
+    OpenDdl::Document document{};
 
     /* Default metrics */
     Float distanceMultiplier = 1.0f;
