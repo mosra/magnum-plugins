@@ -113,6 +113,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void texture();
     void textureDefaultSampler();
+    void textureEmptySampler();
     void textureMissingSource();
 
     void imageEmbedded();
@@ -262,7 +263,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::materialProperties,
 
                        &TinyGltfImporterTest::texture,
-                       &TinyGltfImporterTest::textureDefaultSampler},
+                       &TinyGltfImporterTest::textureDefaultSampler,
+                       &TinyGltfImporterTest::textureEmptySampler},
                       Containers::arraySize(SingleFileData));
 
     addTests({&TinyGltfImporterTest::textureMissingSource});
@@ -1944,9 +1946,9 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE(texture->image(), 0);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
 
-    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
+    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Nearest);
 
     CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
 
@@ -1970,6 +1972,26 @@ void TinyGltfImporterTest::textureDefaultSampler() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "texture-default-sampler" + std::string{data.suffix})));
+
+    auto texture = importer->texture(0);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->image(), 0);
+    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+
+    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
+
+    CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
+}
+
+void TinyGltfImporterTest::textureEmptySampler() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "texture-empty-sampler" + std::string{data.suffix})));
 
     auto texture = importer->texture(0);
     CORRADE_VERIFY(texture);
