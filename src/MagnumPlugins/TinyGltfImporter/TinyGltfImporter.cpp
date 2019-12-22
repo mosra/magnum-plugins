@@ -643,9 +643,9 @@ Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
        FoV). Also tinygltf is stupid and uses 0 to denote infinite far plane
        (wat). */
     if(camera.type == "perspective") {
-        const Vector2 size = 2.0f*camera.perspective.znear*Math::tan(camera.perspective.yfov*0.5_radf)*Vector2::xScale(camera.perspective.aspectRatio);
-        const Float far = camera.perspective.zfar == 0.0f ? Constants::inf() :
-            camera.perspective.zfar;
+        const Vector2 size = 2.0f*camera.perspective.znear*Math::tan(Float(camera.perspective.yfov)*0.5_radf)*Vector2::xScale(Float(camera.perspective.aspectRatio));
+        const Float far = Float(camera.perspective.zfar) == 0.0f ?
+            Constants::inf() : Float(camera.perspective.zfar);
         return CameraData{CameraType::Perspective3D, size, Float(camera.perspective.znear), far, &camera};
     }
 
