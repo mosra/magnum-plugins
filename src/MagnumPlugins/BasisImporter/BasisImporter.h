@@ -114,23 +114,6 @@ OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
 
 <b></b>
 
-@m_class{m-block m-warning}
-
-@par Y-flipping
-    While all importers for uncompressed image data are doing an Y-flip on
-    import to have origin at the bottom (as expected by OpenGL), it's a
-    non-trivial operation with compressed images. In case of Basis, you can
-    pass a `-y_flip` flag to the `basisu` tool to Y-flip the image
-    * *during encoding*, however right now there's no way do so on import. To
-    inform the user, the importer checks for the Y-flip flag in the file and if
-    it's not there, prints a warning about the data having wrong orientation.
-@par
-    To account for this on the application side for files that you don't have a
-    control of, flip texture coordinates of the mesh or patch texture data
-    loading in the shader.
-
-<b></b>
-
 @m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the
