@@ -120,7 +120,7 @@ component of the `MagnumPlugins` package and link to the
 find_package(MagnumPlugins REQUIRED OpenDdl)
 
 # ...
-target_link_libraries(your-app MagnumPlugins::OpenDdl)
+target_link_libraries(your-app PRIVATE MagnumPlugins::OpenDdl)
 @endcode
 */
 /** @namespace Magnum::OpenDdl::Validation
@@ -138,6 +138,6 @@ component of the `MagnumPlugins` package and link to the
 find_package(MagnumPlugins REQUIRED OpenDdl)
 
 # ...
-target_link_libraries(your-app MagnumPlugins::OpenDdl)
+target_link_libraries(your-app PRIVATE MagnumPlugins::OpenDdl)
 @endcode
 */
