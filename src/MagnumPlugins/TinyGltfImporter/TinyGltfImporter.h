@@ -93,10 +93,10 @@ This plugin provides `GltfImporter` and `GlbImporter` plugins.
 The plugin supports @ref Feature::OpenData and @ref Feature::FileCallback
 features. The `tiny_gltf` library loads everything during initial import,
 meaning all external file loading callbacks are called with
-@ref ImporterFileCallbackPolicy::LoadTemporary and the resources can be safely
+@ref InputFileCallbackPolicy::LoadTemporary and the resources can be safely
 freed right after the @ref openData() / @ref openFile() function exits. In case
 of images, the files are loaded on-demand inside @ref image2D() calls with
-@ref ImporterFileCallbackPolicy::LoadTemporary and @ref ImporterFileCallbackPolicy::Close
+@ref InputFileCallbackPolicy::LoadTemporary and @ref InputFileCallbackPolicy::Close
 is emitted right after the file is fully read.
 
 Import of skeleton, skin and morph data is not supported at the moment.

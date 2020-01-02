@@ -143,12 +143,13 @@ This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
 The plugin supports @ref Feature::OpenData and @ref Feature::FileCallback
 features. The Assimp library loads everything during initial import, meaning
 all external file loading callbacks are called with
-@ref ImporterFileCallbackPolicy::LoadTemporary and the resources can be safely
+@ref InputFileCallbackPolicy::LoadTemporary and the resources can be safely
 freed right after the @ref openData() / @ref openFile() function exits. In some
-cases, Assimp will explicitly call @ref ImporterFileCallbackPolicy::Close on
+cases, Assimp will explicitly call @ref InputFileCallbackPolicy::Close on
 the opened file and then open it again. In case of images, the files are loaded
-on-demand inside @ref image2D() calls with @ref ImporterFileCallbackPolicy::LoadTemporary and @ref ImporterFileCallbackPolicy::Close
-is emitted right after the file is fully read.
+on-demand inside @ref image2D() calls with @ref InputFileCallbackPolicy::LoadTemporary
+and @ref InputFileCallbackPolicy::Close is emitted right after the file is
+fully read.
 
 Import of animation data is not supported at the moment.
 
