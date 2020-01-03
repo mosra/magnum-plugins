@@ -69,15 +69,6 @@ the [dr_mp3](https://github.com/mackron/dr_libs) library:
     @ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
     or @ref BufferFormat::Surround71Channel16
 
-This plugin depends on the @ref Audio library and is built if
-`WITH_DRMP3AUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, you need to load the @cpp "DrMp3AudioImporter" @ce plugin from
-`MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
-dependency of another plugin with CMake, you need to request the
-`DrMp3AudioImporter` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::DrMp3AudioImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugins provides `Mp3AudioImporter`.
 
 @m_class{m-block m-primary}
@@ -91,6 +82,40 @@ This plugins provides `Mp3AudioImporter`.
     ([license text](https://github.com/mackron/dr_libs/blob/9177e53ba6427e16bd56e436b1dab816e6bc1b77/dr_mp3.h#L3911-L3929),
     [choosealicense.com](https://choosealicense.com/licenses/mit/)).
 
+@section Audio-DrMp3Importer-usage Usage
+
+This plugin depends on the @ref Audio library and is built if
+`WITH_DRMP3AUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, load @cpp "DrMp3AudioImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_DRMP3AUDIOIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::DrMp3AudioImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `DrMp3AudioImporter` component of
+the `MagnumPlugins` package and link to the `MagnumPlugins::DrMp3AudioImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED DrMp3AudioImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::DrMp3AudioImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_DRMP3AUDIOIMPORTER_EXPORT DrMp3Importer: public AbstractImporter {
     public:

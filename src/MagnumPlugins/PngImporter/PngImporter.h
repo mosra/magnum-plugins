@@ -59,15 +59,6 @@ Supports Portable Network Graphics (`*.png`) RGB, RGBA or grayscale images with
 8 and 16 bits per channel. Palleted images and images with transparency mask
 are automatically converted to RGB(A).
 
-This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
-libraries and is built if `WITH_PNGIMPORTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, you need to load the @cpp "PngImporter" @ce
-plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a
-dependency of another plugin with CMake, you need to request the `PngImporter`
-component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::PngImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 @m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the
@@ -75,6 +66,42 @@ component of the `MagnumPlugins` package and link to the
     the @m_class{m-label m-success} **libPNG** license
     ([license text](http://libpng.org/pub/png/src/libpng-LICENSE.txt)). It
     requires attribution for public use.
+
+@section Trade-PngImporter-usage Usage
+
+This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
+libraries and is built if `WITH_PNGIMPORTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, load @cpp "PngImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following. Using libPNG itself as a CMake subproject isn't tested at the
+moment, so you need to provide it as a system dependency and point
+`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+
+@code{.cmake}
+set(WITH_PNGIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::PngImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `PngImporter` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::PngImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED PngImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::PngImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-PngImporter-limitations Behavior and limitations
 

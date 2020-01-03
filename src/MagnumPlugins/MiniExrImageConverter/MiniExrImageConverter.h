@@ -60,15 +60,6 @@ Supports images with format @ref PixelFormat::RGB16F or
 @ref PixelFormat::RGBA16F using the [miniexr](https://github.com/aras-p/miniexr)
 library.
 
-This plugin depends on the @ref Trade library and is built if
-`WITH_MINIEXRIMAGECONVERTER` is enabled when building Magnum Plugins. To use as
-a dynamic plugin, you need to load the @cpp "MiniExrImageConverter" @ce plugin
-from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. To use as a static plugin or as a
-dependency of another plugin with CMake, you need to request the
-`MiniExrImageConverter` component of the `MagnumPlugins` package and link to
-the `MagnumPlugins::MiniExrImageConverter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugins provides `OpenExrImageConverter` plugin, but note that this plugin
 generates only uncompressed files and the performance might be worse than when
 using plugin dedicated for given format.
@@ -78,6 +69,41 @@ using plugin dedicated for given format.
 @thirdparty This plugin makes use of the
     [miniexr](https://github.com/aras-p/miniexr) library by Aras Pranckevičius, released into the @m_class{m-label m-primary} **public domain**
     ([choosealicense.com](https://choosealicense.com/licenses/unlicense/)).
+
+@section Trade-MiniExrImageConverter-usage Usage
+
+This plugin depends on the @ref Trade library and is built if
+`WITH_MINIEXRIMAGECONVERTER` is enabled when building Magnum Plugins. To use as
+a dynamic plugin, load @cpp "MiniExrImageConverter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_MINIEXRIMAGECONVERTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::MiniExrImageConverter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `MiniExrImageConverter` component
+of the `MagnumPlugins` package and link to the
+`MagnumPlugins::MiniExrImageConverter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED MiniExrImageConverter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::MiniExrImageConverter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:

@@ -62,16 +62,6 @@ printed to the console). @ref PixelFormat::RG8Unorm can't be easily supported,
 see @ref StbImageConverter for an alternative with a possibility to export RG
 images as a grayscale JPEG.
 
-This plugin depends on the @ref Trade and [libJPEG](http://libjpeg.sourceforge.net/)
-libraries and is built if `WITH_JPEGIMAGECONVERTER` is enabled when building
-Magnum Plugins. To use as a dynamic plugin, you need to load the
-@cpp "JpegImageConverter" @ce plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`.
-To use as a static plugin or as a dependency of another plugin with CMake, you
-need to request the `JpegImageConverter` component of the `MagnumPlugins`
-package and link to the `MagnumPlugins::JpegImageConverter` target. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
-
 @m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the [libJPEG](http://ijg.org/) library,
@@ -80,6 +70,43 @@ information.
     requires attribution for public use. Note that this plugin can be built
     against any other compatible and possibly differently-licensed libJPEG
     implementation as well.
+
+@section Trade-JpegImageConverter-usage Usage
+
+This plugin depends on the @ref Trade and [libJPEG](http://libjpeg.sourceforge.net/)
+libraries and is built if `WITH_JPEGIMAGECONVERTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, load @cpp "JpegImageConverter" @ce
+via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following. Using libJPEG itself as a CMake subproject isn't tested at the
+moment, so you need to provide it as a system dependency and point
+`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+
+@code{.cmake}
+set(WITH_JPEGIMAGECONVERTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::JpegImageConverter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `JpegImageConverter` component of
+the `MagnumPlugins` package and link to the `MagnumPlugins::JpegImageConverter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED JpegImageConverter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::JpegImageConverter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-JpegImageConverter-implementations libJPEG implementations
 

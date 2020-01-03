@@ -55,15 +55,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief JPEG importer plugin
 
-Supports RGB or grayscale images with 8 bits per channel.
-
-This plugin depends on the @ref Trade and [libJPEG](http://libjpeg.sourceforge.net/) libraries and is built if `WITH_JPEGIMPORTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, you need to load the @cpp "JpegImporter" @ce
-plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a
-dependency of another plugin with CMake, you need to request the `JpegImporter`
-component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::JpegImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
+Supports RGB or grayscale images with 8 bits per channel. The images are
+imported with @ref PixelFormat::RGB8Unorm or @ref PixelFormat::R8Unorm. All
+imported images use default @ref PixelStorage parameters.
 
 @m_class{m-block m-success}
 
@@ -74,8 +68,40 @@ component of the `MagnumPlugins` package and link to the
     against any other compatible and possibly differently-licensed libJPEG
     implementation as well.
 
-The images are imported with @ref PixelFormat::RGB8Unorm or @ref PixelFormat::R8Unorm. All imported images use default @ref PixelStorage
-parameters.
+@section Trade-JpegImporter-usage Usage
+
+This plugin depends on the @ref Trade and [libJPEG](http://libjpeg.sourceforge.net/) libraries and is built if `WITH_JPEGIMPORTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, load @cpp "JpegImporter" @ce
+via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following. Using libJPEG itself as a CMake subproject isn't tested at the
+moment, so you need to provide it as a system dependency and point
+`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+
+@code{.cmake}
+set(WITH_JPEGIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::JpegImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `JpegImporter` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::JpegImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED JpegImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::JpegImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-JpegImporter-implementations libJPEG implementations
 

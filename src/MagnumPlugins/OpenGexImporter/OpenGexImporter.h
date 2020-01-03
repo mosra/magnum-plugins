@@ -61,14 +61,43 @@ format.
 
 Supports importing of scene, object, camera, mesh, texture and image data.
 
-This plugin depends on the @ref Trade library and the @ref AnyImageImporter
-plugin. It is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, you need to load
-the @cpp "OpenGexImporter" @ce plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To
-use as a static plugin or as a dependency of another plugin with CMake, you
-need to request the `OpenGexImporter` component of the `MagnumPlugins` package
-and link to the `MagnumPlugins::OpenGexImporter` target. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more information.
+@section Trade-OpenGexImporter-usage Usage
+
+This plugin depends on the @ref Trade and @ref OpenDdl libraries and the
+@ref AnyImageImporter plugin. It is built if `WITH_OPENGEXIMPORTER` is enabled
+when building Magnum Plugins. To use as a dynamic plugin, load
+@cpp "OpenGexImporter" @ce via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum EXCLUDE_FROM_ALL)
+
+set(WITH_OPENGEXIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::OpenGexImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `OpenGexImporter` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::OpenGexImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED OpenGexImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::OpenGexImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-OpenGexImporter-limitations Behavior and limitations
 

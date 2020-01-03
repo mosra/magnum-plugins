@@ -98,19 +98,6 @@ Creates files in one of the following formats using the
 If the conversion results in lost channels (such as saving RGBA to a JPEG,
 losing the alpha in process), a warning is printed to the output.
 
-This plugin depends on the @ref Trade library and is built if
-`WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, you need to load one of the @cpp "StbBmpImageConverter" @ce,
-@cpp "StbHdrImageConverter" @ce, @cpp "StbPngImageConverter" @ce,
-@cpp "StbTgaImageConverter" @ce plugins from
-`MAGNUM_PLUGINS_IMAGECONVERTER_DIR`. If you would load the plugin as just
-@cpp "StbImageConverter" @ce, it won't be able to guess the desired output
-format. To use as a static plugin or as a dependency of another plugin with
-CMake, you need to request the `StbImageConverter` component of the
-`MagnumPlugins` package and link to the `MagnumPlugins::StbImageConverter`
-target. See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
-
 Besides `StbBmpImageConverter`, `StbHdrImageConverter`, `StbJpegImageConverter`,
 `StbPngImageConverter` and `StbTgaImageConverter` aliases this plugin provides
 also `BmpImageConverter`, `HdrImageConverter`, `JpegImageConverter`,
@@ -128,6 +115,44 @@ using plugins dedicated for given format.
     or alternatively under @m_class{m-label m-success} **MIT**
     ([license text](https://github.com/nothings/stb/blob/e6afb9cbae4064da8c3e69af3ff5c4629579c1d2/stb_image_write.h#L1532-L1548),
     [choosealicense.com](https://choosealicense.com/licenses/mit/)).
+
+@section Trade-StbImageConverter-usage Usage
+
+This plugin depends on the @ref Trade library and is built if
+`WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, load one of the @cpp "StbBmpImageConverter" @ce,
+@cpp "StbHdrImageConverter" @ce, @cpp "StbPngImageConverter" @ce,
+@cpp "StbTgaImageConverter" @ce plugins via @ref Corrade::PluginManager::Manager.
+If you would load the plugin as just @cpp "StbImageConverter" @ce, it won't be
+able to guess the desired output format.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_STBIMAGECONVERTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::StbImageConverter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `StbImageConverter` component of
+the `MagnumPlugins` package and link to the `MagnumPlugins::StbImageConverter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED StbImageConverter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::StbImageConverter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-StbImageConverter-configuration Plugin-specific configuration
 

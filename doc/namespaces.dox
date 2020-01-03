@@ -112,15 +112,23 @@ Parser for [OpenDDL](http://openddl.org) file format. See
 @ref OpenDdl::Document for more information.
 
 This library is built if `WITH_OPENDDL` is enabled when building Magnum
-Plugins. To use this library with CMake, you need to request the `OpenDdl`
-component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::OpenDdl` target:
+Plugins. To use this library with CMake, request the `OpenDdl` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::OpenDdl` target:
 
 @code{.cmake}
 find_package(MagnumPlugins REQUIRED OpenDdl)
 
 # ...
 target_link_libraries(your-app PRIVATE MagnumPlugins::OpenDdl)
+@endcode
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following *before* calling @cmake find_package() @ce:
+
+@code{.cmake}
+set(WITH_OPENDDL ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 @endcode
 */
 /** @namespace Magnum::OpenDdl::Validation
@@ -130,14 +138,22 @@ Validation of OpenDDL documents. See @ref OpenDdl::Document::validate() for
 more information.
 
 This library is built if `WITH_OPENDDL` is enabled when building Magnum
-Plugins. To use this library with CMake, you need to request the `OpenDdl`
-component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::OpenDdl` target:
+Plugins. To use this library with CMake, request the `OpenDdl` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::OpenDdl` target:
 
 @code{.cmake}
 find_package(MagnumPlugins REQUIRED OpenDdl)
 
 # ...
 target_link_libraries(your-app PRIVATE MagnumPlugins::OpenDdl)
+@endcode
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following *before* calling @cmake find_package() @ce:
+
+@code{.cmake}
+set(WITH_OPENDDL ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 @endcode
 */

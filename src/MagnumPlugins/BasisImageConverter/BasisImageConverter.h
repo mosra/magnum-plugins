@@ -63,14 +63,51 @@ Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
 @ref PixelFormat::RGBA8Unorm. Use @ref BasisImporter to import images in this
 format.
 
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the
+    [Basis Universal GPU Texture Codec](https://github.com/BinomialLLC/basis_universal)
+    library, licensed under @m_class{m-label m-success} **Apache-2.0**
+    ([license text](https://opensource.org/licenses/Apache-2.0),
+    [choosealicense.com](https://choosealicense.com/licenses/apache-2.0/)). It
+    requires attribution for public use.
+
+@section Trade-BasisImageConverter-usage Usage
+
 This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
 libraries and is built if `WITH_BASISIMAGECONVERTER` is enabled when building
-Magnum Plugins. To use as a dynamic plugin, you need to load the
-@cpp "BasisImageConverter" @ce plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`.
-To use as a static plugin or as a dependency of another plugin with CMake, you
-need to request the `BasisImageConverter` component of the `MagnumPlugins`
-package and link to the `MagnumPlugins::BasisImageConverter` target. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
+Magnum Plugins. To use as a dynamic plugin, load @cpp "BasisImageConverter" @ce
+via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins](https://github.com/mosra/magnum-plugins) and
+[basis-universal](https://github.com/BinomialLLC/basis_universal) repositories
+and do the following:
+
+@code{.cmake}
+set(BASIS_UNIVERSAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/basis-universal)
+set(WITH_BASISIMAGECONVERTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::BasisImageConverter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+and [FindBasisUniversal.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindBasisUniversal.cmake)
+into your `modules/` directory, request the `BasisImageConverter` component of
+the `MagnumPlugins` package and link to the `MagnumPlugins::BasisImageConverter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED BasisImageConverter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::BasisImageConverter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
 @section Trade-BasisImageConverter-configuration Plugin-specific configuration
@@ -99,15 +136,6 @@ like this:
 find_package(Threads REQUIRED)
 target_link_libraries(your-application PRIVATE Threads::Threads)
 @endcode
-
-@m_class{m-block m-success}
-
-@thirdparty This plugin makes use of the
-    [Basis Universal GPU Texture Codec](https://github.com/BinomialLLC/basis_universal)
-    library, licensed under @m_class{m-label m-success} **Apache-2.0**
-    ([license text](https://opensource.org/licenses/Apache-2.0),
-    [choosealicense.com](https://choosealicense.com/licenses/apache-2.0/)). It
-    requires attribution for public use.
 */
 class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImageConverter {
     public:

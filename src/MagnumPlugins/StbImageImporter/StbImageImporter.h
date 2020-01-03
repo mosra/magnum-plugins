@@ -75,15 +75,6 @@ Supports the following formats using the
 Creates RGB, RGBA, grayscale or grayscale + alpha images with 8 bits per
 channel. Palleted images are automatically converted to RGB(A).
 
-This plugin depends on the @ref Trade library and is built if
-`WITH_STBIMAGEIMPORTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, you need to load the @cpp "StbImageImporter" @ce plugin from
-`MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a dependency of
-another plugin with CMake, you need to request the `StbImageImporter` component
-of the `MagnumPlugins` package and link to the
-`MagnumPlugins::StbImageImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugins provides `BmpImporter`, `GifImporter`, `HdrImporter`,
 `JpegImporter`, `PgmImporter`, `PicImporter`, `PngImporter`, `PpmImporter`,
 `PsdImporter` and `TgaImporter` plugins, but note that this plugin doesn't have
@@ -100,6 +91,41 @@ when using plugin dedicated for given format.
     or alternatively under @m_class{m-label m-success} **MIT**
     ([license text](https://github.com/nothings/stb/blob/e6afb9cbae4064da8c3e69af3ff5c4629579c1d2/stb_image.h#L7426-L7442),
     [choosealicense.com](https://choosealicense.com/licenses/mit/)).
+
+@section Trade-StbImageImporter-usage Usage
+
+This plugin depends on the @ref Trade library and is built if
+`WITH_STBIMAGEIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, load @cpp "StbImageImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_STBIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::StbImageImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `StbImageImporter` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::StbImageImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED StbImageImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::StbImageImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-StbImageImporter-limitations Behavior and limitations
 

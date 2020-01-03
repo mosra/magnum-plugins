@@ -60,16 +60,6 @@ Creates Portable Network Graphics (`*.png`) files from images with format
 @ref PixelFormat::RGB8Unorm / @ref PixelFormat::RGB16Unorm or
 @ref PixelFormat::RGBA8Unorm / @ref PixelFormat::RGBA16Unorm.
 
-This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
-libraries and is built if `WITH_PNGIMAGECONVERTER` is enabled when building
-Magnum Plugins. To use as a dynamic plugin, you need to load the
-@cpp "PngImageConverter" @ce plugin from `MAGNUM_PLUGINS_IMAGECONVERTER_DIR`.
-To use as a static plugin or as a dependency of another plugin with CMake, you
-need to request the `PngImageConverter` component of the `MagnumPlugins`
-package and link to the `MagnumPlugins::PngImageConverter` target. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
-
 @m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the
@@ -77,6 +67,43 @@ information.
     the @m_class{m-label m-success} **libPNG** license
     ([license text](http://libpng.org/pub/png/src/libpng-LICENSE.txt)). It
     requires attribution for public use.
+
+@section Trade-PngImageConverter-usage Usage
+
+This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
+libraries and is built if `WITH_PNGIMAGECONVERTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, load @cpp "PngImageConverter" @ce
+via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following. Using libPNG itself as a CMake subproject isn't tested at the
+moment, so you need to provide it as a system dependency and point
+`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+
+@code{.cmake}
+set(WITH_PNGIMAGECONVERTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::PngImageConverter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `PngImageConverter` component of
+the `MagnumPlugins` package and link to the `MagnumPlugins::PngImageConverter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED PngImageConverter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::PngImageConverter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageConverter {
     public:

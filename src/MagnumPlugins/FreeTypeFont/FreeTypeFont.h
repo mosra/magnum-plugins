@@ -66,15 +66,6 @@ namespace Magnum { namespace Text {
 The font can be created either from file or from memory location of format
 supported by [FreeType](http://www.freetype.org/) library.
 
-This plugin depends on the @ref Text and [FreeType](http://www.freetype.org)
-libraries and is built if `WITH_FREETYPEFONT` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, you need to load the
-@cpp "FreeTypeFont" @ce plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use as a
-static plugin or as a dependency of another plugin with CMake, you need to
-request the `FreeTypeFont` component of the `MagnumPlugins` package and link to
-the `MagnumPlugins::FreeTypeFont` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 
 @m_class{m-block m-success}
@@ -87,6 +78,41 @@ This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
     [choosealicense.com](https://choosealicense.com/licenses/gpl-2.0)). It
     requires attribution for public use.
 
+@section Text-FreeTypeFont-usage Usage
+
+This plugin depends on the @ref Text and [FreeType](http://www.freetype.org)
+libraries and is built if `WITH_FREETYPEFONT` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, load @cpp "FreeTypeFont" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following. Using FreeType itself as a CMake subproject isn't tested at the
+moment, so you need to provide it as a system dependency and point
+`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+
+@code{.cmake}
+set(WITH_FREETYPEFONT ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::FreeTypeFont)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `FreeTypeFont` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::FreeTypeFont` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED FreeTypeFont)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::FreeTypeFont)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     public:

@@ -79,15 +79,6 @@ the [dr_flac](https://github.com/mackron/dr_libs) library:
     @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
     @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
 
-This plugin depends on the @ref Audio library and is built if
-`WITH_DRFLACAUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, you need to load the @cpp "DrFlacAudioImporter" @ce plugin from
-`MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
-dependency of another plugin with CMake, you need to request the
-`DrFlacAudioImporter` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::DrFlacAudioImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugins provides `FlacAudioImporter`, but note that this plugin doesn't
 handle CRC checks, corrupt or perverse FLAC streams, or broadcast streams.
 
@@ -99,6 +90,40 @@ handle CRC checks, corrupt or perverse FLAC streams, or broadcast streams.
     ([license text](https://github.com/mackron/dr_libs/blob/b5e569af74dab39183bc1d5f8fce53296efcfeee/dr_flac.h#L6232-L6257),
     [choosealicense.com](https://choosealicense.com/licenses/unlicense/)).
 
+@section Audio-DrFlacImporter-usage Usage
+
+This plugin depends on the @ref Audio library and is built if
+`WITH_DRFLACAUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, load @cpp "DrFlacAudioImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_DRFLACAUDIOIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::DrFlacAudioImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `DrFlacAudioImporter` component of
+the  `MagnumPlugins` package and link to the
+`MagnumPlugins::DrFlacAudioImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED DrFlacAudioImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::DrFlacAudioImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter {
     public:

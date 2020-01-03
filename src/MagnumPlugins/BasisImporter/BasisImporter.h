@@ -66,20 +66,57 @@ Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
 explicitly specified GPU format (see @ref Trade-BasisImporter-target-format).
 You can use @ref BasisImageConverter to transcode images into this format.
 
-This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
-libraries and is built if `WITH_BASISIMPORTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, you need to load the
-@cpp "BasisImporter" @ce plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a
-static plugin or as a dependency of another plugin with CMake, you need to
-request the `BasisImporter` component of the `MagnumPlugins` package and link
-to the `MagnumPlugins::BasisImporter` target. See @ref building-plugins,
-@ref plugins for more information.
-
 This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,
 `BasisImporterEtc1RGB`, `BasisImporterEtc2RGBA`, `BasisImporterBc1RGB`,
 `BasisImporterBc3RGBA`, `BasisImporterBc4R`, `BasisImporterBc5RG`,
 `BasisImporterBc7RGB`, `BasisImporterBc7RGBA`, `BasisImporterPvrtc1RGB4bpp`,
 `BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`, `BasisImporterRGBA8`.
+
+@m_class{m-block m-success}
+
+@thirdparty This plugin makes use of the
+    [Basis Universal GPU Texture Codec](https://github.com/BinomialLLC/basis_universal)
+    library, licensed under @m_class{m-label m-success} **Apache-2.0**
+    ([license text](https://opensource.org/licenses/Apache-2.0),
+    [choosealicense.com](https://choosealicense.com/licenses/apache-2.0/)). It
+    requires attribution for public use.
+
+@section Trade-BasisImporter-usage Usage
+
+This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
+libraries and is built if `WITH_BASISIMPORTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, load @cpp "BasisImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins](https://github.com/mosra/magnum-plugins) and
+[basis-universal](https://github.com/BinomialLLC/basis_universal) repositories
+and do the following:
+
+@code{.cmake}
+set(BASIS_UNIVERSAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/basis-universal)
+set(WITH_BASISIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::BasisImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+and [FindBasisUniversal.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindBasisUniversal.cmake)
+into your `modules/` directory, request the `BasisImporter` component of the
+`MagnumPlugins` package  and link to the `MagnumPlugins::BasisImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED BasisImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::BasisImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-BasisImporter-configuration Plugin-specific configuration
 
@@ -128,17 +165,6 @@ OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
     To account for this on the application side for files that you don't have a
     control of, flip texture coordinates of the mesh or patch texture data
     loading in the shader.
-
-<b></b>
-
-@m_class{m-block m-success}
-
-@thirdparty This plugin makes use of the
-    [Basis Universal GPU Texture Codec](https://github.com/BinomialLLC/basis_universal)
-    library, licensed under @m_class{m-label m-success} **Apache-2.0**
-    ([license text](https://opensource.org/licenses/Apache-2.0),
-    [choosealicense.com](https://choosealicense.com/licenses/apache-2.0/)). It
-    requires attribution for public use.
 */
 class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
     public:

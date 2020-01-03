@@ -66,15 +66,6 @@ namespace Magnum { namespace Trade {
 Imports glTF and binary glTF using the [TinyGLTF](https://github.com/syoyo/tinygltf)
 library.
 
-This plugin depends on the @ref Trade library and is built if
-`WITH_TINYGLTFIMPORTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, you need to load the @cpp "TinyGltfImporter" @ce plugin from
-`MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a dependency of
-another plugin with CMake, you need to request the `TinyGltfImporter` component
-of the `MagnumPlugins` package and link to the
-`MagnumPlugins::TinyGltfImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugin provides `GltfImporter` and `GlbImporter` plugins.
 
 @m_class{m-block m-success}
@@ -87,6 +78,44 @@ This plugin provides `GltfImporter` and `GlbImporter` plugins.
     Lohmann's [json.hpp](https://github.com/nlohmann/json), licensed under
     @m_class{m-label m-success} **MIT** as well
     ([license text](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)).
+
+@section Trade-TinyGltfImporter-usage Usage
+
+This plugin depends on the @ref Trade library and the @ref AnyImageImporter
+plugin and is built if `WITH_TINYGLTFIMPORTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, load @cpp "TinyGltfImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum EXCLUDE_FROM_ALL)
+
+set(WITH_TINYGLTFIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::TinyGltfImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `TinyGltfImporter` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::TinyGltfImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED TinyGltfImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::TinyGltfImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-TinyGltfImporter-limitations Behavior and limitations
 

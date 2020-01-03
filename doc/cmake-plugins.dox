@@ -92,10 +92,13 @@ set(WITH_TINYGLTFIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the StbImageImporter / TinyGltfImporter gets built implicitly
-add_custom_target(plugins ALL DEPENDS
+add_dependencies(your-app
     MagnumPlugins::StbImageImporter
     MagnumPlugins::TinyGltfImporter)
 @endcode
+
+Each plugin class provides further information about additional steps needed
+for a CMake subproject setup.
 
 @section cmake-plugins-find-module Finding the package and its components
 

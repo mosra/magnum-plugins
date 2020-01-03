@@ -61,15 +61,6 @@ Supports mono and stereo AAC files with 16 bits per channel using the
 [FAAD2](https://www.audiocoding.com) library. The files are always imported
 with @ref BufferFormat::Stereo16.
 
-This plugin depends on the @ref Audio library and is built if
-`WITH_FAAD2AUDIOIMPORTER` is enabled when building Magnum Plugins. To use
-as a dynamic plugin, you need to load the @cpp "Faad2AudioImporter" @ce
-plugin from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as
-a dependency of another plugin with CMake, you need to request the
-`Faad2AudioImporter` component of the `MagnumPlugins` package and link to
-the `MagnumPlugins::Faad2AudioImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugins provides `AacAudioImporter`.
 
 @m_class{m-block m-danger}
@@ -80,6 +71,44 @@ This plugins provides `AacAudioImporter`.
     [choosealicense.com](https://choosealicense.com/licenses/gpl-2.0/)). It
     requires attribution and source disclosure for public use. It's subject to
     patent licensing for commercial use.
+
+@section Audio-Faad2Importer-usage Usage
+
+This plugin depends on the @ref Audio library and is built if
+`WITH_FAAD2AUDIOIMPORTER` is enabled when building Magnum Plugins. To use
+as a dynamic plugin, load @cpp "Faad2AudioImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following. Using FAAD2 itself as a CMake subproject isn't tested at the moment,
+so you need to provide it as a system dependency and point `CMAKE_PREFIX_PATH`
+to its installation dir if necessary.
+
+@code{.cmake}
+set(WITH_FAAD2AUDIOIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::Faad2AudioImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+and [FindFAAD2.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindFAAD2.cmake)
+into your `modules/` directory, request the `Faad2AudioImporter` component of
+the `MagnumPlugins` package and link to the `MagnumPlugins::Faad2AudioImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED Faad2AudioImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::Faad2AudioImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_FAAD2AUDIOIMPORTER_EXPORT Faad2Importer: public AbstractImporter {
     public:

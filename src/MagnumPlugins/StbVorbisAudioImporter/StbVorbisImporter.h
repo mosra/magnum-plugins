@@ -66,15 +66,6 @@ imported with @ref BufferFormat::Mono16, @ref BufferFormat::Stereo16,
 @ref BufferFormat::Surround61Channel16 and @ref BufferFormat::Surround71Channel16,
 respectively.
 
-This plugin depends on the @ref Audio library and is built if
-`WITH_STBVORBISAUDIOIMPORTER` is enabled when building Magnum Plugins. To use
-as a dynamic plugin, you need to load the @cpp "StbVorbisAudioImporter" @ce
-plugin from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as
-a dependency of another plugin with CMake, you need to request the
-`StbVorbisAudioImporter` component of the `MagnumPlugins` package and link to
-the `MagnumPlugins::StbVorbisAudioImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugins provides `VorbisAudioImporter`, but note that this plugin doesn't
 have complete support for all format quirks and the performance might be worse
 than when using plugin dedicated for given format.
@@ -89,6 +80,41 @@ than when using plugin dedicated for given format.
     or alternatively under @m_class{m-label m-success} **MIT**
     ([license text](https://github.com/nothings/stb/blob/master/stb_vorbis.c#L5426-L5442),
     [choosealicense.com](https://choosealicense.com/licenses/mit/)).
+
+@section Audio-StbVorbisImporter-usage Usage
+
+This plugin depends on the @ref Audio library and is built if
+`WITH_STBVORBISAUDIOIMPORTER` is enabled when building Magnum Plugins. To use
+as a dynamic plugin, load @cpp "StbVorbisAudioImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_STBVORBISAUDIOIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::StbVorbisAudioImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `StbVorbisAudioImporter` component
+of the `MagnumPlugins` package and link to the
+`MagnumPlugins::StbVorbisAudioImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED StbVorbisAudioImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::StbVorbisAudioImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT StbVorbisImporter: public AbstractImporter {
     public:

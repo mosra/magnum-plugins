@@ -113,15 +113,6 @@ Imports various formats using [Assimp](http://assimp.org), in particular:
 
 Supports importing of scene, object, camera, mesh, texture and image data.
 
-This plugin depends on the @ref Trade and [Assimp](http://assimp.org) libraries
-and is built if `WITH_ASSIMPIMPORTER` is enabled when building Magnum Plugins.
-To use as a dynamic plugin, you need to load the @cpp "AssimpImporter" @ce
-plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a
-dependency of another plugin with CMake, you need to request the
-`AssimpImporter` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::AssimpImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
 `BvhImporter`, `CsmImporter`, `ColladaImporter`, `DirectXImporter`,
 `DxfImporter`, `FbxImporter`, `GltfImporter`, `IfcImporter`,
@@ -137,6 +128,55 @@ This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
     ([license text](http://assimp.org/index.php/license),
     [choosealicense.com](https://choosealicense.com/licenses/bsd-3-clause/)).
     It requires attribution for public use.
+
+@section Trade-AssimpImporter-usage Usage
+
+This plugin depends on the @ref Trade and [Assimp](http://assimp.org) libraries
+and the @ref AnyImageImporter plugin and is built if `WITH_ASSIMPIMPORTER` is
+enabled when building Magnum Plugins. To use as a dynamic plugin, load
+@cpp "AssimpImporter" @ce via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins](https://github.com/mosra/magnum-plugins) and
+[assimp](https://github.com/assimp/assimp) repositories and do the following.
+If you want to use system-installed Assimp, omit the first part and point
+`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+
+@code{.cmake}
+# Add Assimp with unwanted parts disabled, help Magnum find everything needed
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assimp/include CACHE STRING "" FORCE)
+set(ASSIMP_LIBRARY_DEBUG assimp CACHE STRING "" FORCE)
+set(ASSIMP_LIBRARY_RELEASE assimp CACHE STRING "" FORCE)
+add_subdirectory(assimp EXCLUDE_FROM_ALL)
+add_library(Assimp::Assimp ALIAS assimp)
+
+set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum EXCLUDE_FROM_ALL)
+
+set(WITH_ASSIMPIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::AssimpImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+and [FindAssimp.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindAssimp.cmake)
+into your `modules/` directory, request the `AssimpImporter` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::AssimpImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED AssimpImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::AssimpImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-AssimpImporter-limitations Behavior and limitations
 

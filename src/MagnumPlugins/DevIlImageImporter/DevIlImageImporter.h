@@ -111,15 +111,13 @@ is incomplete):
 -   X Pixel Map (`*.xpm`)
 -   Doom graphics
 
-This plugin depends on the @ref Trade and [DevIL](http://openil.sourceforge.net/)
-libraries and is built if `WITH_DEVILIMAGEIMPORTER` is enabled when building
-Magnum Plugins. To use as a dynamic plugin, you need to load the
-@cpp "DevIlImageImporter" @ce plugin from `MAGNUM_PLUGINS_IMPORTER_DIR`. To use
-as a static plugin or as a dependency of another plugin with CMake, you need to
-request the `DevIlImageImporter` component of the `MagnumPlugins` package in
-CMake and link to the `MagnumPlugins::DevIlImageImporter` target. See
-@ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+The images are imported as @ref PixelFormat::R8Unorm,
+@ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
+@ref PixelFormat::RGBA8Unorm. BGR/BGRA will be converted to
+@ref PixelFormat::RGB8Unorm / @ref PixelFormat::RGBA8Unorm, all other formats
+to @ref PixelFormat::RGBA8Unorm. Images are imported with default
+@ref PixelStorage parameters except for alignment, which may be changed to `1`
+if the data require it.
 
 This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
 `GifImporter`, `HdrImporter`, `JpegImporter`, `Jpeg2000Importer`,
@@ -136,13 +134,43 @@ This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
     requires attribution and either dynamic linking or source disclosure for
     public use.
 
-The images are imported as @ref PixelFormat::R8Unorm,
-@ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
-@ref PixelFormat::RGBA8Unorm. BGR/BGRA will be converted to
-@ref PixelFormat::RGB8Unorm / @ref PixelFormat::RGBA8Unorm, all other formats
-to @ref PixelFormat::RGBA8Unorm. Images are imported with default
-@ref PixelStorage parameters except for alignment, which may be changed to `1`
-if the data require it.
+@section Trade-DevIlImageImporter-usage Usage
+
+This plugin depends on the @ref Trade and [DevIL](http://openil.sourceforge.net/)
+libraries and is built if `WITH_DEVILIMAGEIMPORTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, load @cpp "DevIlImageImporter" @ce
+via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following. Using DevIL itself as a CMake subproject isn't tested at the moment,
+so you need to provide it as a system dependency and point `CMAKE_PREFIX_PATH`
+to its installation dir if necessary.
+
+@code{.cmake}
+set(WITH_TINYGLTFIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::DevIlImageImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+and [FindDevIL.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindDevIL.cmake)
+into your `modules/` directory, request the `DevIlImageImporter` component of
+the `MagnumPlugins`  package in CMake and link to the
+`MagnumPlugins::DevIlImageImporter` target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED DevIlImageImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::DevIlImageImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImporter {
     public:

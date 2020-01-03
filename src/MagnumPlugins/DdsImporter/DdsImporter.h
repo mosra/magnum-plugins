@@ -101,16 +101,43 @@ Supports DirectDraw Surface images (`*.dds`) in the following formats:
     -   `R32_FLOAT`, `R32G32_FLOAT`, `R32G32B32_FLOAT`, `R32G32B32A32_FLOAT` as
         @ref PixelFormat::R32F and its two-/three-/four-component equivalents
 
+@section Trade-DdsImporter-usage Usage
+
 This plugin depends on the @ref Trade library and is built if
 `WITH_DDSIMPORTER` is enabled when building Magnum Plugins. To use as a dynamic
-plugin, you need to load the @cpp "DdsImporter" @ce plugin from
-`MAGNUM_PLUGINS_IMPORTER_DIR`. To use as a static plugin or as a dependency of
-another plugin with CMake, you need to request the `DdsImporter` component of
-the `MagnumPlugins` package in CMake and link to the
-`MagnumPlugins::DdsImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
+plugin, load @cpp "DdsImporter" @ce via @ref Corrade::PluginManager::Manager.
 
-Note: Mipmaps are currently imported under separate image data ids. You may
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_DDSIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::DdsImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `DdsImporter` component of the
+`MagnumPlugins` package in CMake and link to the `MagnumPlugins::DdsImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED DdsImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::DdsImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
+
+@section Trade-DdsImporter-limitations Behavior and limitations
+
+Note that mipmaps are currently imported under separate image data IDs. You may
 access them via @ref image2D(UnsignedInt)/@ref image3D(UnsignedInt) which will
 return the n-th mip, a bigger n indicating a smaller mip.
 */

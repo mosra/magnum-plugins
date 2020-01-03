@@ -64,15 +64,6 @@ location using the [stb_truetype](https://github.com/nothings/stb) library:
 -   TrueType fonts (`*.ttf`)
 -   OpenType / Type 2 fonts (`*.otf`)
 
-This plugin depends on the @ref Text library and is built if `WITH_STBTRUETYPEFONT`
-is enabled when building Magnum Plugins and depends on the @ref Text library.
-To use as a dynamic plugin, you need to load the @cpp "StbTrueTypeFont" @ce
-plugin from `MAGNUM_PLUGINS_FONT_DIR`. To use as a static plugin or as a
-dependency of another plugin with CMake, you need to request the
-`StbTrueTypeFont` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::StbTrueTypeFont` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins, but please
 note that this plugin trades the simplicity and portability for various
 limitations, the most visible being the lack of autohinting. That causes the
@@ -90,6 +81,41 @@ fonts opened with @ref FreeTypeFont using the same size.
     or alternatively under @m_class{m-label m-success} **MIT**
     ([license text](https://github.com/nothings/stb/blob/master/stb_truetype.h#L4817-L4833),
     [choosealicense.com](https://choosealicense.com/licenses/mit/)).
+
+@section Text-StbTrueTypeFont-usage Usage
+
+This plugin depends on the @ref Text library and is built if `WITH_STBTRUETYPEFONT`
+is enabled when building Magnum Plugins and depends on the @ref Text library.
+To use as a dynamic plugin, load @cpp "StbTrueTypeFont" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_STBTRUETYPEFONT ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::StbTrueTypeFont)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `StbTrueTypeFont` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::StbTrueTypeFont`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED StbTrueTypeFont)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::StbTrueTypeFont)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
     public:

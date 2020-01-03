@@ -81,14 +81,6 @@ the [dr_wav](https://github.com/mackron/dr_libs) library:
 -   A-Law, imported as @ref BufferFormat::MonoALaw / @ref BufferFormat::StereoALaw
 -   μ-Law, imported as @ref BufferFormat::MonoMuLaw / @ref BufferFormat::StereoMuLaw
 
-This plugin depends on the @ref Audio library and is built if
-`WITH_DRWAVAUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, you need to load the @cpp "DrWavAudioImporter" @ce plugin from `MAGNUM_PLUGINS_AUDIOIMPORTER_DIR`. To use as a static plugin or as a
-dependency of another plugin with CMake, you need to request the
-`DrWavAudioImporter` component of the `MagnumPlugins` package and link to the
-`MagnumPlugins::DrWavAudioImporter` target. See @ref building-plugins,
-@ref cmake-plugins and @ref plugins for more information.
-
 This plugins provides `WavAudioImporter`, but note that this plugin doesn't
 handle some errata such as JUNK blocks in strange places.
 
@@ -100,6 +92,40 @@ handle some errata such as JUNK blocks in strange places.
     ([license text](https://github.com/mackron/dr_libs/blob/b5e569af74dab39183bc1d5f8fce53296efcfeee/dr_wav.h#L3702-L3727),
     [choosealicense.com](https://choosealicense.com/licenses/unlicense/)).
 
+@section Audio-DrWavImporter-usage Usage
+
+This plugin depends on the @ref Audio library and is built if
+`WITH_DRWAVAUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, load @cpp "DrWavAudioImporter" @ce via
+@ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_DRWAVAUDIOIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::DrWavAudioImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `DrWavAudioImporter` component of
+the `MagnumPlugins` package and link to the `MagnumPlugins::DrWavAudioImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED DrWavAudioImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::DrWavAudioImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 */
 class MAGNUM_DRWAVAUDIOIMPORTER_EXPORT DrWavImporter: public AbstractImporter {
     public:
