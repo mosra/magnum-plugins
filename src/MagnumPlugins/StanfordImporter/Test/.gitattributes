@@ -1,6 +1,10 @@
-*.ply -crlf
-big-endian.ply binary
-common.ply binary
-crlf.ply binary
-ignored-vertex-components.ply binary
-short-file.ply binary
+# You have to add the following to your .git/config or global
+# ~/.gitconfig to make the binary diffs work (without the comment
+# character, of course):
+#
+# [diff "hex"]
+#     textconv = hexdump -v -C
+#     binary = true
+#
+
+*.ply binary diff=hex

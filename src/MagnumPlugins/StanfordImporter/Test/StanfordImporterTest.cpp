@@ -27,9 +27,11 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -42,40 +44,12 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct StanfordImporterTest: TestSuite::Tester {
     explicit StanfordImporterTest();
 
-    void invalidSignature();
-
-    void formatInvalid();
-    void formatUnsupported();
-    void formatMissing();
-    void formatTooLate();
-
-    void unknownLine();
-    void unknownElement();
-
-    void unexpectedProperty();
-    void invalidVertexProperty();
-    void invalidVertexType();
-    void invalidFaceProperty();
-    void invalidFaceType();
-    void invalidFaceSizeType();
-    void invalidFaceIndexType();
-
-    void incompleteVertex();
-    void incompleteFace();
-
+    void invalid();
     void fileEmpty();
     void fileTooShort();
-    void invalidFaceSize();
 
-    void openFile();
-    void openData();
+    void parse();
     void empty();
-    void colors();
-    void unaligned();
-    void bigEndian();
-    void crlf();
-    void ignoredVertexComponents();
-    void ignoredFaceComponents();
 
     void openTwice();
     void importTwice();
@@ -85,52 +59,95 @@ struct StanfordImporterTest: TestSuite::Tester {
 };
 
 constexpr struct {
+    const char* filename;
+    const char* message;
+} InvalidData[]{
+    {"invalid-signature", "invalid file signature bla"},
+
+    {"format-invalid", "invalid format line format binary_big_endian 1.0 extradata"},
+    {"format-unsupported", "unsupported file format ascii 1.0"},
+    {"format-missing", "missing format line"},
+    {"format-too-late", "expected format line, got element face 1"},
+
+    {"unknown-line", "unknown line heh"},
+    {"unknown-element", "unknown element edge"},
+
+    {"unexpected-property", "unexpected property line"},
+    {"invalid-vertex-property", "invalid vertex property line property float x extradata"},
+    {"invalid-vertex-type", "invalid vertex component type float16"},
+    {"invalid-face-property", "invalid face property line property float x extradata"},
+    {"invalid-face-type", "invalid face component type float16"},
+    {"invalid-face-size-type", "invalid face size type float"},
+    {"invalid-face-index-type", "invalid face index type float"},
+
+    {"incomplete-vertex-specification", "incomplete vertex specification"},
+    {"incomplete-face-specification", "incomplete face specification"},
+
+    {"positions-not-same-type", "expecting all position coordinates to have the same type but got Array(VertexFormat::UnsignedShort, VertexFormat::UnsignedByte, VertexFormat::UnsignedShort)"},
+    {"positions-not-tightly-packed", "expecting position coordinates to be tightly packed, but got offsets Vector(0, 4, 2) for a 2-byte type"},
+    {"positions-unsupported-type", "unsupported position component type VertexFormat::Double"},
+
+    {"colors-not-same-type", "expecting all color channels to have the same type but got Array(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)"},
+    {"colors-not-tightly-packed", "expecting color channels to be tightly packed, but got offsets Vector(12, 14, 13) for a 1-byte type"},
+    {"colors-unsupported-type", "unsupported color channel type VertexFormat::Int"},
+
+    {"unsupported-face-size", "unsupported face size 5"}
+};
+
+constexpr struct {
     std::size_t prefix;
     const char* message;
 } ShortFileData[]{
-    {0x0f4, "incomplete vertex data"},
-    {0x108, "incomplete index data"},
-    {0x10f, "incomplete face data"}
+    {0x103, "incomplete vertex data"},
+    {0x107, "incomplete index data"},
+    {0x117, "incomplete face data"}
+};
+
+constexpr struct {
+    const char* filename;
+    MeshIndexType indexType;
+    VertexFormat positionFormat, colorFormat;
+} ParseData[]{
+    /* GCC 4.8 doesn't like just {}, needs VertexFormat{} */
+    {"positions-float-indices-uint", MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat{}},
+    {"positions-colors-float-indices-int", MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat::Vector3},
+    /* Testing endian flip */
+    {"positions-colors-float-indices-int-be", MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat::Vector3},
+    /* Testing endian flip of unaligned data */
+    {"positions-colors-float-indices-int-be-unaligned", MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat::Vector3},
+    /* Testing various packing variants (hopefully exhausting all combinations) */
+    {"positions-uchar-indices-ushort", MeshIndexType::UnsignedShort,
+        VertexFormat::Vector3ub, VertexFormat{}},
+    {"positions-char-colors-ushort-indices-short-be", MeshIndexType::UnsignedShort,
+        VertexFormat::Vector3b, VertexFormat::Vector3usNormalized},
+    {"positions-ushort-indices-uchar-be", MeshIndexType::UnsignedByte,
+        VertexFormat::Vector3us, VertexFormat{}},
+    {"positions-short-colors-uchar-indices-char", MeshIndexType::UnsignedByte,
+        VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized},
+    /* CR/LF instead of LF */
+    {"crlf", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}},
+    /* Ignoring extra components */
+    {"ignored-face-components", MeshIndexType::UnsignedByte, VertexFormat::Vector3b, VertexFormat{}},
+    {"ignored-vertex-components", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}}
 };
 
 StanfordImporterTest::StanfordImporterTest() {
-    addTests({&StanfordImporterTest::invalidSignature,
+    addInstancedTests({&StanfordImporterTest::invalid},
+        Containers::arraySize(InvalidData));
 
-              &StanfordImporterTest::formatInvalid,
-              &StanfordImporterTest::formatUnsupported,
-              &StanfordImporterTest::formatMissing,
-              &StanfordImporterTest::formatTooLate,
-
-              &StanfordImporterTest::unknownLine,
-              &StanfordImporterTest::unknownElement,
-
-              &StanfordImporterTest::unexpectedProperty,
-              &StanfordImporterTest::invalidVertexProperty,
-              &StanfordImporterTest::invalidVertexType,
-              &StanfordImporterTest::invalidFaceProperty,
-              &StanfordImporterTest::invalidFaceType,
-              &StanfordImporterTest::invalidFaceSizeType,
-              &StanfordImporterTest::invalidFaceIndexType,
-
-              &StanfordImporterTest::incompleteVertex,
-              &StanfordImporterTest::incompleteFace,
-
-              &StanfordImporterTest::fileEmpty});
+    addTests({&StanfordImporterTest::fileEmpty});
 
     addInstancedTests({&StanfordImporterTest::fileTooShort},
         Containers::arraySize(ShortFileData));
 
-    addTests({&StanfordImporterTest::invalidFaceSize,
+    addInstancedTests({&StanfordImporterTest::parse},
+        Containers::arraySize(ParseData));
 
-              &StanfordImporterTest::openFile,
-              &StanfordImporterTest::openData,
-              &StanfordImporterTest::empty,
-              &StanfordImporterTest::colors,
-              &StanfordImporterTest::unaligned,
-              &StanfordImporterTest::bigEndian,
-              &StanfordImporterTest::crlf,
-              &StanfordImporterTest::ignoredVertexComponents,
-              &StanfordImporterTest::ignoredFaceComponents,
+    addTests({&StanfordImporterTest::empty,
 
               &StanfordImporterTest::openTwice,
               &StanfordImporterTest::importTwice});
@@ -142,164 +159,17 @@ StanfordImporterTest::StanfordImporterTest() {
     #endif
 }
 
-void StanfordImporterTest::invalidSignature() {
+void StanfordImporterTest::invalid() {
+    auto&& data = InvalidData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::String::replaceAll(data.filename, "-", " "));
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-signature.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid file signature bla\n");
-}
-
-void StanfordImporterTest::formatInvalid() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "format-invalid.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid format line format binary_big_endian 1.0 extradata\n");
-}
-
-void StanfordImporterTest::formatUnsupported() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "format-unsupported.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unsupported file format ascii 1.0\n");
-}
-
-void StanfordImporterTest::formatMissing() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "format-missing.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): missing format line\n");
-}
-
-void StanfordImporterTest::formatTooLate() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "format-too-late.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): expected format line, got element face 1\n");
-}
-
-void StanfordImporterTest::unknownLine() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-line.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown line heh\n");
-}
-
-void StanfordImporterTest::unknownElement() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unknown-element.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unknown element edge\n");
-}
-
-void StanfordImporterTest::unexpectedProperty() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unexpected-property.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unexpected property line\n");
-}
-
-void StanfordImporterTest::invalidVertexProperty() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-vertex-property.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid vertex property line property float x extradata\n");
-}
-
-void StanfordImporterTest::invalidVertexType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-vertex-type.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid vertex component type float16\n");
-}
-
-void StanfordImporterTest::invalidFaceProperty() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-property.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face property line property float x extradata\n");
-}
-
-void StanfordImporterTest::invalidFaceType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-type.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face component type float16\n");
-}
-
-void StanfordImporterTest::invalidFaceSizeType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size-type.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face size type int128\n");
-}
-
-void StanfordImporterTest::invalidFaceIndexType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-index-type.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): invalid face index type int128\n");
-}
-
-void StanfordImporterTest::incompleteVertex() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "incomplete-vertex.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): incomplete vertex specification\n");
-}
-
-void StanfordImporterTest::incompleteFace() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "incomplete-face.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): incomplete face specification\n");
+    CORRADE_VERIFY(!importer->mesh(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::mesh(): {}\n", data.message));
 }
 
 void StanfordImporterTest::fileEmpty() {
@@ -308,7 +178,7 @@ void StanfordImporterTest::fileEmpty() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(nullptr));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::openData(): the file is empty\n");
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::openData(): the file is empty\n"));
 }
 
 void StanfordImporterTest::fileTooShort() {
@@ -317,23 +187,13 @@ void StanfordImporterTest::fileTooShort() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "short-file.ply"));
+    Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply"));
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(importer->openData(file.prefix(data.prefix)));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::mesh3D(): {}\n", data.message));
-}
-
-void StanfordImporterTest::invalidFaceSize() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "invalid-face-size.ply")));
-    CORRADE_VERIFY(!importer->mesh3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StanfordImporter::mesh3D(): unsupported face size 5\n");
+    CORRADE_VERIFY(!importer->mesh(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::mesh(): {}\n", data.message));
 }
 
 /*
@@ -344,44 +204,50 @@ void StanfordImporterTest::invalidFaceSize() {
     | \|/
     1--2
 */
-const std::vector<UnsignedInt> Indices{0, 1, 2, 0, 2, 3, 3, 2, 4};
-const std::vector<Vector3> Positions{
+constexpr UnsignedInt Indices[]{0, 1, 2, 0, 2, 3, 3, 2, 4};
+constexpr Vector3 Positions[]{
     {1.0f, 3.0f, 2.0f},
     {1.0f, 1.0f, 2.0f},
     {3.0f, 3.0f, 2.0f},
     {3.0f, 1.0f, 2.0f},
     {5.0f, 3.0f, 9.0f}
 };
-const std::vector<Color4> Colors{
-    {0.8f, 0.2f, 0.399222f},
-    {0.6f, 0.666667f, 0.996887f},
-    {0.0f, 0.0666667f, 0.93048f},
-    {0.733333f, 0.866667f, 0.133593f},
-    {0.266667f, 0.333333f, 0.465629f}
+constexpr Color3 Colors[]{
+    {0.8f, 0.2f, 0.4f},
+    {0.6f, 0.666667f, 1.0f},
+    {0.0f, 0.0666667f, 0.9333333f},
+    {0.733333f, 0.8666666f, 0.133333f},
+    {0.266667f, 0.3333333f, 0.466666f}
 };
 
-void StanfordImporterTest::openFile() {
+void StanfordImporterTest::parse() {
+    auto&& data = ParseData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::String::replaceAll(data.filename, "-", " "));
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
-
-    auto mesh = importer->mesh3D(0);
+    auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), Indices);
-    CORRADE_COMPARE(mesh->positions(0), Positions);
-    CORRADE_VERIFY(!mesh->hasColors());
-}
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE(mesh->indexType(), data.indexType);
+    CORRADE_COMPARE_AS(mesh->indicesAsArray(),
+        Containers::arrayView(Indices),
+        TestSuite::Compare::Container);
 
-void StanfordImporterTest::openData() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), data.positionFormat);
+    CORRADE_COMPARE_AS(mesh->positions3DAsArray(),
+        Containers::arrayView(Positions),
+        TestSuite::Compare::Container);
 
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply"))));
-
-    auto mesh = importer->mesh3D(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), Indices);
-    CORRADE_COMPARE(mesh->positions(0), Positions);
-    CORRADE_VERIFY(!mesh->hasColors());
+    if(data.colorFormat != VertexFormat{}) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color), data.colorFormat);
+        CORRADE_COMPARE_AS(Containers::arrayCast<Color3>(Containers::stridedArrayView(mesh->colorsAsArray())),
+            Containers::stridedArrayView(Colors),
+            TestSuite::Compare::Container);
+    }
 }
 
 void StanfordImporterTest::empty() {
@@ -389,113 +255,47 @@ void StanfordImporterTest::empty() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "empty.ply")));
 
-    auto mesh = importer->mesh3D(0);
+    auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(!mesh->isIndexed());
-    CORRADE_VERIFY(mesh->positions(0).empty());
-}
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
-void StanfordImporterTest::colors() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    /* Metadata parsed, but the actual count is zero */
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedInt);
+    CORRADE_COMPARE(mesh->indexCount(), 0);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "colors.ply")));
-
-    auto mesh = importer->mesh3D(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), Indices);
-    CORRADE_COMPARE(mesh->positions(0), Positions);
-    CORRADE_VERIFY(mesh->hasColors());
-    CORRADE_COMPARE(mesh->colors(0), Colors);
-}
-
-void StanfordImporterTest::unaligned() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "unaligned.ply")));
-
-    auto mesh = importer->mesh3D(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
-        0x01234567, 0x89abcdef, 0x01234567,
-        0x01234567, 0x89abcdef, 0x01234567
-    }));
-    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-        {Float(0x12), Float(0x3456789a), 12345678901234567890.0f},
-        {Float(0xbc), Float(0xdef01234), 98765432109876543210.0f}
-    }));
-}
-
-void StanfordImporterTest::bigEndian() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "big-endian.ply")));
-
-    auto mesh = importer->mesh3D(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), Indices);
-    CORRADE_COMPARE(mesh->positions(0), Positions);
-    CORRADE_VERIFY(mesh->hasColors());
-    CORRADE_COMPARE(mesh->colors(0), Colors);
-}
-
-void StanfordImporterTest::crlf() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "crlf.ply")));
-
-    auto mesh = importer->mesh3D(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), Indices);
-    CORRADE_COMPARE(mesh->positions(0), Positions);
-    CORRADE_VERIFY(!mesh->hasColors());
-}
-
-void StanfordImporterTest::ignoredVertexComponents() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "ignored-vertex-components.ply")));
-
-    auto mesh = importer->mesh3D(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), Indices);
-    CORRADE_COMPARE(mesh->positions(0), Positions);
-    CORRADE_VERIFY(!mesh->hasColors());
-}
-
-void StanfordImporterTest::ignoredFaceComponents() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "ignored-face-components.ply")));
-
-    auto mesh = importer->mesh3D(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->indices(), Indices);
-    CORRADE_COMPARE(mesh->positions(0), Positions);
-    CORRADE_VERIFY(!mesh->hasColors());
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position),
+        VertexFormat::Vector3);
+    CORRADE_COMPARE(mesh->vertexCount(), 0);
 }
 
 void StanfordImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void StanfordImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "common.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
 
     /* Verify that everything is working the same way on second use */
     {
-        Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+        Containers::Optional<MeshData> mesh = importer->mesh(0);
         CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->positions(0), Positions);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+            Containers::arrayView(Positions),
+            TestSuite::Compare::Container);
     } {
-        Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+        Containers::Optional<MeshData> mesh = importer->mesh(0);
         CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->positions(0), Positions);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+            Containers::arrayView(Positions),
+            TestSuite::Compare::Container);
     }
 }
 

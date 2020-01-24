@@ -46,9 +46,9 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
-        big-endian.ply
-        colors.ply
-        common.ply
+        colors-not-same-type.ply
+        colors-not-tightly-packed.ply
+        colors-unsupported-type.ply
         crlf.ply
         empty.ply
         format-invalid.ply
@@ -57,21 +57,30 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         format-unsupported.ply
         ignored-face-components.ply
         ignored-vertex-components.ply
-        incomplete-face.ply
-        incomplete-vertex.ply
+        incomplete-face-specification.ply
+        incomplete-vertex-specification.ply
         invalid-face-index-type.ply
-        invalid-face-size.ply
-        invalid-face-size-type.ply
         invalid-face-property.ply
+        invalid-face-size-type.ply
         invalid-face-type.ply
         invalid-signature.ply
         invalid-vertex-property.ply
         invalid-vertex-type.ply
-        short-file.ply
-        unaligned.ply
+        positions-colors-float-indices-int-be.ply
+        positions-colors-float-indices-int-be-unaligned.ply
+        positions-colors-float-indices-int.ply
+        positions-float-indices-uint.ply
+        positions-char-colors-ushort-indices-short-be.ply
+        positions-not-same-type.ply
+        positions-not-tightly-packed.ply
+        positions-short-colors-uchar-indices-char.ply
+        positions-uchar-indices-ushort.ply
+        positions-unsupported-type.ply
+        positions-ushort-indices-uchar-be.ply
         unexpected-property.ply
         unknown-element.ply
-        unknown-line.ply)
+        unknown-line.ply
+        unsupported-face-size.ply)
 target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(StanfordImporterTest PRIVATE StanfordImporter)

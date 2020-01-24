@@ -55,14 +55,8 @@ namespace Magnum { namespace Trade {
 /**
 @brief Stanford PLY importer plugin
 
-Supports little and big endian binary format (ASCII files are not supported),
-triangle/quad meshes (edge properties are not supported). Vertex positions and
-vertex colors (if any) are imported, you can generate the normals using either
-@ref MeshTools::generateFlatNormals() /
-@ref MeshTools::generateSmoothNormals() or by passing
-@ref MeshTools::CompileFlag::GenerateFlatNormals /
-@ref MeshTools::CompileFlag::GenerateSmoothNormals to
-@ref MeshTools::compile().
+Supports little and big endian binary formats with triangle and quad meshes,
+importing vertex positions and vertex colors (if any).
 
 @section Trade-StanfordImporter-usage Usage
 
@@ -98,6 +92,43 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::StanfordImporter)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Trade-StanfordImporter-limitations Behavior and limitations
+
+In order to optimize for fast import, the importer supports a restricted subset
+of PLY features, which however shouldn't affect any real-world models.
+
+-   Both Big-Endian and Little-Endian binary files are supported, with bytes
+    swapped to match platform endianness. ASCII files are not supported due to
+    the storage size overhead and inherent inefficiency of float literal
+    parsing.
+-   Position coordinates are expected to be tightly packed in a X/Y/Z order in
+    order to be directly reinterpretable as a @ref Magnum::Vector3 "Vector3".
+    Same goes for colors, expected channel order is R/G/B.
+-   All position coordinates are expected to have the same type, and be either
+    32-bit floats or (signed) bytes or shorts. Resulting position type is then
+    @ref VertexFormat::Vector3, @ref VertexFormat::Vector3ub,
+    @ref VertexFormat::Vector3b, @ref VertexFormat::Vector3us or
+    @ref VertexFormat::Vector3s. Integer and double positions are not
+    supported.
+-   All color coordinates are expected to have the same type, and be either
+    32-bit floats or unsigned bytes/shorts. Resulting color type is then
+    @ref VertexFormat::Vector3, @ref VertexFormat::Vector3ub or
+    @ref VertexFormat::Vector3us. Signed, 32-bit integer and double colors
+    are not supported.
+-   Indices are imported as either @ref MeshIndexType::UnsignedByte,
+    @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt. Quads
+    are triangulated, but higher-order polygons are not supported. Because
+    there are real-world files with signed indices, signed types are allowed
+    for indices as well, but interpreted as unsigned (because negative values
+    wouldn't make sense anyway).
+
+The mesh is always indexed; positions are always present, color coordinates
+are optional. The file format doesn't support normals. You can generate them
+using either @ref MeshTools::generateFlatNormals() /
+@ref MeshTools::generateSmoothNormals() or by passing
+@ref MeshTools::CompileFlag::GenerateFlatNormals /
+@ref MeshTools::CompileFlag::GenerateSmoothNormals to @ref MeshTools::compile().
 */
 class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
     public:
@@ -116,8 +147,8 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         MAGNUM_STANFORDIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
         MAGNUM_STANFORDIMPORTER_LOCAL void doClose() override;
 
-        MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
-        MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
+        MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
         Containers::Array<char> _in;
 };

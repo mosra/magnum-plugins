@@ -26,14 +26,17 @@
 #include "StanfordImporter.h"
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Endianness.h>
+#include <Corrade/Utility/EndiannessBatch.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Array.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Color.h>
-#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/ArrayAllocator.h>
+#include <Magnum/Trade/MeshData.h>
 
 namespace Magnum { namespace Trade {
 
@@ -63,188 +66,74 @@ void StanfordImporter::doOpenData(const Containers::ArrayView<const char> data) 
     }
 
     _in = Containers::Array<char>{Containers::NoInit, data.size()};
-    std::memcpy(_in, data, data.size());
+    Utility::copy(data, _in);
 }
 
-UnsignedInt StanfordImporter::doMesh3DCount() const { return 1; }
+UnsignedInt StanfordImporter::doMeshCount() const { return 1; }
 
 namespace {
 
-enum class FileFormat {
-    LittleEndian = 1,
-    BigEndian = 2
-};
-
-enum class Type {
-    UnsignedByte = 1,
-    Byte,
-    UnsignedShort,
-    Short,
-    UnsignedInt,
-    Int,
-    Float,
-    Double
-};
-
 enum class PropertyType {
     Vertex = 1,
-    Face,
-    Ignored
+    Face
 };
 
-Type parseType(const std::string& type) {
-    if(type == "uchar"  || type == "uint8")     return Type::UnsignedByte;
-    if(type == "char"   || type == "int8")      return Type::Byte;
-    if(type == "ushort" || type == "uint16")    return Type::UnsignedShort;
-    if(type == "short"  || type == "int16")     return Type::Short;
-    if(type == "uint"   || type == "uint32")    return Type::UnsignedInt;
-    if(type == "int"    || type == "int32")     return Type::Int;
-    if(type == "float"  || type == "float32")   return Type::Float;
-    if(type == "double" || type == "float64")   return Type::Double;
+MeshIndexType parseIndexType(const std::string& type) {
+    if(type == "uchar"  || type == "uint8" ||
+       type == "char"   || type == "int8")
+        return MeshIndexType::UnsignedByte;
+    if(type == "ushort" || type == "uint16" ||
+       type == "short"  || type == "int16")
+        return MeshIndexType::UnsignedShort;
+    if(type == "uint"   || type == "uint32" ||
+       type == "int"    || type == "int32")
+        return MeshIndexType::UnsignedInt;
 
     return {};
 }
 
-std::size_t sizeOf(Type type) {
-    switch(type) {
-        /* LCOV_EXCL_START */
-        #define _c(type) case Type::type: return sizeof(type);
-        _c(UnsignedByte)
-        _c(Byte)
-        _c(UnsignedShort)
-        _c(Short)
-        _c(UnsignedInt)
-        _c(Int)
-        _c(Float)
-        _c(Double)
-        #undef _c
-        /* LCOV_EXCL_STOP */
-    }
+VertexFormat parseAttributeType(const std::string& type) {
+    if(type == "uchar"  || type == "uint8")
+        return VertexFormat::UnsignedByte;
+    if(type == "char"   || type == "int8")
+        return VertexFormat::Byte;
+    if(type == "ushort" || type == "uint16")
+        return VertexFormat::UnsignedShort;
+    if(type == "short"  || type == "int16")
+        return VertexFormat::Short;
+    if(type == "uint"   || type == "uint32")
+        return VertexFormat::UnsignedInt;
+    if(type == "int"    || type == "int32")
+        return VertexFormat::Int;
+    if(type == "float"  || type == "float32")
+        return VertexFormat::Float;
+    if(type == "double" || type == "float64")
+        return VertexFormat::Double;
 
-    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    return {};
 }
 
-template<FileFormat format, class T> struct EndianSwap;
-template<class T> struct EndianSwap<FileFormat::LittleEndian, T> {
-    constexpr T operator()(T value) const { return Utility::Endianness::littleEndian<T>(value); }
-};
-template<class T> struct EndianSwap<FileFormat::BigEndian, T> {
-    constexpr T operator()(T value) const { return Utility::Endianness::bigEndian<T>(value); }
-};
-
-template<class T, FileFormat format, class U> inline T extractAndSkip(const char*& buffer) {
+template<class T, class U> inline T extractValue(const char* buffer, const bool endianSwap) {
     /* do a memcpy() instead of *reinterpret_cast, as that'll correctly handle
        unaligned loads as well */
     U dest;
     std::memcpy(&dest, buffer, sizeof(U));
-    const auto result = T(EndianSwap<format, U>{}(dest));
-    buffer += sizeof(U);
-    return result;
+    if(endianSwap) Utility::Endianness::swapInPlace(dest);
+    return T(dest);
 }
 
-template<class T, FileFormat format> T extractAndSkip(const char*& buffer, const Type type) {
+template<class T> T extractIndexValue(const char* buffer, const MeshIndexType type, const bool endianSwap) {
     switch(type) {
         /* LCOV_EXCL_START */
-        #define _c(type) case Type::type: return extractAndSkip<T, format, type>(buffer);
+        #define _c(type) case MeshIndexType::type: return extractValue<T, type>(buffer, endianSwap);
         _c(UnsignedByte)
-        _c(Byte)
         _c(UnsignedShort)
-        _c(Short)
         _c(UnsignedInt)
-        _c(Int)
-        _c(Float)
-        _c(Double)
         #undef _c
         /* LCOV_EXCL_STOP */
+
+        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
-
-    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-}
-
-template<class T> inline T extractAndSkip(const char*& buffer, const FileFormat fileFormat, const Type type) {
-    return fileFormat == FileFormat::LittleEndian ?
-        extractAndSkip<T, FileFormat::LittleEndian>(buffer, type) :
-        extractAndSkip<T, FileFormat::BigEndian>(buffer, type);
-}
-
-template<class T> inline T extract(const char* const buffer, const FileFormat fileFormat, const Type type) {
-    const char* mutableBuffer = buffer;
-    return extractAndSkip<T>(mutableBuffer, fileFormat, type);
-}
-
-template<class T, FileFormat format, class U> inline T extractNormalizedAndSkip(const char*& buffer) {
-    return Math::unpack<T, U>(extractAndSkip<T, format, U>(buffer));
-}
-
-template<class T, FileFormat format> T extractNormalizedAndSkip(const char*& buffer, const Type type) {
-    switch(type) {
-        /* Floats are not denormalized. For coverage ensure at least one of the
-           integer variants and at least one of the floating-point variants is
-           covered */
-        #define _c(type) case Type::type: return extractNormalizedAndSkip<T, format, type>(buffer);
-        _c(UnsignedByte)        /* LCOV_EXCL_LINE */
-        _c(Byte)                /* LCOV_EXCL_LINE */
-        _c(UnsignedShort)
-        _c(Short)               /* LCOV_EXCL_LINE */
-        _c(UnsignedInt)         /* LCOV_EXCL_LINE */
-        _c(Int)                 /* LCOV_EXCL_LINE */
-        #undef _c
-        #define _c(type) case Type::type: return extractAndSkip<T, format, type>(buffer);
-        _c(Float)
-        _c(Double)              /* LCOV_EXCL_LINE */
-        #undef c
-    }
-
-    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-}
-
-template<class T> inline T extractNormalizedAndSkip(const char*& buffer, const FileFormat fileFormat, const Type type) {
-    return fileFormat == FileFormat::LittleEndian ?
-        extractNormalizedAndSkip<T, FileFormat::LittleEndian>(buffer, type) :
-        extractNormalizedAndSkip<T, FileFormat::BigEndian>(buffer, type);
-}
-
-template<class T> inline T extractNormalized(const char* const buffer, const FileFormat fileFormat, const Type type) {
-    const char* mutableBuffer = buffer;
-    return extractNormalizedAndSkip<T>(mutableBuffer, fileFormat, type);
-}
-
-inline void extractTriangle(std::vector<UnsignedInt>& indices, const char* const buffer, const FileFormat fileFormat, const Type indexType) {
-    const char* position = buffer;
-
-    indices.insert(indices.end(), {
-        extractAndSkip<UnsignedInt>(position, fileFormat, indexType),
-        extractAndSkip<UnsignedInt>(position, fileFormat, indexType),
-        extractAndSkip<UnsignedInt>(position, fileFormat, indexType)
-    });
-}
-
-inline void extractQuad(std::vector<UnsignedInt>& indices, const char* const buffer, const FileFormat fileFormat, const Type indexType) {
-    const char* position = buffer;
-
-    /* GCC <=4.8 doesn't properly sequence the operations in list-initializer
-       (e.g. Vector4ui{extractAndSkip(), extractAndSkip(), ...}, so I need to
-       make the order really explicit. From what I understood from the specs,
-       this should be defined when using {}. Am I right? */
-    Vector4ui quad{Math::NoInit};
-    quad[0] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
-    quad[1] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
-    quad[2] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
-    quad[3] = extractAndSkip<UnsignedInt>(position, fileFormat, indexType);
-
-    /* 0 0---3
-       |\ \  |
-       | \ \ |
-       |  \ \|
-       1---2 2 */
-    indices.insert(indices.end(), {
-        quad[0],
-        quad[1],
-        quad[2],
-        quad[0],
-        quad[2],
-        quad[3]
-    });
 }
 
 std::string extractLine(Containers::ArrayView<const char>& in) {
@@ -262,20 +151,20 @@ std::string extractLine(Containers::ArrayView<const char>& in) {
 
 }
 
-Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
+Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt) {
     Containers::ArrayView<const char> in = _in;
 
     /* Check file signature */
     {
         std::string header = Utility::String::rtrim(extractLine(in));
         if(header != "ply") {
-            Error() << "Trade::StanfordImporter::mesh3D(): invalid file signature" << header;
+            Error() << "Trade::StanfordImporter::mesh(): invalid file signature" << header;
             return Containers::NullOpt;
         }
     }
 
     /* Parse format line */
-    FileFormat fileFormat{};
+    Containers::Optional<bool> fileFormatNeedsEndianSwapping{};
     {
         while(in) {
             const std::string line = extractLine(in);
@@ -286,41 +175,41 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
                 continue;
 
             if(tokens[0] != "format") {
-                Error{} << "Trade::StanfordImporter::mesh3D(): expected format line, got" << line;
+                Error{} << "Trade::StanfordImporter::mesh(): expected format line, got" << line;
                 return Containers::NullOpt;
             }
 
             if(tokens.size() != 3) {
-                Error() << "Trade::StanfordImporter::mesh3D(): invalid format line" << line;
+                Error() << "Trade::StanfordImporter::mesh(): invalid format line" << line;
                 return Containers::NullOpt;
             }
 
             if(tokens[2] == "1.0") {
                 if(tokens[1] == "binary_little_endian") {
-                    fileFormat = FileFormat::LittleEndian;
+                    fileFormatNeedsEndianSwapping = Utility::Endianness::isBigEndian();
                     break;
                 } else if(tokens[1] == "binary_big_endian") {
-                    fileFormat = FileFormat::BigEndian;
+                    fileFormatNeedsEndianSwapping = !Utility::Endianness::isBigEndian();
                     break;
                 }
             }
 
-            Error() << "Trade::StanfordImporter::mesh3D(): unsupported file format" << tokens[1] << tokens[2];
+            Error() << "Trade::StanfordImporter::mesh(): unsupported file format" << tokens[1] << tokens[2];
             return Containers::NullOpt;
         }
     }
 
     /* Check format line consistency */
-    if(fileFormat == FileFormat{}) {
-        Error() << "Trade::StanfordImporter::mesh3D(): missing format line";
+    if(!fileFormatNeedsEndianSwapping) {
+        Error() << "Trade::StanfordImporter::mesh(): missing format line";
         return Containers::NullOpt;
     }
 
     /* Parse rest of the header */
     UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
-    Array3D<Type> positionTypes, colorTypes;
-    Type faceSizeType{}, faceIndexType{};
-    Vector3i positionOffsets{-1}, colorOffsets{-1};
+    Array3D<VertexFormat> positionFormats, colorFormats;
+    MeshIndexType faceSizeType{}, faceIndexType{};
+    Vector3ui positionOffsets{~UnsignedInt{}}, colorOffsets{~UnsignedInt{}};
     {
         std::size_t vertexComponentOffset{};
         PropertyType propertyType{};
@@ -346,7 +235,7 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 
                 /* Something else */
                 } else {
-                    Error() << "Trade::StanfordImporter::mesh3D(): unknown element" << tokens[1];
+                    Error() << "Trade::StanfordImporter::mesh(): unknown element" << tokens[1];
                     return Containers::NullOpt;
                 }
 
@@ -355,40 +244,40 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
                 /* Vertex element properties */
                 if(propertyType == PropertyType::Vertex) {
                     if(tokens.size() != 3) {
-                        Error() << "Trade::StanfordImporter::mesh3D(): invalid vertex property line" << line;
+                        Error() << "Trade::StanfordImporter::mesh(): invalid vertex property line" << line;
                         return Containers::NullOpt;
                     }
 
                     /* Component type */
-                    const Type componentType = parseType(tokens[1]);
-                    if(componentType == Type{}) {
-                        Error() << "Trade::StanfordImporter::mesh3D(): invalid vertex component type" << tokens[1];
+                    const VertexFormat componentFormat = parseAttributeType(tokens[1]);
+                    if(componentFormat == VertexFormat{}) {
+                        Error() << "Trade::StanfordImporter::mesh(): invalid vertex component type" << tokens[1];
                         return Containers::NullOpt;
                     }
 
                     /* Component */
                     if(tokens[2] == "x") {
                         positionOffsets.x() = vertexComponentOffset;
-                        positionTypes.x() = componentType;
+                        positionFormats.x() = componentFormat;
                     } else if(tokens[2] == "y") {
                         positionOffsets.y() = vertexComponentOffset;
-                        positionTypes.y() = componentType;
+                        positionFormats.y() = componentFormat;
                     } else if(tokens[2] == "z") {
                         positionOffsets.z() = vertexComponentOffset;
-                        positionTypes.z() = componentType;
+                        positionFormats.z() = componentFormat;
                     } else if(tokens[2] == "red") {
                         colorOffsets.x() = vertexComponentOffset;
-                        colorTypes.x() = componentType;
+                        colorFormats.x() = componentFormat;
                     } else if(tokens[2] == "green") {
                         colorOffsets.y() = vertexComponentOffset;
-                        colorTypes.y() = componentType;
+                        colorFormats.y() = componentFormat;
                     } else if(tokens[2] == "blue") {
                         colorOffsets.z() = vertexComponentOffset;
-                        colorTypes.z() = componentType;
-                    } else Debug{} << "Trade::StanfordImporter::mesh3D(): ignoring unknown vertex component" << tokens[2];
+                        colorFormats.z() = componentFormat;
+                    } else Debug{} << "Trade::StanfordImporter::mesh(): ignoring unknown vertex component" << tokens[2];
 
                     /* Add size of current component to total offset */
-                    vertexComponentOffset += sizeOf(componentType);
+                    vertexComponentOffset += vertexFormatSize(componentFormat);
 
                 /* Face element properties */
                 } else if(propertyType == PropertyType::Face) {
@@ -398,37 +287,37 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
                         faceSkip = 0;
 
                         /* Face size type */
-                        if((faceSizeType = parseType(tokens[2])) == Type{}) {
-                            Error() << "Trade::StanfordImporter::mesh3D(): invalid face size type" << tokens[2];
+                        if((faceSizeType = parseIndexType(tokens[2])) == MeshIndexType{}) {
+                            Error() << "Trade::StanfordImporter::mesh(): invalid face size type" << tokens[2];
                             return Containers::NullOpt;
                         }
 
                         /* Face index type */
-                        if((faceIndexType = parseType(tokens[3])) == Type{}) {
-                            Error() << "Trade::StanfordImporter::mesh3D(): invalid face index type" << tokens[3];
+                        if((faceIndexType = parseIndexType(tokens[3])) == MeshIndexType{}) {
+                            Error() << "Trade::StanfordImporter::mesh(): invalid face index type" << tokens[3];
                             return Containers::NullOpt;
                         }
 
                     /* Ignore unknown properties */
                     } else if(tokens.size() == 3) {
-                        const Type faceType = parseType(tokens[1]);
-                        if(faceType == Type{}) {
-                            Error{} << "Trade::StanfordImporter::mesh3D(): invalid face component type" << tokens[1];
+                        const VertexFormat faceFormat = parseAttributeType(tokens[1]);
+                        if(faceFormat == VertexFormat{}) {
+                            Error{} << "Trade::StanfordImporter::mesh(): invalid face component type" << tokens[1];
                             return Containers::NullOpt;
                         }
 
-                        Debug{} << "Trade::StanfordImporter::mesh3D(): ignoring unknown face component" << tokens[2];
-                        faceSkip += sizeOf(faceType);
+                        Debug{} << "Trade::StanfordImporter::mesh(): ignoring unknown face component" << tokens[2];
+                        faceSkip += vertexFormatSize(faceFormat);
 
                     /* Fail on unknwon lines */
                     } else {
-                        Error() << "Trade::StanfordImporter::mesh3D(): invalid face property line" << line;
+                        Error() << "Trade::StanfordImporter::mesh(): invalid face property line" << line;
                         return Containers::NullOpt;
                     }
 
                 /* Unexpected property line */
-                } else if(propertyType != PropertyType::Ignored) {
-                    Error() << "Trade::StanfordImporter::mesh3D(): unexpected property line";
+                } else if(propertyType == PropertyType{}) {
+                    Error() << "Trade::StanfordImporter::mesh(): unexpected property line";
                     return Containers::NullOpt;
                 }
 
@@ -438,7 +327,7 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
 
             /* Something else */
             } else {
-                Error() << "Trade::StanfordImporter::mesh3D(): unknown line" << line;
+                Error() << "Trade::StanfordImporter::mesh(): unknown line" << line;
                 return Containers::NullOpt;
             }
         }
@@ -447,55 +336,141 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
     }
 
     /* Check header consistency */
-    if((positionOffsets < Vector3i{0}).any()) {
-        Error() << "Trade::StanfordImporter::mesh3D(): incomplete vertex specification";
+    if((positionOffsets >= Vector3ui{~UnsignedInt{}}).any()) {
+        Error() << "Trade::StanfordImporter::mesh(): incomplete vertex specification";
         return Containers::NullOpt;
     }
-    if(faceSizeType == Type{} || faceIndexType == Type{}) {
-        Error() << "Trade::StanfordImporter::mesh3D(): incomplete face specification";
+    if(faceSizeType == MeshIndexType{} || faceIndexType == MeshIndexType{}) {
+        Error() << "Trade::StanfordImporter::mesh(): incomplete face specification";
         return Containers::NullOpt;
     }
 
-    /* Parse vertices */
-    std::vector<Vector3> positions;
-    std::vector<std::vector<Color4>> colors;
-    positions.reserve(vertexCount);
-    if((colorOffsets > Vector3i{0}).any()) {
-        colors.emplace_back();
-        colors.back().reserve(vertexCount);
+    /* Copy all vertex data */
+    if(in.size() < vertexStride*vertexCount) {
+        Error() << "Trade::StanfordImporter::mesh(): incomplete vertex data";
+        return Containers::NullOpt;
     }
+    Containers::Array<char> vertexData{Containers::NoInit,
+        vertexStride*vertexCount};
+    Utility::copy(in.prefix(vertexStride*vertexCount), vertexData);
+    in = in.suffix(vertexStride*vertexCount);
+
+    /* Gather all attributes */
+    std::size_t attributeCount = 1;
+    if((colorOffsets < Vector3ui{~UnsignedInt{}}).any()) ++attributeCount;
+    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    std::size_t attributeOffset = 0;
+
+    /* Wrap up positions */
     {
-        for(std::size_t i = 0; i != vertexCount; ++i) {
-            if(in.size() < vertexStride) {
-                Error() << "Trade::StanfordImporter::mesh3D(): incomplete vertex data";
-                return Containers::NullOpt;
-            }
-
-            Containers::ArrayView<const char> buffer = in.prefix(vertexStride);
-            in = in.suffix(vertexStride);
-
-            positions.emplace_back(
-                extract<Float>(buffer + positionOffsets.x(), fileFormat, positionTypes.x()),
-                extract<Float>(buffer + positionOffsets.y(), fileFormat, positionTypes.y()),
-                extract<Float>(buffer + positionOffsets.z(), fileFormat, positionTypes.z())
-            );
-            if((colorOffsets > Vector3i{0}).any()) colors.back().emplace_back(
-                colorOffsets.x() != -1 ? extractNormalized<Float>(buffer + colorOffsets.x(), fileFormat, colorTypes.x()) : 0.0f,
-                colorOffsets.y() != -1 ? extractNormalized<Float>(buffer + colorOffsets.y(), fileFormat, colorTypes.y()) : 0.0f,
-                colorOffsets.z() != -1 ? extractNormalized<Float>(buffer + colorOffsets.z(), fileFormat, colorTypes.z()) : 0.0f
-            );
+        /* Check that we have the same type for all position coordinates */
+        if(positionFormats.x() != positionFormats.y() ||
+           positionFormats.x() != positionFormats.z()) {
+            Error{} << "Trade::StanfordImporter::mesh(): expecting all position coordinates to have the same type but got" << positionFormats;
+            return Containers::NullOpt;
         }
+
+        /* And that they are right after each other in correct order */
+        const UnsignedInt positionFormatSize = vertexFormatSize(positionFormats.x());
+        if(positionOffsets.y() != positionOffsets.x() + positionFormatSize ||
+           positionOffsets.z() != positionOffsets.y() + positionFormatSize) {
+            Error{} << "Trade::StanfordImporter::mesh(): expecting position coordinates to be tightly packed, but got offsets" << positionOffsets << "for a" << positionFormatSize << Debug::nospace << "-byte type";
+            return Containers::NullOpt;
+        }
+
+        /* Ensure the type is one of allowed */
+        if(positionFormats.x() != VertexFormat::Float &&
+           positionFormats.x() != VertexFormat::UnsignedByte &&
+           positionFormats.x() != VertexFormat::Byte &&
+           positionFormats.x() != VertexFormat::UnsignedShort &&
+           positionFormats.x() != VertexFormat::Short) {
+            Error{} << "Trade::StanfordImporter::mesh(): unsupported position component type" << positionFormats.x();
+            return Containers::NullOpt;
+        }
+
+        /* Endian-swap them, if needed */
+        if(*fileFormatNeedsEndianSwapping) {
+            Containers::StridedArrayView3D<char> positionComponents{vertexData,
+                vertexData + positionOffsets.x(),
+                {3, vertexCount, positionFormatSize}, {std::ptrdiff_t(positionFormatSize), std::ptrdiff_t(vertexStride), 1}};
+            for(std::size_t component = 0; component != 3; ++component) {
+                if(positionFormatSize == 2)
+                    Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedShort>(positionComponents[component]));
+                else if(positionFormatSize == 4)
+                    Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedInt>(positionComponents[component]));
+                else CORRADE_INTERNAL_ASSERT(positionFormatSize == 1);
+            }
+        }
+
+        /* Add the attribute */
+        attributeData[attributeOffset++] = MeshAttributeData{
+            MeshAttribute::Position,
+            vertexFormat(positionFormats.x(), 3, false),
+            Containers::StridedArrayView1D<void>{vertexData,
+                vertexData + positionOffsets.x(),
+                vertexCount, vertexStride}};
     }
 
-    /* Parse faces, reserve optimistically amount for all-triangle faces */
-    std::vector<UnsignedInt> indices;
-    indices.reserve(faceCount*3);
+    /* Wrap up colors, if any */
+    if((colorOffsets < Vector3ui{~UnsignedInt{}}).any()) {
+        /* Check that we have the same type for all position coordinates */
+        if(colorFormats.x() != colorFormats.y() ||
+           colorFormats.x() != colorFormats.z()) {
+            Error{} << "Trade::StanfordImporter::mesh(): expecting all color channels to have the same type but got" << colorFormats;
+            return Containers::NullOpt;
+        }
+
+        /* And that they are right after each other in correct order */
+        const UnsignedInt colorTypeSize = vertexFormatSize(colorFormats.x());
+        if(colorOffsets.y() != colorOffsets.x() + colorTypeSize ||
+           colorOffsets.z() != colorOffsets.y() + colorTypeSize) {
+            Error{} << "Trade::StanfordImporter::mesh(): expecting color channels to be tightly packed, but got offsets" << colorOffsets << "for a" << colorTypeSize << Debug::nospace << "-byte type";
+            return Containers::NullOpt;
+        }
+
+        /* Ensure the type is one of allowed */
+        if(colorFormats.x() != VertexFormat::Float &&
+           colorFormats.x() != VertexFormat::UnsignedByte &&
+           colorFormats.x() != VertexFormat::UnsignedShort) {
+            Error{} << "Trade::StanfordImporter::mesh(): unsupported color channel type" << colorFormats.x();
+            return Containers::NullOpt;
+        }
+
+        /* Endian-swap them, if needed */
+        if(*fileFormatNeedsEndianSwapping) {
+            Containers::StridedArrayView3D<char> colorChannels{vertexData,
+                vertexData + colorOffsets.x(),
+                {3, vertexCount, colorTypeSize}, {std::ptrdiff_t(colorTypeSize), std::ptrdiff_t(vertexStride), 1}};
+            for(std::size_t channel = 0; channel != 3; ++channel) {
+                if(colorTypeSize == 2)
+                    Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedShort>(colorChannels[channel]));
+                else if(colorTypeSize== 4)
+                    Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedInt>(colorChannels[channel]));
+                else CORRADE_INTERNAL_ASSERT(colorTypeSize == 1);
+            }
+        }
+
+        /* Add the attribute */
+        attributeData[attributeOffset++] = MeshAttributeData{
+            MeshAttribute::Color,
+            /* We want integer types normalized */
+            vertexFormat(colorFormats.x(), 3, colorFormats.x() != VertexFormat::Float),
+            Containers::StridedArrayView1D<void>{vertexData,
+                vertexData + colorOffsets.x(),
+                vertexCount, vertexStride}};
+    }
+
+    /* Parse faces. Keep the original index type, reserve optimistically amount
+       for all-triangle faces */
+    Containers::Array<char> indexData;
+    const UnsignedInt faceIndexTypeSize = meshIndexTypeSize(faceIndexType);
+    Containers::arrayReserve<ArrayAllocator>(indexData,
+        faceCount*3*faceIndexTypeSize);
     {
-        const UnsignedInt faceSizeTypeSize = sizeOf(faceSizeType);
-        const UnsignedInt faceIndexTypeSize = sizeOf(faceIndexType);
+        const UnsignedInt faceSizeTypeSize = meshIndexTypeSize(faceSizeType);
         for(std::size_t i = 0; i != faceCount; ++i) {
             if(in.size() < faceIndicesOffset + faceSizeTypeSize) {
-                Error() << "Trade::StanfordImporter::mesh3D(): incomplete index data";
+                Error() << "Trade::StanfordImporter::mesh(): incomplete index data";
                 return Containers::NullOpt;
             }
 
@@ -504,28 +479,54 @@ Containers::Optional<MeshData3D> StanfordImporter::doMesh3D(UnsignedInt) {
             /* Get face size */
             Containers::ArrayView<const char> buffer = in.prefix(faceSizeTypeSize);
             in = in.suffix(faceSizeTypeSize);
-            const UnsignedInt faceSize = extract<UnsignedInt>(buffer, fileFormat, faceSizeType);
+            const UnsignedInt faceSize = extractIndexValue<UnsignedInt>(buffer, faceSizeType, *fileFormatNeedsEndianSwapping);
             if(faceSize < 3 || faceSize > 4) {
-                Error() << "Trade::StanfordImporter::mesh3D(): unsupported face size" << faceSize;
+                Error() << "Trade::StanfordImporter::mesh(): unsupported face size" << faceSize;
                 return Containers::NullOpt;
             }
 
             /* Parse face indices */
             if(in.size() < faceIndexTypeSize*faceSize + faceSkip) {
-                Error() << "Trade::StanfordImporter::mesh3D(): incomplete face data";
+                Error() << "Trade::StanfordImporter::mesh(): incomplete face data";
                 return Containers::NullOpt;
             }
 
             buffer = in.prefix(faceIndexTypeSize*faceSize);
             in = in.suffix(faceIndexTypeSize*faceSize + faceSkip);
 
-            faceSize == 3 ?
-                extractTriangle(indices, buffer, fileFormat, faceIndexType) :
-                extractQuad(indices, buffer, fileFormat, faceIndexType);
+            /* Append either the triangle or the first triangle of the quad */
+            Containers::arrayAppend<ArrayAllocator>(indexData,
+                buffer.prefix(3*faceIndexTypeSize));
+            /* For a quad add the 0, 2 and 3 indices forming another triangle */
+            if(faceSize == 4) {
+                /* 0 0---3
+                   |\ \  |
+                   | \ \ |
+                   |  \ \|
+                   1---2 2 */
+                Containers::arrayAppend<ArrayAllocator>(indexData,
+                    buffer.slice(0*faceIndexTypeSize, 1*faceIndexTypeSize));
+                Containers::arrayAppend<ArrayAllocator>(indexData,
+                    buffer.slice(2*faceIndexTypeSize, 3*faceIndexTypeSize));
+                Containers::arrayAppend<ArrayAllocator>(indexData,
+                    buffer.slice(3*faceIndexTypeSize, 4*faceIndexTypeSize));
+            }
+        }
+
+        /* Endian-swap the indices, if needed */
+        if(*fileFormatNeedsEndianSwapping) {
+            if(faceIndexTypeSize == 2)
+                Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedShort>(indexData));
+            else if(faceIndexTypeSize == 4)
+                Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedInt>(indexData));
+            else CORRADE_INTERNAL_ASSERT(faceIndexTypeSize == 1);
         }
     }
 
-    return MeshData3D{MeshPrimitive::Triangles, std::move(indices), {std::move(positions)}, {}, {}, colors, nullptr};
+    MeshIndexData indices{faceIndexType, indexData};
+    return MeshData{MeshPrimitive::Triangles,
+        std::move(indexData), indices,
+        std::move(vertexData), std::move(attributeData)};
 }
 
 }}
