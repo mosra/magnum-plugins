@@ -140,7 +140,7 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
 
     /* For 16 bit depth we need to swap to big endian */
     } else if(bitDepth == 16) {
-        #ifndef CORRADE_BIG_ENDIAN
+        #ifndef CORRADE_TARGET_BIG_ENDIAN
         png_set_swap(file);
         #endif
         for(Int y = 0; y != image.size().y(); ++y) {

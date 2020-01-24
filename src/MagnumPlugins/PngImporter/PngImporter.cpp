@@ -195,7 +195,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
     data = Containers::Array<char>{stride*std::size_t(size.y())};
 
     /* Endianness correction for 16 bit depth */
-    #ifndef CORRADE_BIG_ENDIAN
+    #ifndef CORRADE_TARGET_BIG_ENDIAN
     if(bits == 16) png_set_swap(file);
     #endif
 
