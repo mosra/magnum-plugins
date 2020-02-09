@@ -45,7 +45,7 @@
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
-#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
@@ -220,7 +220,7 @@ void AssimpImporterTest::openFile() {
     {
         /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
         CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
-        CORRADE_VERIFY(!importer->mesh3DCount());
+        CORRADE_VERIFY(!importer->meshCount());
     }
 
     importer->close();
@@ -248,7 +248,7 @@ void AssimpImporterTest::openData() {
     {
         /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
         CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
-        CORRADE_VERIFY(!importer->mesh3DCount());
+        CORRADE_VERIFY(!importer->meshCount());
     }
 
     importer->close();
@@ -524,32 +524,44 @@ void AssimpImporterTest::mesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
-    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(mesh->normalArrayCount(), 1);
-    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 1);
-    CORRADE_COMPARE(mesh->colorArrayCount(), 1);
 
-    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-        {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}}));
-    CORRADE_COMPARE(mesh->normals(0), (std::vector<Vector3>{
-        {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}));
-    CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
-        {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}}));
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        Containers::arrayView<UnsignedInt>({0, 1, 2}),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Normal), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
+        Containers::arrayView<Vector3>({
+            {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}
+        }), TestSuite::Compare::Container);
+
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     {
         CORRADE_EXPECT_FAIL_IF(version < 302,
             "Assimp < 3.2 loads incorrect alpha value for the last color");
-        CORRADE_COMPARE(mesh->colors(0), (std::vector<Color4>{
-            {1.0f, 0.25f, 0.24f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.1f, 0.2f, 0.3f, 1.0f}}));
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Color),
+        Containers::arrayView<Vector4>({
+            {1.0f, 0.25f, 0.24f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.1f, 0.2f, 0.3f, 1.0f}
+        }), TestSuite::Compare::Container);
     }
-    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
 
     Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
@@ -560,21 +572,23 @@ void AssimpImporterTest::pointMesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "points.obj")));
 
-    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
-    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(mesh->normalArrayCount(), 0);
-    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
-    CORRADE_COMPARE(mesh->colorArrayCount(), 0);
 
-    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-        {0.5f, 2.0f, 3.0f}, {2.0f, 3.0f, 5.0f}, {0.0f, 1.5f, 1.0f}}));
-    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2, 0}));
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        Containers::arrayView<UnsignedInt>({0, 1, 2, 0}),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {0.5f, 2.0f, 3.0f}, {2.0f, 3.0f, 5.0f}, {0.0f, 1.5f, 1.0f}
+        }), TestSuite::Compare::Container);
 
     Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
@@ -585,21 +599,23 @@ void AssimpImporterTest::lineMesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "line.dae")));
 
-    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
-    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(mesh->normalArrayCount(), 0);
-    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 0);
-    CORRADE_COMPARE(mesh->colorArrayCount(), 0);
 
-    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-        {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}}));
-    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1}));
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        Containers::arrayView<UnsignedInt>({0, 1}),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}
+        }), TestSuite::Compare::Container);
 
     Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
@@ -629,7 +645,7 @@ void AssimpImporterTest::emptyGltf() {
 
     /* No crazy meshes created for an empty glTF file, unlike with COLLADA
        files that have no meshes */
-    CORRADE_COMPARE(importer->mesh3DCount(), 0);
+    CORRADE_COMPARE(importer->meshCount(), 0);
 }
 
 void AssimpImporterTest::scene() {
@@ -944,15 +960,17 @@ void AssimpImporterTest::configurePostprocessFlipUVs() {
     importer->configuration().group("postprocess")->setValue("FlipUVs", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
-    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 1);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 1);
 
     /* The same as in mesh() but with reversed Y */
-    CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
-        {0.5f, 0.0f}, {0.75f, 0.5f}, {0.5f, 0.1f}}));
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            {0.5f, 0.0f}, {0.75f, 0.5f}, {0.5f, 0.1f}
+        }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::fileCallback() {
@@ -971,22 +989,35 @@ void AssimpImporterTest::fileCallback() {
         }, files);
 
     CORRADE_VERIFY(importer->openFile("not/a/path/mesh.dae"));
-    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+    /* Same as in mesh(), not testing colors because of the assimp bugs that
+       need to be worked around */
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(mesh->normalArrayCount(), 1);
-    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 1);
 
-    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-        {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}}));
-    CORRADE_COMPARE(mesh->normals(0), (std::vector<Vector3>{
-        {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}));
-    CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
-        {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}}));
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        Containers::arrayView<UnsignedInt>({0, 1, 2}),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Normal), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
+        Containers::arrayView<Vector3>({
+            {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}
+        }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::fileCallbackNotFound() {
