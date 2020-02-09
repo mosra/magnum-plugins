@@ -26,11 +26,10 @@
 
 #include "AssimpImporter.h"
 
-#include <cstring>
-#include <algorithm>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -40,10 +39,11 @@
 #include <Magnum/Math/Vector.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/PixelStorage.h>
+#include <Magnum/Trade/ArrayAllocator.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
-#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
@@ -453,11 +453,11 @@ Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
     return LightData(lightType, ambientColor, 1.0f, l);
 }
 
-UnsignedInt AssimpImporter::doMesh3DCount() const {
+UnsignedInt AssimpImporter::doMeshCount() const {
     return _f->scene->mNumMeshes;
 }
 
-Containers::Optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) {
+Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, UnsignedInt) {
     const aiMesh* mesh = _f->scene->mMeshes[id];
 
     /* Primitive */
@@ -469,65 +469,114 @@ Containers::Optional<MeshData3D> AssimpImporter::doMesh3D(const UnsignedInt id) 
     } else if(mesh->mPrimitiveTypes == aiPrimitiveType_TRIANGLE) {
         primitive = MeshPrimitive::Triangles;
     } else {
-        Error() << "Trade::AssimpImporter::mesh3D(): unsupported aiPrimitiveType" << mesh->mPrimitiveTypes;
+        Error() << "Trade::AssimpImporter::mesh(): unsupported aiPrimitiveType" << mesh->mPrimitiveTypes;
         return Containers::NullOpt;
     }
 
-    /* Mesh data */
-    std::vector<std::vector<Vector3>> positions{{}};
-    std::vector<std::vector<Vector2>> textureCoordinates;
-    std::vector<std::vector<Vector3>> normals;
-    std::vector<std::vector<Color4>> colors;
-
-    /* Import positions */
-    auto vertexArray = Containers::arrayCast<Vector3>(Containers::arrayView(mesh->mVertices, mesh->mNumVertices));
-    positions.front().assign(vertexArray.begin(), vertexArray.end());
-
+    /* Gather all attributes. Position is there always, others are optional */
+    std::size_t attributeCount = 1;
+    std::ptrdiff_t stride = sizeof(Vector3);
     if(mesh->HasNormals()) {
-        normals.emplace_back();
-        auto normalArray = Containers::arrayCast<Vector3>(Containers::arrayView(mesh->mNormals, mesh->mNumVertices));
-        normals.front().assign(normalArray.begin(), normalArray.end());
+        ++attributeCount;
+        stride += sizeof(Vector3);
     }
-
-    /** @todo only first uv layer (or "channel") supported) */
-    textureCoordinates.reserve(mesh->GetNumUVChannels());
     for(std::size_t layer = 0; layer < mesh->GetNumUVChannels(); ++layer) {
         if(mesh->mNumUVComponents[layer] != 2) {
-            /** @todo Only 2 dimensional texture coordinates supported in MeshData3D */
-            Warning() << "Trade::AssimpImporter::mesh3D(): skipping texture coordinate layer" << layer << "which has" << mesh->mNumUVComponents[layer] << "components per coordinate. Only two dimensional texture coordinates are supported.";
+            Warning() << "Trade::AssimpImporter::mesh(): skipping texture coordinate layer" << layer << "which has" << mesh->mNumUVComponents[layer] << "components per coordinate. Only two dimensional texture coordinates are supported.";
             continue;
         }
 
-        textureCoordinates.emplace_back();
-        auto& texCoords = textureCoordinates[layer];
-        texCoords.reserve(mesh->mNumVertices);
-        for(std::size_t i = 0; i < mesh->mNumVertices; ++i) {
-            /* GCC 4.7 has a problem with .x/.y here */
-            texCoords.emplace_back(mesh->mTextureCoords[layer][i][0], mesh->mTextureCoords[layer][i][1]);
-        }
+        ++attributeCount;
+        stride += sizeof(Vector2);
+    }
+    attributeCount += mesh->GetNumColorChannels();
+    stride += mesh->GetNumColorChannels()*sizeof(Color4);
+
+    /* Allocate vertex data, fill in the attributes */
+    const UnsignedInt vertexCount = mesh->mNumVertices;
+    Containers::Array<char> vertexData{Containers::NoInit, std::size_t(stride)*vertexCount};
+    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    std::size_t attributeIndex = 0;
+    std::size_t attributeOffset = 0;
+
+    /* Positions */
+    {
+        Containers::StridedArrayView1D<Vector3> positions{vertexData,
+            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            vertexCount, stride};
+        Utility::copy(Containers::arrayView(reinterpret_cast<Vector3*>(mesh->mVertices), mesh->mNumVertices), positions);
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::Position, positions};
+        attributeOffset += sizeof(Vector3);
     }
 
-    colors.reserve(mesh->GetNumColorChannels());
+    /* Normals, if any */
+    if(mesh->HasNormals()) {
+        Containers::StridedArrayView1D<Vector3> normals{vertexData,
+            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            vertexCount, stride};
+        Utility::copy(Containers::arrayView(reinterpret_cast<Vector3*>(mesh->mNormals), mesh->mNumVertices), normals);
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::Normal, normals};
+        attributeOffset += sizeof(Vector3);
+    }
+
+    /* Texture coordinates */
+    /** @todo only first uv layer (or "channel") supported) */
+    for(std::size_t layer = 0; layer < mesh->GetNumUVChannels(); ++layer) {
+        /* Warning already printed above */
+        if(mesh->mNumUVComponents[layer] != 2) continue;
+
+        Containers::StridedArrayView1D<Vector2> textureCoordinates{vertexData,
+            reinterpret_cast<Vector2*>(vertexData + attributeOffset),
+            vertexCount, stride};
+        Utility::copy(
+            /* Converting to a strided array view to take just the first 2
+               component of the 3D coordinate */
+            Containers::arrayCast<Vector2>(Containers::stridedArrayView(
+                Containers::arrayView(mesh->mTextureCoords[layer], mesh->mNumVertices))),
+            textureCoordinates);
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::TextureCoordinates, textureCoordinates};
+        attributeOffset += sizeof(Vector2);
+    }
+
+    /* Colors */
     for(std::size_t layer = 0; layer < mesh->GetNumColorChannels(); ++layer) {
-        colors.emplace_back();
-        auto colorArray = Containers::arrayCast<Color4>(Containers::arrayView(mesh->mColors[layer], mesh->mNumVertices));
-        colors[layer].assign(colorArray.begin(), colorArray.end());
+        Containers::StridedArrayView1D<Color4> colors{vertexData,
+            reinterpret_cast<Color4*>(vertexData + attributeOffset),
+            vertexCount, stride};
+        Utility::copy(Containers::arrayView(reinterpret_cast<Color4*>(mesh->mColors[layer]), mesh->mNumVertices), colors);
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::Color, colors};
+        attributeOffset += sizeof(Color4);
     }
 
-    /* Import indices */
-    std::vector<UnsignedInt> indices;
-    indices.reserve(mesh->mNumFaces*3);
+    /* Check we pre-calculated well */
+    CORRADE_INTERNAL_ASSERT(attributeOffset == std::size_t(stride));
+    CORRADE_INTERNAL_ASSERT(attributeIndex == attributeCount);
 
+    /* Import indices. There doesn't seem to be any shortcut to just copy all
+       index data in a single go, so having to iterate over faces. Ugh. */
+    Containers::Array<UnsignedInt> indexData;
+    Containers::arrayReserve<ArrayAllocator>(indexData, mesh->mNumFaces*3);
     for(std::size_t faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
         const aiFace& face = mesh->mFaces[faceIndex];
+        CORRADE_ASSERT(face.mNumIndices <= 3, "Trade::AssimpImporter::mesh(): triangulation while loading should have ensured <= 3 vertices per primitive", {});
 
-        CORRADE_ASSERT(face.mNumIndices <= 3, "Trade::AssimpImporter::mesh3D(): triangulation while loading should have ensured <= 3 vertices per primitive", {});
-        for(std::size_t i = 0; i < face.mNumIndices; ++i) {
-            indices.push_back(face.mIndices[i]);
-        }
+        Containers::arrayAppend<ArrayAllocator>(indexData, {face.mIndices, face.mNumIndices});
     }
 
-    return MeshData3D(primitive, std::move(indices), std::move(positions), std::move(normals), std::move(textureCoordinates), std::move(colors), mesh);
+    MeshIndexData indices{indexData};
+    return MeshData{primitive,
+        Containers::arrayAllocatorCast<char, ArrayAllocator>(std::move(indexData)),
+        indices,
+        std::move(vertexData), std::move(attributeData),
+        MeshData::ImplicitVertexCount, mesh};
 }
 
 UnsignedInt AssimpImporter::doMaterialCount() const { return _f->scene->mNumMaterials; }

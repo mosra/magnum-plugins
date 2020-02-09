@@ -229,6 +229,15 @@ Import of animation data is not supported at the moment.
 -   For some file formats (such as COLLADA), Assimp may create a dummy
     "skeleton visualizer" mesh if the file has no mesh data. For others (such
     as glTF) not.
+-   The importer follows types used by Assimp, thus indices are always
+    @ref MeshIndexType::UnsignedInt, positions and normals are always imported
+    as @ref VertexFormat::Vector3, texture coordinates as
+    @ref VertexFormat::Vector2 and colors as @ref VertexFormat::Vector4. In
+    other words, everything gets expanded by Assimp to floats, even if the
+    original file might be using different types.
+
+The mesh is always indexed; positions are always present, normals, colors and
+texture coordinates are optional.
 
 @subsection Trade-AssimpImporter-limitations-textures Texture import
 
@@ -272,7 +281,7 @@ importer state methods:
     -   @ref CameraData::importerState() returns `aiCamera`
     -   @ref TextureData::importerState() returns `std::pair<const aiMaterial*, aiTextureType>`,
         in which the first texture of given type in given material is referred to.
-    -   @ref MeshData3D::importerState() returns `aiMesh`
+    -   @ref MeshData::importerState() returns `aiMesh`
     -   @ref ObjectData3D::importerState() returns `aiNode`
     -   @ref LightData::importerState() returns `aiLight`
     -   @ref ImageData2D::importerState() may return `aiTexture`, if texture was embedded
@@ -333,8 +342,8 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doLightCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
 
-        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
