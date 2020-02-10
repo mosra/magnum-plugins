@@ -528,8 +528,9 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 target = AnimationTrackTargetType::Rotation3D;
                 resultType = AnimationTrackType::Quaternion;
                 if(interpolation == Animation::Interpolation::Spline) {
-                    /* Postprocess the spline track. This can be done only once for
-                    every track -- postprocessSplineTrack() checks that. */
+                    /* Postprocess the spline track. This can be done only once
+                       for every track -- postprocessSplineTrack() checks
+                       that. */
                     const auto values = Containers::arrayCast<CubicHermiteQuaternion>(outputData);
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
@@ -539,8 +540,9 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                         animationInterpolatorFor<CubicHermiteQuaternion>(interpolation),
                         Animation::Extrapolation::Constant};
                 } else {
-                    /* Ensure shortest path is always chosen. Not doing this for
-                    spline interpolation, there it would cause war and famine. */
+                    /* Ensure shortest path is always chosen. Not doing this
+                       for spline interpolation, there it would cause war and
+                       famine. */
                     const auto values = Containers::arrayCast<Quaternion>(outputData);
                     if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
                         Float flip = 1.0f;
@@ -550,10 +552,11 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                         }
                     }
 
-                    /* Normalize the quaternions if not already. Don't attempt to
-                    normalize every time to avoid tiny differences, only when
-                    the quaternion looks to be off. Again, not doing this for
-                    splines as it would cause things to go haywire. */
+                    /* Normalize the quaternions if not already. Don't attempt
+                       to normalize every time to avoid tiny differences, only
+                       when the quaternion looks to be off. Again, not doing
+                       this for splines as it would cause things to go
+                       haywire. */
                     if(configuration().value<bool>("normalizeQuaternions")) {
                         for(auto& i: values) if(!i.isNormalized()) {
                             i = i.normalized();
@@ -579,8 +582,9 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 target = AnimationTrackTargetType::Scaling3D;
                 resultType = AnimationTrackType::Vector3;
                 if(interpolation == Animation::Interpolation::Spline) {
-                    /* Postprocess the spline track. This can be done only once for
-                    every track -- postprocessSplineTrack() checks that. */
+                    /* Postprocess the spline track. This can be done only once
+                       for every track -- postprocessSplineTrack() checks
+                       that. */
                     const auto values = Containers::arrayCast<CubicHermite3D>(outputData);
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
@@ -603,9 +607,10 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 return Containers::NullOpt;
             }
 
-            /* Splines were postprocessed using the corresponding time track. If a
-            spline is not yet marked as postprocessed, mark it. Otherwise check
-            that the spline track is always used with the same time track. */
+            /* Splines were postprocessed using the corresponding time track.
+               If a spline is not yet marked as postprocessed, mark it.
+               Otherwise check that the spline track is always used with the
+               same time track. */
             if(interpolation == Animation::Interpolation::Spline) {
                 if(timeTrackUsed == ~std::size_t{})
                     timeTrackUsed = sampler.input;
@@ -616,9 +621,10 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             }
 
             tracks[trackId++] = AnimationTrackData{type, resultType, target,
-                /* In cases where multi-primitive mesh nodes are split into multipe
-                objects, the animation should affect the first node -- the other
-                nodes are direct children of it and so they get affected too */
+                /* In cases where multi-primitive mesh nodes are split into
+                   multiple objects, the animation should affect the first node
+                   -- the other nodes are direct children of it and so they get
+                   affected too */
                 UnsignedInt(_d->nodeSizeOffsets[channel.target_node]),
                 track};
         }
