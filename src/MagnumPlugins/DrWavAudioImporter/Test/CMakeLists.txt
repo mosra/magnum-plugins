@@ -99,5 +99,5 @@ if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such
     # as output redirection and so on).
-    set_target_properties(DrWavImporterTest PROPERTIES ENABLE_EXPORTS ON)
+    set_target_properties(DrWavAudioImporterTest PROPERTIES ENABLE_EXPORTS ON)
 endif()
