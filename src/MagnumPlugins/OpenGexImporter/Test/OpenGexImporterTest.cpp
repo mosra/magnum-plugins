@@ -40,7 +40,7 @@
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
-#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
@@ -695,89 +695,111 @@ void OpenGexImporterTest::mesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::TriangleStrip);
+
     CORRADE_VERIFY(!mesh->isIndexed());
-    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-        {0.0f, 1.0f, 3.0f}, {-1.0f, 2.0f, 2.0f}, {3.0f, 3.0f, 1.0f}
-    }));
-    CORRADE_COMPARE(mesh->normalArrayCount(), 1);
-    CORRADE_COMPARE(mesh->normals(0), (std::vector<Vector3>{
-        {0.0f, 1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}
-    }));
-    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 2);
-    CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
-        {0.5f, 0.5f}, {0.5f, 1.0f}, {1.0f, 1.0f}
-    }));
-    CORRADE_COMPARE(mesh->textureCoords2D(1), (std::vector<Vector2>{
-        {0.5f, 1.0f}, {1.0f, 0.5f}, {0.5f, 0.5f}
-    }));
+
+    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {0.0f, 1.0f, 3.0f}, {-1.0f, 2.0f, 2.0f}, {3.0f, 3.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Normal));
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
+        Containers::arrayView<Vector3>({
+            {0.0f, 1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 2);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            {0.5f, 0.5f}, {0.5f, 1.0f}, {1.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates, 1),
+        Containers::arrayView<Vector2>({
+            {0.5f, 1.0f}, {1.0f, 0.5f}, {0.5f, 0.5f}
+        }), TestSuite::Compare::Container);
 }
 
 void OpenGexImporterTest::meshIndexed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
-    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(1);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+
     CORRADE_VERIFY(mesh->isIndexed());
-    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-        {0.0f, 1.0f, 3.0f}, {-1.0f, 2.0f, 2.0f}, {3.0f, 3.0f, 1.0f}, {5.0f, 7.0f, 0.5f}
-    }));
-    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
-        2, 0, 1, 1, 2, 3
-    }));
+    CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedShort);
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedShort>(),
+        Containers::arrayView<UnsignedShort>({
+            2, 0, 1, 1, 2, 3
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {0.0f, 1.0f, 3.0f}, {-1.0f, 2.0f, 2.0f}, {3.0f, 3.0f, 1.0f}, {5.0f, 7.0f, 0.5f}
+        }), TestSuite::Compare::Container);
 }
 
 void OpenGexImporterTest::meshMetrics() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-metrics.ogex")));
-    Containers::Optional<Trade::MeshData3D> mesh = importer->mesh3D(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
-    CORRADE_COMPARE(mesh->positions(0), (std::vector<Vector3>{
-        {100.0f, -200.0f, -50.0f} /* swapped for Y up, multiplied */
-    }));
-    CORRADE_COMPARE(mesh->normalArrayCount(), 1);
-    CORRADE_COMPARE(mesh->normals(0), (std::vector<Vector3>{
-        {1.0, -1.0, -2.5} /* swapped for Y up */
-    }));
-    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 1);
-    CORRADE_COMPARE(mesh->textureCoords2D(0), (std::vector<Vector2>{
-        {1.0, 0.5} /* no change */
-    }));
+
     CORRADE_VERIFY(mesh->isIndexed());
-    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{
-        2 /* no change */
-    }));
+    CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedByte);
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedByte>(),
+        Containers::arrayView<UnsignedByte>({
+            2
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 3);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {100.0f, -200.0f, -50.0f} /* swapped for Y up, multiplied */
+        }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Normal));
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
+        Containers::arrayView<Vector3>({
+            {1.0, -1.0, -2.5} /* swapped for Y up */
+        }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            {1.0, 0.5} /* no change */
+        }), TestSuite::Compare::Container);
 }
 
 void OpenGexImporterTest::meshInvalidPrimitive() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer->mesh3DCount(), 6);
+    CORRADE_COMPARE(importer->meshCount(), 6);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh3D(0));
+    CORRADE_VERIFY(!importer->mesh(0));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh(): unsupported primitive quads\n");
 }
 
 void OpenGexImporterTest::meshUnsupportedSize() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer->mesh3DCount(), 6);
+    CORRADE_COMPARE(importer->meshCount(), 6);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh3D(1));
-    CORRADE_VERIFY(!importer->mesh3D(2));
-    CORRADE_VERIFY(!importer->mesh3D(3));
+    CORRADE_VERIFY(!importer->mesh(1));
+    CORRADE_VERIFY(!importer->mesh(2));
+    CORRADE_VERIFY(!importer->mesh(3));
     CORRADE_COMPARE(out.str(),
         "Trade::OpenGexImporter::mesh(): unsupported position vector size 4\n"
         "Trade::OpenGexImporter::mesh(): unsupported normal vector size 2\n"
@@ -787,22 +809,22 @@ void OpenGexImporterTest::meshUnsupportedSize() {
 void OpenGexImporterTest::meshMismatchedSizes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer->mesh3DCount(), 6);
+    CORRADE_COMPARE(importer->meshCount(), 6);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh3D(4));
+    CORRADE_VERIFY(!importer->mesh(4));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh(): mismatched vertex count for attribute normal, expected 2 but got 1\n");
 }
 
 void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
-    CORRADE_COMPARE(importer->mesh3DCount(), 6);
+    CORRADE_COMPARE(importer->meshCount(), 6);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh3D(5));
+    CORRADE_VERIFY(!importer->mesh(5));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh(): invalid index array subarray size 3 for MeshPrimitive::Lines\n");
 }
 
@@ -810,11 +832,11 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
 void OpenGexImporterTest::meshUnsupportedIndexType() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid-int64.ogex")));
-    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh3D(0));
+    CORRADE_VERIFY(!importer->mesh(0));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh(): 64bit indices are not supported\n");
 }
 #endif

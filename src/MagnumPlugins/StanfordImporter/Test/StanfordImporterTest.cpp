@@ -36,7 +36,7 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
-#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshData.h>
 
 #include "configure.h"
 
