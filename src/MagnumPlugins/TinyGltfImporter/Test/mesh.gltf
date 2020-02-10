@@ -8,7 +8,8 @@
             "primitives": [
                 {
                     "attributes": {
-                        "POSITION": 1
+                        "POSITION": 1,
+                        "TEXCOORD_0": 3
                     }
                 }
             ]
@@ -51,10 +52,17 @@
             "type": "VEC3"
         },
         {
-            "bufferView": 2,
+            "bufferView": 1,
+            "byteOffset": 12,
             "componentType": 5126,
             "count": 3,
             "type": "VEC3"
+        },
+        {
+            "bufferView": 2,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC2"
         }
     ],
     "bufferViews": [
@@ -66,20 +74,21 @@
         },
         {
             "buffer": 0,
-            "byteLength": 36,
+            "byteLength": 72,
             "byteOffset": 4,
+            "byteStride": 24,
             "target": 34962
         },
         {
             "buffer": 0,
-            "byteLength": 36,
-            "byteOffset": 40,
+            "byteLength": 24,
+            "byteOffset": 76,
             "target": 34962
         }
     ],
     "buffers": [
         {
-            "byteLength": 76,
+            "byteLength": 100,
             "uri": "mesh.bin"
         }
     ]

@@ -1,5 +1,5 @@
 # Data based on AnimatedBox glTF sample model
-type = "<6f8f12f12f 4f4f48f36f36f"
+type = "<6f8f24f 4f4f48f36f36f"
 input = [
     # time for rotation
     1.25, 2.5,
@@ -11,17 +11,11 @@ input = [
     0.0, 0.0, 0.0, 1.0, # 360° rotation along X
     1.0, 0.0, 0.0, 0.0, # 180° rotation along X
 
-    # translation track
-    0.0, 0.0, 0.0,
-    0.0, 2.5, 0.0,
-    0.0, 2.5, 0.0,
-    0.0, 0.0, 0.0,
-
-    # scaling track
-    1.0, 1.0, 1.0,
-    1.0, 1.0, 5.0,
-    1.0, 1.0, 6.0,
-    1.0, 1.0, 1.0,
+    # interleaved translation & scaling track
+    0.0, 0.0, 0.0, 1.0, 1.0, 1.0,
+    0.0, 2.5, 0.0, 1.0, 1.0, 5.0,
+    0.0, 2.5, 0.0, 1.0, 1.0, 6.0,
+    0.0, 0.0, 0.0, 1.0, 1.0, 1.0,
 
     # time for spline interpolation -- *need* to have varying keyframe spacing
     # to test the cubic hermite postprocessing.
@@ -86,3 +80,5 @@ input = [
     1.5, 9.8, -5.1,
     0, 0, 0, # not used anyway
 ]
+
+# kate: hl python

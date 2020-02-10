@@ -31,7 +31,9 @@
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -107,20 +109,24 @@ std::size_t elementSize(const tinygltf::Accessor& accessor) {
     return tinygltf::GetComponentSizeInBytes(accessor.componentType)*tinygltf::GetNumComponentsInType(accessor.type);
 }
 
-Containers::ArrayView<const char> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
+Containers::StridedArrayView2D<const char> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
     const std::size_t bufferElementSize = elementSize(accessor);
     CORRADE_INTERNAL_ASSERT(std::size_t(accessor.bufferView) < model.bufferViews.size());
     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
+    /* Stride could be 0, in which case it's equal to element size */
+    const std::size_t stride = bufferView.byteStride ? bufferView.byteStride : bufferElementSize;
     CORRADE_INTERNAL_ASSERT(std::size_t(bufferView.buffer) < model.buffers.size());
     const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
 
-    CORRADE_INTERNAL_ASSERT(bufferView.byteStride == 0 || bufferView.byteStride == bufferElementSize);
-    return {reinterpret_cast<const char*>(buffer.data.data()) + bufferView.byteOffset + accessor.byteOffset, accessor.count*bufferElementSize};
+    return Containers::StridedArrayView2D<const char>{Containers::arrayView(buffer.data),
+        reinterpret_cast<const char*>(buffer.data.data()) + bufferView.byteOffset + accessor.byteOffset,
+        {accessor.count, bufferElementSize},
+        {std::ptrdiff_t(stride), 1}};
 }
 
-template<class T> Containers::ArrayView<const T> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
+template<class T> Containers::StridedArrayView1D<const T> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
     CORRADE_INTERNAL_ASSERT(elementSize(accessor) == sizeof(T));
-    return Containers::arrayCast<const T>(bufferView(model, accessor));
+    return Containers::arrayCast<1, const T>(bufferView(model, accessor));
 }
 
 }
@@ -389,7 +395,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
        and will be used later to check that a spline track was not used with
        more than one time track, as it needs to be postprocessed for given time
        track. */
-    std::unordered_map<int, std::tuple<Containers::ArrayView<const char>, std::size_t, std::size_t>> samplerData;
+    std::unordered_map<int, std::tuple<Containers::StridedArrayView2D<const char>, std::size_t, std::size_t>> samplerData;
     std::size_t dataSize = 0;
     for(std::size_t a = animationBegin; a != animationEnd; ++a) {
         const tinygltf::Animation& animation = _d->model.animations[a];
@@ -403,17 +409,17 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             /* If the input view is not yet present in the output data buffer, add
             it */
             if(samplerData.find(sampler.input) == samplerData.end()) {
-                Containers::ArrayView<const char> view = bufferView(_d->model, input);
+                Containers::StridedArrayView2D<const char> view = bufferView(_d->model, input);
                 samplerData.emplace(sampler.input, std::make_tuple(view, dataSize, ~std::size_t{}));
-                dataSize += view.size();
+                dataSize += view.size()[0]*view.size()[1];
             }
 
             /* If the output view is not yet present in the output data buffer, add
             it */
             if(samplerData.find(sampler.output) == samplerData.end()) {
-                Containers::ArrayView<const char> view = bufferView(_d->model, output);
+                Containers::StridedArrayView2D<const char> view = bufferView(_d->model, output);
                 samplerData.emplace(sampler.output, std::make_tuple(view, dataSize, ~std::size_t{}));
-                dataSize += view.size();
+                dataSize += view.size()[0]*view.size()[1];
             }
         }
     }
@@ -425,13 +431,14 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
      *      postprocess them and can't just use the memory directly.
      */
     Containers::Array<char> data{dataSize};
-    for(const std::pair<int, std::tuple<Containers::ArrayView<const char>, std::size_t, std::size_t>>& view: samplerData) {
-        Containers::ArrayView<const char> input;
+    for(const std::pair<int, std::tuple<Containers::StridedArrayView2D<const char>, std::size_t, std::size_t>>& view: samplerData) {
+        Containers::StridedArrayView2D<const char> src;
         std::size_t outputOffset;
-        std::tie(input, outputOffset, std::ignore) = view.second;
+        std::tie(src, outputOffset, std::ignore) = view.second;
 
-        CORRADE_INTERNAL_ASSERT(outputOffset + input.size() <= data.size());
-        std::copy(input.begin(), input.end(), data.begin() + outputOffset);
+        Containers::StridedArrayView2D<char> dst{data.suffix(outputOffset),
+            src.size()};
+        Utility::copy(src, dst);
     }
 
     /* Calculate total track count. If merging all animations together, this is
@@ -460,7 +467,10 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             /* View on the key data */
             const auto inputDataFound = samplerData.find(sampler.input);
             CORRADE_INTERNAL_ASSERT(inputDataFound != samplerData.end());
-            const auto keys = Containers::arrayCast<Float>(data.suffix(std::get<1>(inputDataFound->second)).prefix(std::get<0>(inputDataFound->second).size()));
+            const auto keys = Containers::arrayCast<Float>(
+                data.suffix(std::get<1>(inputDataFound->second)).prefix(
+                    std::get<0>(inputDataFound->second).size()[0]*
+                    std::get<0>(inputDataFound->second).size()[1]));
 
             /* Interpolation mode */
             Animation::Interpolation interpolation;
@@ -482,7 +492,9 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             Animation::TrackViewStorage<Float> track;
             const auto outputDataFound = samplerData.find(sampler.output);
             CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
-            const auto outputData = data.suffix(std::get<1>(outputDataFound->second)).prefix(std::get<0>(outputDataFound->second).size());
+            const auto outputData = data.suffix(std::get<1>(outputDataFound->second))
+                .prefix(std::get<0>(outputDataFound->second).size()[0]*
+                        std::get<0>(outputDataFound->second).size()[1]);
             std::size_t& timeTrackUsed = std::get<2>(outputDataFound->second);
 
             /* Translation */
@@ -933,14 +945,6 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     std::vector<std::vector<Color4>> colorArrays;
     for(auto& attribute: primitive.attributes) {
         const tinygltf::Accessor& accessor = _d->model.accessors[attribute.second];
-        const tinygltf::BufferView& view = _d->model.bufferViews[accessor.bufferView];
-
-        /* Some of the Khronos sample models have explicitly specified stride
-           (without interleaving), don't fail on that */
-        if(view.byteStride != 0 && view.byteStride != elementSize(accessor)) {
-            Error() << "Trade::TinyGltfImporter::mesh3D(): interleaved buffer views are not supported";
-            return  Containers::NullOpt;
-        }
 
         /* At the moment all vertex attributes should have float underlying
            type */
@@ -955,9 +959,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
                 return Containers::NullOpt;
             }
 
-            positions.reserve(accessor.count);
-            const auto buffer = bufferView<Vector3>(_d->model, accessor);
-            std::copy(buffer.begin(), buffer.end(), std::back_inserter(positions));
+            positions.resize(accessor.count);
+            Utility::copy(bufferView<Vector3>(_d->model, accessor), positions);
 
         } else if(attribute.first == "NORMAL") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
@@ -967,9 +970,8 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
 
             normalArrays.emplace_back();
             std::vector<Vector3>& normals = normalArrays.back();
-            normals.reserve(accessor.count);
-            const auto buffer = bufferView<Vector3>(_d->model, accessor);
-            std::copy(buffer.begin(), buffer.end(), std::back_inserter(normals));
+            normals.resize(accessor.count);
+            Utility::copy(bufferView<Vector3>(_d->model, accessor), normals);
 
         /* Texture coordinate attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
@@ -980,25 +982,29 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
 
             textureCoordinateArrays.emplace_back();
             std::vector<Vector2>& textureCoordinates = textureCoordinateArrays.back();
-            textureCoordinates.reserve(accessor.count);
-            const auto buffer = bufferView<Vector2>(_d->model, accessor);
-            std::copy(buffer.begin(), buffer.end(), std::back_inserter(textureCoordinates));
+            textureCoordinates.resize(accessor.count);
+            Utility::copy(bufferView<Vector2>(_d->model, accessor), textureCoordinates);
 
         /* Color attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "COLOR")) {
             colorArrays.emplace_back();
             std::vector<Color4>& colors = colorArrays.back();
-            colors.reserve(accessor.count);
+            colors.resize(accessor.count);
 
+            /* For a three-element color copy the first 3 elements and fill
+               alpha with a single value */
             if(accessor.type == TINYGLTF_TYPE_VEC3) {
-                colors.reserve(accessor.count);
-                const auto buffer = bufferView<Color3>(_d->model, accessor);
-                std::copy(buffer.begin(), buffer.end(), std::back_inserter(colors));
+                auto colors4f = Containers::stridedArrayView(colors);
+                Utility::copy(bufferView<Color3>(_d->model, accessor),
+                    Containers::arrayCast<Color3>(colors4f));
+                constexpr Float alpha[1]{1.0f};
+                Utility::copy(
+                    Containers::stridedArrayView(alpha).broadcasted<0>(colors.size()),
+                    Containers::arrayCast<2, Float>(colors4f).transposed<0, 1>()[3]);
 
+            /* For four-element colors copy directly */
             } else if(accessor.type == TINYGLTF_TYPE_VEC4) {
-                colors.reserve(accessor.count);
-                const auto buffer = bufferView<Color4>(_d->model, accessor);
-                std::copy(buffer.begin(), buffer.end(), std::back_inserter(colors));
+                Utility::copy(bufferView<Color4>(_d->model, accessor), colors);
 
             } else {
                 Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3 or VEC4";
@@ -1021,15 +1027,16 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
             return Containers::NullOpt;
         }
 
+        /* Assuming the index buffers are contiguous */
         indices.reserve(accessor.count);
         if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-            const auto buffer = bufferView<UnsignedByte>(_d->model, accessor);
+            const auto buffer = bufferView<UnsignedByte>(_d->model, accessor).asContiguous();
             std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
         } else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-            const auto buffer = bufferView<UnsignedShort>(_d->model, accessor);
+            const auto buffer = bufferView<UnsignedShort>(_d->model, accessor).asContiguous();
             std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
         } else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-            const auto buffer = bufferView<UnsignedInt>(_d->model, accessor);
+            const auto buffer = bufferView<UnsignedInt>(_d->model, accessor).asContiguous();
             std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
         } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }

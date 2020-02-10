@@ -46,6 +46,8 @@ namespace Magnum {
 -   Minor speedup in the @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin by
     avoiding use of 64-bit floating-point operations (see
     [mosra/magnum-plugins#73](https://github.com/mosra/magnum-plugins/pull/73))
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now supports interleaved
+    animation and mesh attributes
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

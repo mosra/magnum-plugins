@@ -190,7 +190,6 @@ Import of skeleton, skin and morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 
--   Meshes with interleaved vertex data/buffer views are not supported.
 -   Multi-primitive meshes are loaded as follows:
     -   The @ref mesh3DCount() query returns a number of all *primitives*, not
         meshes

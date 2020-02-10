@@ -102,7 +102,6 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshUnknownAttribute();
     void meshPrimitives();
     void meshColors();
-    void meshWithStride();
 
     void meshMultiplePrimitives();
 
@@ -250,10 +249,6 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::meshPrimitives,
                        &TinyGltfImporterTest::meshColors},
                       Containers::arraySize(MultiFileData));
-
-    /* There are no external data for this one at the moment */
-    addInstancedTests({&TinyGltfImporterTest::meshWithStride},
-                      Containers::arraySize(SingleFileData));
 
     addTests({&TinyGltfImporterTest::meshMultiplePrimitives});
 
@@ -1345,12 +1340,20 @@ void TinyGltfImporterTest::mesh() {
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
     CORRADE_VERIFY(!mesh->isIndexed());
     CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(mesh->textureCoords2DArrayCount(), 1);
     CORRADE_COMPARE(mesh->normalArrayCount(), 0);
 
     CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
+        /* Interleaved with normals (which are in a different mesh) */
         {1.5f, -1.0f, -0.5f},
         {-0.5f, 2.5f, 0.75f},
         {-2.0f, 1.0f, 0.3f}
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(mesh->textureCoords2D(0), (std::vector<Vector2>{
+        /* Y-flipped compared to the input */
+        {0.3f, 1.0f},
+        {0.0f, 0.5f},
+        {0.3f, 0.7f}
     }), TestSuite::Compare::Container);
 }
 
@@ -1544,28 +1547,6 @@ void TinyGltfImporterTest::meshColors() {
         {0.5f, 0.6f, 0.7f, 0.8f},
         {0.9f, 1.0f, 1.1f, 1.2f}
     }), TestSuite::Compare::Container);
-}
-
-void TinyGltfImporterTest::meshWithStride() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh-with-stride" + std::string{data.suffix})));
-
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    /* First has a stride of 12 bytes (no interleaving), shouldn't fail */
-    CORRADE_VERIFY(importer->mesh3D(0));
-
-    /* Second has a stride of 24 bytes, should fail */
-    {
-        CORRADE_EXPECT_FAIL("Tnterleaved buffer views are not supported.");
-        CORRADE_VERIFY(importer->mesh3D(1));
-    }
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): interleaved buffer views are not supported\n");
 }
 
 void TinyGltfImporterTest::meshMultiplePrimitives() {
