@@ -30,16 +30,10 @@ GeometryObject /*meshIndexed*/ {
     }
 }
 
-GeometryObject /*meshEnlargeShrink*/ {
+GeometryObject /*noPositions*/ {
     Mesh {
-        VertexArray (attrib = "position") { float[4] {
-            {0.0, 1.0, 3.0, 0.5}, {-1.0, 2.0, 2.0, 1.0}, {3.0, 3.0, 1.0, 1.0}
-        }}
-        VertexArray (attrib = "normal") { float[2] {
-            {0.0, 1.0}, {-1.0, 0.0}, {1.0, 0.0}
-        }}
-        VertexArray (attrib = "texcoord") { float[1] {
-            {0.5}, {0.0}, {1.0}
+        VertexArray (attrib = "normal") { float[3] {
+            {0.0, 1.0, 0.0}, {-1.0, 0.0, 0.0}, {0.0, 0.0, 1.0}
         }}
     }
 }

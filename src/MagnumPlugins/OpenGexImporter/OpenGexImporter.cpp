@@ -30,6 +30,7 @@
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
@@ -37,7 +38,7 @@
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
-#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
@@ -548,61 +549,11 @@ Containers::Optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
     return LightData{lightType, lightColor, lightIntensity, &light};
 }
 
-UnsignedInt OpenGexImporter::doMesh3DCount() const {
+UnsignedInt OpenGexImporter::doMeshCount() const {
     return _d->meshes.size();
 }
 
-namespace {
-
-template<class Result, class Original> std::vector<Result> extractVertexData3(const OpenDdl::Structure vertexArray) {
-    const Containers::ArrayView<const typename Original::Type> data = vertexArray.asArray<typename Original::Type>();
-    const std::size_t vertexCount = vertexArray.arraySize()/(vertexArray.subArraySize() ? vertexArray.subArraySize() : 1);
-
-    std::vector<Result> output;
-    output.reserve(vertexCount);
-    for(std::size_t i = 0; i != vertexCount; ++i)
-        /* Convert the data to result type and then pad it to result size */
-        output.push_back(Result::pad(Math::Vector<Original::Size, typename Result::Type>{Original::from(data + i*Original::Size)}));
-
-    return output;
-}
-
-template<class Result, std::size_t originalSize> std::vector<Result> extractVertexData2(const OpenDdl::Structure vertexArray) {
-    switch(vertexArray.type()) {
-        /** @todo half */
-        case OpenDdl::Type::Float:
-            return extractVertexData3<Result, Math::Vector<originalSize, Float>>(vertexArray);
-        case OpenDdl::Type::Double:
-            return extractVertexData3<Result, Math::Vector<originalSize, Double>>(vertexArray);
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-    }
-
-}
-
-template<class Result> std::vector<Result> extractVertexData(const OpenDdl::Structure vertexArray) {
-    switch(vertexArray.subArraySize()) {
-        case 0:
-        case 1:
-            return extractVertexData2<Result, 1>(vertexArray);
-        case 2:
-            return extractVertexData2<Result, 2>(vertexArray);
-        case 3:
-            return extractVertexData2<Result, 3>(vertexArray);
-        case 4:
-            return extractVertexData2<Result, 4>(vertexArray);
-    }
-
-    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-}
-
-template<class T> std::vector<UnsignedInt> extractIndices(const OpenDdl::Structure indexArray) {
-    const Containers::ArrayView<const T> data = indexArray.asArray<T>();
-    return {data.begin(), data.end()};
-}
-
-}
-
-Containers::Optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id) {
+Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, UnsignedInt) {
     const OpenDdl::Structure& mesh = _d->meshes[id].firstChildOf(OpenGex::Mesh);
 
     /* Primitive type, triangles by default */
@@ -624,99 +575,164 @@ Containers::Optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id)
             indexArraySubArraySize = 1;
         } else if(primitiveString != "triangles") {
             /** @todo quads */
-            Error() << "Trade::OpenGexImporter::mesh3D(): unsupported primitive" << primitiveString;
+            Error() << "Trade::OpenGexImporter::mesh(): unsupported primitive" << primitiveString;
             return Containers::NullOpt;
         }
     }
 
-    /* Vertices */
-    std::vector<std::vector<Vector3>> positions;
-    std::vector<std::vector<Vector2>> textureCoordinates;
-    std::vector<std::vector<Vector3>> normals;
+    /* Gather all attributes. Position is optional as well. */
+    std::size_t attributeCount = 0;
+    std::ptrdiff_t stride = 0;
+    UnsignedInt vertexCount = 0;
     for(const OpenDdl::Structure vertexArray: mesh.childrenOf(OpenGex::VertexArray)) {
         /* Skip unsupported ones */
         auto&& attrib = vertexArray.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib != "position" && attrib != "normal" && attrib != "texcoord")
             continue;
 
+        /* Doubles were supported before (and converted to floats), I could do
+           a cast now as well but I don't bother as nobody uses this format
+           anymore anyway */
+        const OpenDdl::Structure vertexArrayData = vertexArray.firstChild();
+        if(vertexArrayData.type() != OpenDdl::Type::Float) {
+            Error() << "Trade::OpenGexImporter::mesh(): unsupported vertex array type" << vertexArrayData.type();
+            return Containers::NullOpt;
+        }
+
+        if(attrib == "position") {
+            /* 2D positions could be supported too but I don't bother due to
+               the same reason as above */
+            if(vertexArrayData.subArraySize() != 3) {
+                Error{} << "Trade::OpenGexImporter::mesh(): unsupported position vector size" << vertexArrayData.subArraySize();
+                return Containers::NullOpt;
+            }
+
+            stride += sizeof(Vector3);
+
+        } else if(attrib == "normal") {
+            if(vertexArrayData.subArraySize() != 3) {
+                Error{} << "Trade::OpenGexImporter::mesh(): unsupported normal vector size" << vertexArrayData.subArraySize();
+                return Containers::NullOpt;
+            }
+
+            stride += sizeof(Vector3);
+
+        } else if(attrib == "texcoord") {
+            if(vertexArrayData.subArraySize() != 2) {
+                Error{} << "Trade::OpenGexImporter::mesh(): unsupported texture coordinate vector size" << vertexArrayData.subArraySize();
+                return Containers::NullOpt;
+            }
+
+            stride += sizeof(Vector2);
+
+        } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+        /* If this is the first attribute, save the vertex count; otherwise
+           check that all attributes have the same amount of vertices */
+        const UnsignedInt attributeVertexCount = vertexArrayData.arraySize()/(vertexArrayData.subArraySize() ? vertexArrayData.subArraySize() : 1);
+        if(!attributeCount) vertexCount = attributeVertexCount;
+        else if(vertexCount != attributeVertexCount) {
+            Error{} << "Trade::OpenGexImporter::mesh(): mismatched vertex count for attribute" << attrib << Debug::nospace << ", expected" << vertexCount << "but got" << attributeVertexCount;
+            return Containers::NullOpt;
+        }
+
+        ++attributeCount;
+    }
+
+    /* Allocate vertex data, fill attributes */
+    Containers::Array<char> vertexData{Containers::NoInit, std::size_t(stride)*vertexCount};
+    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    std::size_t attributeIndex = 0;
+    std::size_t attributeOffset = 0;
+
+    for(const OpenDdl::Structure vertexArray: mesh.childrenOf(OpenGex::VertexArray)) {
+        /* Skip unsupported ones */
         const OpenDdl::Structure vertexArrayData = vertexArray.firstChild();
 
-        /* Sanity checks (would be too bloaty to do in actual templated code) */
-        if(vertexArrayData.type() != OpenDdl::Type::Float &&
-           vertexArrayData.type() != OpenDdl::Type::Double)
-        {
-            Error() << "Trade::OpenGexImporter::mesh3D(): unsupported vertex array type" << vertexArrayData.type();
-            return Containers::NullOpt;
-        }
-        if(vertexArrayData.subArraySize() > 4) {
-            Error() << "Trade::OpenGexImporter::mesh3D(): unsupported vertex array vector size" << vertexArrayData.subArraySize();
-            return Containers::NullOpt;
-        }
-
         /* Vertex positions */
+        auto&& attrib = vertexArray.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "position") {
-            std::vector<Vector3> positionData = extractVertexData<Vector3>(vertexArrayData);
-            for(auto& i: positionData) i *= _d->distanceMultiplier;
-            if(!_d->yUp) for(auto& i: positionData) i = fixVectorZUp(i);
-            positions.push_back(std::move(positionData));
+            Containers::StridedArrayView1D<Vector3> positions{vertexData,
+                reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+                vertexCount, stride};
+            Utility::copy(Containers::arrayCast<const Vector3>(vertexArrayData.asArray<Float>()), positions);
+            for(auto& i: positions) i *= _d->distanceMultiplier;
+            if(!_d->yUp) for(auto& i: positions) i = fixVectorZUp(i);
+
+            attributeData[attributeIndex++] = MeshAttributeData{
+                MeshAttribute::Position, positions};
+            attributeOffset += sizeof(Vector3);
 
         /* Normals */
         } else if(attrib == "normal") {
-            std::vector<Vector3> normalData = extractVertexData<Vector3>(vertexArrayData);
-            if(!_d->yUp) for(auto& i: normalData) i = fixVectorZUp(i);
-            normals.emplace_back(std::move(normalData));
+            Containers::StridedArrayView1D<Vector3> normals{vertexData,
+                reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+                vertexCount, stride};
+            Utility::copy(Containers::arrayCast<const Vector3>(vertexArrayData.asArray<Float>()), normals);
+            if(!_d->yUp) for(auto& i: normals) i = fixVectorZUp(i);
+
+            attributeData[attributeIndex++] = MeshAttributeData{
+                MeshAttribute::Normal, normals};
+            attributeOffset += sizeof(Vector3);
 
         /* 2D texture coordinates */
-        } else if(attrib == "texcoord")
-            textureCoordinates.emplace_back(extractVertexData<Vector2>(vertexArrayData));
+        } else if(attrib == "texcoord") {
+            Containers::StridedArrayView1D<Vector2> textureCoordinates{vertexData,
+                reinterpret_cast<Vector2*>(vertexData + attributeOffset),
+                vertexCount, stride};
+            Utility::copy(Containers::arrayCast<const Vector2>(vertexArrayData.asArray<Float>()), textureCoordinates);
+
+            attributeData[attributeIndex++] = MeshAttributeData{
+                MeshAttribute::TextureCoordinates, textureCoordinates};
+            attributeOffset += sizeof(Vector2);
+
+        /* Some other thing that wasn't handled above, ignore */
+        }
     }
 
-    /* Sanity checks */
-    if(positions.empty()) {
-        Error() << "Trade::OpenGexImporter::mesh3D(): no vertex position array found";
-        return Containers::NullOpt;
-    }
-    std::size_t count = 0;
-    for(auto&& a: positions) {
-        if(!count) count = a.size();
-        else if(a.size() != count) count = std::numeric_limits<std::size_t>::max();
-    }
-    for(auto&& a: normals) {
-        if(!count) count = a.size();
-        else if(a.size() != count) count = std::numeric_limits<std::size_t>::max();
-    }
-    for(auto&& a: textureCoordinates) {
-        if(!count) count = a.size();
-        else if(a.size() != count) count = std::numeric_limits<std::size_t>::max();
-    }
-    if(count == std::numeric_limits<std::size_t>::max()) {
-        Error() << "Trade::OpenGexImporter::mesh3D(): mismatched vertex array sizes";
-        return Containers::NullOpt;
-    }
+    /* Check we pre-calculated well */
+    CORRADE_INTERNAL_ASSERT(attributeOffset == std::size_t(stride));
+    CORRADE_INTERNAL_ASSERT(attributeIndex == attributeCount);
 
-    /* Index array */
-    std::vector<UnsignedInt> indices;
+    /* Mesh indices */
+    MeshIndexData indices;
+    Containers::Array<char> indexData;
     if(const Containers::Optional<OpenDdl::Structure> indexArray = mesh.findFirstChildOf(OpenGex::IndexArray)) {
         const OpenDdl::Structure indexArrayData = indexArray->firstChild();
 
         if(indexArrayData.subArraySize() != indexArraySubArraySize) {
-            Error() << "Trade::OpenGexImporter::mesh3D(): invalid index array subarray size" << indexArrayData.subArraySize() << "for" << primitive;
+            Error() << "Trade::OpenGexImporter::mesh(): invalid index array subarray size" << indexArrayData.subArraySize() << "for" << primitive;
             return Containers::NullOpt;
         }
 
         switch(indexArrayData.type()) {
-            case OpenDdl::Type::UnsignedByte:
-                indices = extractIndices<UnsignedByte>(indexArrayData);
-                break;
-            case OpenDdl::Type::UnsignedShort:
-                indices = extractIndices<UnsignedShort>(indexArrayData);
-                break;
-            case OpenDdl::Type::UnsignedInt:
-                indices = extractIndices<UnsignedInt>(indexArrayData);
-                break;
+            case OpenDdl::Type::UnsignedByte: {
+                Containers::ArrayView<const UnsignedByte> src =
+                    indexArrayData.asArray<UnsignedByte>();
+                indexData = Containers::Array<char>{src.size()};
+                auto indexData8 = Containers::arrayCast<UnsignedByte>(indexData);
+                Utility::copy(src, indexData8);
+                indices = MeshIndexData{indexData8};
+            } break;
+            case OpenDdl::Type::UnsignedShort: {
+                Containers::ArrayView<const UnsignedShort> src =
+                    indexArrayData.asArray<UnsignedShort>();
+                indexData = Containers::Array<char>{src.size()*2};
+                auto indexData16 = Containers::arrayCast<UnsignedShort>(indexData);
+                Utility::copy(src, indexData16);
+                indices = MeshIndexData{indexData16};
+            } break;
+            case OpenDdl::Type::UnsignedInt: {
+                Containers::ArrayView<const UnsignedInt> src =
+                    indexArrayData.asArray<UnsignedInt>();
+                indexData = Containers::Array<char>{src.size()*4};
+                auto indexData32 = Containers::arrayCast<UnsignedInt>(indexData);
+                Utility::copy(src, indexData32);
+                indices = MeshIndexData{indexData32};
+            } break;
             #ifndef CORRADE_TARGET_EMSCRIPTEN
             case OpenDdl::Type::UnsignedLong:
-                Error() << "Trade::OpenGexImporter::mesh3D(): unsupported 64bit indices";
+                Error() << "Trade::OpenGexImporter::mesh(): 64bit indices are not supported";
                 return Containers::NullOpt;
             #endif
 
@@ -724,7 +740,9 @@ Containers::Optional<MeshData3D> OpenGexImporter::doMesh3D(const UnsignedInt id)
         }
     }
 
-    return MeshData3D{primitive, indices, positions, normals, textureCoordinates, {}, &mesh};
+    return MeshData{primitive,
+        std::move(indexData), indices,
+        std::move(vertexData), std::move(attributeData)};
 }
 
 UnsignedInt OpenGexImporter::doMaterialCount() const { return _d->materials.size(); }

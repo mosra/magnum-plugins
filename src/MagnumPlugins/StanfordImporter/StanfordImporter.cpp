@@ -313,7 +313,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                         Debug{} << "Trade::StanfordImporter::mesh(): ignoring unknown face component" << tokens[2];
                         faceSkip += vertexFormatSize(faceFormat);
 
-                    /* Fail on unknwon lines */
+                    /* Fail on unknown lines */
                     } else {
                         Error() << "Trade::StanfordImporter::mesh(): invalid face property line" << line;
                         return Containers::NullOpt;
@@ -448,7 +448,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
             for(std::size_t channel = 0; channel != 3; ++channel) {
                 if(colorTypeSize == 2)
                     Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedShort>(colorChannels[channel]));
-                else if(colorTypeSize== 4)
+                else if(colorTypeSize == 4)
                     Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedInt>(colorChannels[channel]));
                 else CORRADE_INTERNAL_ASSERT(colorTypeSize == 1);
             }
