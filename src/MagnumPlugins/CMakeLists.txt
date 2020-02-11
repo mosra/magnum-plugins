@@ -78,6 +78,10 @@ if(WITH_HARFBUZZFONT)
     add_subdirectory(HarfBuzzFont)
 endif()
 
+if(WITH_ICOIMPORTER)
+    add_subdirectory(IcoImporter)
+endif()
+
 if(WITH_JPEGIMAGECONVERTER)
     add_subdirectory(JpegImageConverter)
 endif()
