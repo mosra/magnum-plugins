@@ -102,7 +102,6 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshUnknownAttribute();
     void meshPrimitives();
     void meshColors();
-
     void meshMultiplePrimitives();
 
     void materialPbrMetallicRoughness();
@@ -243,14 +242,14 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addTests({&TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled,
               &TinyGltfImporterTest::objectTransformationQuaternionNormalizationDisabled});
 
-    addInstancedTests({&TinyGltfImporterTest::mesh,
-                       &TinyGltfImporterTest::meshIndexed,
-                       &TinyGltfImporterTest::meshUnknownAttribute,
-                       &TinyGltfImporterTest::meshPrimitives,
-                       &TinyGltfImporterTest::meshColors},
+    addInstancedTests({&TinyGltfImporterTest::mesh},
                       Containers::arraySize(MultiFileData));
 
-    addTests({&TinyGltfImporterTest::meshMultiplePrimitives});
+    addTests({&TinyGltfImporterTest::meshIndexed,
+              &TinyGltfImporterTest::meshUnknownAttribute,
+              &TinyGltfImporterTest::meshPrimitives,
+              &TinyGltfImporterTest::meshColors,
+              &TinyGltfImporterTest::meshMultiplePrimitives});
 
     addInstancedTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
                        &TinyGltfImporterTest::materialPbrSpecularGlossiness,
@@ -1358,12 +1357,9 @@ void TinyGltfImporterTest::mesh() {
 }
 
 void TinyGltfImporterTest::meshIndexed() {
-    auto&& data = MultiFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh" + std::string{data.suffix})));
+        "mesh.gltf")));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 3);
     CORRADE_COMPARE(importer->mesh3DName(1), "Indexed mesh");
@@ -1393,12 +1389,9 @@ void TinyGltfImporterTest::meshIndexed() {
 }
 
 void TinyGltfImporterTest::meshUnknownAttribute() {
-    auto&& data = MultiFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh" + std::string{data.suffix})));
+        "mesh.gltf")));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 3);
     CORRADE_COMPARE(importer->mesh3DName(2), "Mesh with unknown attribute");
@@ -1425,12 +1418,9 @@ void TinyGltfImporterTest::meshUnknownAttribute() {
 }
 
 void TinyGltfImporterTest::meshPrimitives() {
-    auto&& data = MultiFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh-primitives" + std::string{data.suffix})));
+        "mesh-primitives.gltf")));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 6);
 
@@ -1519,12 +1509,9 @@ void TinyGltfImporterTest::meshPrimitives() {
 }
 
 void TinyGltfImporterTest::meshColors() {
-    auto&& data = MultiFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh-colors" + std::string{data.suffix})));
+        "mesh-colors.gltf")));
 
     CORRADE_COMPARE(importer->mesh3DCount(), 1);
 

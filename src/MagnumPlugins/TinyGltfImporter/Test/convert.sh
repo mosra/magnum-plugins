@@ -8,12 +8,12 @@ for i in animation animation-patching mesh-colors mesh-primitives mesh přívodn
 done
 
 # gltf -> embedded gltf
-for i in animation image image-buffer image-basis mesh-colors mesh-primitives mesh; do
+for i in animation image image-buffer image-basis mesh; do
     ./gltf2embedded.py ${i}.gltf
 done
 
 # gltf -> glb
-for i in animation animation-embedded camera empty image image-embedded image-buffer image-buffer-embedded image-basis image-basis-embedded light material-blinnphong material-metallicroughness material-specularglossiness material-properties mesh mesh-colors mesh-colors-embedded mesh-primitives mesh-primitives-embedded mesh mesh-embedded scene scene-nodefault object-transformation texture-default-sampler texture-empty-sampler texture; do
+for i in animation animation-embedded camera empty image image-embedded image-buffer image-buffer-embedded image-basis image-basis-embedded light material-blinnphong material-metallicroughness material-specularglossiness material-properties mesh mesh-embedded scene scene-nodefault object-transformation texture-default-sampler texture-empty-sampler texture; do
     ./gltf2glb.py ${i}.gltf
 done
 

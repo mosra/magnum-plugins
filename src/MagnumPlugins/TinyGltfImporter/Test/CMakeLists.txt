@@ -105,14 +105,8 @@ corrade_add_test(TinyGltfImporterTest
         mesh-multiple-primitives.gltf
         mesh-primitives.gltf
         mesh-primitives.bin
-        mesh-primitives.glb
-        mesh-primitives-embedded.gltf
-        mesh-primitives-embedded.glb
         mesh-colors.gltf
         mesh-colors.bin
-        mesh-colors.glb
-        mesh-colors-embedded.gltf
-        mesh-colors-embedded.glb
         přívodní-šňůra.gltf
         přívodní-šňůra.bin
         přívodní-šňůra.png
