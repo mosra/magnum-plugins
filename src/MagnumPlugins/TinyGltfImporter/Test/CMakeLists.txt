@@ -102,6 +102,8 @@ corrade_add_test(TinyGltfImporterTest
         mesh.glb
         mesh-embedded.gltf
         mesh-embedded.glb
+        mesh-invalid.bin
+        mesh-invalid.gltf
         mesh-multiple-primitives.gltf
         mesh-primitives.gltf
         mesh-primitives.bin

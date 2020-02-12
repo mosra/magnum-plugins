@@ -51,7 +51,7 @@
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/ImageData.h>
-#include <Magnum/Trade/MeshData3D.h>
+#include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 
 #include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
@@ -892,11 +892,11 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         new ObjectData3D{std::move(children), transformation, instanceType, instanceId, &node});
 }
 
-UnsignedInt TinyGltfImporter::doMesh3DCount() const {
+UnsignedInt TinyGltfImporter::doMeshCount() const {
     return _d->meshMap.size();
 }
 
-Int TinyGltfImporter::doMesh3DForName(const std::string& name) {
+Int TinyGltfImporter::doMeshForName(const std::string& name) {
     if(!_d->meshesForName) {
         _d->meshesForName.emplace();
         _d->meshesForName->reserve(_d->model.meshes.size());
@@ -911,12 +911,12 @@ Int TinyGltfImporter::doMesh3DForName(const std::string& name) {
     return found == _d->meshesForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doMesh3DName(const UnsignedInt id) {
+std::string TinyGltfImporter::doMeshName(const UnsignedInt id) {
     /* This returns the same name for all multi-primitive mesh duplicates */
     return _d->model.meshes[_d->meshMap[id].first].name;
 }
 
-Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id) {
+Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, UnsignedInt) {
     const tinygltf::Mesh& mesh = _d->model.meshes[_d->meshMap[id].first];
     const tinygltf::Primitive& primitive = mesh.primitives[_d->meshMap[id].second];
 
@@ -936,117 +936,178 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
     } else if(primitive.mode == TINYGLTF_MODE_TRIANGLE_STRIP) {
         meshPrimitive = MeshPrimitive::TriangleStrip;
     } else {
-        Error{} << "Trade::TinyGltfImporter::mesh3D(): unrecognized primitive" << primitive.mode;
+        Error{} << "Trade::TinyGltfImporter::mesh(): unrecognized primitive" << primitive.mode;
         return Containers::NullOpt;
     }
 
-    std::vector<Vector3> positions;
-    std::vector<std::vector<Vector3>> normalArrays;
-    std::vector<std::vector<Vector2>> textureCoordinateArrays;
-    std::vector<std::vector<Color4>> colorArrays;
+    /* Gather all (whitelisted) attributes and the total buffer range spanning
+       them */
+    std::size_t attributeCount = 0;
+    std::size_t bufferId;
+    UnsignedInt vertexCount = 0;
+    Math::Range1D<std::size_t> bufferRange;
     for(auto& attribute: primitive.attributes) {
         const tinygltf::Accessor& accessor = _d->model.accessors[attribute.second];
 
-        /* At the moment all vertex attributes should have float underlying
-           type */
-        if(accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
-            Error() << "Trade::TinyGltfImporter::mesh3D(): vertex attribute" << attribute.first << "has unexpected type" << accessor.componentType;
-            return Containers::NullOpt;
-        }
-
         if(attribute.first == "POSITION") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
-                Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3";
+                Error{} << "Trade::TinyGltfImporter::mesh(): expected type of" << attribute.first << "is VEC3";
                 return Containers::NullOpt;
             }
-
-            positions.resize(accessor.count);
-            Utility::copy(bufferView<Vector3>(_d->model, accessor), positions);
 
         } else if(attribute.first == "NORMAL") {
             if(accessor.type != TINYGLTF_TYPE_VEC3) {
-                Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3";
+                Error{} << "Trade::TinyGltfImporter::mesh(): expected type of" << attribute.first << "is VEC3";
                 return Containers::NullOpt;
             }
-
-            normalArrays.emplace_back();
-            std::vector<Vector3>& normals = normalArrays.back();
-            normals.resize(accessor.count);
-            Utility::copy(bufferView<Vector3>(_d->model, accessor), normals);
 
         /* Texture coordinate attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
             if(accessor.type != TINYGLTF_TYPE_VEC2) {
-                Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC2";
+                Error{} << "Trade::TinyGltfImporter::mesh(): expected type of" << attribute.first << "is VEC2";
                 return Containers::NullOpt;
             }
 
-            textureCoordinateArrays.emplace_back();
-            std::vector<Vector2>& textureCoordinates = textureCoordinateArrays.back();
-            textureCoordinates.resize(accessor.count);
-            Utility::copy(bufferView<Vector2>(_d->model, accessor), textureCoordinates);
-
         /* Color attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "COLOR")) {
-            colorArrays.emplace_back();
-            std::vector<Color4>& colors = colorArrays.back();
-            colors.resize(accessor.count);
-
-            /* For a three-element color copy the first 3 elements and fill
-               alpha with a single value */
-            if(accessor.type == TINYGLTF_TYPE_VEC3) {
-                auto colors4f = Containers::stridedArrayView(colors);
-                Utility::copy(bufferView<Color3>(_d->model, accessor),
-                    Containers::arrayCast<Color3>(colors4f));
-                constexpr Float alpha[1]{1.0f};
-                Utility::copy(
-                    Containers::stridedArrayView(alpha).broadcasted<0>(colors.size()),
-                    Containers::arrayCast<2, Float>(colors4f).transposed<0, 1>()[3]);
-
-            /* For four-element colors copy directly */
-            } else if(accessor.type == TINYGLTF_TYPE_VEC4) {
-                Utility::copy(bufferView<Color4>(_d->model, accessor), colors);
-
-            } else {
-                Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of" << attribute.first << "is VEC3 or VEC4";
+            if(accessor.type != TINYGLTF_TYPE_VEC4 && accessor.type != TINYGLTF_TYPE_VEC3) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): expected type of" << attribute.first << "is VEC3 or VEC4";
                 return Containers::NullOpt;
             }
 
         } else {
-            Warning() << "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute" << attribute.first;
+            Warning{} << "Trade::TinyGltfImporter::mesh(): unsupported mesh vertex attribute" << attribute.first;
             continue;
         }
-    }
 
-    /* Indices */
-    std::vector<UnsignedInt> indices;
-    if(primitive.indices != -1) {
-        const tinygltf::Accessor& accessor = _d->model.accessors[primitive.indices];
-
-        if(accessor.type != TINYGLTF_TYPE_SCALAR) {
-            Error() << "Trade::TinyGltfImporter::mesh3D(): expected type of index is SCALAR";
+        if(accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+            Error{} << "Trade::TinyGltfImporter::mesh(): vertex attribute" << attribute.first << "has unexpected type" << accessor.componentType;
             return Containers::NullOpt;
         }
 
-        /* Assuming the index buffers are contiguous */
-        indices.reserve(accessor.count);
-        if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-            const auto buffer = bufferView<UnsignedByte>(_d->model, accessor).asContiguous();
-            std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
-        } else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-            const auto buffer = bufferView<UnsignedShort>(_d->model, accessor).asContiguous();
-            std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
-        } else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-            const auto buffer = bufferView<UnsignedInt>(_d->model, accessor).asContiguous();
-            std::copy(buffer.begin(), buffer.end(), std::back_inserter(indices));
-        } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        /* Remember which buffer the attribute is in and the range, for
+           consecutive attribs expand the range */
+        CORRADE_INTERNAL_ASSERT(std::size_t(accessor.bufferView) < _d->model.bufferViews.size());
+        const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
+        if(!attributeCount) {
+            CORRADE_INTERNAL_ASSERT(std::size_t(bufferView.buffer) < _d->model.buffers.size());
+            bufferId = bufferView.buffer;
+            bufferRange = Math::Range1D<std::size_t>::fromSize(bufferView.byteOffset, bufferView.byteLength);
+            vertexCount = accessor.count;
+        } else {
+            /* ... and probably never will be */
+            CORRADE_ASSERT(std::size_t(bufferView.buffer) == bufferId,
+                "Trade::TinyGltfImporter::mesh(): meshes spanning multiple buffers are not supported, sorry", {});
+
+            bufferRange = Math::join(bufferRange, Math::Range1D<std::size_t>::fromSize(bufferView.byteOffset, bufferView.byteLength));
+
+            if(accessor.count != vertexCount) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): mismatched vertex count for attribute" << attribute.first << Debug::nospace << ", expected" << vertexCount << "but got" << accessor.count;
+                return Containers::NullOpt;
+            }
+        }
+
+        /* The attribute passed the checks, count it in */
+        ++attributeCount;
     }
 
-    /* Flip Y axis of texture coordinates */
-    for(std::vector<Vector2>& layer: textureCoordinateArrays)
-        for(Vector2& c: layer) c.y() = 1.0f - c.y();
+    /* Allocate & copy vertex data (if any) */
+    Containers::Array<char> vertexData{Containers::NoInit, bufferRange.size()};
+    if(vertexData.size()) Utility::copy(Containers::arrayCast<const char>(
+        Containers::arrayView(_d->model.buffers[bufferId].data)
+            .slice(bufferRange.min(), bufferRange.max())),
+        vertexData);
 
-    return MeshData3D(meshPrimitive, std::move(indices), {std::move(positions)}, std::move(normalArrays), std::move(textureCoordinateArrays), std::move(colorArrays), &mesh);
+    /* Fill in the attributes */
+    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    std::size_t attributeIndex = 0;
+    for(auto& attribute: primitive.attributes) {
+        const tinygltf::Accessor& accessor = _d->model.accessors[attribute.second];
+        const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
+        /* Stride could be 0, in which case it's equal to element size */
+        const std::ptrdiff_t stride = bufferView.byteStride ? bufferView.byteStride : elementSize(accessor);
+        Containers::StridedArrayView1D<void> data{vertexData,
+            /* Offset is what the accessor + view tells but with the range min
+               subtracted, as we copied without the prefix */
+            vertexData + accessor.byteOffset + bufferView.byteOffset - bufferRange.min(),
+            vertexCount, stride};
+
+        if(attribute.first == "POSITION") {
+            attributeData[attributeIndex++] = MeshAttributeData{
+                MeshAttribute::Position,
+                VertexFormat::Vector3, data};
+
+        } else if(attribute.first == "NORMAL") {
+            attributeData[attributeIndex++] = MeshAttributeData{
+                MeshAttribute::Normal,
+                VertexFormat::Vector3, data};
+
+        /* Texture coordinate attribute ends with _0, _1 ... */
+        /** @todo shouldn't we check the order is correct? */
+        } else if(Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
+            attributeData[attributeIndex++] = MeshAttributeData{
+                MeshAttribute::TextureCoordinates,
+                VertexFormat::Vector2, data};
+
+            /* Flip Y axis of texture coordinates */
+            for(Vector2& c: Containers::arrayCast<Vector2>(data))
+                c.y() = 1.0f - c.y();
+
+        /* Color attribute ends with _0, _1 ... */
+        /** @todo shouldn't we check the order is correct? */
+        } else if(Utility::String::beginsWith(attribute.first, "COLOR")) {
+            VertexFormat type;
+            if(accessor.type == TINYGLTF_TYPE_VEC3)
+                type = VertexFormat::Vector3;
+            else if(accessor.type == TINYGLTF_TYPE_VEC4)
+                type = VertexFormat::Vector4;
+            else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+            attributeData[attributeIndex++] = MeshAttributeData{
+                MeshAttribute::Color, type, data};
+
+        /* Otherwise warning printed in the previous loop already */
+        }
+    }
+
+    /* Check we pre-calculated well */
+    CORRADE_INTERNAL_ASSERT(attributeIndex == attributeCount);
+
+    /* Indices */
+    MeshIndexData indices;
+    Containers::Array<char> indexData;
+    if(primitive.indices != -1) {
+        const tinygltf::Accessor& accessor = _d->model.accessors[primitive.indices];
+        if(accessor.type != TINYGLTF_TYPE_SCALAR) {
+            Error() << "Trade::TinyGltfImporter::mesh(): expected type of index is SCALAR";
+            return Containers::NullOpt;
+        }
+
+        MeshIndexType type;
+        if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE)
+            type = MeshIndexType::UnsignedByte;
+        else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
+            type = MeshIndexType::UnsignedShort;
+        else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
+            type = MeshIndexType::UnsignedInt;
+        else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+        /* Assuming the index buffers are contiguous */
+        Containers::ArrayView<const char> src = bufferView(_d->model, accessor).asContiguous();
+        indexData = Containers::Array<char>{src.size()};
+        Utility::copy(src, indexData);
+        indices = MeshIndexData{type, indexData};
+    }
+
+    /* If we have an index-less attribute-less mesh, glTF has no way to supply
+       a vertex count, so return 0 */
+    if(!indices.data().size() && !attributeData.size())
+        return MeshData{meshPrimitive, 0, &mesh};
+
+    return MeshData{meshPrimitive,
+        std::move(indexData), indices,
+        std::move(vertexData), std::move(attributeData),
+        vertexCount, &mesh};
 }
 
 UnsignedInt TinyGltfImporter::doMaterialCount() const {

@@ -98,11 +98,14 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void objectTransformationQuaternionNormalizationDisabled();
 
     void mesh();
+    void meshAttributeless();
     void meshIndexed();
+    void meshIndexedAttributeless();
     void meshUnknownAttribute();
     void meshPrimitives();
     void meshColors();
     void meshMultiplePrimitives();
+    void meshInconsistentVertexCount();
 
     void materialPbrMetallicRoughness();
     void materialPbrSpecularGlossiness();
@@ -246,11 +249,14 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::mesh},
                       Containers::arraySize(MultiFileData));
 
-    addTests({&TinyGltfImporterTest::meshIndexed,
+    addTests({&TinyGltfImporterTest::meshAttributeless,
+              &TinyGltfImporterTest::meshIndexed,
+              &TinyGltfImporterTest::meshIndexedAttributeless,
               &TinyGltfImporterTest::meshUnknownAttribute,
               &TinyGltfImporterTest::meshPrimitives,
               &TinyGltfImporterTest::meshColors,
-              &TinyGltfImporterTest::meshMultiplePrimitives});
+              &TinyGltfImporterTest::meshMultiplePrimitives,
+              &TinyGltfImporterTest::meshInconsistentVertexCount});
 
     addInstancedTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
                        &TinyGltfImporterTest::materialPbrSpecularGlossiness,
@@ -1343,7 +1349,7 @@ void TinyGltfImporterTest::mesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->mesh3DCount(), 3);
+    CORRADE_COMPARE(importer->mesh3DCount(), 5);
     CORRADE_COMPARE(importer->mesh3DName(0), "Non-indexed mesh");
     CORRADE_COMPARE(importer->mesh3DForName("Non-indexed mesh"), 0);
 
@@ -1370,12 +1376,26 @@ void TinyGltfImporterTest::mesh() {
     }), TestSuite::Compare::Container);
 }
 
+void TinyGltfImporterTest::meshAttributeless() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh.gltf")));
+
+    auto mesh = importer->mesh("Attribute-less mesh");
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->importerState());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_VERIFY(!mesh->isIndexed());
+    CORRADE_COMPARE(mesh->vertexCount(), 0);
+    CORRADE_COMPARE(mesh->attributeCount(), 0);
+}
+
 void TinyGltfImporterTest::meshIndexed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh.gltf")));
 
-    CORRADE_COMPARE(importer->mesh3DCount(), 3);
+    CORRADE_COMPARE(importer->mesh3DCount(), 5);
     CORRADE_COMPARE(importer->mesh3DName(1), "Indexed mesh");
     CORRADE_COMPARE(importer->mesh3DForName("Indexed mesh"), 1);
 
@@ -1402,12 +1422,29 @@ void TinyGltfImporterTest::meshIndexed() {
     CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
 }
 
+void TinyGltfImporterTest::meshIndexedAttributeless() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh.gltf")));
+
+    auto mesh = importer->mesh("Attribute-less indexed mesh");
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->importerState());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->indicesAsArray(),
+        Containers::arrayView<UnsignedInt>({0, 1, 2}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->vertexCount(), 0);
+    CORRADE_COMPARE(mesh->attributeCount(), 0);
+}
+
 void TinyGltfImporterTest::meshUnknownAttribute() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh.gltf")));
 
-    CORRADE_COMPARE(importer->mesh3DCount(), 3);
+    CORRADE_COMPARE(importer->mesh3DCount(), 5);
     CORRADE_COMPARE(importer->mesh3DName(2), "Mesh with unknown attribute");
     CORRADE_COMPARE(importer->mesh3DForName("Mesh with unknown attribute"), 2);
 
@@ -1416,7 +1453,7 @@ void TinyGltfImporterTest::meshUnknownAttribute() {
 
     auto mesh = importer->mesh3D(2);
 
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute UNKNOWN\n");
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh(): unsupported mesh vertex attribute UNKNOWN\n");
 
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->importerState());
@@ -1714,6 +1751,21 @@ void TinyGltfImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(animation->trackTarget(2), 4); /* not 2 */
         CORRADE_COMPARE(animation->trackTarget(3), 8); /* not 4 */
     }
+}
+
+void TinyGltfImporterTest::meshInconsistentVertexCount() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-invalid.gltf")));
+
+    CORRADE_COMPARE(importer->mesh3DCount(), 1);
+    CORRADE_COMPARE(importer->mesh3DName(0), "Mesh with different vertex count for each accessor");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->mesh3D(0));
+    CORRADE_COMPARE(out.str(),
+        "Trade::TinyGltfImporter::mesh(): mismatched vertex count for attribute TEXCOORD_1, expected 3 but got 4\n");
 }
 
 void TinyGltfImporterTest::materialPbrMetallicRoughness() {

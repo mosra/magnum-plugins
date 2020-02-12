@@ -190,13 +190,19 @@ Import of skeleton, skin and morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
 
+-   Indices are imported as either @ref MeshIndexType::UnsignedByte,
+    @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt
+-   Currently only float vertex attributes are supported. Positions and normals
+    (if any) are imported as @ref VertexFormat::Vector3, texture coordinates as
+    @ref VertexFormat::Vector2 and colors as either @ref VertexFormat::Vector3
+    or @ref VertexFormat::Vector4.
 -   Multi-primitive meshes are loaded as follows:
-    -   The @ref mesh3DCount() query returns a number of all *primitives*, not
+    -   The @ref meshCount() query returns a number of all *primitives*, not
         meshes
-    -   Each multi-primitive mesh is split into a sequence of @ref MeshData3D
+    -   Each multi-primitive mesh is split into a sequence of @ref MeshData
         instances following each other
-    -   @ref mesh3DForName() points to the first mesh in given sequence and
-        @ref mesh3DName() returns the same name for all meshes in given
+    -   @ref meshForName() points to the first mesh in given sequence and
+        @ref meshName() returns the same name for all meshes in given
         sequence
     -   The @ref object3DCount() query returns a number of all nodes extended
         with number of extra nodes for each additional mesh primitive
@@ -212,6 +218,9 @@ Import of skeleton, skin and morph data is not supported at the moment.
         extra nodes, always pointing to the first object in the sequence and
         thus indirectly affecting transformations of the extra nodes
         represented as its children
+-   Attribute-less meshes either with or without an index buffer are supported,
+    however since glTF has no way of specifying vertex count for those,
+    returned @ref Trade::MeshData::vertexCount() is set to @cpp 0 @ce
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
 
@@ -341,7 +350,7 @@ importer-specific data accessors:
     structure
 -   @ref ImageData::importerState() returns pointer to the `tinygltf::Image`
     structure
--   @ref MeshData3D::importerState() returns pointer to the `tinygltf::Mesh`
+-   @ref MeshData::importerState() returns pointer to the `tinygltf::Mesh`
     structure
 -   @ref ObjectData3D::importerState() returns pointer to the `tinygltf::Node`
     structure
@@ -428,10 +437,10 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
 
-        MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMesh3DCount() const override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMesh3DForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMesh3DName(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMeshName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;

@@ -36,6 +36,23 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Attribute-less mesh",
+            "primitives": [
+                {
+                    "attributes": {}
+                }
+            ]
+        },
+        {
+            "name": "Attribute-less indexed mesh",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 0
+                }
+            ]
         }
     ],
     "accessors": [
