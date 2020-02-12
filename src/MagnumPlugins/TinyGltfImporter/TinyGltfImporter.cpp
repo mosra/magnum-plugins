@@ -935,12 +935,10 @@ Containers::Optional<MeshData3D> TinyGltfImporter::doMesh3D(const UnsignedInt id
         meshPrimitive = MeshPrimitive::TriangleFan;
     } else if(primitive.mode == TINYGLTF_MODE_TRIANGLE_STRIP) {
         meshPrimitive = MeshPrimitive::TriangleStrip;
-    /* LCOV_EXCL_START */
     } else {
         Error{} << "Trade::TinyGltfImporter::mesh3D(): unrecognized primitive" << primitive.mode;
         return Containers::NullOpt;
     }
-    /* LCOV_EXCL_STOP */
 
     std::vector<Vector3> positions;
     std::vector<std::vector<Vector3>> normalArrays;
