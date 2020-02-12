@@ -136,7 +136,7 @@ class MAGNUM_JPEGIMAGECONVERTER_EXPORT JpegImageConverter: public AbstractImageC
         explicit JpegImageConverter(PluginManager::AbstractManager& manager, std::string plugin);
 
     private:
-        MAGNUM_JPEGIMAGECONVERTER_LOCAL Features doFeatures() const override;
+        MAGNUM_JPEGIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_JPEGIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
 };
 

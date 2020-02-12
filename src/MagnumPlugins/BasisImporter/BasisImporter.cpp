@@ -152,7 +152,7 @@ BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const std:
 
 BasisImporter::~BasisImporter() = default;
 
-auto BasisImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures BasisImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool BasisImporter::doIsOpened() const {
     /* Both the transcoder and then input data have to be present or both

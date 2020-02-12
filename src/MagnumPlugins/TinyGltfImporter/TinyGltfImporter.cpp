@@ -190,7 +190,7 @@ TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<AbstractImporter>& man
 
 TinyGltfImporter::~TinyGltfImporter() = default;
 
-auto TinyGltfImporter::doFeatures() const -> Features { return Feature::OpenData|Feature::FileCallback; }
+ImporterFeatures TinyGltfImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::FileCallback; }
 
 bool TinyGltfImporter::doIsOpened() const { return !!_d && _d->open; }
 

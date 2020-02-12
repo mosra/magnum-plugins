@@ -40,7 +40,7 @@ Faad2Importer::Faad2Importer() = default;
 
 Faad2Importer::Faad2Importer(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
-auto Faad2Importer::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures Faad2Importer::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool Faad2Importer::doIsOpened() const { return !_samples.empty(); }
 

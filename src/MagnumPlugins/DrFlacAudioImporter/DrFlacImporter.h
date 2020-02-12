@@ -134,7 +134,7 @@ class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter 
         explicit DrFlacImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
     private:
-        MAGNUM_DRFLACAUDIOIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_DRFLACAUDIOIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL void doClose() override;

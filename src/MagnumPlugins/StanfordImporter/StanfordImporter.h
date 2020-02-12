@@ -110,7 +110,7 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         ~StanfordImporter();
 
     private:
-        MAGNUM_STANFORDIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_STANFORDIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
 
         MAGNUM_STANFORDIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_STANFORDIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;

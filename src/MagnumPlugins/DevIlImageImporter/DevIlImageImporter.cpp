@@ -43,7 +43,7 @@ DevIlImageImporter::DevIlImageImporter(PluginManager::AbstractManager& manager, 
 
 DevIlImageImporter::~DevIlImageImporter() { close(); }
 
-auto DevIlImageImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures DevIlImageImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool DevIlImageImporter::doIsOpened() const { return _in; }
 

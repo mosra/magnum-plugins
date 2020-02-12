@@ -299,7 +299,7 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
     private:
         struct State;
 
-        MAGNUM_BASISIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_BASISIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_BASISIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_BASISIMPORTER_LOCAL void doClose() override;
         MAGNUM_BASISIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;

@@ -101,12 +101,13 @@ information.
 
 @section Trade-OpenGexImporter-limitations Behavior and limitations
 
-The plugin supports @ref Feature::OpenData and @ref Feature::FileCallback
-features. The importer fully loads the top-level file during initial import,
-meaning there is at most one @ref InputFileCallbackPolicy::LoadTemporary
-callback followed by @ref InputFileCallbackPolicy::Close and the data can
-freed right after the @ref openData() / @ref openFile() function exits. In case
-of images, the files are loaded on-demand inside @ref image2D() calls with
+The plugin supports @ref ImporterFeature::OpenData and
+@ref ImporterFeature::FileCallback features. The importer fully loads the
+top-level file during initial import, meaning there is at most one
+@ref InputFileCallbackPolicy::LoadTemporary callback followed by
+@ref InputFileCallbackPolicy::Close and the data can freed right after the
+@ref openData() / @ref openFile() function exits. In case of images, the files
+are loaded on-demand inside @ref image2D() calls with
 @ref InputFileCallbackPolicy::LoadTemporary and
 @ref InputFileCallbackPolicy::Close is emitted right after the file is fully
 read.
@@ -222,7 +223,7 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
     private:
         struct Document;
 
-        MAGNUM_OPENGEXIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;

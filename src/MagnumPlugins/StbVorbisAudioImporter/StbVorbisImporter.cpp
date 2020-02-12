@@ -40,7 +40,7 @@ StbVorbisImporter::StbVorbisImporter() = default;
 
 StbVorbisImporter::StbVorbisImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
-auto StbVorbisImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures StbVorbisImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool StbVorbisImporter::doIsOpened() const { return _data; }
 

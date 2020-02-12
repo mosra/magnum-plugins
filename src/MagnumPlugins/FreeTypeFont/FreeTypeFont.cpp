@@ -73,7 +73,7 @@ FreeTypeFont::FreeTypeFont(PluginManager::AbstractManager& manager, const std::s
 
 FreeTypeFont::~FreeTypeFont() { close(); }
 
-auto FreeTypeFont::doFeatures() const -> Features { return Feature::OpenData; }
+FontFeatures FreeTypeFont::doFeatures() const { return FontFeature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return ftFont; }
 

@@ -906,7 +906,7 @@ void AssimpImporterTest::fileCallback() {
        because Assimp is using the same callbacks for all data loading */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
     files["not/a/path/mesh.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae"));
@@ -940,7 +940,7 @@ void AssimpImporterTest::fileCallbackNotFound() {
        because Assimp is using the same callbacks for all data loading */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
         void*) {
@@ -962,7 +962,7 @@ void AssimpImporterTest::fileCallbackNotFound() {
 
 void AssimpImporterTest::fileCallbackReset() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
         void*) {
@@ -984,7 +984,7 @@ void AssimpImporterTest::fileCallbackImage() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
     files["not/a/path/texture.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"));
@@ -1014,7 +1014,7 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
         void*) {

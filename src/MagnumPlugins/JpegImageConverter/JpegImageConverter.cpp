@@ -60,7 +60,7 @@ JpegImageConverter::JpegImageConverter() {
 
 JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImageConverter(manager, std::move(plugin)) {}
 
-auto JpegImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
+ImageConverterFeatures JpegImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
 
 Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& image) {
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");

@@ -114,7 +114,7 @@ class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public Abstract
         explicit MiniExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
     private:
-        MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Features doFeatures() const override;
+        MAGNUM_MINIEXRIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
 };
 

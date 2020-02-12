@@ -133,7 +133,7 @@ class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
         ~PngImporter();
 
     private:
-        MAGNUM_PNGIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_PNGIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_PNGIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_PNGIMPORTER_LOCAL void doClose() override;
         MAGNUM_PNGIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;

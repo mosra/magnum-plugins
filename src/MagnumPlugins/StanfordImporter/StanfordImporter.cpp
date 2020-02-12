@@ -45,7 +45,7 @@ StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, cons
 
 StanfordImporter::~StanfordImporter() = default;
 
-auto StanfordImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures StanfordImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool StanfordImporter::doIsOpened() const { return !!_in; }
 

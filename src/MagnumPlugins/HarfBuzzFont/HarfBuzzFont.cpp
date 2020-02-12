@@ -57,7 +57,7 @@ HarfBuzzFont::HarfBuzzFont(PluginManager::AbstractManager& manager, const std::s
 
 HarfBuzzFont::~HarfBuzzFont() { close(); }
 
-auto HarfBuzzFont::doFeatures() const -> Features { return Feature::OpenData; }
+FontFeatures HarfBuzzFont::doFeatures() const { return FontFeature::OpenData; }
 
 bool HarfBuzzFont::doIsOpened() const {
     CORRADE_INTERNAL_ASSERT(FreeTypeFont::doIsOpened() == !!hbFont);

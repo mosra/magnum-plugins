@@ -1081,7 +1081,7 @@ void OpenGexImporterTest::fileCallbackImage() {
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
     files["not/a/path/something.ogex"] = Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"));
@@ -1106,7 +1106,7 @@ void OpenGexImporterTest::fileCallbackImageNotFound() {
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*) {
             return Containers::Optional<Containers::ArrayView<const char>>{};

@@ -118,7 +118,7 @@ DrWavImporter::DrWavImporter() = default;
 
 DrWavImporter::DrWavImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
-auto DrWavImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures DrWavImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool DrWavImporter::doIsOpened() const { return !!_data; }
 

@@ -139,7 +139,7 @@ class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
         ~HarfBuzzFont();
 
     private:
-        MAGNUM_HARFBUZZFONT_LOCAL Features doFeatures() const override;
+        MAGNUM_HARFBUZZFONT_LOCAL FontFeatures doFeatures() const override;
         MAGNUM_HARFBUZZFONT_LOCAL bool doIsOpened() const override;
         MAGNUM_HARFBUZZFONT_LOCAL Metrics doOpenData(Containers::ArrayView<const char> data, Float size) override;
         MAGNUM_HARFBUZZFONT_LOCAL void doClose() override;

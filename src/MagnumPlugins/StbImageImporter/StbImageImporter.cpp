@@ -46,7 +46,7 @@ StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, cons
 
 StbImageImporter::~StbImageImporter() = default;
 
-auto StbImageImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures StbImageImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool StbImageImporter::doIsOpened() const { return _in; }
 

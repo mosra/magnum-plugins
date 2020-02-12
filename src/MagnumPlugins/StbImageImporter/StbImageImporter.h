@@ -156,7 +156,7 @@ class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
         ~StbImageImporter();
 
     private:
-        MAGNUM_STBIMAGEIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_STBIMAGEIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_STBIMAGEIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_STBIMAGEIMPORTER_LOCAL void doClose() override;
         MAGNUM_STBIMAGEIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;

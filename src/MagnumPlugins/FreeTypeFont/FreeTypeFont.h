@@ -145,7 +145,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     private:
         static MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
 
-        Features MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
+        FontFeatures MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
 
         UnsignedInt doGlyphId(char32_t character) override;
 

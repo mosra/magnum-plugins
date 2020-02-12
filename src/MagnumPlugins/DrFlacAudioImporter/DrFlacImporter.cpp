@@ -79,7 +79,7 @@ DrFlacImporter::DrFlacImporter() = default;
 
 DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
-auto DrFlacImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures DrFlacImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool DrFlacImporter::doIsOpened() const { return !!_data; }
 

@@ -114,7 +114,7 @@ class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageCon
         explicit PngImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
     private:
-        MAGNUM_PNGIMAGECONVERTER_LOCAL Features doFeatures() const override;
+        MAGNUM_PNGIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_PNGIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
 };
 

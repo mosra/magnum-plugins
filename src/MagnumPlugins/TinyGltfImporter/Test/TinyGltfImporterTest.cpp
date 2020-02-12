@@ -2128,7 +2128,7 @@ void TinyGltfImporterTest::fileCallbackBuffer() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     Utility::Resource rs{"data"};
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy, Utility::Resource& rs) {
@@ -2158,7 +2158,7 @@ void TinyGltfImporterTest::fileCallbackBufferNotFound() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*)
         -> Containers::Optional<Containers::ArrayView<const char>> { return {}; });
@@ -2179,7 +2179,7 @@ void TinyGltfImporterTest::fileCallbackImage() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     Utility::Resource rs{"data"};
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy  policy, Utility::Resource& rs) {
@@ -2207,7 +2207,7 @@ void TinyGltfImporterTest::fileCallbackImageNotFound() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->features() & AbstractImporter::Feature::FileCallback);
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     Utility::Resource rs{"data"};
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy, Utility::Resource& rs)

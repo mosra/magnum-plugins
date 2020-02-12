@@ -59,7 +59,7 @@ JpegImporter::JpegImporter(PluginManager::AbstractManager& manager, const std::s
 
 JpegImporter::~JpegImporter() { close(); }
 
-auto JpegImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures JpegImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool JpegImporter::doIsOpened() const { return _in; }
 

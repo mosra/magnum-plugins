@@ -183,7 +183,7 @@ class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImport
         ~DevIlImageImporter();
 
     private:
-        MAGNUM_DEVILIMAGEIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_DEVILIMAGEIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL void doClose() override;
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;

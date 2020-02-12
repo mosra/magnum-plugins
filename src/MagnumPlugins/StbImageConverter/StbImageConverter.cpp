@@ -62,7 +62,7 @@ StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, co
         _format = {}; /* Runtime error in doExportToData() */
 }
 
-auto StbImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
+ImageConverterFeatures StbImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
 
 Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& image) {
     if(!Int(_format)) {

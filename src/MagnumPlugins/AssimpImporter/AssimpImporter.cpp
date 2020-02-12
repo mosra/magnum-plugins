@@ -108,7 +108,7 @@ AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const st
 
 AssimpImporter::~AssimpImporter() = default;
 
-auto AssimpImporter::doFeatures() const -> Features { return Feature::OpenData|Feature::OpenState|Feature::FileCallback; }
+ImporterFeatures AssimpImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::OpenState|ImporterFeature::FileCallback; }
 
 bool AssimpImporter::doIsOpened() const { return _f && _f->scene; }
 

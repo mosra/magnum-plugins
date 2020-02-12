@@ -77,7 +77,7 @@ StbTrueTypeFont::StbTrueTypeFont(PluginManager::AbstractManager& manager, const 
 
 StbTrueTypeFont::~StbTrueTypeFont() = default;
 
-auto StbTrueTypeFont::doFeatures() const -> Features { return Feature::OpenData; }
+FontFeatures StbTrueTypeFont::doFeatures() const { return FontFeature::OpenData; }
 
 bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 

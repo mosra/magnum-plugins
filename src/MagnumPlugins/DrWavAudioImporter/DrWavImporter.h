@@ -136,7 +136,7 @@ class MAGNUM_DRWAVAUDIOIMPORTER_EXPORT DrWavImporter: public AbstractImporter {
         explicit DrWavImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
     private:
-        MAGNUM_DRWAVAUDIOIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_DRWAVAUDIOIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_DRWAVAUDIOIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_DRWAVAUDIOIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
         MAGNUM_DRWAVAUDIOIMPORTER_LOCAL void doClose() override;

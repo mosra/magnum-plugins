@@ -103,7 +103,7 @@ OpenGexImporter::OpenGexImporter(PluginManager::AbstractManager& manager, const 
 
 OpenGexImporter::~OpenGexImporter() = default;
 
-auto OpenGexImporter::doFeatures() const -> Features { return Feature::OpenData|Feature::FileCallback; }
+ImporterFeatures OpenGexImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::FileCallback; }
 
 bool OpenGexImporter::doIsOpened() const { return !!_d; }
 

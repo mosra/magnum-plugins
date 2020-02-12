@@ -131,7 +131,7 @@ class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
         struct Font;
         class Layouter;
 
-        MAGNUM_STBTRUETYPEFONT_LOCAL Features doFeatures() const override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL FontFeatures doFeatures() const override;
         MAGNUM_STBTRUETYPEFONT_LOCAL bool doIsOpened() const override;
         MAGNUM_STBTRUETYPEFONT_LOCAL Metrics doOpenData(Containers::ArrayView<const char> data, Float size) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL void doClose() override;

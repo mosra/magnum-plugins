@@ -60,7 +60,7 @@ DrMp3Importer::DrMp3Importer() = default;
 
 DrMp3Importer::DrMp3Importer(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
-auto DrMp3Importer::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures DrMp3Importer::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool DrMp3Importer::doIsOpened() const { return !!_data; }
 

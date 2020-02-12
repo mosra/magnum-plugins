@@ -281,8 +281,9 @@ Released 2018-10-23, tagged as
     properties together with type and aspect ratio / projection size
 -   @ref Trade::AssimpImporter "AssimpImporter", @ref Trade::OpenGexImporter "OpenGexImporter"
     and @ref Trade::TinyGltfImporter "TinyGltfImporter" now support
-    @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom
-    callbacks to load extra files
+    @cpp Trade::AbstractImporter::Feature::FileCallback @ce for specifying
+    custom callbacks to load extra files (see
+    [mosra/magnum-plugins#47](https://github.com/mosra/magnum-plugins/pull/47))
 -   @ref Trade::StbImageConverter "StbImageConverter" was updated with a new
     version of `stb_image_write`, supporting also JPEG export now (see
     [mosra/magnum-plugins#26](https://github.com/mosra/magnum-plugins/pull/26))
@@ -291,10 +292,6 @@ Released 2018-10-23, tagged as
 -   @ref Text::FreeTypeFont "FreeTypeFont", @ref Text::HarfBuzzFont "HarfBuzzFont"
     and @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugins can now be loaded
     also using the `OpenTypeFont` alias, in addition to `TrueTypeFont
--   @ref Trade::OpenGexImporter "OpenGexImporter" now supports
-    @ref Trade::AbstractImporter::Feature::FileCallback for specifying custom
-    callbacks to load extra files (see
-    [mosra/magnum-plugins#47](https://github.com/mosra/magnum-plugins/pull/47))
 
 @subsection changelog-plugins-2018-10-changes Changes and improvements
 

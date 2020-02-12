@@ -48,7 +48,7 @@ PngImageConverter::PngImageConverter() = default;
 
 PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-auto PngImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
+ImageConverterFeatures PngImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
 
 Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& image) {
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,

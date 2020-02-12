@@ -45,7 +45,7 @@ MiniExrImageConverter::MiniExrImageConverter() = default;
 
 MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-auto MiniExrImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
+ImageConverterFeatures MiniExrImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
 
 Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D& image) {
     Int components;

@@ -120,7 +120,7 @@ class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
         ~JpegImporter();
 
     private:
-        MAGNUM_JPEGIMPORTER_LOCAL Features doFeatures() const override;
+        MAGNUM_JPEGIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_JPEGIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_JPEGIMPORTER_LOCAL void doClose() override;
         MAGNUM_JPEGIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;

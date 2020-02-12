@@ -46,7 +46,7 @@ BasisImageConverter::BasisImageConverter() = default;
 
 BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-auto BasisImageConverter::doFeatures() const -> Features { return Feature::ConvertData; }
+ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
 
 Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& image) {
     /* Check input */

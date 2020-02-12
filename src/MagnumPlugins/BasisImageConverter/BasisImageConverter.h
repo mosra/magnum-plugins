@@ -146,7 +146,7 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
         explicit BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
     private:
-        MAGNUM_BASISIMAGECONVERTER_LOCAL Features doFeatures() const override;
+        MAGNUM_BASISIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
 };
 

@@ -481,7 +481,7 @@ DdsImporter::DdsImporter(PluginManager::AbstractManager& manager, const std::str
 
 DdsImporter::~DdsImporter() = default;
 
-auto DdsImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures DdsImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool DdsImporter::doIsOpened() const { return !!_f; }
 

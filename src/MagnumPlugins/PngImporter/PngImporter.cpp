@@ -53,7 +53,7 @@ PngImporter::PngImporter(PluginManager::AbstractManager& manager, const std::str
 
 PngImporter::~PngImporter() = default;
 
-auto PngImporter::doFeatures() const -> Features { return Feature::OpenData; }
+ImporterFeatures PngImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool PngImporter::doIsOpened() const { return _in; }
 
