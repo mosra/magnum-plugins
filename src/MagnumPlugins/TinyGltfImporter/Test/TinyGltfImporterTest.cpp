@@ -1379,27 +1379,27 @@ void TinyGltfImporterTest::meshIndexed() {
     CORRADE_COMPARE(importer->mesh3DName(1), "Indexed mesh");
     CORRADE_COMPARE(importer->mesh3DForName("Indexed mesh"), 1);
 
-    auto meshObject = importer->mesh3D(1);
-    CORRADE_VERIFY(meshObject);
-    CORRADE_VERIFY(meshObject->importerState());
-    CORRADE_COMPARE(meshObject->primitive(), MeshPrimitive::Triangles);
-    CORRADE_VERIFY(meshObject->isIndexed());
-    CORRADE_COMPARE(meshObject->positionArrayCount(), 1);
-    CORRADE_COMPARE(meshObject->normalArrayCount(), 1);
+    auto mesh = importer->mesh3D(1);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->importerState());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(mesh->normalArrayCount(), 1);
 
-    CORRADE_COMPARE_AS(meshObject->positions(0), (std::vector<Vector3>{
+    CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
         {1.5f, -1.0f, -0.5f},
         {-0.5f, 2.5f, 0.75f},
         {-2.0f, 1.0f, 0.3f}
     }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(meshObject->normalArrayCount(), 1);
-    CORRADE_COMPARE_AS(meshObject->normals(0), (std::vector<Vector3>{
+    CORRADE_COMPARE(mesh->normalArrayCount(), 1);
+    CORRADE_COMPARE_AS(mesh->normals(0), (std::vector<Vector3>{
         {0.1f, 0.2f, 0.3f},
         {0.4f, 0.5f, 0.6f},
         {0.7f, 0.8f, 0.9f}
     }), TestSuite::Compare::Container);
 
-    CORRADE_COMPARE(meshObject->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
+    CORRADE_COMPARE(mesh->indices(), (std::vector<UnsignedInt>{0, 1, 2}));
 }
 
 void TinyGltfImporterTest::meshUnknownAttribute() {
@@ -1414,17 +1414,17 @@ void TinyGltfImporterTest::meshUnknownAttribute() {
     std::ostringstream out;
     Warning redirectWarning{&out};
 
-    auto meshObject = importer->mesh3D(2);
+    auto mesh = importer->mesh3D(2);
 
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh3D(): unsupported mesh vertex attribute UNKNOWN\n");
 
-    CORRADE_VERIFY(meshObject);
-    CORRADE_VERIFY(meshObject->importerState());
-    CORRADE_COMPARE(meshObject->primitive(), MeshPrimitive::Triangles);
-    CORRADE_COMPARE(meshObject->positionArrayCount(), 1);
-    CORRADE_COMPARE(meshObject->normalArrayCount(), 0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->importerState());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_COMPARE(mesh->positionArrayCount(), 1);
+    CORRADE_COMPARE(mesh->normalArrayCount(), 0);
 
-    CORRADE_COMPARE_AS(meshObject->positions(0), (std::vector<Vector3>{
+    CORRADE_COMPARE_AS(mesh->positions(0), (std::vector<Vector3>{
         {1.5f, -1.0f, -0.5f},
         {-0.5f, 2.5f, 0.75f},
         {-2.0f, 1.0f, 0.3f}
