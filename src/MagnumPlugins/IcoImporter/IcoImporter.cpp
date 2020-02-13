@@ -145,23 +145,30 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    CORRADE_ASSERT(data.size() >= sizeof(IconDir),
-                   "Trade::IcoImporter::image2D(): header too short", );
+    if (data.size() < sizeof(IconDir)) {
+        Error{} << "Trade::IcoImporter::image2D(): header too short";
+        return;
+    }
+
     IconDir header = *reinterpret_cast<const IconDir*>(data.begin());
     Utility::Endianness::littleEndianInPlace(
         header.reserved,
         header.imageType,
         header.imageCount
     );
-    CORRADE_ASSERT(header.reserved == 0,
-                   "Trade::IcoImporter::image2D(): reserved data incorrect", );
+    if (header.reserved != 0) {
+        Error{} << "Trade::IcoImporter::image2D(): reserved data incorrect";
+        return;
+    }
 
     _imageDataArray = Containers::Array<std::pair<bool, Containers::Array<char>>>{header.imageCount};
 
     for (Int i = 0; i < header.imageCount; ++i) {
         Int iconDirEntryOffset = sizeof(IconDir) + (sizeof(IconDirEntry) * i);
-        CORRADE_ASSERT(data.size() >= (iconDirEntryOffset + sizeof(IconDirEntry)),
-                       "Trade::IcoImporter::image2D(): image entry header too short", );
+        if (data.size() < (iconDirEntryOffset + sizeof(IconDirEntry))) {
+            Error{} << "Trade::IcoImporter::image2D(): image entry header too short";
+            return;
+        }
 
         IconDirEntry iconDirEntry = *reinterpret_cast<const IconDirEntry*>(data.begin() + iconDirEntryOffset);
         Utility::Endianness::littleEndianInPlace(
@@ -174,13 +181,17 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
             iconDirEntry.imageDataSize,
             iconDirEntry.imageDataOffset
         );
-        CORRADE_ASSERT(iconDirEntry.reserved == 0,
-                       "Trade::IcoImporter::image2D(): reserved data incorrect", );
+        if (iconDirEntry.reserved != 0) {
+            Error{} << "Trade::IcoImporter::image2D(): reserved data incorrect";
+            continue;
+        }
 
         const char* imageDataBegin = data.begin() + iconDirEntry.imageDataOffset;
         const char* imageDataEnd = imageDataBegin + iconDirEntry.imageDataSize;
-        CORRADE_ASSERT(data.size() >= (iconDirEntry.imageDataOffset + iconDirEntry.imageDataSize),
-                       "Trade::IcoImporter::image2D(): reserved bytes incorrect", );
+        if (data.size() < (iconDirEntry.imageDataOffset + iconDirEntry.imageDataSize)) {
+            Error{} << "Trade::IcoImporter::image2D(): image data out of bounds";
+            continue;
+        }
 
         bool isPng = std::equal(pngMagicNum.begin(), pngMagicNum.end(), imageDataBegin);
         auto &imageData = std::get<1>(_imageDataArray[i]);
@@ -230,11 +241,10 @@ Containers::Optional<ImageData2D> IcoImporter::doImage2D(UnsignedInt id) {
     bool isPng = std::get<0>(_imageDataArray[id]);
     if (isPng) {
         /* just delegate actual image importing */
-        if (!_pngImporter) {
-            _pngImporter = manager()->loadAndInstantiate("PngImporter");
+        if (!_pngImporter && !(_pngImporter = manager()->loadAndInstantiate("PngImporter"))) {
+            Error{} << "Trade::IcoImporter::image2D(): PngImporter is unavailable";
+            return Containers::NullOpt;
         }
-        CORRADE_ASSERT(_pngImporter,
-                       "Trade::IcoImporter::image2D(): the correct image importer is unavailable", Containers::NullOpt);
 
         if (!_pngImporter->openData(std::get<1>(_imageDataArray[id]))) {
             return Containers::NullOpt;
