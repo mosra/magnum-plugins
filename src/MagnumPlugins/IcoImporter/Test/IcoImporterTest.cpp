@@ -70,6 +70,9 @@ IcoImporterTest::IcoImporterTest() {
     #ifdef ICOIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(ICOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+    #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 /*
 void IcoImporterTest::bmp_1bpp_1ba_2sp() {

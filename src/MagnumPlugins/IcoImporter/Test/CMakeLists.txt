@@ -35,6 +35,9 @@ endif()
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT BUILD_PLUGINS_STATIC)
     set(ICOIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:IcoImporter>)
+    if(WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
