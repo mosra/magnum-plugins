@@ -156,10 +156,7 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
     CORRADE_ASSERT(header.reserved == 0,
                    "Trade::IcoImporter::image2D(): reserved data incorrect", );
 
-    _imageType = static_cast<ImageType>(header.imageType);
-    _imageCount = header.imageCount;
-
-    _imageDataArray = Containers::Array<std::pair<bool, Containers::Array<char>>>{_imageCount};
+    _imageDataArray = Containers::Array<std::pair<bool, Containers::Array<char>>>{header.imageCount};
 
     for (Int i = 0; i < header.imageCount; ++i) {
         Int iconDirEntryOffset = sizeof(IconDir) + (sizeof(IconDirEntry) * i);
@@ -227,7 +224,7 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _isOpened = true;
 }
 
-UnsignedInt IcoImporter::doImage2DCount() const { return _imageCount; }
+UnsignedInt IcoImporter::doImage2DCount() const { return _imageDataArray.size(); }
 
 Containers::Optional<ImageData2D> IcoImporter::doImage2D(UnsignedInt id) {
     bool isPng = std::get<0>(_imageDataArray[id]);

@@ -81,8 +81,6 @@ class MAGNUM_ICOIMPORTER_EXPORT IcoImporter: public AbstractImporter {
         MAGNUM_ICOIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
 
         bool _isOpened = false;
-        ImageType _imageType{};
-        UnsignedShort _imageCount{};
         Containers::Pointer<Trade::AbstractImporter> _pngImporter = nullptr;
         Containers::Array<std::pair<bool, Containers::Array<char>>> _imageDataArray{};
 };
