@@ -66,6 +66,11 @@ namespace Magnum {
 -   Removed @ref OpenDdl headers in `MagnumPlugins/OpenGexImporter/OpenDdl`
     that were deprecated in 2018.04, include them from the `Magnum/OpenDdl`
     directory instead.
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" translation of PBR
+    materials into a Phong shading model left
+    @ref Trade::PhongMaterialData::shininess() set at @cpp 1.0f @ce, which
+    wasn't a good default. Now it's set to @cpp 80.0f @ce to match defaults
+    of @ref Shaders::Phong
 
 @section changelog-plugins-2019-10 2019.10
 

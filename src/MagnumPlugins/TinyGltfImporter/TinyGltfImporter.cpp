@@ -1090,7 +1090,7 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     UnsignedInt diffuseTexture{}, specularTexture{};
     Color4 diffuseColor{1.0f};
     Color3 specularColor{1.0f};
-    Float shininess{1.0f};
+    Float shininess{80.0f};
 
     /* Make Blinn/Phong a priority, because there we can import most properties */
     if(material.extensions.find("KHR_materials_cmnBlinnPhong") != material.extensions.end()) {
