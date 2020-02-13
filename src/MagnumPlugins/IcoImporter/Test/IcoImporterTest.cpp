@@ -45,7 +45,8 @@ struct IcoImporterTest: TestSuite::Tester {
     //void bmp_4bpp_1ba_16sp();
     //void bmp_8bpp_1ba_256sp();
     //void bmp_24bpp_1ba_np();
-    void bmp_32bpp_8ba_np();
+    //void bmp_32bpp_8ba_np();
+    void bmp();
     void png();
 
     /* Explicitly forbid system-wide plugin dependencies */
@@ -59,7 +60,8 @@ IcoImporterTest::IcoImporterTest() {
          //&IcoImporterTest::bmp_4bpp_1ba_16sp,
          //&IcoImporterTest::bmp_8bpp_1ba_256sp,
          //&IcoImporterTest::bmp_24bpp_1ba_np,
-         &IcoImporterTest::bmp_32bpp_8ba_np,
+         //&IcoImporterTest::bmp_32bpp_8ba_np,
+         &IcoImporterTest::bmp,
          &IcoImporterTest::png
     });
 
@@ -105,8 +107,18 @@ void IcoImporterTest::bmp_24bpp_1ba_np() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), (Vector2i{64, 64}));
 }
-*/
+
 void IcoImporterTest::bmp_32bpp_8ba_np() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "stone.ico")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(4);
+
+    CORRADE_VERIFY(image);
+    //CORRADE_COMPARE(image->size(), (Vector2i{128, 128}));
+}
+*/
+void IcoImporterTest::bmp() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "stone.ico")));
 
