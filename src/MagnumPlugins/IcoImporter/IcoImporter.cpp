@@ -127,8 +127,8 @@ void IcoImporter::doClose() {
 }
 
 namespace {
-    constexpr std::initializer_list<const char> bmpFileHeaderTemplate{'B', 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    constexpr std::initializer_list<const char> pngMagicNum{static_cast<char>(0x89), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+    const char bmpFileHeaderTemplate[] = {'B', 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    const char pngMagicNum[] = {static_cast<char>(0x89), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
 }
 
 void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
@@ -193,7 +193,7 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
             continue;
         }
 
-        bool isPng = std::equal(pngMagicNum.begin(), pngMagicNum.end(), imageDataBegin);
+        bool isPng = std::equal(std::begin(pngMagicNum), std::end(pngMagicNum), imageDataBegin);
         auto &imageData = std::get<1>(_imageDataArray[i]);
         if (isPng) {
             imageData = Containers::Array<char>{Containers::NoInit, iconDirEntry.imageDataSize};
