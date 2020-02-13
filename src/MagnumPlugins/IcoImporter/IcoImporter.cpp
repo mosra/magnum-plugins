@@ -145,7 +145,7 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    CORRADE_ASSERT(data.size() >= 6,
+    CORRADE_ASSERT(data.size() >= sizeof(IconDir),
                    "Trade::IcoImporter::image2D(): header too short", );
     IconDir header = *reinterpret_cast<const IconDir*>(data.begin());
     Utility::Endianness::littleEndianInPlace(
