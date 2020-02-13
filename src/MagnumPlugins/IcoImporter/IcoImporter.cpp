@@ -162,8 +162,8 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _imageDataArray = Containers::Array<std::pair<bool, Containers::Array<char>>>{_imageCount};
 
     for (Int i = 0; i < header.imageCount; ++i) {
-        Int iconDirEntryOffset = IconDir::Size + (IconDirEntry::Size * i);
-        CORRADE_ASSERT(data.size() >= (iconDirEntryOffset + IconDirEntry::Size),
+        Int iconDirEntryOffset = sizeof(IconDir) + (sizeof(IconDirEntry) * i);
+        CORRADE_ASSERT(data.size() >= (iconDirEntryOffset + sizeof(IconDirEntry)),
                        "Trade::IcoImporter::image2D(): image entry header too short", );
 
         IconDirEntry iconDirEntry = *reinterpret_cast<const IconDirEntry*>(data.begin() + iconDirEntryOffset);
