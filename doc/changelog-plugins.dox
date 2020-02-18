@@ -73,6 +73,12 @@ namespace Magnum {
     @ref Trade::PhongMaterialData::shininess() set at @cpp 1.0f @ce, which
     wasn't a good default. Now it's set to @cpp 80.0f @ce to match defaults
     of @ref Shaders::Phong
+-   The bundled `tiny_gltf` code was updated from `v2.0.0` to `v2.4.1` in order
+    to implement support for `KHR_lights_punctual` A lot happened between these
+    two versions including a change in how it parses numeric data. It may cause
+    the imported transformations to be slightly different than in 2019.10,
+    resulting in very minor differences in rendered images, particularly on
+    aliased edges. See also [facebookresearch/habitat-sim#496](https://github.com/facebookresearch/habitat-sim/pull/496).
 
 @section changelog-plugins-2019-10 2019.10
 
