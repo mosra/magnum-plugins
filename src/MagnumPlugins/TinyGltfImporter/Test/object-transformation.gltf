@@ -85,6 +85,9 @@
                 0.5,
                 2.3
             ]
+        },
+        {
+            "name": "Implicit transformation"
         }
     ],
     "meshes": [

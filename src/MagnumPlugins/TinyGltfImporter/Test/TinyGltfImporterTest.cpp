@@ -1178,7 +1178,7 @@ void TinyGltfImporterTest::objectTransformation() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object-transformation" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->object3DCount(), 7);
+    CORRADE_COMPARE(importer->object3DCount(), 8);
 
     {
         CORRADE_COMPARE(importer->object3DName(0), "Matrix");
@@ -1280,6 +1280,17 @@ void TinyGltfImporterTest::objectTransformation() {
         CORRADE_COMPARE(object->rotation(), Quaternion{});
         CORRADE_COMPARE(object->scaling(), (Vector3{0.9f, 0.5f, 2.3f}));
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling({0.9f, 0.5f, 2.3f}));
+    } {
+        CORRADE_COMPARE(importer->object3DName(7), "Implicit transformation");
+        auto object = importer->object3D(7);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instance(), -1);
+        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
+        CORRADE_COMPARE(object->translation(), Vector3{});
+        CORRADE_COMPARE(object->rotation(), Quaternion{});
+        CORRADE_COMPARE(object->scaling(), Vector3{1.0f});
+        CORRADE_COMPARE(object->transformation(), Matrix4{Math::IdentityInit});
     }
 }
 
