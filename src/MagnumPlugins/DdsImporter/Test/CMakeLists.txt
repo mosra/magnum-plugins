@@ -57,6 +57,9 @@ corrade_add_test(DdsImporterTest
 target_include_directories(DdsImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(DdsImporterTest PRIVATE DdsImporter)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(DdsImporterTest DdsImporter)
 endif()
 set_target_properties(DdsImporterTest PROPERTIES FOLDER "MagnumPlugins/DdsImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)

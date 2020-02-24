@@ -50,6 +50,9 @@ corrade_add_test(PngImporterTest PngImporterTest.cpp
 target_include_directories(PngImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(PngImporterTest PRIVATE PngImporter)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(PngImporterTest PngImporter)
 endif()
 set_target_properties(PngImporterTest PROPERTIES FOLDER "MagnumPlugins/PngImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)

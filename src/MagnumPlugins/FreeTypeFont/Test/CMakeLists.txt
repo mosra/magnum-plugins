@@ -49,6 +49,9 @@ corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp
 target_include_directories(FreeTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(FreeTypeFontTest PRIVATE FreeTypeFont)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(FreeTypeFontTest FreeTypeFont)
 endif()
 set_target_properties(FreeTypeFontTest PROPERTIES FOLDER "MagnumPlugins/FreeTypeFont/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)

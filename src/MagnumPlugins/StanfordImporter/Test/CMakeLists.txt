@@ -75,6 +75,9 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
 target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(StanfordImporterTest PRIVATE StanfordImporter)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(StanfordImporterTest StanfordImporter)
 endif()
 set_target_properties(StanfordImporterTest PROPERTIES FOLDER "MagnumPlugins/StanfordImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)

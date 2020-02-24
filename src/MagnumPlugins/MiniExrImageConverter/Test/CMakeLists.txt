@@ -49,6 +49,9 @@ corrade_add_test(MiniExrImageConverterTest MiniExrImageConverterTest.cpp
 target_include_directories(MiniExrImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(MiniExrImageConverterTest PRIVATE MiniExrImageConverter)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(MiniExrImageConverterTest MiniExrImageConverter)
 endif()
 set_target_properties(MiniExrImageConverterTest PROPERTIES FOLDER "MagnumPlugins/MiniExrImageConverter/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)

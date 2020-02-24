@@ -57,6 +57,9 @@ corrade_add_test(DevIlImageImporterTest DevIlImageImporterTest.cpp
 target_include_directories(DevIlImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(DevIlImageImporterTest PRIVATE DevIlImageImporter)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(DevIlImageImporterTest DevIlImageImporter)
 endif()
 set_target_properties(DevIlImageImporterTest PROPERTIES FOLDER "MagnumPlugins/DevIlImageImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)

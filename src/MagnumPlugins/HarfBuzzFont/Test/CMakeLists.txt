@@ -49,9 +49,10 @@ corrade_add_test(HarfBuzzFontTest HarfBuzzFontTest.cpp
     FILES ../../FreeTypeFont/Test/Oxygen.ttf)
 target_include_directories(HarfBuzzFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
-    target_link_libraries(HarfBuzzFontTest PRIVATE
-        FreeTypeFont
-        HarfBuzzFont)
+    target_link_libraries(HarfBuzzFontTest PRIVATE FreeTypeFont HarfBuzzFont)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(HarfBuzzFontTest FreeTypeFont HarfBuzzFont)
 endif()
 set_target_properties(HarfBuzzFontTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont/Test")
 # Older HB versions give slightly different results, so we need to check the

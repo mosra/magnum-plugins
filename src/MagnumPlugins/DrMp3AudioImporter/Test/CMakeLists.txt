@@ -54,6 +54,9 @@ corrade_add_test(DrMp3AudioImporterTest DrMp3ImporterTest.cpp
 target_include_directories(DrMp3AudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(DrMp3AudioImporterTest PRIVATE DrMp3AudioImporter)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(DrMp3AudioImporterTest DrMp3AudioImporter)
 endif()
 set_target_properties(DrMp3AudioImporterTest PROPERTIES FOLDER "MagnumPlugins/DrMp3AudioImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)

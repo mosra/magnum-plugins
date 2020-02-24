@@ -56,6 +56,9 @@ corrade_add_test(StbVorbisAudioImporterTest StbVorbisImporterTest.cpp
 target_include_directories(StbVorbisAudioImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(StbVorbisAudioImporterTest PRIVATE StbVorbisAudioImporter)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(StbVorbisAudioImporterTest StbVorbisAudioImporter)
 endif()
 set_target_properties(StbVorbisAudioImporterTest PROPERTIES FOLDER "MagnumPlugins/StbVorbisAudioImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)

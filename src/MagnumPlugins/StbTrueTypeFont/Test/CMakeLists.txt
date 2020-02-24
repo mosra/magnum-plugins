@@ -49,6 +49,9 @@ corrade_add_test(StbTrueTypeFontTest StbTrueTypeFontTest.cpp
 target_include_directories(StbTrueTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(StbTrueTypeFontTest PRIVATE StbTrueTypeFont)
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(StbTrueTypeFontTest StbTrueTypeFont)
 endif()
 set_target_properties(StbTrueTypeFontTest PROPERTIES FOLDER "MagnumPlugins/StbTrueTypeFont/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
