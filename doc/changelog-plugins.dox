@@ -79,6 +79,10 @@ namespace Magnum {
     the imported transformations to be slightly different than in 2019.10,
     resulting in very minor differences in rendered images, particularly on
     aliased edges. See also [facebookresearch/habitat-sim#496](https://github.com/facebookresearch/habitat-sim/pull/496).
+-   @ref Trade::DdsImporter "DdsImporter" now exposes mip levels not as
+    separate images, but through the new @p level parameter and
+    @ref Trade::AbstractImporter::image2DLevelCount() /
+    @ref Trade::AbstractImporter::image3DLevelCount() APIs.
 
 @section changelog-plugins-2019-10 2019.10
 

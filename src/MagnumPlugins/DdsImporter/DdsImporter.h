@@ -134,12 +134,6 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::DdsImporter)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
-
-@section Trade-DdsImporter-limitations Behavior and limitations
-
-Note that mipmaps are currently imported under separate image data IDs. You may
-access them via @ref image2D(UnsignedInt)/@ref image3D(UnsignedInt) which will
-return the n-th mip, a bigger n indicating a smaller mip.
 */
 class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
     public:
@@ -158,10 +152,12 @@ class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
         MAGNUM_DDSIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
 
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_DDSIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
+        MAGNUM_DDSIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage3DCount() const override;
-        MAGNUM_DDSIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id) override;
+        MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage3DLevelCount(UnsignedInt id) override;
+        MAGNUM_DDSIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
 
     private:
         struct File;

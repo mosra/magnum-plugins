@@ -225,6 +225,9 @@ void DdsImporterTest::rgb() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
 
     const char pixels[] = {'\xde', '\xad', '\xb5',
                            '\xca', '\xfe', '\x77',
@@ -248,6 +251,9 @@ void DdsImporterTest::rgbWithMips() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_mips.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
 
     const char pixels[] = {'\xde', '\xad', '\xb5',
                            '\xca', '\xfe', '\x77',
@@ -268,7 +274,7 @@ void DdsImporterTest::rgbWithMips() {
             TestSuite::Compare::Container);
 
     /* check mip 0 */
-    Containers::Optional<Trade::ImageData2D> mip = importer->image2D(1);
+    Containers::Optional<Trade::ImageData2D> mip = importer->image2D(0, 1);
     CORRADE_VERIFY(mip);
     CORRADE_VERIFY(!mip->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -283,6 +289,9 @@ void DdsImporterTest::rgbVolume() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_volume.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 0);
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
     const char pixels[] = {
         /* slice 0 */
@@ -316,7 +325,6 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
         TestSuite::Compare::Container);
 }
-
 
 void DdsImporterTest::dxt1() {
     Utility::Resource resource{"DdsTestFiles"};

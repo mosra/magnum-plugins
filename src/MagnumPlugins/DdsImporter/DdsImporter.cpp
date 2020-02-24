@@ -631,10 +631,12 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _f = std::move(f);
 }
 
-UnsignedInt DdsImporter::doImage2DCount() const {  return _f->volume ? 0 : _f->imageData.size(); }
+UnsignedInt DdsImporter::doImage2DCount() const {  return _f->volume ? 0 : 1; }
 
-Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
-    const File::ImageDataOffset& dataOffset = _f->imageData[id];
+UnsignedInt DdsImporter::doImage2DLevelCount(UnsignedInt) {  return _f->imageData.size(); }
+
+Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt, const UnsignedInt level) {
+    const File::ImageDataOffset& dataOffset = _f->imageData[level];
 
     /* copy image data */
     Containers::Array<char> data = Containers::Array<char>(dataOffset.data.size());
@@ -655,10 +657,12 @@ Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt id) {
     return ImageData2D{storage, _f->pixelFormat.uncompressed, dataOffset.dimensions.xy(), std::move(data)};
 }
 
-UnsignedInt DdsImporter::doImage3DCount() const { return _f->volume ? _f->imageData.size() : 0; }
+UnsignedInt DdsImporter::doImage3DCount() const { return _f->volume ? 1 : 0; }
 
-Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
-    const File::ImageDataOffset& dataOffset = _f->imageData[id];
+UnsignedInt DdsImporter::doImage3DLevelCount(UnsignedInt) {  return _f->imageData.size(); }
+
+Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt, const UnsignedInt level) {
+    const File::ImageDataOffset& dataOffset = _f->imageData[level];
 
     /* copy image data */
     Containers::Array<char> data = Containers::Array<char>(dataOffset.data.size());
@@ -682,4 +686,4 @@ Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt id) {
 }}
 
 CORRADE_PLUGIN_REGISTER(DdsImporter, Magnum::Trade::DdsImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")
