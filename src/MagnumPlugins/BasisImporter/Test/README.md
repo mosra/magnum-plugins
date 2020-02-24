@@ -19,9 +19,19 @@ To convert, run the following commands:
 basisu rgb-63x27.png -output_file rgb.basis -y_flip
 basisu rgb-63x27.png -output_file rgb-noflip.basis
 basisu rgba-63x27.png -output_file rgba.basis -force_alpha -y_flip
-basisu rgba-63x27.png rgba-27x63.png -output_file rgba-2images.basis -y_flip
+basisu rgba-63x27.png rgba-27x63.png -output_file rgba-2images-mips.basis -y_flip -mipmap -mip_smallest 16 -mip_filter box
 
 # Required for PVRTC1 target, which requires pow2 dimensions
 basisu rgb-64x32.png -output_file rgb-pow2.basis -y_flip
 basisu rgba-64x32.png -output_file rgba-pow2.basis -force_alpha -y_flip
+```
+
+For mipmap testing, the PNG image is resized to two more levels. Using the
+box filter, the same as Basis itself, to have the least difference.
+
+```sh
+convert rgba-63x27.png -filter box -resize 31x13\! rgba-31x13.png
+convert rgba-63x27.png -filter box -resize 15x6\! rgba-15x6.png
+pngcrush -ow rgba-31x13.png
+pngcrush -ow rgba-15x6.png
 ```

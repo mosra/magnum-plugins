@@ -206,9 +206,11 @@ UnsignedInt BasisImporter::doImage2DCount() const {
     return _state->fileInfo.m_total_images;
 }
 
-Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
-    const UnsignedInt level = 0;
+UnsignedInt BasisImporter::doImage2DLevelCount(const UnsignedInt id) {
+    return _state->fileInfo.m_image_mipmap_levels[id];
+}
 
+Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
     std::string targetFormatStr = configuration().value<std::string>("format");
     TargetFormat targetFormat;
     if(targetFormatStr.empty()) {
@@ -225,19 +227,19 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
     const auto format = basist::transcoder_texture_format(Int(targetFormat));
 
     basist::basisu_image_info info;
-    /* Header validation etc. is already done in doOpenData() and index is
+    /* Header validation etc. is already done in doOpenData() and id is
        bounds-checked against doImage2DCount() by AbstractImporter, so by
        looking at the code there's nothing else that could fail and wasn't
        already caught before. That means we also can't craft any file to cover
        an error path, so turning this into an assert. When this blows up for
        someome, we'd most probably need to harden doOpenData() to catch that,
        not turning this into a graceful error. */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_info(_state->in.data(), _state->in.size(), info, index));
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_info(_state->in.data(), _state->in.size(), info, id));
 
     UnsignedInt origWidth, origHeight, totalBlocks;
     /* Same as above, it checks for state we already verified before. If this
        blows up for someone, we can reconsider. */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_level_desc(_state->in.data(), _state->in.size(), index, level, origWidth, origHeight, totalBlocks));
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_level_desc(_state->in.data(), _state->in.size(), id, level, origWidth, origHeight, totalBlocks));
 
     /* No flags used by transcode_image_level() by default */
     const std::uint32_t flags = 0;
@@ -261,7 +263,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(UnsignedInt index) {
         dataSize = basis_get_bytes_per_block(format)*totalBlocks;
     }
     Containers::Array<char> dest{Containers::DefaultInit, dataSize};
-    if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), index, level, dest.data(), outputSizeInBlocksOrPixels, basist::transcoder_texture_format(format), flags, rowStride, nullptr, outputRowsInPixels)) {
+    if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, basist::transcoder_texture_format(format), flags, rowStride, nullptr, outputRowsInPixels)) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
         return Containers::NullOpt;
     }
@@ -283,4 +285,4 @@ BasisImporter::TargetFormat BasisImporter::targetFormat() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImporter, Magnum::Trade::BasisImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")

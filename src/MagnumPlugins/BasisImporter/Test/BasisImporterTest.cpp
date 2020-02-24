@@ -330,20 +330,38 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgba-2images.basis")));
+        "rgba-2images-mips.basis")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
+    CORRADE_COMPARE(importer->image2DLevelCount(1), 3);
 
     Containers::Optional<Trade::ImageData2D> image0 = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image0l1 = importer->image2D(0, 1);
+    Containers::Optional<Trade::ImageData2D> image0l2 = importer->image2D(0, 2);
     CORRADE_VERIFY(image0);
-    CORRADE_VERIFY(!image0->isCompressed());
-    CORRADE_COMPARE(image0->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE(image0->size(), (Vector2i{63, 27}));
+    CORRADE_VERIFY(image0l1);
+    CORRADE_VERIFY(image0l2);
 
     Containers::Optional<Trade::ImageData2D> image1 = importer->image2D(1);
+    Containers::Optional<Trade::ImageData2D> image1l1 = importer->image2D(1, 1);
+    Containers::Optional<Trade::ImageData2D> image1l2 = importer->image2D(1, 2);
     CORRADE_VERIFY(image1);
-    CORRADE_VERIFY(!image1->isCompressed());
-    CORRADE_COMPARE(image1->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_VERIFY(image1l1);
+    CORRADE_VERIFY(image1l2);
+
+    for(auto* image: {&*image0, &*image0l1, &*image0l2,
+                      &*image1, &*image1l1, &*image1l2}) {
+        CORRADE_ITERATION(image->size());
+        CORRADE_VERIFY(!image->isCompressed());
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    }
+
+    CORRADE_COMPARE(image0->size(), (Vector2i{63, 27}));
+    CORRADE_COMPARE(image0l1->size(), (Vector2i{31, 13}));
+    CORRADE_COMPARE(image0l2->size(), (Vector2i{15, 6}));
     CORRADE_COMPARE(image1->size(), (Vector2i{27, 63}));
+    CORRADE_COMPARE(image1l1->size(), (Vector2i{13, 31}));
+    CORRADE_COMPARE(image1l2->size(), (Vector2i{6, 15}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -354,10 +372,25 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
        one image alone as there's more to compress */
     CORRADE_COMPARE_WITH(image0->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
-        (DebugTools::CompareImageToFile{_manager, 86.25f, 8.357f}));
+        (DebugTools::CompareImageToFile{_manager, 88.25f, 8.357f}));
+    CORRADE_COMPARE_WITH(image0l1->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        (DebugTools::CompareImageToFile{_manager, 75.25f, 14.85f}));
+    CORRADE_COMPARE_WITH(image0l2->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
+        (DebugTools::CompareImageToFile{_manager, 64.5f, 23.85f}));
     CORRADE_COMPARE_WITH(image1->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"),
         (DebugTools::CompareImageToFile{_manager, 87.8f, 9.984f}));
+    /* Rotating the pixels so we don't need to store the ground truth twice.
+       Somehow it compresses differently for those, tho (I would expect the
+       compression to be invariant of the orientation). */
+    CORRADE_COMPARE_WITH((image1l1->pixels<Color4ub>().transposed<0, 1>()),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        (DebugTools::CompareImageToFile{_manager, 82.5f, 33.27f}));
+    CORRADE_COMPARE_WITH((image1l2->pixels<Color4ub>().transposed<0, 1>()),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
+        (DebugTools::CompareImageToFile{_manager, 85.25f, 40.15f}));
 }
 
 void BasisImporterTest::rgb() {
@@ -441,7 +474,7 @@ void BasisImporterTest::openDifferent() {
     CORRADE_VERIFY(importer->openFile(
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
     CORRADE_VERIFY(importer->openFile(
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-2images.basis")));
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-2images-mips.basis")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     /* Shouldn't crash, leak or anything */

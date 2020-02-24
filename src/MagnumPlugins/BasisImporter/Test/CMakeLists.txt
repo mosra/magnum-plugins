@@ -56,8 +56,9 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
     LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
         rgb.basis rgb-pow2.basis rgb-noflip.basis
-        rgba.basis rgba-pow2.basis rgba-2images.basis
-        rgb-63x27.png rgba-63x27.png rgba-27x63.png)
+        rgba.basis rgba-pow2.basis rgba-2images-mips.basis
+        rgb-63x27.png rgba-63x27.png rgba-31x13.png rgba-15x6.png
+        rgba-27x63.png)
 target_include_directories(BasisImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(BasisImporterTest PRIVATE BasisImporter)
