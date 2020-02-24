@@ -73,7 +73,7 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
 
 UnsignedInt StbImageImporter::doImage2DCount() const { return 1; }
 
-Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
+Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt, UnsignedInt) {
     Vector2i size;
     Int components;
 
@@ -129,4 +129,4 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt) {
 }}
 
 CORRADE_PLUGIN_REGISTER(StbImageImporter, Magnum::Trade::StbImageImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")

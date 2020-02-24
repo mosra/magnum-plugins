@@ -139,7 +139,7 @@ class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
         MAGNUM_PNGIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
 
         MAGNUM_PNGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_PNGIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_PNGIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
         Containers::Array<unsigned char> _in;
 };

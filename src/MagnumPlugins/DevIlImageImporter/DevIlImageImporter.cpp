@@ -68,7 +68,7 @@ void DevIlImageImporter::doOpenData(const Containers::ArrayView<const char> data
 
 UnsignedInt DevIlImageImporter::doImage2DCount() const { return 1; }
 
-Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
+Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt, UnsignedInt) {
     ILuint imgID = 0;
     ilGenImages(1, &imgID);
     ilBindImage(imgID);
@@ -167,4 +167,4 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt) {
 }}
 
 CORRADE_PLUGIN_REGISTER(DevIlImageImporter, Magnum::Trade::DevIlImageImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")

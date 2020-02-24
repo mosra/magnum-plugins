@@ -84,7 +84,7 @@ void JpegImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 UnsignedInt JpegImporter::doImage2DCount() const { return 1; }
 
-Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
+Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt, UnsignedInt) {
     /* Initialize structures */
     jpeg_decompress_struct file;
     Containers::Array<char> data;
@@ -163,4 +163,4 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt) {
 }}
 
 CORRADE_PLUGIN_REGISTER(JpegImporter, Magnum::Trade::JpegImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")

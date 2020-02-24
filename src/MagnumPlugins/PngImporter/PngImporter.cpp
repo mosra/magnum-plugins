@@ -78,7 +78,7 @@ void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
-Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
+Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedInt) {
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
         "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, Containers::NullOpt);
 
@@ -235,4 +235,4 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt) {
 }}
 
 CORRADE_PLUGIN_REGISTER(PngImporter, Magnum::Trade::PngImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")
