@@ -344,8 +344,11 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
+        MAGNUM_ASSIMPIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(UnsignedInt id, const char* errorPrefix);
+
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;
 

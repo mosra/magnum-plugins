@@ -1,0 +1,13 @@
+mtllib image-mips.mtl
+o First
+v -1.0 0.0 0.0
+v 1.0 0.0 0.0
+v 0.0 1.0 0.0
+usemtl First
+f 1 2 3
+o Second
+v -100.0 0.0 0.0
+v 100.0 0.0 0.0
+v 0.0 100.0 0.0
+usemtl Second
+f 4 5 6

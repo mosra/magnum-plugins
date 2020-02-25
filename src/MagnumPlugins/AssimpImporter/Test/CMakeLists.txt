@@ -35,6 +35,9 @@ endif()
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT BUILD_PLUGINS_STATIC)
     set(ASSIMPIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:AssimpImporter>)
+    if(WITH_DDSIMPORTER)
+        set(DDSIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DdsImporter>)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
@@ -64,10 +67,13 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         embedded-texture.blend
         image-filename-trailing-space.mtl
         image-filename-trailing-space.obj
+        image-mips.mtl
+        image-mips.obj
         light-undefined.dae
         light.dae
         mesh-material.dae
         mesh.dae
+        mips.dds
         multiple-textures.mtl r.png g.png b.png y.png
         points.obj
         scene.dae
@@ -80,12 +86,18 @@ target_include_directories(AssimpImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(AssimpImporterTest PRIVATE
         AssimpImporter Magnum::AnyImageImporter)
+    if(WITH_DDSIMPORTER)
+        target_link_libraries(AssimpImporterTest PRIVATE DdsImporter)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         target_link_libraries(AssimpImporterTest PRIVATE StbImageImporter)
     endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(AssimpImporterTest AssimpImporter)
+    if(WITH_DDSIMPORTER)
+        add_dependencies(AssimpImporterTest DdsImporter)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         add_dependencies(AssimpImporterTest StbImageImporter)
     endif()

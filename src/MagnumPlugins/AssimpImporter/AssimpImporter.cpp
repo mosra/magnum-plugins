@@ -79,6 +79,9 @@ struct AssimpImporter::File {
     std::unordered_map<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> nodeInstances;
     std::unordered_map<std::string, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
+
+    UnsignedInt imageImporterId = ~UnsignedInt{};
+    Containers::Optional<AnyImageImporter> imageImporter;
 };
 
 namespace {
@@ -653,17 +656,29 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
 
 UnsignedInt AssimpImporter::doImage2DCount() const { return _f->images.size(); }
 
-Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id) {
-    CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
-
+AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const errorPrefix) {
     const aiMaterial* mat;
     aiTextureType type;
     std::tie(mat, type) = _f->images[id];
 
+    /* Looking for the same ID, so reuse an importer populated before. If the
+       previous attempt failed, the importer is not set, so return nullptr in
+       that case. Going through everything below again would not change the
+       outcome anyway, only spam the output with redundant messages. */
+    if(_f->imageImporterId == id)
+        return _f->imageImporter ? &*_f->imageImporter : nullptr;
+
+    /* Otherwise reset the importer and remember the new ID. If the import
+       fails, the importer will stay unset, but the ID will be updated so the
+       next round can again just return nullptr above instead of going through
+       the doomed-to-fail process again. */
+    _f->imageImporter = Containers::NullOpt;
+    _f->imageImporterId = id;
+
     aiString texturePath;
     if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) != AI_SUCCESS) {
-        Error() << "Trade::AssimpImporter::image2D(): error getting path for texture" << id;
-        return Containers::NullOpt;
+        Error{} << errorPrefix << "error getting path for texture" << id;
+        return {};
     }
 
     std::string path = texturePath.C_Str();
@@ -675,8 +690,8 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
 
         const Int index = Int(std::strtol(str, &err, 10));
         if(err == nullptr || err == str) {
-            Error() << "Trade::AssimpImporter::image2D(): embedded texture path did not contain a valid integer string";
-            return Containers::NullOpt;
+            Error{} << errorPrefix << "embedded texture path did not contain a valid integer string";
+            return nullptr;
         }
 
         const aiTexture* texture = _f->scene->mTextures[index];
@@ -686,20 +701,20 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
 
             AnyImageImporter importer{*manager()};
             if(!importer.openData(textureData))
-                return Containers::NullOpt;
-            return importer.image2D(0);
+                return nullptr;
+            return &_f->imageImporter.emplace(std::move(importer));
 
         /* Uncompressed image data */
         } else {
-            Error() << "Trade::AssimpImporter::image2D(): uncompressed embedded image data is not supported";
-            return Containers::NullOpt;
+            Error{} << errorPrefix << "uncompressed embedded image data is not supported";
+            return nullptr;
         }
 
     /* Load external texture */
     } else {
         if(!_f->filePath && !fileCallback()) {
-            Error{} << "Trade::AssimpImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present";
-            return {};
+            Error{} << errorPrefix << "external images can be imported only when opening files from the filesystem or if a file callback is present";
+            return nullptr;
         }
 
         AnyImageImporter importer{*manager()};
@@ -707,9 +722,29 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
         /* Assimp doesn't trim spaces from the end of image paths in OBJ
            materials so we have to. See the image-filename-space.mtl test. */
         if(!importer.openFile(Utility::String::trim(Utility::Directory::join(_f->filePath ? *_f->filePath : "", path))))
-            return Containers::NullOpt;
-        return importer.image2D(0);
+            return nullptr;
+        return &_f->imageImporter.emplace(std::move(importer));
     }
+}
+
+UnsignedInt AssimpImporter::doImage2DLevelCount(const UnsignedInt id) {
+    CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+
+    AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::AssimpImporter::image2DLevelCount():");
+    /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
+       report 1 on failure and expect image2D() to fail later */
+    if(!importer) return 1;
+
+    return importer->image2DLevelCount(0);
+}
+
+Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
+    CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+
+    AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::AssimpImporter::image2D():");
+    if(!importer) return Containers::NullOpt;
+
+    return importer->image2D(0, level);
 }
 
 const void* AssimpImporter::doImporterState() const {
@@ -719,4 +754,4 @@ const void* AssimpImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(AssimpImporter, Magnum::Trade::AssimpImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")
