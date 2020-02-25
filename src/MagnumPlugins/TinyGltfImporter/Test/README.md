@@ -26,7 +26,7 @@ The `texture.basis` file is created from `texture.png` using the following
 command:
 
 ```sh
-basisu texture.png -output_file texture.basis -y_flip
+basisu texture.png -output_file texture.basis -y_flip -mipmap -mip_smallest 2
 ```
 
 Embedding buffers

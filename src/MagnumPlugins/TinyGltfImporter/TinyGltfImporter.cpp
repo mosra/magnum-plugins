@@ -169,6 +169,9 @@ struct TinyGltfImporter::Document {
     std::vector<std::size_t> nodeSizeOffsets;
 
     bool open = false;
+
+    UnsignedInt imageImporterId = ~UnsignedInt{};
+    Containers::Optional<AnyImageImporter> imageImporter;
 };
 
 namespace {
@@ -1365,8 +1368,20 @@ std::string TinyGltfImporter::doImage2DName(const UnsignedInt id) {
     return _d->model.images[id].name;
 }
 
-Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt id) {
-    CORRADE_ASSERT(manager(), "Trade::TinyGltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
+AbstractImporter* TinyGltfImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const errorPrefix) {
+    /* Looking for the same ID, so reuse an importer populated before. If the
+       previous attempt failed, the importer is not set, so return nullptr in
+       that case. Going through everything below again would not change the
+       outcome anyway, only spam the output with redundant messages. */
+    if(_d->imageImporterId == id)
+        return _d->imageImporter ? &*_d->imageImporter : nullptr;
+
+    /* Otherwise reset the importer and remember the new ID. If the import
+       fails, the importer will stay unset, but the ID will be updated so the
+       next round can again just return nullptr above instead of going through
+       the doomed-to-fail process again. */
+    _d->imageImporter = Containers::NullOpt;
+    _d->imageImporterId = id;
 
     /* Because we specified an empty callback for loading image data,
        Image.image, Image.width, Image.height and Image.component will not be
@@ -1374,8 +1389,8 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
 
     const tinygltf::Image& image = _d->model.images[id];
 
-    AnyImageImporter imageImporter{*manager()};
-    if(fileCallback()) imageImporter.setFileCallback(fileCallback(), fileCallbackUserData());
+    AnyImageImporter importer{*manager()};
+    if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
     /* Load embedded image */
     if(image.uri.empty()) {
@@ -1395,24 +1410,44 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
         }
 
         Containers::Optional<ImageData2D> imageData;
-        if(!imageImporter.openData(data) || !(imageData = imageImporter.image2D(0)))
-            return Containers::NullOpt;
-
-        return ImageData2D{std::move(*imageData), &image};
+        if(!importer.openData(data))
+            return nullptr;
+        return &_d->imageImporter.emplace(std::move(importer));
+    }
 
     /* Load external image */
-    } else {
-        if(!_d->filePath && !fileCallback()) {
-            Error{} << "Trade::TinyGltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present";
-            return {};
-        }
-
-        Containers::Optional<ImageData2D> imageData;
-        if(!imageImporter.openFile(Utility::Directory::join(_d->filePath ? *_d->filePath : "", image.uri)) || !(imageData = imageImporter.image2D(0)))
-            return Containers::NullOpt;
-
-        return ImageData2D{std::move(*imageData), &image};
+    if(!_d->filePath && !fileCallback()) {
+        Error{} << errorPrefix << "external images can be imported only when opening files from the filesystem or if a file callback is present";
+        return nullptr;
     }
+
+    Containers::Optional<ImageData2D> imageData;
+    if(!importer.openFile(Utility::Directory::join(_d->filePath ? *_d->filePath : "", image.uri)))
+        return nullptr;
+    return &_d->imageImporter.emplace(std::move(importer));
+}
+
+UnsignedInt TinyGltfImporter::doImage2DLevelCount(const UnsignedInt id) {
+    CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+
+    AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::TinyGltfImporter::image2DLevelCount():");
+    /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
+       report 1 on failure and expect image2D() to fail later */
+    if(!importer) return 1;
+
+    return importer->image2DLevelCount(0);
+}
+
+Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
+    CORRADE_ASSERT(manager(), "Trade::TinyGltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
+
+    AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::TinyGltfImporter::image2D():");
+    if(!importer) return Containers::NullOpt;
+
+    /* Include a pointer to the tinygltf state in the result */
+    Containers::Optional<ImageData2D> imageData = importer->image2D(0, level);
+    if(!imageData) return Containers::NullOpt;
+    return ImageData2D{std::move(*imageData), &_d->model.images[id]};
 }
 
 const void* TinyGltfImporter::doImporterState() const {
@@ -1422,4 +1457,4 @@ const void* TinyGltfImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(TinyGltfImporter, Magnum::Trade::TinyGltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")

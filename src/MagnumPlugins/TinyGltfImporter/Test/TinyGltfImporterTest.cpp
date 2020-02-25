@@ -120,6 +120,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void imageExternalNoPathNoCallback();
 
     void imageBasis();
+    void imageMipLevels();
 
     void fileCallbackBuffer();
     void fileCallbackBufferNotFound();
@@ -274,6 +275,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addInstancedTests({&TinyGltfImporterTest::imageBasis},
                       Containers::arraySize(ImageBasisData));
+
+    addTests({&TinyGltfImporterTest::imageMipLevels});
 
     addInstancedTests({&TinyGltfImporterTest::fileCallbackBuffer,
                        &TinyGltfImporterTest::fileCallbackBufferNotFound,
@@ -2101,6 +2104,66 @@ void TinyGltfImporterTest::imageBasis() {
     auto texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->image(), 1);
+}
+
+void TinyGltfImporterTest::imageMipLevels() {
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    /* Import as RGBA so we can verify the pixels */
+    _manager.metadata("BasisImporter")->configuration().setValue("format", "RGBA8");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "image-basis.gltf")));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(1), 2);
+
+    /* Verify that loading a different image will properly switch to another
+       importer instance */
+    Containers::Optional<Trade::ImageData2D> image0 = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image10 = importer->image2D(1);
+    Containers::Optional<Trade::ImageData2D> image11 = importer->image2D(1, 1);
+
+    CORRADE_VERIFY(image0);
+    CORRADE_VERIFY(image0->importerState());
+    CORRADE_VERIFY(!image0->isCompressed());
+    CORRADE_COMPARE(image0->size(), (Vector2i{5, 3}));
+    CORRADE_COMPARE(image0->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(image0->data()),
+        Containers::arrayView<UnsignedByte>({
+            168, 167, 172, 255, 157, 158, 160, 255, 173, 173, 172, 255,
+            187, 187, 186, 255, 179, 180, 182, 255, 176, 177, 182, 255,
+            160, 160, 161, 255, 159, 159, 160, 255, 188, 188, 186, 255,
+            204, 204, 204, 255, 178, 180, 185, 255, 184, 185, 187, 255,
+            193, 195, 194, 255, 188, 189, 191, 255, 184, 184, 188, 255
+        }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(image10);
+    CORRADE_VERIFY(image10->importerState());
+    CORRADE_VERIFY(!image10->isCompressed());
+    CORRADE_COMPARE(image10->size(), (Vector2i{5, 3}));
+    CORRADE_COMPARE(image10->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(image10->data()),
+        Containers::arrayView<UnsignedByte>({
+            /* Should be different from the above because this is
+               Basis-encoded, not a PNG */
+            168, 168, 168, 255, 156, 156, 156, 255, 168, 168, 168, 255,
+            190, 190, 190, 255, 182, 182, 190, 255, 178, 178, 178, 255,
+            156, 156, 156, 255, 156, 156, 156, 255, 190, 190, 190, 255,
+            202, 202, 210, 255, 178, 178, 178, 255, 190, 190, 190, 255,
+            190, 190, 190, 255, 190, 190, 190, 255, 182, 182, 190, 255
+        }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(image11);
+    CORRADE_VERIFY(image11->importerState());
+    CORRADE_VERIFY(!image11->isCompressed());
+    CORRADE_COMPARE(image11->size(), (Vector2i{2, 1}));
+    CORRADE_COMPARE(image11->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(image11->data()),
+        Containers::arrayView<UnsignedByte>({
+            172, 172, 181, 255, 184, 184, 193, 255
+        }), TestSuite::Compare::Container);
 }
 
 void TinyGltfImporterTest::fileCallbackBuffer() {
