@@ -35,6 +35,9 @@ endif()
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT BUILD_PLUGINS_STATIC)
     set(OPENGEXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:OpenGexImporter>)
+    if(WITH_DDSIMPORTER)
+        set(DDSIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DdsImporter>)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
@@ -62,6 +65,7 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         mesh-invalid.ogex
         mesh-metrics.ogex
         mesh.ogex
+        mips.dds
         object-camera.ogex
         object-geometry.ogex
         object-light.ogex
@@ -74,16 +78,23 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         object-translation.ogex
         texture-invalid.ogex
         texture.ogex
+        texture-mips.ogex
         texture-unique.ogex)
 target_include_directories(OpenGexImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(OpenGexImporterTest PRIVATE OpenGexImporter)
+    if(WITH_DDSIMPORTER)
+        target_link_libraries(OpenGexImporterTest PRIVATE DdsImporter)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         target_link_libraries(OpenGexImporterTest PRIVATE StbImageImporter)
     endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(OpenGexImporterTest OpenGexImporter)
+    if(WITH_DDSIMPORTER)
+        add_dependencies(OpenGexImporterTest DdsImporter)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         add_dependencies(OpenGexImporterTest StbImageImporter)
     endif()

@@ -256,8 +256,11 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
+        MAGNUM_OPENGEXIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(UnsignedInt id, const char* errorPrefix);
+
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt idl) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL const void* doImporterState() const override;
 

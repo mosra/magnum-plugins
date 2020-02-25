@@ -1,0 +1,11 @@
+LightObject (type = "spot") {
+    Texture (attrib = "projection") {
+        string { "mips.dds" }
+    }
+}
+
+Material {
+    Texture (attrib = "diffuse") {
+        string { "image.tga" }
+    }
+}

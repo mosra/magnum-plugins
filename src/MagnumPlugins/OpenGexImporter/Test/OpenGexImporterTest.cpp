@@ -28,12 +28,14 @@
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -109,6 +111,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void image();
     void imageNotFound();
     void imageUnique();
+    void imageMipLevels();
     void imageNoPathNoCallback();
 
     void extension();
@@ -169,6 +172,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::image,
               &OpenGexImporterTest::imageNotFound,
               &OpenGexImporterTest::imageUnique,
+              &OpenGexImporterTest::imageMipLevels,
               &OpenGexImporterTest::imageNoPathNoCallback,
 
               &OpenGexImporterTest::extension,
@@ -183,6 +187,10 @@ OpenGexImporterTest::OpenGexImporterTest() {
     #ifdef OPENGEXIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT(_manager.load(OPENGEXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     _manager.setPluginDirectory({});
+    #endif
+    /* The DdsImporter (for DDS loading / mip import tests) is optional */
+    #ifdef DDSIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT(_manager.load(DDSIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* The StbImageImporter (for TGA image loading) is optional */
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
@@ -963,6 +971,9 @@ void OpenGexImporterTest::imageNotFound() {
 
     std::ostringstream out;
     Error redirectError{&out};
+    /* The (failed) importer should get cached even in case of failure, so
+       the message should get printed just once */
+    CORRADE_VERIFY(!importer->image2D(1));
     CORRADE_VERIFY(!importer->image2D(1));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n");
 }
@@ -1013,6 +1024,53 @@ void OpenGexImporterTest::imageUnique() {
         CORRADE_VERIFY(!importer->image2D(texture2->image()));
         CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex3.tga\n");
     }
+}
+
+void OpenGexImporterTest::imageMipLevels() {
+    if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("TgaImporter plugin not found, cannot test");
+    if(_manager.loadState("DdsImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("DdsImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-mips.ogex")));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+    CORRADE_COMPARE(importer->image2DLevelCount(1), 1);
+
+    /* Verify that loading a different image will properly switch to another
+       importer instance */
+    Containers::Optional<Trade::ImageData2D> image00 = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image01 = importer->image2D(0, 1);
+    Containers::Optional<Trade::ImageData2D> image1 = importer->image2D(1);
+
+    CORRADE_VERIFY(image00);
+    CORRADE_COMPARE(image00->size(), (Vector2i{3, 2}));
+    CORRADE_COMPARE(image00->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE_AS(image00->data(), Containers::arrayView<char>({
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77'
+    }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(image01);
+    CORRADE_COMPARE(image01->size(), Vector2i{1});
+    CORRADE_COMPARE(image01->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE_AS(image01->data(), Containers::arrayView<char>({
+        '\xd4', '\xd5', '\x96'
+    }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(image1);
+    CORRADE_COMPARE(image1->size(), (Vector2i{2, 3}));
+    CORRADE_COMPARE(image1->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE_AS(image1->data(), Containers::arrayView<char>({
+        3, 2, 1, 4, 3, 2,
+        5, 4, 3, 6, 5, 4,
+        7, 6, 5, 8, 7, 6
+    }), TestSuite::Compare::Container);
 }
 
 void OpenGexImporterTest::imageNoPathNoCallback() {
