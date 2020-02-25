@@ -2091,6 +2091,7 @@ void TinyGltfImporterTest::imageBasis() {
 
     auto image = importer->image2D(1);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->importerState());
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc4x4RGBAUnorm);
