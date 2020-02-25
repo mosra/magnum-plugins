@@ -38,6 +38,12 @@ namespace Magnum {
 -   Support for the `KHR_lights_punctual` extension in
     @ref Trade::TinyGltfImporter "TinyGltfImporter", replacing the obsolete
     unuspported `KHR_lights_cmn` (see [mosra/magnum-plugins#77](https://github.com/mosra/magnum-plugins/pull/77))
+-   @ref Trade::DdsImporter "DdsImporter" and
+    @ref Trade::BasisImporter "BasisImporter", now support loading image mip
+    levels; @ref Trade::AssimpImporter "AssimpImporter",
+    @ref Trade::OpenGexImporter "OpenGexImporter" and
+    @ref Trade::TinyGltfImporter "TinyGltfImporter" were updated to proxy mip
+    level loading to image importer plugins (see [mosra/magnum#369](https://github.com/mosra/magnum/pull/369))
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
