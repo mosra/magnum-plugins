@@ -49,7 +49,7 @@ want to have more control. Cross-compiling is very similar to
 -   @ref building-plugins-packages-gentoo
 -   @ref building-plugins-packages-brew
 
-@subsection building-plugins-packages-vcpkg Vcpkg packages on Windows
+@subsection building-plugins-packages-vcpkg Vcpkg package
 
 Magnum Plugins are available as a [Vcpkg](https://github.com/Microsoft/vcpkg)
 package. See @ref building-packages-vcpkg "the Magnum Vcpkg documentation" for
