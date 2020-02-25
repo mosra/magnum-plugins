@@ -168,13 +168,15 @@ void BasisImporterTest::unconfigured() {
     {
         Warning redirectWarning{&out};
         image = importer->image2D(0);
+        /* It should warn just once, not spam every time */
+        image = importer->image2D(0);
     }
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.\n");
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");

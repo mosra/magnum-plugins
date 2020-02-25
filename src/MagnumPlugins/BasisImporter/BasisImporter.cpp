@@ -128,6 +128,8 @@ struct BasisImporter::State {
     Containers::Array<unsigned char> in;
     basist::basisu_file_info fileInfo;
 
+    bool noTranscodeFormatWarningPrinted = false;
+
     explicit State(): codebook(basist::g_global_selector_cb_size,
         basist::g_global_selector_cb) {}
 };
@@ -214,8 +216,10 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
     std::string targetFormatStr = configuration().value<std::string>("format");
     TargetFormat targetFormat;
     if(targetFormatStr.empty()) {
-        Warning{} << "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or set the format explicitly via plugin configuration.";
+        if(!_state->noTranscodeFormatWarningPrinted)
+            Warning{} << "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.";
         targetFormat = TargetFormat::RGBA8;
+        _state->noTranscodeFormatWarningPrinted = true;
     } else {
         targetFormat = configuration().value<TargetFormat>("format");
         if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
