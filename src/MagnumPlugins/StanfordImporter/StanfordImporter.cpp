@@ -33,7 +33,6 @@
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Corrade/Utility/String.h>
-#include <Magnum/Array.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/ArrayAllocator.h>
@@ -211,7 +210,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
 
     /* Parse rest of the header */
     UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
-    Array3D<VertexFormat> positionFormats, colorFormats;
+    Math::Vector3<VertexFormat> positionFormats, colorFormats;
     MeshIndexType faceSizeType{}, faceIndexType{};
     Vector3ui positionOffsets{~UnsignedInt{}}, colorOffsets{~UnsignedInt{}};
     {
