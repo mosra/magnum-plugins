@@ -49,6 +49,8 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         colors-not-same-type.ply
         colors-not-tightly-packed.ply
         colors-unsupported-type.ply
+        colors4-not-same-type.ply
+        colors4-not-tightly-packed.ply
         crlf.ply
         empty.ply
         format-invalid.ply
@@ -67,10 +69,11 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         invalid-vertex-property.ply
         invalid-vertex-type.ply
         positions-colors-float-indices-int-be.ply
-        positions-colors-float-indices-int-be-unaligned.ply
         positions-colors-float-indices-int.ply
+        positions-colors4-float-indices-int-be-unaligned.ply
+        positions-colors4-float-indices-int.ply
         positions-float-indices-uint.ply
-        positions-char-colors-ushort-indices-short-be.ply
+        positions-char-colors4-ushort-indices-short-be.ply
         positions-not-same-type.ply
         positions-not-tightly-packed.ply
         positions-short-colors-uchar-indices-char.ply

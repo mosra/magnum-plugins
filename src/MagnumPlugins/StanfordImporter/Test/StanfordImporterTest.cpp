@@ -91,7 +91,9 @@ constexpr struct {
     {"positions-unsupported-type", "unsupported position component type VertexFormat::Double"},
 
     {"colors-not-same-type", "expecting all color channels to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)"},
+    {"colors4-not-same-type", "expecting all color channels to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::Float)"},
     {"colors-not-tightly-packed", "expecting color channels to be tightly packed, but got offsets Vector(12, 14, 13) for a 1-byte type"},
+    {"colors4-not-tightly-packed", "expecting color channels to be tightly packed, but got offsets Vector(13, 14, 15, 12) for a 1-byte type"},
     {"colors-unsupported-type", "unsupported color channel type VertexFormat::Int"},
 
     {"unsupported-face-size", "unsupported face size 5"}
@@ -116,17 +118,20 @@ constexpr struct {
         VertexFormat::Vector3, VertexFormat{}},
     {"positions-colors-float-indices-int", MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector3},
+    /* Four-component colors */
+    {"positions-colors4-float-indices-int", MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat::Vector4},
     /* Testing endian flip */
     {"positions-colors-float-indices-int-be", MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector3},
     /* Testing endian flip of unaligned data */
-    {"positions-colors-float-indices-int-be-unaligned", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector3},
+    {"positions-colors4-float-indices-int-be-unaligned", MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat::Vector4},
     /* Testing various packing variants (hopefully exhausting all combinations) */
     {"positions-uchar-indices-ushort", MeshIndexType::UnsignedShort,
         VertexFormat::Vector3ub, VertexFormat{}},
-    {"positions-char-colors-ushort-indices-short-be", MeshIndexType::UnsignedShort,
-        VertexFormat::Vector3b, VertexFormat::Vector3usNormalized},
+    {"positions-char-colors4-ushort-indices-short-be", MeshIndexType::UnsignedShort,
+        VertexFormat::Vector3b, VertexFormat::Vector4usNormalized},
     {"positions-ushort-indices-uchar-be", MeshIndexType::UnsignedByte,
         VertexFormat::Vector3us, VertexFormat{}},
     {"positions-short-colors-uchar-indices-char", MeshIndexType::UnsignedByte,
@@ -233,6 +238,13 @@ constexpr Color3 Colors[]{
     {0.733333f, 0.8666666f, 0.133333f},
     {0.266667f, 0.3333333f, 0.466666f}
 };
+constexpr Color4 Colors4[]{
+    {0.8f, 0.2f, 0.4f, 0.266667f},
+    {0.6f, 0.666667f, 1.0f, 0.8666666f},
+    {0.0f, 0.0666667f, 0.9333333f, 0.466666f},
+    {0.733333f, 0.8666666f, 0.133333f, 0.666667f},
+    {0.266667f, 0.3333333f, 0.466666f, 0.0666667f}
+};
 
 void StanfordImporterTest::parse() {
     auto&& data = ParseData[testCaseInstanceId()];
@@ -255,11 +267,18 @@ void StanfordImporterTest::parse() {
         Containers::arrayView(Positions),
         TestSuite::Compare::Container);
 
-    if(data.colorFormat != VertexFormat{}) {
+    if(data.colorFormat == VertexFormat{}) {
+    } else if(vertexFormatComponentCount(data.colorFormat) == 3) {
         CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
         CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color), data.colorFormat);
         CORRADE_COMPARE_AS(Containers::arrayCast<Color3>(Containers::stridedArrayView(mesh->colorsAsArray())),
             Containers::stridedArrayView(Colors),
+            TestSuite::Compare::Container);
+    } else if(vertexFormatComponentCount(data.colorFormat) == 4) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color), data.colorFormat);
+        CORRADE_COMPARE_AS(Containers::stridedArrayView(mesh->colorsAsArray()),
+            Containers::stridedArrayView(Colors4),
             TestSuite::Compare::Container);
     }
 }

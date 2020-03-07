@@ -210,9 +210,11 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
 
     /* Parse rest of the header */
     UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
-    Math::Vector3<VertexFormat> positionFormats, colorFormats;
+    Math::Vector3<VertexFormat> positionFormats;
+    Math::Vector4<VertexFormat> colorFormats;
     MeshIndexType faceSizeType{}, faceIndexType{};
-    Vector3ui positionOffsets{~UnsignedInt{}}, colorOffsets{~UnsignedInt{}};
+    Vector3ui positionOffsets{~UnsignedInt{}};
+    Vector4ui colorOffsets{~UnsignedInt{}};
     {
         std::size_t vertexComponentOffset{};
         PropertyType propertyType{};
@@ -277,6 +279,12 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                     } else if(tokens[2] == "blue") {
                         colorOffsets.z() = vertexComponentOffset;
                         colorFormats.z() = componentFormat;
+                    /* Several people complain that Meshlab doesn't support
+                       alpha, so let's make sure we do :P
+                       https://github.com/cnr-isti-vclab/meshlab/issues/161*/
+                    } else if(tokens[2] == "alpha") {
+                        colorOffsets.w() = vertexComponentOffset;
+                        colorFormats.w() = componentFormat;
                     } else Debug{} << "Trade::StanfordImporter::mesh(): ignoring unknown vertex component" << tokens[2];
 
                     /* Add size of current component to total offset */
@@ -360,7 +368,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
 
     /* Gather all attributes */
     std::size_t attributeCount = 1;
-    if((colorOffsets < Vector3ui{~UnsignedInt{}}).any()) ++attributeCount;
+    if((colorOffsets < Vector4ui{~UnsignedInt{}}).any()) ++attributeCount;
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
     std::size_t attributeOffset = 0;
 
@@ -415,19 +423,33 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
     }
 
     /* Wrap up colors, if any */
-    if((colorOffsets < Vector3ui{~UnsignedInt{}}).any()) {
-        /* Check that we have the same type for all position coordinates */
+    if((colorOffsets < Vector4ui{~UnsignedInt{}}).any()) {
+        /* Check that we have the same type for all color coordinates. Alpha is
+           optional. */
         if(colorFormats.x() != colorFormats.y() ||
-           colorFormats.x() != colorFormats.z()) {
-            Error{} << "Trade::StanfordImporter::mesh(): expecting all color channels to have the same type but got" << colorFormats;
+           colorFormats.x() != colorFormats.z() ||
+          (colorFormats.x() != colorFormats.w() && colorFormats.w() != VertexFormat{})) {
+            Error e;
+            e << "Trade::StanfordImporter::mesh(): expecting all color channels to have the same type but got";
+            if(colorFormats.w() == VertexFormat{})
+                e << colorFormats.xyz();
+            else
+                e << colorFormats;
             return Containers::NullOpt;
         }
 
         /* And that they are right after each other in correct order */
         const UnsignedInt colorTypeSize = vertexFormatSize(colorFormats.x());
         if(colorOffsets.y() != colorOffsets.x() + colorTypeSize ||
-           colorOffsets.z() != colorOffsets.y() + colorTypeSize) {
-            Error{} << "Trade::StanfordImporter::mesh(): expecting color channels to be tightly packed, but got offsets" << colorOffsets << "for a" << colorTypeSize << Debug::nospace << "-byte type";
+           colorOffsets.z() != colorOffsets.y() + colorTypeSize ||
+          (colorOffsets.w() != colorOffsets.z() + colorTypeSize && colorOffsets.w() != ~UnsignedInt{})) {
+            Error e;
+            e << "Trade::StanfordImporter::mesh(): expecting color channels to be tightly packed, but got offsets";
+            if(colorOffsets.w() == ~UnsignedInt{})
+                e << colorOffsets.xyz();
+            else
+                e << colorOffsets;
+            e << "for a" << colorTypeSize << Debug::nospace << "-byte type";
             return Containers::NullOpt;
         }
 
@@ -443,8 +465,10 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
         if(*fileFormatNeedsEndianSwapping) {
             Containers::StridedArrayView3D<char> colorChannels{vertexData,
                 vertexData + colorOffsets.x(),
-                {3, vertexCount, colorTypeSize}, {std::ptrdiff_t(colorTypeSize), std::ptrdiff_t(vertexStride), 1}};
-            for(std::size_t channel = 0; channel != 3; ++channel) {
+                {std::size_t(colorFormats.w() == VertexFormat{} ? 3 : 4),
+                 vertexCount, colorTypeSize},
+                {std::ptrdiff_t(colorTypeSize), std::ptrdiff_t(vertexStride), 1}};
+            for(std::size_t channel = 0; channel != colorChannels.size()[0]; ++channel) {
                 if(colorTypeSize == 2)
                     Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedShort>(colorChannels[channel]));
                 else if(colorTypeSize == 4)
@@ -456,8 +480,8 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
         /* Add the attribute */
         attributeData[attributeOffset++] = MeshAttributeData{
             MeshAttribute::Color,
-            /* We want integer types normalized */
-            vertexFormat(colorFormats.x(), 3, colorFormats.x() != VertexFormat::Float),
+            /* We want integer types normalized, 3 or 4 components */
+            vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
             Containers::StridedArrayView1D<void>{vertexData,
                 vertexData + colorOffsets.x(),
                 vertexCount, vertexStride}};

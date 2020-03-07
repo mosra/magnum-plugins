@@ -1,0 +1,30 @@
+header = """
+element vertex 5
+property float x
+property float y
+property float z
+property float red
+property float green
+property float blue
+property float alpha
+element face 2
+property list int32 uint vertex_indices
+"""
+type = '<3f4f 3f4f 3f4f 3f4f 3f4f i4ii3i'
+input = [
+    1.0, 3.0, 2.0,
+        0.8, 0.2, 0.4, 0.26666666666666667,
+    1.0, 1.0, 2.0,
+        0.6, 0.66666666666666667, 1.0, 0.86666666666666667,
+    3.0, 3.0, 2.0,
+        0.0, 0.06666666666666667, 0.93333333333333333, 0.46666666666666667,
+    3.0, 1.0, 2.0,
+        0.73333333333333333, 0.86666666666666667, 0.13333333333333333, 0.66666666666666667,
+    5.0, 3.0, 9.0,
+        0.26666666666666667, 0.33333333333333333, 0.46666666666666667, 0.06666666666666667,
+
+    4, 0, 1, 2, 3,
+    3, 3, 2, 4
+]
+
+# kate: hl python

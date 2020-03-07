@@ -112,9 +112,11 @@ of PLY features, which however shouldn't affect any real-world models.
     @ref VertexFormat::Vector3s. Integer and double positions are not
     supported.
 -   All color coordinates are expected to have the same type, and be either
-    32-bit floats or unsigned bytes/shorts. Resulting color type is then
-    @ref VertexFormat::Vector3, @ref VertexFormat::Vector3ub or
-    @ref VertexFormat::Vector3us. Signed, 32-bit integer and double colors
+    32-bit floats or unsigned bytes/shorts. Alpha is supported as well,
+    resulting color type is then @ref VertexFormat::Vector3 /
+    @ref VertexFormat::Vector4, @ref VertexFormat::Vector3ub /
+    @ref VertexFormat::Vector4ub or @ref VertexFormat::Vector3us /
+    @ref VertexFormat::Vector4us. Signed, 32-bit integer and double colors
     are not supported.
 -   Indices are imported as either @ref MeshIndexType::UnsignedByte,
     @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt. Quads
