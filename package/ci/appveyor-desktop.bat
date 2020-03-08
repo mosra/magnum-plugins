@@ -28,7 +28,7 @@ rem Build libPNG. As of 2019-08-23, vcpkg is broken on the 2015 image and needs
 rem updating. Disabling the libPNG build there for now.
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_IF_VCPKG_IS_BROKEN=OFF
 IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_IF_VCPKG_IS_BROKEN=ON
-IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" vcpkg install libpng:x64-windows
+IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" vcpkg install libpng:x64-windows || exit /b
 
 rem Build Corrade
 git clone --depth 1 git://github.com/mosra/corrade.git || exit /b
