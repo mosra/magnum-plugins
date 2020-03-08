@@ -1,0 +1,22 @@
+header = """
+comment this is a simple file
+element vertex 5
+property float x
+property float y
+property float z
+element face 2
+property list int32 uint vertex_indices
+"""
+type = '<3f 3f 3f 3f 3f i4ii3i'
+input = [
+    1.0, 3.0, 2.0,
+    1.0, 1.0, 2.0,
+    3.0, 3.0, 2.0,
+    3.0, 1.0, 2.0,
+    5.0, 3.0, 9.0,
+
+    4, 0, 1, 2, 3,
+    3, 3, 2, 4
+]
+
+# kate: hl python

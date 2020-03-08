@@ -1,0 +1,24 @@
+header = """
+comment this is a simple file
+element vertex 5
+property char x
+property char y
+property char z
+element face 2
+property uint16 weight
+property list uint32 char vertex_indices
+property uint32 id
+"""
+type = '<3b 3b 3b 3b 3b HI4bI HI3bI'
+input = [
+    1, 3, 2,
+    1, 1, 2,
+    3, 3, 2,
+    3, 1, 2,
+    5, 3, 9,
+
+    0xaaaa, 4, 0, 1, 2, 3, 0xffffffff,
+    0xaaaa, 3, 3, 2, 4, 0xffffffff
+]
+
+# kate: hl python

@@ -1,0 +1,21 @@
+header = """
+element vertex 5
+property uchar x
+property uint8 y
+property uchar z
+element face 2
+property list uchar ushort vertex_indices
+"""
+type = '<3B 3B 3B 3B 3B B4HB3H'
+input = [
+    1, 3, 2,
+    1, 1, 2,
+    3, 3, 2,
+    3, 1, 2,
+    5, 3, 9,
+
+    4, 0, 1, 2, 3,
+    3, 3, 2, 4
+]
+
+# kate: hl python
