@@ -25,6 +25,7 @@
 
 #include "StanfordImporter.h"
 
+#include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
@@ -46,6 +47,9 @@ struct StanfordImporter::State {
     UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
     MeshIndexType faceSizeType{}, faceIndexType{};
     bool fileFormatNeedsEndianSwapping;
+
+    std::unordered_map<std::string, MeshAttribute> attributeNameMap;
+    Containers::Array<std::string> attributeNames;
 };
 
 StanfordImporter::StanfordImporter() {
@@ -305,7 +309,18 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
                     } else if(tokens[2] == "alpha") {
                         colorOffsets.w() = vertexComponentOffset;
                         colorFormats.w() = componentFormat;
-                    } else Debug{} << "Trade::StanfordImporter::openData(): ignoring unknown vertex component" << tokens[2];
+
+                    /* Unknown component, add to the attribute list. Stride is
+                       not known yet, using 0 until it's updated later. */
+                    } else {
+                        auto inserted = state->attributeNameMap.emplace(tokens[2],
+                            meshAttributeCustom(state->attributeNames.size()));
+                        arrayAppend(state->attributeNames, tokens[2]);
+                        arrayAppend(state->attributeData, MeshAttributeData{
+                            inserted.first->second,
+                            componentFormat,
+                            vertexComponentOffset, state->vertexCount, 0});
+                    }
 
                     /* Add size of current component to total offset */
                     vertexComponentOffset += vertexFormatSize(componentFormat);
@@ -376,11 +391,12 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    /* Gather all attributes */
-    std::size_t attributeCount = 1;
-    if((colorOffsets < Vector4ui{~UnsignedInt{}}).any()) ++attributeCount;
-    state->attributeData = Containers::Array<MeshAttributeData>{attributeCount};
-    std::size_t attributeOffset = 0;
+    /* Stride is known now, update it in custom attributes */
+    for(MeshAttributeData& attribute: state->attributeData) {
+        attribute = MeshAttributeData{
+            attribute.name(), attribute.format(),
+            attribute.offset({}), state->vertexCount, std::ptrdiff_t(state->vertexStride)};
+    }
 
     /* Wrap up positions */
     {
@@ -400,10 +416,10 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
         }
 
         /* Add the attribute */
-        state->attributeData[attributeOffset++] = MeshAttributeData{
+        arrayAppend(state->attributeData, Containers::InPlaceInit,
             MeshAttribute::Position,
             vertexFormat(positionFormats.x(), 3, false),
-            positionOffsets.x(), state->vertexCount, state->vertexStride};
+            positionOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
     }
 
     /* Wrap up colors, if any */
@@ -427,11 +443,11 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
         }
 
         /* Add the attribute */
-        state->attributeData[attributeOffset++] = MeshAttributeData{
+        arrayAppend(state->attributeData, Containers::InPlaceInit,
             MeshAttribute::Color,
             /* We want integer types normalized, 3 or 4 components */
             vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
-            colorOffsets.x(), state->vertexCount, state->vertexStride};
+            colorOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
     }
 
     if(data.size() < state->vertexStride*state->vertexCount) {
@@ -544,7 +560,10 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
             } else if(formatSize == 4) {
                 for(Containers::StridedArrayView1D<UnsignedInt> component: Containers::arrayCast<2, UnsignedInt>(mutableData, componentCount).transposed<0, 1>())
                     Utility::Endianness::swapInPlace(component);
-            } else CORRADE_ASSERT_UNREACHABLE(); /* 8-byte types not supported */
+            } else if(formatSize == 8) {
+                for(Containers::StridedArrayView1D<UnsignedLong> component: Containers::arrayCast<2, UnsignedLong>(mutableData, componentCount).transposed<0, 1>())
+                    Utility::Endianness::swapInPlace(component);
+            } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
         if(faceIndexTypeSize == 2)
@@ -554,8 +573,9 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
         else CORRADE_INTERNAL_ASSERT(faceIndexTypeSize == 1);
     }
 
-    /* We need to copy the attribute data, so use that opportunity to turn them
-       from offset-only to absolute */
+    /* We need to copy the attribute data (also because they use a forbidden
+       deleter), so use that opportunity to turn them from offset-only to
+       absolute */
     Containers::Array<MeshAttributeData> attributeData{_state->attributeData.size()};
     for(std::size_t i = 0; i != attributeData.size(); ++i) {
         attributeData[i] = MeshAttributeData{
@@ -568,6 +588,15 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
     return MeshData{MeshPrimitive::Triangles,
         std::move(indexData), indices,
         std::move(vertexData), std::move(attributeData)};
+}
+
+std::string StanfordImporter::doMeshAttributeName(UnsignedShort name) {
+    return _state && name < _state->attributeNames.size() ?
+        _state->attributeNames[name] : "";
+}
+
+MeshAttribute StanfordImporter::doMeshAttributeForName(const std::string& name) {
+    return _state ? _state->attributeNameMap[name] : MeshAttribute{};
 }
 
 }}

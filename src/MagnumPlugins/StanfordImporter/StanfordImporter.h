@@ -93,7 +93,7 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::StanfordImporter)
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
 
-@section Trade-StanfordImporter-limitations Behavior and limitations
+@section Trade-StanfordImporter-behavior Behavior and limitations
 
 In order to optimize for fast import, the importer supports a restricted subset
 of PLY features, which however shouldn't affect any real-world models.
@@ -132,6 +132,14 @@ using either @ref MeshTools::generateFlatNormals() /
 @ref MeshTools::CompileFlag::GenerateFlatNormals /
 @ref MeshTools::CompileFlag::GenerateSmoothNormals to @ref MeshTools::compile().
 
+@subsection Trade-StanfordImporter-behavior-custom-attributes Custom attributes
+
+Custom and unrecognized vertex attributes of known types are present in the
+imported mesh as well. Their mapping to/from a string can be queried using
+@ref meshAttributeName() and @ref meshAttributeForName(). Attributes with
+unknown types cause the import to fail, as the format relies on knowing the
+type size.
+
 @section Trade-StanfordImporter-configuration Plugin-specific config
 
 It's possible to tune various import options through @ref configuration(). See
@@ -159,6 +167,8 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
 
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
         MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
+        MAGNUM_STANFORDIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const std::string& name) override;
+        MAGNUM_STANFORDIMPORTER_LOCAL std::string doMeshAttributeName(UnsignedShort name) override;
 
         struct State;
         Containers::Pointer<State> _state;

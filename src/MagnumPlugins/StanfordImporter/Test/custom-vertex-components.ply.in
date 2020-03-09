@@ -1,0 +1,23 @@
+header = """
+element vertex 5
+property uchar index
+property ushort x
+property ushort y
+property uint16 z
+property double weight
+element face 2
+property list uint32 char vertex_indices
+"""
+type = '<B3Hd B3Hd B3Hd B3Hd B3Hd I4b I3b'
+input = [
+    0xaa, 1, 3, 2, 1.23456,
+    0xab, 1, 1, 2, 12.3456,
+    0xac, 3, 3, 2, 123.456,
+    0xad, 3, 1, 2, 1234.56,
+    0xae, 5, 3, 9, 12345.6,
+
+    4, 0, 1, 2, 3,
+    3, 3, 2, 4,
+]
+
+# kate: hl python

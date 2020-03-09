@@ -52,6 +52,10 @@ struct StanfordImporterTest: TestSuite::Tester {
     void parse();
     void empty();
 
+    void customAttributes();
+    void customAttributesDuplicate();
+    void customAttributesNoFileOpened();
+
     void triangleFastPath();
 
     void openTwice();
@@ -114,35 +118,42 @@ constexpr struct {
     const char* filename;
     MeshIndexType indexType;
     VertexFormat positionFormat, colorFormat;
+    UnsignedInt attributeCount;
 } ParseData[]{
     /* GCC 4.8 doesn't like just {}, needs VertexFormat{} */
     {"positions-float-indices-uint", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat{}},
+        VertexFormat::Vector3, VertexFormat{}, 1},
     {"positions-colors-float-indices-int", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector3},
+        VertexFormat::Vector3, VertexFormat::Vector3, 2},
     /* Four-component colors */
     {"positions-colors4-float-indices-int", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector4},
+        VertexFormat::Vector3, VertexFormat::Vector4, 2},
     /* Testing endian flip */
     {"positions-colors-float-indices-int-be", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector3},
+        VertexFormat::Vector3, VertexFormat::Vector3, 2},
     /* Testing endian flip of unaligned data */
     {"positions-colors4-float-indices-int-be-unaligned", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector4},
+        VertexFormat::Vector3, VertexFormat::Vector4, 4},
     /* Testing various packing variants (hopefully exhausting all combinations) */
     {"positions-uchar-indices-ushort", MeshIndexType::UnsignedShort,
-        VertexFormat::Vector3ub, VertexFormat{}},
+        VertexFormat::Vector3ub, VertexFormat{}, 1},
     {"positions-char-colors4-ushort-indices-short-be", MeshIndexType::UnsignedShort,
-        VertexFormat::Vector3b, VertexFormat::Vector4usNormalized},
+        VertexFormat::Vector3b, VertexFormat::Vector4usNormalized, 2},
     {"positions-ushort-indices-uchar-be", MeshIndexType::UnsignedByte,
-        VertexFormat::Vector3us, VertexFormat{}},
+        VertexFormat::Vector3us, VertexFormat{}, 1},
     {"positions-short-colors-uchar-indices-char", MeshIndexType::UnsignedByte,
-        VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized},
+        VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized, 2},
     /* CR/LF instead of LF */
-    {"crlf", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}},
+    {"crlf", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}, 1},
     /* Ignoring extra components */
-    {"ignored-face-components", MeshIndexType::UnsignedByte, VertexFormat::Vector3b, VertexFormat{}},
-    {"ignored-vertex-components", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}}
+    {"ignored-face-components", MeshIndexType::UnsignedByte, VertexFormat::Vector3b, VertexFormat{}, 1}
+};
+
+constexpr struct {
+    const char* filename;
+} CustomAttributeData[]{
+    {"custom-vertex-components"},
+    {"custom-vertex-components-be"}
 };
 
 constexpr struct {
@@ -166,6 +177,12 @@ StanfordImporterTest::StanfordImporterTest() {
         Containers::arraySize(ParseData));
 
     addTests({&StanfordImporterTest::empty});
+
+    addInstancedTests({&StanfordImporterTest::customAttributes},
+        Containers::arraySize(CustomAttributeData));
+
+    addTests({&StanfordImporterTest::customAttributesDuplicate,
+              &StanfordImporterTest::customAttributesNoFileOpened});
 
     addInstancedTests({&StanfordImporterTest::triangleFastPath},
         Containers::arraySize(FastTrianglePathData));
@@ -267,6 +284,8 @@ void StanfordImporterTest::parse() {
 
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(), data.attributeCount);
+
     CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE(mesh->indexType(), data.indexType);
     CORRADE_COMPARE_AS(mesh->indicesAsArray(),
@@ -313,6 +332,106 @@ void StanfordImporterTest::empty() {
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position),
         VertexFormat::Vector3);
     CORRADE_COMPARE(mesh->vertexCount(), 0);
+}
+
+void StanfordImporterTest::customAttributes() {
+    auto&& data = CustomAttributeData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::String::replaceAll(data.filename, "-", " "));
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
+
+    /* The should be available even before the mesh is imported */
+    const MeshAttribute indexAttribute = importer->meshAttributeForName("index");
+    CORRADE_COMPARE(indexAttribute, meshAttributeCustom(0));
+    CORRADE_COMPARE(importer->meshAttributeName(indexAttribute), "index");
+
+    const MeshAttribute weightAttribute = importer->meshAttributeForName("weight");
+    CORRADE_COMPARE(weightAttribute, meshAttributeCustom(1));
+    CORRADE_COMPARE(importer->meshAttributeName(weightAttribute), "weight");
+
+    /* Asking for attribute name that's out of bounds should be handled
+       gracefully */
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(1000)), "");
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(), 3);
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedByte);
+    CORRADE_COMPARE_AS(mesh->indicesAsArray(),
+        Containers::arrayView(Indices),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3us);
+    CORRADE_COMPARE_AS(mesh->positions3DAsArray(),
+        Containers::arrayView(Positions),
+        TestSuite::Compare::Container);
+
+    /* Custom attributes */
+    CORRADE_VERIFY(mesh->hasAttribute(indexAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(indexAttribute), VertexFormat::UnsignedByte);
+    CORRADE_COMPARE_AS(mesh->attribute<UnsignedByte>(indexAttribute),
+        Containers::arrayView<UnsignedByte>({
+            0xaa, 0xab, 0xac, 0xad, 0xae
+        }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(mesh->hasAttribute(weightAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(weightAttribute), VertexFormat::Double);
+    CORRADE_COMPARE_AS(mesh->attribute<Double>(weightAttribute),
+        Containers::arrayView<Double>({
+            1.23456, 12.3456, 123.456, 1234.56, 12345.6
+        }), TestSuite::Compare::Container);
+}
+
+void StanfordImporterTest::customAttributesDuplicate() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "custom-vertex-components-duplicate.ply")));
+
+    const MeshAttribute weightAttribute = importer->meshAttributeForName("weight");
+    CORRADE_COMPARE(weightAttribute, meshAttributeCustom(0));
+    CORRADE_COMPARE(importer->meshAttributeName(weightAttribute), "weight");
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedByte);
+    CORRADE_COMPARE_AS(mesh->indicesAsArray(),
+        Containers::arrayView(Indices),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3us);
+    CORRADE_COMPARE_AS(mesh->positions3DAsArray(),
+        Containers::arrayView(Positions),
+        TestSuite::Compare::Container);
+
+    /* Custom attributes. The weight is there three times, it should always be
+       the same ID, but can be a different format. */
+    CORRADE_COMPARE(mesh->attributeCount(weightAttribute), 3);
+    CORRADE_COMPARE(mesh->attributeFormat(weightAttribute, 0), VertexFormat::Float);
+    CORRADE_COMPARE_AS(mesh->attribute<Float>(weightAttribute, 0),
+        Containers::arrayView<Float>({
+            0.1f, 0.2f, 0.3f, 0.4f, 0.5f
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeFormat(weightAttribute, 1), VertexFormat::Float);
+    CORRADE_COMPARE_AS(mesh->attribute<Float>(weightAttribute, 1),
+        Containers::arrayView<Float>({
+            0.7f, 0.1f, 0.3f, 0.6f, 0.4f
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeFormat(weightAttribute, 2), VertexFormat::Double);
+    CORRADE_COMPARE_AS(mesh->attribute<Double>(weightAttribute, 2),
+        Containers::arrayView<Double>({
+            0.2, 0.7, 0.4, 0.0, 0.1
+        }), TestSuite::Compare::Container);
+}
+
+void StanfordImporterTest::customAttributesNoFileOpened() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
+    CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
 }
 
 void StanfordImporterTest::triangleFastPath() {
