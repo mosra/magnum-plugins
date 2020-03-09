@@ -40,6 +40,14 @@
 
 namespace Magnum { namespace Trade {
 
+struct StanfordImporter::State {
+    Containers::Array<char> data;
+    Containers::Array<MeshAttributeData> attributeData;
+    UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
+    MeshIndexType faceSizeType{}, faceIndexType{};
+    bool fileFormatNeedsEndianSwapping;
+};
+
 StanfordImporter::StanfordImporter() {
     /** @todo horrible workaround, fix this properly */
     configuration().setValue("triangleFastPath", 0.8f);
@@ -51,28 +59,9 @@ StanfordImporter::~StanfordImporter() = default;
 
 ImporterFeatures StanfordImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool StanfordImporter::doIsOpened() const { return !!_in; }
+bool StanfordImporter::doIsOpened() const { return !!_state; }
 
-void StanfordImporter::doClose() { _in = nullptr; }
-
-void StanfordImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    /* Because here we're copying the data and using the _in to check if file
-       is opened, having them nullptr would mean openData() would fail without
-       any error message. It's not possible to do this check on the importer
-       side, because empty file is valid in some formats (OBJ or glTF). We also
-       can't do the full import here because then doImage2D() would need to
-       copy the imported data instead anyway (and the uncompressed size is much
-       larger). This way it'll also work nicely with a future openMemory(). */
-    if(data.empty()) {
-        Error{} << "Trade::StanfordImporter::openData(): the file is empty";
-        return;
-    }
-
-    _in = Containers::Array<char>{Containers::NoInit, data.size()};
-    Utility::copy(data, _in);
-}
-
-UnsignedInt StanfordImporter::doMeshCount() const { return 1; }
+void StanfordImporter::doClose() { _state = nullptr; }
 
 namespace {
 
@@ -155,7 +144,7 @@ std::string extractLine(Containers::ArrayView<const char>& in) {
 template<std::size_t size> bool checkVectorAttributeValidity(const Math::Vector<size, VertexFormat>& formats, const Math::Vector<size, UnsignedInt>& offsets, const char* name) {
     /* Check that we have the same type for all position coordinates */
     if(formats != Math::Vector<size, VertexFormat>{formats[0]}) {
-        Error{} << "Trade::StanfordImporter::mesh(): expecting all" << name << "components to have the same type but got" << formats;
+        Error{} << "Trade::StanfordImporter::openData(): expecting all" << name << "components to have the same type but got" << formats;
         return false;
     }
 
@@ -163,7 +152,7 @@ template<std::size_t size> bool checkVectorAttributeValidity(const Math::Vector<
     const UnsignedInt formatSize = vertexFormatSize(formats[0]);
     for(std::size_t i = 1; i != size; ++i) {
         if(offsets[i] != offsets[i - 1] + formatSize) {
-            Error{} << "Trade::StanfordImporter::mesh(): expecting" << name << "components to be tightly packed, but got offsets" << offsets << "for a" << formatSize << Debug::nospace << "-byte type";
+            Error{} << "Trade::StanfordImporter::openData(): expecting" << name << "components to be tightly packed, but got offsets" << offsets << "for a" << formatSize << Debug::nospace << "-byte type";
             return false;
         }
     }
@@ -173,23 +162,36 @@ template<std::size_t size> bool checkVectorAttributeValidity(const Math::Vector<
 
 }
 
-Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt) {
-    Containers::ArrayView<const char> in = _in;
+void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
+    /* Because here we're copying the data and using the _in to check if file
+       is opened, having them nullptr would mean openData() would fail without
+       any error message. It's not possible to do this check on the importer
+       side, because empty file is valid in some formats (OBJ or glTF). We also
+       can't do the full import here because then doImage2D() would need to
+       copy the imported data instead anyway (and the uncompressed size is much
+       larger). This way it'll also work nicely with a future openMemory(). */
+    if(data.empty()) {
+        Error{} << "Trade::StanfordImporter::openData(): the file is empty";
+        return;
+    }
+
+    /* Initialize the state */
+    auto state = Containers::pointer<State>();
 
     /* Check file signature */
     {
-        std::string header = Utility::String::rtrim(extractLine(in));
+        std::string header = Utility::String::rtrim(extractLine(data));
         if(header != "ply") {
-            Error() << "Trade::StanfordImporter::mesh(): invalid file signature" << header;
-            return Containers::NullOpt;
+            Error{} << "Trade::StanfordImporter::openData(): invalid file signature" << header;
+            return;
         }
     }
 
     /* Parse format line */
-    Containers::Optional<bool> fileFormatNeedsEndianSwapping{};
+    Containers::Optional<bool> fileFormatNeedsEndianSwapping;
     {
-        while(in) {
-            const std::string line = extractLine(in);
+        while(data) {
+            const std::string line = extractLine(data);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
             /* Skip empty lines and comments */
@@ -197,13 +199,13 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                 continue;
 
             if(tokens[0] != "format") {
-                Error{} << "Trade::StanfordImporter::mesh(): expected format line, got" << line;
-                return Containers::NullOpt;
+                Error{} << "Trade::StanfordImporter::openData(): expected format line, got" << line;
+                return;
             }
 
             if(tokens.size() != 3) {
-                Error() << "Trade::StanfordImporter::mesh(): invalid format line" << line;
-                return Containers::NullOpt;
+                Error() << "Trade::StanfordImporter::openData(): invalid format line" << line;
+                return;
             }
 
             if(tokens[2] == "1.0") {
@@ -216,29 +218,28 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                 }
             }
 
-            Error() << "Trade::StanfordImporter::mesh(): unsupported file format" << tokens[1] << tokens[2];
-            return Containers::NullOpt;
+            Error{} << "Trade::StanfordImporter::openData(): unsupported file format" << tokens[1] << tokens[2];
+            return;
         }
     }
 
     /* Check format line consistency */
     if(!fileFormatNeedsEndianSwapping) {
-        Error() << "Trade::StanfordImporter::mesh(): missing format line";
-        return Containers::NullOpt;
+        Error{} << "Trade::StanfordImporter::openData(): missing format line";
+        return;
     }
+    state->fileFormatNeedsEndianSwapping = *fileFormatNeedsEndianSwapping;
 
     /* Parse rest of the header */
-    UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
     Math::Vector3<VertexFormat> positionFormats;
     Math::Vector4<VertexFormat> colorFormats;
-    MeshIndexType faceSizeType{}, faceIndexType{};
     Vector3ui positionOffsets{~UnsignedInt{}};
     Vector4ui colorOffsets{~UnsignedInt{}};
     {
         std::size_t vertexComponentOffset{};
         PropertyType propertyType{};
-        while(in) {
-            const std::string line = extractLine(in);
+        while(data) {
+            const std::string line = extractLine(data);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
             /* Skip empty lines and comments */
@@ -249,18 +250,18 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
             if(tokens[0] == "element") {
                 /* Vertex elements */
                 if(tokens.size() == 3 && tokens[1] == "vertex") {
-                    vertexCount = std::stoi(tokens[2]);
+                    state->vertexCount = std::stoi(tokens[2]);
                     propertyType = PropertyType::Vertex;
 
                 /* Face elements */
                 } else if(tokens.size() == 3 &&tokens[1] == "face") {
-                    faceCount = std::stoi(tokens[2]);
+                    state->faceCount = std::stoi(tokens[2]);
                     propertyType = PropertyType::Face;
 
                 /* Something else */
                 } else {
-                    Error() << "Trade::StanfordImporter::mesh(): unknown element" << tokens[1];
-                    return Containers::NullOpt;
+                    Error{} << "Trade::StanfordImporter::openData(): unknown element" << tokens[1];
+                    return;
                 }
 
             /* Element properties */
@@ -268,15 +269,15 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                 /* Vertex element properties */
                 if(propertyType == PropertyType::Vertex) {
                     if(tokens.size() != 3) {
-                        Error() << "Trade::StanfordImporter::mesh(): invalid vertex property line" << line;
-                        return Containers::NullOpt;
+                        Error{} << "Trade::StanfordImporter::openData(): invalid vertex property line" << line;
+                        return;
                     }
 
                     /* Component type */
                     const VertexFormat componentFormat = parseAttributeType(tokens[1]);
                     if(componentFormat == VertexFormat{}) {
-                        Error() << "Trade::StanfordImporter::mesh(): invalid vertex component type" << tokens[1];
-                        return Containers::NullOpt;
+                        Error{} << "Trade::StanfordImporter::openData(): invalid vertex component type" << tokens[1];
+                        return;
                     }
 
                     /* Component */
@@ -304,7 +305,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                     } else if(tokens[2] == "alpha") {
                         colorOffsets.w() = vertexComponentOffset;
                         colorFormats.w() = componentFormat;
-                    } else Debug{} << "Trade::StanfordImporter::mesh(): ignoring unknown vertex component" << tokens[2];
+                    } else Debug{} << "Trade::StanfordImporter::openData(): ignoring unknown vertex component" << tokens[2];
 
                     /* Add size of current component to total offset */
                     vertexComponentOffset += vertexFormatSize(componentFormat);
@@ -313,42 +314,42 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                 } else if(propertyType == PropertyType::Face) {
                     /* Face vertex indices */
                     if(tokens.size() == 5 && tokens[1] == "list" && tokens[4] == "vertex_indices") {
-                        faceIndicesOffset = faceSkip;
-                        faceSkip = 0;
+                        state->faceIndicesOffset = state->faceSkip;
+                        state->faceSkip = 0;
 
                         /* Face size type */
-                        if((faceSizeType = parseIndexType(tokens[2])) == MeshIndexType{}) {
-                            Error() << "Trade::StanfordImporter::mesh(): invalid face size type" << tokens[2];
-                            return Containers::NullOpt;
+                        if((state->faceSizeType = parseIndexType(tokens[2])) == MeshIndexType{}) {
+                            Error{} << "Trade::StanfordImporter::openData(): invalid face size type" << tokens[2];
+                            return;
                         }
 
                         /* Face index type */
-                        if((faceIndexType = parseIndexType(tokens[3])) == MeshIndexType{}) {
-                            Error() << "Trade::StanfordImporter::mesh(): invalid face index type" << tokens[3];
-                            return Containers::NullOpt;
+                        if((state->faceIndexType = parseIndexType(tokens[3])) == MeshIndexType{}) {
+                            Error{} << "Trade::StanfordImporter::openData(): invalid face index type" << tokens[3];
+                            return;
                         }
 
                     /* Ignore unknown properties */
                     } else if(tokens.size() == 3) {
                         const VertexFormat faceFormat = parseAttributeType(tokens[1]);
                         if(faceFormat == VertexFormat{}) {
-                            Error{} << "Trade::StanfordImporter::mesh(): invalid face component type" << tokens[1];
-                            return Containers::NullOpt;
+                            Error{} << "Trade::StanfordImporter::openData(): invalid face component type" << tokens[1];
+                            return;
                         }
 
-                        Debug{} << "Trade::StanfordImporter::mesh(): ignoring unknown face component" << tokens[2];
-                        faceSkip += vertexFormatSize(faceFormat);
+                        Debug{} << "Trade::StanfordImporter::openData(): ignoring unknown face component" << tokens[2];
+                        state->faceSkip += vertexFormatSize(faceFormat);
 
                     /* Fail on unknown lines */
                     } else {
-                        Error() << "Trade::StanfordImporter::mesh(): invalid face property line" << line;
-                        return Containers::NullOpt;
+                        Error() << "Trade::StanfordImporter::openData(): invalid face property line" << line;
+                        return;
                     }
 
                 /* Unexpected property line */
                 } else if(propertyType == PropertyType{}) {
-                    Error() << "Trade::StanfordImporter::mesh(): unexpected property line";
-                    return Containers::NullOpt;
+                    Error{} << "Trade::StanfordImporter::openData(): unexpected property line";
+                    return;
                 }
 
             /* Header end */
@@ -357,28 +358,28 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
 
             /* Something else */
             } else {
-                Error() << "Trade::StanfordImporter::mesh(): unknown line" << line;
-                return Containers::NullOpt;
+                Error{} << "Trade::StanfordImporter::openData(): unknown line" << line;
+                return;
             }
         }
 
-        vertexStride = vertexComponentOffset;
+        state->vertexStride = vertexComponentOffset;
     }
 
     /* Check header consistency */
     if((positionOffsets >= Vector3ui{~UnsignedInt{}}).any()) {
-        Error() << "Trade::StanfordImporter::mesh(): incomplete vertex specification";
-        return Containers::NullOpt;
+        Error{} << "Trade::StanfordImporter::openData(): incomplete vertex specification";
+        return;
     }
-    if(faceSizeType == MeshIndexType{} || faceIndexType == MeshIndexType{}) {
-        Error() << "Trade::StanfordImporter::mesh(): incomplete face specification";
-        return Containers::NullOpt;
+    if(state->faceSizeType == MeshIndexType{} || state->faceIndexType == MeshIndexType{}) {
+        Error{} << "Trade::StanfordImporter::openData(): incomplete face specification";
+        return;
     }
 
     /* Gather all attributes */
     std::size_t attributeCount = 1;
     if((colorOffsets < Vector4ui{~UnsignedInt{}}).any()) ++attributeCount;
-    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    state->attributeData = Containers::Array<MeshAttributeData>{attributeCount};
     std::size_t attributeOffset = 0;
 
     /* Wrap up positions */
@@ -386,7 +387,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
         /* Check that all components have the same type and right after each
            other */
         if(!checkVectorAttributeValidity(positionFormats, positionOffsets, "position"))
-            return Containers::NullOpt;
+            return;
 
         /* Ensure the type is one of allowed */
         if(positionFormats.x() != VertexFormat::Float &&
@@ -394,15 +395,15 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
            positionFormats.x() != VertexFormat::Byte &&
            positionFormats.x() != VertexFormat::UnsignedShort &&
            positionFormats.x() != VertexFormat::Short) {
-            Error{} << "Trade::StanfordImporter::mesh(): unsupported position component type" << positionFormats.x();
-            return Containers::NullOpt;
+            Error{} << "Trade::StanfordImporter::openData(): unsupported position component type" << positionFormats.x();
+            return;
         }
 
         /* Add the attribute */
-        attributeData[attributeOffset++] = MeshAttributeData{
+        state->attributeData[attributeOffset++] = MeshAttributeData{
             MeshAttribute::Position,
             vertexFormat(positionFormats.x(), 3, false),
-            positionOffsets.x(), vertexCount, vertexStride};
+            positionOffsets.x(), state->vertexCount, state->vertexStride};
     }
 
     /* Wrap up colors, if any */
@@ -411,54 +412,64 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
            other. Alpha is optional. */
         if(colorFormats.w() == VertexFormat{}) {
             if(!checkVectorAttributeValidity(colorFormats.xyz(), colorOffsets.xyz(), "color"))
-                return Containers::NullOpt;
+                return;
         } else {
             if(!checkVectorAttributeValidity(colorFormats, colorOffsets, "color"))
-                return Containers::NullOpt;
+                return;
         }
 
         /* Ensure the type is one of allowed */
         if(colorFormats.x() != VertexFormat::Float &&
            colorFormats.x() != VertexFormat::UnsignedByte &&
            colorFormats.x() != VertexFormat::UnsignedShort) {
-            Error{} << "Trade::StanfordImporter::mesh(): unsupported color component type" << colorFormats.x();
-            return Containers::NullOpt;
+            Error{} << "Trade::StanfordImporter::openData(): unsupported color component type" << colorFormats.x();
+            return;
         }
 
         /* Add the attribute */
-        attributeData[attributeOffset++] = MeshAttributeData{
+        state->attributeData[attributeOffset++] = MeshAttributeData{
             MeshAttribute::Color,
             /* We want integer types normalized, 3 or 4 components */
             vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
-            colorOffsets.x(), vertexCount, vertexStride};
+            colorOffsets.x(), state->vertexCount, state->vertexStride};
     }
 
-    /* Copy all vertex data */
-    if(in.size() < vertexStride*vertexCount) {
-        Error() << "Trade::StanfordImporter::mesh(): incomplete vertex data";
-        return Containers::NullOpt;
+    if(data.size() < state->vertexStride*state->vertexCount) {
+        Error{} << "Trade::StanfordImporter::openData(): incomplete vertex data";
+        return;
     }
+
+    /* All good, copy the rest of the data to the state struct and save it */
+    state->data = Containers::Array<char>{Containers::NoInit, data.size()};
+    Utility::copy(data, state->data);
+    _state = std::move(state);
+}
+
+UnsignedInt StanfordImporter::doMeshCount() const { return 1; }
+
+Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt) {
+    /* Copy all vertex data */
     Containers::Array<char> vertexData{Containers::NoInit,
-        vertexStride*vertexCount};
-    Utility::copy(in.prefix(vertexStride*vertexCount), vertexData);
-    in = in.suffix(vertexStride*vertexCount);
+        _state->vertexStride*_state->vertexCount};
+    Utility::copy(_state->data.prefix(vertexData.size()), vertexData);
+    Containers::ArrayView<const char> in = _state->data.suffix(vertexData.size());
 
     /* Parse faces, keeping the original index type */
     Containers::Array<char> indexData;
-    const UnsignedInt faceIndexTypeSize = meshIndexTypeSize(faceIndexType);
-    const UnsignedInt faceSizeTypeSize = meshIndexTypeSize(faceSizeType);
+    const UnsignedInt faceIndexTypeSize = meshIndexTypeSize(_state->faceIndexType);
+    const UnsignedInt faceSizeTypeSize = meshIndexTypeSize(_state->faceSizeType);
 
     /* Fast path -- if all faces are triangles, we can just copy all
        indices directly without parsing anything */
     /** @todo this additionally needs to be disabled when per-face attribs are
         imported too */
-    if(configuration().value<bool>("triangleFastPath") && in.size() == faceCount*(faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + faceSkip)) {
+    if(configuration().value<bool>("triangleFastPath") && in.size() == _state->faceCount*(_state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip)) {
         indexData = Containers::Array<char>{Containers::NoInit,
-            faceCount*3*faceIndexTypeSize};
+            _state->faceCount*3*faceIndexTypeSize};
         Containers::StridedArrayView2D<const char> src{in,
-            in + faceIndicesOffset + faceSizeTypeSize, {faceCount, 3*faceIndexTypeSize}, {std::ptrdiff_t(faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + faceSkip), 1}};
+            in + _state->faceIndicesOffset + faceSizeTypeSize, {_state->faceCount, 3*faceIndexTypeSize}, {std::ptrdiff_t(_state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip), 1}};
         Containers::StridedArrayView2D<char> dst{indexData,
-            {faceCount, 3*faceIndexTypeSize}};
+            {_state->faceCount, 3*faceIndexTypeSize}};
         Utility::copy(src, dst);
 
     /* Otherwise reserve optimistically amount for all-triangle faces, and let
@@ -467,32 +478,32 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
        (assuming no stray data at EOF) */
     } else {
         Containers::arrayReserve<ArrayAllocator>(indexData,
-            faceCount*3*faceIndexTypeSize);
-        for(std::size_t i = 0; i != faceCount; ++i) {
-            if(in.size() < faceIndicesOffset + faceSizeTypeSize) {
+            _state->faceCount*3*faceIndexTypeSize);
+        for(std::size_t i = 0; i != _state->faceCount; ++i) {
+            if(in.size() < _state->faceIndicesOffset + faceSizeTypeSize) {
                 Error() << "Trade::StanfordImporter::mesh(): incomplete index data";
                 return Containers::NullOpt;
             }
 
-            in = in.suffix(faceIndicesOffset);
+            in = in.suffix(_state->faceIndicesOffset);
 
             /* Get face size */
             Containers::ArrayView<const char> buffer = in.prefix(faceSizeTypeSize);
             in = in.suffix(faceSizeTypeSize);
-            const UnsignedInt faceSize = extractIndexValue<UnsignedInt>(buffer, faceSizeType, *fileFormatNeedsEndianSwapping);
+            const UnsignedInt faceSize = extractIndexValue<UnsignedInt>(buffer, _state->faceSizeType, _state->fileFormatNeedsEndianSwapping);
             if(faceSize < 3 || faceSize > 4) {
                 Error() << "Trade::StanfordImporter::mesh(): unsupported face size" << faceSize;
                 return Containers::NullOpt;
             }
 
             /* Parse face indices */
-            if(in.size() < faceIndexTypeSize*faceSize + faceSkip) {
+            if(in.size() < faceIndexTypeSize*faceSize + _state->faceSkip) {
                 Error() << "Trade::StanfordImporter::mesh(): incomplete face data";
                 return Containers::NullOpt;
             }
 
             buffer = in.prefix(faceIndexTypeSize*faceSize);
-            in = in.suffix(faceIndexTypeSize*faceSize + faceSkip);
+            in = in.suffix(faceIndexTypeSize*faceSize + _state->faceSkip);
 
             /* Append either the triangle or the first triangle of the quad */
             Containers::arrayAppend<ArrayAllocator>(indexData,
@@ -515,8 +526,8 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
     }
 
     /* Endian-swap the data, if needed */
-    if(*fileFormatNeedsEndianSwapping) {
-        for(const MeshAttributeData& attribute: attributeData) {
+    if(_state->fileFormatNeedsEndianSwapping) {
+        for(const MeshAttributeData& attribute: _state->attributeData) {
             const UnsignedInt formatSize =
                 vertexFormatSize(vertexFormatComponentFormat(attribute.format()));
             if(formatSize == 1) continue;
@@ -543,7 +554,17 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
         else CORRADE_INTERNAL_ASSERT(faceIndexTypeSize == 1);
     }
 
-    MeshIndexData indices{faceIndexType, indexData};
+    /* We need to copy the attribute data, so use that opportunity to turn them
+       from offset-only to absolute */
+    Containers::Array<MeshAttributeData> attributeData{_state->attributeData.size()};
+    for(std::size_t i = 0; i != attributeData.size(); ++i) {
+        attributeData[i] = MeshAttributeData{
+            _state->attributeData[i].name(),
+            _state->attributeData[i].format(),
+            _state->attributeData[i].data(vertexData)};
+    }
+
+    MeshIndexData indices{_state->faceIndexType, indexData};
     return MeshData{MeshPrimitive::Triangles,
         std::move(indexData), indices,
         std::move(vertexData), std::move(attributeData)};

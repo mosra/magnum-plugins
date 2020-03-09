@@ -64,48 +64,50 @@ struct StanfordImporterTest: TestSuite::Tester {
 constexpr struct {
     const char* filename;
     const char* message;
+    bool duringOpen;
 } InvalidData[]{
-    {"invalid-signature", "invalid file signature bla"},
+    {"invalid-signature", "invalid file signature bla", true},
 
-    {"format-invalid", "invalid format line format binary_big_endian 1.0 extradata"},
-    {"format-unsupported", "unsupported file format ascii 1.0"},
-    {"format-missing", "missing format line"},
-    {"format-too-late", "expected format line, got element face 1"},
+    {"format-invalid", "invalid format line format binary_big_endian 1.0 extradata", true},
+    {"format-unsupported", "unsupported file format ascii 1.0", true},
+    {"format-missing", "missing format line", true},
+    {"format-too-late", "expected format line, got element face 1", true},
 
-    {"unknown-line", "unknown line heh"},
-    {"unknown-element", "unknown element edge"},
+    {"unknown-line", "unknown line heh", true},
+    {"unknown-element", "unknown element edge", true},
 
-    {"unexpected-property", "unexpected property line"},
-    {"invalid-vertex-property", "invalid vertex property line property float x extradata"},
-    {"invalid-vertex-type", "invalid vertex component type float16"},
-    {"invalid-face-property", "invalid face property line property float x extradata"},
-    {"invalid-face-type", "invalid face component type float16"},
-    {"invalid-face-size-type", "invalid face size type float"},
-    {"invalid-face-index-type", "invalid face index type float"},
+    {"unexpected-property", "unexpected property line", true},
+    {"invalid-vertex-property", "invalid vertex property line property float x extradata", true},
+    {"invalid-vertex-type", "invalid vertex component type float16", true},
+    {"invalid-face-property", "invalid face property line property float x extradata", true},
+    {"invalid-face-type", "invalid face component type float16", true},
+    {"invalid-face-size-type", "invalid face size type float", true},
+    {"invalid-face-index-type", "invalid face index type float", true},
 
-    {"incomplete-vertex-specification", "incomplete vertex specification"},
-    {"incomplete-face-specification", "incomplete face specification"},
+    {"incomplete-vertex-specification", "incomplete vertex specification", true},
+    {"incomplete-face-specification", "incomplete face specification", true},
 
-    {"positions-not-same-type", "expecting all position components to have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::UnsignedByte, VertexFormat::UnsignedShort)"},
-    {"positions-not-tightly-packed", "expecting position components to be tightly packed, but got offsets Vector(0, 4, 2) for a 2-byte type"},
-    {"positions-unsupported-type", "unsupported position component type VertexFormat::Double"},
+    {"positions-not-same-type", "expecting all position components to have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::UnsignedByte, VertexFormat::UnsignedShort)", true},
+    {"positions-not-tightly-packed", "expecting position components to be tightly packed, but got offsets Vector(0, 4, 2) for a 2-byte type", true},
+    {"positions-unsupported-type", "unsupported position component type VertexFormat::Double", true},
 
-    {"colors-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)"},
-    {"colors4-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::Float)"},
-    {"colors-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(12, 14, 13) for a 1-byte type"},
-    {"colors4-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(13, 14, 15, 12) for a 1-byte type"},
-    {"colors-unsupported-type", "unsupported color component type VertexFormat::Int"},
+    {"colors-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)", true},
+    {"colors4-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::Float)", true},
+    {"colors-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(12, 14, 13) for a 1-byte type", true},
+    {"colors4-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(13, 14, 15, 12) for a 1-byte type", true},
+    {"colors-unsupported-type", "unsupported color component type VertexFormat::Int", true},
 
-    {"unsupported-face-size", "unsupported face size 5"}
+    {"unsupported-face-size", "unsupported face size 5", false}
 };
 
 constexpr struct {
     std::size_t prefix;
     const char* message;
+    bool duringOpen;
 } ShortFileData[]{
-    {0x103, "incomplete vertex data"},
-    {0x107, "incomplete index data"},
-    {0x117, "incomplete face data"}
+    {0x103, "incomplete vertex data", true},
+    {0x107, "incomplete index data", false},
+    {0x117, "incomplete face data", false}
 };
 
 constexpr struct {
@@ -183,12 +185,17 @@ void StanfordImporterTest::invalid() {
     setTestCaseDescription(Utility::String::replaceAll(data.filename, "-", " "));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::mesh(): {}\n", data.message));
+    const bool failed = !importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename)));
+    CORRADE_VERIFY(failed == data.duringOpen);
+    if(!failed) {
+        CORRADE_VERIFY(!importer->mesh(0));
+    }
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::{}(): {}\n",
+        data.duringOpen ? "openData" : "mesh",
+        data.message));
 }
 
 void StanfordImporterTest::fileEmpty() {
@@ -210,9 +217,14 @@ void StanfordImporterTest::fileTooShort() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(importer->openData(file.prefix(data.prefix)));
-    CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::mesh(): {}\n", data.message));
+    const bool failed = !importer->openData(file.prefix(data.prefix));
+    CORRADE_VERIFY(failed == data.duringOpen);
+    if(!failed) {
+        CORRADE_VERIFY(!importer->mesh(0));
+    }
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::{}(): {}\n",
+        data.duringOpen ? "openData" : "mesh",
+        data.message));
 }
 
 /*

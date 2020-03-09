@@ -29,7 +29,7 @@
  * @brief Class @ref Magnum::Trade::StanfordImporter
  */
 
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Pointer.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "MagnumPlugins/StanfordImporter/configure.h"
@@ -160,7 +160,8 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
         MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
-        Containers::Array<char> _in;
+        struct State;
+        Containers::Pointer<State> _state;
 };
 
 }}
