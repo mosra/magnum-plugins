@@ -152,6 +152,25 @@ std::string extractLine(Containers::ArrayView<const char>& in) {
     return {out.begin(), out.end()};
 }
 
+template<std::size_t size> bool checkVectorAttributeValidity(const Math::Vector<size, VertexFormat>& formats, const Math::Vector<size, UnsignedInt>& offsets, const char* name) {
+    /* Check that we have the same type for all position coordinates */
+    if(formats != Math::Vector<size, VertexFormat>{formats[0]}) {
+        Error{} << "Trade::StanfordImporter::mesh(): expecting all" << name << "components to have the same type but got" << formats;
+        return false;
+    }
+
+    /* And that they are right after each other in correct order */
+    const UnsignedInt formatSize = vertexFormatSize(formats[0]);
+    for(std::size_t i = 1; i != size; ++i) {
+        if(offsets[i] != offsets[i - 1] + formatSize) {
+            Error{} << "Trade::StanfordImporter::mesh(): expecting" << name << "components to be tightly packed, but got offsets" << offsets << "for a" << formatSize << Debug::nospace << "-byte type";
+            return false;
+        }
+    }
+
+    return true;
+}
+
 }
 
 Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt) {
@@ -356,16 +375,6 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
         return Containers::NullOpt;
     }
 
-    /* Copy all vertex data */
-    if(in.size() < vertexStride*vertexCount) {
-        Error() << "Trade::StanfordImporter::mesh(): incomplete vertex data";
-        return Containers::NullOpt;
-    }
-    Containers::Array<char> vertexData{Containers::NoInit,
-        vertexStride*vertexCount};
-    Utility::copy(in.prefix(vertexStride*vertexCount), vertexData);
-    in = in.suffix(vertexStride*vertexCount);
-
     /* Gather all attributes */
     std::size_t attributeCount = 1;
     if((colorOffsets < Vector4ui{~UnsignedInt{}}).any()) ++attributeCount;
@@ -374,20 +383,10 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
 
     /* Wrap up positions */
     {
-        /* Check that we have the same type for all position coordinates */
-        if(positionFormats.x() != positionFormats.y() ||
-           positionFormats.x() != positionFormats.z()) {
-            Error{} << "Trade::StanfordImporter::mesh(): expecting all position coordinates to have the same type but got" << positionFormats;
+        /* Check that all components have the same type and right after each
+           other */
+        if(!checkVectorAttributeValidity(positionFormats, positionOffsets, "position"))
             return Containers::NullOpt;
-        }
-
-        /* And that they are right after each other in correct order */
-        const UnsignedInt positionFormatSize = vertexFormatSize(positionFormats.x());
-        if(positionOffsets.y() != positionOffsets.x() + positionFormatSize ||
-           positionOffsets.z() != positionOffsets.y() + positionFormatSize) {
-            Error{} << "Trade::StanfordImporter::mesh(): expecting position coordinates to be tightly packed, but got offsets" << positionOffsets << "for a" << positionFormatSize << Debug::nospace << "-byte type";
-            return Containers::NullOpt;
-        }
 
         /* Ensure the type is one of allowed */
         if(positionFormats.x() != VertexFormat::Float &&
@@ -399,82 +398,31 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
             return Containers::NullOpt;
         }
 
-        /* Endian-swap them, if needed */
-        if(*fileFormatNeedsEndianSwapping) {
-            Containers::StridedArrayView3D<char> positionComponents{vertexData,
-                vertexData + positionOffsets.x(),
-                {3, vertexCount, positionFormatSize}, {std::ptrdiff_t(positionFormatSize), std::ptrdiff_t(vertexStride), 1}};
-            for(std::size_t component = 0; component != 3; ++component) {
-                if(positionFormatSize == 2)
-                    Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedShort>(positionComponents[component]));
-                else if(positionFormatSize == 4)
-                    Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedInt>(positionComponents[component]));
-                else CORRADE_INTERNAL_ASSERT(positionFormatSize == 1);
-            }
-        }
-
         /* Add the attribute */
         attributeData[attributeOffset++] = MeshAttributeData{
             MeshAttribute::Position,
             vertexFormat(positionFormats.x(), 3, false),
-            Containers::StridedArrayView1D<void>{vertexData,
-                vertexData + positionOffsets.x(),
-                vertexCount, vertexStride}};
+            positionOffsets.x(), vertexCount, vertexStride};
     }
 
     /* Wrap up colors, if any */
     if((colorOffsets < Vector4ui{~UnsignedInt{}}).any()) {
-        /* Check that we have the same type for all color coordinates. Alpha is
-           optional. */
-        if(colorFormats.x() != colorFormats.y() ||
-           colorFormats.x() != colorFormats.z() ||
-          (colorFormats.x() != colorFormats.w() && colorFormats.w() != VertexFormat{})) {
-            Error e;
-            e << "Trade::StanfordImporter::mesh(): expecting all color channels to have the same type but got";
-            if(colorFormats.w() == VertexFormat{})
-                e << colorFormats.xyz();
-            else
-                e << colorFormats;
-            return Containers::NullOpt;
-        }
-
-        /* And that they are right after each other in correct order */
-        const UnsignedInt colorTypeSize = vertexFormatSize(colorFormats.x());
-        if(colorOffsets.y() != colorOffsets.x() + colorTypeSize ||
-           colorOffsets.z() != colorOffsets.y() + colorTypeSize ||
-          (colorOffsets.w() != colorOffsets.z() + colorTypeSize && colorOffsets.w() != ~UnsignedInt{})) {
-            Error e;
-            e << "Trade::StanfordImporter::mesh(): expecting color channels to be tightly packed, but got offsets";
-            if(colorOffsets.w() == ~UnsignedInt{})
-                e << colorOffsets.xyz();
-            else
-                e << colorOffsets;
-            e << "for a" << colorTypeSize << Debug::nospace << "-byte type";
-            return Containers::NullOpt;
+        /* Check that all components have the same type and right after each
+           other. Alpha is optional. */
+        if(colorFormats.w() == VertexFormat{}) {
+            if(!checkVectorAttributeValidity(colorFormats.xyz(), colorOffsets.xyz(), "color"))
+                return Containers::NullOpt;
+        } else {
+            if(!checkVectorAttributeValidity(colorFormats, colorOffsets, "color"))
+                return Containers::NullOpt;
         }
 
         /* Ensure the type is one of allowed */
         if(colorFormats.x() != VertexFormat::Float &&
            colorFormats.x() != VertexFormat::UnsignedByte &&
            colorFormats.x() != VertexFormat::UnsignedShort) {
-            Error{} << "Trade::StanfordImporter::mesh(): unsupported color channel type" << colorFormats.x();
+            Error{} << "Trade::StanfordImporter::mesh(): unsupported color component type" << colorFormats.x();
             return Containers::NullOpt;
-        }
-
-        /* Endian-swap them, if needed */
-        if(*fileFormatNeedsEndianSwapping) {
-            Containers::StridedArrayView3D<char> colorChannels{vertexData,
-                vertexData + colorOffsets.x(),
-                {std::size_t(colorFormats.w() == VertexFormat{} ? 3 : 4),
-                 vertexCount, colorTypeSize},
-                {std::ptrdiff_t(colorTypeSize), std::ptrdiff_t(vertexStride), 1}};
-            for(std::size_t channel = 0; channel != colorChannels.size()[0]; ++channel) {
-                if(colorTypeSize == 2)
-                    Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedShort>(colorChannels[channel]));
-                else if(colorTypeSize == 4)
-                    Utility::Endianness::swapInPlace(Containers::arrayCast<1, UnsignedInt>(colorChannels[channel]));
-                else CORRADE_INTERNAL_ASSERT(colorTypeSize == 1);
-            }
         }
 
         /* Add the attribute */
@@ -482,10 +430,18 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
             MeshAttribute::Color,
             /* We want integer types normalized, 3 or 4 components */
             vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
-            Containers::StridedArrayView1D<void>{vertexData,
-                vertexData + colorOffsets.x(),
-                vertexCount, vertexStride}};
+            colorOffsets.x(), vertexCount, vertexStride};
     }
+
+    /* Copy all vertex data */
+    if(in.size() < vertexStride*vertexCount) {
+        Error() << "Trade::StanfordImporter::mesh(): incomplete vertex data";
+        return Containers::NullOpt;
+    }
+    Containers::Array<char> vertexData{Containers::NoInit,
+        vertexStride*vertexCount};
+    Utility::copy(in.prefix(vertexStride*vertexCount), vertexData);
+    in = in.suffix(vertexStride*vertexCount);
 
     /* Parse faces, keeping the original index type */
     Containers::Array<char> indexData;
@@ -558,8 +514,28 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
         }
     }
 
-    /* Endian-swap the indices, if needed */
+    /* Endian-swap the data, if needed */
     if(*fileFormatNeedsEndianSwapping) {
+        for(const MeshAttributeData& attribute: attributeData) {
+            const UnsignedInt formatSize =
+                vertexFormatSize(vertexFormatComponentFormat(attribute.format()));
+            if(formatSize == 1) continue;
+            const UnsignedInt componentCount =
+                vertexFormatComponentCount(attribute.format());
+            const Containers::StridedArrayView1D<const void> data = attribute.data(vertexData);
+            /** @todo some arrayConstCast? ugh */
+            const Containers::StridedArrayView1D<void> mutableData{
+                {const_cast<void*>(data.data()), ~std::size_t{}},
+                const_cast<void*>(data.data()), data.size(), data.stride()};
+            if(formatSize == 2) {
+                for(Containers::StridedArrayView1D<UnsignedShort> component: Containers::arrayCast<2, UnsignedShort>(mutableData, componentCount).transposed<0, 1>())
+                    Utility::Endianness::swapInPlace(component);
+            } else if(formatSize == 4) {
+                for(Containers::StridedArrayView1D<UnsignedInt> component: Containers::arrayCast<2, UnsignedInt>(mutableData, componentCount).transposed<0, 1>())
+                    Utility::Endianness::swapInPlace(component);
+            } else CORRADE_ASSERT_UNREACHABLE(); /* 8-byte types not supported */
+        }
+
         if(faceIndexTypeSize == 2)
             Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedShort>(indexData));
         else if(faceIndexTypeSize == 4)

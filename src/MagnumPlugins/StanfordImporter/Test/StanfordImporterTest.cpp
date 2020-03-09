@@ -86,15 +86,15 @@ constexpr struct {
     {"incomplete-vertex-specification", "incomplete vertex specification"},
     {"incomplete-face-specification", "incomplete face specification"},
 
-    {"positions-not-same-type", "expecting all position coordinates to have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::UnsignedByte, VertexFormat::UnsignedShort)"},
-    {"positions-not-tightly-packed", "expecting position coordinates to be tightly packed, but got offsets Vector(0, 4, 2) for a 2-byte type"},
+    {"positions-not-same-type", "expecting all position components to have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::UnsignedByte, VertexFormat::UnsignedShort)"},
+    {"positions-not-tightly-packed", "expecting position components to be tightly packed, but got offsets Vector(0, 4, 2) for a 2-byte type"},
     {"positions-unsupported-type", "unsupported position component type VertexFormat::Double"},
 
-    {"colors-not-same-type", "expecting all color channels to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)"},
-    {"colors4-not-same-type", "expecting all color channels to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::Float)"},
-    {"colors-not-tightly-packed", "expecting color channels to be tightly packed, but got offsets Vector(12, 14, 13) for a 1-byte type"},
-    {"colors4-not-tightly-packed", "expecting color channels to be tightly packed, but got offsets Vector(13, 14, 15, 12) for a 1-byte type"},
-    {"colors-unsupported-type", "unsupported color channel type VertexFormat::Int"},
+    {"colors-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)"},
+    {"colors4-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::Float)"},
+    {"colors-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(12, 14, 13) for a 1-byte type"},
+    {"colors4-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(13, 14, 15, 12) for a 1-byte type"},
+    {"colors-unsupported-type", "unsupported color component type VertexFormat::Int"},
 
     {"unsupported-face-size", "unsupported face size 5"}
 };
