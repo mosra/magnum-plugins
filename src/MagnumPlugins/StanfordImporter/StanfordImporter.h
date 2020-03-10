@@ -132,11 +132,20 @@ using either @ref MeshTools::generateFlatNormals() /
 @ref MeshTools::CompileFlag::GenerateFlatNormals /
 @ref MeshTools::CompileFlag::GenerateSmoothNormals to @ref MeshTools::compile().
 
+@subsection Trade-StanfordImporter-behavior-per-face Per-face attributes
+
+The importer provides access to per-face attributes in a second mesh level ---
+i.e., @ref meshLevelCount() always returns @cpp 2 @ce, and calling @ref mesh()
+with @p level set to @cpp 1 @ce will return a @ref MeshData instance with
+@ref MeshPrimitive::Faces. The faces are triangulated, which means each item
+contains data for each triangle in the @ref MeshPrimitive::Triangles mesh at
+@p level @cpp 0 @ce.
+
 @subsection Trade-StanfordImporter-behavior-custom-attributes Custom attributes
 
-Custom and unrecognized vertex attributes of known types are present in the
-imported mesh as well. Their mapping to/from a string can be queried using
-@ref meshAttributeName() and @ref meshAttributeForName(). Attributes with
+Custom and unrecognized vertex and face attributes of known types are present
+in the imported meshes as well. Their mapping to/from a string can be queried
+using @ref meshAttributeName() and @ref meshAttributeForName(). Attributes with
 unknown types cause the import to fail, as the format relies on knowing the
 type size.
 
@@ -166,6 +175,7 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         MAGNUM_STANFORDIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
+        MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMeshLevelCount(UnsignedInt id) override;
         MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
         MAGNUM_STANFORDIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const std::string& name) override;
         MAGNUM_STANFORDIMPORTER_LOCAL std::string doMeshAttributeName(UnsignedShort name) override;

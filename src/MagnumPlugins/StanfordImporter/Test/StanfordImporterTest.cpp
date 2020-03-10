@@ -118,42 +118,40 @@ constexpr struct {
     const char* filename;
     MeshIndexType indexType;
     VertexFormat positionFormat, colorFormat;
-    UnsignedInt attributeCount;
+    UnsignedInt attributeCount, faceAttributeCount;
 } ParseData[]{
     /* GCC 4.8 doesn't like just {}, needs VertexFormat{} */
     {"positions-float-indices-uint", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat{}, 1},
+        VertexFormat::Vector3, VertexFormat{}, 1, 0},
     {"positions-colors-float-indices-int", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector3, 2},
+        VertexFormat::Vector3, VertexFormat::Vector3, 2, 0},
     /* Four-component colors */
     {"positions-colors4-float-indices-int", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector4, 2},
+        VertexFormat::Vector3, VertexFormat::Vector4, 2, 0},
     /* Testing endian flip */
     {"positions-colors-float-indices-int-be", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector3, 2},
+        VertexFormat::Vector3, VertexFormat::Vector3, 2, 0},
     /* Testing endian flip of unaligned data */
     {"positions-colors4-float-indices-int-be-unaligned", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector4, 4},
+        VertexFormat::Vector3, VertexFormat::Vector4, 4, 1},
     /* Testing various packing variants (hopefully exhausting all combinations) */
     {"positions-uchar-indices-ushort", MeshIndexType::UnsignedShort,
-        VertexFormat::Vector3ub, VertexFormat{}, 1},
+        VertexFormat::Vector3ub, VertexFormat{}, 1, 0},
     {"positions-char-colors4-ushort-indices-short-be", MeshIndexType::UnsignedShort,
-        VertexFormat::Vector3b, VertexFormat::Vector4usNormalized, 2},
+        VertexFormat::Vector3b, VertexFormat::Vector4usNormalized, 2, 0},
     {"positions-ushort-indices-uchar-be", MeshIndexType::UnsignedByte,
-        VertexFormat::Vector3us, VertexFormat{}, 1},
+        VertexFormat::Vector3us, VertexFormat{}, 1, 0},
     {"positions-short-colors-uchar-indices-char", MeshIndexType::UnsignedByte,
-        VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized, 2},
+        VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized, 2, 0},
     /* CR/LF instead of LF */
-    {"crlf", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}, 1},
-    /* Ignoring extra components */
-    {"ignored-face-components", MeshIndexType::UnsignedByte, VertexFormat::Vector3b, VertexFormat{}, 1}
+    {"crlf", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}, 1, 0}
 };
 
 constexpr struct {
     const char* filename;
 } CustomAttributeData[]{
-    {"custom-vertex-components"},
-    {"custom-vertex-components-be"}
+    {"custom-components"},
+    {"custom-components-be"}
 };
 
 constexpr struct {
@@ -281,6 +279,8 @@ void StanfordImporterTest::parse() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshLevelCount(0), 2);
 
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -312,12 +312,22 @@ void StanfordImporterTest::parse() {
             Containers::stridedArrayView(Colors4),
             TestSuite::Compare::Container);
     }
+
+    /* The face mesh should be mostly empty */
+    auto faceMesh = importer->mesh(0, 1);
+    CORRADE_VERIFY(faceMesh);
+    CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
+    CORRADE_VERIFY(!faceMesh->isIndexed());
+    CORRADE_COMPARE(faceMesh->attributeCount(), data.faceAttributeCount);
+    /* Two faces, one a quad, the other a triangle */
+    CORRADE_COMPARE(faceMesh->vertexCount(), 3);
 }
 
 void StanfordImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "empty.ply")));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshLevelCount(0), 2);
 
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -332,6 +342,14 @@ void StanfordImporterTest::empty() {
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position),
         VertexFormat::Vector3);
     CORRADE_COMPARE(mesh->vertexCount(), 0);
+
+    /* There's no faces or per-face attributes either */
+    auto faceMesh = importer->mesh(0, 1);
+    CORRADE_VERIFY(faceMesh);
+    CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
+    CORRADE_VERIFY(!faceMesh->isIndexed());
+    CORRADE_COMPARE(faceMesh->attributeCount(), 0);
+    CORRADE_COMPARE(faceMesh->vertexCount(), 0);
 }
 
 void StanfordImporterTest::customAttributes() {
@@ -349,6 +367,14 @@ void StanfordImporterTest::customAttributes() {
     const MeshAttribute weightAttribute = importer->meshAttributeForName("weight");
     CORRADE_COMPARE(weightAttribute, meshAttributeCustom(1));
     CORRADE_COMPARE(importer->meshAttributeName(weightAttribute), "weight");
+
+    const MeshAttribute maskAttribute = importer->meshAttributeForName("mask");
+    CORRADE_COMPARE(maskAttribute, meshAttributeCustom(2));
+    CORRADE_COMPARE(importer->meshAttributeName(maskAttribute), "mask");
+
+    const MeshAttribute idAttribute = importer->meshAttributeForName("id");
+    CORRADE_COMPARE(idAttribute, meshAttributeCustom(3));
+    CORRADE_COMPARE(importer->meshAttributeName(idAttribute), "id");
 
     /* Asking for attribute name that's out of bounds should be handled
        gracefully */
@@ -382,11 +408,29 @@ void StanfordImporterTest::customAttributes() {
         Containers::arrayView<Double>({
             1.23456, 12.3456, 123.456, 1234.56, 12345.6
         }), TestSuite::Compare::Container);
+
+    /* Custom face attributes */
+    auto faceMesh = importer->mesh(0, 1);
+    CORRADE_VERIFY(faceMesh);
+    CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
+    CORRADE_VERIFY(!faceMesh->isIndexed());
+    CORRADE_VERIFY(faceMesh->hasAttribute(maskAttribute));
+    CORRADE_COMPARE(faceMesh->attributeFormat(maskAttribute), VertexFormat::UnsignedShort);
+    CORRADE_COMPARE_AS(faceMesh->attribute<UnsignedShort>(maskAttribute),
+        Containers::arrayView<UnsignedShort>({
+            0xf0f0, 0xf0f0, 0xf1f1
+        }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(faceMesh->hasAttribute(idAttribute));
+    CORRADE_COMPARE(faceMesh->attributeFormat(idAttribute), VertexFormat::Int);
+    CORRADE_COMPARE_AS(faceMesh->attribute<Int>(idAttribute),
+        Containers::arrayView<Int>({
+            15688464, 15688464, -24512
+        }), TestSuite::Compare::Container);
 }
 
 void StanfordImporterTest::customAttributesDuplicate() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "custom-vertex-components-duplicate.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "custom-components-duplicate.ply")));
 
     const MeshAttribute weightAttribute = importer->meshAttributeForName("weight");
     CORRADE_COMPARE(weightAttribute, meshAttributeCustom(0));
@@ -425,6 +469,18 @@ void StanfordImporterTest::customAttributesDuplicate() {
         Containers::arrayView<Double>({
             0.2, 0.7, 0.4, 0.0, 0.1
         }), TestSuite::Compare::Container);
+
+    /* And in the faces as well */
+    auto faceMesh = importer->mesh(0, 1);
+    CORRADE_VERIFY(faceMesh);
+    CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
+    CORRADE_VERIFY(!faceMesh->isIndexed());
+    CORRADE_VERIFY(faceMesh->hasAttribute(weightAttribute));
+    CORRADE_COMPARE(faceMesh->attributeFormat(weightAttribute), VertexFormat::UnsignedByte);
+    CORRADE_COMPARE_AS(faceMesh->attribute<UnsignedByte>(weightAttribute),
+        Containers::arrayView<UnsignedByte>({
+            127, 127, 155
+        }), TestSuite::Compare::Container);
 }
 
 void StanfordImporterTest::customAttributesNoFileOpened() {
@@ -459,6 +515,29 @@ void StanfordImporterTest::triangleFastPath() {
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position),
         VertexFormat::Vector3b);
     CORRADE_COMPARE(mesh->vertexCount(), 0);
+
+    const MeshAttribute somethingBefore = importer->meshAttributeForName("something_before");
+    CORRADE_VERIFY(somethingBefore != MeshAttribute{});
+    const MeshAttribute somethingAfter = importer->meshAttributeForName("something_after");
+    CORRADE_VERIFY(somethingAfter != MeshAttribute{});
+
+    auto faceMesh = importer->mesh(0, 1);
+    CORRADE_VERIFY(faceMesh);
+    CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
+    CORRADE_VERIFY(!faceMesh->isIndexed());
+    CORRADE_VERIFY(faceMesh->hasAttribute(somethingBefore));
+    CORRADE_COMPARE(faceMesh->attributeFormat(somethingBefore), VertexFormat::UnsignedInt);
+    CORRADE_COMPARE_AS(faceMesh->attribute<UnsignedInt>(somethingBefore),
+        Containers::arrayView<UnsignedInt>({
+            0xfaffffff, 0xffafffff, 0xfffaffff, 0xffffafff, 0xfffffaff
+        }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(faceMesh->hasAttribute(somethingAfter));
+    CORRADE_COMPARE(faceMesh->attributeFormat(somethingAfter), VertexFormat::UnsignedShort);
+    CORRADE_COMPARE_AS(faceMesh->attribute<UnsignedShort>(somethingAfter),
+        Containers::arrayView<UnsignedShort>({
+            0xaaaa, 0xabaa, 0xacaa, 0xadaa, 0xaeaa
+        }), TestSuite::Compare::Container);
+
 }
 
 void StanfordImporterTest::openTwice() {

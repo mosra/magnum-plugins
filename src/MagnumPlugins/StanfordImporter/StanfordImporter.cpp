@@ -44,6 +44,7 @@ namespace Magnum { namespace Trade {
 struct StanfordImporter::State {
     Containers::Array<char> data;
     Containers::Array<MeshAttributeData> attributeData;
+    Containers::Array<MeshAttributeData> faceAttributeData;
     UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
     MeshIndexType faceSizeType{}, faceIndexType{};
     bool fileFormatNeedsEndianSwapping;
@@ -344,7 +345,9 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
                             return;
                         }
 
-                    /* Ignore unknown properties */
+                    /* Unknown component, add to the face attribute list.
+                       Stride and actual triangle face count is not known yet,
+                       using 0 until it's updated later. */
                     } else if(tokens.size() == 3) {
                         const VertexFormat faceFormat = parseAttributeType(tokens[1]);
                         if(faceFormat == VertexFormat{}) {
@@ -352,7 +355,19 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
                             return;
                         }
 
-                        Debug{} << "Trade::StanfordImporter::openData(): ignoring unknown face component" << tokens[2];
+                        auto inserted = state->attributeNameMap.emplace(tokens[2],
+                            meshAttributeCustom(state->attributeNames.size()));
+                        arrayAppend(state->attributeNames, tokens[2]);
+                        arrayAppend(state->faceAttributeData, MeshAttributeData{
+                            inserted.first->second,
+                            faceFormat,
+                            /* Before indices are found, faceIndicesOffset is
+                               zero. After indices are found, faceIndicesOffset
+                               is set and faceSkip is zero again, thus the sum
+                               of the two is always offset from the beginning
+                               of the face, which is what we need. */
+                            state->faceIndicesOffset + state->faceSkip, 0, 0});
+
                         state->faceSkip += vertexFormatSize(faceFormat);
 
                     /* Fail on unknown lines */
@@ -391,11 +406,17 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    /* Stride is known now, update it in custom attributes */
+    /* Stride is known now, update it in custom attributes. Triangle face count
+       is not known yet, that'll get updated after parsing all faces. */
     for(MeshAttributeData& attribute: state->attributeData) {
         attribute = MeshAttributeData{
             attribute.name(), attribute.format(),
             attribute.offset({}), state->vertexCount, std::ptrdiff_t(state->vertexStride)};
+    }
+    for(MeshAttributeData& attribute: state->faceAttributeData) {
+        attribute = MeshAttributeData{
+            attribute.name(), attribute.format(),
+            attribute.offset({}), 0, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip)};
     }
 
     /* Wrap up positions */
@@ -463,36 +484,63 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
 
 UnsignedInt StanfordImporter::doMeshCount() const { return 1; }
 
-Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt) {
+UnsignedInt StanfordImporter::doMeshLevelCount(UnsignedInt) { return 2; }
+
+Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const UnsignedInt level) {
     /* Copy all vertex data */
-    Containers::Array<char> vertexData{Containers::NoInit,
+    Containers::Array<char> vertexData;
+    if(level == 0) {
+        vertexData = Containers::Array<char>{Containers::NoInit,
         _state->vertexStride*_state->vertexCount};
-    Utility::copy(_state->data.prefix(vertexData.size()), vertexData);
-    Containers::ArrayView<const char> in = _state->data.suffix(vertexData.size());
+        Utility::copy(_state->data.prefix(vertexData.size()), vertexData);
+    }
+    Containers::ArrayView<const char> in = _state->data.suffix(_state->vertexStride*_state->vertexCount);
 
     /* Parse faces, keeping the original index type */
+    Containers::Array<char> faceData;
     Containers::Array<char> indexData;
     const UnsignedInt faceIndexTypeSize = meshIndexTypeSize(_state->faceIndexType);
     const UnsignedInt faceSizeTypeSize = meshIndexTypeSize(_state->faceSizeType);
+    UnsignedInt triangleFaceCount = _state->faceCount;
 
-    /* Fast path -- if all faces are triangles, we can just copy all
-       indices directly without parsing anything */
-    /** @todo this additionally needs to be disabled when per-face attribs are
-        imported too */
+    /* Fast path -- if all faces are triangles, we can just copy all indices
+       and per-face data directly without parsing anything */
     if(configuration().value<bool>("triangleFastPath") && in.size() == _state->faceCount*(_state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip)) {
-        indexData = Containers::Array<char>{Containers::NoInit,
-            _state->faceCount*3*faceIndexTypeSize};
-        Containers::StridedArrayView2D<const char> src{in,
-            in + _state->faceIndicesOffset + faceSizeTypeSize, {_state->faceCount, 3*faceIndexTypeSize}, {std::ptrdiff_t(_state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip), 1}};
-        Containers::StridedArrayView2D<char> dst{indexData,
-            {_state->faceCount, 3*faceIndexTypeSize}};
-        Utility::copy(src, dst);
+        if(level == 0) {
+            indexData = Containers::Array<char>{Containers::NoInit,
+                _state->faceCount*3*faceIndexTypeSize};
+            Containers::StridedArrayView2D<const char> src{in,
+                in + _state->faceIndicesOffset + faceSizeTypeSize,
+                {_state->faceCount, 3*faceIndexTypeSize},
+                {std::ptrdiff_t(_state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip), 1}};
+            Containers::StridedArrayView2D<char> dst{indexData,
+                {_state->faceCount, 3*faceIndexTypeSize}};
+            Utility::copy(src, dst);
+        } else {
+            faceData = Containers::Array<char>{Containers::NoInit,
+                _state->faceCount*(_state->faceIndicesOffset + _state->faceSkip)};
+            Containers::StridedArrayView2D<const char> src{in,
+                {_state->faceCount, _state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip}};
+            Containers::StridedArrayView2D<char> dst{faceData,
+                {_state->faceCount, _state->faceIndicesOffset + _state->faceSkip}};
+            /* Separately copy the part before indices, and the part after.
+               Transpose the sliced array so first dimension is faces and
+               second bytes to avoid copying it byte-by-byte. */
+            Utility::copy(
+                src.prefix({_state->faceCount, _state->faceIndicesOffset}),
+                dst.prefix({_state->faceCount, _state->faceIndicesOffset}));
+            Utility::copy(
+                src.suffix({0, _state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize}),
+                dst.suffix({0, _state->faceIndicesOffset}));
+        }
 
     /* Otherwise reserve optimistically amount for all-triangle faces, and let
        the array grow */
     /** @todo the size could be estimated *exactly* via the above equation
        (assuming no stray data at EOF) */
     } else {
+        if(level == 1) Containers::arrayReserve<ArrayAllocator>(faceData,
+            _state->faceCount*(_state->faceIndicesOffset + _state->faceSkip));
         Containers::arrayReserve<ArrayAllocator>(indexData,
             _state->faceCount*3*faceIndexTypeSize);
         for(std::size_t i = 0; i != _state->faceCount; ++i) {
@@ -501,12 +549,14 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                 return Containers::NullOpt;
             }
 
+            /* Copy all face attributes that are before the index */
+            const Containers::ArrayView<const char> faceDataBeforeIndices = in.prefix(_state->faceIndicesOffset);
             in = in.suffix(_state->faceIndicesOffset);
 
             /* Get face size */
-            Containers::ArrayView<const char> buffer = in.prefix(faceSizeTypeSize);
+            const Containers::ArrayView<const char> faceSizeData = in.prefix(faceSizeTypeSize);
             in = in.suffix(faceSizeTypeSize);
-            const UnsignedInt faceSize = extractIndexValue<UnsignedInt>(buffer, _state->faceSizeType, _state->fileFormatNeedsEndianSwapping);
+            const UnsignedInt faceSize = extractIndexValue<UnsignedInt>(faceSizeData, _state->faceSizeType, _state->fileFormatNeedsEndianSwapping);
             if(faceSize < 3 || faceSize > 4) {
                 Error() << "Trade::StanfordImporter::mesh(): unsupported face size" << faceSize;
                 return Containers::NullOpt;
@@ -518,12 +568,18 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                 return Containers::NullOpt;
             }
 
-            buffer = in.prefix(faceIndexTypeSize*faceSize);
-            in = in.suffix(faceIndexTypeSize*faceSize + _state->faceSkip);
+            const Containers::ArrayView<const char> faceIndexData = in.prefix(faceIndexTypeSize*faceSize);
+            in = in.suffix(faceIndexTypeSize*faceSize);
+            const Containers::ArrayView<const char> faceDataAfterIndices = in.prefix(_state->faceSkip);
+            in = in.suffix(_state->faceSkip);
 
             /* Append either the triangle or the first triangle of the quad */
             Containers::arrayAppend<ArrayAllocator>(indexData,
-                buffer.prefix(3*faceIndexTypeSize));
+                faceIndexData.prefix(3*faceIndexTypeSize));
+            if(level == 1) {
+                Containers::arrayAppend<ArrayAllocator>(faceData, faceDataBeforeIndices);
+                Containers::arrayAppend<ArrayAllocator>(faceData, faceDataAfterIndices);
+            }
             /* For a quad add the 0, 2 and 3 indices forming another triangle */
             if(faceSize == 4) {
                 /* 0 0---3
@@ -532,24 +588,57 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                    |  \ \|
                    1---2 2 */
                 Containers::arrayAppend<ArrayAllocator>(indexData,
-                    buffer.slice(0*faceIndexTypeSize, 1*faceIndexTypeSize));
+                    faceIndexData.slice(0*faceIndexTypeSize, 1*faceIndexTypeSize));
                 Containers::arrayAppend<ArrayAllocator>(indexData,
-                    buffer.slice(2*faceIndexTypeSize, 3*faceIndexTypeSize));
+                    faceIndexData.slice(2*faceIndexTypeSize, 3*faceIndexTypeSize));
                 Containers::arrayAppend<ArrayAllocator>(indexData,
-                    buffer.slice(3*faceIndexTypeSize, 4*faceIndexTypeSize));
+                    faceIndexData.slice(3*faceIndexTypeSize, 4*faceIndexTypeSize));
+                if(level == 1) {
+                    Containers::arrayAppend<ArrayAllocator>(faceData, faceDataBeforeIndices);
+                    Containers::arrayAppend<ArrayAllocator>(faceData, faceDataAfterIndices);
+                }
+                ++triangleFaceCount;
             }
+        }
+    }
+
+    /* We need to copy the attribute data (also because they use a forbidden
+       deleter), so use that opportunity to also turn them from offset-only to
+       absolute, and for per-face ones fill the count for each (which wasn't
+       known until now) */
+    Containers::Array<MeshAttributeData> attributeData;
+    if(level == 0) {
+        attributeData = Containers::Array<MeshAttributeData>{_state->attributeData.size()};
+        for(std::size_t i = 0; i != attributeData.size(); ++i) {
+            attributeData[i] = MeshAttributeData{
+                _state->attributeData[i].name(),
+                _state->attributeData[i].format(),
+                _state->attributeData[i].data(vertexData)};
+        }
+    } else {
+        attributeData = Containers::Array<MeshAttributeData>{_state->faceAttributeData.size()};
+        for(std::size_t i = 0; i != attributeData.size(); ++i) {
+            attributeData[i] = MeshAttributeData{
+                _state->faceAttributeData[i].name(),
+                _state->faceAttributeData[i].format(),
+                Containers::StridedArrayView1D<const void>{
+                    faceData,
+                    _state->faceAttributeData[i].data(faceData).data(),
+                    triangleFaceCount,
+                    _state->faceAttributeData[i].stride()}};
         }
     }
 
     /* Endian-swap the data, if needed */
     if(_state->fileFormatNeedsEndianSwapping) {
-        for(const MeshAttributeData& attribute: _state->attributeData) {
+        for(const MeshAttributeData& attribute: attributeData) {
             const UnsignedInt formatSize =
                 vertexFormatSize(vertexFormatComponentFormat(attribute.format()));
             if(formatSize == 1) continue;
             const UnsignedInt componentCount =
                 vertexFormatComponentCount(attribute.format());
-            const Containers::StridedArrayView1D<const void> data = attribute.data(vertexData);
+            const Containers::StridedArrayView1D<const void> data = attribute.data(
+                level == 0 ? vertexData : faceData);
             /** @todo some arrayConstCast? ugh */
             const Containers::StridedArrayView1D<void> mutableData{
                 {const_cast<void*>(data.data()), ~std::size_t{}},
@@ -566,28 +655,24 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
             } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
-        if(faceIndexTypeSize == 2)
-            Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedShort>(indexData));
-        else if(faceIndexTypeSize == 4)
-            Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedInt>(indexData));
-        else CORRADE_INTERNAL_ASSERT(faceIndexTypeSize == 1);
+        if(level == 0) {
+            if(faceIndexTypeSize == 2)
+                Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedShort>(indexData));
+            else if(faceIndexTypeSize == 4)
+                Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedInt>(indexData));
+            else CORRADE_INTERNAL_ASSERT(faceIndexTypeSize == 1);
+        }
     }
 
-    /* We need to copy the attribute data (also because they use a forbidden
-       deleter), so use that opportunity to turn them from offset-only to
-       absolute */
-    Containers::Array<MeshAttributeData> attributeData{_state->attributeData.size()};
-    for(std::size_t i = 0; i != attributeData.size(); ++i) {
-        attributeData[i] = MeshAttributeData{
-            _state->attributeData[i].name(),
-            _state->attributeData[i].format(),
-            _state->attributeData[i].data(vertexData)};
+    if(level == 0) {
+        MeshIndexData indices{_state->faceIndexType, indexData};
+        return MeshData{MeshPrimitive::Triangles,
+            std::move(indexData), indices,
+            std::move(vertexData), std::move(attributeData)};
+    } else {
+        return MeshData{MeshPrimitive::Faces,
+            std::move(faceData), std::move(attributeData), triangleFaceCount};
     }
-
-    MeshIndexData indices{_state->faceIndexType, indexData};
-    return MeshData{MeshPrimitive::Triangles,
-        std::move(indexData), indices,
-        std::move(vertexData), std::move(attributeData)};
 }
 
 std::string StanfordImporter::doMeshAttributeName(UnsignedShort name) {

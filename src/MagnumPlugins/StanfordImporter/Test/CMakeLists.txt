@@ -51,16 +51,15 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         colors-unsupported-type.ply
         colors4-not-same-type.ply
         colors4-not-tightly-packed.ply
-        custom-vertex-components.ply
-        custom-vertex-components-be.ply
-        custom-vertex-components-duplicate.ply
+        custom-components.ply
+        custom-components-be.ply
+        custom-components-duplicate.ply
         crlf.ply
         empty.ply
         format-invalid.ply
         format-missing.ply
         format-too-late.ply
         format-unsupported.ply
-        ignored-face-components.ply
         incomplete-face-specification.ply
         incomplete-vertex-specification.ply
         invalid-face-index-type.ply
