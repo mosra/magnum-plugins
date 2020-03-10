@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -95,6 +96,14 @@ constexpr struct {
     {"positions-not-tightly-packed", "expecting position components to be tightly packed, but got offsets Vector(0, 4, 2) for a 2-byte type", true},
     {"positions-unsupported-type", "unsupported position component type VertexFormat::Double", true},
 
+    {"normals-not-same-type", "expecting all normal components to have the same type but got Vector(VertexFormat::Short, VertexFormat::Float, VertexFormat::Short)", true},
+    {"normals-not-tightly-packed", "expecting normal components to be tightly packed, but got offsets Vector(14, 13, 12) for a 1-byte type", true},
+    {"normals-unsupported-type", "unsupported normal component type VertexFormat::UnsignedByte", true},
+
+    {"texcoords-not-same-type", "expecting all texture coordinate components to have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::Float)", true},
+    {"texcoords-not-tightly-packed", "expecting texture coordinate components to be tightly packed, but got offsets Vector(13, 0) for a 1-byte type", true},
+    {"texcoords-unsupported-type", "unsupported texture coordinate component type VertexFormat::Short", true},
+
     {"colors-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)", true},
     {"colors4-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::Float)", true},
     {"colors-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(12, 14, 13) for a 1-byte type", true},
@@ -117,34 +126,54 @@ constexpr struct {
 constexpr struct {
     const char* filename;
     MeshIndexType indexType;
-    VertexFormat positionFormat, colorFormat;
+    VertexFormat positionFormat, colorFormat, normalFormat, texcoordFormat;
     UnsignedInt attributeCount, faceAttributeCount;
 } ParseData[]{
     /* GCC 4.8 doesn't like just {}, needs VertexFormat{} */
     {"positions-float-indices-uint", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat{}, 1, 0},
-    {"positions-colors-float-indices-int", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector3, 2, 0},
+        VertexFormat::Vector3, VertexFormat{},
+        VertexFormat{}, VertexFormat{},
+        1, 0},
+    /* All supported attributes, in the canonical type */
+    {"positions-colors-normals-texcoords-float-indices-int",
+        MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat::Vector3,
+        VertexFormat::Vector3, VertexFormat::Vector2, 4, 0},
     /* Four-component colors */
     {"positions-colors4-float-indices-int", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector4, 2, 0},
+        VertexFormat::Vector3, VertexFormat::Vector4,
+        VertexFormat{}, VertexFormat{}, 2, 0},
     /* Testing endian flip */
-    {"positions-colors-float-indices-int-be", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector3, 2, 0},
+    {"positions-colors-normals-texcoords-float-indices-int-be",
+        MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat::Vector3,
+        VertexFormat::Vector3, VertexFormat::Vector2, 4, 0},
     /* Testing endian flip of unaligned data */
-    {"positions-colors4-float-indices-int-be-unaligned", MeshIndexType::UnsignedInt,
-        VertexFormat::Vector3, VertexFormat::Vector4, 4, 1},
+    {"positions-colors4-normals-texcoords-float-indices-int-be-unaligned",
+        MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat::Vector4,
+        VertexFormat::Vector3, VertexFormat::Vector2, 8, 1},
     /* Testing various packing variants (hopefully exhausting all combinations) */
-    {"positions-uchar-indices-ushort", MeshIndexType::UnsignedShort,
-        VertexFormat::Vector3ub, VertexFormat{}, 1, 0},
-    {"positions-char-colors4-ushort-indices-short-be", MeshIndexType::UnsignedShort,
-        VertexFormat::Vector3b, VertexFormat::Vector4usNormalized, 2, 0},
-    {"positions-ushort-indices-uchar-be", MeshIndexType::UnsignedByte,
-        VertexFormat::Vector3us, VertexFormat{}, 1, 0},
-    {"positions-short-colors-uchar-indices-char", MeshIndexType::UnsignedByte,
-        VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized, 2, 0},
+    {"positions-uchar-normals-char-indices-ushort",
+        MeshIndexType::UnsignedShort,
+        VertexFormat::Vector3ub, VertexFormat{},
+        VertexFormat::Vector3bNormalized, VertexFormat{}, 2, 0},
+    {"positions-char-colors4-ushort-texcoords-uchar-indices-short-be",
+        MeshIndexType::UnsignedShort,
+        VertexFormat::Vector3b, VertexFormat::Vector4usNormalized,
+        VertexFormat{}, VertexFormat::Vector2ubNormalized, 3, 0},
+    {"positions-ushort-normals-short-indices-uchar-be",
+        MeshIndexType::UnsignedByte,
+        VertexFormat::Vector3us, VertexFormat{},
+        VertexFormat::Vector3sNormalized, VertexFormat{}, 2, 0},
+    {"positions-short-colors-uchar-texcoords-ushort-indices-char",
+        MeshIndexType::UnsignedByte,
+        VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized,
+        VertexFormat{}, VertexFormat::Vector2usNormalized, 3, 0},
     /* CR/LF instead of LF */
-    {"crlf", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}, 1, 0}
+    {"crlf", MeshIndexType::UnsignedByte,
+        VertexFormat::Vector3us, VertexFormat{},
+        VertexFormat{}, VertexFormat{}, 1, 0}
 };
 
 constexpr struct {
@@ -263,14 +292,28 @@ constexpr Color3 Colors[]{
     {0.6f, 0.666667f, 1.0f},
     {0.0f, 0.0666667f, 0.9333333f},
     {0.733333f, 0.8666666f, 0.133333f},
-    {0.266667f, 0.3333333f, 0.466666f}
+    {0.266667f, 0.3333333f, 0.466667f}
 };
 constexpr Color4 Colors4[]{
     {0.8f, 0.2f, 0.4f, 0.266667f},
-    {0.6f, 0.666667f, 1.0f, 0.8666666f},
-    {0.0f, 0.0666667f, 0.9333333f, 0.466666f},
-    {0.733333f, 0.8666666f, 0.133333f, 0.666667f},
+    {0.6f, 0.666667f, 1.0f, 0.8666667f},
+    {0.0f, 0.0666667f, 0.9333333f, 0.466667f},
+    {0.733333f, 0.8666667f, 0.133333f, 0.666667f},
     {0.266667f, 0.3333333f, 0.466666f, 0.0666667f}
+};
+constexpr Vector3 Normals[]{
+    {-0.333333f, -0.6666667f, -0.933333f},
+    {-0.0f, -0.133333f, -1.0f},
+    {-0.6f, -0.8f, -0.2f},
+    {-0.4f, -0.733333f, -0.933333f},
+    {-0.133333f, -0.733333f, -0.4f}
+};
+constexpr Vector2 TextureCoordinates[]{
+    {0.933333f, 0.333333f},
+    {0.133333f, 0.933333f},
+    {0.666667f, 0.266667f},
+    {0.466666f, 0.333333f},
+    {0.866666f, 0.066666f}
 };
 
 void StanfordImporterTest::parse() {
@@ -310,6 +353,33 @@ void StanfordImporterTest::parse() {
         CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color), data.colorFormat);
         CORRADE_COMPARE_AS(Containers::stridedArrayView(mesh->colorsAsArray()),
             Containers::stridedArrayView(Colors4),
+            TestSuite::Compare::Container);
+    }
+
+    if(data.normalFormat != VertexFormat{}) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Normal));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), data.normalFormat);
+
+        /* Because the signed packed formats are extremely imprecise, we
+           increase the precision a bit */
+        auto normals = mesh->normalsAsArray();
+        const Float precision = Math::pow(10.0f, -1.5f*vertexFormatSize(vertexFormatComponentFormat(data.normalFormat)));
+        CORRADE_COMPARE_AS(precision, 5.0e-2f, TestSuite::Compare::Less);
+        CORRADE_COMPARE_AS(precision, 1.0e-6f, TestSuite::Compare::GreaterOrEqual);
+        CORRADE_COMPARE(normals.size(), Containers::arraySize(Normals));
+        CORRADE_ITERATION("precision" << precision);
+        for(std::size_t i = 0; i != normals.size(); ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE_WITH(normals[i], Normals[i],
+                TestSuite::Compare::around(Vector3{precision}));
+        }
+    }
+
+    if(data.texcoordFormat != VertexFormat{}) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates), data.texcoordFormat);
+        CORRADE_COMPARE_AS(mesh->textureCoordinates2DAsArray(),
+            Containers::stridedArrayView(TextureCoordinates),
             TestSuite::Compare::Container);
     }
 

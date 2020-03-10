@@ -1,0 +1,51 @@
+header = """
+element vertex 5
+comment s/t should work the same as u/v
+property float s
+property float t
+property char gap
+property float x
+property float y
+property float z
+property uchar gap
+property float red
+property float green
+property float blue
+property float alpha
+property uchar gap
+property float nx
+property float ny
+property float nz
+property uchar gap
+element face 2
+property char gap
+property list int uint32 vertex_indices
+"""
+type = '>2fx3fx4fx3fx 2fx3fx4fx3fx 2fx3fx4fx3fx 2fx3fx4fx3fx 2fx3fx4fx3fx xi4ixi3i'
+input = [
+    0.93333333333333333, 0.33333333333333333,
+        1.0, 3.0, 2.0,
+            0.8, 0.2, 0.4, 0.26666666666666667,
+                -0.33333333333333333, -0.66666666666666667, -0.93333333333333333,
+    0.13333333333333333, 0.93333333333333333,
+        1.0, 1.0, 2.0,
+            0.6, 0.66666666666666667, 1.0, 0.86666666666666667,
+                -0.0, -0.13333333333333333, -1.0,
+    0.66666666666666667, 0.26666666666666667,
+        3.0, 3.0, 2.0,
+            0.0, 0.06666666666666667, 0.93333333333333333, 0.46666666666666667,
+                -0.6, -0.8, -0.2,
+    0.46666666666666667, 0.33333333333333333,
+        3.0, 1.0, 2.0,
+            0.73333333333333333, 0.86666666666666667, 0.13333333333333333, 0.66666666666666667,
+                -0.4, -0.73333333333333333, -0.93333333333333333,
+    0.86666666666666667, 0.06666666666666667,
+        5.0, 3.0, 9.0,
+            0.26666666666666667, 0.33333333333333333, 0.46666666666666667, 0.06666666666666667,
+                -0.13333333333333333, -0.73333333333333333, -0.4,
+
+    4, 0, 1, 2, 3,
+    3, 3, 2, 4
+]
+
+# kate: hl python

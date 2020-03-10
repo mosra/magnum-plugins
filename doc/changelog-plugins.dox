@@ -34,7 +34,8 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-new New features
 
--   Vertex color import in @ref Trade::StanfordImporter "StanfordImporter"
+-   Vertex color, normal and texture coordinate import in
+    @ref Trade::StanfordImporter "StanfordImporter"
 -   Custom vertex and face attribute import in
     @ref Trade::StanfordImporter "StanfordImporter"
 -   Support for the `KHR_lights_punctual` extension in

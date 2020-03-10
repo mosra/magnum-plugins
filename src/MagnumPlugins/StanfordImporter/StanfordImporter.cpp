@@ -237,8 +237,12 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
 
     /* Parse rest of the header */
     Math::Vector3<VertexFormat> positionFormats;
+    Math::Vector3<VertexFormat> normalFormats;
+    Math::Vector2<VertexFormat> textureCoordinateFormats;
     Math::Vector4<VertexFormat> colorFormats;
     Vector3ui positionOffsets{~UnsignedInt{}};
+    Vector3ui normalOffsets{~UnsignedInt{}};
+    Vector2ui textureCoordinateOffsets{~UnsignedInt{}};
     Vector4ui colorOffsets{~UnsignedInt{}};
     {
         std::size_t vertexComponentOffset{};
@@ -295,6 +299,22 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
                     } else if(tokens[2] == "z") {
                         positionOffsets.z() = vertexComponentOffset;
                         positionFormats.z() = componentFormat;
+                    } else if(tokens[2] == "nx") {
+                        normalOffsets.x() = vertexComponentOffset;
+                        normalFormats.x() = componentFormat;
+                    } else if(tokens[2] == "ny") {
+                        normalOffsets.y() = vertexComponentOffset;
+                        normalFormats.y() = componentFormat;
+                    } else if(tokens[2] == "nz") {
+                        normalOffsets.z() = vertexComponentOffset;
+                        normalFormats.z() = componentFormat;
+                    /* LuxBlend uses s/t, Mitsuba uses u/v */
+                    } else if(tokens[2] == "u" || tokens[2] == "s") {
+                        textureCoordinateOffsets.x() = vertexComponentOffset;
+                        textureCoordinateFormats.x() = componentFormat;
+                    } else if(tokens[2] == "v" || tokens[2] == "t") {
+                        textureCoordinateOffsets.y() = vertexComponentOffset;
+                        textureCoordinateFormats.y() = componentFormat;
                     } else if(tokens[2] == "red") {
                         colorOffsets.x() = vertexComponentOffset;
                         colorFormats.x() = componentFormat;
@@ -441,6 +461,52 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
             MeshAttribute::Position,
             vertexFormat(positionFormats.x(), 3, false),
             positionOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
+    }
+
+    /* Wrap up normals, if any */
+    if((normalOffsets < Vector3ui{~UnsignedInt{}}).any()) {
+        /* Check that all components have the same type and right after each
+           other */
+        if(!checkVectorAttributeValidity(normalFormats, normalOffsets, "normal"))
+            return;
+
+        /* Ensure the type is one of allowed */
+        if(normalFormats.x() != VertexFormat::Float &&
+           normalFormats.x() != VertexFormat::Byte &&
+           normalFormats.x() != VertexFormat::Short) {
+            Error{} << "Trade::StanfordImporter::openData(): unsupported normal component type" << normalFormats.x();
+            return;
+        }
+
+        /* Add the attribute */
+        arrayAppend(state->attributeData, Containers::InPlaceInit,
+            MeshAttribute::Normal,
+            /* We want integer types normalized */
+            vertexFormat(normalFormats.x(), 3, normalFormats.x() != VertexFormat::Float),
+            normalOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
+    }
+
+    /* Wrap up texture coordinates, if any */
+    if((textureCoordinateOffsets < Vector2ui{~UnsignedInt{}}).any()) {
+        /* Check that all components have the same type and right after each
+           other */
+        if(!checkVectorAttributeValidity(textureCoordinateFormats, textureCoordinateOffsets, "texture coordinate"))
+            return;
+
+        /* Ensure the type is one of allowed */
+        if(textureCoordinateFormats.x() != VertexFormat::Float &&
+           textureCoordinateFormats.x() != VertexFormat::UnsignedByte &&
+           textureCoordinateFormats.x() != VertexFormat::UnsignedShort) {
+            Error{} << "Trade::StanfordImporter::openData(): unsupported texture coordinate component type" << textureCoordinateFormats.x();
+            return;
+        }
+
+        /* Add the attribute */
+        arrayAppend(state->attributeData, Containers::InPlaceInit,
+            MeshAttribute::TextureCoordinates,
+            /* We want integer types normalized */
+            vertexFormat(textureCoordinateFormats.x(), 2, textureCoordinateFormats.x() != VertexFormat::Float),
+            textureCoordinateOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
     }
 
     /* Wrap up colors, if any */

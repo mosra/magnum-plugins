@@ -55,8 +55,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief Stanford PLY importer plugin
 
-Supports little and big endian binary formats with triangle and quad meshes,
-importing vertex positions and vertex colors (if any).
+Supports Little- and Big-Endian binary formats with triangle and quad meshes.
+Imports vertex positions, normals, 2D texture coordinates, vertex colors,
+custom attributes and per-face data as well.
 
 @section Trade-StanfordImporter-usage Usage
 
@@ -98,26 +99,37 @@ information.
 In order to optimize for fast import, the importer supports a restricted subset
 of PLY features, which however shouldn't affect any real-world models.
 
--   Both Big-Endian and Little-Endian binary files are supported, with bytes
-    swapped to match platform endianness. ASCII files are not supported due to
-    the storage size overhead and inherent inefficiency of float literal
-    parsing.
--   Position coordinates are expected to be tightly packed in a X/Y/Z order in
-    order to be directly reinterpretable as a @ref Magnum::Vector3 "Vector3".
-    Same goes for colors, expected channel order is R/G/B.
--   All position coordinates are expected to have the same type, and be either
-    32-bit floats or (signed) bytes or shorts. Resulting position type is then
+-   Both Little- and Big-Endian binary files are supported, with bytes swapped
+    to match platform endianness. ASCII files are not supported due to the
+    storage size overhead and inherent inefficiency of float literal parsing.
+-   Position coordinates (`x`/`y`/`z`) are expected to have the same type, be
+    tightly packed in a XYZ order and be either 32-bit floats or (signed) bytes
+    or shorts. Resulting position type is then
     @ref VertexFormat::Vector3, @ref VertexFormat::Vector3ub,
     @ref VertexFormat::Vector3b, @ref VertexFormat::Vector3us or
-    @ref VertexFormat::Vector3s. Integer and double positions are not
+    @ref VertexFormat::Vector3s. 32-bit integer and double positions are not
     supported.
--   All color coordinates are expected to have the same type, and be either
-    32-bit floats or unsigned bytes/shorts. Alpha is supported as well,
-    resulting color type is then @ref VertexFormat::Vector3 /
-    @ref VertexFormat::Vector4, @ref VertexFormat::Vector3ub /
-    @ref VertexFormat::Vector4ub or @ref VertexFormat::Vector3us /
-    @ref VertexFormat::Vector4us. Signed, 32-bit integer and double colors
-    are not supported.
+-   Normal coordinates (`nx`/`ny`/`nz`) are expected to have the same type, be
+    tightly packed in a XYZ order and be either 32-bit floats or *signed* bytes
+    or shorts. Resulting normal type is then
+    @ref VertexFormat::Vector3, @ref VertexFormat::Vector3bNormalized or
+    @ref VertexFormat::Vector3sNormalized. 32-bit integer, unsigned and double
+    normals are not supported.
+-   Texture coordinates (`u`/`v` or `s`/`t`) are expected to have the same
+    type, be tightly packed in a XY order and be either 32-bit floats or
+    * *unsigned* bytes or shorts. Resulting texture coordinate type is then
+    @ref VertexFormat::Vector2, @ref VertexFormat::Vector2ubNormalized or
+    @ref VertexFormat::Vector2usNormalized. Double texture coordinates are not
+    supported, signed and 32.bit integer coordinates don't have a well-defined
+    mapping to the @f$ [0, 1] @f$ range and thus are not supported either.
+-   Color chammels (`red`/`green`/`blue` and optional `alpha`) are expected
+    to have the same type, be tightly packed in a RGB or RGBA order and be
+    either 32-bit floats or unsigned bytes/shorts. Tesulting color type is then
+    @ref VertexFormat::Vector3 / @ref VertexFormat::Vector4,
+    @ref VertexFormat::Vector3ubNormalized / @ref VertexFormat::Vector4ubNormalized
+    or @ref VertexFormat::Vector3usNormalized /
+    @ref VertexFormat::Vector4usNormalized. Signed, 32-bit integer and double
+    colors are not supported.
 -   Indices are imported as either @ref MeshIndexType::UnsignedByte,
     @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt. Quads
     are triangulated, but higher-order polygons are not supported. Because
@@ -125,12 +137,8 @@ of PLY features, which however shouldn't affect any real-world models.
     for indices as well, but interpreted as unsigned (because negative values
     wouldn't make sense anyway).
 
-The mesh is always indexed; positions are always present, color coordinates
-are optional. The file format doesn't support normals. You can generate them
-using either @ref MeshTools::generateFlatNormals() /
-@ref MeshTools::generateSmoothNormals() or by passing
-@ref MeshTools::CompileFlag::GenerateFlatNormals /
-@ref MeshTools::CompileFlag::GenerateSmoothNormals to @ref MeshTools::compile().
+The mesh is always indexed; positions are always present, other attributes are
+optional.
 
 @subsection Trade-StanfordImporter-behavior-per-face Per-face attributes
 

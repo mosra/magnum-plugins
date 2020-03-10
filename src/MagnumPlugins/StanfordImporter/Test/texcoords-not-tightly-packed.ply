@@ -1,0 +1,11 @@
+ply
+format binary_little_endian 1.0
+element vertex 0
+property uchar v
+property float x
+property float y
+property float z
+property uchar u
+element face 0
+property list uint32 char vertex_indices
+end_header
