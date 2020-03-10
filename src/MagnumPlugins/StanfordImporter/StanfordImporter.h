@@ -149,6 +149,9 @@ with @p level set to @cpp 1 @ce will return a @ref MeshData instance with
 contains data for each triangle in the @ref MeshPrimitive::Triangles mesh at
 @p level @cpp 0 @ce.
 
+From the builtin attributes, colors and normals can be either per-vertex or
+per-face, positions and texture coordinates are always per-vertex.
+
 @subsection Trade-StanfordImporter-behavior-custom-attributes Custom attributes
 
 Custom and unrecognized vertex and face attributes of known types are present

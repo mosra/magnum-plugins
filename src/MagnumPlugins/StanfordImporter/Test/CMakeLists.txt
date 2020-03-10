@@ -72,6 +72,8 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         normals-not-same-type.ply
         normals-not-tightly-packed.ply
         normals-unsupported-type.ply
+        per-face-colors-be.ply
+        per-face-normals.ply
         positions-colors-normals-texcoords-float-indices-int-be.ply
         positions-colors-normals-texcoords-float-indices-int.ply
         positions-colors4-normals-texcoords-float-indices-int-be-unaligned.ply

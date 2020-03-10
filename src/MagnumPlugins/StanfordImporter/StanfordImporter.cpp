@@ -244,6 +244,8 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
     Vector3ui normalOffsets{~UnsignedInt{}};
     Vector2ui textureCoordinateOffsets{~UnsignedInt{}};
     Vector4ui colorOffsets{~UnsignedInt{}};
+    bool perFaceNormals = false;
+    bool perFaceColors = false;
     {
         std::size_t vertexComponentOffset{};
         PropertyType propertyType{};
@@ -365,30 +367,63 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
                             return;
                         }
 
-                    /* Unknown component, add to the face attribute list.
-                       Stride and actual triangle face count is not known yet,
-                       using 0 until it's updated later. */
+                    /* Per-face component */
                     } else if(tokens.size() == 3) {
-                        const VertexFormat faceFormat = parseAttributeType(tokens[1]);
-                        if(faceFormat == VertexFormat{}) {
+                       const VertexFormat componentFormat = parseAttributeType(tokens[1]);
+                        if(componentFormat == VertexFormat{}) {
                             Error{} << "Trade::StanfordImporter::openData(): invalid face component type" << tokens[1];
                             return;
                         }
 
-                        auto inserted = state->attributeNameMap.emplace(tokens[2],
-                            meshAttributeCustom(state->attributeNames.size()));
-                        arrayAppend(state->attributeNames, tokens[2]);
-                        arrayAppend(state->faceAttributeData, MeshAttributeData{
-                            inserted.first->second,
-                            faceFormat,
-                            /* Before indices are found, faceIndicesOffset is
-                               zero. After indices are found, faceIndicesOffset
-                               is set and faceSkip is zero again, thus the sum
-                               of the two is always offset from the beginning
-                               of the face, which is what we need. */
-                            state->faceIndicesOffset + state->faceSkip, 0, 0});
+                        /* Before indices are found, faceIndicesOffset is zero.
+                           After indices are found, faceIndicesOffset is set
+                           and faceSkip is zero again, thus the sum of the two
+                           is always offset from the beginning of the face,
+                           which is what we need. */
+                        const UnsignedInt faceComponentOffset =
+                            state->faceIndicesOffset + state->faceSkip;
 
-                        state->faceSkip += vertexFormatSize(faceFormat);
+                        /* Per-face normals and colors make sense, OTOH
+                           positions or texture coordinates don't, so not
+                           handling those in any way (they would appear as
+                           custom attributes) */
+                        if(tokens[2] == "nx") {
+                            perFaceNormals = true;
+                            normalOffsets.x() = faceComponentOffset;
+                            normalFormats.x() = componentFormat;
+                        } else if(tokens[2] == "ny") {
+                            normalOffsets.y() = faceComponentOffset;
+                            normalFormats.y() = componentFormat;
+                        } else if(tokens[2] == "nz") {
+                            normalOffsets.z() = faceComponentOffset;
+                            normalFormats.z() = componentFormat;
+                        } else if(tokens[2] == "red") {
+                            perFaceColors = true;
+                            colorOffsets.x() = faceComponentOffset;
+                            colorFormats.x() = componentFormat;
+                        } else if(tokens[2] == "green") {
+                            colorOffsets.y() = faceComponentOffset;
+                            colorFormats.y() = componentFormat;
+                        } else if(tokens[2] == "blue") {
+                            colorOffsets.z() = faceComponentOffset;
+                            colorFormats.z() = componentFormat;
+                        } else if(tokens[2] == "alpha") {
+                            colorOffsets.w() = faceComponentOffset;
+                            colorFormats.w() = componentFormat;
+
+                        /* Unknown component, add to the face attribute list.
+                           Stride and actual triangle face count is not known yet,
+                           using 0 until it's updated later. */
+                        } else {
+                            auto inserted = state->attributeNameMap.emplace(tokens[2],
+                                meshAttributeCustom(state->attributeNames.size()));
+                            arrayAppend(state->attributeNames, tokens[2]);
+                            arrayAppend(state->faceAttributeData, MeshAttributeData{
+                                inserted.first->second,
+                                componentFormat, faceComponentOffset, 0, 0});
+                        }
+
+                        state->faceSkip += vertexFormatSize(componentFormat);
 
                     /* Fail on unknown lines */
                     } else {
@@ -478,12 +513,18 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
             return;
         }
 
-        /* Add the attribute */
-        arrayAppend(state->attributeData, Containers::InPlaceInit,
-            MeshAttribute::Normal,
+        /* Add the attribute. If it is per-face, actual triangle face count is
+           not known yet, using 0 until after all faces are parsed. */
+        if(!perFaceNormals) arrayAppend(state->attributeData,
+            Containers::InPlaceInit, MeshAttribute::Normal,
             /* We want integer types normalized */
             vertexFormat(normalFormats.x(), 3, normalFormats.x() != VertexFormat::Float),
             normalOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
+        else arrayAppend(state->faceAttributeData,
+            Containers::InPlaceInit, MeshAttribute::Normal,
+            /* We want integer types normalized */
+            vertexFormat(normalFormats.x(), 3, normalFormats.x() != VertexFormat::Float),
+            normalOffsets.x(), 0u, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip));
     }
 
     /* Wrap up texture coordinates, if any */
@@ -529,12 +570,18 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
             return;
         }
 
-        /* Add the attribute */
-        arrayAppend(state->attributeData, Containers::InPlaceInit,
-            MeshAttribute::Color,
+        /* Add the attribute. If it is per-face, actual triangle face count is
+           not known yet, using 0 until after all faces are parsed. */
+        if(!perFaceColors) arrayAppend(state->attributeData,
+            Containers::InPlaceInit, MeshAttribute::Color,
             /* We want integer types normalized, 3 or 4 components */
             vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
             colorOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
+        else arrayAppend(state->faceAttributeData,
+            Containers::InPlaceInit, MeshAttribute::Color,
+            /* We want integer types normalized, 3 or 4 components */
+            vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
+            colorOffsets.x(), 0u, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip));
     }
 
     if(data.size() < state->vertexStride*state->vertexCount) {
