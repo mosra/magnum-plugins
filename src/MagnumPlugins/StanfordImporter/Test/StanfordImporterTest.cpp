@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
@@ -50,6 +51,8 @@ struct StanfordImporterTest: TestSuite::Tester {
 
     void parse();
     void empty();
+
+    void triangleFastPath();
 
     void openTwice();
     void importTwice();
@@ -135,6 +138,14 @@ constexpr struct {
     {"ignored-vertex-components", MeshIndexType::UnsignedByte, VertexFormat::Vector3us, VertexFormat{}}
 };
 
+constexpr struct {
+    const char* name;
+    bool enabled;
+} FastTrianglePathData[]{
+    {"", true},
+    {"disabled", false}
+};
+
 StanfordImporterTest::StanfordImporterTest() {
     addInstancedTests({&StanfordImporterTest::invalid},
         Containers::arraySize(InvalidData));
@@ -147,9 +158,12 @@ StanfordImporterTest::StanfordImporterTest() {
     addInstancedTests({&StanfordImporterTest::parse},
         Containers::arraySize(ParseData));
 
-    addTests({&StanfordImporterTest::empty,
+    addTests({&StanfordImporterTest::empty});
 
-              &StanfordImporterTest::openTwice,
+    addInstancedTests({&StanfordImporterTest::triangleFastPath},
+        Containers::arraySize(FastTrianglePathData));
+
+    addTests({&StanfordImporterTest::openTwice,
               &StanfordImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -267,6 +281,33 @@ void StanfordImporterTest::empty() {
     CORRADE_COMPARE(mesh->attributeCount(), 1);
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position),
         VertexFormat::Vector3);
+    CORRADE_COMPARE(mesh->vertexCount(), 0);
+}
+
+void StanfordImporterTest::triangleFastPath() {
+    auto&& data = FastTrianglePathData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    importer->configuration().setValue("triangleFastPath", data.enabled);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "triangle-fast-path-be.ply")));
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedShort);
+    /* The file is BE to verify the endian flip is done here as well */
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedShort>(),
+        Containers::arrayView<UnsignedShort>({
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position),
+        VertexFormat::Vector3b);
     CORRADE_COMPARE(mesh->vertexCount(), 0);
 }
 

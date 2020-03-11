@@ -77,6 +77,7 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         positions-uchar-indices-ushort.ply
         positions-unsupported-type.ply
         positions-ushort-indices-uchar-be.ply
+        triangle-fast-path-be.ply
         unexpected-property.ply
         unknown-element.ply
         unknown-line.ply

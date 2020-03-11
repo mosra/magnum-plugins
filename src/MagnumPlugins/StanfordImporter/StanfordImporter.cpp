@@ -29,6 +29,7 @@
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Corrade/Utility/String.h>
@@ -40,7 +41,10 @@
 
 namespace Magnum { namespace Trade {
 
-StanfordImporter::StanfordImporter() = default;
+StanfordImporter::StanfordImporter() {
+    /** @todo horrible workaround, fix this properly */
+    configuration().setValue("triangleFastPath", 0.8f);
+}
 
 StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
@@ -460,14 +464,31 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                 vertexCount, vertexStride}};
     }
 
-    /* Parse faces. Keep the original index type, reserve optimistically amount
-       for all-triangle faces */
+    /* Parse faces, keeping the original index type */
     Containers::Array<char> indexData;
     const UnsignedInt faceIndexTypeSize = meshIndexTypeSize(faceIndexType);
-    Containers::arrayReserve<ArrayAllocator>(indexData,
-        faceCount*3*faceIndexTypeSize);
-    {
-        const UnsignedInt faceSizeTypeSize = meshIndexTypeSize(faceSizeType);
+    const UnsignedInt faceSizeTypeSize = meshIndexTypeSize(faceSizeType);
+
+    /* Fast path -- if all faces are triangles, we can just copy all
+       indices directly without parsing anything */
+    /** @todo this additionally needs to be disabled when per-face attribs are
+        imported too */
+    if(configuration().value<bool>("triangleFastPath") && in.size() == faceCount*(faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + faceSkip)) {
+        indexData = Containers::Array<char>{Containers::NoInit,
+            faceCount*3*faceIndexTypeSize};
+        Containers::StridedArrayView2D<const char> src{in,
+            in + faceIndicesOffset + faceSizeTypeSize, {faceCount, 3*faceIndexTypeSize}, {std::ptrdiff_t(faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + faceSkip), 1}};
+        Containers::StridedArrayView2D<char> dst{indexData,
+            {faceCount, 3*faceIndexTypeSize}};
+        Utility::copy(src, dst);
+
+    /* Otherwise reserve optimistically amount for all-triangle faces, and let
+       the array grow */
+    /** @todo the size could be estimated *exactly* via the above equation
+       (assuming no stray data at EOF) */
+    } else {
+        Containers::arrayReserve<ArrayAllocator>(indexData,
+            faceCount*3*faceIndexTypeSize);
         for(std::size_t i = 0; i != faceCount; ++i) {
             if(in.size() < faceIndicesOffset + faceSizeTypeSize) {
                 Error() << "Trade::StanfordImporter::mesh(): incomplete index data";
@@ -512,15 +533,15 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, UnsignedInt
                     buffer.slice(3*faceIndexTypeSize, 4*faceIndexTypeSize));
             }
         }
+    }
 
-        /* Endian-swap the indices, if needed */
-        if(*fileFormatNeedsEndianSwapping) {
-            if(faceIndexTypeSize == 2)
-                Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedShort>(indexData));
-            else if(faceIndexTypeSize == 4)
-                Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedInt>(indexData));
-            else CORRADE_INTERNAL_ASSERT(faceIndexTypeSize == 1);
-        }
+    /* Endian-swap the indices, if needed */
+    if(*fileFormatNeedsEndianSwapping) {
+        if(faceIndexTypeSize == 2)
+            Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedShort>(indexData));
+        else if(faceIndexTypeSize == 4)
+            Utility::Endianness::swapInPlace(Containers::arrayCast<UnsignedInt>(indexData));
+        else CORRADE_INTERNAL_ASSERT(faceIndexTypeSize == 1);
     }
 
     MeshIndexData indices{faceIndexType, indexData};

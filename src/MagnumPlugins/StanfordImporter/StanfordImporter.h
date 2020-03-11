@@ -129,6 +129,14 @@ using either @ref MeshTools::generateFlatNormals() /
 @ref MeshTools::generateSmoothNormals() or by passing
 @ref MeshTools::CompileFlag::GenerateFlatNormals /
 @ref MeshTools::CompileFlag::GenerateSmoothNormals to @ref MeshTools::compile().
+
+@section Trade-StanfordImporter-configuration Plugin-specific config
+
+It's possible to tune various import options through @ref configuration(). See
+below for all options and their default values:
+
+@snippet MagnumPlugins/StanfordImporter/StanfordImporter.conf config
+
 */
 class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
     public:
