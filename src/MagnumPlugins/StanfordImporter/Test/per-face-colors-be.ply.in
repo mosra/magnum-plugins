@@ -4,13 +4,13 @@ property float x
 property float y
 property float z
 element face 2
-property list int32 uint vertex_indices
+property list int32 short vertex_indices
 property float red
 property float green
 property float blue
 property float alpha
 """
-type = '>3f 3f 3f 3f 3f i4i4fi3i4f'
+type = '>3f 3f 3f 3f 3f i4h4fi3h4f'
 input = [
     1.0, 3.0, 2.0,
     1.0, 1.0, 2.0,

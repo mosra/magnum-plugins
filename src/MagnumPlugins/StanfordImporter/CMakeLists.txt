@@ -23,7 +23,9 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED Trade)
+find_package(Magnum REQUIRED
+    MeshTools
+    Trade)
 
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_STANFORDIMPORTER_BUILD_STATIC 1)
@@ -45,7 +47,9 @@ endif()
 target_include_directories(StanfordImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(StanfordImporter PUBLIC Magnum::Trade)
+target_link_libraries(StanfordImporter PUBLIC
+    Magnum::MeshTools
+    Magnum::Trade)
 # Modify output location only if all are set, otherwise it makes no sense
 if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND CMAKE_LIBRARY_OUTPUT_DIRECTORY AND CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
     set_target_properties(StanfordImporter PROPERTIES

@@ -142,12 +142,21 @@ optional.
 
 @subsection Trade-StanfordImporter-behavior-per-face Per-face attributes
 
-The importer provides access to per-face attributes in a second mesh level ---
-i.e., @ref meshLevelCount() always returns @cpp 2 @ce, and calling @ref mesh()
-with @p level set to @cpp 1 @ce will return a @ref MeshData instance with
-@ref MeshPrimitive::Faces. The faces are triangulated, which means each item
-contains data for each triangle in the @ref MeshPrimitive::Triangles mesh at
-@p level @cpp 0 @ce.
+By default, if the mesh contains per-face attributes apart from indices, these
+get converted to per-vertex during import. This is what the users usually want,
+however for large meshes this may have a performance impact due to calculating
+only unique per-vertex/per-face data combinations. If this conversion takes
+place, the resulting index type is always @ref MeshIndexType::UnsignedInt,
+independent of what the file has.
+
+Alternatively, if the @cb{.ini} perFaceToPerVertex @ce
+@ref Trade-StanfordImporter-configuration "configuration option" is disabled,
+the importer provides access to per-face attributes in a second mesh level ---
+i.e., @ref meshLevelCount() returns @cpp 2 @ce in that case, and calling
+@ref mesh() with @p level set to @cpp 1 @ce will return a @ref MeshData
+instance with @ref MeshPrimitive::Faces. The faces are triangulated, which
+means each item contains data for three vertices in the
+@ref MeshPrimitive::Triangles mesh at <tt>level</tt> @cpp 0 @ce.
 
 From the builtin attributes, colors and normals can be either per-vertex or
 per-face, positions and texture coordinates are always per-vertex.

@@ -36,6 +36,7 @@
 #include <Corrade/Utility/String.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/MeshTools/Combine.h>
 #include <Magnum/Trade/ArrayAllocator.h>
 #include <Magnum/Trade/MeshData.h>
 
@@ -597,9 +598,17 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
 
 UnsignedInt StanfordImporter::doMeshCount() const { return 1; }
 
-UnsignedInt StanfordImporter::doMeshLevelCount(UnsignedInt) { return 2; }
+UnsignedInt StanfordImporter::doMeshLevelCount(UnsignedInt) {
+    return configuration().value<bool>("perFaceToPerVertex") ? 1 : 2;
+}
 
 Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const UnsignedInt level) {
+    /* We either have per-face in the second level or we convert them to
+       per-vertex, never both */
+    CORRADE_INTERNAL_ASSERT(!(level == 1 && configuration().value<bool>("perFaceToPerVertex")));
+    const bool parsePerFaceAttributes = level == 1 ||
+        configuration().value<bool>("perFaceToPerVertex");
+
     /* Copy all vertex data */
     Containers::Array<char> vertexData;
     if(level == 0) {
@@ -629,7 +638,9 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
             Containers::StridedArrayView2D<char> dst{indexData,
                 {_state->faceCount, 3*faceIndexTypeSize}};
             Utility::copy(src, dst);
-        } else {
+        }
+
+        if(parsePerFaceAttributes) {
             faceData = Containers::Array<char>{Containers::NoInit,
                 _state->faceCount*(_state->faceIndicesOffset + _state->faceSkip)};
             Containers::StridedArrayView2D<const char> src{in,
@@ -652,7 +663,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
     /** @todo the size could be estimated *exactly* via the above equation
        (assuming no stray data at EOF) */
     } else {
-        if(level == 1) Containers::arrayReserve<ArrayAllocator>(faceData,
+        if(parsePerFaceAttributes) Containers::arrayReserve<ArrayAllocator>(faceData,
             _state->faceCount*(_state->faceIndicesOffset + _state->faceSkip));
         Containers::arrayReserve<ArrayAllocator>(indexData,
             _state->faceCount*3*faceIndexTypeSize);
@@ -689,7 +700,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
             /* Append either the triangle or the first triangle of the quad */
             Containers::arrayAppend<ArrayAllocator>(indexData,
                 faceIndexData.prefix(3*faceIndexTypeSize));
-            if(level == 1) {
+            if(parsePerFaceAttributes) {
                 Containers::arrayAppend<ArrayAllocator>(faceData, faceDataBeforeIndices);
                 Containers::arrayAppend<ArrayAllocator>(faceData, faceDataAfterIndices);
             }
@@ -706,7 +717,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
                     faceIndexData.slice(2*faceIndexTypeSize, 3*faceIndexTypeSize));
                 Containers::arrayAppend<ArrayAllocator>(indexData,
                     faceIndexData.slice(3*faceIndexTypeSize, 4*faceIndexTypeSize));
-                if(level == 1) {
+                if(parsePerFaceAttributes) {
                     Containers::arrayAppend<ArrayAllocator>(faceData, faceDataBeforeIndices);
                     Containers::arrayAppend<ArrayAllocator>(faceData, faceDataAfterIndices);
                 }
@@ -719,19 +730,22 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
        deleter), so use that opportunity to also turn them from offset-only to
        absolute, and for per-face ones fill the count for each (which wasn't
        known until now) */
-    Containers::Array<MeshAttributeData> attributeData;
+    Containers::Array<MeshAttributeData> vertexAttributeData;
+    Containers::Array<MeshAttributeData> faceAttributeData;
     if(level == 0) {
-        attributeData = Containers::Array<MeshAttributeData>{_state->attributeData.size()};
-        for(std::size_t i = 0; i != attributeData.size(); ++i) {
-            attributeData[i] = MeshAttributeData{
+        vertexAttributeData = Containers::Array<MeshAttributeData>{_state->attributeData.size()};
+        for(std::size_t i = 0; i != vertexAttributeData.size(); ++i) {
+            vertexAttributeData[i] = MeshAttributeData{
                 _state->attributeData[i].name(),
                 _state->attributeData[i].format(),
                 _state->attributeData[i].data(vertexData)};
         }
-    } else {
-        attributeData = Containers::Array<MeshAttributeData>{_state->faceAttributeData.size()};
-        for(std::size_t i = 0; i != attributeData.size(); ++i) {
-            attributeData[i] = MeshAttributeData{
+    }
+
+    if(parsePerFaceAttributes) {
+        faceAttributeData = Containers::Array<MeshAttributeData>{_state->faceAttributeData.size()};
+        for(std::size_t i = 0; i != faceAttributeData.size(); ++i) {
+            faceAttributeData[i] = MeshAttributeData{
                 _state->faceAttributeData[i].name(),
                 _state->faceAttributeData[i].format(),
                 Containers::StridedArrayView1D<const void>{
@@ -744,28 +758,32 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
 
     /* Endian-swap the data, if needed */
     if(_state->fileFormatNeedsEndianSwapping) {
-        for(const MeshAttributeData& attribute: attributeData) {
-            const UnsignedInt formatSize =
-                vertexFormatSize(vertexFormatComponentFormat(attribute.format()));
-            if(formatSize == 1) continue;
-            const UnsignedInt componentCount =
-                vertexFormatComponentCount(attribute.format());
-            const Containers::StridedArrayView1D<const void> data = attribute.data(
-                level == 0 ? vertexData : faceData);
-            /** @todo some arrayConstCast? ugh */
-            const Containers::StridedArrayView1D<void> mutableData{
-                {const_cast<void*>(data.data()), ~std::size_t{}},
-                const_cast<void*>(data.data()), data.size(), data.stride()};
-            if(formatSize == 2) {
-                for(Containers::StridedArrayView1D<UnsignedShort> component: Containers::arrayCast<2, UnsignedShort>(mutableData, componentCount).transposed<0, 1>())
-                    Utility::Endianness::swapInPlace(component);
-            } else if(formatSize == 4) {
-                for(Containers::StridedArrayView1D<UnsignedInt> component: Containers::arrayCast<2, UnsignedInt>(mutableData, componentCount).transposed<0, 1>())
-                    Utility::Endianness::swapInPlace(component);
-            } else if(formatSize == 8) {
-                for(Containers::StridedArrayView1D<UnsignedLong> component: Containers::arrayCast<2, UnsignedLong>(mutableData, componentCount).transposed<0, 1>())
-                    Utility::Endianness::swapInPlace(component);
-            } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        for(const auto& attributeData: {
+            Containers::arrayView(vertexAttributeData),
+            Containers::arrayView(faceAttributeData)}) {
+            for(const MeshAttributeData& attribute: attributeData) {
+                const UnsignedInt formatSize =
+                    vertexFormatSize(vertexFormatComponentFormat(attribute.format()));
+                if(formatSize == 1) continue;
+                const UnsignedInt componentCount =
+                    vertexFormatComponentCount(attribute.format());
+                const Containers::StridedArrayView1D<const void> data =
+                    attribute.data(attributeData.data() == vertexAttributeData.data() ? vertexData : faceData);
+                /** @todo some arrayConstCast? ugh */
+                const Containers::StridedArrayView1D<void> mutableData{
+                    {const_cast<void*>(data.data()), ~std::size_t{}},
+                    const_cast<void*>(data.data()), data.size(), data.stride()};
+                if(formatSize == 2) {
+                    for(Containers::StridedArrayView1D<UnsignedShort> component: Containers::arrayCast<2, UnsignedShort>(mutableData, componentCount).transposed<0, 1>())
+                        Utility::Endianness::swapInPlace(component);
+                } else if(formatSize == 4) {
+                    for(Containers::StridedArrayView1D<UnsignedInt> component: Containers::arrayCast<2, UnsignedInt>(mutableData, componentCount).transposed<0, 1>())
+                        Utility::Endianness::swapInPlace(component);
+                } else if(formatSize == 8) {
+                    for(Containers::StridedArrayView1D<UnsignedLong> component: Containers::arrayCast<2, UnsignedLong>(mutableData, componentCount).transposed<0, 1>())
+                        Utility::Endianness::swapInPlace(component);
+                } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            }
         }
 
         if(level == 0) {
@@ -777,14 +795,28 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
         }
     }
 
+    /* Turn per-face attributes into per-vertex, if desired (and if there are
+       any) */
+    if(level == 0 && configuration().value<bool>("perFaceToPerVertex") && !faceAttributeData.empty()) {
+        /** @todo in this case it'll assert if indices are out of bounds, check
+            for it at runtime somehow */
+        MeshIndexData indices{_state->faceIndexType, indexData};
+        MeshData perVertex{MeshPrimitive::Triangles,
+            std::move(indexData), indices,
+            std::move(vertexData), std::move(vertexAttributeData)};
+        MeshData perFace{MeshPrimitive::Faces,
+            std::move(faceData), std::move(faceAttributeData), triangleFaceCount};
+        return MeshTools::combineFaceAttributes(perVertex, perFace);
+    }
+
     if(level == 0) {
         MeshIndexData indices{_state->faceIndexType, indexData};
         return MeshData{MeshPrimitive::Triangles,
             std::move(indexData), indices,
-            std::move(vertexData), std::move(attributeData)};
+            std::move(vertexData), std::move(vertexAttributeData)};
     } else {
         return MeshData{MeshPrimitive::Faces,
-            std::move(faceData), std::move(attributeData), triangleFaceCount};
+            std::move(faceData), std::move(faceAttributeData), triangleFaceCount};
     }
 }
 

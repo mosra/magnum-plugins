@@ -72,6 +72,7 @@ digraph "Magnum Plugins dependency order" {
     OpenGexImporter -> MagnumTrade
     OpenGexImporter -> AnyImageImporter
     OpenGexImporter -> MagnumOpenDdl
+    StanfordImporter -> MagnumMeshTools
     TinyGltfImporter -> MagnumTrade
     TinyGltfImporter -> AnyImageImporter
 }

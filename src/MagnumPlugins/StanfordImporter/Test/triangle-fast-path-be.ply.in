@@ -1,20 +1,24 @@
 header = """
-element vertex 0
+element vertex 5
 property char x
 property char y
 property char z
-element face 5
+element face 3
 property uint something_before
 property list char int16 vertex_indices
 property ushort something_after
 """
-type = '>Ib3hH Ib3hH Ib3hH Ib3hH Ib3hH'
+type = '>15b Ib3hH Ib3hH Ib3hH'
 input = [
-    0xfaffffff, 3, 0, 1, 2, 0xaaaa,
-    0xffafffff, 3, 3, 4, 5, 0xabaa,
-    0xfffaffff, 3, 6, 7, 8, 0xacaa,
-    0xffffafff, 3, 9, 10, 11, 0xadaa,
-    0xfffffaff, 3, 12, 13, 14, 0xaeaa
+    1, 3, 2,
+    1, 1, 2,
+    3, 3, 2,
+    3, 1, 2,
+    5, 3, 9,
+
+    0xfaffffff, 3, 0, 1, 2, 0xabaa,
+    0xfaffffff, 3, 0, 2, 3, 0xabaa,
+    0xffffffaf, 3, 3, 2, 4, 0xbbab,
 ]
 
 # kate: hl python

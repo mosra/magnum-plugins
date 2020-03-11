@@ -7,9 +7,9 @@ element face 2
 property float nx
 property float ny
 property float nz
-property list int32 uint vertex_indices
+property list int32 uchar vertex_indices
 """
-type = '<3f 3f 3f 3f 3f 3fi4i3fi3i'
+type = '<3f 3f 3f 3f 3f 3fi4B3fi3B'
 input = [
     1.0, 3.0, 2.0,
     1.0, 1.0, 2.0,
