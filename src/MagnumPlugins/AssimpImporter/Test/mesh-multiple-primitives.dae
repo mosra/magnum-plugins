@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 2.82.7 commit date:2020-03-12, commit time:05:06, hash:375c7dc4caf4</authoring_tool>
+    </contributor>
+    <created>2020-03-14T15:11:32</created>
+    <modified>2020-03-14T15:11:32</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_effects>
+    <effect id="Material-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <diffuse>
+              <color sid="diffuse">0.8 0.8 0.8 1</color>
+            </diffuse>
+            <index_of_refraction>
+              <float sid="ior">1.45</float>
+            </index_of_refraction>
+          </lambert>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_images/>
+  <library_materials>
+    <material id="Material-material" name="Material">
+      <instance_effect url="#Material-effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="Multi-primitive_lines__triangles__triangle_strip-mesh" name="Multi-primitive lines, triangles, triangle strip">
+      <mesh>
+        <source id="Multi-primitive_lines__triangles__triangle_strip-mesh-positions">
+          <float_array id="Multi-primitive_lines__triangles__triangle_strip-mesh-positions-array" count="9">0 0 0 1 1 1 2 2 2</float_array>
+          <technique_common>
+            <accessor source="#Multi-primitive_lines__triangles__triangle_strip-mesh-positions-array" count="3" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Multi-primitive_lines__triangles__triangle_strip-mesh-normals">
+          <float_array id="Multi-primitive_lines__triangles__triangle_strip-mesh-normals-array" count="9">0 0 1 0 0 1 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#Multi-primitive_lines__triangles__triangle_strip-mesh-normals-array" count="3" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Multi-primitive_lines__triangles__triangle_strip-mesh-vertices">
+          <input semantic="POSITION" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-positions"/>
+        </vertices>
+        <lines material="Material-material" count="2">
+          <input semantic="VERTEX" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-vertices" />
+          <p>0 1 1 2</p>
+        </lines>
+        <triangles material="Material-material" count="1">
+          <input semantic="VERTEX" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-vertices" />
+          <input semantic="NORMAL" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-normals" />
+          <p>0 1 2</p>
+        </triangles>
+        <tristrips material="Material-material" count="1">
+          <input semantic="VERTEX" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-vertices" />
+          <input semantic="NORMAL" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-normals" />
+          <p>0 1 2</p>
+        </tristrips>
+      </mesh>
+    </geometry>
+    <geometry id="Multi-primitive_triangle_fan__line_strip-mesh" name="Multi-primitive triangle fan, line strip">
+      <mesh>
+        <source id="Multi-primitive_triangle_fan__line_strip-mesh-positions">
+          <float_array id="Multi-primitive_triangle_fan__line_strip-mesh-positions-array" count="9">0 0 0 1 1 1 2 2 2</float_array>
+          <technique_common>
+            <accessor source="#Multi-primitive_triangle_fan__line_strip-mesh-positions-array" count="3" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Multi-primitive_triangle_fan__line_strip-mesh-normals">
+          <float_array id="Multi-primitive_triangle_fan__line_strip-mesh-normals-array" count="9">0 0 1 0 0 1 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#Multi-primitive_triangle_fan__line_strip-mesh-normals-array" count="3" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Multi-primitive_triangle_fan__line_strip-mesh-vertices">
+          <input semantic="POSITION" source="#Multi-primitive_triangle_fan__line_strip-mesh-positions"/>
+        </vertices>
+        <trifans material="Material-material" count="1">
+          <input semantic="VERTEX" source="#Multi-primitive_triangle_fan__line_strip-mesh-vertices" />
+          <input semantic="NORMAL" source="#Multi-primitive_triangle_fan__line_strip-mesh-normals" />
+          <p>0 1 2</p>
+        </trifans>
+        <linestrips material="Material-material" count="1">
+          <input semantic="VERTEX" source="#Multi-primitive_triangle_fan__line_strip-mesh-vertices" />
+          <p>0 1</p>
+        </linestrips>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_animations/>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <matrix sid="transform">1 0 0 0 0 -1.34359e-7 -1 0 0 1 -1.34359e-7 0 0 0 0 1</matrix>
+      <node id="Using_the_second_mesh__should_have_4_children" name="Using the second mesh, should have 4 children" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <instance_geometry url="#Multi-primitive_lines__triangles__triangle_strip-mesh" name="Using the second mesh, should have 4 children">
+          <bind_material><technique_common><instance_material symbol="Material-material" target="#Material-material" /></technique_common></bind_material>
+        </instance_geometry>
+        <node id="Using_the_fourth_mesh__1_child" name="Using the fourth mesh, 1 child" type="NODE">
+          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+          <instance_geometry url="#Multi-primitive_triangle_fan__line_strip-mesh" name="Using the fourth mesh, 1 child">
+            <bind_material><technique_common><instance_material symbol="Material-material" target="#Material-material" /></technique_common></bind_material>
+          </instance_geometry>
+        </node>
+      </node>
+      <node id="Just_a_non-mesh_node" name="Just a non-mesh node" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+      </node>
+      <node id="Using_the_second_mesh_again__again_2_children" name="Using the second mesh again, again 2 children" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <instance_geometry url="#Multi-primitive_lines__triangles__triangle_strip-mesh" name="Using the second mesh again, again 2 children">
+          <bind_material><technique_common><instance_material symbol="Material-material" target="#Material-material" /></technique_common></bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
