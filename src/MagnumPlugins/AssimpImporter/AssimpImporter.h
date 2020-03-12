@@ -223,8 +223,8 @@ Import of animation data is not supported at the moment.
 
 @subsection Trade-AssimpImporter-limitations-meshes Mesh import
 
--   Only the first mesh of a `aiNode` is loaded
--   Only triangle meshes are loaded
+-   Only point, triangle, and line meshes are loaded (quad and poly meshes
+    are triangularized by Assimp)
 -   Texture coordinate layers with other than two components are skipped
 -   For some file formats (such as COLLADA), Assimp may create a dummy
     "skeleton visualizer" mesh if the file has no mesh data. For others (such
@@ -235,6 +235,19 @@ Import of animation data is not supported at the moment.
     @ref VertexFormat::Vector2 and colors as @ref VertexFormat::Vector4. In
     other words, everything gets expanded by Assimp to floats, even if the
     original file might be using different types.
+-   Multi-mesh nodes and multi-primitive meshes are loaded as follows:
+    -   Multi-primitive meshes are split by Assimp into individual meshes
+    -   The @ref meshCount() query returns a number of all *primitives*, not
+        meshes
+    -   The @ref object3DCount() query returns a number of all nodes extended
+        with number of extra objects for each additional mesh
+    -   Each node referencing a multiple meshes is split into a sequence
+        of @ref MeshObjectData3D instances following each other; the extra
+        nodes being a direct and immediate children of the first one with an
+        identity transformation
+    -   @ref object3DForName() points to the first object containing the first
+        mesh, @ref object3DName() returns the same name for all objects in
+        given sequence
 
 The mesh is always indexed; positions are always present, normals, colors and
 texture coordinates are optional.
