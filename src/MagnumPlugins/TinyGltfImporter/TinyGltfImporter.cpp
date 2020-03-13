@@ -1241,17 +1241,13 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
 
     /* From the core Metallic/Roughness we get just the base color / texture */
     } else {
-        auto dt = material.values.find("baseColorTexture");
-        if(dt != material.values.end()) {
-            diffuseTexture = dt->second.TextureIndex();
+        const Int index = material.pbrMetallicRoughness.baseColorTexture.index;
+        if(index != -1) {
+            diffuseTexture = index;
             flags |= PhongMaterialData::Flag::DiffuseTexture;
         }
 
-        auto baseColorFactorValue = material.values.find("baseColorFactor");
-        if(baseColorFactorValue != material.values.end()) {
-            tinygltf::ColorValue color = baseColorFactorValue->second.ColorFactor();
-            diffuseColor = Vector4{Vector4d::from(color.data())};
-        }
+        diffuseColor = Vector4{Vector4d::from(material.pbrMetallicRoughness.baseColorFactor.data())};
     }
 
     /* Put things together */
