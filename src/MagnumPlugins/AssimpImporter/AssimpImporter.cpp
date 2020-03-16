@@ -50,6 +50,7 @@
 #include <Magnum/Trade/TextureData.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
+#include <assimp/config.h>
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 #include <assimp/IOStream.hpp>
@@ -94,19 +95,35 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     postprocess.setValue("SortByPType", true);
 }
 
+/* Setup an Assimp::Importer with sane default configuration */
+Corrade::Containers::Pointer<Assimp::Importer> createImporter()
+{
+    Corrade::Containers::Pointer<Assimp::Importer> importer{new Assimp::Importer};
+
+    /* If this is set to false (default), Assimp will return a transformation
+       in the root aiNode to rotate the scene to Y-Up. With the default settings
+       this transform is ignored, since we only look at the children of the
+       root node. But if the user sets the PreTransformVertices flag, Assimp
+       will apply this transformation. Since nobody needs that, switch it
+       off. */
+    importer->SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
+
+    return importer;
 }
 
-AssimpImporter::AssimpImporter(): _importer{new Assimp::Importer} {
+}
+
+AssimpImporter::AssimpImporter(): _importer{createImporter()} {
     /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
-AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager), _importer{new Assimp::Importer} {
+AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager), _importer{createImporter()} {
     /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
-AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin), _importer{new Assimp::Importer}  {}
+AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin), _importer{createImporter()}  {}
 
 AssimpImporter::~AssimpImporter() = default;
 
