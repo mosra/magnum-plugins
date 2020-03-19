@@ -343,6 +343,8 @@ By default no plugins are built and you need to select them manually:
     [libPNG](http://www.libpng.org/pub/png/libpng.html).
 -   `WITH_PNGIMPORTER` --- Build the @ref Trade::PngImporter "PngImporter"
     plugin. Depends on [libPNG](http://www.libpng.org/pub/png/libpng.html).
+-   `WITH_PRIMITIVEIMPORTER` --- Build the @ref Trade::PrimitiveImporter
+    "PrimitiveImporter" plugin.
 -   `WITH_STANFORDIMPORTER` --- Build the
     @ref Trade::StanfordImporter "StanfordImporter" plugin.
 -   `WITH_STBIMAGECONVERTER` --- Build the

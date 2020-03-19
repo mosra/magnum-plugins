@@ -102,6 +102,10 @@ if(WITH_PNGIMPORTER)
     add_subdirectory(PngImporter)
 endif()
 
+if(WITH_PRIMITIVEIMPORTER)
+    add_subdirectory(PrimitiveImporter)
+endif()
+
 if(WITH_STANFORDIMPORTER)
     add_subdirectory(StanfordImporter)
 endif()

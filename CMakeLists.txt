@@ -54,6 +54,7 @@ cmake_dependent_option(WITH_OPENDDL "Build OpenDdl library" OFF "NOT WITH_OPENGE
 option(WITH_OPENGEXIMPORTER "Build OpenGexImporter plugin" OFF)
 option(WITH_PNGIMAGECONVERTER "Build PngImageConverter plugin" OFF)
 option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
+option(WITH_PRIMITIVEIMPORTER "Build PrimitiveImporter plugin" OFF)
 option(WITH_STANFORDIMPORTER "Build StanfordImporter plugin" OFF)
 option(WITH_STBIMAGECONVERTER "Build StbImageConverter plugin" OFF)
 option(WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
