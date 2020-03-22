@@ -856,7 +856,7 @@ void TinyGltfImporterTest::animationQuaternionNormalizationEnabled() {
     CORRADE_COMPARE(importer->animationCount(), 2);
     CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
 
-    Containers::Optional<Trade::AnimationData> animation;
+    Containers::Optional<AnimationData> animation;
     std::ostringstream out;
     {
         Warning warningRedirection{&out};
@@ -1116,35 +1116,35 @@ void TinyGltfImporterTest::scene() {
         CORRADE_COMPARE(importer->object3DForName("Camera"), 0);
         auto object = importer->object3D(0);
         CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Camera);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
         CORRADE_VERIFY(object->children().empty());
     } {
         CORRADE_COMPARE(importer->object3DName(1), "Empty");
         CORRADE_COMPARE(importer->object3DForName("Empty"), 1);
         auto object = importer->object3D(1);
         CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{0}));
     } {
         CORRADE_COMPARE(importer->object3DName(2), "Mesh");
         CORRADE_COMPARE(importer->object3DForName("Mesh"), 2);
         auto object = importer->object3D(2);
         CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_VERIFY(object->children().empty());
     } {
         CORRADE_COMPARE(importer->object3DName(3), "Light");
         CORRADE_COMPARE(importer->object3DForName("Light"), 3);
         auto object = importer->object3D(3);
         CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Light);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
         CORRADE_VERIFY(object->children().empty());
     } {
         CORRADE_COMPARE(importer->object3DName(4), "Empty 2");
         CORRADE_COMPARE(importer->object3DForName("Empty 2"), 4);
         auto object = importer->object3D(4);
         CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), Trade::ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{3, 1}));
     }
 }
@@ -1313,7 +1313,7 @@ void TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled() 
     CORRADE_COMPARE(importer->object3DCount(), 1);
     CORRADE_COMPARE(importer->object3DName(0), "Non-normalized rotation");
 
-    Containers::Pointer<Trade::ObjectData3D> object;
+    Containers::Pointer<ObjectData3D> object;
     std::ostringstream out;
     {
         Warning warningRedirection{&out};
@@ -1834,9 +1834,9 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
         auto material = importer->material(0);
         CORRADE_VERIFY(material);
         CORRADE_VERIFY(material->importerState());
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
         CORRADE_COMPARE(phong.ambientColor(), 0x000000ff_rgbaf);
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
@@ -1850,9 +1850,9 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
         auto material = importer->material(1);
         CORRADE_VERIFY(material);
         CORRADE_VERIFY(material->importerState());
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
         CORRADE_COMPARE(phong.ambientColor(), 0x000000ff_rgbaf);
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
@@ -1878,9 +1878,9 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
         auto material = importer->material(0);
         CORRADE_VERIFY(material);
         CORRADE_VERIFY(material->importerState());
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
         CORRADE_COMPARE(phong.diffuseTexture(), 0);
@@ -1895,9 +1895,9 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
         auto material = importer->material(1);
         CORRADE_VERIFY(material);
         CORRADE_VERIFY(material->importerState());
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
         /* This is always three-component */
         CORRADE_COMPARE(phong.specularColor(), (Color4{0.1f, 0.2f, 0.6f}));
@@ -1922,9 +1922,9 @@ void TinyGltfImporterTest::materialBlinnPhong() {
         auto material = importer->material(0);
         CORRADE_VERIFY(material);
         CORRADE_VERIFY(material->importerState());
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
         CORRADE_COMPARE(phong.diffuseTexture(), 0);
@@ -1939,9 +1939,9 @@ void TinyGltfImporterTest::materialBlinnPhong() {
         auto material = importer->material(1);
         CORRADE_VERIFY(material);
         CORRADE_VERIFY(material->importerState());
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
         CORRADE_COMPARE(phong.specularColor(), (Color4{0.1f, 0.2f, 0.6f}));
         CORRADE_COMPARE(phong.shininess(), 12.7f);
@@ -1964,9 +1964,9 @@ void TinyGltfImporterTest::materialProperties() {
         CORRADE_COMPARE(importer->materialName(0), "Implicit values");
         auto material = importer->material(0);
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
         CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Opaque);
         CORRADE_COMPARE(phong.alphaMask(), 0.5f);
@@ -1974,9 +1974,9 @@ void TinyGltfImporterTest::materialProperties() {
         CORRADE_COMPARE(importer->materialName(1), "Alpha mask");
         auto material = importer->material(1);
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
         CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Mask);
         CORRADE_COMPARE(phong.alphaMask(), 0.369f);
@@ -1984,9 +1984,9 @@ void TinyGltfImporterTest::materialProperties() {
         CORRADE_COMPARE(importer->materialName(2), "Double-sided alpha blend");
         auto material = importer->material(2);
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DoubleSided);
         CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Blend);
         CORRADE_COMPARE(phong.alphaMask(), 0.5f);
@@ -1994,9 +1994,9 @@ void TinyGltfImporterTest::materialProperties() {
         CORRADE_COMPARE(importer->materialName(3), "Opaque");
         auto material = importer->material(3);
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-        auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
         CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Opaque);
         CORRADE_COMPARE(phong.alphaMask(), 0.5f);
@@ -2024,9 +2024,9 @@ void TinyGltfImporterTest::texture() {
     auto material = importer->material(0);
 
     CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
+    CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-    auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+    auto&& phong = static_cast<const PhongMaterialData&>(*material);
     CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
     CORRADE_COMPARE(phong.diffuseTexture(), 0);
     CORRADE_COMPARE(phong.shininess(), 80.0f);
@@ -2237,9 +2237,9 @@ void TinyGltfImporterTest::imageMipLevels() {
 
     /* Verify that loading a different image will properly switch to another
        importer instance */
-    Containers::Optional<Trade::ImageData2D> image0 = importer->image2D(0);
-    Containers::Optional<Trade::ImageData2D> image10 = importer->image2D(1);
-    Containers::Optional<Trade::ImageData2D> image11 = importer->image2D(1, 1);
+    Containers::Optional<ImageData2D> image0 = importer->image2D(0);
+    Containers::Optional<ImageData2D> image10 = importer->image2D(1);
+    Containers::Optional<ImageData2D> image11 = importer->image2D(1, 1);
 
     CORRADE_VERIFY(image0);
     CORRADE_VERIFY(image0->importerState());
