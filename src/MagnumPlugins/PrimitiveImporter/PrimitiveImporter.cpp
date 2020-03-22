@@ -257,6 +257,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Primitives::CapsuleFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::CapsuleFlag::TextureCoordinates;
+        if(conf->value<bool>("tangents"))
+            flags |= Primitives::CapsuleFlag::Tangents;
 
         return Primitives::capsule3DSolid(
             conf->value<UnsignedInt>("hemisphereRings"),
@@ -305,6 +307,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Primitives::Circle3DFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::Circle3DFlag::TextureCoordinates;
+        if(conf->value<bool>("tangents"))
+            flags |= Primitives::Circle3DFlag::Tangents;
 
         return Primitives::circle3DSolid(
             conf->value<UnsignedInt>("segments"),
@@ -326,6 +330,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Primitives::ConeFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::ConeFlag::TextureCoordinates;
+        if(conf->value<bool>("tangents"))
+            flags |= Primitives::ConeFlag::Tangents;
         if(conf->value<bool>("capEnd"))
             flags |= Primitives::ConeFlag::CapEnd;
 
@@ -367,6 +373,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Primitives::CylinderFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::CylinderFlag::TextureCoordinates;
+        if(conf->value<bool>("tangents"))
+            flags |= Primitives::CylinderFlag::Tangents;
         if(conf->value<bool>("capEnds"))
             flags |= Primitives::CylinderFlag::CapEnds;
 
@@ -456,6 +464,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Primitives::GridFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::GridFlag::TextureCoordinates;
+        if(conf->value<bool>("tangents"))
+            flags |= Primitives::GridFlag::Tangents;
         if(conf->value<bool>("normals"))
             flags |= Primitives::GridFlag::Normals;
 
@@ -505,6 +515,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Primitives::PlaneFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::PlaneFlag::TextureCoordinates;
+        if(conf->value<bool>("tangents"))
+            flags |= Primitives::PlaneFlag::Tangents;
 
         return Primitives::planeSolid(flags);
     }
@@ -533,6 +545,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Primitives::UVSphereFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::UVSphereFlag::TextureCoordinates;
+        if(conf->value<bool>("tangents"))
+            flags |= Primitives::UVSphereFlag::Tangents;
 
         return Primitives::uvSphereSolid(
             conf->value<UnsignedInt>("rings"),
