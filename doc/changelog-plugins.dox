@@ -77,6 +77,11 @@ namespace Magnum {
     @ref Trade::JpegImporter "JpegImporter" on with libjpeg coming from MSYS2
     MinGW packages (see [mosra/magnum-plugins#74]https://github.com/mosra/magnum-plugins/pull/74))
 
+@subsection changelog-plugins-latest-bugfixes Bug fixes
+
+-   @ref Trade::AssimpImporter "AssimpImporter" could crash on a
+    division-by-zero when custom file callbacks encounter an empty file
+
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
 
 -   Removed @ref OpenDdl headers in `MagnumPlugins/OpenGexImporter/OpenDdl`

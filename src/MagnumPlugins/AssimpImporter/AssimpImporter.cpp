@@ -142,6 +142,10 @@ struct IoStream: Assimp::IOStream {
 
     /* mimics fread() / fseek() */
     std::size_t Read(void* buffer, std::size_t size, std::size_t count) override {
+        /* For some zero-sized files, Assimp passes zero size. Ensure we don't
+           crash on a division-by-zero. */
+        if(!size) return 0;
+
         const Containers::ArrayView<const char> slice = _data.suffix(_pos);
         const std::size_t maxCount = Math::min(slice.size()/size, count);
         std::memcpy(buffer, slice.begin(), size*maxCount);
