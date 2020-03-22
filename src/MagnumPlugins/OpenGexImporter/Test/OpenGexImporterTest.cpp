@@ -870,7 +870,7 @@ void OpenGexImporterTest::materialColors() {
     CORRADE_COMPARE(importer->materialForName("colors"), 1);
 
     auto&& phong = static_cast<const PhongMaterialData&>(*material);
-    CORRADE_VERIFY(!phong.flags());
+    CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
     CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.0f, 0.8f, 0.5f, 1.0f}));
     CORRADE_COMPARE(phong.specularColor(), (Color4{0.5f, 0.2f, 1.0f, 0.8f}));
     CORRADE_COMPARE(phong.shininess(), 80.0f);
@@ -889,7 +889,7 @@ void OpenGexImporterTest::materialTextured() {
         CORRADE_COMPARE(importer->materialName(2), "diffuse_texture");
 
         auto&& phong = static_cast<const PhongMaterialData&>(*material);
-        CORRADE_VERIFY(phong.flags() == PhongMaterialData::Flag::DiffuseTexture);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
         CORRADE_COMPARE(phong.diffuseTexture(), 1);
     } {
         Containers::Pointer<AbstractMaterialData> material = importer->material(3);
@@ -897,7 +897,7 @@ void OpenGexImporterTest::materialTextured() {
         CORRADE_COMPARE(importer->materialName(3), "both_textures");
 
         auto&& phong = static_cast<const PhongMaterialData&>(*material);
-        CORRADE_VERIFY(phong.flags() == (PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture));
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
         CORRADE_COMPARE(phong.diffuseTexture(), 2);
         CORRADE_COMPARE(phong.specularTexture(), 3);
     }
