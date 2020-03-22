@@ -9,13 +9,14 @@
               <color sid="emission">0 0 0 1</color>
             </emission>
             <ambient>
-              <color sid="ambient">0 0 0 1</color>
+              <!-- for some reason, Assimp ignores ambient alpha -->
+              <color sid="ambient">0.1 0.05 0.1 0.0.9</color>
             </ambient>
             <diffuse>
-              <color sid="diffuse">0.08000001 0.16 0.24 1</color>
+              <color sid="diffuse">0.08 0.16 0.24 0.7</color>
             </diffuse>
             <specular>
-              <color sid="specular">0.15 0.1 0.05 1</color>
+              <color sid="specular">0.15 0.1 0.05 0.5</color>
             </specular>
             <shininess>
               <float sid="shininess">50</float>

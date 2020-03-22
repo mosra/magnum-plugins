@@ -1,0 +1,9 @@
+newmtl material
+Ka 0.1 0.05 0.1
+Kd 0.08 0.16 0.24
+Ks 0.15 0.1 0.05
+map_Ka r.png
+map_Kd g.png
+map_Ks b.png
+
+# kate: hl Wavefront OBJ

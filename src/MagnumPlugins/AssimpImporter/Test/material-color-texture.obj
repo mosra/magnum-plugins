@@ -1,0 +1,12 @@
+mtllib material-color-texture.mtl
+
+v -1 0 0
+v 1 0 0
+v 0 1 0
+
+vt 0 0
+vt 1 0
+vt 0.5 1
+
+usemtl material
+f 1/1 2/2 3/3

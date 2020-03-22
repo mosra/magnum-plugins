@@ -93,7 +93,9 @@ struct AssimpImporterTest: TestSuite::Tester {
     void camera();
     void light();
     void lightUndefined();
-    void material();
+    void materialColor();
+    void materialTexture();
+    void materialColorTexture();
     void materialStlWhiteAmbientPatch();
     void materialWhiteAmbientTexture();
     void materialMultipleTextures();
@@ -161,7 +163,9 @@ AssimpImporterTest::AssimpImporterTest() {
     addInstancedTests({&AssimpImporterTest::light}, LightInstanceCount);
 
     addTests({&AssimpImporterTest::lightUndefined,
-              &AssimpImporterTest::material,
+              &AssimpImporterTest::materialColor,
+              &AssimpImporterTest::materialTexture,
+              &AssimpImporterTest::materialColorTexture,
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
               &AssimpImporterTest::materialWhiteAmbientTexture,
               &AssimpImporterTest::materialMultipleTextures,
@@ -326,9 +330,9 @@ void AssimpImporterTest::lightUndefined() {
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): light type 4 is not supported\n");
 }
 
-void AssimpImporterTest::material() {
+void AssimpImporterTest::materialColor() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh-material.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
     Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(0);
@@ -338,9 +342,15 @@ void AssimpImporterTest::material() {
     Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
     CORRADE_VERIFY(phongMaterial);
     CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flags{});
-    CORRADE_COMPARE(phongMaterial->ambientColor(), Color3(0.0f, 0.0f, 0.0f));
-    CORRADE_COMPARE(phongMaterial->specularColor(), Color3(0.15f, 0.1f, 0.05f));
-    CORRADE_COMPARE(phongMaterial->diffuseColor(), Color3(0.08f, 0.16f, 0.24f));
+    {
+        CORRADE_EXPECT_FAIL("Assimp sets ambient alpha to 0, ignoring the actual value (for COLLADA at least).");
+        CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 0.9f}));
+    } {
+        /* We're importing as Color3 instead, forcing the alpha to be 1 */
+        CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 1.0f}));
+    }
+    CORRADE_COMPARE(phongMaterial->diffuseColor(), (Color4{0.08f, 0.16f, 0.24f, 0.7f}));
+    CORRADE_COMPARE(phongMaterial->specularColor(), (Color4{0.15f, 0.1f, 0.05f, 0.5f}));
     CORRADE_COMPARE(phongMaterial->shininess(), 50.0f);
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
@@ -353,6 +363,63 @@ void AssimpImporterTest::material() {
         CORRADE_COMPARE(importer->materialName(0), "Material");
     }
     CORRADE_COMPARE(importer->materialForName("Ghost"), -1);
+}
+
+void AssimpImporterTest::materialTexture() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
+
+    CORRADE_COMPARE(importer->materialCount(), 1);
+    Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(0);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+    Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
+    CORRADE_VERIFY(phongMaterial);
+
+    {
+        CORRADE_EXPECT_FAIL("Assimp ignores ambient textures in COLLADA files.");
+        CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flag::AmbientTexture|Trade::PhongMaterialData::Flag::DiffuseTexture|Trade::PhongMaterialData::Flag::SpecularTexture);
+        /* (This would assert now) */
+        //CORRADE_COMPARE(phongMaterial->ambientTexture(), 1);
+    } {
+        CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flag::DiffuseTexture|Trade::PhongMaterialData::Flag::SpecularTexture);
+    }
+    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 0);
+    CORRADE_COMPARE(phongMaterial->specularTexture(), 1);
+
+    /* Colors should stay at their defaults as these aren't provided in the
+       file */
+    CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.0f, 0.0f, 0.0f, 1.0f}));
+    CORRADE_COMPARE(phongMaterial->diffuseColor(), (Color4{1.0f, 1.0f, 1.0f, 1.0f}));
+    CORRADE_COMPARE(phongMaterial->specularColor(), (Color4{1.0f, 1.0f, 1.0f, 1.0f}));
+}
+
+void AssimpImporterTest::materialColorTexture() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color-texture.obj")));
+
+    {
+        CORRADE_EXPECT_FAIL("Assimp reports one material more than it should for OBJ and the first is always useless.");
+        CORRADE_COMPARE(importer->materialCount(), 1);
+    } {
+        CORRADE_COMPARE(importer->materialCount(), 2);
+    }
+    Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(1);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+    Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
+    CORRADE_VERIFY(phongMaterial);
+    CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flag::AmbientTexture|Trade::PhongMaterialData::Flag::DiffuseTexture|Trade::PhongMaterialData::Flag::SpecularTexture);
+    CORRADE_COMPARE(phongMaterial->ambientTexture(), 0);
+    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 1);
+    CORRADE_COMPARE(phongMaterial->specularTexture(), 2);
+
+    /* Alpha not supported by OBJ, should be set to 1 */
+    CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 1.0f}));
+    CORRADE_COMPARE(phongMaterial->diffuseColor(), (Color4{0.08f, 0.16f, 0.24f, 1.0f}));
+    CORRADE_COMPARE(phongMaterial->specularColor(), (Color4{0.15f, 0.1f, 0.05f, 1.0f}));
 }
 
 void AssimpImporterTest::materialStlWhiteAmbientPatch() {
@@ -887,9 +954,9 @@ void AssimpImporterTest::imageExternal() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
-    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DCount(), 2);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
@@ -927,8 +994,8 @@ void AssimpImporterTest::imageExternalNoPathNoCallback() {
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"))));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"))));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -1006,19 +1073,19 @@ void AssimpImporterTest::texture() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
-    CORRADE_COMPARE(importer->textureCount(), 1);
+    CORRADE_COMPARE(importer->textureCount(), 2);
     Containers::Optional<Trade::TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
         Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
-    CORRADE_COMPARE(texture->image(), 0);
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(texture->image(), 0);
 
-    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DCount(), 2);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
@@ -1071,14 +1138,14 @@ void AssimpImporterTest::openStateTexture() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Assimp::Importer _importer;
-    const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
+    const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
     CORRADE_VERIFY(sc != nullptr);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openState(sc, ASSIMPIMPORTER_TEST_DIR));
     CORRADE_COMPARE(importer->importerState(), sc);
 
-    CORRADE_COMPARE(importer->textureCount(), 1);
+    CORRADE_COMPARE(importer->textureCount(), 2);
     Containers::Optional<Trade::TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
@@ -1088,7 +1155,7 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
 
-    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DCount(), 2);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
@@ -1234,7 +1301,7 @@ void AssimpImporterTest::fileCallbackImage() {
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
-    files["not/a/path/texture.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"));
+    files["not/a/path/texture.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"));
     files["not/a/path/diffuse_texture.png"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "diffuse_texture.png"));
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
@@ -1243,7 +1310,7 @@ void AssimpImporterTest::fileCallbackImage() {
         }, files);
 
     CORRADE_VERIFY(importer->openFile("not/a/path/texture.dae"));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DCount(), 2);
 
     /* Check only size, as it is good enough proof that it is working */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -1268,8 +1335,8 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
 
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture.dae"))));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"))));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
 
     std::ostringstream out;
     Error redirectError{&out};

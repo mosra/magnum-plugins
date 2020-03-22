@@ -71,13 +71,15 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         image-mips.obj
         light-undefined.dae
         light.dae
-        mesh-material.dae
+        material-color.dae
+        material-texture.dae
+        material-color-texture.mtl
+        material-color-texture.obj
         mesh.dae
         mips.dds
         multiple-textures.mtl r.png g.png b.png y.png
         points.obj
         scene.dae
-        texture.dae
         texture-ambient.obj
         texture-ambient.mtl
         quad.stl)

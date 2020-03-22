@@ -66,6 +66,12 @@ template<> struct VectorConverter<3, Float, aiColor3D> {
     }
 };
 
+template<> struct VectorConverter<4, Float, aiColor4D> {
+    static Vector<4, Float> from(const aiColor4D& other) {
+        return {other.r, other.g, other.b, other.a};
+    }
+};
+
 }}}
 
 namespace Magnum { namespace Trade {
@@ -669,7 +675,6 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
 
     PhongMaterialData::Flags flags;
     aiString texturePath;
-    aiColor3D color;
 
     if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), texturePath) == AI_SUCCESS)
         flags |= PhongMaterialData::Flag::AmbientTexture;
@@ -684,40 +689,47 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
     Float shininess = 0.0f;
     mat->Get(AI_MATKEY_SHININESS, shininess);
 
-    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags, MaterialAlphaMode::Opaque, 0.5f, shininess, mat};
-
-    /* Key always present, default black */
-    mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
     UnsignedInt firstTextureIndex = _f->textureIndices[mat];
-    if(flags & PhongMaterialData::Flag::AmbientTexture) {
-        data->ambientTexture() = firstTextureIndex++;
-    } else {
-        data->ambientColor() = Color3(color);
 
+    /* Key always present, default black, except if Assimp has a bug (see
+       below). And also the alpha is always set to zero, even if the source has
+       something else, so we just don't import it at all. */
+    aiColor3D ambientColor;
+    UnsignedInt ambientTexture{};
+    mat->Get(AI_MATKEY_COLOR_AMBIENT, ambientColor);
+    if(flags & PhongMaterialData::Flag::AmbientTexture)
+        ambientTexture = firstTextureIndex++;
+    else {
         /* Assimp 4.1 forces ambient color to white for STL models. That's just
            plain wrong, so we force it back to black (and emit a warning, so in
            the very rare case when someone would actually want white ambient,
            they'll know it got overriden). Fixed by
            https://github.com/assimp/assimp/pull/2563, not released yet. */
-        if(data->ambientColor() == Color4{1.0f}) {
+        if(ambientColor == aiColor3D{1.0f, 1.0f, 1.0f}) {
             Warning{} << "Trade::AssimpImporter::material(): white ambient detected, forcing back to black";
-            data->ambientColor() = Color3{0.0f};
+            ambientColor = aiColor3D{0.0f, 0.0f, 0.0f};
         }
     }
 
     /* Key always present, default black */
-    mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+    aiColor4D diffuseColor;
+    UnsignedInt diffuseTexture{};
+    mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
     if(flags & PhongMaterialData::Flag::DiffuseTexture)
-        data->diffuseTexture() = firstTextureIndex++;
-    else
-        data->diffuseColor() = Color3(color);
+        diffuseTexture = firstTextureIndex++;
 
     /* Key always present, default black */
-    mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
+    aiColor4D specularColor;
+    UnsignedInt specularTexture{};
+    mat->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
     if(flags & PhongMaterialData::Flag::SpecularTexture)
-        data->specularTexture() = firstTextureIndex++;
-    else
-        data->specularColor() = Color3(color);
+        specularTexture = firstTextureIndex++;
+
+    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags,
+        Color3{ambientColor}, ambientTexture,
+        Color4{diffuseColor}, diffuseTexture,
+        Color4{specularColor}, specularTexture, UnsignedInt{}, Matrix3{},
+        MaterialAlphaMode::Opaque, 0.5f, shininess, mat};
 
     /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
        the pointer. Just std::move() works as well, but that gives a warning

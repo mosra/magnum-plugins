@@ -4,14 +4,27 @@
     <image id="diffuse_texture" name="diffuse_texture">
       <init_from>diffuse_texture.png</init_from>
     </image>
+    <image id="ambientspecular_texture" name="ambientspecular_texture">
+      <init_from>y.png</init_from>
+    </image>
   </library_images>
   <library_effects>
     <effect id="Material-effect">
       <profile_COMMON>
+        <newparam sid="ambientspecular_texture-surface">
+          <surface type="2D">
+            <init_from>ambientspecular_texture</init_from>
+          </surface>
+        </newparam>
         <newparam sid="diffuse_texture-surface">
           <surface type="2D">
             <init_from>diffuse_texture</init_from>
           </surface>
+        </newparam>
+        <newparam sid="ambientspecular_texture-sampler">
+          <sampler2D>
+            <source>ambientspecular_texture-surface</source>
+          </sampler2D>
         </newparam>
         <newparam sid="diffuse_texture-sampler">
           <sampler2D>
@@ -23,14 +36,18 @@
             <emission>
               <color sid="emission">0 0 0 1</color>
             </emission>
+            <!-- COLLADA supports either texture or color but not both, so
+              texture and color is tested with material-color-texture.obj -->
             <ambient>
-              <color sid="ambient">0 0 0 1</color>
+              <!-- for some reason, Assimp ignores textures here. Ambient
+                textures work for OBJ tho. -->
+              <texture texture="ambientspecular_texture-sampler"/>
             </ambient>
             <diffuse>
               <texture texture="diffuse_texture-sampler"/>
             </diffuse>
             <specular>
-              <color sid="specular">0.15 0.1 0.05 1</color>
+              <texture texture="ambientspecular_texture-sampler"/>
             </specular>
             <shininess>
               <float sid="shininess">50</float>
