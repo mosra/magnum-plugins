@@ -138,12 +138,12 @@ struct AssimpImporterTest: TestSuite::Tester {
 enum: std::size_t { LightInstanceCount = 3 };
 
 constexpr struct {
-    Trade::LightData::Type type;
+    LightData::Type type;
     Color3 color;
 } LightInstanceData[LightInstanceCount]{
-    {Trade::LightData::Type::Spot, {0.12f, 0.24f, 0.36f}},
-    {Trade::LightData::Type::Point, {0.5f, 0.25f, 0.05f}},
-    {Trade::LightData::Type::Infinite, {1.0f, 0.15f, 0.45f}}
+    {LightData::Type::Spot, {0.12f, 0.24f, 0.36f}},
+    {LightData::Type::Point, {0.5f, 0.25f, 0.05f}},
+    {LightData::Type::Infinite, {1.0f, 0.15f, 0.45f}}
 };
 
 AssimpImporterTest::AssimpImporterTest() {
@@ -281,7 +281,7 @@ void AssimpImporterTest::camera() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
 
     CORRADE_COMPARE(importer->cameraCount(), 1);
-    Containers::Optional<Trade::CameraData> camera = importer->camera(0);
+    Containers::Optional<CameraData> camera = importer->camera(0);
     CORRADE_VERIFY(camera);
     CORRADE_COMPARE(camera->fov(), 49.13434_degf);
     CORRADE_COMPARE(camera->near(), 0.123f);
@@ -289,7 +289,7 @@ void AssimpImporterTest::camera() {
 
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    Containers::Pointer<Trade::ObjectData3D> cameraObject = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> cameraObject = importer->object3D(0);
     CORRADE_COMPARE(cameraObject->instanceType(), ObjectInstanceType3D::Camera);
     CORRADE_COMPARE(cameraObject->instance(), 0);
 }
@@ -303,13 +303,13 @@ void AssimpImporterTest::light() {
     CORRADE_COMPARE(importer->lightCount(), 3);
     CORRADE_COMPARE(importer->object3DCount(), 3);
 
-    Containers::Optional<Trade::LightData> light = importer->light(testCaseInstanceId());
+    Containers::Optional<LightData> light = importer->light(testCaseInstanceId());
     CORRADE_VERIFY(light);
     CORRADE_COMPARE(light->type(), data.type);
     CORRADE_COMPARE(light->color(), data.color);
     CORRADE_COMPARE(light->intensity(), 1.0f);
 
-    Containers::Pointer<Trade::ObjectData3D> lightObject = importer->object3D(testCaseInstanceId());
+    Containers::Pointer<ObjectData3D> lightObject = importer->object3D(testCaseInstanceId());
     CORRADE_COMPARE(lightObject->instanceType(), ObjectInstanceType3D::Light);
     CORRADE_COMPARE(lightObject->instance(), testCaseInstanceId());
 }
@@ -335,13 +335,13 @@ void AssimpImporterTest::materialColor() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
-    Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(0);
+    Containers::Pointer<AbstractMaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-    Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
+    PhongMaterialData* phongMaterial = static_cast<PhongMaterialData*>(material.get());
     CORRADE_VERIFY(phongMaterial);
-    CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flags{});
+    CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flags{});
     {
         CORRADE_EXPECT_FAIL("Assimp sets ambient alpha to 0, ignoring the actual value (for COLLADA at least).");
         CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 0.9f}));
@@ -370,20 +370,20 @@ void AssimpImporterTest::materialTexture() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
-    Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(0);
+    Containers::Pointer<AbstractMaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-    Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
+    PhongMaterialData* phongMaterial = static_cast<PhongMaterialData*>(material.get());
     CORRADE_VERIFY(phongMaterial);
 
     {
         CORRADE_EXPECT_FAIL("Assimp ignores ambient textures in COLLADA files.");
-        CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flag::AmbientTexture|Trade::PhongMaterialData::Flag::DiffuseTexture|Trade::PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
         /* (This would assert now) */
         //CORRADE_COMPARE(phongMaterial->ambientTexture(), 1);
     } {
-        CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flag::DiffuseTexture|Trade::PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
     }
     CORRADE_COMPARE(phongMaterial->diffuseTexture(), 0);
     CORRADE_COMPARE(phongMaterial->specularTexture(), 1);
@@ -405,13 +405,13 @@ void AssimpImporterTest::materialColorTexture() {
     } {
         CORRADE_COMPARE(importer->materialCount(), 2);
     }
-    Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(1);
+    Containers::Pointer<AbstractMaterialData> material = importer->material(1);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-    Trade::PhongMaterialData* phongMaterial = static_cast<Trade::PhongMaterialData*>(material.get());
+    PhongMaterialData* phongMaterial = static_cast<PhongMaterialData*>(material.get());
     CORRADE_VERIFY(phongMaterial);
-    CORRADE_COMPARE(phongMaterial->flags(), Trade::PhongMaterialData::Flag::AmbientTexture|Trade::PhongMaterialData::Flag::DiffuseTexture|Trade::PhongMaterialData::Flag::SpecularTexture);
+    CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
     CORRADE_COMPARE(phongMaterial->ambientTexture(), 0);
     CORRADE_COMPARE(phongMaterial->diffuseTexture(), 1);
     CORRADE_COMPARE(phongMaterial->specularTexture(), 2);
@@ -428,7 +428,7 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
 
     CORRADE_COMPARE(importer->materialCount(), 1);
 
-    Containers::Pointer<Trade::AbstractMaterialData> material;
+    Containers::Pointer<AbstractMaterialData> material;
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
@@ -446,8 +446,8 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): white ambient detected, forcing back to black\n");
     }
 
-    auto& phongMaterial = static_cast<Trade::PhongMaterialData&>(*material);
-    CORRADE_COMPARE(phongMaterial.flags(), Trade::PhongMaterialData::Flags{});
+    auto& phongMaterial = static_cast<PhongMaterialData&>(*material);
+    CORRADE_COMPARE(phongMaterial.flags(), PhongMaterialData::Flags{});
     /* WHY SO COMPLICATED, COME ON */
     if(version < 401 || ASSIMP_IS_VERSION_5)
         CORRADE_COMPARE(phongMaterial.ambientColor(), Color3{0.05f});
@@ -480,7 +480,7 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
         CORRADE_COMPARE(importer->materialCount(), 2);
     }
 
-    Containers::Pointer<Trade::AbstractMaterialData> material;
+    Containers::Pointer<AbstractMaterialData> material;
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
@@ -513,7 +513,7 @@ void AssimpImporterTest::materialMultipleTextures() {
 
     /* Check that texture ID assignment is correct */
     {
-        Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(importer->materialForName("ambient_diffuse"));
+        Containers::Pointer<AbstractMaterialData> material = importer->material(importer->materialForName("ambient_diffuse"));
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
@@ -522,7 +522,7 @@ void AssimpImporterTest::materialMultipleTextures() {
         CORRADE_COMPARE(phong.ambientTexture(), 0); /* r.png */
         CORRADE_COMPARE(phong.diffuseTexture(), 1); /* g.png */
     } {
-        Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(importer->materialForName("diffuse_specular"));
+        Containers::Pointer<AbstractMaterialData> material = importer->material(importer->materialForName("diffuse_specular"));
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
@@ -531,7 +531,7 @@ void AssimpImporterTest::materialMultipleTextures() {
         CORRADE_COMPARE(phong.diffuseTexture(), 2); /* b.png */
         CORRADE_COMPARE(phong.specularTexture(), 3); /* y.png */
     } {
-        Containers::Pointer<Trade::AbstractMaterialData> material = importer->material(importer->materialForName("all"));
+        Containers::Pointer<AbstractMaterialData> material = importer->material(importer->materialForName("all"));
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
@@ -544,56 +544,56 @@ void AssimpImporterTest::materialMultipleTextures() {
 
     /* Check that image ID assignment is correct */
     {
-        Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+        Containers::Optional<TextureData> texture = importer->texture(0);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->image(), 0); /* r.png */
     } {
-        Containers::Optional<Trade::TextureData> texture = importer->texture(1);
+        Containers::Optional<TextureData> texture = importer->texture(1);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->image(), 1); /* g.png */
     } {
-        Containers::Optional<Trade::TextureData> texture = importer->texture(2);
+        Containers::Optional<TextureData> texture = importer->texture(2);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->image(), 2); /* b.png */
     } {
-        Containers::Optional<Trade::TextureData> texture = importer->texture(3);
+        Containers::Optional<TextureData> texture = importer->texture(3);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->image(), 3); /* y.png */
     } {
-        Containers::Optional<Trade::TextureData> texture = importer->texture(4);
+        Containers::Optional<TextureData> texture = importer->texture(4);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->image(), 3); /* y.png */
     } {
-        Containers::Optional<Trade::TextureData> texture = importer->texture(5);
+        Containers::Optional<TextureData> texture = importer->texture(5);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->image(), 0); /* r.png */
     } {
-        Containers::Optional<Trade::TextureData> texture = importer->texture(6);
+        Containers::Optional<TextureData> texture = importer->texture(6);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->image(), 1); /* g.png */
     }
 
     /* Check that correct images are imported */
     {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        Containers::Optional<ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i(1));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb); /* r.png */
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(1);
+        Containers::Optional<ImageData2D> image = importer->image2D(1);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i(1));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb); /* g.png */
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(2);
+        Containers::Optional<ImageData2D> image = importer->image2D(2);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i(1));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x0000ff_rgb); /* b.png */
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(3);
+        Containers::Optional<ImageData2D> image = importer->image2D(3);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i(1));
@@ -608,7 +608,7 @@ void AssimpImporterTest::mesh() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
@@ -644,7 +644,7 @@ void AssimpImporterTest::mesh() {
         }), TestSuite::Compare::Container);
     }
 
-    Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
@@ -656,7 +656,7 @@ void AssimpImporterTest::pointMesh() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
 
@@ -671,7 +671,7 @@ void AssimpImporterTest::pointMesh() {
             {0.5f, 2.0f, 3.0f}, {2.0f, 3.0f, 5.0f}, {0.0f, 1.5f, 1.0f}
         }), TestSuite::Compare::Container);
 
-    Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
@@ -683,7 +683,7 @@ void AssimpImporterTest::lineMesh() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
 
@@ -698,7 +698,7 @@ void AssimpImporterTest::lineMesh() {
             {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}
         }), TestSuite::Compare::Container);
 
-    Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
@@ -864,16 +864,16 @@ void AssimpImporterTest::scene() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 2);
 
-    Containers::Optional<Trade::SceneData> scene = importer->scene(0);
+    Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), {0});
 
-    Containers::Pointer<Trade::ObjectData3D> parent = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> parent = importer->object3D(0);
     CORRADE_COMPARE(parent->children(), {1});
     CORRADE_COMPARE(parent->instanceType(), ObjectInstanceType3D::Empty);
     CORRADE_COMPARE(parent->transformation(), Matrix4::scaling({1.0f, 2.0f, 3.0f}));
 
-    Containers::Pointer<Trade::ObjectData3D> childObject = importer->object3D(1);
+    Containers::Pointer<ObjectData3D> childObject = importer->object3D(1);
     CORRADE_COMPARE(childObject->transformation(), (Matrix4{
         {0.813798f, 0.469846f, -0.34202f, 0.0f},
         {-0.44097f, 0.882564f, 0.163176f, 0.0f},
@@ -901,12 +901,12 @@ void AssimpImporterTest::sceneCollapsedNode() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1); /* Just the root node */
 
-    Containers::Optional<Trade::SceneData> scene = importer->scene(0);
+    Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), {0});
 
     /* Assimp makes some bogus mesh for this one */
-    Containers::Pointer<Trade::ObjectData3D> collapsedNode = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> collapsedNode = importer->object3D(0);
     CORRADE_COMPARE(collapsedNode->children(), {});
     CORRADE_COMPARE(collapsedNode->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(collapsedNode->transformation(), Matrix4{});
@@ -937,7 +937,7 @@ void AssimpImporterTest::imageEmbedded() {
     CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend"))));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -957,7 +957,7 @@ void AssimpImporterTest::imageExternal() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -1011,7 +1011,7 @@ void AssimpImporterTest::imagePathMtlSpaceAtTheEnd() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-trailing-space.obj")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -1032,9 +1032,9 @@ void AssimpImporterTest::imageMipLevels() {
 
     /* Verify that loading a different image will properly switch to another
        importer instance */
-    Containers::Optional<Trade::ImageData2D> image00 = importer->image2D(0);
-    Containers::Optional<Trade::ImageData2D> image01 = importer->image2D(0, 1);
-    Containers::Optional<Trade::ImageData2D> image1 = importer->image2D(1);
+    Containers::Optional<ImageData2D> image00 = importer->image2D(0);
+    Containers::Optional<ImageData2D> image01 = importer->image2D(0, 1);
+    Containers::Optional<ImageData2D> image1 = importer->image2D(1);
 
     CORRADE_VERIFY(image00);
     CORRADE_COMPARE(image00->size(), (Vector2i{3, 2}));
@@ -1076,18 +1076,18 @@ void AssimpImporterTest::texture() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->textureCount(), 2);
-    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+    Containers::Optional<TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
         Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->image(), 0);
 
-    Containers::Optional<Trade::TextureData> texture1 = importer->texture(1);
+    Containers::Optional<TextureData> texture1 = importer->texture(1);
     CORRADE_VERIFY(texture1);
-    CORRADE_COMPARE(texture1->type(), Trade::TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture1->type(), TextureData::Type::Texture2D);
     {
         /* I assume this "don't care for remaining stuff" part is responsible:
            https://github.com/assimp/assimp/blob/0c3933ca7c460644d346d94ecbb1b118f598ced4/code/Collada/ColladaParser.cpp#L1977-L1978 */
@@ -1106,7 +1106,7 @@ void AssimpImporterTest::texture() {
     CORRADE_COMPARE(texture1->image(), 1);
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -1126,16 +1126,16 @@ void AssimpImporterTest::openState() {
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->object3DCount(), 2);
 
-    Containers::Optional<Trade::SceneData> scene = importer->scene(0);
+    Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), {0});
 
-    Containers::Pointer<Trade::ObjectData3D> parent = importer->object3D(0);
+    Containers::Pointer<ObjectData3D> parent = importer->object3D(0);
     CORRADE_COMPARE(parent->children(), {1});
     CORRADE_COMPARE(parent->instanceType(), ObjectInstanceType3D::Empty);
     CORRADE_COMPARE(parent->transformation(), Matrix4::scaling({1.0f, 2.0f, 3.0f}));
 
-    Containers::Pointer<Trade::ObjectData3D> childObject = importer->object3D(1);
+    Containers::Pointer<ObjectData3D> childObject = importer->object3D(1);
     CORRADE_COMPARE(childObject->transformation(), (Matrix4{
         {0.813798f, 0.469846f, -0.34202f, 0.0f},
         {-0.44097f, 0.882564f, 0.163176f, 0.0f},
@@ -1166,9 +1166,9 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_COMPARE(importer->importerState(), sc);
 
     CORRADE_COMPARE(importer->textureCount(), 2);
-    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+    Containers::Optional<TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->type(), Trade::TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
         Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->image(), 0);
@@ -1176,7 +1176,7 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -1190,7 +1190,7 @@ void AssimpImporterTest::configurePostprocessFlipUVs() {
 
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 1);
 
@@ -1221,7 +1221,7 @@ void AssimpImporterTest::fileCallback() {
 
     /* Same as in mesh(), not testing colors because of the assimp bugs that
        need to be worked around */
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
@@ -1333,7 +1333,7 @@ void AssimpImporterTest::fileCallbackImage() {
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     /* Check only size, as it is good enough proof that it is working */
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(1, 1));
 }
