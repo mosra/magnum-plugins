@@ -63,7 +63,8 @@ namespace Magnum {
     [mosra/magnum-plugins#73](https://github.com/mosra/magnum-plugins/pull/73))
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now supports interleaved
     animation and mesh attributes
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports both color and
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" and @ref
+    @ref Trade::OpenGexImporter "OpenGexImporter" now import both color and
     texture information instead of only one of them
 
 @subsection changelog-plugins-latest-buildsystem Build system

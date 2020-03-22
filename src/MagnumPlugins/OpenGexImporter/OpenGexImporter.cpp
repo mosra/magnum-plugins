@@ -774,7 +774,7 @@ Containers::Pointer<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsi
         }
     }
 
-    /* Colors (used only if matching texture isn't already specified) */
+    /* Colors */
     Color4 diffuseColor{1.0f};
     Color4 specularColor{1.0f};
     for(const OpenDdl::Structure color: material.childrenOf(OpenGex::Color)) {
@@ -799,19 +799,15 @@ Containers::Pointer<AbstractMaterialData> OpenGexImporter::doMaterial(const Unsi
             shininess = param.firstChild().as<Float>();
     }
 
-    /* Put things together */
-    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags, MaterialAlphaMode::Opaque, 0.5f, shininess, &material};
-    if(flags & PhongMaterialData::Flag::DiffuseTexture)
-        data->diffuseTexture() = diffuseTexture;
-    else data->diffuseColor() = diffuseColor;
-    if(flags & PhongMaterialData::Flag::SpecularTexture)
-        data->specularTexture() = specularTexture;
-    else data->specularColor() = specularColor;
-
     /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
        the pointer. Just std::move() works as well, but that gives a warning
        on GCC 9. */
-    return Containers::Pointer<AbstractMaterialData>{std::move(data)};
+    return Containers::Pointer<AbstractMaterialData>{
+        Containers::Pointer<PhongMaterialData>{Containers::InPlaceInit,
+            flags, 0x000000ff_rgbaf, UnsignedInt{},
+            diffuseColor, diffuseTexture,
+            specularColor, specularTexture, UnsignedInt{}, Matrix3{},
+            MaterialAlphaMode::Opaque, 0.5f, shininess, &material}};
 }
 
 UnsignedInt OpenGexImporter::doTextureCount() const { return _d->textures.size(); }

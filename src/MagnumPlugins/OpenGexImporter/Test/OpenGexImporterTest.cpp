@@ -890,6 +890,7 @@ void OpenGexImporterTest::materialTextured() {
 
         auto&& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.0f, 0.8f, 0.5f, 1.1f}));
         CORRADE_COMPARE(phong.diffuseTexture(), 1);
     } {
         Containers::Pointer<AbstractMaterialData> material = importer->material(3);
@@ -898,7 +899,10 @@ void OpenGexImporterTest::materialTextured() {
 
         auto&& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        /* Not specified, kept at default */
+        CORRADE_COMPARE(phong.diffuseColor(), 0xffffffff_rgbaf);
         CORRADE_COMPARE(phong.diffuseTexture(), 2);
+        CORRADE_COMPARE(phong.specularColor(), (Color4{0.5f, 0.2f, 1.0f, 0.8f}));
         CORRADE_COMPARE(phong.specularTexture(), 3);
     }
 }
