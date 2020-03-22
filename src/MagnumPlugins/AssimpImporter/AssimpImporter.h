@@ -235,7 +235,8 @@ Import of animation data is not supported at the moment.
     @ref VertexFormat::Vector2 and colors as @ref VertexFormat::Vector4. In
     other words, everything gets expanded by Assimp to floats, even if the
     original file might be using different types.
--   Multi-mesh nodes and multi-primitive meshes are loaded as follows:
+-   Multi-mesh nodes and multi-primitive meshes are loaded as follows,
+    consistently with the behavior of @link TinyGltfImporter @endlink:
     -   Multi-primitive meshes are split by Assimp into individual meshes
     -   The @ref meshCount() query returns a number of all *primitives*, not
         meshes

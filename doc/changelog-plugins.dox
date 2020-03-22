@@ -34,6 +34,10 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-new New features
 
+-   Multi-primitive mesh support in @ref Trade::AssimpImporter "AssimpImporter",
+    consistent with @ref Trade::TinyGltfImporter "TinyGltfImporter" behavior
+    (see [mosra/magnum-plugins#68](https://github.com/mosra/magnum-plugins/pull/68)
+    and [mosra/magnum-plugins#81](https://github.com/mosra/magnum-plugins/pull/81))
 -   Vertex color, normal and texture coordinate import in
     @ref Trade::StanfordImporter "StanfordImporter", colors and normals are
     supported per-face as well

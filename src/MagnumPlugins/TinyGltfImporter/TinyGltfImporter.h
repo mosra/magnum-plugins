@@ -196,7 +196,8 @@ Import of skeleton, skin and morph data is not supported at the moment.
     (if any) are imported as @ref VertexFormat::Vector3, texture coordinates as
     @ref VertexFormat::Vector2 and colors as either @ref VertexFormat::Vector3
     or @ref VertexFormat::Vector4.
--   Multi-primitive meshes are loaded as follows:
+-   Multi-primitive meshes are loaded as follows, consistently with the
+    behavior of @link AssimpImporter @endlink:
     -   The @ref meshCount() query returns a number of all *primitives*, not
         meshes
     -   Each multi-primitive mesh is split into a sequence of @ref MeshData
