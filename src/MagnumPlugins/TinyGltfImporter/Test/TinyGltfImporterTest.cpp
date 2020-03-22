@@ -1837,7 +1837,7 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
-        CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
         CORRADE_COMPARE(phong.diffuseTexture(), 0);
         CORRADE_COMPARE(phong.specularColor(), 0xffffff_rgbf);
         CORRADE_COMPARE(phong.shininess(), 80.0f);
@@ -1877,8 +1877,7 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
-        CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
-        CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
         CORRADE_COMPARE(phong.diffuseTexture(), 0);
         CORRADE_COMPARE(phong.specularTexture(), 1);
         CORRADE_COMPARE(phong.shininess(), 80.0f);
@@ -1918,8 +1917,7 @@ void TinyGltfImporterTest::materialBlinnPhong() {
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
-        CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
-        CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
         CORRADE_COMPARE(phong.diffuseTexture(), 0);
         CORRADE_COMPARE(phong.specularTexture(), 1);
         CORRADE_COMPARE(phong.shininess(), 40.5f);
@@ -2018,7 +2016,7 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
     auto&& phong = static_cast<const Trade::PhongMaterialData&>(*material);
-    CORRADE_VERIFY(phong.flags() & PhongMaterialData::Flag::DiffuseTexture);
+    CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
     CORRADE_COMPARE(phong.diffuseTexture(), 0);
     CORRADE_COMPARE(phong.shininess(), 80.0f);
 
