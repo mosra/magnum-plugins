@@ -625,6 +625,10 @@ void AssimpImporterTest::lineMesh() {
 }
 
 void AssimpImporterTest::meshMultiplePrimitives() {
+    /* Possibly broken in other versions too (4.1 and 5 works, 3.2 doesn't) */
+    if(aiGetVersionMajor()*100 + aiGetVersionMinor() <= 302)
+        CORRADE_SKIP("Assimp 3.2 doesn't recognize primitives used in the test COLLADA file.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
