@@ -404,7 +404,12 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
     /* ASS IMP reports TWO materials for an OBJ. The parser code is so lazy
        that it just has the first material totally empty. Wonderful. Lost one
        hour on this and my hair is even greyer now. */
-    CORRADE_COMPARE(importer->materialCount(), 2);
+    {
+        CORRADE_EXPECT_FAIL("Assimp reports one material more than it should for OBJ and the first is always useless.");
+        CORRADE_COMPARE(importer->materialCount(), 1);
+    } {
+        CORRADE_COMPARE(importer->materialCount(), 2);
+    }
 
     Containers::Pointer<Trade::AbstractMaterialData> material;
     std::ostringstream out;
@@ -425,10 +430,13 @@ void AssimpImporterTest::materialMultipleTextures() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "multiple-textures.obj")));
 
-    /* Yes, it's one more than it should be and the first is useless. See
-       materialWhiteAmbientTexture() for why I'm angry at everything all the
-       time */
-    CORRADE_COMPARE(importer->materialCount(), 3 + 1);
+    /* See materialWhiteAmbientTexture() for a rant. */
+    {
+        CORRADE_EXPECT_FAIL("Assimp reports one material more than it should for OBJ and the first is always useless.");
+        CORRADE_COMPARE(importer->materialCount(), 3);
+    } {
+        CORRADE_COMPARE(importer->materialCount(), 3 + 1);
+    }
 
     /* Seven textures, but using just four distinct images */
     CORRADE_COMPARE(importer->textureCount(), 7);
