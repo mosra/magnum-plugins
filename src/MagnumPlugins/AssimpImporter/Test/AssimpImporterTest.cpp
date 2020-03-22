@@ -1085,6 +1085,26 @@ void AssimpImporterTest::texture() {
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->image(), 0);
 
+    Containers::Optional<Trade::TextureData> texture1 = importer->texture(1);
+    CORRADE_VERIFY(texture1);
+    CORRADE_COMPARE(texture1->type(), Trade::TextureData::Type::Texture2D);
+    {
+        /* I assume this "don't care for remaining stuff" part is responsible:
+           https://github.com/assimp/assimp/blob/0c3933ca7c460644d346d94ecbb1b118f598ced4/code/Collada/ColladaParser.cpp#L1977-L1978 */
+        CORRADE_EXPECT_FAIL("Assimp ignores sampler properties (in COLLADA files, at least).");
+        CORRADE_COMPARE(texture1->wrapping(),
+            Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
+        CORRADE_COMPARE(texture1->minificationFilter(), SamplerFilter::Nearest);
+        CORRADE_COMPARE(texture1->magnificationFilter(), SamplerFilter::Nearest);
+    } {
+        /* It gives out the default always */
+        CORRADE_COMPARE(texture->wrapping(),
+            Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+    }
+    CORRADE_COMPARE(texture1->image(), 1);
+
     CORRADE_COMPARE(importer->image2DCount(), 2);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);

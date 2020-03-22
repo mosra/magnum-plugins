@@ -24,6 +24,11 @@
         <newparam sid="ambientspecular_texture-sampler">
           <sampler2D>
             <source>ambientspecular_texture-surface</source>
+            <!-- Assimp apparently ignores these -->
+            <wrap_s>REPEAT</wrap_s>
+            <wrap_t>REPEAT</wrap_t>
+            <minfilter>NEAREST</minfilter>
+            <magfilter>NEAREST</magfilter>
           </sampler2D>
         </newparam>
         <newparam sid="diffuse_texture-sampler">
