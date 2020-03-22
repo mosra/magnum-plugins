@@ -124,6 +124,7 @@ struct AssimpImporterTest: TestSuite::Tester {
 
     void fileCallback();
     void fileCallbackNotFound();
+    void fileCallbackEmptyFile();
     void fileCallbackReset();
     void fileCallbackImage();
     void fileCallbackImageNotFound();
@@ -191,6 +192,7 @@ AssimpImporterTest::AssimpImporterTest() {
 
               &AssimpImporterTest::fileCallback,
               &AssimpImporterTest::fileCallbackNotFound,
+              &AssimpImporterTest::fileCallbackEmptyFile,
               &AssimpImporterTest::fileCallbackReset,
               &AssimpImporterTest::fileCallbackImage,
               &AssimpImporterTest::fileCallbackImageNotFound});
@@ -764,7 +766,9 @@ void AssimpImporterTest::emptyCollada() {
 
     /* Instead of giving out an empty file, assimp fails on opening, but only
        for COLLADA, not for e.g. glTF. I have a different opinion about the
-       behavior, but whatever. */
+       behavior, but whatever. It's also INTERESTING that supplying an empty
+       DAE through file callbacks results in a completely different message --
+       see fileCallbackEmptyFile(). */
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "empty.dae")));
 }
 
@@ -1180,6 +1184,27 @@ void AssimpImporterTest::fileCallbackNotFound() {
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
     else
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
+}
+
+void AssimpImporterTest::fileCallbackEmptyFile() {
+    /* This verifies that we don't do anything silly (like division by zero) in
+       IoStream::Read(). Works only with *.dae files, for *.obj Assimp bails
+       out with `OBJ-file is too small.` without even calling Read(). */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
+
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
+        void*) {
+            return Containers::Optional<Containers::ArrayView<const char>>{Containers::InPlaceInit};
+        });
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("some-file.dae"));
+    /* INTERESTINGLY ENOUGH, a different message is printed when opening a DAE
+       file directly w/o callbacks -- see emptyCollada() above. */
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: File is too small\n");
 }
 
 void AssimpImporterTest::fileCallbackReset() {
