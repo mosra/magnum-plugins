@@ -1838,6 +1838,8 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
+        CORRADE_COMPARE(phong.ambientColor(), 0x000000ff_rgbaf);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
         CORRADE_COMPARE(phong.diffuseTexture(), 0);
         CORRADE_COMPARE(phong.specularColor(), 0xffffff_rgbf);
         CORRADE_COMPARE(phong.shininess(), 80.0f);
@@ -1851,6 +1853,8 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
         CORRADE_COMPARE(material->type(), Trade::MaterialType::Phong);
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
+        CORRADE_COMPARE(phong.ambientColor(), 0x000000ff_rgbaf);
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
         CORRADE_COMPARE(phong.specularColor(), 0xffffff_rgbf);
         CORRADE_COMPARE(phong.shininess(), 80.0f);
@@ -1878,7 +1882,10 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
         CORRADE_COMPARE(phong.diffuseTexture(), 0);
+        /* This is always three-component */
+        CORRADE_COMPARE(phong.specularColor(), (Color3{0.4f, 0.5f, 0.6f}));
         CORRADE_COMPARE(phong.specularTexture(), 1);
         CORRADE_COMPARE(phong.shininess(), 80.0f);
 
@@ -1892,6 +1899,7 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
+        /* This is always three-component */
         CORRADE_COMPARE(phong.specularColor(), (Color4{0.1f, 0.2f, 0.6f}));
         CORRADE_COMPARE(phong.shininess(), 80.0f);
 
@@ -1918,7 +1926,10 @@ void TinyGltfImporterTest::materialBlinnPhong() {
 
         auto& phong = static_cast<const Trade::PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
         CORRADE_COMPARE(phong.diffuseTexture(), 0);
+        /* This is always three-component */
+        CORRADE_COMPARE(phong.specularColor(), (Color3{0.4f, 0.5f, 0.6f}));
         CORRADE_COMPARE(phong.specularTexture(), 1);
         CORRADE_COMPARE(phong.shininess(), 40.5f);
 

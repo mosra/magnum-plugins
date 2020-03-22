@@ -1251,13 +1251,11 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     }
 
     /* Put things together */
-    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags, alphaMode, alphaMask, shininess, &material};
-    if(flags & PhongMaterialData::Flag::DiffuseTexture)
-        data->diffuseTexture() = diffuseTexture;
-    else data->diffuseColor() = diffuseColor;
-    if(flags & PhongMaterialData::Flag::SpecularTexture)
-        data->specularTexture() = specularTexture;
-    else data->specularColor() = specularColor;
+    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags,
+        0x000000ff_rgbaf, 0u,
+        diffuseColor, diffuseTexture,
+        specularColor, specularTexture, 0u, Matrix3{},
+        alphaMode, alphaMask, shininess, &material};
 
     /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
        the pointer. Just std::move() works as well, but that gives a warning
