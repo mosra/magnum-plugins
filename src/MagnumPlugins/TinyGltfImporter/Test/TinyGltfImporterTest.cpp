@@ -172,7 +172,10 @@ constexpr struct {
     const char* name;
     const char* message;
 } MaterialInvalidData[]{
-    {"unknown alpha mode", "unknown alpha mode WAT"}
+    {"unknown alpha mode", "unknown alpha mode WAT"},
+    {"invalid texture index pbrMetallicRoughness", "baseColorTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness diffuse", "diffuseTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"}
 };
 
 constexpr struct {

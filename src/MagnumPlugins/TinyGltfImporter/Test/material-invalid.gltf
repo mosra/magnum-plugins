@@ -6,6 +6,37 @@
         {
             "name": "unknown alpha mode",
             "alphaMode": "WAT"
+        },
+        {
+            "name": "invalid texture index pbrMetallicRoughness",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 2
+                }
+            }
+        },
+        {
+            "name": "invalid texture index pbrSpecularGlossiness diffuse",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseTexture": {
+                        "index": 2
+                    }
+                }
+            }
+        },
+        {
+            "name": "invalid texture index pbrSpecularGlossiness specular",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "specularGlossinessTexture": {
+                        "index": 2
+                    }
+                }
+            }
         }
+    ],
+    "textures": [
+        {}, {}
     ]
 }

@@ -1125,6 +1125,16 @@ std::string TinyGltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->model.materials[id].name;
 }
 
+bool TinyGltfImporter::materialTexture(const char* name, const Int texture, UnsignedInt& index) const {
+    if(UnsignedInt(texture) >= _d->model.textures.size()) {
+        Error{} << "Trade::TinyGltfImporter::material():" << name << "index" << texture << "out of bounds for" << _d->model.textures.size() << "textures";
+        return false;
+    }
+
+    index = texture;
+    return true;
+}
+
 Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const UnsignedInt id) {
     const tinygltf::Material& material = _d->model.materials[id];
 
@@ -1166,13 +1176,17 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     if(khrMaterialsPbrSpecularGlossiness != material.extensions.end()) {
         auto diffuseTextureValue = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseTexture");
         if(diffuseTextureValue.Type() != tinygltf::NULL_TYPE) {
-            diffuseTexture = UnsignedInt(diffuseTextureValue.Get("index").Get<int>());
+            if(!materialTexture("diffuseTexture", diffuseTextureValue.Get("index").Get<int>(), diffuseTexture))
+                return nullptr;
+
             flags |= PhongMaterialData::Flag::DiffuseTexture;
         }
 
         auto specularTextureValue = khrMaterialsPbrSpecularGlossiness->second.Get("specularGlossinessTexture");
         if(specularTextureValue.Type() != tinygltf::NULL_TYPE) {
-            specularTexture = UnsignedInt(specularTextureValue.Get("index").Get<int>());
+            if(!materialTexture("specularGlossinessTexture", specularTextureValue.Get("index").Get<int>(), specularTexture))
+                return nullptr;
+
             flags |= PhongMaterialData::Flag::SpecularTexture;
         }
 
@@ -1198,7 +1212,9 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     } else {
         const Int index = material.pbrMetallicRoughness.baseColorTexture.index;
         if(index != -1) {
-            diffuseTexture = index;
+            if(!materialTexture("baseColorTexture", index, diffuseTexture))
+                return nullptr;
+
             flags |= PhongMaterialData::Flag::DiffuseTexture;
         }
 
