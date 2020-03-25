@@ -22,6 +22,46 @@
                     "index": 0
                 }
             }
+        },
+        {
+            "name": "texture transform all",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0,
+                    "extensions": {
+                        "KHR_texture_transform": {
+                            "offset": [0.0, 1.0],
+                            "rotation": 1.23456,
+                            "scale": [0.5, 0.5]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture transform offset + scale",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0,
+                    "extensions": {
+                        "KHR_texture_transform": {
+                            "offset": [0.0, 1.0],
+                            "scale": [0.5, 0.5]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture transform nothing",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0,
+                    "extensions": {
+                        "KHR_texture_transform": {}
+                    }
+                }
+            }
         }
     ],
     "samplers": [

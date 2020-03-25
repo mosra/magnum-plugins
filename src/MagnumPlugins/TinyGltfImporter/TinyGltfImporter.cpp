@@ -1125,7 +1125,10 @@ std::string TinyGltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->model.materials[id].name;
 }
 
-bool TinyGltfImporter::materialTexture(const char* name, const Int texture, const Int texCoord, UnsignedInt& index) const {
+/* textureMatrix should be an empty Optional when parsing the first texture.
+   The function will fill it and then use to check consistency of the transform
+   for subsequent textures. */
+bool TinyGltfImporter::materialTexture(const char* name, const Int texture, const Int texCoord, const tinygltf::Value& extensions, UnsignedInt& index, Containers::Optional<Matrix3>& textureMatrix, PhongMaterialData::Flags& flags) const {
     if(UnsignedInt(texture) >= _d->model.textures.size()) {
         Error{} << "Trade::TinyGltfImporter::material():" << name << "index" << texture << "out of bounds for" << _d->model.textures.size() << "textures";
         return false;
@@ -1135,6 +1138,76 @@ bool TinyGltfImporter::materialTexture(const char* name, const Int texture, cons
         Error{} << "Trade::TinyGltfImporter::material(): multiple texture coordinate sets are not supported";
         return false;
     }
+
+    /* Texture transform. Because texture coordinates were Y-flipped, we first
+       unflip them back, apply the transform (which assumes origin at bottom
+       left and Y down) and then flip the result again. Sanity of the following
+       verified with https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/TextureTransformTest */
+    Matrix3 matrix;
+    if(extensions.Type() == tinygltf::OBJECT_TYPE) {
+        auto khrTextureTransform = extensions.Get("KHR_texture_transform");
+        if(khrTextureTransform.Type() != tinygltf::NULL_TYPE) {
+            matrix = Matrix3::translation(Vector2::yAxis(1.0f))*
+                     Matrix3::scaling(Vector2::yScale(-1.0f));
+
+            auto transformTexCoord = khrTextureTransform.Get("texCoord");
+            if(transformTexCoord.Type() != tinygltf::NULL_TYPE) {
+                Error{} << "Trade::TinyGltfImporter::material(): transform of multiple texture coordinate sets is not supported";
+                return false;
+            }
+
+            auto scale = khrTextureTransform.Get("scale");
+            if(scale.Type() != tinygltf::NULL_TYPE) {
+                matrix = Matrix3::scaling(Vector2{Vector2d{
+                        scale.Get(0).Get<double>(),
+                        scale.Get(1).Get<double>()}}
+                    )*matrix;
+            }
+
+            /* Because we import images with Y flipped, counterclockwise
+               rotation is now clockwise. This has to be done in addition
+               to the Y flip/unflip. */
+            auto rotation = khrTextureTransform.Get("rotation");
+            if(rotation.Type() != tinygltf::NULL_TYPE) {
+                matrix = Matrix3::rotation(
+                        -Rad(Radd(rotation.Get<double>()))
+                    )*matrix;
+            }
+
+            auto offset = khrTextureTransform.Get("offset");
+            if(offset.Type() != tinygltf::NULL_TYPE) {
+                matrix = Matrix3::translation(Vector2{Vector2d{
+                        offset.Get(0).Get<double>(),
+                        offset.Get(1).Get<double>()}}
+                    )*matrix;
+            }
+
+            matrix = Matrix3::translation(Vector2::yAxis(1.0f))*
+                     Matrix3::scaling(Vector2::yScale(-1.0f))*matrix;
+
+            /* Save the texture matrix if this is the first time. Enable flag
+               always so it's set even if the first texture had no transform
+               and the second had an identity transform. */
+            if(!textureMatrix) textureMatrix = matrix;
+            flags |= PhongMaterialData::Flag::TextureTransformation;
+        }
+    }
+
+    /* If there's no texture matrix and we have a non-identity matrix or if
+       there is a texture matrix and we have something else, it's an error.
+       This restriction can be lifted once we support more than one texture
+       coordinate set for a material or per-texture transformation. */
+    if((!textureMatrix && matrix != Matrix3{}) ||
+       (textureMatrix && matrix != *textureMatrix)) {
+        Error{} << "Trade::TinyGltfImporter::material():" << name << "has an inconsistent texture transform, expected" << Debug::newline << (textureMatrix ? *textureMatrix : Matrix3{}) << "but got" << Debug::newline << matrix;
+        return false;
+    }
+
+    /* If this texture didn't have a transformation, set it to an identity so
+       the following textures can check that the transform is consistent. If it
+       would stay a NullOpt, the following calls would think these are the
+       first texture for the material and check nothing. */
+    if(!textureMatrix) textureMatrix = Matrix3{};
 
     index = texture;
     return true;
@@ -1172,6 +1245,7 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     }
 
     /* Textures */
+    Containers::Optional<Matrix3> textureMatrix;
     UnsignedInt diffuseTexture{}, specularTexture{};
     Color4 diffuseColor{1.0f};
     Color3 specularColor{1.0f};
@@ -1184,7 +1258,8 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
             if(!materialTexture("diffuseTexture",
                 diffuseTextureValue.Get("index").Get<int>(),
                 diffuseTextureValue.Get("texCoord").Get<int>(),
-                diffuseTexture))
+                diffuseTextureValue.Get("extensions"),
+                diffuseTexture, textureMatrix, flags))
                 return nullptr;
 
             flags |= PhongMaterialData::Flag::DiffuseTexture;
@@ -1195,7 +1270,8 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
             if(!materialTexture("specularGlossinessTexture",
                 specularTextureValue.Get("index").Get<int>(),
                 specularTextureValue.Get("texCoord").Get<int>(),
-                specularTexture))
+                specularTextureValue.Get("extensions"),
+                specularTexture, textureMatrix, flags))
                 return nullptr;
 
             flags |= PhongMaterialData::Flag::SpecularTexture;
@@ -1225,7 +1301,11 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
         if(index != -1) {
             if(!materialTexture("baseColorTexture", index,
                 material.pbrMetallicRoughness.baseColorTexture.texCoord,
-                diffuseTexture))
+                /* YES, you guessed right, this does a deep copy of the nested
+                   std::maps because tinygltf is SO GREAT that there's NO WAY
+                   to access extension structures in a consistent way */
+                tinygltf::Value(material.pbrMetallicRoughness.baseColorTexture.extensions),
+                diffuseTexture, textureMatrix, flags))
                 return nullptr;
 
             flags |= PhongMaterialData::Flag::DiffuseTexture;
@@ -1238,7 +1318,8 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags,
         0x000000ff_rgbaf, 0u,
         diffuseColor, diffuseTexture,
-        specularColor, specularTexture, 0u, Matrix3{},
+        specularColor, specularTexture, 0u,
+        textureMatrix ? *textureMatrix : Matrix3{},
         alphaMode, alphaMask, shininess, &material};
 
     /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
