@@ -258,12 +258,12 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::meshMultiplePrimitives,
               &TinyGltfImporterTest::meshInconsistentVertexCount});
 
-    addInstancedTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
-                       &TinyGltfImporterTest::materialPbrSpecularGlossiness,
-                       &TinyGltfImporterTest::materialBlinnPhong,
-                       &TinyGltfImporterTest::materialProperties,
+    addTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
+              &TinyGltfImporterTest::materialPbrSpecularGlossiness,
+              &TinyGltfImporterTest::materialBlinnPhong,
+              &TinyGltfImporterTest::materialProperties});
 
-                       &TinyGltfImporterTest::texture,
+    addInstancedTests({&TinyGltfImporterTest::texture,
                        &TinyGltfImporterTest::textureDefaultSampler,
                        &TinyGltfImporterTest::textureEmptySampler},
                       Containers::arraySize(SingleFileData));
@@ -1821,12 +1821,9 @@ void TinyGltfImporterTest::meshInconsistentVertexCount() {
 }
 
 void TinyGltfImporterTest::materialPbrMetallicRoughness() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material-metallicroughness" + std::string{data.suffix})));
+        "material-metallicroughness.gltf")));
 
     CORRADE_COMPARE(importer->materialCount(), 2);
 
@@ -1865,12 +1862,9 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
 }
 
 void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material-specularglossiness" + std::string{data.suffix})));
+        "material-specularglossiness.gltf")));
 
     CORRADE_COMPARE(importer->materialCount(), 2);
 
@@ -1909,12 +1903,9 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
 }
 
 void TinyGltfImporterTest::materialBlinnPhong() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material-blinnphong" + std::string{data.suffix})));
+        "material-blinnphong.gltf")));
 
     CORRADE_COMPARE(importer->materialCount(), 2);
 
@@ -1952,12 +1943,9 @@ void TinyGltfImporterTest::materialBlinnPhong() {
 }
 
 void TinyGltfImporterTest::materialProperties() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material-properties" + std::string{data.suffix})));
+        "material-properties.gltf")));
 
     CORRADE_COMPARE(importer->materialCount(), 5);
     {

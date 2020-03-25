@@ -90,13 +90,9 @@ corrade_add_test(TinyGltfImporterTest
         light.gltf
         light.glb
         material-blinnphong.gltf
-        material-blinnphong.glb
         material-metallicroughness.gltf
-        material-metallicroughness.glb
         material-properties.gltf
-        material-properties.glb
         material-specularglossiness.gltf
-        material-specularglossiness.glb
         mesh.gltf
         mesh.bin
         mesh.glb

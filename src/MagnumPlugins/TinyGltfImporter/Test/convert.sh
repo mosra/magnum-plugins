@@ -13,7 +13,7 @@ for i in animation image image-buffer image-basis mesh; do
 done
 
 # gltf -> glb
-for i in animation animation-embedded camera empty image image-embedded image-buffer image-buffer-embedded image-basis image-basis-embedded light material-blinnphong material-metallicroughness material-specularglossiness material-properties mesh mesh-embedded scene scene-nodefault object-transformation texture-default-sampler texture-empty-sampler texture; do
+for i in animation animation-embedded camera empty image image-embedded image-buffer image-buffer-embedded image-basis image-basis-embedded light mesh mesh-embedded scene scene-nodefault object-transformation texture-default-sampler texture-empty-sampler texture; do
     ./gltf2glb.py ${i}.gltf
 done
 
