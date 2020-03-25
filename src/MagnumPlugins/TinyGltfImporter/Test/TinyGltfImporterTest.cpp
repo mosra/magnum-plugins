@@ -175,7 +175,10 @@ constexpr struct {
     {"unknown alpha mode", "unknown alpha mode WAT"},
     {"invalid texture index pbrMetallicRoughness", "baseColorTexture index 2 out of bounds for 2 textures"},
     {"invalid texture index pbrSpecularGlossiness diffuse", "diffuseTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"}
+    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"},
+    {"invalid texCoord index pbrMetallicRoughness", "multiple texture coordinate sets are not supported"},
+    {"invalid texCoord index pbrSpecularGlossiness diffuse", "multiple texture coordinate sets are not supported"},
+    {"invalid texCoord index pbrSpecularGlossiness specular", "multiple texture coordinate sets are not supported"}
 };
 
 constexpr struct {

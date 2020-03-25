@@ -1125,9 +1125,14 @@ std::string TinyGltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->model.materials[id].name;
 }
 
-bool TinyGltfImporter::materialTexture(const char* name, const Int texture, UnsignedInt& index) const {
+bool TinyGltfImporter::materialTexture(const char* name, const Int texture, const Int texCoord, UnsignedInt& index) const {
     if(UnsignedInt(texture) >= _d->model.textures.size()) {
         Error{} << "Trade::TinyGltfImporter::material():" << name << "index" << texture << "out of bounds for" << _d->model.textures.size() << "textures";
+        return false;
+    }
+
+    if(texCoord != 0) {
+        Error{} << "Trade::TinyGltfImporter::material(): multiple texture coordinate sets are not supported";
         return false;
     }
 
@@ -1176,7 +1181,10 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     if(khrMaterialsPbrSpecularGlossiness != material.extensions.end()) {
         auto diffuseTextureValue = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseTexture");
         if(diffuseTextureValue.Type() != tinygltf::NULL_TYPE) {
-            if(!materialTexture("diffuseTexture", diffuseTextureValue.Get("index").Get<int>(), diffuseTexture))
+            if(!materialTexture("diffuseTexture",
+                diffuseTextureValue.Get("index").Get<int>(),
+                diffuseTextureValue.Get("texCoord").Get<int>(),
+                diffuseTexture))
                 return nullptr;
 
             flags |= PhongMaterialData::Flag::DiffuseTexture;
@@ -1184,7 +1192,10 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
 
         auto specularTextureValue = khrMaterialsPbrSpecularGlossiness->second.Get("specularGlossinessTexture");
         if(specularTextureValue.Type() != tinygltf::NULL_TYPE) {
-            if(!materialTexture("specularGlossinessTexture", specularTextureValue.Get("index").Get<int>(), specularTexture))
+            if(!materialTexture("specularGlossinessTexture",
+                specularTextureValue.Get("index").Get<int>(),
+                specularTextureValue.Get("texCoord").Get<int>(),
+                specularTexture))
                 return nullptr;
 
             flags |= PhongMaterialData::Flag::SpecularTexture;
@@ -1212,7 +1223,9 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     } else {
         const Int index = material.pbrMetallicRoughness.baseColorTexture.index;
         if(index != -1) {
-            if(!materialTexture("baseColorTexture", index, diffuseTexture))
+            if(!materialTexture("baseColorTexture", index,
+                material.pbrMetallicRoughness.baseColorTexture.texCoord,
+                diffuseTexture))
                 return nullptr;
 
             flags |= PhongMaterialData::Flag::DiffuseTexture;

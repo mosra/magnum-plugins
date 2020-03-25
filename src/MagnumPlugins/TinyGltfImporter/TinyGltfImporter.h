@@ -227,6 +227,7 @@ Import of skeleton, skin and morph data is not supported at the moment.
 
 -   Subset of all material specs is currently imported as @ref PhongMaterialData
 -   Ambient color is always @cpp 0x000000_rgbf @ce (never a texture)
+-   Only the first set of texture coordinates is supported
 -   For the Metallic/Roughness material spec ([in core](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material),
     default):
     -   The `baseColorTexture` field is used for diffuse texture, if present.
@@ -432,7 +433,7 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMeshName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
-        MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, Int texture, UnsignedInt& index) const;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, Int texture, Int texCoord, UnsignedInt& index) const;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
