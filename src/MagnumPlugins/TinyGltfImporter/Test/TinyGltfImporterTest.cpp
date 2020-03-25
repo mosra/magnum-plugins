@@ -31,9 +31,10 @@
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
-#include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/Resource.h>
 #include <Magnum/Array.h>
 #include <Magnum/FileCallback.h>
@@ -110,6 +111,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void materialPbrMetallicRoughness();
     void materialPbrSpecularGlossiness();
     void materialProperties();
+    void materialInvalid();
 
     void texture();
     void textureDefaultSampler();
@@ -164,6 +166,13 @@ constexpr struct {
     {"ascii embedded", "-embedded.gltf"},
     {"binary external", ".glb"},
     {"binary embedded", "-embedded.glb"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* message;
+} MaterialInvalidData[]{
+    {"unknown alpha mode", "unknown alpha mode WAT"}
 };
 
 constexpr struct {
@@ -260,6 +269,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
               &TinyGltfImporterTest::materialPbrSpecularGlossiness,
               &TinyGltfImporterTest::materialProperties});
+
+    addInstancedTests({&TinyGltfImporterTest::materialInvalid},
+        Containers::arraySize(MaterialInvalidData));
 
     addInstancedTests({&TinyGltfImporterTest::texture,
                        &TinyGltfImporterTest::textureDefaultSampler,
@@ -1895,7 +1907,7 @@ void TinyGltfImporterTest::materialProperties() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-properties.gltf")));
 
-    CORRADE_COMPARE(importer->materialCount(), 5);
+    CORRADE_COMPARE(importer->materialCount(), 4);
 
     {
         auto material = importer->material("implicit values");
@@ -1933,12 +1945,24 @@ void TinyGltfImporterTest::materialProperties() {
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
         CORRADE_COMPARE(phong.alphaMode(), MaterialAlphaMode::Opaque);
         CORRADE_COMPARE(phong.alphaMask(), 0.5f);
-    } {
-        std::ostringstream out;
-        Error redirectError{&out};
-        CORRADE_VERIFY(!importer->material("unknown alpha mode"));
-        CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::material(): unknown alpha mode WAT\n");
     }
+}
+
+void TinyGltfImporterTest::materialInvalid() {
+    auto&& data = MaterialInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "material-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(MaterialInvalidData));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->material(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::material(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::texture() {

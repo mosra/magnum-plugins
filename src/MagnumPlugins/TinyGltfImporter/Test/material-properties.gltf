@@ -20,10 +20,6 @@
             "name": "opaque",
             "doubleSided": false,
             "alphaMode": "OPAQUE"
-        },
-        {
-            "name": "unknown alpha mode",
-            "alphaMode": "WAT"
         }
     ]
 }
