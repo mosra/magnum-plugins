@@ -4,7 +4,7 @@
     },
     "meshes": [
         {
-            "name": "Mesh with different vertex count for each accessor",
+            "name": "different vertex count for each accessor",
             "primitives": [
                 {
                     "attributes": {

@@ -106,7 +106,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshPrimitives();
     void meshColors();
     void meshMultiplePrimitives();
-    void meshInconsistentVertexCount();
+    void meshInvalid();
 
     void materialPbrMetallicRoughness();
     void materialPbrSpecularGlossiness();
@@ -166,6 +166,13 @@ constexpr struct {
     {"ascii embedded", "-embedded.gltf"},
     {"binary external", ".glb"},
     {"binary embedded", "-embedded.glb"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* message;
+} MeshInvalidData[]{
+    {"different vertex count for each accessor", "mismatched vertex count for attribute TEXCOORD_1, expected 3 but got 4"}
 };
 
 constexpr struct {
@@ -291,8 +298,10 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::meshUnknownAttribute,
               &TinyGltfImporterTest::meshPrimitives,
               &TinyGltfImporterTest::meshColors,
-              &TinyGltfImporterTest::meshMultiplePrimitives,
-              &TinyGltfImporterTest::meshInconsistentVertexCount});
+              &TinyGltfImporterTest::meshMultiplePrimitives});
+
+    addInstancedTests({&TinyGltfImporterTest::meshInvalid},
+        Containers::arraySize(MeshInvalidData));
 
     addTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
               &TinyGltfImporterTest::materialPbrSpecularGlossiness,
@@ -1843,19 +1852,21 @@ void TinyGltfImporterTest::meshMultiplePrimitives() {
     }
 }
 
-void TinyGltfImporterTest::meshInconsistentVertexCount() {
+void TinyGltfImporterTest::meshInvalid() {
+    auto&& data = MeshInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh-invalid.gltf")));
 
-    CORRADE_COMPARE(importer->meshCount(), 1);
-    CORRADE_COMPARE(importer->meshName(0), "Mesh with different vertex count for each accessor");
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->meshCount(), Containers::arraySize(MeshInvalidData));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(),
-        "Trade::TinyGltfImporter::mesh(): mismatched vertex count for attribute TEXCOORD_1, expected 3 but got 4\n");
+    CORRADE_VERIFY(!importer->mesh(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::mesh(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::materialPbrMetallicRoughness() {
