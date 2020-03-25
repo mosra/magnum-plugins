@@ -98,6 +98,11 @@ namespace Magnum {
     @ref Trade::PhongMaterialData::shininess() set at @cpp 1.0f @ce, which
     wasn't a good default. Now it's set to @cpp 80.0f @ce to match defaults
     of @ref Shaders::Phong
+-   Support for the [KHR_materials_cmnBlinnPhong](https://github.com/KhronosGroup/glTF/tree/gltf2-common-materials/extensions/Khronos/KHR_materials_cmnBlinnPhong)
+    glTF extension has been removed from
+    @ref Trade::TinyGltfImporter "TinyGltfImporter", as it seems to be
+    effectively abandoned. The branch didn't see any update since 2017 and
+    there are no exporters supporting it.
 -   The bundled `tiny_gltf` code was updated from `v2.0.0` to `v2.4.1` in order
     to implement support for `KHR_lights_punctual` A lot happened between these
     two versions including a change in how it parses numeric data. It may cause

@@ -1162,48 +1162,8 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     Color3 specularColor{1.0f};
     Float shininess{80.0f};
 
-    /* Make Blinn/Phong a priority, because there we can import most properties */
-    auto khrMaterialsCmnBlinnPhong = material.extensions.find("KHR_materials_cmnBlinnPhong");
     auto khrMaterialsPbrSpecularGlossiness = material.extensions.find("KHR_materials_pbrSpecularGlossiness");
-    if(khrMaterialsCmnBlinnPhong != material.extensions.end()) {
-        auto diffuseTextureValue = khrMaterialsCmnBlinnPhong->second.Get("diffuseTexture");
-        if(diffuseTextureValue.Type() != tinygltf::NULL_TYPE) {
-            diffuseTexture = UnsignedInt(diffuseTextureValue.Get("index").Get<int>());
-            flags |= PhongMaterialData::Flag::DiffuseTexture;
-        }
-
-        auto specularTextureValue = khrMaterialsCmnBlinnPhong->second.Get("specularShininessTexture");
-        if(specularTextureValue.Type() != tinygltf::NULL_TYPE) {
-            specularTexture = UnsignedInt(specularTextureValue.Get("index").Get<int>());
-            flags |= PhongMaterialData::Flag::SpecularTexture;
-        }
-
-        /* Colors */
-        auto diffuseFactorValue = khrMaterialsCmnBlinnPhong->second.Get("diffuseFactor");
-        if(diffuseFactorValue.Type() != tinygltf::NULL_TYPE) {
-            diffuseColor = Vector4{Vector4d{
-                diffuseFactorValue.Get(0).Get<double>(),
-                diffuseFactorValue.Get(1).Get<double>(),
-                diffuseFactorValue.Get(2).Get<double>(),
-                diffuseFactorValue.Get(3).Get<double>()}};
-        }
-
-        auto specularColorValue = khrMaterialsCmnBlinnPhong->second.Get("specularFactor");
-        if(specularColorValue.Type() != tinygltf::NULL_TYPE) {
-            specularColor = Vector3{Vector3d{
-                specularColorValue.Get(0).Get<double>(),
-                specularColorValue.Get(1).Get<double>(),
-                specularColorValue.Get(2).Get<double>()}};
-        }
-
-        /* Parameters */
-        auto shininessFactorValue = khrMaterialsCmnBlinnPhong->second.Get("shininessFactor");
-        if(shininessFactorValue.Type() != tinygltf::NULL_TYPE) {
-            shininess = float(shininessFactorValue.Get<double>());
-        }
-
-    /* After that there is the PBR Specular/Glosiness */
-    } else if(khrMaterialsPbrSpecularGlossiness != material.extensions.end()) {
+    if(khrMaterialsPbrSpecularGlossiness != material.extensions.end()) {
         auto diffuseTextureValue = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseTexture");
         if(diffuseTextureValue.Type() != tinygltf::NULL_TYPE) {
             diffuseTexture = UnsignedInt(diffuseTextureValue.Get("index").Get<int>());

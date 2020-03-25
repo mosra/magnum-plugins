@@ -246,19 +246,8 @@ Import of skeleton, skin and morph data is not supported at the moment.
         Otherwise, `specularFactor` is used for specular color, if present.
         Otherwise, @cpp 0xffffff_rgbf @ce is used.
     -   Shininess is always @cpp 1.0f @ce
--   For the Blinn/Phong material spec (*draft*
-    [KHR_materials_cmnBlinnPhong](https://github.com/KhronosGroup/glTF/tree/gltf2-common-materials/extensions/Khronos/KHR_materials_cmnBlinnPhong)
-    extension):
-    -   The `diffuseTexture` field is used for diffuse texture, if present.
-        Otherwise, `diffuseFactor` is used for diffuse color, if present.
-        Otherwise, @cpp 0xffffff_rgbf @ce is used.
-    -   The `specularShininessTexture` field is used for specular texture, if
-        present (note that only the RGB channels should be used and the alpha
-        channel --- containing snininess --- should be ignored). Otherwise,
-        `specularFactor` is used for diffuse color, if present. Otherwise,
-        @cpp 0xffffff_rgbf @ce is used.
-    -   The `snininessFactor` field is used for snininess, if present.
-        Otherwise @cpp 1.0f @ce is used.
+-   The [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
+    extension is currently not supported.
 
 @subsection Trade-TinyGltfImporter-limitations-textures Texture and image import
 

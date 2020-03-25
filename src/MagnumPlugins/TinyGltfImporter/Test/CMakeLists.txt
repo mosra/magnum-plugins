@@ -89,7 +89,6 @@ corrade_add_test(TinyGltfImporterTest
         image-basis-embedded.glb
         light.gltf
         light.glb
-        material-blinnphong.gltf
         material-metallicroughness.gltf
         material-properties.gltf
         material-specularglossiness.gltf

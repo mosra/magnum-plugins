@@ -109,7 +109,6 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void materialPbrMetallicRoughness();
     void materialPbrSpecularGlossiness();
-    void materialBlinnPhong();
     void materialProperties();
 
     void texture();
@@ -260,7 +259,6 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
               &TinyGltfImporterTest::materialPbrSpecularGlossiness,
-              &TinyGltfImporterTest::materialBlinnPhong,
               &TinyGltfImporterTest::materialProperties});
 
     addInstancedTests({&TinyGltfImporterTest::texture,
@@ -1899,46 +1897,6 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
 
         CORRADE_COMPARE(importer->materialForName("Specular/Glossiness without textures"), 1);
         CORRADE_COMPARE(importer->materialName(1), "Specular/Glossiness without textures");
-    }
-}
-
-void TinyGltfImporterTest::materialBlinnPhong() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material-blinnphong.gltf")));
-
-    CORRADE_COMPARE(importer->materialCount(), 2);
-
-    {
-        auto material = importer->material(0);
-        CORRADE_VERIFY(material);
-        CORRADE_VERIFY(material->importerState());
-        CORRADE_COMPARE(material->type(), MaterialType::Phong);
-
-        auto& phong = static_cast<const PhongMaterialData&>(*material);
-        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
-        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
-        CORRADE_COMPARE(phong.diffuseTexture(), 0);
-        /* This is always three-component */
-        CORRADE_COMPARE(phong.specularColor(), (Color3{0.4f, 0.5f, 0.6f}));
-        CORRADE_COMPARE(phong.specularTexture(), 1);
-        CORRADE_COMPARE(phong.shininess(), 40.5f);
-
-        CORRADE_COMPARE(importer->materialForName("Blinn/Phong with textures"), 0);
-        CORRADE_COMPARE(importer->materialName(0), "Blinn/Phong with textures");
-    } {
-        auto material = importer->material(1);
-        CORRADE_VERIFY(material);
-        CORRADE_VERIFY(material->importerState());
-        CORRADE_COMPARE(material->type(), MaterialType::Phong);
-
-        auto& phong = static_cast<const PhongMaterialData&>(*material);
-        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
-        CORRADE_COMPARE(phong.specularColor(), (Color4{0.1f, 0.2f, 0.6f}));
-        CORRADE_COMPARE(phong.shininess(), 12.7f);
-
-        CORRADE_COMPARE(importer->materialForName("Blinn/Phong without textures"), 1);
-        CORRADE_COMPARE(importer->materialName(1), "Blinn/Phong without textures");
     }
 }
 
