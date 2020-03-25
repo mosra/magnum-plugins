@@ -15,45 +15,28 @@
     ],
     "materials": [
         {
+            "name": "colors",
             "extensions": {
                 "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseFactor": [
-                        0.7,
-                        0.8,
-                        0.9,
-                        1.1
-                    ],
+                    "diffuseFactor": [0.3, 0.4, 0.5, 0.8],
+                    "specularFactor": [0.1, 0.2, 0.6]
+                }
+            }
+        },
+        {
+            "name": "textures",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseFactor": [0.7, 0.8, 0.9, 1.1],
                     "diffuseTexture": {
                         "index": 0
                     },
-                    "specularFactor": [
-                        0.4,
-                        0.5,
-                        0.6
-                    ],
+                    "specularFactor": [0.4, 0.5, 0.6],
                     "specularGlossinessTexture": {
                         "index": 1
                     }
                 }
-            },
-            "name": "Specular/Glossiness with textures"
-        }, {
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseFactor": [
-                        0.3,
-                        0.4,
-                        0.5,
-                        0.8
-                    ],
-                    "specularFactor": [
-                        0.1,
-                        0.2,
-                        0.6
-                    ]
-                }
-            },
-            "name": "Specular/Glossiness without textures"
+            }
         }
     ],
     "samplers": [
@@ -63,7 +46,8 @@
         {
             "sampler": 0,
             "source": 0
-        }, {
+        },
+        {
             "sampler": 0,
             "source": 0
         }
