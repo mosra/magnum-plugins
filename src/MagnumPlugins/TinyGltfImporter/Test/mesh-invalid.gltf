@@ -4,6 +4,15 @@
     },
     "meshes": [
         {
+            "name": "invalid primitive",
+            "primitives": [
+                {
+                    "mode": 666,
+                    "attributes": {}
+                }
+            ]
+        },
+        {
             "name": "different vertex count for each accessor",
             "primitives": [
                 {
@@ -111,34 +120,116 @@
                     "indices": 7
                 }
             ]
+        },
+        {
+            "name": "normalized index type",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 8
+                }
+            ]
+        },
+        {
+            "name": "strided index view",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 9
+                }
+            ]
+        },
+        {
+            "name": "accessor type size larger than buffer stride",
+            "primitives": [
+                {
+                    "attributes": {
+                        "COLOR_0": 10
+                    }
+                }
+            ]
+        },
+        {
+            "name": "accessor count larger than buffer size",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 11
+                }
+            ]
+        },
+        {
+            "name": "buffer view range out of bounds",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 12
+                }
+            ]
+        },
+        {
+            "name": "buffer index out of bounds",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 13
+                    }
+                }
+            ]
+        },
+        {
+            "name": "buffer view index out of bounds",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 14
+                    }
+                }
+            ]
+        },
+        {
+            "name": "accessor index out of bounds",
+            "primitives": [
+                {
+                    "note": "for indices tinygltf handles this, for attributes not. HEH.",
+                    "attributes": {
+                        "POSITION": 15
+                    }
+                }
+            ]
         }
     ],
     "accessors": [
         {
+            "name": "0",
             "bufferView": 0,
             "componentType": 5126,
             "count": 3,
             "type": "VEC3"
         },
         {
+            "name": "1",
             "bufferView": 1,
             "componentType": 5126,
             "count": 4,
             "type": "VEC2"
         },
         {
+            "name": "2",
             "bufferView": 0,
             "componentType": 5126,
             "count": 3,
             "type": "VEC2"
         },
         {
-            "bufferView": 0,
+            "name": "3",
+            "bufferView": 1,
             "componentType": 5130,
             "count": 1,
             "type": "VEC3"
         },
         {
+            "name": "4",
             "bufferView": 0,
             "componentType": 5125,
             "normalized": true,
@@ -146,22 +237,77 @@
             "type": "VEC2"
         },
         {
+            "name": "5",
             "bufferView": 0,
             "componentType": 5120,
             "count": 3,
             "type": "VEC4"
         },
         {
+            "name": "6",
             "bufferView": 1,
             "componentType": 5125,
             "count": 3,
             "type": "VEC2"
         },
         {
+            "name": "7",
             "bufferView": 1,
             "componentType": 5124,
             "count": 3,
             "type": "SCALAR"
+        },
+        {
+            "name": "8",
+            "bufferView": 1,
+            "componentType": 5125,
+            "normalized": true,
+            "count": 3,
+            "type": "SCALAR"
+        },
+        {
+            "name": "9",
+            "bufferView": 0,
+            "componentType": 5125,
+            "count": 3,
+            "type": "SCALAR"
+        },
+        {
+            "name": "10",
+            "bufferView": 0,
+            "componentType": 5126,
+            "normalized": true,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "name": "11",
+            "bufferView": 1,
+            "byteOffset": 1,
+            "componentType": 5125,
+            "count": 8,
+            "type": "SCALAR"
+        },
+        {
+            "name": "12",
+            "bufferView": 2,
+            "componentType": 5125,
+            "count": 3,
+            "type": "SCALAR"
+        },
+        {
+            "name": "13",
+            "bufferView": 3,
+            "componentType": 5125,
+            "count": 3,
+            "type": "SCALAR"
+        },
+        {
+            "name": "14",
+            "bufferView": 4,
+            "componentType": 5126,
+            "count": 9,
+            "type": "VEC3"
         }
     ],
     "bufferViews": [
@@ -175,6 +321,16 @@
             "buffer": 0,
             "byteOffset": 36,
             "byteLength": 32
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 60,
+            "byteLength": 12
+        },
+        {
+            "buffer": 1,
+            "byteOffset": 0,
+            "byteLength": 12
         }
     ],
     "buffers": [

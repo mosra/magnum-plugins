@@ -1,0 +1,16 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "name": "different vertex count for each accessor",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 0
+                }
+            ]
+        }
+    ]
+}

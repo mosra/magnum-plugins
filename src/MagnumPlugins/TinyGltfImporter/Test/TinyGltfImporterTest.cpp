@@ -108,6 +108,10 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshColors();
     void meshMultiplePrimitives();
     void meshPrimitivesTypes();
+    /* This is THE ONE AND ONLY OOB check done by tinygltf, so it fails right
+       at openData() and thus has to be separate. Everything else is not done
+       by it. */
+    void meshIndexAccessorOutOfBounds();
     void meshInvalid();
 
     void materialPbrMetallicRoughness();
@@ -234,6 +238,7 @@ constexpr struct {
     const char* name;
     const char* message;
 } MeshInvalidData[]{
+    {"invalid primitive", "unrecognized primitive 666"},
     {"different vertex count for each accessor", "mismatched vertex count for attribute TEXCOORD_1, expected 3 but got 4"},
     {"unexpected position type", "unexpected POSITION type 2"},
     {"unsupported position component type", "unsupported POSITION component type unnormalized 5130"},
@@ -244,7 +249,15 @@ constexpr struct {
     {"unexpected color type", "unexpected COLOR type 2"},
     {"unsupported color component type", "unsupported COLOR component type unnormalized 5120"},
     {"unexpected index type", "unexpected index type 2"},
-    {"unsupported index component type", "unexpected index component type 5124"}
+    {"unsupported index component type", "unexpected index component type 5124"},
+    {"normalized index type", "index type can't be normalized"},
+    {"strided index view", "index bufferView is not contiguous"},
+    {"accessor type size larger than buffer stride", "16-byte type defined by accessor 10 can't fit into bufferView 0 stride of 12"},
+    {"accessor count larger than buffer size", "accessor 11 needs 33 bytes but bufferView 1 has only 32"},
+    {"buffer view range out of bounds", "bufferView 2 needs 72 bytes but buffer 0 has only 68"},
+    {"buffer index out of bounds", "buffer 1 out of bounds for 1 buffers"},
+    {"buffer view index out of bounds", "bufferView 4 out of bounds for 4 views"},
+    {"accessor index out of bounds", "accessor 15 out of bounds for 15 accessors"}
 };
 
 constexpr struct {
@@ -440,6 +453,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addInstancedTests({&TinyGltfImporterTest::meshPrimitivesTypes},
         Containers::arraySize(MeshPrimitivesTypesData));
+
+    addTests({&TinyGltfImporterTest::meshIndexAccessorOutOfBounds});
 
     addInstancedTests({&TinyGltfImporterTest::meshInvalid},
         Containers::arraySize(MeshInvalidData));
@@ -2065,6 +2080,16 @@ void TinyGltfImporterTest::meshPrimitivesTypes() {
                 {24.0f, 57.0f}
             }), TestSuite::Compare::Container);
     }
+}
+
+void TinyGltfImporterTest::meshIndexAccessorOutOfBounds() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-index-accessor-oob.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: primitive indices accessor out of bounds\n");
 }
 
 void TinyGltfImporterTest::meshInvalid() {

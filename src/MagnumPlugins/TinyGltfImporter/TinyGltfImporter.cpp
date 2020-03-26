@@ -110,6 +110,44 @@ std::size_t elementSize(const tinygltf::Accessor& accessor) {
     return tinygltf::GetComponentSizeInBytes(accessor.componentType)*tinygltf::GetNumComponentsInType(accessor.type);
 }
 
+const tinygltf::Accessor* checkedAccessor(const tinygltf::Model& model, const char* function, Int id) {
+    if(std::size_t(id) >= model.accessors.size()) {
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << id << "out of bounds for" << model.accessors.size() << "accessors";
+        return nullptr;
+    }
+
+    const tinygltf::Accessor& accessor = model.accessors[id];
+    if(std::size_t(accessor.bufferView) >= model.bufferViews.size()) {
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): bufferView" << accessor.bufferView << "out of bounds for" << model.bufferViews.size() << "views";
+        return nullptr;
+    }
+
+    const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
+    const std::size_t size = elementSize(accessor);
+    if(bufferView.byteStride != 0 && bufferView.byteStride < size) {
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "():" << size << Debug::nospace << "-byte type defined by accessor" << id << "can't fit into bufferView" << accessor.bufferView << "stride of" << bufferView.byteStride;
+        return nullptr;
+    }
+    const std::size_t accessorSize = accessor.byteOffset + (accessor.count - 1)*(bufferView.byteStride ? bufferView.byteStride : size) + size;
+    if(bufferView.byteLength < accessorSize) {
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << id << "needs" << accessorSize << "bytes but bufferView" << accessor.bufferView << "has only" << bufferView.byteLength;
+        return nullptr;
+    }
+    if(std::size_t(bufferView.buffer) >= model.buffers.size()) {
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): buffer" << bufferView.buffer << "out of bounds for" << model.buffers.size() << "buffers";
+        return nullptr;
+    }
+
+    const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
+    const std::size_t viewSize = bufferView.byteOffset + bufferView.byteLength;
+    if(buffer.data.size() < viewSize) {
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): bufferView" << accessor.bufferView << "needs" << viewSize << "bytes but buffer" << bufferView.buffer << "has only" << buffer.data.size();
+        return nullptr;
+    }
+
+    return &accessor;
+}
+
 Containers::StridedArrayView2D<const char> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
     const std::size_t bufferElementSize = elementSize(accessor);
     CORRADE_INTERNAL_ASSERT(std::size_t(accessor.bufferView) < model.bufferViews.size());
@@ -316,6 +354,11 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         for(const tinygltf::Primitive& primitive: mesh.primitives) {
             for(const std::pair<std::string, int>& attribute: primitive.attributes) {
                 if(!Utility::String::beginsWith(attribute.first, "TEXCOORD_"))
+                    continue;
+
+                /* Ignore aaccessor is out of bounds, this will fail later
+                   during mesh import */
+                if(std::size_t(attribute.second) >= _d->model.accessors.size())
                     continue;
 
                 const int type = _d->model.accessors[attribute.second].componentType;
@@ -979,7 +1022,9 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
     Containers::Array<MeshAttributeData> attributes;
     arrayReserve(attributes, primitive.attributes.size());
     for(auto& attribute: primitive.attributes) {
-        const tinygltf::Accessor& accessor = _d->model.accessors[attribute.second];
+        auto* acessorPointer = checkedAccessor(_d->model, "mesh", attribute.second);
+        if(!acessorPointer) return Containers::NullOpt;
+        const tinygltf::Accessor& accessor = *acessorPointer;
 
         /* Whitelist supported name and type combinations */
         MeshAttribute name;
@@ -1099,10 +1144,8 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
 
         /* Remember which buffer the attribute is in and the range, for
            consecutive attribs expand the range */
-        CORRADE_INTERNAL_ASSERT(std::size_t(accessor.bufferView) < _d->model.bufferViews.size());
         const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
         if(attributes.empty()) {
-            CORRADE_INTERNAL_ASSERT(std::size_t(bufferView.buffer) < _d->model.buffers.size());
             bufferId = bufferView.buffer;
             bufferRange = Math::Range1D<std::size_t>::fromSize(bufferView.byteOffset, bufferView.byteLength);
             vertexCount = accessor.count;
@@ -1181,28 +1224,40 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
     MeshIndexData indices;
     Containers::Array<char> indexData;
     if(primitive.indices != -1) {
-        const tinygltf::Accessor& accessor = _d->model.accessors[primitive.indices];
-        if(accessor.type != TINYGLTF_TYPE_SCALAR) {
-            Error() << "Trade::TinyGltfImporter::mesh(): unexpected index type" << accessor.type;
+        const tinygltf::Accessor* accessor = checkedAccessor(_d->model, "mesh", primitive.indices);
+        if(!accessor) return Containers::NullOpt;
+
+        if(accessor->type != TINYGLTF_TYPE_SCALAR) {
+            Error() << "Trade::TinyGltfImporter::mesh(): unexpected index type" << accessor->type;
+            return Containers::NullOpt;
+        }
+
+        if(accessor->normalized) {
+            Error() << "Trade::TinyGltfImporter::mesh(): index type can't be normalized";
             return Containers::NullOpt;
         }
 
         MeshIndexType type;
-        if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE)
+        if(accessor->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE)
             type = MeshIndexType::UnsignedByte;
-        else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
+        else if(accessor->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
             type = MeshIndexType::UnsignedShort;
-        else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
+        else if(accessor->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
             type = MeshIndexType::UnsignedInt;
         else {
-            Error() << "Trade::TinyGltfImporter::mesh(): unexpected index component type" << accessor.componentType;
+            Error{} << "Trade::TinyGltfImporter::mesh(): unexpected index component type" << accessor->componentType;
             return Containers::NullOpt;
         }
 
-        /* Assuming the index buffers are contiguous */
-        Containers::ArrayView<const char> src = bufferView(_d->model, accessor).asContiguous();
-        indexData = Containers::Array<char>{src.size()};
-        Utility::copy(src, indexData);
+        Containers::StridedArrayView2D<const char> src = bufferView(_d->model, *accessor);
+        if(!src.isContiguous()) {
+            Error{} << "Trade::TinyGltfImporter::mesh(): index bufferView is not contiguous";
+            return Containers::NullOpt;
+        }
+
+        Containers::ArrayView<const char> srcContiguous = src.asContiguous();
+        indexData = Containers::Array<char>{srcContiguous.size()};
+        Utility::copy(srcContiguous, indexData);
         indices = MeshIndexData{type, indexData};
     }
 
