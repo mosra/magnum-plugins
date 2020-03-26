@@ -3,8 +3,8 @@
 set -e
 
 # in -> bin
-for i in animation animation-patching mesh-colors mesh-primitives mesh mesh-invalid přívodní-šňůra; do
-    ./in2bin.py ${i}.bin.in
+for i in *.bin.in; do
+    ./in2bin.py ${i}
 done
 
 # gltf -> embedded gltf
