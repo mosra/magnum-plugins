@@ -198,6 +198,9 @@ Import of skeleton, skin and morph data is not supported at the moment.
     (if any) are imported as @ref VertexFormat::Vector3, texture coordinates as
     @ref VertexFormat::Vector2 and colors as either @ref VertexFormat::Vector3
     or @ref VertexFormat::Vector4.
+-   Texture coordinates are Y-flipped on import unless
+    @cb{.conf} textureCoordinateYFlipInMaterial @ce is enabled, in which case
+    all materials provide a texture transformation that does the Y-flip instead
 -   Multi-primitive meshes are loaded as follows, consistently with the
     behavior of @link AssimpImporter @endlink:
     -   The @ref meshCount() query returns a number of all *primitives*, not

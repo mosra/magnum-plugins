@@ -93,6 +93,8 @@ corrade_add_test(TinyGltfImporterTest
         material-metallicroughness.gltf
         material-properties.gltf
         material-specularglossiness.gltf
+        material-texcoord-flip.bin
+        material-texcoord-flip.gltf
         mesh.gltf
         mesh.bin
         mesh.glb

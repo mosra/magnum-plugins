@@ -176,6 +176,7 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     conf.setValue("optimizeQuaternionShortestPath", true);
     conf.setValue("normalizeQuaternions", true);
     conf.setValue("mergeAnimationClips", false);
+    conf.setValue("textureCoordinateYFlipInMaterial", false);
 }
 
 }
@@ -1044,9 +1045,11 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
                 MeshAttribute::TextureCoordinates,
                 VertexFormat::Vector2, data};
 
-            /* Flip Y axis of texture coordinates */
-            for(Vector2& c: Containers::arrayCast<Vector2>(data))
-                c.y() = 1.0f - c.y();
+            /* Flip Y axis of texture coordinates, unless it's told to be done
+               in the material instead */
+            if(!configuration().value<bool>("textureCoordinateYFlipInMaterial"))
+                for(Vector2& c: Containers::arrayCast<Vector2>(data))
+                    c.y() = 1.0f - c.y();
 
         /* Color attribute ends with _0, _1 ... */
         /** @todo shouldn't we check the order is correct? */
@@ -1144,11 +1147,18 @@ bool TinyGltfImporter::materialTexture(const char* name, const Int texture, cons
        left and Y down) and then flip the result again. Sanity of the following
        verified with https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/TextureTransformTest */
     Matrix3 matrix;
+    bool hasTextureTransform = false;
     if(extensions.Type() == tinygltf::OBJECT_TYPE) {
         auto khrTextureTransform = extensions.Get("KHR_texture_transform");
         if(khrTextureTransform.Type() != tinygltf::NULL_TYPE) {
-            matrix = Matrix3::translation(Vector2::yAxis(1.0f))*
-                     Matrix3::scaling(Vector2::yScale(-1.0f));
+            hasTextureTransform = true;
+
+            /* If textureCoordinateYFlipInMaterial is set, the mesh doesn't
+               have the texture coordinates flipped and thus we don't need to
+               unflip them first */
+            if(!configuration().value<bool>("textureCoordinateYFlipInMaterial"))
+                matrix = Matrix3::translation(Vector2::yAxis(1.0f))*
+                         Matrix3::scaling(Vector2::yScale(-1.0f));
 
             auto transformTexCoord = khrTextureTransform.Get("texCoord");
             if(transformTexCoord.Type() != tinygltf::NULL_TYPE) {
@@ -1189,6 +1199,21 @@ bool TinyGltfImporter::materialTexture(const char* name, const Int texture, cons
                always so it's set even if the first texture had no transform
                and the second had an identity transform. */
             if(!textureMatrix) textureMatrix = matrix;
+            flags |= PhongMaterialData::Flag::TextureTransformation;
+        }
+    }
+
+    /* In case the material had no texture transformation but
+       textureCoordinateYFlipInMaterial is enabled, we'll put an Y-flip
+       transformation there. */
+    if(!hasTextureTransform && configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
+        matrix =
+            Matrix3::translation(Vector2::yAxis(1.0f))*
+            Matrix3::scaling(Vector2::yScale(-1.0f));
+
+        /* Save the texture matrix if this is the first time */
+        if(!textureMatrix) {
+            textureMatrix = matrix;
             flags |= PhongMaterialData::Flag::TextureTransformation;
         }
     }

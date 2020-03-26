@@ -1,0 +1,95 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "name": "float",
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_0": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "signed integer",
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_0": 1
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC2"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 24
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 24,
+            "byteLength": 12
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 36,
+            "uri": "material-texcoord-flip.bin"
+        }
+    ],
+    "materials": [
+        {
+            "name": "multiple textures w/o transform",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseTexture": {
+                        "index": 0
+                    },
+                    "specularGlossinessTexture": {
+                        "index": 0
+                    }
+                }
+            }
+        },
+        {
+            "name": "multiple textures w/ identity transform",
+            "extensions": {
+                "note": "tinygltf treats empty {} as if there was no entry, so can't use that. See the XFAIL in materialPbrSpecularGlossiness() for details.",
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "rotation": 0.0
+                            }
+                        }
+                    },
+                    "specularGlossinessTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.0, 0.0]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "textures": [
+        {}
+    ]
+}

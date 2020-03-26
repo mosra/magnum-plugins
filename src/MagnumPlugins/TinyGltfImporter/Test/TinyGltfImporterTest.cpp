@@ -41,6 +41,7 @@
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/CubicHermite.h>
+#include <Magnum/MeshTools/Transform.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/AbstractMaterialData.h>
 #include <Magnum/Trade/AnimationData.h>
@@ -112,6 +113,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void materialPbrSpecularGlossiness();
     void materialProperties();
     void materialInvalid();
+    void materialTexCoordFlip();
 
     void texture();
     void textureDefaultSampler();
@@ -208,6 +210,27 @@ Matrix(1, 0, 0,
 Matrix(0.5, 0, 0,
        0, 0.5, 0.5,
        0, 0, 1))"}
+};
+
+constexpr struct {
+    const char* name;
+    bool flipInMaterial;
+    PhongMaterialData::Flags materialFlags;
+} MaterialTexCoordFlipData[]{
+    {"multiple textures w/o transform", false,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::SpecularTexture},
+    {"multiple textures w/o transform", true,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::SpecularTexture},
+    {"multiple textures w/ identity transform", false,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::SpecularTexture|
+        PhongMaterialData::Flag::TextureTransformation},
+    {"multiple textures w/ identity transform", true,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::SpecularTexture|
+        PhongMaterialData::Flag::TextureTransformation}
 };
 
 constexpr struct {
@@ -309,6 +332,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addInstancedTests({&TinyGltfImporterTest::materialInvalid},
         Containers::arraySize(MaterialInvalidData));
+
+    addInstancedTests({&TinyGltfImporterTest::materialTexCoordFlip},
+        Containers::arraySize(MaterialTexCoordFlipData));
 
     addInstancedTests({&TinyGltfImporterTest::texture,
                        &TinyGltfImporterTest::textureDefaultSampler,
@@ -2100,6 +2126,43 @@ void TinyGltfImporterTest::materialInvalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->material(data.name));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::material(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::materialTexCoordFlip() {
+    auto&& data = MaterialTexCoordFlipData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::formatString("{}{}", data.name, data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    if(data.flipInMaterial)
+        importer->configuration().setValue("textureCoordinateYFlipInMaterial", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "material-texcoord-flip.gltf")));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+    Containers::Array<Vector2> texCoords = mesh->textureCoordinates2DAsArray();
+
+    /* Texture transform is added to materials that don't have it yet */
+    auto material = importer->material(data.name);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+    auto& phongMaterial = static_cast<PhongMaterialData&>(*material);
+    if(data.flipInMaterial) CORRADE_COMPARE(phongMaterial.flags(),
+        data.materialFlags|PhongMaterialData::Flag::TextureTransformation);
+    else CORRADE_COMPARE(phongMaterial.flags(), data.materialFlags);
+
+    /* Transformed texture coordinates should be the same regardless of the
+       setting */
+    MeshTools::transformPointsInPlace(phongMaterial.textureMatrix(), texCoords);
+    CORRADE_COMPARE_AS(texCoords, Containers::arrayView<Vector2>({
+        {1.0f, 0.5f},
+        {0.5f, 1.0f},
+        {0.0f, 0.0f}
+    }), TestSuite::Compare::Container);
 }
 
 void TinyGltfImporterTest::texture() {
