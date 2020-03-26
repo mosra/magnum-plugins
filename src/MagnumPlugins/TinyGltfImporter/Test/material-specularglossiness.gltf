@@ -98,6 +98,19 @@
                     }
                 }
             }
+        },
+        {
+            "name": "texture transform nothing",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {}
+                        }
+                    }
+                }
+            }
         }
     ],
     "samplers": [

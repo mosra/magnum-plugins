@@ -1956,7 +1956,7 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-specularglossiness.gltf")));
 
-    CORRADE_COMPARE(importer->materialCount(), 5);
+    CORRADE_COMPARE(importer->materialCount(), 6);
 
     {
         auto material = importer->material("colors");
@@ -2019,6 +2019,22 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
 
         auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::TextureTransformation);
+        CORRADE_COMPARE(phong.textureMatrix(), (Matrix3{}));
+    } {
+        const char* name = "texture transform nothing";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
+        {
+            CORRADE_EXPECT_FAIL("tinygltf treats an empty extension object inside an extension as if there was no extension at all. The same works correctly with builtin pbrMetallicRoughness.");
+            CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::TextureTransformation);
+        } {
+            CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
+        }
         CORRADE_COMPARE(phong.textureMatrix(), (Matrix3{}));
     }
 }
