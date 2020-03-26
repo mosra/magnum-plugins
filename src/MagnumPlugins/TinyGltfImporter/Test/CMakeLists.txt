@@ -95,6 +95,7 @@ corrade_add_test(TinyGltfImporterTest
         material-specularglossiness.gltf
         material-texcoord-flip.bin
         material-texcoord-flip.gltf
+        material-texcoord-flip-unnormalized.gltf
         mesh.gltf
         mesh.bin
         mesh.glb
@@ -103,8 +104,8 @@ corrade_add_test(TinyGltfImporterTest
         mesh-invalid.bin
         mesh-invalid.gltf
         mesh-multiple-primitives.gltf
-        mesh-primitives.gltf
-        mesh-primitives.bin
+        mesh-primitives-types.gltf
+        mesh-primitives-types.bin
         mesh-colors.gltf
         mesh-colors.bin
         přívodní-šňůra.gltf

@@ -1,0 +1,387 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "name": "positions byte, color4 unsigned short, texcoords normalized unsigned byte; triangle strip",
+            "primitives": [
+                {
+                    "mode": 5,
+                    "attributes": {
+                        "COLOR_0": 0,
+                        "POSITION": 1,
+                        "TEXCOORD_0": 2
+                    }
+                }
+            ]
+        },
+        {
+            "name": "positions short, colors unsigned byte, texcoords normalized unsigned short; lines",
+            "primitives": [
+                {
+                    "mode": 1,
+                    "attributes": {
+                        "POSITION": 3,
+                        "COLOR_0": 4,
+                        "TEXCOORD_0": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "positions unsigned byte, normals byte, texcoords short; indices unsigned int; line loop",
+            "primitives": [
+                {
+                    "mode": 2,
+                    "attributes": {
+                        "NORMAL": 6,
+                        "POSITION": 7,
+                        "TEXCOORD_0": 8
+                    },
+                    "indices": 9
+                }
+            ]
+        },
+        {
+            "name": "positions unsigned short, normals short, texcoords byte; indices unsigned byte; triangle fan",
+            "primitives": [
+                {
+                    "mode": 6,
+                    "attributes": {
+                        "POSITION": 10,
+                        "TEXCOORD_0": 11,
+                        "NORMAL": 12
+                    },
+                    "indices": 13
+                }
+            ]
+        },
+        {
+            "name": "positions normalized unsigned byte, texcoords normalized short; indices unsigned short; line strip",
+            "primitives": [
+                {
+                    "mode": 3,
+                    "attributes": {
+                        "TEXCOORD_0": 14,
+                        "POSITION": 15
+                    },
+                    "indices": 16
+                }
+            ]
+        },
+        {
+            "name": "positions normalized short, texcoords unsigned byte; triangles",
+            "primitives": [
+                {
+                    "mode": 4,
+                    "attributes": {
+                        "TEXCOORD_0": 17,
+                        "POSITION": 18
+                    }
+                }
+            ]
+        },
+        {
+            "name": "positions normalized unsigned short, texcoords normalized byte",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 19,
+                        "TEXCOORD_0": 20
+                    }
+                }
+            ]
+        },
+        {
+            "name": "positions normalized byte, texcoords unsigned short",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 21,
+                        "TEXCOORD_0": 22
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "name": "0",
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5123,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC4"
+        },
+        {
+            "name": "1",
+            "bufferView": 0,
+            "byteOffset": 8,
+            "componentType": 5120,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "2",
+            "bufferView": 0,
+            "byteOffset": 11,
+            "componentType": 5121,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC2"
+        },
+        {
+            "name": "3",
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 5122,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "4",
+            "bufferView": 1,
+            "byteOffset": 6,
+            "componentType": 5121,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "5",
+            "bufferView": 1,
+            "byteOffset": 10,
+            "componentType": 5123,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC2"
+        },
+        {
+            "name": "6",
+            "bufferView": 2,
+            "byteOffset": 0,
+            "componentType": 5120,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "7",
+            "bufferView": 2,
+            "byteOffset": 3,
+            "componentType": 5121,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "8",
+            "bufferView": 2,
+            "byteOffset": 6,
+            "componentType": 5122,
+            "count": 5,
+            "type": "VEC2"
+        },
+        {
+            "name": "9",
+            "bufferView": 3,
+            "componentType": 5125,
+            "count": 6,
+            "type": "SCALAR"
+        },
+        {
+            "name": "10",
+            "bufferView": 4,
+            "byteOffset": 0,
+            "componentType": 5123,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "11",
+            "bufferView": 4,
+            "byteOffset": 6,
+            "componentType": 5120,
+            "count": 5,
+            "type": "VEC2"
+        },
+        {
+            "name": "12",
+            "bufferView": 4,
+            "byteOffset": 8,
+            "componentType": 5122,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "13",
+            "bufferView": 5,
+            "byteOffset": 0,
+            "componentType": 5121,
+            "count": 6,
+            "type": "SCALAR"
+        },
+        {
+            "name": "14",
+            "bufferView": 6,
+            "byteOffset": 0,
+            "componentType": 5122,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC2"
+        },
+        {
+            "name": "15",
+            "bufferView": 6,
+            "byteOffset": 4,
+            "componentType": 5121,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "16",
+            "bufferView": 7,
+            "byteOffset": 0,
+            "componentType": 5123,
+            "count": 6,
+            "type": "SCALAR"
+        },
+        {
+            "name": "17",
+            "bufferView": 8,
+            "byteOffset": 0,
+            "componentType": 5121,
+            "count": 5,
+            "type": "VEC2"
+        },
+        {
+            "name": "18",
+            "bufferView": 8,
+            "byteOffset": 2,
+            "componentType": 5122,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "19",
+            "bufferView": 9,
+            "byteOffset": 0,
+            "componentType": 5123,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "20",
+            "bufferView": 9,
+            "byteOffset": 6,
+            "componentType": 5120,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC2"
+        },
+        {
+            "name": "21",
+            "bufferView": 10,
+            "byteOffset": 0,
+            "componentType": 5120,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC3"
+        },
+        {
+            "name": "22",
+            "bufferView": 10,
+            "byteOffset": 4,
+            "componentType": 5123,
+            "count": 5,
+            "type": "VEC2"
+        }
+    ],
+    "bufferViews": [
+        {
+            "name": "0",
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 80,
+            "byteStride": 16
+        },
+        {
+            "name": "1",
+            "buffer": 0,
+            "byteOffset": 80,
+            "byteLength": 80,
+            "byteStride": 16
+        },
+        {
+            "name": "2",
+            "buffer": 0,
+            "byteOffset": 160,
+            "byteLength": 60,
+            "byteStride": 12
+        },
+        {
+            "name": "3",
+            "buffer": 0,
+            "byteOffset": 220,
+            "byteLength": 24
+        },
+        {
+            "name": "4",
+            "buffer": 0,
+            "byteOffset": 244,
+            "byteLength": 80,
+            "byteStride": 16
+        },
+        {
+            "name": "5",
+            "buffer": 0,
+            "byteOffset": 324,
+            "byteLength": 8
+        },
+        {
+            "name": "6",
+            "buffer": 0,
+            "byteOffset": 332,
+            "byteLength": 40,
+            "byteStride": 8
+        },
+        {
+            "name": "7",
+            "buffer": 0,
+            "byteOffset": 372,
+            "byteLength": 12
+        },
+        {
+            "name": "8",
+            "buffer": 0,
+            "byteOffset": 384,
+            "byteLength": 40,
+            "byteStride": 8
+        },
+        {
+            "name": "9",
+            "buffer": 0,
+            "byteOffset": 424,
+            "byteLength": 40,
+            "byteStride": 8
+        },
+        {
+            "name": "10",
+            "buffer": 0,
+            "byteOffset": 464,
+            "byteLength": 40,
+            "byteStride": 8
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 504,
+            "uri": "mesh-primitives-types.bin"
+        }
+    ]
+}

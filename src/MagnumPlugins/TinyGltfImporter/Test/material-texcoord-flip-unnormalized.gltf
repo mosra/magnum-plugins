@@ -1,0 +1,94 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "name": "normalized signed integer",
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_0": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "signed integer",
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_0": 1
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5120,
+            "normalized": true,
+            "count": 3,
+            "type": "VEC2"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5122,
+            "count": 3,
+            "type": "VEC2"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 44,
+            "byteLength": 8
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 52,
+            "byteLength": 12
+        }
+    ],
+    "buffers": [
+        {
+            "note": "reusing the same as material-texcoord-flip.gltf",
+            "byteLength": 64,
+            "uri": "material-texcoord-flip.bin"
+        }
+    ],
+    "materials": [
+        {
+            "name": "transform from normalized signed integer",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0,
+                    "extensions": {
+                        "KHR_texture_transform": {
+                            "offset": [0.5, 0.5],
+                            "scale": [-0.5, 0.5]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "transform from signed integer",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0,
+                    "extensions": {
+                        "KHR_texture_transform": {
+                            "offset": [0.0, 0.25],
+                            "scale": [0.005, 0.0025]
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "textures": [
+        {}
+    ]
+}

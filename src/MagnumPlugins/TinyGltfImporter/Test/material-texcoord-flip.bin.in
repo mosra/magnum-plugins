@@ -1,8 +1,44 @@
-type = '<6f'
-input = [
+type = '<'
+input = []
+
+# Floats
+type += '6f'
+input += [
     1.0, 0.5,
     0.5, 0.0,
     0.0, 1.0
+]
+
+# Normalized unsigned bytes. On Y it's flipped.
+type += '6Bxx'
+input += [
+    254, 127,
+    127, 254,
+    0, 0
+]
+
+# Normalized unsigned shorts. On Y it's flipped.
+type += '6H'
+input += [
+    65534, 32767,
+    32767, 65534,
+    0, 0
+]
+
+# Normalized signed bytes. On X it's flipped.
+type += '6bxx'
+input += [
+    -127, 0,
+    0, -127,
+    127, 127,
+]
+
+# Unnormalized signed shorts. On Y it's off-center.
+type += '6h'
+input += [
+    200, 100,
+    100, -100,
+    0, 300
 ]
 
 # kate: hl python

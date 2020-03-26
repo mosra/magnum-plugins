@@ -13,6 +13,104 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "unexpected position type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 2
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsupported position component type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unexpected normal type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "NORMAL": 2
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsupported normal component type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "NORMAL": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unexpected texcoord type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_0": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsupported texcoord component type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_0": 4
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unexpected color type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "COLOR_0": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsupported color component type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "COLOR_0": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unexpected index type",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 6
+                }
+            ]
+        },
+        {
+            "name": "unsupported index component type",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 7
+                }
+            ]
         }
     ],
     "accessors": [
@@ -27,19 +125,56 @@
             "componentType": 5126,
             "count": 4,
             "type": "VEC2"
+        },
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC2"
+        },
+        {
+            "bufferView": 0,
+            "componentType": 5130,
+            "count": 1,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 0,
+            "componentType": 5125,
+            "normalized": true,
+            "count": 3,
+            "type": "VEC2"
+        },
+        {
+            "bufferView": 0,
+            "componentType": 5120,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5125,
+            "count": 3,
+            "type": "VEC2"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5124,
+            "count": 3,
+            "type": "SCALAR"
         }
     ],
     "bufferViews": [
         {
             "buffer": 0,
+            "byteOffset": 0,
             "byteLength": 36,
-            "target": 34962
+            "byteStride": 12
         },
         {
             "buffer": 0,
-            "byteLength": 32,
             "byteOffset": 36,
-            "target": 34962
+            "byteLength": 32
         }
     ],
     "buffers": [

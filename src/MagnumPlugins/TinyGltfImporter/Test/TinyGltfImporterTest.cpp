@@ -31,6 +31,7 @@
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -104,9 +105,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshIndexed();
     void meshIndexedAttributeless();
     void meshUnknownAttribute();
-    void meshPrimitives();
     void meshColors();
     void meshMultiplePrimitives();
+    void meshPrimitivesTypes();
     void meshInvalid();
 
     void materialPbrMetallicRoughness();
@@ -172,9 +173,78 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    MeshPrimitive primitive;
+    MeshIndexType indexType;
+    VertexFormat positionFormat;
+    VertexFormat normalFormat;
+    VertexFormat colorFormat;
+    VertexFormat textureCoordinateFormat;
+} MeshPrimitivesTypesData[]{
+    {"positions byte, color4 unsigned short, texcoords normalized unsigned byte; triangle strip",
+        MeshPrimitive::TriangleStrip, MeshIndexType{},
+        VertexFormat::Vector3b,
+        VertexFormat{},
+        VertexFormat::Vector4usNormalized,
+        VertexFormat::Vector2ubNormalized},
+    {"positions short, colors unsigned byte, texcoords normalized unsigned short; lines",
+        MeshPrimitive::Lines, MeshIndexType{},
+        VertexFormat::Vector3s,
+        VertexFormat{},
+        VertexFormat::Vector3ubNormalized,
+        VertexFormat::Vector2usNormalized},
+    {"positions unsigned byte, normals byte, texcoords short; indices unsigned int; line loop",
+        MeshPrimitive::LineLoop, MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3ub,
+        VertexFormat::Vector3bNormalized,
+        VertexFormat{},
+        VertexFormat::Vector2s},
+    {"positions unsigned short, normals short, texcoords byte; indices unsigned byte; triangle fan",
+        MeshPrimitive::TriangleFan, MeshIndexType::UnsignedByte,
+        VertexFormat::Vector3us,
+        VertexFormat::Vector3sNormalized,
+        VertexFormat{},
+        VertexFormat::Vector2b},
+    {"positions normalized unsigned byte, texcoords normalized short; indices unsigned short; line strip",
+        MeshPrimitive::LineStrip, MeshIndexType::UnsignedShort,
+        VertexFormat::Vector3ubNormalized,
+        VertexFormat{},
+        VertexFormat{},
+        VertexFormat::Vector2sNormalized},
+    {"positions normalized short, texcoords unsigned byte; triangles",
+        MeshPrimitive::Triangles, MeshIndexType{},
+        VertexFormat::Vector3sNormalized,
+        VertexFormat{},
+        VertexFormat{},
+        VertexFormat::Vector2ub},
+    {"positions normalized unsigned short, texcoords normalized byte",
+        MeshPrimitive::Triangles, MeshIndexType{},
+        VertexFormat::Vector3usNormalized,
+        VertexFormat{},
+        VertexFormat{},
+        VertexFormat::Vector2bNormalized},
+    {"positions normalized byte, texcoords unsigned short",
+        MeshPrimitive::Triangles, MeshIndexType{},
+        VertexFormat::Vector3bNormalized,
+        VertexFormat{},
+        VertexFormat{},
+        VertexFormat::Vector2us}
+};
+
+constexpr struct {
+    const char* name;
     const char* message;
 } MeshInvalidData[]{
-    {"different vertex count for each accessor", "mismatched vertex count for attribute TEXCOORD_1, expected 3 but got 4"}
+    {"different vertex count for each accessor", "mismatched vertex count for attribute TEXCOORD_1, expected 3 but got 4"},
+    {"unexpected position type", "unexpected POSITION type 2"},
+    {"unsupported position component type", "unsupported POSITION component type unnormalized 5130"},
+    {"unexpected normal type", "unexpected NORMAL type 2"},
+    {"unsupported normal component type", "unsupported NORMAL component type unnormalized 5130"},
+    {"unexpected texcoord type", "unexpected TEXCOORD type 3"},
+    {"unsupported texcoord component type", "unsupported TEXCOORD component type normalized 5125"},
+    {"unexpected color type", "unexpected COLOR type 2"},
+    {"unsupported color component type", "unsupported COLOR component type unnormalized 5120"},
+    {"unexpected index type", "unexpected index type 2"},
+    {"unsupported index component type", "unexpected index component type 5124"}
 };
 
 constexpr struct {
@@ -214,23 +284,69 @@ Matrix(0.5, 0, 0,
 
 constexpr struct {
     const char* name;
+    const char* fileName;
+    const char* meshName;
     bool flipInMaterial;
     PhongMaterialData::Flags materialFlags;
 } MaterialTexCoordFlipData[]{
-    {"multiple textures w/o transform", false,
+    {"multiple textures w/o transform",
+        "material-texcoord-flip.gltf", "float", false,
         PhongMaterialData::Flag::DiffuseTexture|
         PhongMaterialData::Flag::SpecularTexture},
-    {"multiple textures w/o transform", true,
+    {"multiple textures w/o transform",
+        "material-texcoord-flip.gltf", "float", true,
         PhongMaterialData::Flag::DiffuseTexture|
         PhongMaterialData::Flag::SpecularTexture},
-    {"multiple textures w/ identity transform", false,
+    {"multiple textures w/ identity transform",
+        "material-texcoord-flip.gltf", "float", false,
         PhongMaterialData::Flag::DiffuseTexture|
         PhongMaterialData::Flag::SpecularTexture|
         PhongMaterialData::Flag::TextureTransformation},
-    {"multiple textures w/ identity transform", true,
+    {"multiple textures w/ identity transform",
+        "material-texcoord-flip.gltf", "float", true,
         PhongMaterialData::Flag::DiffuseTexture|
         PhongMaterialData::Flag::SpecularTexture|
-        PhongMaterialData::Flag::TextureTransformation}
+        PhongMaterialData::Flag::TextureTransformation},
+    {"transform from normalized unsigned byte",
+        "material-texcoord-flip.gltf",
+        "normalized unsigned byte", false,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::TextureTransformation},
+    {"transform from normalized unsigned byte",
+        "material-texcoord-flip.gltf",
+        "normalized unsigned byte", true,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::TextureTransformation},
+    {"transform from normalized unsigned short",
+        "material-texcoord-flip.gltf",
+        "normalized unsigned short", false,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::TextureTransformation},
+    {"transform from normalized unsigned short",
+        "material-texcoord-flip.gltf",
+        "normalized unsigned short", true,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::TextureTransformation},
+    {"transform from normalized signed integer",
+        "material-texcoord-flip-unnormalized.gltf",
+        "normalized signed integer", false,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::TextureTransformation},
+    {"transform from normalized signed integer",
+        "material-texcoord-flip-unnormalized.gltf",
+        "normalized signed integer", true,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::TextureTransformation},
+    {"transform from signed integer",
+        "material-texcoord-flip-unnormalized.gltf",
+        "signed integer", false,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::TextureTransformation},
+    {"transform from signed integer",
+        "material-texcoord-flip-unnormalized.gltf",
+        "signed integer", true,
+        PhongMaterialData::Flag::DiffuseTexture|
+        PhongMaterialData::Flag::TextureTransformation},
 };
 
 constexpr struct {
@@ -319,9 +435,11 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::meshIndexed,
               &TinyGltfImporterTest::meshIndexedAttributeless,
               &TinyGltfImporterTest::meshUnknownAttribute,
-              &TinyGltfImporterTest::meshPrimitives,
               &TinyGltfImporterTest::meshColors,
               &TinyGltfImporterTest::meshMultiplePrimitives});
+
+    addInstancedTests({&TinyGltfImporterTest::meshPrimitivesTypes},
+        Containers::arraySize(MeshPrimitivesTypesData));
 
     addInstancedTests({&TinyGltfImporterTest::meshInvalid},
         Containers::arraySize(MeshInvalidData));
@@ -1555,127 +1673,6 @@ void TinyGltfImporterTest::meshUnknownAttribute() {
         }), TestSuite::Compare::Container);
 }
 
-void TinyGltfImporterTest::meshPrimitives() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh-primitives.gltf")));
-
-    CORRADE_COMPARE(importer->meshCount(), 6);
-
-    {
-        auto mesh = importer->mesh(0);
-        CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
-
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedByte);
-        CORRADE_COMPARE_AS(mesh->indices<UnsignedByte>(),
-            Containers::arrayView<UnsignedByte>({0, 2, 1}),
-            TestSuite::Compare::Container);
-
-        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-            Containers::arrayView<Vector3>({
-                {1.0f, 2.0f, 3.0f},
-                {4.0f, 5.0f, 6.0f},
-                {7.0f, 8.0f, 9.0f}
-            }), TestSuite::Compare::Container);
-    } {
-        auto mesh = importer->mesh(1);
-        CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
-
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedShort);
-        CORRADE_COMPARE_AS(mesh->indices<UnsignedShort>(),
-            Containers::arrayView<UnsignedShort>({0, 2, 1, 3}),
-            TestSuite::Compare::Container);
-
-        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-            Containers::arrayView<Vector3>({
-                {10.0f, 11.0f, 12.0f},
-                {13.0f, 14.0f, 15.0f},
-                {16.0f, 17.0f, 18.0f},
-                {1.9f, 20.0f, 2.1f}
-            }), TestSuite::Compare::Container);
-    } {
-        auto mesh = importer->mesh(2);
-        CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::LineLoop);
-
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedInt);
-        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
-            Containers::arrayView<UnsignedInt>({0, 1}),
-            TestSuite::Compare::Container);
-
-        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-            Containers::arrayView<Vector3>({
-                {1.1f, 1.2f, 1.4f},
-                {1.5f, 1.6f, 1.7f},
-                {1.8f, 1.9f, 2.0f}
-            }), TestSuite::Compare::Container);
-    } {
-        auto mesh = importer->mesh(3);
-        CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::LineStrip);
-
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedInt);
-        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
-            Containers::arrayView<UnsignedInt>({2, 1, 0}),
-            TestSuite::Compare::Container);
-
-        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-            Containers::arrayView<Vector3>({
-                {2.1f, 2.2f, 2.4f},
-                {2.5f, 2.6f, 2.7f},
-                {2.8f, 2.9f, 3.0f}
-            }), TestSuite::Compare::Container);
-    } {
-        auto mesh = importer->mesh(4);
-        CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::TriangleStrip);
-
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedInt);
-        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
-            Containers::arrayView<UnsignedInt>({2, 1, 0, 3}),
-            TestSuite::Compare::Container);
-
-        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-            Containers::arrayView<Vector3>({
-                {3.1f, 3.2f, 3.4f},
-                {3.5f, 3.6f, 3.7f},
-                {3.8f, 3.9f, 4.0f},
-                {4.1f, 4.2f, 4.3f}
-            }), TestSuite::Compare::Container);
-    } {
-        auto mesh = importer->mesh(5);
-        CORRADE_VERIFY(mesh);
-        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::TriangleFan);
-
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedInt);
-        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
-            Containers::arrayView<UnsignedInt>({2, 1, 3, 0}),
-            TestSuite::Compare::Container);
-
-        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-            Containers::arrayView<Vector3>({
-                {5.1f, 5.2f, 5.3f},
-                {6.1f, 6.2f, 6.3f},
-                {7.1f, 7.2f, 7.3f},
-                {8.1f, 8.2f, 8.3f}
-            }), TestSuite::Compare::Container);
-    }
-}
-
 void TinyGltfImporterTest::meshColors() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -1875,6 +1872,198 @@ void TinyGltfImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(animation->trackTarget(1), 3); /* not 1 */
         CORRADE_COMPARE(animation->trackTarget(2), 4); /* not 2 */
         CORRADE_COMPARE(animation->trackTarget(3), 8); /* not 4 */
+    }
+}
+
+void TinyGltfImporterTest::meshPrimitivesTypes() {
+    auto&& data = MeshPrimitivesTypesData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Disable Y-flipping to have consistent results. Tested separately for all
+       types in materialTexCoordFlip(). */
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    importer->configuration().setValue("textureCoordinateYFlipInMaterial", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-primitives-types.gltf")));
+
+    /* Ensure we didn't forget to test any case */
+    CORRADE_COMPARE(importer->meshCount(), Containers::arraySize(MeshPrimitivesTypesData));
+
+    auto mesh = importer->mesh(data.name);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->primitive(), data.primitive);
+
+    if(data.indexType != MeshIndexType{}) {
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE(mesh->indexType(), data.indexType);
+        CORRADE_COMPARE_AS(mesh->indicesAsArray(),
+            Containers::arrayView<UnsignedInt>({0, 2, 1, 4, 3, 0}),
+            TestSuite::Compare::Container);
+    } else CORRADE_VERIFY(!mesh->isIndexed());
+
+    /* Positions */
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), data.positionFormat);
+    if(isVertexFormatNormalized(data.positionFormat)) {
+        if(vertexFormatComponentFormat(data.positionFormat) == VertexFormat::UnsignedByte ||
+           vertexFormatComponentFormat(data.positionFormat) == VertexFormat::UnsignedShort) {
+            CORRADE_COMPARE_AS(mesh->positions3DAsArray(),
+                Containers::arrayView<Vector3>({
+                    {0.8f, 0.4f, 0.2f},
+                    {1.0f, 0.333333f, 0.666667f},
+                    {0.733333f, 0.866667f, 0.0f},
+                    {0.066667f, 0.133333f, 0.933333f},
+                    {0.6f, 0.266667f, 0.466667f}
+                }), TestSuite::Compare::Container);
+        } else if(vertexFormatComponentFormat(data.positionFormat) == VertexFormat::Byte ||
+                  vertexFormatComponentFormat(data.positionFormat) == VertexFormat::Short) {
+
+            constexpr Vector3 expected[]{
+                    {-0.133333f, -0.333333f, -0.2f},
+                    {-0.8f, -0.133333f, -0.4f},
+                    {-1.0f, -0.933333f, -0.0f},
+                    {-0.4f, -0.6f, -0.333333f},
+                    {-0.666667f, -0.733333f, -0.933333f}
+            };
+
+            /* Because the signed packed formats are extremely imprecise, we
+               increase the fuzziness a bit */
+            auto positions = mesh->positions3DAsArray();
+            const Float precision = Math::pow(10.0f, -1.5f*vertexFormatSize(vertexFormatComponentFormat(data.positionFormat)));
+            CORRADE_COMPARE_AS(precision, 5.0e-2f, TestSuite::Compare::Less);
+            CORRADE_COMPARE_AS(precision, 1.0e-6f, TestSuite::Compare::GreaterOrEqual);
+            CORRADE_COMPARE(positions.size(), Containers::arraySize(expected));
+            CORRADE_ITERATION("precision" << precision);
+            for(std::size_t i = 0; i != positions.size(); ++i) {
+                CORRADE_ITERATION(i);
+                CORRADE_COMPARE_WITH(positions[i], expected[i],
+                    TestSuite::Compare::around(Vector3{precision}));
+            }
+        } else {
+            CORRADE_ITERATION(data.positionFormat);
+            CORRADE_VERIFY(false);
+        }
+    } else {
+        CORRADE_COMPARE_AS(mesh->positions3DAsArray(),
+            Containers::arrayView<Vector3>({
+                {1.0f, 3.0f, 2.0f},
+                {1.0f, 1.0f, 2.0f},
+                {3.0f, 3.0f, 2.0f},
+                {3.0f, 1.0f, 2.0f},
+                {5.0f, 3.0f, 9.0f}
+            }), TestSuite::Compare::Container);
+    }
+
+    /* Normals */
+    if(data.normalFormat != VertexFormat{}) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Normal));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), data.normalFormat);
+
+        constexpr Vector3 expected[]{
+            {-0.333333f, -0.6666667f, -0.933333f},
+            {-0.0f, -0.133333f, -1.0f},
+            {-0.6f, -0.8f, -0.2f},
+            {-0.4f, -0.733333f, -0.933333f},
+            {-0.133333f, -0.733333f, -0.4f}
+        };
+
+        /* Because the signed packed formats are extremely imprecise, we
+           increase the fuzziness a bit */
+        auto normals = mesh->normalsAsArray();
+        const Float precision = Math::pow(10.0f, -1.5f*vertexFormatSize(vertexFormatComponentFormat(data.normalFormat)));
+        CORRADE_COMPARE_AS(precision, 5.0e-2f, TestSuite::Compare::Less);
+        CORRADE_COMPARE_AS(precision, 1.0e-6f, TestSuite::Compare::GreaterOrEqual);
+        CORRADE_COMPARE(normals.size(), Containers::arraySize(expected));
+        CORRADE_ITERATION("precision" << precision);
+        for(std::size_t i = 0; i != normals.size(); ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE_WITH(normals[i], expected[i],
+                TestSuite::Compare::around(Vector3{precision}));
+        }
+    } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::Normal));
+
+    /* Colors */
+    if(data.colorFormat == VertexFormat{}) {
+        CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::Color));
+    } else if(vertexFormatComponentCount(data.colorFormat) == 3) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color), data.colorFormat);
+        CORRADE_COMPARE_AS(Containers::arrayCast<Color3>(Containers::stridedArrayView(mesh->colorsAsArray())),
+            Containers::stridedArrayView<Color3>({
+                {0.8f, 0.2f, 0.4f},
+                {0.6f, 0.666667f, 1.0f},
+                {0.0f, 0.0666667f, 0.9333333f},
+                {0.733333f, 0.8666666f, 0.133333f},
+                {0.266667f, 0.3333333f, 0.466667f}
+            }), TestSuite::Compare::Container);
+    } else if(vertexFormatComponentCount(data.colorFormat) == 4) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color), data.colorFormat);
+        CORRADE_COMPARE_AS(mesh->colorsAsArray(),
+            Containers::arrayView<Color4>({
+                {0.8f, 0.2f, 0.4f, 0.266667f},
+                {0.6f, 0.666667f, 1.0f, 0.8666667f},
+                {0.0f, 0.0666667f, 0.9333333f, 0.466667f},
+                {0.733333f, 0.8666667f, 0.133333f, 0.666667f},
+                {0.266667f, 0.3333333f, 0.466666f, 0.0666667f}
+            }), TestSuite::Compare::Container);
+    } else CORRADE_VERIFY(false);
+
+    /* Texture coordinates */
+    if(data.textureCoordinateFormat == VertexFormat{}) {
+        CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+
+    } else if(isVertexFormatNormalized(data.textureCoordinateFormat)) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates), data.textureCoordinateFormat);
+        if(vertexFormatComponentFormat(data.textureCoordinateFormat) == VertexFormat::UnsignedByte ||
+           vertexFormatComponentFormat(data.textureCoordinateFormat) == VertexFormat::UnsignedShort) {
+            CORRADE_COMPARE_AS(mesh->textureCoordinates2DAsArray(),
+                Containers::arrayView<Vector2>({
+                    {0.933333f, 0.3333333f},
+                    {0.133333f, 0.9333333f},
+                    {0.666667f, 0.2666667f},
+                    {0.466666f, 0.3333333f},
+                    {0.866666f, 0.0666667f}
+                }), TestSuite::Compare::Container);
+        } else if(vertexFormatComponentFormat(data.textureCoordinateFormat) == VertexFormat::Byte ||
+                  vertexFormatComponentFormat(data.textureCoordinateFormat) == VertexFormat::Short) {
+            constexpr Vector2 expected[]{
+                {-0.666667f, -0.9333333f},
+                {-0.4f, -0.7333333f},
+                {-0.8f, -0.2f},
+                {-0.0f, -0.1333333f},
+                {-0.6f, -0.3333333f}
+            };
+
+            /* Because the signed packed formats are extremely imprecise, we
+               increase the fuzziness a bit */
+            auto textureCoordinates = mesh->textureCoordinates2DAsArray();
+            const Float precision = Math::pow(10.0f, -1.5f*vertexFormatSize(vertexFormatComponentFormat(data.textureCoordinateFormat)));
+            CORRADE_COMPARE_AS(precision, 5.0e-2f, TestSuite::Compare::Less);
+            CORRADE_COMPARE_AS(precision, 1.0e-6f, TestSuite::Compare::GreaterOrEqual);
+            CORRADE_COMPARE(textureCoordinates.size(), Containers::arraySize(expected));
+            CORRADE_ITERATION("precision" << precision);
+            for(std::size_t i = 0; i != textureCoordinates.size(); ++i) {
+                CORRADE_ITERATION(i);
+                CORRADE_COMPARE_WITH(textureCoordinates[i], expected[i],
+                    TestSuite::Compare::around(Vector2{precision}));
+            }
+        } else {
+            CORRADE_ITERATION(data.positionFormat);
+            CORRADE_VERIFY(false);
+        }
+    } else {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates), data.textureCoordinateFormat);
+        CORRADE_COMPARE_AS(mesh->textureCoordinates2DAsArray(),
+            Containers::arrayView<Vector2>({
+                {75.0f, 13.0f},
+                {98.0f, 22.0f},
+                {15.0f, 125.0f},
+                {12.0f, 33.0f},
+                {24.0f, 57.0f}
+            }), TestSuite::Compare::Container);
     }
 }
 
@@ -2134,14 +2323,15 @@ void TinyGltfImporterTest::materialTexCoordFlip() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
+    /* This should be implicitly enabled on files that contain non-normalized
+       integer texture coordinates */
     if(data.flipInMaterial)
         importer->configuration().setValue("textureCoordinateYFlipInMaterial", true);
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material-texcoord-flip.gltf")));
-    CORRADE_COMPARE(importer->meshCount(), 1);
+        data.fileName)));
 
-    auto mesh = importer->mesh(0);
+    auto mesh = importer->mesh(data.meshName);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
     Containers::Array<Vector2> texCoords = mesh->textureCoordinates2DAsArray();

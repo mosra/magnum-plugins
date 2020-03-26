@@ -194,13 +194,37 @@ Import of skeleton, skin and morph data is not supported at the moment.
 
 -   Indices are imported as either @ref MeshIndexType::UnsignedByte,
     @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt
--   Currently only float vertex attributes are supported. Positions and normals
-    (if any) are imported as @ref VertexFormat::Vector3, texture coordinates as
-    @ref VertexFormat::Vector2 and colors as either @ref VertexFormat::Vector3
-    or @ref VertexFormat::Vector4.
--   Texture coordinates are Y-flipped on import unless
-    @cb{.conf} textureCoordinateYFlipInMaterial @ce is enabled, in which case
-    all materials provide a texture transformation that does the Y-flip instead
+-   Positions are imported as @ref VertexFormat::Vector3,
+    @ref VertexFormat::Vector3ub, @ref VertexFormat::Vector3b,
+    @ref VertexFormat::Vector3us, @ref VertexFormat::Vector3s,
+    @ref VertexFormat::Vector3ubNormalized,
+    @ref VertexFormat::Vector3bNormalized,
+    @ref VertexFormat::Vector3usNormalized or
+    @ref VertexFormat::Vector3sNormalized (which includes the additional types
+    specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_mesh_quantization/README.md))
+-   Normals, if any, are imported as @ref VertexFormat::Vector3,
+    @ref VertexFormat::Vector3bNormalized or
+    @ref VertexFormat::Vector3sNormalized
+-   Texture coordinates are imported as @ref VertexFormat::Vector3,
+    @ref VertexFormat::Vector3ub, @ref VertexFormat::Vector3b,
+    @ref VertexFormat::Vector3us, @ref VertexFormat::Vector3s,
+    @ref VertexFormat::Vector3ubNormalized,
+    @ref VertexFormat::Vector3bNormalized,
+    @ref VertexFormat::Vector3usNormalized or
+    @ref VertexFormat::Vector3sNormalized (which includes the additional types
+    specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)). The
+    data are by default Y-flipped on import unless
+    @cb{.conf} textureCoordinateYFlipInMaterial @ce is either explicitly
+    enabled, or if the file contains non-normalized integer or normalized
+    signed integer texture coordinates (which can't easily be flipped). In that
+    case texture coordinate data are kept as-is and materials provide a texture
+    transformation that does the Y-flip instead.
+-   Colors are imported as @ref VertexFormat::Vector3,
+    @ref VertexFormat::Vector4,
+    @ref VertexFormat::Vector3ubNormalized,
+    @ref VertexFormat::Vector4ubNormalized,
+    @ref VertexFormat::Vector3usNormalized or
+    @ref VertexFormat::Vector4usNormalized
 -   Multi-primitive meshes are loaded as follows, consistently with the
     behavior of @link AssimpImporter @endlink:
     -   The @ref meshCount() query returns a number of all *primitives*, not

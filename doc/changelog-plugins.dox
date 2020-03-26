@@ -46,8 +46,8 @@ namespace Magnum {
 -   Support for the `KHR_lights_punctual` extension in
     @ref Trade::TinyGltfImporter "TinyGltfImporter", replacing the obsolete
     unuspported `KHR_lights_cmn` (see [mosra/magnum-plugins#77](https://github.com/mosra/magnum-plugins/pull/77))
--   Support for the `KHR_texture_transform` extension in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter"
+-   Support for the `KHR_texture_transform` and `KHR_mesh_quantization`
+    extensions in @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   @ref Trade::DdsImporter "DdsImporter" and
     @ref Trade::BasisImporter "BasisImporter", now support loading image mip
     levels; @ref Trade::AssimpImporter "AssimpImporter",
