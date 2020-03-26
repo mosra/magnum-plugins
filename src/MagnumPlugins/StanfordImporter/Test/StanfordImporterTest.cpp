@@ -414,7 +414,7 @@ void StanfordImporterTest::parse() {
         CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), data.normalFormat);
 
         /* Because the signed packed formats are extremely imprecise, we
-           increase the precision a bit */
+           increase the fuzziness a bit */
         auto normals = mesh->normalsAsArray();
         const Float precision = Math::pow(10.0f, -1.5f*vertexFormatSize(vertexFormatComponentFormat(data.normalFormat)));
         CORRADE_COMPARE_AS(precision, 5.0e-2f, TestSuite::Compare::Less);
