@@ -124,11 +124,6 @@ Containers::StridedArrayView2D<const char> bufferView(const tinygltf::Model& mod
         {std::ptrdiff_t(stride), 1}};
 }
 
-template<class T> Containers::StridedArrayView1D<const T> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
-    CORRADE_INTERNAL_ASSERT(elementSize(accessor) == sizeof(T));
-    return Containers::arrayCast<1, const T>(bufferView(model, accessor));
-}
-
 }
 
 struct TinyGltfImporter::Document {
