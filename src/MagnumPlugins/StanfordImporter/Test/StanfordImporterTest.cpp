@@ -621,7 +621,7 @@ void StanfordImporterTest::customAttributes() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
 
-    /* The should be available even before the mesh is imported */
+    /* The mapping should be available even before the mesh is imported */
     const MeshAttribute indexAttribute = importer->meshAttributeForName("index");
     CORRADE_COMPARE(indexAttribute, meshAttributeCustom(0));
     CORRADE_COMPARE(importer->meshAttributeName(indexAttribute), "index");
@@ -817,6 +817,7 @@ void StanfordImporterTest::customAttributesDuplicate() {
 void StanfordImporterTest::customAttributesNoFileOpened() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
+    /* These should return nothing (and not crash) */
     CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
     CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
 }

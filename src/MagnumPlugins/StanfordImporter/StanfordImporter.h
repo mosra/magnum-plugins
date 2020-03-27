@@ -122,7 +122,7 @@ of PLY features, which however shouldn't affect any real-world models.
     @ref VertexFormat::Vector2usNormalized. Double texture coordinates are not
     supported, signed and 32.bit integer coordinates don't have a well-defined
     mapping to the @f$ [0, 1] @f$ range and thus are not supported either.
--   Color chammels (`red`/`green`/`blue` and optional `alpha`) are expected
+-   Color channels (`red`/`green`/`blue` and optional `alpha`) are expected
     to have the same type, be tightly packed in a RGB or RGBA order and be
     either 32-bit floats or unsigned bytes/shorts. Tesulting color type is then
     @ref VertexFormat::Vector3 / @ref VertexFormat::Vector4,
