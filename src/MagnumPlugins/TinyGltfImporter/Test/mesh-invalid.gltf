@@ -64,6 +64,26 @@
             ]
         },
         {
+            "name": "unexpected tangent type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "TANGENT": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsupported tangent component type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "TANGENT": 5
+                    }
+                }
+            ]
+        },
+        {
             "name": "unexpected texcoord type",
             "primitives": [
                 {

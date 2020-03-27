@@ -1,12 +1,12 @@
-type = '<3Bx18f6f'
+type = '<3Bx 3f3f4f 3f3f4f 3f3f4f 2f2f2f'
 input = [
     # indices
     0, 1, 2,
 
-    # interleaved positions & normals
-     1.5, -1.0, -0.5,   0.1, 0.2, 0.3,
-    -0.5,  2.5,  0.75,  0.4, 0.5, 0.6,
-    -2.0,  1.0,  0.3,   0.7, 0.8, 0.9,
+    # interleaved positions, normals & tangents
+     1.5, -1.0, -0.5,   0.1, 0.2, 0.3,  -0.1, -0.2, -0.3,  1.0,
+    -0.5,  2.5,  0.75,  0.4, 0.5, 0.6,  -0.4, -0.5, -0.6, -1.0,
+    -2.0,  1.0,  0.3,   0.7, 0.8, 0.9,  -0.7, -0.8, -0.9,  1.0,
 
     # non-interleaved texture coordinates
     0.3, 0.0,

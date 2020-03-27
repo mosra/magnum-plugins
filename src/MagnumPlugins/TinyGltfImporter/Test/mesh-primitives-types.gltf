@@ -58,26 +58,28 @@
             ]
         },
         {
-            "name": "positions normalized unsigned byte, texcoords normalized short; indices unsigned short; line strip",
+            "name": "positions normalized unsigned byte, tangents short, texcoords normalized short; indices unsigned short; line strip",
             "primitives": [
                 {
                     "mode": 3,
                     "attributes": {
                         "TEXCOORD_0": 14,
-                        "POSITION": 15
+                        "TANGENT": 15,
+                        "POSITION": 16
                     },
-                    "indices": 16
+                    "indices": 17
                 }
             ]
         },
         {
-            "name": "positions normalized short, texcoords unsigned byte; triangles",
+            "name": "positions normalized short, texcoords unsigned byte, tangents byte; triangles",
             "primitives": [
                 {
                     "mode": 4,
                     "attributes": {
-                        "TEXCOORD_0": 17,
-                        "POSITION": 18
+                        "TEXCOORD_0": 18,
+                        "POSITION": 19,
+                        "TANGENT": 20
                     }
                 }
             ]
@@ -87,8 +89,8 @@
             "primitives": [
                 {
                     "attributes": {
-                        "POSITION": 19,
-                        "TEXCOORD_0": 20
+                        "POSITION": 21,
+                        "TEXCOORD_0": 22
                     }
                 }
             ]
@@ -98,8 +100,8 @@
             "primitives": [
                 {
                     "attributes": {
-                        "POSITION": 21,
-                        "TEXCOORD_0": 22
+                        "POSITION": 23,
+                        "TEXCOORD_0": 24
                     }
                 }
             ]
@@ -236,13 +238,22 @@
             "name": "15",
             "bufferView": 6,
             "byteOffset": 4,
+            "componentType": 5122,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC4"
+        },
+        {
+            "name": "16",
+            "bufferView": 6,
+            "byteOffset": 12,
             "componentType": 5121,
             "normalized": true,
             "count": 5,
             "type": "VEC3"
         },
         {
-            "name": "16",
+            "name": "17",
             "bufferView": 7,
             "byteOffset": 0,
             "componentType": 5123,
@@ -250,7 +261,7 @@
             "type": "SCALAR"
         },
         {
-            "name": "17",
+            "name": "18",
             "bufferView": 8,
             "byteOffset": 0,
             "componentType": 5121,
@@ -258,7 +269,7 @@
             "type": "VEC2"
         },
         {
-            "name": "18",
+            "name": "19",
             "bufferView": 8,
             "byteOffset": 2,
             "componentType": 5122,
@@ -267,7 +278,16 @@
             "type": "VEC3"
         },
         {
-            "name": "19",
+            "name": "20",
+            "bufferView": 8,
+            "byteOffset": 8,
+            "componentType": 5120,
+            "normalized": true,
+            "count": 5,
+            "type": "VEC4"
+        },
+        {
+            "name": "21",
             "bufferView": 9,
             "byteOffset": 0,
             "componentType": 5123,
@@ -276,7 +296,7 @@
             "type": "VEC3"
         },
         {
-            "name": "20",
+            "name": "22",
             "bufferView": 9,
             "byteOffset": 6,
             "componentType": 5120,
@@ -285,7 +305,7 @@
             "type": "VEC2"
         },
         {
-            "name": "21",
+            "name": "23",
             "bufferView": 10,
             "byteOffset": 0,
             "componentType": 5120,
@@ -294,7 +314,7 @@
             "type": "VEC3"
         },
         {
-            "name": "22",
+            "name": "24",
             "bufferView": 10,
             "byteOffset": 4,
             "componentType": 5123,
@@ -347,40 +367,40 @@
             "name": "6",
             "buffer": 0,
             "byteOffset": 332,
-            "byteLength": 40,
-            "byteStride": 8
+            "byteLength": 80,
+            "byteStride": 16
         },
         {
             "name": "7",
             "buffer": 0,
-            "byteOffset": 372,
+            "byteOffset": 412,
             "byteLength": 12
         },
         {
             "name": "8",
             "buffer": 0,
-            "byteOffset": 384,
-            "byteLength": 40,
-            "byteStride": 8
+            "byteOffset": 424,
+            "byteLength": 60,
+            "byteStride": 12
         },
         {
             "name": "9",
             "buffer": 0,
-            "byteOffset": 424,
+            "byteOffset": 484,
             "byteLength": 40,
             "byteStride": 8
         },
         {
             "name": "10",
             "buffer": 0,
-            "byteOffset": 464,
+            "byteOffset": 524,
             "byteLength": 40,
             "byteStride": 8
         }
     ],
     "buffers": [
         {
-            "byteLength": 504,
+            "byteLength": 564,
             "uri": "mesh-primitives-types.bin"
         }
     ]

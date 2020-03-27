@@ -1080,6 +1080,23 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
                 return Containers::NullOpt;
             }
 
+        } else if(attribute.first == "TANGENT") {
+            name = MeshAttribute::Tangent;
+
+            if(accessor.type != TINYGLTF_TYPE_VEC4) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unexpected TANGENT type" << accessor.type;
+                return Containers::NullOpt;
+            }
+
+            if(!(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT && !accessor.normalized) &&
+               !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_BYTE && accessor.normalized) &&
+               !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_SHORT && accessor.normalized)) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unsupported TANGENT component type"
+                    << (accessor.normalized ? "normalized" : "unnormalized")
+                    << accessor.componentType;
+                return Containers::NullOpt;
+            }
+
         /* Texture coordinate attribute ends with _0, _1 ... */
         } else if(Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
             name = MeshAttribute::TextureCoordinates;

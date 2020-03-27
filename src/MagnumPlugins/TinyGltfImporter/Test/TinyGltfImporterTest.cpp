@@ -181,56 +181,56 @@ constexpr struct {
     MeshPrimitive primitive;
     MeshIndexType indexType;
     VertexFormat positionFormat;
-    VertexFormat normalFormat;
+    VertexFormat normalFormat, tangentFormat;
     VertexFormat colorFormat;
     VertexFormat textureCoordinateFormat;
 } MeshPrimitivesTypesData[]{
     {"positions byte, color4 unsigned short, texcoords normalized unsigned byte; triangle strip",
         MeshPrimitive::TriangleStrip, MeshIndexType{},
         VertexFormat::Vector3b,
-        VertexFormat{},
+        VertexFormat{}, VertexFormat{},
         VertexFormat::Vector4usNormalized,
         VertexFormat::Vector2ubNormalized},
     {"positions short, colors unsigned byte, texcoords normalized unsigned short; lines",
         MeshPrimitive::Lines, MeshIndexType{},
         VertexFormat::Vector3s,
-        VertexFormat{},
+        VertexFormat{}, VertexFormat{},
         VertexFormat::Vector3ubNormalized,
         VertexFormat::Vector2usNormalized},
     {"positions unsigned byte, normals byte, texcoords short; indices unsigned int; line loop",
         MeshPrimitive::LineLoop, MeshIndexType::UnsignedInt,
         VertexFormat::Vector3ub,
-        VertexFormat::Vector3bNormalized,
+        VertexFormat::Vector3bNormalized, VertexFormat{},
         VertexFormat{},
         VertexFormat::Vector2s},
     {"positions unsigned short, normals short, texcoords byte; indices unsigned byte; triangle fan",
         MeshPrimitive::TriangleFan, MeshIndexType::UnsignedByte,
         VertexFormat::Vector3us,
-        VertexFormat::Vector3sNormalized,
+        VertexFormat::Vector3sNormalized, VertexFormat{},
         VertexFormat{},
         VertexFormat::Vector2b},
-    {"positions normalized unsigned byte, texcoords normalized short; indices unsigned short; line strip",
+    {"positions normalized unsigned byte, tangents short, texcoords normalized short; indices unsigned short; line strip",
         MeshPrimitive::LineStrip, MeshIndexType::UnsignedShort,
         VertexFormat::Vector3ubNormalized,
-        VertexFormat{},
+        VertexFormat{}, VertexFormat::Vector4sNormalized,
         VertexFormat{},
         VertexFormat::Vector2sNormalized},
-    {"positions normalized short, texcoords unsigned byte; triangles",
+    {"positions normalized short, texcoords unsigned byte, tangents byte; triangles",
         MeshPrimitive::Triangles, MeshIndexType{},
         VertexFormat::Vector3sNormalized,
-        VertexFormat{},
+        VertexFormat{}, VertexFormat::Vector4bNormalized,
         VertexFormat{},
         VertexFormat::Vector2ub},
     {"positions normalized unsigned short, texcoords normalized byte",
         MeshPrimitive::Triangles, MeshIndexType{},
         VertexFormat::Vector3usNormalized,
-        VertexFormat{},
+        VertexFormat{}, VertexFormat{},
         VertexFormat{},
         VertexFormat::Vector2bNormalized},
     {"positions normalized byte, texcoords unsigned short",
         MeshPrimitive::Triangles, MeshIndexType{},
         VertexFormat::Vector3bNormalized,
-        VertexFormat{},
+        VertexFormat{}, VertexFormat{},
         VertexFormat{},
         VertexFormat::Vector2us}
 };
@@ -245,6 +245,8 @@ constexpr struct {
     {"unsupported position component type", "unsupported POSITION component type unnormalized 5130"},
     {"unexpected normal type", "unexpected NORMAL type 2"},
     {"unsupported normal component type", "unsupported NORMAL component type unnormalized 5130"},
+    {"unexpected tangent type", "unexpected TANGENT type 3"},
+    {"unsupported tangent component type", "unsupported TANGENT component type unnormalized 5120"},
     {"unexpected texcoord type", "unexpected TEXCOORD type 3"},
     {"unsupported texcoord component type", "unsupported TEXCOORD component type normalized 5125"},
     {"unexpected color type", "unexpected COLOR type 2"},
@@ -1625,7 +1627,7 @@ void TinyGltfImporterTest::meshIndexed() {
         Containers::arrayView<UnsignedByte>({0, 1, 2}),
         TestSuite::Compare::Container);
 
-    CORRADE_COMPARE(mesh->attributeCount(), 2);
+    CORRADE_COMPARE(mesh->attributeCount(), 3);
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
@@ -1641,6 +1643,14 @@ void TinyGltfImporterTest::meshIndexed() {
             {0.1f, 0.2f, 0.3f},
             {0.4f, 0.5f, 0.6f},
             {0.7f, 0.8f, 0.9f}
+        }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Tangent));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Tangent), VertexFormat::Vector4);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Tangent),
+        Containers::arrayView<Vector4>({
+            {-0.1f, -0.2f, -0.3f, 1.0f},
+            {-0.4f, -0.5f, -0.6f, -1.0f},
+            {-0.7f, -0.8f, -0.9f, 1.0f}
         }), TestSuite::Compare::Container);
 }
 
@@ -2059,6 +2069,40 @@ void TinyGltfImporterTest::meshPrimitivesTypes() {
                 TestSuite::Compare::around(Vector3{precision}));
         }
     } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::Normal));
+
+    /* Tangents */
+    if(data.tangentFormat != VertexFormat{}) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Tangent));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Tangent), data.tangentFormat);
+
+        constexpr Vector3 expected[]{
+            {-0.933333f, -0.333333f, -0.6666667f},
+            {-1.0f, -0.0f, -0.133333f},
+            {-0.2f, -0.6f, -0.8f},
+            {-0.933333f, -0.4f, -0.733333f},
+            {-0.4f, -0.133333f, -0.733333f}
+        };
+
+        /* Because the signed packed formats are extremely imprecise, we
+           increase the fuzziness a bit */
+        auto tangents = mesh->tangentsAsArray();
+        const Float precision = Math::pow(10.0f, -1.5f*vertexFormatSize(vertexFormatComponentFormat(data.tangentFormat)));
+        CORRADE_COMPARE_AS(precision, 5.0e-2f, TestSuite::Compare::Less);
+        CORRADE_COMPARE_AS(precision, 1.0e-6f, TestSuite::Compare::GreaterOrEqual);
+        CORRADE_COMPARE(tangents.size(), Containers::arraySize(expected));
+        CORRADE_ITERATION("precision" << precision);
+        for(std::size_t i = 0; i != tangents.size(); ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE_WITH(tangents[i], expected[i],
+                TestSuite::Compare::around(Vector3{precision}));
+        }
+
+        /* However the bitangents signs are just 1 or -1, so no need to take
+           extreme measures */
+        CORRADE_COMPARE_AS(mesh->bitangentSignsAsArray(),
+            Containers::arrayView<Float>({1.0f, -1.0f, 1.0f, -1.0f, 1.0f}),
+            TestSuite::Compare::Container);
+    } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::Tangent));
 
     /* Colors */
     if(data.colorFormat == VertexFormat{}) {
