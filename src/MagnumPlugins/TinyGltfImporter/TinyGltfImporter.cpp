@@ -1474,32 +1474,23 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
     const tinygltf::Material& material = _d->model.materials[id];
 
     /* Alpha mode and mask, double sided */
-    PhongMaterialData::Flags flags;
-    MaterialAlphaMode alphaMode = MaterialAlphaMode::Opaque;
-    Float alphaMask = 0.5f;
-    {
-        auto found = material.additionalValues.find("alphaCutoff");
-        if(found != material.additionalValues.end())
-            alphaMask = found->second.Factor();
-    } {
-        auto found = material.additionalValues.find("alphaMode");
-        if(found != material.additionalValues.end()) {
-            if(found->second.string_value == "OPAQUE")
-                alphaMode = MaterialAlphaMode::Opaque;
-            else if(found->second.string_value == "BLEND")
-                alphaMode = MaterialAlphaMode::Blend;
-            else if(found->second.string_value == "MASK")
-                alphaMode = MaterialAlphaMode::Mask;
-            else {
-                Error{} << "Trade::TinyGltfImporter::material(): unknown alpha mode" << found->second.string_value;
-                return nullptr;
-            }
-        }
-    } {
-        auto found = material.additionalValues.find("doubleSided");
-        if(found != material.additionalValues.end() && found->second.bool_value)
-            flags |= PhongMaterialData::Flag::DoubleSided;
+    const Float alphaMask = material.alphaCutoff;
+
+    MaterialAlphaMode alphaMode;
+    if(material.alphaMode == "OPAQUE")
+        alphaMode = MaterialAlphaMode::Opaque;
+    else if(material.alphaMode == "BLEND")
+        alphaMode = MaterialAlphaMode::Blend;
+    else if(material.alphaMode == "MASK")
+        alphaMode = MaterialAlphaMode::Mask;
+    else {
+        Error{} << "Trade::TinyGltfImporter::material(): unknown alpha mode" << material.alphaMode;
+        return nullptr;
     }
+
+    PhongMaterialData::Flags flags;
+    if(material.doubleSided)
+        flags |= PhongMaterialData::Flag::DoubleSided;
 
     /* Textures */
     Containers::Optional<Matrix3> textureMatrix;
