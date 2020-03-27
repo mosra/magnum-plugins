@@ -27,17 +27,6 @@
             ]
         },
         {
-            "name": "Mesh with unknown attribute",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 1,
-                        "UNKNOWN": 1
-                    }
-                }
-            ]
-        },
-        {
             "name": "Attribute-less mesh",
             "primitives": [
                 {

@@ -1,0 +1,89 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "_TBN": 0,
+                        "_UV_ROTATION": 1,
+                        "_TBN_PRECISER": 2,
+                        "_DOUBLE_SHOT": 3,
+                        "_OBJECT_ID": 4,
+                        "_NEGATIVE_PADDING": 5,
+                        "_NOT_AN_IDENTITY": 6
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5120,
+            "normalized": true,
+            "count": 1,
+            "type": "MAT3"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 12,
+            "componentType": 5120,
+            "normalized": true,
+            "count": 1,
+            "type": "MAT2"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 20,
+            "componentType": 5122,
+            "normalized": true,
+            "count": 1,
+            "type": "MAT3"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 44,
+            "componentType": 5130,
+            "count": 1,
+            "type": "VEC2"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 60,
+            "componentType": 5125,
+            "count": 1,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 64,
+            "componentType": 5124,
+            "count": 1,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 72,
+            "componentType": 5130,
+            "count": 1,
+            "type": "MAT4"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 200,
+            "byteStride": 200
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 200,
+            "uri": "mesh-custom-attributes.bin"
+        }
+    ]
+}

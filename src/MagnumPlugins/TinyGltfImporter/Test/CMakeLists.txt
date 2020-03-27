@@ -99,6 +99,8 @@ corrade_add_test(TinyGltfImporterTest
         mesh.gltf
         mesh.bin
         mesh.glb
+        mesh-custom-attributes.bin
+        mesh-custom-attributes.gltf
         mesh-embedded.gltf
         mesh-embedded.glb
         mesh-index-accessor-oob.gltf

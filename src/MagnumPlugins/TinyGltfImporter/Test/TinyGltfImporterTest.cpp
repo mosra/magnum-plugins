@@ -104,8 +104,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshAttributeless();
     void meshIndexed();
     void meshIndexedAttributeless();
-    void meshUnknownAttribute();
     void meshColors();
+    void meshCustomAttributes();
+    void meshCustomAttributesNoFileOpened();
     void meshMultiplePrimitives();
     void meshPrimitivesTypes();
     /* This is THE ONE AND ONLY OOB check done by tinygltf, so it fails right
@@ -257,7 +258,9 @@ constexpr struct {
     {"buffer view range out of bounds", "bufferView 2 needs 72 bytes but buffer 0 has only 68"},
     {"buffer index out of bounds", "buffer 1 out of bounds for 1 buffers"},
     {"buffer view index out of bounds", "bufferView 4 out of bounds for 4 views"},
-    {"accessor index out of bounds", "accessor 15 out of bounds for 15 accessors"}
+    {"normalized float", "floating-point component types can't be normalized"},
+    {"non-normalized byte matrix", "unsupported matrix component type unnormalized 5120"},
+    {"accessor index out of bounds", "accessor 17 out of bounds for 17 accessors"}
 };
 
 constexpr struct {
@@ -447,8 +450,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addTests({&TinyGltfImporterTest::meshAttributeless,
               &TinyGltfImporterTest::meshIndexed,
               &TinyGltfImporterTest::meshIndexedAttributeless,
-              &TinyGltfImporterTest::meshUnknownAttribute,
               &TinyGltfImporterTest::meshColors,
+              &TinyGltfImporterTest::meshCustomAttributes,
+              &TinyGltfImporterTest::meshCustomAttributesNoFileOpened,
               &TinyGltfImporterTest::meshMultiplePrimitives});
 
     addInstancedTests({&TinyGltfImporterTest::meshPrimitivesTypes},
@@ -1555,7 +1559,7 @@ void TinyGltfImporterTest::mesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->meshCount(), 5);
+    CORRADE_COMPARE(importer->meshCount(), 4);
     CORRADE_COMPARE(importer->meshName(0), "Non-indexed mesh");
     CORRADE_COMPARE(importer->meshForName("Non-indexed mesh"), 0);
 
@@ -1606,7 +1610,7 @@ void TinyGltfImporterTest::meshIndexed() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh.gltf")));
 
-    CORRADE_COMPARE(importer->meshCount(), 5);
+    CORRADE_COMPARE(importer->meshCount(), 4);
     CORRADE_COMPARE(importer->meshName(1), "Indexed mesh");
     CORRADE_COMPARE(importer->meshForName("Indexed mesh"), 1);
 
@@ -1657,37 +1661,6 @@ void TinyGltfImporterTest::meshIndexedAttributeless() {
     CORRADE_COMPARE(mesh->attributeCount(), 0);
 }
 
-void TinyGltfImporterTest::meshUnknownAttribute() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh.gltf")));
-
-    CORRADE_COMPARE(importer->meshCount(), 5);
-    CORRADE_COMPARE(importer->meshName(2), "Mesh with unknown attribute");
-    CORRADE_COMPARE(importer->meshForName("Mesh with unknown attribute"), 2);
-
-    std::ostringstream out;
-    Warning redirectWarning{&out};
-
-    auto mesh = importer->mesh(2);
-
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::mesh(): unsupported mesh vertex attribute UNKNOWN\n");
-
-    CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->importerState());
-    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-
-    CORRADE_COMPARE(mesh->attributeCount(), 1);
-    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-        Containers::arrayView<Vector3>({
-            {1.5f, -1.0f, -0.5f},
-            {-0.5f, 2.5f, 0.75f},
-            {-2.0f, 1.0f, 0.3f}
-        }), TestSuite::Compare::Container);
-}
-
 void TinyGltfImporterTest::meshColors() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -1722,6 +1695,96 @@ void TinyGltfImporterTest::meshColors() {
             {0.5f, 0.6f, 0.7f, 0.8f},
             {0.9f, 1.0f, 1.1f, 1.2f}
         }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::meshCustomAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-custom-attributes.gltf")));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    /* The mapping should be available even before the mesh is imported.
+       Attributes are sorted by name by JSON so the ID isn't in declaration
+       order. */
+    const MeshAttribute tbnAttribute = importer->meshAttributeForName("_TBN");
+    CORRADE_COMPARE(tbnAttribute, meshAttributeCustom(4));
+    CORRADE_COMPARE(importer->meshAttributeName(tbnAttribute), "_TBN");
+
+    const MeshAttribute uvRotation = importer->meshAttributeForName("_UV_ROTATION");
+    CORRADE_COMPARE(uvRotation, meshAttributeCustom(6));
+    CORRADE_COMPARE(importer->meshAttributeName(uvRotation), "_UV_ROTATION");
+
+    const MeshAttribute tbnPreciserAttribute = importer->meshAttributeForName("_TBN_PRECISER");
+    const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
+    const MeshAttribute objectIdAttribute = importer->meshAttributeForName("_OBJECT_ID");
+    const MeshAttribute negativePaddingAttribute = importer->meshAttributeForName("_NEGATIVE_PADDING");
+    const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("_NOT_AN_IDENTITY");
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 7);
+    CORRADE_VERIFY(mesh->hasAttribute(tbnAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(tbnAttribute), VertexFormat::Matrix3x3bNormalizedAligned);
+    CORRADE_COMPARE_AS(mesh->attribute<Matrix3x4b>(tbnAttribute),
+        Containers::arrayView<Matrix3x4b>({{
+            Vector4b{1, 2, 3, 0},
+            Vector4b{4, 5, 6, 0},
+            Vector4b{7, 8, 9, 0}
+        }}), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(uvRotation));
+    CORRADE_COMPARE(mesh->attributeFormat(uvRotation), VertexFormat::Matrix2x2bNormalizedAligned);
+    CORRADE_COMPARE_AS(mesh->attribute<Matrix2x4b>(uvRotation),
+        Containers::arrayView<Matrix2x4b>({{
+            Vector4b{10, 11, 0, 0},
+            Vector4b{12, 13, 0, 0},
+        }}), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(tbnPreciserAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(tbnPreciserAttribute), VertexFormat::Matrix3x3sNormalizedAligned);
+    CORRADE_COMPARE_AS(mesh->attribute<Matrix3x4s>(tbnPreciserAttribute),
+        Containers::arrayView<Matrix3x4s>({{
+            Vector4s{-1, -2, -3, 0},
+            Vector4s{-4, -5, -6, 0},
+            Vector4s{-7, -8, -9, 0}
+        }}), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(doubleShotAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(doubleShotAttribute), VertexFormat::Vector2d);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2d>(doubleShotAttribute),
+        Containers::arrayView<Vector2d>({{31.2, 28.8}}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(objectIdAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(objectIdAttribute), VertexFormat::UnsignedInt);
+    CORRADE_COMPARE_AS(mesh->attribute<UnsignedInt>(objectIdAttribute),
+        Containers::arrayView<UnsignedInt>({5678125}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(negativePaddingAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(negativePaddingAttribute), VertexFormat::Int);
+    CORRADE_COMPARE_AS(mesh->attribute<Int>(negativePaddingAttribute),
+        Containers::arrayView<Int>({-3548415}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(notAnIdentityAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(notAnIdentityAttribute), VertexFormat::Matrix4x4d);
+    CORRADE_COMPARE_AS(mesh->attribute<Matrix4d>(notAnIdentityAttribute),
+        Containers::arrayView<Matrix4d>({{
+            {0.1, 0.2, 0.3, 0.4},
+            {0.5, 0.6, 0.7, 0.8},
+            {0.9, 1.0, 1.1, 1.2},
+            {1.3, 1.4, 1.5, 1.6}
+        }}), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::meshCustomAttributesNoFileOpened() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    /* These should return nothing (and not crash) */
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
+    CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
 }
 
 void TinyGltfImporterTest::meshMultiplePrimitives() {

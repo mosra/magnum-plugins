@@ -252,6 +252,12 @@ Import of skeleton, skin and morph data is not supported at the moment.
     however since glTF has no way of specifying vertex count for those,
     returned @ref Trade::MeshData::vertexCount() is set to @cpp 0 @ce
 
+Custom and unrecognized vertex attributes of allowed types are present in the
+imported meshes as well. Their mapping to/from a string can be queried using
+@ref meshAttributeName() and @ref meshAttributeForName(). Attributes with
+unsupported types (such as non-normalized integer matrices) cause the import to
+fail.
+
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
 
 -   Subset of all material specs is currently imported as @ref PhongMaterialData
@@ -466,6 +472,8 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMeshName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMeshAttributeName(UnsignedShort name) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, Int texture, Int texCoord, const tinygltf::Value& extensions, UnsignedInt& index, Containers::Optional<Matrix3>& textureMatrix, PhongMaterialData::Flags& flags) const;
 

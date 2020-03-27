@@ -188,12 +188,32 @@
             ]
         },
         {
+            "name": "normalized float",
+            "primitives": [
+                {
+                    "attributes": {
+                        "_THING": 15
+                    }
+                }
+            ]
+        },
+        {
+            "name": "non-normalized byte matrix",
+            "primitives": [
+                {
+                    "attributes": {
+                        "_THING": 16
+                    }
+                }
+            ]
+        },
+        {
             "name": "accessor index out of bounds",
             "primitives": [
                 {
-                    "note": "for indices tinygltf handles this, for attributes not. HEH.",
+                    "note": "for indices tinygltf handles this, for attributes not. HEH. Using TEXCOORD so the initial check for texture coordinate types is verified for bounds checks also.",
                     "attributes": {
-                        "POSITION": 15
+                        "TEXCOORD_1": 17
                     }
                 }
             ]
@@ -308,6 +328,22 @@
             "componentType": 5126,
             "count": 9,
             "type": "VEC3"
+        },
+        {
+            "name": "15",
+            "bufferView": 0,
+            "componentType": 5130,
+            "normalized": true,
+            "count": 1,
+            "type": "SCALAR"
+        },
+        {
+            "name": "16",
+            "bufferView": 1,
+            "componentType": 5120,
+            "normalized": false,
+            "count": 1,
+            "type": "MAT2"
         }
     ],
     "bufferViews": [

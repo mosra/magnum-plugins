@@ -181,6 +181,14 @@ struct TinyGltfImporter::Document {
         imagesForName,
         texturesForName;
 
+    /* Unlike the ones above, these are filled already during construction as
+       we need them in three different places and on-demand construction would
+       be too annoying to test. Also, assuming the importer knows all builtin
+       names, in most case these would be empty anyway. */
+    std::unordered_map<std::string, MeshAttribute>
+        meshAttributesForName;
+    Containers::Array<std::string> meshAttributeNames;
+
     /* Mapping for multi-primitive meshes:
 
         -   meshMap.size() is the count of meshes reported to the user
@@ -345,38 +353,45 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         _d->nodeSizeOffsets.emplace_back(_d->nodeMap.size());
     }
 
-    /* If textureCoordinateYFlipInMaterial isn't already requested from the
-       configuration, enable it implicitly if there are any texture coordinates
+    /* Go through all meshes, collect custom attributes and decide about
+       implicitly enabling textureCoordinateYFlipInMaterial if it isn't already
+       requested from the configuration and there are any texture coordinates
        that need it */
     if(configuration().value<bool>("textureCoordinateYFlipInMaterial"))
         _d->textureCoordinateYFlipInMaterial = true;
-    else for(const tinygltf::Mesh& mesh: _d->model.meshes) {
+    for(const tinygltf::Mesh& mesh: _d->model.meshes) {
         for(const tinygltf::Primitive& primitive: mesh.primitives) {
             for(const std::pair<std::string, int>& attribute: primitive.attributes) {
-                if(!Utility::String::beginsWith(attribute.first, "TEXCOORD_"))
-                    continue;
+                if(Utility::String::beginsWith(attribute.first, "TEXCOORD_")) {
+                    if(!_d->textureCoordinateYFlipInMaterial) {
+                        /* Ignore aaccessor is out of bounds, this will fail
+                           later during mesh import */
+                        if(std::size_t(attribute.second) >= _d->model.accessors.size())
+                            continue;
 
-                /* Ignore aaccessor is out of bounds, this will fail later
-                   during mesh import */
-                if(std::size_t(attribute.second) >= _d->model.accessors.size())
-                    continue;
+                        const int type = _d->model.accessors[attribute.second].componentType;
+                        const bool normalized = _d->model.accessors[attribute.second].normalized;
+                        if(type == TINYGLTF_COMPONENT_TYPE_BYTE ||
+                           type == TINYGLTF_COMPONENT_TYPE_SHORT ||
+                          (type == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE && !normalized) ||
+                          (type == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT && !normalized)) {
+                            Debug{} << "Trade::TinyGltfImporter::openData(): file contains non-normalized texture coordinates, implicitly enabling textureCoordinateYFlipInMaterial";
+                            _d->textureCoordinateYFlipInMaterial = true;
+                        }
+                    }
 
-                const int type = _d->model.accessors[attribute.second].componentType;
-                const bool normalized = _d->model.accessors[attribute.second].normalized;
-                if(type == TINYGLTF_COMPONENT_TYPE_BYTE ||
-                   type == TINYGLTF_COMPONENT_TYPE_SHORT ||
-                  (type == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE && !normalized) ||
-                  (type == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT && !normalized)) {
-                    Debug{} << "Trade::TinyGltfImporter::openData(): file contains non-normalized texture coordinates, implicitly enabling textureCoordinateYFlipInMaterial";
-                    _d->textureCoordinateYFlipInMaterial = true;
-                    break;
+                /* If the name isn't recognized, add the attribute to custom if
+                   not there already */
+                } else if(attribute.first != "POSITION" &&
+                    attribute.first != "NORMAL" &&
+                    !Utility::String::beginsWith(attribute.first, "COLOR_"))
+                {
+                    if(_d->meshAttributesForName.emplace(attribute.first,
+                        meshAttributeCustom(_d->meshAttributeNames.size())).second)
+                        arrayAppend(_d->meshAttributeNames, attribute.first);
                 }
             }
-
-            if(_d->textureCoordinateYFlipInMaterial) break;
         }
-
-        if(_d->textureCoordinateYFlipInMaterial) break;
     }
 
     /* Name maps are lazy-loaded because these might not be needed every time */
@@ -1018,9 +1033,9 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
        them */
     std::size_t bufferId;
     UnsignedInt vertexCount = 0;
+    std::size_t attributeId = 0;
     Math::Range1D<std::size_t> bufferRange;
-    Containers::Array<MeshAttributeData> attributes;
-    arrayReserve(attributes, primitive.attributes.size());
+    Containers::Array<MeshAttributeData> attributeData{primitive.attributes.size()};
     for(auto& attribute: primitive.attributes) {
         auto* acessorPointer = checkedAccessor(_d->model, "mesh", attribute.second);
         if(!acessorPointer) return Containers::NullOpt;
@@ -1104,10 +1119,8 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
                 return Containers::NullOpt;
             }
 
-        } else {
-            Warning{} << "Trade::TinyGltfImporter::mesh(): unsupported mesh vertex attribute" << attribute.first;
-            continue;
-        }
+        /* Custom or unrecognized attributes, map to an ID */
+        } else name = _d->meshAttributesForName.at(attribute.first);
 
         /* Convert to our vertex format */
         VertexFormat componentFormat;
@@ -1119,13 +1132,18 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             componentFormat = VertexFormat::Short;
         else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
             componentFormat = VertexFormat::UnsignedShort;
+        else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
+            componentFormat = VertexFormat::UnsignedInt;
+        else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_INT)
+            componentFormat = VertexFormat::Int;
         else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT)
             componentFormat = VertexFormat::Float;
-        /* Other formats not handled currently as those are not whitelisted
-           above */
+        else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_DOUBLE)
+            componentFormat = VertexFormat::Double;
         else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
         UnsignedInt componentCount;
+        UnsignedInt vectorCount = 0;
         if(accessor.type == TINYGLTF_TYPE_SCALAR)
             componentCount = 1;
         else if(accessor.type == TINYGLTF_TYPE_VEC2)
@@ -1134,18 +1152,43 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             componentCount = 3;
         else if(accessor.type == TINYGLTF_TYPE_VEC4)
             componentCount = 4;
-        /* Other formats not handled currently as those are not whitelisted
-           above */
-        else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        else if(accessor.type == TINYGLTF_TYPE_MAT2) {
+            componentCount = 2;
+            vectorCount = 2;
+        } else if(accessor.type == TINYGLTF_TYPE_MAT3) {
+            componentCount = 3;
+            vectorCount = 3;
+        } else if(accessor.type == TINYGLTF_TYPE_MAT4) {
+            componentCount = 4;
+            vectorCount = 4;
+        } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
-        /** @todo add an additional check that floats are not normalized once
-            custom attributes are supported */
-        const VertexFormat format = vertexFormat(componentFormat, componentCount, accessor.normalized);
+        /* Floats should not be normalized */
+        if(accessor.normalized && (componentFormat == VertexFormat::Float || componentFormat == VertexFormat::Double)) {
+            Error{} << "Trade::TinyGltfImporter::mesh(): floating-point component types can't be normalized";
+            return Containers::NullOpt;
+        }
+
+        /* Check that matrix type is legal */
+        if(vectorCount &&
+            componentFormat != VertexFormat::Float &&
+            componentFormat != VertexFormat::Double &&
+            !(componentFormat == VertexFormat::Byte && accessor.normalized) &&
+            !(componentFormat == VertexFormat::Short && accessor.normalized)) {
+            Error{} << "Trade::TinyGltfImporter::mesh(): unsupported matrix component type"
+                << (accessor.normalized ? "normalized" : "unnormalized")
+                << accessor.componentType;
+            return Containers::NullOpt;
+        }
+
+        const VertexFormat format = vectorCount ?
+            vertexFormat(componentFormat, vectorCount, componentCount, true) :
+            vertexFormat(componentFormat, componentCount, accessor.normalized);
 
         /* Remember which buffer the attribute is in and the range, for
            consecutive attribs expand the range */
         const tinygltf::BufferView& bufferView = _d->model.bufferViews[accessor.bufferView];
-        if(attributes.empty()) {
+        if(attributeId == 0) {
             bufferId = bufferView.buffer;
             bufferRange = Math::Range1D<std::size_t>::fromSize(bufferView.byteOffset, bufferView.byteLength);
             vertexCount = accessor.count;
@@ -1165,12 +1208,14 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
         /* Fill in an attribute. Offset-only, will be patched to be relative to
            the actual output buffer once we know how large it is and where it
            is allocated. */
-        arrayAppend(attributes, Containers::InPlaceInit, name, format,
+        attributeData[attributeId++] = MeshAttributeData{name, format,
             UnsignedInt(accessor.byteOffset + bufferView.byteOffset), vertexCount,
             /* Stride could be 0, in which case it's equal to element size */
-            UnsignedInt(bufferView.byteStride ? bufferView.byteStride : vertexFormatSize(format))
-        );
+            std::ptrdiff_t(bufferView.byteStride ? bufferView.byteStride : vertexFormatSize(format))};
     }
+
+    /* Verify we really filled all attributes */
+    CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
 
     /* Allocate & copy vertex data (if any) */
     Containers::Array<char> vertexData{Containers::NoInit, bufferRange.size()};
@@ -1181,27 +1226,26 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
 
     /* Convert the attributes from relative to absolute, copy them to a
        non-growable array and do additional patching */
-    Containers::Array<MeshAttributeData> attributeData{attributes.size()};
-    for(std::size_t i = 0; i != attributes.size(); ++i) {
+    for(std::size_t i = 0; i != attributeData.size(); ++i) {
         Containers::StridedArrayView1D<char> data{vertexData,
             /* Offset is what with the range min subtracted, as we copied
                without the prefix */
-            vertexData + attributes[i].offset(vertexData) - bufferRange.min(),
-            vertexCount, attributes[i].stride()};
+            vertexData + attributeData[i].offset(vertexData) - bufferRange.min(),
+            vertexCount, attributeData[i].stride()};
 
-        attributeData[i] = MeshAttributeData{attributes[i].name(),
-            attributes[i].format(), data};
+        attributeData[i] = MeshAttributeData{attributeData[i].name(),
+            attributeData[i].format(), data};
 
         /* Flip Y axis of texture coordinates, unless it's done in the material
            instead */
-        if(attributes[i].name() == MeshAttribute::TextureCoordinates && !_d->textureCoordinateYFlipInMaterial) {
-           if(attributes[i].format() == VertexFormat::Vector2)
+        if(attributeData[i].name() == MeshAttribute::TextureCoordinates && !_d->textureCoordinateYFlipInMaterial) {
+           if(attributeData[i].format() == VertexFormat::Vector2)
                 for(auto& c: Containers::arrayCast<Vector2>(data))
                     c.y() = 1.0f - c.y();
-            else if(attributes[i].format() == VertexFormat::Vector2ubNormalized)
+            else if(attributeData[i].format() == VertexFormat::Vector2ubNormalized)
                 for(auto& c: Containers::arrayCast<Vector2ub>(data))
                     c.y() = 255 - c.y();
-            else if(attributes[i].format() == VertexFormat::Vector2usNormalized)
+            else if(attributeData[i].format() == VertexFormat::Vector2usNormalized)
                 for(auto& c: Containers::arrayCast<Vector2us>(data))
                     c.y() = 65535 - c.y();
             /* For these it's always done in the material texture transform as
@@ -1209,12 +1253,12 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
                the KHR_mesh_quantization formats and in that case the texture
                transform should be always present. */
             /* LCOV_EXCL_START */
-            else if(attributes[i].format() != VertexFormat::Vector2bNormalized &&
-                    attributes[i].format() != VertexFormat::Vector2sNormalized &&
-                    attributes[i].format() != VertexFormat::Vector2ub &&
-                    attributes[i].format() != VertexFormat::Vector2b &&
-                    attributes[i].format() != VertexFormat::Vector2us &&
-                    attributes[i].format() != VertexFormat::Vector2s)
+            else if(attributeData[i].format() != VertexFormat::Vector2bNormalized &&
+                    attributeData[i].format() != VertexFormat::Vector2sNormalized &&
+                    attributeData[i].format() != VertexFormat::Vector2ub &&
+                    attributeData[i].format() != VertexFormat::Vector2b &&
+                    attributeData[i].format() != VertexFormat::Vector2us &&
+                    attributeData[i].format() != VertexFormat::Vector2s)
                 CORRADE_ASSERT_UNREACHABLE();
             /* LCOV_EXCL_STOP */
         }
@@ -1270,6 +1314,15 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
         std::move(indexData), indices,
         std::move(vertexData), std::move(attributeData),
         vertexCount, &mesh};
+}
+
+std::string TinyGltfImporter::doMeshAttributeName(UnsignedShort name) {
+    return _d && name < _d->meshAttributeNames.size() ?
+        _d->meshAttributeNames[name] : "";
+}
+
+MeshAttribute TinyGltfImporter::doMeshAttributeForName(const std::string& name) {
+    return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
 }
 
 UnsignedInt TinyGltfImporter::doMaterialCount() const {
