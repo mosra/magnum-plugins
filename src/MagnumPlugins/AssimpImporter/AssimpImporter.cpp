@@ -701,17 +701,20 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
     }
 
     PhongMaterialData::Flags flags;
-    aiString texturePath;
 
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), texturePath) == AI_SUCCESS)
-        flags |= PhongMaterialData::Flag::AmbientTexture;
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texturePath) == AI_SUCCESS)
-        flags |= PhongMaterialData::Flag::DiffuseTexture;
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), texturePath) == AI_SUCCESS)
-        flags |= PhongMaterialData::Flag::SpecularTexture;
-    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texturePath) == AI_SUCCESS)
-        flags |= PhongMaterialData::Flag::NormalTexture;
-    /** @todo many more types supported in assimp */
+    /* Check available textures */
+    {
+        aiString texturePath;
+        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), texturePath) == AI_SUCCESS)
+            flags |= PhongMaterialData::Flag::AmbientTexture;
+        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texturePath) == AI_SUCCESS)
+            flags |= PhongMaterialData::Flag::DiffuseTexture;
+        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), texturePath) == AI_SUCCESS)
+            flags |= PhongMaterialData::Flag::SpecularTexture;
+        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texturePath) == AI_SUCCESS)
+            flags |= PhongMaterialData::Flag::NormalTexture;
+        /** @todo many more types supported in assimp */
+    }
 
     /* Shininess is *not* always present (for example in STL models), default
        to 0 */
