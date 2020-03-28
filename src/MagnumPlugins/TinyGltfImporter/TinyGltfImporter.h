@@ -63,12 +63,12 @@ namespace Magnum { namespace Trade {
 /**
 @brief TinyGltf importer plugin
 
-@m_keywords{GltfImporter GlbImporter}
+@m_keywords{GltfImporter}
 
 Imports glTF and binary glTF using the [TinyGLTF](https://github.com/syoyo/tinygltf)
 library.
 
-This plugin provides `GltfImporter` and `GlbImporter` plugins.
+This plugin provides the `GltfImporter` plugin.
 
 @m_class{m-block m-success}
 
