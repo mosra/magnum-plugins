@@ -617,7 +617,7 @@ void AssimpImporterTest::mesh() {
         Containers::arrayView<UnsignedInt>({0, 1, 2}),
         TestSuite::Compare::Container);
 
-    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_COMPARE(mesh->attributeCount(), 6);
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
         Containers::arrayView<Vector3>({
@@ -627,6 +627,16 @@ void AssimpImporterTest::mesh() {
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
         Containers::arrayView<Vector3>({
             {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Tangent), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Tangent),
+        Containers::arrayView<Vector3>({
+            {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Bitangent), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Bitangent),
+        Containers::arrayView<Vector3>({
+            {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
         }), TestSuite::Compare::Container);
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 1);
     CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
@@ -1219,8 +1229,8 @@ void AssimpImporterTest::fileCallback() {
     CORRADE_VERIFY(importer->openFile("not/a/path/mesh.dae"));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    /* Same as in mesh(), not testing colors because of the assimp bugs that
-       need to be worked around */
+    /* Same as in mesh(), testing just the basics, no need to repeat everything
+       here */
     Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
@@ -1230,7 +1240,7 @@ void AssimpImporterTest::fileCallback() {
         Containers::arrayView<UnsignedInt>({0, 1, 2}),
         TestSuite::Compare::Container);
 
-    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_COMPARE(mesh->attributeCount(), 6);
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
         Containers::arrayView<Vector3>({
@@ -1240,11 +1250,6 @@ void AssimpImporterTest::fileCallback() {
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
         Containers::arrayView<Vector3>({
             {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}
-        }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 1);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
-        Containers::arrayView<Vector2>({
-            {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}
         }), TestSuite::Compare::Container);
 }
 

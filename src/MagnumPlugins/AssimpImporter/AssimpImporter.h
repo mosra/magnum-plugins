@@ -230,11 +230,14 @@ Import of animation data is not supported at the moment.
     "skeleton visualizer" mesh if the file has no mesh data. For others (such
     as glTF) not.
 -   The importer follows types used by Assimp, thus indices are always
-    @ref MeshIndexType::UnsignedInt, positions and normals are always imported
-    as @ref VertexFormat::Vector3, texture coordinates as
-    @ref VertexFormat::Vector2 and colors as @ref VertexFormat::Vector4. In
-    other words, everything gets expanded by Assimp to floats, even if the
-    original file might be using different types.
+    @ref MeshIndexType::UnsignedInt, positions, normals, tangents and
+    bitangents are always imported as @ref VertexFormat::Vector3, texture
+    coordinates as @ref VertexFormat::Vector2 and colors as
+    @ref VertexFormat::Vector4. In other words, everything gets expanded by
+    Assimp to floats, even if the original file might be using different types.
+-   The imported model always has either both @ref MeshAttribute::Tangent
+    @ref MeshAttribute::Bitangent or neither of them, tangents are always
+    three-component with binormals separate.
 -   Multi-mesh nodes and multi-primitive meshes are loaded as follows,
     consistently with the behavior of @link TinyGltfImporter @endlink:
     -   Multi-primitive meshes are split by Assimp into individual meshes

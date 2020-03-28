@@ -547,6 +547,11 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         ++attributeCount;
         stride += sizeof(Vector3);
     }
+    /* Assimp provides either none or both, never just one of these */
+    if(mesh->HasTangentsAndBitangents()) {
+        attributeCount += 2;
+        stride += 2*sizeof(Vector3);
+    }
     for(std::size_t layer = 0; layer < mesh->GetNumUVChannels(); ++layer) {
         if(mesh->mNumUVComponents[layer] != 2) {
             Warning() << "Trade::AssimpImporter::mesh(): skipping texture coordinate layer" << layer << "which has" << mesh->mNumUVComponents[layer] << "components per coordinate. Only two dimensional texture coordinates are supported.";
@@ -587,6 +592,28 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
         attributeData[attributeIndex++] = MeshAttributeData{
             MeshAttribute::Normal, normals};
+        attributeOffset += sizeof(Vector3);
+    }
+
+    /* Tangents + bitangents, if any. Assimp always provides either none or
+       both, never just one of these. */
+    if(mesh->HasTangentsAndBitangents()) {
+        Containers::StridedArrayView1D<Vector3> tangents{vertexData,
+            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            vertexCount, stride};
+        Utility::copy(Containers::arrayView(reinterpret_cast<Vector3*>(mesh->mTangents), mesh->mNumVertices), tangents);
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::Tangent, tangents};
+        attributeOffset += sizeof(Vector3);
+
+        Containers::StridedArrayView1D<Vector3> bitangents{vertexData,
+            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            vertexCount, stride};
+        Utility::copy(Containers::arrayView(reinterpret_cast<Vector3*>(mesh->mBitangents), mesh->mNumVertices), bitangents);
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::Bitangent, bitangents};
         attributeOffset += sizeof(Vector3);
     }
 
