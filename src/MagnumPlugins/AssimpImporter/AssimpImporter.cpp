@@ -293,7 +293,7 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
            use successive indices. For images ensure we have an unique set so
            each file isn't imported more than once. */
         _f->textureIndices[mat] = textureIndex;
-        for(auto type: {aiTextureType_AMBIENT, aiTextureType_DIFFUSE, aiTextureType_SPECULAR}) {
+        for(auto type: {aiTextureType_AMBIENT, aiTextureType_DIFFUSE, aiTextureType_SPECULAR, aiTextureType_NORMALS}) {
             if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) == AI_SUCCESS) {
                 auto uniqueImage = uniqueImages.emplace(texturePath.C_Str(), _f->images.size());
                 if(uniqueImage.second) _f->images.emplace_back(mat, type);
@@ -709,6 +709,8 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
         flags |= PhongMaterialData::Flag::DiffuseTexture;
     if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), texturePath) == AI_SUCCESS)
         flags |= PhongMaterialData::Flag::SpecularTexture;
+    if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texturePath) == AI_SUCCESS)
+        flags |= PhongMaterialData::Flag::NormalTexture;
     /** @todo many more types supported in assimp */
 
     /* Shininess is *not* always present (for example in STL models), default
@@ -752,10 +754,14 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
     if(flags & PhongMaterialData::Flag::SpecularTexture)
         specularTexture = firstTextureIndex++;
 
+    UnsignedInt normalTexture{};
+    if(flags & PhongMaterialData::Flag::NormalTexture)
+        normalTexture = firstTextureIndex++;
+
     Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags,
         Color3{ambientColor}, ambientTexture,
         Color4{diffuseColor}, diffuseTexture,
-        Color4{specularColor}, specularTexture, UnsignedInt{}, Matrix3{},
+        Color4{specularColor}, specularTexture, normalTexture, Matrix3{},
         MaterialAlphaMode::Opaque, 0.5f, shininess, mat};
 
     /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast

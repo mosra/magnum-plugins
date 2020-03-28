@@ -379,14 +379,16 @@ void AssimpImporterTest::materialTexture() {
 
     {
         CORRADE_EXPECT_FAIL("Assimp ignores ambient textures in COLLADA files.");
-        CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::NormalTexture);
         /* (This would assert now) */
         //CORRADE_COMPARE(phongMaterial->ambientTexture(), 1);
     } {
-        CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::NormalTexture);
     }
+    CORRADE_COMPARE(importer->textureCount(), 3);
     CORRADE_COMPARE(phongMaterial->diffuseTexture(), 0);
     CORRADE_COMPARE(phongMaterial->specularTexture(), 1);
+    CORRADE_COMPARE(phongMaterial->normalTexture(), 2);
 
     /* Colors should stay at their defaults as these aren't provided in the
        file */
@@ -1085,7 +1087,7 @@ void AssimpImporterTest::texture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
-    CORRADE_COMPARE(importer->textureCount(), 2);
+    CORRADE_COMPARE(importer->textureCount(), 3);
     Containers::Optional<TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
@@ -1114,6 +1116,12 @@ void AssimpImporterTest::texture() {
         CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
     }
     CORRADE_COMPARE(texture1->image(), 1);
+
+    /* Normal texture, reusing the diffuse image (so the same index) */
+    Containers::Optional<TextureData> texture2 = importer->texture(2);
+    CORRADE_VERIFY(texture2);
+    CORRADE_COMPARE(texture2->type(), TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture2->image(), 0);
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -1175,7 +1183,7 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_VERIFY(importer->openState(sc, ASSIMPIMPORTER_TEST_DIR));
     CORRADE_COMPARE(importer->importerState(), sc);
 
-    CORRADE_COMPARE(importer->textureCount(), 2);
+    CORRADE_COMPARE(importer->textureCount(), 3);
     Containers::Optional<TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
