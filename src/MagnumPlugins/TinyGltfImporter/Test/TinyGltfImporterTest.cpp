@@ -181,7 +181,11 @@ constexpr struct {
     {"unexpected translation type", "translation track has unexpected type 4/5126"},
     {"unexpected rotation type", "rotation track has unexpected type 65/5126"},
     {"unexpected scaling type", "scaling track has unexpected type 4/5126"},
-    {"unsupported path", "unsupported track target color"}
+    {"unsupported path", "unsupported track target color"},
+    {"sampler index out of bounds", "sampler 1 out of bounds for 1 samplers"},
+    {"node index out of bounds", "target node 2 out of bounds for 2 nodes"},
+    {"sampler input accessor index out of bounds", "accessor 3 out of bounds for 3 accessors"},
+    {"sampler output accessor index out of bounds", "accessor 3 out of bounds for 3 accessors"}
 };
 
 constexpr struct {

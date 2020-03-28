@@ -149,12 +149,11 @@ const tinygltf::Accessor* checkedAccessor(const tinygltf::Model& model, const ch
 }
 
 Containers::StridedArrayView2D<const char> bufferView(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
+    /* All this assumes the accessor was retrieved using checkedAccessor() */
     const std::size_t bufferElementSize = elementSize(accessor);
-    CORRADE_INTERNAL_ASSERT(std::size_t(accessor.bufferView) < model.bufferViews.size());
     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
     /* Stride could be 0, in which case it's equal to element size */
     const std::size_t stride = bufferView.byteStride ? bufferView.byteStride : bufferElementSize;
-    CORRADE_INTERNAL_ASSERT(std::size_t(bufferView.buffer) < model.buffers.size());
     const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
 
     return Containers::StridedArrayView2D<const char>{Containers::arrayView(buffer.data),
@@ -493,15 +492,19 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
         const tinygltf::Animation& animation = _d->model.animations[a];
         for(std::size_t i = 0; i != animation.samplers.size(); ++i) {
             const tinygltf::AnimationSampler& sampler = animation.samplers[i];
-            const tinygltf::Accessor& input = _d->model.accessors[sampler.input];
-            const tinygltf::Accessor& output = _d->model.accessors[sampler.output];
+
+            const tinygltf::Accessor* input = checkedAccessor(_d->model, "animation", sampler.input);
+            if(!input) return Containers::NullOpt;
+
+            const tinygltf::Accessor* output = checkedAccessor(_d->model, "animation", sampler.output);
+            if(!output) return Containers::NullOpt;
 
             /** @todo handle alignment once we do more than just four-byte types */
 
             /* If the input view is not yet present in the output data buffer, add
             it */
             if(samplerData.find(sampler.input) == samplerData.end()) {
-                Containers::StridedArrayView2D<const char> view = bufferView(_d->model, input);
+                Containers::StridedArrayView2D<const char> view = bufferView(_d->model, *input);
                 samplerData.emplace(sampler.input, std::make_tuple(view, dataSize, ~std::size_t{}));
                 dataSize += view.size()[0]*view.size()[1];
             }
@@ -509,7 +512,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             /* If the output view is not yet present in the output data buffer, add
             it */
             if(samplerData.find(sampler.output) == samplerData.end()) {
-                Containers::StridedArrayView2D<const char> view = bufferView(_d->model, output);
+                Containers::StridedArrayView2D<const char> view = bufferView(_d->model, *output);
                 samplerData.emplace(sampler.output, std::make_tuple(view, dataSize, ~std::size_t{}));
                 dataSize += view.size()[0]*view.size()[1];
             }
@@ -547,9 +550,15 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
         const tinygltf::Animation& animation = _d->model.animations[a];
         for(std::size_t i = 0; i != animation.channels.size(); ++i) {
             const tinygltf::AnimationChannel& channel = animation.channels[i];
+            if(std::size_t(channel.sampler) >= animation.samplers.size()) {
+                Error{} << "Trade::TinyGltfImporter::animation(): sampler" << channel.sampler << "out of bounds for" << animation.samplers.size() << "samplers";
+                return Containers::NullOpt;
+            }
+
             const tinygltf::AnimationSampler& sampler = animation.samplers[channel.sampler];
 
-            /* Key properties -- always float time */
+            /* Key properties -- always float time. Not using checkedAccessor()
+               as this was all checked above once already. */
             const tinygltf::Accessor& input = _d->model.accessors[sampler.input];
             if(input.type != TINYGLTF_TYPE_SCALAR || input.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
                 Error{} << "Trade::TinyGltfImporter::animation(): time track has unexpected type" << input.type << Debug::nospace << "/" << Debug::nospace << input.componentType;
@@ -577,7 +586,8 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 return Containers::NullOpt;
             }
 
-            /* Decide on value properties */
+            /* Decide on value properties. Not using checkedAccessor() as this
+               was all checked above once already. */
             const tinygltf::Accessor& output = _d->model.accessors[sampler.output];
             AnimationTrackTargetType target;
             AnimationTrackType type, resultType;
@@ -722,6 +732,11 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                     Error{} << "Trade::TinyGltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry";
                     return Containers::NullOpt;
                 }
+            }
+
+            if(std::size_t(channel.target_node) >= _d->model.nodes.size()) {
+                Error{} << "Trade::TinyGltfImporter::animation(): target node" << channel.target_node << "out of bounds for" << _d->model.nodes.size() << "nodes";
+                return Containers::NullOpt;
             }
 
             tracks[trackId++] = AnimationTrackData{type, resultType, target,
