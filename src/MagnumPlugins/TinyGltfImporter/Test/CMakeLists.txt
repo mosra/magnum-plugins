@@ -62,6 +62,8 @@ corrade_add_test(TinyGltfImporterTest
         empty.glb
         buffer-notfound.gltf
         buffer-notfound.glb
+        buffer-wrong-size.gltf
+        buffer-wrong-size.glb
         animation.gltf
         animation.glb
         animation.bin
@@ -73,7 +75,9 @@ corrade_add_test(TinyGltfImporterTest
         animation-wrong.gltf
         camera.gltf
         camera.glb
-        # external-data.* packed via a resource
+        external-data.bin
+        # external-data.* packed via a resource (but *.bin needed also by
+        # buffer-wrong-size.gltf, so added separately as well)
         image.gltf
         image.glb
         image-embedded.gltf

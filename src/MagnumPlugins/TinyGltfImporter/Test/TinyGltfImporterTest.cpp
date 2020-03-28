@@ -68,6 +68,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void openError();
     void openExternalDataNotFound();
     void openExternalDataNoPathNoCallback();
+    void openExternalDataWrongSize();
 
     void animation();
     void animationWrongTimeType();
@@ -407,7 +408,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                       Containers::arraySize(OpenErrorData));
 
     addInstancedTests({&TinyGltfImporterTest::openExternalDataNotFound,
-                       &TinyGltfImporterTest::openExternalDataNoPathNoCallback},
+                       &TinyGltfImporterTest::openExternalDataNoPathNoCallback,
+                       &TinyGltfImporterTest::openExternalDataWrongSize},
                       Containers::arraySize(SingleFileData));
 
     addInstancedTests({&TinyGltfImporterTest::animation},
@@ -581,6 +583,23 @@ void TinyGltfImporterTest::openExternalDataNoPathNoCallback() {
 
     CORRADE_VERIFY(!importer->openData(Utility::Directory::read(filename)));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File read error : /nonexistent.bin : external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
+}
+
+void TinyGltfImporterTest::openExternalDataWrongSize() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    {
+        CORRADE_EXPECT_FAIL_IF(data.suffix == std::string{".glb"},
+            "tinygltf doesn't check for correct buffer size in GLBs.");
+        CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+            "buffer-wrong-size" + std::string{data.suffix})));
+        CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File size mismatch : external-data.bin, requestedBytes 6, but got 12\n");
+    }
 }
 
 void TinyGltfImporterTest::animation() {
