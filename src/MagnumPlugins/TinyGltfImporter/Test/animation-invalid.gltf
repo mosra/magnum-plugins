@@ -4,7 +4,7 @@
     },
     "animations": [
         {
-            "name": "wrong time type",
+            "name": "unexpected time type",
             "channels": [
                 {
                     "sampler": 0,
@@ -23,7 +23,7 @@
             ]
         },
         {
-            "name": "wrong interpolation type",
+            "name": "unsupported interpolation type",
             "channels": [
                 {
                     "sampler": 0,
@@ -42,7 +42,7 @@
             ]
         },
         {
-            "name": "wrong translation type",
+            "name": "unexpected translation type",
             "channels": [
                 {
                     "sampler": 0,
@@ -61,7 +61,7 @@
             ]
         },
         {
-            "name": "wrong rotation type",
+            "name": "unexpected rotation type",
             "channels": [
                 {
                     "sampler": 0,
@@ -80,7 +80,7 @@
             ]
         },
         {
-            "name": "wrong scaling type",
+            "name": "unexpected scaling type",
             "channels": [
                 {
                     "sampler": 0,

@@ -69,10 +69,10 @@ corrade_add_test(TinyGltfImporterTest
         animation.bin
         animation-embedded.gltf
         animation-embedded.glb
+        animation-invalid.gltf
         animation-patching.bin
         animation-patching.gltf
         animation-splines-sharing.gltf
-        animation-wrong.gltf
         camera.gltf
         camera.glb
         external-data.bin

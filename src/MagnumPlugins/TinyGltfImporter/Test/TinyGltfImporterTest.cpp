@@ -71,12 +71,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void openExternalDataWrongSize();
 
     void animation();
-    void animationWrongTimeType();
-    void animationWrongInterpolationType();
-    void animationWrongTranslationType();
-    void animationWrongRotationType();
-    void animationWrongScalingType();
-    void animationUnsupportedPath();
+    void animationInvalid();
 
     void animationSpline();
     void animationSplineSharedWithSameTimeTrack();
@@ -175,6 +170,18 @@ constexpr struct {
     {"ascii embedded", "-embedded.gltf"},
     {"binary external", ".glb"},
     {"binary embedded", "-embedded.glb"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* message;
+} AnimationInvalidData[]{
+    {"unexpected time type", "time track has unexpected type 4/5126"},
+    {"unsupported interpolation type", "unsupported interpolation QUADRATIC"},
+    {"unexpected translation type", "translation track has unexpected type 4/5126"},
+    {"unexpected rotation type", "rotation track has unexpected type 65/5126"},
+    {"unexpected scaling type", "scaling track has unexpected type 4/5126"},
+    {"unsupported path", "unsupported track target color"}
 };
 
 constexpr struct {
@@ -415,12 +422,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::animation},
                       Containers::arraySize(MultiFileData));
 
-    addTests({&TinyGltfImporterTest::animationWrongTimeType,
-              &TinyGltfImporterTest::animationWrongInterpolationType,
-              &TinyGltfImporterTest::animationWrongTranslationType,
-              &TinyGltfImporterTest::animationWrongRotationType,
-              &TinyGltfImporterTest::animationWrongScalingType,
-              &TinyGltfImporterTest::animationUnsupportedPath});
+    addInstancedTests({&TinyGltfImporterTest::animationInvalid},
+        Containers::arraySize(AnimationInvalidData));
 
     addInstancedTests({&TinyGltfImporterTest::animationSpline},
                       Containers::arraySize(MultiFileData));
@@ -705,88 +708,21 @@ void TinyGltfImporterTest::animation() {
     }
 }
 
-void TinyGltfImporterTest::animationWrongTimeType() {
+void TinyGltfImporterTest::animationInvalid() {
+    auto&& data = AnimationInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-wrong.gltf")));
+        "animation-invalid.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 6);
-    CORRADE_COMPARE(importer->animationName(0), "wrong time type");
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidData));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(0));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): time track has unexpected type 4/5126\n");
-}
-
-void TinyGltfImporterTest::animationWrongInterpolationType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-wrong.gltf")));
-
-    CORRADE_COMPARE(importer->animationCount(), 6);
-    CORRADE_COMPARE(importer->animationName(1), "wrong interpolation type");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(1));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): unsupported interpolation QUADRATIC\n");
-}
-
-void TinyGltfImporterTest::animationWrongTranslationType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-wrong.gltf")));
-
-    CORRADE_COMPARE(importer->animationCount(), 6);
-    CORRADE_COMPARE(importer->animationName(2), "wrong translation type");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(2));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): translation track has unexpected type 4/5126\n");
-}
-
-void TinyGltfImporterTest::animationWrongRotationType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-wrong.gltf")));
-
-    CORRADE_COMPARE(importer->animationCount(), 6);
-    CORRADE_COMPARE(importer->animationName(3), "wrong rotation type");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(3));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): rotation track has unexpected type 65/5126\n");
-}
-
-void TinyGltfImporterTest::animationWrongScalingType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-wrong.gltf")));
-
-    CORRADE_COMPARE(importer->animationCount(), 6);
-    CORRADE_COMPARE(importer->animationName(4), "wrong scaling type");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(4));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): scaling track has unexpected type 4/5126\n");
-}
-
-void TinyGltfImporterTest::animationUnsupportedPath() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-wrong.gltf")));
-
-    CORRADE_COMPARE(importer->animationCount(), 6);
-    CORRADE_COMPARE(importer->animationName(5), "unsupported path");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(5));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): unsupported track target color\n");
+    CORRADE_VERIFY(!importer->animation(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::animation(): {}\n", data.message));
 }
 
 constexpr Float AnimationSplineTime1Keys[]{ 0.5f, 3.5f, 4.0f, 5.0f };
