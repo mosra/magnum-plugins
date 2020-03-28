@@ -49,7 +49,7 @@ namespace Magnum {
 -   Support for the `KHR_texture_transform` and `KHR_mesh_quantization`
     extensions in @ref Trade::TinyGltfImporter "TinyGltfImporter"
 -   Tangent and custom vertex attribute support in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter"
+    @ref Trade::TinyGltfImporter "TinyGltfImporter", normal texture import
 -   @ref Trade::DdsImporter "DdsImporter" and
     @ref Trade::BasisImporter "BasisImporter", now support loading image mip
     levels; @ref Trade::AssimpImporter "AssimpImporter",

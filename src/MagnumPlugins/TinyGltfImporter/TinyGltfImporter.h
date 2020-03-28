@@ -260,7 +260,8 @@ fail.
 
 @subsection Trade-TinyGltfImporter-limitations-materials Material import
 
--   Subset of all material specs is currently imported as @ref PhongMaterialData
+-   Subset of all material specs is currently imported as @ref PhongMaterialData,
+    including normal textures
 -   Ambient color is always @cpp 0x000000_rgbf @ce (never a texture)
 -   Only the first set of texture coordinates is supported
 -   If [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_texture_transform/README.md)

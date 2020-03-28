@@ -62,12 +62,37 @@
                     }
                 }
             }
+        },
+        {
+            "name": "color + normal map",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [0.3, 0.4, 0.5, 0.8]
+            },
+            "normalTexture": {
+                "index": 1
+            }
+        },
+        {
+            "name": "normal map, texture transform",
+            "pbrMetallicRoughness": {},
+            "normalTexture": {
+                "index": 1,
+                "extensions": {
+                    "KHR_texture_transform": {
+                        "rotation": 1.23456
+                    }
+                }
+            }
         }
     ],
     "samplers": [
         {}
     ],
     "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
         {
             "sampler": 0,
             "source": 0

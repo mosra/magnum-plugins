@@ -25,6 +25,19 @@
             }
         },
         {
+            "name": "invalid texture index normalTexture",
+            "normalTexture": {
+                "index": 2
+            }
+        },
+        {
+            "name": "invalid texCoord index normalTexture",
+            "normalTexture": {
+                "index": 1,
+                "texCoord": 1
+            }
+        },
+        {
             "name": "invalid texture index pbrSpecularGlossiness diffuse",
             "extensions": {
                 "KHR_materials_pbrSpecularGlossiness": {
@@ -117,7 +130,28 @@
             }
         },
         {
-            "name": "inconsistent texture transform",
+            "name": "inconsistent texture transform pbrMetallicRoughness + normal",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0,
+                    "extensions": {
+                        "KHR_texture_transform": {
+                            "offset": [0.0, 1.0]
+                        }
+                    }
+                }
+            },
+            "normalTexture": {
+                "index": 1,
+                "extensions": {
+                    "KHR_texture_transform": {
+                        "scale": [0.5, 0.5]
+                    }
+                }
+            }
+        },
+        {
+            "name": "inconsistent texture transform pbrSpecularGlossiness",
             "extensions": {
                 "KHR_materials_pbrSpecularGlossiness": {
                     "diffuseTexture": {

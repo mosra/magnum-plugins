@@ -111,6 +111,15 @@
                     }
                 }
             }
+        },
+        {
+            "name": "color + normal map",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [0.3, 0.4, 0.5, 0.8]
+            },
+            "normalTexture": {
+                "index": 1
+            }
         }
     ],
     "samplers": [

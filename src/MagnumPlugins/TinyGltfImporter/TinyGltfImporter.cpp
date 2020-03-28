@@ -1577,11 +1577,29 @@ Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const Uns
         diffuseColor = Vector4{Vector4d::from(material.pbrMetallicRoughness.baseColorFactor.data())};
     }
 
+    /* Normal texture */
+    UnsignedInt normalTexture{};
+    {
+        const Int index = material.normalTexture.index;
+        if(index != -1) {
+            if(!materialTexture("normalTexture", index,
+                material.normalTexture.texCoord,
+                /* YES, you guessed right, this does a deep copy of the nested
+                   std::maps because tinygltf is SO GREAT that there's NO WAY
+                   to access extension structures in a consistent way */
+                tinygltf::Value(material.normalTexture.extensions),
+                normalTexture, textureMatrix, flags))
+                return nullptr;
+
+            flags |= PhongMaterialData::Flag::NormalTexture;
+        }
+    }
+
     /* Put things together */
     Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags,
         0x000000ff_rgbaf, 0u,
         diffuseColor, diffuseTexture,
-        specularColor, specularTexture, 0u,
+        specularColor, specularTexture, normalTexture,
         textureMatrix ? *textureMatrix : Matrix3{},
         alphaMode, alphaMask, shininess, &material};
 

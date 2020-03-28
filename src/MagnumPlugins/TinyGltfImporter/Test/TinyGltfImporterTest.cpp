@@ -282,6 +282,8 @@ constexpr struct {
     const char* message;
 } MaterialInvalidData[]{
     {"unknown alpha mode", "unknown alpha mode WAT"},
+    {"invalid texture index normalTexture", "normalTexture index 2 out of bounds for 2 textures"},
+    {"invalid texCoord index normalTexture", "multiple texture coordinate sets are not supported"},
     {"invalid texture index pbrMetallicRoughness", "baseColorTexture index 2 out of bounds for 2 textures"},
     {"invalid texture index pbrSpecularGlossiness diffuse", "diffuseTexture index 2 out of bounds for 2 textures"},
     {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"},
@@ -303,7 +305,14 @@ Matrix(1, 0, 0,
 Matrix(1, 0, 0,
        0, 1, 0,
        0, 0, 1))"},
-    {"inconsistent texture transform", R"(specularGlossinessTexture has an inconsistent texture transform, expected
+    {"inconsistent texture transform pbrMetallicRoughness + normal", R"(normalTexture has an inconsistent texture transform, expected
+Matrix(1, 0, 0,
+       0, 1, -1,
+       0, 0, 1) but got
+Matrix(0.5, 0, 0,
+       0, 0.5, 0.5,
+       0, 0, 1))"},
+    {"inconsistent texture transform pbrSpecularGlossiness", R"(specularGlossinessTexture has an inconsistent texture transform, expected
 Matrix(1, 0, 0,
        0, 1, -1,
        0, 0, 1) but got
@@ -2180,7 +2189,7 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-metallicroughness.gltf")));
 
-    CORRADE_COMPARE(importer->materialCount(), 5);
+    CORRADE_COMPARE(importer->materialCount(), 7);
     CORRADE_COMPARE(importer->materialForName("texture"), 1);
     CORRADE_COMPARE(importer->materialName(1), "texture");
 
@@ -2250,11 +2259,36 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
         auto& phong = static_cast<const PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::TextureTransformation);
         CORRADE_COMPARE(phong.textureMatrix(), (Matrix3{}));
-    }
+    } {
+        const char* name = "color + normal map";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
 
-    /* Texture transform consistency across multiple textures of the same
-       materials are tested for pbrSpecularGlossiness, as this one doesn't have
-       more than one texture handled at the moment */
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::NormalTexture);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
+        CORRADE_COMPARE(phong.normalTexture(), 1);
+    } {
+        const char* name = "normal map, texture transform";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::NormalTexture|PhongMaterialData::Flag::TextureTransformation);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{1.0f}));
+        CORRADE_COMPARE(phong.normalTexture(), 1);
+        CORRADE_COMPARE(phong.textureMatrix(), (Matrix3{
+            {0.329937f, 0.944003f, 0.0f},
+            {-0.944003f, 0.329937f, 0.0f},
+            {0.944003f, 0.670063f, 1.0f}
+        }));
+    }
 }
 
 void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
@@ -2262,7 +2296,7 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-specularglossiness.gltf")));
 
-    CORRADE_COMPARE(importer->materialCount(), 6);
+    CORRADE_COMPARE(importer->materialCount(), 7);
 
     {
         auto material = importer->material("colors");
@@ -2342,6 +2376,18 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
             CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture);
         }
         CORRADE_COMPARE(phong.textureMatrix(), (Matrix3{}));
+    } {
+        const char* name = "color + normal map";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->importerState());
+        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+
+        auto& phong = static_cast<const PhongMaterialData&>(*material);
+        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::NormalTexture);
+        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
+        CORRADE_COMPARE(phong.normalTexture(), 1);
     }
 }
 
