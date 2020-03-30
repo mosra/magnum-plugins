@@ -130,6 +130,14 @@ of PLY features, which however shouldn't affect any real-world models.
     or @ref VertexFormat::Vector3usNormalized /
     @ref VertexFormat::Vector4usNormalized. Signed, 32-bit integer and double
     colors are not supported.
+-   Per-vertex object ID attribute is imported as either
+    @ref VertexFormat::UnsignedInt, @ref VertexFormat::UnsignedShort or
+    @ref VertexFormat::UnsignedByte. By default `object_id` is the recognized
+    name, use the @cb{.ini} objectIdAttribute @ce
+    @ref Trade-StanfordImporter-configuration "configuration option" to change
+    the identifier that's being looked for. Because there are real-world files
+    with signed object IDs, signed types are allowed as well, but interpreted
+    as unsigned.
 -   Indices are imported as either @ref MeshIndexType::UnsignedByte,
     @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt. Quads
     are triangulated, but higher-order polygons are not supported. Because
@@ -158,8 +166,9 @@ instance with @ref MeshPrimitive::Faces. The faces are triangulated, which
 means each item contains data for three vertices in the
 @ref MeshPrimitive::Triangles mesh at <tt>level</tt> @cpp 0 @ce.
 
-From the builtin attributes, colors and normals can be either per-vertex or
-per-face, positions and texture coordinates are always per-vertex.
+From the builtin attributes, colors, normals and object IDs can be either
+per-vertex or per-face, positions and texture coordinates are always
+per-vertex.
 
 @subsection Trade-StanfordImporter-behavior-custom-attributes Custom attributes
 

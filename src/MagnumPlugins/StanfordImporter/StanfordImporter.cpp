@@ -58,6 +58,7 @@ StanfordImporter::StanfordImporter() {
     /** @todo horrible workaround, fix this properly */
     configuration().setValue("perFaceToPerVertex", true);
     configuration().setValue("triangleFastPath", true);
+    configuration().setValue("objectIdAttribute", "object_id");
 }
 
 StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
@@ -242,12 +243,15 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
     Math::Vector3<VertexFormat> normalFormats;
     Math::Vector2<VertexFormat> textureCoordinateFormats;
     Math::Vector4<VertexFormat> colorFormats;
+    VertexFormat objectIdFormat{};
     Vector3ui positionOffsets{~UnsignedInt{}};
     Vector3ui normalOffsets{~UnsignedInt{}};
     Vector2ui textureCoordinateOffsets{~UnsignedInt{}};
     Vector4ui colorOffsets{~UnsignedInt{}};
+    UnsignedInt objectIdOffset = ~UnsignedInt{};
     bool perFaceNormals = false;
     bool perFaceColors = false;
+    bool perFaceObjectIds = false;
     {
         std::size_t vertexComponentOffset{};
         PropertyType propertyType{};
@@ -334,6 +338,9 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
                     } else if(tokens[2] == "alpha") {
                         colorOffsets.w() = vertexComponentOffset;
                         colorFormats.w() = componentFormat;
+                    } else if(tokens[2] == configuration().value("objectIdAttribute")) {
+                        objectIdOffset = vertexComponentOffset;
+                        objectIdFormat = componentFormat;
 
                     /* Unknown component, add to the attribute list. Stride is
                        not known yet, using 0 until it's updated later. */
@@ -412,6 +419,10 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
                         } else if(tokens[2] == "alpha") {
                             colorOffsets.w() = faceComponentOffset;
                             colorFormats.w() = componentFormat;
+                        } else if(tokens[2] == configuration().value("objectIdAttribute")) {
+                            perFaceObjectIds = true;
+                            objectIdOffset = faceComponentOffset;
+                            objectIdFormat = componentFormat;
 
                         /* Unknown component, add to the face attribute list.
                            Stride and actual triangle face count is not known yet,
@@ -584,6 +595,32 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
             /* We want integer types normalized, 3 or 4 components */
             vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
             colorOffsets.x(), 0u, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip));
+    }
+
+    /* Wrap up object IDs, if any */
+    if(objectIdOffset < ~UnsignedInt{}) {
+        /* Same as with indices, various datasets in the wild use signed
+           integers. Interpret them as unsigned. */
+        VertexFormat format;
+        if(objectIdFormat == VertexFormat::UnsignedInt || objectIdFormat == VertexFormat::Int)
+            format = VertexFormat::UnsignedInt;
+        else if(objectIdFormat == VertexFormat::UnsignedShort || objectIdFormat == VertexFormat::Short)
+            format = VertexFormat::UnsignedShort;
+        else if(objectIdFormat == VertexFormat::UnsignedByte || objectIdFormat == VertexFormat::Byte)
+            format = VertexFormat::UnsignedByte;
+        else {
+            Error{} << "Trade::StanfordImporter::openData(): unsupported object ID type" << objectIdFormat;
+            return;
+        }
+
+        /* Add the attribute. If it is per-face, actual triangle face count is
+           not known yet, using 0 until after all faces are parsed. */
+        if(!perFaceObjectIds) arrayAppend(state->attributeData,
+            Containers::InPlaceInit, MeshAttribute::ObjectId, format,
+            objectIdOffset, state->vertexCount, std::ptrdiff_t(state->vertexStride));
+        else arrayAppend(state->faceAttributeData,
+            Containers::InPlaceInit, MeshAttribute::ObjectId, format,
+            objectIdOffset, 0u, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip));
     }
 
     if(data.size() < state->vertexStride*state->vertexCount) {

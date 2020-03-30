@@ -8,8 +8,9 @@ property float nx
 property float ny
 property float nz
 property list int32 uchar vertex_indices
+property ushort objectid
 """
-type = '<3f 3f 3f 3f 3f 3fi4B3fi3B'
+type = '<3f 3f 3f 3f 3f 3fi4BH 3fi3BH'
 input = [
     1.0, 3.0, 2.0,
     1.0, 1.0, 2.0,
@@ -21,10 +22,12 @@ input = [
     -0.66666666666666667,
     -0.93333333333333333,
         4, 0, 1, 2, 3,
+            117,
     -0.0,
     -0.13333333333333333,
     -1.0,
         3, 3, 2, 4,
+            56
 ]
 
 # kate: hl python

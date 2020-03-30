@@ -114,6 +114,8 @@ constexpr struct {
     {"colors4-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(13, 14, 15, 12) for a 1-byte type", true},
     {"colors-unsupported-type", "unsupported color component type VertexFormat::Int", true},
 
+    {"objectid-unsupported-type", "unsupported object ID type VertexFormat::Float", true},
+
     {"unsupported-face-size", "unsupported face size 5", false}
 };
 
@@ -130,54 +132,65 @@ constexpr struct {
 constexpr struct {
     const char* filename;
     MeshIndexType indexType;
-    VertexFormat positionFormat, colorFormat, normalFormat, texcoordFormat;
+    VertexFormat positionFormat, colorFormat, normalFormat, texcoordFormat,
+        objectIdFormat;
+    const char* objectIdAttribute;
     UnsignedInt attributeCount, faceAttributeCount;
 } ParseData[]{
     /* GCC 4.8 doesn't like just {}, needs VertexFormat{} */
     {"positions-float-indices-uint", MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat{},
         VertexFormat{}, VertexFormat{},
-        1, 0},
+        VertexFormat{}, nullptr, 1, 0},
     /* All supported attributes, in the canonical type */
-    {"positions-colors-normals-texcoords-float-indices-int",
+    {"positions-colors-normals-texcoords-float-objectid-uint-indices-int",
         MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector3,
-        VertexFormat::Vector3, VertexFormat::Vector2, 4, 0},
+        VertexFormat::Vector3, VertexFormat::Vector2,
+        VertexFormat::UnsignedInt, nullptr, 5, 0},
     /* Four-component colors */
     {"positions-colors4-float-indices-int", MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector4,
-        VertexFormat{}, VertexFormat{}, 2, 0},
+        VertexFormat{}, VertexFormat{},
+        VertexFormat{}, nullptr, 2, 0},
     /* Testing endian flip */
-    {"positions-colors-normals-texcoords-float-indices-int-be",
+    {"positions-colors-normals-texcoords-float-objectid-uint-indices-int-be",
         MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector3,
-        VertexFormat::Vector3, VertexFormat::Vector2, 4, 0},
+        VertexFormat::Vector3, VertexFormat::Vector2,
+        VertexFormat::UnsignedInt, nullptr, 5, 0},
     /* Testing endian flip of unaligned data */
     {"positions-colors4-normals-texcoords-float-indices-int-be-unaligned",
         MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector4,
-        VertexFormat::Vector3, VertexFormat::Vector2, 8, 1},
+        VertexFormat::Vector3, VertexFormat::Vector2,
+        VertexFormat{}, nullptr, 8, 1},
     /* Testing various packing variants (hopefully exhausting all combinations) */
-    {"positions-uchar-normals-char-indices-ushort",
+    {"positions-uchar-normals-char-objectid-short-indices-ushort",
         MeshIndexType::UnsignedShort,
         VertexFormat::Vector3ub, VertexFormat{},
-        VertexFormat::Vector3bNormalized, VertexFormat{}, 2, 0},
+        VertexFormat::Vector3bNormalized, VertexFormat{},
+        VertexFormat::UnsignedShort, "OBJECTID", 3, 0},
     {"positions-char-colors4-ushort-texcoords-uchar-indices-short-be",
         MeshIndexType::UnsignedShort,
         VertexFormat::Vector3b, VertexFormat::Vector4usNormalized,
-        VertexFormat{}, VertexFormat::Vector2ubNormalized, 3, 0},
-    {"positions-ushort-normals-short-indices-uchar-be",
+        VertexFormat{}, VertexFormat::Vector2ubNormalized,
+        VertexFormat{}, nullptr, 3, 0},
+    {"positions-ushort-normals-short-objectid-uchar-indices-uchar-be",
         MeshIndexType::UnsignedByte,
         VertexFormat::Vector3us, VertexFormat{},
-        VertexFormat::Vector3sNormalized, VertexFormat{}, 2, 0},
+        VertexFormat::Vector3sNormalized, VertexFormat{},
+        VertexFormat::UnsignedByte, "semantic", 3, 0},
     {"positions-short-colors-uchar-texcoords-ushort-indices-char",
         MeshIndexType::UnsignedByte,
         VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized,
-        VertexFormat{}, VertexFormat::Vector2usNormalized, 3, 0},
+        VertexFormat{}, VertexFormat::Vector2usNormalized,
+        VertexFormat{}, nullptr, 3, 0},
     /* CR/LF instead of LF */
     {"crlf", MeshIndexType::UnsignedByte,
         VertexFormat::Vector3us, VertexFormat{},
-        VertexFormat{}, VertexFormat{}, 1, 0}
+        VertexFormat{}, VertexFormat{},
+        VertexFormat{}, nullptr, 1, 0}
 };
 
 constexpr struct {
@@ -185,14 +198,17 @@ constexpr struct {
     const char* filename;
     UnsignedInt faceAttributeCount;
     MeshIndexType indexType;
-    VertexFormat colorFormat, normalFormat;
+    VertexFormat colorFormat, normalFormat, objectIdFormat;
 } ParsePerFaceData[]{
     {"per-face nothing", "positions-float-indices-uint.ply", 0,
-        MeshIndexType::UnsignedInt, VertexFormat{}, VertexFormat{}},
+        MeshIndexType::UnsignedInt,
+        VertexFormat{}, VertexFormat{}, VertexFormat{}},
     {"per-face colors", "per-face-colors-be.ply", 1,
-        MeshIndexType::UnsignedShort, VertexFormat::Vector4, VertexFormat{}},
-    {"per-face normals", "per-face-normals.ply", 1,
-        MeshIndexType::UnsignedByte, VertexFormat{}, VertexFormat::Vector3}
+        MeshIndexType::UnsignedShort,
+        VertexFormat::Vector4, VertexFormat{}, VertexFormat{}},
+    {"per-face normals, object ids", "per-face-normals-objectid.ply", 2,
+        MeshIndexType::UnsignedByte,
+        VertexFormat{}, VertexFormat::Vector3, VertexFormat::UnsignedShort}
 };
 
 constexpr struct {
@@ -363,6 +379,9 @@ constexpr Vector2 TextureCoordinates[]{
     {0.466666f, 0.333333f},
     {0.866666f, 0.066666f}
 };
+constexpr UnsignedInt ObjectIds[]{
+    215, 71, 133, 5, 196
+};
 
 void StanfordImporterTest::parse() {
     auto&& data = ParseData[testCaseInstanceId()];
@@ -373,6 +392,8 @@ void StanfordImporterTest::parse() {
     /* Disable per-face to per-vertex conversion, that's tested thoroughly in
        parsePerFace() */
     importer->configuration().setValue("perFaceToPerVertex", false);
+    if(data.objectIdAttribute)
+        importer->configuration().setValue("objectIdAttribute", data.objectIdAttribute);
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -435,6 +456,14 @@ void StanfordImporterTest::parse() {
             Containers::stridedArrayView(TextureCoordinates),
             TestSuite::Compare::Container);
     }
+
+    if(data.objectIdFormat != VertexFormat{}) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::ObjectId));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::ObjectId), data.objectIdFormat);
+        CORRADE_COMPARE_AS(mesh->objectIdsAsArray(),
+            Containers::stridedArrayView(ObjectIds),
+            TestSuite::Compare::Container);
+    }
 }
 
 void StanfordImporterTest::parsePerFace() {
@@ -444,6 +473,7 @@ void StanfordImporterTest::parsePerFace() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     importer->configuration().setValue("perFaceToPerVertex", false);
+    importer->configuration().setValue("objectIdAttribute", "objectid");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, data.filename)));
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -493,6 +523,14 @@ void StanfordImporterTest::parsePerFace() {
                 {-0.0f, -0.133333f, -1.0f}
             }), TestSuite::Compare::Container);
     }
+
+    if(data.objectIdFormat != VertexFormat{}) {
+        CORRADE_VERIFY(faceMesh->hasAttribute(MeshAttribute::ObjectId));
+        CORRADE_COMPARE(faceMesh->attributeFormat(MeshAttribute::ObjectId), data.objectIdFormat);
+        CORRADE_COMPARE_AS(faceMesh->objectIdsAsArray(),
+            Containers::arrayView<UnsignedInt>({117, 117, 56}),
+            TestSuite::Compare::Container);
+    }
 }
 
 void StanfordImporterTest::parsePerFaceToPerVertex() {
@@ -503,6 +541,7 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
 
     /* Done by default */
     //importer->configuration().setValue("perFaceToPerVertex", true);
+    importer->configuration().setValue("objectIdAttribute", "objectid");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, data.filename)));
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -570,6 +609,16 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
                 {-0.0f, -0.133333f, -1.0f},
                 {-0.0f, -0.133333f, -1.0f}
             }), TestSuite::Compare::Container);
+    }
+
+    if(data.objectIdFormat != VertexFormat{}) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::ObjectId));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::ObjectId), data.objectIdFormat);
+        CORRADE_COMPARE_AS(mesh->objectIdsAsArray(),
+            Containers::arrayView<UnsignedInt>({
+                117, 117, 117, 117,
+                56, 56, 56}),
+            TestSuite::Compare::Container);
     }
 }
 
