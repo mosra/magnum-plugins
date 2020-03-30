@@ -56,7 +56,8 @@ struct StanfordImporter::State {
 
 StanfordImporter::StanfordImporter() {
     /** @todo horrible workaround, fix this properly */
-    configuration().setValue("triangleFastPath", 0.8f);
+    configuration().setValue("perFaceToPerVertex", true);
+    configuration().setValue("triangleFastPath", true);
 }
 
 StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
