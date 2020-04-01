@@ -104,6 +104,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void emptyGltf();
     void scene();
     void sceneCollapsedNode();
+    void pretransformedMesh();
 
     void imageEmbedded();
     void imageExternal();
@@ -170,6 +171,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
               &AssimpImporterTest::sceneCollapsedNode,
+              &AssimpImporterTest::pretransformedMesh,
 
               &AssimpImporterTest::imageEmbedded,
               &AssimpImporterTest::imageExternal,
@@ -712,6 +714,36 @@ void AssimpImporterTest::sceneCollapsedNode() {
         CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
         CORRADE_COMPARE(importer->object3DName(0), "Scene");
     }
+}
+
+void AssimpImporterTest::pretransformedMesh() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    importer->configuration().group("postprocess")->setValue("PreTransformVertices", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "line.dae")));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
+
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
+
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        Containers::arrayView<UnsignedInt>({0, 1}),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+
+    Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
+    CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+    CORRADE_COMPARE(meshObject->instance(), 0);
 }
 
 void AssimpImporterTest::imageEmbedded() {
