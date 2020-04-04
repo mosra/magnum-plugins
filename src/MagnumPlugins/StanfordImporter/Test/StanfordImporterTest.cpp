@@ -415,7 +415,9 @@ void StanfordImporterTest::parse() {
         Containers::arrayView(Positions),
         TestSuite::Compare::Container);
 
+    /* Colors */
     if(data.colorFormat == VertexFormat{}) {
+        CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::Color));
     } else if(vertexFormatComponentCount(data.colorFormat) == 3) {
         CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
         CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color), data.colorFormat);
@@ -430,6 +432,7 @@ void StanfordImporterTest::parse() {
             TestSuite::Compare::Container);
     }
 
+    /* Normals */
     if(data.normalFormat != VertexFormat{}) {
         CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Normal));
         CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), data.normalFormat);
@@ -447,23 +450,25 @@ void StanfordImporterTest::parse() {
             CORRADE_COMPARE_WITH(normals[i], Normals[i],
                 TestSuite::Compare::around(Vector3{precision}));
         }
-    }
+    } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::Normal));
 
+    /* Texture coordinates */
     if(data.texcoordFormat != VertexFormat{}) {
         CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
         CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates), data.texcoordFormat);
         CORRADE_COMPARE_AS(mesh->textureCoordinates2DAsArray(),
             Containers::stridedArrayView(TextureCoordinates),
             TestSuite::Compare::Container);
-    }
+    } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::TextureCoordinates));
 
+    /* Object ID */
     if(data.objectIdFormat != VertexFormat{}) {
         CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::ObjectId));
         CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::ObjectId), data.objectIdFormat);
         CORRADE_COMPARE_AS(mesh->objectIdsAsArray(),
             Containers::stridedArrayView(ObjectIds),
             TestSuite::Compare::Container);
-    }
+    } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::ObjectId));
 }
 
 void StanfordImporterTest::parsePerFace() {
