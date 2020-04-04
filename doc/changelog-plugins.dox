@@ -75,6 +75,9 @@ namespace Magnum {
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" and
     @ref Trade::OpenGexImporter "OpenGexImporter" now import both color and
     texture information instead of only one of them
+-   @ref Trade::AssimpImporter "AssimpImporter" inadvertently ignored base
+    orientation for files that are defined with Z up instead of Y, this
+    behavior is now also configurable (see [mosra/magnum-plugins#82](https://github.com/mosra/magnum-plugins/pull/82))
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
