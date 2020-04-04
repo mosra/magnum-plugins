@@ -82,7 +82,9 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         scene.dae
         texture-ambient.obj
         texture-ambient.mtl
-        quad.stl)
+        quad.stl
+        y-up.dae
+        z-up.dae)
 target_link_libraries(AssimpImporterTest PRIVATE Assimp::Assimp)
 target_include_directories(AssimpImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)

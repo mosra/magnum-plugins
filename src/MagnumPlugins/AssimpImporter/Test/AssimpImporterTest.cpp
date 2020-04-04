@@ -45,6 +45,7 @@
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Vector3.h>
+#include <Magnum/MeshTools/Transform.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData.h>
@@ -109,6 +110,8 @@ struct AssimpImporterTest: TestSuite::Tester {
     void emptyGltf();
     void scene();
     void sceneCollapsedNode();
+    void upDirectionPatching();
+    void upDirectionPatchingPreTransformVertices();
 
     void imageEmbedded();
     void imageExternal();
@@ -146,6 +149,14 @@ constexpr struct {
     {LightData::Type::Infinite, {1.0f, 0.15f, 0.45f}}
 };
 
+constexpr struct {
+    const char* name;
+    const char* file;
+} UpDirectionPatchingData[]{
+    {"Y up", "y-up.dae"},
+    {"Z up", "z-up.dae"},
+};
+
 AssimpImporterTest::AssimpImporterTest() {
     #ifdef MAGNUM_ASSIMPIMPORTER_DEBUG
     Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
@@ -178,9 +189,13 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::emptyCollada,
               &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
-              &AssimpImporterTest::sceneCollapsedNode,
+              &AssimpImporterTest::sceneCollapsedNode});
 
-              &AssimpImporterTest::imageEmbedded,
+    addInstancedTests({&AssimpImporterTest::upDirectionPatching,
+                       &AssimpImporterTest::upDirectionPatchingPreTransformVertices},
+        Containers::arraySize(UpDirectionPatchingData));
+
+    addTests({&AssimpImporterTest::imageEmbedded,
               &AssimpImporterTest::imageExternal,
               &AssimpImporterTest::imageExternalNotFound,
               &AssimpImporterTest::imageExternalNoPathNoCallback,
@@ -931,6 +946,105 @@ void AssimpImporterTest::sceneCollapsedNode() {
             "Assimp 3.2 and below doesn't use name of the root node for collapsed nodes.");
         CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
         CORRADE_COMPARE(importer->object3DName(0), "Scene");
+    }
+}
+
+void AssimpImporterTest::upDirectionPatching() {
+    auto&& data = UpDirectionPatchingData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 2);
+
+    /* First object is directly in the root, second object is a child of the
+       first. */
+    Matrix4 object0Transformation, object1Transformation;
+    {
+        Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(meshObject->instance(), 0);
+        CORRADE_COMPARE(meshObject->children(), std::vector<UnsignedInt>{1});
+        object0Transformation = meshObject->transformation();
+    } {
+        Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(1);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(meshObject->instance(), 0);
+        CORRADE_COMPARE(meshObject->children(), std::vector<UnsignedInt>{});
+        object1Transformation = meshObject->transformation();
+    }
+
+    /* The first mesh should have always the same final positions independently
+       of how file's Y/Z-up or PreTransformVertices is set */
+    {
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+        CORRADE_VERIFY(mesh);
+
+        /* Transform the positions with object transform */
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+        MeshTools::transformPointsInPlace(object0Transformation,
+            mesh->mutableAttribute<Vector3>(MeshAttribute::Position));
+
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+            Containers::arrayView<Vector3>({
+                {-1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, 1.0f}
+            }), TestSuite::Compare::Container);
+
+    /* The second mesh is a child of the first, scaled 2x in addition. Verify
+       the initial Z-up pretransformation is not applied redundantly to it. */
+    } {
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+        CORRADE_VERIFY(mesh);
+
+        /* Transform the positions with object transform and its parent as
+           well */
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+        MeshTools::transformPointsInPlace(
+            object0Transformation*object1Transformation,
+            mesh->mutableAttribute<Vector3>(MeshAttribute::Position));
+
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+            Containers::arrayView<Vector3>({
+                {-2.0f, 2.0f, -2.0f}, {-2.0f, 2.0f, 2.0f}
+            }), TestSuite::Compare::Container);
+    }
+}
+
+void AssimpImporterTest::upDirectionPatchingPreTransformVertices() {
+    auto&& data = UpDirectionPatchingData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    importer->configuration().group("postprocess")->setValue("PreTransformVertices", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
+
+    /* There's only one object, directly in the root, with no transformation */
+    {
+        Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(meshObject->instance(), 0);
+        CORRADE_COMPARE(meshObject->children(), std::vector<UnsignedInt>{});
+        CORRADE_COMPARE(meshObject->transformation(), Matrix4{});
+    }
+
+    /* There's just one mesh, with all vertices combined and already
+       transformed. */
+    {
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+        CORRADE_VERIFY(mesh);
+
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+            Containers::arrayView<Vector3>({
+                {-1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, 1.0f},
+                {-2.0f, 2.0f, -2.0f}, {-2.0f, 2.0f, 2.0f}
+            }), TestSuite::Compare::Container);
     }
 }
 

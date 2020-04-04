@@ -109,6 +109,8 @@ struct AssimpImporter::File {
 
     UnsignedInt imageImporterId = ~UnsignedInt{};
     Containers::Optional<AnyImageImporter> imageImporter;
+
+    Matrix4 rootTransformation;
 };
 
 namespace {
@@ -317,19 +319,24 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
            https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
 
         /* If there is more than just a root node, extract children of the root
-           node, as we treat the root node as the scene here and it has no
-           transformation or anything attached. */
+           node, as we treat the root node as the scene here. In some cases
+           (for example for a COLLADA file with Z_UP defined) the root node can
+           contain a transformation, save it. This root transformation is then
+           applied to all direct children of mRootNode inside doObject3D(). */
         if(root->mNumChildren) {
             _f->nodes.reserve(root->mNumChildren);
             _f->nodes.insert(_f->nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
             _f->nodeIndices.reserve(root->mNumChildren);
+            _f->rootTransformation = Matrix4::from(reinterpret_cast<const float*>(&root->mTransformation)).transposed();
 
         /* In some pathological cases there's just one root node --- for
            example the DART integration depends on that. Import it as a single
-           node. */
+           node. In this case applying the root transformation is not desired,
+           so set it to identity. */
         } else {
             _f->nodes.push_back(root);
             _f->nodeIndices.reserve(1);
+            _f->rootTransformation = Matrix4{};
         }
 
         /* Insert may invalidate iterators, so we use indices here. */
@@ -462,8 +469,15 @@ Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt i
         for(auto child: Containers::arrayView(node->mChildren, node->mNumChildren))
             children.push_back(_f->nodeMap[_f->nodeIndices[child]]);
 
-        /* aiMatrix4x4 is always row-major, transpose */
-        const Matrix4 transformation = Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation)).transposed();
+        /* aiMatrix4x4 is always row-major, transpose. Pre-multiply top-level
+           nodes (which are direct children of assimp root node) with root node
+           transformation, so things like Y-up/Z-up adaptation are preserved.
+           If Assimp gives us only the root node with no children, that one is
+           not premultiplied (because that would duplicate its own
+           transformation). */
+        Matrix4 transformation = Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation)).transposed();
+        if(node->mParent == _f->scene->mRootNode)
+            transformation = _f->rootTransformation*transformation;
 
         auto instance = _f->nodeInstances.find(node);
         if(instance != _f->nodeInstances.end()) {
