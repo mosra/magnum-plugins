@@ -389,7 +389,7 @@ void AssimpImporter::doOpenFile(const std::string& filename) {
     _f.reset(new File);
     _f->filePath = Utility::Directory::path(filename);
 
-    /* File callbacks are set up in doSetFileCallbacks() */
+    /* File callbacks are set up in doSetFileCallback() */
     if(!(_f->scene = _importer->ReadFile(filename, flagsFromConfiguration(configuration())))) {
         Error{} << "Trade::AssimpImporter::openFile(): failed to open" << filename << Debug::nospace << ":" << _importer->GetErrorString();
         return;
@@ -451,7 +451,6 @@ Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt i
     const auto& spec = _f->objectMap[id];
     const UnsignedInt nodeId = spec.first;
     const aiNode* node = _f->nodes[spec.first];
-
 
     /* Is this the first mesh of the aiNode? */
     if(spec.second == 0) {
