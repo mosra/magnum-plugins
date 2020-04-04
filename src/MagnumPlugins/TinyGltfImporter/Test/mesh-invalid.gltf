@@ -124,6 +124,26 @@
             ]
         },
         {
+            "name": "unexpected object id type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "_OBJECT_ID": 6
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsupported object id component type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "_OBJECT_ID": 7
+                    }
+                }
+            ]
+        },
+        {
             "name": "unexpected index type",
             "primitives": [
                 {

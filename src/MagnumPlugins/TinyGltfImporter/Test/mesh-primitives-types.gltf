@@ -85,23 +85,25 @@
             ]
         },
         {
-            "name": "positions normalized unsigned short, texcoords normalized byte",
+            "name": "positions normalized unsigned short, texcoords normalized byte, objectid unsigned short",
             "primitives": [
                 {
                     "attributes": {
                         "POSITION": 21,
-                        "TEXCOORD_0": 22
+                        "TEXCOORD_0": 22,
+                        "_OBJECT_ID": 23
                     }
                 }
             ]
         },
         {
-            "name": "positions normalized byte, texcoords unsigned short",
+            "name": "positions normalized byte, texcoords unsigned short, objectid unsigned byte",
             "primitives": [
                 {
                     "attributes": {
-                        "POSITION": 23,
-                        "TEXCOORD_0": 24
+                        "POSITION": 24,
+                        "TEXCOORD_0": 25,
+                        "OBJECTID": 26
                     }
                 }
             ]
@@ -306,6 +308,14 @@
         },
         {
             "name": "23",
+            "bufferView": 9,
+            "byteOffset": 8,
+            "componentType": 5123,
+            "count": 5,
+            "type": "SCALAR"
+        },
+        {
+            "name": "24",
             "bufferView": 10,
             "byteOffset": 0,
             "componentType": 5120,
@@ -314,12 +324,20 @@
             "type": "VEC3"
         },
         {
-            "name": "24",
+            "name": "25",
             "bufferView": 10,
             "byteOffset": 4,
             "componentType": 5123,
             "count": 5,
             "type": "VEC2"
+        },
+        {
+            "name": "26",
+            "bufferView": 10,
+            "byteOffset": 8,
+            "componentType": 5121,
+            "count": 5,
+            "type": "SCALAR"
         }
     ],
     "bufferViews": [
@@ -387,20 +405,20 @@
             "name": "9",
             "buffer": 0,
             "byteOffset": 484,
-            "byteLength": 40,
-            "byteStride": 8
+            "byteLength": 60,
+            "byteStride": 12
         },
         {
             "name": "10",
             "buffer": 0,
-            "byteOffset": 524,
-            "byteLength": 40,
-            "byteStride": 8
+            "byteOffset": 544,
+            "byteLength": 60,
+            "byteStride": 12
         }
     ],
     "buffers": [
         {
-            "byteLength": 564,
+            "byteLength": 604,
             "uri": "mesh-primitives-types.bin"
         }
     ]

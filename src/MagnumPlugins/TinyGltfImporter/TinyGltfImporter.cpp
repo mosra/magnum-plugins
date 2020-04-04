@@ -228,6 +228,7 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     conf.setValue("normalizeQuaternions", true);
     conf.setValue("mergeAnimationClips", false);
     conf.setValue("textureCoordinateYFlipInMaterial", false);
+    conf.setValue("objectIdAttribute", "_OBJECT_ID");
 }
 
 }
@@ -1146,6 +1147,25 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
                !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE && accessor.normalized) &&
                !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT && accessor.normalized)) {
                 Error{} << "Trade::TinyGltfImporter::mesh(): unsupported COLOR component type"
+                    << (accessor.normalized ? "normalized" : "unnormalized")
+                    << accessor.componentType;
+                return Containers::NullOpt;
+            }
+
+        /* Object ID, name user-configurable */
+        } else if(attribute.first == configuration().value("objectIdAttribute")) {
+            name = MeshAttribute::ObjectId;
+
+            if(accessor.type != TINYGLTF_TYPE_SCALAR) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unexpected object ID type" << accessor.type;
+                return Containers::NullOpt;
+            }
+
+            if((accessor.componentType != TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT &&
+                accessor.componentType != TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT &&
+                accessor.componentType != TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) ||
+                accessor.normalized) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unsupported object ID component type"
                     << (accessor.normalized ? "normalized" : "unnormalized")
                     << accessor.componentType;
                 return Containers::NullOpt;

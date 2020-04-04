@@ -1,4 +1,4 @@
-type = '<3Bx 3f3f4f 3f3f4f 3f3f4f 2f2f2f'
+type = '<3Bx 3f3f4f 3f3f4f 3f3f4f 2f2f2f III'
 input = [
     # indices
     0, 1, 2,
@@ -11,7 +11,10 @@ input = [
     # non-interleaved texture coordinates
     0.3, 0.0,
     0.0, 0.5,
-    0.3, 0.3
+    0.3, 0.3,
+
+    #non-interleaved object IDs
+    215, 71, 133
 ]
 
 # kate: hl python

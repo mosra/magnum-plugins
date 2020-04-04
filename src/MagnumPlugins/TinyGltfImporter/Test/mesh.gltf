@@ -21,7 +21,8 @@
                     "attributes": {
                         "NORMAL": 2,
                         "POSITION": 1,
-                        "TANGENT": 4
+                        "TANGENT": 4,
+                        "_OBJECT_ID": 5
                     },
                     "indices": 0
                 }
@@ -47,18 +48,21 @@
     ],
     "accessors": [
         {
+            "name": "0",
             "bufferView": 0,
             "componentType": 5121,
             "count": 3,
             "type": "SCALAR"
         },
         {
+            "name": "1",
             "bufferView": 1,
             "componentType": 5126,
             "count": 3,
             "type": "VEC3"
         },
         {
+            "name": "2",
             "bufferView": 1,
             "byteOffset": 12,
             "componentType": 5126,
@@ -66,43 +70,55 @@
             "type": "VEC3"
         },
         {
+            "name": "3",
             "bufferView": 2,
             "componentType": 5126,
             "count": 3,
             "type": "VEC2"
         },
         {
+            "name": "4",
             "bufferView": 1,
             "byteOffset": 24,
             "componentType": 5126,
             "count": 3,
             "type": "VEC4"
+        },
+        {
+            "name": "4",
+            "bufferView": 3,
+            "byteOffset": 0,
+            "componentType": 5125,
+            "count": 3,
+            "type": "SCALAR"
         }
     ],
     "bufferViews": [
         {
             "buffer": 0,
             "byteOffset": 0,
-            "byteLength": 3,
-            "target": 34963
+            "byteLength": 3
         },
         {
             "buffer": 0,
             "byteOffset": 4,
             "byteLength": 120,
-            "byteStride": 40,
-            "target": 34962
+            "byteStride": 40
         },
         {
             "buffer": 0,
             "byteOffset": 124,
-            "byteLength": 24,
-            "target": 34962
+            "byteLength": 24
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 148,
+            "byteLength": 12
         }
     ],
     "buffers": [
         {
-            "byteLength": 148,
+            "byteLength": 160,
             "uri": "mesh.bin"
         }
     ]

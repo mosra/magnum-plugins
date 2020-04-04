@@ -195,56 +195,57 @@ constexpr struct {
     VertexFormat positionFormat;
     VertexFormat normalFormat, tangentFormat;
     VertexFormat colorFormat;
-    VertexFormat textureCoordinateFormat;
+    VertexFormat textureCoordinateFormat, objectIdFormat;
+    const char* objectIdAttribute;
 } MeshPrimitivesTypesData[]{
     {"positions byte, color4 unsigned short, texcoords normalized unsigned byte; triangle strip",
         MeshPrimitive::TriangleStrip, MeshIndexType{},
         VertexFormat::Vector3b,
         VertexFormat{}, VertexFormat{},
         VertexFormat::Vector4usNormalized,
-        VertexFormat::Vector2ubNormalized},
+        VertexFormat::Vector2ubNormalized, VertexFormat{}, nullptr},
     {"positions short, colors unsigned byte, texcoords normalized unsigned short; lines",
         MeshPrimitive::Lines, MeshIndexType{},
         VertexFormat::Vector3s,
         VertexFormat{}, VertexFormat{},
         VertexFormat::Vector3ubNormalized,
-        VertexFormat::Vector2usNormalized},
+        VertexFormat::Vector2usNormalized, VertexFormat{}, nullptr},
     {"positions unsigned byte, normals byte, texcoords short; indices unsigned int; line loop",
         MeshPrimitive::LineLoop, MeshIndexType::UnsignedInt,
         VertexFormat::Vector3ub,
         VertexFormat::Vector3bNormalized, VertexFormat{},
         VertexFormat{},
-        VertexFormat::Vector2s},
+        VertexFormat::Vector2s, VertexFormat{}, nullptr},
     {"positions unsigned short, normals short, texcoords byte; indices unsigned byte; triangle fan",
         MeshPrimitive::TriangleFan, MeshIndexType::UnsignedByte,
         VertexFormat::Vector3us,
         VertexFormat::Vector3sNormalized, VertexFormat{},
         VertexFormat{},
-        VertexFormat::Vector2b},
+        VertexFormat::Vector2b, VertexFormat{}, nullptr},
     {"positions normalized unsigned byte, tangents short, texcoords normalized short; indices unsigned short; line strip",
         MeshPrimitive::LineStrip, MeshIndexType::UnsignedShort,
         VertexFormat::Vector3ubNormalized,
         VertexFormat{}, VertexFormat::Vector4sNormalized,
         VertexFormat{},
-        VertexFormat::Vector2sNormalized},
+        VertexFormat::Vector2sNormalized, VertexFormat{}, nullptr},
     {"positions normalized short, texcoords unsigned byte, tangents byte; triangles",
         MeshPrimitive::Triangles, MeshIndexType{},
         VertexFormat::Vector3sNormalized,
         VertexFormat{}, VertexFormat::Vector4bNormalized,
         VertexFormat{},
-        VertexFormat::Vector2ub},
-    {"positions normalized unsigned short, texcoords normalized byte",
+        VertexFormat::Vector2ub, VertexFormat{}, nullptr},
+    {"positions normalized unsigned short, texcoords normalized byte, objectid unsigned short",
         MeshPrimitive::Triangles, MeshIndexType{},
         VertexFormat::Vector3usNormalized,
         VertexFormat{}, VertexFormat{},
         VertexFormat{},
-        VertexFormat::Vector2bNormalized},
-    {"positions normalized byte, texcoords unsigned short",
+        VertexFormat::Vector2bNormalized, VertexFormat::UnsignedShort, nullptr},
+    {"positions normalized byte, texcoords unsigned short, objectid unsigned byte",
         MeshPrimitive::Triangles, MeshIndexType{},
         VertexFormat::Vector3bNormalized,
         VertexFormat{}, VertexFormat{},
         VertexFormat{},
-        VertexFormat::Vector2us}
+        VertexFormat::Vector2us, VertexFormat::UnsignedByte, "OBJECTID"}
 };
 
 constexpr struct {
@@ -263,6 +264,8 @@ constexpr struct {
     {"unsupported texcoord component type", "unsupported TEXCOORD component type normalized 5125"},
     {"unexpected color type", "unexpected COLOR type 2"},
     {"unsupported color component type", "unsupported COLOR component type unnormalized 5120"},
+    {"unexpected object id type", "unexpected object ID type 2"},
+    {"unsupported object id component type", "unsupported object ID component type unnormalized 5124"},
     {"unexpected index type", "unexpected index type 2"},
     {"unsupported index component type", "unexpected index component type 5124"},
     {"normalized index type", "index type can't be normalized"},
@@ -1595,7 +1598,7 @@ void TinyGltfImporterTest::meshIndexed() {
         Containers::arrayView<UnsignedByte>({0, 1, 2}),
         TestSuite::Compare::Container);
 
-    CORRADE_COMPARE(mesh->attributeCount(), 3);
+    CORRADE_COMPARE(mesh->attributeCount(), 4);
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
@@ -1604,6 +1607,7 @@ void TinyGltfImporterTest::meshIndexed() {
             {-0.5f, 2.5f, 0.75f},
             {-2.0f, 1.0f, 0.3f}
         }), TestSuite::Compare::Container);
+
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Normal));
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), VertexFormat::Vector3);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
@@ -1612,6 +1616,7 @@ void TinyGltfImporterTest::meshIndexed() {
             {0.4f, 0.5f, 0.6f},
             {0.7f, 0.8f, 0.9f}
         }), TestSuite::Compare::Container);
+
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Tangent));
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Tangent), VertexFormat::Vector4);
     CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Tangent),
@@ -1619,6 +1624,13 @@ void TinyGltfImporterTest::meshIndexed() {
             {-0.1f, -0.2f, -0.3f, 1.0f},
             {-0.4f, -0.5f, -0.6f, -1.0f},
             {-0.7f, -0.8f, -0.9f, 1.0f}
+        }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::ObjectId));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::ObjectId), VertexFormat::UnsignedInt);
+    CORRADE_COMPARE_AS(mesh->attribute<UnsignedInt>(MeshAttribute::ObjectId),
+        Containers::arrayView<UnsignedInt>({
+            215, 71, 133
         }), TestSuite::Compare::Container);
 }
 
@@ -1694,7 +1706,7 @@ void TinyGltfImporterTest::meshCustomAttributes() {
 
     const MeshAttribute tbnPreciserAttribute = importer->meshAttributeForName("_TBN_PRECISER");
     const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
-    const MeshAttribute objectIdAttribute = importer->meshAttributeForName("_OBJECT_ID");
+    const MeshAttribute objectIdAttribute = importer->meshAttributeForName("_OBJECT_ID3");
     const MeshAttribute negativePaddingAttribute = importer->meshAttributeForName("_NEGATIVE_PADDING");
     const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("_NOT_AN_IDENTITY");
 
@@ -1940,6 +1952,9 @@ void TinyGltfImporterTest::meshPrimitivesTypes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     importer->configuration().setValue("textureCoordinateYFlipInMaterial", true);
 
+    if(data.objectIdAttribute)
+        importer->configuration().setValue("objectIdAttribute", data.objectIdAttribute);
+
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh-primitives-types.gltf")));
 
@@ -2155,6 +2170,16 @@ void TinyGltfImporterTest::meshPrimitivesTypes() {
                 {24.0f, 57.0f}
             }), TestSuite::Compare::Container);
     }
+
+    /* Object ID */
+    if(data.objectIdFormat != VertexFormat{}) {
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::ObjectId));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::ObjectId), data.objectIdFormat);
+        CORRADE_COMPARE_AS(mesh->objectIdsAsArray(),
+            Containers::stridedArrayView<UnsignedInt>({
+                215, 71, 133, 5, 196
+            }), TestSuite::Compare::Container);
+    } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::ObjectId));
 }
 
 void TinyGltfImporterTest::meshIndexAccessorOutOfBounds() {

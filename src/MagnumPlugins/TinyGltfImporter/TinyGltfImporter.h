@@ -225,6 +225,12 @@ Import of skeleton, skin and morph data is not supported at the moment.
     @ref VertexFormat::Vector4ubNormalized,
     @ref VertexFormat::Vector3usNormalized or
     @ref VertexFormat::Vector4usNormalized
+-   Per-vertex object ID attribute is imported as either
+    @ref VertexFormat::UnsignedInt, @ref VertexFormat::UnsignedShort or
+    @ref VertexFormat::UnsignedByte. By default `_OBJECT_ID` is the recognized
+    name, use the @cb{.ini} objectIdAttribute @ce
+    @ref Trade-TinyGltfImporter-configuration "configuration option" to change
+    the identifier that's being looked for.
 -   Multi-primitive meshes are loaded as follows, consistently with the
     behavior of @link AssimpImporter @endlink:
     -   The @ref meshCount() query returns a number of all *primitives*, not
