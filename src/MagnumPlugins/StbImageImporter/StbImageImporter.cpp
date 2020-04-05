@@ -26,6 +26,7 @@
 #include "StbImageImporter.h"
 
 #include <algorithm>
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
@@ -40,6 +41,10 @@
 
 namespace Magnum { namespace Trade {
 
+struct StbImageImporter::State {
+    Containers::Array<unsigned char> data;
+};
+
 StbImageImporter::StbImageImporter() = default;
 
 StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
@@ -48,7 +53,7 @@ StbImageImporter::~StbImageImporter() = default;
 
 ImporterFeatures StbImageImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool StbImageImporter::doIsOpened() const { return _in; }
+bool StbImageImporter::doIsOpened() const { return !!_in; }
 
 void StbImageImporter::doClose() {
     _in = nullptr;
@@ -67,8 +72,9 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
-    _in = Containers::Array<unsigned char>{data.size()};
-    std::copy(data.begin(), data.end(), _in.data());
+    _in.emplace();
+    _in->data = Containers::Array<unsigned char>{data.size()};
+    std::copy(data.begin(), data.end(), _in->data.data());
 }
 
 UnsignedInt StbImageImporter::doImage2DCount() const { return 1; }
@@ -84,8 +90,8 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt, Unsig
     stbi_uc* data;
     std::size_t channelSize;
     PixelFormat format;
-    if(stbi_is_hdr_from_memory(_in, _in.size())) {
-        data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0));
+    if(stbi_is_hdr_from_memory(_in->data, _in->data.size())) {
+        data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(_in->data, _in->data.size(), &size.x(), &size.y(), &components, 0));
         channelSize = 4;
         if(data) switch(components) {
             case 1: format = PixelFormat::R32F;         break;
@@ -95,7 +101,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt, Unsig
             default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     } else {
-        data = stbi_load_from_memory(_in, _in.size(), &size.x(), &size.y(), &components, 0);
+        data = stbi_load_from_memory(_in->data, _in->data.size(), &size.x(), &size.y(), &components, 0);
         channelSize = 1;
         if(data) switch(components) {
             case 1: format = PixelFormat::R8Unorm;      break;

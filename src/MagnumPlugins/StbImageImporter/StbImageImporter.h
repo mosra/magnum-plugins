@@ -29,7 +29,7 @@
  * @brief Class @ref Magnum::Trade::StbImageImporter
  */
 
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Pointer.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "MagnumPlugins/StbImageImporter/configure.h"
@@ -164,7 +164,8 @@ class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
         MAGNUM_STBIMAGEIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_STBIMAGEIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
-        Containers::Array<unsigned char> _in;
+        struct State;
+        Containers::Pointer<State> _in;
 };
 
 }}
