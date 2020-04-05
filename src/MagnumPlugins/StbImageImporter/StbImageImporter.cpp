@@ -72,6 +72,10 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
+    stbi_set_flip_vertically_on_load(true);
+    /* The docs say this is enabled by default, but it's *not*. Ugh. */
+    stbi_convert_iphone_png_to_rgb(true);
+
     _in.emplace();
     _in->data = Containers::Array<unsigned char>{data.size()};
     std::copy(data.begin(), data.end(), _in->data.data());
@@ -82,10 +86,6 @@ UnsignedInt StbImageImporter::doImage2DCount() const { return 1; }
 Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt, UnsignedInt) {
     Vector2i size;
     Int components;
-
-    stbi_set_flip_vertically_on_load(true);
-    /* The docs say this is enabled by default, but it's *not*. Ugh. */
-    stbi_convert_iphone_png_to_rgb(true);
 
     stbi_uc* data;
     std::size_t channelSize;
