@@ -123,10 +123,10 @@ void StbImageImporterTest::grayPng() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\x88', '\x00', '\xff'
+    }), TestSuite::Compare::Container);
 }
 
 void StbImageImporterTest::grayJpeg() {
@@ -138,10 +138,10 @@ void StbImageImporterTest::grayJpeg() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\x88', '\x00', '\xff'
+    }), TestSuite::Compare::Container);
 }
 
 void StbImageImporterTest::rgbPng() {
@@ -153,14 +153,14 @@ void StbImageImporterTest::rgbPng() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\xde', '\xad', '\xb5'
+    }), TestSuite::Compare::Container);
 }
 
 void StbImageImporterTest::rgbJpeg() {
@@ -173,14 +173,14 @@ void StbImageImporterTest::rgbJpeg() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xca', '\xfe', '\x76',
         '\xdf', '\xad', '\xb6',
         '\xca', '\xfe', '\x76',
         '\xe0', '\xad', '\xb6',
         '\xc9', '\xff', '\x76',
-        '\xdf', '\xad', '\xb6'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\xdf', '\xad', '\xb6'
+    }), TestSuite::Compare::Container);
 }
 
 void StbImageImporterTest::rgbHdr() {
@@ -193,11 +193,11 @@ void StbImageImporterTest::rgbHdr() {
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()),
-        (Containers::Array<float>{Containers::InPlaceInit, {
+        Containers::arrayView<float>({
             1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
             3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
-            5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const float>>);
+            5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f
+        }), TestSuite::Compare::Container);
 }
 
 void StbImageImporterTest::rgbHdrInvalid() {
@@ -224,14 +224,14 @@ void StbImageImporterTest::rgbaPng() {
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xde', '\xad', '\xb5', '\xff',
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
-        '\xde', '\xad', '\xb5', '\xff'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\xde', '\xad', '\xb5', '\xff'
+    }), TestSuite::Compare::Container);
 }
 
 void StbImageImporterTest::openTwice() {
