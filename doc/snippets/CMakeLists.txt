@@ -47,3 +47,10 @@ if(WITH_BASISIMPORTER)
     target_link_libraries(snippets-BasisImporter PRIVATE Magnum::Trade)
     set_target_properties(snippets-BasisImporter PROPERTIES FOLDER "Magnum/doc/snippets")
 endif()
+
+if(WITH_STBIMAGEIMPORTER)
+    add_library(snippets-StbImageImporter STATIC
+        StbImageImporter.cpp)
+    target_link_libraries(snippets-StbImageImporter PRIVATE Magnum::Trade)
+    set_target_properties(snippets-StbImageImporter PROPERTIES FOLDER "Magnum/doc/snippets")
+endif()

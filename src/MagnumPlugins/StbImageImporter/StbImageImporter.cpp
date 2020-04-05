@@ -43,6 +43,11 @@ namespace Magnum { namespace Trade {
 
 struct StbImageImporter::State {
     Containers::Array<char> data;
+
+    /* Gif size, frame stride and delays */
+    Vector3i gifSize;
+    std::size_t gifFrameStride;
+    Containers::Array<int> gifDelays;
 };
 
 StbImageImporter::StbImageImporter() = default;
@@ -76,14 +81,59 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
     /* The docs say this is enabled by default, but it's *not*. Ugh. */
     stbi_convert_iphone_png_to_rgb(true);
 
+    /* Try to open as a gif. If that succeeds, great. If that fails, the actual
+       opening (and error handling) is done in doImage2D(). */
+    {
+        int* delays;
+        Vector3i size;
+        int components;
+        stbi_uc* gifData = stbi_load_gif_from_memory(reinterpret_cast<const stbi_uc*>(data.begin()), data.size(), &delays, &size.x(), &size.y(), &size.z(), &components, 0);
+        if(gifData) {
+            _in.emplace();
+
+            /* Acquire ownership of the data */
+            _in->gifDelays = Containers::Array<int>{delays, std::size_t(size.z()),
+                [](int* data, std::size_t) { stbi_image_free(data); }};
+            _in->data = Containers::Array<char>{reinterpret_cast<char*>(gifData),
+                std::size_t(size.product()*components),
+                [](char* data, std::size_t) { stbi_image_free(data); }};
+
+            /* Save size, decide on frame stride. stb_image says that for GIF
+               the result is always four-channel, so take a shortcut and report
+               the images as PixelFormat::RGBA8Unorm always -- that also means
+               we don't need to handle alignment explicitly. */
+            _in->gifSize = size;
+            CORRADE_INTERNAL_ASSERT(components == 4);
+            CORRADE_INTERNAL_ASSERT((size.x()*components)%4 == 0);
+            _in->gifFrameStride = size.xy().product()*components;
+            return;
+        }
+    }
+
     _in.emplace();
     _in->data = Containers::Array<char>{data.size()};
     Utility::copy(data, _in->data);
 }
 
-UnsignedInt StbImageImporter::doImage2DCount() const { return 1; }
+const void* StbImageImporter::doImporterState() const {
+    return _in->gifDelays.data();
+}
 
-Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt, UnsignedInt) {
+UnsignedInt StbImageImporter::doImage2DCount() const {
+    return _in->gifSize.isZero() ? 1 : _in->gifSize.z();
+}
+
+Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt id, UnsignedInt) {
+    /* This is a GIF that was loaded already during data opening. Return Nth
+       image */
+    if(!_in->gifSize.isZero()) {
+        Containers::Array<char> imageData{_in->gifFrameStride};
+        Utility::copy(Containers::arrayCast<char>(
+            _in->data.slice(id*_in->gifFrameStride, (id + 1)*_in->gifFrameStride)),
+            imageData);
+        return Trade::ImageData2D{PixelFormat::RGBA8Unorm, _in->gifSize.xy(), std::move(imageData)};
+    }
+
     Vector2i size;
     Int components;
 

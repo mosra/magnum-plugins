@@ -25,11 +25,13 @@
 
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -52,6 +54,8 @@ struct StbImageImporterTest: TestSuite::Tester {
     void rgbHdrInvalid();
 
     void rgbaPng();
+
+    void animatedGif();
 
     void openTwice();
     void importTwice();
@@ -82,7 +86,9 @@ StbImageImporterTest::StbImageImporterTest() {
 
     addInstancedTests({&StbImageImporterTest::rgbaPng}, Containers::arraySize(RgbaPngTestData));
 
-    addTests({&StbImageImporterTest::openTwice,
+    addTests({&StbImageImporterTest::animatedGif,
+
+              &StbImageImporterTest::openTwice,
               &StbImageImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -232,6 +238,45 @@ void StbImageImporterTest::rgbaPng() {
         '\x00', '\x00', '\x00', '\x00',
         '\xde', '\xad', '\xb5', '\xff'
     }), TestSuite::Compare::Container);
+}
+
+void StbImageImporterTest::animatedGif() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
+    CORRADE_COMPARE(importer->image2DCount(), 5);
+
+    /* Importer state should expose the delays, in milliseconds */
+    CORRADE_VERIFY(importer->importerState());
+    CORRADE_COMPARE_AS(
+        Containers::arrayView(reinterpret_cast<const Int*>(importer->importerState()), importer->image2DCount()),
+        Containers::arrayView<Int>({1000, 1000, 1000, 1000, 1000}),
+        TestSuite::Compare::Container);
+
+    /* All images should have the same format & size */
+    for(UnsignedInt i = 0; i != importer->image2DCount(); ++i) {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(i);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+        CORRADE_COMPARE(image->size(), Vector2i(100, 100));
+    }
+
+    /* Second frame should have a pixel on top left a different kind of blue
+       than the first */
+    {
+        using namespace Math::Literals;
+
+        Containers::Optional<Trade::ImageData2D> image0 = importer->image2D(0);
+        Containers::Optional<Trade::ImageData2D> image1 = importer->image2D(1);
+        CORRADE_VERIFY(image0);
+        CORRADE_VERIFY(image1);
+
+        /* Uncomment for debugging purposes */
+        //Debug{} << Debug::color << Debug::packed << image1->pixels<Color4ub>().every({3, 3}).flipped<0>();
+
+        CORRADE_COMPARE(image0->pixels<Color4ub>()[88][30], 0x87ceeb_rgb);
+        CORRADE_COMPARE(image1->pixels<Color4ub>()[88][30], 0x0000ff_rgb);
+    }
 }
 
 void StbImageImporterTest::openTwice() {

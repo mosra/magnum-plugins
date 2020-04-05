@@ -62,7 +62,7 @@ Supports the following formats using the
 [stb_image](https://github.com/nothings/stb) library:
 
 -   Windows Bitmap (`*.bmp`), only non-1bpp, no RLE
--   Graphics Interchange Format (`*.gif`)
+-   Graphics Interchange Format (`*.gif`), including animations
 -   Radiance HDR (`*.hdr`)
 -   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`), except for arithmetic encoding
 -   Portable Graymap (`*.pgm`)
@@ -137,6 +137,17 @@ images are imported with @ref PixelFormat::RGB32F, @ref PixelFormat::RGBA32F,
 default @ref PixelStorage parameters except for alignment, which may be changed
 to @cpp 1 @ce if the data require it.
 
+@subsection Trade-StbImageImporter-animated-gifs Animated GIFs
+
+In case the file is an animated GIF, the importer will report frame count in
+@ref image2DCount() and you can then import each frame separately.
+Additionally, for the lack of better APIs at the moment, frame delays are
+exposed through @ref importerState() as an array of @ref Magnum::Int "Int",
+where each entry is number of milliseconds to wait before advancing to the next
+frame. Example usage:
+
+@snippet StbImageImporter.cpp gif-delays
+
 @subsection Trade-StbImageImporter-limitations-cgbi Apple CgBI PNGs
 
 CgBI is a proprietary Apple-specific extension to PNG
@@ -163,6 +174,8 @@ class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
 
         MAGNUM_STBIMAGEIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_STBIMAGEIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
+
+        MAGNUM_STBIMAGEIMPORTER_LOCAL const void* doImporterState() const override;
 
         struct State;
         Containers::Pointer<State> _in;

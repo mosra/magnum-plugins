@@ -50,6 +50,8 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(StbImageImporterTest StbImageImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
+        # https://github.com/python-pillow/Pillow/blob/8c9100e267f40a63081b344220abaa57325a3d6d/Tests/images/dispose_bgnd.gif
+        dispose_bgnd.gif
         ../../PngImporter/Test/gray.png
         ../../PngImporter/Test/rgb.png
         ../../PngImporter/Test/rgba.png
