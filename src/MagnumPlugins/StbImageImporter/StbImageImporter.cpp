@@ -25,9 +25,9 @@
 
 #include "StbImageImporter.h"
 
-#include <algorithm>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -42,7 +42,7 @@
 namespace Magnum { namespace Trade {
 
 struct StbImageImporter::State {
-    Containers::Array<unsigned char> data;
+    Containers::Array<char> data;
 };
 
 StbImageImporter::StbImageImporter() = default;
@@ -77,8 +77,8 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
     stbi_convert_iphone_png_to_rgb(true);
 
     _in.emplace();
-    _in->data = Containers::Array<unsigned char>{data.size()};
-    std::copy(data.begin(), data.end(), _in->data.data());
+    _in->data = Containers::Array<char>{data.size()};
+    Utility::copy(data, _in->data);
 }
 
 UnsignedInt StbImageImporter::doImage2DCount() const { return 1; }
@@ -90,8 +90,8 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt, Unsig
     stbi_uc* data;
     std::size_t channelSize;
     PixelFormat format;
-    if(stbi_is_hdr_from_memory(_in->data, _in->data.size())) {
-        data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(_in->data, _in->data.size(), &size.x(), &size.y(), &components, 0));
+    if(stbi_is_hdr_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size())) {
+        data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, 0));
         channelSize = 4;
         if(data) switch(components) {
             case 1: format = PixelFormat::R32F;         break;
@@ -101,7 +101,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt, Unsig
             default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     } else {
-        data = stbi_load_from_memory(_in->data, _in->data.size(), &size.x(), &size.y(), &components, 0);
+        data = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, 0);
         channelSize = 1;
         if(data) switch(components) {
             case 1: format = PixelFormat::R8Unorm;      break;
@@ -121,7 +121,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(UnsignedInt, Unsig
        can't use custom deleter to avoid dangling function pointer call when
        the plugin is unloaded sooner than the array is deleted) */
     Containers::Array<char> imageData{std::size_t(size.product()*components*channelSize)};
-    std::copy_n(reinterpret_cast<char*>(data), imageData.size(), imageData.begin());
+    Utility::copy(Containers::arrayView(reinterpret_cast<char*>(data), imageData.size()), imageData);
     stbi_image_free(data);
 
     /* Adjust pixel storage if row size is not four byte aligned */
