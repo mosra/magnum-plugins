@@ -117,25 +117,37 @@ namespace {
 
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     /** @todo horrible workaround, fix this properly */
+
+    conf.setValue("ImportColladaIgnoreUpDirection", false);
+
     Utility::ConfigurationGroup& postprocess = *conf.addGroup("postprocess");
     postprocess.setValue("JoinIdenticalVertices", true);
     postprocess.setValue("Triangulate", true);
     postprocess.setValue("SortByPType", true);
 }
 
+Containers::Pointer<Assimp::Importer> createImporter(Utility::ConfigurationGroup& conf) {
+    Containers::Pointer<Assimp::Importer> importer{Containers::InPlaceInit};
+
+    importer->SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION,
+        conf.value<bool>("ImportColladaIgnoreUpDirection"));
+
+    return importer;
 }
 
-AssimpImporter::AssimpImporter(): _importer{new Assimp::Importer} {
+}
+
+AssimpImporter::AssimpImporter() {
     /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
-AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager), _importer{new Assimp::Importer} {
+AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager) {
     /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
-AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin), _importer{new Assimp::Importer}  {}
+AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin) {}
 
 AssimpImporter::~AssimpImporter() = default;
 
@@ -217,6 +229,8 @@ struct IoSystem: Assimp::IOSystem {
 }
 
 void AssimpImporter::doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData) {
+    if(!_importer) _importer = createImporter(configuration());
+
     if(callback) {
         _importer->SetIOHandler(_ourFileCallback = new IoSystem{callback, userData});
 
@@ -265,6 +279,8 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
 }
 
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
+    if(!_importer) _importer = createImporter(configuration());
+
     if(!_f) {
         _f.reset(new File);
         /* File callbacks are set up in doSetFileCallbacks() */
@@ -386,6 +402,8 @@ void AssimpImporter::doOpenState(const void* state, const std::string& filePath)
 }
 
 void AssimpImporter::doOpenFile(const std::string& filename) {
+    if(!_importer) _importer = createImporter(configuration());
+
     _f.reset(new File);
     _f->filePath = Utility::Directory::path(filename);
 

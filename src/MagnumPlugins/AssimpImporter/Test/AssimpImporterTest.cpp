@@ -152,9 +152,13 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
+    bool importColladaIgnoreUpDirection;
+    bool expectFail;
 } UpDirectionPatchingData[]{
-    {"Y up", "y-up.dae"},
-    {"Z up", "z-up.dae"},
+    {"Y up", "y-up.dae", false, false},
+    {"Y up, ignored", "y-up.dae", true, false},
+    {"Z up", "z-up.dae", false, false},
+    {"Z up, ignored", "z-up.dae", true, true}
 };
 
 AssimpImporterTest::AssimpImporterTest() {
@@ -954,6 +958,11 @@ void AssimpImporterTest::upDirectionPatching() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Set only if not false to test correctness of the default as well */
+    if(data.importColladaIgnoreUpDirection)
+        importer->configuration().setValue("ImportColladaIgnoreUpDirection", true);
+    importer->configuration().setValue("ImportColladaIgnoreUpDirection",
+        data.importColladaIgnoreUpDirection);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -987,6 +996,7 @@ void AssimpImporterTest::upDirectionPatching() {
         MeshTools::transformPointsInPlace(object0Transformation,
             mesh->mutableAttribute<Vector3>(MeshAttribute::Position));
 
+        CORRADE_EXPECT_FAIL_IF(data.expectFail, "Up direction is ignored.");
         CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
             Containers::arrayView<Vector3>({
                 {-1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, 1.0f}
@@ -1005,6 +1015,7 @@ void AssimpImporterTest::upDirectionPatching() {
             object0Transformation*object1Transformation,
             mesh->mutableAttribute<Vector3>(MeshAttribute::Position));
 
+        CORRADE_EXPECT_FAIL_IF(data.expectFail, "Up direction is ignored.");
         CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
             Containers::arrayView<Vector3>({
                 {-2.0f, 2.0f, -2.0f}, {-2.0f, 2.0f, 2.0f}
@@ -1017,7 +1028,9 @@ void AssimpImporterTest::upDirectionPatchingPreTransformVertices() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-
+    /* Set only if not false to test correctness of the default as well */
+    if(data.importColladaIgnoreUpDirection)
+        importer->configuration().setValue("ImportColladaIgnoreUpDirection", true);
     importer->configuration().group("postprocess")->setValue("PreTransformVertices", true);
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
@@ -1040,6 +1053,7 @@ void AssimpImporterTest::upDirectionPatchingPreTransformVertices() {
         Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
         CORRADE_VERIFY(mesh);
 
+        CORRADE_EXPECT_FAIL_IF(data.expectFail, "Up direction is ignored.");
         CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
             Containers::arrayView<Vector3>({
                 {-1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, 1.0f},

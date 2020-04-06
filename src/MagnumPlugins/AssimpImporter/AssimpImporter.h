@@ -277,14 +277,20 @@ texture coordinates are optional.
 
 @section Trade-AssimpImporter-configuration Plugin-specific configuration
 
-Assimp has a versatile set of processing operations applied on imported scenes.
-The @cb{.conf} [postprocess] @ce group of @ref configuration() contains boolean
-toggles that correspond to the [aiPostProcessSteps](http://assimp.sourceforge.net/lib_html/postprocess_8h.html#a64795260b95f5a4b3f3dc1be4f52e410)
-enum. Some of them are enabled by default, some not; options for not yet
-supported features are omitted. The full form of the configuration is shown
-below:
+Assimp has a versatile set of configuration options and processing operations
+applied on imported scenes. A subset of these is exposed via
+@ref configuration(), the full form shown below. The first group of options
+matches the [AI_CONFIG_*](http://assimp.sourceforge.net/lib_html/config_8h.html)
+macros and has to be applied before opening first file with given plugin
+instance; to change them again you need to create a new importer instance.
 
-@snippet MagnumPlugins/AssimpImporter/AssimpImporter.conf configuration
+The @cb{.conf} [postprocess] @ce subgroup contains boolean toggles that
+correspond to the [aiPostProcessSteps](http://assimp.sourceforge.net/lib_html/postprocess_8h.html#a64795260b95f5a4b3f3dc1be4f52e410)
+enum. Some of them are enabled by default, some not; options for not yet
+supported features are omitted. These are passed to Assimp when opening a file,
+meaning a change in these will be always applied to the next opened file.
+
+@snippet MagnumPlugins/AssimpImporter/AssimpImporter.conf configuration_
 
 @section Trade-AssimpImporter-state Access to internal importer state
 
