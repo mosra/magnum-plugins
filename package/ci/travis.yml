@@ -45,7 +45,6 @@ matrix:
         sources:
         - llvm-toolchain-xenial
         packages:
-        - libgl1-mesa-dev
         - clang-3.8
         - ninja-build
         - libfaad-dev
