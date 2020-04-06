@@ -36,6 +36,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #define STBI_ASSERT CORRADE_INTERNAL_ASSERT
+
+/* Use our own thread-local, and only if CORRADE_BUILD_MULTITHREADED is set.
+   Verified in StbImageImporterTest::multithreaded(). */
+#define STBI_NO_THREAD_LOCALS
+#ifdef CORRADE_BUILD_MULTITHREADED
+#define STBI_THREAD_LOCAL CORRADE_THREAD_LOCAL
+#endif
+
 /* Not defining malloc/free, because there's no equivalent for realloc in C++ */
 #include "stb_image.h"
 
@@ -77,9 +85,12 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
-    stbi_set_flip_vertically_on_load(true);
+    /* NOTE: the StbImageImporterTest::multithreaded() test depends on these
+       two being located here. If that changes, the test needs to be adapted to
+       check those elsewhere. */
+    stbi_set_flip_vertically_on_load_thread(true);
     /* The docs say this is enabled by default, but it's *not*. Ugh. */
-    stbi_convert_iphone_png_to_rgb(true);
+    stbi_convert_iphone_png_to_rgb_thread(true);
 
     /* Try to open as a gif. If that succeeds, great. If that fails, the actual
        opening (and error handling) is done in doImage2D(). */

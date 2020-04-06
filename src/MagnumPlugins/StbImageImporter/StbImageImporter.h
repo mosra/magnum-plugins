@@ -137,6 +137,9 @@ images are imported with @ref PixelFormat::RGB32F, @ref PixelFormat::RGBA32F,
 default @ref PixelStorage parameters except for alignment, which may be changed
 to @cpp 1 @ce if the data require it.
 
+The importer is thread-safe if Corrade and Magnum is compiled with
+@ref CORRADE_BUILD_MULTITHREADED enabled.
+
 @subsection Trade-StbImageImporter-animated-gifs Animated GIFs
 
 In case the file is an animated GIF, the importer will report frame count in

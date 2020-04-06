@@ -318,6 +318,10 @@ void StbImageImporterTest::importTwice() {
 
 #ifndef CORRADE_TARGET_EMSCRIPTEN
 void StbImageImporterTest::multithreaded() {
+    #ifndef CORRADE_BUILD_MULTITHREADED
+    CORRADE_SKIP("CORRADE_BUILD_MULTITHREADED is not enabled.");
+    #endif
+
     Containers::Pointer<AbstractImporter> a = _manager.instantiate("StbImageImporter");
     Containers::Pointer<AbstractImporter> b = _manager.instantiate("StbImageImporter");
 
