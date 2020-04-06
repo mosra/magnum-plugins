@@ -85,5 +85,5 @@ ninja install # for Any*Importer tests
 
 # DevIL tests "leak" since testing directly the dlopen()ed dynamic plugin, was
 # not a problem when testing a statically built library.
-ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer.conf" CORRADE_TEST_COLOR=ON ctest -V -E "DevIl"
-ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer-devil.conf" CORRADE_TEST_COLOR=ON ctest -V -R DevIl
+ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer.conf" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -E "DevIl"
+ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer-devil.conf" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -R DevIl
