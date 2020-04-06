@@ -37,6 +37,10 @@
 
 #include "configure.h"
 
+#ifndef CORRADE_TARGET_EMSCRIPTEN
+#include <thread>
+#endif
+
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct StbImageImporterTest: TestSuite::Tester {
@@ -59,6 +63,10 @@ struct StbImageImporterTest: TestSuite::Tester {
 
     void openTwice();
     void importTwice();
+
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
+    void multithreaded();
+    #endif
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
@@ -90,6 +98,10 @@ StbImageImporterTest::StbImageImporterTest() {
 
               &StbImageImporterTest::openTwice,
               &StbImageImporterTest::importTwice});
+
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
+    addRepeatedTests({&StbImageImporterTest::multithreaded}, 100);
+    #endif
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -303,6 +315,33 @@ void StbImageImporterTest::importTwice() {
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }
 }
+
+#ifndef CORRADE_TARGET_EMSCRIPTEN
+void StbImageImporterTest::multithreaded() {
+    Containers::Pointer<AbstractImporter> a = _manager.instantiate("StbImageImporter");
+    Containers::Pointer<AbstractImporter> b = _manager.instantiate("StbImageImporter");
+
+    int counterA = 0, counterB = 0;
+    {
+        constexpr const char data[1]{};
+        auto fn = [&](AbstractImporter& importer, int& counter) {
+            for(std::size_t i = 0; i != 1000; ++i) {
+                importer.openData(data);
+                ++counter;
+            }
+        };
+
+        std::thread threadA{fn, std::ref(*a), std::ref(counterA)};
+        std::thread threadB{fn, std::ref(*b), std::ref(counterB)};
+
+        threadA.join();
+        threadB.join();
+    }
+
+    CORRADE_COMPARE(counterA, 1000);
+    CORRADE_COMPARE(counterB, 1000);
+}
+#endif
 
 }}}}
 

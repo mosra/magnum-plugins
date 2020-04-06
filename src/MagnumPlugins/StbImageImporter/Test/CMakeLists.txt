@@ -23,6 +23,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(NOT CORRADE_TARGET_EMSCRIPTEN)
+    find_package(Threads REQUIRED)
+endif()
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(PNGIMPORTER_TEST_DIR ".")
     set(JPEGIMPORTER_TEST_DIR ".")
@@ -65,6 +69,10 @@ if(BUILD_PLUGINS_STATIC)
 else()
     # So the plugins get properly built when building the test
     add_dependencies(StbImageImporterTest StbImageImporter)
+endif()
+if(NOT CORRADE_TARGET_EMSCRIPTEN)
+    # Testing thread safety of the importer
+    target_link_libraries(StbImageImporterTest PRIVATE Threads::Threads)
 endif()
 set_target_properties(StbImageImporterTest PROPERTIES FOLDER "MagnumPlugins/StbImageImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
