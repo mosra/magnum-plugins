@@ -35,6 +35,7 @@
 #  StbImageImporter             - Image importer using stb_image
 #  StbTrueTypeFont              - TrueType font using stb_truetype
 #  StbVorbisAudioImporter       - OGG audio importer using stb_vorbis
+#  StlImporter                  - STL importer
 #  TinyGltfImporter             - GLTF importer using tiny_gltf
 #
 # Some plugins expose their internal state through separate libraries. The
@@ -134,7 +135,7 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     FreeTypeFont HarfBuzzFont JpegImageConverter JpegImporter
     MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
     PrimitiveImporter StanfordImporter StbImageConverter StbImageImporter
-    StbTrueTypeFont StbVorbisAudioImporter TinyGltfImporter)
+    StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
@@ -390,6 +391,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # StbImageImporter has no dependencies
         # StbTrueTypeFont has no dependencies
         # StbVorbisAudioImporter has no dependencies
+        # StlImporter has no dependencies
         # TinyGltfImporter has no dependencies
 
         # Find plugin/library includes

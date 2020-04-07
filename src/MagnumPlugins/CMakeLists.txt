@@ -126,6 +126,10 @@ if(WITH_STBVORBISAUDIOIMPORTER)
     add_subdirectory(StbVorbisAudioImporter)
 endif()
 
+if(WITH_STLIMPORTER)
+    add_subdirectory(StlImporter)
+endif()
+
 if(WITH_TINYGLTFIMPORTER)
     add_subdirectory(TinyGltfImporter)
 endif()

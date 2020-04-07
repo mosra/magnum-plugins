@@ -60,6 +60,7 @@ option(WITH_STBIMAGECONVERTER "Build StbImageConverter plugin" OFF)
 option(WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
 option(WITH_STBTRUETYPEFONT "Build StbTrueTypeFont plugin" OFF)
 option(WITH_STBVORBISAUDIOIMPORTER "Build StbVorbisAudioImporter plugin" OFF)
+option(WITH_STLIMPORTER "Build StlImporter plugin" OFF)
 option(WITH_TINYGLTFIMPORTER "Build TinyGltfImporter plugin" OFF)
 
 include(CMakeDependentOption)
