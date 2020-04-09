@@ -149,8 +149,11 @@ set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assimp/include CACHE STRING "" FORCE)
 set(ASSIMP_LIBRARY_DEBUG assimp CACHE STRING "" FORCE)
 set(ASSIMP_LIBRARY_RELEASE assimp CACHE STRING "" FORCE)
-# The following is important to avoid Assimp renaming Magnum plugin binaries
+# The following is important to avoid Assimp appending `d` to all your
+# binaries. You need Assimp >= 5.0.0 for this to work, also note that after
+# 5.0.1 this option is prefixed with ASSIMP_, so better set both variants.
 set(INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 add_library(Assimp::Assimp ALIAS assimp)
 
