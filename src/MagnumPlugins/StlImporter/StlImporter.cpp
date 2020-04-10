@@ -29,6 +29,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Endianness.h>
+#include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/MeshData.h>
@@ -114,6 +115,17 @@ Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt) {
     Containers::StridedArrayView1D<Vector3> normals{vertexData,
         reinterpret_cast<Vector3*>(vertexData.data() + sizeof(Vector3)),
         3*triangleCount, outputVertexStride};
+
+    /* Endian conversion. This is needed only on Big-Endian systems, but it's
+       enabled always to minimize a risk of accidental breakage when we can't
+       test. */
+    for(Containers::StridedArrayView1D<Float> component:
+        Containers::arrayCast<2, Float>(positions).transposed<0, 1>())
+        Utility::Endianness::littleEndianInPlace(component);
+    for(Containers::StridedArrayView1D<Float> component:
+        Containers::arrayCast<2, Float>(normals).transposed<0, 1>())
+        Utility::Endianness::littleEndianInPlace(component);
+
     return MeshData{MeshPrimitive::Triangles, std::move(vertexData), {
         Trade::MeshAttributeData{MeshAttribute::Position, positions},
         Trade::MeshAttributeData{MeshAttribute::Normal, normals}}};
