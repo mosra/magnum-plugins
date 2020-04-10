@@ -62,7 +62,7 @@ void StlImporter::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    if(std::strncmp(data, "solid", 5) == 0) {
+    if(std::memcmp(data, "solid", 5) == 0) {
         Error{} << "Trade::StlImporter::openData(): ASCII STL files are not supported, sorry";
         return;
     }

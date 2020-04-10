@@ -44,6 +44,7 @@ struct StlImporterTest: TestSuite::Tester {
 
     void invalid();
     void ascii();
+    void almostAsciiButNotActually();
     void emptyBinary();
     void binary();
 
@@ -100,6 +101,7 @@ StlImporterTest::StlImporterTest() {
         Containers::arraySize(InvalidData));
 
     addTests({&StlImporterTest::ascii,
+              &StlImporterTest::almostAsciiButNotActually,
               &StlImporterTest::emptyBinary,
               &StlImporterTest::binary});
 
@@ -130,6 +132,30 @@ void StlImporterTest::ascii() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "ascii.stl")));
     CORRADE_COMPARE(out.str(), "Trade::StlImporter::openData(): ASCII STL files are not supported, sorry\n");
+}
+
+void StlImporterTest::almostAsciiButNotActually() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
+
+    constexpr const char data[]{
+        /* 80-byte header, starting like an ascii file but not fully. The
+           importer should not fail on that. */
+        's', 'o', 'l', 'i', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, /* No triangles */
+    };
+
+    CORRADE_VERIFY(importer->openData(data));
+
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(!mesh->isIndexed());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_COMPARE(mesh->vertexCount(), 0);
+    CORRADE_COMPARE(mesh->attributeCount(), 2);
 }
 
 void StlImporterTest::emptyBinary() {
