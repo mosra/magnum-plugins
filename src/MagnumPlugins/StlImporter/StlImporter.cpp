@@ -46,7 +46,7 @@ ImporterFeatures StlImporter::doFeatures() const { return ImporterFeature::OpenD
 
 bool StlImporter::doIsOpened() const { return !!_in; }
 
-void StlImporter::doClose() { _in = nullptr; }
+void StlImporter::doClose() { _in = Containers::NullOpt; }
 
 namespace {
     /* In the input file, the triangle is represented by 12 floats (3D normal
@@ -81,19 +81,19 @@ void StlImporter::doOpenData(Containers::ArrayView<const char> data) {
     }
 
     _in = Containers::Array<char>{Containers::NoInit, triangleData.size()};
-    Utility::copy(triangleData, _in);
+    Utility::copy(triangleData, *_in);
 }
 
 UnsignedInt StlImporter::doMeshCount() const { return 1; }
 
 Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt) {
     /* Make 2D views on input normals and positions */
-    const std::size_t triangleCount = _in.size()/InputTriangleStride;
-    Containers::StridedArrayView2D<const Vector3> inputNormals{_in,
-        reinterpret_cast<const Vector3*>(_in.data() + 0),
+    const std::size_t triangleCount = _in->size()/InputTriangleStride;
+    Containers::StridedArrayView2D<const Vector3> inputNormals{*_in,
+        reinterpret_cast<const Vector3*>(_in->data() + 0),
         {triangleCount, 3}, {InputTriangleStride, 0}};
-    Containers::StridedArrayView2D<const Vector3> inputPositions{_in,
-        reinterpret_cast<const Vector3*>(_in.data() + sizeof(Vector3)), {triangleCount, 3}, {InputTriangleStride, sizeof(Vector3)}};
+    Containers::StridedArrayView2D<const Vector3> inputPositions{*_in,
+        reinterpret_cast<const Vector3*>(_in->data() + sizeof(Vector3)), {triangleCount, 3}, {InputTriangleStride, sizeof(Vector3)}};
 
     /* The output stores a 3D position and 3D normal for each vertex */
     constexpr std::ptrdiff_t outputVertexStride = 6*4;

@@ -44,6 +44,7 @@ struct StlImporterTest: TestSuite::Tester {
 
     void invalid();
     void ascii();
+    void emptyBinary();
     void binary();
 
     void openTwice();
@@ -99,6 +100,7 @@ StlImporterTest::StlImporterTest() {
         Containers::arraySize(InvalidData));
 
     addTests({&StlImporterTest::ascii,
+              &StlImporterTest::emptyBinary,
               &StlImporterTest::binary});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -128,6 +130,29 @@ void StlImporterTest::ascii() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "ascii.stl")));
     CORRADE_COMPARE(out.str(), "Trade::StlImporter::openData(): ASCII STL files are not supported, sorry\n");
+}
+
+void StlImporterTest::emptyBinary() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
+
+    constexpr const char data[]{
+        /* 80-byte header */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, /* No triangles */
+    };
+
+    CORRADE_VERIFY(importer->openData(data));
+
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(!mesh->isIndexed());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_COMPARE(mesh->vertexCount(), 0);
+    CORRADE_COMPARE(mesh->attributeCount(), 2);
 }
 
 void StlImporterTest::binary() {

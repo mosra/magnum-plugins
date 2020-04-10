@@ -29,6 +29,7 @@
  * @brief Class @ref Magnum::Trade::StlImporter
  */
 
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
@@ -123,7 +124,7 @@ class MAGNUM_STLIMPORTER_EXPORT StlImporter: public AbstractImporter {
         MAGNUM_STLIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
         MAGNUM_STLIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
-        Containers::Array<char> _in;
+        Containers::Optional<Containers::Array<char>> _in;
 };
 
 }}
