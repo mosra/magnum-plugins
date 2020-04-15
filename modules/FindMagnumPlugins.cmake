@@ -99,7 +99,7 @@ set(_MAGNUMPLUGINS_DEPENDENCIES )
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     if(_component MATCHES ".+AudioImporter$")
         set(_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES Audio)
-    elseif(_component MATCHES ".+(Importer|ImageConverter)")
+    elseif(_component MATCHES ".+(Importer|ImageConverter|SceneConverter)")
         set(_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES Trade)
     elseif(_component MATCHES ".+(Font|FontConverter)$")
         set(_MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES Text)
@@ -218,6 +218,10 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             # ImageConverter plugin specific name suffixes
             elseif(_component MATCHES ".+ImageConverter$")
                 set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX imageconverters)
+
+            # SceneConverter plugin specific name suffixes
+            elseif(_component MATCHES ".+SceneConverter$")
+                set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX sceneconverters)
 
             # FontConverter plugin specific name suffixes
             elseif(_component MATCHES ".+FontConverter$")
