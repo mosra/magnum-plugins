@@ -32,6 +32,8 @@
 #   font converter plugins
 #  MAGNUM_PLUGINS_IMAGECONVERTER[|_DEBUG|_RELEASE]_DIR - Directory with dynamic
 #   image converter plugins
+#  MAGNUM_PLUGINS_SCENECONVERTER[|_DEBUG|_RELEASE]_DIR - Directory with dynamic
+#   scene converter plugins
 #  MAGNUM_PLUGINS_IMPORTER[|_DEBUG|_RELEASE]_DIR  - Directory with dynamic
 #   importer plugins
 #  MAGNUM_PLUGINS_AUDIOIMPORTER[|_DEBUG|_RELEASE]_DIR - Directory with dynamic
@@ -91,6 +93,7 @@
 #  distancefieldconverter       - magnum-distancefieldconverter executable
 #  fontconverter                - magnum-fontconverter executable
 #  imageconverter               - magnum-imageconverter executable
+#  sceneconverterter            - magnum-sceneconverter executable
 #  gl-info                      - magnum-gl-info executable
 #  al-info                      - magnum-al-info executable
 #
@@ -174,6 +177,10 @@
 #   plugin binary installation directory
 #  MAGNUM_PLUGINS_IMPORTER_[DEBUG|RELEASE]_LIBRARY_INSTALL_DIR  - Importer
 #   plugin library installation directory
+#  MAGNUM_PLUGINS_SCENECONVERTER_[DEBUG|RELEASE]_BINARY_INSTALL_DIR - Scene
+#   converter plugin binary installation directory
+#  MAGNUM_PLUGINS_SCENECONVERTER_[DEBUG|RELEASE]_LIBRARY_INSTALL_DIR - Scene
+#   converter plugin library installation directory
 #  MAGNUM_PLUGINS_AUDIOIMPORTER_[DEBUG|RELEASE]_BINARY_INSTALL_DIR - Audio
 #   importer plugin binary installation directory
 #  MAGNUM_PLUGINS_AUDIOIMPORTER_[DEBUG|RELEASE]_LIBRARY_INSTALL_DIR - Audio
@@ -357,7 +364,8 @@ set(_MAGNUM_PLUGIN_COMPONENT_LIST
     MagnumFont MagnumFontConverter ObjImporter TgaImageConverter TgaImporter
     WavAudioImporter)
 set(_MAGNUM_EXECUTABLE_COMPONENT_LIST
-    distancefieldconverter fontconverter imageconverter gl-info al-info)
+    distancefieldconverter fontconverter imageconverter sceneconverter gl-info
+    al-info)
 
 # Inter-component dependencies
 set(_MAGNUM_Audio_DEPENDENCIES )
@@ -454,7 +462,7 @@ set(_MAGNUM_ObjImporter_DEPENDENCIES MeshTools) # and below
 foreach(_component ${_MAGNUM_PLUGIN_COMPONENT_LIST})
     if(_component MATCHES ".+AudioImporter")
         list(APPEND _MAGNUM_${_component}_DEPENDENCIES Audio)
-    elseif(_component MATCHES ".+(Importer|ImageConverter)")
+    elseif(_component MATCHES ".+(Importer|ImageConverter|SceneConverter)")
         list(APPEND _MAGNUM_${_component}_DEPENDENCIES Trade)
     elseif(_component MATCHES ".+(Font|FontConverter)")
         list(APPEND _MAGNUM_${_component}_DEPENDENCIES Text TextureTools)
@@ -544,6 +552,10 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
             # ImageConverter plugin specific name suffixes
             elseif(_component MATCHES ".+ImageConverter$")
                 set(_MAGNUM_${_COMPONENT}_PATH_SUFFIX imageconverters)
+
+            # SceneConverter plugin specific name suffixes
+            elseif(_component MATCHES ".+SceneConverter$")
+                set(_MAGNUM_${_COMPONENT}_PATH_SUFFIX sceneconverters)
 
             # FontConverter plugin specific name suffixes
             elseif(_component MATCHES ".+FontConverter$")
@@ -1113,6 +1125,10 @@ set(MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_BINA
 set(MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_LIBRARY_INSTALL_DIR}/importers)
 set(MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_BINARY_INSTALL_DIR}/importers)
 set(MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_LIBRARY_INSTALL_DIR}/importers)
+set(MAGNUM_PLUGINS_SCENECONVERTER_DEBUG_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_BINARY_INSTALL_DIR}/sceneconverters)
+set(MAGNUM_PLUGINS_SCENECONVERTER_DEBUG_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_LIBRARY_INSTALL_DIR}/sceneconverters)
+set(MAGNUM_PLUGINS_SCENECONVERTER_RELEASE_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_LIBRARY_INSTALL_DIR}/sceneconverters)
+set(MAGNUM_PLUGINS_SCENECONVERTER_RELEASE_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_BINARY_INSTALL_DIR}/sceneconverters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_BINARY_INSTALL_DIR}/audioimporters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_LIBRARY_INSTALL_DIR}/audioimporters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_BINARY_INSTALL_DIR}/audioimporters)
@@ -1145,6 +1161,9 @@ set(MAGNUM_PLUGINS_IMAGECONVERTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/imag
 set(MAGNUM_PLUGINS_IMPORTER_DIR ${MAGNUM_PLUGINS_DIR}/importers)
 set(MAGNUM_PLUGINS_IMPORTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/importers)
 set(MAGNUM_PLUGINS_IMPORTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/importers)
+set(MAGNUM_PLUGINS_SCENECONVERTER_DIR ${MAGNUM_PLUGINS_DIR}/sceneconverters)
+set(MAGNUM_PLUGINS_SCENECONVERTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/sceneconverters)
+set(MAGNUM_PLUGINS_SCENECONVERTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/sceneconverters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_DIR ${MAGNUM_PLUGINS_DIR}/audioimporters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/audioimporters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/audioimporters)
