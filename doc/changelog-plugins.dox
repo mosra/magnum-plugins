@@ -63,6 +63,9 @@ namespace Magnum {
 -   New @ref Trade::StlImporter "StlImporter" plugin for importing binary STL
     files
 -   Animated GIF support in @ref Trade::StbImageImporter "StbImageImporter"
+-   New @ref Trade::MagnumImporter "MagnumImporter" and
+    @ref Trade::MagnumSceneConverter "MagnumSceneConverter" plugins,
+    complementing the binary serialization support in the @ref Trade library
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 

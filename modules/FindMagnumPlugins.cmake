@@ -25,6 +25,8 @@
 #  HarfBuzzFont                 - HarfBuzz font
 #  JpegImageConverter           - JPEG image converter
 #  JpegImporter                 - JPEG importer
+#  MagnumImporter               - Magnum blob importer plugin
+#  MagnumSceneConverter         - Magnum blob converter plugin
 #  MiniExrImageConverter        - OpenEXR image converter using miniexr
 #  OpenGexImporter              - OpenGEX importer
 #  PngImageConverter            - PNG image converter
@@ -130,9 +132,10 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
-    AssimpImporter BasisImageConverter BasisImporter DdsImporter DevIlImageImporter
-    DrFlacAudioImporter DrMp3AudioImporter DrWavAudioImporter Faad2AudioImporter
-    FreeTypeFont HarfBuzzFont JpegImageConverter JpegImporter
+    AssimpImporter BasisImageConverter BasisImporter DdsImporter
+    DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
+    DrWavAudioImporter Faad2AudioImporter FreeTypeFont HarfBuzzFont
+    JpegImageConverter JpegImporter MagnumImporter MagnumSceneConverter
     MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
     PrimitiveImporter StanfordImporter StbImageConverter StbImageImporter
     StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
@@ -366,6 +369,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                     INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
             endif()
 
+        # MagnumImporter has no dependencies
+        # MagnumSceneConverter has no dependencies
         # MiniExrImageConverter has no dependencies
         # No special setup for the OpenDdl library
         # OpenGexImporter has no dependencies

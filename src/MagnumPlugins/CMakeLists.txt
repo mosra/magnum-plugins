@@ -86,6 +86,14 @@ if(WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
 
+if(WITH_MAGNUMIMPORTER)
+    add_subdirectory(MagnumImporter)
+endif()
+
+if(WITH_MAGNUMSCENECONVERTER)
+    add_subdirectory(MagnumSceneConverter)
+endif()
+
 if(WITH_MINIEXRIMAGECONVERTER)
     add_subdirectory(MiniExrImageConverter)
 endif()
