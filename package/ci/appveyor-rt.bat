@@ -34,7 +34,7 @@ cmake --build . --config Release --target install -- /m /v:m || exit /b
 cd .. && cd ..
 
 rem Crosscompile Magnum
-git clone --depth 1 git://github.com/mosra/magnum.git || exit /b
+git clone --depth 1 --branch meshdata-cereal-killer git://github.com/mosra/magnum.git || exit /b
 cd magnum || exit /b
 mkdir build-rt && cd build-rt || exit /b
 cmake .. ^
