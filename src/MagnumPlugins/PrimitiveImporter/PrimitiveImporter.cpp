@@ -105,6 +105,7 @@ constexpr const char* Names[]{
     "grid3DWireframe",
 
     "icosphereSolid",
+    "icosphereWireframe",
 
     "line2D",
     "line3D",
@@ -153,6 +154,7 @@ constexpr const char* Names3D[]{
     "grid3DSolid",
     "grid3DWireframe",
     "icosphereSolid",
+    "icosphereWireframe",
     "line3D",
     "planeSolid",
     "planeWireframe",
@@ -489,6 +491,9 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         return Primitives::icosphereSolid(
             conf->value<UnsignedInt>("subdivisions"));
     }
+
+    if(std::strcmp(Names[id], "icosphereWireframe") == 0)
+        return Primitives::icosphereWireframe();
 
     if(std::strcmp(Names[id], "line2D") == 0) {
         Utility::ConfigurationGroup* conf;

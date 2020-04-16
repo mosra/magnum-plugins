@@ -91,6 +91,7 @@ constexpr struct {
     {"grid3DWireframe", 35, 116},
 
     {"icosphereSolid", 42, 240},
+    {"icosphereWireframe", 12, 60},
 
     {"line2D", 2, 0},
     {"line3D", 2, 0},
