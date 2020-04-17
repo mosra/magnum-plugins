@@ -103,7 +103,10 @@ StlImporterTest::StlImporterTest() {
     addTests({&StlImporterTest::ascii,
               &StlImporterTest::almostAsciiButNotActually,
               &StlImporterTest::emptyBinary,
-              &StlImporterTest::binary});
+              &StlImporterTest::binary,
+
+              &StlImporterTest::openTwice,
+              &StlImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -215,6 +218,31 @@ void StlImporterTest::binary() {
             {0.4f, 0.5f, 0.6f},
             {0.4f, 0.5f, 0.6f}
         }), TestSuite::Compare::Container);
+}
+
+void StlImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void StlImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl")));
+
+    /* Verify that everything is working the same way on second use */
+    {
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->vertexCount(), 6);
+    } {
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->vertexCount(), 6);
+    }
 }
 
 }}}}
