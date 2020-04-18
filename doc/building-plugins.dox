@@ -338,6 +338,9 @@ By default no plugins are built and you need to select them manually:
     @ref Trade::MagnumImporter "MagnumImporter" plugin.
 -   `WITH_MAGNUMSCENECONVERTER` --- Build the
     @ref Trade::MagnumSceneConverter "MagnumSceneConverter" plugin.
+-   `WITH_MESHOPTIMIZERSCENECONVERTER` --- Build the
+    @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter"
+    plugin.
 -   `WITH_MINIEXRIMAGECONVERTER` --- Build the
     @ref Trade::MiniExrImageConverter "MiniExrImageConverter" plugin.
 -   `WITH_OPENGEXIMPORTER` --- Build the @ref Trade::OpenGexImporter "OpenGexImporter"

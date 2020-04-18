@@ -94,6 +94,10 @@ if(WITH_MAGNUMSCENECONVERTER)
     add_subdirectory(MagnumSceneConverter)
 endif()
 
+if(WITH_MESHOPTIMIZERSCENECONVERTER)
+    add_subdirectory(MeshOptimizerSceneConverter)
+endif()
+
 if(WITH_MINIEXRIMAGECONVERTER)
     add_subdirectory(MiniExrImageConverter)
 endif()

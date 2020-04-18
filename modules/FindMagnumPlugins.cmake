@@ -27,6 +27,7 @@
 #  JpegImporter                 - JPEG importer
 #  MagnumImporter               - Magnum blob importer plugin
 #  MagnumSceneConverter         - Magnum blob converter plugin
+#  MeshOptimizerSceneConverter  - MeshOptimizer converter plugin
 #  MiniExrImageConverter        - OpenEXR image converter using miniexr
 #  OpenGexImporter              - OpenGEX importer
 #  PngImageConverter            - PNG image converter
@@ -136,9 +137,10 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
     DrWavAudioImporter Faad2AudioImporter FreeTypeFont HarfBuzzFont
     JpegImageConverter JpegImporter MagnumImporter MagnumSceneConverter
-    MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
-    PrimitiveImporter StanfordImporter StbImageConverter StbImageImporter
-    StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
+    MeshOptimizerSceneConverter MiniExrImageConverter OpenGexImporter
+    PngImageConverter PngImporter PrimitiveImporter StanfordImporter
+    StbImageConverter StbImageImporter StbTrueTypeFont StbVorbisAudioImporter
+    StlImporter TinyGltfImporter)
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
@@ -371,6 +373,13 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # MagnumImporter has no dependencies
         # MagnumSceneConverter has no dependencies
+
+        # MeshOptimizerSceneConverter plugin dependencies
+        elseif(_component STREQUAL MeshOptimizerSceneConverter)
+            find_package(meshoptimizer CONFIG)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES meshoptimizer::meshoptimizer)
+
         # MiniExrImageConverter has no dependencies
         # No special setup for the OpenDdl library
         # OpenGexImporter has no dependencies

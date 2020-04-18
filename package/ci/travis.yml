@@ -165,6 +165,9 @@ notifications:
 cache:
   directories:
   - $HOME/cmake
+  # Not caching meshoptimizer build because it's small enough <3 and so it's
+  # faster to download and build than unpacking the cache. Would cache just
+  # the archive file, but Travis doesn't know how to do that, sigh.
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ ! "$TARGET" == "desktop-sanitizers" ] && [ ! "$TARGET" == "android" ]; then export CXX=g++-4.8; fi
@@ -192,6 +195,9 @@ install:
 
 # FAAD2, HarfBuzz, Assimp, DevIL
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install faad2 harfbuzz assimp devil; fi
+
+# meshoptimizer, few commits after 0.14 with a fix for old Apple Clang
+- if [[ "$TARGET" == desktop* ]]; then wget -nc --no-check-certificate https://github.com/zeux/meshoptimizer/archive/97c52415c6d29f297a76482ddde22f739292446d.tar.gz && mkdir -p meshoptimizer && cd meshoptimizer && tar --strip-components=1 -xzf ../97c52415c6d29f297a76482ddde22f739292446d.tar.gz && mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=$HOME/deps -G Ninja && ninja install && cd $TRAVIS_BUILD_DIR; fi
 
 # Basis Universal
 - export BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed && wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.zip && unzip -q $BASIS_VERSION; mv basis_universal-$BASIS_VERSION $HOME/basis_universal

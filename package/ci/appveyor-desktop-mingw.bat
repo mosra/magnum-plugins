@@ -19,6 +19,21 @@ cmake .. ^
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
 
+rem build meshoptimizer
+IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v0.14.tar.gz appveyor DownloadFile https://github.com/zeux/meshoptimizer/archive/v0.14.tar.gz || exit /b
+7z x v0.14.tar.gz || exit /b
+7z x v0.14.tar || exit /b
+ren meshoptimizer-v0.14 meshoptimizer || exit /b
+cd meshoptimizer || exit /b
+mkdir build && cd build || exit /b
+cmake .. ^
+    -DCMAKE_CXX_FLAGS="--coverage" ^
+    -DCMAKE_BUILD_TYPE=Debug ^
+    -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
+    -G Ninja || exit /b
+cmake --build . --target install || exit /b
+cd .. && cd .. || exit /b
+
 rem Build Corrade
 git clone --depth 1 git://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b
@@ -80,6 +95,7 @@ cmake .. ^
     -DWITH_JPEGIMPORTER=ON ^
     -DWITH_MAGNUMIMPORTER=ON ^
     -DWITH_MAGNUMSCENECONVERTER=ON ^
+    -DWITH_MESHOPTIMIZERSCENECONVERTER=ON ^
     -DWITH_MINIEXRIMAGECONVERTER=ON ^
     -DWITH_OPENGEXIMPORTER=ON ^
     -DWITH_PNGIMAGECONVERTER=OFF ^

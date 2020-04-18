@@ -62,6 +62,8 @@ namespace Magnum {
     contents of the @ref Primitives library via importer APIs
 -   New @ref Trade::StlImporter "StlImporter" plugin for importing binary STL
     files
+-   New @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter"
+    plugin, integrating [meshoptimizer](https://github.com/zeux/meshoptimizer)
 -   Animated GIF support in @ref Trade::StbImageImporter "StbImageImporter"
 -   New @ref Trade::MagnumImporter "MagnumImporter" and
     @ref Trade::MagnumSceneConverter "MagnumSceneConverter" plugins,
