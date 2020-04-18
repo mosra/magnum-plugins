@@ -69,6 +69,8 @@ digraph "Magnum Plugins dependency order" {
     AssimpImporter -> AnyImageImporter
     FreeTypeFont -> MagnumText
     HarfBuzzFont -> FreeTypeFont
+    MeshOptimizerSceneConverter -> MagnumTrade
+    MeshOptimizerSceneConverter -> MagnumMeshTools
     OpenGexImporter -> MagnumTrade
     OpenGexImporter -> AnyImageImporter
     OpenGexImporter -> MagnumOpenDdl

@@ -64,6 +64,8 @@ namespace Magnum {
     writing binary PLY files
 -   New @ref Trade::StlImporter "StlImporter" plugin for importing binary STL
     files
+-   New @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter"
+    plugin, integrating [meshoptimizer](https://github.com/zeux/meshoptimizer)
 -   Animated GIF support in @ref Trade::StbImageImporter "StbImageImporter"
 -   Texture coordinate set import in @ref Trade::AssimpImporter "AssimpImporter"
     and @ref Trade::TinyGltfImporter "TinyGltfImporter" (see

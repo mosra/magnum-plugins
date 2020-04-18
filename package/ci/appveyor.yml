@@ -73,3 +73,5 @@ cache:
 - libjpeg-turbo-1.5.0.tar.gz -> package/ci/appveyor-cache-reset.txt
 - DevIL-SDK-x64-1.7.8.zip -> package/ci/appveyor-cache-reset.txt
 - basis_universal-%BASIS_VERSION%.zip -> package/ci/appveyor-cache-reset.txt
+# meshoptimizer
+- v0.14.zip -> package/ci/appveyor-cache-reset.txt

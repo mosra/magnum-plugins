@@ -49,6 +49,7 @@ cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WI
 option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
 option(WITH_JPEGIMAGECONVERTER "Build JpegImageConverter plugin" OFF)
 option(WITH_JPEGIMPORTER "Build JpegImporter plugin" OFF)
+option(WITH_MESHOPTIMIZERSCENECONVERTER "Build MeshOptimizerSceneConverter plugin" OFF)
 option(WITH_MINIEXRIMAGECONVERTER "Build MiniExrImageConverter plugin" OFF)
 cmake_dependent_option(WITH_OPENDDL "Build OpenDdl library" OFF "NOT WITH_OPENGEXIMPORTER" ON)
 option(WITH_OPENGEXIMPORTER "Build OpenGexImporter plugin" OFF)

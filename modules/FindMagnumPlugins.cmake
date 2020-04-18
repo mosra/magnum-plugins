@@ -25,6 +25,7 @@
 #  HarfBuzzFont                 - HarfBuzz font
 #  JpegImageConverter           - JPEG image converter
 #  JpegImporter                 - JPEG importer
+#  MeshOptimizerSceneConverter  - MeshOptimizer scene converter
 #  MiniExrImageConverter        - OpenEXR image converter using miniexr
 #  OpenGexImporter              - OpenGEX importer
 #  PngImageConverter            - PNG image converter
@@ -108,6 +109,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
     if(_component STREQUAL AssimpImporter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
+    elseif(_component STREQUAL MeshOptimizerSceneConverter)
+        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES MeshTools)
     elseif(_component STREQUAL OpenGexImporter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     elseif(_component STREQUAL PrimitiveImporter)
@@ -136,9 +139,11 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     AssimpImporter BasisImageConverter BasisImporter DdsImporter
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
     DrWavAudioImporter Faad2AudioImporter FreeTypeFont HarfBuzzFont
-    JpegImageConverter JpegImporter MiniExrImageConverter OpenGexImporter
-    PngImageConverter PngImporter PrimitiveImporter StanfordImporter
-    StanfordSceneConverter StbImageConverter StbImageImporter StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
+    JpegImageConverter JpegImporter MeshOptimizerSceneConverter
+    MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
+    PrimitiveImporter StanfordImporter StanfordSceneConverter StbImageConverter
+    StbImageImporter StbTrueTypeFont StbVorbisAudioImporter StlImporter
+    TinyGltfImporter)
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
@@ -367,6 +372,17 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             else()
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
+            endif()
+
+        # MeshOptimizerSceneConverter plugin dependencies
+        elseif(_component STREQUAL MeshOptimizerSceneConverter)
+            if(NOT TARGET meshoptimizer)
+                find_package(meshoptimizer REQUIRED CONFIG)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES meshoptimizer::meshoptimizer)
+            else()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES meshoptimizer)
             endif()
 
         # MiniExrImageConverter has no dependencies

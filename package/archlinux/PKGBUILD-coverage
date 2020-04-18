@@ -7,7 +7,7 @@ arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
 depends=('magnum' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
-makedepends=('cmake' 'ninja' 'lcov' 'basis-universal-src')
+makedepends=('cmake' 'ninja' 'lcov' 'basis-universal-src' 'meshoptimizer')
 options=(!strip)
 provides=('magnum-plugins-git')
 
@@ -41,6 +41,7 @@ build() {
         -DWITH_HARFBUZZFONT=ON \
         -DWITH_JPEGIMAGECONVERTER=ON \
         -DWITH_JPEGIMPORTER=ON \
+        -DWITH_MESHOPTIMIZERSCENECONVERTER=ON \
         -DWITH_MINIEXRIMAGECONVERTER=ON \
         -DWITH_OPENGEXIMPORTER=ON \
         -DWITH_PNGIMAGECONVERTER=ON \

@@ -133,6 +133,9 @@ This command will not try to find any actual plugin. The plugins are:
 -   `JpegImageConverter` --- @ref Trade::JpegImageConverter "JpegImageConverter"
     plugin
 -   `JpegImporter` --- @ref Trade::JpegImporter "JpegImporter" plugin
+-   `MeshOptimizerSceneConverter` ---
+    @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter"
+    plugin
 -   `MiniExrImageConverter` --- @ref Trade::MiniExrImageConverter "MiniExrImageConverter"
     plugin
 -   `OpenGexImporter` --- @ref Trade::OpenGexImporter "OpenGexImporter" plugin

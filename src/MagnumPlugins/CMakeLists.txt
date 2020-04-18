@@ -86,6 +86,10 @@ if(WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
 
+if(WITH_MESHOPTIMIZERSCENECONVERTER)
+    add_subdirectory(MeshOptimizerSceneConverter)
+endif()
+
 if(WITH_MINIEXRIMAGECONVERTER)
     add_subdirectory(MiniExrImageConverter)
 endif()
