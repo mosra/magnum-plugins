@@ -418,7 +418,7 @@ Containers::Pointer<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt 
 
             matrix = Matrix4::scaling(_d->yUp ? v : fixScalingZUp(v));
 
-        } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
         transformation = transformation*matrix;
     }
@@ -489,7 +489,7 @@ template<class Result> Result extractColorData(const OpenDdl::Structure floatArr
         case 4: return extractColorData2<Result, 4>(floatArray);
     }
 
-    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 }
@@ -625,7 +625,7 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
 
             stride += sizeof(Vector2);
 
-        } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
         /* If this is the first attribute, save the vertex count; otherwise
            check that all attributes have the same amount of vertices */
@@ -736,7 +736,7 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
                 return Containers::NullOpt;
             #endif
 
-            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     }
 

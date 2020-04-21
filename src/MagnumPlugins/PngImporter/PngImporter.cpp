@@ -212,7 +212,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
             case PNG_COLOR_TYPE_GRAY: format = PixelFormat::R8Unorm; break;
             case PNG_COLOR_TYPE_RGB:  format = PixelFormat::RGB8Unorm; break;
             case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA8Unorm; break;
-            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
     /* 16-bit images */
@@ -221,12 +221,12 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
             case PNG_COLOR_TYPE_GRAY: format = PixelFormat::R16Unorm; break;
             case PNG_COLOR_TYPE_RGB:  format = PixelFormat::RGB16Unorm; break;
             case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA16Unorm; break;
-            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
     /* https://en.wikipedia.org/wiki/Portable_Network_Graphics#Pixel_format
        Only 1, 2, 4, 8 or 16 bits per channel, we expand the 1/2/4 to 8 above */
-    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Always using the default 4-byte alignment */
     return Trade::ImageData2D{format, size, std::move(data)};

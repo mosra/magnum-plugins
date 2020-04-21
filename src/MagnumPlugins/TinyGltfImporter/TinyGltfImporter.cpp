@@ -782,7 +782,7 @@ Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
             Vector2{Float(camera.orthographic.xmag), Float(camera.orthographic.ymag)}*2.0f,
             Float(camera.orthographic.znear), Float(camera.orthographic.zfar), &camera};
 
-    CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 UnsignedInt TinyGltfImporter::doLightCount() const {
@@ -1192,7 +1192,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             componentFormat = VertexFormat::Float;
         else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_DOUBLE)
             componentFormat = VertexFormat::Double;
-        else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
         UnsignedInt componentCount;
         UnsignedInt vectorCount = 0;
@@ -1213,7 +1213,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
         } else if(accessor.type == TINYGLTF_TYPE_MAT4) {
             componentCount = 4;
             vectorCount = 4;
-        } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
         /* Floats should not be normalized */
         if(accessor.normalized && (componentFormat == VertexFormat::Float || componentFormat == VertexFormat::Double)) {
@@ -1311,7 +1311,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
                     attributeData[i].format() != VertexFormat::Vector2b &&
                     attributeData[i].format() != VertexFormat::Vector2us &&
                     attributeData[i].format() != VertexFormat::Vector2s)
-                CORRADE_ASSERT_UNREACHABLE();
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
             /* LCOV_EXCL_STOP */
         }
     }
@@ -1721,7 +1721,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
             minFilter = SamplerFilter::Linear;
             mipmap = SamplerMipmap::Linear;
             break;
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     SamplerFilter magFilter;
@@ -1736,7 +1736,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
         case -1:
             magFilter = SamplerFilter::Linear;
             break;
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     /* There's wrapR that is a tiny_gltf extension and is set to zero. Ignoring
@@ -1756,7 +1756,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
             case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT:
                 wrapping[wrap.second] = SamplerWrapping::MirroredRepeat;
                 break;
-            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     }
 

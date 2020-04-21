@@ -188,10 +188,10 @@ struct IoStream: Assimp::IOStream {
     /* We are just a reader */
     /* LCOV_EXCL_START */
     std::size_t Write(const void*, std::size_t, std::size_t) override {
-        CORRADE_ASSERT_UNREACHABLE();
+        CORRADE_INTERNAL_ASSERT_UNREACHABLE();
     }
     void Flush() override {
-        CORRADE_ASSERT_UNREACHABLE();
+        CORRADE_INTERNAL_ASSERT_UNREACHABLE();
     }
     /* LCOV_EXCL_STOP */
 

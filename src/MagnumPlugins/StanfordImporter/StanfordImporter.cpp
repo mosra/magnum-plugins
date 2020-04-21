@@ -132,7 +132,7 @@ template<class T> T extractIndexValue(const char* buffer, const MeshIndexType ty
         #undef _c
         /* LCOV_EXCL_STOP */
 
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 }
 
@@ -820,7 +820,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
                 } else if(formatSize == 8) {
                     for(Containers::StridedArrayView1D<UnsignedLong> component: Containers::arrayCast<2, UnsignedLong>(mutableData, componentCount).transposed<0, 1>())
                         Utility::Endianness::swapInPlace(component);
-                } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
             }
         }
 

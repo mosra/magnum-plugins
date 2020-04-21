@@ -168,7 +168,7 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
             for(std::size_t x = 0; x != src.size()[1]; ++x)
                 dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
 
-    } else CORRADE_ASSERT_UNREACHABLE();
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
 
     basisu::basis_compressor basis;
     basis.init(params);
@@ -201,7 +201,7 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
         case basisu::basis_compressor::error_code::cECFailedWritingOutput:
             /* We do not write any files, just data */
         default:
-            CORRADE_ASSERT_UNREACHABLE();
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE();
             return {};
         /* LCOV_EXCL_STOP */
     }

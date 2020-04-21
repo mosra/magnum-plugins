@@ -161,7 +161,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
             case 2: format = PixelFormat::RG32F;        break;
             case 3: format = PixelFormat::RGB32F;       break;
             case 4: format = PixelFormat::RGBA32F;      break;
-            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     } else {
         data = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, 0);
@@ -171,7 +171,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
             case 2: format = PixelFormat::RG8Unorm;     break;
             case 3: format = PixelFormat::RGB8Unorm;    break;
             case 4: format = PixelFormat::RGBA8Unorm;   break;
-            default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     }
 

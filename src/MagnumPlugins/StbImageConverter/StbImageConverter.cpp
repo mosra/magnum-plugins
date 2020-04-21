@@ -105,7 +105,7 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
                 Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for HDR output";
                 return nullptr;
         }
-    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Get data properties and calculate the initial slice based on subimage
        offset */
@@ -153,7 +153,7 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
             Error() << "Trade::StbImageConverter::exportToData(): error while writing the TGA file";
             return nullptr;
         }
-    } else CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Copy the data into array (I would *love* to have a detach() function on
        std::string) */

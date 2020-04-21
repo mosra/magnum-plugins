@@ -75,7 +75,7 @@ CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type) {
             return CompressedPixelFormat::EacR11Unorm;
         case BasisImporter::TargetFormat::EacRG:
             return CompressedPixelFormat::EacRG11Unorm;
-        default: CORRADE_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 }
 
