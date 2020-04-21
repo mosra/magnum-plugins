@@ -254,7 +254,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "capsule3DSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("capsule3DSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("capsule3DSolid"));
 
         Primitives::CapsuleFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -272,7 +272,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "capsule3DWireframe") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("capsule3DWireframe"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("capsule3DWireframe"));
 
         return Primitives::capsule3DWireframe(
             conf->value<UnsignedInt>("hemisphereRings"),
@@ -283,7 +283,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "circle2DSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("circle2DSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle2DSolid"));
 
         Primitives::Circle2DFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -296,7 +296,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "circle2DWireframe") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("circle2DWireframe"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle2DWireframe"));
 
         return Primitives::circle2DWireframe(
             conf->value<UnsignedInt>("segments"));
@@ -304,7 +304,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "circle3DSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("circle3DSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle3DSolid"));
 
         Primitives::Circle3DFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -319,7 +319,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "circle3DWireframe") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("circle3DWireframe"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle3DWireframe"));
 
         return Primitives::circle3DWireframe(
             conf->value<UnsignedInt>("segments"));
@@ -327,7 +327,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "coneSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("coneSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("coneSolid"));
 
         Primitives::ConeFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -346,7 +346,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "coneWireframe") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("coneWireframe"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("coneWireframe"));
 
         return Primitives::coneWireframe(
             conf->value<UnsignedInt>("segments"),
@@ -370,7 +370,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "cylinderSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("cylinderSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("cylinderSolid"));
 
         Primitives::CylinderFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -389,7 +389,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "cylinderWireframe") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("cylinderWireframe"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("cylinderWireframe"));
 
         return Primitives::cylinderWireframe(
             conf->value<UnsignedInt>("rings"),
@@ -399,7 +399,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "gradient2D") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("gradient2D"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient2D"));
 
         return Primitives::gradient2D(
             conf->value<Vector2>("a"),
@@ -411,7 +411,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
     if(std::strcmp(Names[id], "gradient2DHorizontal") == 0) {
         Utility::ConfigurationGroup* conf;
         /* The same config shared for all 2D gradients */
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("gradient2D"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient2D"));
 
         return Primitives::gradient2DHorizontal(
             conf->value<Color4>("colorA"),
@@ -421,7 +421,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
     if(std::strcmp(Names[id], "gradient2DVertical") == 0) {
         Utility::ConfigurationGroup* conf;
         /* The same config shared for all 2D gradients */
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("gradient2D"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient2D"));
 
         return Primitives::gradient2DVertical(
             conf->value<Color4>("colorA"),
@@ -430,7 +430,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "gradient3D") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("gradient3D"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient3D"));
 
         return Primitives::gradient3D(
             conf->value<Vector3>("a"),
@@ -442,7 +442,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
     if(std::strcmp(Names[id], "gradient3DHorizontal") == 0) {
         Utility::ConfigurationGroup* conf;
         /* The same config shared for all 3D gradients */
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("gradient3D"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient3D"));
 
         return Primitives::gradient3DHorizontal(
             conf->value<Color4>("colorA"),
@@ -452,7 +452,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
     if(std::strcmp(Names[id], "gradient3DVertical") == 0) {
         Utility::ConfigurationGroup* conf;
         /* The same config shared for all 3D gradients */
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("gradient3D"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient3D"));
 
         return Primitives::gradient3DVertical(
             conf->value<Color4>("colorA"),
@@ -461,7 +461,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "grid3DSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("grid3DSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("grid3DSolid"));
 
         Primitives::GridFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -478,7 +478,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "grid3DWireframe") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("grid3DWireframe"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("grid3DWireframe"));
 
         return Primitives::grid3DWireframe(
             conf->value<Vector2i>("subdivisions"));
@@ -486,7 +486,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "icosphereSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("icosphereSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("icosphereSolid"));
 
         return Primitives::icosphereSolid(
             conf->value<UnsignedInt>("subdivisions"));
@@ -497,7 +497,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "line2D") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("line2D"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("line2D"));
 
         return Primitives::line2D(
             conf->value<Vector2>("a"),
@@ -506,7 +506,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "line3D") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("line3D"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("line3D"));
 
         return Primitives::line3D(
             conf->value<Vector3>("a"),
@@ -515,7 +515,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "planeSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("planeSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("planeSolid"));
 
         Primitives::PlaneFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -531,7 +531,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "squareSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("squareSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("squareSolid"));
 
         Primitives::SquareFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -545,7 +545,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "uvSphereSolid") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("uvSphereSolid"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("uvSphereSolid"));
 
         Primitives::UVSphereFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -561,7 +561,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 
     if(std::strcmp(Names[id], "uvSphereWireframe") == 0) {
         Utility::ConfigurationGroup* conf;
-        CORRADE_INTERNAL_ASSERT(conf = configuration().group("uvSphereWireframe"));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("uvSphereWireframe"));
 
         return Primitives::uvSphereWireframe(
             conf->value<UnsignedInt>("rings"),

@@ -79,7 +79,7 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef DEVILIMAGEIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(DEVILIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(DEVILIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 

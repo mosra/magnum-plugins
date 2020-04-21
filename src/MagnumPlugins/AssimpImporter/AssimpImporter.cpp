@@ -212,6 +212,9 @@ struct IoSystem: Assimp::IOSystem {
 
     Assimp::IOStream* Open(const char* file, const char* mode) override {
         CORRADE_INTERNAL_ASSERT(mode == std::string{"rb"});
+        #ifdef CORRADE_NO_ASSERT
+        static_cast<void>(mode);
+        #endif
         const Containers::Optional<Containers::ArrayView<const char>> data = _callback(file, InputFileCallbackPolicy::LoadTemporary, _userData);
         if(!data) return {};
         return new IoStream{file, *data};

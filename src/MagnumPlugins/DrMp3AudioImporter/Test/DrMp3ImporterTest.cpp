@@ -62,7 +62,7 @@ DrMp3ImporterTest::DrMp3ImporterTest() {
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef DRMP3AUDIOIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(DRMP3AUDIOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(DRMP3AUDIOIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 

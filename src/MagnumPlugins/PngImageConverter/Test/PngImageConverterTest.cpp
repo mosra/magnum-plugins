@@ -68,11 +68,11 @@ PngImageConverterTest::PngImageConverterTest() {
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef PNGIMAGECONVERTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_converterManager.load(PNGIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(PNGIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* The PngImporter is optional */
     #ifdef PNGIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_importerManager.load(PNGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(PNGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 

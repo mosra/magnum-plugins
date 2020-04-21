@@ -529,14 +529,14 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
        the plugin dir after so it doesn't load anything else from the filesystem. */
     #ifdef TINYGLTFIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(TINYGLTFIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(TINYGLTFIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     _manager.setPluginDirectory({});
     #endif
     #ifdef BASISIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 

@@ -107,11 +107,11 @@ StbImageConverterTest::StbImageConverterTest() {
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef STBIMAGECONVERTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_converterManager.load(STBIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(STBIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* The PngImporter is optional */
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_importerManager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 

@@ -81,11 +81,11 @@ JpegImageConverterTest::JpegImageConverterTest() {
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef JPEGIMAGECONVERTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_converterManager.load(JPEGIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(JPEGIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* The JpegImporter is optional */
     #ifdef JPEGIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_importerManager.load(JPEGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(JPEGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 

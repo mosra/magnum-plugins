@@ -51,9 +51,8 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
 
     /* Decide what's the sample format. For some reason this doesn't depend on
        the file. */
-    NeAACDecConfigurationPtr configuration = NeAACDecGetCurrentConfiguration(decoder);
     /** @todo how do I detect what format is actually stored?! */
-    CORRADE_INTERNAL_ASSERT(configuration->outputFormat = FAAD_FMT_16BIT);
+    CORRADE_INTERNAL_ASSERT(NeAACDecGetCurrentConfiguration(decoder)->outputFormat = FAAD_FMT_16BIT);
 
     /* Open the file. I expected anything but a need for a const_cast. Ugh. */
     /* For raw AAC files it returns always 0, not skipping any header:

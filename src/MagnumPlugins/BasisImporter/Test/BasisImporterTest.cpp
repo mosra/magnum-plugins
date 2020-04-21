@@ -128,12 +128,12 @@ BasisImporterTest::BasisImporterTest() {
     _manager.load("AnyImageImporter");
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     _manager.setPluginDirectory({});
-    CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef BASISIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 

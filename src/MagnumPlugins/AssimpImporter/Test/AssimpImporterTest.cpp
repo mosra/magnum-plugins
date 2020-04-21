@@ -225,16 +225,16 @@ AssimpImporterTest::AssimpImporterTest() {
        the plugin dir after so it doesn't load anything else from the
        filesystem. */
     #ifdef ASSIMPIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(ASSIMPIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(ASSIMPIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     _manager.setPluginDirectory({});
     #endif
     /* The DdsImporter (for DDS loading / mip import tests) is optional */
     #ifdef DDSIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(DDSIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(DDSIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* The StbImageImporter (for PNG image loading) is optional */
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 
