@@ -24,6 +24,7 @@ matrix:
     - TARGET=desktop
     - CMAKE_CXX_FLAGS="--coverage"
     - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
+    - CONFIGURATION=Debug
   - language: cpp
     os: linux
     dist: xenial
@@ -32,6 +33,8 @@ matrix:
     - JOBID=linux-nondeprecated
     - TARGET=desktop
     - BUILD_DEPRECATED=OFF
+    - CMAKE_CXX_FLAGS="-DCORRADE_NO_ASSERT"
+    - CONFIGURATION=Release
   - language: cpp
     os: linux
     dist: xenial
@@ -40,6 +43,7 @@ matrix:
     - JOBID=linux-sanitizers
     - TARGET=desktop-sanitizers
     - CMAKE_CXX_FLAGS=-fsanitize=address
+    - CONFIGURATION=Debug
     addons:
       apt:
         sources:
@@ -63,6 +67,7 @@ matrix:
     - JOBID=linux-threadsanitizer
     - TARGET=desktop-sanitizers
     - CMAKE_CXX_FLAGS=-fsanitize=thread
+    - CONFIGURATION=Debug
     addons:
       apt:
         sources:
@@ -88,6 +93,7 @@ matrix:
     - CMAKE_CXX_FLAGS="--coverage"
     - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
     - BUILD_STATIC=ON
+    - CONFIGURATION=Debug
   - language: cpp
     os: osx
     # The new plugin testing workflow is dynamically loading and unloading them
@@ -105,6 +111,7 @@ matrix:
     - JOBID=macos
     - TARGET=desktop
     - CMAKE_CXX_FLAGS="--coverage"
+    - CONFIGURATION=Debug
   - language: cpp
     os: osx
     # See above
@@ -115,6 +122,7 @@ matrix:
     - TARGET=desktop
     - CMAKE_CXX_FLAGS="--coverage"
     - BUILD_STATIC=ON
+    - CONFIGURATION=Debug
   - language: cpp
     os: osx
     osx_image: xcode7.3

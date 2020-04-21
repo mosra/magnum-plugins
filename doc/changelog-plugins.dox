@@ -96,6 +96,8 @@ namespace Magnum {
     builds of @ref Trade::JpegImageConverter "JpegImageConverter" and
     @ref Trade::JpegImporter "JpegImporter" on with libjpeg coming from MSYS2
     MinGW packages (see [mosra/magnum-plugins#74]https://github.com/mosra/magnum-plugins/pull/74))
+-   The library again compiles and tests cleanly with @ref CORRADE_NO_ASSERT
+    enabled, and this setup is verified on the CI to avoid further regressions
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
