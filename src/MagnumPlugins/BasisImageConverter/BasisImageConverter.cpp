@@ -35,6 +35,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/Math/Swizzle.h>
 #include <Magnum/PixelFormat.h>
 #include <basisu_enc.h>
 #include <basisu_comp.h>

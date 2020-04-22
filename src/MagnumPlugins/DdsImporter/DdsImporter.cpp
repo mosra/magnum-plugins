@@ -37,6 +37,7 @@
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
+#include <Magnum/Math/Swizzle.h>
 #include <Magnum/Trade/ImageData.h>
 
 namespace Magnum { namespace Trade {
