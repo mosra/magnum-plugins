@@ -138,12 +138,10 @@ struct AssimpImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
-enum: std::size_t { LightInstanceCount = 3 };
-
 constexpr struct {
     LightData::Type type;
     Color3 color;
-} LightInstanceData[LightInstanceCount]{
+} LightInstanceData[]{
     {LightData::Type::Spot, {0.12f, 0.24f, 0.36f}},
     {LightData::Type::Point, {0.5f, 0.25f, 0.05f}},
     {LightData::Type::Infinite, {1.0f, 0.15f, 0.45f}}
@@ -175,7 +173,8 @@ AssimpImporterTest::AssimpImporterTest() {
 
               &AssimpImporterTest::camera});
 
-    addInstancedTests({&AssimpImporterTest::light}, LightInstanceCount);
+    addInstancedTests({&AssimpImporterTest::light},
+        Containers::arraySize(LightInstanceData));
 
     addTests({&AssimpImporterTest::lightUndefined,
               &AssimpImporterTest::materialColor,
