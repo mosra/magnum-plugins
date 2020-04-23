@@ -80,6 +80,11 @@ namespace Magnum {
 -   @ref Trade::AssimpImporter "AssimpImporter" inadvertently ignored base
     orientation for files that are defined with Z up instead of Y, this
     behavior is now also configurable (see [mosra/magnum-plugins#82](https://github.com/mosra/magnum-plugins/pull/82))
+-   @ref Trade::AssimpImporter "AssimpImporter",
+    @ref Trade::DdsImporter "DdsImporter" and
+    @ref Trade::StanfordImporter "StanfordImporter" now recognize the
+    @ref Trade::ImporterFlag::Verbose flag, printing verbose messages on the
+    output if enabled
 -   @ref Trade::StbImageImporter "StbImageImporter" is now thread-safe if
     @ref CORRADE_BUILD_MULTITHREADED is enabled.
 
