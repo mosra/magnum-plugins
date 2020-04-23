@@ -69,6 +69,18 @@ struct DdsImporterTest: TestSuite::Tester {
 };
 
 constexpr struct {
+    const char* name;
+    ImporterFlags flags;
+    const char* message2D;
+    const char* message3D;
+} VerboseData[] {
+    {"", {}, "", ""},
+    {"verbose", ImporterFlag::Verbose,
+        "Trade::DdsImporter::image2D(): converting from BGR to RGB\n",
+        "Trade::DdsImporter::image3D(): converting from BGR to RGB\n"}
+};
+
+constexpr struct {
     const char* filename;
     PixelFormat format;
 } Files2D[]{
@@ -142,13 +154,15 @@ DdsImporterTest::DdsImporterTest() {
     addTests({&DdsImporterTest::wrongSignature,
               &DdsImporterTest::unknownFormat,
               &DdsImporterTest::unknownCompression,
-              &DdsImporterTest::insufficientData,
+              &DdsImporterTest::insufficientData});
 
-              &DdsImporterTest::rgb,
-              &DdsImporterTest::rgbWithMips,
-              &DdsImporterTest::rgbVolume,
+    addInstancedTests({
+        &DdsImporterTest::rgb,
+        &DdsImporterTest::rgbWithMips,
+        &DdsImporterTest::rgbVolume},
+        Containers::arraySize(VerboseData));
 
-              &DdsImporterTest::dxt1,
+    addTests({&DdsImporterTest::dxt1,
               &DdsImporterTest::dxt3,
               &DdsImporterTest::dxt5});
 
@@ -216,9 +230,13 @@ void DdsImporterTest::insufficientData() {
 }
 
 void DdsImporterTest::rgb() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Utility::Resource resource{"DdsTestFiles"};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->setFlags(data.flags);
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -231,7 +249,12 @@ void DdsImporterTest::rgb() {
                            '\xde', '\xad', '\xb5',
                            '\xca', '\xfe', '\x77'};
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    std::ostringstream out;
+    Containers::Optional<Trade::ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -239,12 +262,17 @@ void DdsImporterTest::rgb() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
         TestSuite::Compare::Container);
+    CORRADE_COMPARE(out.str(), data.message2D);
 }
 
 void DdsImporterTest::rgbWithMips() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Utility::Resource resource{"DdsTestFiles"};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->setFlags(data.flags);
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_mips.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
@@ -258,8 +286,14 @@ void DdsImporterTest::rgbWithMips() {
                            '\xca', '\xfe', '\x77'};
     const char mipPixels[] = {'\xd4', '\xd5', '\x96'};
 
+    std::ostringstream out;
+
     /* check image */
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -267,9 +301,15 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
             TestSuite::Compare::Container);
+    CORRADE_COMPARE(out.str(), data.message2D);
 
     /* check mip 0 */
-    Containers::Optional<Trade::ImageData2D> mip = importer->image2D(0, 1);
+    Containers::Optional<Trade::ImageData2D> mip;
+    {
+        out.str({});
+        Debug redirectOutput{&out};
+        mip = importer->image2D(0, 1);
+    }
     CORRADE_VERIFY(mip);
     CORRADE_VERIFY(!mip->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -277,12 +317,17 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_COMPARE(mip->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(mip->data(), Containers::arrayView(mipPixels),
             TestSuite::Compare::Container);
+    CORRADE_COMPARE(out.str(), data.message2D);
 }
 
 void DdsImporterTest::rgbVolume() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Utility::Resource resource{"DdsTestFiles"};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->setFlags(data.flags);
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_volume.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 0);
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -311,7 +356,12 @@ void DdsImporterTest::rgbVolume() {
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77'};
 
-    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    std::ostringstream out;
+    Containers::Optional<Trade::ImageData3D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image3D(0);
+    }
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -319,6 +369,7 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
         TestSuite::Compare::Container);
+    CORRADE_COMPARE(out.str(), data.message3D);
 }
 
 void DdsImporterTest::dxt1() {

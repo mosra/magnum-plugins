@@ -101,6 +101,9 @@ Supports DirectDraw Surface images (`*.dds`) in the following formats:
     -   `R32_FLOAT`, `R32G32_FLOAT`, `R32G32B32_FLOAT`, `R32G32B32A32_FLOAT` as
         @ref PixelFormat::R32F and its two-/three-/four-component equivalents
 
+The importer recognizes @ref ImporterFlag::Verbose, printing additional info
+when the flag is enabled.
+
 @section Trade-DdsImporter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if

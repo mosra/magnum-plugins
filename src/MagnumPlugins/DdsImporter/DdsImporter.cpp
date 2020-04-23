@@ -298,15 +298,15 @@ inline std::string fourcc(UnsignedInt enc) {
     return c;
 }
 
-void swizzlePixels(const PixelFormat format, Containers::Array<char>& data) {
+void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, const char* verbosePrefix) {
     if(format == PixelFormat::RGB8Unorm) {
-        Debug() << "Trade::DdsImporter: converting from BGR to RGB";
+        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGR to RGB";
         auto pixels = reinterpret_cast<Math::Vector3<UnsignedByte>*>(data.data());
         std::transform(pixels, pixels + data.size()/sizeof(Math::Vector3<UnsignedByte>), pixels,
             [](Math::Vector3<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r'>(pixel); });
 
     } else if(format == PixelFormat::RGBA8Unorm) {
-        Debug() << "Trade::DdsImporter: converting from BGRA to RGBA";
+        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGRA to RGBA";
         auto pixels = reinterpret_cast<Math::Vector4<UnsignedByte>*>(data.data());
         std::transform(pixels, pixels + data.size()/sizeof(Math::Vector4<UnsignedByte>), pixels,
             [](Math::Vector4<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r', 'a'>(pixel); });
@@ -648,7 +648,8 @@ Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt, const Unsi
         return ImageData2D(_f->pixelFormat.compressed, dataOffset.dimensions.xy(), std::move(data));
 
     /* Uncompressed */
-    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data);
+    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
+        flags() & ImporterFlag::Verbose ? "Trade::DdsImporter::image2D():" : nullptr);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
@@ -674,7 +675,8 @@ Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt, const Unsi
         return ImageData3D(_f->pixelFormat.compressed, dataOffset.dimensions, std::move(data));
 
     /* Uncompressed */
-    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data);
+    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
+        flags() & ImporterFlag::Verbose ? "Trade::DdsImporter::image3D():" : nullptr);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
