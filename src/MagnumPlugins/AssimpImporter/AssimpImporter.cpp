@@ -53,9 +53,11 @@
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
 #include <assimp/postprocess.h>
+#include <assimp/DefaultLogger.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
+#include <assimp/Logger.hpp>
 #include <assimp/scene.h>
 
 namespace Magnum { namespace Math { namespace Implementation {
@@ -149,7 +151,11 @@ AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager
 
 AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin) {}
 
-AssimpImporter::~AssimpImporter() = default;
+AssimpImporter::~AssimpImporter() {
+    /* Because we are dealing with a crappy singleton here, we need to make
+       sure to clean up everything that might have been set earlier */
+    if(flags() & ImporterFlag::Verbose) Assimp::DefaultLogger::kill();
+}
 
 ImporterFeatures AssimpImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::OpenState|ImporterFeature::FileCallback; }
 
@@ -229,6 +235,24 @@ struct IoSystem: Assimp::IOSystem {
     void* _userData;
 };
 
+}
+
+void AssimpImporter::doSetFlags(const ImporterFlags flags) {
+    struct DebugStream: Assimp::LogStream {
+        void write(const char* message) override {
+            Debug{Debug::Flag::NoNewlineAtTheEnd} << "Trade::AssimpImporter:" << message;
+        }
+    };
+
+    /* I'm extremely unsure about leaks, memory ownership, or whether this
+       really restores things back to the default. Ugh, what's the obsession
+       with extremely complex loggers everywhere? If a thing works, you don't
+       need gigabytes of logs vomitted from every function calls. */
+    if(flags & ImporterFlag::Verbose) {
+        Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
+        Assimp::DefaultLogger::get()->attachStream(new DebugStream,
+            Assimp::Logger::Info|Assimp::Logger::Err|Assimp::Logger::Warn|Assimp::Logger::Debugging);
+    } else Assimp::DefaultLogger::kill();
 }
 
 void AssimpImporter::doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData) {

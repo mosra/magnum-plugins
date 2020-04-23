@@ -199,6 +199,11 @@ read.
 
 Import of animation data is not supported at the moment.
 
+The importer recognizes @ref ImporterFlag::Verbose, enabling verbose logging
+in Assimp when the flag is enabled. However please note that since Assimp
+handles logging through a global singleton, it's not possible to have different
+verbosity levels in each instance.
+
 @subsection Trade-AssimpImporter-limitations-materials Material import
 
 -   Only materials with shading mode `aiShadingMode_Phong` are supported
@@ -345,6 +350,8 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
 
         MAGNUM_ASSIMPIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL bool doIsOpened() const override;
+
+        MAGNUM_ASSIMPIMPORTER_LOCAL void doSetFlags(ImporterFlags flags) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL void doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData) override;
 

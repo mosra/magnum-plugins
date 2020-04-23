@@ -26,9 +26,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/* enable when things become *really* dire */
-// #define MAGNUM_ASSIMPIMPORTER_DEBUG
-
 #include <sstream>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
@@ -57,10 +54,6 @@
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
 
-#ifdef MAGNUM_ASSIMPIMPORTER_DEBUG
-#include <assimp/Logger.hpp>
-#include <assimp/DefaultLogger.hpp>
-#endif
 #include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -73,23 +66,17 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 
 using namespace Math::Literals;
 
-#ifdef MAGNUM_ASSIMPIMPORTER_DEBUG
-/* Stream implementation for outputting assimp log messages to Debug() */
-class MagnumDebugStream: public Assimp::LogStream {
-public:
-    void write(const char* message) override {
-        Debug(Debug::Flag::NoNewlineAtTheEnd) << Debug::color(Debug::Color::Yellow) << "assimp:" << message;
-    }
-};
-#endif
-
 struct AssimpImporterTest: TestSuite::Tester {
     explicit AssimpImporterTest();
+
+    void setFlagsRestoreBack();
 
     void openFile();
     void openFileFailed();
     void openData();
     void openDataFailed();
+
+    void openFileVerbose();
 
     void camera();
     void light();
@@ -139,6 +126,14 @@ struct AssimpImporterTest: TestSuite::Tester {
 };
 
 constexpr struct {
+    const char* name;
+    ImporterFlags flags;
+} VerboseData[]{
+    {"", {}},
+    {"verbose", ImporterFlag::Verbose}
+};
+
+constexpr struct {
     LightData::Type type;
     Color3 color;
 } LightInstanceData[]{
@@ -160,14 +155,10 @@ constexpr struct {
 };
 
 AssimpImporterTest::AssimpImporterTest() {
-    #ifdef MAGNUM_ASSIMPIMPORTER_DEBUG
-    Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
-    Assimp::DefaultLogger::get()->attachStream(new MagnumDebugStream,
-            Assimp::Logger::Info|Assimp::Logger::Err|Assimp::Logger::Warn|Assimp::Logger::Debugging);
-    #endif
+    addInstancedTests({&AssimpImporterTest::openFile},
+        Containers::arraySize(VerboseData));
 
-    addTests({&AssimpImporterTest::openFile,
-              &AssimpImporterTest::openFileFailed,
+    addTests({&AssimpImporterTest::openFileFailed,
               &AssimpImporterTest::openData,
               &AssimpImporterTest::openDataFailed,
 
@@ -238,21 +229,34 @@ AssimpImporterTest::AssimpImporterTest() {
 }
 
 void AssimpImporterTest::openFile() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->setFlags(data.flags);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
-    CORRADE_VERIFY(importer->importerState());
-    CORRADE_COMPARE(importer->sceneCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 2);
-
+    std::ostringstream out;
     {
-        /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
-        CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
-        CORRADE_VERIFY(!importer->meshCount());
+        Debug redirectOutput{&out};
+
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+        CORRADE_VERIFY(importer->importerState());
+        CORRADE_COMPARE(importer->sceneCount(), 1);
+        CORRADE_COMPARE(importer->object3DCount(), 2);
+
+        {
+            /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
+            CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
+            CORRADE_VERIFY(!importer->meshCount());
+        }
+
+        importer->close();
+        CORRADE_VERIFY(!importer->isOpened());
     }
 
-    importer->close();
-    CORRADE_VERIFY(!importer->isOpened());
+    /* It should be noisy if and only if verbose output is enabled */
+    Debug{Debug::Flag::NoNewlineAtTheEnd} << out.str();
+    CORRADE_COMPARE(!out.str().empty(), data.flags >= ImporterFlag::Verbose);
 }
 
 void AssimpImporterTest::openFileFailed() {
