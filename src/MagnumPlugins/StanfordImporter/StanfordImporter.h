@@ -148,6 +148,9 @@ of PLY features, which however shouldn't affect any real-world models.
 The mesh is always indexed; positions are always present, other attributes are
 optional.
 
+The importer recognizes @ref ImporterFlag::Verbose, printing additional info
+when the flag is enabled.
+
 @subsection Trade-StanfordImporter-behavior-per-face Per-face attributes
 
 By default, if the mesh contains per-face attributes apart from indices, these

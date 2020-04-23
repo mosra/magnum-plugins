@@ -836,6 +836,9 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
     /* Turn per-face attributes into per-vertex, if desired (and if there are
        any) */
     if(level == 0 && configuration().value<bool>("perFaceToPerVertex") && !faceAttributeData.empty()) {
+        if(flags() & ImporterFlag::Verbose)
+            Debug{} << "Trade::StanfordImporter::mesh(): converting" << faceAttributeData.size() << "per-face attributes to per-vertex";
+
         /** @todo in this case it'll assert if indices are out of bounds, check
             for it at runtime somehow */
         MeshIndexData indices{_state->faceIndexType, indexData};

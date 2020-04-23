@@ -199,16 +199,29 @@ constexpr struct {
     UnsignedInt faceAttributeCount;
     MeshIndexType indexType;
     VertexFormat colorFormat, normalFormat, objectIdFormat;
+    ImporterFlags flags;
+    const char* message;
 } ParsePerFaceData[]{
     {"per-face nothing", "positions-float-indices-uint.ply", 0,
         MeshIndexType::UnsignedInt,
-        VertexFormat{}, VertexFormat{}, VertexFormat{}},
+        VertexFormat{}, VertexFormat{}, VertexFormat{},
+        {}, ""},
+    {"per-face nothing, verbose", "positions-float-indices-uint.ply", 0,
+        MeshIndexType::UnsignedInt,
+        VertexFormat{}, VertexFormat{}, VertexFormat{},
+        ImporterFlag::Verbose, ""},
     {"per-face colors", "per-face-colors-be.ply", 1,
         MeshIndexType::UnsignedShort,
-        VertexFormat::Vector4, VertexFormat{}, VertexFormat{}},
+        VertexFormat::Vector4, VertexFormat{}, VertexFormat{},
+        {}, ""},
     {"per-face normals, object ids", "per-face-normals-objectid.ply", 2,
         MeshIndexType::UnsignedByte,
-        VertexFormat{}, VertexFormat::Vector3, VertexFormat::UnsignedShort}
+        VertexFormat{}, VertexFormat::Vector3, VertexFormat::UnsignedShort,
+        {}, ""},
+    {"per-face normals, object ids, verbose", "per-face-normals-objectid.ply", 2,
+        MeshIndexType::UnsignedByte,
+        VertexFormat{}, VertexFormat::Vector3, VertexFormat::UnsignedShort,
+        ImporterFlag::Verbose, "Trade::StanfordImporter::mesh(): converting 2 per-face attributes to per-vertex\n"}
 };
 
 constexpr struct {
@@ -476,6 +489,8 @@ void StanfordImporterTest::parsePerFace() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    /* Verbose flag won't do anything in this case */
+    importer->setFlags(data.flags);
 
     importer->configuration().setValue("perFaceToPerVertex", false);
     importer->configuration().setValue("objectIdAttribute", "objectid");
@@ -543,6 +558,7 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    importer->setFlags(data.flags);
 
     /* Done by default */
     //importer->configuration().setValue("perFaceToPerVertex", true);
@@ -552,7 +568,12 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshLevelCount(0), 1);
 
-    auto mesh = importer->mesh(0);
+    std::ostringstream out;
+    Containers::Optional<MeshData> mesh;
+    {
+        Debug redirectOutput{&out};
+        mesh = importer->mesh(0);
+    }
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(), 1 + data.faceAttributeCount);
 
@@ -625,6 +646,9 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
                 56, 56, 56}),
             TestSuite::Compare::Container);
     }
+
+    /* Verbose message, if any */
+    CORRADE_COMPARE(out.str(), data.message);
 }
 
 void StanfordImporterTest::empty() {
