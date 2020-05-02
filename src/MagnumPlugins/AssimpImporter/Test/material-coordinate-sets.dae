@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_images>
+    <image id="diffusenormal_texture" name="diffusenormal_texture">
+      <init_from>diffuse_texture.png</init_from>
+    </image>
+    <image id="ambientspecular_texture" name="ambientspecular_texture">
+      <init_from>y.png</init_from>
+    </image>
+  </library_images>
+  <library_effects>
+    <effect id="Material-effect">
+      <profile_COMMON>
+        <newparam sid="ambientspecular_texture-surface">
+          <surface type="2D">
+            <init_from>ambientspecular_texture</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="diffusenormal_texture-surface">
+          <surface type="2D">
+            <init_from>diffusenormal_texture</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="ambientspecular_texture-sampler">
+          <sampler2D>
+            <source>ambientspecular_texture-surface</source>
+          </sampler2D>
+        </newparam>
+        <newparam sid="diffusenormal_texture-sampler">
+          <sampler2D>
+            <source>diffusenormal_texture-surface</source>
+          </sampler2D>
+        </newparam>
+        <technique sid="common">
+          <phong>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <ambient>
+              <texture texture="ambientspecular_texture-sampler" texcoord="uv1"/>
+            </ambient>
+            <diffuse>
+              <texture texture="diffusenormal_texture-sampler" texcoord="uv2"/>
+            </diffuse>
+            <specular>
+              <texture texture="ambientspecular_texture-sampler" texcoord="uv3"/>
+            </specular>
+            <shininess>
+              <float sid="shininess">50</float>
+            </shininess>
+            <index_of_refraction>
+              <float sid="index_of_refraction">1</float>
+            </index_of_refraction>
+          </phong>
+          <extra>
+            <technique profile="FCOLLADA">
+              <bump bumptype="NORMALMAP">
+                <texture texture="diffusenormal_texture-sampler" texcoord="uv2"/>
+              </bump>
+            </technique>
+          </extra>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_materials>
+    <material id="Material-material" name="Material">
+      <instance_effect url="#Material-effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="Cube-mesh" name="Cube">
+      <mesh>
+        <source id="Cube-mesh-positions">
+          <float_array id="Cube-mesh-positions-array" count="9">-1 -1 1 -1 1 1 1 -1 1</float_array>
+          <technique_common>
+            <accessor source="#Cube-mesh-positions-array" count="3" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Cube-mesh-normals">
+          <float_array id="Cube-mesh-normals-array" count="3">0 0 1</float_array>
+          <technique_common>
+            <accessor source="#Cube-mesh-normals-array" count="1" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Cube-mesh-uvs">
+          <float_array id="Cube-mesh-uvs-array" count="2">1 0</float_array>
+          <technique_common>
+            <accessor source="#Cube-mesh-uvs-array" count="1" stride="2">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Cube-mesh-uvs1">
+          <float_array id="Cube-mesh-uvs1-array" count="2">1 0.4</float_array>
+          <technique_common>
+            <accessor source="#Cube-mesh-uvs1-array" count="1" stride="2">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Cube-mesh-vertices">
+          <input semantic="POSITION" source="#Cube-mesh-positions"/>
+        </vertices>
+        <polylist material="Material-material" count="1">
+          <input semantic="VERTEX" source="#Cube-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Cube-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Cube-mesh-uvs" offset="1" set="0"/>
+          <input semantic="TEXCOORD" source="#Cube-mesh-uvs1" offset="1" set="1"/>
+          <input semantic="TEXCOORD" source="#Cube-mesh-uvs" offset="1" set="2"/>
+          <input semantic="TEXCOORD" source="#Cube-mesh-uvs" offset="1" set="3"/>
+          <vcount>3</vcount>
+          <p>1 0 0 0 2 0</p>
+        </polylist>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Cube" name="Cube" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <instance_geometry url="#Cube-mesh" name="Cube">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Material-material" target="#Material-material">
+                  <bind_vertex_input semantic="uv0" input_semantic="TEXCOORD" input_set="0"/>
+                  <bind_vertex_input semantic="uv1" input_semantic="TEXCOORD" input_set="1"/>
+                  <bind_vertex_input semantic="uv2" input_semantic="TEXCOORD" input_set="2"/>
+                  <bind_vertex_input semantic="uv3" input_semantic="TEXCOORD" input_set="3"/>
+              </instance_material>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

@@ -3,7 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
               Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2017 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2017, 2020 Jonathan Hale <squareys@googlemail.com>
     Copyright © 2018 Konstantinos Chatzilygeroudis <costashatz@gmail.com>
     Copyright © 2019, 2020 Max Schwarz <max.schwarz@ais.uni-bonn.de>
 
@@ -786,10 +786,23 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
        something else, so we just don't import it at all. */
     aiColor3D ambientColor;
     UnsignedInt ambientTexture{};
+    UnsignedInt ambientCoordinateSet{};
     mat->Get(AI_MATKEY_COLOR_AMBIENT, ambientColor);
-    if(flags & PhongMaterialData::Flag::AmbientTexture)
+    if(flags & PhongMaterialData::Flag::AmbientTexture) {
         ambientTexture = firstTextureIndex++;
-    else {
+        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_AMBIENT, 0), ambientCoordinateSet);
+
+        /* Couldn't convince Assimp to import non-zero values from a COLLADA
+         * file, so this code path isn't tested */
+        if(ambientCoordinateSet != 0) {
+            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
+                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
+                return {};
+            }
+
+            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
+        }
+    } else {
         /* Assimp 4.1 forces ambient color to white for STL models. That's just
            plain wrong, so we force it back to black (and emit a warning, so in
            the very rare case when someone would actually want white ambient,
@@ -804,25 +817,68 @@ Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const Unsig
     /* Key always present, default black */
     aiColor4D diffuseColor;
     UnsignedInt diffuseTexture{};
+    UnsignedInt diffuseCoordinateSet{};
     mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
-    if(flags & PhongMaterialData::Flag::DiffuseTexture)
+    if(flags & PhongMaterialData::Flag::DiffuseTexture) {
         diffuseTexture = firstTextureIndex++;
+        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE, 0), diffuseCoordinateSet);
+
+        /* Couldn't convince Assimp to import non-zero values from a COLLADA
+         * file, so this code path isn't tested */
+        if(diffuseCoordinateSet != 0) {
+            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
+                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
+                return {};
+            }
+
+            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
+        }
+    }
 
     /* Key always present, default black */
     aiColor4D specularColor;
     UnsignedInt specularTexture{};
+    UnsignedInt specularCoordinateSet{};
     mat->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
-    if(flags & PhongMaterialData::Flag::SpecularTexture)
+    if(flags & PhongMaterialData::Flag::SpecularTexture) {
         specularTexture = firstTextureIndex++;
+        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_SPECULAR, 0), specularCoordinateSet);
+
+        /* Couldn't convince Assimp to import non-zero values from a COLLADA
+         * file, so this code path isn't tested */
+        if(specularCoordinateSet != 0) {
+            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
+                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
+                return {};
+            }
+
+            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
+        }
+    }
 
     UnsignedInt normalTexture{};
-    if(flags & PhongMaterialData::Flag::NormalTexture)
+    UnsignedInt normalCoordinateSet{};
+    if(flags & PhongMaterialData::Flag::NormalTexture) {
         normalTexture = firstTextureIndex++;
+        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_NORMALS, 0), normalCoordinateSet);
+
+        /* Couldn't convince Assimp to import non-zero values from a COLLADA
+         * file, so this code path isn't tested */
+        if(normalCoordinateSet != 0) {
+            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
+                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
+                return {};
+            }
+
+            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
+        }
+    }
 
     Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags,
-        Color3{ambientColor}, ambientTexture,
-        Color4{diffuseColor}, diffuseTexture,
-        Color4{specularColor}, specularTexture, normalTexture, Matrix3{},
+        Color3{ambientColor}, ambientTexture, ambientCoordinateSet,
+        Color4{diffuseColor}, diffuseTexture, diffuseCoordinateSet,
+        Color4{specularColor}, specularTexture, specularCoordinateSet,
+        normalTexture, normalCoordinateSet, Matrix3{},
         MaterialAlphaMode::Opaque, 0.5f, shininess, mat};
 
     /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast

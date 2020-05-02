@@ -3,7 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
               Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2017 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2017, 2020 Jonathan Hale <squareys@googlemail.com>
     Copyright © 2018 Konstantinos Chatzilygeroudis <costashatz@gmail.com>
     Copyright © 2019, 2020 Max Schwarz <max.schwarz@ais.uni-bonn.de>
 
@@ -87,6 +87,8 @@ struct AssimpImporterTest: TestSuite::Tester {
     void materialStlWhiteAmbientPatch();
     void materialWhiteAmbientTexture();
     void materialMultipleTextures();
+    void materialTextureCoordinateSetsDefault();
+    void materialTextureCoordinateSets();
 
     void mesh();
     void pointMesh();
@@ -174,6 +176,8 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
               &AssimpImporterTest::materialWhiteAmbientTexture,
               &AssimpImporterTest::materialMultipleTextures,
+              &AssimpImporterTest::materialTextureCoordinateSetsDefault,
+              &AssimpImporterTest::materialTextureCoordinateSets,
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
@@ -623,6 +627,34 @@ void AssimpImporterTest::materialMultipleTextures() {
         CORRADE_COMPARE(image->size(), Vector2i(1));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xffff00_rgb); /* y.png */
     }
+}
+
+void AssimpImporterTest::materialTextureCoordinateSetsDefault() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
+
+    CORRADE_EXPECT_FAIL("Material is loaded since coordinate sets are not imported");
+    CORRADE_VERIFY(!importer->material(0));
+
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them\n");
+}
+
+void AssimpImporterTest::materialTextureCoordinateSets() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("allowMaterialTextureCoordinateSets", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
+    auto abstractMat = importer->material(0);
+    auto& mat = static_cast<PhongMaterialData&>(*abstractMat);
+
+    CORRADE_EXPECT_FAIL("Assimp ignores ambient texture and does not import coordinate sets");
+    CORRADE_COMPARE(mat.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::NormalTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::TextureCoordinateSets);
+    CORRADE_COMPARE(mat.diffuseCoordinateSet(), 2);
+    CORRADE_COMPARE(mat.specularCoordinateSet(), 3);
+    CORRADE_COMPARE(mat.normalCoordinateSet(), 2);
 }
 
 void AssimpImporterTest::mesh() {

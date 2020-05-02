@@ -213,6 +213,9 @@ verbosity levels in each instance.
     @cpp 0xffffff_srgbf @ce, which causes all other color information to be
     discarded. If such a case is detected, the ambient is forced back to
     @cpp 0x000000_srgbf @ce. See also [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059).
+-   Unless explicitly enabled with the @cb{.ini} allowMaterialTextureCoordinateSets @ce
+    @ref Trade-AssimpImporter-configuration "configuration option", only the
+    first set of texture coordinates is supported.
 
 @subsection Trade-AssimpImporter-limitations-lights Light import
 
