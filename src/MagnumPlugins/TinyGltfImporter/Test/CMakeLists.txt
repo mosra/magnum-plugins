@@ -100,6 +100,7 @@ corrade_add_test(TinyGltfImporterTest
         material-texcoord-flip.bin
         material-texcoord-flip.gltf
         material-texcoord-flip-unnormalized.gltf
+        material-texcoord-sets.gltf
         mesh.gltf
         mesh.bin
         mesh.glb

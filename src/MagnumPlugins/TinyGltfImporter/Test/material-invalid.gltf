@@ -16,25 +16,9 @@
             }
         },
         {
-            "name": "invalid texCoord index pbrMetallicRoughness",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "texCoord": 1
-                }
-            }
-        },
-        {
             "name": "invalid texture index normalTexture",
             "normalTexture": {
                 "index": 2
-            }
-        },
-        {
-            "name": "invalid texCoord index normalTexture",
-            "normalTexture": {
-                "index": 1,
-                "texCoord": 1
             }
         },
         {
@@ -48,33 +32,11 @@
             }
         },
         {
-            "name": "invalid texCoord index pbrSpecularGlossiness diffuse",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseTexture": {
-                        "index": 1,
-                        "texCoord": 1
-                    }
-                }
-            }
-        },
-        {
             "name": "invalid texture index pbrSpecularGlossiness specular",
             "extensions": {
                 "KHR_materials_pbrSpecularGlossiness": {
                     "specularGlossinessTexture": {
                         "index": 2
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid texCoord index pbrSpecularGlossiness specular",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "specularGlossinessTexture": {
-                        "index": 1,
-                        "texCoord": 1
                     }
                 }
             }

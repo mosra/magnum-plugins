@@ -269,7 +269,9 @@ fail.
 -   Subset of all material specs is currently imported as @ref PhongMaterialData,
     including normal textures
 -   Ambient color is always @cpp 0x000000_rgbf @ce (never a texture)
--   Only the first set of texture coordinates is supported
+-   Unless explicitly enabled with the @cb{.ini} allowMaterialTextureCoordinateSets @ce
+    @ref Trade-TinyGltfImporter-configuration "configuration option", only the
+    first set of texture coordinates is supported.
 -   If [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_texture_transform/README.md)
     is present, the imported material has @ref PhongMaterialData::Flag::TextureTransformation
     set. All textures have to share the same transformation and the
@@ -482,7 +484,7 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const std::string& name) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMeshAttributeName(UnsignedShort name) override;
 
-        MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, Int texture, Int texCoord, const tinygltf::Value& extensions, UnsignedInt& index, Containers::Optional<Matrix3>& textureMatrix, PhongMaterialData::Flags& flags) const;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, Int texture, Int texCoord, const tinygltf::Value& extensions, UnsignedInt& index, UnsignedInt& coordinateSet, Containers::Optional<Matrix3>& textureMatrix, PhongMaterialData::Flags& flags) const;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
