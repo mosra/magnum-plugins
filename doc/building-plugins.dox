@@ -347,6 +347,8 @@ By default no plugins are built and you need to select them manually:
     "PrimitiveImporter" plugin.
 -   `WITH_STANFORDIMPORTER` --- Build the
     @ref Trade::StanfordImporter "StanfordImporter" plugin.
+-   `WITH_STANFORDSCENECONVERTER` --- Build the
+    @ref Trade::StanfordSceneConverter "StanfordSceneConverter" plugin.
 -   `WITH_STBIMAGECONVERTER` --- Build the
     @ref Trade::StbImageConverter "StbImageConverter" plugin.
 -   `WITH_STBIMAGEIMPORTER` --- Build the

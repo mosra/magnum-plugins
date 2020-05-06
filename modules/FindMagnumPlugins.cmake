@@ -31,6 +31,7 @@
 #  PngImporter                  - PNG importer
 #  PrimitiveImporter            - Primitive importer
 #  StanfordImporter             - Stanford PLY importer
+#  StanfordSceneConverter       - Stanford PLY converter
 #  StbImageConverter            - Image converter using stb_image_write
 #  StbImageImporter             - Image importer using stb_image
 #  StbTrueTypeFont              - TrueType font using stb_truetype
@@ -113,6 +114,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES Primitives)
     elseif(_component STREQUAL StanfordImporter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES MeshTools)
+    elseif(_component STREQUAL StanfordSceneConverter)
+        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES MeshTools)
     elseif(_component STREQUAL TinyGltfImporter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     endif()
@@ -130,12 +133,12 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
-    AssimpImporter BasisImageConverter BasisImporter DdsImporter DevIlImageImporter
-    DrFlacAudioImporter DrMp3AudioImporter DrWavAudioImporter Faad2AudioImporter
-    FreeTypeFont HarfBuzzFont JpegImageConverter JpegImporter
-    MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
-    PrimitiveImporter StanfordImporter StbImageConverter StbImageImporter
-    StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
+    AssimpImporter BasisImageConverter BasisImporter DdsImporter
+    DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
+    DrWavAudioImporter Faad2AudioImporter FreeTypeFont HarfBuzzFont
+    JpegImageConverter JpegImporter MiniExrImageConverter OpenGexImporter
+    PngImageConverter PngImporter PrimitiveImporter StanfordImporter
+    StanfordSceneConverter StbImageConverter StbImageImporter StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
@@ -391,6 +394,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # PrimitiveImporter has no dependencies
         # StanfordImporter has no dependencies
+        # StanfordSceneConverter has no dependencies
         # StbImageConverter has no dependencies
         # StbImageImporter has no dependencies
         # StbTrueTypeFont has no dependencies

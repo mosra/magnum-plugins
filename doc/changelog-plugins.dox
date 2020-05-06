@@ -60,6 +60,8 @@ namespace Magnum {
     level loading to image importer plugins (see [mosra/magnum#369](https://github.com/mosra/magnum/pull/369))
 -   New @ref Trade::PrimitiveImporter "PrimitiveImporter" plugin for accessing
     contents of the @ref Primitives library via importer APIs
+-   New @ref Trade::StanfordSceneConverter "StanfordSceneConverter" for
+    writing binary PLY files
 -   New @ref Trade::StlImporter "StlImporter" plugin for importing binary STL
     files
 -   Animated GIF support in @ref Trade::StbImageImporter "StbImageImporter"

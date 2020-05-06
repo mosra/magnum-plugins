@@ -110,6 +110,10 @@ if(WITH_STANFORDIMPORTER)
     add_subdirectory(StanfordImporter)
 endif()
 
+if(WITH_STANFORDSCENECONVERTER)
+    add_subdirectory(StanfordSceneConverter)
+endif()
+
 if(WITH_STBIMAGECONVERTER)
     add_subdirectory(StbImageConverter)
 endif()
