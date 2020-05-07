@@ -1171,6 +1171,41 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
                 return Containers::NullOpt;
             }
 
+        /* Joint attribute ends with _0, _1 ... */
+        } else if(Utility::String::beginsWith(attribute.first, "JOINTS")) {
+            name = MeshAttribute::JointIds;
+
+            if(accessor.type != TINYGLTF_TYPE_VEC4) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unexpected JOINTS type" << accessor.type;
+                return Containers::NullOpt;
+            }
+
+            if(!(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) &&
+               !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unsupported JOINTS component type"
+                    << (accessor.normalized ? "normalized" : "unnormalized")
+                    << accessor.componentType;
+                return Containers::NullOpt;
+            }
+
+        /* Weights attribute ends with _0, _1 ... */
+        } else if(Utility::String::beginsWith(attribute.first, "WEIGHTS")) {
+            name = MeshAttribute::Weights;
+
+            if(accessor.type != TINYGLTF_TYPE_VEC4) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unexpected WEIGHTS type" << accessor.type;
+                return Containers::NullOpt;
+            }
+
+            if(!(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT && !accessor.normalized) &&
+               !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE && accessor.normalized) &&
+               !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT && accessor.normalized)) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unsupported WEIGHTS component type"
+                    << (accessor.normalized ? "normalized" : "unnormalized")
+                    << accessor.componentType;
+                return Containers::NullOpt;
+            }
+
         /* Custom or unrecognized attributes, map to an ID */
         } else name = _d->meshAttributesForName.at(attribute.first);
 
