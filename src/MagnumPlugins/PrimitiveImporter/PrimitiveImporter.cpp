@@ -568,7 +568,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<UnsignedInt>("segments"));
     }
 
-    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 }}
