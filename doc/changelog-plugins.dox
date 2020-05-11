@@ -63,6 +63,9 @@ namespace Magnum {
 -   New @ref Trade::StlImporter "StlImporter" plugin for importing binary STL
     files
 -   Animated GIF support in @ref Trade::StbImageImporter "StbImageImporter"
+-   Texture coordinate set import in @ref Trade::AssimpImporter "AssimpImporter"
+    and @ref Trade::TinyGltfImporter "TinyGltfImporter" (see
+    [mosra/magnum-plugins#83](https://github.com/mosra/magnum-plugins/pull/83))
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
