@@ -101,6 +101,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshIndexed();
     void meshIndexedAttributeless();
     void meshColors();
+    void meshJointIds();
+    void meshWeights();
     void meshCustomAttributes();
     void meshCustomAttributesNoFileOpened();
     void meshMultiplePrimitives();
@@ -474,6 +476,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::meshIndexed,
               &TinyGltfImporterTest::meshIndexedAttributeless,
               &TinyGltfImporterTest::meshColors,
+              &TinyGltfImporterTest::meshJointIds,
+              &TinyGltfImporterTest::meshWeights,
               &TinyGltfImporterTest::meshCustomAttributes,
               &TinyGltfImporterTest::meshCustomAttributesNoFileOpened,
               &TinyGltfImporterTest::meshMultiplePrimitives});
@@ -1655,6 +1659,42 @@ void TinyGltfImporterTest::meshColors() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh-colors.gltf")));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(!mesh->isIndexed());
+
+    CORRADE_COMPARE(mesh->attributeCount(), 3);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {1.5f, -1.0f, -0.5f},
+            {-0.5f, 2.5f, 0.75f},
+            {-2.0f, 1.0f, 0.3f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color), 2);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color, 0), VertexFormat::Vector3);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Color),
+        Containers::arrayView<Vector3>({
+            {0.1f, 0.2f, 0.3f},
+            {0.4f, 0.5f, 0.6f},
+            {0.7f, 0.8f, 0.9f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color, 1), VertexFormat::Vector4);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Color, 1),
+        Containers::arrayView<Vector4>({
+            {0.1f, 0.2f, 0.3f, 0.4f},
+            {0.5f, 0.6f, 0.7f, 0.8f},
+            {0.9f, 1.0f, 1.1f, 1.2f}
+        }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::meshJointIds() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-jointIds.gltf")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
 
