@@ -36,6 +36,8 @@ namespace Magnum {
     support in @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
 -   **Alexander F Rødseth** ([\@xyproto](https://github.com/xyproto)) ---
     packages in the ArchLinux community repository
+-   **Andrew ([\@sheerluck](https://github.com/sheerluck)) --- Gentoo package
+    fixes
 -   **Bill Robinson** ([\@wivlaro](https://github.com/wivlaroú) --- numerous
     bug reports and fixes
 -   **[\@DJQuardaboff](https://github.com/DJQuardaboff)** --- Investigation

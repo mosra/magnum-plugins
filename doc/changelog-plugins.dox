@@ -108,6 +108,8 @@ namespace Magnum {
     MinGW packages (see [mosra/magnum-plugins#74]https://github.com/mosra/magnum-plugins/pull/74))
 -   The library again compiles and tests cleanly with @ref CORRADE_NO_ASSERT
     enabled, and this setup is verified on the CI to avoid further regressions
+-   Properly installing plugin binaries in Gentoo packages (see
+    [mosra/magnum-plugins#85](https://github.com/mosra/magnum-plugins/issues/85))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
