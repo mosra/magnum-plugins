@@ -110,7 +110,8 @@ Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt) {
         reinterpret_cast<const Vector3*>(in.data() + 0),
         {triangleCount, 3}, {InputTriangleStride, 0}};
     Containers::StridedArrayView2D<const Vector3> inputPositions{in,
-        reinterpret_cast<const Vector3*>(in.data() + sizeof(Vector3)), {triangleCount, 3}, {InputTriangleStride, sizeof(Vector3)}};
+        reinterpret_cast<const Vector3*>(in.data() + sizeof(Vector3)),
+        {triangleCount, 3}, {InputTriangleStride, sizeof(Vector3)}};
 
     /* The output stores a 3D position and 3D normal for each vertex */
     constexpr std::ptrdiff_t outputVertexStride = 6*4;
