@@ -43,6 +43,7 @@ struct StlImporterTest: TestSuite::Tester {
     explicit StlImporterTest();
 
     void invalid();
+    void fileNotFound();
     void ascii();
     void almostAsciiButNotActually();
     void emptyBinary();
@@ -100,7 +101,8 @@ StlImporterTest::StlImporterTest() {
     addInstancedTests({&StlImporterTest::invalid},
         Containers::arraySize(InvalidData));
 
-    addTests({&StlImporterTest::ascii,
+    addTests({&StlImporterTest::fileNotFound,
+              &StlImporterTest::ascii,
               &StlImporterTest::almostAsciiButNotActually,
               &StlImporterTest::emptyBinary,
               &StlImporterTest::binary,
@@ -126,6 +128,15 @@ void StlImporterTest::invalid() {
     CORRADE_VERIFY(!importer->openData(data.data));
     CORRADE_COMPARE(out.str(),
         Utility::formatString("Trade::StlImporter::openData(): {}\n", data.message));
+}
+
+void StlImporterTest::fileNotFound() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("nonexistent.stl"));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StlImporter::openFile(): cannot open file nonexistent.stl\n"));
 }
 
 void StlImporterTest::ascii() {

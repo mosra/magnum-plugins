@@ -32,6 +32,7 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Mesh.h>
@@ -44,6 +45,7 @@ namespace Magnum { namespace Trade {
 
 struct StanfordImporter::State {
     Containers::Array<char> data;
+    std::size_t headerSize;
     Containers::Array<MeshAttributeData> attributeData;
     Containers::Array<MeshAttributeData> faceAttributeData;
     UnsignedInt vertexStride{}, vertexCount{}, faceIndicesOffset{}, faceSkip{}, faceCount{};
@@ -70,6 +72,21 @@ ImporterFeatures StanfordImporter::doFeatures() const { return ImporterFeature::
 bool StanfordImporter::doIsOpened() const { return !!_state; }
 
 void StanfordImporter::doClose() { _state = nullptr; }
+
+void StanfordImporter::doOpenFile(const std::string& filename) {
+    if(!Utility::Directory::exists(filename)) {
+        Error{} << "Trade::StanfordImporter::openFile(): cannot open file" << filename;
+        return;
+    }
+
+    openDataInternal(Utility::Directory::read(filename));
+}
+
+void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
+    Containers::Array<char> copy{Containers::NoInit, data.size()};
+    Utility::copy(data, copy);
+    openDataInternal(std::move(copy));
+}
 
 namespace {
 
@@ -170,7 +187,7 @@ template<std::size_t size> bool checkVectorAttributeValidity(const Math::Vector<
 
 }
 
-void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
+void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
     /* Because here we're copying the data and using the _in to check if file
        is opened, having them nullptr would mean openData() would fail without
        any error message. It's not possible to do this check on the importer
@@ -185,10 +202,11 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
 
     /* Initialize the state */
     auto state = Containers::pointer<State>();
+    Containers::ArrayView<const char> in = data;
 
     /* Check file signature */
     {
-        std::string header = Utility::String::rtrim(extractLine(data));
+        std::string header = Utility::String::rtrim(extractLine(in));
         if(header != "ply") {
             Error{} << "Trade::StanfordImporter::openData(): invalid file signature" << header;
             return;
@@ -198,8 +216,8 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
     /* Parse format line */
     Containers::Optional<bool> fileFormatNeedsEndianSwapping;
     {
-        while(data) {
-            const std::string line = extractLine(data);
+        while(in) {
+            const std::string line = extractLine(in);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
             /* Skip empty lines and comments */
@@ -255,8 +273,8 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
     {
         std::size_t vertexComponentOffset{};
         PropertyType propertyType{};
-        while(data) {
-            const std::string line = extractLine(data);
+        while(in) {
+            const std::string line = extractLine(in);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
             /* Skip empty lines and comments */
@@ -623,14 +641,15 @@ void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
             objectIdOffset, 0u, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip));
     }
 
-    if(data.size() < state->vertexStride*state->vertexCount) {
+    if(in.size() < state->vertexStride*state->vertexCount) {
         Error{} << "Trade::StanfordImporter::openData(): incomplete vertex data";
         return;
     }
 
-    /* All good, copy the rest of the data to the state struct and save it */
-    state->data = Containers::Array<char>{Containers::NoInit, data.size()};
-    Utility::copy(data, state->data);
+    /* All good, move the data to the state struct and save it. Remember header
+       size so we can directly access the binary data in doMesh(). */
+    state->data = std::move(data);
+    state->headerSize = state->data.size() - in.size();
     _state = std::move(state);
 }
 
@@ -647,14 +666,16 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
     const bool parsePerFaceAttributes = level == 1 ||
         configuration().value<bool>("perFaceToPerVertex");
 
+    Containers::ArrayView<const char> in = _state->data.suffix(_state->headerSize);
+
     /* Copy all vertex data */
     Containers::Array<char> vertexData;
     if(level == 0) {
         vertexData = Containers::Array<char>{Containers::NoInit,
         _state->vertexStride*_state->vertexCount};
-        Utility::copy(_state->data.prefix(vertexData.size()), vertexData);
+        Utility::copy(in.prefix(vertexData.size()), vertexData);
     }
-    Containers::ArrayView<const char> in = _state->data.suffix(_state->vertexStride*_state->vertexCount);
+    in = in.suffix(_state->vertexStride*_state->vertexCount);
 
     /* Parse faces, keeping the original index type */
     Containers::Array<char> faceData;

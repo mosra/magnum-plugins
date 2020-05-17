@@ -28,6 +28,8 @@
 #include <cstring>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/Math/Functions.h>
@@ -48,13 +50,28 @@ bool StlImporter::doIsOpened() const { return !!_in; }
 
 void StlImporter::doClose() { _in = Containers::NullOpt; }
 
+void StlImporter::doOpenFile(const std::string& filename) {
+    if(!Utility::Directory::exists(filename)) {
+        Error{} << "Trade::StlImporter::openFile(): cannot open file" << filename;
+        return;
+    }
+
+    openDataInternal(Utility::Directory::read(filename));
+}
+
+void StlImporter::doOpenData(Containers::ArrayView<const char> data) {
+    Containers::Array<char> copy{Containers::NoInit, data.size()};
+    Utility::copy(data, copy);
+    openDataInternal(std::move(copy));
+}
+
 namespace {
     /* In the input file, the triangle is represented by 12 floats (3D normal
        followed by three 3D vertices) and 2 extra bytes. */
     constexpr std::ptrdiff_t InputTriangleStride = 12*4 + 2;
 }
 
-void StlImporter::doOpenData(Containers::ArrayView<const char> data) {
+void StlImporter::openDataInternal(Containers::Array<char>&& data) {
     /* At this point we can't even check if it's an ASCII or binary file, bail
        out */
     if(data.size() < 5) {
@@ -73,27 +90,27 @@ void StlImporter::doOpenData(Containers::ArrayView<const char> data) {
     }
 
     const UnsignedInt triangleCount = Utility::Endianness::littleEndian(*reinterpret_cast<const UnsignedInt*>(data + 80));
-    const Containers::ArrayView<const char> triangleData = data.suffix(84);
     const std::size_t expectedSize = InputTriangleStride*triangleCount;
-    if(triangleData.size() != expectedSize) {
+    if(data.size() != 84 + expectedSize) {
         Error{} << "Trade::StlImporter::openData(): file size doesn't match triangle count, expected" << 84 + expectedSize << "but got" << data.size() << "for" << triangleCount << "triangles";
         return;
     }
 
-    _in = Containers::Array<char>{Containers::NoInit, triangleData.size()};
-    Utility::copy(triangleData, *_in);
+    _in = std::move(data);
 }
 
 UnsignedInt StlImporter::doMeshCount() const { return 1; }
 
 Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt) {
+    Containers::ArrayView<const char> in = _in->suffix(84);
+
     /* Make 2D views on input normals and positions */
-    const std::size_t triangleCount = _in->size()/InputTriangleStride;
-    Containers::StridedArrayView2D<const Vector3> inputNormals{*_in,
-        reinterpret_cast<const Vector3*>(_in->data() + 0),
+    const std::size_t triangleCount = in.size()/InputTriangleStride;
+    Containers::StridedArrayView2D<const Vector3> inputNormals{in,
+        reinterpret_cast<const Vector3*>(in.data() + 0),
         {triangleCount, 3}, {InputTriangleStride, 0}};
-    Containers::StridedArrayView2D<const Vector3> inputPositions{*_in,
-        reinterpret_cast<const Vector3*>(_in->data() + sizeof(Vector3)), {triangleCount, 3}, {InputTriangleStride, sizeof(Vector3)}};
+    Containers::StridedArrayView2D<const Vector3> inputPositions{in,
+        reinterpret_cast<const Vector3*>(in.data() + sizeof(Vector3)), {triangleCount, 3}, {InputTriangleStride, sizeof(Vector3)}};
 
     /* The output stores a 3D position and 3D normal for each vertex */
     constexpr std::ptrdiff_t outputVertexStride = 6*4;

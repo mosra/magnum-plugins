@@ -119,7 +119,9 @@ class MAGNUM_STLIMPORTER_EXPORT StlImporter: public AbstractImporter {
         MAGNUM_STLIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
 
         MAGNUM_STLIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_STLIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_STLIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_STLIMPORTER_LOCAL void openDataInternal(Containers::Array<char>&& data);
         MAGNUM_STLIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_STLIMPORTER_LOCAL UnsignedInt doMeshCount() const override;

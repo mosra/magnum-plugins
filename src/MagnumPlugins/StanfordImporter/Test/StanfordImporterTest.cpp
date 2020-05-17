@@ -47,6 +47,7 @@ struct StanfordImporterTest: TestSuite::Tester {
     explicit StanfordImporterTest();
 
     void invalid();
+    void fileNotFound();
     void fileEmpty();
     void fileTooShort();
 
@@ -251,7 +252,8 @@ StanfordImporterTest::StanfordImporterTest() {
     addInstancedTests({&StanfordImporterTest::invalid},
         Containers::arraySize(InvalidData));
 
-    addTests({&StanfordImporterTest::fileEmpty});
+    addTests({&StanfordImporterTest::fileNotFound,
+              &StanfordImporterTest::fileEmpty});
 
     addInstancedTests({&StanfordImporterTest::fileTooShort},
         Containers::arraySize(ShortFileData));
@@ -303,6 +305,15 @@ void StanfordImporterTest::invalid() {
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::{}(): {}\n",
         data.duringOpen ? "openData" : "mesh",
         data.message));
+}
+
+void StanfordImporterTest::fileNotFound() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("nonexistent.ply"));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::openFile(): cannot open file nonexistent.ply\n"));
 }
 
 void StanfordImporterTest::fileEmpty() {
