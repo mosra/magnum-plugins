@@ -240,7 +240,9 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
 
     /* Allocate the data, copy header */
     Containers::Array<char> out{Containers::NoInit, header.size() + vertexDataSize + indexDataSize};
-    Utility::copy({header.data(), header.size()}, out.prefix(header.size()));
+    /* Needs an explicit ArrayView constructor, otherwise MSVC 2015, 17 and 19
+       creates ArrayView<const void> here (wtf!) */
+    Utility::copy(Containers::ArrayView<const char>{header.data(), header.size()}, out.prefix(header.size()));
 
     /* Copy the vertices */
     Containers::ArrayView<char> vertexData = out.slice(header.size(), header.size() + vertexDataSize);
