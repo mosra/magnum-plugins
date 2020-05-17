@@ -180,10 +180,10 @@ find_package(MagnumPlugins REQUIRED AssimpImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::AssimpImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
-@section Trade-AssimpImporter-limitations Behavior and limitations
+@section Trade-AssimpImporter-behavior Behavior and limitations
 
 The plugin supports @ref ImporterFeature::OpenData and
 @ref ImporterFeature::FileCallback features. The Assimp library loads
@@ -204,20 +204,22 @@ in Assimp when the flag is enabled. However please note that since Assimp
 handles logging through a global singleton, it's not possible to have different
 verbosity levels in each instance.
 
-@subsection Trade-AssimpImporter-limitations-materials Material import
+@subsection Trade-AssimpImporter-behavior-materials Material import
 
 -   Only materials with shading mode `aiShadingMode_Phong` are supported
--   Only the first diffuse/specular/ambient texture is loaded
 -   Two-sided property and alpha mode is not imported
+-   Assimp seems to ignore ambient textures in COLLADA files
 -   For some reason, Assimp 4.1 imports STL models with ambient set to
     @cpp 0xffffff_srgbf @ce, which causes all other color information to be
     discarded. If such a case is detected, the ambient is forced back to
     @cpp 0x000000_srgbf @ce. See also [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059).
 -   Unless explicitly enabled with the @cb{.ini} allowMaterialTextureCoordinateSets @ce
     @ref Trade-AssimpImporter-configuration "configuration option", only the
-    first set of texture coordinates is supported.
+    first set of texture coordinates is supported. However, even with this
+    option enabled, Assimp doesn't seem to import non-zero coordinate sets
+    correctly.
 
-@subsection Trade-AssimpImporter-limitations-lights Light import
+@subsection Trade-AssimpImporter-behavior-lights Light import
 
 -   The following properties are ignored:
     -   Angle inner/outer cone
@@ -228,18 +230,23 @@ verbosity levels in each instance.
 -   Light types other than `aiLightSource_DIRECTIONAL`, `aiLightSource_POINT`
     and `aiLightSource_SPOT` are unsupported
 
-@subsection Trade-AssimpImporter-limitations-cameras Camera import
+@subsection Trade-AssimpImporter-behavior-cameras Camera import
 
 -   Aspect and up vector properties are not imported
 
-@subsection Trade-AssimpImporter-limitations-meshes Mesh import
+@subsection Trade-AssimpImporter-behavior-meshes Mesh import
 
 -   Only point, triangle, and line meshes are loaded (quad and poly meshes
     are triangularized by Assimp)
+-   Custom mesh attributes (such as `object_id` in Stanford PLY files) are
+    not imported.
 -   Texture coordinate layers with other than two components are skipped
 -   For some file formats (such as COLLADA), Assimp may create a dummy
     "skeleton visualizer" mesh if the file has no mesh data. For others (such
     as glTF) not.
+-   Per-face attributes in Stanford PLY files are not imported.
+-   Stanford PLY files that contain a comment before the format line fail to
+    import.
 -   The importer follows types used by Assimp, thus indices are always
     @ref MeshIndexType::UnsignedInt, positions, normals, tangents and
     bitangents are always imported as @ref VertexFormat::Vector3, texture
@@ -267,14 +274,14 @@ verbosity levels in each instance.
 The mesh is always indexed; positions are always present, normals, colors and
 texture coordinates are optional.
 
-@subsection Trade-AssimpImporter-limitations-textures Texture import
+@subsection Trade-AssimpImporter-behavior-textures Texture import
 
 -   Textures with mapping mode/wrapping `aiTextureMapMode_Decal` are loaded
     with @ref SamplerWrapping::ClampToEdge
 -   Assimp does not appear to load any filtering information
 -   Raw embedded image data is not supported
 
-@subsection Trade-AssimpImporter-limitations-scene Scene import
+@subsection Trade-AssimpImporter-behavior-scene Scene import
 
 -   For some file formats (such as COLLADA), Assimp fails to load the file if
     it doesn't contain any scene. For some (such as glTF) it will succeed and

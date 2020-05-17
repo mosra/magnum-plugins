@@ -100,8 +100,8 @@ find_package(MagnumPlugins REQUIRED JpegImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::JpegImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
 @section Trade-JpegImporter-implementations libJPEG implementations
 

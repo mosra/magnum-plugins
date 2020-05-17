@@ -55,7 +55,45 @@ namespace Magnum { namespace Trade {
 /**
 @brief DDS image importer plugin
 
-Supports DirectDraw Surface images (`*.dds`) in the following formats:
+Supports DirectDraw Surface images (`*.dds`).
+
+@section Trade-DdsImporter-usage Usage
+
+This plugin depends on the @ref Trade library and is built if
+`WITH_DDSIMPORTER` is enabled when building Magnum Plugins. To use as a dynamic
+plugin, load @cpp "DdsImporter" @ce via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_DDSIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::DdsImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `DdsImporter` component of the
+`MagnumPlugins` package in CMake and link to the `MagnumPlugins::DdsImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED DdsImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::DdsImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
+
+@section Trade-DdsImporter-behavior Behavior and limitations
+
+Imports images in the following formats:
 
 -   DDS uncompressed RGB, RGBA, BGR, BGRA, grayscale as
     @ref PixelFormat::RGB8Unorm, @ref PixelFormat::RGBA8Unorm or
@@ -104,39 +142,7 @@ Supports DirectDraw Surface images (`*.dds`) in the following formats:
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled.
 
-@section Trade-DdsImporter-usage Usage
-
-This plugin depends on the @ref Trade library and is built if
-`WITH_DDSIMPORTER` is enabled when building Magnum Plugins. To use as a dynamic
-plugin, load @cpp "DdsImporter" @ce via @ref Corrade::PluginManager::Manager.
-
-Additionally, if you're using Magnum as a CMake subproject, bundle the
-[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
-following:
-
-@code{.cmake}
-set(WITH_DDSIMPORTER ON CACHE BOOL "" FORCE)
-add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
-
-# So the dynamically loaded plugin gets built implicitly
-add_dependencies(your-app MagnumPlugins::DdsImporter)
-@endcode
-
-To use as a static plugin or as a dependency of another plugin with CMake, put
-[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-into your `modules/` directory, request the `DdsImporter` component of the
-`MagnumPlugins` package in CMake and link to the `MagnumPlugins::DdsImporter`
-target:
-
-@code{.cmake}
-find_package(MagnumPlugins REQUIRED DdsImporter)
-
-# ...
-target_link_libraries(your-app PRIVATE MagnumPlugins::DdsImporter)
-@endcode
-
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+BC6h, BC7 and other compressed formats are currently not imported correctly.
 */
 class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
     public:

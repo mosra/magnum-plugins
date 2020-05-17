@@ -91,8 +91,8 @@ find_package(MagnumPlugins REQUIRED StanfordImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::StanfordImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
 @section Trade-StanfordImporter-behavior Behavior and limitations
 

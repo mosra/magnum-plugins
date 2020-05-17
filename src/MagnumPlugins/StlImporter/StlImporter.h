@@ -57,7 +57,8 @@ namespace Magnum { namespace Trade {
 @brief STL importer plugin
 @m_since_latest_{plugins}
 
-Imports normal and vertex information from binary STL files.
+Imports normal and vertex information from binary
+[Stereolitography STL](https://en.wikipedia.org/wiki/STL_(file_format)) files.
 
 @section Trade-StlImporter-usage Usage
 
@@ -91,8 +92,8 @@ find_package(MagnumPlugins REQUIRED StlImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::StlImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
 @section Trade-StlImporter-behavior Behavior and limitations
 

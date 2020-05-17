@@ -100,10 +100,10 @@ find_package(MagnumPlugins REQUIRED PngImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::PngImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
-@section Trade-PngImporter-limitations Behavior and limitations
+@section Trade-PngImporter-behavior Behavior and limitations
 
 The images are imported with @ref PixelFormat::RGB8Unorm /
 @ref PixelFormat::RGB16Unorm, @ref PixelFormat::RGBA8Unorm /
@@ -111,7 +111,7 @@ The images are imported with @ref PixelFormat::RGB8Unorm /
 @ref PixelFormat::R16Unorm. All imported images use default @ref PixelStorage
 parameters.
 
-@subsection Trade-PngImporter-limitations-cgbi Apple CgBI PNGs
+@subsection Trade-PngImporter-behavior-cgbi Apple CgBI PNGs
 
 CgBI is a proprietary Apple-specific extension to PNG
 ([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). Stock

@@ -61,10 +61,10 @@ namespace Magnum { namespace Trade {
 Supports the following formats using the
 [stb_image](https://github.com/nothings/stb) library:
 
--   Windows Bitmap (`*.bmp`), only non-1bpp, no RLE
+-   Windows Bitmap (`*.bmp`)
 -   Graphics Interchange Format (`*.gif`), including animations
 -   Radiance HDR (`*.hdr`)
--   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`), except for arithmetic encoding
+-   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`)
 -   Portable Graymap (`*.pgm`)
 -   Softimage PIC (`*.pic`)
 -   Portable Network Graphics (`*.png`)
@@ -124,10 +124,10 @@ find_package(MagnumPlugins REQUIRED StbImageImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::StbImageImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
-@section Trade-StbImageImporter-limitations Behavior and limitations
+@section Trade-StbImageImporter-behavior Behavior and limitations
 
 The images are imported with @ref PixelFormat::RGB8Unorm,
 @ref PixelFormat::RGBA8Unorm, @ref PixelFormat::R8Unorm for grayscale or
@@ -140,7 +140,11 @@ to @cpp 1 @ce if the data require it.
 The importer is thread-safe if Corrade and Magnum is compiled with
 @ref CORRADE_BUILD_MULTITHREADED enabled.
 
-@subsection Trade-StbImageImporter-animated-gifs Animated GIFs
+@subsection Trade-StbImageImporter-behavior-bmp BMP support
+
+1bpp and RLE files are not supported.
+
+@subsection Trade-StbImageImporter-behavior-animated-gifs Animated GIFs
 
 In case the file is an animated GIF, the importer will report frame count in
 @ref image2DCount() and you can then import each frame separately.
@@ -151,7 +155,16 @@ frame. Example usage:
 
 @snippet StbImageImporter.cpp gif-delays
 
-@subsection Trade-StbImageImporter-limitations-cgbi Apple CgBI PNGs
+Note that the support for GIF transitions is currently incomplete, see
+[nothings/stb#683](https://github.com/nothings/stb/pull/683) for details.
+
+@subsection Trade-StbImageImporter-behavior-arithmetic-jpeg Arithmetic JPEG decoding
+
+[Arithmetic coding](https://en.wikipedia.org/wiki/Arithmetic_coding) is not
+implemented in stb_image, use @ref JpegImporter together with libjpeg-turbo or
+mozjpeg instead.
+
+@subsection Trade-StbImageImporter-behavior-cgbi Apple CgBI PNGs
 
 CgBI is a proprietary Apple-specific extension to PNG
 ([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). The

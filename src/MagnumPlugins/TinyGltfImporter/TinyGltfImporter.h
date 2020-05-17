@@ -116,10 +116,10 @@ find_package(MagnumPlugins REQUIRED TinyGltfImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::TinyGltfImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
-@section Trade-TinyGltfImporter-limitations Behavior and limitations
+@section Trade-TinyGltfImporter-behavior Behavior and limitations
 
 The plugin supports @ref ImporterFeature::OpenData and
 @ref ImporterFeature::FileCallback features. The `tiny_gltf` library loads
@@ -133,7 +133,7 @@ read.
 
 Import of skeleton, skin and morph data is not supported at the moment.
 
-@subsection Trade-TinyGltfImporter-limitations-animation Animation import
+@subsection Trade-TinyGltfImporter-behavior-animation Animation import
 
 -   Linear quaternion rotation tracks are postprocessed in order to make it
     possible to use the faster
@@ -163,7 +163,7 @@ Import of skeleton, skin and morph data is not supported at the moment.
     however, it can happen that multiple conflicting tracks affecting the same
     node are merged in the same clip, causing the animation to misbehave.
 
-@subsection Trade-TinyGltfImporter-limitations-objects Scene and object import
+@subsection Trade-TinyGltfImporter-behavior-objects Scene and object import
 
 -   If no @cb{.json} "scene" @ce property is present and the file contains at
     least one scene, @ref defaultScene() returns @cpp 0 @ce instead of
@@ -178,19 +178,19 @@ Import of skeleton, skin and morph data is not supported at the moment.
     @cb{.ini} normalizeQuaternions @ce option, see
     @ref Trade-TinyGltfImporter-configuration "below".
 
-@subsection Trade-TinyGltfImporter-limitations-camera Camera import
+@subsection Trade-TinyGltfImporter-behavior-camera Camera import
 
 -   Cameras in glTF are specified with vertical FoV and vertical:horizontal
     aspect ratio, these values are recalculated for horizontal FoV and
     horizontal:vertical aspect ratio as is common in Magnum
 
-@subsection Trade-TinyGltfImporter-limitations-lights Light import
+@subsection Trade-TinyGltfImporter-behavior-lights Light import
 
 -   The importer supports the [KHR_lights_punctual](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual)
     extension, supported by the official glTF Exporter in Blender 2.8.x.
     -   Only light properties color, intensity and type are imported.
 
-@subsection Trade-TinyGltfImporter-limitations-meshes Mesh import
+@subsection Trade-TinyGltfImporter-behavior-meshes Mesh import
 
 -   Indices are imported as either @ref MeshIndexType::UnsignedByte,
     @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt
@@ -264,7 +264,7 @@ imported meshes as well. Their mapping to/from a string can be queried using
 unsupported types (such as non-normalized integer matrices) cause the import to
 fail.
 
-@subsection Trade-TinyGltfImporter-limitations-materials Material import
+@subsection Trade-TinyGltfImporter-behavior-materials Material import
 
 -   Subset of all material specs is currently imported as @ref PhongMaterialData,
     including normal textures
@@ -299,7 +299,7 @@ fail.
 -   The [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
     extension is currently not supported.
 
-@subsection Trade-TinyGltfImporter-limitations-textures Texture and image import
+@subsection Trade-TinyGltfImporter-behavior-textures Texture and image import
 
 <ul>
 <li>Texture type is always @ref Trade::TextureData::Type::Texture2D, as glTF

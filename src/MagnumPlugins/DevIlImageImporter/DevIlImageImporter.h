@@ -111,14 +111,6 @@ is incomplete):
 -   X Pixel Map (`*.xpm`)
 -   Doom graphics
 
-The images are imported as @ref PixelFormat::R8Unorm,
-@ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
-@ref PixelFormat::RGBA8Unorm. BGR/BGRA will be converted to
-@ref PixelFormat::RGB8Unorm / @ref PixelFormat::RGBA8Unorm, all other formats
-to @ref PixelFormat::RGBA8Unorm. Images are imported with default
-@ref PixelStorage parameters except for alignment, which may be changed to `1`
-if the data require it.
-
 This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
 `GifImporter`, `HdrImporter`, `JpegImporter`, `Jpeg2000Importer`,
 `MngImporter`, `PcxImporter`, `PbmImporter`, `PgmImporter`, `PicImporter`,
@@ -169,8 +161,34 @@ find_package(MagnumPlugins REQUIRED DevIlImageImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::DevIlImageImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
+
+@section Trade-DevIlImageImporter-behavior Behavior and limitations
+
+The images are imported as @ref PixelFormat::R8Unorm,
+@ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
+@ref PixelFormat::RGBA8Unorm. BGR/BGRA will be converted to
+@ref PixelFormat::RGB8Unorm / @ref PixelFormat::RGBA8Unorm, all other formats
+to @ref PixelFormat::RGBA8Unorm. Images are imported with default
+@ref PixelStorage parameters except for alignment, which may be changed to `1`
+if the data require it.
+
+@subsection Trade-DevIlImageImporter-behavior-dds Compressed DDS files
+
+DDS files with BCn compression are always decompressed to RGBA on input.
+
+@subsection Trade-DevIlImageImporter-behavior-animated-gifs Animated GIFs
+
+While DevIL itself supports loading of animated GIFs, the importer doesn't
+implement necessary interfaces. Use @ref StbImageImporter for loading GIF
+animations instead.
+
+@subsection Trade-DevIlImageImporter-behavior-cgbi Apple CgBI PNGs
+
+CgBI is a proprietary Apple-specific extension to PNG
+([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). DevIL
+doesn't support these, use @ref StbImageImporter for loading these instead.
 */
 class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImporter {
     public:

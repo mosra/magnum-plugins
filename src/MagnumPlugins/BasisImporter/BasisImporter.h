@@ -115,8 +115,8 @@ find_package(MagnumPlugins REQUIRED BasisImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::BasisImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
 @section Trade-BasisImporter-configuration Plugin-specific configuration
 

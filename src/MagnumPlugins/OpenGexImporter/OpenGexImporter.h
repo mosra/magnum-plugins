@@ -96,10 +96,10 @@ find_package(MagnumPlugins REQUIRED OpenGexImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::OpenGexImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
-@section Trade-OpenGexImporter-limitations Behavior and limitations
+@section Trade-OpenGexImporter-behavior Behavior and limitations
 
 The plugin supports @ref ImporterFeature::OpenData and
 @ref ImporterFeature::FileCallback features. The importer fully loads the
@@ -117,14 +117,14 @@ read.
 -   On OpenGL ES, usage of double type and on WebGL additionally also usage of
     64bit integer types results in parsing error.
 
-@subsection Trade-OpenGexImporter-limitations-scenes Scene hierarchy import
+@subsection Trade-OpenGexImporter-behavior-scenes Scene hierarchy import
 
 -   Object-only transformations are not supported.
 -   Additional material references after the first one for given geometry node
     are ignored.
 -   Geometry node visibility, shadow and motion blur properties are ignored.
 
-@subsection Trade-OpenGexImporter-limitations-camera Camera import
+@subsection Trade-OpenGexImporter-behavior-camera Camera import
 
 -   Camera type is always @ref CameraType::Perspective3D
 -   Default FoV for cameras that don't have it specified is @cpp 35.0_degf @ce
@@ -132,12 +132,12 @@ read.
     @cpp 0.01f @ce and @cpp 100.0f @ce
 -   Aspect ratio is ignored and hardcoded to @cpp 1.0f @ce
 
-@subsection Trade-OpenGexImporter-limitations-lights Light import
+@subsection Trade-OpenGexImporter-behavior-lights Light import
 
 -   Light attenuation properties are not yet supported.
 -   Light textures are not yet supported.
 
-@subsection Trade-OpenGexImporter-limitations-meshes Mesh import
+@subsection Trade-OpenGexImporter-behavior-meshes Mesh import
 
 -   Quads are not supported.
 -   Additional mesh LoDs after the first one are ignored.
@@ -154,7 +154,7 @@ read.
 The imported mesh always has at least one vertex attribute, but positions are
 not required to be present. Indices are optional as well.
 
-@subsection Trade-OpenGexImporter-limitations-materials Material import
+@subsection Trade-OpenGexImporter-behavior-materials Material import
 
 -   Alpha mode is always @ref MaterialAlphaMode::Opaque and alpha mask always
     @cpp 0.5f @ce
@@ -164,7 +164,7 @@ not required to be present. Indices are optional as well.
 -   `emission`, `opacity` and `transparency` attributes are not supported.
 -   `normal` textures are not supported.
 
-@subsection Trade-OpenGexImporter-limitations-textures Texture import
+@subsection Trade-OpenGexImporter-behavior-textures Texture import
 
 -   Texture coordinate transformation is ignored.
 -   Textures using other than the first coordinate set are not supported.
