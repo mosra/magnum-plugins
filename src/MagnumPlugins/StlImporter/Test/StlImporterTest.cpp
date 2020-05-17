@@ -28,6 +28,7 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
@@ -97,6 +98,23 @@ const struct {
         "file size doesn't match triangle count, expected 234 but got 235 for 3 triangles"}
 };
 
+const struct {
+    const char* name;
+    bool perFaceToPerVertex;
+    UnsignedInt level;
+    UnsignedInt levelCount;
+    MeshPrimitive primitive;
+    UnsignedInt vertexCount;
+    UnsignedInt attributeCount;
+    bool positions, normals;
+} BinaryData[] {
+    {"", true, 0, 1, MeshPrimitive::Triangles, 6, 2, true, true},
+    {"per-face normals, level 0",
+        false, 0, 2, MeshPrimitive::Triangles, 6, 1, true, false},
+    {"per-face normals, level 1",
+        false, 1, 2, MeshPrimitive::Faces, 2, 1, false, false}
+};
+
 StlImporterTest::StlImporterTest() {
     addInstancedTests({&StlImporterTest::invalid},
         Containers::arraySize(InvalidData));
@@ -104,10 +122,12 @@ StlImporterTest::StlImporterTest() {
     addTests({&StlImporterTest::fileNotFound,
               &StlImporterTest::ascii,
               &StlImporterTest::almostAsciiButNotActually,
-              &StlImporterTest::emptyBinary,
-              &StlImporterTest::binary,
+              &StlImporterTest::emptyBinary});
 
-              &StlImporterTest::openTwice,
+    addInstancedTests({&StlImporterTest::binary},
+        Containers::arraySize(BinaryData));
+
+    addTests({&StlImporterTest::openTwice,
               &StlImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -196,39 +216,61 @@ void StlImporterTest::emptyBinary() {
 }
 
 void StlImporterTest::binary() {
+    auto&& data = BinaryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
+
+    /* Set only if disabled, to test the default value as well */
+    if(!data.perFaceToPerVertex)
+        importer->configuration().setValue("perFaceToPerVertex", data.perFaceToPerVertex);
+
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl")));
 
-    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshLevelCount(0), data.levelCount);
+
+    Containers::Optional<MeshData> mesh = importer->mesh(0, data.level);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(!mesh->isIndexed());
-    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-    CORRADE_COMPARE(mesh->vertexCount(), 6);
-    CORRADE_COMPARE(mesh->attributeCount(), 2);
+    CORRADE_COMPARE(mesh->primitive(), data.primitive);
+    CORRADE_COMPARE(mesh->vertexCount(), data.vertexCount);
+    CORRADE_COMPARE(mesh->attributeCount(), data.attributeCount);
 
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-        Containers::arrayView<Vector3>({
-            {1.0f, 2.0f, 3.0f},
-            {4.0f, 5.0f, 6.0f},
-            {7.0f, 8.0f, 9.0f},
+    if(data.level == 0) {
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+            Containers::arrayView<Vector3>({
+                {1.0f, 2.0f, 3.0f},
+                {4.0f, 5.0f, 6.0f},
+                {7.0f, 8.0f, 9.0f},
 
-            {1.1f, 2.1f, 3.1f},
-            {4.1f, 5.1f, 6.1f},
-            {7.1f, 8.1f, 9.1f}
-        }), TestSuite::Compare::Container);
+                {1.1f, 2.1f, 3.1f},
+                {4.1f, 5.1f, 6.1f},
+                {7.1f, 8.1f, 9.1f}
+            }), TestSuite::Compare::Container);
 
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), VertexFormat::Vector3);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
-        Containers::arrayView<Vector3>({
-            {0.1f, 0.2f, 0.3f},
-            {0.1f, 0.2f, 0.3f},
-            {0.1f, 0.2f, 0.3f},
+        if(data.normals) {
+            CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), VertexFormat::Vector3);
+            CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
+                Containers::arrayView<Vector3>({
+                    {0.1f, 0.2f, 0.3f},
+                    {0.1f, 0.2f, 0.3f},
+                    {0.1f, 0.2f, 0.3f},
 
-            {0.4f, 0.5f, 0.6f},
-            {0.4f, 0.5f, 0.6f},
-            {0.4f, 0.5f, 0.6f}
-        }), TestSuite::Compare::Container);
+                    {0.4f, 0.5f, 0.6f},
+                    {0.4f, 0.5f, 0.6f},
+                    {0.4f, 0.5f, 0.6f}
+                }), TestSuite::Compare::Container);
+        }
+    } else if(data.level == 1) {
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), VertexFormat::Vector3);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
+            Containers::arrayView<Vector3>({
+                {0.1f, 0.2f, 0.3f},
+                {0.4f, 0.5f, 0.6f}
+            }), TestSuite::Compare::Container);
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
 }
 
 void StlImporterTest::openTwice() {

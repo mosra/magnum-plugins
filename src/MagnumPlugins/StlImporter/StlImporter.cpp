@@ -28,6 +28,7 @@
 #include <cstring>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Endianness.h>
@@ -101,52 +102,95 @@ void StlImporter::openDataInternal(Containers::Array<char>&& data) {
 
 UnsignedInt StlImporter::doMeshCount() const { return 1; }
 
-Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt) {
+UnsignedInt StlImporter::doMeshLevelCount(UnsignedInt) {
+    return configuration().value<bool>("perFaceToPerVertex") ? 1 : 2;
+}
+
+Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt level) {
+    /* We either have per-face in the second level or we convert them to
+       per-vertex, never both */
+    const bool perFaceToPerVertex = configuration().value<bool>("perFaceToPerVertex");
+    CORRADE_INTERNAL_ASSERT(!(level == 1 && perFaceToPerVertex));
+
     Containers::ArrayView<const char> in = _in->suffix(84);
 
     /* Make 2D views on input normals and positions */
     const std::size_t triangleCount = in.size()/InputTriangleStride;
     Containers::StridedArrayView2D<const Vector3> inputNormals{in,
         reinterpret_cast<const Vector3*>(in.data() + 0),
-        {triangleCount, 3}, {InputTriangleStride, 0}};
+        {triangleCount, 1}, {InputTriangleStride, 0}};
     Containers::StridedArrayView2D<const Vector3> inputPositions{in,
         reinterpret_cast<const Vector3*>(in.data() + sizeof(Vector3)),
         {triangleCount, 3}, {InputTriangleStride, sizeof(Vector3)}};
 
-    /* The output stores a 3D position and 3D normal for each vertex */
-    constexpr std::ptrdiff_t outputVertexStride = 6*4;
-    Containers::Array<char> vertexData{Containers::NoInit, std::size_t(3*outputVertexStride*triangleCount)};
-    Containers::StridedArrayView2D<Vector3> outputPositions{vertexData,
-        reinterpret_cast<Vector3*>(vertexData.data() + 0),
-        {triangleCount, 3}, {outputVertexStride*3, outputVertexStride}};
-    Containers::StridedArrayView2D<Vector3> outputNormals{vertexData,
-        reinterpret_cast<Vector3*>(vertexData.data() + sizeof(Vector3)),
-        {triangleCount, 3}, {outputVertexStride*3, outputVertexStride}};
+    /* Decide on output vertex stride and attribute count */
+    std::size_t vertexCount;
+    std::size_t attributeCount = 1;
+    std::ptrdiff_t outputVertexStride = 3*4;
+    if(level == 0) {
+        vertexCount = 3*triangleCount;
+        if(perFaceToPerVertex) {
+            outputVertexStride += 3*4;
+            ++attributeCount;
+        }
+    } else vertexCount = triangleCount;
 
-    /* Copy the things over */
-    Utility::copy(inputNormals, outputNormals);
-    Utility::copy(inputPositions, outputPositions);
+    /* Allocate output data */
+    Containers::Array<char> vertexData{Containers::NoInit, std::size_t(outputVertexStride*vertexCount)};
+    Containers::Array<MeshAttributeData> attributeData{attributeCount};
 
-    Containers::StridedArrayView1D<Vector3> positions{vertexData,
-        reinterpret_cast<Vector3*>(vertexData.data() + 0),
-        3*triangleCount, outputVertexStride};
-    Containers::StridedArrayView1D<Vector3> normals{vertexData,
-        reinterpret_cast<Vector3*>(vertexData.data() + sizeof(Vector3)),
-        3*triangleCount, outputVertexStride};
+    /* Copy positions */
+    std::size_t offset = 0;
+    std::size_t attributeIndex = 0;
+    if(level == 0) {
+        Containers::StridedArrayView2D<Vector3> outputPositions{vertexData,
+            reinterpret_cast<Vector3*>(vertexData.data() + offset),
+            {triangleCount, 3}, {outputVertexStride*3, outputVertexStride}};
+        Utility::copy(inputPositions, outputPositions);
+        Containers::StridedArrayView1D<Vector3> positions{vertexData,
+            reinterpret_cast<Vector3*>(vertexData.data() + offset),
+            vertexCount, outputVertexStride};
 
-    /* Endian conversion. This is needed only on Big-Endian systems, but it's
-       enabled always to minimize a risk of accidental breakage when we can't
-       test. */
-    for(Containers::StridedArrayView1D<Float> component:
-        Containers::arrayCast<2, Float>(positions).transposed<0, 1>())
-        Utility::Endianness::littleEndianInPlace(component);
-    for(Containers::StridedArrayView1D<Float> component:
-        Containers::arrayCast<2, Float>(normals).transposed<0, 1>())
-        Utility::Endianness::littleEndianInPlace(component);
+        /* Endian conversion. This is needed only on Big-Endian systems, but
+           it's enabled always to minimize a risk of accidental breakage when
+           we can't test. */
+        for(Containers::StridedArrayView1D<Float> component:
+            Containers::arrayCast<2, Float>(positions).transposed<0, 1>())
+                Utility::Endianness::littleEndianInPlace(component);
 
-    return MeshData{MeshPrimitive::Triangles, std::move(vertexData), {
-        Trade::MeshAttributeData{MeshAttribute::Position, positions},
-        Trade::MeshAttributeData{MeshAttribute::Normal, normals}}};
+        offset += sizeof(Vector3);
+        attributeData[attributeIndex++] = MeshAttributeData{MeshAttribute::Position, positions};
+    }
+
+    /* Copy normals */
+    if(perFaceToPerVertex || level == 1) {
+        const std::size_t normalRepeatCount = perFaceToPerVertex ? 3 : 1;
+        Containers::StridedArrayView2D<Vector3> outputNormals{vertexData,
+            reinterpret_cast<Vector3*>(vertexData.data() + offset),
+            {triangleCount, normalRepeatCount},
+            {std::ptrdiff_t(outputVertexStride*normalRepeatCount), outputVertexStride}};
+        Utility::copy(inputNormals.broadcasted<1>(normalRepeatCount),
+            outputNormals);
+        Containers::StridedArrayView1D<Vector3> normals{vertexData,
+            reinterpret_cast<Vector3*>(vertexData.data() + offset),
+            vertexCount, outputVertexStride};
+
+        /* Endian conversion. This is needed only on Big-Endian systems, but
+           it's enabled always to minimize a risk of accidental breakage when
+           we can't test. */
+        for(Containers::StridedArrayView1D<Float> component:
+            Containers::arrayCast<2, Float>(normals).transposed<0, 1>())
+                Utility::Endianness::littleEndianInPlace(component);
+
+        offset += sizeof(Vector3);
+        attributeData[attributeIndex++] = MeshAttributeData{MeshAttribute::Normal, normals};
+    }
+
+    CORRADE_INTERNAL_ASSERT(offset == std::size_t(outputVertexStride));
+    CORRADE_INTERNAL_ASSERT(attributeIndex == attributeCount);
+
+    return MeshData{level == 0 ? MeshPrimitive::Triangles : MeshPrimitive::Faces,
+        std::move(vertexData), std::move(attributeData)};
 }
 
 }}

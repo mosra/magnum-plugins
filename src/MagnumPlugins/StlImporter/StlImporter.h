@@ -125,6 +125,7 @@ class MAGNUM_STLIMPORTER_EXPORT StlImporter: public AbstractImporter {
         MAGNUM_STLIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_STLIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
+        MAGNUM_STLIMPORTER_LOCAL UnsignedInt doMeshLevelCount(UnsignedInt id) override;
         MAGNUM_STLIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
         Containers::Optional<Containers::Array<char>> _in;
