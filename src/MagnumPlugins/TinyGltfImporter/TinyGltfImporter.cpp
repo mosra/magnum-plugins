@@ -361,7 +361,7 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         _d->textureCoordinateYFlipInMaterial = true;
     for(const tinygltf::Mesh& mesh: _d->model.meshes) {
         for(const tinygltf::Primitive& primitive: mesh.primitives) {
-            for(const std::pair<std::string, int>& attribute: primitive.attributes) {
+            for(const std::pair<const std::string, int>& attribute: primitive.attributes) {
                 if(Utility::String::beginsWith(attribute.first, "TEXCOORD_")) {
                     if(!_d->textureCoordinateYFlipInMaterial) {
                         /* Ignore aaccessor is out of bounds, this will fail
@@ -527,7 +527,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
      *      postprocess them and can't just use the memory directly.
      */
     Containers::Array<char> data{dataSize};
-    for(const std::pair<int, std::tuple<Containers::StridedArrayView2D<const char>, std::size_t, std::size_t>>& view: samplerData) {
+    for(const std::pair<const int, std::tuple<Containers::StridedArrayView2D<const char>, std::size_t, std::size_t>>& view: samplerData) {
         Containers::StridedArrayView2D<const char> src;
         std::size_t outputOffset;
         std::tie(src, outputOffset, std::ignore) = view.second;
