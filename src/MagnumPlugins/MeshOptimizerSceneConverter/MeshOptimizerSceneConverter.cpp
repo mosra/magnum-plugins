@@ -141,7 +141,8 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
        if there are no positions -- so check the hasAttribute() earlier. */
     if((flags & SceneConverterFlag::Verbose && mesh.hasAttribute(MeshAttribute::Position)) ||
        configuration.value<bool>("optimizeOverdraw") ||
-       configuration.value<bool>("simplify"))
+       configuration.value<bool>("simplify") ||
+       configuration.value<bool>("simplifySloppy"))
     {
         if(!mesh.hasAttribute(MeshAttribute::Position)) {
             Error{} << prefix << "optimizeOverdraw and simplify require the mesh to have positions";
@@ -242,7 +243,9 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
     }
 
 
-    if(configuration().value<bool>("simplify")) {
+    if(configuration().value<bool>("simplify") ||
+       configuration().value<bool>("simplifySloppy"))
+    {
         Error{} << "Trade::MeshOptimizerSceneConverter::convertInPlace(): mesh simplification can't be performed in-place, use convert() instead";
         return false;
     }
@@ -284,7 +287,9 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
     if(!convertInPlaceInternal("Trade::MeshOptimizerSceneConverter::convert():", out, flags(), configuration(), positionStorage, positions, vertexSize, vertexCacheStatsBefore, vertexFetchStatsBefore, overdrawStatsBefore))
         return Containers::NullOpt;
 
-    if(configuration().value<bool>("simplify")) {
+    if(configuration().value<bool>("simplify") ||
+       configuration().value<bool>("simplifySloppy"))
+    {
         const UnsignedInt targetIndexCount = out.indexCount()*configuration().value<Float>("simplifyTargetIndexCountThreshold");
         const Float targetError = configuration().value<Float>("simplifyTargetError");
 
@@ -301,7 +306,14 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
 
         Containers::Array<UnsignedInt> outputIndices;
         Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, Containers::NoInit, mesh.indexCount());
-        Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, meshopt_simplify(outputIndices.data(), inputIndices, out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount, targetError));
+
+        UnsignedInt vertexCount;
+        if(configuration().value<bool>("simplifySloppy"))
+            vertexCount = meshopt_simplifySloppy(outputIndices.data(), inputIndices, out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount);
+        else
+            vertexCount = meshopt_simplify(outputIndices.data(), inputIndices, out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount, targetError);
+
+        Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, vertexCount);
 
         /* Take the original mesh vertex data with the reduced index buffer and
            call combineIndexedAttributes() to throw away the unused vertices */

@@ -75,9 +75,18 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
     void simplifyInPlace();
     void simplifyNoPositions();
     template<class T> void simplify();
+    template<class T> void simplifySloppy();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractSceneConverter> _manager{"nonexistent"};
+};
+
+const struct {
+    const char* name;
+    const char* option;
+} SimplifyData[] {
+    {"", "simplify"},
+    {"sloppy", "simplifySloppy"}
 };
 
 MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
@@ -116,14 +125,20 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
 
         &MeshOptimizerSceneConverterTest::copy,
         &MeshOptimizerSceneConverterTest::copyTriangleStrip2DPositions,
-        &MeshOptimizerSceneConverterTest::copyTriangleFanIndexed,
+        &MeshOptimizerSceneConverterTest::copyTriangleFanIndexed});
 
+    addInstancedTests({
         &MeshOptimizerSceneConverterTest::simplifyInPlace,
-        &MeshOptimizerSceneConverterTest::simplifyNoPositions,
+        &MeshOptimizerSceneConverterTest::simplifyNoPositions},
+        Containers::arraySize(SimplifyData));
 
+    addTests<MeshOptimizerSceneConverterTest>({
         &MeshOptimizerSceneConverterTest::simplify<UnsignedByte>,
         &MeshOptimizerSceneConverterTest::simplify<UnsignedShort>,
-        &MeshOptimizerSceneConverterTest::simplify<UnsignedInt>});
+        &MeshOptimizerSceneConverterTest::simplify<UnsignedInt>,
+        &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedByte>,
+        &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedShort>,
+        &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedInt>});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -728,11 +743,14 @@ void MeshOptimizerSceneConverterTest::copyTriangleFanIndexed() {
 }
 
 void MeshOptimizerSceneConverterTest::simplifyInPlace() {
+    auto&& data = SimplifyData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
     converter->configuration().setValue("optimizeVertexCache", false);
     converter->configuration().setValue("optimizeOverdraw", false);
     converter->configuration().setValue("optimizeVertexFetch", false);
-    converter->configuration().setValue("simplify", true);
+    converter->configuration().setValue(data.option, true);
 
     const UnsignedByte indexData[3]{};
     MeshData mesh{MeshPrimitive::Triangles,
@@ -746,11 +764,14 @@ void MeshOptimizerSceneConverterTest::simplifyInPlace() {
 }
 
 void MeshOptimizerSceneConverterTest::simplifyNoPositions() {
+    auto&& data = SimplifyData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
     converter->configuration().setValue("optimizeVertexCache", false);
     converter->configuration().setValue("optimizeOverdraw", false);
     converter->configuration().setValue("optimizeVertexFetch", false);
-    converter->configuration().setValue("simplify", true);
+    converter->configuration().setValue(data.option, true);
 
     const UnsignedByte indexData[3]{};
     MeshData mesh{MeshPrimitive::Triangles,
@@ -833,6 +854,67 @@ template<class T> void MeshOptimizerSceneConverterTest::simplify() {
             {0.666667f, 0.75f},
             {1.0f, 0.75f}, /* Seam #2 */
             {0.5f, 1.0f}
+        }), TestSuite::Compare::Container);
+}
+
+template<class T> void MeshOptimizerSceneConverterTest::simplifySloppy() {
+    setTestCaseTemplateName(Math::TypeTraits<T>::name());
+
+    /* We're interested only in the simplifier here, nothing else. Reducing to
+       half the vertices */
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
+    converter->configuration().setValue("simplifySloppy", true);
+    converter->configuration().setValue("simplifyTargetIndexCountThreshold", 0.5f);
+
+    MeshData sphere = MeshTools::compressIndices(
+        Primitives::uvSphereSolid(4, 6, Primitives::UVSphereFlag::TextureCoordinates),
+        Implementation::meshIndexTypeFor<T>());
+    CORRADE_COMPARE(sphere.indexType(), Implementation::meshIndexTypeFor<T>());
+    CORRADE_COMPARE(sphere.indexCount(), 108);
+    CORRADE_COMPARE(sphere.vertexCount(), 23);
+
+    Containers::Optional<MeshData> simplified = converter->convert(sphere);
+    CORRADE_VERIFY(simplified);
+    CORRADE_COMPARE(simplified->indexType(), MeshIndexType::UnsignedInt);
+    CORRADE_COMPARE(simplified->indexCount(), 36); /* Less than a half */
+    CORRADE_COMPARE(simplified->vertexCount(), 8);
+    CORRADE_COMPARE_AS(simplified->indices<UnsignedInt>(), Containers::arrayView<UnsignedInt>({
+        0, 1, 2, 0, 3, 1, 0, 2, 4, 0, 4, 5, 2, 1, 6, 2, 6, 4, 1, 3, 7, 1, 7, 6,
+        0, 5, 3, 3, 5, 7, 4, 6, 5, 6, 7, 5
+    }), TestSuite::Compare::Container);
+
+    /* Vertex data unique, with no seam preserved ... */
+    const Vector3 positionsOrNormals[]{
+        {0.0f, -0.707107f, 0.707107f},
+        {0.612372f, -0.707107f, -0.353553f},
+        {0.612372f, -0.707107f, 0.353553f},
+        {-0.612372f, -0.707107f, -0.353553f},
+        {0.866025f, 0.0f, 0.5f},
+        {-0.612372f, 0.707107f, 0.353553f},
+        {0.866025f, 0.0f, -0.5f},
+        {0.0f, 0.707107f, -0.707107f}
+    };
+    CORRADE_COMPARE_AS(simplified->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView(positionsOrNormals),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(simplified->attribute<Vector3>(MeshAttribute::Normal),
+        Containers::arrayView(positionsOrNormals),
+        TestSuite::Compare::Container);
+
+    /* ... which of course breaks the UVs */
+    CORRADE_COMPARE_AS(simplified->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            {0.0f, 0.25f},
+            {0.333333f, 0.25f},
+            {0.166667f, 0.25f},
+            {0.666667f, 0.25f},
+            {0.166667f, 0.5f},
+            {0.833333f, 0.75f},
+            {0.333333f, 0.5f},
+            {0.5f, 0.75}
         }), TestSuite::Compare::Container);
 }
 

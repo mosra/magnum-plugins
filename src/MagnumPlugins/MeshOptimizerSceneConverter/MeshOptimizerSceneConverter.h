@@ -138,8 +138,9 @@ before and after the operation.
 
 @subsection Trade-MeshOptimizerSceneConverter-behavior-simplification Mesh simplification
 
-By default the plugin performs only the above non-destructive operations. Mesh
-simplification can be enabled using the @cb{.ini} simplify @ce
+By default the plugin performs only the above non-destructive operations.
+[Mesh simplification](https://github.com/zeux/meshoptimizer#simplification) can
+be enabled using either the @cb{.ini} simplify @ce or @cb{.ini} simplifySloppy @ce
 @ref Trade-MeshOptimizerSceneConverter-configuration "configuration option" together with specifying desired @cb{.ini} simplifyTargetIndexCountThreshold @ce
 --- the default value of 1.0 will leave the mesh unchanged, set it to for
 example 0.25 to reduce the mesh to a fourth of its size.
