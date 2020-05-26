@@ -29,6 +29,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/MeshTools/CompressIndices.h>
 #include <Magnum/Primitives/Circle.h>
@@ -435,12 +436,21 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
         CORRADE_VERIFY(converter->convert(icosphere));
         CORRADE_VERIFY(converter->convertInPlace(icosphere));
     }
-    CORRADE_COMPARE(out.str(),
+
+    /* We get a slightly different result on MSVC STL */
+    const char* acmr =
+        #ifdef CORRADE_TARGET_DINKUMWARE
+        "2.01563"
+        #else
+        "2.01562"
+        #endif
+        ;
+    CORRADE_COMPARE(out.str(), Utility::formatString(
 R"(Trade::MeshOptimizerSceneConverter::convert(): processing stats:
   vertex cache:
     165120 -> 58521 transformed vertices
     1 -> 1 executed warps
-    ACMR 2.01562 -> 0.714368
+    ACMR {0} -> 0.714368
     ATVR 4.03105 -> 1.42867
   vertex fetch:
     3891008 -> 1582144 bytes fetched
@@ -453,7 +463,7 @@ Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
     165120 -> 58521 transformed vertices
     1 -> 1 executed warps
-    ACMR 2.01562 -> 0.714368
+    ACMR {0} -> 0.714368
     ATVR 4.03105 -> 1.42867
   vertex fetch:
     3891008 -> 1582144 bytes fetched
@@ -462,7 +472,7 @@ Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
     308753 -> 308750 shaded pixels
     308748 -> 308748 covered pixels
     overdraw 1.00002 -> 1.00001
-)");
+)", acmr));
 
 }
 
@@ -491,12 +501,21 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(converter->convertInPlace(icosphereCustom));
     }
-    CORRADE_COMPARE(out.str(),
+
+    /* We get a slightly different result on MSVC STL */
+    const char* acmr =
+        #ifdef CORRADE_TARGET_DINKUMWARE
+        "2.01563"
+        #else
+        "2.01562"
+        #endif
+        ;
+    CORRADE_COMPARE(out.str(), Utility::formatString(
 R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
     165120 -> 58521 transformed vertices
     1 -> 1 executed warps
-    ACMR 2.01562 -> 0.714368
+    ACMR {} -> 0.714368
     ATVR 4.03105 -> 1.42867
   vertex fetch:
     3891008 -> 1582144 bytes fetched
@@ -505,8 +524,7 @@ R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
     308753 -> 308750 shaded pixels
     308748 -> 308748 covered pixels
     overdraw 1.00002 -> 1.00001
-)");
-
+)", acmr));
 }
 
 void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
