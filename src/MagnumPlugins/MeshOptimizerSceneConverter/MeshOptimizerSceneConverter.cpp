@@ -280,7 +280,9 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
     if(flags() & SceneConverterFlag::Verbose)
         analyzePost("Trade::MeshOptimizerSceneConverter::convert():", out, configuration(), positions, vertexSize, vertexCacheStatsBefore, vertexFetchStatsBefore, overdrawStatsBefore);
 
-    return out;
+    /* GCC 4.8 needs an explicit conversion, otherwise it tries to copy the
+       thing and fails */
+    return Containers::optional(std::move(out));
 }
 
 }}

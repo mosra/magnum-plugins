@@ -437,7 +437,8 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
         CORRADE_VERIFY(converter->convertInPlace(icosphere));
     }
 
-    /* We get a slightly different result on MSVC STL */
+    /* We get a slightly different result on MSVC STL; moreover GCC 4.8 can't
+       handle raw string literals inside macros */
     const char* acmr =
         #ifdef CORRADE_TARGET_DINKUMWARE
         "2.01563"
@@ -445,8 +446,7 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
         "2.01562"
         #endif
         ;
-    CORRADE_COMPARE(out.str(), Utility::formatString(
-R"(Trade::MeshOptimizerSceneConverter::convert(): processing stats:
+    const char* expected = R"(Trade::MeshOptimizerSceneConverter::convert(): processing stats:
   vertex cache:
     165120 -> 58521 transformed vertices
     1 -> 1 executed warps
@@ -472,8 +472,8 @@ Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
     308753 -> 308750 shaded pixels
     308748 -> 308748 covered pixels
     overdraw 1.00002 -> 1.00001
-)", acmr));
-
+)";
+    CORRADE_COMPARE(out.str(), Utility::formatString(expected, acmr));
 }
 
 void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
@@ -502,7 +502,8 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
         CORRADE_VERIFY(converter->convertInPlace(icosphereCustom));
     }
 
-    /* We get a slightly different result on MSVC STL */
+    /* We get a slightly different result on MSVC STL; moreover GCC 4.8 can't
+       handle raw string literals inside macros */
     const char* acmr =
         #ifdef CORRADE_TARGET_DINKUMWARE
         "2.01563"
@@ -510,8 +511,7 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
         "2.01562"
         #endif
         ;
-    CORRADE_COMPARE(out.str(), Utility::formatString(
-R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
+    const char* expected = R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
     165120 -> 58521 transformed vertices
     1 -> 1 executed warps
@@ -524,7 +524,8 @@ R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
     308753 -> 308750 shaded pixels
     308748 -> 308748 covered pixels
     overdraw 1.00002 -> 1.00001
-)", acmr));
+)";
+    CORRADE_COMPARE(out.str(), Utility::formatString(expected, acmr));
 }
 
 void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
@@ -560,8 +561,8 @@ void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
             /* Same as in inPlaceOptimizeVertexFetch() */
             0, 1, 2, 2, 1, 3, 3, 1, 4, 2, 3, 5, 6, 3, 4, 3
         }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(out.str(),
-R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): can't analyze vertex fetch for VertexFormat::ImplementationSpecific(0x1234)
+    /* GCC 4.8 can't handle raw string literals inside macros */
+    const char* expected = R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): can't analyze vertex fetch for VertexFormat::ImplementationSpecific(0x1234)
 Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
     136 -> 49 transformed vertices
@@ -572,7 +573,8 @@ Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
     149965 -> 149965 shaded pixels
     149965 -> 149965 covered pixels
     overdraw 1 -> 1
-)");
+)";
+    CORRADE_COMPARE(out.str(), expected);
 }
 
 template<class T> void MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty() {
@@ -595,8 +597,8 @@ template<class T> void MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty() {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(converter->convertInPlace(icosphere));
     }
-    CORRADE_COMPARE(out.str(),
-R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
+    /* GCC 4.8 can't handle raw string literals inside macros */
+    const char* expected = R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
     0 -> 0 transformed vertices
     0 -> 0 executed warps
@@ -609,7 +611,8 @@ R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
     0 -> 0 shaded pixels
     0 -> 0 covered pixels
     overdraw 0 -> 0
-)");
+)";
+    CORRADE_COMPARE(out.str(), expected);
 }
 
 void MeshOptimizerSceneConverterTest::copy() {
