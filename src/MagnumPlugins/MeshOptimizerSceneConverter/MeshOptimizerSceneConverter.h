@@ -136,6 +136,21 @@ When @ref SceneConverterFlag::Verbose is enabled, the plugin prints the output
 from meshoptimizer's [efficiency analyzers](https://github.com/zeux/meshoptimizer#efficiency-analyzers)
 before and after the operation.
 
+@subsection Trade-MeshOptimizerSceneConverter-behavior-simplification Mesh simplification
+
+By default the plugin performs only the above non-destructive operations. Mesh
+simplification can be enabled using the @cb{.ini} simplify @ce
+@ref Trade-MeshOptimizerSceneConverter-configuration "configuration option" together with specifying desired @cb{.ini} simplifyTargetIndexCountThreshold @ce
+--- the default value of 1.0 will leave the mesh unchanged, set it to for
+example 0.25 to reduce the mesh to a fourth of its size.
+
+The simplification process is done in @ref convert(const MeshData&) and returns
+a copy of the mesh with a subset of original vertices and a reduced index
+buffer, meaning the original vertex positions are used, with no interpolation
+to new locations. It only requires the mesh to have a position attribute, mesh
+connectivity and face seams are figured out from the index buffer. As with all
+other operations, all original attributes are preserved.
+
 @section Trade-MeshOptimizerSceneConverter-configuration Plugin-specific config
 
 It's possible to tune various output options through @ref configuration(). See

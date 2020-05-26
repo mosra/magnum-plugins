@@ -35,6 +35,7 @@
 #include <Magnum/Primitives/Circle.h>
 #include <Magnum/Primitives/Icosphere.h>
 #include <Magnum/Primitives/Square.h>
+#include <Magnum/Primitives/UVSphere.h>
 #include <Magnum/Trade/AbstractSceneConverter.h>
 #include <Magnum/Trade/MeshData.h>
 
@@ -70,6 +71,10 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
     void copy();
     void copyTriangleStrip2DPositions();
     void copyTriangleFanIndexed();
+
+    void simplifyInPlace();
+    void simplifyNoPositions();
+    template<class T> void simplify();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractSceneConverter> _manager{"nonexistent"};
@@ -111,7 +116,14 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
 
         &MeshOptimizerSceneConverterTest::copy,
         &MeshOptimizerSceneConverterTest::copyTriangleStrip2DPositions,
-        &MeshOptimizerSceneConverterTest::copyTriangleFanIndexed});
+        &MeshOptimizerSceneConverterTest::copyTriangleFanIndexed,
+
+        &MeshOptimizerSceneConverterTest::simplifyInPlace,
+        &MeshOptimizerSceneConverterTest::simplifyNoPositions,
+
+        &MeshOptimizerSceneConverterTest::simplify<UnsignedByte>,
+        &MeshOptimizerSceneConverterTest::simplify<UnsignedShort>,
+        &MeshOptimizerSceneConverterTest::simplify<UnsignedInt>});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -230,8 +242,8 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeOverdrawNoPositions() {
     CORRADE_VERIFY(!converter->convert(mesh));
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
     CORRADE_COMPARE(out.str(),
-        "Trade::MeshOptimizerSceneConverter::convert(): optimizeOverdraw requires the mesh to have positions\n"
-        "Trade::MeshOptimizerSceneConverter::convertInPlace(): optimizeOverdraw requires the mesh to have positions\n");
+        "Trade::MeshOptimizerSceneConverter::convert(): optimizeOverdraw and simplify require the mesh to have positions\n"
+        "Trade::MeshOptimizerSceneConverter::convertInPlace(): optimizeOverdraw and simplify require the mesh to have positions\n");
 }
 
 void MeshOptimizerSceneConverterTest::inPlaceOptimizeNone() {
@@ -712,6 +724,115 @@ void MeshOptimizerSceneConverterTest::copyTriangleFanIndexed() {
             {-0.5f, 0.866025f, 0.0f},
             {-0.5f, -0.866025f, 0.0f},
             {1.0f, 0.0f, 0.0f}
+        }), TestSuite::Compare::Container);
+}
+
+void MeshOptimizerSceneConverterTest::simplifyInPlace() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
+    converter->configuration().setValue("simplify", true);
+
+    const UnsignedByte indexData[3]{};
+    MeshData mesh{MeshPrimitive::Triangles,
+        {}, indexData, MeshIndexData{indexData},
+        nullptr, {}, 1};
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertInPlace(mesh));
+    CORRADE_COMPARE(out.str(),
+        "Trade::MeshOptimizerSceneConverter::convertInPlace(): mesh simplification can't be performed in-place, use convert() instead\n");
+}
+
+void MeshOptimizerSceneConverterTest::simplifyNoPositions() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
+    converter->configuration().setValue("simplify", true);
+
+    const UnsignedByte indexData[3]{};
+    MeshData mesh{MeshPrimitive::Triangles,
+        {}, indexData, MeshIndexData{indexData},
+        nullptr, {}, 1};
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convert(mesh));
+    CORRADE_COMPARE(out.str(),
+        "Trade::MeshOptimizerSceneConverter::convert(): optimizeOverdraw and simplify require the mesh to have positions\n");
+}
+
+template<class T> void MeshOptimizerSceneConverterTest::simplify() {
+    setTestCaseTemplateName(Math::TypeTraits<T>::name());
+
+    /* We're interested only in the simplifier here, nothing else. Reducing to
+       half the vertices */
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
+    converter->configuration().setValue("simplify", true);
+    converter->configuration().setValue("simplifyTargetIndexCountThreshold", 0.5f);
+    /* The default 1.0e-2 is too little for this */
+    converter->configuration().setValue("simplifyTargetError", 0.25f);
+
+    MeshData sphere = MeshTools::compressIndices(
+        Primitives::uvSphereSolid(4, 6, Primitives::UVSphereFlag::TextureCoordinates),
+        Implementation::meshIndexTypeFor<T>());
+    CORRADE_COMPARE(sphere.indexType(), Implementation::meshIndexTypeFor<T>());
+    CORRADE_COMPARE(sphere.indexCount(), 108);
+    CORRADE_COMPARE(sphere.vertexCount(), 23);
+
+    Containers::Optional<MeshData> simplified = converter->convert(sphere);
+    CORRADE_VERIFY(simplified);
+    CORRADE_COMPARE(simplified->indexType(), MeshIndexType::UnsignedInt);
+    CORRADE_COMPARE(simplified->indexCount(), 54); /* The half, yay */
+    CORRADE_COMPARE(simplified->vertexCount(), 13);
+    CORRADE_COMPARE_AS(simplified->indices<UnsignedInt>(), Containers::arrayView<UnsignedInt>({
+        0, 1, 2, 0, 3, 1, 0, 4, 3, 0, 5, 4, 2, 1, 6, 1, 3, 7, 2, 6, 8, 6, 1, 9,
+        6, 9, 8, 1, 7, 9, 7, 3, 10, 7, 10, 9, 3, 4, 10, 4, 5, 11, 4, 11, 10, 8,
+        9, 12, 9, 10, 12, 10, 11, 12
+    }), TestSuite::Compare::Container);
+
+    /* Attributes should have the seam preserved */
+    const Vector3 positionsOrNormals[]{
+        {0.0f, -1.0f, 0.0f},
+        {0.612372f, -0.707107f, -0.353553f},
+        {0.0f, 0.0f, 1.0f}, /* Seam #1 */
+        {-0.612372f, -0.707107f, -0.353553f},
+        {-0.866025f, 0.0f, 0.5f},
+        {0.0f, 0.0f, 1.0f}, /* Seam #1 */
+        {0.866025f, 0.0f, 0.5f},
+        {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.707107f, 0.707107f}, /* Seam #2 */
+        {0.612372f, 0.707107f, -0.353553f},
+        {-0.612372f, 0.707107f, -0.353553f},
+        {0.0f, 0.707107f, 0.707107f}, /* Seam #2 */
+        {0.0f, 1.0f, 0.0f}
+    };
+    CORRADE_COMPARE_AS(simplified->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView(positionsOrNormals),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(simplified->attribute<Vector3>(MeshAttribute::Normal),
+        Containers::arrayView(positionsOrNormals),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(simplified->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            {0.5f, 0.0f},
+            {0.333333f, 0.25f},
+            {0.0f, 0.5f}, /* Seam #1 */
+            {0.666667f, 0.25f},
+            {0.833333f, 0.5f},
+            {1.0f, 0.5f}, /* Seam #1 */
+            {0.166667f, 0.5f},
+            {0.5f, 0.5f},
+            {0.0f, 0.75f}, /* Seam #2 */
+            {0.333333f, 0.75f},
+            {0.666667f, 0.75f},
+            {1.0f, 0.75f}, /* Seam #2 */
+            {0.5f, 1.0f}
         }), TestSuite::Compare::Container);
 }
 

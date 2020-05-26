@@ -30,6 +30,7 @@
 #include <Magnum/Math/PackingBatch.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/MeshTools/Concatenate.h>
+#include <Magnum/MeshTools/Combine.h>
 #include <Magnum/MeshTools/GenerateIndices.h>
 #include <Magnum/MeshTools/Duplicate.h>
 #include <Magnum/MeshTools/Interleave.h>
@@ -139,10 +140,11 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
        by the verbose stats also but in that case the processing shouldn't fail
        if there are no positions -- so check the hasAttribute() earlier. */
     if((flags & SceneConverterFlag::Verbose && mesh.hasAttribute(MeshAttribute::Position)) ||
-       configuration.value<bool>("optimizeOverdraw"))
+       configuration.value<bool>("optimizeOverdraw") ||
+       configuration.value<bool>("simplify"))
     {
         if(!mesh.hasAttribute(MeshAttribute::Position)) {
-            Error{} << prefix << "optimizeOverdraw requires the mesh to have positions";
+            Error{} << prefix << "optimizeOverdraw and simplify require the mesh to have positions";
             return false;
         }
 
@@ -239,6 +241,12 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
         }
     }
 
+
+    if(configuration().value<bool>("simplify")) {
+        Error{} << "Trade::MeshOptimizerSceneConverter::convertInPlace(): mesh simplification can't be performed in-place, use convert() instead";
+        return false;
+    }
+
     meshopt_VertexCacheStatistics vertexCacheStatsBefore;
     meshopt_VertexFetchStatistics vertexFetchStatsBefore;
     meshopt_OverdrawStatistics overdrawStatsBefore;
@@ -275,6 +283,36 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
     Containers::Optional<UnsignedInt> vertexSize;
     if(!convertInPlaceInternal("Trade::MeshOptimizerSceneConverter::convert():", out, flags(), configuration(), positionStorage, positions, vertexSize, vertexCacheStatsBefore, vertexFetchStatsBefore, overdrawStatsBefore))
         return Containers::NullOpt;
+
+    if(configuration().value<bool>("simplify")) {
+        const UnsignedInt targetIndexCount = out.indexCount()*configuration().value<Float>("simplifyTargetIndexCountThreshold");
+        const Float targetError = configuration().value<Float>("simplifyTargetError");
+
+        /* In this case meshoptimizer doesn't provide overloads, so let's do
+           this on our side instead */
+        Containers::Array<UnsignedInt> inputIndicesStorage;
+        Containers::ArrayView<const UnsignedInt> inputIndices;
+        if(out.indexType() == MeshIndexType::UnsignedInt)
+            inputIndices = out.indices<UnsignedInt>();
+        else {
+            inputIndicesStorage = out.indicesAsArray();
+            inputIndices = inputIndicesStorage;
+        }
+
+        Containers::Array<UnsignedInt> outputIndices;
+        Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, Containers::NoInit, mesh.indexCount());
+        Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, meshopt_simplify(outputIndices.data(), inputIndices, out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount, targetError));
+
+        /* Take the original mesh vertex data with the reduced index buffer and
+           call combineIndexedAttributes() to throw away the unused vertices */
+        /** @todo provide a way to use the new vertices with the original
+            vertex buffer for LODs */
+        MeshIndexData indices{outputIndices};
+        out = Trade::MeshData{out.primitive(),
+            Containers::arrayAllocatorCast<char, Trade::ArrayAllocator>(std::move(outputIndices)), indices,
+            out.releaseVertexData(), out.releaseAttributeData()};
+        out = MeshTools::combineIndexedAttributes({out});
+    }
 
     /* Print before & after stats if verbose output is requested */
     if(flags() & SceneConverterFlag::Verbose)
