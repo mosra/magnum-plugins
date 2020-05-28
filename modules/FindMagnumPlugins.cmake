@@ -23,6 +23,7 @@
 #  Faad2AudioImporter           - AAC audio importer using FAAD2
 #  FreeTypeFont                 - FreeType font
 #  HarfBuzzFont                 - HarfBuzz font
+#  IcoImporter                  - ICO importer
 #  JpegImageConverter           - JPEG image converter
 #  JpegImporter                 - JPEG importer
 #  MeshOptimizerSceneConverter  - MeshOptimizer scene converter
@@ -138,7 +139,7 @@ set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     AssimpImporter BasisImageConverter BasisImporter DdsImporter
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
-    DrWavAudioImporter Faad2AudioImporter FreeTypeFont HarfBuzzFont
+    DrWavAudioImporter Faad2AudioImporter FreeTypeFont HarfBuzzFont IcoImporter
     JpegImageConverter JpegImporter MeshOptimizerSceneConverter
     MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
     PrimitiveImporter StanfordImporter StanfordSceneConverter StbImageConverter
@@ -359,6 +360,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             endif()
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES HarfBuzz::HarfBuzz)
+
+        # IcoImporter has no dependencies
 
         # JpegImporter / JpegImageConverter plugin dependencies
         elseif(_component STREQUAL JpegImageConverter OR _component STREQUAL JpegImporter)

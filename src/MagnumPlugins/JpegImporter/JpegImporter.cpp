@@ -57,7 +57,7 @@ JpegImporter::JpegImporter() = default;
 
 JpegImporter::JpegImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
-JpegImporter::~JpegImporter() { close(); }
+JpegImporter::~JpegImporter() = default;
 
 ImporterFeatures JpegImporter::doFeatures() const { return ImporterFeature::OpenData; }
 

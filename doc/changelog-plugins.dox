@@ -58,6 +58,8 @@ namespace Magnum {
     @ref Trade::OpenGexImporter "OpenGexImporter" and
     @ref Trade::TinyGltfImporter "TinyGltfImporter" were updated to proxy mip
     level loading to image importer plugins (see [mosra/magnum#369](https://github.com/mosra/magnum/pull/369))
+-   New @ref Trade::IcoImporter "IcoImporter" plugin for importing ICO files
+    with embedded PNGs (see [mosra/magnum-plugins#79](https://github.com/mosra/magnum-plugins/pull/79))
 -   New @ref Trade::PrimitiveImporter "PrimitiveImporter" plugin for accessing
     contents of the @ref Primitives library via importer APIs
 -   New @ref Trade::StanfordSceneConverter "StanfordSceneConverter" for
