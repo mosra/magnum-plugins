@@ -23,28 +23,23 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# On MSVC remove /W3, as we are replacing it with /W4
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
-    string(REPLACE "/W3" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+# A lot of 3rd party code emits warnings with our stricter flags and some even
+# uses -Werror, so those are undesired here.
+set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS OFF)
+
+# To help Homebrew and Vcpkg packages, meshoptimizer sources can be cloned to
+# src/external and we will use those without any extra effort from the outside.
+if(WITH_MESHOPTIMIZERSCENECONVERTER)
+    if(NOT TARGET meshoptimizer AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/meshoptimizer)
+        # Build (static) meshoptimizer with PIC enabled if we are building
+        # dynamic plugins
+        if(NOT BUILD_PLUGINS_STATIC)
+            set(_PREV_CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE})
+            set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+        endif()
+        add_subdirectory(meshoptimizer EXCLUDE_FROM_ALL)
+        if(NOT BUILD_PLUGINS_STATIC)
+            set(CMAKE_POSITION_INDEPENDENT_CODE ${_PREV_CMAKE_POSITION_INDEPENDENT_CODE})
+        endif()
+    endif()
 endif()
-
-# On Windows enable UNICODE/_UNICODE macros to avoid accidentally passing UTF-8
-# values to ANSI functions
-if(CORRADE_TARGET_WINDOWS)
-    add_definitions("-DUNICODE" "-D_UNICODE")
-endif()
-
-set_directory_properties(PROPERTIES
-    CORRADE_CXX_STANDARD 11
-    CORRADE_USE_PEDANTIC_FLAGS ON)
-
-add_subdirectory(Magnum)
-add_subdirectory(MagnumExternal)
-add_subdirectory(MagnumPlugins)
-
-# External libraries. Compared to MagnumExternal, headers of those aren't meant
-# to be installed.
-add_subdirectory(external)
-
-# Magnum plugins include dir for superprojects
-set(MAGNUMPLUGINS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "")
