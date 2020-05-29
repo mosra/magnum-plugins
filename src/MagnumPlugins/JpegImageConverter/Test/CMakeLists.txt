@@ -43,8 +43,13 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(JpegImageConverterTest JpegImageConverterTest.cpp
-    LIBRARIES Magnum::Trade Magnum::DebugTools)
-target_include_directories(JpegImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+    LIBRARIES Magnum::Trade Magnum::DebugTools ${JPEG_LIBRARIES})
+target_include_directories(JpegImageConverterTest PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
+    # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
+    # imported target instead anyway). The test includes jpeglib.h to test for
+    # presence of libjpeg-turbo, so this is needed.
+    ${JPEG_INCLUDE_DIR})
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(JpegImageConverterTest PRIVATE JpegImageConverter)
     if(WITH_JPEGIMPORTER)

@@ -38,8 +38,8 @@
 
 #include "configure.h"
 
-/* jpeglib.h is needed to query if RGBA output is supported. See
-   JpegImageConverter.cpp for details why the define below is needed. */
+/* jpeglib.h is needed to query if RGBA output is supported (JCS_EXTENSIONS).
+   See JpegImageConverter.cpp for details why the define below is needed. */
 #ifdef CORRADE_TARGET_WINDOWS
 #define XMD_H
 #endif
