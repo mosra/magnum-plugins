@@ -69,14 +69,10 @@ using namespace Math::Literals;
 struct AssimpImporterTest: TestSuite::Tester {
     explicit AssimpImporterTest();
 
-    void setFlagsRestoreBack();
-
     void openFile();
     void openFileFailed();
     void openData();
     void openDataFailed();
-
-    void openFileVerbose();
 
     void camera();
     void light();
