@@ -27,6 +27,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <Corrade/Utility/StlMath.h>
 #include <png.h>
 /*
     The <csetjmp> header has to be included *after* png.h, otherwise older
