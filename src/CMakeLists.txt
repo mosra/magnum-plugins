@@ -38,13 +38,15 @@ set_directory_properties(PROPERTIES
     CORRADE_CXX_STANDARD 11
     CORRADE_USE_PEDANTIC_FLAGS ON)
 
+# External libraries. Compared to MagnumExternal, headers of those aren't meant
+# to be installed; the directory needs to be added first so the actual plugins
+# can see targets from there being available and not attempting to find the
+# bundled libraries system-wide.
+add_subdirectory(external)
+
 add_subdirectory(Magnum)
 add_subdirectory(MagnumExternal)
 add_subdirectory(MagnumPlugins)
-
-# External libraries. Compared to MagnumExternal, headers of those aren't meant
-# to be installed.
-add_subdirectory(external)
 
 # Magnum plugins include dir for superprojects
 set(MAGNUMPLUGINS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "")
