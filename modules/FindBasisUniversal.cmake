@@ -207,7 +207,6 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
 
             # Fall back to finding sources and compile them with the target they are linked to
             else()
-
                 find_path(BasisUniversalTranscoder_DIR NAMES basisu_transcoder.cpp
                     HINTS "${BASIS_UNIVERSAL_DIR}/transcoder" "${BASIS_UNIVERSAL_DIR}"
                     NO_CMAKE_FIND_ROOT_PATH)
