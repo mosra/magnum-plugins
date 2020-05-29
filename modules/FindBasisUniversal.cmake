@@ -77,11 +77,14 @@ endmacro()
 foreach(_component ${BasisUniversal_FIND_COMPONENTS})
     if(_component STREQUAL "Encoder")
         if(NOT TARGET BasisUniversal::Encoder)
-            # Try to find compiled library when installed through vcpkg
-            find_library(BasisUniversalEncoder_LIBRARY_RELEASE basisu_encoder)
-            find_library(BasisUniversalEncoder_LIBRARY_DEBUG basisu_encoder HINTS "debug")
-
-            if(BasisUniversalEncoder_LIBRARY_DEBUG OR BasisUniversalEncoder_LIBRARY_RELEASE)
+            # Try to find compiled library when installed through vcpkg -- but
+            # only if BASIS_UNIVERSAL_DIR wasn't explicitly passed, in which
+            # case we'll look there instead
+            if(NOT BASIS_UNIVERSAL_DIR)
+                find_library(BasisUniversalEncoder_LIBRARY_RELEASE basisu_encoder)
+                find_library(BasisUniversalEncoder_LIBRARY_DEBUG basisu_encoder HINTS "debug")
+            endif()
+            if(NOT BASIS_UNIVERSAL_DIR AND (BasisUniversalEncoder_LIBRARY_DEBUG OR BasisUniversalEncoder_LIBRARY_RELEASE))
                 find_path(BasisUniversalEncoder_INCLUDE_DIR basisu_enc.h PATH_SUFFIXES "basisu/encoder")
 
                 add_library(BasisUniversal::Encoder UNKNOWN IMPORTED)
@@ -172,10 +175,14 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
 
     elseif(_component STREQUAL "Transcoder")
         if(NOT TARGET BasisUniversal::Transcoder)
-            find_library(BasisUniversalTranscoder_LIBRARY_RELEASE basisu_transcoder)
-            find_library(BasisUniversalTranscoder_LIBRARY_DEBUG basisu_transcoder HINTS "debug")
-
-            if(BasisUniversalTranscoder_LIBRARY_DEBUG OR BasisUniversalTranscoder_LIBRARY_RELEASE)
+            # Try to find compiled library when installed through vcpkg -- but
+            # only if BASIS_UNIVERSAL_DIR wasn't explicitly passed, in which
+            # case we'll look there instead
+            if(NOT BASIS_UNIVERSAL_DIR)
+                find_library(BasisUniversalTranscoder_LIBRARY_RELEASE basisu_transcoder)
+                find_library(BasisUniversalTranscoder_LIBRARY_DEBUG basisu_transcoder HINTS "debug")
+            endif()
+            if(NOT BASIS_UNIVERSAL_DIR AND (BasisUniversalTranscoder_LIBRARY_DEBUG OR BasisUniversalTranscoder_LIBRARY_RELEASE))
                 # Encoder includes expect the basis includes to be prefixed with transcoder/ as in the
                 # original basis_universal repository.
                 find_path(BasisUniversalTranscoder_INCLUDE_DIR transcoder/basisu_transcoder.h PATH_SUFFIXES "basisu")

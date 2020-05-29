@@ -24,6 +24,14 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# To help Homebrew and Vcpkg packages, Basis Universal sources can be cloned to
+# src/external and we will use those without any extra effort from the outside.
+# Note that, because I hate underscores, the name has to contain a dash, *not*
+# an underscore (which is how the GitHub repo is named).
+if(NOT BASIS_UNIVERSAL_DIR AND EXISTS ${PROJECT_SOURCE_DIR}/src/external/basis-universal)
+    set(BASIS_UNIVERSAL_DIR ${PROJECT_SOURCE_DIR}/src/external/basis-universal)
+endif()
+
 find_package(Magnum REQUIRED Trade)
 find_package(BasisUniversal REQUIRED Transcoder)
 
