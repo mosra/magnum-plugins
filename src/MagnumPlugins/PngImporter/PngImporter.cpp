@@ -169,7 +169,10 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         /* Palette needs to be converted */
         case PNG_COLOR_TYPE_PALETTE:
             png_set_palette_to_rgb(file);
-            bits = png_get_bit_depth(file, info);
+            /* png_get_bit_depth(file, info); would return the original value
+               here (which can be < 8), expecting the png_set_*() function to
+               give back 8-bit channels */
+            bits = 8;
             colorType = PNG_COLOR_TYPE_RGB;
             channels = 3;
             break;
@@ -185,12 +188,14 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         channels += 1;
         CORRADE_INTERNAL_ASSERT_OUTPUT(channels == 4);
         colorType = PNG_COLOR_TYPE_RGBA;
-        /** @todo Why bits = png_get_bit_depth(file, info); doesn't work for
-            non-paletted images with tRNS? Can 16bit images have tRNS? */
+        /* png_get_bit_depth(file, info); would return the original value
+           here (which can be < 8), expecting the png_set_*() function to give
+           back 8-bit channels */
         bits = 8;
     }
 
     /* Initialize data array, align rows to four bytes */
+    CORRADE_INTERNAL_ASSERT(bits >= 8);
     const std::size_t stride = ((size.x()*channels*bits/8 + 3)/4)*4;
     data = Containers::Array<char>{stride*std::size_t(size.y())};
 
