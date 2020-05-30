@@ -354,17 +354,21 @@ void DevIlImageImporterTest::openTwice() {
 
 void DevIlImageImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    /* Verify that everything is working the same way on second use */
+    /* Verify that everything is working the same way on second use and that
+       the data are the same -- some APIs (such as iluFlipImage()) mutate the
+       original data and we would get a different result every time. */
     {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+        CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], 0xdeadb5ff_rgba);
     } {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
+        CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], 0xdeadb5ff_rgba);
     }
 }
 
