@@ -464,10 +464,11 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
         CORRADE_VERIFY(converter->convertInPlace(icosphere));
     }
 
-    /* We get a slightly different result on MSVC STL; moreover GCC 4.8 can't
-       handle raw string literals inside macros */
+    /* We get a slightly different result on MSVC STL (but apparently not with
+       2019 anymore for some reason); moreover GCC 4.8 can't handle raw string
+       literals inside macros */
     const char* acmr =
-        #ifdef CORRADE_TARGET_DINKUMWARE
+        #if defined(CORRADE_TARGET_DINKUMWARE) && _MSC_VER < 1920
         "2.01563"
         #else
         "2.01562"
@@ -529,10 +530,11 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
         CORRADE_VERIFY(converter->convertInPlace(icosphereCustom));
     }
 
-    /* We get a slightly different result on MSVC STL; moreover GCC 4.8 can't
-       handle raw string literals inside macros */
+    /* We get a slightly different result on MSVC STL (but apparently not with
+       2019 anymore for some reason); moreover GCC 4.8 can't handle raw string
+       literals inside macros */
     const char* acmr =
-        #ifdef CORRADE_TARGET_DINKUMWARE
+        #if defined(CORRADE_TARGET_DINKUMWARE) && _MSC_VER < 1920
         "2.01563"
         #else
         "2.01562"
