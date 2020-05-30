@@ -65,7 +65,7 @@ void DevIlImageImporter::doOpenData(const Containers::ArrayView<const char> data
     if(!ilLoadL(IL_TYPE_UNKNOWN, data.begin(), data.size())) {
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
-        Error() << "Trade::DevIlImageImporter::openData(): cannot open the image:" << ilGetError();
+        Error() << "Trade::DevIlImageImporter::openData(): cannot open the image:" << reinterpret_cast<void*>(ilGetError());
         return;
     }
 
@@ -136,7 +136,7 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt, Uns
     if(rgbaNeeded && !ilConvertImage(components == 3 ? IL_RGB : IL_RGBA, IL_UNSIGNED_BYTE)) {
         /* iluGetString() returns empty string for 0x512, which is even
            more useless than just returning the error ID */
-        Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image:" << ilGetError();
+        Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image:" << reinterpret_cast<void*>(ilGetError());
         return Containers::NullOpt;
     }
 

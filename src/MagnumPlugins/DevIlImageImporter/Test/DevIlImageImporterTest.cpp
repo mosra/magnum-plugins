@@ -106,7 +106,7 @@ void DevIlImageImporterTest::invalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData("invalid"));
-    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): cannot open the image: 1298\n");
+    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): cannot open the image: 0x512\n");
 }
 
 void DevIlImageImporterTest::grayPng() {
