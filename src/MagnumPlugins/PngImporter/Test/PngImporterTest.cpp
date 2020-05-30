@@ -101,10 +101,17 @@ constexpr struct {
 PngImporterTest::PngImporterTest() {
     addTests({&PngImporterTest::empty});
 
-    addInstancedTests({&PngImporterTest::invalid}, Containers::arraySize(InvalidData));
-    addInstancedTests({&PngImporterTest::gray}, Containers::arraySize(GrayData));
-    addInstancedTests({&PngImporterTest::rgb}, Containers::arraySize(RgbData));
-    addInstancedTests({&PngImporterTest::rgba}, Containers::arraySize(RgbaData));
+    addInstancedTests({&PngImporterTest::invalid},
+        Containers::arraySize(InvalidData));
+
+    addInstancedTests({&PngImporterTest::gray},
+        Containers::arraySize(GrayData));
+
+    addInstancedTests({&PngImporterTest::rgb},
+        Containers::arraySize(RgbData));
+
+    addInstancedTests({&PngImporterTest::rgba},
+        Containers::arraySize(RgbaData));
 
     addTests({&PngImporterTest::openTwice,
               &PngImporterTest::importTwice});
