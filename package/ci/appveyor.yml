@@ -54,7 +54,7 @@ install:
 
 # DevIL
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\DevIL-SDK-x64-1.7.8.zip appveyor DownloadFile http://downloads.sourceforge.net/openil/DevIL-SDK-x64-1.7.8.zip
-- IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move *.lib lib\ && cd ..
+- IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move unicode\*.lib lib\ && cd ..
 
 # Basis Universal
 - set BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed
