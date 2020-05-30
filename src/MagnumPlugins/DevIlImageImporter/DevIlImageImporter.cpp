@@ -26,8 +26,8 @@
 
 #include "DevIlImageImporter.h"
 
-#include <algorithm>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -170,7 +170,7 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt, Uns
 
     /* Copy the data into array that is owned by us and not by IL */
     Containers::Array<char> imageData{std::size_t(size.product()*components)};
-    std::copy_n(reinterpret_cast<char*>(ilGetData()), imageData.size(), imageData.begin());
+    Utility::copy(Containers::arrayView(reinterpret_cast<const char*>(imageInfo.Data), imageInfo.SizeOfData), imageData);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
