@@ -29,6 +29,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -67,7 +68,7 @@ void DevIlImageImporter::doOpenData(const Containers::ArrayView<const char> data
 
     /* The documentation doesn't state if the data needs to stay in scope.
        Let's assume so to avoid a copy on the importer side. */
-    if(!ilLoadL(IL_TYPE_UNKNOWN, data.begin(), data.size())) {
+    if(!ilLoadL(configuration().value<ILenum>("type", Utility::ConfigurationValueFlag::Hex), data.begin(), data.size())) {
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
         Error() << "Trade::DevIlImageImporter::openData(): cannot open the image:" << reinterpret_cast<void*>(ilGetError());
@@ -83,7 +84,7 @@ void DevIlImageImporter::doOpenFile(const std::string& filename) {
     ilGenImages(1, &image);
     ilBindImage(image);
 
-    if(!ilLoad(IL_TYPE_UNKNOWN, filename.data())) {
+    if(!ilLoad(configuration().value<ILenum>("type", Utility::ConfigurationValueFlag::Hex), filename.data())) {
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
         Error() << "Trade::DevIlImageImporter::openFile(): cannot open the image:" << reinterpret_cast<void*>(ilGetError());

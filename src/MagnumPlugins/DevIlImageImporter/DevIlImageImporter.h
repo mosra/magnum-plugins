@@ -188,8 +188,10 @@ animations instead.
 
 DevIL is able to load ICO files with embedded BMPs, unfortunately it crashes
 for ICOs with embedded PNGs --- use @ref IcoImporter in that case instead. Note
-that for proper file format auto-detection you need to load them via
-@ref openFile(), not @ref openData().
+that for proper file format auto-detection you either need to load them via
+@ref openFile() or set the @cb{.ini} type @ce
+@ref Trade-DevIlImageImporter-configuration "configuration option" to
+(hexadecimal) @cpp 0x0424 @ce.
 
 @subsection Trade-DevIlImageImporter-behavior-cgbi Apple CgBI PNGs
 
@@ -197,6 +199,12 @@ CgBI is a proprietary Apple-specific extension to PNG
 ([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). DevIL
 doesn't support these, use @ref StbImageImporter for loading these instead.
 
+@section Trade-DevIlImageImporter-configuration Plugin-specific config
+
+It's possible to tune various output options through @ref configuration(). See
+below for all options and their default values:
+
+@snippet MagnumPlugins/DevIlImageImporter/DevIlImageImporter.conf config
 */
 class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImporter {
     public:

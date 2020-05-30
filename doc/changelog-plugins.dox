@@ -80,7 +80,8 @@ namespace Magnum {
     texture for file formats that support it
 -   @ref Trade::DevIlImageImporter "DevIlImageImporter" now also considers file
     extension when detecting file format, being able to open files that don't
-    really have any easy-to-detect magic header.
+    really have any easy-to-detect magic header; additionally the file type can
+    be also forced though a plugin-specific configuration option.
 -   Minor speedup in the @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin by
     avoiding use of 64-bit floating-point operations (see
     [mosra/magnum-plugins#73](https://github.com/mosra/magnum-plugins/pull/73))

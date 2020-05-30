@@ -29,6 +29,7 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
@@ -72,10 +73,15 @@ using namespace Math::Literals;
 const struct {
     const char* name;
     bool openFile;
+    const char* filename;
+    const char* type;
     bool succeeds;
 } IcoBmpData[] {
-    {"openFile", true, true},
-    {"openData", false, false}
+    {"openFile", true, nullptr, nullptr, true},
+    {"openFile, unexpected filename", true, "icon.dat", nullptr, false},
+    {"openFile, unexpected filename, type override", true, "icon.dat", "0x0424", true},
+    {"openData", false, nullptr, nullptr, false},
+    {"openData, type override", false, nullptr, "0x0424", true},
 };
 
 DevIlImageImporterTest::DevIlImageImporterTest() {
@@ -278,11 +284,24 @@ void DevIlImageImporterTest::icoBmp() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+
+    /* Set the type override, if desired. It's a string to test it can
+       correctly recognize hexadecimal values. */
+    if(data.type)
+        importer->configuration().setValue("type", data.type);
+
+    /* Open a file or data -- the ICO format has no magic header or anything,
+       so we can use it to test file format autodetection and forcing. */
     std::string filename = Utility::Directory::join(ICOIMPORTER_TEST_DIR, "bmp+png.ico");
-    if(data.openFile)
+    if(data.openFile) {
+        /* Copy to a differently named file, if desired */
+        if(data.filename) {
+            CORRADE_VERIFY(Utility::Directory::copy(filename, Utility::Directory::join(DEVILIMAGEIMPORTER_WRITE_TEST_DIR, data.filename)));
+            filename = data.filename;
+        }
+
         CORRADE_COMPARE(importer->openFile(filename), data.succeeds);
-    else
-        CORRADE_COMPARE(importer->openData(Utility::Directory::read(filename)), data.succeeds);
+    } else CORRADE_COMPARE(importer->openData(Utility::Directory::read(filename)), data.succeeds);
     if(!data.succeeds) return;
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
