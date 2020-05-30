@@ -163,9 +163,9 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt, Uns
 
     /* Flip the image to match OpenGL's conventions */
     /** @todo use our own routine to avoid linking to ILU */
-    ILinfo ImageInfo;
-    iluGetImageInfo(&ImageInfo);
-    if(ImageInfo.Origin == IL_ORIGIN_UPPER_LEFT)
+    ILinfo imageInfo;
+    iluGetImageInfo(&imageInfo);
+    if(imageInfo.Origin == IL_ORIGIN_UPPER_LEFT)
         iluFlipImage();
 
     /* Copy the data into array that is owned by us and not by IL */
