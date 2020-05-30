@@ -180,18 +180,21 @@ DDS files with BCn compression are always decompressed to RGBA on input.
 
 @subsection Trade-DevIlImageImporter-behavior-animated-gifs Animated GIFs
 
-While DevIL itself supports loading of animated GIFs, the importer doesn't
-implement necessary interfaces. Use @ref StbImageImporter for loading GIF
-animations instead.
+In case the file is an animated GIF, the importer will report frame count in
+@ref image2DCount() and you can then import each frame separately.
+Unfortunately, GIF transitions are not supported properly and some GIFs can
+fail to load or crash the library. See @ref StbImageImporter for an
+alternative.
 
 @subsection Trade-DevIlImageImporter-behavior-ico ICO files
 
 DevIL is able to load ICO files with embedded BMPs, unfortunately it crashes
-for ICOs with embedded PNGs --- use @ref IcoImporter in that case instead. Note
-that for proper file format auto-detection you either need to load them via
-@ref openFile() or set the @cb{.ini} type @ce
-@ref Trade-DevIlImageImporter-configuration "configuration option" to
-(hexadecimal) @cpp 0x0424 @ce.
+for some ICOs with embedded PNGs and doesn't correctly import alpha for others
+--- use @ref IcoImporter in that case instead. Note that for proper file format
+auto-detection you either need to load them via @ref openFile() or set the
+@cb{.ini} type @ce @ref Trade-DevIlImageImporter-configuration "configuration option" to
+(hexadecimal) @cpp 0x0424 @ce. Compared to @ref IcoImporter the icon sizes are
+reported as separate images instead of image levels.
 
 @subsection Trade-DevIlImageImporter-behavior-cgbi Apple CgBI PNGs
 

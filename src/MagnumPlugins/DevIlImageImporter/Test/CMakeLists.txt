@@ -28,10 +28,12 @@ if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(ICOIMPORTER_TEST_DIR ".")
     set(PNGIMPORTER_TEST_DIR ".")
     set(JPEGIMPORTER_TEST_DIR ".")
+    set(STBIMAGEIMPORTER_TEST_DIR ".")
 else()
     set(ICOIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/IcoImporter/Test)
     set(PNGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test)
     set(JPEGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test)
+    set(STBIMAGEIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/StbImageImporter/Test)
 endif()
 
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
@@ -57,7 +59,8 @@ corrade_add_test(DevIlImageImporterTest DevIlImageImporterTest.cpp
         ../../PngImporter/Test/rgb.png
         ../../PngImporter/Test/rgba.png
         ../../JpegImporter/Test/gray.jpg
-        ../../JpegImporter/Test/rgb.jpg)
+        ../../JpegImporter/Test/rgb.jpg
+        ../../StbImageImporter/Test/dispose_bgnd.gif)
 target_include_directories(DevIlImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(DevIlImageImporterTest PRIVATE DevIlImageImporter)

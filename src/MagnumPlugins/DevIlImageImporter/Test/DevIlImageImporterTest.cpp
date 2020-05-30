@@ -60,6 +60,8 @@ struct DevIlImageImporterTest: TestSuite::Tester {
     void icoBmp();
     void icoPng();
 
+    void animatedGif();
+
     void openTwice();
     void importTwice();
     void twoImporters();
@@ -102,6 +104,8 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
         Containers::arraySize(IcoBmpData));
 
     addTests({&DevIlImageImporterTest::icoPng,
+
+              &DevIlImageImporterTest::animatedGif,
 
               &DevIlImageImporterTest::openTwice,
               &DevIlImageImporterTest::importTwice,
@@ -304,35 +308,45 @@ void DevIlImageImporterTest::icoBmp() {
     } else CORRADE_COMPARE(importer->openData(Utility::Directory::read(filename)), data.succeeds);
     if(!data.succeeds) return;
 
-    CORRADE_COMPARE(importer->image2DCount(), 1);
     {
-        CORRADE_EXPECT_FAIL("DevIlImageImporter does not support image levels.");
-        CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+        CORRADE_EXPECT_FAIL("DevIL does not report ICO sizes as image levels, but instead as separate images.");
+        CORRADE_COMPARE(importer->image2DCount(), 1);
     }
-    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image2DCount(), 2);
 
     {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
         CORRADE_COMPARE(image->size(), (Vector2i{16, 8}));
         CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], 0x00ff00_rgb);
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+        CORRADE_COMPARE(image->size(), Vector2i{256});
+
+        Color4ub pngColor = image->pixels<Color4ub>()[0][0];
+        {
+            CORRADE_EXPECT_FAIL_IF(pngColor.a() != 255, "DevIL doesn't correctly import alpha for PNGs embedded in ICO files.");
+            CORRADE_COMPARE(pngColor, 0x0000ff_rgb);
+        }
+        CORRADE_COMPARE(pngColor.rgb(), 0x0000ff_rgb);
     }
 }
 
 void DevIlImageImporterTest::icoPng() {
     /* Last checked with version 1.8, May 2020 */
-    CORRADE_SKIP("DevIL crashes on ICOs with embedded PNGs, skipping the test.");
+    CORRADE_SKIP("DevIL crashes on some ICOs with embedded PNGs, skipping the test.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
-    CORRADE_COMPARE(importer->image2DCount(), 1);
     {
-        CORRADE_EXPECT_FAIL("DevIlImageImporter does not support image levels.");
-        CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+        CORRADE_EXPECT_FAIL("DevIL does not report ICO sizes as image levels, but instead as separate images.");
+        CORRADE_COMPARE(importer->image2DCount(), 1);
     }
-    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image2DCount(), 3);
 
     {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
@@ -340,6 +354,41 @@ void DevIlImageImporterTest::icoPng() {
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), (Vector2i{16, 8}));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb);
+    }
+}
+
+void DevIlImageImporterTest::animatedGif() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+
+    /* Basically the same as StbImageImporterTest::animatedGif(), except that
+       we don't import image delays here */
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
+    CORRADE_COMPARE(importer->image2DCount(), 5);
+
+    /* All images should have the same format & size */
+    for(UnsignedInt i = 0; i != importer->image2DCount(); ++i) {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(i);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+        CORRADE_COMPARE(image->size(), Vector2i(100, 100));
+    }
+
+    /* Second frame should have a pixel on top left a different kind of blue
+       than the first */
+    {
+        using namespace Math::Literals;
+
+        Containers::Optional<Trade::ImageData2D> image0 = importer->image2D(0);
+        Containers::Optional<Trade::ImageData2D> image1 = importer->image2D(1);
+        CORRADE_VERIFY(image0);
+        CORRADE_VERIFY(image1);
+
+        /* Uncomment for debugging purposes */
+        //Debug{} << Debug::color << Debug::packed << image1->pixels<Color4ub>().every({3, 3}).flipped<0>();
+
+        CORRADE_COMPARE(image0->pixels<Color4ub>()[88][30], 0x87ceeb_rgb);
+        CORRADE_COMPARE(image1->pixels<Color4ub>()[88][30], 0x0000ff_rgb);
     }
 }
 
@@ -377,7 +426,12 @@ void DevIlImageImporterTest::twoImporters() {
     Containers::Pointer<AbstractImporter> b = _manager.instantiate("DevIlImageImporter");
 
     CORRADE_VERIFY(a->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
-    CORRADE_VERIFY(b->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+    CORRADE_VERIFY(b->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
+
+    /* Ask for image A metadata after loading file B to test that the two
+       importers don't get their state mixed together */
+    CORRADE_COMPARE(a->image2DCount(), 1);
+    CORRADE_COMPARE(b->image2DCount(), 5);
 
     /* Import image A after loading file B to test that the two importers don't
        get their state mixed together */
@@ -391,9 +445,9 @@ void DevIlImageImporterTest::twoImporters() {
     CORRADE_COMPARE(imageA->pixels<Color3ub>()[0][0], 0xcafe76_rgb);
 
     CORRADE_VERIFY(imageB);
-    CORRADE_COMPARE(imageB->size(), (Vector2i{3, 2}));
+    CORRADE_COMPARE(imageB->size(), (Vector2i{100, 100}));
     CORRADE_COMPARE(imageB->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE(imageB->pixels<Color4ub>()[0][0], 0xdeadb5ff_rgba);
+    CORRADE_COMPARE(imageB->pixels<Color4ub>()[0][0], 0x87ceeb_rgb);
 }
 
 }}}}

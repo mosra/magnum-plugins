@@ -95,13 +95,20 @@ void DevIlImageImporter::doOpenFile(const std::string& filename) {
     _image = image;
 }
 
-UnsignedInt DevIlImageImporter::doImage2DCount() const { return 1; }
-
-Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt, UnsignedInt) {
+UnsignedInt DevIlImageImporter::doImage2DCount() const {
     /* Bind the image. This was done above already, but since it's a global
        state, this avoids a mismatch in case there's more than one importer
        active at a time. */
     ilBindImage(_image);
+    return ilGetInteger(IL_NUM_IMAGES) + 1;
+}
+
+Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt id, UnsignedInt) {
+    /* Bind the image. This was done above already, but since it's a global
+       state, this avoids a mismatch in case there's more than one importer
+       active at a time. */
+    ilBindImage(_image);
+    ilActiveImage(id);
 
     const Vector2i size{ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT)};
 

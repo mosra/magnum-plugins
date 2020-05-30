@@ -82,6 +82,8 @@ namespace Magnum {
     extension when detecting file format, being able to open files that don't
     really have any easy-to-detect magic header; additionally the file type can
     be also forced though a plugin-specific configuration option.
+-   @ref Trade::DevIlImageImporter "DevIlImageImporter" can now load
+    multi-image files such as `*.ico`s or animated GIFs
 -   Minor speedup in the @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin by
     avoiding use of 64-bit floating-point operations (see
     [mosra/magnum-plugins#73](https://github.com/mosra/magnum-plugins/pull/73))
