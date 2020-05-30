@@ -37,6 +37,13 @@
 
 namespace Magnum { namespace Trade {
 
+void DevIlImageImporter::initialize() {
+    /* You are a funny devil, DevIL. No tutorials or docs mention this function
+       (except for a tiny note at http://openil.sourceforge.net/tuts/tut_step/)
+       AND YET when I call ilLoadImage() without this, everything explodes. */
+    ilInit();
+}
+
 DevIlImageImporter::DevIlImageImporter() = default;
 
 DevIlImageImporter::DevIlImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
@@ -66,6 +73,22 @@ void DevIlImageImporter::doOpenData(const Containers::ArrayView<const char> data
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
         Error() << "Trade::DevIlImageImporter::openData(): cannot open the image:" << reinterpret_cast<void*>(ilGetError());
+        return;
+    }
+
+    /* All good, save the image */
+    _image = image;
+}
+
+void DevIlImageImporter::doOpenFile(const std::string& filename) {
+    UnsignedInt image;
+    ilGenImages(1, &image);
+    ilBindImage(image);
+
+    if(!ilLoad(IL_TYPE_UNKNOWN, filename.data())) {
+        /* iluGetString() returns empty string for 0x512, which is even more
+           useless than just returning the error ID */
+        Error() << "Trade::DevIlImageImporter::openFile(): cannot open the image:" << reinterpret_cast<void*>(ilGetError());
         return;
     }
 

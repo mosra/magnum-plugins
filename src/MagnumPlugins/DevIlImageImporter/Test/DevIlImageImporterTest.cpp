@@ -43,6 +43,7 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct DevIlImageImporterTest: TestSuite::Tester {
     explicit DevIlImageImporterTest();
 
+    void fileNotFound();
     void empty();
     void invalid();
 
@@ -66,7 +67,8 @@ struct DevIlImageImporterTest: TestSuite::Tester {
 using namespace Math::Literals;
 
 DevIlImageImporterTest::DevIlImageImporterTest() {
-    addTests({&DevIlImageImporterTest::empty,
+    addTests({&DevIlImageImporterTest::fileNotFound,
+              &DevIlImageImporterTest::empty,
               &DevIlImageImporterTest::invalid,
 
               &DevIlImageImporterTest::grayPng,
@@ -89,6 +91,15 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
     #endif
 }
 
+void DevIlImageImporterTest::fileNotFound() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("nonexistent"));
+    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openFile(): cannot open the image: 0x50b\n");
+}
+
 void DevIlImageImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
 
@@ -97,7 +108,7 @@ void DevIlImageImporterTest::empty() {
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): cannot open the image: 1289\n");
+    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): cannot open the image: 0x509\n");
 }
 
 void DevIlImageImporterTest::invalid() {
