@@ -88,8 +88,8 @@ find_package(MagnumPlugins REQUIRED DdsImporter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::DdsImporter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
 @section Trade-DdsImporter-behavior Behavior and limitations
 
