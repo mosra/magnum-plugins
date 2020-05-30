@@ -26,11 +26,13 @@
 
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
@@ -55,10 +57,13 @@ struct DevIlImageImporterTest: TestSuite::Tester {
 
     void openTwice();
     void importTwice();
+    void twoImporters();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
+
+using namespace Math::Literals;
 
 DevIlImageImporterTest::DevIlImageImporterTest() {
     addTests({&DevIlImageImporterTest::empty,
@@ -74,7 +79,8 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
               &DevIlImageImporterTest::bgraTga,
 
               &DevIlImageImporterTest::openTwice,
-              &DevIlImageImporterTest::importTwice});
+              &DevIlImageImporterTest::importTwice,
+              &DevIlImageImporterTest::twoImporters});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -91,18 +97,16 @@ void DevIlImageImporterTest::empty() {
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): the file is empty\n");
+    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): cannot open the image: 1289\n");
 }
 
 void DevIlImageImporterTest::invalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    /* The open does just a memory copy, so it doesn't fail */
-    CORRADE_VERIFY(importer->openData("invalid"));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::image2D(): cannot open the image: 1298\n");
+    CORRADE_VERIFY(!importer->openData("invalid"));
+    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): cannot open the image: 1298\n");
 }
 
 void DevIlImageImporterTest::grayPng() {
@@ -264,6 +268,30 @@ void DevIlImageImporterTest::importTwice() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }
+}
+
+void DevIlImageImporterTest::twoImporters() {
+    Containers::Pointer<AbstractImporter> a = _manager.instantiate("DevIlImageImporter");
+    Containers::Pointer<AbstractImporter> b = _manager.instantiate("DevIlImageImporter");
+
+    CORRADE_VERIFY(a->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
+    CORRADE_VERIFY(b->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+
+    /* Import image A after loading file B to test that the two importers don't
+       get their state mixed together */
+    Containers::Optional<Trade::ImageData2D> imageA = a->image2D(0);
+    Containers::Optional<Trade::ImageData2D> imageB = b->image2D(0);
+
+    /* Colors the same as above */
+    CORRADE_VERIFY(imageA);
+    CORRADE_COMPARE(imageA->size(), (Vector2i{3, 2}));
+    CORRADE_COMPARE(imageA->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE(imageA->pixels<Color3ub>()[0][0], 0xcafe76_rgb);
+
+    CORRADE_VERIFY(imageB);
+    CORRADE_COMPARE(imageB->size(), (Vector2i{3, 2}));
+    CORRADE_COMPARE(imageB->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(imageB->pixels<Color4ub>()[0][0], 0xdeadb5ff_rgba);
 }
 
 }}}}

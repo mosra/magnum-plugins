@@ -45,43 +45,41 @@ DevIlImageImporter::~DevIlImageImporter() { close(); }
 
 ImporterFeatures DevIlImageImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool DevIlImageImporter::doIsOpened() const { return _in; }
+bool DevIlImageImporter::doIsOpened() const { return _image; }
 
-void DevIlImageImporter::doClose() { _in = nullptr; }
+void DevIlImageImporter::doClose() {
+    ilDeleteImages(1, &_image);
+    _image = 0;
+}
+
+/* So we can use the shorter if(!ilFoo()) */
+static_assert(!IL_FALSE, "IL_FALSE doesn't have a zero value");
 
 void DevIlImageImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    /* Because here we're copying the data and using the _in to check if file
-       is opened, having them nullptr would mean openData() would fail without
-       any error message. It's not possible to do this check on the importer
-       side, because empty file is valid in some formats (OBJ or glTF). We also
-       can't do the full import here because then doImage2D() would need to
-       copy the imported data instead anyway (and the uncompressed size is much
-       larger). This way it'll also work nicely with a future openMemory(). */
-    if(data.empty()) {
-        Error{} << "Trade::DevIlImageImporter::openData(): the file is empty";
+    UnsignedInt image;
+    ilGenImages(1, &image);
+    ilBindImage(image);
+
+    /* The documentation doesn't state if the data needs to stay in scope.
+       Let's assume so to avoid a copy on the importer side. */
+    if(!ilLoadL(IL_TYPE_UNKNOWN, data.begin(), data.size())) {
+        /* iluGetString() returns empty string for 0x512, which is even more
+           useless than just returning the error ID */
+        Error() << "Trade::DevIlImageImporter::openData(): cannot open the image:" << ilGetError();
         return;
     }
 
-    _in = Containers::Array<unsigned char>(data.size());
-    std::copy(data.begin(), data.end(), _in.begin());
+    /* All good, save the image */
+    _image = image;
 }
 
 UnsignedInt DevIlImageImporter::doImage2DCount() const { return 1; }
 
 Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt, UnsignedInt) {
-    ILuint imgID = 0;
-    ilGenImages(1, &imgID);
-    ilBindImage(imgID);
-
-    /* So we can use the shorter if(!ilFoo()) */
-    static_assert(!IL_FALSE, "IL_FALSE doesn't have a zero value");
-
-    if(!ilLoadL(IL_TYPE_UNKNOWN, _in, _in.size())) {
-        /* iluGetString() returns empty string for 0x512, which is even more
-           useless than just returning the error ID */
-        Error() << "Trade::DevIlImageImporter::image2D(): cannot open the image:" << ilGetError();
-        return Containers::NullOpt;
-    }
+    /* Bind the image. This was done above already, but since it's a global
+       state, this avoids a mismatch in case there's more than one importer
+       active at a time. */
+    ilBindImage(_image);
 
     const Vector2i size{ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT)};
 
@@ -152,9 +150,6 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt, Uns
     /* Copy the data into array that is owned by us and not by IL */
     Containers::Array<char> imageData{std::size_t(size.product()*components)};
     std::copy_n(reinterpret_cast<char*>(ilGetData()), imageData.size(), imageData.begin());
-
-    /* Release the texture back to DevIL */
-    ilDeleteImages(1, &imgID);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;

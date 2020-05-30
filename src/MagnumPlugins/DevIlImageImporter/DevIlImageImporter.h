@@ -209,7 +209,7 @@ class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImport
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
-        Containers::Array<unsigned char> _in;
+        UnsignedInt _image = 0;
 };
 
 }}
