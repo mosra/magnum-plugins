@@ -25,12 +25,14 @@
 
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/FormatStl.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -46,6 +48,7 @@ struct PngImporterTest: TestSuite::Tester {
 
     void gray();
     void rgb();
+    void rgbPalette1bit();
     void rgba();
 
     void openTwice();
@@ -54,6 +57,8 @@ struct PngImporterTest: TestSuite::Tester {
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
+
+using namespace Math::Literals;
 
 constexpr struct {
     const char* name;
@@ -109,6 +114,8 @@ PngImporterTest::PngImporterTest() {
 
     addInstancedTests({&PngImporterTest::rgb},
         Containers::arraySize(RgbData));
+
+    addTests({&PngImporterTest::rgbPalette1bit});
 
     addInstancedTests({&PngImporterTest::rgba},
         Containers::arraySize(RgbaData));
@@ -200,6 +207,22 @@ void PngImporterTest::rgb() {
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5', 0, 0, 0
     }}), TestSuite::Compare::Container);
+}
+
+void PngImporterTest::rgbPalette1bit() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+
+    /* convert IcoImporter/Test/icon256x256.png rgb-palette-1bit.png
+       (the file is all 0x0000ff, so I guess that makes it a 1-bit palette).
+       Taking this file as a repro case because it crashed the importer. */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb-palette-1bit.png")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(256, 256));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+
+    CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x0000ff_rgb);
 }
 
 void PngImporterTest::rgba() {

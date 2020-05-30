@@ -44,6 +44,7 @@ corrade_add_test(PngImporterTest PngImporterTest.cpp
         gray-4bit.png
         rgb.png
         rgb-palette.png
+        rgb-palette-1bit.png
         rgba.png
         rgba-iphone.png
         rgba-trns.png)
