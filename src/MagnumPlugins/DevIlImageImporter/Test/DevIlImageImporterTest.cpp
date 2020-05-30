@@ -66,6 +66,8 @@ struct DevIlImageImporterTest: TestSuite::Tester {
     void importTwice();
     void twoImporters();
 
+    void utf8Filename();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
@@ -109,7 +111,9 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
 
               &DevIlImageImporterTest::openTwice,
               &DevIlImageImporterTest::importTwice,
-              &DevIlImageImporterTest::twoImporters});
+              &DevIlImageImporterTest::twoImporters,
+
+              &DevIlImageImporterTest::utf8Filename});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -448,6 +452,25 @@ void DevIlImageImporterTest::twoImporters() {
     CORRADE_COMPARE(imageB->size(), (Vector2i{100, 100}));
     CORRADE_COMPARE(imageB->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(imageB->pixels<Color4ub>()[0][0], 0x87ceeb_rgb);
+}
+
+void DevIlImageImporterTest::utf8Filename() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+
+    std::string filename = Utility::Directory::join(DEVILIMAGEIMPORTER_WRITE_TEST_DIR, "hýždě.png");
+    CORRADE_VERIFY(Utility::Directory::copy(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png"), filename));
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* Same as in grayPng() */
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 1);
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
+    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+        '\xff', '\x88', '\x00',
+        '\x88', '\x00', '\xff'}}),
+        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
 }
 
 }}}}

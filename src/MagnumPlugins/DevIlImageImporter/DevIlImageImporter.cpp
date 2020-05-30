@@ -36,6 +36,10 @@
 #include <IL/il.h>
 #include <IL/ilu.h>
 
+#ifdef CORRADE_TARGET_WINDOWS
+#include <Corrade/Utility/Unicode.h>
+#endif
+
 namespace Magnum { namespace Trade {
 
 void DevIlImageImporter::initialize() {
@@ -84,7 +88,13 @@ void DevIlImageImporter::doOpenFile(const std::string& filename) {
     ilGenImages(1, &image);
     ilBindImage(image);
 
-    if(!ilLoad(configuration().value<ILenum>("type", Utility::ConfigurationValueFlag::Hex), filename.data())) {
+    if(!ilLoad(configuration().value<ILenum>("type", Utility::ConfigurationValueFlag::Hex),
+        #ifdef CORRADE_TARGET_WINDOWS
+        Utility::Unicode::widen(filename).data()
+        #else
+        filename.data()
+        #endif
+    )) {
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
         Error() << "Trade::DevIlImageImporter::openFile(): cannot open the image:" << reinterpret_cast<void*>(ilGetError());
