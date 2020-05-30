@@ -25,9 +25,11 @@
 #
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(ICOIMPORTER_TEST_DIR ".")
     set(PNGIMPORTER_TEST_DIR ".")
     set(JPEGIMPORTER_TEST_DIR ".")
 else()
+    set(ICOIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/IcoImporter/Test)
     set(PNGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test)
     set(JPEGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/JpegImporter/Test)
 endif()
@@ -49,6 +51,8 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(DevIlImageImporterTest DevIlImageImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
+        ../../IcoImporter/Test/bmp+png.ico
+        ../../IcoImporter/Test/pngs.ico
         ../../PngImporter/Test/gray.png
         ../../PngImporter/Test/rgb.png
         ../../PngImporter/Test/rgba.png

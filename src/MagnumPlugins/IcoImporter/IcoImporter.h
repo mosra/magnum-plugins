@@ -99,7 +99,8 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 The importer will report count of all icon sizes in @ref image2DLevelCount()
 and you can then import each using the second parameter of @ref image2D().
 Currently, only embedded PNGs are supported --- for images that are BMPs,
-@ref image2D() will fail.
+@ref image2D() will fail. You can use @ref DevIlImageImporter in that case
+instead, but please @ref Trade-DevIlImageImporter-behavior-ico "be aware of its limitations".
 */
 class MAGNUM_ICOIMPORTER_EXPORT IcoImporter: public AbstractImporter {
     public:

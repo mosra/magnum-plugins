@@ -56,6 +56,9 @@ struct DevIlImageImporterTest: TestSuite::Tester {
     void bgrTga();
     void bgraTga();
 
+    void icoBmp();
+    void icoPng();
+
     void openTwice();
     void importTwice();
     void twoImporters();
@@ -65,6 +68,15 @@ struct DevIlImageImporterTest: TestSuite::Tester {
 };
 
 using namespace Math::Literals;
+
+const struct {
+    const char* name;
+    bool openFile;
+    bool succeeds;
+} IcoBmpData[] {
+    {"openFile", true, true},
+    {"openData", false, false}
+};
 
 DevIlImageImporterTest::DevIlImageImporterTest() {
     addTests({&DevIlImageImporterTest::fileNotFound,
@@ -78,7 +90,12 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
               &DevIlImageImporterTest::rgbaPng,
 
               &DevIlImageImporterTest::bgrTga,
-              &DevIlImageImporterTest::bgraTga,
+              &DevIlImageImporterTest::bgraTga});
+
+    addInstancedTests({&DevIlImageImporterTest::icoBmp},
+        Containers::arraySize(IcoBmpData));
+
+    addTests({&DevIlImageImporterTest::icoPng,
 
               &DevIlImageImporterTest::openTwice,
               &DevIlImageImporterTest::importTwice,
@@ -254,6 +271,57 @@ void DevIlImageImporterTest::bgraTga() {
         5, 4, 3, 6, 6, 5, 4, 7,
         7, 6, 5, 8, 8, 7, 6, 9}}),
         TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+}
+
+void DevIlImageImporterTest::icoBmp() {
+    auto&& data = IcoBmpData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    std::string filename = Utility::Directory::join(ICOIMPORTER_TEST_DIR, "bmp+png.ico");
+    if(data.openFile)
+        CORRADE_COMPARE(importer->openFile(filename), data.succeeds);
+    else
+        CORRADE_COMPARE(importer->openData(Utility::Directory::read(filename)), data.succeeds);
+    if(!data.succeeds) return;
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    {
+        CORRADE_EXPECT_FAIL("DevIlImageImporter does not support image levels.");
+        CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+    }
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+        CORRADE_COMPARE(image->size(), (Vector2i{16, 8}));
+        CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], 0x00ff00_rgb);
+    }
+}
+
+void DevIlImageImporterTest::icoPng() {
+    /* Last checked with version 1.8, May 2020 */
+    CORRADE_SKIP("DevIL crashes on ICOs with embedded PNGs, skipping the test.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    {
+        CORRADE_EXPECT_FAIL("DevIlImageImporter does not support image levels.");
+        CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+    }
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+        CORRADE_COMPARE(image->size(), (Vector2i{16, 8}));
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb);
+    }
 }
 
 void DevIlImageImporterTest::openTwice() {

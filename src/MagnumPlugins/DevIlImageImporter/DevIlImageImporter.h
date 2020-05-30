@@ -112,10 +112,10 @@ is incomplete):
 -   Doom graphics
 
 This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
-`GifImporter`, `HdrImporter`, `JpegImporter`, `Jpeg2000Importer`,
-`MngImporter`, `PcxImporter`, `PbmImporter`, `PgmImporter`, `PicImporter`,
-`PngImporter`, `PnmImporter`, `PpmImporter`, `PsdImporter`, `SgiImporter`,
-`TgaImporter` and `TiffImporter` plugins.
+`GifImporter`, `HdrImporter`, `IcoImporter`, `JpegImporter`,
+`Jpeg2000Importer`, `MngImporter`, `PcxImporter`, `PbmImporter`, `PgmImporter`,
+`PicImporter`, `PngImporter`, `PnmImporter`, `PpmImporter`, `PsdImporter`,
+`SgiImporter`, `TgaImporter` and `TiffImporter` plugins.
 
 @m_class{m-block m-warning}
 
@@ -184,11 +184,19 @@ While DevIL itself supports loading of animated GIFs, the importer doesn't
 implement necessary interfaces. Use @ref StbImageImporter for loading GIF
 animations instead.
 
+@subsection Trade-DevIlImageImporter-behavior-ico ICO files
+
+DevIL is able to load ICO files with embedded BMPs, unfortunately it crashes
+for ICOs with embedded PNGs --- use @ref IcoImporter in that case instead. Note
+that for proper file format auto-detection you need to load them via
+@ref openFile(), not @ref openData().
+
 @subsection Trade-DevIlImageImporter-behavior-cgbi Apple CgBI PNGs
 
 CgBI is a proprietary Apple-specific extension to PNG
 ([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). DevIL
 doesn't support these, use @ref StbImageImporter for loading these instead.
+
 */
 class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImporter {
     public:
