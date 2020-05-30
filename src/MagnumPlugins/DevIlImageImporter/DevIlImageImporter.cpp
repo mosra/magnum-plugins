@@ -44,8 +44,6 @@ void DevIlImageImporter::initialize() {
     ilInit();
 }
 
-DevIlImageImporter::DevIlImageImporter() = default;
-
 DevIlImageImporter::DevIlImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 DevIlImageImporter::~DevIlImageImporter() { close(); }

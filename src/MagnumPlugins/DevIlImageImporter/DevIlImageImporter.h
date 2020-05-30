@@ -203,9 +203,6 @@ class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImport
         /** @brief Initialize DevIL library */
         static void initialize();
 
-        /** @brief Default constructor */
-        explicit DevIlImageImporter();
-
         /** @brief Plugin manager constructor */
         explicit DevIlImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
