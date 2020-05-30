@@ -123,6 +123,9 @@ namespace Magnum {
 
 -   @ref Trade::AssimpImporter "AssimpImporter" could crash on a
     division-by-zero when custom file callbacks encounter an empty file
+-   Importing one image multiple times with
+    @ref Trade::DevIlImageImporter "DevIlImageImporter" would cause it being
+    differently flipped every time
 
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
 

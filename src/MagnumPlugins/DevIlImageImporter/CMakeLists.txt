@@ -58,7 +58,7 @@ target_include_directories(DevIlImageImporter PUBLIC
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(DevIlImageImporter PUBLIC
     Magnum::Trade
-    ${IL_LIBRARIES} ${ILU_LIBRARIES})
+    ${IL_LIBRARIES})
 # Modify output location only if all are set, otherwise it makes no sense
 if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND CMAKE_LIBRARY_OUTPUT_DIRECTORY AND CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
     set_target_properties(DevIlImageImporter PROPERTIES

@@ -162,16 +162,24 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt, Uns
         return Containers::NullOpt;
     }
 
-    /* Flip the image to match OpenGL's conventions */
-    /** @todo use our own routine to avoid linking to ILU */
-    ILinfo imageInfo;
-    iluGetImageInfo(&imageInfo);
-    if(imageInfo.Origin == IL_ORIGIN_UPPER_LEFT)
-        iluFlipImage();
-
-    /* Copy the data into array that is owned by us and not by IL */
+    /* Copy the data into array that is owned by us and not by IL. Make a 2D
+       view so we can flip the image to have the origin bottom left. */
     Containers::Array<char> imageData{std::size_t(size.product()*components)};
-    Utility::copy(Containers::arrayView(reinterpret_cast<const char*>(imageInfo.Data), imageInfo.SizeOfData), imageData);
+    Containers::StridedArrayView2D<const char> src{
+        Containers::arrayView(reinterpret_cast<const char*>(ilGetData()), ilGetInteger(IL_IMAGE_SIZE_OF_DATA)),
+        {std::size_t(size.y()), std::size_t(size.x()*components)}};
+    Containers::StridedArrayView2D<char> dst{imageData,
+        {std::size_t(size.y()), std::size_t(size.x()*components)}};
+
+    /* Originally this was done using iluFlipImage(), but that thing mutates
+       the original data WITHOUT adapting IL_IMAGE_ORIGIN, which means it
+       flipped every time we asked for the image, giving a different origin
+       every time. FFS. Now we don't use that anymore and thus we don't need to
+       link to ILU either, which is nice. */
+    if(ilGetInteger(IL_IMAGE_ORIGIN) == IL_ORIGIN_UPPER_LEFT)
+        dst = dst.flipped<0>();
+
+    Utility::copy(src, dst);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
