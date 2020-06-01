@@ -77,6 +77,8 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
     template<class T> void simplify();
     template<class T> void simplifySloppy();
 
+    void simplifyVerbose();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractSceneConverter> _manager{"nonexistent"};
 };
@@ -132,13 +134,14 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
         &MeshOptimizerSceneConverterTest::simplifyNoPositions},
         Containers::arraySize(SimplifyErrorData));
 
-    addTests<MeshOptimizerSceneConverterTest>({
+    addTests({
         &MeshOptimizerSceneConverterTest::simplify<UnsignedByte>,
         &MeshOptimizerSceneConverterTest::simplify<UnsignedShort>,
         &MeshOptimizerSceneConverterTest::simplify<UnsignedInt>,
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedByte>,
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedShort>,
-        &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedInt>});
+        &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedInt>,
+        &MeshOptimizerSceneConverterTest::simplifyVerbose});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -918,6 +921,42 @@ template<class T> void MeshOptimizerSceneConverterTest::simplifySloppy() {
             {0.333333f, 0.5f},
             {0.5f, 0.75}
         }), TestSuite::Compare::Container);
+}
+
+void MeshOptimizerSceneConverterTest::simplifyVerbose() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->setFlags(SceneConverterFlag::Verbose);
+    converter->configuration().setValue("simplify", true);
+    converter->configuration().setValue("simplifyTargetIndexCountThreshold", 0.5f);
+    /* The default 1.0e-2 is too little for this */
+    converter->configuration().setValue("simplifyTargetError", 0.25f);
+
+    std::ostringstream out;
+    Containers::Optional<MeshData> simplified;
+    {
+        Debug redirectDebug{&out};
+        simplified = converter->convert(Primitives::uvSphereSolid(4, 6, Primitives::UVSphereFlag::TextureCoordinates));
+    }
+    CORRADE_VERIFY(simplified);
+    CORRADE_COMPARE(simplified->indexType(), MeshIndexType::UnsignedInt);
+    CORRADE_COMPARE(simplified->indexCount(), 54); /* The half, yay */
+    CORRADE_COMPARE(simplified->vertexCount(), 13);
+
+    const char* expected = R"(Trade::MeshOptimizerSceneConverter::convert(): processing stats:
+  vertex cache:
+    23 -> 13 transformed vertices
+    1 -> 1 executed warps
+    ACMR 0.638889 -> 0.722222
+    ATVR 1 -> 1
+  vertex fetch:
+    768 -> 448 bytes fetched
+    overfetch 1.04348 -> 1.07692
+  overdraw:
+    127149 -> 138617 shaded pixels
+    127149 -> 138617 covered pixels
+    overdraw 1 -> 1
+)";
+    CORRADE_COMPARE(out.str(), expected);
 }
 
 }}}}
