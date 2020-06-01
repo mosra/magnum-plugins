@@ -84,7 +84,7 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
 const struct {
     const char* name;
     const char* option;
-} SimplifyData[] {
+} SimplifyErrorData[] {
     {"", "simplify"},
     {"sloppy", "simplifySloppy"}
 };
@@ -130,7 +130,7 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
     addInstancedTests({
         &MeshOptimizerSceneConverterTest::simplifyInPlace,
         &MeshOptimizerSceneConverterTest::simplifyNoPositions},
-        Containers::arraySize(SimplifyData));
+        Containers::arraySize(SimplifyErrorData));
 
     addTests<MeshOptimizerSceneConverterTest>({
         &MeshOptimizerSceneConverterTest::simplify<UnsignedByte>,
@@ -745,7 +745,7 @@ void MeshOptimizerSceneConverterTest::copyTriangleFanIndexed() {
 }
 
 void MeshOptimizerSceneConverterTest::simplifyInPlace() {
-    auto&& data = SimplifyData[testCaseInstanceId()];
+    auto&& data = SimplifyErrorData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
@@ -766,7 +766,7 @@ void MeshOptimizerSceneConverterTest::simplifyInPlace() {
 }
 
 void MeshOptimizerSceneConverterTest::simplifyNoPositions() {
-    auto&& data = SimplifyData[testCaseInstanceId()];
+    auto&& data = SimplifyErrorData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
