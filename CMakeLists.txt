@@ -117,9 +117,12 @@ endif()
 
 set(MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR share/cmake/MagnumPlugins)
 
-# Library version
+# Library version. MAGNUMPLUGINS_VERSION_YEAR/MONTH is used in
+# src/Magnum/CMakeLists.txt to generate the versionPlugins.h header.
 set(MAGNUMPLUGINS_LIBRARY_VERSION 2.3)
 set(MAGNUMPLUGINS_LIBRARY_SOVERSION 2)
+set(MAGNUMPLUGINS_VERSION_YEAR 2019)
+set(MAGNUMPLUGINS_VERSION_MONTH 10)
 
 # A single output location. After a decade of saying NO THIS IS A NON-SOLUTION
 # TO A NON-PROBLEM I reconsidered my views and enabled this, because:
