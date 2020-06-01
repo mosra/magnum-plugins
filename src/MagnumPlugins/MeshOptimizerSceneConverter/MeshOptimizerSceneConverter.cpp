@@ -123,6 +123,15 @@ void analyzePost(const char* prefix, const MeshData& mesh, const Utility::Config
         << overdrawStatsBefore.overdraw << "->" << overdrawStats.overdraw;
 }
 
+void populatePositions(const MeshData& mesh, Containers::Array<Vector3>& positionStorage, Containers::StridedArrayView1D<const Vector3>& positions) {
+    if(mesh.attributeFormat(MeshAttribute::Position) == VertexFormat::Vector3)
+        positions = mesh.attribute<Vector3>(MeshAttribute::Position);
+    else {
+        positionStorage = mesh.positions3DAsArray();
+        positions = positionStorage;
+    }
+}
+
 bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConverterFlags flags, const Utility::ConfigurationGroup& configuration, Containers::Array<Vector3>& positionStorage, Containers::StridedArrayView1D<const Vector3>& positions, Containers::Optional<UnsignedInt>& vertexSize,  meshopt_VertexCacheStatistics& vertexCacheStatsBefore, meshopt_VertexFetchStatistics& vertexFetchStatsBefore, meshopt_OverdrawStatistics& overdrawStatsBefore) {
     /* Only doConvert() can handle triangle strips etc, in-place only triangles */
     if(mesh.primitive() != MeshPrimitive::Triangles) {
@@ -149,12 +158,7 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
             return false;
         }
 
-        if(mesh.attributeFormat(MeshAttribute::Position) == VertexFormat::Vector3)
-            positions = mesh.attribute<Vector3>(MeshAttribute::Position);
-        else {
-            positionStorage = mesh.positions3DAsArray();
-            positions = positionStorage;
-        }
+        populatePositions(mesh, positionStorage, positions);
     }
 
     /* Save "before" stats if verbose output is requested. No messages as those
@@ -324,6 +328,11 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
             Containers::arrayAllocatorCast<char, Trade::ArrayAllocator>(std::move(outputIndices)), indices,
             out.releaseVertexData(), out.releaseAttributeData()};
         out = MeshTools::combineIndexedAttributes({out});
+
+        /* If we're printing stats after, repopulate the positions to avoid
+           using a now-gone array */
+        if(flags() & SceneConverterFlag::Verbose)
+            populatePositions(out, positionStorage, positions);
     }
 
     /* Print before & after stats if verbose output is requested */
