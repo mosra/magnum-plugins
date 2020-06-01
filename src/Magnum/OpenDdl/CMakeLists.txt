@@ -68,7 +68,7 @@ target_include_directories(MagnumOpenDdl PUBLIC
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(MagnumOpenDdl PUBLIC Magnum::Magnum)
 if(NOT BUILD_STATIC)
-    set_target_properties(MagnumOpenDdl PROPERTIES VERSION ${MAGNUM_LIBRARY_VERSION} SOVERSION ${MAGNUM_LIBRARY_SOVERSION})
+    set_target_properties(MagnumOpenDdl PROPERTIES VERSION ${MAGNUMPLUGINS_LIBRARY_VERSION} SOVERSION ${MAGNUMPLUGINS_LIBRARY_SOVERSION})
 elseif(BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(MagnumOpenDdl PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
