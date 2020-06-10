@@ -1,5 +1,8 @@
 rem Workaround for CMake not wanting sh.exe on PATH for MinGW. AARGH.
 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+rem Unlike with Magnum itself which copies OpenAL DLL to its output directory,
+rem here we need to do that ourselves as we don't have Magnum's build dir in
+rem PATH
 set PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin;%APPVEYOR_BUILD_FOLDER%/openal/bin/Win64;%APPVEYOR_BUILD_FOLDER%\deps\bin;%APPVEYOR_BUILD_FOLDER%\devil\unicode;%PATH%
 
 rem Build LibJPEG

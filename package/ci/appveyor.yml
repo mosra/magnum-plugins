@@ -50,6 +50,8 @@ install:
 # OpenAL
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.19.1-bin.zip appveyor DownloadFile https://openal-soft.org/openal-binaries/openal-soft-1.19.1-bin.zip
 - IF NOT "%TARGET%" == "rt" 7z x openal-soft-1.19.1-bin.zip && ren openal-soft-1.19.1-bin openal && echo [General] > %APPDATA%/alsoft.ini & echo drivers=null >> %APPDATA%/alsoft.ini
+# Unlike with Magnum itself which copies OpenAL DLL to its output directory,
+# here we need to do that ourselves as we don't have Magnum's build dir in PATH
 - IF "%TARGET%" == "desktop" ren openal\bin\Win64\soft_oal.dll OpenAL32.dll
 
 # DevIL
