@@ -521,7 +521,7 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
            fetch bytes are calculated correctly even for custom / matrix /
            array attribs */
         Trade::MeshAttributeData{meshAttributeCustom(1),
-            VertexFormat::Matrix3x2bNormalized, 2, icosphere.attribute(1)}
+            VertexFormat::Matrix3x2bNormalized, icosphere.attribute(1), 2}
     });
     MeshData icosphereCustom{icosphere.primitive(),
         icosphere.releaseIndexData(), indices,
@@ -650,19 +650,22 @@ template<class T> void MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty() {
 void MeshOptimizerSceneConverterTest::copy() {
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
 
-    MeshData original = Primitives::icosphereSolid(1);
+    /* Convert to a 16-bit indices to verify the type is preserved */
+    MeshData original = MeshTools::compressIndices(Primitives::icosphereSolid(1));
+    CORRADE_COMPARE(original.indexType(), MeshIndexType::UnsignedShort);
     Containers::Optional<MeshData> optimized = converter->convert(original);
 
     CORRADE_VERIFY(optimized);
     CORRADE_COMPARE(optimized->primitive(), original.primitive());
     CORRADE_COMPARE(optimized->indexCount(), original.indexCount());
+    CORRADE_COMPARE(optimized->indexType(), MeshIndexType::UnsignedShort);
     CORRADE_COMPARE(optimized->vertexCount(), original.vertexCount());
     CORRADE_COMPARE(optimized->attributeCount(), original.attributeCount());
     CORRADE_COMPARE(optimized->indexDataFlags(), DataFlag::Owned|DataFlag::Mutable);
     CORRADE_COMPARE(optimized->vertexDataFlags(), DataFlag::Owned|DataFlag::Mutable);
 
-    CORRADE_COMPARE_AS(optimized->indices<UnsignedInt>().prefix(16),
-        Containers::arrayView<UnsignedInt>({
+    CORRADE_COMPARE_AS(optimized->indices<UnsignedShort>().prefix(16),
+        Containers::arrayView<UnsignedShort>({
             /* Same as in inPlaceOptimizeVertexFetch() */
             0, 1, 2, 2, 1, 3, 3, 1, 4, 2, 3, 5, 6, 3, 4, 3
         }), TestSuite::Compare::Container);

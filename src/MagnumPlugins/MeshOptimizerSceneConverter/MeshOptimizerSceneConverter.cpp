@@ -26,14 +26,15 @@
 #include "MeshOptimizerSceneConverter.h"
 
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/Math/PackingBatch.h>
 #include <Magnum/Math/Vector3.h>
-#include <Magnum/MeshTools/Concatenate.h>
 #include <Magnum/MeshTools/Combine.h>
-#include <Magnum/MeshTools/GenerateIndices.h>
 #include <Magnum/MeshTools/Duplicate.h>
+#include <Magnum/MeshTools/GenerateIndices.h>
 #include <Magnum/MeshTools/Interleave.h>
+#include <Magnum/MeshTools/Reference.h>
 #include <Magnum/Trade/ArrayAllocator.h>
 #include <Magnum/Trade/MeshData.h>
 #include <meshoptimizer.h>
@@ -271,9 +272,7 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
 
 Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const MeshData& mesh) {
     /* Make the mesh interleaved and owned first */
-    /** @todo concat() unpacks the indices :/ */
-    /** @todo interleave() makes the mesh owned for some :/ */
-    MeshData out = MeshTools::concatenate(MeshTools::interleave(mesh));
+    MeshData out = MeshTools::owned(MeshTools::interleave(mesh));
     CORRADE_INTERNAL_ASSERT(MeshTools::isInterleaved(out));
 
     /* Convert to an indexed triangle mesh if we have a strip or a fan */
