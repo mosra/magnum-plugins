@@ -125,7 +125,10 @@ void analyzePost(const char* prefix, const MeshData& mesh, const Utility::Config
 }
 
 void populatePositions(const MeshData& mesh, Containers::Array<Vector3>& positionStorage, Containers::StridedArrayView1D<const Vector3>& positions) {
-    if(mesh.attributeFormat(MeshAttribute::Position) == VertexFormat::Vector3)
+    /* MeshOptimizer accepts float positions with stride divisible by four. If
+       the input doesn't have that (for example because it's a tightly-packed
+       PLY with 24bit RGB colors), we need to supply unpacked aligned copy. */
+    if(mesh.attributeFormat(MeshAttribute::Position) == VertexFormat::Vector3 && mesh.attributeStride(MeshAttribute::Position) % 4 == 0)
         positions = mesh.attribute<Vector3>(MeshAttribute::Position);
     else {
         positionStorage = mesh.positions3DAsArray();
