@@ -55,9 +55,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief PNG importer plugin
 
-Supports Portable Network Graphics (`*.png`) RGB, RGBA or grayscale images with
-8 and 16 bits per channel. Palleted images and images with transparency mask
-are automatically converted to RGB(A).
+Supports Portable Network Graphics (`*.png`) grayscale, grayscale+alpha, RGB or
+RGBA images with 8 and 16 bits per channel. Palleted images and images with
+transparency mask are automatically converted to G(A) / RGB(A).
 
 @m_class{m-block m-success}
 
@@ -105,11 +105,12 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-PngImporter-behavior Behavior and limitations
 
-The images are imported with @ref PixelFormat::RGB8Unorm /
-@ref PixelFormat::RGB16Unorm, @ref PixelFormat::RGBA8Unorm /
-@ref PixelFormat::RGBA16Unorm or @ref PixelFormat::R8Unorm /
-@ref PixelFormat::R16Unorm. All imported images use default @ref PixelStorage
-parameters.
+Grayscale images are imported as @ref PixelFormat::R8Unorm /
+@ref PixelFormat::R16Unorm, grayscale + alpha as @ref PixelFormat::RG8Unorm /
+@ref PixelFormat::RG16Unorm, RGB as @ref PixelFormat::RGB8Unorm /
+@ref PixelFormat::RGB16Unorm and RGBA as @ref PixelFormat::RGBA8Unorm /
+@ref PixelFormat::RGBA16Unorm. All imported images use default
+@ref PixelStorage parameters.
 
 @subsection Trade-PngImporter-behavior-cgbi Apple CgBI PNGs
 

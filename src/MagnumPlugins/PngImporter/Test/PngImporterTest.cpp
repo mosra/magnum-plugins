@@ -47,6 +47,7 @@ struct PngImporterTest: TestSuite::Tester {
     void invalid();
 
     void gray();
+    void grayAlpha();
     void rgb();
     void rgbPalette1bit();
     void rgba();
@@ -83,6 +84,23 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* filename;
+} GrayAlphaData[]{
+    /* magnum-imageconverter ga-trns.png --converter StbPngImageConverter ga.png
+       because imagemagick is STUPID and doesn't let me override the rRNS from
+       http://www.imagemagick.org/Usage/formats/#png_quality -- the suggested
+       -type TruecolorMatte doesn't do anything and PNG32: gives me a RGBA
+       (yes, the source file is the one from below) */
+    {"8bit", "ga.png"},
+    /* convert rgba.png -colorspace gray ga-trns.png
+       According to http://www.imagemagick.org/Usage/formats/#png_quality,
+       ImageMagick creates a tRNS chunk if the original image has binary (00
+       or FF) alpha. */
+    {"tRNS alpha mask", "ga-trns.png"},
+};
+
+constexpr struct {
+    const char* name;
+    const char* filename;
 } RgbData[]{
     {"RGB", "rgb.png"},
     /* convert rgb.png -define png:exclude-chunks=date png8:palette.png */
@@ -111,6 +129,9 @@ PngImporterTest::PngImporterTest() {
 
     addInstancedTests({&PngImporterTest::gray},
         Containers::arraySize(GrayData));
+
+    addInstancedTests({&PngImporterTest::grayAlpha},
+        Containers::arraySize(GrayAlphaData));
 
     addInstancedTests({&PngImporterTest::rgb},
         Containers::arraySize(RgbData));
@@ -176,6 +197,30 @@ void PngImporterTest::gray() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
         '\xff', '\x88', '\x00', 0,
         '\x88', '\x00', '\xff', 0
+    }}), TestSuite::Compare::Container);
+}
+
+void PngImporterTest::grayAlpha() {
+    auto&& data = GrayAlphaData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
+
+    /* The image has four-byte aligned rows, clear the padding to deterministic
+       values */
+    CORRADE_COMPARE(image->data().size(), 16);
+    image->mutableData()[6] = image->mutableData()[7] =
+        image->mutableData()[14] = image->mutableData()[15] = 0;
+
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
+        '\xb8', '\xff', '\xe9', '\xff', '\x00', '\x00', 0, 0,
+        '\xe9', '\xff', '\x00', '\x00', '\xb8', '\xff', 0, 0
     }}), TestSuite::Compare::Container);
 }
 

@@ -40,6 +40,8 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(PngImporterTest PngImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
+        ga.png
+        ga-trns.png
         gray.png
         gray-4bit.png
         rgb.png
