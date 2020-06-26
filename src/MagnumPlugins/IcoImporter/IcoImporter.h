@@ -28,7 +28,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::IcoImporter
- * @m_since_latest
+ * @m_since_{plugins,2020,06}
  */
 
 #include <Corrade/Containers/Pointer.h>
@@ -56,7 +56,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief ICO importer plugin
-@m_since_latest
+@m_since_{plugins,2020,06}
 
 Loads Windows icon/cursor (`*.ico` / `*.cur`) files with embedded PNGs.
 

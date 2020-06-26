@@ -27,6 +27,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::StlImporter
+ * @m_since_{plugins,2020,06}
  */
 
 #include <Corrade/Containers/Optional.h>
@@ -55,7 +56,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief STL importer plugin
-@m_since_latest_{plugins}
+@m_since_{plugins,2020,06}
 
 Imports normal and vertex information from binary
 [Stereolitography STL](https://en.wikipedia.org/wiki/STL_(file_format)) files.

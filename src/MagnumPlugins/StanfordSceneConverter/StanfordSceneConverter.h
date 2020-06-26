@@ -27,7 +27,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::StanfordSceneConverter
- * @m_since_latest_{plugins}
+ * @m_since_{plugins,2020,06}
  */
 
 #include <Magnum/Trade/AbstractSceneConverter.h>
@@ -54,7 +54,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief Stanford PLY converter plugin
-@m_since_latest_{plugins}
+@m_since_{plugins,2020,06}
 
 Exports to either Little- or Big-Endian binary files with triangle faces.
 

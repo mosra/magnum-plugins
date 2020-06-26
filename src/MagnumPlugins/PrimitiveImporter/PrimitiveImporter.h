@@ -27,7 +27,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::PrimitiveImporter
- * @m_since_latest
+ * @m_since_{plugins,2020,06}
  */
 
 #include <Magnum/Trade/AbstractImporter.h>
@@ -54,7 +54,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief Primitive importer plugin
-@m_since_latest
+@m_since_{plugins,2020,06}
 
 Exposes primitives from the @ref Primitives library through importer APIs.
 Applications that have an importer pipeline already set up can use this plugin

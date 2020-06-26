@@ -27,7 +27,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::MeshOptimizerSceneConverter
- * @m_since_latest_{plugins}
+ * @m_since_{plugins,2020,06}
  */
 
 #include <Magnum/Trade/AbstractSceneConverter.h>
@@ -54,7 +54,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief MeshOptimizer converter plugin
-@m_since_latest_{plugins}
+@m_since_{plugins,2020,06}
 
 Integrates various algorithms from [meshoptimizer](https://github.com/zeux/meshoptimizer).
 
