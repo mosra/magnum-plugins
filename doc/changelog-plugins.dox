@@ -30,9 +30,14 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@section changelog-plugins-latest Changes since 2019.10
+@anchor changelog-plugins-latest
 
-@subsection changelog-plugins-latest-new New features
+@section changelog-plugins-2020-06 2020.06
+
+Released 2020-06-27, tagged as
+[v2020.06](https://github.com/mosra/magnum-plugins/releases/tag/v2020.06).
+
+@subsection changelog-plugins-2020-06-new New features
 
 -   Multi-primitive mesh support in @ref Trade::AssimpImporter "AssimpImporter",
     consistent with @ref Trade::TinyGltfImporter "TinyGltfImporter" behavior
@@ -73,7 +78,7 @@ namespace Magnum {
     and @ref Trade::TinyGltfImporter "TinyGltfImporter" (see
     [mosra/magnum-plugins#83](https://github.com/mosra/magnum-plugins/pull/83))
 
-@subsection changelog-plugins-latest-changes Changes and improvements
+@subsection changelog-plugins-2020-06-changes Changes and improvements
 
 -   @ref Trade::AssimpImporter "AssimpImporter" now imports color alpha channel
     in @ref Trade::PhongMaterialData as well as importing both color and
@@ -112,7 +117,7 @@ namespace Magnum {
 -   @ref Trade::PngImporter now recognizes and imports gray+alpha files as well
     (see [mosra/magnum-plugins#71](https://github.com/mosra/magnum-plugins/issues/71))
 
-@subsection changelog-plugins-latest-buildsystem Build system
+@subsection changelog-plugins-2020-06-buildsystem Build system
 
 -   `FindAssimp.cmake` is updated to look for IrrXML on all systems, not just
     Windows, since Vcpkg has the static build the same on all platforms
@@ -132,7 +137,7 @@ namespace Magnum {
 -   Properly installing plugin binaries in Gentoo packages (see
     [mosra/magnum-plugins#85](https://github.com/mosra/magnum-plugins/issues/85))
 
-@subsection changelog-plugins-latest-bugfixes Bug fixes
+@subsection changelog-plugins-2020-06-bugfixes Bug fixes
 
 -   @ref Trade::AssimpImporter "AssimpImporter" could crash on a
     division-by-zero when custom file callbacks encounter an empty file
@@ -142,7 +147,7 @@ namespace Magnum {
 -   Fixed a crash in @ref Trade::PngImporter "PngImporter" when encountering
     palette files with less than 8 bits per pixel
 
-@subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
+@subsection changelog-plugins-2020-06-compatibility Potential compatibility breakages, removed APIs
 
 -   Removed @ref OpenDdl headers in `MagnumPlugins/OpenGexImporter/OpenDdl`
     that were deprecated in 2018.04, include them from the `Magnum/OpenDdl`
