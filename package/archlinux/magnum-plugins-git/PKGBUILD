@@ -7,7 +7,7 @@ arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
 depends=('magnum-git' 'devil' 'faad2' 'libpng' 'libjpeg' 'freetype2' 'assimp' 'meshoptimizer')
-makedepends=('cmake' 'git')
+makedepends=('cmake' 'git' 'ninja')
 provides=('magnum-plugins')
 conflicts=('magnum-plugins')
 source=("git+git://github.com/mosra/magnum-plugins.git")
@@ -51,11 +51,12 @@ build() {
         -DWITH_STBTRUETYPEFONT=ON \
         -DWITH_STBVORBISAUDIOIMPORTER=ON \
         -DWITH_STLIMPORTER=ON \
-        -DWITH_TINYGLTFIMPORTER=ON
-    make
+        -DWITH_TINYGLTFIMPORTER=ON \
+        -G Ninja
+    ninja
 }
 
 package() {
     cd "$srcdir/build"
-    make DESTDIR="$pkgdir/" install
+    DESTDIR="$pkgdir/" ninja install
 }
