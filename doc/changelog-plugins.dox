@@ -125,6 +125,8 @@ namespace Magnum {
     builds of @ref Trade::JpegImageConverter "JpegImageConverter" and
     @ref Trade::JpegImporter "JpegImporter" on with libjpeg coming from MSYS2
     MinGW packages (see [mosra/magnum-plugins#74]https://github.com/mosra/magnum-plugins/pull/74))
+-   Fixed build of @ref Audio::DrWavImporter "DrWavAudioImporter" on static
+    libraries with dynamic plugins (see [mosra/magnum-plugins#78](https://github.com/mosra/magnum-plugins/issues/78))
 -   The library again compiles and tests cleanly with @ref CORRADE_NO_ASSERT
     enabled, and this setup is verified on the CI to avoid further regressions
 -   Properly installing plugin binaries in Gentoo packages (see
