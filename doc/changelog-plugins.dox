@@ -129,7 +129,7 @@ Released 2020-06-27, tagged as
     as they weren't used and unnecessarily pulled in `windows.h`; fixed static
     builds of @ref Trade::JpegImageConverter "JpegImageConverter" and
     @ref Trade::JpegImporter "JpegImporter" on with libjpeg coming from MSYS2
-    MinGW packages (see [mosra/magnum-plugins#74]https://github.com/mosra/magnum-plugins/pull/74))
+    MinGW packages (see [mosra/magnum-plugins#74](https://github.com/mosra/magnum-plugins/pull/74))
 -   Fixed build of @ref Audio::DrWavImporter "DrWavAudioImporter" on static
     libraries with dynamic plugins (see [mosra/magnum-plugins#78](https://github.com/mosra/magnum-plugins/issues/78))
 -   The library again compiles and tests cleanly with @ref CORRADE_NO_ASSERT
@@ -163,11 +163,11 @@ Released 2020-06-27, tagged as
     effectively abandoned. The branch didn't see any update since 2017 and
     there are no exporters supporting it.
 -   The bundled `tiny_gltf` code was updated from `v2.0.0` to `v2.4.1` in order
-    to implement support for `KHR_lights_punctual` A lot happened between these
-    two versions including a change in how it parses numeric data. It may cause
-    the imported transformations to be slightly different than in 2019.10,
-    resulting in very minor differences in rendered images, particularly on
-    aliased edges. See also [facebookresearch/habitat-sim#496](https://github.com/facebookresearch/habitat-sim/pull/496).
+    to implement support for `KHR_lights_punctual`. A lot happened between
+    these two versions including a change in how it parses numeric data. It may
+    cause the imported transformations to be slightly different than in
+    2019.10, resulting in very minor differences in rendered images,
+    particularly on aliased edges. See also [facebookresearch/habitat-sim#496](https://github.com/facebookresearch/habitat-sim/pull/496).
 -   @ref Trade::DdsImporter "DdsImporter" now exposes mip levels not as
     separate images, but through the new @p level parameter and
     @ref Trade::AbstractImporter::image2DLevelCount() /
