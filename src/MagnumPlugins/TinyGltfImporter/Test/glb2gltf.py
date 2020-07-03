@@ -83,10 +83,17 @@ if args.extract_images:
         assert 'bufferView' in image
         assert 'uri' not in image
 
+        # Figure out an extension
+        ext = None
         if image['mimeType'] == 'image/jpeg': ext = '.jpg'
         elif image['mimeType'] == 'image/png': ext = '.png'
         elif image['mimeType'] == 'image/x-basis': ext = '.basis'
-        else: assert False, "Unknown MIME type %s" % image['mimeType']
+        elif image['mimeType'] == 'image/unknown':
+            if 'name' in image: ext = os.path.splitext(image['name'])[1]
+        assert ext, "Unknown MIME type %s" % image['mimeType']
+
+        # Err, if an extension is already present in the name, strip it
+        if 'name' in image and image['name'].endswith(ext): ext = ''
 
         # Remember the earliest buffer view used
         buffer_view_id = image['bufferView']
