@@ -62,6 +62,9 @@ install:
 - set BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed
 - IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\basis_universal-%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/%BASIS_VERSION%.zip
 - 7z x %BASIS_VERSION%.zip && ren basis_universal-%BASIS_VERSION% basis_universal
+# https://github.com/BinomialLLC/basis_universal/pull/106
+# TODO: remove once we update to UASTC-enabled Basis
+- bash -c "cd basis_universal && patch -p1 < ../package/ci/basisu-msvc2019-16.6.patch"
 
 build_script:
 - IF NOT "%BUILD_STATIC%" == "ON" set BUILD_STATIC=OFF
