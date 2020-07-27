@@ -30,7 +30,12 @@ namespace Magnum {
 @tableofcontents
 @m_footernavigation
 
-@anchor changelog-plugins-latest
+@section changelog-plugins-latest Changes since 2020.06
+
+@subsection changelog-plugins-latest-buildsystem Build system
+
+-   The `versionPlugins.h` header now gets populated from Git correctly also
+    when inside a CMake subproject
 
 @section changelog-plugins-2020-06 2020.06
 
