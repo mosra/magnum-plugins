@@ -4,7 +4,7 @@ Material {
     Name { string { "colors" } }
     Color (attrib = "diffuse") { float[3] { { 0.0, 0.8, 0.5 } } }
     Color (attrib = "specular") { float[4] { { 0.5, 0.2, 1.0, 0.8 } } }
-    Param (attrib = "specular_power") { float { 80.0 } }
+    Param (attrib = "specular_power") { float { 10.0 } }
 
     Texture (attrib = "something_else") { string { "" } } // ID 0
 }

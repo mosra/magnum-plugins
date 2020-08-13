@@ -854,7 +854,7 @@ void OpenGexImporterTest::materialDefaults() {
     CORRADE_COMPARE(phong.ambientColor(), 0x000000ff_rgbaf);
     CORRADE_COMPARE(phong.diffuseColor(), 0xffffffff_rgbaf);
     CORRADE_COMPARE(phong.specularColor(), 0xffffffff_rgbaf);
-    CORRADE_COMPARE(phong.shininess(), 1.0f);
+    CORRADE_COMPARE(phong.shininess(), 80.0f);
 }
 
 void OpenGexImporterTest::materialColors() {
@@ -873,7 +873,7 @@ void OpenGexImporterTest::materialColors() {
     CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flags{});
     CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.0f, 0.8f, 0.5f, 1.0f}));
     CORRADE_COMPARE(phong.specularColor(), (Color4{0.5f, 0.2f, 1.0f, 0.8f}));
-    CORRADE_COMPARE(phong.shininess(), 80.0f);
+    CORRADE_COMPARE(phong.shininess(), 10.0f);
 }
 
 void OpenGexImporterTest::materialTextured() {

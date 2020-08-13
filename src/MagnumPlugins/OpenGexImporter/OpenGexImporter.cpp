@@ -30,10 +30,12 @@
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
+#include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
@@ -757,57 +759,45 @@ std::string OpenGexImporter::doMaterialName(const UnsignedInt id) {
     return name ? name->firstChild().as<std::string>() : "";
 }
 
-Containers::Pointer<AbstractMaterialData> OpenGexImporter::doMaterial(const UnsignedInt id) {
+Containers::Optional<MaterialData> OpenGexImporter::doMaterial(const UnsignedInt id) {
     const OpenDdl::Structure& material = _d->materials[id];
 
+    Containers::Array<MaterialAttributeData> attributes;
+
     /* Textures */
-    PhongMaterialData::Flags flags;
-    UnsignedInt diffuseTexture{}, specularTexture{};
     for(const OpenDdl::Structure texture: material.childrenOf(OpenGex::Texture)) {
         const auto& attrib = texture.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "diffuse") {
-            diffuseTexture = structureId(_d->textures, texture);
-            flags |= PhongMaterialData::Flag::DiffuseTexture;
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTexture, structureId(_d->textures, texture));
         } else if(attrib == "specular") {
-            specularTexture = structureId(_d->textures, texture);
-            flags |= PhongMaterialData::Flag::SpecularTexture;
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::SpecularTexture, structureId(_d->textures, texture));
         }
     }
 
     /* Colors */
-    Color4 diffuseColor{1.0f};
-    Color4 specularColor{1.0f};
     for(const OpenDdl::Structure color: material.childrenOf(OpenGex::Color)) {
         const OpenDdl::Structure floatArray = color.firstChild();
         if(floatArray.subArraySize() != 3 && floatArray.subArraySize() != 4) {
             Error() << "Trade::OpenGexImporter::material(): invalid color structure";
-            return nullptr;
+            return Containers::NullOpt;
         }
 
         const auto& attrib = color.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "diffuse")
-            diffuseColor = extractColorData<Color4>(floatArray);
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseColor, extractColorData<Color4>(floatArray));
         else if(attrib == "specular")
-            specularColor = extractColorData<Color4>(floatArray);
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::SpecularColor, extractColorData<Color4>(floatArray));
     }
 
     /* Parameters */
-    Float shininess{1.0f};
     for(const OpenDdl::Structure param: material.childrenOf(OpenGex::Param)) {
         const auto& attrib = param.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "specular_power")
-            shininess = param.firstChild().as<Float>();
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::Shininess, param.firstChild().as<Float>());
     }
 
-    /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
-       the pointer. Just std::move() works as well, but that gives a warning
-       on GCC 9. */
-    return Containers::Pointer<AbstractMaterialData>{
-        Containers::Pointer<PhongMaterialData>{Containers::InPlaceInit,
-            flags, 0x000000ff_rgbaf, UnsignedInt{},
-            diffuseColor, diffuseTexture,
-            specularColor, specularTexture, UnsignedInt{}, Matrix3{},
-            MaterialAlphaMode::Opaque, 0.5f, shininess, &material}};
+    arrayShrink(attributes, Containers::DefaultInit);
+    return MaterialData{MaterialType::Phong, std::move(attributes), &material};
 }
 
 UnsignedInt OpenGexImporter::doTextureCount() const { return _d->textures.size(); }
@@ -883,4 +873,4 @@ const void* OpenGexImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenGexImporter, Magnum::Trade::OpenGexImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.2")
