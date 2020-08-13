@@ -62,11 +62,19 @@
 /** @dir MagnumPlugins/HarfBuzzFont
  * @brief Plugin @ref Magnum::Text::HarfBuzzFont
  */
+/** @dir MagnumPlugins/IcoImporter
+ * @brief Plugin @ref Magnum::Trade::IcoImporter
+ * @m_since_{plugins,2020,06}
+ */
 /** @dir MagnumPlugins/JpegImageConverter
  * @brief Plugin @ref Magnum::Trade::JpegImageConverter
  */
 /** @dir MagnumPlugins/JpegImporter
  * @brief Plugin @ref Magnum::Trade::JpegImporter
+ */
+/** @dir MagnumPlugins/MeshOptimizerSceneConverter
+ * @brief Plugin @ref Magnum::Trade::MeshOptimizerSceneConverter
+ * @m_since_{plugins,2020,06}
  */
 /** @dir MagnumPlugins/MiniExrImageConverter
  * @brief Plugin @ref Magnum::Trade::MiniExrImageConverter
@@ -80,8 +88,16 @@
 /** @dir MagnumPlugins/PngImporter
  * @brief Plugin @ref Magnum::Trade::PngImporter
  */
+/** @dir MagnumPlugins/PrimitiveImporter
+ * @brief Plugin @ref Magnum::Trade::PrimitiveImporter
+ * @m_since_{plugins,2020,06}
+ */
 /** @dir MagnumPlugins/StanfordImporter
  * @brief Plugin @ref Magnum::Trade::StanfordImporter
+ */
+/** @dir MagnumPlugins/StanfordSceneConverter
+ * @brief Plugin @ref Magnum::Trade::StanfordSceneConverter
+ * @m_since_{plugins,2020,06}
  */
 /** @dir MagnumPlugins/StbImageConverter
  * @brief Plugin @ref Magnum::Trade::StbImageConverter
@@ -91,6 +107,10 @@
  */
 /** @dir MagnumPlugins/StbTrueTypeFont
  * @brief Plugin @ref Magnum::Text::StbTrueTypeFont
+ */
+/** @dir MagnumPlugins/StlImporter
+ * @brief Plugin @ref Magnum::Trade::StlImporter
+ * @m_since_{plugins,2020,06}
  */
 /** @dir MagnumPlugins/StbVorbisAudioImporter
  * @brief Plugin @ref Magnum::Audio::StbVorbisImporter
