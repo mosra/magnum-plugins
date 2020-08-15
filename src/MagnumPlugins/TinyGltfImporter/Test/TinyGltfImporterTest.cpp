@@ -116,7 +116,6 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void materialProperties();
     void materialInvalid();
     void materialTexCoordFlip();
-    void materialTextureCoordinateSetsDefault();
     void materialTextureCoordinateSets();
 
     void texture();
@@ -290,36 +289,7 @@ constexpr struct {
     {"invalid texture index normalTexture", "normalTexture index 2 out of bounds for 2 textures"},
     {"invalid texture index pbrMetallicRoughness", "baseColorTexture index 2 out of bounds for 2 textures"},
     {"invalid texture index pbrSpecularGlossiness diffuse", "diffuseTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture transform texCoord index", "transform of multiple texture coordinate sets is not supported"},
-    {"missing first texture transform", R"(specularGlossinessTexture has an inconsistent texture transform, expected
-Matrix(1, 0, 0,
-       0, 1, 0,
-       0, 0, 1) but got
-Matrix(1, 0, 0,
-       0, 1, -1,
-       0, 0, 1))"},
-    {"missing second texture transform", R"(specularGlossinessTexture has an inconsistent texture transform, expected
-Matrix(1, 0, 0,
-       0, 1, -1,
-       0, 0, 1) but got
-Matrix(1, 0, 0,
-       0, 1, 0,
-       0, 0, 1))"},
-    {"inconsistent texture transform pbrMetallicRoughness + normal", R"(normalTexture has an inconsistent texture transform, expected
-Matrix(1, 0, 0,
-       0, 1, -1,
-       0, 0, 1) but got
-Matrix(0.5, 0, 0,
-       0, 0.5, 0.5,
-       0, 0, 1))"},
-    {"inconsistent texture transform pbrSpecularGlossiness", R"(specularGlossinessTexture has an inconsistent texture transform, expected
-Matrix(1, 0, 0,
-       0, 1, -1,
-       0, 0, 1) but got
-Matrix(0.5, 0, 0,
-       0, 0.5, 0.5,
-       0, 0, 1))"}
+    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"}
 };
 
 constexpr struct {
@@ -487,7 +457,6 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addTests({&TinyGltfImporterTest::materialPbrMetallicRoughness,
               &TinyGltfImporterTest::materialPbrSpecularGlossiness,
               &TinyGltfImporterTest::materialProperties,
-              &TinyGltfImporterTest::materialTextureCoordinateSetsDefault,
               &TinyGltfImporterTest::materialTextureCoordinateSets});
 
     addInstancedTests({&TinyGltfImporterTest::materialInvalid},
@@ -2515,25 +2484,6 @@ void TinyGltfImporterTest::materialTexCoordFlip() {
         {0.5f, 1.0f},
         {0.0f, 0.0f}
     }), TestSuite::Compare::Container);
-}
-
-void TinyGltfImporterTest::materialTextureCoordinateSetsDefault() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material-texcoord-sets.gltf")));
-
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    CORRADE_VERIFY(!importer->material(0));
-    CORRADE_VERIFY(!importer->material(1));
-    CORRADE_VERIFY(!importer->material(2));
-    CORRADE_VERIFY(!importer->material(3));
-    CORRADE_COMPARE(out.str(),
-        "Trade::TinyGltfImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them\n"
-        "Trade::TinyGltfImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them\n"
-        "Trade::TinyGltfImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them\n"
-        "Trade::TinyGltfImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them\n");
 }
 
 void TinyGltfImporterTest::materialTextureCoordinateSets() {

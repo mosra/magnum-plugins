@@ -43,6 +43,7 @@
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/CubicHermite.h>
+#include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/AnimationData.h>
@@ -227,7 +228,7 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     conf.setValue("optimizeQuaternionShortestPath", true);
     conf.setValue("normalizeQuaternions", true);
     conf.setValue("mergeAnimationClips", false);
-    conf.setValue("textureCoordinateYFlipInMaterial", false);
+    conf.setValue("phongMaterialFallback", true);
     conf.setValue("objectIdAttribute", "_OBJECT_ID");
 }
 
@@ -1397,35 +1398,22 @@ std::string TinyGltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->model.materials[id].name;
 }
 
-/* textureMatrix should be an empty Optional when parsing the first texture.
-   The function will fill it and then use to check consistency of the transform
-   for subsequent textures. */
-bool TinyGltfImporter::materialTexture(const char* name, const Int texture, const Int texCoord, const tinygltf::Value& extensions, UnsignedInt& index, UnsignedInt& coordinateSet, Containers::Optional<Matrix3>& textureMatrix, PhongMaterialData::Flags& flags) const {
-    if(UnsignedInt(texture) >= _d->model.textures.size()) {
+bool TinyGltfImporter::materialTexture(const char* name, const UnsignedInt texture, UnsignedInt texCoord, const tinygltf::Value& extensions, Containers::Array<MaterialAttributeData>& attributes, const MaterialAttribute attribute, const MaterialAttribute matrixAttribute, const MaterialAttribute coordinateAttribute) const {
+    if(texture >= _d->model.textures.size()) {
         Error{} << "Trade::TinyGltfImporter::material():" << name << "index" << texture << "out of bounds for" << _d->model.textures.size() << "textures";
         return false;
-    }
-
-    if(texCoord != 0) {
-        if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
-            Error{} << "Trade::TinyGltfImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
-            return false;
-        }
-
-        coordinateSet = texCoord;
-        flags |= PhongMaterialData::Flag::TextureCoordinateSets;
     }
 
     /* Texture transform. Because texture coordinates were Y-flipped, we first
        unflip them back, apply the transform (which assumes origin at bottom
        left and Y down) and then flip the result again. Sanity of the following
        verified with https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/TextureTransformTest */
-    Matrix3 matrix;
     bool hasTextureTransform = false;
     if(extensions.Type() == tinygltf::OBJECT_TYPE) {
         auto khrTextureTransform = extensions.Get("KHR_texture_transform");
         if(khrTextureTransform.Type() != tinygltf::NULL_TYPE) {
             hasTextureTransform = true;
+            Matrix3 matrix;
 
             /* If material needs an Y-flip, the mesh doesn't have the texture
                coordinates flipped and thus we don't need to unflip them first */
@@ -1433,11 +1421,12 @@ bool TinyGltfImporter::materialTexture(const char* name, const Int texture, cons
                 matrix = Matrix3::translation(Vector2::yAxis(1.0f))*
                          Matrix3::scaling(Vector2::yScale(-1.0f));
 
+            /* The extension can override texture coordinate index (for example
+               to have the unextended coordinates already transformed, and
+               applying transformation to a different set) */
             auto transformTexCoord = khrTextureTransform.Get("texCoord");
-            if(transformTexCoord.Type() != tinygltf::NULL_TYPE) {
-                Error{} << "Trade::TinyGltfImporter::material(): transform of multiple texture coordinate sets is not supported";
-                return false;
-            }
+            if(transformTexCoord.Type() != tinygltf::NULL_TYPE)
+                texCoord = transformTexCoord.Get<int>();
 
             auto scale = khrTextureTransform.Get("scale");
             if(scale.Type() != tinygltf::NULL_TYPE) {
@@ -1468,173 +1457,211 @@ bool TinyGltfImporter::materialTexture(const char* name, const Int texture, cons
             matrix = Matrix3::translation(Vector2::yAxis(1.0f))*
                      Matrix3::scaling(Vector2::yScale(-1.0f))*matrix;
 
-            /* Save the texture matrix if this is the first time. Enable flag
-               always so it's set even if the first texture had no transform
-               and the second had an identity transform. */
-            if(!textureMatrix) textureMatrix = matrix;
-            flags |= PhongMaterialData::Flag::TextureTransformation;
+            arrayAppend(attributes, Containers::InPlaceInit, matrixAttribute, matrix);
         }
     }
 
     /* In case the material had no texture transformation but still needs an
        Y-flip, put it there */
     if(!hasTextureTransform && _d->textureCoordinateYFlipInMaterial) {
-        matrix =
+        arrayAppend(attributes, Containers::InPlaceInit, matrixAttribute,
             Matrix3::translation(Vector2::yAxis(1.0f))*
-            Matrix3::scaling(Vector2::yScale(-1.0f));
-
-        /* Save the texture matrix if this is the first time */
-        if(!textureMatrix) {
-            textureMatrix = matrix;
-            flags |= PhongMaterialData::Flag::TextureTransformation;
-        }
+            Matrix3::scaling(Vector2::yScale(-1.0f)));
     }
 
-    /* If there's no texture matrix and we have a non-identity matrix or if
-       there is a texture matrix and we have something else, it's an error.
-       This restriction can be lifted once we support more than one texture
-       coordinate set for a material or per-texture transformation. */
-    if((!textureMatrix && matrix != Matrix3{}) ||
-       (textureMatrix && matrix != *textureMatrix)) {
-        Error{} << "Trade::TinyGltfImporter::material():" << name << "has an inconsistent texture transform, expected" << Debug::newline << (textureMatrix ? *textureMatrix : Matrix3{}) << "but got" << Debug::newline << matrix;
-        return false;
-    }
+    /* Add texture coordinate set if non-zero. The KHR_texture_transform
+       could be modifying it, so do that after */
+    if(texCoord != 0)
+        arrayAppend(attributes, Containers::InPlaceInit, coordinateAttribute, texCoord);
 
-    /* If this texture didn't have a transformation, set it to an identity so
-       the following textures can check that the transform is consistent. If it
-       would stay a NullOpt, the following calls would think these are the
-       first texture for the material and check nothing. */
-    if(!textureMatrix) textureMatrix = Matrix3{};
+    /* In some cases (when dealing with packed textures), we're parsing &
+       adding texture coordinates and matrix multiple times, but adding the
+       packed texture ID just once. In other cases the attribute is invalid. */
+    if(attribute != MaterialAttribute{})
+        arrayAppend(attributes, Containers::InPlaceInit, attribute, texture);
 
-    index = texture;
     return true;
 }
 
-Containers::Pointer<AbstractMaterialData> TinyGltfImporter::doMaterial(const UnsignedInt id) {
+Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedInt id) {
     const tinygltf::Material& material = _d->model.materials[id];
 
-    /* Alpha mode and mask, double sided */
-    const Float alphaMask = material.alphaCutoff;
+    Containers::Array<MaterialAttributeData> attributes;
+    MaterialTypes types;
 
-    MaterialAlphaMode alphaMode;
-    if(material.alphaMode == "OPAQUE")
-        alphaMode = MaterialAlphaMode::Opaque;
-    else if(material.alphaMode == "BLEND")
-        alphaMode = MaterialAlphaMode::Blend;
+    /* Alpha mode and mask, double sided */
+    if(material.alphaMode == "BLEND")
+        arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::AlphaBlend, true);
     else if(material.alphaMode == "MASK")
-        alphaMode = MaterialAlphaMode::Mask;
-    else {
+        arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::AlphaMask, Float(material.alphaCutoff));
+    else if(material.alphaMode != "OPAQUE") {
         Error{} << "Trade::TinyGltfImporter::material(): unknown alpha mode" << material.alphaMode;
-        return nullptr;
+        return Containers::NullOpt;
     }
 
-    PhongMaterialData::Flags flags;
     if(material.doubleSided)
-        flags |= PhongMaterialData::Flag::DoubleSided;
+        arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DoubleSided, true);
 
-    /* Textures */
-    Containers::Optional<Matrix3> textureMatrix;
-    UnsignedInt diffuseTexture{}, specularTexture{};
-    UnsignedInt diffuseCoordinateSet{}, specularCoordinateSet{};
-    Color4 diffuseColor{1.0f};
-    Color3 specularColor{1.0f};
-    Float shininess{80.0f};
+    /* Core metallic/roughness material */
+    /** @todo is there ANY way to check if these properties are actually
+        present?! tinygltf FFS */
+    {
+        types |= MaterialType::PbrMetallicRoughness;
 
-    auto khrMaterialsPbrSpecularGlossiness = material.extensions.find("KHR_materials_pbrSpecularGlossiness");
-    if(khrMaterialsPbrSpecularGlossiness != material.extensions.end()) {
-        auto diffuseTextureValue = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseTexture");
-        if(diffuseTextureValue.Type() != tinygltf::NULL_TYPE) {
-            if(!materialTexture("diffuseTexture",
-                diffuseTextureValue.Get("index").Get<int>(),
-                diffuseTextureValue.Get("texCoord").Get<int>(),
-                diffuseTextureValue.Get("extensions"),
-                diffuseTexture, diffuseCoordinateSet, textureMatrix, flags))
-                return nullptr;
+        if(Vector4d::from(material.pbrMetallicRoughness.baseColorFactor.data()) != Vector4d{1.0})
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::BaseColor,
+                Color4{Vector4d::from(material.pbrMetallicRoughness.baseColorFactor.data())});
 
-            flags |= PhongMaterialData::Flag::DiffuseTexture;
-        }
-
-        auto specularTextureValue = khrMaterialsPbrSpecularGlossiness->second.Get("specularGlossinessTexture");
-        if(specularTextureValue.Type() != tinygltf::NULL_TYPE) {
-            if(!materialTexture("specularGlossinessTexture",
-                specularTextureValue.Get("index").Get<int>(),
-                specularTextureValue.Get("texCoord").Get<int>(),
-                specularTextureValue.Get("extensions"),
-                specularTexture, specularCoordinateSet, textureMatrix, flags))
-                return nullptr;
-
-            flags |= PhongMaterialData::Flag::SpecularTexture;
-        }
-
-        /* Colors */
-        auto diffuseFactorValue = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseFactor");
-        if(diffuseFactorValue.Type() != tinygltf::NULL_TYPE) {
-            diffuseColor = Vector4{Vector4d{
-                diffuseFactorValue.Get(0).Get<double>(),
-                diffuseFactorValue.Get(1).Get<double>(),
-                diffuseFactorValue.Get(2).Get<double>(),
-                diffuseFactorValue.Get(3).Get<double>()}};
-        }
-
-        auto specularColorValue = khrMaterialsPbrSpecularGlossiness->second.Get("specularFactor");
-        if(specularColorValue.Type() != tinygltf::NULL_TYPE) {
-            specularColor = Vector3{Vector3d{
-                specularColorValue.Get(0).Get<double>(),
-                specularColorValue.Get(1).Get<double>(),
-                specularColorValue.Get(2).Get<double>()}};
-        }
-
-    /* From the core Metallic/Roughness we get just the base color / texture */
-    } else {
-        const Int index = material.pbrMetallicRoughness.baseColorTexture.index;
-        if(index != -1) {
-            if(!materialTexture("baseColorTexture", index,
+        const Int baseColorTexture = material.pbrMetallicRoughness.baseColorTexture.index;
+        if(baseColorTexture != -1) {
+            if(!materialTexture("baseColorTexture", baseColorTexture,
                 material.pbrMetallicRoughness.baseColorTexture.texCoord,
                 /* YES, you guessed right, this does a deep copy of the nested
                    std::maps because tinygltf is SO GREAT that there's NO WAY
                    to access extension structures in a consistent way */
                 tinygltf::Value(material.pbrMetallicRoughness.baseColorTexture.extensions),
-                diffuseTexture, diffuseCoordinateSet, textureMatrix, flags))
-                return nullptr;
+                attributes,
+                MaterialAttribute::BaseColorTexture,
+                MaterialAttribute::BaseColorTextureMatrix,
+                MaterialAttribute::BaseColorTextureCoordinates)
+            )
+                return Containers::NullOpt;
+        }
+    }
 
-            flags |= PhongMaterialData::Flag::DiffuseTexture;
+    /* Specular/glossiness material */
+    auto khrMaterialsPbrSpecularGlossiness = material.extensions.find("KHR_materials_pbrSpecularGlossiness");
+    if(khrMaterialsPbrSpecularGlossiness != material.extensions.end()) {
+        types |= MaterialType::PbrSpecularGlossiness;
+
+        auto diffuseColor = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseFactor");
+        if(diffuseColor.Type() != tinygltf::NULL_TYPE) {
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::DiffuseColor, Vector4{Vector4d{
+                diffuseColor.Get(0).Get<double>(),
+                diffuseColor.Get(1).Get<double>(),
+                diffuseColor.Get(2).Get<double>(),
+                diffuseColor.Get(3).Get<double>()}});
         }
 
-        diffuseColor = Vector4{Vector4d::from(material.pbrMetallicRoughness.baseColorFactor.data())};
+        auto specularColor = khrMaterialsPbrSpecularGlossiness->second.Get("specularFactor");
+        if(specularColor.Type() != tinygltf::NULL_TYPE) {
+            arrayAppend(attributes, Containers::InPlaceInit,
+                /* Specular is 3-component in glTF, alpha should be 0 to not
+                   affect transparent materials */
+                MaterialAttribute::SpecularColor, Color4{Vector3{Vector3d{
+                specularColor.Get(0).Get<double>(),
+                specularColor.Get(1).Get<double>(),
+                specularColor.Get(2).Get<double>()}}, 0.0f});
+        }
+
+        auto diffuseTexture = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseTexture");
+        if(diffuseTexture.Type() != tinygltf::NULL_TYPE) {
+            if(!materialTexture("diffuseTexture",
+                diffuseTexture.Get("index").Get<int>(),
+                diffuseTexture.Get("texCoord").Get<int>(),
+                diffuseTexture.Get("extensions"),
+                attributes,
+                MaterialAttribute::DiffuseTexture,
+                MaterialAttribute::DiffuseTextureMatrix,
+                MaterialAttribute::DiffuseTextureCoordinates)
+            )
+                return Containers::NullOpt;
+        }
+
+        auto specularGlossinessTexture = khrMaterialsPbrSpecularGlossiness->second.Get("specularGlossinessTexture");
+        if(specularGlossinessTexture.Type() != tinygltf::NULL_TYPE) {
+            if(!materialTexture("specularGlossinessTexture",
+                specularGlossinessTexture.Get("index").Get<int>(),
+                specularGlossinessTexture.Get("texCoord").Get<int>(),
+                specularGlossinessTexture.Get("extensions"),
+                attributes,
+                MaterialAttribute::SpecularGlossinessTexture,
+                MaterialAttribute::SpecularTextureMatrix,
+                MaterialAttribute::SpecularTextureCoordinates)
+            )
+                return Containers::NullOpt;
+
+            /* Add the matrix/coordinates attributes also for the glossiness
+               texture, but skip adding the texture ID again */
+            CORRADE_INTERNAL_ASSERT_OUTPUT(materialTexture(
+                "specularGlossinessTexture",
+                specularGlossinessTexture.Get("index").Get<int>(),
+                specularGlossinessTexture.Get("texCoord").Get<int>(),
+                specularGlossinessTexture.Get("extensions"),
+                attributes,
+                MaterialAttribute{},
+                MaterialAttribute::GlossinessTextureMatrix,
+                MaterialAttribute::GlossinessTextureCoordinates));
+        }
     }
 
     /* Normal texture */
-    UnsignedInt normalTexture{};
-    UnsignedInt normalCoordinateSet{};
-    {
-        const Int index = material.normalTexture.index;
-        if(index != -1) {
-            if(!materialTexture("normalTexture", index,
-                material.normalTexture.texCoord,
-                /* YES, you guessed right, this does a deep copy of the nested
-                   std::maps because tinygltf is SO GREAT that there's NO WAY
-                   to access extension structures in a consistent way */
-                tinygltf::Value(material.normalTexture.extensions),
-                normalTexture, normalCoordinateSet, textureMatrix, flags))
-                return nullptr;
-
-            flags |= PhongMaterialData::Flag::NormalTexture;
-        }
+    const Int normalTexture = material.normalTexture.index;
+    if(normalTexture != -1) {
+        if(!materialTexture("normalTexture", normalTexture,
+            material.normalTexture.texCoord,
+            /* YES, you guessed right, this does a deep copy of the nested
+                std::maps because tinygltf is SO GREAT that there's NO WAY
+                to access extension structures in a consistent way */
+            tinygltf::Value(material.normalTexture.extensions),
+            attributes,
+            MaterialAttribute::NormalTexture,
+            MaterialAttribute::NormalTextureMatrix,
+            MaterialAttribute::NormalTextureCoordinates)
+        )
+            return Containers::NullOpt;
     }
 
-    /* Put things together */
-    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags,
-        0x000000ff_rgbaf, 0u, 0u,
-        diffuseColor, diffuseTexture, diffuseCoordinateSet,
-        specularColor, specularTexture, specularCoordinateSet,
-        normalTexture, normalCoordinateSet,
-        textureMatrix ? *textureMatrix : Matrix3{},
-        alphaMode, alphaMask, shininess, &material};
+    /* Phong material fallback for backwards compatibility */
+    if(configuration().value<bool>("phongMaterialFallback")) {
+        types |= MaterialType::Phong;
 
-    /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
-       the pointer. Just std::move() works as well, but that gives a warning
-       on GCC 9. */
-    return Containers::Pointer<AbstractMaterialData>{std::move(data)};
+        /* Create Diffuse attributes from BaseColor */
+        Containers::Optional<Color4> diffuseColor;
+        Containers::Optional<UnsignedInt> diffuseTexture;
+        Containers::Optional<Matrix3> diffuseTextureMatrix;
+        Containers::Optional<UnsignedInt> diffuseTextureCoordinates;
+        for(const MaterialAttributeData& attribute: attributes) {
+            if(attribute.name() == "BaseColor")
+                diffuseColor = attribute.value<Color4>();
+            else if(attribute.name() == "BaseColorTexture")
+                diffuseTexture = attribute.value<UnsignedInt>();
+            else if(attribute.name() == "BaseColorTextureMatrix")
+                diffuseTextureMatrix = attribute.value<Matrix3>();
+            else if(attribute.name() == "BaseColorTextureCoordinates")
+                diffuseTextureCoordinates = attribute.value<UnsignedInt>();
+        }
+
+        /* But if there already are those from the specular/glossiness
+           material, don't add them again. Has to be done in a separate pass
+           to avoid resetting too early. */
+        for(const MaterialAttributeData& attribute: attributes) {
+            if(attribute.name() == "DiffuseColor")
+                diffuseColor = Containers::NullOpt;
+            else if(attribute.name() == "DiffuseTexture")
+                diffuseTexture = Containers::NullOpt;
+            else if(attribute.name() == "DiffuseTextureMatrix")
+                diffuseTextureMatrix = Containers::NullOpt;
+            else if(attribute.name() == "DiffuseTextureCoordinates")
+                diffuseTextureCoordinates = Containers::NullOpt;
+        }
+
+        if(diffuseColor)
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseColor, *diffuseColor);
+        if(diffuseTexture)
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTexture, *diffuseTexture);
+        if(diffuseTextureMatrix)
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTextureMatrix, *diffuseTextureMatrix);
+        if(diffuseTextureCoordinates)
+            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTextureCoordinates, *diffuseTextureCoordinates);
+    }
+
+    /* Can't use growable deleters in a plugin, convert back to the default
+       deleter */
+    arrayShrink(attributes, Containers::DefaultInit);
+    return MaterialData{types, std::move(attributes), &material};
 }
 
 UnsignedInt TinyGltfImporter::doTextureCount() const {
@@ -1882,4 +1909,4 @@ const void* TinyGltfImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(TinyGltfImporter, Magnum::Trade::TinyGltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.2")

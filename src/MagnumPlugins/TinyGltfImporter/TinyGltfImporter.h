@@ -484,12 +484,12 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const std::string& name) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMeshAttributeName(UnsignedShort name) override;
 
-        MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, Int texture, Int texCoord, const tinygltf::Value& extensions, UnsignedInt& index, UnsignedInt& coordinateSet, Containers::Optional<Matrix3>& textureMatrix, PhongMaterialData::Flags& flags) const;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, UnsignedInt texture, UnsignedInt texCoord, const tinygltf::Value& extensions, Containers::Array<MaterialAttributeData>& attributes, MaterialAttribute attribute, MaterialAttribute matrixAttribute, MaterialAttribute coordinateAttribute) const;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Pointer<AbstractMaterialData> doMaterial(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doTextureForName(const std::string& name) override;
