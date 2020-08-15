@@ -1,0 +1,113 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "texture.png"
+        }
+    ],
+    "materials": [
+        {
+            "name": "defaults"
+        },
+        {
+            "name": "alpha mask",
+            "alphaCutoff": 0.369,
+            "alphaMode": "MASK"
+        },
+        {
+            "name": "double-sided alpha blend",
+            "doubleSided": true,
+            "alphaMode": "BLEND"
+        },
+        {
+            "name": "opaque",
+            "doubleSided": false,
+            "alphaMode": "OPAQUE"
+        },
+        {
+            "name": "normal, occlusion, emissive texture",
+            "normalTexture": {
+                "index": 1,
+                "scale": 0.56
+            },
+            "occlusionTexture": {
+                "index": 2,
+                "strength": 0.21
+            },
+            "emissiveFactor": [0.1, 0.2, 0.3],
+            "emissiveTexture": {
+                "index": 0
+            }
+        },
+        {
+            "name": "normal, occlusion, emissive texture identity transform",
+            "normalTexture": {
+                "index": 1,
+                "extensions": {
+                    "KHR_texture_transform": {}
+                }
+            },
+            "occlusionTexture": {
+                "index": 2,
+                "extensions": {
+                    "KHR_texture_transform": {}
+                }
+            },
+            "emissiveTexture": {
+                "index": 0,
+                "extensions": {
+                    "KHR_texture_transform": {}
+                }
+            }
+        },
+        {
+            "name": "normal, occlusion, emissive texture transform + sets",
+            "normalTexture": {
+                "index": 1,
+                "extensions": {
+                    "KHR_texture_transform": {
+                        "offset": [0.0, 1.0],
+                        "texCoord": 2
+                    }
+                }
+            },
+            "occlusionTexture": {
+                "index": 2,
+                "extensions": {
+                    "KHR_texture_transform": {
+                        "offset": [0.5, 1.0]
+                    }
+                },
+                "texCoord": 3
+            },
+            "emissiveTexture": {
+                "index": 0,
+                "extensions": {
+                    "KHR_texture_transform": {
+                        "offset": [0.5, 0.0],
+                        "texCoord": 1
+                    }
+                }
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ]
+}

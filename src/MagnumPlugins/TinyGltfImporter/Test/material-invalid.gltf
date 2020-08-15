@@ -8,7 +8,7 @@
             "alphaMode": "WAT"
         },
         {
-            "name": "invalid texture index pbrMetallicRoughness",
+            "name": "invalid texture index pbrMetallicRoughness base color",
             "pbrMetallicRoughness": {
                 "baseColorTexture": {
                     "index": 2
@@ -16,9 +16,11 @@
             }
         },
         {
-            "name": "invalid texture index normalTexture",
-            "normalTexture": {
-                "index": 2
+            "name": "invalid texture index pbrMetallicRoughness metallic/roughness",
+            "pbrMetallicRoughness": {
+                "metallicRoughnessTexture": {
+                    "index": 2
+                }
             }
         },
         {
@@ -39,6 +41,24 @@
                         "index": 2
                     }
                 }
+            }
+        },
+        {
+            "name": "invalid texture index normal",
+            "normalTexture": {
+                "index": 2
+            }
+        },
+        {
+            "name": "invalid texture index occlusion",
+            "occlusionTexture": {
+                "index": 2
+            }
+        },
+        {
+            "name": "invalid texture index emissive",
+            "emissiveTexture": {
+                "index": 2
             }
         }
     ],

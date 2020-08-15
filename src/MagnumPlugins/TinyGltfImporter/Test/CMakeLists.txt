@@ -93,14 +93,15 @@ corrade_add_test(TinyGltfImporterTest
         image-basis-embedded.glb
         light.gltf
         light.glb
+        material-common.gltf
         material-invalid.gltf
         material-metallicroughness.gltf
-        material-properties.gltf
+        material-phong-fallback.gltf
         material-specularglossiness.gltf
         material-texcoord-flip.bin
         material-texcoord-flip.gltf
         material-texcoord-flip-unnormalized.gltf
-        material-texcoord-sets.gltf
+        material-unlit.gltf
         mesh.gltf
         mesh.bin
         mesh.glb

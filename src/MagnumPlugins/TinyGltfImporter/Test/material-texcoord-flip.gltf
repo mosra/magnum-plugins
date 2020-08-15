@@ -81,37 +81,22 @@
     ],
     "materials": [
         {
-            "name": "multiple textures w/o transform",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseTexture": {
-                        "index": 0
-                    },
-                    "specularGlossinessTexture": {
-                        "index": 0
-                    }
+            "name": "no transform",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0
                 }
             }
         },
         {
-            "name": "multiple textures w/ identity transform",
-            "extensions": {
-                "note": "tinygltf treats empty {} as if there was no entry, so can't use that. See the XFAIL in materialPbrSpecularGlossiness() for details.",
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseTexture": {
-                        "index": 0,
-                        "extensions": {
-                            "KHR_texture_transform": {
-                                "rotation": 0.0
-                            }
-                        }
-                    },
-                    "specularGlossinessTexture": {
-                        "index": 0,
-                        "extensions": {
-                            "KHR_texture_transform": {
-                                "offset": [0.0, 0.0]
-                            }
+            "name": "identity transform",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0,
+                    "note": "tinygltf treats empty {} as if there was no entry, so can't use that. See the XFAIL in the materialPbrSpecularGlossiness() test",
+                    "extensions": {
+                        "KHR_texture_transform": {
+                            "rotation": 0.0
                         }
                     }
                 }

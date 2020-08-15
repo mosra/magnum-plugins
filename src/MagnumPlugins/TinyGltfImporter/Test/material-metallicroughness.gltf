@@ -9,22 +9,50 @@
     ],
     "materials": [
         {
+            "name": "defaults",
+            "pbrMetallicRoughness": {}
+        },
+        {
             "name": "color",
             "pbrMetallicRoughness": {
-                "baseColorFactor": [0.3, 0.4, 0.5, 0.8]
+                "baseColorFactor": [0.3, 0.4, 0.5, 0.8],
+                "metallicFactor": 0.56,
+                "roughnessFactor": 0.89
             }
         },
         {
-            "name": "texture",
+            "name": "textures",
             "pbrMetallicRoughness": {
                 "baseColorFactor": [0.7, 0.8, 0.9, 1.1],
                 "baseColorTexture": {
                     "index": 0
+                },
+                "metallicFactor": 0.6,
+                "roughnessFactor": 0.9,
+                "metallicRoughnessTexture": {
+                    "index": 1
                 }
             }
         },
         {
-            "name": "texture transform all",
+            "name": "identity texture transform",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0,
+                    "extensions": {
+                        "KHR_texture_transform": {}
+                    }
+                },
+                "metallicRoughnessTexture": {
+                    "index": 1,
+                    "extensions": {
+                        "KHR_texture_transform": {}
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture transform",
             "pbrMetallicRoughness": {
                 "baseColorTexture": {
                     "index": 0,
@@ -35,14 +63,9 @@
                             "scale": [0.5, 0.5]
                         }
                     }
-                }
-            }
-        },
-        {
-            "name": "texture transform offset + scale",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 0,
+                },
+                "metallicRoughnessTexture": {
+                    "index": 1,
                     "extensions": {
                         "KHR_texture_transform": {
                             "offset": [0.0, 1.0],
@@ -53,33 +76,34 @@
             }
         },
         {
-            "name": "texture transform nothing",
+            "name": "texture coordinate sets",
             "pbrMetallicRoughness": {
                 "baseColorTexture": {
                     "index": 0,
-                    "extensions": {
-                        "KHR_texture_transform": {}
-                    }
+                    "texCoord": 7
+                },
+                "metallicRoughnessTexture": {
+                    "index": 1,
+                    "texCoord": 5
                 }
             }
         },
         {
-            "name": "color + normal map",
+            "name": "empty texture transform with overriden coordinate set",
             "pbrMetallicRoughness": {
-                "baseColorFactor": [0.3, 0.4, 0.5, 0.8]
-            },
-            "normalTexture": {
-                "index": 1
-            }
-        },
-        {
-            "name": "normal map, texture transform",
-            "pbrMetallicRoughness": {},
-            "normalTexture": {
-                "index": 1,
-                "extensions": {
-                    "KHR_texture_transform": {
-                        "rotation": 1.23456
+                "baseColorTexture": {
+                    "index": 1,
+                    "extensions": {
+                        "KHR_texture_transform": {}
+                    }
+                },
+                "metallicRoughnessTexture": {
+                    "index": 0,
+                    "texCoord": 5,
+                    "extensions": {
+                        "KHR_texture_transform": {
+                            "texCoord": 2
+                        }
                     }
                 }
             }

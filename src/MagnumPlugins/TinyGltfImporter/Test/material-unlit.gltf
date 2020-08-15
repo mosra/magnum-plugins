@@ -1,0 +1,38 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "texture.png"
+        }
+    ],
+    "materials": [
+        {
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [0.7, 0.8, 0.9, 1.1],
+                "baseColorTexture": {
+                    "index": 1
+                }
+            },
+            "note": "to verify Type::PbrSpecularGlossiness gets removed too",
+            "KHR_materials_pbrSpecularGlossiness": {},
+            "extensions": {
+                "KHR_materials_unlit": {}
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ]
+}

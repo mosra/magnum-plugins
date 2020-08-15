@@ -1,0 +1,76 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "texture.png"
+        }
+    ],
+    "materials": [
+        {
+            "name": "none"
+        },
+        {
+            "name": "metallic/roughness",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [0.7, 0.8, 0.9, 1.1],
+                "baseColorTexture": {
+                    "index": 1,
+                    "extensions": {
+                        "KHR_texture_transform": {
+                            "offset": [0.5, 1.0]
+                        }
+                    },
+                    "texCoord": 3
+                }
+            }
+        },
+        {
+            "name": "specular/glossiness",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseFactor": [0.7, 0.8, 0.9, 1.1],
+                    "diffuseTexture": {
+                        "index": 1,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.5, 1.0]
+                            }
+                        },
+                        "texCoord": 3
+                    },
+                    "specularFactor": [0.1, 0.2, 0.6],
+                    "specularGlossinessTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "scale": [0.5, 0.5]
+                            }
+                        },
+                        "texCoord": 2
+                    }
+                }
+            }
+        },
+        {
+            "name": "unlit",
+            "extensions": {
+                "KHR_materials_unlit": {}
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ]
+}

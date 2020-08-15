@@ -1512,6 +1512,14 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
             arrayAppend(attributes, Containers::InPlaceInit,
                 MaterialAttribute::BaseColor,
                 Color4{Vector4d::from(material.pbrMetallicRoughness.baseColorFactor.data())});
+        if(material.pbrMetallicRoughness.metallicFactor != 1.0)
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::Metalness,
+                Float(material.pbrMetallicRoughness.metallicFactor));
+        if(material.pbrMetallicRoughness.roughnessFactor != 1.0)
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::Roughness,
+                Float(material.pbrMetallicRoughness.roughnessFactor));
 
         const Int baseColorTexture = material.pbrMetallicRoughness.baseColorTexture.index;
         if(baseColorTexture != -1) {
@@ -1527,6 +1535,37 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
                 MaterialAttribute::BaseColorTextureCoordinates)
             )
                 return Containers::NullOpt;
+        }
+
+        const Int metallicRoughnessTexture = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
+        if(metallicRoughnessTexture != -1) {
+            if(!materialTexture("metallicRoughnessTexture",
+                metallicRoughnessTexture,
+                material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord,
+                /* YES, you guessed right, this does a deep copy of the nested
+                   std::maps because tinygltf is SO GREAT that there's NO WAY
+                   to access extension structures in a consistent way */
+                tinygltf::Value(material.pbrMetallicRoughness.metallicRoughnessTexture.extensions),
+                attributes,
+                MaterialAttribute::NoneRoughnessMetallicTexture,
+                MaterialAttribute::MetalnessTextureMatrix,
+                MaterialAttribute::MetalnessTextureCoordinates)
+            )
+                return Containers::NullOpt;
+
+            /* Add the matrix/coordinates attributes also for the roughness
+               texture, but skip adding the texture ID again */
+            CORRADE_INTERNAL_ASSERT_OUTPUT(materialTexture("metallicRoughnessTexture",
+                metallicRoughnessTexture,
+                material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord,
+                /* YES, you guessed right, this does a deep copy of the nested
+                   std::maps because tinygltf is SO GREAT that there's NO WAY
+                   to access extension structures in a consistent way */
+                tinygltf::Value(material.pbrMetallicRoughness.metallicRoughnessTexture.extensions),
+                attributes,
+                MaterialAttribute{},
+                MaterialAttribute::RoughnessTextureMatrix,
+                MaterialAttribute::RoughnessTextureCoordinates));
         }
     }
 
@@ -1554,6 +1593,13 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
                 specularColor.Get(0).Get<double>(),
                 specularColor.Get(1).Get<double>(),
                 specularColor.Get(2).Get<double>()}}, 0.0f});
+        }
+
+        auto glossiness = khrMaterialsPbrSpecularGlossiness->second.Get("glossinessFactor");
+        if(glossiness.Type() != tinygltf::NULL_TYPE) {
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::Glossiness,
+                Float(glossiness.Get<double>()));
         }
 
         auto diffuseTexture = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseTexture");
@@ -1597,6 +1643,12 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
         }
     }
 
+    /* Unlit material -- reset all types and add just Flat */
+    auto khrMaterialsUnlit = material.extensions.find("KHR_materials_unlit");
+    if(khrMaterialsUnlit != material.extensions.end()) {
+        types = MaterialType::Flat;
+    }
+
     /* Normal texture */
     const Int normalTexture = material.normalTexture.index;
     if(normalTexture != -1) {
@@ -1612,10 +1664,60 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
             MaterialAttribute::NormalTextureCoordinates)
         )
             return Containers::NullOpt;
+
+        if(material.normalTexture.scale != 1.0)
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::NormalTextureScale,
+                Float(material.normalTexture.scale));
+    }
+
+    /* Occlusion texture */
+    const Int occlusionTexture = material.occlusionTexture.index;
+    if(occlusionTexture != -1) {
+        if(!materialTexture("occlusionTexture", occlusionTexture,
+            material.occlusionTexture.texCoord,
+            /* YES, you guessed right, this does a deep copy of the nested
+                std::maps because tinygltf is SO GREAT that there's NO WAY
+                to access extension structures in a consistent way */
+            tinygltf::Value(material.occlusionTexture.extensions),
+            attributes,
+            MaterialAttribute::OcclusionTexture,
+            MaterialAttribute::OcclusionTextureMatrix,
+            MaterialAttribute::OcclusionTextureCoordinates)
+        )
+            return Containers::NullOpt;
+
+        if(material.occlusionTexture.strength != 1.0)
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::OcclusionTextureStrength,
+                Float(material.occlusionTexture.strength));
+    }
+
+    /* Emissive factor & texture */
+    if(Vector3d::from(material.emissiveFactor.data()) != Vector3d{0.0})
+        arrayAppend(attributes, Containers::InPlaceInit,
+            MaterialAttribute::EmissiveColor,
+            Color3{Vector3d::from(material.emissiveFactor.data())});
+    const Int emissiveTexture = material.emissiveTexture.index;
+    if(emissiveTexture != -1) {
+        if(!materialTexture("emissiveTexture", emissiveTexture,
+            material.emissiveTexture.texCoord,
+            /* YES, you guessed right, this does a deep copy of the nested
+                std::maps because tinygltf is SO GREAT that there's NO WAY
+                to access extension structures in a consistent way */
+            tinygltf::Value(material.emissiveTexture.extensions),
+            attributes,
+            MaterialAttribute::EmissiveTexture,
+            MaterialAttribute::EmissiveTextureMatrix,
+            MaterialAttribute::EmissiveTextureCoordinates)
+        )
+            return Containers::NullOpt;
     }
 
     /* Phong material fallback for backwards compatibility */
     if(configuration().value<bool>("phongMaterialFallback")) {
+        /* This adds a Phong type even to Flat materials because that's exactly
+           how it behaved before */
         types |= MaterialType::Phong;
 
         /* Create Diffuse attributes from BaseColor */

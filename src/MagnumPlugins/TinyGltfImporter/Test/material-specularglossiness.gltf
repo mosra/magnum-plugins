@@ -2,12 +2,6 @@
     "asset": {
         "version": "2.0"
     },
-    "extensionsRequired": [
-        "KHR_materials_pbrSpecularGlossiness"
-    ],
-    "extensionsUsed": [
-        "KHR_materials_pbrSpecularGlossiness"
-    ],
     "images": [
         {
             "uri": "texture.png"
@@ -15,11 +9,18 @@
     ],
     "materials": [
         {
-            "name": "colors",
+            "name": "defaults",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {}
+            }
+        },
+        {
+            "name": "color",
             "extensions": {
                 "KHR_materials_pbrSpecularGlossiness": {
                     "diffuseFactor": [0.3, 0.4, 0.5, 0.8],
-                    "specularFactor": [0.1, 0.2, 0.6]
+                    "specularFactor": [0.1, 0.2, 0.6],
+                    "glossinessFactor": 0.89
                 }
             }
         },
@@ -32,6 +33,7 @@
                         "index": 0
                     },
                     "specularFactor": [0.4, 0.5, 0.6],
+                    "glossinessFactor": 0.9,
                     "specularGlossinessTexture": {
                         "index": 1
                     }
@@ -39,72 +41,18 @@
             }
         },
         {
-            "name": "texture transform same for both textures",
+            "name": "identity texture transform",
             "extensions": {
                 "KHR_materials_pbrSpecularGlossiness": {
+                    "note": "tinygltf treats empty {} as if there was no entry, see the XFAIL in the test",
                     "diffuseTexture": {
                         "index": 0,
                         "extensions": {
-                            "KHR_texture_transform": {
-                                "rotation": 1.23456,
-                                "scale": [0.5, 0.5]
-                            }
+                            "KHR_texture_transform": {}
                         }
                     },
                     "specularGlossinessTexture": {
                         "index": 1,
-                        "extensions": {
-                            "KHR_texture_transform": {
-                                "rotation": 1.23456,
-                                "scale": [0.5, 0.5]
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "texture transform first identity, second none",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseTexture": {
-                        "index": 0,
-                        "extensions": {
-                            "KHR_texture_transform": {
-                                "scale": [1.0, 1.0]
-                            }
-                        }
-                    },
-                    "specularGlossinessTexture": {
-                        "index": 1
-                    }
-                }
-            }
-        },
-        {
-            "name": "texture transform first none, second identity",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseTexture": {
-                        "index": 0
-                    },
-                    "specularGlossinessTexture": {
-                        "index": 1,
-                        "extensions": {
-                            "KHR_texture_transform": {
-                                "offset": [0.0, 0.0]
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "texture transform nothing",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseTexture": {
-                        "index": 0,
                         "extensions": {
                             "KHR_texture_transform": {}
                         }
@@ -113,12 +61,56 @@
             }
         },
         {
-            "name": "color + normal map",
+            "name": "texture transform",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.0, 1.0]
+                            }
+                        }
+                    },
+                    "specularGlossinessTexture": {
+                        "index": 1,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "scale": [0.5, 0.5]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture coordinate sets",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseTexture": {
+                        "index": 0,
+                        "texCoord": 7
+                    },
+                    "specularGlossinessTexture": {
+                        "index": 1,
+                        "texCoord": 5
+                    }
+                }
+            }
+        },
+        {
+            "name": "both metallic/roughness and specular/glossiness",
             "pbrMetallicRoughness": {
-                "baseColorFactor": [0.3, 0.4, 0.5, 0.8]
+                "baseColorFactor": [0.3, 0.4, 0.5, 0.8],
+                "metallicFactor": 0.56,
+                "roughnessFactor": 0.89
             },
-            "normalTexture": {
-                "index": 1
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseFactor": [0.3, 0.4, 0.5, 0.8],
+                    "specularFactor": [0.1, 0.2, 0.6],
+                    "glossinessFactor": 0.89
+                }
             }
         }
     ],
