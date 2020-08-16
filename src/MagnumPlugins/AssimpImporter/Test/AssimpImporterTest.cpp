@@ -355,22 +355,22 @@ void AssimpImporterTest::materialColor() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
-    Containers::Pointer<AbstractMaterialData> material = importer->material(0);
+    Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+    CORRADE_COMPARE(material->types(), MaterialType::Phong);
+    CORRADE_COMPARE(material->layerCount(), 1);
+    CORRADE_COMPARE(material->attributeCount(), 4);
 
-    PhongMaterialData* phongMaterial = static_cast<PhongMaterialData*>(material.get());
-    CORRADE_VERIFY(phongMaterial);
-    CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flags{});
+    const auto& phong = material->as<PhongMaterialData>();
     {
         CORRADE_EXPECT_FAIL("Assimp sets ambient alpha to 0, ignoring the actual value (for COLLADA at least).");
-        CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 0.9f}));
+        CORRADE_COMPARE(phong.ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 0.9f}));
     } {
-        CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 0.0f}));
+        CORRADE_COMPARE(phong.ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 0.0f}));
     }
-    CORRADE_COMPARE(phongMaterial->diffuseColor(), (Color4{0.08f, 0.16f, 0.24f, 0.7f}));
-    CORRADE_COMPARE(phongMaterial->specularColor(), (Color4{0.15f, 0.1f, 0.05f, 0.5f}));
-    CORRADE_COMPARE(phongMaterial->shininess(), 50.0f);
+    CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.08f, 0.16f, 0.24f, 0.7f}));
+    CORRADE_COMPARE(phong.specularColor(), (Color4{0.15f, 0.1f, 0.05f, 0.5f}));
+    CORRADE_COMPARE(phong.shininess(), 50.0f);
 
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* Ancient assimp version add "-material" suffix */
@@ -389,33 +389,35 @@ void AssimpImporterTest::materialTexture() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
-    Containers::Pointer<AbstractMaterialData> material = importer->material(0);
+    Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+    CORRADE_COMPARE(material->types(), MaterialType::Phong);
+    CORRADE_COMPARE(material->layerCount(), 1);
+    CORRADE_COMPARE(material->attributeCount(), 10); /* includes zero texcoords */
 
-    PhongMaterialData* phongMaterial = static_cast<PhongMaterialData*>(material.get());
-    CORRADE_VERIFY(phongMaterial);
-
+    const auto& phong = material->as<PhongMaterialData>();
     {
         CORRADE_EXPECT_FAIL("Assimp, the stupid thing, imports ambient textures in COLLADA files as LIGHTMAP.");
-        CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::NormalTexture);
-        /* (This would assert now) */
-        //CORRADE_COMPARE(phongMaterial->ambientTexture(), 1);
-    } {
-        CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::NormalTexture);
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::AmbientTexture));
     }
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+    CORRADE_VERIFY(phong.hasSpecularTexture());
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::NormalTexture));
+
     /* Ambient texture *is* there, but treated as LIGHTMAP and thus unknown to
        the material. */
     CORRADE_COMPARE(importer->textureCount(), 4);
-    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 2);
-    CORRADE_COMPARE(phongMaterial->specularTexture(), 1);
-    CORRADE_COMPARE(phongMaterial->normalTexture(), 3);
+    /* (This would assert now) */
+    //CORRADE_COMPARE(phong.ambientTexture(), 1);
+    CORRADE_COMPARE(phong.diffuseTexture(), 2);
+    CORRADE_COMPARE(phong.specularTexture(), 1);
+    CORRADE_COMPARE(phong.normalTexture(), 3);
 
     /* Colors should stay at their defaults as these aren't provided in the
        file */
-    CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.0f, 0.0f, 0.0f, 1.0f}));
-    CORRADE_COMPARE(phongMaterial->diffuseColor(), (Color4{1.0f, 1.0f, 1.0f, 1.0f}));
-    CORRADE_COMPARE(phongMaterial->specularColor(), (Color4{1.0f, 1.0f, 1.0f, 1.0f}));
+    CORRADE_COMPARE(phong.ambientColor(), (Color4{0.0f, 0.0f, 0.0f, 1.0f}));
+    CORRADE_COMPARE(phong.diffuseColor(), (Color4{1.0f, 1.0f, 1.0f, 1.0f}));
+    CORRADE_COMPARE(phong.specularColor(), (Color4{1.0f, 1.0f, 1.0f, 1.0f}));
 }
 
 void AssimpImporterTest::materialColorTexture() {
@@ -425,24 +427,27 @@ void AssimpImporterTest::materialColorTexture() {
     {
         CORRADE_EXPECT_FAIL("Assimp reports one material more than it should for OBJ and the first is always useless.");
         CORRADE_COMPARE(importer->materialCount(), 1);
-    } {
-        CORRADE_COMPARE(importer->materialCount(), 2);
     }
-    Containers::Pointer<AbstractMaterialData> material = importer->material(1);
-    CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+    CORRADE_COMPARE(importer->materialCount(), 2);
 
-    PhongMaterialData* phongMaterial = static_cast<PhongMaterialData*>(material.get());
-    CORRADE_VERIFY(phongMaterial);
-    CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
-    CORRADE_COMPARE(phongMaterial->ambientTexture(), 1);
-    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 0);
-    CORRADE_COMPARE(phongMaterial->specularTexture(), 2);
+    Containers::Optional<MaterialData> material = importer->material(1);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->types(), MaterialType::Phong);
+    CORRADE_COMPARE(material->layerCount(), 1);
+    CORRADE_COMPARE(material->attributeCount(), 10); /* includes zero texcoords */
+
+    const auto& phong = material->as<PhongMaterialData>();
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::AmbientTexture));
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+    CORRADE_VERIFY(phong.hasSpecularTexture());
+    CORRADE_COMPARE(phong.ambientTexture(), 1);
+    CORRADE_COMPARE(phong.diffuseTexture(), 0);
+    CORRADE_COMPARE(phong.specularTexture(), 2);
 
     /* Alpha not supported by OBJ, should be set to 1 */
-    CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 1.0f}));
-    CORRADE_COMPARE(phongMaterial->diffuseColor(), (Color4{0.08f, 0.16f, 0.24f, 1.0f}));
-    CORRADE_COMPARE(phongMaterial->specularColor(), (Color4{0.15f, 0.1f, 0.05f, 1.0f}));
+    CORRADE_COMPARE(phong.ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 1.0f}));
+    CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.08f, 0.16f, 0.24f, 1.0f}));
+    CORRADE_COMPARE(phong.specularColor(), (Color4{0.15f, 0.1f, 0.05f, 1.0f}));
 }
 
 void AssimpImporterTest::materialStlWhiteAmbientPatch() {
@@ -451,7 +456,7 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
 
     CORRADE_COMPARE(importer->materialCount(), 1);
 
-    Containers::Pointer<AbstractMaterialData> material;
+    Containers::Optional<MaterialData> material;
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
@@ -459,7 +464,7 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     }
 
     CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+    CORRADE_COMPARE(material->types(), MaterialType::Phong);
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     {
         /* aiGetVersion*() returns 401 for assimp 5, FFS, so we have to check
@@ -469,25 +474,25 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): white ambient detected, forcing back to black\n");
     }
 
-    auto& phongMaterial = static_cast<PhongMaterialData&>(*material);
-    CORRADE_COMPARE(phongMaterial.flags(), PhongMaterialData::Flags{});
+    const auto& phong = material->as<PhongMaterialData>();
+    CORRADE_VERIFY(!phong.hasAttribute(MaterialAttribute::AmbientTexture));
     /* WHY SO COMPLICATED, COME ON */
     if(version < 401 || ASSIMP_IS_VERSION_5)
-        CORRADE_COMPARE(phongMaterial.ambientColor(), Color3{0.05f});
+        CORRADE_COMPARE(phong.ambientColor(), Color3{0.05f});
     else
-        CORRADE_COMPARE(phongMaterial.ambientColor(), 0x000000_srgbf);
+        CORRADE_COMPARE(phong.ambientColor(), 0x000000_srgbf);
 
     /* ASS IMP WHAT?! WHY 3.2 is different from 3.0 and 4.0?! */
     if(version == 302) {
-        CORRADE_COMPARE(phongMaterial.specularColor(), Color3{0.6f});
-        CORRADE_COMPARE(phongMaterial.diffuseColor(), Color3{0.6f});
+        CORRADE_COMPARE(phong.specularColor(), Color3{0.6f});
+        CORRADE_COMPARE(phong.diffuseColor(), Color3{0.6f});
     } else {
-        CORRADE_COMPARE(phongMaterial.specularColor(), 0xffffff_srgbf);
-        CORRADE_COMPARE(phongMaterial.diffuseColor(), 0xffffff_srgbf);
+        CORRADE_COMPARE(phong.specularColor(), 0xffffff_srgbf);
+        CORRADE_COMPARE(phong.diffuseColor(), 0xffffff_srgbf);
     }
     /* This value is not supplied by Assimp for STL models, so we keep it at
        default */
-    CORRADE_COMPARE(phongMaterial.shininess(), 80.0f);
+    CORRADE_COMPARE(phong.shininess(), 80.0f);
 }
 
 void AssimpImporterTest::materialWhiteAmbientTexture() {
@@ -504,7 +509,7 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
         CORRADE_COMPARE(importer->materialCount(), 2);
     }
 
-    Containers::Pointer<AbstractMaterialData> material;
+    Containers::Optional<MaterialData> material;
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
@@ -512,9 +517,9 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
     }
 
     CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->type(), MaterialType::Phong);
+    CORRADE_COMPARE(material->types(), MaterialType::Phong);
     CORRADE_COMPARE(importer->textureCount(), 1);
-    CORRADE_COMPARE(static_cast<PhongMaterialData&>(*material).flags(), PhongMaterialData::Flag::AmbientTexture);
+    CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::AmbientTexture));
     /* It shouldn't be complaining about white ambient in this case */
     CORRADE_COMPARE(out.str(), "");
 }
@@ -537,30 +542,34 @@ void AssimpImporterTest::materialMultipleTextures() {
 
     /* Check that texture ID assignment is correct */
     {
-        Containers::Pointer<AbstractMaterialData> material = importer->material(importer->materialForName("ambient_diffuse"));
+        Containers::Optional<MaterialData> material = importer->material("ambient_diffuse");
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+        CORRADE_COMPARE(material->types(), MaterialType::Phong);
 
-        auto& phong = static_cast<PhongMaterialData&>(*material);
-        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture);
+        const auto& phong = material->as<PhongMaterialData>();
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::AmbientTexture));
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
         CORRADE_COMPARE(phong.ambientTexture(), 1); /* r.png */
         CORRADE_COMPARE(phong.diffuseTexture(), 0); /* g.png */
     } {
-        Containers::Pointer<AbstractMaterialData> material = importer->material(importer->materialForName("diffuse_specular"));
+        Containers::Optional<MaterialData> material = importer->material("diffuse_specular");
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+        CORRADE_COMPARE(material->types(), MaterialType::Phong);
 
-        auto& phong = static_cast<PhongMaterialData&>(*material);
-        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        const auto& phong = material->as<PhongMaterialData>();
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::SpecularTexture));
         CORRADE_COMPARE(phong.diffuseTexture(), 2); /* b.png */
         CORRADE_COMPARE(phong.specularTexture(), 3); /* y.png */
     } {
-        Containers::Pointer<AbstractMaterialData> material = importer->material(importer->materialForName("all"));
+        Containers::Optional<MaterialData> material = importer->material("all");
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->type(), MaterialType::Phong);
+        CORRADE_COMPARE(material->types(), MaterialType::Phong);
 
-        auto& phong = static_cast<PhongMaterialData&>(*material);
-        CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
+        const auto& phong = material->as<PhongMaterialData>();
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::AmbientTexture));
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::SpecularTexture));
         CORRADE_COMPARE(phong.ambientTexture(), 5); /* y.png */
         CORRADE_COMPARE(phong.diffuseTexture(), 4); /* r.png */
         CORRADE_COMPARE(phong.specularTexture(), 6); /* g.png */
@@ -629,13 +638,18 @@ void AssimpImporterTest::materialTextureCoordinateSets() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
-    auto abstractMat = importer->material(0);
-    auto& mat = static_cast<PhongMaterialData&>(*abstractMat);
 
-    CORRADE_COMPARE(mat.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::NormalTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::TextureCoordinateSets);
-    CORRADE_COMPARE(mat.diffuseCoordinateSet(), 2);
-    CORRADE_COMPARE(mat.specularCoordinateSet(), 3);
-    CORRADE_COMPARE(mat.normalCoordinateSet(), 2);
+    Containers::Optional<MaterialData> material = importer->material(0);
+    CORRADE_VERIFY(material);
+    const auto& phong = material->as<PhongMaterialData>();
+
+    CORRADE_VERIFY(phong.hasTextureCoordinates());
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::SpecularTexture));
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::NormalTexture));
+    CORRADE_COMPARE(phong.diffuseTextureCoordinates(), 2);
+    CORRADE_COMPARE(phong.specularTextureCoordinates(), 3);
+    CORRADE_COMPARE(phong.normalTextureCoordinates(), 2);
 }
 
 void AssimpImporterTest::mesh() {
