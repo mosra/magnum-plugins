@@ -30,6 +30,7 @@
 
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -38,6 +39,7 @@
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
+#include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Vector.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/PixelStorage.h>
@@ -82,8 +84,12 @@ struct AssimpImporter::File {
     Containers::Optional<std::string> filePath;
     const aiScene* scene = nullptr;
     std::vector<aiNode*> nodes;
-    std::vector<std::tuple<const aiMaterial*, aiTextureType, UnsignedInt>> textures;
-    std::vector<std::pair<const aiMaterial*, aiTextureType>> images;
+    /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
+       imageIndex points to the (deduplicated) images array */
+    std::vector<std::tuple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
+    /* (materialPointer, propertyIndexInsideMaterial) tuple defining the first
+       (unique) location of an image */
+    std::vector<std::pair<const aiMaterial*, UnsignedInt>> images;
 
     std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
     std::unordered_map<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> nodeInstances;
@@ -303,6 +309,20 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
     return flags;
 }
 
+/* Assimp doesn't implement any getters directly on a material property (only a
+   lookup via key on aiMaterial), so here's a copy of aiGetMaterialString()
+   internals: https://github.com/assimp/assimp/blob/e845988c22d449b3fe45c1e96d51ae2fa6b59979/code/Material/MaterialSystem.cpp#L299-L306 */
+Containers::StringView materialPropertyString(const aiMaterialProperty& property) {
+    CORRADE_INTERNAL_ASSERT(property.mType == aiPTI_String);
+    /* The string is stored with 32-bit length prefix followed by a
+       null-terminated data, and according to asserts in aiGetMaterialString()
+       the total length should correspond with mDataLength, so just assert
+       that here and use mDataLength instead as that doesn't need any ugly
+       casts */
+    CORRADE_INTERNAL_ASSERT(*reinterpret_cast<UnsignedInt*>(property.mData) + 1 + 4 == property.mDataLength);
+    return {property.mData + 4, property.mDataLength - 4 - 1, Containers::StringViewFlag::NullTerminated};
+}
+
 }
 
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
@@ -324,7 +344,7 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     aiString matName;
     aiString texturePath;
-    Int textureIndex = 0;
+    UnsignedInt textureIndex = 0;
     std::unordered_map<std::string, UnsignedInt> uniqueImages;
     for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
         const aiMaterial* mat = _f->scene->mMaterials[i];
@@ -335,17 +355,25 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
 
         /* Store first possible texture index for this material, next textures
-           use successive indices. For images ensure we have an unique set so
-           each file isn't imported more than once. */
+           use successive indices. */
         _f->textureIndices[mat] = textureIndex;
-        for(auto type: {aiTextureType_AMBIENT, aiTextureType_DIFFUSE, aiTextureType_SPECULAR, aiTextureType_NORMALS}) {
-            if(mat->Get(AI_MATKEY_TEXTURE(type, 0), texturePath) == AI_SUCCESS) {
-                auto uniqueImage = uniqueImages.emplace(texturePath.C_Str(), _f->images.size());
-                if(uniqueImage.second) _f->images.emplace_back(mat, type);
+        for(std::size_t i = 0; i != mat->mNumProperties; ++i) {
+            /* We're only interested in AI_MATKEY_TEXTURE_* properties */
+            const aiMaterialProperty& property = *mat->mProperties[i];
+            if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} != _AI_MATKEY_TEXTURE_BASE) continue;
 
-                _f->textures.emplace_back(mat, type, uniqueImage.first->second);
-                ++textureIndex;
-            }
+            /* For images ensure we have an unique path so each file isn't
+               imported more than once. Each image then points to i-th property
+               of the material, which is then used to retrieve its path again. */
+            Containers::StringView texturePath = materialPropertyString(property);
+            auto uniqueImage = uniqueImages.emplace(texturePath, _f->images.size());
+            if(uniqueImage.second) _f->images.emplace_back(mat, i);
+
+            /* Each texture points to i-th property of the material, which is
+               then used to retrieve related info, plus an index into the
+               unique images array */
+            _f->textures.emplace_back(mat, i, uniqueImage.first->second);
+            ++textureIndex;
         }
     }
 
@@ -746,146 +774,191 @@ std::string AssimpImporter::doMaterialName(const UnsignedInt id) {
     return name.C_Str();
 }
 
-Containers::Pointer<AbstractMaterialData> AssimpImporter::doMaterial(const UnsignedInt id) {
-    /* Put things together */
+namespace {
+
+MaterialAttributeData materialColor(MaterialAttribute attribute, const aiMaterialProperty& property) {
+    if(property.mDataLength == 4*4)
+        return {attribute, MaterialAttributeType::Vector4, property.mData};
+    else if(property.mDataLength == 4*3)
+        return {attribute, Color4{Color3::from(reinterpret_cast<const Float*>(property.mData))}};
+    else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
+
+}
+
+Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt id) {
     const aiMaterial* mat = _f->scene->mMaterials[id];
 
-    /* Verify that shading mode is either unknown or Phong (not supporting
-       anything else ATM) */
-    aiShadingMode shadingMode;
-    if(mat->Get(AI_MATKEY_SHADING_MODEL, shadingMode) == AI_SUCCESS && shadingMode != aiShadingMode_Phong) {
-        Error() << "Trade::AssimpImporter::material(): unsupported shading mode" << shadingMode;
-        return {};
-    }
+    /* Calculate how many layers there are in the material */
+    UnsignedInt maxLayer = 0;
+    for(std::size_t i = 0; i != mat->mNumProperties; ++i)
+        maxLayer = Math::max(maxLayer, mat->mProperties[i]->mIndex);
 
-    PhongMaterialData::Flags flags;
+    /* Allocate attribute and layer arrays. Only reserve the memory for
+       attributes as we'll be skipping properties that don't fit. */
+    Containers::Array<MaterialAttributeData> attributes;
+    arrayReserve(attributes, mat->mNumProperties);
+    Containers::Array<UnsignedInt> layers{maxLayer + 1};
 
-    /* Check available textures */
-    {
-        aiString texturePath;
-        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), texturePath) == AI_SUCCESS)
-            flags |= PhongMaterialData::Flag::AmbientTexture;
-        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texturePath) == AI_SUCCESS)
-            flags |= PhongMaterialData::Flag::DiffuseTexture;
-        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), texturePath) == AI_SUCCESS)
-            flags |= PhongMaterialData::Flag::SpecularTexture;
-        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texturePath) == AI_SUCCESS)
-            flags |= PhongMaterialData::Flag::NormalTexture;
-        /** @todo many more types supported in assimp */
-    }
+    /* Go through each layer add then for each add all its properties so they
+       are consecutive in the array */
+    for(UnsignedInt layer = 0; layer <= maxLayer; ++layer) {
+        /* Save offset of this layer */
+        if(layer != 0) layers[layer - 1] = attributes.size();
 
-    /* Shininess is *not* always present (for example in STL models), default
-       to 0 */
-    Float shininess = 0.0f;
-    mat->Get(AI_MATKEY_SHININESS, shininess);
+        /* Texture indices are consecutive for all textures in the material,
+           starting at the offset we saved at the beginning. Because we're
+           going layer by layer here, the counting has to be restarted every
+           time, and counted also for skipped properties below */
+        UnsignedInt textureIndex = _f->textureIndices.at(mat);
 
-    UnsignedInt firstTextureIndex = _f->textureIndices[mat];
+        for(std::size_t i = 0; i != mat->mNumProperties; ++i) {
+            aiMaterialProperty& property = *mat->mProperties[i];
 
-    /* Key always present, default black, except if Assimp has a bug (see
-       below). And also the alpha is always set to zero, even if the source has
-       something else, so we just don't import it at all. */
-    aiColor3D ambientColor;
-    UnsignedInt ambientTexture{};
-    UnsignedInt ambientCoordinateSet{};
-    mat->Get(AI_MATKEY_COLOR_AMBIENT, ambientColor);
-    if(flags & PhongMaterialData::Flag::AmbientTexture) {
-        ambientTexture = firstTextureIndex++;
-
-        /* Couldn't convince Assimp to import non-zero values from a COLLADA
-           file, so this code path isn't tested */
-        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_AMBIENT, 0), ambientCoordinateSet);
-        if(ambientCoordinateSet != 0) {
-            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
-                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
-                return {};
+            /* Process only properties from this layer (again, to have them
+               consecutive in the attribute array), but properly increase
+               texture index even for the skipped properties so we have the
+               mapping correct */
+            if(mat->mProperties[i]->mIndex != layer) {
+                if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} == _AI_MATKEY_TEXTURE_BASE)
+                    ++textureIndex;
+                continue;
             }
 
-            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
-        }
+            using namespace Containers::Literals;
 
-    } else {
-        /* Assimp 4.1 forces ambient color to white for STL models. That's just
-           plain wrong, so we force it back to black (and emit a warning, so in
-           the very rare case when someone would actually want white ambient,
-           they'll know it got overriden). Fixed by
-           https://github.com/assimp/assimp/pull/2563, not released yet. */
-        if(ambientColor == aiColor3D{1.0f, 1.0f, 1.0f}) {
-            Warning{} << "Trade::AssimpImporter::material(): white ambient detected, forcing back to black";
-            ambientColor = aiColor3D{0.0f, 0.0f, 0.0f};
-        }
-    }
+            const Containers::StringView key{property.mKey.C_Str(), property.mKey.length, Containers::StringViewFlag::NullTerminated};
 
-    /* Key always present, default black */
-    aiColor4D diffuseColor;
-    UnsignedInt diffuseTexture{};
-    UnsignedInt diffuseCoordinateSet{};
-    mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
-    if(flags & PhongMaterialData::Flag::DiffuseTexture) {
-        diffuseTexture = firstTextureIndex++;
+            /* Recognize known attributes if they have expected types and
+               sizes */
+            MaterialAttributeData data;
+            MaterialAttribute attribute{};
+            MaterialAttributeType type{};
+            {
+                /* AI_MATKEY_* are in form "bla",0,0, so extract the first part and
+                   turn it into a StringView for string comparison. */
+                #define _str2(name, i, j) name ## _s
+                #define _str(name) _CORRADE_HELPER_DEFER(_str2, name)
+                /* Properties not tied to a particular texture */
+                if(property.mSemantic == aiTextureType_NONE) {
+                    /* Material name is available through materialName() /
+                       materialForName() already, ignore it */
+                    if(key == _str(AI_MATKEY_NAME) && property.mType == aiPTI_String) {
+                        continue;
 
-        /* Couldn't convince Assimp to import non-zero values from a COLLADA
-           file, so this code path isn't tested */
-        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE, 0), diffuseCoordinateSet);
-        if(diffuseCoordinateSet != 0) {
-            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
-                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
-                return {};
+                    /* Colors. Some formats have them three-components (OBJ),
+                       some four-component (glTF). Documentation states it's
+                       always three-component. FFS. */
+                    } else if(key == _str(AI_MATKEY_COLOR_AMBIENT) && property.mType == aiPTI_Float && (property.mDataLength == 4*4 || property.mDataLength == 4*3)) {
+                        data = materialColor(MaterialAttribute::AmbientColor, property);
+
+                        /* Assimp 4.1 forces ambient color to white for STL
+                           models. That's just plain wrong, so we force it back
+                           to black (and emit a warning, so in the very rare
+                           case when someone would actually want white ambient,
+                           they'll know it got overriden). Fixed by
+                           https://github.com/assimp/assimp/pull/2563 in 5.0.
+
+                           In addition, we abuse this fix in case Assimp
+                           imports ambient textures as LIGHTMAP. Those are not
+                           recognized right now (because WHY THE FUCK one would
+                           import an ambient texture as something else?!) and
+                           so the ambient color, which is white in this case as
+                           well, makes no sense. */
+                        aiString texturePath;
+                        if(data.value<Color4>() == Color4{1.0f} && mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, layer), texturePath) != AI_SUCCESS) {
+                            Warning{} << "Trade::AssimpImporter::material(): white ambient detected, forcing back to black";
+                            data = {MaterialAttribute::AmbientColor, Color4{0.0f, 1.0f}};
+                        }
+
+                    } else if(key == _str(AI_MATKEY_COLOR_DIFFUSE) && property.mType == aiPTI_Float && (property.mDataLength == 4*4 || property.mDataLength == 4*3)) {
+                        data = materialColor(MaterialAttribute::DiffuseColor, property);
+                    } else if(key == _str(AI_MATKEY_COLOR_SPECULAR) && property.mType == aiPTI_Float && (property.mDataLength == 4*4 || property.mDataLength == 4*3)) {
+                        data = materialColor(MaterialAttribute::SpecularColor, property);
+
+                    /* Factors */
+                    } else if(key == _str(AI_MATKEY_SHININESS) && property.mType == aiPTI_Float && property.mDataLength == 4) {
+                        attribute = MaterialAttribute::Shininess;
+                        type = MaterialAttributeType::Float;
+                    }
+
+                /* Properties tied to a particular texture */
+                } else {
+                    /* Texture index */
+                    if(key == _AI_MATKEY_TEXTURE_BASE) {
+                        switch(property.mSemantic) {
+                            case aiTextureType_AMBIENT:
+                                attribute = MaterialAttribute::AmbientTexture;
+                                break;
+                            case aiTextureType_DIFFUSE:
+                                attribute = MaterialAttribute::DiffuseTexture;
+                                break;
+                            case aiTextureType_SPECULAR:
+                                attribute = MaterialAttribute::SpecularTexture;
+                                break;
+                            case aiTextureType_NORMALS:
+                                attribute = MaterialAttribute::NormalTexture;
+                                break;
+                        }
+
+                        /* Save only if the name is recognized (and let it
+                            be imported as a custom attribute otherwise),
+                            but increment the texture index counter always
+                            to stay in sync */
+                        if(attribute != MaterialAttribute{})
+                            data = {attribute, textureIndex};
+                        ++textureIndex;
+
+                    /* Texture coordinate set index */
+                    } else if(key == _AI_MATKEY_UVWSRC_BASE && property.mType == aiPTI_Integer && property.mDataLength == 4) {
+                        type = MaterialAttributeType::UnsignedInt;
+                        switch(property.mSemantic) {
+                            case aiTextureType_AMBIENT:
+                                attribute = MaterialAttribute::AmbientTextureCoordinates;
+                                break;
+                            case aiTextureType_DIFFUSE:
+                                attribute = MaterialAttribute::DiffuseTextureCoordinates;
+                                break;
+                            case aiTextureType_SPECULAR:
+                                attribute = MaterialAttribute::SpecularTextureCoordinates;
+                                break;
+                            case aiTextureType_NORMALS:
+                                attribute = MaterialAttribute::NormalTextureCoordinates;
+                                break;
+                        }
+                    }
+                }
+                #undef _str
+                #undef _str2
             }
 
-            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
-        }
-    }
+            /* If the attribute data is already constructed (parsed from a
+               string value etc), put it directly in */
+            if(data.type() != MaterialAttributeType{}) {
+                arrayAppend(attributes, data);
 
-    /* Key always present, default black */
-    aiColor4D specularColor;
-    UnsignedInt specularTexture{};
-    UnsignedInt specularCoordinateSet{};
-    mat->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
-    if(flags & PhongMaterialData::Flag::SpecularTexture) {
-        specularTexture = firstTextureIndex++;
+            /* Otherwise, if we know the name and type, use mData for the value */
+            } else if(attribute != MaterialAttribute{}) {
+                /* For string attributes we'd need to pass StringView instead
+                   of mData, but there are none so far so assert for now */
+                CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{} && type != MaterialAttributeType::String);
+                arrayAppend(attributes, Containers::InPlaceInit, attribute, type, property.mData);
 
-        /* Couldn't convince Assimp to import non-zero values from a COLLADA
-           file, so this code path isn't tested */
-        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_SPECULAR, 0), specularCoordinateSet);
-        if(specularCoordinateSet != 0) {
-            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
-                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
-                return {};
+            /* Otherwise ignore for now. At a later point remaining attributes
+               will be imported as custom, but that needs a lot of testing
+               which I don't have time for right now. */
             }
-
-            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
         }
     }
 
-    UnsignedInt normalTexture{};
-    UnsignedInt normalCoordinateSet{};
-    if(flags & PhongMaterialData::Flag::NormalTexture) {
-        normalTexture = firstTextureIndex++;
+    /* Save offset for the last layer */
+    layers.back() = attributes.size();
 
-        /* Couldn't convince Assimp to import non-zero values from a COLLADA
-           file, so this code path isn't tested */
-        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_NORMALS, 0), normalCoordinateSet);
-        if(normalCoordinateSet != 0) {
-            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
-                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
-                return {};
-            }
-
-            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
-        }
-    }
-
-    Containers::Pointer<PhongMaterialData> data{Containers::InPlaceInit, flags,
-        Color3{ambientColor}, ambientTexture, ambientCoordinateSet,
-        Color4{diffuseColor}, diffuseTexture, diffuseCoordinateSet,
-        Color4{specularColor}, specularTexture, specularCoordinateSet,
-        normalTexture, normalCoordinateSet, Matrix3{},
-        MaterialAlphaMode::Opaque, 0.5f, shininess, mat};
-
-    /* Needs to be explicit on GCC 4.8 and Clang 3.8 so it can properly upcast
-       the pointer. Just std::move() works as well, but that gives a warning
-       on GCC 9. */
-    return Containers::Pointer<AbstractMaterialData>{std::move(data)};
+    /* Can't use growable deleters in a plugin, convert back to the default
+       deleter */
+    arrayShrink(attributes, Containers::DefaultInit);
+    /** @todo detect PBR properties and add relevant types accordingly */
+    return MaterialData{MaterialType::Phong, std::move(attributes), std::move(layers), mat};
 }
 
 UnsignedInt AssimpImporter::doTextureCount() const { return _f->textures.size(); }
@@ -914,7 +987,7 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
 
     aiTextureMapMode mapMode;
     const aiMaterial* mat = std::get<0>(_f->textures[id]);
-    const aiTextureType type = std::get<1>(_f->textures[id]);
+    const aiTextureType type = aiTextureType(mat->mProperties[std::get<1>(_f->textures[id])]->mSemantic);
     SamplerWrapping wrappingU = SamplerWrapping::ClampToEdge;
     SamplerWrapping wrappingV = SamplerWrapping::ClampToEdge;
     if(mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mapMode) == AI_SUCCESS)
@@ -930,9 +1003,8 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
 UnsignedInt AssimpImporter::doImage2DCount() const { return _f->images.size(); }
 
 AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const errorPrefix) {
-    const aiMaterial* mat;
-    aiTextureType type;
-    std::tie(mat, type) = _f->images[id];
+    const aiMaterial* mat = _f->images[id].first;
+    const aiTextureType type = aiTextureType(mat->mProperties[_f->images[id].second]->mSemantic);
 
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
@@ -1027,4 +1099,4 @@ const void* AssimpImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(AssimpImporter, Magnum::Trade::AssimpImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.2")

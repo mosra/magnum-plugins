@@ -83,7 +83,6 @@ struct AssimpImporterTest: TestSuite::Tester {
     void materialStlWhiteAmbientPatch();
     void materialWhiteAmbientTexture();
     void materialMultipleTextures();
-    void materialTextureCoordinateSetsDefault();
     void materialTextureCoordinateSets();
 
     void mesh();
@@ -172,7 +171,6 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
               &AssimpImporterTest::materialWhiteAmbientTexture,
               &AssimpImporterTest::materialMultipleTextures,
-              &AssimpImporterTest::materialTextureCoordinateSetsDefault,
               &AssimpImporterTest::materialTextureCoordinateSets,
 
               &AssimpImporterTest::mesh,
@@ -368,8 +366,7 @@ void AssimpImporterTest::materialColor() {
         CORRADE_EXPECT_FAIL("Assimp sets ambient alpha to 0, ignoring the actual value (for COLLADA at least).");
         CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 0.9f}));
     } {
-        /* We're importing as Color3 instead, forcing the alpha to be 1 */
-        CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 1.0f}));
+        CORRADE_COMPARE(phongMaterial->ambientColor(), (Color4{0.1f, 0.05f, 0.1f, 0.0f}));
     }
     CORRADE_COMPARE(phongMaterial->diffuseColor(), (Color4{0.08f, 0.16f, 0.24f, 0.7f}));
     CORRADE_COMPARE(phongMaterial->specularColor(), (Color4{0.15f, 0.1f, 0.05f, 0.5f}));
@@ -400,17 +397,19 @@ void AssimpImporterTest::materialTexture() {
     CORRADE_VERIFY(phongMaterial);
 
     {
-        CORRADE_EXPECT_FAIL("Assimp ignores ambient textures in COLLADA files.");
+        CORRADE_EXPECT_FAIL("Assimp, the stupid thing, imports ambient textures in COLLADA files as LIGHTMAP.");
         CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::NormalTexture);
         /* (This would assert now) */
         //CORRADE_COMPARE(phongMaterial->ambientTexture(), 1);
     } {
         CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::NormalTexture);
     }
-    CORRADE_COMPARE(importer->textureCount(), 3);
-    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 0);
+    /* Ambient texture *is* there, but treated as LIGHTMAP and thus unknown to
+       the material. */
+    CORRADE_COMPARE(importer->textureCount(), 4);
+    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 2);
     CORRADE_COMPARE(phongMaterial->specularTexture(), 1);
-    CORRADE_COMPARE(phongMaterial->normalTexture(), 2);
+    CORRADE_COMPARE(phongMaterial->normalTexture(), 3);
 
     /* Colors should stay at their defaults as these aren't provided in the
        file */
@@ -436,8 +435,8 @@ void AssimpImporterTest::materialColorTexture() {
     PhongMaterialData* phongMaterial = static_cast<PhongMaterialData*>(material.get());
     CORRADE_VERIFY(phongMaterial);
     CORRADE_COMPARE(phongMaterial->flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
-    CORRADE_COMPARE(phongMaterial->ambientTexture(), 0);
-    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 1);
+    CORRADE_COMPARE(phongMaterial->ambientTexture(), 1);
+    CORRADE_COMPARE(phongMaterial->diffuseTexture(), 0);
     CORRADE_COMPARE(phongMaterial->specularTexture(), 2);
 
     /* Alpha not supported by OBJ, should be set to 1 */
@@ -486,8 +485,9 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
         CORRADE_COMPARE(phongMaterial.specularColor(), 0xffffff_srgbf);
         CORRADE_COMPARE(phongMaterial.diffuseColor(), 0xffffff_srgbf);
     }
-    /* This value is not supplied by Assimp for STL models, so we set it to 0 */
-    CORRADE_COMPARE(phongMaterial.shininess(), 0.0f);
+    /* This value is not supplied by Assimp for STL models, so we keep it at
+       default */
+    CORRADE_COMPARE(phongMaterial.shininess(), 80.0f);
 }
 
 void AssimpImporterTest::materialWhiteAmbientTexture() {
@@ -543,8 +543,8 @@ void AssimpImporterTest::materialMultipleTextures() {
 
         auto& phong = static_cast<PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture);
-        CORRADE_COMPARE(phong.ambientTexture(), 0); /* r.png */
-        CORRADE_COMPARE(phong.diffuseTexture(), 1); /* g.png */
+        CORRADE_COMPARE(phong.ambientTexture(), 1); /* r.png */
+        CORRADE_COMPARE(phong.diffuseTexture(), 0); /* g.png */
     } {
         Containers::Pointer<AbstractMaterialData> material = importer->material(importer->materialForName("diffuse_specular"));
         CORRADE_VERIFY(material);
@@ -561,8 +561,8 @@ void AssimpImporterTest::materialMultipleTextures() {
 
         auto& phong = static_cast<PhongMaterialData&>(*material);
         CORRADE_COMPARE(phong.flags(), PhongMaterialData::Flag::AmbientTexture|PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::SpecularTexture);
-        CORRADE_COMPARE(phong.ambientTexture(), 4); /* y.png */
-        CORRADE_COMPARE(phong.diffuseTexture(), 5); /* r.png */
+        CORRADE_COMPARE(phong.ambientTexture(), 5); /* y.png */
+        CORRADE_COMPARE(phong.diffuseTexture(), 4); /* r.png */
         CORRADE_COMPARE(phong.specularTexture(), 6); /* g.png */
     }
 
@@ -570,11 +570,11 @@ void AssimpImporterTest::materialMultipleTextures() {
     {
         Containers::Optional<TextureData> texture = importer->texture(0);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 0); /* r.png */
+        CORRADE_COMPARE(texture->image(), 0); /* g.png */
     } {
         Containers::Optional<TextureData> texture = importer->texture(1);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 1); /* g.png */
+        CORRADE_COMPARE(texture->image(), 1); /* r.png */
     } {
         Containers::Optional<TextureData> texture = importer->texture(2);
         CORRADE_VERIFY(texture);
@@ -586,15 +586,15 @@ void AssimpImporterTest::materialMultipleTextures() {
     } {
         Containers::Optional<TextureData> texture = importer->texture(4);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 3); /* y.png */
+        CORRADE_COMPARE(texture->image(), 1); /* r.png */
     } {
         Containers::Optional<TextureData> texture = importer->texture(5);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 0); /* r.png */
+        CORRADE_COMPARE(texture->image(), 3); /* y.png */
     } {
         Containers::Optional<TextureData> texture = importer->texture(6);
         CORRADE_VERIFY(texture);
-        CORRADE_COMPARE(texture->image(), 1); /* g.png */
+        CORRADE_COMPARE(texture->image(), 0); /* g.png */
     }
 
     /* Check that correct images are imported */
@@ -603,13 +603,13 @@ void AssimpImporterTest::materialMultipleTextures() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i(1));
-        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb); /* r.png */
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb); /* g.png */
     } {
         Containers::Optional<ImageData2D> image = importer->image2D(1);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i(1));
-        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb); /* g.png */
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb); /* r.png */
     } {
         Containers::Optional<ImageData2D> image = importer->image2D(2);
         CORRADE_VERIFY(image);
@@ -625,28 +625,13 @@ void AssimpImporterTest::materialMultipleTextures() {
     }
 }
 
-void AssimpImporterTest::materialTextureCoordinateSetsDefault() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
-
-    CORRADE_EXPECT_FAIL("Material is loaded since coordinate sets are not imported");
-    CORRADE_VERIFY(!importer->material(0));
-
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them\n");
-}
-
 void AssimpImporterTest::materialTextureCoordinateSets() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    importer->configuration().setValue("allowMaterialTextureCoordinateSets", true);
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
     auto abstractMat = importer->material(0);
     auto& mat = static_cast<PhongMaterialData&>(*abstractMat);
 
-    CORRADE_EXPECT_FAIL("Assimp ignores ambient texture and does not import coordinate sets");
     CORRADE_COMPARE(mat.flags(), PhongMaterialData::Flag::DiffuseTexture|PhongMaterialData::Flag::NormalTexture|PhongMaterialData::Flag::SpecularTexture|PhongMaterialData::Flag::TextureCoordinateSets);
     CORRADE_COMPARE(mat.diffuseCoordinateSet(), 2);
     CORRADE_COMPARE(mat.specularCoordinateSet(), 3);
@@ -1128,7 +1113,7 @@ void AssimpImporterTest::imageExternal() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
-    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(1);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -1245,17 +1230,19 @@ void AssimpImporterTest::texture() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
+    CORRADE_COMPARE(importer->textureCount(), 4);
 
-    CORRADE_COMPARE(importer->textureCount(), 3);
-    Containers::Optional<TextureData> texture = importer->texture(0);
+    /* Diffuse texture */
+    Containers::Optional<TextureData> texture = importer->texture(2);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
         Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->image(), 0);
+    CORRADE_COMPARE(texture->image(), 1);
 
+    /* Specular texture */
     Containers::Optional<TextureData> texture1 = importer->texture(1);
     CORRADE_VERIFY(texture1);
     CORRADE_COMPARE(texture1->type(), TextureData::Type::Texture2D);
@@ -1274,16 +1261,16 @@ void AssimpImporterTest::texture() {
         CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
         CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
     }
-    CORRADE_COMPARE(texture1->image(), 1);
+    CORRADE_COMPARE(texture1->image(), 0);
 
     /* Normal texture, reusing the diffuse image (so the same index) */
-    Containers::Optional<TextureData> texture2 = importer->texture(2);
+    Containers::Optional<TextureData> texture2 = importer->texture(3);
     CORRADE_VERIFY(texture2);
     CORRADE_COMPARE(texture2->type(), TextureData::Type::Texture2D);
-    CORRADE_COMPARE(texture2->image(), 0);
+    CORRADE_COMPARE(texture2->image(), 1);
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
-    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(1);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -1341,19 +1328,20 @@ void AssimpImporterTest::openStateTexture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openState(sc, ASSIMPIMPORTER_TEST_DIR));
     CORRADE_COMPARE(importer->importerState(), sc);
+    CORRADE_COMPARE(importer->textureCount(), 4);
 
-    CORRADE_COMPARE(importer->textureCount(), 3);
-    Containers::Optional<TextureData> texture = importer->texture(0);
+    /* Diffuse texture */
+    Containers::Optional<TextureData> texture = importer->texture(2);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
         Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
-    CORRADE_COMPARE(texture->image(), 0);
+    CORRADE_COMPARE(texture->image(), 1);
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
-    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(1);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
@@ -1505,7 +1493,7 @@ void AssimpImporterTest::fileCallbackImage() {
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     /* Check only size, as it is good enough proof that it is working */
-    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(1);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i(1, 1));
 }
@@ -1532,7 +1520,7 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_VERIFY(!importer->image2D(1));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file diffuse_texture.png\n");
 }
 
