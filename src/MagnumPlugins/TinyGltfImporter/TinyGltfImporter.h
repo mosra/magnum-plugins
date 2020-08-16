@@ -266,38 +266,32 @@ fail.
 
 @subsection Trade-TinyGltfImporter-behavior-materials Material import
 
--   Subset of all material specs is currently imported as @ref PhongMaterialData,
-    including normal textures
--   Ambient color is always @cpp 0x000000_rgbf @ce (never a texture)
--   Unless explicitly enabled with the @cb{.ini} allowMaterialTextureCoordinateSets @ce
-    @ref Trade-TinyGltfImporter-configuration "configuration option", only the
-    first set of texture coordinates is supported.
--   If [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_texture_transform/README.md)
-    is present, the imported material has @ref PhongMaterialData::Flag::TextureTransformation
-    set. All textures have to share the same transformation and the
-    transformation, if present, has to affect the first set of texture
-    coordinates.
--   For the Metallic/Roughness material spec ([in core](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material),
-    default):
-    -   The `baseColorTexture` field is used for diffuse texture, if present.
-        Otherwise, `baseColorFactor` is used for diffuse color, if present.
-        Otherwise, @cpp 0xffffff_rgbf @ce is used.
-    -   Specular color is always @cpp 0xffffff_rgbf @ce (never a texture)
-    -   Shininess is always @cpp 1.0f @ce
--   For the Specular/Glossiness material spec
-    ([KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
-    extension):
-    -   The `diffuseTexture` field is used for diffuse texture, if present.
-        Otherwise, `diffuseFactor` is used for diffuse color, if present.
-        Otherwise, @cpp 0xffffff_rgbf @ce is used.
-    -   The `specularGlossinessTexture` field is used for a specular texture,
-        if present (note that only the RGB channels should be used and the
-        alpha channel --- containing glossiness --- should be ignored).
-        Otherwise, `specularFactor` is used for specular color, if present.
-        Otherwise, @cpp 0xffffff_rgbf @ce is used.
-    -   Shininess is always @cpp 1.0f @ce
--   The [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
-    extension is currently not supported.
+-   Builtin [metallic/roughness](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material) material is imported always,
+    setting @ref MaterialType::PbrMetallicRoughness on the @ref MaterialData.
+    Unfortunately TinyGLTF doesn't provide a way to detect if
+    metallic/roughness properties are actually present, so this type is set
+    always.
+-   If the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
+    extension is present, its properties are imported with
+    @ref MaterialType::PbrSpecularGlossiness present in material types.
+-   Additional normal, occlusion and emissive maps are imported, together with
+    related properties
+-   If the [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
+    extension is present, @ref MaterialType::Flat is set in material types,
+    replacing @ref MaterialType::PbrMetallicRoughness or
+    @ref MaterialType::PbrSpecularGlossiness.
+-   Custom texture coordinate sets as well as [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_texture_transform/README.md)
+    properties are imported on all textures.
+-   If the on-by-default @cb{.ini} phongMaterialFallback @ce
+    @ref Trade-TinyGltfImporter-configuration "configuration option" is
+    enabled, the importer provides a Phong fallback for backwards
+    compatibility:
+    -   @ref MaterialType::Phong is added to material types
+    -   Base color and base color texture along with custom texture coordinate
+        set and transformation, if present, is exposed as a diffuse color and
+        texture, unless already present together with specular color / texture
+        from the specular/glossiness material
+    -   All other @ref PhongMaterialData values are is kept at their defaults
 
 @subsection Trade-TinyGltfImporter-behavior-textures Texture and image import
 

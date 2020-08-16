@@ -32,6 +32,16 @@ namespace Magnum {
 
 @section changelog-plugins-latest Changes since 2020.06
 
+@subsection changelog-plugins-latest-new New features
+
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" material import was
+    reworked for the new @ref Trade::MaterialData API, supporting all core
+    properties as well as everything from the
+    [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
+    and [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
+    extensions. All the previous limitations on texture transformation or
+    coordinate set variability are now gone.
+
 @subsection changelog-plugins-latest-buildsystem Build system
 
 -   The `versionPlugins.h` header now gets populated from Git correctly also
