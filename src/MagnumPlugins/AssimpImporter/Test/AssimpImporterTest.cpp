@@ -434,7 +434,14 @@ void AssimpImporterTest::materialColorTexture() {
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
     CORRADE_COMPARE(material->layerCount(), 1);
-    CORRADE_COMPARE(material->attributeCount(), 10); /* includes zero texcoords */
+
+    /* Newer versions import also useless zero texcoords. Not sure if it's
+       since 4.0 or 5.0, but definitely 3.2 returns 7. */
+    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    if(version < 400)
+        CORRADE_COMPARE(material->attributeCount(), 7);
+    else
+        CORRADE_COMPARE(material->attributeCount(), 10);
 
     const auto& phong = material->as<PhongMaterialData>();
     CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::AmbientTexture));
