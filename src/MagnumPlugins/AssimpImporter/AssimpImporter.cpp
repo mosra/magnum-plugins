@@ -127,6 +127,8 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     /** @todo horrible workaround, fix this properly */
 
     conf.setValue("ImportColladaIgnoreUpDirection", false);
+    conf.setValue("rawMaterialData", false);
+    conf.setValue("phongMaterialFallback", true);
 
     Utility::ConfigurationGroup& postprocess = *conf.addGroup("postprocess");
     postprocess.setValue("JoinIdenticalVertices", true);
@@ -784,6 +786,53 @@ MaterialAttributeData materialColor(MaterialAttribute attribute, const aiMateria
     else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
+Containers::String customMaterialKey(Containers::StringView key, const aiTextureType semantic) {
+    using namespace Containers::Literals;
+
+    /* Create a non-owning key String, add texture type to it if
+        present */
+    auto keyString = Containers::String::nullTerminatedView(key);
+    if(semantic != aiTextureType_NONE) {
+        Containers::StringView keyExtra;
+        switch(semantic) {
+            #define _c(type) case aiTextureType_ ## type:       \
+                keyExtra = #type ## _s;                         \
+                break;
+            _c(AMBIENT)
+            _c(DIFFUSE)
+            _c(SPECULAR)
+            _c(EMISSIVE)
+            _c(OPACITY)
+            _c(NORMALS)
+            _c(HEIGHT)
+            _c(DISPLACEMENT)
+            _c(LIGHTMAP)
+            _c(REFLECTION)
+            _c(UNKNOWN)
+            _c(BASE_COLOR)
+            _c(SHININESS)
+            _c(NORMAL_CAMERA)
+            _c(EMISSION_COLOR)
+            _c(METALNESS)
+            _c(DIFFUSE_ROUGHNESS)
+            _c(AMBIENT_OCCLUSION)
+            #undef _c
+
+            case aiTextureType_NONE:
+            case _aiTextureType_Force32Bit:
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+        }
+
+        CORRADE_INTERNAL_ASSERT(!keyExtra.isEmpty());
+
+        /** @todo use format() and drop data() + FormatStl include
+            when format() is converted to StringViews */
+        keyString = Utility::formatString("{}.{}", key.data(), keyExtra.data());
+    }
+
+    return keyString;
+}
+
 }
 
 Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt id) {
@@ -830,11 +879,13 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
             const Containers::StringView key{property.mKey.C_Str(), property.mKey.length, Containers::StringViewFlag::NullTerminated};
 
             /* Recognize known attributes if they have expected types and
-               sizes */
+               sizes. If they don't, they'll be treated as custom attribs in
+               the code below. It's also possible to skip this by enabling the
+               rawMaterialData configuration ooption. */
             MaterialAttributeData data;
             MaterialAttribute attribute{};
             MaterialAttributeType type{};
-            {
+            if(!configuration().value<bool>("rawMaterialData")) {
                 /* AI_MATKEY_* are in form "bla",0,0, so extract the first part and
                    turn it into a StringView for string comparison. */
                 #define _str2(name, i, j) name ## _s
@@ -845,6 +896,11 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                        materialForName() already, ignore it */
                     if(key == _str(AI_MATKEY_NAME) && property.mType == aiPTI_String) {
                         continue;
+
+                    /* Double-sided */
+                    } else if(key == _str(AI_MATKEY_TWOSIDED) && property.mType == aiPTI_Integer && property.mDataLength == 1) {
+                        attribute = MaterialAttribute::DoubleSided;
+                        type = MaterialAttributeType::Bool;
 
                     /* Colors. Some formats have them three-components (OBJ),
                        some four-component (glTF). Documentation states it's
@@ -875,59 +931,216 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         data = materialColor(MaterialAttribute::DiffuseColor, property);
                     } else if(key == _str(AI_MATKEY_COLOR_SPECULAR) && property.mType == aiPTI_Float && (property.mDataLength == 4*4 || property.mDataLength == 4*3)) {
                         data = materialColor(MaterialAttribute::SpecularColor, property);
+                    } else if(key == _str(AI_MATKEY_COLOR_EMISSIVE) && property.mType == aiPTI_Float && (property.mDataLength == 4*4 || property.mDataLength == 4*3)) {
+                        attribute = MaterialAttribute::EmissiveColor;
+                        /* Assimp has this in a 3- or 4-component vector, we
+                           want always just three components (alpha doesn't
+                           make sense here) */
+                        type = MaterialAttributeType::Vector3;
+                    } else if(key == _str(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR) && property.mType == aiPTI_Float && (property.mDataLength == 4*4 || property.mDataLength == 4*3)) {
+                        data = materialColor(MaterialAttribute::BaseColor, property);
 
                     /* Factors */
                     } else if(key == _str(AI_MATKEY_SHININESS) && property.mType == aiPTI_Float && property.mDataLength == 4) {
                         attribute = MaterialAttribute::Shininess;
                         type = MaterialAttributeType::Float;
+                    } else if(key == _str(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR) && property.mType == aiPTI_Float && property.mDataLength == 4) {
+                        attribute = MaterialAttribute::Metalness;
+                        type = MaterialAttributeType::Float;
+                    } else if(key == _str(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR) && property.mType == aiPTI_Float && property.mDataLength == 4) {
+                        attribute = MaterialAttribute::Roughness;
+                        type = MaterialAttributeType::Float;
+                    } else if(key == _str(AI_MATKEY_GLTF_PBRSPECULARGLOSSINESS_GLOSSINESS_FACTOR) && property.mType == aiPTI_Float && property.mDataLength == 4) {
+                        attribute = MaterialAttribute::Glossiness;
+                        type = MaterialAttributeType::Float;
+
+                    /* glTF alpha mode and cutoff, converted to a pair of bool
+                       (if we want blending) and a mask value. The mask value
+                       might not be present, in which case we add the default
+                       0.5 */
+                    } else if(key == _str(AI_MATKEY_GLTF_ALPHACUTOFF) && property.mType == aiPTI_Float && property.mDataLength == 4) {
+                        attribute = MaterialAttribute::AlphaMask;
+                        type = MaterialAttributeType::Float;
+                    } else if(key == _str(AI_MATKEY_GLTF_ALPHAMODE) && property.mType == aiPTI_String) {
+                        const Containers::StringView value = materialPropertyString(property);
+                        if(value == "BLEND"_s)
+                            data = {MaterialAttribute::AlphaBlend, true};
+                        /* Add a default mask value only if the mask isn't
+                           already present, otherwise we'd end up with a
+                           duplicate AlphaMask attribute */
+                        else if(value == "MASK"_s && aiGetMaterialFloat(mat, AI_MATKEY_GLTF_ALPHAMODE, nullptr) == AI_FAILURE)
+                            data = {MaterialAttribute::AlphaMask, 0.5f};
+                        /* Add a false AlphaBlend, even though the default
+                           would do as well -- if we wouldn't fill the data,
+                           code below would think the attribute is unrecognized
+                           and add it anyway */
+                        else {
+                            CORRADE_INTERNAL_ASSERT(value == "OPAQUE"_s);
+                            data = {MaterialAttribute::AlphaBlend, false};
+                        }
                     }
 
                 /* Properties tied to a particular texture */
                 } else {
-                    /* Texture index */
-                    if(key == _AI_MATKEY_TEXTURE_BASE) {
-                        switch(property.mSemantic) {
-                            case aiTextureType_AMBIENT:
-                                attribute = MaterialAttribute::AmbientTexture;
-                                break;
-                            case aiTextureType_DIFFUSE:
-                                attribute = MaterialAttribute::DiffuseTexture;
-                                break;
-                            case aiTextureType_SPECULAR:
-                                attribute = MaterialAttribute::SpecularTexture;
-                                break;
-                            case aiTextureType_NORMALS:
-                                attribute = MaterialAttribute::NormalTexture;
-                                break;
-                        }
+                    if(property.mSemantic == aiTextureType_NORMALS && key == _AI_MATKEY_GLTF_SCALE_BASE && property.mType == aiPTI_Float && property.mDataLength == 4) {
+                        attribute = MaterialAttribute::NormalTextureScale;
+                        type = MaterialAttributeType::Float;
+                    } else {
+                        /* Texture index */
+                        if(key == _AI_MATKEY_TEXTURE_BASE) {
+                            switch(aiTextureType(property.mSemantic)) {
+                                case aiTextureType_AMBIENT:
+                                    attribute = MaterialAttribute::AmbientTexture;
+                                    break;
+                                case aiTextureType_DIFFUSE:
+                                    attribute = MaterialAttribute::DiffuseTexture;
+                                    break;
+                                case aiTextureType_SPECULAR:
+                                    attribute = MaterialAttribute::SpecularTexture;
+                                    break;
+                                case aiTextureType_EMISSIVE:
+                                    attribute = MaterialAttribute::EmissiveTexture;
+                                    break;
+                                case aiTextureType_NORMALS:
+                                    attribute = MaterialAttribute::NormalTexture;
+                                    break;
+                                case aiTextureType_AMBIENT_OCCLUSION:
+                                    attribute = MaterialAttribute::OcclusionTexture;
+                                    break;
+                                case aiTextureType_BASE_COLOR:
+                                    /** @todo gltf uses DIFFUSE for some reason */
+                                case aiTextureType_EMISSION_COLOR:
+                                    /** @todo what's the difference to EMISSIVE */
+                                case aiTextureType_DIFFUSE_ROUGHNESS:
+                                case aiTextureType_METALNESS:
+                                case aiTextureType_NORMAL_CAMERA:
+                                    /** @todo which formats use these? */
+                                case aiTextureType_UNKNOWN:
+                                    /** @todo used for gltf metallic/roughness,
+                                        need to detect file type to be sure */
+                                case aiTextureType_DISPLACEMENT:
+                                case aiTextureType_HEIGHT:
+                                case aiTextureType_LIGHTMAP:
+                                case aiTextureType_OPACITY:
+                                case aiTextureType_REFLECTION:
+                                case aiTextureType_SHININESS:
+                                    break;
 
-                        /* Save only if the name is recognized (and let it
-                            be imported as a custom attribute otherwise),
-                            but increment the texture index counter always
-                            to stay in sync */
-                        if(attribute != MaterialAttribute{})
-                            data = {attribute, textureIndex};
-                        ++textureIndex;
+                                case aiTextureType_NONE:
+                                case _aiTextureType_Force32Bit:
+                                    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                            }
 
-                    /* Texture coordinate set index */
-                    } else if(key == _AI_MATKEY_UVWSRC_BASE && property.mType == aiPTI_Integer && property.mDataLength == 4) {
-                        type = MaterialAttributeType::UnsignedInt;
-                        switch(property.mSemantic) {
-                            case aiTextureType_AMBIENT:
-                                attribute = MaterialAttribute::AmbientTextureCoordinates;
-                                break;
-                            case aiTextureType_DIFFUSE:
-                                attribute = MaterialAttribute::DiffuseTextureCoordinates;
-                                break;
-                            case aiTextureType_SPECULAR:
-                                attribute = MaterialAttribute::SpecularTextureCoordinates;
-                                break;
-                            case aiTextureType_NORMALS:
-                                attribute = MaterialAttribute::NormalTextureCoordinates;
-                                break;
+                            /* Save only if the name is recognized (and let it
+                               be imported as a custom attribute otherwise),
+                               but increment the texture index counter always
+                               to stay in sync */
+                            if(attribute != MaterialAttribute{})
+                                data = {attribute, textureIndex};
+                            ++textureIndex;
+
+                        /* Texture coordinate set index */
+                        } else if(key == _AI_MATKEY_UVWSRC_BASE && property.mType == aiPTI_Integer && property.mDataLength == 4) {
+                            type = MaterialAttributeType::UnsignedInt;
+                            switch(aiTextureType(property.mSemantic)) {
+                                case aiTextureType_AMBIENT:
+                                    attribute = MaterialAttribute::AmbientTextureCoordinates;
+                                    break;
+                                case aiTextureType_DIFFUSE:
+                                    attribute = MaterialAttribute::DiffuseTextureCoordinates;
+                                    break;
+                                case aiTextureType_SPECULAR:
+                                    attribute = MaterialAttribute::SpecularTextureCoordinates;
+                                    break;
+                                case aiTextureType_EMISSIVE:
+                                    attribute = MaterialAttribute::EmissiveTextureCoordinates;
+                                    break;
+                                case aiTextureType_NORMALS:
+                                    attribute = MaterialAttribute::NormalTextureCoordinates;
+                                    break;
+                                case aiTextureType_AMBIENT_OCCLUSION:
+                                    attribute = MaterialAttribute::OcclusionTextureCoordinates;
+                                    break;
+                                case aiTextureType_BASE_COLOR:
+                                case aiTextureType_EMISSION_COLOR:
+                                case aiTextureType_DIFFUSE_ROUGHNESS:
+                                case aiTextureType_METALNESS:
+                                case aiTextureType_NORMAL_CAMERA:
+                                case aiTextureType_UNKNOWN:
+                                case aiTextureType_DISPLACEMENT:
+                                case aiTextureType_HEIGHT:
+                                case aiTextureType_LIGHTMAP:
+                                case aiTextureType_OPACITY:
+                                case aiTextureType_REFLECTION:
+                                case aiTextureType_SHININESS:
+                                    break;
+
+                                case aiTextureType_NONE:
+                                case _aiTextureType_Force32Bit:
+                                    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                            }
+
+                        /* Texture matrix */
+                        } else if(key == _AI_MATKEY_UVTRANSFORM_BASE && property.mType == aiPTI_Float && property.mDataLength == sizeof(aiUVTransform)) {
+                            switch(aiTextureType(property.mSemantic)) {
+                                case aiTextureType_AMBIENT:
+                                    attribute = MaterialAttribute::AmbientTextureMatrix;
+                                    break;
+                                case aiTextureType_DIFFUSE:
+                                    attribute = MaterialAttribute::DiffuseTextureMatrix;
+                                    break;
+                                case aiTextureType_SPECULAR:
+                                    attribute = MaterialAttribute::SpecularTextureMatrix;
+                                    break;
+                                case aiTextureType_EMISSIVE:
+                                    attribute = MaterialAttribute::EmissiveTextureMatrix;
+                                    break;
+                                case aiTextureType_NORMALS:
+                                    attribute = MaterialAttribute::NormalTextureMatrix;
+                                    break;
+                                case aiTextureType_AMBIENT_OCCLUSION:
+                                    attribute = MaterialAttribute::OcclusionTexture;
+                                    break;
+                                case aiTextureType_BASE_COLOR:
+                                case aiTextureType_EMISSION_COLOR:
+                                case aiTextureType_DIFFUSE_ROUGHNESS:
+                                case aiTextureType_METALNESS:
+                                case aiTextureType_NORMAL_CAMERA:
+                                case aiTextureType_UNKNOWN:
+                                case aiTextureType_DISPLACEMENT:
+                                case aiTextureType_HEIGHT:
+                                case aiTextureType_LIGHTMAP:
+                                case aiTextureType_OPACITY:
+                                case aiTextureType_REFLECTION:
+                                case aiTextureType_SHININESS:
+                                    break;
+
+                                case aiTextureType_NONE:
+                                case _aiTextureType_Force32Bit:
+                                    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                            }
+
+                            const auto& transform = *reinterpret_cast<aiUVTransform*>(property.mData);
+                            Matrix3 matrix = {
+                                Matrix3::translation({transform.mTranslation.x, transform.mTranslation.y})*
+                                Matrix3::rotation(Rad(transform.mRotation))*
+                                Matrix3::scaling({transform.mScaling.x, transform.mScaling.y})
+                            };
+                            if(attribute != MaterialAttribute{})
+                                data = {attribute, matrix};
+                            else
+                                data = {customMaterialKey(key, aiTextureType(property.mSemantic)), matrix};
                         }
                     }
                 }
+                /** @todo aiTextureFlags_UseAlpha in _AI_MATKEY_TEXFLAGS_BASE
+                    ($tex.flags) could be used for AlphaBlend ... which formats
+                    define it? */
+                /** @todo AI_MATKEY_BUMPSCALING is apparently not normal map scale
+                    (as that's $tex.scale in glTF), so what is it? */
+                /** @todo AI_MATKEY_REFRACTI for IOR when the corresponding glTF
+                    exts are exposed to MaterialAttribute */
+                /** @todo AI_MATKEY_GLTF_UNLIT, convert to a Type flag */
                 #undef _str
                 #undef _str2
             }
@@ -944,15 +1157,214 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{} && type != MaterialAttributeType::String);
                 arrayAppend(attributes, Containers::InPlaceInit, attribute, type, property.mData);
 
-            /* Otherwise ignore for now. At a later point remaining attributes
-               will be imported as custom, but that needs a lot of testing
-               which I don't have time for right now. */
+            /* Otherwise figure out its type, do some additional checking and
+               put it there as a custom attribute */
+            } else {
+                MaterialAttributeType type;
+                if(property.mType == aiPTI_Integer) {
+                    if(property.mDataLength == 1)
+                        type = MaterialAttributeType::Bool;
+                    else if(property.mDataLength/4 == 1)
+                        type = MaterialAttributeType::Int;
+                    else if(property.mDataLength/4 == 2)
+                        type = MaterialAttributeType::Vector2i;
+                    else if(property.mDataLength/4 == 3)
+                        type = MaterialAttributeType::Vector3i;
+                    else if(property.mDataLength/4 == 4)
+                        type = MaterialAttributeType::Vector4i;
+                    else {
+                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is integer array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
+                        type = MaterialAttributeType::String;
+                    }
+                } else if(property.mType == aiPTI_Float) {
+                    if(property.mDataLength/4 == 1)
+                        type = MaterialAttributeType::Float;
+                    else if(property.mDataLength/4 == 2)
+                        type = MaterialAttributeType::Vector2;
+                    else if(property.mDataLength/4 == 3)
+                        type = MaterialAttributeType::Vector3;
+                    else if(property.mDataLength/4 == 4)
+                        type = MaterialAttributeType::Vector4;
+                    else {
+                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
+                        type = MaterialAttributeType::String;
+                    }
+                } else if(property.mType == aiPTI_Double) {
+                    Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
+                    type = MaterialAttributeType::String;
+                } else if(property.mType == aiPTI_String || property.mType == aiPTI_Buffer) {
+                    type = MaterialAttributeType::String;
+                } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+
+                Containers::StringView value;
+                std::size_t valueSize;
+                const void* valuePointer;
+                if(type == MaterialAttributeType::String) {
+                    value = {property.mData, property.mDataLength};
+                    /* +2 is null byte + size */
+                    valueSize = property.mDataLength + 2;
+                    valuePointer = &value;
+                } else {
+                    valueSize = materialAttributeTypeSize(type);
+                    valuePointer = property.mData;
+                }
+
+                const Containers::String keyString = customMaterialKey(key, aiTextureType(property.mSemantic));
+
+                /* +1 is null byte for the key */
+                if(valueSize + keyString.size() + 1 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
+                    Error{} << "Trade::AssimpImporter::material(): property" << keyString << "has" << valueSize << "bytes, skipping";
+                    continue;
+                }
+
+                arrayAppend(attributes, Containers::InPlaceInit, keyString, type, valuePointer);
             }
         }
     }
 
     /* Save offset for the last layer */
     layers.back() = attributes.size();
+
+#if 0
+
+    for(std::size_t i = 0; i != mat->mNumProperties; ++i) {
+//         Containers::StringView key =
+
+//         Debug{} << mat->mProperties[i]->mKey.C_Str() << mat->mProperties[i]->mType << mat->mProperties[i]->mIndex;
+    }
+
+    /* Verify that shading mode is either unknown or Phong (not supporting
+       anything else ATM) */
+    aiShadingMode shadingMode;
+    if(mat->Get(AI_MATKEY_SHADING_MODEL, shadingMode) == AI_SUCCESS && shadingMode != aiShadingMode_Phong) {
+        Error() << "Trade::AssimpImporter::material(): unsupported shading mode" << shadingMode;
+        return {};
+    }
+
+    PhongMaterialData::Flags flags;
+
+    /* Check available textures */
+    {
+        aiString texturePath;
+        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), texturePath) == AI_SUCCESS)
+            flags |= PhongMaterialData::Flag::AmbientTexture;
+        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texturePath) == AI_SUCCESS)
+            flags |= PhongMaterialData::Flag::DiffuseTexture;
+        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), texturePath) == AI_SUCCESS)
+            flags |= PhongMaterialData::Flag::SpecularTexture;
+        if(mat->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texturePath) == AI_SUCCESS)
+            flags |= PhongMaterialData::Flag::NormalTexture;
+        /** @todo many more types supported in assimp */
+    }
+
+    /* Shininess is *not* always present (for example in STL models), default
+       to 0 */
+    Float shininess = 0.0f;
+    mat->Get(AI_MATKEY_SHININESS, shininess);
+
+    UnsignedInt firstTextureIndex = _f->textureIndices[mat];
+
+    /* Key always present, default black, except if Assimp has a bug (see
+       below). And also the alpha is always set to zero, even if the source has
+       something else, so we just don't import it at all. */
+    aiColor3D ambientColor;
+    UnsignedInt ambientTexture{};
+    UnsignedInt ambientCoordinateSet{};
+    mat->Get(AI_MATKEY_COLOR_AMBIENT, ambientColor);
+    if(flags & PhongMaterialData::Flag::AmbientTexture) {
+        ambientTexture = firstTextureIndex++;
+
+        /* Couldn't convince Assimp to import non-zero values from a COLLADA
+           file, so this code path isn't tested */
+        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_AMBIENT, 0), ambientCoordinateSet);
+        if(ambientCoordinateSet != 0) {
+            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
+                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
+                return {};
+            }
+
+            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
+        }
+
+    } else {
+        /* Assimp 4.1 forces ambient color to white for STL models. That's just
+           plain wrong, so we force it back to black (and emit a warning, so in
+           the very rare case when someone would actually want white ambient,
+           they'll know it got overriden). Fixed by
+           https://github.com/assimp/assimp/pull/2563, not released yet. */
+        if(ambientColor == aiColor3D{1.0f, 1.0f, 1.0f}) {
+            Warning{} << "Trade::AssimpImporter::material(): white ambient detected, forcing back to black";
+            ambientColor = aiColor3D{0.0f, 0.0f, 0.0f};
+        }
+    }
+
+    /* Key always present, default black */
+    aiColor4D diffuseColor;
+    UnsignedInt diffuseTexture{};
+    UnsignedInt diffuseCoordinateSet{};
+    mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
+    if(flags & PhongMaterialData::Flag::DiffuseTexture) {
+        diffuseTexture = firstTextureIndex++;
+
+        /* Couldn't convince Assimp to import non-zero values from a COLLADA
+           file, so this code path isn't tested */
+        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE, 0), diffuseCoordinateSet);
+        if(diffuseCoordinateSet != 0) {
+            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
+                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
+                return {};
+            }
+
+            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
+        }
+    }
+
+    /* Key always present, default black */
+    aiColor4D specularColor;
+    UnsignedInt specularTexture{};
+    UnsignedInt specularCoordinateSet{};
+    mat->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
+    if(flags & PhongMaterialData::Flag::SpecularTexture) {
+        specularTexture = firstTextureIndex++;
+
+        /* Couldn't convince Assimp to import non-zero values from a COLLADA
+           file, so this code path isn't tested */
+        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_SPECULAR, 0), specularCoordinateSet);
+        if(specularCoordinateSet != 0) {
+            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
+                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
+                return {};
+            }
+
+            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
+        }
+    }
+
+    UnsignedInt normalTexture{};
+    UnsignedInt normalCoordinateSet{};
+    if(flags & PhongMaterialData::Flag::NormalTexture) {
+        normalTexture = firstTextureIndex++;
+
+        /* Couldn't convince Assimp to import non-zero values from a COLLADA
+           file, so this code path isn't tested */
+        mat->Get(AI_MATKEY_UVWSRC(aiTextureType_NORMALS, 0), normalCoordinateSet);
+        if(normalCoordinateSet != 0) {
+            if(!configuration().value<bool>("allowMaterialTextureCoordinateSets")) {
+                Error{} << "Trade::AssimpImporter::material(): multiple texture coordinate sets are not allowed by default, enable allowMaterialTextureCoordinateSets to import them";
+                return {};
+            }
+
+            flags |= PhongMaterialData::Flag::TextureCoordinateSets;
+        }
+    }
+
+    PhongMaterialData data{flags,
+        Color3{ambientColor}, ambientTexture, ambientCoordinateSet,
+        Color4{diffuseColor}, diffuseTexture, diffuseCoordinateSet,
+        Color4{specularColor}, specularTexture, specularCoordinateSet,
+        normalTexture, normalCoordinateSet, Matrix3{},
+        MaterialAlphaMode::Opaque, 0.5f, shininess, mat};
+#endif
 
     /* Can't use growable deleters in a plugin, convert back to the default
        deleter */
