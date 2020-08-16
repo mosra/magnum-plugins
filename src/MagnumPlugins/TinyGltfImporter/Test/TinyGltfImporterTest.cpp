@@ -52,6 +52,7 @@
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/FlatMaterialData.h>
+#include <Magnum/Trade/PbrClearCoatMaterialData.h>
 #include <Magnum/Trade/PbrMetallicRoughnessMaterialData.h>
 #include <Magnum/Trade/PbrSpecularGlossinessMaterialData.h>
 #include <Magnum/Trade/PhongMaterialData.h>
@@ -117,6 +118,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void materialPbrSpecularGlossiness();
     void materialCommon();
     void materialUnlit();
+    void materialClearCoat();
     void materialPhongFallback();
 
     void materialInvalid();
@@ -297,6 +299,9 @@ constexpr struct {
     {"invalid texture index normal", "normalTexture index 2 out of bounds for 2 textures"},
     {"invalid texture index occlusion", "occlusionTexture index 2 out of bounds for 2 textures"},
     {"invalid texture index emissive", "emissiveTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat factor", "clearcoatTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat roughness", "clearcoatRoughnessTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat normal", "clearcoatNormalTexture index 2 out of bounds for 2 textures"},
 };
 
 constexpr struct {
@@ -439,6 +444,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::materialPbrSpecularGlossiness,
               &TinyGltfImporterTest::materialCommon,
               &TinyGltfImporterTest::materialUnlit,
+              &TinyGltfImporterTest::materialClearCoat,
               &TinyGltfImporterTest::materialPhongFallback});
 
     addInstancedTests({&TinyGltfImporterTest::materialInvalid},
@@ -2560,6 +2566,140 @@ void TinyGltfImporterTest::materialUnlit() {
     CORRADE_COMPARE(flat.color(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
     CORRADE_VERIFY(flat.hasTexture());
     CORRADE_COMPARE(flat.texture(), 1);
+}
+
+void TinyGltfImporterTest::materialClearCoat() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       testing that separately in materialPhongFallback() */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "material-clearcoat.gltf")));
+    CORRADE_COMPARE(importer->materialCount(), 6);
+
+    {
+        const char* name = "defaults";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        {
+            CORRADE_EXPECT_FAIL("Ideally tinygltf wouldn't define metallic/roughness attributes if not present in the material, but well.");
+            CORRADE_COMPARE(material->types(), MaterialType::PbrClearCoat);
+        }
+        CORRADE_COMPARE(material->types(), MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat);
+        CORRADE_COMPARE(material->layerCount(), 2);
+        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+
+        /* These are glTF defaults, which are *not* consistent with ours */
+        const auto& pbr = material->as<PbrClearCoatMaterialData>();
+        CORRADE_COMPARE(pbr.attributeCount(), 3);
+        CORRADE_COMPARE(pbr.layerFactor(), 0.0f);
+        CORRADE_COMPARE(pbr.roughness(), 0.0f);
+    } {
+        const char* name = "factors";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->layerCount(), 2);
+        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+
+        const auto& pbr = material->as<PbrClearCoatMaterialData>();
+        CORRADE_COMPARE(pbr.attributeCount(), 3);
+        CORRADE_COMPARE(pbr.layerFactor(), 0.67f);
+        CORRADE_COMPARE(pbr.roughness(), 0.34f);
+    } {
+        const char* name = "textures";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->layerCount(), 2);
+        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+
+        const auto& pbr = material->as<PbrClearCoatMaterialData>();
+        CORRADE_COMPARE(pbr.attributeCount(), 8);
+        CORRADE_COMPARE(pbr.layerFactor(), 0.7f);
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture));
+        CORRADE_COMPARE(pbr.layerFactorTexture(), 2);
+        CORRADE_COMPARE(pbr.layerFactorTextureSwizzle(), MaterialTextureSwizzle::R);
+        CORRADE_COMPARE(pbr.roughness(), 0.4f);
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
+        CORRADE_COMPARE(pbr.roughnessTexture(), 1);
+        CORRADE_COMPARE(pbr.roughnessTextureSwizzle(), MaterialTextureSwizzle::G);
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
+        CORRADE_COMPARE(pbr.normalTexture(), 0);
+        CORRADE_COMPARE(pbr.normalTextureScale(), 0.35f);
+    } {
+        const char* name = "packed textures";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->layerCount(), 2);
+        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+
+        const auto& pbr = material->as<PbrClearCoatMaterialData>();
+        CORRADE_COMPARE(pbr.attributeCount(), 6);
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture));
+        CORRADE_COMPARE(pbr.layerFactorTexture(), 1);
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
+        CORRADE_COMPARE(pbr.roughnessTexture(), 1);
+        CORRADE_VERIFY(pbr.hasLayerFactorRoughnessTexture());
+    } {
+        const char* name = "texture identity transform";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->layerCount(), 2);
+        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+
+        const auto& pbr = material->as<PbrClearCoatMaterialData>();
+        {
+            CORRADE_EXPECT_FAIL("tinygltf treats an empty extension object inside an extension as if there was no extension at all. The same works correctly with builtin pbrMetallicRoughness.");
+            CORRADE_COMPARE(pbr.attributeCount(), 7 + 3);
+            CORRADE_VERIFY(pbr.hasTextureTransformation());
+        }
+        CORRADE_COMPARE(pbr.attributeCount(), 7);
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture));
+        CORRADE_COMPARE(pbr.layerFactorTextureMatrix(), Matrix3{});
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
+        CORRADE_COMPARE(pbr.roughnessTextureMatrix(), Matrix3{});
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
+        CORRADE_COMPARE(pbr.normalTextureMatrix(), Matrix3{});
+    } {
+        const char* name = "texture transform + coordinate set";
+        auto material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->layerCount(), 2);
+        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+
+        const auto& pbr = material->as<PbrClearCoatMaterialData>();
+        CORRADE_COMPARE(pbr.attributeCount(), 13);
+        /* Identity transform, but is present */
+        CORRADE_VERIFY(pbr.hasTextureTransformation());
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture));
+        CORRADE_COMPARE(pbr.layerFactorTextureMatrix(), (Matrix3{
+            {1.0f, 0.0f, 0.0f},
+            {0.0f, 1.0f, 0.0f},
+            {0.0f, -1.0f, 1.0f}
+        }));
+        CORRADE_COMPARE(pbr.layerFactorTextureCoordinates(), 5);
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
+        CORRADE_COMPARE(pbr.roughnessTextureMatrix(), (Matrix3{
+            {0.5f, 0.0f, 0.0f},
+            {0.0f, 0.5f, 0.0f},
+            {0.0f, 0.5f, 1.0f}
+        }));
+        CORRADE_COMPARE(pbr.roughnessTextureCoordinates(), 1);
+        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
+        CORRADE_COMPARE(pbr.normalTextureMatrix(), (Matrix3{
+            {1.0f, 0.0f, 0.0f},
+            {0.0f, 1.0f, 0.0f},
+            {0.5f, 0.0f, 1.0f}
+        }));
+        CORRADE_COMPARE(pbr.normalTextureCoordinates(), 7);
+    }
 }
 
 void TinyGltfImporterTest::materialPhongFallback() {

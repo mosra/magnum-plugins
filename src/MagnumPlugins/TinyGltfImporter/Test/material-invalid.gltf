@@ -60,6 +60,36 @@
             "emissiveTexture": {
                 "index": 2
             }
+        },
+        {
+            "name": "invalid texture index clearcoat factor",
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatTexture": {
+                        "index": 2
+                    }
+                }
+            }
+        },
+        {
+            "name": "invalid texture index clearcoat roughness",
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatRoughnessTexture": {
+                        "index": 2
+                    }
+                }
+            }
+        },
+        {
+            "name": "invalid texture index clearcoat normal",
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatNormalTexture": {
+                        "index": 2
+                    }
+                }
+            }
         }
     ],
     "textures": [

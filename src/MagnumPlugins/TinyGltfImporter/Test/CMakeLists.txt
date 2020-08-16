@@ -94,6 +94,7 @@ corrade_add_test(TinyGltfImporterTest
         light.gltf
         light.glb
         material-common.gltf
+        material-clearcoat.gltf
         material-invalid.gltf
         material-metallicroughness.gltf
         material-phong-fallback.gltf

@@ -1,0 +1,135 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "texture.png"
+        }
+    ],
+    "materials": [
+        {
+            "name": "defaults",
+            "extensions": {
+                "KHR_materials_clearcoat": {}
+            }
+        },
+        {
+            "name": "factors",
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatFactor": 0.67,
+                    "clearcoatRoughnessFactor": 0.34
+                }
+            }
+        },
+        {
+            "name": "textures",
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatFactor": 0.7,
+                    "clearcoatTexture": {
+                        "index": 2
+                    },
+                    "clearcoatRoughnessFactor": 0.4,
+                    "clearcoatRoughnessTexture": {
+                        "index": 1
+                    },
+                    "clearcoatNormalTexture": {
+                        "index": 0,
+                        "scale": 0.35
+                    }
+                }
+            }
+        },
+        {
+            "name": "packed textures",
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatTexture": {
+                        "index": 1
+                    },
+                    "clearcoatRoughnessTexture": {
+                        "index": 1
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture identity transform",
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatTexture": {
+                        "index": 2,
+                        "extensions": {
+                            "KHR_texture_transform": {}
+                        }
+                    },
+                    "clearcoatRoughnessTexture": {
+                        "index": 1,
+                        "extensions": {
+                            "KHR_texture_transform": {}
+                        }
+                    },
+                    "clearcoatNormalTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {}
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture transform + coordinate set",
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatTexture": {
+                        "index": 2,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.0, 1.0],
+                                "texCoord": 5
+                            }
+                        }
+                    },
+                    "clearcoatRoughnessTexture": {
+                        "index": 1,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "scale": [0.5, 0.5]
+                            }
+                        },
+                        "texCoord": 1
+                    },
+                    "clearcoatNormalTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.5, 0.0],
+                                "texCoord": 7
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ]
+}

@@ -1486,6 +1486,7 @@ bool TinyGltfImporter::materialTexture(const char* name, const UnsignedInt textu
 Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedInt id) {
     const tinygltf::Material& material = _d->model.materials[id];
 
+    Containers::Array<UnsignedInt> layers;
     Containers::Array<MaterialAttributeData> attributes;
     MaterialTypes types;
 
@@ -1760,10 +1761,114 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
             arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTextureCoordinates, *diffuseTextureCoordinates);
     }
 
+    /* Clear coat layer -- needs to be after all base material attributes */
+    auto khrMaterialsClearCoat = material.extensions.find("KHR_materials_clearcoat");
+    if(khrMaterialsClearCoat != material.extensions.end()) {
+        types |= MaterialType::PbrClearCoat;
+
+        /* Add a new layer -- this works both if layers are empty and if
+           there's something already */
+        arrayAppend(layers, UnsignedInt(attributes.size()));
+        arrayAppend(attributes, Containers::InPlaceInit, MaterialLayer::ClearCoat);
+
+        auto clearcoatFactor = khrMaterialsClearCoat->second.Get("clearcoatFactor");
+        if(clearcoatFactor.Type() != tinygltf::NULL_TYPE) {
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::LayerFactor,
+                Float(clearcoatFactor.Get<double>()));
+        } else {
+            /* Default factor is 0, i.e. the layer disabled. I assume this is
+               in order to be ready for when clearcoat is part of the material
+               object and not an extension (in which case the values would be
+               always present and thus it make sense to have clearcoat layers
+               disabled by default). Original reasoning here:
+               https://github.com/KhronosGroup/glTF/pull/1677#issuecomment-543268157
+
+               In our MaterialData API the presence of the layer alone enables
+               it and thus a default of 1 makes sense -- so one can specify
+               just the texture, without the factor as well. */
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::LayerFactor, 0.0f);
+        }
+
+        auto clearcoatTexture = khrMaterialsClearCoat->second.Get("clearcoatTexture");
+        if(clearcoatTexture.Type() != tinygltf::NULL_TYPE) {
+            if(!materialTexture("clearcoatTexture",
+                clearcoatTexture.Get("index").Get<int>(),
+                clearcoatTexture.Get("texCoord").Get<int>(),
+                clearcoatTexture.Get("extensions"),
+                attributes,
+                MaterialAttribute::LayerFactorTexture,
+                MaterialAttribute::LayerFactorTextureMatrix,
+                MaterialAttribute::LayerFactorTextureCoordinates)
+            )
+                return Containers::NullOpt;
+        }
+
+        auto clearcoatRoughnessFactor = khrMaterialsClearCoat->second.Get("clearcoatRoughnessFactor");
+        if(clearcoatRoughnessFactor.Type() != tinygltf::NULL_TYPE) {
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::Roughness,
+                Float(clearcoatRoughnessFactor.Get<double>()));
+        } else {
+            /* Default factor in glTF is 0, not 1. I assume there's a similar
+               reasoning as with the clearcoatFactor above, but it makes less
+               sense. */
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::Roughness, 0.0f);
+        }
+
+        auto clearcoatRoughnessTexture = khrMaterialsClearCoat->second.Get("clearcoatRoughnessTexture");
+        if(clearcoatRoughnessTexture.Type() != tinygltf::NULL_TYPE) {
+            if(!materialTexture("clearcoatRoughnessTexture",
+                clearcoatRoughnessTexture.Get("index").Get<int>(),
+                clearcoatRoughnessTexture.Get("texCoord").Get<int>(),
+                clearcoatRoughnessTexture.Get("extensions"),
+                attributes,
+                MaterialAttribute::RoughnessTexture,
+                MaterialAttribute::RoughnessTextureMatrix,
+                MaterialAttribute::RoughnessTextureCoordinates)
+            )
+                return Containers::NullOpt;
+
+            /* The extension description doesn't mention it, but the schema
+               says the clearcoat roughness is actually in the G channel:
+               https://github.com/KhronosGroup/glTF/blob/dc5519b9ce9834f07c30ec4c957234a0cd6280a2/extensions/2.0/Khronos/KHR_materials_clearcoat/schema/glTF.KHR_materials_clearcoat.schema.json#L32 */
+            arrayAppend(attributes, Containers::InPlaceInit,
+                MaterialAttribute::RoughnessTextureSwizzle,
+                MaterialTextureSwizzle::G);
+        }
+
+        auto clearcoatNormalTexture = khrMaterialsClearCoat->second.Get("clearcoatNormalTexture");
+        if(clearcoatNormalTexture.Type() != tinygltf::NULL_TYPE) {
+            if(!materialTexture("clearcoatNormalTexture",
+                clearcoatNormalTexture.Get("index").Get<int>(),
+                clearcoatNormalTexture.Get("texCoord").Get<int>(),
+                clearcoatNormalTexture.Get("extensions"),
+                attributes,
+                MaterialAttribute::NormalTexture,
+                MaterialAttribute::NormalTextureMatrix,
+                MaterialAttribute::NormalTextureCoordinates)
+            )
+                return Containers::NullOpt;
+
+            auto scale = clearcoatNormalTexture.Get("scale");
+            if(scale.Type() != tinygltf::NULL_TYPE) {
+                arrayAppend(attributes, Containers::InPlaceInit,
+                    MaterialAttribute::NormalTextureScale,
+                    Float(scale.Get<double>()));
+            }
+        }
+    }
+
+    /* If there's any layer, add the final attribute count */
+    arrayAppend(layers, UnsignedInt(attributes.size()));
+
     /* Can't use growable deleters in a plugin, convert back to the default
        deleter */
+    arrayShrink(layers);
     arrayShrink(attributes, Containers::DefaultInit);
-    return MaterialData{types, std::move(attributes), &material};
+    return MaterialData{types, std::move(attributes), std::move(layers), &material};
 }
 
 UnsignedInt TinyGltfImporter::doTextureCount() const {

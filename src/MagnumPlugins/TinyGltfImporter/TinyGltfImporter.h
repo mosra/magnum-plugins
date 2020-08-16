@@ -280,6 +280,9 @@ fail.
     extension is present, @ref MaterialType::Flat is set in material types,
     replacing @ref MaterialType::PbrMetallicRoughness or
     @ref MaterialType::PbrSpecularGlossiness.
+-   If the [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_clearcoat)
+    extension is present, @ref MaterialType::PbrClearCoat is set in material
+    types, and a new layer with clearcoat properties is added
 -   Custom texture coordinate sets as well as [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_texture_transform/README.md)
     properties are imported on all textures.
 -   If the on-by-default @cb{.ini} phongMaterialFallback @ce
