@@ -835,9 +835,16 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
             MaterialAttribute attribute{};
             MaterialAttributeType type{};
             {
-                /* AI_MATKEY_* are in form "bla",0,0, so extract the first part and
-                   turn it into a StringView for string comparison. */
+                /* AI_MATKEY_* are in form "bla",0,0, so extract the first part
+                   and turn it into a StringView for string comparison. The
+                   _s literal is there to avoid useless strlen() calls in every
+                   branch, but MSVC gets extremely confused by that, so not
+                   doing that there. */
+                #ifndef CORRADE_MSVC2019_COMPATIBILITY
                 #define _str2(name, i, j) name ## _s
+                #else
+                #define _str2(name, i, j) name
+                #endif
                 #define _str(name) _CORRADE_HELPER_DEFER(_str2, name)
                 /* Properties not tied to a particular texture */
                 if(property.mSemantic == aiTextureType_NONE) {
