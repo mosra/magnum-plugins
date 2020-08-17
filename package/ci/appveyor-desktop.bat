@@ -27,11 +27,11 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug ^
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
 
-rem Build libPNG. As of 2019-08-23, vcpkg is broken on the 2015 image and needs
+rem Build libPNG. As of 2020-08-17, vcpkg is broken on the 2019 image and needs
 rem updating. Disabling the libPNG build there for now.
-IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_IF_VCPKG_IS_BROKEN=OFF
-IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_IF_VCPKG_IS_BROKEN=ON
-IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" vcpkg install libpng:x64-windows || exit /b
+IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set EXCEPT_IF_VCPKG_IS_BROKEN=OFF
+IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set EXCEPT_IF_VCPKG_IS_BROKEN=ON
+IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" vcpkg install libpng:x64-windows || exit /b
 
 rem build meshoptimizer
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v0.14.zip appveyor DownloadFile https://github.com/zeux/meshoptimizer/archive/v0.14.zip || exit /b
