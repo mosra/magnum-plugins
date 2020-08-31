@@ -6,6 +6,14 @@
         {
             "primitives": [
                 {
+                    "attributes": {},
+                    "material": 1
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
                     "attributes": {}
                 }
             ]
@@ -13,35 +21,36 @@
     ],
     "cameras": [
         {
-            "name": "Camera",
-            "perspective": {
-                "aspectRatio": 1.7777777777777777,
-                "yfov": 0.5033799372418416,
-                "zfar": 100.0,
-                "znear": 0.10000000149011612
-            },
-            "type": "perspective"
+            "type": "perspective",
+            "perspective" : {
+                "yfov" : 1.0,
+                "znear" : 0.1
+            }
+        },
+        {
+            "type": "orthographic",
+            "orthographic" : {
+                "xmag" : 2.0,
+                "ymag" : 1.5,
+                "zfar" : 100.0,
+                "znear" : 0.01
+            }
+        },
+        {
+            "type": "perspective",
+            "perspective" : {
+                "yfov" : 1.0,
+                "znear" : 0.1
+            }
         }
     ],
     "extensions": {
         "KHR_lights_punctual": {
             "lights": [
                 {
-                    "color": [
-                        1.0,
-                        1.0,
-                        1.0
-                    ],
-                    "name": "Lamp",
                     "type": "point"
                 },
                 {
-                    "color": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "name": "Ambient_Scene",
                     "type": "ambient"
                 }
             ]
@@ -54,53 +63,41 @@
         "KHR_lights_punctual"
     ],
     "materials": [
-        {
-            "name": "Material",
-            "pbrMetallicRoughness": {
-                "baseColorFactor": [
-                    0.6400000190734865,
-                    0.6400000190734865,
-                    0.6400000190734865,
-                    1.0
-                ],
-                "metallicFactor": 0.0
-            }
-        }
+        {},
+        {}
     ],
     "nodes": [
         {
-            "camera": 0,
+            "camera": 2,
             "name": "Camera"
         },
         {
             "children": [
                 0
             ],
-            "name": "Empty"
+            "name": "Empty with one child"
         },
         {
-            "name": "Mesh",
+            "name": "Mesh w/o material",
+            "mesh": 1
+        },
+        {
+            "name": "Mesh and a material",
             "mesh": 0
         },
         {
             "extensions": {
                 "KHR_lights_punctual": {
-                    "light": 0
+                    "light": 1
                 }
             },
-            "name": "Light",
-            "rotation": [
-                -0.7071067690849304,
-                -0.0,
-                0.0,
-                0.7071067690849304
-            ]
+            "name": "Light"
         },
         {
             "children": [
                 3, 1
             ],
-            "name": "Empty 2"
+            "name": "Empty with two children"
         }
     ],
     "scene": 1,
@@ -109,11 +106,6 @@
             "nodes": []
         },
         {
-            "extensions": {
-                "KHR_lights_punctual": {
-                    "light": 1
-                }
-            },
             "name": "Scene",
             "nodes": [
                 2,

@@ -1244,45 +1244,61 @@ void TinyGltfImporterTest::scene() {
     CORRADE_COMPARE(importer->sceneName(1), "Scene");
     CORRADE_COMPARE(importer->sceneForName("Scene"), 1);
 
+    auto emptyScene = importer->scene(0);
+    CORRADE_VERIFY(emptyScene);
+    CORRADE_VERIFY(emptyScene->importerState());
+    CORRADE_COMPARE(emptyScene->children3D(), std::vector<UnsignedInt>{});
+
     auto scene = importer->scene(1);
     CORRADE_VERIFY(scene);
     CORRADE_VERIFY(scene->importerState());
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4}));
 
-    CORRADE_COMPARE(importer->object3DCount(), 5);
+    CORRADE_COMPARE(importer->object3DCount(), 6);
+
+    CORRADE_COMPARE(importer->object3DName(4), "Light");
+    CORRADE_COMPARE(importer->object3DForName("Light"), 4);
 
     {
-        CORRADE_COMPARE(importer->object3DName(0), "Camera");
-        CORRADE_COMPARE(importer->object3DForName("Camera"), 0);
-        auto object = importer->object3D(0);
+        auto object = importer->object3D("Camera");
+        CORRADE_VERIFY(object);
         CORRADE_VERIFY(object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
+        CORRADE_COMPARE(object->instance(), 2);
         CORRADE_VERIFY(object->children().empty());
     } {
-        CORRADE_COMPARE(importer->object3DName(1), "Empty");
-        CORRADE_COMPARE(importer->object3DForName("Empty"), 1);
-        auto object = importer->object3D(1);
+        auto object = importer->object3D("Empty with one child");
+        CORRADE_VERIFY(object);
         CORRADE_VERIFY(object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
+        CORRADE_COMPARE(object->instance(), -1);
         CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{0}));
     } {
-        CORRADE_COMPARE(importer->object3DName(2), "Mesh");
-        CORRADE_COMPARE(importer->object3DForName("Mesh"), 2);
-        auto object = importer->object3D(2);
+        auto object = importer->object3D("Mesh w/o material");
+        CORRADE_VERIFY(object);
         CORRADE_VERIFY(object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 1);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), -1);
         CORRADE_VERIFY(object->children().empty());
     } {
-        CORRADE_COMPARE(importer->object3DName(3), "Light");
-        CORRADE_COMPARE(importer->object3DForName("Light"), 3);
-        auto object = importer->object3D(3);
+        auto object = importer->object3D("Mesh and a material");
+        CORRADE_VERIFY(object);
+        CORRADE_VERIFY(object->importerState());
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 0);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), 1);
+        CORRADE_VERIFY(object->children().empty());
+    } {
+        auto object = importer->object3D("Light");
+        CORRADE_VERIFY(object);
         CORRADE_VERIFY(object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
+        CORRADE_COMPARE(object->instance(), 1);
         CORRADE_VERIFY(object->children().empty());
     } {
-        CORRADE_COMPARE(importer->object3DName(4), "Empty 2");
-        CORRADE_COMPARE(importer->object3DForName("Empty 2"), 4);
-        auto object = importer->object3D(4);
+        auto object = importer->object3D("Empty with two children");
+        CORRADE_VERIFY(object);
         CORRADE_VERIFY(object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{3, 1}));
