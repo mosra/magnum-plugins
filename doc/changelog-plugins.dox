@@ -43,6 +43,12 @@ namespace Magnum {
     extensions. All the previous limitations on texture transformation or
     coordinate set variability are now gone.
 
+@subsection changelog-plugins-latest-changes Changes and improvements
+
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now performs range checks
+    on scene, node, camera, mesh, material, child and light references in the
+    scene hierarchy for more robust handling of broken files
+
 @subsection changelog-plugins-latest-buildsystem Build system
 
 -   The `versionPlugins.h` header now gets populated from Git correctly also

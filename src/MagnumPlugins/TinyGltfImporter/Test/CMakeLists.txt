@@ -125,6 +125,9 @@ corrade_add_test(TinyGltfImporterTest
         scene.glb
         scene-nodefault.gltf
         scene-nodefault.glb
+        scene-invalid.gltf
+        scene-invalid-mesh.gltf
+        scene-invalid-default.gltf
         object-transformation.gltf
         object-transformation.glb
         object-transformation-patching.gltf

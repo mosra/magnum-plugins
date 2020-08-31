@@ -325,6 +325,14 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
+    /* Bounds checks that can't be deferred to later. No, tinygltf doesn't
+       check for this. */
+    if(_d->model.defaultScene != -1 && UnsignedInt(_d->model.defaultScene) >= _d->model.scenes.size()) {
+        Error{} << "Trade::TinyGltfImporter::openData(): scene index" << _d->model.defaultScene << "out of bounds for" << _d->model.scenes.size() << "scenes";
+        doClose();
+        return;
+    }
+
     /* Treat meshes with multiple primitives as separate meshes. Each mesh gets
        duplicated as many times as is the size of the primitives array. */
     _d->meshSizeOffsets.emplace_back(0);
@@ -344,6 +352,13 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
 
         const Int mesh = _d->model.nodes[i].mesh;
         if(mesh != -1) {
+            /* tinygltf doesn't check for this either */
+            if(UnsignedInt(mesh) >= _d->model.meshes.size()) {
+                Error{} << "Trade::TinyGltfImporter::openData(): mesh index" << mesh << "out of bounds for" << _d->model.meshes.size() << "meshes";
+                doClose();
+                return;
+            }
+
             /* If a node has a mesh with multiple primitives, add nested nodes
                containing the other primitives after it */
             const std::size_t count = _d->model.meshes[mesh].primitives.size();
@@ -844,6 +859,7 @@ Int TinyGltfImporter::doDefaultScene() const {
     if(_d->model.defaultScene == -1 && !_d->model.scenes.empty())
         return 0;
 
+    /* Bounds-checked in doOpenData() */
     return _d->model.defaultScene;
 }
 
@@ -872,8 +888,14 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
        nodes are children of them */
     std::vector<UnsignedInt> children;
     children.reserve(scene.nodes.size());
-    for(const std::size_t i: scene.nodes)
+    for(const Int i: scene.nodes) {
+        if(UnsignedInt(i) >= _d->model.nodes.size()) {
+            Error{} << "Trade::TinyGltfImporter::scene(): node index" << i << "out of bounds for" << _d->model.nodes.size() << "nodes";
+            return Containers::NullOpt;
+        }
+
         children.push_back(_d->nodeSizeOffsets[i]);
+    }
 
     return SceneData{{}, std::move(children), &scene};
 }
@@ -911,6 +933,10 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
        mesh & material combo */
     const std::size_t nodePrimitiveId = _d->nodeMap[id].second;
     if(nodePrimitiveId) {
+        /* This had to be already checked during file import as we remap for
+           multi-primitive meshes */
+        CORRADE_INTERNAL_ASSERT(UnsignedInt(node.mesh) <= _d->model.meshes.size());
+
         const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh] + nodePrimitiveId;
         const Int materialId = _d->model.meshes[node.mesh].primitives[nodePrimitiveId].material;
         return Containers::pointer(new MeshObjectData3D{{}, {}, {}, Vector3{1.0f}, meshId, materialId, &node});
@@ -932,8 +958,14 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         /** @todo the test should fail with children.push_back(originalNodeId + i + 1); */
         children.push_back(_d->nodeSizeOffsets[originalNodeId] + i + 1);
     }
-    for(const std::size_t i: node.children)
+    for(const Int i: node.children) {
+        if(UnsignedInt(i) >= _d->model.nodes.size()) {
+            Error{} << "Trade::TinyGltfImporter::object3D(): child index" << i << "out of bounds for" << _d->model.nodes.size() << "nodes";
+            return nullptr;
+        }
+
         children.push_back(_d->nodeSizeOffsets[i]);
+    }
 
     /* According to the spec, order is T-R-S: first scale, then rotate, then
        translate (or translate*rotate*scale multiplication of matrices). Makes
@@ -966,13 +998,22 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     }
 
     /* Node is a mesh */
-    if(node.mesh >= 0) {
+    if(node.mesh != -1) {
+        /* This had to be already checked during file import as we remap for
+           multi-primitive meshes */
+        CORRADE_INTERNAL_ASSERT(UnsignedInt(node.mesh) <= _d->model.meshes.size());
+
         /* Multi-primitive nodes are handled above */
         CORRADE_INTERNAL_ASSERT(_d->nodeMap[id].second == 0);
         CORRADE_INTERNAL_ASSERT(!_d->model.meshes[node.mesh].primitives.empty());
 
         const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh];
         const Int materialId = _d->model.meshes[node.mesh].primitives[0].material;
+        if(materialId != -1 && UnsignedInt(materialId) >= _d->model.materials.size()) {
+            Error{} << "Trade::TinyGltfImporter::object3D(): material index" << materialId << "out of bounds for" << _d->model.materials.size() << "materials";
+            return nullptr;
+        }
+
         return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?
             new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, &node} :
             new MeshObjectData3D{std::move(children), transformation, meshId, materialId, &node});
@@ -983,7 +1024,12 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     UnsignedInt instanceId = ~UnsignedInt{}; /* -1 */
 
     /* Node is a camera */
-    if(node.camera >= 0) {
+    if(node.camera != -1) {
+        if(UnsignedInt(node.camera) >= _d->model.cameras.size()) {
+            Error{} << "Trade::TinyGltfImporter::object3D(): camera index" << node.camera << "out of bounds for" << _d->model.cameras.size() << "cameras";
+            return nullptr;
+        }
+
         instanceType = ObjectInstanceType3D::Camera;
         instanceId = node.camera;
 
@@ -991,6 +1037,11 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     } else if(node.extensions.find("KHR_lights_punctual") != node.extensions.end()) {
         instanceType = ObjectInstanceType3D::Light;
         instanceId = UnsignedInt(node.extensions.at("KHR_lights_punctual").Get("light").Get<int>());
+
+        if(instanceId >= _d->model.lights.size()) {
+            Error{} << "Trade::TinyGltfImporter::object3D(): light index" << Int(instanceId) << "out of bounds for" << _d->model.lights.size() << "lights";
+            return nullptr;
+        }
     }
 
     return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?

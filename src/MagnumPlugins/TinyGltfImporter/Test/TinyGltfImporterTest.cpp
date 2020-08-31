@@ -94,8 +94,12 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void scene();
     void sceneEmpty();
     void sceneNoDefault();
-    void objectTransformation();
+    void sceneInvalidObject();
+    void sceneInvalidMesh();
+    void sceneInvalidScene();
+    void sceneInvalidDefaultScene();
 
+    void objectTransformation();
     void objectTransformationQuaternionNormalizationEnabled();
     void objectTransformationQuaternionNormalizationDisabled();
 
@@ -306,6 +310,16 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    const char* message;
+} SceneInvalidObjectData[]{
+    {"camera out of bounds", "camera index 1 out of bounds for 1 cameras"},
+    {"child out of bounds", "child index 5 out of bounds for 4 nodes"},
+    {"material out of bounds", "material index 4 out of bounds for 4 materials"},
+    {"light out of bounds", "light index 2 out of bounds for 2 lights"}
+};
+
+constexpr struct {
+    const char* name;
     const char* fileName;
     const char* meshName;
     bool flipInMaterial;
@@ -414,8 +428,18 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
                        &TinyGltfImporterTest::scene,
                        &TinyGltfImporterTest::sceneEmpty,
-                       &TinyGltfImporterTest::sceneNoDefault,
-                       &TinyGltfImporterTest::objectTransformation},
+                       &TinyGltfImporterTest::sceneNoDefault},
+                      Containers::arraySize(SingleFileData));
+
+    addTests({&TinyGltfImporterTest::sceneInvalidMesh});
+
+    addInstancedTests({&TinyGltfImporterTest::sceneInvalidObject},
+        Containers::arraySize(SceneInvalidObjectData));
+
+    addTests({&TinyGltfImporterTest::sceneInvalidScene,
+              &TinyGltfImporterTest::sceneInvalidDefaultScene});
+
+    addInstancedTests({&TinyGltfImporterTest::objectTransformation},
                       Containers::arraySize(SingleFileData));
 
     addTests({&TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled,
@@ -1333,6 +1357,56 @@ void TinyGltfImporterTest::sceneNoDefault() {
     auto scene = importer->scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_VERIFY(scene->children3D().empty());
+}
+
+void TinyGltfImporterTest::sceneInvalidObject() {
+    auto&& data = SceneInvalidObjectData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "scene-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->object3DCount(), Containers::arraySize(SceneInvalidObjectData));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->object3D(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::object3D(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::sceneInvalidMesh() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "scene-invalid-mesh.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): mesh index 1 out of bounds for 1 meshes\n");
+}
+
+void TinyGltfImporterTest::sceneInvalidScene() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "scene-invalid.gltf")));
+
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->scene("node out of bounds"));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): node index 5 out of bounds for 4 nodes\n");
+}
+
+void TinyGltfImporterTest::sceneInvalidDefaultScene() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "scene-invalid-default.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of bounds for 0 scenes\n");
 }
 
 void TinyGltfImporterTest::objectTransformation() {
