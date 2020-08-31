@@ -150,7 +150,10 @@ Import of skeleton, skin and morph data is not supported at the moment.
     the @cb{.ini} normalizeQuaternions @ce option, see
     @ref Trade-TinyGltfImporter-configuration "below". This doesn't affect
     spline-interpolated rotation tracks.
--   Skinning and morph targets are not supported
+-   Skin `skeleton` property is not imported, but you can retrieve it via
+    @ref SkinData::importerState() --- see @ref Trade-TinyGltfImporter-state
+    for more information
+-   Morph targets are not supported
 -   Animation tracks are always imported with
     @ref Animation::Extrapolation::Constant, because glTF doesn't support
     anything else
@@ -393,6 +396,8 @@ importer-specific data accessors:
     structure
 -   @ref SceneData::importerState() returns pointer to the `tinygltf::Scene`
     structure
+-   @ref SkinData::importerState() returns pointer to the `tinygltf::Skin`
+    structure
 -   @ref TextureData::importerState() returns pointer to the
     `tinygltf::Texture` structure
 
@@ -473,6 +478,11 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
+
+        MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doSkin3DForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doSkin3DName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;

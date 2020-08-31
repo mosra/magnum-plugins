@@ -128,6 +128,13 @@ corrade_add_test(TinyGltfImporterTest
         scene-invalid.gltf
         scene-invalid-mesh.gltf
         scene-invalid-default.gltf
+        skin-embedded.glb
+        skin-embedded.gltf
+        skin-invalid.gltf
+        skin-no-joints.gltf
+        skin.gltf
+        skin.bin
+        skin.glb
         object-transformation.gltf
         object-transformation.glb
         object-transformation-patching.gltf

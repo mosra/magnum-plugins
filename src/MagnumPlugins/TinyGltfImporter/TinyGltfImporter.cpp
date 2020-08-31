@@ -50,6 +50,7 @@
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/ImageData.h>
@@ -175,6 +176,7 @@ struct TinyGltfImporter::Document {
         camerasForName,
         lightsForName,
         scenesForName,
+        skinsForName,
         nodesForName,
         meshesForName,
         materialsForName,
@@ -937,6 +939,11 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
             Error{} << "Trade::TinyGltfImporter::object3D(): material index" << materialId << "out of bounds for" << _d->model.materials.size() << "materials";
             return nullptr;
         }
+
+        if(node.skin != -1 && UnsignedInt(node.skin) >= _d->model.skins.size()) {
+            Error{} << "Trade::TinyGltfImporter::object3D(): skin index" << node.skin << "out of bounds for" << _d->model.skins.size() << "skins";
+            return nullptr;
+        }
     }
 
     /* This is an extra node added for multi-primitive meshes -- return it with
@@ -949,7 +956,7 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
 
         const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh] + nodePrimitiveId;
         const Int materialId = _d->model.meshes[node.mesh].primitives[nodePrimitiveId].material;
-        return Containers::pointer(new MeshObjectData3D{{}, {}, {}, Vector3{1.0f}, meshId, materialId, &node});
+        return Containers::pointer(new MeshObjectData3D{{}, {}, {}, Vector3{1.0f}, meshId, materialId, node.skin, &node});
     }
 
     CORRADE_INTERNAL_ASSERT(node.rotation.size() == 0 || node.rotation.size() == 4);
@@ -1020,8 +1027,8 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
         const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh];
         const Int materialId = _d->model.meshes[node.mesh].primitives[0].material;
         return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?
-            new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, &node} :
-            new MeshObjectData3D{std::move(children), transformation, meshId, materialId, &node});
+            new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, node.skin, &node} :
+            new MeshObjectData3D{std::move(children), transformation, meshId, materialId, node.skin, &node});
     }
 
     /* Unknown nodes are treated as Empty */
@@ -1052,6 +1059,68 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?
         new ObjectData3D{std::move(children), translation, rotation, scaling, instanceType, instanceId, &node} :
         new ObjectData3D{std::move(children), transformation, instanceType, instanceId, &node});
+}
+
+UnsignedInt TinyGltfImporter::doSkin3DCount() const {
+    return _d->model.skins.size();
+}
+
+Int TinyGltfImporter::doSkin3DForName(const std::string& name) {
+    if(!_d->skinsForName) {
+        _d->skinsForName.emplace();
+        _d->skinsForName->reserve(_d->model.skins.size());
+        for(std::size_t i = 0; i != _d->model.skins.size(); ++i)
+            _d->skinsForName->emplace(_d->model.skins[i].name, i);
+    }
+
+    const auto found = _d->skinsForName->find(name);
+    return found == _d->skinsForName->end() ? -1 : found->second;
+}
+
+std::string TinyGltfImporter::doSkin3DName(const UnsignedInt id) {
+    return _d->model.skins[id].name;
+}
+
+Containers::Optional<SkinData3D> TinyGltfImporter::doSkin3D(const UnsignedInt id) {
+    const tinygltf::Skin& skin = _d->model.skins[id];
+
+    if(skin.joints.empty()) {
+        Error{} << "Trade::TinyGltfImporter::skin3D(): skin has no joints";
+        return Containers::NullOpt;
+    }
+
+    /* Joint IDs */
+    Containers::Array<UnsignedInt> joints{Containers::NoInit, skin.joints.size()};
+    for(std::size_t i = 0; i != joints.size(); ++i) {
+        if(std::size_t(skin.joints[i]) >= _d->model.nodes.size()) {
+            Error{} << "Trade::TinyGltfImporter::skin3D(): target node" << skin.joints[i] << "out of bounds for" << _d->model.nodes.size() << "nodes";
+            return Containers::NullOpt;
+        }
+
+        joints[i] = skin.joints[i];
+    }
+
+    /* Inverse bind matrices. If there are none, default is identities */
+    Containers::Array<Matrix4> inverseBindMatrices{skin.joints.size()};
+    if(skin.inverseBindMatrices != -1) {
+        const tinygltf::Accessor* accessor = checkedAccessor(_d->model, "skin3D", skin.inverseBindMatrices);
+        if(!accessor) return Containers::NullOpt;
+
+        if(accessor->type != TINYGLTF_TYPE_MAT4 || accessor->componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+            Error{} << "Trade::TinyGltfImporter::skin3D(): inverse bind matrices have unexpected type" << accessor->type << Debug::nospace << "/" << Debug::nospace << accessor->componentType;
+            return Containers::NullOpt;
+        }
+
+        Containers::StridedArrayView1D<const Matrix4> data = Containers::arrayCast<1, const Matrix4>(bufferView(_d->model, *accessor));
+        if(data.size() != inverseBindMatrices.size()) {
+            Error{} << "Trade::TinyGltfImporter::skin3D(): invalid inverse bind matrix count, expected" << inverseBindMatrices.size() << "but got" << data.size();
+            return Containers::NullOpt;
+        }
+
+        Utility::copy(data, inverseBindMatrices);
+    }
+
+    return SkinData3D{std::move(joints), std::move(inverseBindMatrices), &skin};
 }
 
 UnsignedInt TinyGltfImporter::doMeshCount() const {

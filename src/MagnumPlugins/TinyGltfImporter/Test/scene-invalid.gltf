@@ -21,6 +21,23 @@
                     "material": 5
                 }
             ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                },
+                {
+                    "attributes": {}
+                }
+            ]
         }
     ],
     "cameras": [
@@ -57,7 +74,7 @@
         },
         {
             "name": "child out of bounds",
-            "children": [5]
+            "children": [7]
         },
         {
             "name": "material out of bounds",
@@ -74,12 +91,33 @@
                     "light": 2
                 }
             }
+        },
+        {
+            "name": "skin out of bounds",
+            "mesh": 2,
+            "skin": 3
+        },
+        {
+            "name": "skin for a multi-primitive mesh out of bounds",
+            "mesh": 3,
+            "skin": 3
+        }
+    ],
+    "skins": [
+        {
+            "joints": [1, 2]
+        },
+        {
+            "joints": [0, 1, 2]
+        },
+        {
+            "joints": [1]
         }
     ],
     "scenes": [
         {
             "name": "node out of bounds",
-            "nodes": [5]
+            "nodes": [7]
         }
     ]
 }

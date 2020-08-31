@@ -42,6 +42,9 @@ namespace Magnum {
     and [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_clearcoat)
     extensions. All the previous limitations on texture transformation or
     coordinate set variability are now gone.
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports skins through
+    @ref Trade::AbstractImporter::skin3D(), @ref Trade::MeshObjectData3D::skin()
+    and related APIs
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 

@@ -1,0 +1,83 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "nodes": [
+        {},
+        {}
+    ],
+    "skins": [
+        {
+            "name": "no joints",
+            "joints": [],
+            "comment": "see also skin-no-joints.gltf"
+        },
+        {
+            "name": "joint out of bounds",
+            "joints": [1, 0, 2]
+        },
+        {
+            "name": "accessor out of bounds",
+            "inverseBindMatrices": 4,
+            "joints": [0, 1]
+        },
+        {
+            "name": "wrong accessor type",
+            "inverseBindMatrices": 1,
+            "joints": [0, 1]
+        },
+        {
+            "name": "wrong accessor component type",
+            "inverseBindMatrices": 2,
+            "joints": [0, 1]
+        },
+        {
+            "name": "wrong accessor count",
+            "inverseBindMatrices": 3,
+            "joints": [0, 1]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 2,
+            "type": "MAT4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 2,
+            "type": "MAT3"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5123,
+            "count": 2,
+            "type": "MAT4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "MAT4"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 192
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 192,
+            "uri": "skin.bin"
+        }
+    ]
+}

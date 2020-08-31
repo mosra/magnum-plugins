@@ -57,6 +57,7 @@
 #include <Magnum/Trade/PbrSpecularGlossinessMaterialData.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Sampler.h>
 
@@ -102,6 +103,10 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void objectTransformation();
     void objectTransformationQuaternionNormalizationEnabled();
     void objectTransformationQuaternionNormalizationDisabled();
+
+    void skin();
+    void skinInvalid();
+    void skinNoJointsProperty();
 
     void mesh();
     void meshAttributeless();
@@ -197,6 +202,18 @@ constexpr struct {
     {"node index out of bounds", "target node 2 out of bounds for 2 nodes"},
     {"sampler input accessor index out of bounds", "accessor 3 out of bounds for 3 accessors"},
     {"sampler output accessor index out of bounds", "accessor 3 out of bounds for 3 accessors"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* message;
+} SkinInvalidData[]{
+    {"no joints", "skin has no joints"},
+    {"joint out of bounds", "target node 2 out of bounds for 2 nodes"},
+    {"accessor out of bounds", "accessor 4 out of bounds for 4 accessors"},
+    {"wrong accessor type", "inverse bind matrices have unexpected type 35/5126"},
+    {"wrong accessor component type", "inverse bind matrices have unexpected type 36/5123"},
+    {"wrong accessor count", "invalid inverse bind matrix count, expected 2 but got 3"}
 };
 
 constexpr struct {
@@ -314,9 +331,13 @@ constexpr struct {
     const char* message;
 } SceneInvalidObjectData[]{
     {"camera out of bounds", 0, "camera index 1 out of bounds for 1 cameras"},
-    {"child out of bounds", 0, "child index 5 out of bounds for 5 nodes"},
+    {"child out of bounds", 0, "child index 7 out of bounds for 7 nodes"},
     {"material out of bounds", 0, "material index 4 out of bounds for 4 materials"},
     {"material in a multi-primitive mesh out of bounds", 1, "material index 5 out of bounds for 4 materials"},
+    {"skin out of bounds", 0, "skin index 3 out of bounds for 3 skins"},
+    /* The skin should be checked for both duplicates of the primitive */
+    {"skin for a multi-primitive mesh out of bounds", 0, "skin index 3 out of bounds for 3 skins"},
+    {"skin for a multi-primitive mesh out of bounds", 1, "skin index 3 out of bounds for 3 skins"},
     {"light out of bounds", 0, "light index 2 out of bounds for 2 lights"}
 };
 
@@ -446,6 +467,14 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addTests({&TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled,
               &TinyGltfImporterTest::objectTransformationQuaternionNormalizationDisabled});
+
+    addInstancedTests({&TinyGltfImporterTest::skin},
+        Containers::arraySize(MultiFileData));
+
+    addInstancedTests({&TinyGltfImporterTest::skinInvalid},
+        Containers::arraySize(SkinInvalidData));
+
+    addTests({&TinyGltfImporterTest::skinNoJointsProperty});
 
     addInstancedTests({&TinyGltfImporterTest::mesh},
                       Containers::arraySize(MultiFileData));
@@ -1280,7 +1309,7 @@ void TinyGltfImporterTest::scene() {
     CORRADE_VERIFY(scene->importerState());
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4}));
 
-    CORRADE_COMPARE(importer->object3DCount(), 6);
+    CORRADE_COMPARE(importer->object3DCount(), 7);
 
     CORRADE_COMPARE(importer->object3DName(4), "Light");
     CORRADE_COMPARE(importer->object3DForName("Light"), 4);
@@ -1306,6 +1335,7 @@ void TinyGltfImporterTest::scene() {
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 1);
         CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), -1);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), -1);
         CORRADE_VERIFY(object->children().empty());
     } {
         auto object = importer->object3D("Mesh and a material");
@@ -1314,6 +1344,16 @@ void TinyGltfImporterTest::scene() {
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 0);
         CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), 1);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), -1);
+        CORRADE_VERIFY(object->children().empty());
+    } {
+        auto object = importer->object3D("Mesh and a skin");
+        CORRADE_VERIFY(object);
+        CORRADE_VERIFY(object->importerState());
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(object->instance(), 1);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), -1);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), 1);
         CORRADE_VERIFY(object->children().empty());
     } {
         auto object = importer->object3D("Light");
@@ -1405,7 +1445,7 @@ void TinyGltfImporterTest::sceneInvalidScene() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->scene("node out of bounds"));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): node index 5 out of bounds for 5 nodes\n");
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): node index 7 out of bounds for 7 nodes\n");
 }
 
 void TinyGltfImporterTest::sceneInvalidDefaultScene() {
@@ -1578,6 +1618,82 @@ void TinyGltfImporterTest::objectTransformationQuaternionNormalizationDisabled()
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
     CORRADE_COMPARE(object->rotation(), Quaternion::rotation(45.0_degf, Vector3::yAxis())*2.0f);
+}
+
+void TinyGltfImporterTest::skin() {
+    auto&& data = MultiFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "skin" + std::string{data.suffix})));
+
+    CORRADE_COMPARE(importer->skin3DCount(), 2);
+    CORRADE_COMPARE(importer->skin3DName(1), "explicit inverse bind matrices");
+    CORRADE_COMPARE(importer->skin3DForName("explicit inverse bind matrices"), 1);
+    CORRADE_COMPARE(importer->skin3DForName("nonexistent"), -1);
+
+    {
+        CORRADE_COMPARE(importer->skin3DName(0), "implicit inverse bind matrices");
+
+        auto skin = importer->skin3D(0);
+        CORRADE_VERIFY(skin);
+        CORRADE_VERIFY(skin->importerState());
+        CORRADE_COMPARE_AS(skin->joints(),
+            Containers::arrayView<UnsignedInt>({1, 2}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(skin->inverseBindMatrices(),
+            Containers::arrayView({Matrix4{}, Matrix4{}}),
+            TestSuite::Compare::Container);
+
+    } {
+        CORRADE_COMPARE(importer->skin3DName(1), "explicit inverse bind matrices");
+
+        auto skin = importer->skin3D(1);
+        CORRADE_VERIFY(skin);
+        CORRADE_VERIFY(skin->importerState());
+        CORRADE_COMPARE_AS(skin->joints(),
+            Containers::arrayView<UnsignedInt>({0, 2, 1}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(skin->inverseBindMatrices(),
+            Containers::arrayView({
+                Matrix4::rotationX(35.0_degf),
+                Matrix4::translation({2.0f, 3.0f, 4.0f}),
+                Matrix4::scaling({2.0f, 3.0f, 4.0f})
+            }), TestSuite::Compare::Container);
+    }
+}
+
+void TinyGltfImporterTest::skinInvalid() {
+    auto&& data = SkinInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "skin-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->skin3DCount(), Containers::arraySize(SkinInvalidData));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->skin3D(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::skin3D(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::skinNoJointsProperty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "skin-no-joints.gltf")));
+    {
+        CORRADE_EXPECT_FAIL("TinyGLTF doesn't give any usable error message when there's no skin.joints property, sigh.");
+        CORRADE_VERIFY(false);
+    }
+
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: \n");
 }
 
 void TinyGltfImporterTest::mesh() {

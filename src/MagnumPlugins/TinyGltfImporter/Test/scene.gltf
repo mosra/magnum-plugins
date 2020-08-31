@@ -98,6 +98,19 @@
                 3, 1
             ],
             "name": "Empty with two children"
+        },
+        {
+            "name": "Mesh and a skin",
+            "mesh": 1,
+            "skin": 1
+        }
+    ],
+    "skins": [
+        {
+            "joints": [0]
+        },
+        {
+            "joints": [1, 2]
         }
     ],
     "scene": 1,
