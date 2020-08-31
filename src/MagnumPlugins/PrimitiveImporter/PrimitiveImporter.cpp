@@ -164,7 +164,7 @@ constexpr const char* Names3D[]{
 
 }
 
-Int PrimitiveImporter::doDefaultScene() { return 0; }
+Int PrimitiveImporter::doDefaultScene() const { return 0; }
 
 UnsignedInt PrimitiveImporter::doSceneCount() const { return 1; }
 
@@ -195,7 +195,7 @@ Containers::Pointer<ObjectData2D> PrimitiveImporter::doObject2D(const UnsignedIn
     static_assert(Containers::arraySize(Names2D) <= 12, "can't pack into 3x4 cells");
     return Containers::pointer(new MeshObjectData2D{{},
         Matrix3::translation(3.0f*Vector2{-1.5f + Float(id % 4), -1.0f + Float(id / 4)}),
-        UnsignedInt(doMeshForName(Names2D[id])), -1
+        UnsignedInt(doMeshForName(Names2D[id])), -1, -1
     });
 }
 
@@ -217,7 +217,7 @@ Containers::Pointer<ObjectData3D> PrimitiveImporter::doObject3D(const UnsignedIn
     static_assert(Containers::arraySize(Names3D) <= 25, "can't pack into 5x5 cells");
     return Containers::pointer(new MeshObjectData3D{{},
         Matrix4::translation(3.0f*Vector3{-2.0f + Float(id % 5), -2.0f + Float(id / 5), 0.0f}),
-        UnsignedInt(doMeshForName(Names3D[id])), -1
+        UnsignedInt(doMeshForName(Names3D[id])), -1, -1
     });
 }
 
@@ -574,4 +574,4 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 }}
 
 CORRADE_PLUGIN_REGISTER(PrimitiveImporter, Magnum::Trade::PrimitiveImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")

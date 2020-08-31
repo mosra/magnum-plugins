@@ -689,4 +689,4 @@ Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt, const Unsi
 }}
 
 CORRADE_PLUGIN_REGISTER(DdsImporter, Magnum::Trade::DdsImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")

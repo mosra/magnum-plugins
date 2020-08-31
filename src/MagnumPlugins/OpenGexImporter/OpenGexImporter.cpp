@@ -237,7 +237,7 @@ void OpenGexImporter::doOpenFile(const std::string& filename) {
 
 void OpenGexImporter::doClose() { _d = nullptr; }
 
-Int OpenGexImporter::doDefaultScene() { return 0; }
+Int OpenGexImporter::doDefaultScene() const { return 0; }
 
 UnsignedInt OpenGexImporter::doSceneCount() const { return 1; }
 
@@ -447,7 +447,7 @@ Containers::Pointer<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt 
             if(const auto material = materialRef->firstChildOf(OpenDdl::Type::Reference).asReference())
                 materialId = structureId(_d->materials, *material);
 
-        return Containers::pointer(new MeshObjectData3D{children, transformation, meshId, materialId, &node});
+        return Containers::pointer(new MeshObjectData3D{children, transformation, meshId, materialId, -1, &node});
 
     /* Camera object */
     } else if(node.identifier() == OpenGex::CameraNode) {
@@ -873,4 +873,4 @@ const void* OpenGexImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenGexImporter, Magnum::Trade::OpenGexImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")

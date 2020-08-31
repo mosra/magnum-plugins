@@ -833,7 +833,7 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     return LightData{lightType, lightColor, lightIntensity, &light};
 }
 
-Int TinyGltfImporter::doDefaultScene() {
+Int TinyGltfImporter::doDefaultScene() const {
     /* While https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#scenes
        says that "When scene is undefined, runtime is not required to render
        anything at load time.", several official sample glTF models (e.g. the
@@ -2116,4 +2116,4 @@ const void* TinyGltfImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(TinyGltfImporter, Magnum::Trade::TinyGltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")

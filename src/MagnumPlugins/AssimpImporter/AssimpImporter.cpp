@@ -476,7 +476,7 @@ void AssimpImporter::doClose() {
     _f.reset();
 }
 
-Int AssimpImporter::doDefaultScene() { return _f->scene->mRootNode ? 0 : -1; }
+Int AssimpImporter::doDefaultScene() const { return _f->scene->mRootNode ? 0 : -1; }
 
 UnsignedInt AssimpImporter::doSceneCount() const { return _f->scene->mRootNode ? 1 : 0; }
 
@@ -557,7 +557,7 @@ Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt i
             const int index = (*instance).second.second;
             if(type == ObjectInstanceType3D::Mesh) {
                 const aiMesh* mesh = _f->scene->mMeshes[index];
-                return Containers::pointer(new MeshObjectData3D(children, transformation, index, mesh->mMaterialIndex, node));
+                return Containers::pointer(new MeshObjectData3D(children, transformation, index, mesh->mMaterialIndex, -1, node));
             }
 
             return Containers::pointer(new ObjectData3D(children, transformation, type, index, node));
@@ -576,7 +576,7 @@ Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt i
         return Containers::pointer(new MeshObjectData3D(
             {},
             translation, rotation, scaling,
-            node->mMeshes[spec.second], mesh->mMaterialIndex, node)
+            node->mMeshes[spec.second], mesh->mMaterialIndex, -1, node)
         );
     }
 }
@@ -1106,4 +1106,4 @@ const void* AssimpImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(AssimpImporter, Magnum::Trade::AssimpImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")

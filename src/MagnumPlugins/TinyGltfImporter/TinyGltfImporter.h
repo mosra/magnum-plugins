@@ -462,7 +462,7 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doLightName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doLightCount() const override;
 
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doDefaultScene() override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doDefaultScene() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doSceneForName(const std::string& name) override;

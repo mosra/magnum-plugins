@@ -133,7 +133,7 @@ class MAGNUM_PRIMITIVEIMPORTER_EXPORT PrimitiveImporter: public AbstractImporter
         MAGNUM_PRIMITIVEIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
         MAGNUM_PRIMITIVEIMPORTER_LOCAL void doClose() override;
 
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL Int doDefaultScene() override;
+        MAGNUM_PRIMITIVEIMPORTER_LOCAL Int doDefaultScene() const override;
 
         MAGNUM_PRIMITIVEIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_PRIMITIVEIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;

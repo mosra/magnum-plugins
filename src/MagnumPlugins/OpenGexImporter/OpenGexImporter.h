@@ -240,7 +240,7 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
         MAGNUM_OPENGEXIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_OPENGEXIMPORTER_LOCAL void doClose() override;
 
-        MAGNUM_OPENGEXIMPORTER_LOCAL Int doDefaultScene() override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL Int doDefaultScene() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 

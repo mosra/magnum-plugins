@@ -370,7 +370,7 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL void doClose() override;
 
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doDefaultScene() override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doDefaultScene() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
