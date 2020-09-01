@@ -310,12 +310,14 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    Int idOffset;
     const char* message;
 } SceneInvalidObjectData[]{
-    {"camera out of bounds", "camera index 1 out of bounds for 1 cameras"},
-    {"child out of bounds", "child index 5 out of bounds for 4 nodes"},
-    {"material out of bounds", "material index 4 out of bounds for 4 materials"},
-    {"light out of bounds", "light index 2 out of bounds for 2 lights"}
+    {"camera out of bounds", 0, "camera index 1 out of bounds for 1 cameras"},
+    {"child out of bounds", 0, "child index 5 out of bounds for 5 nodes"},
+    {"material out of bounds", 0, "material index 4 out of bounds for 4 materials"},
+    {"material in a multi-primitive mesh out of bounds", 1, "material index 5 out of bounds for 4 materials"},
+    {"light out of bounds", 0, "light index 2 out of bounds for 2 lights"}
 };
 
 constexpr struct {
@@ -1367,12 +1369,19 @@ void TinyGltfImporterTest::sceneInvalidObject() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "scene-invalid.gltf")));
 
-    /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->object3DCount(), Containers::arraySize(SceneInvalidObjectData));
+    /* Check we didn't forget to test anything. There are some extra nodes for
+       multi-primitive meshes, ignore those. */
+    CORRADE_COMPARE(importer->object3DCount() - 1, Containers::arraySize(SceneInvalidObjectData));
+
+    /* For testing bounds checks for multi-primitive meshes we need to import
+       Nth mesh of the same name */
+    Int id = importer->object3DForName(data.name);
+    CORRADE_VERIFY(id != -1);
+    CORRADE_COMPARE(importer->object3DName(id + data.idOffset), data.name);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(data.name));
+    CORRADE_VERIFY(!importer->object3D(id + data.idOffset));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::object3D(): {}\n", data.message));
 }
 
@@ -1396,7 +1405,7 @@ void TinyGltfImporterTest::sceneInvalidScene() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->scene("node out of bounds"));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): node index 5 out of bounds for 4 nodes\n");
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): node index 5 out of bounds for 5 nodes\n");
 }
 
 void TinyGltfImporterTest::sceneInvalidDefaultScene() {

@@ -926,12 +926,22 @@ std::string TinyGltfImporter::doObject3DName(UnsignedInt id) {
 
 Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
     const std::size_t originalNodeId = _d->nodeMap[id].first;
+    const std::size_t nodePrimitiveId = _d->nodeMap[id].second;
     const tinygltf::Node& node = _d->model.nodes[originalNodeId];
+
+    /* Checks that are common for mesh nodes and extra nodes for
+       multi-primitive meshes */
+    if(nodePrimitiveId || node.mesh != -1) {
+        const Int materialId = _d->model.meshes[node.mesh].primitives[nodePrimitiveId].material;
+        if(materialId != -1 && UnsignedInt(materialId) >= _d->model.materials.size()) {
+            Error{} << "Trade::TinyGltfImporter::object3D(): material index" << materialId << "out of bounds for" << _d->model.materials.size() << "materials";
+            return nullptr;
+        }
+    }
 
     /* This is an extra node added for multi-primitive meshes -- return it with
        no children, identity transformation and just a link to the particular
        mesh & material combo */
-    const std::size_t nodePrimitiveId = _d->nodeMap[id].second;
     if(nodePrimitiveId) {
         /* This had to be already checked during file import as we remap for
            multi-primitive meshes */
@@ -1009,11 +1019,6 @@ Containers::Pointer<ObjectData3D> TinyGltfImporter::doObject3D(UnsignedInt id) {
 
         const UnsignedInt meshId = _d->meshSizeOffsets[node.mesh];
         const Int materialId = _d->model.meshes[node.mesh].primitives[0].material;
-        if(materialId != -1 && UnsignedInt(materialId) >= _d->model.materials.size()) {
-            Error{} << "Trade::TinyGltfImporter::object3D(): material index" << materialId << "out of bounds for" << _d->model.materials.size() << "materials";
-            return nullptr;
-        }
-
         return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?
             new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, &node} :
             new MeshObjectData3D{std::move(children), transformation, meshId, materialId, &node});

@@ -10,6 +10,17 @@
                     "material": 4
                 }
             ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                },
+                {
+                    "attributes": {},
+                    "material": 5
+                }
+            ]
         }
     ],
     "cameras": [
@@ -51,6 +62,10 @@
         {
             "name": "material out of bounds",
             "mesh": 0
+        },
+        {
+            "name": "material in a multi-primitive mesh out of bounds",
+            "mesh": 1
         },
         {
             "name": "light out of bounds",
