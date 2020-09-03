@@ -45,6 +45,8 @@ namespace Magnum {
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports skins through
     @ref Trade::AbstractImporter::skin3D(), @ref Trade::MeshObjectData3D::skin()
     and related APIs
+-   @ref Trade::AssimpImporter "AssimpImporter" now imports ambient lights,
+    light attenuation and spotlight cone angle properties
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 

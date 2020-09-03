@@ -69,8 +69,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         image-filename-trailing-space.obj
         image-mips.mtl
         image-mips.obj
-        light-undefined.dae
         light.dae
+        light-area.fbx # Converted from light-area.blend
         material-color.dae
         material-texture.dae
         material-color-texture.mtl

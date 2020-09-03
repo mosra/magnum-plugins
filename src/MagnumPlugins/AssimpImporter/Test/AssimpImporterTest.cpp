@@ -76,7 +76,7 @@ struct AssimpImporterTest: TestSuite::Tester {
 
     void camera();
     void light();
-    void lightUndefined();
+    void lightUnsupported();
     void materialColor();
     void materialTexture();
     void materialColorTexture();
@@ -131,15 +131,6 @@ constexpr struct {
 };
 
 constexpr struct {
-    LightData::Type type;
-    Color3 color;
-} LightInstanceData[]{
-    {LightData::Type::Spot, {0.12f, 0.24f, 0.36f}},
-    {LightData::Type::Point, {0.5f, 0.25f, 0.05f}},
-    {LightData::Type::Infinite, {1.0f, 0.15f, 0.45f}}
-};
-
-constexpr struct {
     const char* name;
     const char* file;
     bool importColladaIgnoreUpDirection;
@@ -159,12 +150,11 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::openData,
               &AssimpImporterTest::openDataFailed,
 
-              &AssimpImporterTest::camera});
+              &AssimpImporterTest::camera,
 
-    addInstancedTests({&AssimpImporterTest::light},
-        Containers::arraySize(LightInstanceData));
+              &AssimpImporterTest::light,
+              &AssimpImporterTest::lightUnsupported,
 
-    addTests({&AssimpImporterTest::lightUndefined,
               &AssimpImporterTest::materialColor,
               &AssimpImporterTest::materialTexture,
               &AssimpImporterTest::materialColorTexture,
@@ -315,39 +305,71 @@ void AssimpImporterTest::camera() {
 }
 
 void AssimpImporterTest::light() {
-    auto&& data = LightInstanceData[testCaseInstanceId()];
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
 
-    CORRADE_COMPARE(importer->lightCount(), 3);
-    CORRADE_COMPARE(importer->object3DCount(), 3);
+    CORRADE_COMPARE(importer->lightCount(), 4);
 
-    Containers::Optional<LightData> light = importer->light(testCaseInstanceId());
-    CORRADE_VERIFY(light);
-    CORRADE_COMPARE(light->type(), data.type);
-    CORRADE_COMPARE(light->color(), data.color);
-    CORRADE_COMPARE(light->intensity(), 1.0f);
+    /* Spot light */
+    {
+        auto light = importer->light(0);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->color(), (Color3{0.12f, 0.24f, 0.36f}));
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+        CORRADE_COMPARE(light->attenuation(), (Vector3{0.1f, 0.3f, 0.5f}));
+        CORRADE_COMPARE(light->range(), Constants::inf());
+        CORRADE_COMPARE(light->innerConeAngle(), 45.0_degf);
+        /* Not sure how it got calculated from 0.15 falloff exponent, but let's
+           just trust Assimp for once */
+        CORRADE_COMPARE(light->outerConeAngle(), 135.0_degf);
 
-    Containers::Pointer<ObjectData3D> lightObject = importer->object3D(testCaseInstanceId());
-    CORRADE_COMPARE(lightObject->instanceType(), ObjectInstanceType3D::Light);
-    CORRADE_COMPARE(lightObject->instance(), testCaseInstanceId());
+    /* Point light */
+    } {
+        auto light = importer->light(1);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->color(), (Color3{0.5f, 0.25f, 0.05f}));
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+        CORRADE_COMPARE(light->attenuation(), (Vector3{0.1f, 0.7f, 0.9f}));
+        CORRADE_COMPARE(light->range(), Constants::inf());
+
+    /* Directional light */
+    } {
+        auto light = importer->light(2);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        /* This one has intensity of 10, which gets premultiplied to the
+           color */
+        CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.15f, 0.45f})*10.0f);
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+
+    /* Ambient light -- imported as Point with no attenuation */
+    } {
+        auto light = importer->light(3);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->color(), (Color3{0.01f, 0.02f, 0.05f}));
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
+    }
 }
 
-void AssimpImporterTest::lightUndefined() {
+void AssimpImporterTest::lightUnsupported() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light-undefined.dae")));
 
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
-        CORRADE_SKIP("Current version of assimp cannot load lights with undefined light type yet.");
+    /* The light-area.blend file contains an area light, but Assimp can't open
+       Blender 2.8 files yet it seems. So I saved it from Blender as FBX and
+       opening that, but somehow the light lost its area type in process and
+       it's now UNKNOWN instead. Which is fine I guess as I want to test just
+       the failure anyway. */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light-area.fbx")));
+    CORRADE_COMPARE(importer->lightCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!importer->light(0));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): light type 4 is not supported\n");
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): light type 0 is not supported\n");
 }
 
 void AssimpImporterTest::materialColor() {

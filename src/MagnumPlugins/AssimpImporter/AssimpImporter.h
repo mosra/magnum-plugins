@@ -221,14 +221,15 @@ verbosity levels in each instance.
 
 @subsection Trade-AssimpImporter-behavior-lights Light import
 
+-   @ref LightData::intensity() is always @cpp 1.0f @ce, instead Assimp
+    premultiplies @ref LightData::color() with the intensity
+-   Ambient lights are imported as @ref LightData::Type::Point with attenuation
+    set to @cpp {1.0f, 0.0f, 0.0f} @ce
 -   The following properties are ignored:
-    -   Angle inner/outer cone
-    -   Linear/quadratic/constant attenuation
-    -   Ambient/specular color
--   Assimp does not load a property which can be mapped to
-    @ref LightData::intensity()
--   Light types other than `aiLightSource_DIRECTIONAL`, `aiLightSource_POINT`
-    and `aiLightSource_SPOT` are unsupported
+    -   Specular color
+    -   Custom light orientation vectors --- the orientation is always only
+        inherited from the node containing the light
+-   Area lights are not supported
 
 @subsection Trade-AssimpImporter-behavior-cameras Camera import
 

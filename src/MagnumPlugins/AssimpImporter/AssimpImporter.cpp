@@ -589,21 +589,31 @@ Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
     const aiLight* l = _f->scene->mLights[id];
 
     LightData::Type lightType;
+    Color3 color; /** @todo specular color? */
     if(l->mType == aiLightSource_DIRECTIONAL) {
-        lightType = LightData::Type::Infinite;
+        lightType = LightData::Type::Directional;
+        color = Color3{l->mColorDiffuse};
     } else if(l->mType == aiLightSource_POINT) {
         lightType = LightData::Type::Point;
+        color = Color3{l->mColorDiffuse};
     } else if(l->mType == aiLightSource_SPOT) {
         lightType = LightData::Type::Spot;
+        color = Color3{l->mColorDiffuse};
+    } else if(l->mType == aiLightSource_AMBIENT) {
+        lightType = LightData::Type::Point;
+        color = Color3{l->mColorAmbient};
     } else {
+        /** @todo area lights */
         Error() << "Trade::AssimpImporter::light(): light type" << l->mType << "is not supported";
         return {};
     }
 
-    Color3 ambientColor = Color3(l->mColorDiffuse);
-
-    /** @todo angle inner/outer cone, linear/quadratic/constant attenuation, ambient/specular color are not used */
-    return LightData(lightType, ambientColor, 1.0f, l);
+    return LightData{lightType, color, 1.0f,
+        /* For a DIRECTIONAL and AMBIENT light this is (1, 0, 0), which is
+           exactly what we expect (yay!) */
+        {l->mAttenuationConstant, l->mAttenuationLinear, l->mAttenuationQuadratic},
+        Rad{l->mAngleInnerCone}, Rad{l->mAngleOuterCone},
+        l};
 }
 
 UnsignedInt AssimpImporter::doMeshCount() const {
