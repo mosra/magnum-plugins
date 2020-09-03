@@ -641,7 +641,7 @@ void OpenGexImporterTest::light() {
     {
         Containers::Optional<LightData> light = importer->light(0);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Infinite);
+        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
         CORRADE_COMPARE(light->color(), (Color3{0.7f, 1.0f, 0.1f}));
         CORRADE_COMPARE(light->intensity(), 3.0f);
 

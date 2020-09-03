@@ -508,7 +508,7 @@ Containers::Optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
     LightData::Type lightType;
     const auto type = light.propertyOf(OpenGex::type);
     if(type.as<std::string>() == "infinite")
-        lightType = LightData::Type::Infinite;
+        lightType = LightData::Type::Directional;
     else if(type.as<std::string>() == "point")
         lightType = LightData::Type::Point;
     else if(type.as<std::string>() == "spot")
