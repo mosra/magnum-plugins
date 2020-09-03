@@ -47,6 +47,8 @@ namespace Magnum {
     and related APIs
 -   @ref Trade::AssimpImporter "AssimpImporter" now imports ambient lights,
     light attenuation and spotlight cone angle properties
+-   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports light range and
+    spotlight cone angle properties
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 

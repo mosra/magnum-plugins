@@ -826,28 +826,63 @@ std::string TinyGltfImporter::doLightName(const UnsignedInt id) {
 Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     const tinygltf::Light& light = _d->model.lights[id];
 
-    Color3 lightColor{float(light.color[0]), float(light.color[1]), float(light.color[2])};
-    Float lightIntensity{Float(light.intensity)};
-
-    LightData::Type lightType;
-
+    /* Light type */
+    LightData::Type type;
     if(light.type == "point") {
-        lightType = LightData::Type::Point;
+        type = LightData::Type::Point;
     } else if(light.type == "spot") {
-        lightType = LightData::Type::Spot;
+        type = LightData::Type::Spot;
     } else if(light.type == "directional") {
-        lightType = LightData::Type::Infinite;
-    } else if(light.type == "ambient") {
-        Error() << "Trade::TinyGltfImporter::light(): unsupported value for light type:" << light.type;
-        return Containers::NullOpt;
-    /* LCOV_EXCL_START */
+        type = LightData::Type::Directional;
     } else {
-        Error() << "Trade::TinyGltfImporter::light(): invalid value for light type:" << light.type;
+        Error{} << "Trade::TinyGltfImporter::light(): invalid light type" << light.type;
         return Containers::NullOpt;
     }
-    /* LCOV_EXCL_STOP */
 
-    return LightData{lightType, lightColor, lightIntensity, &light};
+    /* Light color */
+    Color3 color{NoInit};
+    if(light.color.size() == 3)
+        color = {Float(light.color[0]), Float(light.color[1]), Float(light.color[2])};
+    else if(light.color.size() == 0)
+        color = Color3{1.0f};
+    else {
+        Error{} << "Trade::TinyGltfImporter::light(): expected three values for a color, got" << light.color.size();
+        return Containers::NullOpt;
+    }
+
+    /* Spotlight cone angles. In glTF they're specified as half-angles (which
+       is also why the limit on outer angle is 90°, not 180°), to avoid
+       confusion report a potential error in the original half-angles and
+       double the angle only at the end. */
+    Rad innerConeAngle{NoInit}, outerConeAngle{NoInit};
+    if(type == LightData::Type::Spot) {
+        innerConeAngle = Rad{Float(light.spot.innerConeAngle)};
+        outerConeAngle = Rad{Float(light.spot.outerConeAngle)};
+
+        if(innerConeAngle < Rad(0.0_degf) || innerConeAngle >= outerConeAngle || outerConeAngle >= Rad(90.0_degf)) {
+            Error{} << "Trade::TinyGltfImporter::light(): inner and outer cone angle" << Deg(innerConeAngle) << "and" << Deg(outerConeAngle) << "out of allowed bounds";
+            return Containers::NullOpt;
+        }
+    } else innerConeAngle = outerConeAngle = 180.0_degf;
+
+    /* Tinygltf sets range to 0 instead of infinity when it's not present.
+       That's stupid because it would divide by zero, fix that. Even more
+       stupid is JSON not having ANY way to represent an infinity, FFS. */
+    Float range;
+    if(light.range == 0.0) range = Constants::inf();
+    else range = Float(light.range);
+
+    /* Range should be infinity for directional lights. Because there's no way
+       to represent infinity in JSON, directly suggest to remove the range
+       property, don't even bother printing the value. */
+    if(type == LightData::Type::Directional && range != Constants::inf()) {
+        Error{} << "Trade::TinyGltfImporter::light(): range can't be defined for a directional light";
+        return Containers::NullOpt;
+    }
+
+    /* As said above, glTF uses half-angles, while we have full angles (for
+       consistency with existing APIs such as OpenAL cone angles or math intersection routines as well as Blender). */
+    return LightData{type, color, Float(light.intensity), range, innerConeAngle*2.0f, outerConeAngle*2.0f, &light};
 }
 
 Int TinyGltfImporter::doDefaultScene() const {

@@ -1,61 +1,51 @@
 {
-    "asset" : {
-        "version" : "2.0"
+    "asset": {
+        "version": "2.0"
     },
-    "extensions" : {
-        "KHR_lights_punctual" : {
-            "lights" : [
+    "extensions": {
+        "KHR_lights_punctual": {
+            "lights": [
                 {
-                    "color" : [
-                        0.06,
-                        0.88,
-                        1.0
-                    ],
-                    "name" : "Point",
-                    "range" : 10.0,
-                    "type" : "point"
+                    "name": "Point with everything implicit",
+                    "type": "point"
                 },
                 {
-                    "color" : [
+                    "name": "Spot",
+                    "type": "spot",
+                    "color": [
                         0.28,
                         0.19,
                         1.0
                     ],
-                    "name" : "Spot",
-                    "spot" : {
-                        "innerConeAngle" : 0.3337942263919169,
-                        "outerConeAngle" : 0.39269909262657166
+                    "spot": {
+                        "innerConeAngle": 0.25,
+                        "outerConeAngle": 0.35
                     },
-                    "intensity": 2.1,
-                    "profile" : "CMN",
-                    "type" : "spot"
+                    "range": 10.0,
+                    "intensity": 2.1
                 },
                 {
-                    "color" : [
+                    "name": "Spot with implicit angles",
+                    "type": "spot",
+                    "spot": {}
+                },
+                {
+                    "name": "Sun",
+                    "type": "directional",
+                    "color": [
                         1.0,
                         0.08,
                         0.14
                     ],
-                    "name" : "Sun",
-                    "profile" : "CMN",
-                    "type" : "directional"
-                },
-                {
-                    "color" : [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "name" : "Ambient_Scene",
-                    "type" : "ambient"
+                    "intensity": 0.1
                 }
             ]
         }
     },
-    "extensionsRequired" : [
+    "extensionsRequired": [
         "KHR_lights_punctual"
     ],
-    "extensionsUsed" : [
+    "extensionsUsed": [
         "KHR_lights_punctual"
     ]
 }

@@ -1,0 +1,58 @@
+{
+    "asset" : {
+        "version" : "2.0"
+    },
+    "extensions" : {
+        "KHR_lights_punctual" : {
+            "lights" : [
+                {
+                    "name" : "unknown type",
+                    "type" : "what"
+                },
+                {
+                    "name" : "directional with range",
+                    "type" : "directional",
+                    "range" : 2
+                },
+                {
+                    "name" : "spot with too small inner angle",
+                    "type" : "spot",
+                    "spot" : {
+                        "innerConeAngle" : -0.01
+                    }
+                },
+                {
+                    "name" : "spot with too large outer angle",
+                    "type" : "spot",
+                    "spot" : {
+                        "outerConeAngle" : 1.58
+                    }
+                },
+                {
+                    "name" : "spot with inner angle same as outer",
+                    "type" : "spot",
+                    "spot" : {
+                        "innerConeAngle" : 0.25,
+                        "outerConeAngle" : 0.25
+                    }
+                },
+                {
+                    "name": "four color values",
+                    "type": "directional",
+                    "color": [
+                        1.0,
+                        0.08,
+                        0.14,
+                        0.5
+                    ]
+                }
+            ]
+        }
+    },
+    "extensionsRequired" : [
+        "KHR_lights_punctual"
+    ],
+    "extensionsUsed" : [
+        "KHR_lights_punctual"
+    ]
+}

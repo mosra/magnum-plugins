@@ -93,6 +93,9 @@ corrade_add_test(TinyGltfImporterTest
         image-basis-embedded.glb
         light.gltf
         light.glb
+        light-invalid.gltf
+        light-missing-type.gltf
+        light-missing-spot.gltf
         material-common.gltf
         material-clearcoat.gltf
         material-invalid.gltf

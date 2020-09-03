@@ -91,6 +91,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void camera();
 
     void light();
+    void lightInvalid();
+    void lightMissingType();
+    void lightMissingSpot();
 
     void scene();
     void sceneEmpty();
@@ -202,6 +205,20 @@ constexpr struct {
     {"node index out of bounds", "target node 2 out of bounds for 2 nodes"},
     {"sampler input accessor index out of bounds", "accessor 3 out of bounds for 3 accessors"},
     {"sampler output accessor index out of bounds", "accessor 3 out of bounds for 3 accessors"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* message;
+} LightInvalidData[]{
+    {"unknown type", "invalid light type what"},
+    {"directional with range", "range can't be defined for a directional light"},
+    {"spot with too small inner angle", "inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
+    /* These are kinda silly (not sure why we should limit to 90° and why inner
+       can't be the same as outer), but let's follow the spec */
+    {"spot with too large outer angle", "inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
+    {"spot with inner angle same as outer", "inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
+    {"four color values", "expected three values for a color, got 4"}
 };
 
 constexpr struct {
@@ -447,9 +464,16 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addInstancedTests({&TinyGltfImporterTest::camera,
 
-                       &TinyGltfImporterTest::light,
+                       &TinyGltfImporterTest::light},
+                      Containers::arraySize(SingleFileData));
 
-                       &TinyGltfImporterTest::scene,
+    addInstancedTests({&TinyGltfImporterTest::lightInvalid},
+        Containers::arraySize(LightInvalidData));
+
+    addTests({&TinyGltfImporterTest::lightMissingType,
+              &TinyGltfImporterTest::lightMissingSpot});
+
+    addInstancedTests({&TinyGltfImporterTest::scene,
                        &TinyGltfImporterTest::sceneEmpty,
                        &TinyGltfImporterTest::sceneNoDefault},
                       Containers::arraySize(SingleFileData));
@@ -1253,36 +1277,83 @@ void TinyGltfImporterTest::light() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "light" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->lightCount(), 4); /* 3 + 1 (ambient light) */
+    CORRADE_COMPARE(importer->lightCount(), 4);
+
+    CORRADE_COMPARE(importer->lightForName("Spot"), 1);
+    CORRADE_COMPARE(importer->lightName(1), "Spot");
 
     {
-        CORRADE_COMPARE(importer->lightForName("Point"), 0);
-        CORRADE_COMPARE(importer->lightName(0), "Point");
-
-        auto light = importer->light(0);
+        auto light = importer->light("Point with everything implicit");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Point);
-        CORRADE_COMPARE(light->color(), (Color3{0.06f, 0.88f, 1.0f}));
+        CORRADE_COMPARE(light->color(), (Color3{1.0f, 1.0f, 1.0f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 1.0f}));
+        CORRADE_COMPARE(light->range(), Constants::inf());
     } {
-        CORRADE_COMPARE(importer->lightForName("Spot"), 1);
-        CORRADE_COMPARE(importer->lightName(1), "Spot");
-
-        auto light = importer->light(1);
+        auto light = importer->light("Spot");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.28f, 0.19f, 1.0f}));
         CORRADE_COMPARE(light->intensity(), 2.1f);
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 1.0f}));
+        CORRADE_COMPARE(light->range(), 10.0f);
+        /* glTF has half-angles, we have full angles */
+        CORRADE_COMPARE(light->innerConeAngle(), 0.25_radf*2.0f);
+        CORRADE_COMPARE(light->outerConeAngle(), 0.35_radf*2.0f);
     } {
-        CORRADE_COMPARE(importer->lightForName("Sun"), 2);
-        CORRADE_COMPARE(importer->lightName(2), "Sun");
-
-        auto light = importer->light(2);
+        auto light = importer->light("Spot with implicit angles");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Infinite);
+        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->innerConeAngle(), 0.0_degf);
+        /* glTF has half-angles, we have full angles */
+        CORRADE_COMPARE(light->outerConeAngle(), 45.0_degf*2.0f);
+    } {
+        auto light = importer->light("Sun");
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.08f, 0.14f}));
-        CORRADE_COMPARE(light->intensity(), 1.0f);
+        CORRADE_COMPARE(light->intensity(), 0.1f);
     }
+}
+
+void TinyGltfImporterTest::lightInvalid() {
+    auto&& data = LightInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "light-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->lightCount(), Containers::arraySize(LightInvalidData));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->light(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::light(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::lightMissingType() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "light-missing-type.gltf")));
+    /* This error is extremely shitty, but well that's tinygltf, so. */
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: 'type' property is missing.\n");
+}
+
+void TinyGltfImporterTest::lightMissingSpot() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "light-missing-spot.gltf")));
+    /* This error is extremely shitty, but well that's tinygltf, so. */
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: Spot light description not found.\n");
 }
 
 void TinyGltfImporterTest::scene() {
