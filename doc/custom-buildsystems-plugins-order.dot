@@ -42,6 +42,7 @@ digraph "Magnum Plugins dependency order" {
 
     AudioImporter [label="*AudioImporter" class="m-success"]
     ImageConverter [label="*ImageConverter" class="m-success"]
+    SceneConverter [label="*SceneConverter" class="m-success"]
     Importer [label="*Importer" class="m-success"]
     Font [label="*Font" class="m-success"]
 
@@ -62,6 +63,7 @@ digraph "Magnum Plugins dependency order" {
 
     AudioImporter -> MagnumAudio
     ImageConverter -> MagnumTrade
+    SceneConverter -> MagnumTrade
     Importer -> MagnumTrade
     Font -> MagnumText
 

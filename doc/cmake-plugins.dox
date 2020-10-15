@@ -41,6 +41,10 @@ information), they need to be linked into the executable and then explicitly
 imported. Also if you are going to use them as dependencies, you need to find
 the dependency and then link to it.
 
+@note
+    Plugin usage on the C++ side is the same for both static and dynamic
+    plugins. Refer to @ref plugins for more information.
+
 @section cmake-plugins-installed Using Magnum Plugins that were externally built and installed
 
 The main logic is in the [FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
