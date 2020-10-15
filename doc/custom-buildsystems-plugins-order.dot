@@ -31,6 +31,7 @@ digraph "Magnum Plugins dependency order" {
     Magnum [style=solid class="m-info"]
     MagnumAudio [style=solid label="Magnum\nAudio" class="m-info"]
     MagnumMeshTools [style=solid label="Magnum\nMeshTools" class="m-info"]
+    MagnumShaderTools [style=solid label="Magnum\nShaderTools" class="m-info"]
     MagnumText [style=solid label="Magnum\nText" class="m-info"]
     MagnumTrade [style=solid label="Magnum\nTrade" class="m-info"]
 
@@ -43,6 +44,7 @@ digraph "Magnum Plugins dependency order" {
     AudioImporter [label="*AudioImporter" class="m-success"]
     ImageConverter [label="*ImageConverter" class="m-success"]
     SceneConverter [label="*SceneConverter" class="m-success"]
+    ShaderConverter [label="*ShaderConverter" class="m-success"]
     Importer [label="*Importer" class="m-success"]
     Font [label="*Font" class="m-success"]
 
@@ -54,6 +56,7 @@ digraph "Magnum Plugins dependency order" {
 
     MagnumAudio -> Magnum [class="m-info"]
     MagnumMeshTools -> Magnum [class="m-info"]
+    MagnumShaderTools -> Magnum [class="m-info"]
     MagnumText -> Magnum [class="m-info"]
     MagnumTrade -> Magnum [class="m-info"]
 
@@ -64,6 +67,7 @@ digraph "Magnum Plugins dependency order" {
     AudioImporter -> MagnumAudio
     ImageConverter -> MagnumTrade
     SceneConverter -> MagnumTrade
+    ShaderConverter -> MagnumShaderTools
     Importer -> MagnumTrade
     Font -> MagnumText
 
