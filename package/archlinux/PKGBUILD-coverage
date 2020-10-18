@@ -6,8 +6,8 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (coverage build)"
 arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
-depends=('magnum' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng')
-makedepends=('cmake' 'ninja' 'lcov' 'basis-universal-src' 'meshoptimizer')
+depends=('magnum' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'meshoptimizer')
+makedepends=('cmake' 'ninja' 'lcov' 'basis-universal-src')
 options=(!strip)
 provides=('magnum-plugins-git')
 
