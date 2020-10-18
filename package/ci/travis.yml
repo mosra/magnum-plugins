@@ -96,16 +96,9 @@ matrix:
     - CONFIGURATION=Debug
   - language: cpp
     os: osx
-    # The new plugin testing workflow is dynamically loading and unloading them
-    # in the tests. When that's combined with coverage and LLVM < 5.0.1, all
-    # such tests crash on exit: https://bugs.llvm.org/show_bug.cgi?id=27224
-    # But only in some cases (for example not at all in tests for Corrade
-    # PluginManager itself). The commit fixing it is from Jan 3 2018 and all
-    # Xcode versions before Xcode 9.3 beta (released on Jan 24) are affected.
-    # https://github.com/llvm-mirror/compiler-rt/commit/860d7953a6f36980f406bfbff76f3c00f15eed57
-    # Xcode 9.3 beta has broken git clone ("unknown protocol version 2") since
-    # Feb 16 2019, so using version 9.3 now.
-    osx_image: xcode9.3
+    # This is currently (Sep 2020) the Travis default, 9.3 didn't have
+    # spirv-tools in (non-updated) Homebrew.
+    osx_image: xcode9.4
     compiler: clang
     env:
     - JOBID=macos
@@ -115,7 +108,7 @@ matrix:
   - language: cpp
     os: osx
     # See above
-    osx_image: xcode9.3
+    osx_image: xcode9.4
     compiler: clang
     env:
     - JOBID=macos-static
@@ -193,11 +186,14 @@ install:
 # work. EVERYTHING SUCKS NOWADAYS.
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install emscripten binaryen && export LLVM=/usr/local/opt/emscripten/libexec/llvm/bin && emcc && echo -e "\nBINARYEN_ROOT = '/usr/local'\n" >> ~/.emscripten; fi
 
-# FAAD2, HarfBuzz, Assimp, DevIL
-- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install faad2 harfbuzz assimp devil; fi
+# FAAD2, HarfBuzz, Assimp, DevIL, spirv-tools
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install faad2 harfbuzz assimp devil spirv-tools; fi
 
 # meshoptimizer, few commits after 0.14 with a fix for old Apple Clang
 - if [[ "$TARGET" == desktop* ]]; then wget -nc --no-check-certificate https://github.com/zeux/meshoptimizer/archive/97c52415c6d29f297a76482ddde22f739292446d.tar.gz && mkdir -p meshoptimizer && cd meshoptimizer && tar --strip-components=1 -xzf ../97c52415c6d29f297a76482ddde22f739292446d.tar.gz && mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=$HOME/deps -G Ninja && ninja install && cd $TRAVIS_BUILD_DIR; fi
+
+# spirv-tools. Prebuilt on Linux, fetched from Homebrew on macOS above
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then cd $HOME ; wget https://ci.magnum.graphics/spirv-tools-2020.5-ubuntu-16.04.zip && cd $HOME/deps && unzip $HOME/spirv-tools-2020.5-ubuntu-16.04.zip && cd $TRAVIS_BUILD_DIR ; fi
 
 # Basis Universal
 - export BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed && wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.zip && unzip -q $BASIS_VERSION; mv basis_universal-$BASIS_VERSION $HOME/basis_universal

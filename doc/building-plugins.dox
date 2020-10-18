@@ -350,6 +350,8 @@ By default no plugins are built and you need to select them manually:
     plugin. Depends on [libPNG](http://www.libpng.org/pub/png/libpng.html).
 -   `WITH_PRIMITIVEIMPORTER` --- Build the @ref Trade::PrimitiveImporter
     "PrimitiveImporter" plugin.
+-   `WITH_SPIRVTOOLSSHADERCONVERTER` --- Build the @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter"
+    plugin. Depends on [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools).
 -   `WITH_STANFORDIMPORTER` --- Build the
     @ref Trade::StanfordImporter "StanfordImporter" plugin.
 -   `WITH_STANFORDSCENECONVERTER` --- Build the

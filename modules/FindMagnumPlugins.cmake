@@ -32,6 +32,7 @@
 #  PngImageConverter            - PNG image converter
 #  PngImporter                  - PNG importer
 #  PrimitiveImporter            - Primitive importer
+#  SpirvToolsShaderConverter    - SPIR-V Tools shader converter
 #  StanfordImporter             - Stanford PLY importer
 #  StanfordSceneConverter       - Stanford PLY converter
 #  StbImageConverter            - Image converter using stb_image_write
@@ -142,9 +143,9 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     DrWavAudioImporter Faad2AudioImporter FreeTypeFont HarfBuzzFont IcoImporter
     JpegImageConverter JpegImporter MeshOptimizerSceneConverter
     MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
-    PrimitiveImporter StanfordImporter StanfordSceneConverter StbImageConverter
-    StbImageImporter StbTrueTypeFont StbVorbisAudioImporter StlImporter
-    TinyGltfImporter)
+    PrimitiveImporter SpirvToolsShaderConverter StanfordImporter
+    StanfordSceneConverter StbImageConverter StbImageImporter StbTrueTypeFont
+    StbVorbisAudioImporter StlImporter TinyGltfImporter)
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
@@ -412,6 +413,13 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # PrimitiveImporter has no dependencies
+
+        # SpirvToolsShaderConverter plugin dependencies
+        if(_component STREQUAL SpirvToolsShaderConverter)
+            find_package(SPIRV-Tools CONFIG REQUIRED)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES SPIRV-Tools)
+
         # StanfordImporter has no dependencies
         # StanfordSceneConverter has no dependencies
         # StbImageConverter has no dependencies

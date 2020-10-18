@@ -1,0 +1,258 @@
+/*
+    This file is part of Magnum.
+
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
+                2020 Vladimír Vondruš <mosra@centrum.cz>
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+*/
+
+#include "SpirvToolsConverter.h"
+
+#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/ScopeGuard.h>
+#include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
+
+#include "spirv-tools/libspirv.h"
+
+namespace Magnum { namespace ShaderTools {
+
+using namespace Containers::Literals;
+
+struct SpirvToolsConverter::State {
+    /* Initialized in the constructor */
+    Format inputFormat, outputFormat;
+    Containers::String inputVersion, outputVersion;
+
+    Containers::String inputFilename, outputFilename;
+};
+
+SpirvToolsConverter::SpirvToolsConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{Containers::InPlaceInit} {
+    /* If the plugin was loaded through some of the aliases, set implicit
+       input/output formats */
+    if(plugin == "SpirvAssemblyToSpirvShaderConverter") {
+        _state->inputFormat = Format::SpirvAssembly;
+        _state->outputFormat = Format::Spirv;
+    } else if(plugin == "SpirvToSpirvAssemblyShaderConverter") {
+        _state->inputFormat = Format::Spirv;
+        _state->outputFormat = Format::SpirvAssembly;
+    } else if(plugin == "SpirvShaderConverter") {
+        _state->inputFormat = Format::Spirv;
+        _state->outputFormat = Format::Spirv;
+    } else if(plugin == "SpirvAssemblyShaderConverter") {
+        _state->inputFormat = Format::SpirvAssembly;
+        _state->outputFormat = Format::SpirvAssembly;
+    } else {
+        _state->inputFormat = Format::Unspecified;
+        _state->outputFormat = Format::Unspecified;
+    }
+}
+
+ConverterFeatures SpirvToolsConverter::doFeatures() const {
+    return ConverterFeature::ConvertData|
+        /* We actually don't, but without this set the doConvertFileTo*()
+           intercepts don't get called when the input is specified through
+           callbacks. And since we delegate to the base implementation, the
+           callbacks *do* work. */
+        ConverterFeature::InputFileCallback;
+}
+
+void SpirvToolsConverter::doSetInputFormat(const Format format, const Containers::StringView version) {
+    _state->inputFormat = format;
+    _state->inputVersion = Containers::String::nullTerminatedGlobalView(version);
+}
+
+void SpirvToolsConverter::doSetOutputFormat(const Format format, const Containers::StringView version) {
+    _state->outputFormat = format;
+    _state->outputVersion = Containers::String::nullTerminatedGlobalView(version);
+}
+
+namespace {
+
+/* A copy of spvDiagnosticPrint(), printing via our APIs */
+void printDiagnostic(Debug& out, const Containers::StringView filename, const spv_diagnostic& diagnostic) {
+    CORRADE_INTERNAL_ASSERT(diagnostic);
+
+    out << (filename.isEmpty() ? "<data>" : filename) << Debug::nospace << ":";
+
+    /* SPIRV-Tools count lines/columns from 0, but editors from 1 */
+    if(diagnostic->isTextSource)
+        out << Debug::nospace << diagnostic->position.line + 1 << Debug::nospace << ":" << Debug::nospace << diagnostic->position.column + 1 << Debug::nospace << ":";
+    /* This check is in spvDiagnosticPrint() as well, I assume it's because
+       some errors don't have a byte index (wrong size and such?) */
+    else if(diagnostic->position.index)
+        out << Debug::nospace << diagnostic->position.index << Debug::nospace << ":";
+
+    out << diagnostic->error;
+}
+
+}
+
+bool SpirvToolsConverter::doConvertFileToFile(const Stage stage, const Containers::StringView from, const Containers::StringView to) {
+    _state->inputFilename = Containers::String::nullTerminatedGlobalView(from);
+    _state->outputFilename = Containers::String::nullTerminatedGlobalView(to);
+    return AbstractConverter::doConvertFileToFile(stage, from, to);
+}
+
+Containers::Array<char> SpirvToolsConverter::doConvertFileToData(const Stage stage, const Containers::StringView from) {
+    _state->inputFilename = Containers::String::nullTerminatedGlobalView(from);
+    return AbstractConverter::doConvertFileToData(stage, from);
+}
+
+Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Containers::ArrayView<const char> data) {
+    /* If we're converting from a file, save the input filename for use in a
+       potential error message. If we're converting to a file, save the output
+       filename for detecting if the output should be an assembly. Clear both
+       so next time plain data is converted the error messages / output format
+       aren't based on stale information. */
+    const Containers::String inputFilename = std::move(_state->inputFilename);
+    const Containers::String outputFilename = std::move(_state->outputFilename);
+    _state->inputFilename = {};
+    _state->outputFilename = {};
+
+    if(_state->inputFormat != Format::Unspecified &&
+       _state->inputFormat != Format::Spirv &&
+       _state->inputFormat != Format::SpirvAssembly) {
+        Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): input format should be Spirv, SpirvAssembly or Unspecified but got" << _state->inputFormat;
+        return {};
+    }
+    if(!_state->inputVersion.isEmpty()) {
+        Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): input format version should be empty but got" << _state->inputVersion;
+        return {};
+    }
+
+    if(_state->outputFormat != Format::Unspecified &&
+       _state->outputFormat != Format::Spirv &&
+       _state->outputFormat != Format::SpirvAssembly) {
+        Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): output format should be Spirv, SpirvAssembly or Unspecified but got" << _state->outputFormat;
+        return {};
+    }
+    spv_target_env env = SPV_ENV_VULKAN_1_0;
+    if(!_state->outputVersion.isEmpty() && !spvParseTargetEnv(_state->outputVersion.data(), &env)) {
+        Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): unrecognized output format version" << _state->outputVersion;
+        return {};
+    }
+
+    const spv_context context = spvContextCreate(env);
+    Containers::ScopeGuard contextDestroy{context, spvContextDestroy};
+
+    /** @todo make this work on big-endian */
+
+    /* If the format is explicitly specified as SPIR-V assembly or if it's
+       unspecified and data doesn't look like a binary, parse as an assembly */
+    spv_binary_t binaryStorage;
+    spv_binary binary{};
+    Containers::ScopeGuard binaryDestroy{Containers::NoCreate};
+    if(_state->inputFormat == Format::SpirvAssembly || (_state->inputFormat == Format::Unspecified && (data.size() < 4 || *reinterpret_cast<const UnsignedInt*>(data.data()) != 0x07230203))) {
+        /* There's SPV_TEXT_TO_BINARY_OPTION_NONE which has a non-zero value
+           but isn't used anywhere. Looks like a brainfart, HEH. */
+        Int options = 0;
+        if(configuration().value<bool>("preserveNumericIds"))
+            options |= SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS;
+
+        spv_diagnostic diagnostic;
+        const spv_result_t error = spvTextToBinaryWithOptions(context, data, data.size(), options, &binary, &diagnostic);
+        Containers::ScopeGuard diagnosticDestroy{diagnostic, spvDiagnosticDestroy};
+        binaryDestroy = Containers::ScopeGuard{binary, spvBinaryDestroy};
+        if(error) {
+            Error e;
+            e << "ShaderTools::SpirvToolsConverter::convertDataToData(): assembly failed:";
+            printDiagnostic(e, inputFilename, diagnostic);
+            return {};
+        }
+
+    /* Otherwise (explicitly specified as SPIR-V binary or unspecified and
+       looking like a binary) just make a view on the data, with binaryDestroy
+       unused */
+    } else {
+        if(data.size() % 4 != 0) {
+            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): SPIR-V binary size not divisible by four:" << data.size() << "bytes";
+            return {};
+        }
+
+        binaryStorage.code = const_cast<UnsignedInt*>(reinterpret_cast<const UnsignedInt*>(data.data()));
+        binaryStorage.wordCount = data.size()/4;
+        binary = &binaryStorage;
+    }
+
+    /** @todo optimization and whatnot will go here */
+
+    /* Disassemble, if desired, or if the output filename ends with *.spvasm */
+    Containers::Array<char> out;
+    if(_state->outputFormat == Format::SpirvAssembly || (_state->outputFormat == Format::Unspecified && outputFilename.hasSuffix(".spvasm"_s))) {
+        /* There's SPV_BINARY_TO_TEXT_OPTION_NONE which has a non-zero value
+           but isn't used anywhere. Looks like another variant of the same
+           brainfart. */
+        Int options = 0;
+        /* SPV_BINARY_TO_TEXT_OPTION_PRINT not exposed, we always want data */
+        /** @todo put Color into flags? so magnum-shaderconverter can use
+            --color auto and such */
+        if(configuration().value<bool>("color"))
+            options |= SPV_BINARY_TO_TEXT_OPTION_COLOR;
+        if(configuration().value<bool>("indent"))
+            options |= SPV_BINARY_TO_TEXT_OPTION_INDENT;
+        if(configuration().value<bool>("byteOffset"))
+            options |= SPV_BINARY_TO_TEXT_OPTION_SHOW_BYTE_OFFSET;
+        /* no-headers=false would be a hard-to-parse double negative, flip
+           that (also it would mean `magnum-shaderconverter -fno-no-headers`,
+           which looks extra stupid) */
+        if(!configuration().value<bool>("header"))
+            options |= SPV_BINARY_TO_TEXT_OPTION_NO_HEADER;
+        if(configuration().value<bool>("friendlyNames"))
+            options |= SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES;
+        /** @todo SPV_BINARY_TO_TEXT_OPTION_COMMENT, since
+            https://github.com/KhronosGroup/SPIRV-Tools/pull/3847, not in the
+            2020.6 release yet -- also, expose through setDebugInfoLevel()? */
+
+        spv_text text{};
+        spv_diagnostic diagnostic;
+        const spv_result_t error = spvBinaryToText(context, binary->code, binary->wordCount, options, &text, &diagnostic);
+        Containers::ScopeGuard textDestroy{text, spvTextDestroy};
+        Containers::ScopeGuard diagnosticDestroy{diagnostic, spvDiagnosticDestroy};
+        if(error) {
+            Error e;
+            e << "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed:";
+            printDiagnostic(e, inputFilename, diagnostic);
+            return {};
+        }
+
+        /* Copy the text to the output. We can't take ownership of that array
+           because it *might* have a different deleter (in reality it uses a
+           plain delete[], but I don't want to depend on such an implementation
+           detail, this is not a perf-critical code path). */
+        out = Containers::Array<char>{Containers::NoInit, text->length};
+        Utility::copy(Containers::arrayView(text->str, text->length), out);
+
+    /* Otherwise simply copy the binary to the output. We can't take ownership
+       of the array here either because in addition to the case above the
+       binary could also point right at the input `data`. */
+    } else {
+        Containers::ArrayView<const char> in(reinterpret_cast<const char*>(binary->code), 4*binary->wordCount);
+        out = Containers::Array<char>{Containers::NoInit, in.size()};
+        Utility::copy(in, out);
+    }
+
+    return out;
+}
+
+}}
+
+CORRADE_PLUGIN_REGISTER(SpirvToolsShaderConverter, Magnum::ShaderTools::SpirvToolsConverter,
+    "cz.mosra.magnum.ShaderTools.AbstractConverter/0.1")

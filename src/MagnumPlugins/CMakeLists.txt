@@ -114,6 +114,10 @@ if(WITH_PRIMITIVEIMPORTER)
     add_subdirectory(PrimitiveImporter)
 endif()
 
+if(WITH_SPIRVTOOLSSHADERCONVERTER)
+    add_subdirectory(SpirvToolsShaderConverter)
+endif()
+
 if(WITH_STANFORDIMPORTER)
     add_subdirectory(StanfordImporter)
 endif()

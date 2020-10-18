@@ -18,7 +18,8 @@ depends=("${MINGW_PACKAGE_PREFIX}-magnum>=$pkgver"
          "${MINGW_PACKAGE_PREFIX}-freetype"
          "${MINGW_PACKAGE_PREFIX}-harfbuzz"
          "${MINGW_PACKAGE_PREFIX}-libjpeg-turbo"
-         "${MINGW_PACKAGE_PREFIX}-libpng")
+         "${MINGW_PACKAGE_PREFIX}-libpng"
+         "${MINGW_PACKAGE_PREFIX}-spirv-tools")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cmake" "${MINGW_PACKAGE_PREFIX}-ninja")
 options=('!strip')
 
@@ -53,6 +54,7 @@ build() {
             -DWITH_PNGIMAGECONVERTER=ON \
             -DWITH_PNGIMPORTER=ON \
             -DWITH_PRIMITIVEIMPORTER=ON \
+            -DWITH_SPIRVTOOLSSHADERCONVERTER=ON \
             -DWITH_STANFORDIMPORTER=ON \
             -DWITH_STANFORDSCENECONVERTER=ON \
             -DWITH_STBIMAGECONVERTER=ON \

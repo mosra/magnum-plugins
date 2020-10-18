@@ -15,6 +15,7 @@ class MagnumPlugins < Formula
   depends_on "harfbuzz" => :recommended
   depends_on "libpng" => :recommended
   depends_on "jpeg" => :recommended
+  depends_on "spirv-tools" => :recommended
 
   def install
     # Bundle Basis Universal, a commit that's before the UASTC support (which
@@ -59,6 +60,7 @@ class MagnumPlugins < Formula
         "-DWITH_PNGIMAGECONVERTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-DWITH_PNGIMPORTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-DWITH_PRIMITIVEIMPORTER=ON",
+        "-DWITH_SPIRVTOOLSSHADERCONVERTER=#{(build.with? 'glslang') ? 'ON' : 'OFF'}",
         "-DWITH_STANFORDIMPORTER=ON",
         "-DWITH_STANFORDSCENECONVERTER=ON",
         "-DWITH_STBIMAGECONVERTER=ON",

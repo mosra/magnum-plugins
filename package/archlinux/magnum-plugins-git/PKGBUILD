@@ -7,7 +7,7 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (Git version)"
 arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
-depends=('magnum-git' 'devil' 'faad2' 'libpng' 'libjpeg' 'freetype2' 'assimp' 'meshoptimizer')
+depends=('magnum-git' 'devil' 'faad2' 'libpng' 'libjpeg' 'freetype2' 'assimp' 'meshoptimizer' 'spirv-tools')
 makedepends=('cmake' 'git' 'ninja')
 provides=('magnum-plugins')
 conflicts=('magnum-plugins')
@@ -52,6 +52,7 @@ build() {
         -DWITH_PNGIMAGECONVERTER=ON \
         -DWITH_PNGIMPORTER=ON \
         -DWITH_PRIMITIVEIMPORTER=ON \
+        -DWITH_SPIRVTOOLSSHADERCONVERTER=ON \
         -DWITH_STANFORDIMPORTER=ON \
         -DWITH_STANFORDSCENECONVERTER=ON \
         -DWITH_STBIMAGECONVERTER=ON \
