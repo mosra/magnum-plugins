@@ -25,8 +25,8 @@
 
 find_package(Magnum REQUIRED ShaderTools)
 
-# A dash in a package name?! ARE YOU OUT OF YOUR MIND
-find_package(SPIRV-Tools CONFIG REQUIRED)
+# See modules/FindSpirvTools.cmake for the complete rant
+find_package(SpirvTools REQUIRED)
 
 if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_SPIRVTOOLSSHADERCONVERTER_BUILD_STATIC 1)
@@ -50,7 +50,7 @@ target_include_directories(SpirvToolsShaderConverter PUBLIC
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(SpirvToolsShaderConverter PUBLIC
     Magnum::ShaderTools
-    SPIRV-Tools)
+    SpirvTools::SpirvTools)
 # Modify output location only if all are set, otherwise it makes no sense
 if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND CMAKE_LIBRARY_OUTPUT_DIRECTORY AND CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
     set_target_properties(SpirvToolsShaderConverter PROPERTIES
