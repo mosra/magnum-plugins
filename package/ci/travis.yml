@@ -193,7 +193,7 @@ install:
 - if [[ "$TARGET" == desktop* ]]; then wget -nc --no-check-certificate https://github.com/zeux/meshoptimizer/archive/97c52415c6d29f297a76482ddde22f739292446d.tar.gz && mkdir -p meshoptimizer && cd meshoptimizer && tar --strip-components=1 -xzf ../97c52415c6d29f297a76482ddde22f739292446d.tar.gz && mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=$HOME/deps -G Ninja && ninja install && cd $TRAVIS_BUILD_DIR; fi
 
 # spirv-tools. Prebuilt on Linux, fetched from Homebrew on macOS above
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then cd $HOME ; wget https://ci.magnum.graphics/spirv-tools-2020.5-ubuntu-16.04.zip && cd $HOME/deps && unzip $HOME/spirv-tools-2020.5-ubuntu-16.04.zip && cd $TRAVIS_BUILD_DIR ; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then cd $HOME ; wget https://ci.magnum.graphics/spirv-tools-2020.4-ubuntu-16.04.zip && cd $HOME/deps && unzip $HOME/spirv-tools-2020.4-ubuntu-16.04.zip && cd $TRAVIS_BUILD_DIR ; fi
 
 # Basis Universal
 - export BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed && wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.zip && unzip -q $BASIS_VERSION; mv basis_universal-$BASIS_VERSION $HOME/basis_universal

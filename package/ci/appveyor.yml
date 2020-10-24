@@ -67,8 +67,8 @@ install:
 - bash -c "cd basis_universal && patch -p1 < ../package/ci/basisu-msvc2019-16.6.patch"
 
 # SPIRV-Tools
-- IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\spirv-tools-2020.5-windows-2019.zip appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.5-windows-2019.zip
-- IF NOT "%TARGET%" == "rt" 7z x spirv-tools-2020.5-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\spirv-tools-2020.5-windows-2019.zip appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2019.zip
+- IF NOT "%TARGET%" == "rt" 7z x spirv-tools-2020.4-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 build_script:
 - IF NOT "%BUILD_STATIC%" == "ON" set BUILD_STATIC=OFF
