@@ -107,13 +107,12 @@ void printDiagnostic(Debug& out, const Containers::StringView filename, const sp
     out << diagnostic->error;
 }
 
-bool readData(const spv_context context, const Utility::ConfigurationGroup& configuration, const Format inputFormat, const Containers::StringView inputFilename, const char* const prefix, spv_binary_t& binaryStorage, spv_binary& binary, Containers::ScopeGuard& binaryDestroy, const Containers::ArrayView<const char> data) {
+bool readData(const spv_context context, const Utility::ConfigurationGroup& configuration, const Format inputFormat, const Containers::StringView inputFilename, const char* const prefix, spv_binary_t& binaryStorage, spv_binary& binary, Containers::ScopeGuard& binaryDestroy, const Containers::ArrayView<const char> data, Int options) {
     /* If the format is explicitly specified as SPIR-V assembly or if it's
        unspecified and data doesn't look like a binary, parse as an assembly */
     if(inputFormat == Format::SpirvAssembly || (inputFormat == Format::Unspecified && (data.size() < 4 || *reinterpret_cast<const UnsignedInt*>(data.data()) != 0x07230203))) {
         /* There's SPV_TEXT_TO_BINARY_OPTION_NONE which has a non-zero value
            but isn't used anywhere. Looks like a brainfart, HEH. */
-        Int options = 0;
         if(configuration.value<bool>("preserveNumericIds"))
             options |= SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS;
 
@@ -192,7 +191,15 @@ std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, c
     spv_binary_t binaryStorage;
     spv_binary binary{};
     Containers::ScopeGuard binaryDestroy{Containers::NoCreate};
-    if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::validateData():", binaryStorage, binary, binaryDestroy, data))
+    if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::validateData():", binaryStorage, binary, binaryDestroy, data,
+        /* Implicitly preserve numeric IDs, so when we're validating a SPIR-V
+           assembly, the disassembled instruction in the validation message
+           matches the text input as much as possible. */
+        /** @todo would be great to have an option of having a reverse mapping
+            to the assembly text (lines and such) -- do that manually using
+            OpName, OpSource, OpLine and such? */
+        SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS
+    ))
         return {};
 
     /* Validator options and limits */
@@ -319,7 +326,7 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
     spv_binary_t binaryStorage;
     spv_binary binary{};
     Containers::ScopeGuard binaryDestroy{Containers::NoCreate};
-    if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::convertDataToData():", binaryStorage, binary, binaryDestroy, data))
+    if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::convertDataToData():", binaryStorage, binary, binaryDestroy, data, 0))
         return {};
 
     /** @todo optimization and whatnot will go here */

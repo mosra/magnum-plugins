@@ -287,10 +287,6 @@ void SpirvToolsConverterTest::validateFailInstruction() {
 
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
 
-    /* Otherwise the assembled output will not be the same as the binary and
-       the disssembled instruction in the error won't match */
-    converter->configuration().setValue("preserveNumericIds", true);
-
     /* Valid SPIR-V 1.2, but isn't valid for Vulkan 1.1 because of a lower-left
        origin */
     converter->setOutputFormat({}, "vulkan1.1");
@@ -335,10 +331,6 @@ void SpirvToolsConverterTest::validateFailFileInstruction() {
     converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
         return arrayView(file);
     }, file);
-
-    /* Otherwise the assembled output will not be the same as the binary and
-       the disssembled instruction in the error won't match */
-    converter->configuration().setValue("preserveNumericIds", true);
 
     /* Valid SPIR-V 1.2, but isn't valid for Vulkan 1.1 because of a lower-left
        origin */
