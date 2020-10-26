@@ -103,6 +103,44 @@ void printDiagnostic(Debug& out, const Containers::StringView filename, const sp
     out << diagnostic->error;
 }
 
+bool readData(const spv_context context, const Utility::ConfigurationGroup& configuration, const Format inputFormat, const Containers::StringView inputFilename, const char* const prefix, spv_binary_t& binaryStorage, spv_binary& binary, Containers::ScopeGuard& binaryDestroy, const Containers::ArrayView<const char> data) {
+    /* If the format is explicitly specified as SPIR-V assembly or if it's
+       unspecified and data doesn't look like a binary, parse as an assembly */
+    if(inputFormat == Format::SpirvAssembly || (inputFormat == Format::Unspecified && (data.size() < 4 || *reinterpret_cast<const UnsignedInt*>(data.data()) != 0x07230203))) {
+        /* There's SPV_TEXT_TO_BINARY_OPTION_NONE which has a non-zero value
+           but isn't used anywhere. Looks like a brainfart, HEH. */
+        Int options = 0;
+        if(configuration.value<bool>("preserveNumericIds"))
+            options |= SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS;
+
+        spv_diagnostic diagnostic;
+        const spv_result_t error = spvTextToBinaryWithOptions(context, data, data.size(), options, &binary, &diagnostic);
+        Containers::ScopeGuard diagnosticDestroy{diagnostic, spvDiagnosticDestroy};
+        binaryDestroy = Containers::ScopeGuard{binary, spvBinaryDestroy};
+        if(error) {
+            Error e;
+            e << prefix << "assembly failed:";
+            printDiagnostic(e, inputFilename, diagnostic);
+            return false;
+        }
+
+    /* Otherwise (explicitly specified as SPIR-V binary or unspecified and
+       looking like a binary) just make a view on the data, with binaryDestroy
+       unused */
+    } else {
+        if(data.size() % 4 != 0) {
+            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): SPIR-V binary size not divisible by four:" << data.size() << "bytes";
+            return false;
+        }
+
+        binaryStorage.code = const_cast<UnsignedInt*>(reinterpret_cast<const UnsignedInt*>(data.data()));
+        binaryStorage.wordCount = data.size()/4;
+        binary = &binaryStorage;
+    }
+
+    return true;
+}
+
 }
 
 bool SpirvToolsConverter::doConvertFileToFile(const Stage stage, const Containers::StringView from, const Containers::StringView to) {
@@ -121,7 +159,8 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
        potential error message. If we're converting to a file, save the output
        filename for detecting if the output should be an assembly. Clear both
        so next time plain data is converted the error messages / output format
-       aren't based on stale information. */
+       aren't based on stale information. This is done as early as possible so
+       the early exits don't leave it in inconsistent state. */
     const Containers::String inputFilename = std::move(_state->inputFilename);
     const Containers::String outputFilename = std::move(_state->outputFilename);
     _state->inputFilename = {};
@@ -155,42 +194,11 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
 
     /** @todo make this work on big-endian */
 
-    /* If the format is explicitly specified as SPIR-V assembly or if it's
-       unspecified and data doesn't look like a binary, parse as an assembly */
     spv_binary_t binaryStorage;
     spv_binary binary{};
     Containers::ScopeGuard binaryDestroy{Containers::NoCreate};
-    if(_state->inputFormat == Format::SpirvAssembly || (_state->inputFormat == Format::Unspecified && (data.size() < 4 || *reinterpret_cast<const UnsignedInt*>(data.data()) != 0x07230203))) {
-        /* There's SPV_TEXT_TO_BINARY_OPTION_NONE which has a non-zero value
-           but isn't used anywhere. Looks like a brainfart, HEH. */
-        Int options = 0;
-        if(configuration().value<bool>("preserveNumericIds"))
-            options |= SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS;
-
-        spv_diagnostic diagnostic;
-        const spv_result_t error = spvTextToBinaryWithOptions(context, data, data.size(), options, &binary, &diagnostic);
-        Containers::ScopeGuard diagnosticDestroy{diagnostic, spvDiagnosticDestroy};
-        binaryDestroy = Containers::ScopeGuard{binary, spvBinaryDestroy};
-        if(error) {
-            Error e;
-            e << "ShaderTools::SpirvToolsConverter::convertDataToData(): assembly failed:";
-            printDiagnostic(e, inputFilename, diagnostic);
-            return {};
-        }
-
-    /* Otherwise (explicitly specified as SPIR-V binary or unspecified and
-       looking like a binary) just make a view on the data, with binaryDestroy
-       unused */
-    } else {
-        if(data.size() % 4 != 0) {
-            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): SPIR-V binary size not divisible by four:" << data.size() << "bytes";
-            return {};
-        }
-
-        binaryStorage.code = const_cast<UnsignedInt*>(reinterpret_cast<const UnsignedInt*>(data.data()));
-        binaryStorage.wordCount = data.size()/4;
-        binary = &binaryStorage;
-    }
+    if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::convertDataToData():", binaryStorage, binary, binaryDestroy, data))
+        return {};
 
     /** @todo optimization and whatnot will go here */
 
