@@ -33,6 +33,11 @@ IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set EXCEPT_IF_VCPKG_I
 IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set EXCEPT_IF_VCPKG_IS_BROKEN=ON
 IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" vcpkg install libpng:x64-windows || exit /b
 
+rem Some dependencies are built on GitHub Actions and there the only available
+rem MSVC version is 2019. Better than nothing, but eh.
+IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_ON_MSVC2019=ON
+IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_ON_MSVC2019=OFF
+
 rem build meshoptimizer
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v0.14.zip appveyor DownloadFile https://github.com/zeux/meshoptimizer/archive/v0.14.zip || exit /b
 7z x v0.14.zip || exit /b
@@ -112,7 +117,7 @@ cmake .. ^
     -DWITH_PNGIMAGECONVERTER=%EXCEPT_IF_VCPKG_IS_BROKEN% ^
     -DWITH_PNGIMPORTER=%EXCEPT_IF_VCPKG_IS_BROKEN% ^
     -DWITH_PRIMITIVEIMPORTER=ON ^
-    -DWITH_SPIRVTOOLSSHADERCONVERTER=ON ^
+    -DWITH_SPIRVTOOLSSHADERCONVERTER=%ONLY_ON_MSVC2019% ^
     -DWITH_STANFORDIMPORTER=ON ^
     -DWITH_STANFORDSCENECONVERTER=ON ^
     -DWITH_STBIMAGECONVERTER=ON ^
