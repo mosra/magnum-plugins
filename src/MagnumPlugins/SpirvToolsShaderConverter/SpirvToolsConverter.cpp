@@ -29,6 +29,7 @@
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/FormatStl.h> /** @todo remove once format() produces a String */
 
 #include "spirv-tools/libspirv.h"
 
@@ -65,12 +66,15 @@ SpirvToolsConverter::SpirvToolsConverter(PluginManager::AbstractManager& manager
     }
 }
 
+/** @todo is spvTargetEnvDescription() useful for something? in verbose output
+    maybe? */
+
 ConverterFeatures SpirvToolsConverter::doFeatures() const {
-    return ConverterFeature::ConvertData|
-        /* We actually don't, but without this set the doConvertFileTo*()
-           intercepts don't get called when the input is specified through
-           callbacks. And since we delegate to the base implementation, the
-           callbacks *do* work. */
+    return ConverterFeature::ValidateData|ConverterFeature::ConvertData|
+        /* We actually don't, but without this set the doValidateFile() /
+           doConvertFileTo*() intercepts don't get called when the input is
+           specified through callbacks. And since we delegate to the base
+           implementation, the callbacks *do* work. */
         ConverterFeature::InputFileCallback;
 }
 
@@ -141,6 +145,124 @@ bool readData(const spv_context context, const Utility::ConfigurationGroup& conf
     return true;
 }
 
+}
+
+std::pair<bool, Containers::String> SpirvToolsConverter::doValidateFile(const Stage stage, const Containers::StringView filename) {
+    _state->inputFilename = Containers::String::nullTerminatedGlobalView(filename);
+    return AbstractConverter::doValidateFile(stage, filename);
+}
+
+std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, const Containers::ArrayView<const char> data) {
+    /* If we're validating a file, save the input filename for use in a
+       potential error message. Clear it so next time plain data is validated
+       the error messages aren't based on stale information. This is done as
+       early as possible so the early exits don't leave it in inconsistent
+       state. */
+    const Containers::String inputFilename = std::move(_state->inputFilename);
+    _state->inputFilename = {};
+    /* If this happens, we messed up real bad (it's only set in doConvert*()) */
+    CORRADE_INTERNAL_ASSERT(_state->outputFilename.isEmpty());
+
+    if(_state->inputFormat != Format::Unspecified &&
+       _state->inputFormat != Format::Spirv &&
+       _state->inputFormat != Format::SpirvAssembly) {
+        Error{} << "ShaderTools::SpirvToolsConverter::validateData(): input format should be Spirv, SpirvAssembly or Unspecified but got" << _state->inputFormat;
+        return {};
+    }
+    if(!_state->inputVersion.isEmpty()) {
+        Error{} << "ShaderTools::SpirvToolsConverter::validateData(): input format version should be empty but got" << _state->inputVersion;
+        return {};
+    }
+
+    if(_state->outputFormat != Format::Unspecified) {
+        Error{} << "ShaderTools::SpirvToolsConverter::validateData(): output format should be Unspecified but got" << _state->outputFormat;
+        return {};
+    }
+    spv_target_env env = SPV_ENV_VULKAN_1_0;
+    if(!_state->outputVersion.isEmpty() && !spvParseTargetEnv(_state->outputVersion.data(), &env)) {
+        Error{} << "ShaderTools::SpirvToolsConverter::validateData(): unrecognized output format version" << _state->outputVersion;
+        return {};
+    }
+
+    const spv_context context = spvContextCreate(env);
+    Containers::ScopeGuard contextDestroy{context, spvContextDestroy};
+
+    /** @todo make this work on big-endian */
+
+    spv_binary_t binaryStorage;
+    spv_binary binary{};
+    Containers::ScopeGuard binaryDestroy{Containers::NoCreate};
+    if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::validateData():", binaryStorage, binary, binaryDestroy, data))
+        return {};
+
+    /* Validator options and limits */
+    spv_validator_options options = spvValidatorOptionsCreate();
+    Containers::ScopeGuard optionsDestroy{options, spvValidatorOptionsDestroy};
+
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_struct_members,
+        configuration().value<UnsignedInt>("maxStructMembers"));
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_struct_depth,
+        configuration().value<UnsignedInt>("maxStructDepth"));
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_local_variables,
+        configuration().value<UnsignedInt>("maxLocalVariables"));
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_global_variables,
+        configuration().value<UnsignedInt>("maxGlobalVariables"));
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_switch_branches,
+        configuration().value<UnsignedInt>("maxSwitchBranches"));;
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_function_args,
+        configuration().value<UnsignedInt>("maxFunctionArgs"));
+    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_control_flow_nesting_depth,
+        configuration().value<UnsignedInt>("maxControlFlowNestingDepth"));
+    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_access_chain_indexes,
+        /* Magnum uses "indices" everywhere, so be consistent here as well */
+        configuration().value<UnsignedInt>("maxAccessChainIndices"));;
+    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_id_bound,
+        configuration().value<UnsignedInt>("maxIdBound"));
+    spvValidatorOptionsSetRelaxLogicalPointer(options,
+        configuration().value<bool>("relaxLogicalPointer"));
+    spvValidatorOptionsSetRelaxBlockLayout(options,
+        configuration().value<bool>("relaxBlockLayout"));
+    spvValidatorOptionsSetUniformBufferStandardLayout(options,
+        configuration().value<bool>("uniformBufferStandardLayout"));
+    spvValidatorOptionsSetScalarBlockLayout(options,
+        configuration().value<bool>("scalarBlockLayout"));
+    spvValidatorOptionsSetSkipBlockLayout(options,
+        configuration().value<bool>("skipBlockLayout"));
+    spvValidatorOptionsSetRelaxStoreStruct(options,
+        /* Both the C++ API and spirv-val use "relax struct store", so use that
+           instead of "relax store struct" */
+        configuration().value<bool>("relaxStructStore"));
+    spvValidatorOptionsSetBeforeHlslLegalization(options,
+        configuration().value<bool>("beforeHlslLegalization"));
+
+    spv_diagnostic diagnostic;
+    const spv_result_t error = spvValidateWithOptions(context, options, reinterpret_cast<spv_const_binary>(binary), &diagnostic);
+    Containers::ScopeGuard diagnosticDestroy{diagnostic, spvDiagnosticDestroy};
+    if(error) {
+        CORRADE_INTERNAL_ASSERT(diagnostic && !diagnostic->isTextSource);
+
+        /* Drop trailing newline, if any. Messages that print disassembled
+           instructions have those. */
+        /** @todo clean up once StringView::trimmed() exists */
+        Containers::StringView error = diagnostic->error;
+        if(error.back() == '\n') error = error.except(1);
+
+        return {false, Utility::formatString(
+            diagnostic->position.index ? "{}:{}: {}" : "{0}: {2}",
+            inputFilename.isEmpty() ? "<data>" : inputFilename,
+            diagnostic->position.index,
+            error
+        )};
+    }
+
+    CORRADE_INTERNAL_ASSERT(!diagnostic);
+    return {true, {}};
 }
 
 bool SpirvToolsConverter::doConvertFileToFile(const Stage stage, const Containers::StringView from, const Containers::StringView to) {

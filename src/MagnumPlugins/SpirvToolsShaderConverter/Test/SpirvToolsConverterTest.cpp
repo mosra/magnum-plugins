@@ -36,6 +36,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
 
 #include "configure.h"
@@ -44,6 +45,20 @@ namespace Magnum { namespace ShaderTools { namespace Test { namespace {
 
 struct SpirvToolsConverterTest: TestSuite::Tester {
     explicit SpirvToolsConverterTest();
+
+    void validate();
+    void validateFile();
+    void validateWrongInputFormat();
+    void validateWrongInputVersion();
+    void validateWrongOutputFormat();
+    void validateWrongOutputVersion();
+    void validateFailWhole();
+    void validateFailInstruction();
+    void validateFailFileWhole();
+    void validateFailFileInstruction();
+    void validateFailAssemble();
+    void validateFailAssembleFile();
+    void validateBinarySizeNotDivisbleByFour();
 
     void convertNoOp();
     void convertDisassemble();
@@ -64,6 +79,14 @@ struct SpirvToolsConverterTest: TestSuite::Tester {
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractConverter> _converterManager{"nonexistent"};
+};
+
+const struct {
+    const char* name;
+    const char* filename;
+} ValidateData[] {
+    {"binary", "triangle-shaders.spv"},
+    {"assembly", "triangle-shaders.spvasm"}
 };
 
 const struct {
@@ -110,6 +133,25 @@ const struct {
 };
 
 SpirvToolsConverterTest::SpirvToolsConverterTest() {
+    addInstancedTests({&SpirvToolsConverterTest::validate,
+                       &SpirvToolsConverterTest::validateFile},
+        Containers::arraySize(ValidateData));
+
+    addTests({&SpirvToolsConverterTest::validateWrongInputFormat,
+              &SpirvToolsConverterTest::validateWrongInputVersion,
+              &SpirvToolsConverterTest::validateWrongOutputFormat,
+              &SpirvToolsConverterTest::validateWrongOutputVersion});
+
+    addInstancedTests({&SpirvToolsConverterTest::validateFailWhole,
+                       &SpirvToolsConverterTest::validateFailInstruction,
+                       &SpirvToolsConverterTest::validateFailFileWhole,
+                       &SpirvToolsConverterTest::validateFailFileInstruction},
+        Containers::arraySize(ValidateData));
+
+    addTests({&SpirvToolsConverterTest::validateFailAssemble,
+              &SpirvToolsConverterTest::validateFailAssembleFile,
+              &SpirvToolsConverterTest::validateBinarySizeNotDivisbleByFour});
+
     addTests({&SpirvToolsConverterTest::convertNoOp});
 
     addInstancedTests({&SpirvToolsConverterTest::convertDisassemble,
@@ -137,6 +179,239 @@ SpirvToolsConverterTest::SpirvToolsConverterTest() {
     #ifdef SPIRVTOOLSSHADERCONVERTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(SPIRVTOOLSSHADERCONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void SpirvToolsConverterTest::validate() {
+    auto&& data = ValidateData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    /* The input is in SPIR-V 1.2, but isn't valid for Vulkan 1.1 because of
+       OpExecutionMode OriginLowerLeft (which is used below to test failures),
+       so using just general SPIR-V validation. With OpExecutionMode missing it
+       would not even validate as SPIR-V. */
+    converter->setOutputFormat({}, "spv1.2");
+
+    CORRADE_COMPARE(converter->validateData({}, Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename))),
+        std::make_pair(true, Containers::String{}));
+}
+
+void SpirvToolsConverterTest::validateFile() {
+    auto&& data = ValidateData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    /* The input is in SPIR-V 1.2, but isn't valid for Vulkan 1.1 because of
+       OpExecutionMode OriginLowerLeft (which is used below to test failures),
+       so using just general SPIR-V validation. With OpExecutionMode missing it
+       would not even validate as SPIR-V. */
+    converter->setOutputFormat({}, "spv1.2");
+
+    CORRADE_COMPARE(converter->validateFile({}, Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename)),
+        std::make_pair(true, Containers::String{}));
+}
+
+void SpirvToolsConverterTest::validateWrongInputFormat() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setInputFormat(Format::Glsl);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateData({}, {}),
+        std::make_pair(false, ""));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::validateData(): input format should be Spirv, SpirvAssembly or Unspecified but got ShaderTools::Format::Glsl\n");
+}
+
+void SpirvToolsConverterTest::validateWrongInputVersion() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setInputFormat(Format::Spirv, "vulkan1.1");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateData({}, {}),
+        std::make_pair(false, ""));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::validateData(): input format version should be empty but got vulkan1.1\n");
+}
+
+void SpirvToolsConverterTest::validateWrongOutputFormat() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setOutputFormat(Format::Spirv);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateData({}, {}),
+        std::make_pair(false, ""));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::validateData(): output format should be Unspecified but got ShaderTools::Format::Spirv\n");
+}
+
+void SpirvToolsConverterTest::validateWrongOutputVersion() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setOutputFormat(Format::Unspecified, "vulkan2.1");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateData({}, {}),
+        std::make_pair(false, ""));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::validateData(): unrecognized output format version vulkan2.1\n");
+}
+
+void SpirvToolsConverterTest::validateFailWhole() {
+    auto&& data = ValidateData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    /* Set ID limit too low to make it fail */
+    converter->setOutputFormat({}, "spv1.2");
+    converter->configuration().setValue("maxIdBound", 15);
+
+    CORRADE_COMPARE(converter->validateData({}, Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename))),
+        /* Wow fuck me why the double spaces. IT'S NOT A TYPEWRITER AGE ANYMORE
+           RECONSIDER YOUR LIFE CHOICES FFS */
+        std::make_pair(false, "<data>: Invalid SPIR-V.  The id bound is larger than the max id bound 15."));
+}
+
+void SpirvToolsConverterTest::validateFailInstruction() {
+    auto&& data = ValidateData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    /* Otherwise the assembled output will not be the same as the binary and
+       the disssembled instruction in the error won't match */
+    converter->configuration().setValue("preserveNumericIds", true);
+
+    /* Valid SPIR-V 1.2, but isn't valid for Vulkan 1.1 because of a lower-left
+       origin */
+    converter->setOutputFormat({}, "vulkan1.1");
+
+    CORRADE_COMPARE(converter->validateData({}, Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename))),
+        std::make_pair(false, "<data>:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"));
+}
+
+void SpirvToolsConverterTest::validateFailFileWhole() {
+    auto&& data = ValidateData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    /* Fake the file loading via a callback so we don't have a YUUGE path in
+       the output */
+    const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
+        return arrayView(file);
+    }, file);
+
+    /* Set ID limit too low to make it fail */
+    converter->setOutputFormat({}, "spv1.2");
+    converter->configuration().setValue("maxIdBound", 15);
+
+    CORRADE_COMPARE(converter->validateFile({}, data.filename),
+        std::make_pair(false, Utility::formatString("{}: Invalid SPIR-V.  The id bound is larger than the max id bound 15.", data.filename)));
+    /* Validating data again should not be using the stale filename */
+    CORRADE_COMPARE(converter->validateData({}, file),
+        std::make_pair(false, "<data>: Invalid SPIR-V.  The id bound is larger than the max id bound 15."));
+}
+
+void SpirvToolsConverterTest::validateFailFileInstruction() {
+    auto&& data = ValidateData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    /* Fake the file loading via a callback so we don't have a YUUGE path in
+       the output */
+    const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
+        return arrayView(file);
+    }, file);
+
+    /* Otherwise the assembled output will not be the same as the binary and
+       the disssembled instruction in the error won't match */
+    converter->configuration().setValue("preserveNumericIds", true);
+
+    /* Valid SPIR-V 1.2, but isn't valid for Vulkan 1.1 because of a lower-left
+       origin */
+    converter->setOutputFormat({}, "vulkan1.1");
+
+    CORRADE_COMPARE(converter->validateFile({}, data.filename),
+        std::make_pair(false, Utility::formatString("{}:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft", data.filename)));
+    /* Validating data again should nnot be using the stale filename */
+    CORRADE_COMPARE(converter->validateData({}, file),
+        std::make_pair(false, "<data>:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"));
+}
+
+void SpirvToolsConverterTest::validateFailAssemble() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+    converter->setInputFormat(Format::SpirvAssembly);
+
+    const char data[] = R"(
+        OpCapability Shader
+        OpMemoryModel Logical GLSL450
+        OpDeadFool
+)";
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateData({}, data),
+        std::make_pair(false, Containers::String{}));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::validateData(): assembly failed: <data>:4:9: Invalid Opcode name 'OpDeadFool'\n");
+}
+
+void SpirvToolsConverterTest::validateFailAssembleFile() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+    converter->setInputFormat(Format::SpirvAssembly);
+
+    const char data[] = R"(
+        OpCapability Shader
+        OpMemoryModel Logical GLSL450
+        OpDeadFool
+)";
+
+    Containers::ArrayView<const char> dataView = data;
+
+    /* Fake the file loading via a callback */
+    converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, Containers::ArrayView<const char>& data) -> Containers::Optional<Containers::ArrayView<const char>> {
+        return data;
+    }, dataView);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateFile({}, "deadfool.spvasm"),
+        std::make_pair(false, Containers::String{}));
+    /* Validating data again should not be using the stale filename */
+    CORRADE_COMPARE(converter->validateData({}, data),
+        std::make_pair(false, Containers::String{}));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::validateData(): assembly failed: deadfool.spvasm:4:9: Invalid Opcode name 'OpDeadFool'\n"
+        "ShaderTools::SpirvToolsConverter::validateData(): assembly failed: <data>:4:9: Invalid Opcode name 'OpDeadFool'\n");
+}
+
+void SpirvToolsConverterTest::validateBinarySizeNotDivisbleByFour() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    /* Set the input format explicitly so we don't need to convince the
+       autodetection */
+    converter->setInputFormat(Format::Spirv);
+    const char data[37]{};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateData({}, data),
+        std::make_pair(false, Containers::String{}));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::convertDataToData(): SPIR-V binary size not divisible by four: 37 bytes\n");
 }
 
 void SpirvToolsConverterTest::convertNoOp() {

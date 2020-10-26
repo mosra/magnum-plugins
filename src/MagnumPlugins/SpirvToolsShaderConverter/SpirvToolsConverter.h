@@ -60,9 +60,9 @@ namespace Magnum { namespace ShaderTools {
 @m_keywords{SpirvAssemblyToSpirvShaderConverter SpirvShaderConverter}
 @m_keywords{SpirvAssemblyShaderConverter}
 
-Uses [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools) for converting
-between SPIR-V binary and assembly text (@ref Format::Spirv,
-@ref Format::SpirvAssembly).
+Uses [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools) for SPIR-V
+validation and converting between SPIR-V binary and assembly text
+(@ref Format::Spirv, @ref Format::SpirvAssembly).
 
 This plugin provides the `SpirvShaderConverter`, `SpirvAssemblyShaderConverter`,
 `SpirvToSpirvAssemblyShaderConverter` and `SpirvAssemblyToSpirvShaderConverter`
@@ -129,6 +129,26 @@ entrypoints for multiple stages).
 On error, the message contains either a line/column (when assembling) or
 instruction index (when disassemling).
 
+@section ShaderTools-SpirvToolsConverter-validation SPIR-V validation
+
+Use @ref validateData() or @ref validateFile() to validate a SPIR-V file.
+Compared to the @m_class{m-doc-external} [spirv-val](https://github.com/KhronosGroup/SPIRV-Tools#validator-tool)
+tool, it accepts a SPIR-V assembly as well, converting it to a SPIR-V binary
+first (equivalently to
+@ref ShaderTools-SpirvToolsConverter-conversion "doing a conversion" first,
+with the exact same behavior and options recognized). Note that in some cases,
+such as opening an inaccessible file or an assembly error the validation
+function can return @cpp {false, ""} @ce and print a message to the error
+output instead.
+
+Validation results are highly dependent on the target version set using
+@ref setOutputFormat(), see @ref ShaderTools-SpirvToolsConverter-format below
+for details. Additional validation options can be set through the
+@ref ShaderTools-SpirvToolsConverter-configuration "plugin-specific config".
+
+If the returned validation string contains a numeric identifier, it's always an
+instruction index, even in case of a SPIR-V assembly on the input.
+
 @section ShaderTools-SpirvToolsConverter-format Input and output format and version
 
 By default, the converter attempts to detect a SPIR-V binary and if that fails,
@@ -149,13 +169,17 @@ ways:
     assembly instead of SPIR-V binary (the default) if the output file
     extension is `*.spvasm`.
 
-Input version string set using the second parameter of @ref setInputFormat() is
-currently reserved for future extensions and has to be always empty.
+The format passed to @ref setInputFormat() has to be either
+@ref Format::Unspecified, @ref Format::Spirv or @ref Format::SpirvAssembly. The
+@p version parameter is currently reserved for future extensions and has to be
+always empty.
 
-The output version string set using the second parameter of
-@ref setOutputFormat() can be one of these. Depending on the version of
-SPIRV-Tools the plugin is linked against, some choices might not be available
-or there might be new ones:
+The format passed to @ref setOutputFormat() has to be either
+@ref Format::Unspecified, @ref Format::Spirv or @ref Format::SpirvAssembly for
+conversion and @ref Format::Unspecified for validation. The @p version
+string can be one of these. Depending on the version of SPIRV-Tools the plugin
+is linked against, some choices might not be available or there might be new
+ones:
 
 -   `spv1.0` for SPIR-V 1.0 with no other restrictions
 -   `spv1.1` for SPIR-V 1.1 with no other restrictions
@@ -191,8 +215,10 @@ for OpenGL 4.4.
 
 @section ShaderTools-SpirvToolsConverter-configuration Plugin-specific config
 
-It's possible to tune various assembler and disassembler options through
-@ref configuration(). See below for all options and their default values.
+It's possible to tune various assembler, disassembler and validator options
+through @ref configuration(). The assembler options are used also during
+validation in case the input is a SPIR-V assembly. See below for all options
+and their default values.
 
 @snippet MagnumPlugins/SpirvToolsShaderConverter/SpirvToolsShaderConverter.conf config
 
@@ -207,6 +233,8 @@ class MAGNUM_SPIRVTOOLSSHADERCONVERTER_EXPORT SpirvToolsConverter: public Abstra
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL void doSetInputFormat(Format format, Containers::StringView version) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL void doSetOutputFormat(Format format, Containers::StringView version) override;
 
+        MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateData(Stage stage, Containers::ArrayView<const char> data) override;
+        MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateFile(Stage stage, Containers::StringView filename) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL bool doConvertFileToFile(Stage stage, Containers::StringView from, Containers::StringView to) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL Containers::Array<char> doConvertFileToData(Stage stage, Containers::StringView from) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL Containers::Array<char> doConvertDataToData(Magnum::ShaderTools::Stage stage, Containers::ArrayView<const char> data) override;

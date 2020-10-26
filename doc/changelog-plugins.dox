@@ -35,7 +35,7 @@ namespace Magnum {
 @subsection changelog-plugins-latest-new New features
 
 -   New @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter"
-    plugin for SPIR-V shader (dis)assembly
+    plugin for SPIR-V shader (dis)assembly and validation
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" material import was
     reworked for the new @ref Trade::MaterialData API, supporting all core
     properties as well as everything from the
