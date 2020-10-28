@@ -32,6 +32,7 @@
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once format() produces a String */
 
 #include "spirv-tools/libspirv.h"
+#include "MagnumPlugins/SpirvToolsShaderConverter/configureInternal.h"
 
 namespace Magnum { namespace ShaderTools {
 
@@ -235,8 +236,10 @@ std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, c
         configuration().value<bool>("relaxLogicalPointer"));
     spvValidatorOptionsSetRelaxBlockLayout(options,
         configuration().value<bool>("relaxBlockLayout"));
+    #ifdef SPIRVTOOLS_IS_2019_03
     spvValidatorOptionsSetUniformBufferStandardLayout(options,
         configuration().value<bool>("uniformBufferStandardLayout"));
+    #endif
     spvValidatorOptionsSetScalarBlockLayout(options,
         configuration().value<bool>("scalarBlockLayout"));
     spvValidatorOptionsSetSkipBlockLayout(options,
@@ -245,8 +248,10 @@ std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, c
         /* Both the C++ API and spirv-val use "relax struct store", so use that
            instead of "relax store struct" */
         configuration().value<bool>("relaxStructStore"));
+    #ifdef SPIRVTOOLS_IS_2019_03
     spvValidatorOptionsSetBeforeHlslLegalization(options,
         configuration().value<bool>("beforeHlslLegalization"));
+    #endif
 
     spv_diagnostic diagnostic;
     const spv_result_t error = spvValidateWithOptions(context, options, reinterpret_cast<spv_const_binary>(binary), &diagnostic);

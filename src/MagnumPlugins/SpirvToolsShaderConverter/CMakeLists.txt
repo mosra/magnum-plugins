@@ -35,6 +35,14 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
+# It's 2020 so nothing surprises me anymore -- of course SPIRV-Tools don't have
+# any reasonable way to know the version except for parsing the CHANGES file,
+# which might or might not be present. The plugin is using APIs from 2019.03
+# but there are still Homebrew packages that are just 2019.02.
+try_compile(SPIRVTOOLS_IS_2019_03 ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/checkSpirvTools201903.cpp LINK_LIBRARIES SpirvTools::SpirvTools)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configureInternal.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configureInternal.h)
+
 # SpirvToolsShaderConverter plugin
 add_plugin(SpirvToolsShaderConverter
     "${MAGNUM_PLUGINS_SHADERCONVERTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_SHADERCONVERTER_DEBUG_LIBRARY_INSTALL_DIR}"
