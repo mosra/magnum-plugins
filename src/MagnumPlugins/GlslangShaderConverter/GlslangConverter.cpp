@@ -37,6 +37,14 @@
 #include <glslang/Public/ShaderLang.h> /* Haha what the fuck this name */
 #include <glslang/SPIRV/GlslangToSpv.h>
 
+/* For GLSLANG_PATCH_LEVEL because of course GLSLANG_MINOR_VERSION is always 13
+   and GLSLANG_MAJOR_VERSION does not exist, so I have to compare numbers like
+   7313 and 6268782757. And it's removed since version 11-10 (yes, a dash, A
+   FUCKING DASH) and replaced with an USELESS runtime API that CAN'T be used to
+   conditionally compile out a piece of code. But I won't bother until such
+   version is available in package managers. Fuck this shit. Sideways. */
+#include <glslang/Include/revision.h>
+
 namespace Magnum { namespace ShaderTools {
 
 struct GlslangConverter::State {
@@ -132,12 +140,14 @@ EShLanguage translateStage(const Stage stage) {
         case Stage::TessellationControl: return EShLangTessControl;
         case Stage::TessellationEvaluation: return EShLangTessEvaluation;
         case Stage::Compute: return EShLangCompute;
-        case Stage::RayGeneration: return EShLangRayGen;
-        case Stage::RayAnyHit: return EShLangAnyHit;
-        case Stage::RayClosestHit: return EShLangClosestHit;
-        case Stage::RayMiss: return EShLangMiss;
-        case Stage::RayIntersection: return EShLangIntersect;
-        case Stage::RayCallable: return EShLangCallable;
+        /* The variants without NV suffix are only since version 8.13, use the
+           old ones for compatibility with 7.13 */
+        case Stage::RayGeneration: return EShLangRayGenNV;
+        case Stage::RayAnyHit: return EShLangAnyHitNV;
+        case Stage::RayClosestHit: return EShLangClosestHitNV;
+        case Stage::RayMiss: return EShLangMissNV;
+        case Stage::RayIntersection: return EShLangIntersectNV;
+        case Stage::RayCallable: return EShLangCallableNV;
         /** @todo drop the NV suffix when mesh shaders are a KHR extension */
         case Stage::MeshTask: return EShLangTaskNV;
         case Stage::Mesh: return EShLangMeshNV;
@@ -210,10 +220,17 @@ std::pair<glslang::EShTargetClientVersion, glslang::EShTargetLanguageVersion> pa
     } else if(split[0] == "vulkan1.1"_s) {
         client = glslang::EShTargetVulkan_1_1;
         language = glslang::EShTargetSpv_1_3;
-    } else if(split[0] == "vulkan1.2"_s) {
+    }
+    /* Available since 8.13.3743. Yes, we can't just compare major versions
+       because this shit is SHIT. See #include <glslang/Include/revision.h>
+       for a longer rant. */
+    #if GLSLANG_PATCH_LEVEL >= 3743
+    else if(split[0] == "vulkan1.2"_s) {
         client = glslang::EShTargetVulkan_1_2;
         language = glslang::EShTargetSpv_1_5;
-    } else {
+    }
+    #endif
+    else {
         Error{} << prefix << "output format version target should be opengl4.5 or vulkanX.Y but got" << split[0];
         return {};
     }
@@ -381,18 +398,23 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
     switch(outputVersion.first) {
         case glslang::EShTargetVulkan_1_0:
         case glslang::EShTargetVulkan_1_1:
+        /* See #include <glslang/Include/revision.h> for a longer rant. */
+        #if GLSLANG_PATCH_LEVEL >= 3743
         case glslang::EShTargetVulkan_1_2:
+        #endif
             client = glslang::EShClientVulkan;
             break;
         case glslang::EShTargetOpenGL_450:
             client = glslang::EShClientOpenGL;
             break;
 
-        /* FFS */
+        /* FFS. See #include <glslang/Include/revision.h> for a longer rant. */
+        #if GLSLANG_PATCH_LEVEL >= 3743
         /* LCOV_EXCL_START */
         case glslang::EShTargetClientVersionCount:
             CORRADE_INTERNAL_ASSERT_UNREACHABLE();
         /* LCOV_EXCL_STOP */
+        #endif
     }
     CORRADE_INTERNAL_ASSERT(client);
 

@@ -28,7 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/TestSuite/Compare/File.h>
+#include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -109,9 +109,10 @@ const struct {
     {"Vulkan 1.1 SPIR-V 1.4 shader",
         Stage{}, "shader.vk.frag", nullptr,
         "", "vulkan1.1 spv1.4"},
-    {"Vulkan 1.2 shader",
-        Stage{}, "shader.vk.frag", nullptr,
-        "", "vulkan1.2"},
+    /* Not tested because this is not present in glslang 7.13 yet */
+    //{"Vulkan 1.2 shader",
+    //    Stage{}, "shader.vk.frag", nullptr,
+    //    "", "vulkan1.2"},
 };
 
 const struct {
@@ -527,11 +528,17 @@ void GlslangConverterTest::convert() {
         return arrayView(file);
     }, file);
 
-    std::string output = Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_OUTPUT_DIR, data.output);
-    CORRADE_VERIFY(converter->convertFileToFile(data.stage, data.alias ? data.alias : data.filename, output));
-    CORRADE_COMPARE_AS(output,
+    Containers::Array<char> output = converter->convertFileToData(data.stage, data.alias ? data.alias : data.filename);
+
+    /* glslang 7.13 differs from 8.13 only in the generator version, patch
+       that to have the same output */
+    auto words = Containers::arrayCast<UnsignedInt>(output);
+    if(words.size() >= 3 && words[2] == 524295)
+        words[2] = 524296;
+
+    CORRADE_COMPARE_AS((std::string{output.begin(), output.end()}),
         Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.output),
-        TestSuite::Compare::File);
+        TestSuite::Compare::StringToFile);
 }
 
 void GlslangConverterTest::convertPreprocessOnlyNotImplemented() {
