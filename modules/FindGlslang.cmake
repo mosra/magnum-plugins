@@ -11,8 +11,8 @@
 # Link to Glslang::Glslang, all its dependencies will get linked transitively.
 # Additionally these variables are defined for internal usage:
 #
-#  GLSLANG_LIBRARY      - Glslang library
-#  GLSLANG_SPIRV_LIBRARY - Glslang libSPIRV library
+#  GLSLANG_LIBRARY_{DEBUG,RELEASE} - Glslang library
+#  GLSLANG_SPIRV_LIBRARY_{DEBUG,RELEASE} - Glslang libSPIRV library
 #  GLSLANG_INCLUDE_DIR  - Include dir
 #
 # Actually, it's 2020 and none of this should be needed, but apparently Magnum
@@ -48,9 +48,15 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Libraries
-find_library(GLSLANG_LIBRARY NAMES glslang)
-find_library(GLSLANG_SPIRV_LIBRARY NAMES SPIRV)
+# Libraries. The debug suffix is used only on Windows.
+find_library(GLSLANG_LIBRARY_RELEASE NAMES glslang)
+find_library(GLSLANG_LIBRARY_DEBUG NAMES glslangd)
+find_library(GLSLANG_SPIRV_LIBRARY_RELEASE NAMES SPIRV)
+find_library(GLSLANG_SPIRV_LIBRARY_DEBUG NAMES SPIRVd)
+
+include(SelectLibraryConfigurations)
+select_library_configurations(GLSLANG)
+select_library_configurations(GLSLANG_SPIRV)
 
 # Include dir
 find_path(GLSLANG_INCLUDE_DIR
@@ -65,21 +71,39 @@ find_package_handle_standard_args(Glslang DEFAULT_MSG
     GLSLANG_SPIRV_LIBRARY
     GLSLANG_INCLUDE_DIR)
 
-mark_as_advanced(FORCE
-    GLSLANG_LIBRARY
-    GLSLANG_SPIRV_LIBRARY
-    GLSLANG_INCLUDE_DIR)
+mark_as_advanced(FORCE GLSLANG_INCLUDE_DIR)
 
 if(NOT TARGET Glslang::SPIRV)
     add_library(Glslang::SPIRV UNKNOWN IMPORTED)
-    set_target_properties(Glslang::SPIRV PROPERTIES
-        IMPORTED_LOCATION ${GLSLANG_SPIRV_LIBRARY})
+    if(GLSLANG_SPIRV_LIBRARY_RELEASE)
+        set_property(TARGET Glslang::SPIRV APPEND PROPERTY
+            IMPORTED_CONFIGURATIONS RELEASE)
+        set_target_properties(Glslang::SPIRV PROPERTIES
+            IMPORTED_LOCATION_RELEASE ${GLSLANG_SPIRV_LIBRARY_RELEASE})
+    endif()
+    if(GLSLANG_SPIRV_LIBRARY_DEBUG)
+        set_property(TARGET Glslang::SPIRV APPEND PROPERTY
+            IMPORTED_CONFIGURATIONS DEBUG)
+        set_target_properties(Glslang::SPIRV PROPERTIES
+            IMPORTED_LOCATION_DEBUG ${GLSLANG_SPIRV_LIBRARY_DEBUG})
+    endif()
 endif()
 
 if(NOT TARGET Glslang::Glslang)
     add_library(Glslang::Glslang UNKNOWN IMPORTED)
+    if(GLSLANG_LIBRARY_RELEASE)
+        set_property(TARGET Glslang::Glslang APPEND PROPERTY
+            IMPORTED_CONFIGURATIONS RELEASE)
+        set_target_properties(Glslang::Glslang PROPERTIES
+            IMPORTED_LOCATION_RELEASE ${GLSLANG_LIBRARY_RELEASE})
+    endif()
+    if(GLSLANG_LIBRARY_DEBUG)
+        set_property(TARGET Glslang::Glslang APPEND PROPERTY
+            IMPORTED_CONFIGURATIONS DEBUG)
+        set_target_properties(Glslang::Glslang PROPERTIES
+            IMPORTED_LOCATION_DEBUG ${GLSLANG_LIBRARY_DEBUG})
+    endif()
     set_target_properties(Glslang::Glslang PROPERTIES
-        IMPORTED_LOCATION ${GLSLANG_LIBRARY}
         INTERFACE_INCLUDE_DIRECTORIES ${GLSLANG_INCLUDE_DIR}
         INTERFACE_LINK_LIBRARIES Glslang::SPIRV)
 endif()
