@@ -81,35 +81,36 @@ const struct {
     const char* inputVersion;
     const char* outputVersion;
 } ValidateData[] {
+    /* GCC 4.8 doesn't like using just {} for Stage or for const char* */
     {"GL shader",
-        {}, "shader.gl.frag", {},
+        Stage{}, "shader.gl.frag", nullptr,
         "", "opengl4.5"},
     {"GL shader, explicit stage",
         Stage::Fragment, "shader.gl.frag", "shader.glsl",
         "", "opengl4.5"},
     {"GL shader, <stage>.glsl",
-        {}, "shader.gl.frag", "shader.frag.glsl",
+        Stage{}, "shader.gl.frag", "shader.frag.glsl",
         "", "opengl4.5"},
     {"GL 2.1 shader",
-        {}, "shader.oldgl.frag", {},
+        Stage{}, "shader.oldgl.frag", nullptr,
         "110", "opengl4.5"},
     {"GLES 2.0 shader",
-        {}, "shader.oldgl.frag", {},
+        Stage{}, "shader.oldgl.frag", nullptr,
         "100 es", "opengl4.5"},
     {"Vulkan shader, default",
-        {}, "shader.vk.frag", {},
+        Stage{}, "shader.vk.frag", nullptr,
         "", ""},
     {"Vulkan 1.0 shader",
-        {}, "shader.vk.frag", {},
+        Stage{}, "shader.vk.frag", nullptr,
         "", "vulkan1.0"},
     {"Vulkan 1.1 shader",
-        {}, "shader.vk.frag", {},
+        Stage{}, "shader.vk.frag", nullptr,
         "", "vulkan1.1"},
     {"Vulkan 1.1 SPIR-V 1.4 shader",
-        {}, "shader.vk.frag", {},
+        Stage{}, "shader.vk.frag", nullptr,
         "", "vulkan1.1 spv1.4"},
     {"Vulkan 1.2 shader",
-        {}, "shader.vk.frag", {},
+        Stage{}, "shader.vk.frag", nullptr,
         "", "vulkan1.2"},
 };
 
@@ -180,14 +181,15 @@ const struct {
 } ConvertData[] {
     /* Just a subset of what's checked for validate(), to verify code paths
        specific to convert() */
+    /* GCC 4.8 doesn't like using just {} for Stage or for const char* */
     {"GL shader",
-        {}, "shader.gl.frag", {}, "shader.gl.spv",
+        Stage{}, "shader.gl.frag", nullptr, "shader.gl.spv",
         "opengl4.5"},
     {"GL shader, explicit stage",
         Stage::Fragment, "shader.gl.frag", "shader.glsl", "shader.gl.spv",
         "opengl4.5"},
     {"Vulkan shader, default",
-        {}, "shader.vk.frag", {}, "shader.vk.spv",
+        Stage{}, "shader.vk.frag", nullptr, "shader.vk.spv",
         ""},
 };
 
