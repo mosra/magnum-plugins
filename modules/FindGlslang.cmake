@@ -104,6 +104,9 @@ if(NOT TARGET Glslang::Glslang)
             IMPORTED_LOCATION_DEBUG ${GLSLANG_LIBRARY_DEBUG})
     endif()
     set_target_properties(Glslang::Glslang PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${GLSLANG_INCLUDE_DIR}
+        INTERFACE_INCLUDE_DIRECTORIES
+            # Second entry to account for broken relative includes in version
+            # 7.13. Sigh. https://github.com/KhronosGroup/glslang/issues/2007
+            "${GLSLANG_INCLUDE_DIR};${GLSLANG_INCLUDE_DIR}/glslang"
         INTERFACE_LINK_LIBRARIES Glslang::SPIRV)
 endif()
