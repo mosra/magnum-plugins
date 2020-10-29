@@ -28,6 +28,10 @@ environment:
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     APPVEYOR_JOB_NAME: windows-mingw
   - TARGET: rt
+    # This actually isn't needed anywhere, but without this the %COMPILE:~0,4%
+    # expressions cause a "The syntax of the command is incorrect." sometimes
+    # but not in all cases. What the fuck, cmd.exe.
+    COMPILER: msvc
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     APPVEYOR_JOB_NAME: windows-rt-msvc2017
 
@@ -67,6 +71,9 @@ install:
 - bash -c "cd basis_universal && patch -p1 < ../package/ci/basisu-msvc2019-16.6.patch"
 
 # SPIRV-Tools, for MSVC 2019 and clang-cl only
+# This line REQUIRES the COMPILER variable to be set on rt builds, otherwise it
+# complains that "The syntax of the command is incorrect.". The same done in
+# build_script below works without problems. What the hell.
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\spirv-tools-2020.4-windows-2019-debug.zip appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2019-debug.zip
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" 7z x spirv-tools-2020.4-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
