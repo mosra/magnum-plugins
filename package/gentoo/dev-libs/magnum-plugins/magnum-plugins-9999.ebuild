@@ -21,6 +21,7 @@ RDEPEND="
 	virtual/jpeg
 	media-libs/libpng
 	media-libs/assimp
+	dev-util/glslang
 	dev-util/spirv-tools
 "
 DEPEND="${RDEPEND}"
@@ -40,6 +41,7 @@ src_configure() {
 		-DWITH_DRWAVAUDIOIMPORTER=ON
 		-DWITH_FAAD2AUDIOIMPORTER=ON
 		-DWITH_FREETYPEFONT=ON
+		-DWITH_GLSLANGSHADERCONVERTER=ON
 		-DWITH_HARFBUZZFONT=ON
 		-DWITH_ICOIMPORTER=ON
 		-DWITH_JPEGIMAGECONVERTER=ON

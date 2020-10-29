@@ -22,6 +22,7 @@
 #  DrWavAudioImporter           - WAV audio importer using dr_wav
 #  Faad2AudioImporter           - AAC audio importer using FAAD2
 #  FreeTypeFont                 - FreeType font
+#  GlslangShaderConverter       - Glslang shader converter
 #  HarfBuzzFont                 - HarfBuzz font
 #  IcoImporter                  - ICO importer
 #  JpegImageConverter           - JPEG image converter
@@ -140,12 +141,12 @@ set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
     AssimpImporter BasisImageConverter BasisImporter DdsImporter
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
-    DrWavAudioImporter Faad2AudioImporter FreeTypeFont HarfBuzzFont IcoImporter
-    JpegImageConverter JpegImporter MeshOptimizerSceneConverter
-    MiniExrImageConverter OpenGexImporter PngImageConverter PngImporter
-    PrimitiveImporter SpirvToolsShaderConverter StanfordImporter
-    StanfordSceneConverter StbImageConverter StbImageImporter StbTrueTypeFont
-    StbVorbisAudioImporter StlImporter TinyGltfImporter)
+    DrWavAudioImporter Faad2AudioImporter FreeTypeFont GlslangShaderConverter
+    HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
+    MeshOptimizerSceneConverter MiniExrImageConverter OpenGexImporter
+    PngImageConverter PngImporter PrimitiveImporter SpirvToolsShaderConverter
+    StanfordImporter StanfordSceneConverter StbImageConverter StbImageImporter
+    StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
@@ -344,6 +345,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
             endif()
+
+        # GlslangShaderConverter plugin dependencies
+        elseif(_component STREQUAL GlslangShaderConverter)
+            find_package(Glslang REQUIRED)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES Glslang::Glslang)
 
         # HarfBuzzFont plugin dependencies
         elseif(_component STREQUAL HarfBuzzFont)

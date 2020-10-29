@@ -327,6 +327,8 @@ By default no plugins are built and you need to select them manually:
     [FAAD2](https://www.audiocoding.com/faad2.html).
 -   `WITH_FREETYPEFONT` --- Build the @ref Text::FreeTypeFont "FreeTypeFont"
     plugin. Depends on [FreeType](http://www.freetype.org/).
+-   `WITH_GLSLANGSHADERCONVERTER` --- Build the @ref ShaderTools::GlslangConverter "GlslangShaderConverter"
+    plugin. Depends on [Glslang](https://github.com/KhronosGroup/glslang).
 -   `WITH_HARFBUZZFONT` --- Build the @ref Text::HarfBuzzFont "HarfBuzzFont"
     plugin. Enables also building of the @ref Text::FreeTypeFont "FreeTypeFont"
     plugin. Depends on [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz).

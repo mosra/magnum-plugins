@@ -59,6 +59,10 @@
 /** @dir MagnumPlugins/FreeTypeFont
  * @brief Plugin @ref Magnum::Text::FreeTypeFont
  */
+/** @dir MagnumPlugins/GlslangShaderConverter
+ * @brief Plugin @ref Magnum::ShaderTools::GlslangConverter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/HarfBuzzFont
  * @brief Plugin @ref Magnum::Text::HarfBuzzFont
  */

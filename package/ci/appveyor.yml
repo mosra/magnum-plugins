@@ -70,6 +70,10 @@ install:
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\spirv-tools-2020.4-windows-2019-debug.zip appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2019-debug.zip
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" 7z x spirv-tools-2020.4-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
+# Glslang, for MSVC 2019 and clang-cl only
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\glslang-8.13.3743-windows-2019-debug.zip appveyor DownloadFile https://ci.magnum.graphics/glslang-8.13.3743-windows-2019-debug.zip
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" 7z x glslang-8.13.3743-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+
 build_script:
 - IF NOT "%BUILD_STATIC%" == "ON" set BUILD_STATIC=OFF
 - IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" call package\ci\appveyor-desktop.bat
@@ -84,4 +88,4 @@ cache:
 - basis_universal-%BASIS_VERSION%.zip -> package/ci/appveyor-cache-reset.txt
 # meshoptimizer
 - v0.14.zip -> package/ci/appveyor-cache-reset.txt
-- spirv-tools-2020.4-windows-2019-debug.zip -> package/ci/appveyor-cache-reset.txt
+- glslang-8.13.3743-windows-2019-debug.zip -> package/ci/appveyor-cache-reset.txt

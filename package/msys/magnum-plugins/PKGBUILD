@@ -16,6 +16,7 @@ depends=("${MINGW_PACKAGE_PREFIX}-magnum>=$pkgver"
          "${MINGW_PACKAGE_PREFIX}-devil"
          "${MINGW_PACKAGE_PREFIX}-faad2"
          "${MINGW_PACKAGE_PREFIX}-freetype"
+         "${MINGW_PACKAGE_PREFIX}-glslang"
          "${MINGW_PACKAGE_PREFIX}-harfbuzz"
          "${MINGW_PACKAGE_PREFIX}-libjpeg-turbo"
          "${MINGW_PACKAGE_PREFIX}-libpng"
@@ -51,6 +52,7 @@ build() {
             -DWITH_DRMP3AUDIOIMPORTER=ON \
             -DWITH_DRWAVAUDIOIMPORTER=ON \
             -DWITH_FREETYPEFONT=ON \
+            -DWITH_GLSLANGSHADERCONVERTER=ON \
             -DWITH_FAAD2AUDIOIMPORTER=ON \
             -DWITH_HARFBUZZFONT=ON \
             -DWITH_ICOIMPORTER=ON \

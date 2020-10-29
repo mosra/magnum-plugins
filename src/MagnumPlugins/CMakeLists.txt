@@ -74,6 +74,10 @@ if(WITH_FREETYPEFONT)
     add_subdirectory(FreeTypeFont)
 endif()
 
+if(WITH_GLSLANGSHADERCONVERTER)
+    add_subdirectory(GlslangShaderConverter)
+endif()
+
 if(WITH_HARFBUZZFONT)
     add_subdirectory(HarfBuzzFont)
 endif()
