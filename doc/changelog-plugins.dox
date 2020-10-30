@@ -56,6 +56,9 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
+-   @ref Text::FreeTypeFont "FreeTypeFont" now treats its internal global
+    library handle as thread-local, making it possible to be used in
+    multi-threaded environments
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now performs range checks
     on scene, node, camera, mesh, material, child and light references in the
     scene hierarchy for more robust handling of broken files

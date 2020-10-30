@@ -143,7 +143,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         void doClose() override;
 
     private:
-        static MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
+        static CORRADE_THREAD_LOCAL MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
 
         FontFeatures MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
 
