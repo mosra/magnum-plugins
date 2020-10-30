@@ -246,7 +246,7 @@ class MAGNUM_GLSLANGSHADERCONVERTER_EXPORT GlslangConverter: public AbstractConv
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL void doSetInputFormat(Format format, Containers::StringView version) override;
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL void doSetOutputFormat(Format format, Containers::StringView version) override;
 
-        MAGNUM_GLSLANGSHADERCONVERTER_LOCAL void doSetDefinitions(Containers::ArrayView<const std::pair<Containers::StringView, Containers::StringView> > definitions) override;
+        MAGNUM_GLSLANGSHADERCONVERTER_LOCAL void doSetDefinitions(Containers::ArrayView<const std::pair<Containers::StringView, Containers::StringView>> definitions) override;
 
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateFile(Stage stage, Containers::StringView filename) override;
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateData(Stage stage, Containers::ArrayView<const char> data) override;
