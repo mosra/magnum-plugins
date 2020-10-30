@@ -220,6 +220,17 @@ the `openglX.Y` target implicitly adds @cpp #define GL_SPIRV @ce (as specified
 by @gl_extension{ARB,gl_spirv}), while `vulkanX.Y` adds @cpp #define VULKAN @ce
 (as specified by @m_class{m-doc-external} [GL_KHR_vulkan_glsl](https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_vulkan_glsl.txt)).
 
+@section ShaderTools-GlslangConverter-debug-info-level Debug info level
+
+By default, the converter outputs SPIR-V without any debug information. You
+can control this using @ref setDebugInfoLevel():
+
+-   `0` or the empty default generates no debug info
+-   `1` makes the input GLSL source embedded in the `OpSource` instruction
+    (including the filename, if converting from a file), together with `OpLine`
+    providing line info for the instructions and `OpModuleProcessed` describing
+    what all processing steps were taken by Glslang
+
 @section ShaderTools-GlslangConverter-configuration Plugin-specific config
 
 It's possible to tune various compiler and validator options through
@@ -247,6 +258,7 @@ class MAGNUM_GLSLANGSHADERCONVERTER_EXPORT GlslangConverter: public AbstractConv
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL void doSetOutputFormat(Format format, Containers::StringView version) override;
 
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL void doSetDefinitions(Containers::ArrayView<const std::pair<Containers::StringView, Containers::StringView>> definitions) override;
+        MAGNUM_GLSLANGSHADERCONVERTER_LOCAL void doSetDebugInfoLevel(Containers::StringView level) override;
 
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateFile(Stage stage, Containers::StringView filename) override;
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateData(Stage stage, Containers::ArrayView<const char> data) override;

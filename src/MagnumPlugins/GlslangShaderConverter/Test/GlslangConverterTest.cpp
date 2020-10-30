@@ -63,6 +63,7 @@ struct GlslangConverterTest: TestSuite::Tester {
     void convertWrongOutputFormat();
     void convertWrongOutputVersionTarget();
     void convertWrongOutputVersionLanguage();
+    void convertWrongDebugInfoLevel();
     void convertFail();
     void convertFailWrongStage();
     void convertFailFileWrongStage();
@@ -179,19 +180,25 @@ const struct {
     const char* output;
 
     const char* outputVersion;
+    const char* debugInfoLevel;
 } ConvertData[] {
     /* Just a subset of what's checked for validate(), to verify code paths
        specific to convert() */
     /* GCC 4.8 doesn't like using just {} for Stage or for const char* */
     {"GL shader",
         Stage{}, "shader.gl.frag", nullptr, "shader.gl.spv",
-        "opengl4.5"},
+        "opengl4.5", nullptr},
     {"GL shader, explicit stage",
         Stage::Fragment, "shader.gl.frag", "shader.glsl", "shader.gl.spv",
-        "opengl4.5"},
+        "opengl4.5", nullptr},
     {"Vulkan shader, default",
         Stage{}, "shader.vk.frag", nullptr, "shader.vk.spv",
-        ""},
+        "", nullptr},
+    /* Vulkan 1.0 target puts OpModuleProcessed into the shader source which
+       looks strange in the disassembly, but that's all */
+    {"Vulkan 1.1 shader with debug info",
+        Stage{}, "shader.vk.frag", nullptr, "shader.vk.debug.spv",
+        "vulkan1.1", "1"},
 };
 
 const struct {
@@ -263,7 +270,8 @@ GlslangConverterTest::GlslangConverterTest() {
               &GlslangConverterTest::convertWrongInputVersion,
               &GlslangConverterTest::convertWrongOutputFormat,
               &GlslangConverterTest::convertWrongOutputVersionTarget,
-              &GlslangConverterTest::convertWrongOutputVersionLanguage});
+              &GlslangConverterTest::convertWrongOutputVersionLanguage,
+              &GlslangConverterTest::convertWrongDebugInfoLevel});
 
     addInstancedTests({&GlslangConverterTest::convertFail},
         Containers::arraySize(ConvertFailData));
@@ -521,6 +529,8 @@ void GlslangConverterTest::convert() {
         {"NEED_LOCATION", ""}
     });
     converter->setOutputFormat({}, data.outputVersion);
+    if(data.debugInfoLevel)
+        converter->setDebugInfoLevel(data.debugInfoLevel);
 
     /* Fake the file loading via a callback */
     const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.filename));
@@ -615,6 +625,18 @@ void GlslangConverterTest::convertWrongOutputVersionLanguage() {
     CORRADE_COMPARE(out.str(),
         /* Yep, it's silly. But this way we know it's silly. */
         "ShaderTools::GlslangConverter::convertDataToData(): output format version language should be spvX.Y but got spv2.1\n");
+}
+
+void GlslangConverterTest::convertWrongDebugInfoLevel() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
+
+    converter->setDebugInfoLevel("2");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertDataToData({}, {}));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::GlslangConverter::convertDataToData(): debug info level should be 0, 1 or empty but got 2\n");
 }
 
 void GlslangConverterTest::convertFail() {

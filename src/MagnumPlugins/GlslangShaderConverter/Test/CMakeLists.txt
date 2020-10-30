@@ -42,7 +42,7 @@ corrade_add_test(GlslangShaderConverterTest GlslangConverterTest.cpp
     FILES
         shader.gl.frag shader.gl.spv
         shader.oldgl.frag
-        shader.vk.frag shader.vk.spv)
+        shader.vk.frag shader.vk.spv shader.vk.debug.spv)
 target_include_directories(GlslangShaderConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(GlslangShaderConverterTest PRIVATE GlslangShaderConverter)

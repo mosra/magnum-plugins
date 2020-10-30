@@ -55,6 +55,8 @@ struct GlslangConverter::State {
 
     /** @todo change to a String when formatInto() supports it */
     std::string definitions;
+
+    Containers::String debugInfo;
 };
 
 void GlslangConverter::initialize() {
@@ -71,7 +73,7 @@ void GlslangConverter::finalize() {
 GlslangConverter::GlslangConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{Containers::InPlaceInit} {}
 
 ConverterFeatures GlslangConverter::doFeatures() const {
-    return ConverterFeature::ConvertData|ConverterFeature::ValidateData|ConverterFeature::Preprocess|
+    return ConverterFeature::ConvertData|ConverterFeature::ValidateData|ConverterFeature::Preprocess|ConverterFeature::DebugInfo|
         /* We actually don't, but without this set the doValidateFile() /
            doConvertFileTo*() intercepts don't get called when the input is
            specified through callbacks. And since we delegate to the base
@@ -101,6 +103,10 @@ void GlslangConverter::doSetDefinitions(const Containers::ArrayView<const std::p
         else
             Utility::formatInto(_state->definitions, _state->definitions.size(), "#define {} {}\n", definition.first, definition.second);
     }
+}
+
+void GlslangConverter::doSetDebugInfoLevel(const Containers::StringView level) {
+    _state->debugInfo = Containers::String::nullTerminatedGlobalView(level);
 }
 
 namespace {
@@ -252,7 +258,7 @@ std::pair<glslang::EShTargetClientVersion, glslang::EShTargetLanguageVersion> pa
     return {client, language};
 }
 
-std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TProgram& program, const Utility::ConfigurationGroup& configuration, const ConverterFlags flags, const std::pair<int, EProfile> inputVersion, const std::pair<glslang::EshTargetClientVersion, glslang::EShTargetLanguageVersion> outputVersion, const bool versionExplicitlySpecified, const Containers::StringView definitions, const Containers::StringView filename, const Containers::ArrayView<const char> data) {
+std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TProgram& program, const Utility::ConfigurationGroup& configuration, const ConverterFlags flags, const std::pair<int, EProfile> inputVersion, const std::pair<glslang::EshTargetClientVersion, glslang::EShTargetLanguageVersion> outputVersion, const bool versionExplicitlySpecified, const Containers::StringView definitions, const Containers::StringView filename, const Containers::ArrayView<const char> data, Int messages) {
     /* Add preprocessor definitions */
     shader.setPreamble(definitions.data());
 
@@ -461,7 +467,6 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
             some better API to access that info. It's just noise when done like
             this.
     */
-    Int messages = 0;
     if(configuration.value<bool>("cascadingErrors"))
         messages |= EShMsgCascadingErrors;
     if(configuration.value<bool>("permissive"))
@@ -596,7 +601,7 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
        function is shared between doValidateData() and doConvertDataToData()
        and does the same in both. Here we use just the output log. */
     glslang::TProgram program;
-    const std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, data);
+    const std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, data, 0);
 
     /* Trim excessive newlines and spaces from the output. What the fuck, did
        nobody ever verify what mess it spits out?! */
@@ -680,6 +685,81 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
     const std::pair<glslang::EshTargetClientVersion, glslang::EShTargetLanguageVersion> outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::convertDataToData():", _state->outputVersion);
     if(!inputVersion.first || !outputVersion.first) return {};
 
+    /* Compilation and SPIR-V options */
+    Int messages = 0;
+    glslang::SpvOptions spvOptions;
+    /* We'll do these ourselves (and better) on the resulting SPIR-V instead */
+    spvOptions.disableOptimizer = true;
+    spvOptions.optimizeSize = false;
+    spvOptions.disassemble = false;
+    /* We have a dedicated plugin for SPIR-V validation with far more options */
+    spvOptions.validate = false;
+    /* Might be overriden below */
+    spvOptions.generateDebugInfo = false;
+
+    /* Debug info level */
+    if(_state->debugInfo == "1"_s) {
+        /* My expectations for glslang can't get much lower anymore but
+           nevertheless, for some reason, there isn't a single option that
+           enables debug info -- one has to set *two* options in sync. Behold:
+
+           1. If both are specified, the resulting SPIR-V has both the original
+           source embedded in OpSource, line info in OpLine and processing info
+           in OpModuleProcessed. It makes sense this way:
+
+            %1 = OpString "a.vert"
+                 OpSource ESSL 310 %1 "…
+            …
+            "
+                 OpModuleProcessed "client vulkan100"
+                 …
+
+           2. If just generateDebugInfo is specified, it results in a mess like
+
+            %1 = OpString ""
+            %7 = OpString "a.vert"
+                 OpSource ESSL 310 %1
+                 …
+
+           where the referenced source name should be clearly %7 and not %1
+           (OTOH the following OpLine statements reference %7 correctly, so I
+           suppose this is yet another weird bug I came across as the first
+           person on Earth). On SPIR-V 1.0 (`vulkan1.0` / `opengl4.5` target)
+           the OpSource additionally contains the OpModuleProcessed entries
+           embedded in the source and then a #line 1 to reset the line counter
+           back, but the actual source is *still* missing and the same %1 / %7
+           mismatch remains:
+
+            %1 = OpString ""
+            %7 = OpString "a.vert"
+                 OpSource ESSL 310 %1 "// OpModuleProcessed client vulkan100
+            …
+            #line 1
+            "
+                 …
+
+           3. If just EShMsgDebugInfo is specified, the output has no debug
+           info at all. */
+        spvOptions.generateDebugInfo = true;
+        messages |= EShMsgDebugInfo;
+
+    /* There's also a stripDebugInfo option since version 10-11.0.0 (yes, a
+       DASH, WTAF!!) (see https://github.com/KhronosGroup/glslang/pull/2278 ),
+       however even after spending half an hour investigating what it actually
+       does I fail to see its purpose -- if I don't generate any debug info in
+       the first place, there's no debug info to strip later, no?! The purpose
+       of the PR is to add -g0 analogously to GCC, but for GCC it's simply
+
+        Level 0 produces no debug information at all. Thus, -g0 negates -g.
+
+       So here we do the same. If the user specifies -g0, it'll act as a reset
+       for -g1 specified earlier and -g0 alone will have the same effect as not
+       doing anything at all because by default, no debug info is generated. */
+    } else if(_state->debugInfo != "0"_s && _state->debugInfo != ""_s) {
+        Error{} << "ShaderTools::GlslangConverter::convertDataToData(): debug info level should be 0, 1 or empty but got" << _state->debugInfo;
+        return {};
+    }
+
     /* Amazing, why some enums have the glslang:: namespace and some don't /
        can't? Why can't you just be consistent, FFS? */
     glslang::TShader shader{translatedStage};
@@ -694,7 +774,7 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
        function is shared between doValidateData() and doConvertDataToData()
        and does the same in both. */
     glslang::TProgram program;
-    std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, data);
+    std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, data, messages);
 
     /* Trim excessive newlines and spaces from the output. What the fuck, did
        nobody ever verify what mess it spits out?! */
@@ -735,17 +815,6 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
        version). */
     glslang::TIntermediate* ir = program.getIntermediate(translatedStage);
     CORRADE_INTERNAL_ASSERT(ir);
-
-    glslang::SpvOptions spvOptions;
-    /* We'll do these ourselves (and better) on the resulting SPIR-V instead */
-    spvOptions.disableOptimizer = true;
-    spvOptions.disassemble = false;
-    /* We have a dedicated plugin for SPIR-V validation with far more options */
-    spvOptions.validate = false;
-    /** @todo expose, probably together with EShMsgDebugInfo enabled? */
-    spvOptions.generateDebugInfo = false;
-    /* Not in 8.13.3743 yet */
-    //spvOptions.stripDebugInfo = true;
 
     /* WTF, a vector?! U MAD? */
     std::vector<UnsignedInt> spirv;
