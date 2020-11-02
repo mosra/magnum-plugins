@@ -28,11 +28,14 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/ArrayViewStl.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Magnum/FileCallback.h>
 
 #include <glslang/Public/ShaderLang.h> /* Haha what the fuck this name */
 #include <glslang/SPIRV/GlslangToSpv.h>
@@ -258,7 +261,76 @@ std::pair<glslang::EShTargetClientVersion, glslang::EShTargetLanguageVersion> pa
     return {client, language};
 }
 
-std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TProgram& program, const Utility::ConfigurationGroup& configuration, const ConverterFlags flags, const std::pair<int, EProfile> inputVersion, const std::pair<glslang::EshTargetClientVersion, glslang::EShTargetLanguageVersion> outputVersion, const bool versionExplicitlySpecified, const Containers::StringView definitions, const Containers::StringView filename, const Containers::ArrayView<const char> data, Int messages) {
+struct Includer: glslang::TShader::Includer {
+    explicit Includer(Containers::Optional<Containers::ArrayView<const char>>(*const callback)(const std::string&, InputFileCallbackPolicy, void*), void* const userData): _callback{callback}, _userData{userData} {}
+
+    IncludeResult* includeLocal(const char* const headerName, const char* const includerName, std::size_t) override {
+        /* If path/to/shader.glsl includes ../definitions.glsl, it should
+           resolves to path/to/../definitions.glsl */
+        const std::string fullPath = Utility::Directory::join(Utility::Directory::path(includerName), headerName);
+
+        /* If one header is included recursively (for whatever reason), glslang
+           calls the includer multiple times, followed by calling
+           releaseInclude() multiple times. I suppose it's because it can't
+           really know it's really the same header but whatever. It's not
+           great since the user callbacks should not not expected to handle any
+           refcounting and in order to avoid recursive/overlapping file scopes,
+           we refcount here and call the LoadTemporary callback only if we
+           don't have the file loaded yet, and call the Close callback once we
+           really don't need it again.
+
+           Another case happens when a file is included again after after it
+           was closed -- we called Close on it, so we need to load it again,
+           however, in order to avoid searching by key in releaseInclude(),
+           the filename entry is kept in _references with a zero refcount, so
+           we check for that as well. */
+        auto referenceFound = _references.find(fullPath);
+        if(referenceFound == _references.end() || !referenceFound->second.second) {
+            const Containers::Optional<Containers::ArrayView<const char>> data = _callback(fullPath, InputFileCallbackPolicy::LoadTemporary, _userData);
+            if(!data)
+                return nullptr;
+
+            if(referenceFound == _references.end())
+                referenceFound = _references.emplace(fullPath, std::make_pair(*data, 0)).first;
+            else
+                referenceFound->second.first = *data;
+        }
+
+        ++referenceFound->second.second;
+
+        /* "After parsing that source, Glslang will release the IncludeResult
+           object." That doesn't mean it'll delete the returned instance, but
+           instead passes it to releaseInclude() -- and there we have to
+           delete it ourselved. */
+        return new IncludeResult{fullPath, referenceFound->second.first.data(), referenceFound->second.first.size(), &referenceFound->second};
+    }
+
+    void releaseInclude(IncludeResult* const result) override {
+        /* For some reason, it calls releaseInclude() even if we return nullptr
+           from Includer. That's not great. */
+        if(!result) return;
+
+        /* Decrease the reference counter, if it goes to zero, close the data */
+        auto& reference = *static_cast<std::pair<Containers::ArrayView<const char>, std::size_t>*>(result->userData);
+        CORRADE_INTERNAL_ASSERT(reference.second);
+        /* We're not erasing the item from the view as that would mean
+           searching by filename again (as we can't store the whole iterator in
+           userData). Instead, next time the same file is encountered, we check
+           the refcount and load the file again if it's 0. */
+        if(--reference.second == 0)
+            _callback(result->headerName, InputFileCallbackPolicy::Close, _userData);
+
+        delete result;
+    }
+
+    private:
+        Containers::Optional<Containers::ArrayView<const char>>(*_callback)(const std::string&, InputFileCallbackPolicy, void*);
+        void* _userData;
+
+        std::unordered_map<std::string, std::pair<Containers::ArrayView<const char>, std::size_t>> _references;
+};
+
+std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TProgram& program, const Utility::ConfigurationGroup& configuration, const ConverterFlags flags, const std::pair<int, EProfile> inputVersion, const std::pair<glslang::EshTargetClientVersion, glslang::EShTargetLanguageVersion> outputVersion, const bool versionExplicitlySpecified, const Containers::StringView definitions, const Containers::StringView filename, Containers::Optional<Containers::ArrayView<const char>>(*const fileCallback)(const std::string&, InputFileCallbackPolicy, void*), void* const fileCallbackUserData, const Containers::ArrayView<const char> data, Int messages) {
     /* Add preprocessor definitions */
     shader.setPreamble(definitions.data());
 
@@ -273,10 +345,42 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
     const char* filenames = filename.data();
     shader.setStringsWithLengthsAndNames(&string, &length, filename.isEmpty() ? nullptr : &filenames, 1);
 
+    /* Set up the includer -- if we have callbacks, simply use those */
+    Containers::Optional<Includer> includer;
+    std::unordered_map<std::string, Containers::Array<char>> files;
+    if(fileCallback) {
+        includer.emplace(fileCallback, fileCallbackUserData);
+
+    /* Otherwise, if we have filename, build an includer from the filesystem */
+    } else if(!filename.isEmpty()) {
+        includer.emplace([](const std::string& filename, InputFileCallbackPolicy policy, void* userData) -> Containers::Optional<Containers::ArrayView<const char>> {
+            auto& files = *static_cast<std::unordered_map<std::string, Containers::Array<char>>*>(userData);
+            auto found = files.find(filename);
+
+            /* Discard the loaded file, if not needed anymore */
+            if(policy == InputFileCallbackPolicy::Close) {
+                CORRADE_INTERNAL_ASSERT(found != files.end());
+                files.erase(found);
+                return {};
+            }
+
+            /* Read if not there yet */
+            if(found == files.end()) {
+                Containers::Array<char> file = Utility::Directory::read(filename);
+                if(!file) return {};
+
+                found = files.emplace(filename, std::move(file)).first;
+            }
+
+            return Containers::ArrayView<const char>{found->second};
+        }, &files);
+
+    /* Otherwise we can't load files in any way */
+    }
+
     /** @todo ability to override entrypoint name (for linking multiple same
         stages together), for some reason not working in glslang, only for
         hlsl */
-    /** @todo includer */
 
     /* Set up builtin values and resource limits. There's no default
        constructor for that thing so we'd have to populate it either way, even
@@ -482,6 +586,7 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
 
     /* Compile. Why the hell is it called "parse" is beyond me. Don't even
        bother going further if compilation didn't succeed. */
+    glslang::TShader::ForbidIncluder whyTheHellIsThisNotAPointer;
     const bool compilingSucceeded = shader.parse(&resources,
         inputVersion.first, inputVersion.second,
         /* Force version and profile. If the input version is specified by the
@@ -495,7 +600,12 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
            used anywhere to see what it does? */
         configuration.value<bool>("forwardCompatible"),
         /* FFS stupid thing why don't you accept int for flags?! */
-        EShMessages(messages));
+        EShMessages(messages),
+        /* Includer, if we have it. Things would have been SO MUCH SIMPLER if
+           this parameter was a pointer, eh. Like, WHAT THE HELL, `resources`
+           are a pointer but actually CAN'T BE NULL but this damn thing is a
+           reference while it would make MUCH MORE SENSE as a pointer. FFS. */
+        includer ? *includer : static_cast<glslang::TShader::Includer&>(whyTheHellIsThisNotAPointer));
 
     /* Glslang has no way to treat warnings as errors, so instead we look at
        the info log and return failure if it's nonempty */
@@ -601,7 +711,7 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
        function is shared between doValidateData() and doConvertDataToData()
        and does the same in both. Here we use just the output log. */
     glslang::TProgram program;
-    const std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, data, 0);
+    const std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, inputFileCallback(), inputFileCallbackUserData(), data, 0);
 
     /* Trim excessive newlines and spaces from the output. What the fuck, did
        nobody ever verify what mess it spits out?! */
@@ -774,7 +884,7 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
        function is shared between doValidateData() and doConvertDataToData()
        and does the same in both. */
     glslang::TProgram program;
-    std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, data, messages);
+    std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, inputFileCallback(), inputFileCallbackUserData(), data, messages);
 
     /* Trim excessive newlines and spaces from the output. What the fuck, did
        nobody ever verify what mess it spits out?! */

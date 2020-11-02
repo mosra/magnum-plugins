@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
@@ -32,6 +33,8 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
+#include <Magnum/FileCallback.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
 
 #include "configure.h"
@@ -42,6 +45,8 @@ struct GlslangConverterTest: TestSuite::Tester {
     explicit GlslangConverterTest();
 
     void validate();
+    void validateIncludes();
+    void validateIncludesCallback();
     void validateWrongInputFormat();
     void validateWrongInputVersion();
     void validateWrongOutputFormat();
@@ -53,10 +58,12 @@ struct GlslangConverterTest: TestSuite::Tester {
     void validateFailOverridenInputVersion();
     void validateFailOverridenOutputVersion();
     void validateFailOverridenLimit();
+    void validateFailIncludeNotFound();
 
     /* Just a subset of the cases checked for validate(), verifying only the
        convert-specific code paths */
     void convert();
+    void convertIncludes();
     void convertPreprocessOnlyNotImplemented();
     void convertWrongInputFormat();
     void convertWrongInputVersion();
@@ -247,7 +254,9 @@ GlslangConverterTest::GlslangConverterTest() {
     addInstancedTests({&GlslangConverterTest::validate},
         Containers::arraySize(ValidateData));
 
-    addTests({&GlslangConverterTest::validateWrongInputFormat,
+    addTests({&GlslangConverterTest::validateIncludes,
+              &GlslangConverterTest::validateIncludesCallback,
+              &GlslangConverterTest::validateWrongInputFormat,
               &GlslangConverterTest::validateWrongInputVersion,
               &GlslangConverterTest::validateWrongOutputFormat,
               &GlslangConverterTest::validateWrongOutputVersionTarget,
@@ -260,12 +269,14 @@ GlslangConverterTest::GlslangConverterTest() {
               &GlslangConverterTest::validateFailFileWrongStage,
               &GlslangConverterTest::validateFailOverridenInputVersion,
               &GlslangConverterTest::validateFailOverridenOutputVersion,
-              &GlslangConverterTest::validateFailOverridenLimit});
+              &GlslangConverterTest::validateFailOverridenLimit,
+              &GlslangConverterTest::validateFailIncludeNotFound});
 
     addInstancedTests({&GlslangConverterTest::convert},
         Containers::arraySize(ConvertData));
 
-    addTests({&GlslangConverterTest::convertPreprocessOnlyNotImplemented,
+    addTests({&GlslangConverterTest::convertIncludes,
+              &GlslangConverterTest::convertPreprocessOnlyNotImplemented,
               &GlslangConverterTest::convertWrongInputFormat,
               &GlslangConverterTest::convertWrongInputVersion,
               &GlslangConverterTest::convertWrongOutputFormat,
@@ -307,6 +318,70 @@ void GlslangConverterTest::validate() {
 
     CORRADE_COMPARE(converter->validateFile(data.stage, data.alias ? data.alias : data.filename),
         std::make_pair(true, ""));
+}
+
+void GlslangConverterTest::validateIncludes() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
+
+    CORRADE_COMPARE(converter->validateFile({}, Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
+        std::make_pair(true, ""));
+}
+
+void GlslangConverterTest::validateIncludesCallback() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
+
+    std::unordered_map<std::string, Containers::Array<char>> files;
+    converter->setInputFileCallback([](const std::string& filename, InputFileCallbackPolicy policy, std::unordered_map<std::string, Containers::Array<char>>& files) -> Containers::Optional<Containers::ArrayView<const char>> {
+        auto found = files.find(filename);
+
+        /* Discard the loaded file, if not needed anymore */
+        if(policy == InputFileCallbackPolicy::Close) {
+            Debug{} << "Closing" << filename;
+
+            if(found != files.end()) files.erase(found);
+            return {};
+        }
+
+        Debug{} << "Loading" << filename;
+
+        /* Extract from an archive if not there yet; fail if not extraction
+           failed */
+        if(found == files.end()) {
+            Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, filename));
+            CORRADE_VERIFY(file);
+
+            found = files.emplace(filename, std::move(file)).first;
+        }
+
+        return Containers::ArrayView<const char>{found->second};
+    }, files);
+
+    std::ostringstream out;
+    Debug redirectOutput{&out};
+    CORRADE_COMPARE(converter->validateFile({}, "includes.vert"),
+        std::make_pair(true, ""));
+    CORRADE_COMPARE(out.str(),
+        "Loading includes.vert\n"
+        "Loading sub/directory/basics.glsl\n"
+
+        "Loading sub/directory/definitions.glsl\n"
+        "Closing sub/directory/definitions.glsl\n"
+
+        "Loading sub/directory/../relative.glsl\n"
+        "Closing sub/directory/../relative.glsl\n"
+
+        /* Here it's loading & closing basics.glsl again but because it's
+           recursive while it's being in scope, it's not propagated to the
+           callback */
+
+        /* Here it's loading & closing relative.glsl again, which is propagated
+           to the callback because at this point the refcount reached 0 and the
+           original file got already released */
+        "Loading sub/directory/../relative.glsl\n"
+        "Closing sub/directory/../relative.glsl\n"
+
+        "Closing sub/directory/basics.glsl\n"
+        "Closing includes.vert\n");
 }
 
 void GlslangConverterTest::validateWrongInputFormat() {
@@ -514,6 +589,26 @@ layout(binding=8) uniform sampler2D textureData;
             "ERROR: 1 compilation errors.  No code generated."));
 }
 
+void GlslangConverterTest::validateFailIncludeNotFound() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
+
+    converter->setDefinitions({{"MAKE_THIS_BROKEN", ""}});
+    /* We're interested just in the include error. Actually, it's interesting
+       that when I set this to false (which should result in *less* errors),
+       there's an additional error about a missing #endif. Someone inverted the
+       condition in there or what? */
+    converter->configuration().setValue("cascadingErrors", true);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateFile({}, Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
+        std::make_pair(false, Utility::formatString(
+            "ERROR: {0}:10: '#include' : Could not process include directive for header name: ../notfound.glsl\n"
+            "ERROR: 1 compilation errors.  No code generated.", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"))));
+    CORRADE_COMPARE(out.str(),
+        Utility::formatString("Utility::Directory::read(): can't open {}\n", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "../notfound.glsl")));
+}
+
 void GlslangConverterTest::convert() {
     auto&& data = ConvertData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -549,6 +644,15 @@ void GlslangConverterTest::convert() {
     CORRADE_COMPARE_AS((std::string{output.begin(), output.end()}),
         Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.output),
         TestSuite::Compare::StringToFile);
+}
+
+void GlslangConverterTest::convertIncludes() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
+
+    /* Checking just that it passed, the rest was verified for validate()
+       already */
+    CORRADE_VERIFY(converter->convertFileToFile({}, Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"),
+        Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_OUTPUT_DIR, "includes.spv")));
 }
 
 void GlslangConverterTest::convertPreprocessOnlyNotImplemented() {

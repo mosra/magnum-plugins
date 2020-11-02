@@ -136,6 +136,52 @@ Validation results are highly dependent on the target version set using
 details. Additional validation options can be set through the
 @ref ShaderTools-GlslangConverter-configuration "plugin-specific config".
 
+@section ShaderTools-GlslangConverter-includes Processing #include directives
+
+If the `GL_GOOGLE_include_directive` extension is enabled (which, crazily
+enough, isn't listed in any registry nor has any public specification), it's
+possible to @cpp #include @ce other source files. You can also use the
+extension directive to distinguish between offline compilation and runtime
+compilation by a GL driver (in which case you'd add the extra sources for
+example with a sequence of @ref GL::Shader::addSource() calls):
+
+@code{.glsl}
+#ifdef GL_GOOGLE_include_directive
+#extension GL_GOOGLE_include_directive: require
+#include "fullScreenTriangle.glsl"
+#include "constants.glsl"
+#endif
+@endcode
+
+Currently, only @cpp #include "file" @ce directives are implemented in the
+plugin, system includes using @cpp #include <file> @ce are reserved for future
+use.
+
+@m_class{m-note m-warning}
+
+@par
+    The @gl_extension{ARB,shading_language_include} extension isn't supported
+    due to subtle sematical differences --- the [offical reasoning](https://github.com/KhronosGroup/glslang/issues/249)
+    is that this extension relies on shader sources being supplied at runtime
+    which makes it impossible to validate the shader offline.
+
+If you validate or convert using @ref validateFile(), @ref convertFileToFile()
+or @ref convertFileToData(), this will work automatically, with includes being
+searched for relative to the top-level file. If you are validating/converting
+data or when need more flexibility such as custom include paths, you also
+supply an @ref ShaderTools-AbstractConverter-usage-callbacks "input file callback",
+which will then get called for all encountered files.
+
+While it's possible that the callback gets called multiple times for a single
+file due to common files being included from multiple places, a
+@ref InputFileCallbackPolicy::LoadTemporary is guaranteed to be followed by a
+matching @ref InputFileCallbackPolicy::Close before a
+@ref InputFileCallbackPolicy::LoadTemporary happens again --- or, in other
+words, @ref InputFileCallbackPolicy::Close is never called twice for the same
+file without a corresponding @ref InputFileCallbackPolicy::LoadTemporary in
+between. This means the user callbacks don't need to implement any kind of
+reference counting, that's handled on the plugin side.
+
 @section ShaderTools-GlslangConverter-stages Shader stages
 
 When validating or converting files using @ref validateFile(),
