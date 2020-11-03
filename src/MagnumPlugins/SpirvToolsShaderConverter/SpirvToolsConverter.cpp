@@ -145,6 +145,56 @@ bool readData(const spv_context context, const Utility::ConfigurationGroup& conf
     return true;
 }
 
+/* Used by doValidateData() and also the optimizer pass in
+   doConvertDataToData(), as the optimizer can validate before/after */
+void setValidationOptions(spv_validator_options& options, const Utility::ConfigurationGroup& configuration) {
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_struct_members,
+        configuration.value<UnsignedInt>("maxStructMembers"));
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_struct_depth,
+        configuration.value<UnsignedInt>("maxStructDepth"));
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_local_variables,
+        configuration.value<UnsignedInt>("maxLocalVariables"));
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_global_variables,
+        configuration.value<UnsignedInt>("maxGlobalVariables"));
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_switch_branches,
+        configuration.value<UnsignedInt>("maxSwitchBranches"));;
+    spvValidatorOptionsSetUniversalLimit(options,
+        spv_validator_limit_max_function_args,
+        configuration.value<UnsignedInt>("maxFunctionArgs"));
+    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_control_flow_nesting_depth,
+        configuration.value<UnsignedInt>("maxControlFlowNestingDepth"));
+    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_access_chain_indexes,
+        /* Magnum uses "indices" everywhere, so be consistent here as well */
+        configuration.value<UnsignedInt>("maxAccessChainIndices"));;
+    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_id_bound,
+        configuration.value<UnsignedInt>("maxIdBound"));
+    spvValidatorOptionsSetRelaxLogicalPointer(options,
+        configuration.value<bool>("relaxLogicalPointer"));
+    spvValidatorOptionsSetRelaxBlockLayout(options,
+        configuration.value<bool>("relaxBlockLayout"));
+    #ifdef SPIRVTOOLS_IS_2019_03
+    spvValidatorOptionsSetUniformBufferStandardLayout(options,
+        configuration.value<bool>("uniformBufferStandardLayout"));
+    #endif
+    spvValidatorOptionsSetScalarBlockLayout(options,
+        configuration.value<bool>("scalarBlockLayout"));
+    spvValidatorOptionsSetSkipBlockLayout(options,
+        configuration.value<bool>("skipBlockLayout"));
+    spvValidatorOptionsSetRelaxStoreStruct(options,
+        /* Both the C++ API and spirv-val use "relax struct store", so use that
+           instead of "relax store struct" */
+        configuration.value<bool>("relaxStructStore"));
+    #ifdef SPIRVTOOLS_IS_2019_03
+    spvValidatorOptionsSetBeforeHlslLegalization(options,
+        configuration.value<bool>("beforeHlslLegalization"));
+    #endif
+}
+
 }
 
 std::pair<bool, Containers::String> SpirvToolsConverter::doValidateFile(const Stage stage, const Containers::StringView filename) {
@@ -206,52 +256,7 @@ std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, c
     /* Validator options and limits */
     spv_validator_options options = spvValidatorOptionsCreate();
     Containers::ScopeGuard optionsDestroy{options, spvValidatorOptionsDestroy};
-
-    spvValidatorOptionsSetUniversalLimit(options,
-        spv_validator_limit_max_struct_members,
-        configuration().value<UnsignedInt>("maxStructMembers"));
-    spvValidatorOptionsSetUniversalLimit(options,
-        spv_validator_limit_max_struct_depth,
-        configuration().value<UnsignedInt>("maxStructDepth"));
-    spvValidatorOptionsSetUniversalLimit(options,
-        spv_validator_limit_max_local_variables,
-        configuration().value<UnsignedInt>("maxLocalVariables"));
-    spvValidatorOptionsSetUniversalLimit(options,
-        spv_validator_limit_max_global_variables,
-        configuration().value<UnsignedInt>("maxGlobalVariables"));
-    spvValidatorOptionsSetUniversalLimit(options,
-        spv_validator_limit_max_switch_branches,
-        configuration().value<UnsignedInt>("maxSwitchBranches"));;
-    spvValidatorOptionsSetUniversalLimit(options,
-        spv_validator_limit_max_function_args,
-        configuration().value<UnsignedInt>("maxFunctionArgs"));
-    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_control_flow_nesting_depth,
-        configuration().value<UnsignedInt>("maxControlFlowNestingDepth"));
-    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_access_chain_indexes,
-        /* Magnum uses "indices" everywhere, so be consistent here as well */
-        configuration().value<UnsignedInt>("maxAccessChainIndices"));;
-    spvValidatorOptionsSetUniversalLimit(options, spv_validator_limit_max_id_bound,
-        configuration().value<UnsignedInt>("maxIdBound"));
-    spvValidatorOptionsSetRelaxLogicalPointer(options,
-        configuration().value<bool>("relaxLogicalPointer"));
-    spvValidatorOptionsSetRelaxBlockLayout(options,
-        configuration().value<bool>("relaxBlockLayout"));
-    #ifdef SPIRVTOOLS_IS_2019_03
-    spvValidatorOptionsSetUniformBufferStandardLayout(options,
-        configuration().value<bool>("uniformBufferStandardLayout"));
-    #endif
-    spvValidatorOptionsSetScalarBlockLayout(options,
-        configuration().value<bool>("scalarBlockLayout"));
-    spvValidatorOptionsSetSkipBlockLayout(options,
-        configuration().value<bool>("skipBlockLayout"));
-    spvValidatorOptionsSetRelaxStoreStruct(options,
-        /* Both the C++ API and spirv-val use "relax struct store", so use that
-           instead of "relax store struct" */
-        configuration().value<bool>("relaxStructStore"));
-    #ifdef SPIRVTOOLS_IS_2019_03
-    spvValidatorOptionsSetBeforeHlslLegalization(options,
-        configuration().value<bool>("beforeHlslLegalization"));
-    #endif
+    setValidationOptions(options, configuration());
 
     spv_diagnostic diagnostic;
     const spv_result_t error = spvValidateWithOptions(context, options, reinterpret_cast<spv_const_binary>(binary), &diagnostic);
