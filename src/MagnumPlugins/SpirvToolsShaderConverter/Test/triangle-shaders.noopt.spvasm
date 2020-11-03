@@ -1,0 +1,40 @@
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %1 "ver" %12 %13 %15 %16
+               OpEntryPoint Fragment %2 "fra" %5 %6
+               ; invalid Vulkan, but matches triangle-shaders.spv (which
+               ; validate as SPIR-V 1.1)
+               OpExecutionMode %2 OriginLowerLeft
+               OpDecorate %12 Location 0
+               OpDecorate %13 Location 1
+               OpDecorate %15 BuiltIn Position
+               OpDecorate %16 Location 0
+               OpDecorate %5 Location 0
+               OpDecorate %6 Location 0
+          %7 = OpTypeVoid
+          %8 = OpTypeFunction %7
+          %9 = OpTypeFloat 32
+         %10 = OpTypeVector %9 4
+         %11 = OpTypePointer Input %10
+         %12 = OpVariable %11 Input
+         %13 = OpVariable %11 Input
+         %14 = OpTypePointer Output %10
+         %15 = OpVariable %14 Output
+         %16 = OpVariable %14 Output
+          %5 = OpVariable %11 Input
+          %6 = OpVariable %14 Output
+          %1 = OpFunction %7 None %8
+         %33 = OpLabel
+         %30 = OpLoad %10 %12
+     %unused = OpLoad %10 %12 ; should get optimized away
+         %31 = OpLoad %10 %13
+               OpStore %15 %30
+               OpStore %16 %31
+               OpReturn
+               OpFunctionEnd
+          %2 = OpFunction %7 None %8
+         %34 = OpLabel
+         %32 = OpLoad %10 %5
+               OpStore %6 %32
+               OpReturn
+               OpFunctionEnd

@@ -69,6 +69,9 @@ struct SpirvToolsConverterTest: TestSuite::Tester {
     void convertWrongInputVersion();
     void convertWrongOutputFormat();
     void convertWrongOutputVersion();
+    void convertWrongOptimizationLevel();
+    void convertWrongOutputVersionForWebGpuOptimization();
+    void convertWrongOutputVersionForVulkanOptimization();
     void convertDisassembleExplicitFormatEmptyData();
     void convertDisassembleFail();
     void convertDisassembleFailFile();
@@ -76,6 +79,9 @@ struct SpirvToolsConverterTest: TestSuite::Tester {
     void convertAssembleFail();
     void convertAssembleFailFile();
     void convertBinarySizeNotDivisibleByFour();
+
+    void convertOptimize();
+    void convertOptimizeFail();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractConverter> _converterManager{"nonexistent"};
@@ -132,6 +138,38 @@ const struct {
         "shader.spvasm", "shader.dat"}
 };
 
+const struct {
+    const char* name;
+    const char* level;
+    const char* input;
+    const char* expected;
+    Format outputFormat;
+} OptimizeData[] {
+    /* This just tests that the input binary corresponds to the assembly,
+       which is a trivially patched variant of triangle-shaders.spvasm */
+    {"-O0, assembly to binary",
+        "0", "triangle-shaders.noopt.spvasm",
+        "triangle-shaders.noopt.spv", Format::Spirv},
+    {"binary to binary",
+        "1", "triangle-shaders.noopt.spv",
+        "triangle-shaders.spv", Format::Spirv},
+    {"binary to assembly",
+        "1", "triangle-shaders.noopt.spv",
+        "triangle-shaders.spvasm", Format::SpirvAssembly},
+    {"assembly to binary",
+        "1", "triangle-shaders.noopt.spvasm",
+        "triangle-shaders.spv", Format::Spirv},
+    {"assembly to assembly",
+        "1", "triangle-shaders.noopt.spvasm",
+        "triangle-shaders.spvasm", Format::SpirvAssembly},
+    {"-Os",
+        "s", "triangle-shaders.noopt.spv",
+        "triangle-shaders.spv", Format::Spirv},
+    {"HLSL legalization",
+        "legalizeHlsl", "triangle-shaders.noopt.spv",
+        "triangle-shaders.spv", Format::Spirv}
+};
+
 SpirvToolsConverterTest::SpirvToolsConverterTest() {
     addInstancedTests({&SpirvToolsConverterTest::validate,
                        &SpirvToolsConverterTest::validateFile},
@@ -166,6 +204,9 @@ SpirvToolsConverterTest::SpirvToolsConverterTest() {
               &SpirvToolsConverterTest::convertWrongInputVersion,
               &SpirvToolsConverterTest::convertWrongOutputFormat,
               &SpirvToolsConverterTest::convertWrongOutputVersion,
+              &SpirvToolsConverterTest::convertWrongOptimizationLevel,
+              &SpirvToolsConverterTest::convertWrongOutputVersionForWebGpuOptimization,
+              &SpirvToolsConverterTest::convertWrongOutputVersionForVulkanOptimization,
               &SpirvToolsConverterTest::convertDisassembleExplicitFormatEmptyData,
               &SpirvToolsConverterTest::convertDisassembleFail,
               &SpirvToolsConverterTest::convertDisassembleFailFile,
@@ -173,6 +214,11 @@ SpirvToolsConverterTest::SpirvToolsConverterTest() {
               &SpirvToolsConverterTest::convertAssembleFail,
               &SpirvToolsConverterTest::convertAssembleFailFile,
               &SpirvToolsConverterTest::convertBinarySizeNotDivisibleByFour});
+
+    addInstancedTests({&SpirvToolsConverterTest::convertOptimize},
+        Containers::arraySize(OptimizeData));
+
+    addTests({&SpirvToolsConverterTest::convertOptimizeFail});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -584,6 +630,53 @@ void SpirvToolsConverterTest::convertWrongOutputVersion() {
         "ShaderTools::SpirvToolsConverter::convertDataToData(): unrecognized output format version vulkan2.1\n");
 }
 
+void SpirvToolsConverterTest::convertWrongOptimizationLevel() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setOptimizationLevel("2");
+    /* Force input format to binary so it doesn't go through disassembly (and
+       fail on that) */
+    converter->setInputFormat(Format::Spirv);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertDataToData({}, {}));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization level should be 0, 1, s, legalizeHlsl, vulkanToWebGpu, webGpuToVulkan or empty but got 2\n");
+}
+
+void SpirvToolsConverterTest::convertWrongOutputVersionForWebGpuOptimization() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setOutputFormat({}, "spv1.3");
+    converter->setOptimizationLevel("vulkanToWebGpu");
+    /* Force input format to binary so it doesn't go through disassembly (and
+       fail on that) */
+    converter->setInputFormat(Format::Spirv);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertDataToData({}, {}));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target spv1.3 when optimizing for WebGPU, expected empty or webgpu0 instead\n");
+}
+
+void SpirvToolsConverterTest::convertWrongOutputVersionForVulkanOptimization() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setOutputFormat({}, "opengl4.2");
+    converter->setOptimizationLevel("webGpuToVulkan");
+    /* Force input format to binary so it doesn't go through disassembly (and
+       fail on that) */
+    converter->setInputFormat(Format::Spirv);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertDataToData({}, {}));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target opengl4.2 when optimizing for WebGPU, expected empty or vulkanX.Y instead\n");
+}
+
 void SpirvToolsConverterTest::convertDisassembleExplicitFormatEmptyData() {
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
     converter->setInputFormat(Format::Spirv);
@@ -727,6 +820,64 @@ void SpirvToolsConverterTest::convertBinarySizeNotDivisibleByFour() {
     CORRADE_VERIFY(!converter->convertDataToData({}, data));
     CORRADE_COMPARE(out.str(),
         "ShaderTools::SpirvToolsConverter::convertDataToData(): SPIR-V binary size not divisible by four: 37 bytes\n");
+}
+
+void SpirvToolsConverterTest::convertOptimize() {
+    auto&& data = OptimizeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setOptimizationLevel(data.level);
+
+    /* Disable features that make the binary more compact and assembly nicer to
+       read but not roundtrippable */
+    converter->configuration().setValue("preserveNumericIds", true);
+    converter->configuration().setValue("friendlyNames", false);
+    converter->configuration().setValue("header", false);
+
+    /* The input is in SPIR-V 1.2, but isn't valid for Vulkan 1.1 because of
+       OpExecutionMode OriginLowerLeft (which is used above to test failures),
+       so using just general SPIR-V validation. With OpExecutionMode missing it
+       would not even validate as SPIR-V.
+
+       This is here in order to match the original triangle-shaders.spv, which
+       use the same target version. */
+    converter->setOutputFormat(data.outputFormat, "spv1.2");
+
+    Containers::Array<char> out = converter->convertFileToData({},
+        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.input));
+    CORRADE_COMPARE_AS(out.size(), 5*4, TestSuite::Compare::Greater);
+
+    /* If we end up with a binary and the input was an assembly, the output
+       generator ID is something from Khronos, patch it back to ours so the
+       files compare equal. */
+    if(data.outputFormat == Format::Spirv && Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] == 0x70000)
+        Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] = 0xdeadc0de;
+
+    /** @todo ugh the casts are AWFUL, FIX FFS */
+    CORRADE_COMPARE_AS(Containers::StringView{Containers::ArrayView<const char>{out}},
+        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.expected),
+        TestSuite::Compare::StringToFile);
+}
+
+void SpirvToolsConverterTest::convertOptimizeFail() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
+
+    converter->setOptimizationLevel("1");
+
+    /* This makes the validation fail because of a lower-left origin (same as
+       in validateFailInstruction()) */
+    converter->setOutputFormat({}, "vulkan1.1");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertFileToData({},
+        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.noopt.spv")));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization error:\n"
+        "<data>:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n"
+        "  OpExecutionMode %2 OriginLowerLeft\n");
 }
 
 }}}}

@@ -41,7 +41,9 @@ corrade_add_test(SpirvToolsShaderConverterTest SpirvToolsConverterTest.cpp
     LIBRARIES Magnum::ShaderTools
     FILES
         triangle-shaders.spv
-        triangle-shaders.spvasm)
+        triangle-shaders.spvasm
+        triangle-shaders.noopt.spv
+        triangle-shaders.noopt.spvasm)
 target_include_directories(SpirvToolsShaderConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(BUILD_PLUGINS_STATIC)
     target_link_libraries(SpirvToolsShaderConverterTest PRIVATE SpirvToolsShaderConverter)

@@ -32,6 +32,9 @@
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once format() produces a String */
 
 #include "spirv-tools/libspirv.h"
+/* Unfortunately the C optimizer interface is so minimal that it's useless. No
+   way to set any optimization preset, even. */
+#include "spirv-tools/optimizer.hpp"
 #include "MagnumPlugins/SpirvToolsShaderConverter/configureInternal.h"
 
 namespace Magnum { namespace ShaderTools {
@@ -44,6 +47,8 @@ struct SpirvToolsConverter::State {
     Containers::String inputVersion, outputVersion;
 
     Containers::String inputFilename, outputFilename;
+
+    Containers::String optimizationLevel;
 };
 
 SpirvToolsConverter::SpirvToolsConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{Containers::InPlaceInit} {
@@ -71,7 +76,7 @@ SpirvToolsConverter::SpirvToolsConverter(PluginManager::AbstractManager& manager
     maybe? */
 
 ConverterFeatures SpirvToolsConverter::doFeatures() const {
-    return ConverterFeature::ValidateData|ConverterFeature::ConvertData|
+    return ConverterFeature::ValidateData|ConverterFeature::ConvertData|ConverterFeature::Optimize|
         /* We actually don't, but without this set the doValidateFile() /
            doConvertFileTo*() intercepts don't get called when the input is
            specified through callbacks. And since we delegate to the base
@@ -87,6 +92,10 @@ void SpirvToolsConverter::doSetInputFormat(const Format format, const Containers
 void SpirvToolsConverter::doSetOutputFormat(const Format format, const Containers::StringView version) {
     _state->outputFormat = format;
     _state->outputVersion = Containers::String::nullTerminatedGlobalView(version);
+}
+
+void SpirvToolsConverter::doSetOptimizationLevel(const Containers::StringView level) {
+    _state->optimizationLevel = Containers::String::nullTerminatedGlobalView(level);
 }
 
 namespace {
@@ -105,7 +114,13 @@ void printDiagnostic(Debug& out, const Containers::StringView filename, const sp
     else if(diagnostic->position.index)
         out << Debug::nospace << diagnostic->position.index << Debug::nospace << ":";
 
-    out << diagnostic->error;
+    /* Drop trailing newline, if any. Messages that print disassembled
+       instructions have those. */
+    /** @todo clean up once StringView::trimmed() exists */
+    Containers::StringView error = diagnostic->error;
+    if(error.back() == '\n') error = error.except(1);
+
+    out << error;
 }
 
 bool readData(const spv_context context, const Utility::ConfigurationGroup& configuration, const Format inputFormat, const Containers::StringView inputFilename, const char* const prefix, spv_binary_t& binaryStorage, spv_binary& binary, Containers::ScopeGuard& binaryDestroy, const Containers::ArrayView<const char> data, Int options) {
@@ -322,10 +337,31 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
         Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): output format should be Spirv, SpirvAssembly or Unspecified but got" << _state->outputFormat;
         return {};
     }
-    spv_target_env env = SPV_ENV_VULKAN_1_0;
-    if(!_state->outputVersion.isEmpty() && !spvParseTargetEnv(_state->outputVersion.data(), &env)) {
-        Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): unrecognized output format version" << _state->outputVersion;
-        return {};
+
+    /* Target environment. Default to Vulkan 1.0 except if optimizing for
+       WebGPU, in which case default to WebGPU 0 */
+    spv_target_env env = _state->optimizationLevel == "vulkanToWebGpu"_s ?
+        SPV_ENV_WEBGPU_0 : SPV_ENV_VULKAN_1_0;
+    if(!_state->outputVersion.isEmpty()) {
+        if(!spvParseTargetEnv(_state->outputVersion.data(), &env)) {
+            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): unrecognized output format version" << _state->outputVersion;
+            return {};
+        }
+
+        /* Check if the output is legal if we optimize for Vulkan / WebGPU */
+        if(_state->optimizationLevel == "vulkanToWebGpu"_s && env != SPV_ENV_WEBGPU_0) {
+            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target" << _state->outputVersion << "when optimizing for WebGPU, expected empty or webgpu0 instead";
+            return {};
+        }
+        if(_state->optimizationLevel == "webGpuToVulkan"_s &&
+            env != SPV_ENV_VULKAN_1_0 &&
+            env != SPV_ENV_VULKAN_1_1 &&
+            env != SPV_ENV_VULKAN_1_1_SPIRV_1_4 &&
+            env != SPV_ENV_VULKAN_1_2
+        ) {
+            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target" << _state->outputVersion << "when optimizing for WebGPU, expected empty or vulkanX.Y instead";
+            return {};
+        }
     }
 
     const spv_context context = spvContextCreate(env);
@@ -339,7 +375,101 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
     if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::convertDataToData():", binaryStorage, binary, binaryDestroy, data, 0))
         return {};
 
-    /** @todo optimization and whatnot will go here */
+    /* Run the optimizer, if desired. What the hell, is the output a vector
+       again?! Is everyone mad or */
+    std::vector<UnsignedInt> optimizerOutputStorage;
+    if(!_state->optimizationLevel.isEmpty() && _state->optimizationLevel != "0"_s) {
+        /* The env should already be correct if using vulkanToWebGpu or
+           webGpuToVulkan */
+        spvtools::Optimizer optimizer{env};
+        if(_state->optimizationLevel == "1"_s)
+            optimizer.RegisterPerformancePasses();
+        else if(_state->optimizationLevel == "s"_s)
+            optimizer.RegisterSizePasses();
+        else if(_state->optimizationLevel == "legalizeHlsl"_s)
+            optimizer.RegisterLegalizationPasses();
+        else if(_state->optimizationLevel == "vulkanToWebGpu"_s)
+            optimizer.RegisterVulkanToWebGPUPasses();
+        else if(_state->optimizationLevel == "webGpuToVulkan"_s)
+            optimizer.RegisterWebGPUToVulkanPasses();
+        else {
+            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization level should be 0, 1, s, legalizeHlsl, vulkanToWebGpu, webGpuToVulkan or empty but got" << _state->optimizationLevel;
+            return {};
+        }
+
+        /* Print using our own APIs */
+        optimizer.SetMessageConsumer([](spv_message_level_t level, const char* file, const spv_position_t& position, const char* message) {
+            std::ostream* output{};
+            const char* prefix{};
+            switch(level) {
+                /* LCOV_EXCL_START */
+                case SPV_MSG_FATAL:
+                    output = Error::output();
+                    prefix = "fatal optimization error:";
+                    break;
+                case SPV_MSG_INTERNAL_ERROR:
+                    output = Error::output();
+                    prefix = "internal optimization error:";
+                    break;
+                case SPV_MSG_ERROR:
+                    output = Error::output();
+                    prefix = "optimization error:";
+                    break;
+                case SPV_MSG_WARNING:
+                    output = Warning::output();
+                    prefix = "optimization warning:";
+                    break;
+                case SPV_MSG_INFO:
+                    output = Debug::output();
+                    prefix = "optimization info";
+                    break;
+                case SPV_MSG_DEBUG:
+                    output = Debug::output();
+                    prefix = "optimization debug info";
+                    break;
+                /* LCOV_EXCL_STOP */
+            }
+            /* output can be nullptr in case Debug/Warning/Error is silenced */
+            CORRADE_INTERNAL_ASSERT(prefix);
+
+            Debug out{output};
+            out << "ShaderTools::SpirvToolsConverter::convertDataToData():" << prefix << Debug::newline;
+            spv_diagnostic_t diag{position, const_cast<char*>(message), false};
+            printDiagnostic(out, file, &diag);
+        });
+
+        /* Validator options and limits. Same as in doValidateData(). */
+        spv_validator_options validatorOptions = spvValidatorOptionsCreate();
+        Containers::ScopeGuard validatorOptionsDestroy{validatorOptions, spvValidatorOptionsDestroy};
+        setValidationOptions(validatorOptions, configuration());
+
+        /* Optimizer options */
+        spv_optimizer_options optimizerOptions = spvOptimizerOptionsCreate();
+        Containers::ScopeGuard optimizerOptionsDestroy{optimizerOptions, spvOptimizerOptionsDestroy};
+        spvOptimizerOptionsSetRunValidator(optimizerOptions,
+            configuration().value<bool>("validateBeforeOptimization"));
+        spvOptimizerOptionsSetValidatorOptions(optimizerOptions,
+            validatorOptions);
+        spvOptimizerOptionsSetMaxIdBound(optimizerOptions,
+            configuration().value<UnsignedInt>("maxIdBound"));
+        spvOptimizerOptionsSetPreserveBindings(optimizerOptions,
+            configuration().value<UnsignedInt>("preserveBindings"));
+        spvOptimizerOptionsSetPreserveSpecConstants(optimizerOptions,
+            configuration().value<UnsignedInt>("preserveSpecializationConstants"));
+
+        /* If the optimizer fails, exit. The message is printed by the message
+           consumer we set above. */
+        if(!optimizer.Run(binary->code, binary->wordCount, &optimizerOutputStorage, optimizerOptions))
+            return {};
+
+        /* Reference the vector guts in the binary again for the rest of the
+           code. Replace the old scope guard with an empty one, which will
+           also trigger the original deleter, if it was when disassembing. */
+        binaryDestroy = Containers::ScopeGuard{Containers::NoCreate};
+        binary = &binaryStorage;
+        binary->code = optimizerOutputStorage.data();
+        binary->wordCount = optimizerOutputStorage.size();
+    }
 
     /* Disassemble, if desired, or if the output filename ends with *.spvasm */
     Containers::Array<char> out;

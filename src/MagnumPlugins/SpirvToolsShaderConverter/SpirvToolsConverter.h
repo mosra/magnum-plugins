@@ -61,7 +61,7 @@ namespace Magnum { namespace ShaderTools {
 @m_keywords{SpirvAssemblyShaderConverter}
 
 Uses [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools) for SPIR-V
-validation and converting between SPIR-V binary and assembly text
+validation, optimization and converting between SPIR-V binary and assembly text
 (@ref Format::Spirv, @ref Format::SpirvAssembly).
 
 This plugin provides the `SpirvShaderConverter`, `SpirvAssemblyShaderConverter`,
@@ -149,6 +149,29 @@ for details. Additional validation options can be set through the
 If the returned validation string contains a numeric identifier, it's always an
 instruction index, even in case of a SPIR-V assembly on the input.
 
+@section ShaderTools-SpirvToolsConverter-optimization SPIR-V optimization
+
+Use @ref setOptimizationLevel() to set a level of optimizations performed
+during @ref convertDataToData(), @ref convertDataToFile(),
+@ref convertFileToData() or @ref convertFileToFile(). By default no
+optimizations are done and the APIs just pass-through the data or convert
+between SPIR-V binary and assembly @ref ShaderTools-SpirvToolsConverter-conversion "as described above". Valid optimization levels are:
+
+-   `0` or the empty default performs no optimization
+-   `1` optimizes for performance
+-   `s` optimizes for size
+-   `legalizeHlsl` turns SPIR-V originating from a HLSL source to one that can
+    be accepted by Vulkan
+-   `vulkanToWebGpu` turns Vulkan-compatible SPIR-V to one that can be accepted
+    by WebGPU
+-   `webGpuToVulkan` turns WebGPU-compatible SPIR-V to one that can be accepted
+    by Vulkan
+
+Compared to [spirv-opt](https://github.com/KhronosGroup/SPIRV-Tools#optimizer-tool)
+it can work with assembly on both input and output as well, but there's
+currently no way to directly control particular optimizer stages, only general
+validation options specified through the @ref ShaderTools-SpirvToolsConverter-configuration "plugin-specific config".
+
 @section ShaderTools-SpirvToolsConverter-format Input and output format and version
 
 By default, the converter attempts to detect a SPIR-V binary and if that fails,
@@ -232,6 +255,7 @@ class MAGNUM_SPIRVTOOLSSHADERCONVERTER_EXPORT SpirvToolsConverter: public Abstra
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL ConverterFeatures doFeatures() const override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL void doSetInputFormat(Format format, Containers::StringView version) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL void doSetOutputFormat(Format format, Containers::StringView version) override;
+        MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL void doSetOptimizationLevel(Containers::StringView level) override;
 
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateData(Stage stage, Containers::ArrayView<const char> data) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateFile(Stage stage, Containers::StringView filename) override;
