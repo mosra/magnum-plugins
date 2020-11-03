@@ -5,26 +5,27 @@
 # Finds the glslang library. This module defines:
 #
 #  Glslang_FOUND        - True if the Glslang library is found
-#  Glslang::Glslang     - Glslang imported target
-#  Glslang::SPIRV       - Glslang libSPIRV imported target
-#  Glslang::HLSL        - Glslang libHLSL imported target, if found
-#  Glslang::OSDependent - Glslang libOSDependent imported target, if found
+#  Glslang::Glslang     - Glslang imported target.
+#  Glslang::SPIRV       - Glslang SPIRV imported target. Depends on
+#   Glslang::Glslang.
+#  Glslang::HLSL        - Glslang HLSL imported target, if found. Static
+#   dependency of Glslang::Glslang.
+#  Glslang::OSDependent - Glslang OSDependent imported target, if found. Static
+#   dependency of Glslang::Glslang.
+#  Glslang::OGLCompiler - Glslang OGLCompiler imported target, if found. Static
+#   dependency of Glslang::Glslang.
 #
-# Link to Glslang::Glslang, all its dependencies will get linked transitively.
+# Link to Glslang::Glslang and Glslang::SPIRV. The other dependencies, if
+# needed, will get linked transitively.
+#
 # Additionally these variables are defined for internal usage:
 #
-#  GLSLANG_LIBRARY_{DEBUG,RELEASE} - Glslang library
-#  GLSLANG_SPIRV_LIBRARY_{DEBUG,RELEASE} - Glslang libSPIRV library
-#  GLSLANG_HLSL_LIBRARY_{DEBUG,RELEASE} - Glslang libHLSL library
-#  GLSLANG_OSDEPENDENT_LIBRARY_{DEBUG,RELEASE} - Glslang libOSDependent library
-#  GLSLANG_INCLUDE_DIR  - Include dir
-#
-# Actually, it's 2020 and none of this should be needed, but apparently Magnum
-# is the first project ever to use this thing from Khronos as an actual library
-# instead of the CLI tool. Their CMake system installs a ton of
-# ``glslangTargets.cmake`` files, but no actual ``glslangConfig.cmake``, so I
-# have to look for it myself. Scroll below for a continuation of this angry
-# rant.
+#  Glslang_LIBRARY_{DEBUG,RELEASE} - Glslang library
+#  Glslang_SPIRV_LIBRARY_{DEBUG,RELEASE} - Glslang SPIRV library
+#  Glslang_HLSL_LIBRARY_{DEBUG,RELEASE} - Glslang HLSL library
+#  Glslang_OSDependent_LIBRARY_{DEBUG,RELEASE} - Glslang OSDependent library
+#  Glslang_OGLCompiler_LIBRARY_{DEBUG,RELEASE} - Glslang OGLCompiler library
+#  Glslang_INCLUDE_DIR  - Include dir
 #
 
 #
@@ -52,30 +53,47 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# Actually, it's 2020 and none of this should be needed, but apparently Magnum
+# is the first project ever to use this thing from Khronos as an actual library
+# instead of the CLI tool. Their CMake system installs a ton of
+# ``glslangTargets.cmake`` files, but no actual ``glslangConfig.cmake``, so I
+# have to look for it myself. Scroll below for a continuation of this angry
+# rant.
+
 # Libraries. The debug suffix is used only on Windows.
-find_library(GLSLANG_LIBRARY_RELEASE NAMES glslang)
-find_library(GLSLANG_LIBRARY_DEBUG NAMES glslangd)
-find_library(GLSLANG_SPIRV_LIBRARY_RELEASE NAMES SPIRV)
-find_library(GLSLANG_SPIRV_LIBRARY_DEBUG NAMES SPIRVd)
-# These are needed only in a static build. And because it's impossible to
-# detect static build on Windows, we'll just treat them as optional.
-find_library(GLSLANG_HLSL_LIBRARY_RELEASE NAMES HLSL)
-find_library(GLSLANG_HLSL_LIBRARY_DEBUG NAMES HLSLd)
-# Are you mad?! Why the fuck can't you put everything into a single lib FFS
-find_library(GLSLANG_OSDEPENDENT_LIBRARY_RELEASE NAMES OSDependent)
-find_library(GLSLANG_OSDEPENDENT_LIBRARY_DEBUG NAMES OSDependentd)
-find_library(GLSLANG_OGLCOMPILER_LIBRARY_RELEASE NAMES OGLCompiler)
-find_library(GLSLANG_OGLCOMPILER_LIBRARY_DEBUG NAMES OGLCompilerd)
+find_library(Glslang_LIBRARY_RELEASE NAMES glslang)
+find_library(Glslang_LIBRARY_DEBUG NAMES glslangd)
+find_library(Glslang_SPIRV_LIBRARY_RELEASE NAMES SPIRV)
+find_library(Glslang_SPIRV_LIBRARY_DEBUG NAMES SPIRVd)
 
 include(SelectLibraryConfigurations)
-select_library_configurations(GLSLANG)
-select_library_configurations(GLSLANG_SPIRV)
-select_library_configurations(GLSLANG_HLSL)
-select_library_configurations(GLSLANG_OSDEPENDENT)
-select_library_configurations(GLSLANG_OGLCOMPILER)
+select_library_configurations(Glslang)
+select_library_configurations(Glslang_SPIRV)
+
+# These are needed only in a static build, search for them only in case the
+# main library is static (or on Windows, because there it's impossible to
+# know -- in which case we'll just treat them as optional).
+if(Glslang_LIBRARY MATCHES ".*libglslang.a$")
+    set(_GLSLANG_IS_STATIC ON)
+endif()
+if(CORRADE_TARGET_WINDOWS OR _GLSLANG_IS_STATIC)
+    # ARE YOU MAD?! Why the fuck can't you put everything into a single lib FFS
+    set(_GLSLANG_STATIC_LIBRARIES HLSL OSDependent OGLCompiler)
+    # For FPHSA
+    set(_GLSLANG_EXTRA_LIBRARIES )
+    foreach(_library ${_GLSLANG_STATIC_LIBRARIES})
+        find_library(Glslang_${_library}_LIBRARY_DEBUG NAMES ${_library}d)
+        find_library(Glslang_${_library}_LIBRARY_RELEASE NAMES ${_library})
+        select_library_configurations(Glslang_${_library})
+        list(APPEND _GLSLANG_EXTRA_LIBRARIES Glslang_${_library}_LIBRARY)
+    endforeach()
+else()
+    set(_GLSLANG_STATIC_LIBRARIES )
+    set(_GLSLANG_EXTRA_LIBRARIES )
+endif()
 
 # Include dir
-find_path(GLSLANG_INCLUDE_DIR
+find_path(Glslang_INCLUDE_DIR
     # Actually, WHAT THE FUCK, I get that some people suck at naming, but this
     # is an actual naming skill black hole. Even naming it Windows.h would make
     # more sense than this. Like, what the hell.
@@ -83,110 +101,77 @@ find_path(GLSLANG_INCLUDE_DIR
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Glslang DEFAULT_MSG
-    GLSLANG_LIBRARY
-    GLSLANG_SPIRV_LIBRARY
-    GLSLANG_INCLUDE_DIR)
+    Glslang_LIBRARY Glslang_SPIRV_LIBRARY ${_GLSLANG_EXTRA_LIBRARIES}
+    Glslang_INCLUDE_DIR)
 
-mark_as_advanced(FORCE GLSLANG_INCLUDE_DIR)
+mark_as_advanced(FORCE Glslang_INCLUDE_DIR)
 
-if(NOT TARGET Glslang::SPIRV)
-    add_library(Glslang::SPIRV UNKNOWN IMPORTED)
-    if(GLSLANG_SPIRV_LIBRARY_RELEASE)
-        set_property(TARGET Glslang::SPIRV APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS RELEASE)
-        set_target_properties(Glslang::SPIRV PROPERTIES
-            IMPORTED_LOCATION_RELEASE ${GLSLANG_SPIRV_LIBRARY_RELEASE})
-    endif()
-    if(GLSLANG_SPIRV_LIBRARY_DEBUG)
-        set_property(TARGET Glslang::SPIRV APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS DEBUG)
-        set_target_properties(Glslang::SPIRV PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${GLSLANG_SPIRV_LIBRARY_DEBUG})
-    endif()
-endif()
+# Except for SPIRV these are all optional because needed only in a static
+# build, which is impossible to detect. And SPIRV was checked to be present in
+# the FPHSA above, so it's guaranteed to be present.
+foreach(_library SPIRV ${_GLSLANG_STATIC_LIBRARIES})
+    if(Glslang_${_library}_LIBRARY AND NOT TARGET Glslang::${_library})
+        add_library(Glslang::${_library} UNKNOWN IMPORTED)
+        if(Glslang_${_library}_LIBRARY_RELEASE)
+            set_property(TARGET Glslang::${_library} APPEND PROPERTY
+                IMPORTED_CONFIGURATIONS RELEASE)
+            set_target_properties(Glslang::${_library} PROPERTIES
+                IMPORTED_LOCATION_RELEASE ${Glslang_${_library}_LIBRARY_RELEASE})
+        endif()
+        if(Glslang_${_library}_LIBRARY_DEBUG)
+            set_property(TARGET Glslang::${_library} APPEND PROPERTY
+                IMPORTED_CONFIGURATIONS DEBUG)
+            set_target_properties(Glslang::${_library} PROPERTIES
+                IMPORTED_LOCATION_DEBUG ${Glslang_${_library}_LIBRARY_DEBUG})
+        endif()
 
-# Optional because needed only in a static build, which is impossible to detect
-if((GLSLANG_HLSL_LIBRARY_DEBUG OR GLSLANG_HLSL_LIBRARY_RELEASE) AND NOT TARGET Glslang::HLSL)
-    add_library(Glslang::HLSL UNKNOWN IMPORTED)
-    if(GLSLANG_HLSL_LIBRARY_RELEASE)
-        set_property(TARGET Glslang::HLSL APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS RELEASE)
-        set_target_properties(Glslang::HLSL PROPERTIES
-            IMPORTED_LOCATION_RELEASE ${GLSLANG_HLSL_LIBRARY_RELEASE})
-    endif()
-    if(GLSLANG_HLSL_LIBRARY_DEBUG)
-        set_property(TARGET Glslang::HLSL APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS DEBUG)
-        set_target_properties(Glslang::HLSL PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${GLSLANG_HLSL_LIBRARY_DEBUG})
-    endif()
-endif()
-if((GLSLANG_OSDEPENDENT_LIBRARY_DEBUG OR GLSLANG_OSDEPENDENT_LIBRARY_RELEASE) AND NOT TARGET Glslang::OSDependent)
-    add_library(Glslang::OSDependent UNKNOWN IMPORTED)
-    if(GLSLANG_OSDEPENDENT_LIBRARY_RELEASE)
-        set_property(TARGET Glslang::OSDependent APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS RELEASE)
-        set_target_properties(Glslang::OSDependent PROPERTIES
-            IMPORTED_LOCATION_RELEASE ${GLSLANG_OSDEPENDENT_LIBRARY_RELEASE})
-    endif()
-    if(GLSLANG_OSDEPENDENT_LIBRARY_DEBUG)
-        set_property(TARGET Glslang::OSDependent APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS DEBUG)
-        set_target_properties(Glslang::OSDependent PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${GLSLANG_OSDEPENDENT_LIBRARY_DEBUG})
-    endif()
-endif()
-if((GLSLANG_OGLCOMPILER_LIBRARY_DEBUG OR GLSLANG_OGLCOMPILER_LIBRARY_RELEASE) AND NOT TARGET Glslang::OGLCompiler)
-    add_library(Glslang::OGLCompiler UNKNOWN IMPORTED)
-    if(GLSLANG_OGLCOMPILER_LIBRARY_RELEASE)
-        set_property(TARGET Glslang::OGLCompiler APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS RELEASE)
-        set_target_properties(Glslang::OGLCompiler PROPERTIES
-            IMPORTED_LOCATION_RELEASE ${GLSLANG_OGLCOMPILER_LIBRARY_RELEASE})
-    endif()
-    if(GLSLANG_OGLCOMPILER_LIBRARY_DEBUG)
-        set_property(TARGET Glslang::OGLCompiler APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS DEBUG)
-        set_target_properties(Glslang::OGLCompiler PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${GLSLANG_OGLCOMPILER_LIBRARY_DEBUG})
-    endif()
+        # SPIRV depends on glslang (which is created later)
+        if(_library STREQUAL SPIRV)
+            set_property(TARGET Glslang::${_library} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES Glslang::Glslang)
+        endif()
 
-    find_package(Threads REQUIRED)
-    set_property(TARGET Glslang::OGLCompiler APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES Threads::Threads)
-endif()
+        # OGLCompiler needs pthread
+        if(_library STREQUAL OGLCompiler)
+            find_package(Threads REQUIRED)
+            set_property(TARGET Glslang::${_library} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES Threads::Threads)
+        endif()
+    endif()
+endforeach()
 
+# Glslang::Glslang puts that all together
 if(NOT TARGET Glslang::Glslang)
     add_library(Glslang::Glslang UNKNOWN IMPORTED)
-    if(GLSLANG_LIBRARY_RELEASE)
+    if(Glslang_LIBRARY_RELEASE)
         set_property(TARGET Glslang::Glslang APPEND PROPERTY
             IMPORTED_CONFIGURATIONS RELEASE)
         set_target_properties(Glslang::Glslang PROPERTIES
-            IMPORTED_LOCATION_RELEASE ${GLSLANG_LIBRARY_RELEASE})
+            IMPORTED_LOCATION_RELEASE ${Glslang_LIBRARY_RELEASE})
     endif()
-    if(GLSLANG_LIBRARY_DEBUG)
+    if(Glslang_LIBRARY_DEBUG)
         set_property(TARGET Glslang::Glslang APPEND PROPERTY
             IMPORTED_CONFIGURATIONS DEBUG)
         set_target_properties(Glslang::Glslang PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${GLSLANG_LIBRARY_DEBUG})
+            IMPORTED_LOCATION_DEBUG ${Glslang_LIBRARY_DEBUG})
     endif()
     set_target_properties(Glslang::Glslang PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES
             # Second entry to account for broken relative includes in version
             # 7.13. Sigh. https://github.com/KhronosGroup/glslang/issues/2007
-            "${GLSLANG_INCLUDE_DIR};${GLSLANG_INCLUDE_DIR}/glslang"
-        INTERFACE_LINK_LIBRARIES Glslang::SPIRV)
-    # Optional because needed only in a static build, which is impossible to
-    # detect
-    if(TARGET Glslang::HLSL)
+            "${Glslang_INCLUDE_DIR};${Glslang_INCLUDE_DIR}/glslang")
+
+    # On Windows these are all optional because a static build is impossible to
+    # detect there
+    if(_GLSLANG_IS_STATIC OR (CORRADE_TARGET_WINDOWS AND TARGET Glslang::HLSL))
         set_property(TARGET Glslang::Glslang APPEND PROPERTY
             INTERFACE_LINK_LIBRARIES Glslang::HLSL)
     endif()
-    if(TARGET Glslang::OSDependent)
+    if(_GLSLANG_IS_STATIC OR (CORRADE_TARGET_WINDOWS AND TARGET Glslang::OSDependent))
         set_property(TARGET Glslang::Glslang APPEND PROPERTY
             INTERFACE_LINK_LIBRARIES Glslang::OSDependent)
     endif()
-    if(TARGET Glslang::OGLCompiler)
+    if(_GLSLANG_IS_STATIC OR (CORRADE_TARGET_WINDOWS AND TARGET Glslang::OGLCompiler))
         set_property(TARGET Glslang::Glslang APPEND PROPERTY
             INTERFACE_LINK_LIBRARIES Glslang::OGLCompiler)
     endif()
