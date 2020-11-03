@@ -6,10 +6,13 @@
 #
 #  SpirvTools_FOUND          - True if SPIRV-Tools are found
 #  SpirvTools::SpirvTools    - SpirvTools imported target
+#  SpirvTools::Opt           - SpirvTools optimizer imported target. Depends on
+#   SpirvTools::SpirvTools.
 #
 # Additionally these variables are defined for internal usage:
 #
 #  SpirvTools_LIBRARY        - SpirvTools library
+#  SpirvTools_Opt_LIBRARY    - SpirvTools library
 #  SpirvTools_INCLUDE_DIR    - Include dir
 #
 
@@ -43,13 +46,18 @@
 #
 #   find_package(SPIRV-Tools CONFIG REQUIRED)
 #
-# The dash in a package name is just a minor hiccup in the grand scheme of
-# things (A DASH?! ARE YOU OUT OF YOUR #$@ MIND?!), nevertheless, this would be
-# rather straightforward. HOWEVER, in the GRIM reality of 2020, the spirv-tools
-# package in Homebrew doesn't bother installing the CMake config modules, so we
-# have to find it the old way. (Yes, I could submit a patch and bla, but in
-# addition to that suffering I would also have to suffer complaints from people
-# who have an older Homebrew package. Do I want that? No!)
+# ... err, and, well, also this and others:
+#
+#   find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+#
+# The dash in a package name and a separate package for each and every damn
+# target is just a minor hiccup in the grand scheme of things (A DASH?! ARE YOU
+# OUT OF YOUR #$@ MIND?!), nevertheless, this would be rather straightforward.
+# HOWEVER, in the GRIM reality of 2020, the spirv-tools package in Homebrew
+# doesn't bother installing the CMake config modules, so we have to find it the
+# old way. (Yes, I could submit a patch and bla, but in addition to that
+# suffering I would also have to suffer complaints from people who have an
+# older Homebrew package. Do I want that? NO!)
 #
 # This module is thus *deliberately* called SpirvTools instead of SPIRV-Tools
 # to avoid conflicts with the upstream config file, if present.
@@ -59,6 +67,10 @@ find_package(SPIRV-Tools CONFIG QUIET)
 # If we're SO LUCKY and the installation contains CMake find modules, point
 # SpirvTools::SpirvTools there and exit -- nothing else to do here.
 if(TARGET SPIRV-Tools)
+    # For some F reason, the optimizer is a completely separate thing?! Why
+    # it's not a module of the same package, ffs?!
+    find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+
     if(NOT TARGET SpirvTools::SpirvTools)
         # Aliases of (global) targets are only supported in CMake 3.11, so we
         # work around it by this. This is easier than fetching all possible
@@ -66,6 +78,11 @@ if(TARGET SPIRV-Tools)
         # rebuild them into a new target.
         add_library(SpirvTools::SpirvTools INTERFACE IMPORTED)
         set_target_properties(SpirvTools::SpirvTools PROPERTIES INTERFACE_LINK_LIBRARIES SPIRV-Tools)
+    endif()
+    if(NOT TARGET SpirvTools::Opt)
+        # Aliases of (global) targets [..] CMake 3.11 [...], as above
+        add_library(SpirvTools::Opt INTERFACE IMPORTED)
+        set_target_properties(SpirvTools::Opt PROPERTIES INTERFACE_LINK_LIBRARIES SPIRV-Tools-opt)
     endif()
 
     # Just to make FPHSA print some meaningful location, nothing else
@@ -82,6 +99,11 @@ endif()
 find_library(SpirvTools_LIBRARY NAMES
     SPIRV-Tools-shared
     SPIRV-Tools)
+
+# Optimizer library. Not sure why there's no -shared equivalent for this one.
+# What a fucking mess, again.
+find_library(SpirvTools_Opt_LIBRARY NAMES
+    SPIRV-Tools-opt)
 
 # Include dir
 find_path(SpirvTools_INCLUDE_DIR
@@ -101,4 +123,11 @@ if(NOT TARGET SpirvTools::SpirvTools)
     set_target_properties(SpirvTools::SpirvTools PROPERTIES
         IMPORTED_LOCATION ${SpirvTools_LIBRARY}
         INTERFACE_INCLUDE_DIRECTORIES ${SpirvTools_INCLUDE_DIR})
+endif()
+
+if(NOT TARGET SpirvTools::Opt)
+    add_library(SpirvTools::Opt UNKNOWN IMPORTED)
+    set_target_properties(SpirvTools::Opt PROPERTIES
+        IMPORTED_LOCATION ${SpirvTools_Opt_LIBRARY}
+        INTERFACE_LINK_LIBRARIES SpirvTools::SpirvTools)
 endif()
