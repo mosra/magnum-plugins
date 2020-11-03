@@ -118,9 +118,14 @@ information.
 
 Use one of the @ref convertDataToData(), @ref convertDataToFile(),
 @ref convertFileToData() or @ref convertFileToFile() APIs to convert between
-SPIR-V binary and assembly. By default that's the only operation done by the
-plugin. See @ref ShaderTools-SpirvToolsConverter-format below for details on
-how to switch between binary and assembly output.
+SPIR-V binary and assembly, similarly to the
+[spirv-as](https://github.com/KhronosGroup/SPIRV-Tools#assembler-tool) and
+[spirv-dis](https://github.com/KhronosGroup/SPIRV-Tools#disassembler-tool)
+tools. By default that's the only operation done by the plugin, additionally it
+can perform optimizations as @ref ShaderTools-SpirvToolsConverter-optimization "described below".
+See @ref ShaderTools-SpirvToolsConverter-format below for details on how to
+switch between binary and assembly output, see @ref ShaderTools-SpirvToolsConverter-configuration
+for a list of additional options related to the (dis)assembler.
 
 The @p stage parameter of all conversion APIs is ignored, as SPIR-V has the
 information embedded (and additionally a single file can contain multiple
@@ -132,7 +137,7 @@ instruction index (when disassemling).
 @section ShaderTools-SpirvToolsConverter-validation SPIR-V validation
 
 Use @ref validateData() or @ref validateFile() to validate a SPIR-V file.
-Compared to the @m_class{m-doc-external} [spirv-val](https://github.com/KhronosGroup/SPIRV-Tools#validator-tool)
+Compared to the [spirv-val](https://github.com/KhronosGroup/SPIRV-Tools#validator-tool)
 tool, it accepts a SPIR-V assembly as well, converting it to a SPIR-V binary
 first (equivalently to
 @ref ShaderTools-SpirvToolsConverter-conversion "doing a conversion" first,
