@@ -73,7 +73,7 @@ select_library_configurations(Glslang_SPIRV)
 # These are needed only in a static build, search for them only in case the
 # main library is static (or on Windows, because there it's impossible to
 # know -- in which case we'll just treat them as optional).
-if(Glslang_LIBRARY MATCHES ".*libglslang.a$")
+if(Glslang_LIBRARY MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$")
     set(_GLSLANG_IS_STATIC ON)
 endif()
 if(CORRADE_TARGET_WINDOWS OR _GLSLANG_IS_STATIC)
