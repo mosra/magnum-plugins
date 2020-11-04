@@ -37,9 +37,28 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 
 # It's 2020 so nothing surprises me anymore -- of course SPIRV-Tools don't have
 # any reasonable way to know the version except for parsing the CHANGES file,
-# which might or might not be present. The plugin is using APIs from 2019.03
-# but there are still Homebrew packages that are just 2019.02.
-try_compile(SPIRVTOOLS_IS_2019_03 ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/checkSpirvTools201903.cpp LINK_LIBRARIES SpirvTools::SpirvTools)
+# which might or might not be present. Thus we have to iterate over all
+# versions of interest and pick the highest one that compiles.
+foreach(_version 202001 201905 201904 201903 201902)
+    try_compile(_works ${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/checkSpirvToolsVersion.cpp
+        LINK_LIBRARIES SpirvTools::SpirvTools SpirvTools::Opt
+        COMPILE_DEFINITIONS
+            -DCHECK_VERSION=${_version}
+            # I thought I could make this use C++11 by linking to
+            # Corrade::Utility, but for some reason the effect of the
+            # CORRADE_CXX_STANDARD property doesn't get passed through. So I
+            # have to use an internal variable for that instead.
+            ${CORRADE_CXX11_STANDARD_FLAG}
+        OUTPUT_VARIABLE _version_output)
+    if(_works)
+        set(SPIRVTOOLS_VERSION ${_version})
+        break()
+    endif()
+endforeach()
+if(NOT SPIRVTOOLS_VERSION)
+    message(SEND_ERROR "Could not detect SPIRV-Tools version. Maybe even older than 2019.2? ${_version_output}")
+endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configureInternal.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configureInternal.h)
 

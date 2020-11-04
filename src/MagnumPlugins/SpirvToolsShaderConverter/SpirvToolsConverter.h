@@ -168,9 +168,9 @@ between SPIR-V binary and assembly @ref ShaderTools-SpirvToolsConverter-conversi
 -   `legalizeHlsl` turns SPIR-V originating from a HLSL source to one that can
     be accepted by Vulkan
 -   `vulkanToWebGpu` turns Vulkan-compatible SPIR-V to one that can be accepted
-    by WebGPU
+    by WebGPU. Available since SPIRV-Tools 2019.3.
 -   `webGpuToVulkan` turns WebGPU-compatible SPIR-V to one that can be accepted
-    by Vulkan
+    by Vulkan. Available since SPIRV-Tools 2019.3.
 
 Compared to [spirv-opt](https://github.com/KhronosGroup/SPIRV-Tools#optimizer-tool)
 it can work with assembly on both input and output as well, but there's
@@ -213,12 +213,16 @@ ones:
 -   `spv1.1` for SPIR-V 1.1 with no other restrictions
 -   `spv1.2` for SPIR-V 1.2 with no other restrictions
 -   `spv1.3` for SPIR-V 1.3 with no other restrictions
--   `spv1.4` for SPIR-V 1.4 with no other restrictions
--   `spv1.5` for SPIR-V 1.5 with no other restrictions
+-   `spv1.4` for SPIR-V 1.4 with no other restrictions. Available since
+    SPIRV-Tools 2019.3.
+-   `spv1.5` for SPIR-V 1.5 with no other restrictions. Available since
+    SPIRV-Tools 2019.5.
 -   `vulkan1.0` for Vulkan 1.0 with SPIR-V 1.0
 -   `vulkan1.1` for Vulkan 1.1 with SPIR-V 1.3
--   `vulkan1.1spv1.4` for Vulkan 1.1 with SPIR-V 1.4
--   `vulkan1.2` for Vulkan 1.1 with SPIR-V 1.5
+-   `vulkan1.1spv1.4` for Vulkan 1.1 with SPIR-V 1.4. Available since
+    SPIRV-Tools 2019.3.
+-   `vulkan1.2` for Vulkan 1.1 with SPIR-V 1.5. Available since SPIRV-Tools
+    2020.1.
 -   `opencl1.2` for OpenCL Full Profile 1.2 plus
     @m_class{m-doc-external} [cl_khr_il_program](https://www.khronos.org/registry/OpenCL/sdk/2.2/docs/man/html/cl_khr_il_program.html)
 -   `opencl1.2embedded` for OpenCL Embedded Profile 1.2 plus

@@ -24,13 +24,43 @@
 */
 
 #include "spirv-tools/libspirv.h"
+#include "spirv-tools/optimizer.hpp"
+
+#ifndef CHECK_VERSION
+#error CHECK_VERSION not defined
+#define CHECK_VERSION 0xffffffff
+#endif
 
 int main() {
-    spv_validator_options options = spvValidatorOptionsCreate();
+    spv_validator_options validatorOptions = spvValidatorOptionsCreate();
+    spv_optimizer_options optimizerOptions = spvOptimizerOptionsCreate();
+    spv_target_env env{};
+    spvtools::Optimizer optimizer{env};
 
-    /* These two are available since 2019.03 */
-    spvValidatorOptionsSetUniformBufferStandardLayout(options, false);
-    spvValidatorOptionsSetBeforeHlslLegalization(options, false);
+    #if CHECK_VERSION >= 202001
+    env = SPV_ENV_VULKAN_1_2;
+    #endif
 
-    spvValidatorOptionsDestroy(options);
+    #if CHECK_VERSION >= 201905
+    env = SPV_ENV_UNIVERSAL_1_5;
+    #endif
+
+    #if CHECK_VERSION >= 201904
+    spvOptimizerOptionsSetPreserveBindings(optimizerOptions, true);
+    spvOptimizerOptionsSetPreserveSpecConstants(optimizerOptions, true);
+    #endif
+
+    #if CHECK_VERSION >= 201903
+    env = SPV_ENV_UNIVERSAL_1_4;
+    env = SPV_ENV_VULKAN_1_1_SPIRV_1_4;
+    spvValidatorOptionsSetUniformBufferStandardLayout(validatorOptions, false);
+    spvValidatorOptionsSetBeforeHlslLegalization(validatorOptions, false);
+
+    optimizer.RegisterVulkanToWebGPUPasses();
+    optimizer.RegisterWebGPUToVulkanPasses();
+    #endif
+
+    static_cast<void>(env);
+    spvValidatorOptionsDestroy(validatorOptions);
+    spvOptimizerOptionsDestroy(optimizerOptions);
 }

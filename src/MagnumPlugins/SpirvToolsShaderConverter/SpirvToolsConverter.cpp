@@ -192,7 +192,7 @@ void setValidationOptions(spv_validator_options& options, const Utility::Configu
         configuration.value<bool>("relaxLogicalPointer"));
     spvValidatorOptionsSetRelaxBlockLayout(options,
         configuration.value<bool>("relaxBlockLayout"));
-    #ifdef SPIRVTOOLS_IS_2019_03
+    #if SPIRVTOOLS_VERSION >= 201903
     spvValidatorOptionsSetUniformBufferStandardLayout(options,
         configuration.value<bool>("uniformBufferStandardLayout"));
     #endif
@@ -204,7 +204,7 @@ void setValidationOptions(spv_validator_options& options, const Utility::Configu
         /* Both the C++ API and spirv-val use "relax struct store", so use that
            instead of "relax store struct" */
         configuration.value<bool>("relaxStructStore"));
-    #ifdef SPIRVTOOLS_IS_2019_03
+    #if SPIRVTOOLS_VERSION >= 201903
     spvValidatorOptionsSetBeforeHlslLegalization(options,
         configuration.value<bool>("beforeHlslLegalization"));
     #endif
@@ -353,11 +353,15 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
             Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target" << _state->outputVersion << "when optimizing for WebGPU, expected empty or webgpu0 instead";
             return {};
         }
-        if(_state->optimizationLevel == "webGpuToVulkan"_s &&
-            env != SPV_ENV_VULKAN_1_0 &&
-            env != SPV_ENV_VULKAN_1_1 &&
-            env != SPV_ENV_VULKAN_1_1_SPIRV_1_4 &&
-            env != SPV_ENV_VULKAN_1_2
+        if(_state->optimizationLevel == "webGpuToVulkan"_s
+            && env != SPV_ENV_VULKAN_1_0
+            && env != SPV_ENV_VULKAN_1_1
+            #if SPIRVTOOLS_VERSION >= 201903
+            && env != SPV_ENV_VULKAN_1_1_SPIRV_1_4
+            #endif
+            #if SPIRVTOOLS_VERSION >= 202001
+            && env != SPV_ENV_VULKAN_1_2
+            #endif
         ) {
             Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target" << _state->outputVersion << "when optimizing for WebGPU, expected empty or vulkanX.Y instead";
             return {};
@@ -388,10 +392,12 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
             optimizer.RegisterSizePasses();
         else if(_state->optimizationLevel == "legalizeHlsl"_s)
             optimizer.RegisterLegalizationPasses();
+        #if SPIRVTOOLS_VERSION >= 201903
         else if(_state->optimizationLevel == "vulkanToWebGpu"_s)
             optimizer.RegisterVulkanToWebGPUPasses();
         else if(_state->optimizationLevel == "webGpuToVulkan"_s)
             optimizer.RegisterWebGPUToVulkanPasses();
+        #endif
         else {
             Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization level should be 0, 1, s, legalizeHlsl, vulkanToWebGpu, webGpuToVulkan or empty but got" << _state->optimizationLevel;
             return {};
@@ -452,10 +458,12 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
             validatorOptions);
         spvOptimizerOptionsSetMaxIdBound(optimizerOptions,
             configuration().value<UnsignedInt>("maxIdBound"));
+        #if SPIRVTOOLS_VERSION >= 201904
         spvOptimizerOptionsSetPreserveBindings(optimizerOptions,
             configuration().value<UnsignedInt>("preserveBindings"));
         spvOptimizerOptionsSetPreserveSpecConstants(optimizerOptions,
             configuration().value<UnsignedInt>("preserveSpecializationConstants"));
+        #endif
 
         /* If the optimizer fails, exit. The message is printed by the message
            consumer we set above. */
