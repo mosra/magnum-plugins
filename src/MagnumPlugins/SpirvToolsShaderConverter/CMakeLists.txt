@@ -39,6 +39,33 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 # any reasonable way to know the version except for parsing the CHANGES file,
 # which might or might not be present. Thus we have to iterate over all
 # versions of interest and pick the highest one that compiles.
+#
+# To put more salt in the wound, CMake's try_compile() is amazingly useless as
+# - it doesn't propagate properties of the surrounding directory (such as
+#   CORRADE_CXX_STANDARD), forcing me to supply -std=c++11 like a caveman
+# - it doesn't propagate project targets correctly, which means that if I want
+#   to link to SpirvTools::SpirvTools and SPIRV-Tools is a CMake subproject,
+#   it'll fail on -lSPIRV-Tools being unknown. The only way around this is to
+#   compile as a static lib (available since CMake 3.6), which skips the linker
+#   step.
+#
+# This whole code is just to check whether SpirvTools::SpirvTools is coming
+# from a CMake subproject, in which case we try_compile() a static library on
+# CMake >= 3.6 and fail on earlier versions. If it's not from a subproject, we
+# make an executable and hope it links correctly.
+if(TARGET SPIRV-Tools)
+    get_target_property(_SPIRVTOOLS_IS_IMPORTED SPIRV-Tools IMPORTED)
+    if(NOT _SPIRVTOOLS_IS_IMPORTED)
+        if(CMAKE_VERSION VERSION_LESS 3.6)
+            message(FATAL_ERROR "Sorry, using SPIRV-Tools as a CMake subproject is not supported on CMake versions before 3.6 because there's no sane way to figure out its version. To continue, either upgrade CMake or use an external build of SPIR-V Tools.")
+        else()
+            # Also, why the hell isn't this a parameter to try_compile()?
+            set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+        endif()
+    endif()
+endif()
+
+# Go through all versions of interest and pick the highest one that compiles
 foreach(_version 202001 201905 201904 201903 201902)
     try_compile(_works ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/checkSpirvToolsVersion.cpp
