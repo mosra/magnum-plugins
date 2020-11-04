@@ -417,12 +417,11 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${PNG_LIBRARIES})
             endif()
-        endif()
 
         # PrimitiveImporter has no dependencies
 
         # SpirvToolsShaderConverter plugin dependencies
-        if(_component STREQUAL SpirvToolsShaderConverter)
+        elseif(_component STREQUAL SpirvToolsShaderConverter)
             find_package(SPIRV-Tools CONFIG REQUIRED)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES SPIRV-Tools)
@@ -435,6 +434,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # StbVorbisAudioImporter has no dependencies
         # StlImporter has no dependencies
         # TinyGltfImporter has no dependencies
+
+        endif()
 
         # Find plugin/library includes
         if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
