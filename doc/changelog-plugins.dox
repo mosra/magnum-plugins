@@ -71,6 +71,12 @@ namespace Magnum {
 -   The `versionPlugins.h` header now gets populated from Git correctly also
     when inside a CMake subproject
 
+@subsection changelog-plugins-latest-deprecated Deprecated APIs
+
+-   Variables `ASSIMP_LIBRARY_{DEBUG,RELEASE}` and `ASSIMP_INCLUDE_DIR` that
+    could be used to force Assimp location in `FindAssimp.cmake` are deprecated
+    in favor of `Assimp_LIBRARY_{DEBUG,RELEASE}` and `Assimp_INCLUDE_DIR`
+
 @section changelog-plugins-2020-06 2020.06
 
 Released 2020-06-27, tagged as
