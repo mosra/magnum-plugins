@@ -109,8 +109,9 @@ add_dependencies(your-app MagnumPlugins::SpirvToolsShaderConverter)
 
 To use as a static plugin or as a dependency of another plugin with CMake, put
 [FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-into your `modules/` directory, request the `SpirvToolsShaderConverter` component
-of the `MagnumPlugins` package and link to the
+and [FindSpirvTools.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindSpirvTools.cmake)
+into your `modules/` directory, request the `SpirvToolsShaderConverter`
+component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::SpirvToolsShaderConverter` target:
 
 @code{.cmake}
