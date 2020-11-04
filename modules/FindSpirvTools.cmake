@@ -61,11 +61,23 @@
 #
 # This module is thus *deliberately* called SpirvTools instead of SPIRV-Tools
 # to avoid conflicts with the upstream config file, if present.
+#
+# Actually, to make things even worse, there's SPIRV-Tools-shared and
+# SPIRV-Tools (or SPIRV-Tools-static, in newer versions). The former is always
+# a shared lib, while the latter is either a static lib or a shared lib *and
+# then* there's also SPIRV-Tools-opt, which always depends on
+# SPIRV-Tools[-static] and *never* on SPIRV-Tools-shared. Which means, if one
+# wants to use the optimizer as well, it just doesn't make sense to link to
+# SPIRV-Tools-shared at all, because we'd need to pull in the static variant as
+# well. Thus, as much as I'd like to use the shared library to save memory on
+# sane OSes, it's just totally F-ing pointless.
 
 find_package(SPIRV-Tools CONFIG QUIET)
 
 # If we're SO LUCKY and the installation contains CMake find modules, point
-# SpirvTools::SpirvTools there and exit -- nothing else to do here.
+# SpirvTools::SpirvTools there and exit -- nothing else to do here. As said
+# above, we just ignore the SPIRV-Tools-shared target as the optimizer depends
+# always on the static libraries.
 if(TARGET SPIRV-Tools)
     # For some F reason, the optimizer is a completely separate thing?! Why
     # it's not a module of the same package, ffs?!
@@ -94,16 +106,9 @@ if(TARGET SPIRV-Tools)
     return()
 endif()
 
-# Library. Prefer the shared one, if present, to be consistent with what CMake
-# chooses in other cases.
-find_library(SpirvTools_LIBRARY NAMES
-    SPIRV-Tools-shared
-    SPIRV-Tools)
-
-# Optimizer library. Not sure why there's no -shared equivalent for this one.
-# What a fucking mess, again.
-find_library(SpirvTools_Opt_LIBRARY NAMES
-    SPIRV-Tools-opt)
+# Libraries. See above why this completely ignores SPIRV-Tools-shared.
+find_library(SpirvTools_LIBRARY NAMES SPIRV-Tools)
+find_library(SpirvTools_Opt_LIBRARY NAMES SPIRV-Tools-opt)
 
 # Include dir
 find_path(SpirvTools_INCLUDE_DIR
