@@ -126,6 +126,8 @@ namespace {
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     /** @todo horrible workaround, fix this properly */
 
+    conf.setValue("forceWhiteAmbientToBlack", true);
+
     conf.setValue("ImportColladaIgnoreUpDirection", false);
 
     Utility::ConfigurationGroup& postprocess = *conf.addGroup("postprocess");
@@ -883,7 +885,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                            so the ambient color, which is white in this case as
                            well, makes no sense. */
                         aiString texturePath;
-                        if(data.value<Color4>() == Color4{1.0f} && mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, layer), texturePath) != AI_SUCCESS) {
+                        if(configuration().value<bool>("forceWhiteAmbientToBlack") && data.value<Color4>() == Color4{1.0f} && mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, layer), texturePath) != AI_SUCCESS) {
                             Warning{} << "Trade::AssimpImporter::material(): white ambient detected, forcing back to black";
                             data = {MaterialAttribute::AmbientColor, Color4{0.0f, 1.0f}};
                         }

@@ -211,8 +211,11 @@ verbosity levels in each instance.
 -   Assimp seems to ignore ambient textures in COLLADA files
 -   For some reason, Assimp 4.1 imports STL models with ambient set to
     @cpp 0xffffff_srgbf @ce, which causes all other color information to be
-    discarded. If such a case is detected, the ambient is forced back to
-    @cpp 0x000000_srgbf @ce. See also [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059).
+    discarded. If such a case is detected and there's no ambient texture
+    present, the ambient is forced back to @cpp 0x000000_srgbf @ce. See also
+    [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059). This
+    workaround can be disabled using the @cb{.ini} forceWhiteAmbientToBlack @ce
+    @ref Trade-AssimpImporter-configuration "configuration option".
 
 @subsection Trade-AssimpImporter-behavior-lights Light import
 
