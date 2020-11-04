@@ -464,6 +464,10 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
         spvOptimizerOptionsSetPreserveSpecConstants(optimizerOptions,
             configuration().value<UnsignedInt>("preserveSpecializationConstants"));
         #endif
+        #if SPIRVTOOLS_VERSION >= 201903
+        optimizer.SetValidateAfterAll(configuration().value<bool>("validateAfterEachOptimization"));
+        #endif
+        optimizer.SetTimeReport(configuration().value<bool>("optimizerTimeReport") ? Debug::output() : nullptr);
 
         /* If the optimizer fails, exit. The message is printed by the message
            consumer we set above. */
