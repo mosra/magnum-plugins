@@ -422,9 +422,9 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # SpirvToolsShaderConverter plugin dependencies
         elseif(_component STREQUAL SpirvToolsShaderConverter)
-            find_package(SPIRV-Tools CONFIG REQUIRED)
+            find_package(SpirvTools REQUIRED)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES SPIRV-Tools)
+                INTERFACE_LINK_LIBRARIES SpirvTools::SpirvTools)
 
         # StanfordImporter has no dependencies
         # StanfordSceneConverter has no dependencies
