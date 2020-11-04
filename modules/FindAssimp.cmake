@@ -39,6 +39,35 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# In case we have Assimp as a CMake subproject, simply alias our target to that
+if(TARGET assimp)
+    # The assimp target doesn't define any usable INTERFACE_INCLUDE_DIRECTORIES
+    # for some reason (apparently the $<BUILD_INTERFACE:> in there doesn't work
+    # or whatever), so let's do that ourselves.
+    get_target_property(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES assimp SOURCE_DIR)
+    get_filename_component(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES} DIRECTORY)
+    set(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES}/include)
+
+    if(NOT TARGET Assimp::Assimp)
+        # Aliases of (global) targets are only supported in CMake 3.11, so we
+        # work around it by this. This is easier than fetching all possible
+        # properties (which are impossible to track of) and then attempting to
+        # rebuild them into a new target.
+        add_library(Assimp::Assimp INTERFACE IMPORTED)
+        set_target_properties(Assimp::Assimp PROPERTIES
+            INTERFACE_LINK_LIBRARIES assimp)
+
+        set_target_properties(Assimp::Assimp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES})
+    endif()
+
+    # Just to make FPHSA print some meaningful location, nothing else
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args("Assimp" DEFAULT_MSG
+        _ASSIMP_INTERFACE_INCLUDE_DIRECTORIES)
+
+    return()
+endif()
+
 find_path(Assimp_INCLUDE_DIR NAMES assimp/anim.h
     HINTS
         include
