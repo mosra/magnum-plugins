@@ -84,12 +84,23 @@ building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "GlslangShaderConverter" @ce via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
-[magnum-plugins repository](https://github.com/mosra/magnum-plugins)
-and do the following. Using Glslang itself as a CMake subproject isn't tested
-at the moment, so you need to provide it as a system dependency and point
-`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+[magnum-plugins](https://github.com/mosra/magnum-plugins) and
+[glslang](https://github.com/KhronosGroup/glslang) repositories and do the
+following. If you want to use system-installed Glslang, omit the first part and
+point `CMAKE_PREFIX_PATH` to their installation dir if necessary.
 
 @code{.cmake}
+# Skip tests, external dependencies, glslangValidator executable, SPIR-V Tools
+# integration and HLSL support, which Magnum doesn't use
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(BUILD_EXTERNAL OFF CACHE BOOL "" FORCE)
+set(ENABLE_CTEST OFF CACHE BOOL "" FORCE)
+set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
+set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
+set(ENABLE_HLSL OFF CACHE BOOL "" FORCE)
+set(ENABLE_SPVREMAPPER OFF CACHE BOOL "" FORCE)
+add_subdirectory(glslang EXCLUDE_FROM_ALL)
+
 set(WITH_GLSLANGSHADERCONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 

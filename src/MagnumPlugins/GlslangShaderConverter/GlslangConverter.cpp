@@ -38,7 +38,12 @@
 #include <Magnum/FileCallback.h>
 
 #include <glslang/Public/ShaderLang.h> /* Haha what the fuck this name */
-#include <glslang/SPIRV/GlslangToSpv.h>
+/* This can't be <glslang/SPIRV/GlslangToSpv.h> because such path doesn't exist
+   in the glslang repository itself, which means the plugin wouldn't build with
+   glslang as a CMake subproject. In order to work with an external
+   installation, the FindGlslang module adds the glslang/ subdirectory to the
+   include path as well. */
+#include <SPIRV/GlslangToSpv.h>
 
 /* For GLSLANG_PATCH_LEVEL because of course GLSLANG_MINOR_VERSION is always 13
    and GLSLANG_MAJOR_VERSION does not exist, so I have to compare numbers like

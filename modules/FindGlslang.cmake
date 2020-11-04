@@ -60,6 +60,44 @@
 # have to look for it myself. Scroll below for a continuation of this angry
 # rant.
 
+# If we have a CMake subproject, the glslang target should be defined. In that
+# case we just alias Glslang::Glslang to it and exit.
+if(TARGET glslang)
+    # The glslang target doesn't define any usable
+    # INTERFACE_INCLUDE_DIRECTORIES for some reason (the $<BUILD_INTERFACE:> in
+    # there doesn't get expanded), so let's extract that from the SOURCE_DIR
+    # property instead.
+    get_target_property(_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES glslang SOURCE_DIR)
+    get_filename_component(_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES} DIRECTORY)
+
+    if(NOT TARGET Glslang::Glslang)
+        # Aliases of (global) targets are only supported in CMake 3.11, so
+        # we work around it by this. This is easier than fetching all
+        # possible properties (which are impossible to track of) and then
+        # attempting to rebuild them into a new target.
+        add_library(Glslang::Glslang INTERFACE IMPORTED)
+        set_target_properties(Glslang::Glslang PROPERTIES
+            INTERFACE_LINK_LIBRARIES glslang
+            INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES})
+    endif()
+    if(NOT TARGET Glslang::SPIRV)
+        # Aliases of (global) targets [..] CMake 3.11 [...], as above
+        add_library(Glslang::SPIRV INTERFACE IMPORTED)
+        set_target_properties(Glslang::SPIRV PROPERTIES
+            # Make this depend on the Glslang::Glslang target to get the
+            # include path along
+            INTERFACE_LINK_LIBRARIES "SPIRV;Glslang::Glslang")
+    endif()
+
+    # Just to make FPHSA print some meaningful location, nothing else. Luckily
+    # we can just reuse what we had to find above.
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args("Glslang" DEFAULT_MSG
+        _GLSLANG_INTERFACE_INCLUDE_DIRECTORIES)
+
+    return()
+endif()
+
 # Libraries. The debug suffix is used only on Windows.
 find_library(Glslang_LIBRARY_RELEASE NAMES glslang)
 find_library(Glslang_LIBRARY_DEBUG NAMES glslangd)
@@ -159,6 +197,9 @@ if(NOT TARGET Glslang::Glslang)
         INTERFACE_INCLUDE_DIRECTORIES
             # Second entry to account for broken relative includes in version
             # 7.13. Sigh. https://github.com/KhronosGroup/glslang/issues/2007
+            # This also papers over the difference between paths in the repo
+            # and paths actually installed (in particular
+            # <glslang/SPIRV/GlslangToSpirv.h> vs <SPIRV/GlslangToSpirv.h>)
             "${Glslang_INCLUDE_DIR};${Glslang_INCLUDE_DIR}/glslang")
 
     # On Windows these are all optional because a static build is impossible to
