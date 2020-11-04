@@ -85,12 +85,21 @@ building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "SpirvToolsShaderConverter" @ce via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
-[magnum-plugins repository](https://github.com/mosra/magnum-plugins)
-and do the following. Using SPIRV-Tools itself as a CMake subproject isn't
-tested at the moment, so you need to provide it as a system dependency and
-point `CMAKE_PREFIX_PATH` to its installation dir if necessary.
+[magnum-plugins](https://github.com/mosra/magnum-plugins),
+[SPIRV-Headers](https://github.com/KhronosGroup/SPIRV-Headers) and
+[SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools) repositories and do
+the following. If you want to use system-installed SPIRV-Tools, omit the first
+part and point `CMAKE_PREFIX_PATH` to their installation dir if necessary.
 
 @code{.cmake}
+# Skip executables, tests and examples
+set(SPIRV_SKIP_EXECUTABLES ON CACHE BOOL "" FORCE)
+set(SPIRV_SKIP_TESTS ON CACHE BOOL "" FORCE)
+set(SPIRV_HEADERS_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
+# assumes SPIRV-Headers is cloned next to SPIRV-Tools
+set(SPIRV-Headers_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SPIRV-Headers)
+add_subdirectory(SPIRV-Tools EXCLUDE_FROM_ALL)
+
 set(WITH_SPIRVTOOLSSHADERCONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 

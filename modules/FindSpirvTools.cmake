@@ -72,16 +72,38 @@
 # well. Thus, as much as I'd like to use the shared library to save memory on
 # sane OSes, it's just totally F-ing pointless.
 
-find_package(SPIRV-Tools CONFIG QUIET)
+# In case we have SPIRV-Tools as a CMake subproject, SPIRV-Tools should be
+# defined. If it's not, try to find the installed config file.
+if(NOT TARGET SPIRV-Tools)
+    find_package(SPIRV-Tools CONFIG QUIET)
+endif()
 
-# If we're SO LUCKY and the installation contains CMake find modules, point
-# SpirvTools::SpirvTools there and exit -- nothing else to do here. As said
-# above, we just ignore the SPIRV-Tools-shared target as the optimizer depends
-# always on the static libraries.
+# We have a CMake subproject or a package where the config files got LUCKILY
+# installed, point SpirvTools::SpirvTools there and exit -- nothing else to do
+# here. As said above, we just ignore the SPIRV-Tools-shared target as the
+# optimizer depends always on the static libraries.
 if(TARGET SPIRV-Tools)
     # For some F reason, the optimizer is a completely separate thing?! Why
-    # it's not a module of the same package, ffs?!
-    find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+    # it's not a module of the same package, ffs?! Not doing this in case the
+    # target already exists in case of a CMake subproject, ofc.
+    if(NOT TARGET SPIRV-Tools-opt)
+        find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+    endif()
+
+    get_target_property(_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES SPIRV-Tools INTERFACE_INCLUDE_DIRECTORIES)
+    # In case of a CMake subproject, the SPIRV-Tools target doesn't define any
+    # usable INTERFACE_INCLUDE_DIRECTORIES for some reason (the
+    # $<BUILD_INTERFACE:> in there doesn't get expanded), so let's extract that
+    # from the SOURCE_DIR property instead.
+    if(_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES MATCHES "<BUILD_INTERFACE:")
+        get_target_property(_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES SPIRV-Tools SOURCE_DIR)
+        get_filename_component(_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES ${_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES} DIRECTORY)
+        set(_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES ${_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES}/include)
+
+        # We need to add this include dir to the imported target otherwise it
+        # won't work
+        set(_SPIRVTOOLS_NEEDS_INCLUDE ON)
+    endif()
 
     if(NOT TARGET SpirvTools::SpirvTools)
         # Aliases of (global) targets are only supported in CMake 3.11, so we
@@ -90,6 +112,12 @@ if(TARGET SPIRV-Tools)
         # rebuild them into a new target.
         add_library(SpirvTools::SpirvTools INTERFACE IMPORTED)
         set_target_properties(SpirvTools::SpirvTools PROPERTIES INTERFACE_LINK_LIBRARIES SPIRV-Tools)
+
+        # If we have a CMake subproject, this needs to be done otherwise the
+        # includes won't be found
+        if(_SPIRVTOOLS_NEEDS_INCLUDE)
+            set_target_properties(SpirvTools::SpirvTools PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES})
+        endif()
     endif()
     if(NOT TARGET SpirvTools::Opt)
         # Aliases of (global) targets [..] CMake 3.11 [...], as above
@@ -97,8 +125,8 @@ if(TARGET SPIRV-Tools)
         set_target_properties(SpirvTools::Opt PROPERTIES INTERFACE_LINK_LIBRARIES SPIRV-Tools-opt)
     endif()
 
-    # Just to make FPHSA print some meaningful location, nothing else
-    get_target_property(_SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES SPIRV-Tools INTERFACE_INCLUDE_DIRECTORIES)
+    # Just to make FPHSA print some meaningful location, nothing else. Luckily
+    # we can just reuse what we had to find above.
     include(FindPackageHandleStandardArgs)
     find_package_handle_standard_args("SpirvTools" DEFAULT_MSG
         _SPIRVTOOLS_INTERFACE_INCLUDE_DIRECTORIES)
