@@ -207,12 +207,12 @@ ways:
     assembly instead of SPIR-V binary (the default) if the output file
     extension is `*.spvasm`.
 
-The format passed to @ref setInputFormat() has to be either
+The @p format passed to @ref setInputFormat() has to be either
 @ref Format::Unspecified, @ref Format::Spirv or @ref Format::SpirvAssembly. The
 @p version parameter is currently reserved for future extensions and has to be
 always empty.
 
-The format passed to @ref setOutputFormat() has to be either
+The @p format passed to @ref setOutputFormat() has to be either
 @ref Format::Unspecified, @ref Format::Spirv or @ref Format::SpirvAssembly for
 conversion and @ref Format::Unspecified for validation. The @p version
 string can be one of these. Depending on the version of SPIRV-Tools the plugin

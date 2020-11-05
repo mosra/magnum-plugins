@@ -222,7 +222,7 @@ matches or if validating/converting data instead of a file,
 
 @section ShaderTools-GlslangConverter-format Input and output format and version
 
-The format passed to @ref setInputFormat() has to be either
+The @p format passed to @ref setInputFormat() has to be either
 @ref Format::Unspecified or @ref Format::Glsl. The GLSL version is taken from
 the @cpp #version @ce directive, if present in the source, and defaults to
 @cpp 110 @ce (GLSL 1.10, OpenGL 2.0) if not specified. It can be forcibly
@@ -256,9 +256,9 @@ equivalently to allowed @cpp #version @ce directives:
 -   `310 es` for GLSL ES 3.10 (OpenGL ES 3.1)
 -   `320 es` for GLSL ES 3.20 (OpenGL ES 3.2)
 
-The format passed to @ref setOutputFormat() has to be either
+The @p format passed to @ref setOutputFormat() has to be either
 @ref Format::Unspecified or @ref Format::Spirv for conversion and
-@ref Format::Unspecified for validation. The output version is divided between
+@ref Format::Unspecified for validation. The @p version is divided between
 target and SPIR-V version, and by default targets Vulkan 1.0 and SPIR-V 1.0.
 You can override using the second parameter passed to @ref setOutputFormat()
 either by specifying just the target, having the SPIR-V version implicit:
