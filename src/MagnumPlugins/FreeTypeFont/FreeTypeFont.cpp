@@ -54,7 +54,10 @@ class FreeTypeLayouter: public AbstractLayouter {
 
 }
 
-CORRADE_THREAD_LOCAL FT_Library FreeTypeFont::library = nullptr;
+#ifdef CORRADE_BUILD_MULTITHREADED
+CORRADE_THREAD_LOCAL
+#endif
+FT_Library FreeTypeFont::library = nullptr;
 
 void FreeTypeFont::initialize() {
     CORRADE_INTERNAL_ASSERT(!library);
