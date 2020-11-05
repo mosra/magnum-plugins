@@ -40,7 +40,7 @@ add_plugin(StbVorbisAudioImporter
     StbVorbisAudioImporter.conf
     StbVorbisImporter.cpp
     StbVorbisImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(StbVorbisAudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(StbVorbisAudioImporter PUBLIC
@@ -61,7 +61,7 @@ install(FILES StbVorbisImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbVorbisAudioImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbVorbisAudioImporter)
     target_sources(StbVorbisAudioImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

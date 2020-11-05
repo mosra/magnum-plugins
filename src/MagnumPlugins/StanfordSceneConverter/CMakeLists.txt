@@ -39,7 +39,7 @@ add_plugin(StanfordSceneConverter
     StanfordSceneConverter.conf
     StanfordSceneConverter.cpp
     StanfordSceneConverter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_STANFORDSCENECONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(StanfordSceneConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(StanfordSceneConverter PUBLIC
@@ -60,7 +60,7 @@ install(FILES StanfordSceneConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordSceneConverter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_STANFORDSCENECONVERTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StanfordSceneConverter)
     target_sources(StanfordSceneConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

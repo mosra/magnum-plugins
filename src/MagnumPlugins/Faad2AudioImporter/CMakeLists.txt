@@ -40,7 +40,7 @@ add_plugin(Faad2AudioImporter
     Faad2AudioImporter.conf
     Faad2Importer.cpp
     Faad2Importer.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_FAAD2AUDIOIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(Faad2AudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(Faad2AudioImporter PUBLIC
@@ -61,7 +61,7 @@ install(FILES Faad2Importer.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/Faad2AudioImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_FAAD2AUDIOIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/Faad2AudioImporter)
     target_sources(Faad2AudioImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

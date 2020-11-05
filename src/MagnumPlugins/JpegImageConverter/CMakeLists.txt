@@ -40,7 +40,7 @@ add_plugin(JpegImageConverter
     JpegImageConverter.conf
     JpegImageConverter.cpp
     JpegImageConverter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(JpegImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(JpegImageConverter
@@ -66,7 +66,7 @@ install(FILES JpegImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImageConverter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImageConverter)
     target_sources(JpegImageConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

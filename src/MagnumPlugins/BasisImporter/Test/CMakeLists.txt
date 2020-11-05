@@ -39,7 +39,7 @@ endif()
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
-if(NOT BUILD_PLUGINS_STATIC)
+if(NOT MAGNUM_BASISIMPORTER_BUILD_STATIC)
     set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
     if(WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
@@ -60,7 +60,7 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgb-63x27.png rgba-63x27.png rgba-31x13.png rgba-15x6.png
         rgba-27x63.png)
 target_include_directories(BasisImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
     target_link_libraries(BasisImporterTest PRIVATE BasisImporter)
     if(Magnum_AnyImageImporter_FOUND)
         target_link_libraries(BasisImporterTest PRIVATE Magnum::AnyImageImporter)
@@ -76,7 +76,7 @@ else()
     endif()
 endif()
 set_target_properties(BasisImporterTest PROPERTIES FOLDER "MagnumPlugins/BasisImporter/Test")
-if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+if(CORRADE_BUILD_STATIC AND NOT MAGNUM_BASISIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such

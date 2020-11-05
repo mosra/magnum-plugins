@@ -39,7 +39,7 @@ add_plugin(StbImageImporter
     StbImageImporter.conf
     StbImageImporter.cpp
     StbImageImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(StbImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(StbImageImporter PUBLIC
@@ -60,7 +60,7 @@ install(FILES StbImageImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageImporter)
     target_sources(StbImageImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

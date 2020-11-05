@@ -39,7 +39,7 @@ add_plugin(StbImageConverter
     StbImageConverter.conf
     StbImageConverter.cpp
     StbImageConverter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(StbImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(StbImageConverter PUBLIC
@@ -60,7 +60,7 @@ install(FILES StbImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageConverter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StbImageConverter)
     target_sources(StbImageConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

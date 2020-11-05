@@ -29,7 +29,7 @@ find_package(Magnum REQUIRED DebugTools)
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
-if(NOT BUILD_PLUGINS_STATIC)
+if(NOT MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC)
     set(JPEGIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:JpegImageConverter>)
     if(WITH_JPEGIMPORTER)
         set(JPEGIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:JpegImporter>)
@@ -50,7 +50,7 @@ target_include_directories(JpegImageConverterTest PRIVATE
     # imported target instead anyway). The test includes jpeglib.h to test for
     # presence of libjpeg-turbo, so this is needed.
     ${JPEG_INCLUDE_DIR})
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(JpegImageConverterTest PRIVATE JpegImageConverter)
     if(WITH_JPEGIMPORTER)
         target_link_libraries(JpegImageConverterTest PRIVATE JpegImporter)
@@ -63,7 +63,7 @@ else()
     endif()
 endif()
 set_target_properties(JpegImageConverterTest PROPERTIES FOLDER "MagnumPlugins/JpegImageConverter/Test")
-if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+if(CORRADE_BUILD_STATIC AND NOT MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such

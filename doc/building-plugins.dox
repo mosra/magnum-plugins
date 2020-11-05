@@ -283,22 +283,6 @@ cross-compiling and platform-specific issues.
 
 @subsection building-plugins-features Enabling or disabling features
 
-Similarly to Magnum, the plugins are build as shared by default. If you are
-developing for a platform that doesn't support dynamic library loading or if
-you just want to link them statically, enable `BUILD_PLUGINS_STATIC` to build
-the plugins as static. If you plan to use the static plugins with shared
-libraries later, enable also position-independent code with `BUILD_STATIC_PIC`.
-Dynamic plugins are loaded by the manager on request at runtime, potentially
-saving memory when the plugin is not needed, static plugins must be linked in
-at compile time. Some plugins expose their internal state through separate
-libraries, their static build can be controlled using the `BUILD_STATIC`
-option.
-
-Static plugins built in the `Debug` configuration (e.g. with `CMAKE_BUILD_TYPE`
-set to `Debug`) have a `-d` suffix, *dynamic* plugins in `Debug` configuration
-are installed to the `magnum-d` subdirectory, similarly to what is done when
-@ref building "building Magnum itself".
-
 By default no plugins are built and you need to select them manually:
 
 -   `WITH_ASSIMPIMPORTER` --- Build the @ref Trade::AssimpImporter "AssimpImporter"
@@ -376,10 +360,37 @@ control their build separately:
 -   `WITH_OPENDDL` --- Build the @ref OpenDdl library. Enabled automatically if
     `WITH_OPENGEXIMPORTER` is enabled.
 
+Options controlling the build are a subset of
+@ref building-features "the options used by Magnum":
+
+-   `BUILD_STATIC` --- Build all libraries as static. Default is shared, except
+    on platforms such as @ref CORRADE_TARGET_ANDROID "Android" or
+    @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten" that don't support dynamic
+    linking.
+-   `BUILD_STATIC_PIC` --- Build static libraries with position-independent
+    code. Enabled by default when building static libraries, disable if you
+    don't need this feature. On @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten"
+    this option is always off.
+-   `BUILD_PLUGINS_STATIC` --- Build plugins as static. By default, plugins are
+    built as dynamic. Independent of the `BUILD_STATIC` option to allow having
+    static libraries with dynamic plugins and vice versa. To some extent it's
+    also possible to have only a subset of plugins built as static --- keep
+    this option `OFF` and enable `MAGNUM_<PLUGIN>_BUILD_STATIC` for particular
+    plugins instead.
+-   Additional options are inherited from the
+    @ref CORRADE_BUILD_MULTITHREADED and
+    @ref MAGNUM_BUILD_STATIC_UNIQUE_GLOBALS options specified when building
+    Magnu,
+
 Note that each plugin class / library namespace documentation contains more
 detailed information about its dependencies, availability on particular
 platforms and also a guide how to enable given plugin for building and how to
 use it with CMake.
+
+Libraries and static plugins built in the `Debug` configuration (e.g. with
+`CMAKE_BUILD_TYPE` set to `Debug`) have a `-d` suffix, *dynamic* plugins in
+`Debug` configuration are installed to the `magnum-d` subdirectory, similarly
+to what is done when @ref building "building Magnum itself".
 
 @section building-plugins-doc Building documentation
 

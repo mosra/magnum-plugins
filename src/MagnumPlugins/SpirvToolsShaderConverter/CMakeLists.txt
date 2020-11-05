@@ -96,7 +96,7 @@ add_plugin(SpirvToolsShaderConverter
     SpirvToolsShaderConverter.conf
     SpirvToolsConverter.cpp
     SpirvToolsConverter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_SPIRVTOOLSSHADERCONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(SpirvToolsShaderConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(SpirvToolsShaderConverter PUBLIC
@@ -118,7 +118,7 @@ install(FILES SpirvToolsConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/SpirvToolsShaderConverter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_SPIRVTOOLSSHADERCONVERTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/SpirvToolsShaderConverter)
     target_sources(SpirvToolsShaderConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

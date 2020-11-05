@@ -41,7 +41,7 @@ add_plugin(StlImporter
     StlImporter.conf
     StlImporter.cpp
     StlImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_STLIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(StlImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(StlImporter PUBLIC
@@ -62,7 +62,7 @@ install(FILES StlImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StlImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_STLIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/StlImporter)
     target_sources(StlImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

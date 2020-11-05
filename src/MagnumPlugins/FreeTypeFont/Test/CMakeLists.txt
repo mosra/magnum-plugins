@@ -33,7 +33,7 @@ endif()
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
-if(NOT BUILD_PLUGINS_STATIC)
+if(NOT MAGNUM_FREETYPEFONT_BUILD_STATIC)
     set(FREETYPEFONT_PLUGIN_FILENAME $<TARGET_FILE:FreeTypeFont>)
 endif()
 
@@ -47,14 +47,14 @@ corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp
     LIBRARIES Magnum::Text
     FILES Oxygen.ttf)
 target_include_directories(FreeTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_FREETYPEFONT_BUILD_STATIC)
     target_link_libraries(FreeTypeFontTest PRIVATE FreeTypeFont)
 else()
     # So the plugins get properly built when building the test
     add_dependencies(FreeTypeFontTest FreeTypeFont)
 endif()
 set_target_properties(FreeTypeFontTest PROPERTIES FOLDER "MagnumPlugins/FreeTypeFont/Test")
-if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+if(CORRADE_BUILD_STATIC AND NOT MAGNUM_FREETYPEFONT_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such
@@ -62,7 +62,7 @@ if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
     set_target_properties(FreeTypeFontTest PROPERTIES ENABLE_EXPORTS ON)
 endif()
 
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_FREETYPEFONT_BUILD_STATIC)
     # Reinitialization happens only when accessing the plugin directly (and
     # thus explicitly calling initialize()/finalize()) or when initializing and
     # destroying a manager for static plugins multiple times (a rare case).

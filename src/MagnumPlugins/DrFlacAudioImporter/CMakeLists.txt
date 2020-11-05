@@ -40,7 +40,7 @@ add_plugin(DrFlacAudioImporter
     DrFlacAudioImporter.conf
     DrFlacImporter.cpp
     DrFlacImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_DRFLACAUDIOIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(DrFlacAudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # Include the dr_*.h files as a system directory to supress warnings
@@ -61,7 +61,7 @@ install(FILES DrFlacImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrFlacAudioImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_DRFLACAUDIOIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrFlacAudioImporter)
     target_sources(DrFlacAudioImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

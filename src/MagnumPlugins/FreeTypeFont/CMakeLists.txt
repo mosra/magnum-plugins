@@ -45,7 +45,7 @@ add_plugin(FreeTypeFont
     FreeTypeFont.conf
     FreeTypeFont.cpp
     FreeTypeFont.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_FREETYPEFONT_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(FreeTypeFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # Avoid warning spam with old-style casts
@@ -68,7 +68,7 @@ install(FILES FreeTypeFont.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_FREETYPEFONT_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)
     target_sources(FreeTypeFont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

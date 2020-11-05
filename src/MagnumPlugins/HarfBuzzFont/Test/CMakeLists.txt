@@ -33,7 +33,7 @@ endif()
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
-if(NOT BUILD_PLUGINS_STATIC)
+if(NOT MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     set(FREETYPEFONT_PLUGIN_FILENAME $<TARGET_FILE:FreeTypeFont>)
     set(HARFBUZZFONT_PLUGIN_FILENAME $<TARGET_FILE:HarfBuzzFont>)
 endif()
@@ -48,7 +48,7 @@ corrade_add_test(HarfBuzzFontTest HarfBuzzFontTest.cpp
     LIBRARIES Magnum::Text
     FILES ../../FreeTypeFont/Test/Oxygen.ttf)
 target_include_directories(HarfBuzzFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     target_link_libraries(HarfBuzzFontTest PRIVATE FreeTypeFont HarfBuzzFont)
 else()
     # So the plugins get properly built when building the test
@@ -59,7 +59,7 @@ set_target_properties(HarfBuzzFontTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzz
 # version in the test
 target_include_directories(HarfBuzzFontTest PRIVATE
     $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>)
-if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+if(CORRADE_BUILD_STATIC AND NOT MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such

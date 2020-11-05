@@ -47,7 +47,7 @@ target_include_directories(HarfBuzzFont PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src
     $<TARGET_PROPERTY:FreeTypeFont,INTERFACE_INCLUDE_DIRECTORIES>)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_HARFBUZZFONT_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_link_libraries(HarfBuzzFont PUBLIC
@@ -69,7 +69,7 @@ install(FILES HarfBuzzFont.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/HarfBuzzFont)
     target_sources(HarfBuzzFont INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

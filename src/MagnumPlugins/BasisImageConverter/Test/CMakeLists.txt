@@ -45,7 +45,7 @@ endif()
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
-if(NOT BUILD_PLUGINS_STATIC)
+if(NOT MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     set(BASISIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImageConverter>)
     if(WITH_BASISIMPORTER)
         set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
@@ -70,7 +70,7 @@ target_include_directories(BasisImageConverterTest PRIVATE ${CMAKE_CURRENT_BINAR
 # See BasisImageConverter.h for details -- the plugin itself can't be linked to
 # pthread, the app has to be instead
 target_link_libraries(BasisImageConverterTest PRIVATE Threads::Threads)
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(BasisImageConverterTest PRIVATE BasisImageConverter)
     if(Magnum_AnyImageImporter_FOUND)
         target_link_libraries(BasisImageConverterTest PRIVATE Magnum::AnyImageImporter)
@@ -92,7 +92,7 @@ else()
     endif()
 endif()
 set_target_properties(BasisImageConverterTest PROPERTIES FOLDER "MagnumPlugins/BasisImageConverter/Test")
-if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+if(CORRADE_BUILD_STATIC AND NOT MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such

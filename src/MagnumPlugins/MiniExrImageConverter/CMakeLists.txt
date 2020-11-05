@@ -39,7 +39,7 @@ add_plugin(MiniExrImageConverter
     MiniExrImageConverter.conf
     MiniExrImageConverter.cpp
     MiniExrImageConverter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(MiniExrImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # Include the files as a system directory to supress warnings
@@ -60,7 +60,7 @@ install(FILES MiniExrImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/MiniExrImageConverter)
     target_sources(MiniExrImageConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

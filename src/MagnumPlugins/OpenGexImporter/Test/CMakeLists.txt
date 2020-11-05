@@ -33,7 +33,7 @@ endif()
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
-if(NOT BUILD_PLUGINS_STATIC)
+if(NOT MAGNUM_OPENGEXIMPORTER_BUILD_STATIC)
     set(OPENGEXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:OpenGexImporter>)
     if(WITH_DDSIMPORTER)
         set(DDSIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DdsImporter>)
@@ -81,7 +81,7 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         texture-mips.ogex
         texture-unique.ogex)
 target_include_directories(OpenGexImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_OPENGEXIMPORTER_BUILD_STATIC)
     target_link_libraries(OpenGexImporterTest PRIVATE OpenGexImporter)
     if(WITH_DDSIMPORTER)
         target_link_libraries(OpenGexImporterTest PRIVATE DdsImporter)
@@ -100,7 +100,7 @@ else()
     endif()
 endif()
 set_target_properties(OpenGexImporterTest PROPERTIES FOLDER "MagnumPlugins/OpenGexImporter/Test")
-if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+if(CORRADE_BUILD_STATIC AND NOT MAGNUM_OPENGEXIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such

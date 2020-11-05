@@ -41,7 +41,7 @@ add_plugin(AssimpImporter
     AssimpImporter.conf
     AssimpImporter.cpp
     AssimpImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(AssimpImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(AssimpImporter PUBLIC
@@ -50,7 +50,7 @@ target_include_directories(AssimpImporter PUBLIC
 target_link_libraries(AssimpImporter PUBLIC Magnum::Trade Assimp::Assimp)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(AssimpImporter PUBLIC Magnum::AnyImageImporter)
-elseif(BUILD_PLUGINS_STATIC)
+elseif(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     target_link_libraries(AssimpImporter INTERFACE Magnum::AnyImageImporter)
 endif()
 # Modify output location only if all are set, otherwise it makes no sense
@@ -65,7 +65,7 @@ install(FILES AssimpImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AssimpImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/AssimpImporter)
     target_sources(AssimpImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

@@ -41,7 +41,7 @@ add_plugin(PrimitiveImporter
     PrimitiveImporter.conf
     PrimitiveImporter.cpp
     PrimitiveImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_PRIMITIVEIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(PrimitiveImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(PrimitiveImporter PUBLIC
@@ -62,7 +62,7 @@ install(FILES PrimitiveImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PrimitiveImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_PRIMITIVEIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PrimitiveImporter)
     target_sources(PrimitiveImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

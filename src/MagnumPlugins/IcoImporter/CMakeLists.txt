@@ -39,7 +39,7 @@ add_plugin(IcoImporter
     IcoImporter.conf
     IcoImporter.cpp
     IcoImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_ICOIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(IcoImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(IcoImporter PUBLIC
@@ -58,7 +58,7 @@ install(FILES IcoImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/IcoImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_ICOIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/IcoImporter)
     target_sources(IcoImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

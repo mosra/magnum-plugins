@@ -53,7 +53,7 @@ target_include_directories(TinyGltfImporter PUBLIC
 target_link_libraries(TinyGltfImporter PUBLIC Magnum::Trade)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(TinyGltfImporter PUBLIC Magnum::AnyImageImporter)
-elseif(BUILD_PLUGINS_STATIC)
+elseif(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC)
     target_link_libraries(TinyGltfImporter INTERFACE Magnum::AnyImageImporter)
 endif()
 # Modify output location only if all are set, otherwise it makes no sense
@@ -68,7 +68,7 @@ install(FILES TinyGltfImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/TinyGltfImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/TinyGltfImporter)
     target_sources(TinyGltfImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

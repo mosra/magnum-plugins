@@ -50,14 +50,14 @@ add_plugin(OpenGexImporter
     ${OpenGexImporter_SRCS}
     ${OpenGexImporter_HEADERS}
     ${OpenGexImporter_PRIVATE_HEADERS})
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_OPENGEXIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(OpenGexImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(OpenGexImporter PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(OpenGexImporter PUBLIC Magnum::Trade MagnumOpenDdl)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(OpenGexImporter PUBLIC Magnum::AnyImageImporter)
-elseif(BUILD_PLUGINS_STATIC)
+elseif(MAGNUM_OPENGEXIMPORTER_BUILD_STATIC)
     target_link_libraries(OpenGexImporter INTERFACE Magnum::AnyImageImporter)
 endif()
 # Modify output location only if all are set, otherwise it makes no sense
@@ -72,7 +72,7 @@ install(FILES ${OpenGexImporter_HEADERS} ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_OPENGEXIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenGexImporter)
     target_sources(OpenGexImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

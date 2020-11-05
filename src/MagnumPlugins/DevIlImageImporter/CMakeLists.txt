@@ -41,7 +41,7 @@ add_plugin(DevIlImageImporter
     DevIlImageImporter.conf
     DevIlImageImporter.cpp
     DevIlImageImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(DevIlImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # IL_INCLUDE_DIR in the upstream FindDevIL.cmake is "The path to the directory
@@ -71,7 +71,7 @@ install(FILES DevIlImageImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DevIlImageImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DevIlImageImporter)
     target_sources(DevIlImageImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

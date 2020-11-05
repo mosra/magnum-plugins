@@ -40,7 +40,7 @@ add_plugin(DrMp3AudioImporter
     DrMp3AudioImporter.conf
     DrMp3Importer.cpp
     DrMp3Importer.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(DrMp3AudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # Include the dr_*.h files as a system directory to supress warnings
@@ -61,7 +61,7 @@ install(FILES DrMp3Importer.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrMp3AudioImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrMp3AudioImporter)
     target_sources(DrMp3AudioImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

@@ -49,7 +49,7 @@ add_plugin(BasisImporter
     BasisImporter.conf
     BasisImporter.cpp
     BasisImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_BASISIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(BasisImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(BasisImporter
@@ -71,7 +71,7 @@ install(FILES BasisImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/BasisImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/BasisImporter)
     target_sources(BasisImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

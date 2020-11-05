@@ -33,7 +33,7 @@ endif()
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
-if(NOT BUILD_PLUGINS_STATIC)
+if(NOT MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC)
     set(MINIEXRIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:MiniExrImageConverter>)
 endif()
 
@@ -47,14 +47,14 @@ corrade_add_test(MiniExrImageConverterTest MiniExrImageConverterTest.cpp
     LIBRARIES Magnum::Trade
     FILES image.exr)
 target_include_directories(MiniExrImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(MiniExrImageConverterTest PRIVATE MiniExrImageConverter)
 else()
     # So the plugins get properly built when building the test
     add_dependencies(MiniExrImageConverterTest MiniExrImageConverter)
 endif()
 set_target_properties(MiniExrImageConverterTest PROPERTIES FOLDER "MagnumPlugins/MiniExrImageConverter/Test")
-if(CORRADE_BUILD_STATIC AND NOT BUILD_PLUGINS_STATIC)
+if(CORRADE_BUILD_STATIC AND NOT MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such

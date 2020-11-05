@@ -40,7 +40,7 @@ add_plugin(GlslangShaderConverter
     GlslangShaderConverter.conf
     GlslangConverter.cpp
     GlslangConverter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_GLSLANGSHADERCONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(GlslangShaderConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(GlslangShaderConverter PUBLIC
@@ -62,7 +62,7 @@ install(FILES GlslangConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/GlslangShaderConverter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_GLSLANGSHADERCONVERTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/GlslangShaderConverter)
     target_sources(GlslangShaderConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
