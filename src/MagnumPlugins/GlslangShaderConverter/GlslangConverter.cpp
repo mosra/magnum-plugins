@@ -788,7 +788,7 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
     }
     if(_state->outputFormat != Format::Unspecified &&
        _state->outputFormat != Format::Spirv) {
-        Error{} << "ShaderTools::GlslangConverter::validateData(): output format should be Spirv or Unspecified but got" << _state->outputFormat;
+        Error{} << "ShaderTools::GlslangConverter::convertDataToData(): output format should be Spirv or Unspecified but got" << _state->outputFormat;
         return {};
     }
 

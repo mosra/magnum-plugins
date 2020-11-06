@@ -702,7 +702,7 @@ void GlslangConverterTest::convertWrongOutputFormat() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
     CORRADE_COMPARE(out.str(),
-        "ShaderTools::GlslangConverter::validateData(): output format should be Spirv or Unspecified but got ShaderTools::Format::Glsl\n");
+        "ShaderTools::GlslangConverter::convertDataToData(): output format should be Spirv or Unspecified but got ShaderTools::Format::Glsl\n");
 }
 
 void GlslangConverterTest::convertWrongOutputVersionTarget() {
