@@ -144,7 +144,9 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
 
     private:
         static
-        #ifdef CORRADE_BUILD_MULTITHREADED
+        /** @todo Windows don't support dllexported thread-local symbols, work
+            around that (access a local symbol through exported getter?) */
+        #if defined(CORRADE_BUILD_MULTITHREADED) && !defined(CORRADE_TARGET_WINDOWS)
         CORRADE_THREAD_LOCAL
         #endif
         MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
