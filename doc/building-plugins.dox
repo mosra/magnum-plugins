@@ -27,6 +27,8 @@ namespace Magnum {
 /** @page building-plugins Downloading and building plugins
 @brief Guide how to download and build plugins for the Magnum engine.
 
+@m_keyword{Building plugins,,}
+
 @tableofcontents
 @m_footernavigation
 
