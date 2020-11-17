@@ -212,8 +212,53 @@ sudo dpkg -i ../magnum-plugins*.deb
 
 If you want to pass additional flags to CMake or
 @ref building-plugins-features "enable / disable additional features", add them
-to `dh_auto_configure` at the bottom of `debian/rules`. Watch out, as
+to `dh_auto_configure` at the bottom of `package/debian/rules`. Watch out, as
 indentation has to be done using tabs, not spaces.
+
+@m_class{m-block m-warning}
+
+@par Enabling Basis Universal and MeshOptimizer plugins
+@parblock
+Neither Basis Universal nor MeshOptimizer provide any packages for Debian and
+thus the Magnum Plugins package doesn't have it enabled by default. In order to
+enable them, do the following:
+
+-   For @ref Trade::BasisImporter "BasisImporter" or
+    @ref Trade::BasisImageConverter "BasisImageConverter", [download commit
+    `2f43afcc` of the Basis Universal repo](https://github.com/BinomialLLC/basis_universal/archive/2f43afcc97d0a5dafdb73b4e24e123cf9687a418.tar.gz),
+    extract it into `src/external/basis-universal` (note the dash instead of an
+    underscore) and set `WITH_BASISIMPORTER` / `WITH_BASISIMAGECONVERTER` to
+    `ON` in `package/debian/rules`
+-   For @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter",
+    [clone the MeshOptimizer repo](https://github.com/zeux/meshoptimizer) to
+    `src/external/meshoptimizer` and set `WITH_MESHOPTIMIZERSCENECONVERTER` to
+    `ON` in `package/debian/rules`.
+
+With the above, when you run `dpkg-buildpackage`, CMake will automatically
+discover the sources and link them as static libraries to corresponding
+plugins.
+@endparblock
+
+@m_class{m-block m-success}
+
+@par Enabling Glslang and SPIRV-Tools plugins
+@parblock
+Glslang and SPIRV-Tools packages are available only since Ubuntu 20.04 and thus
+are not enabled in the Magnum Plugins package by default. In order to enable
+them, do the following:
+
+-   For @ref ShaderTools::GlslangConverter "GlslangShaderConverter", add
+    `glslang-dev` to the `Build-Depends:` line in `package/debian/control` and
+    set `WITH_GLSLANGSHADERCONVERTER` to `ON` in `package/debian/rules`.
+-   For @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter",
+    add `spirv-tools` to the `Build-Depends:` line in `package/debian/control`
+    and set `WITH_SPIRVTOOLSSHADERCONVERTER` to `ON` in `package/debian/rules`.
+
+With the above, when you run `dpkg-buildpackage`, it should correctly find the
+dependencies (or ask for them to be installed) and build the corresponding
+plugins. The workflow is equivalent for vanilla Debian, as the packages are
+named the same.
+@endparblock
 
 There are also Debian packages for
 @ref building-integration-packages-deb "Magnum Integration",
