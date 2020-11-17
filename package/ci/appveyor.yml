@@ -62,6 +62,10 @@ install:
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\DevIL-SDK-x64-1.7.8.zip appveyor DownloadFile http://downloads.sourceforge.net/openil/DevIL-SDK-x64-1.7.8.zip
 - IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move unicode\*.lib lib\ && cd ..
 
+# FreeType, for MSVC 2019 and clang-cl only
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\freetype-2.10.4-windows-2019.zip appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2019.zip
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" 7z x freetype-2.10.4-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+
 # Basis Universal
 - set BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed
 - IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\basis_universal-%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/%BASIS_VERSION%.zip
