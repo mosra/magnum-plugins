@@ -13,7 +13,10 @@ class MagnumPlugins < Formula
   depends_on "faad2" => :optional
   depends_on "freetype" => :recommended
   depends_on "glslang" => :recommended
-  depends_on "harfbuzz" => :recommended
+  # While harfbuzz is a nice and tidy small lib, Homebrew is stupid and makes
+  # harfbuzz depend on cairo, which is needed just for the hb-view tool which
+  # NOBODY EVER USES, and cairo itself depends on a ton of other stuff.
+  depends_on "harfbuzz" => :optional
   depends_on "libpng" => :recommended
   depends_on "jpeg" => :recommended
   depends_on "spirv-tools" => :recommended
@@ -62,7 +65,7 @@ class MagnumPlugins < Formula
         "-DWITH_PNGIMAGECONVERTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-DWITH_PNGIMPORTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-DWITH_PRIMITIVEIMPORTER=ON",
-        "-DWITH_SPIRVTOOLSSHADERCONVERTER=#{(build.with? 'glslang') ? 'ON' : 'OFF'}",
+        "-DWITH_SPIRVTOOLSSHADERCONVERTER=#{(build.with? 'spirv-tools') ? 'ON' : 'OFF'}",
         "-DWITH_STANFORDIMPORTER=ON",
         "-DWITH_STANFORDSCENECONVERTER=ON",
         "-DWITH_STBIMAGECONVERTER=ON",
