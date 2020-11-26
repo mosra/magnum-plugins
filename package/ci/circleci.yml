@@ -1,0 +1,323 @@
+version: 2.1
+
+orbs:
+  codecov: codecov/codecov@1.1.1
+
+notify:
+  webhooks:
+    # Unfortunately Gitter messages are too verbose (one five-line message per
+    # each job in the build matrix) and thus not wanted
+    #- url: https://webhooks.gitter.im/e/cfbadbd34d28708a57c6
+
+executors:
+  ubuntu-16_04:
+    docker:
+    - image: ubuntu:xenial-20201014
+  emscripten:
+    docker:
+    # 1.39.0 is the oldest on Docker. Anything before 1.39.2 is useless as emar
+    # randomly asserts: https://github.com/emscripten-core/emscripten/pull/9742
+    # Then, anything before 1.39.6 is useless as well because emar has a
+    # filesystem race and randomly complains that a file doesn't exist:
+    # https://github.com/mosra/magnum/issues/413,
+    # https://github.com/emscripten-core/emscripten/pull/10161
+    - image: emscripten/emsdk:1.39.6-upstream
+
+commands:
+  install-base:
+    parameters:
+      extra:
+        type: string
+        default: ""
+    steps:
+    - run:
+        name: Update apt and install base packages
+        # Git is needed always for cloning Corrade and Magnum
+        command: |
+          apt update
+          if [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then export LCOV_PACKAGES="lcov curl"; fi
+          apt install -y git ninja-build $LCOV_PACKAGES << parameters.extra >>
+
+  install-gcc-4_8:
+    steps:
+    - run:
+        name: Install GCC 4.8
+        # For some reason, CMake needs a working C compiler, so provice CC as
+        # well for the case when default gcc isn't installed.
+        command: |
+          apt install -y g++-4.8
+          echo 'export CC=gcc-4.8' >> $BASH_ENV
+          echo 'export CXX=g++-4.8' >> $BASH_ENV
+
+  install-clang-3_8:
+    steps:
+    - run:
+        name: Install Clang 3.8
+        # https://askubuntu.com/questions/787383/how-to-install-llvm-3-9
+        # because the `deb` commands from https://apt.llvm.org don't work
+        #
+        # The software-properties-common need to be installed in order to have
+        # apt-add-repository. Sigh, adding a repository should be a core
+        # feature ffs!
+        #
+        # The apt-transport-https needs to be installed because
+        #  E: The method driver /usr/lib/apt/methods/https could not be found.
+        #  N: Is the package apt-transport-https installed?
+        #
+        # For some reason, CMake needs a working C compiler, so provice CC as
+        # well for the case when default gcc isn't installed.
+        #
+        # The llvm-symbolizer link needs to be set in order to have usable
+        # symbols in the output. This affects suppressions as well, meaning
+        # they won't work if the symbols are not resolvable. It's not enough to
+        # just `export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.8`
+        # because it then complains that
+        #
+        #   External symbolizer path is set to '/usr/bin/llvm-symbolizer-3.8'
+        #   which isn't a known symbolizer. Please set the path to the
+        #   llvm-symbolizer binary or other known tool.
+        #
+        # Probably because because it detects tool type based on the filename?
+        # Ugh.
+        command: |
+          apt install -y software-properties-common apt-transport-https wget
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+          apt-add-repository "deb https://apt.llvm.org/xenial/ llvm-toolchain-xenial-3.9 main"
+          apt update
+          apt install -y clang-3.8
+          echo 'export CC=clang-3.8' >> $BASH_ENV
+          echo 'export CXX=clang++-3.8' >> $BASH_ENV
+          ln -s /usr/bin/llvm-symbolizer{-3.8,}
+
+  install-cmake-3_4:
+    steps:
+    - run:
+        name: Install CMake 3.4
+        command: |
+          apt install -y wget
+          mkdir -p $HOME/cmake && cd $HOME/cmake
+          wget -nc --no-check-certificate https://cmake.org/files/v3.4/cmake-3.4.3-Linux-x86_64.tar.gz
+          tar --strip-components=1 -xzf cmake-3.4.3-Linux-x86_64.tar.gz
+          echo 'export PATH=$HOME/cmake/bin:$PATH' >> $BASH_ENV
+          source $BASH_ENV && cmake --version | grep 3.4
+
+  install-meshoptimizer:
+    steps:
+    - run:
+        name: Install meshoptimizer
+        # few commits after 0.14 with a fix for old Apple Clang
+        command: |
+          export MESHOPTIMIZER_VERSION=97c52415c6d29f297a76482ddde22f739292446d
+          apt install -y wget
+          mkdir -p $HOME/meshoptimizer && cd $HOME/meshoptimizer
+          wget -nc --no-check-certificate https://github.com/zeux/meshoptimizer/archive/$MESHOPTIMIZER_VERSION.tar.gz
+          tar --strip-components=1 -xzf $MESHOPTIMIZER_VERSION.tar.gz
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+            -G Ninja
+          ninja install
+
+  install-basis:
+    steps:
+    - run:
+        name: Install Basis Universal
+        # Version before UASTC is a thing, as our tests crash with the new one
+        command: |
+          export BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed
+          apt install -y wget
+          mkdir -p $HOME/basis_universal && cd $HOME/basis_universal
+          wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.tar.gz
+          tar --strip-components 1 -xzf $BASIS_VERSION.tar.gz
+
+  install-glslang:
+    parameters:
+      build:
+        type: string
+    steps:
+    - run:
+        name: Install glslang
+        # Zip from https://github.com/mosra/magnum-ci/tree/glslang and
+        # self-hosted because GH Actions would make it too simple for people if
+        # you could just download the artifacts directly, right? RIGHT?
+        command: |
+          apt install -y wget unzip
+          mkdir -p $HOME/deps && cd $HOME/deps
+          wget https://ci.magnum.graphics/glslang-8.13.3743-<< parameters.build >>.zip
+          unzip glslang-8.13.3743-<< parameters.build >>.zip
+
+  install-spirv-tools:
+    parameters:
+      build:
+        type: string
+    steps:
+    - run:
+        name: Install SPIRV-Tools
+        # Zip from https://github.com/mosra/magnum-ci/tree/spirv-tools and
+        # self-hosted because GH Actions would make it too simple for people if
+        # you could just download the artifacts directly, right? RIGHT?
+        command: |
+          apt install -y wget unzip
+          mkdir -p $HOME/deps && cd $HOME/deps
+          wget https://ci.magnum.graphics/spirv-tools-2020.4-<< parameters.build >>.zip
+          unzip spirv-tools-2020.4-<< parameters.build >>.zip
+
+  build:
+    parameters:
+      script:
+        type: string
+    steps:
+    - checkout
+    - run:
+        name: Build & test
+        command: |
+          if [ "$BUILD_STATIC" != "ON" ]; then export BUILD_STATIC=OFF; fi
+          if [ "$BUILD_DEPRECATED" != "OFF" ]; then export BUILD_DEPRECATED=ON; fi
+          ./package/ci/<< parameters.script >>
+
+  lcov:
+    steps:
+    - run:
+        name: Collect code coverage
+        # Keep in sync with PKBUILD-coverage, travis.yml and appveyor-lcov.sh,
+        # please
+        command: |
+          lcov $LCOV_EXTRA_OPTS --directory . --capture --output-file coverage.info > /dev/null
+          lcov $LCOV_EXTRA_OPTS --extract coverage.info "*/src/Magnum*/*" --output-file coverage.info > /dev/null
+          lcov $LCOV_EXTRA_OPTS --remove coverage.info "*/MagnumExternal/*" --output-file coverage.info > /dev/null
+          lcov $LCOV_EXTRA_OPTS --remove coverage.info "*/Test/*" --output-file coverage.info > /dev/null
+          lcov $LCOV_EXTRA_OPTS --remove coverage.info "*/build/src/*" --output-file coverage.info > /dev/null
+    - codecov/upload:
+        file: coverage.info
+
+jobs:
+  linux:
+    executor: ubuntu-16_04
+    environment:
+      CMAKE_CXX_FLAGS: --coverage
+      LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
+      CONFIGURATION: Debug
+    steps:
+    - install-base:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-gcc-4_8
+    - install-cmake-3_4
+    - install-basis
+    - install-meshoptimizer
+    - install-glslang:
+        build: ubuntu-16.04-gcc4.8
+    - install-spirv-tools:
+        build: ubuntu-16.04-gcc4.8
+    - build:
+        script: unix-desktop.sh
+    - lcov
+
+  linux-static:
+    executor: ubuntu-16_04
+    environment:
+      # STUPID yml interprets unquoted ON as a boolean
+      BUILD_STATIC: "ON"
+      CMAKE_CXX_FLAGS: --coverage
+      LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
+      CONFIGURATION: Debug
+    steps:
+    - install-base:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-gcc-4_8
+    - install-cmake-3_4
+    - install-basis
+    - install-meshoptimizer
+    - install-glslang:
+        build: ubuntu-16.04-gcc4.8
+    - install-spirv-tools:
+        build: ubuntu-16.04-gcc4.8
+    - build:
+        script: unix-desktop.sh
+    - lcov
+
+  linux-nondeprecated:
+    executor: ubuntu-16_04
+    environment:
+      # STUPID yml interprets unquoted OFF as a boolean
+      BUILD_DEPRECATED: "OFF"
+      CMAKE_CXX_FLAGS: -DCORRADE_NO_ASSERT
+      CONFIGURATION: Release
+    steps:
+    - install-base:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-gcc-4_8
+    - install-cmake-3_4
+    - install-basis
+    - install-meshoptimizer
+    - install-glslang:
+        build: ubuntu-16.04-gcc4.8
+    - install-spirv-tools:
+        build: ubuntu-16.04-gcc4.8
+    - build:
+        script: unix-desktop.sh
+
+  linux-sanitizers:
+    executor: ubuntu-16_04
+    environment:
+      # STUPID yml interprets unquoted OFF as a boolean. Applications don't
+      # have any automated tests, so building them for sanitizers doesn't make
+      # sense.
+      BUILD_APPLICATIONS: "OFF"
+      CMAKE_CXX_FLAGS: -fsanitize=address
+      CONFIGURATION: Debug
+    steps:
+    - install-base:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-clang-3_8
+    - install-cmake-3_4
+    - install-basis
+    - install-meshoptimizer
+    - install-glslang:
+        build: ubuntu-16.04-gcc5
+    - install-spirv-tools:
+        build: ubuntu-16.04-gcc5
+    - build:
+        script: unix-desktop.sh
+
+  linux-threadsanitizer:
+    executor: ubuntu-16_04
+    environment:
+      # STUPID yml interprets unquoted OFF as a boolean. Applications don't
+      # have any automated tests, so building them for sanitizers doesn't make
+      # sense.
+      BUILD_APPLICATIONS: "OFF"
+      CMAKE_CXX_FLAGS: -fsanitize=thread
+      CONFIGURATION: Debug
+    steps:
+    - install-base:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-clang-3_8
+    - install-cmake-3_4
+    - install-basis
+    - install-meshoptimizer
+    - install-glslang:
+        build: ubuntu-16.04-gcc5
+    - install-spirv-tools:
+        build: ubuntu-16.04-gcc5
+    - build:
+        script: unix-desktop.sh
+
+  emscripten:
+    executor: emscripten
+    steps:
+    - install-base
+    - install-basis
+    - build:
+        script: emscripten.sh
+
+workflows:
+  version: 2
+  build:
+    jobs:
+    - linux
+    - linux-static
+    - linux-nondeprecated
+    - linux-sanitizers
+    - linux-threadsanitizer
+    - emscripten

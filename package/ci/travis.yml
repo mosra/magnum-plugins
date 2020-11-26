@@ -14,86 +14,87 @@ addons:
     - libassimp-dev
 
 matrix:
+  # The commented-out jobs are currently handled on Circle CI
   include:
-  - language: cpp
-    os: linux
-    dist: xenial
-    compiler: gcc
-    env:
-    - JOBID=linux
-    - TARGET=desktop
-    - CMAKE_CXX_FLAGS="--coverage"
-    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
-    - CONFIGURATION=Debug
-  - language: cpp
-    os: linux
-    dist: xenial
-    compiler: gcc
-    env:
-    - JOBID=linux-nondeprecated
-    - TARGET=desktop
-    - BUILD_DEPRECATED=OFF
-    - CMAKE_CXX_FLAGS="-DCORRADE_NO_ASSERT"
-    - CONFIGURATION=Release
-  - language: cpp
-    os: linux
-    dist: xenial
-    compiler: clang
-    env:
-    - JOBID=linux-sanitizers
-    - TARGET=desktop-sanitizers
-    - CMAKE_CXX_FLAGS=-fsanitize=address
-    - CONFIGURATION=Debug
-    addons:
-      apt:
-        sources:
-        - llvm-toolchain-xenial
-        packages:
-        - clang-3.8
-        - ninja-build
-        - libfaad-dev
-        - libfreetype6-dev
-        - libjpeg-dev
-        - libopenal-dev
-        - libpng12-dev
-        - libdevil-dev
-        - libharfbuzz-dev
-        - libassimp-dev
-  - language: cpp
-    os: linux
-    dist: xenial
-    compiler: clang
-    env:
-    - JOBID=linux-threadsanitizer
-    - TARGET=desktop-sanitizers
-    - CMAKE_CXX_FLAGS=-fsanitize=thread
-    - CONFIGURATION=Debug
-    addons:
-      apt:
-        sources:
-        - llvm-toolchain-xenial
-        packages:
-        - clang-3.8
-        - ninja-build
-        - libfaad-dev
-        - libfreetype6-dev
-        - libjpeg-dev
-        - libopenal-dev
-        - libpng12-dev
-        - libdevil-dev
-        - libharfbuzz-dev
-        - libassimp-dev
-  - language: cpp
-    os: linux
-    dist: xenial
-    compiler: gcc
-    env:
-    - JOBID=linux-static
-    - TARGET=desktop
-    - CMAKE_CXX_FLAGS="--coverage"
-    - LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
-    - BUILD_STATIC=ON
-    - CONFIGURATION=Debug
+  #- language: cpp
+    #os: linux
+    #dist: xenial
+    #compiler: gcc
+    #env:
+    #- JOBID=linux
+    #- TARGET=desktop
+    #- CMAKE_CXX_FLAGS="--coverage"
+    #- LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
+    #- CONFIGURATION=Debug
+  #- language: cpp
+    #os: linux
+    #dist: xenial
+    #compiler: gcc
+    #env:
+    #- JOBID=linux-nondeprecated
+    #- TARGET=desktop
+    #- BUILD_DEPRECATED=OFF
+    #- CMAKE_CXX_FLAGS="-DCORRADE_NO_ASSERT"
+    #- CONFIGURATION=Release
+  #- language: cpp
+    #os: linux
+    #dist: xenial
+    #compiler: clang
+    #env:
+    #- JOBID=linux-sanitizers
+    #- TARGET=desktop-sanitizers
+    #- CMAKE_CXX_FLAGS=-fsanitize=address
+    #- CONFIGURATION=Debug
+    #addons:
+      #apt:
+        #sources:
+        #- llvm-toolchain-xenial
+        #packages:
+        #- clang-3.8
+        #- ninja-build
+        #- libfaad-dev
+        #- libfreetype6-dev
+        #- libjpeg-dev
+        #- libopenal-dev
+        #- libpng12-dev
+        #- libdevil-dev
+        #- libharfbuzz-dev
+        #- libassimp-dev
+  #- language: cpp
+    #os: linux
+    #dist: xenial
+    #compiler: clang
+    #env:
+    #- JOBID=linux-threadsanitizer
+    #- TARGET=desktop-sanitizers
+    #- CMAKE_CXX_FLAGS=-fsanitize=thread
+    #- CONFIGURATION=Debug
+    #addons:
+      #apt:
+        #sources:
+        #- llvm-toolchain-xenial
+        #packages:
+        #- clang-3.8
+        #- ninja-build
+        #- libfaad-dev
+        #- libfreetype6-dev
+        #- libjpeg-dev
+        #- libopenal-dev
+        #- libpng12-dev
+        #- libdevil-dev
+        #- libharfbuzz-dev
+        #- libassimp-dev
+  #- language: cpp
+    #os: linux
+    #dist: xenial
+    #compiler: gcc
+    #env:
+    #- JOBID=linux-static
+    #- TARGET=desktop
+    #- CMAKE_CXX_FLAGS="--coverage"
+    #- LCOV_EXTRA_OPTS="--gcov-tool /usr/bin/gcov-4.8"
+    #- BUILD_STATIC=ON
+    #- CONFIGURATION=Debug
   - language: cpp
     os: osx
     # This is currently (Sep 2020) the Travis default, 9.3 didn't have
@@ -122,13 +123,13 @@ matrix:
     env:
     - JOBID=ios
     - TARGET=ios-simulator
-  - language: cpp
-    os: osx
-    # Using whatever is the default, since that could be hopefully most
-    # up-to-date
-    env:
-    - JOBID=emscripten
-    - TARGET=emscripten
+  #- language: cpp
+    #os: osx
+    ## Using whatever is the default, since that could be hopefully most
+    ## up-to-date
+    #env:
+    #- JOBID=emscripten
+    #- TARGET=emscripten
   - language: android
     os: linux
     # Setting xenial here will cause it to use 12.04, with GCC 4.6 and other
@@ -179,12 +180,6 @@ install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install ninja; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install lcov; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "ios-simulator" ]; then gem install xcpretty; fi
-# binaryen is a dependency for wasm targets, but homebrew devs don't give a
-# shit: https://github.com/Homebrew/homebrew-core/issues/47869 Also the
-# generated .emscripten doesn't have a newline at EOL so the workaround listed
-# in the issue doesn't work and one has to add explicit \n there to make it
-# work. EVERYTHING SUCKS NOWADAYS.
-- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install emscripten binaryen && export LLVM=/usr/local/opt/emscripten/libexec/llvm/bin && emcc && echo -e "\nBINARYEN_ROOT = '/usr/local'\n" >> ~/.emscripten; fi
 
 # FAAD2, HarfBuzz, Assimp, DevIL, spirv-tools, glslang
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install faad2 harfbuzz assimp devil spirv-tools glslang; fi
@@ -204,16 +199,16 @@ install:
 - export BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed && wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.zip && unzip -q $BASIS_VERSION; mv basis_universal-$BASIS_VERSION $HOME/basis_universal
 
 script:
-- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/travis-desktop.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/unix-desktop.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "android" ]; then ./package/ci/travis-android-arm.sh; fi
-- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then ./package/ci/travis-desktop.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "desktop" ]; then ./package/ci/unix-desktop.sh; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "ios-simulator" ]; then ./package/ci/travis-ios-simulator.sh; fi
-- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then ./package/ci/travis-emscripten.sh; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TARGET" == "emscripten" ]; then ./package/ci/emscripten.sh; fi
 # Travis somehow is not able to gather all output, try to force it using this
 - sync
 
 after_success:
-# Keep in sync with PKBUILD-coverage, please
+# Keep in sync with PKBUILD-coverage, circleci.yml and appveyor-lcov.sh, please
 - if [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then lcov $LCOV_EXTRA_OPTS --directory . --capture --output-file coverage.info > /dev/null; fi
 - if [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then lcov $LCOV_EXTRA_OPTS --extract coverage.info "*/src/Magnum*/*" --output-file coverage.info > /dev/null; fi
 - if [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then lcov $LCOV_EXTRA_OPTS --remove coverage.info "*/src/MagnumExternal/*" --output-file coverage.info > /dev/null; fi
