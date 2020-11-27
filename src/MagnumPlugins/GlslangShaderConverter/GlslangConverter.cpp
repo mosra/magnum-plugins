@@ -214,10 +214,16 @@ std::pair<Int, EProfile> parseInputVersion(const char* const prefix, const Conta
     return {};
 }
 
-std::pair<glslang::EShTargetClientVersion, glslang::EShTargetLanguageVersion> parseOutputVersion(const char* const prefix, const Containers::StringView version) {
+struct OutputVersion {
+    glslang::EShTargetClientVersion client;
+    glslang::EShTargetLanguageVersion language;
+    Format format;
+};
+
+OutputVersion parseOutputVersion(const char* const prefix, Format format, const Containers::StringView version) {
     /* Default (if not set) is Vulkan 1.0 with SPIR-V 1.0 */
     if(version.isEmpty())
-        return {glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0};
+        return {glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0, Format::Spirv};
 
     /* `<target> spv<major>.<minor>`, where the second part is optional. If
        present, split[1] will contain a space, if not, split[1] is empty. */
@@ -261,9 +267,11 @@ std::pair<glslang::EShTargetClientVersion, glslang::EShTargetLanguageVersion> pa
             Error{} << prefix << "output format version language should be spvX.Y but got" << split[2];
             return {};
         }
+
+        format = Format::Spirv;
     }
 
-    return {client, language};
+    return {client, language, format};
 }
 
 struct Includer: glslang::TShader::Includer {
@@ -335,7 +343,7 @@ struct Includer: glslang::TShader::Includer {
         std::unordered_map<std::string, std::pair<Containers::ArrayView<const char>, std::size_t>> _references;
 };
 
-std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TProgram& program, const Utility::ConfigurationGroup& configuration, const ConverterFlags flags, const std::pair<int, EProfile> inputVersion, const std::pair<glslang::EshTargetClientVersion, glslang::EShTargetLanguageVersion> outputVersion, const bool versionExplicitlySpecified, const Containers::StringView definitions, const Containers::StringView filename, Containers::Optional<Containers::ArrayView<const char>>(*const fileCallback)(const std::string&, InputFileCallbackPolicy, void*), void* const fileCallbackUserData, const Containers::ArrayView<const char> data, Int messages) {
+std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TProgram& program, const Utility::ConfigurationGroup& configuration, const ConverterFlags flags, const std::pair<int, EProfile> inputVersion, const OutputVersion outputVersion, const bool versionExplicitlySpecified, const Containers::StringView definitions, const Containers::StringView filename, Containers::Optional<Containers::ArrayView<const char>>(*const fileCallback)(const std::string&, InputFileCallbackPolicy, void*), void* const fileCallbackUserData, const Containers::ArrayView<const char> data, Int messages) {
     /* Add preprocessor definitions */
     shader.setPreamble(definitions.data());
 
@@ -510,7 +518,7 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
 
     /* Decide on the client based on output version */
     glslang::EShClient client{};
-    switch(outputVersion.first) {
+    switch(outputVersion.client) {
         case glslang::EShTargetVulkan_1_0:
         case glslang::EShTargetVulkan_1_1:
         /* See #include <glslang/Include/revision.h> for a longer rant. */
@@ -554,9 +562,20 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
            According to the ARB_gl_spirv and GL_KHR_vulkan_glsl extensions it
            should be 100, and that's what glslangValidator forces as well:
            https://github.com/KhronosGroup/glslang/blob/2de6d657dde37a421ff8afb1bd820d522df5821d/StandAlone/StandAlone.cpp#L699-L700
-           If I pass 0, it'll apparently not define those, so let's do a 100 */
-        100);
-    shader.setEnvClient(client, outputVersion.first);
+           If I pass 0, these macros are not defined, and amazingly enough,
+           this value also controls whether SPIR-V-specific rules such as
+           explicit location and bindings are enforced, but (of course) only partially, in addition to EShTarget passed to setEnvTarget(), which
+           is able to blow up in spectacular ways if the stars don't get
+           aligned properly.
+
+           To make it possible to validate non-SPIR-V GL shaders (such as WebGL
+           1 or GLSL ES), we don't want those for validation unless that's
+           explicitly specified via the output format. HOWEVER, for Vulkan
+           setEnvTarget() has to be set to EShTargetSpv otherwise it can blow
+           up, and thus to have SPIR-V rules applied consistently and not just
+           partially, we use 100 for Vulkan always. */
+        outputVersion.client == glslang::EShTargetOpenGL_450 && outputVersion.format == Format::Unspecified ? 0 : 100);
+    shader.setEnvClient(client, outputVersion.client);
     /* setEnvTarget() needs to be set differently for validation and
        compilation because THE LIB IS SHIT, see doValidateData() and
        doConvertDataToData() for the gory details */
@@ -674,8 +693,11 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
         Error{} << "ShaderTools::GlslangConverter::validateData(): input format should be Glsl or Unspecified but got" << _state->inputFormat;
         return {};
     }
-    if(_state->outputFormat != Format::Unspecified) {
-        Error{} << "ShaderTools::GlslangConverter::validateData(): output format should be Unspecified but got" << _state->outputFormat;
+    /* Setting SPIR-V as an output format will enforce SPIR-V specific rules
+       as well (and define GL_SPIRV or VULKAN) */
+    if(_state->outputFormat != Format::Unspecified &&
+       _state->outputFormat != Format::Spirv) {
+        Error{} << "ShaderTools::GlslangConverter::validateData(): output format should be Spirv or Unspecified but got" << _state->outputFormat;
         return {};
     }
 
@@ -684,8 +706,16 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
        on its own) */
     const EShLanguage translatedStage = translateStage(stage);
     const std::pair<int, EProfile> inputVersion = parseInputVersion("ShaderTools::GlslangConverter::validateData():", _state->inputVersion);
-    const std::pair<glslang::EShTargetClientVersion, glslang::EShTargetLanguageVersion> outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::validateData():", _state->outputVersion);
-    if(!inputVersion.first || !outputVersion.first) return {};
+    OutputVersion outputVersion;
+    /* Shorthand for validating generic GL without SPIR-V */
+    if(_state->outputVersion == "opengl"_s) {
+        if(_state->outputFormat != Format::Unspecified) {
+            Error{} << "ShaderTools::GlslangConverter::validateData(): generic OpenGL can't be validated with SPIR-V rules";
+            return {};
+        }
+        outputVersion = {glslang::EShTargetOpenGL_450, glslang::EShTargetSpv_1_0, Format::Unspecified};
+    } else outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::validateData():", _state->outputFormat, _state->outputVersion);
+    if(!inputVersion.first || !outputVersion.client) return {};
 
     /* Amazing, why a part of the API has the glslang:: namespace and some
        doesn't? Why can't you just be consistent, FFS? Do you ever C++?! */
@@ -695,6 +725,7 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
        (as the README suggests), validation of Vulkan shaders will fail with
 
         syntax error, unexpected TEXTURE2D, expecting COMMA or SEMICOLON
+        INTERNAL ERROR: Unable to parse built-ins
 
        and then a thousand-line spew of all GLSL builtins ever known to man.
        Probably because texture2D becomes a reserved word in newer versions.
@@ -702,14 +733,25 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
        will fail as well, this time with
 
         'double' : not supported with this profile: none
+        INTERNAL ERROR: Unable to parse built-ins
 
        and AGAIN a thousand-line spew of all GLSL builtins ever known to man
        because the library is just stupid. It's unfixable unless I'd attempt to
        parse the source for a #version directive and decide based on that, but
-       that's NOT MY JOB so I'll do a best-effort handling and use Spv when
-       targeting Vulkan and None if targeting GL. I wonder on what case this
-       blows up next. */
-    shader.setEnvTarget(outputVersion.first == glslang::EShTargetOpenGL_450 ? glslang::EShTargetNone : glslang::EShTargetSpv, outputVersion.second);
+       that's NOT MY JOB. At first I did a best-effort handling and used Spv
+       when targeting Vulkan and None if targeting GL.
+
+       I wondered on what case this blows up next and OF COURSE this caused
+       the validation for GL with a SPIR-V target behave differently than
+       compiling GL to SPIR-V, which I wanted to guarantee in the first place.
+       So additionally, I also set Spv when output format is SPIR-V.
+
+       Of course, it's glslang, so any sanity expectations are FUTILE, and this
+       flag isn't the only thing that affects whether SPIR-V-specific rules get
+       enforced. In addition it's also controlled by whether one passes 100 or
+       0 to parse() (yes, really). See a similarly huge disappointed comment
+       block in compileAndLinkShader() for details. */
+    shader.setEnvTarget(outputVersion.client == glslang::EShTargetOpenGL_450 && outputVersion.format == Format::Unspecified ? glslang::EShTargetNone : glslang::EShTargetSpv, outputVersion.language);
 
     /* Add preprocessor definitions, input source, configure limits,
        input/output formats, targets and versions, compile and "link". This
@@ -797,8 +839,8 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
        prints an error message on its own) */
     const EShLanguage translatedStage = translateStage(stage);
     const std::pair<int, EProfile> inputVersion = parseInputVersion("ShaderTools::GlslangConverter::convertDataToData():", _state->inputVersion);
-    const std::pair<glslang::EshTargetClientVersion, glslang::EShTargetLanguageVersion> outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::convertDataToData():", _state->outputVersion);
-    if(!inputVersion.first || !outputVersion.first) return {};
+    const OutputVersion outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::convertDataToData():", Format::Spirv, _state->outputVersion);
+    if(!inputVersion.first || !outputVersion.client) return {};
 
     /* Compilation and SPIR-V options */
     Int messages = 0;
@@ -882,12 +924,17 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
     /* This is done differently for validation and compilation, so it's not
        inside compileAndLinkShader(). Unlike in doValidateData(), here we just
        set a SPIR-V target because that's what we want. */
-    shader.setEnvTarget(glslang::EShTargetSpv, outputVersion.second);
+    shader.setEnvTarget(glslang::EShTargetSpv, outputVersion.language);
 
     /* Add preprocessor definitions, input source, configure limits,
        input/output formats, targets and versions, compile and "link". This
        function is shared between doValidateData() and doConvertDataToData()
-       and does the same in both. */
+       and does the same in both.
+
+       We use Format::Spirv even if outputFormat is Unspecified, as
+       Format::Unspecified is meant for validation purposes only without
+       enforcing SPIR-V specific rules such as presence of explicit locations
+       and bindings. */
     glslang::TProgram program;
     std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, inputFileCallback(), inputFileCallbackUserData(), data, messages);
 

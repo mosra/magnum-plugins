@@ -26,6 +26,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
@@ -52,6 +53,7 @@ struct GlslangConverterTest: TestSuite::Tester {
     void validateWrongOutputFormat();
     void validateWrongOutputVersionTarget();
     void validateWrongOutputVersionLanguage();
+    void validateWrongOutputFormatForGenericOpenGL();
     void validateFail();
     void validateFailWrongStage();
     void validateFailFileWrongStage();
@@ -75,6 +77,8 @@ struct GlslangConverterTest: TestSuite::Tester {
     void convertFailWrongStage();
     void convertFailFileWrongStage();
 
+    void vulkanNoExplicitLayout();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractConverter> _converterManager{"nonexistent"};
 };
@@ -87,40 +91,54 @@ const struct {
     const char* alias;
 
     const char* inputVersion;
+    Format outputFormat;
     const char* outputVersion;
+    bool spirvShouldBeValidated;
 } ValidateData[] {
-    /* GCC 4.8 doesn't like using just {} for Stage or for const char* */
+    /* GCC 4.8 doesn't like using just {} for Stage, Format or const char* */
     {"GL shader",
         Stage{}, "shader.gl.frag", nullptr,
-        "", "opengl4.5"},
+        "", Format{}, "opengl4.5", false},
+    {"GL shader, generic version",
+        Stage{}, "shader.gl.frag", nullptr,
+        "", Format{}, "opengl", false},
+    {"GL shader, SPIR-V output format",
+        Stage{}, "shader.gl.frag", nullptr,
+        "", Format::Spirv, "opengl4.5", true},
+    {"GL shader, SPIR-V included in output version",
+        Stage{}, "shader.gl.frag", nullptr,
+        "", Format{}, "opengl4.5 spv1.0", true},
     {"GL shader, explicit stage",
         Stage::Fragment, "shader.gl.frag", "shader.glsl",
-        "", "opengl4.5"},
+        "", Format{}, "opengl4.5", false},
     {"GL shader, <stage>.glsl",
         Stage{}, "shader.gl.frag", "shader.frag.glsl",
-        "", "opengl4.5"},
+        "", Format{}, "opengl4.5", false},
     {"GL 2.1 shader",
         Stage{}, "shader.oldgl.frag", nullptr,
-        "110", "opengl4.5"},
+        "110", Format{}, "opengl4.5", false},
     {"GLES 2.0 shader",
         Stage{}, "shader.oldgl.frag", nullptr,
-        "100 es", "opengl4.5"},
+        "100 es", Format{}, "opengl4.5", false},
     {"Vulkan shader, default",
         Stage{}, "shader.vk.frag", nullptr,
-        "", ""},
+        "", Format{}, "", true},
+    {"Vulkan shader, SPIR-V target",
+        Stage{}, "shader.vk.frag", nullptr,
+        "", Format::Spirv, "", true},
     {"Vulkan 1.0 shader",
         Stage{}, "shader.vk.frag", nullptr,
-        "", "vulkan1.0"},
+        "", Format{}, "vulkan1.0", true},
     {"Vulkan 1.1 shader",
         Stage{}, "shader.vk.frag", nullptr,
-        "", "vulkan1.1"},
+        "", Format{}, "vulkan1.1", true},
     {"Vulkan 1.1 SPIR-V 1.4 shader",
         Stage{}, "shader.vk.frag", nullptr,
-        "", "vulkan1.1 spv1.4"},
+        "", Format{}, "vulkan1.1 spv1.4", true},
     /* Not tested because this is not present in glslang 7.13 yet */
     //{"Vulkan 1.2 shader",
     //    Stage{}, "shader.vk.frag", nullptr,
-    //    "", "vulkan1.2"},
+    //    "", "vulkan1.2", true},
 };
 
 const struct {
@@ -250,6 +268,31 @@ const struct {
         entrypoint */
 };
 
+/* Yes, trailing whitespace. Fuck me. */
+const char* VulkanNoExplicitBindingError =
+    "ERROR: 0:28: 'binding' : sampler/texture/image requires layout(binding=X) \n"
+    "ERROR: 1 compilation errors.  No code generated.";
+const char* VulkanNoExplicitLocationError =
+    "ERROR: 0:32: 'location' : SPIR-V requires location for user input/output \n"
+    "ERROR: 1 compilation errors.  No code generated.";
+
+const struct {
+    const char* name;
+    const char* define;
+    Format outputFormat;
+    const char* error;
+} VulkanNoExplicitLayoutData[] {
+    /* GCC 4.8 doesn't like using just {} for Format */
+    {"no layout(binding)", "NO_EXPLICIT_BINDING", Format{},
+        VulkanNoExplicitBindingError},
+    {"no layout(binding), SPIR-V output", "NO_EXPLICIT_BINDING", Format::Spirv,
+        VulkanNoExplicitBindingError},
+    {"no layout(location)", "NO_EXPLICIT_LOCATION", Format{},
+        VulkanNoExplicitLocationError},
+    {"no layout(location), SPIR-V output", "NO_EXPLICIT_LOCATION", Format::Spirv,
+        VulkanNoExplicitLocationError},
+};
+
 GlslangConverterTest::GlslangConverterTest() {
     addInstancedTests({&GlslangConverterTest::validate},
         Containers::arraySize(ValidateData));
@@ -260,7 +303,8 @@ GlslangConverterTest::GlslangConverterTest() {
               &GlslangConverterTest::validateWrongInputVersion,
               &GlslangConverterTest::validateWrongOutputFormat,
               &GlslangConverterTest::validateWrongOutputVersionTarget,
-              &GlslangConverterTest::validateWrongOutputVersionLanguage});
+              &GlslangConverterTest::validateWrongOutputVersionLanguage,
+              &GlslangConverterTest::validateWrongOutputFormatForGenericOpenGL});
 
     addInstancedTests({&GlslangConverterTest::validateFail},
         Containers::arraySize(ValidateFailData));
@@ -290,6 +334,9 @@ GlslangConverterTest::GlslangConverterTest() {
     addTests({&GlslangConverterTest::convertFailWrongStage,
               &GlslangConverterTest::convertFailFileWrongStage});
 
+    addInstancedTests({&GlslangConverterTest::vulkanNoExplicitLayout},
+        Containers::arraySize(VulkanNoExplicitLayoutData));
+
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef GLSLANGSHADERCONVERTER_PLUGIN_FILENAME
@@ -303,12 +350,17 @@ void GlslangConverterTest::validate() {
 
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
 
-    converter->setDefinitions({
+    Containers::Array<std::pair<Containers::StringView, Containers::StringView>> defines{Containers::InPlaceInit, {
         {"A_DEFINE", ""},
         {"AN_UNDEFINE", "something awful!!"},
-        {"AN_UNDEFINE", nullptr}
-    });
-    converter->setOutputFormat({}, data.outputVersion);
+        {"AN_UNDEFINE", nullptr},
+    }};
+
+    if(!data.spirvShouldBeValidated)
+        arrayAppend(defines, Containers::InPlaceInit, "VALIDATE_NON_SPIRV", "");
+
+    converter->setDefinitions(defines);
+    converter->setOutputFormat(data.outputFormat, data.outputVersion);
 
     /* Fake the file loading via a callback */
     const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.filename));
@@ -422,7 +474,7 @@ void GlslangConverterTest::validateWrongOutputFormat() {
     CORRADE_COMPARE(converter->validateData({}, {}),
         std::make_pair(false, ""));
     CORRADE_COMPARE(out.str(),
-        "ShaderTools::GlslangConverter::validateData(): output format should be Unspecified but got ShaderTools::Format::Glsl\n");
+        "ShaderTools::GlslangConverter::validateData(): output format should be Spirv or Unspecified but got ShaderTools::Format::Glsl\n");
 }
 
 void GlslangConverterTest::validateWrongOutputVersionTarget() {
@@ -451,6 +503,19 @@ void GlslangConverterTest::validateWrongOutputVersionLanguage() {
     CORRADE_COMPARE(out.str(),
         /* Yep, it's silly. But this way we know it's silly. */
         "ShaderTools::GlslangConverter::validateData(): output format version language should be spvX.Y but got spv2.1\n");
+}
+
+void GlslangConverterTest::validateWrongOutputFormatForGenericOpenGL() {
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
+
+    converter->setOutputFormat(Format::Spirv, "opengl");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(converter->validateData({}, {}),
+        std::make_pair(false, ""));
+    CORRADE_COMPARE(out.str(),
+        "ShaderTools::GlslangConverter::validateData(): generic OpenGL can't be validated with SPIR-V rules\n");
 }
 
 void GlslangConverterTest::validateFail() {
@@ -497,8 +562,8 @@ void GlslangConverterTest::validateFailWrongStage() {
        gl_FragCoord */
     CORRADE_COMPARE(converter->validateData(Stage::Unspecified, Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"))),
         std::make_pair(false, /* Yes, trailing whitespace. Fuck me. */
-            "ERROR: 0:28: 'gl_FragCoord' : undeclared identifier \n"
-            "ERROR: 0:28: '' : compilation terminated \n"
+            "ERROR: 0:35: 'gl_FragCoord' : undeclared identifier \n"
+            "ERROR: 0:35: '' : compilation terminated \n"
             "ERROR: 2 compilation errors.  No code generated."));
 }
 
@@ -526,8 +591,8 @@ void GlslangConverterTest::validateFailFileWrongStage() {
        filename should be also shown in the output. */
     CORRADE_COMPARE(converter->validateFile(Stage::Unspecified, "shader.glsl"),
         std::make_pair(false, /* Yes, trailing whitespace. Fuck me. */
-            "ERROR: shader.glsl:28: 'gl_FragCoord' : undeclared identifier \n"
-            "ERROR: shader.glsl:28: '' : compilation terminated \n"
+            "ERROR: shader.glsl:35: 'gl_FragCoord' : undeclared identifier \n"
+            "ERROR: shader.glsl:35: '' : compilation terminated \n"
             "ERROR: 2 compilation errors.  No code generated."));
 }
 
@@ -618,10 +683,7 @@ void GlslangConverterTest::convert() {
     converter->setDefinitions({
         {"A_DEFINE", ""},
         {"AN_UNDEFINE", "something awful!!"},
-        {"AN_UNDEFINE", nullptr},
-        /* We target SPIR-V so the file needs an explicit layout(location=)
-           always */
-        {"NEED_LOCATION", ""}
+        {"AN_UNDEFINE", nullptr}
     });
     converter->setOutputFormat({}, data.outputVersion);
     if(data.debugInfoLevel)
@@ -708,14 +770,13 @@ void GlslangConverterTest::convertWrongOutputFormat() {
 void GlslangConverterTest::convertWrongOutputVersionTarget() {
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
 
-    converter->setOutputFormat(Format::Unspecified, "vulkan2.0");
+    converter->setOutputFormat(Format::Unspecified, "opengl");
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
     CORRADE_COMPARE(out.str(),
-        /* Yep, it's silly. But this way we know it's silly. */
-        "ShaderTools::GlslangConverter::convertDataToData(): output format version target should be opengl4.5 or vulkanX.Y but got vulkan2.0\n");
+        "ShaderTools::GlslangConverter::convertDataToData(): output format version target should be opengl4.5 or vulkanX.Y but got opengl\n");
 }
 
 void GlslangConverterTest::convertWrongOutputVersionLanguage() {
@@ -793,8 +854,8 @@ void GlslangConverterTest::convertFailWrongStage() {
     CORRADE_VERIFY(!converter->convertDataToData(Stage::Unspecified, Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"))));
     CORRADE_COMPARE(out.str(), /* Yes, trailing whitespace. Fuck me. */
         "ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n"
-        "ERROR: 0:28: 'gl_FragCoord' : undeclared identifier \n"
-        "ERROR: 0:28: '' : compilation terminated \n"
+        "ERROR: 0:35: 'gl_FragCoord' : undeclared identifier \n"
+        "ERROR: 0:35: '' : compilation terminated \n"
         "ERROR: 2 compilation errors.  No code generated.\n");
 }
 
@@ -825,9 +886,36 @@ void GlslangConverterTest::convertFailFileWrongStage() {
     CORRADE_VERIFY(!converter->convertFileToFile(Stage::Unspecified, "shader.glsl", ""));
     CORRADE_COMPARE(out.str(), /* Yes, trailing whitespace. Fuck me. */
         "ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n"
-        "ERROR: shader.glsl:28: 'gl_FragCoord' : undeclared identifier \n"
-        "ERROR: shader.glsl:28: '' : compilation terminated \n"
+        "ERROR: shader.glsl:35: 'gl_FragCoord' : undeclared identifier \n"
+        "ERROR: shader.glsl:35: '' : compilation terminated \n"
         "ERROR: 2 compilation errors.  No code generated.\n");
+}
+
+void GlslangConverterTest::vulkanNoExplicitLayout() {
+    auto&& data = VulkanNoExplicitLayoutData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
+
+    converter->setDefinitions({
+        {"A_DEFINE", ""},
+        {data.define, ""}
+    });
+    converter->setOutputFormat(data.outputFormat, {});
+    /* We're interested in the first error only */
+    converter->configuration().setValue("cascadingErrors", false);
+
+    /* Glslang SPIR-V validation rules can be enforced via multiple different
+       settings and each setting affect only a subset of these, so verify that
+       we're consistent in all cases */
+    std::pair<bool, Containers::String> result = converter->validateData(Stage::Fragment, Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag")));
+    CORRADE_COMPARE(result, std::make_pair(false, data.error));
+
+    /* Conversion should result in exactly the same */
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertDataToData(Stage::Fragment, Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"))));
+    CORRADE_COMPARE(out.str(), Utility::formatString("ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n{}\n", data.error));
 }
 
 }}}}

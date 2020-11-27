@@ -20,10 +20,17 @@ layout(push_constant) uniform Thing {
     float factor;
 };
 
-/* When validating Vulkan shaders, we set target to SPIR-V, which means
-   input/output locations are required */
-layout(location=0) out vec4 color;
+/* Uniform and output locations are always required, and omitting either should
+   cause an error in all scenarios. */
+#ifndef NO_EXPLICIT_BINDING
+layout(binding=0)
+#endif
+uniform sampler2D textureData;
+#ifndef NO_EXPLICIT_LOCATION
+layout(location=0)
+#endif
+out vec4 color;
 
 void main() {
-    color = gl_FragCoord*factor;
+    color = factor*texture(textureData, vec2(0.0))*gl_FragCoord;
 }

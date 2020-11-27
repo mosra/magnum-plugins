@@ -1,7 +1,7 @@
 /* #version is defined externally */
 
-#ifndef GL_SPIRV
-#error GL_SPIRV is not defined but it should be
+#ifdef GL_SPIRV
+#error GL_SPIRV is defined but it should not be
 #endif
 
 #ifdef VULKAN
@@ -16,8 +16,10 @@
 #error AN_UNDEFINE is defined but it should not be
 #endif
 
+/* No layout() can be enforced here because it's not a valid syntax */
 varying vec4 color;
+uniform float factor;
 
 void main() {
-    gl_FragColor = color;
+    gl_FragColor = color*factor;
 }

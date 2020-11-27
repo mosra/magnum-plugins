@@ -143,9 +143,9 @@ validated. Note that in some cases, such as opening an inaccessible file or an
 assembly error the validation function can return @cpp {false, ""} @ce and
 print a message to the error output instead.
 
-Validation results are highly dependent on the target version set using
-@ref setOutputFormat(), see @ref ShaderTools-GlslangConverter-format below for
-details. Additional validation options can be set through the
+Validation results are highly dependent on the target format and version set
+using @ref setOutputFormat(), see @ref ShaderTools-GlslangConverter-format
+below for details. Additional validation options can be set through the
 @ref ShaderTools-GlslangConverter-configuration "plugin-specific config".
 
 @section ShaderTools-GlslangConverter-includes Processing #include directives
@@ -257,12 +257,14 @@ equivalently to allowed @cpp #version @ce directives:
 -   `320 es` for GLSL ES 3.20 (OpenGL ES 3.2)
 
 The @p format passed to @ref setOutputFormat() has to be either
-@ref Format::Unspecified or @ref Format::Spirv for conversion and
-@ref Format::Unspecified for validation. The @p version is divided between
-target and SPIR-V version, and by default targets Vulkan 1.0 and SPIR-V 1.0.
-You can override using the second parameter passed to @ref setOutputFormat()
-either by specifying just the target, having the SPIR-V version implicit:
+@ref Format::Unspecified or @ref Format::Spirv. The @p version is divided
+between target and SPIR-V version, and by default targets Vulkan 1.0 and SPIR-V
+1.0. You can override using the second parameter passed to
+@ref setOutputFormat() either by specifying just the target, having the SPIR-V
+version implicit:
 
+-   `opengl` for generic OpenGL without any SPIR-V rules applied (validation
+    only)
 -   `opengl4.5` for OpenGL 4.5, implicitly with SPIR-V 1.0
 -   `vulkan1.0` for Vulkan 1.0, implicitly with SPIR-V 1.0
 -   `vulkan1.1` for Vulkan 1.1, implicitly with SPIR-V 1.3
@@ -273,10 +275,23 @@ one of the above and the `<major>`/`<minor>` is from the range of 1.0 to 1.5.
 So for example `vulkan1.1 spv1.4` will target Vulkan 1.1 with SPIR-V 1.4
 (instead of the default SPIR-V 1.3).
 
+In case of validation and @p version set to `opengl` or `opengl4.5`, the
+implicit @ref Format::Unspecified means no SPIR-V specific rules will be
+enforced (like explicit uniform locations) in order to make it possible to
+validate non-SPIR-V shaders such as GLSL ES or WebGL ones. In case of
+`opengl4.5` you can set @ref Format::Spirv to enforce SPIR-V rules as well, and
+thus behave the same as when doing a SPIR-V conversion. Using a @p version in
+the `opengl4.5 spv<major>.<minor>` form will also imply @ref Format::Spirv. For
+Vulkan validation and SPIR-V conversion, @ref Format::Unspecified is treated
+the same way as @ref Format::Spirv.
+
 Apart from imposing various target-specific restrictions on the GLSL source,
 the `openglX.Y` target implicitly adds @cpp #define GL_SPIRV @ce (as specified
 by @gl_extension{ARB,gl_spirv}), while `vulkanX.Y` adds @cpp #define VULKAN @ce
 (as specified by @m_class{m-doc-external} [GL_KHR_vulkan_glsl](https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_vulkan_glsl.txt)).
+Either of those macros is always defined for conversion, for validation it's
+defined only if SPIR-V validation is included, as defined in the paragraph
+above.
 
 @section ShaderTools-GlslangConverter-debug-info-level Debug info level
 
