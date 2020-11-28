@@ -13,6 +13,9 @@ executors:
   ubuntu-16_04:
     docker:
     - image: ubuntu:xenial-20201014
+  xcode-10_3:
+    macos:
+      xcode: 10.3.0
   emscripten:
     docker:
     # 1.39.0 is the oldest on Docker. Anything before 1.39.2 is useless as emar
@@ -24,7 +27,7 @@ executors:
     - image: emscripten/emsdk:1.39.6-upstream
 
 commands:
-  install-base:
+  install-base-linux:
     parameters:
       extra:
         type: string
@@ -37,6 +40,20 @@ commands:
           apt update
           if [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then export LCOV_PACKAGES="lcov curl"; fi
           apt install -y git ninja-build $LCOV_PACKAGES << parameters.extra >>
+
+  install-base-macos:
+    parameters:
+      extra:
+        type: string
+        default: ""
+    steps:
+    - run:
+        name: Install base packages
+        # As usual, homebrew takes five minutes to update and then explodes in
+        # a spectacular way. How is this acceptable?!
+        command: |
+          if [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then export LCOV_PACKAGES="lcov"; fi
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake ninja $LCOV_PACKAGES << parameters.extra >>
 
   install-gcc-4_8:
     steps:
@@ -108,7 +125,6 @@ commands:
         # few commits after 0.14 with a fix for old Apple Clang
         command: |
           export MESHOPTIMIZER_VERSION=97c52415c6d29f297a76482ddde22f739292446d
-          apt install -y wget
           mkdir -p $HOME/meshoptimizer && cd $HOME/meshoptimizer
           wget -nc --no-check-certificate https://github.com/zeux/meshoptimizer/archive/$MESHOPTIMIZER_VERSION.tar.gz
           tar --strip-components=1 -xzf $MESHOPTIMIZER_VERSION.tar.gz
@@ -126,7 +142,6 @@ commands:
         # Version before UASTC is a thing, as our tests crash with the new one
         command: |
           export BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed
-          apt install -y wget
           mkdir -p $HOME/basis_universal && cd $HOME/basis_universal
           wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.tar.gz
           tar --strip-components 1 -xzf $BASIS_VERSION.tar.gz
@@ -199,8 +214,8 @@ jobs:
       LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
       CONFIGURATION: Debug
     steps:
-    - install-base:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-base-linux:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
@@ -222,8 +237,8 @@ jobs:
       LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
       CONFIGURATION: Debug
     steps:
-    - install-base:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-base-linux:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
@@ -244,8 +259,8 @@ jobs:
       CMAKE_CXX_FLAGS: -DCORRADE_NO_ASSERT
       CONFIGURATION: Release
     steps:
-    - install-base:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-base-linux:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
@@ -267,8 +282,8 @@ jobs:
       CMAKE_CXX_FLAGS: -fsanitize=address
       CONFIGURATION: Debug
     steps:
-    - install-base:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-base-linux:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-clang-3_8
     - install-cmake-3_4
     - install-basis
@@ -290,8 +305,8 @@ jobs:
       CMAKE_CXX_FLAGS: -fsanitize=thread
       CONFIGURATION: Debug
     steps:
-    - install-base:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev
+    - install-base-linux:
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-clang-3_8
     - install-cmake-3_4
     - install-basis
@@ -303,10 +318,44 @@ jobs:
     - build:
         script: unix-desktop.sh
 
+  macos:
+    # Using 9.4 would be great to ensure compatibility, however spirv-tools
+    # isn't on the stale Homebrew on any earlier image than 10.3.
+    executor: xcode-10_3
+    environment:
+      CMAKE_CXX_FLAGS: --coverage
+      CONFIGURATION: Debug
+    steps:
+    - install-base-macos:
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang wget
+    - install-basis
+    - install-meshoptimizer
+    - build:
+        script: unix-desktop.sh
+    - lcov
+
+  macos-static:
+    # Using 9.4 would be great to ensure compatibility, however spirv-tools
+    # isn't on the stale Homebrew on any earlier image than 10.3.
+    executor: xcode-10_3
+    environment:
+      # STUPID yml interprets unquoted ON as a boolean
+      BUILD_STATIC: "ON"
+      CMAKE_CXX_FLAGS: --coverage
+      CONFIGURATION: Debug
+    steps:
+    - install-base-macos:
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang wget
+    - install-basis
+    - install-meshoptimizer
+    - build:
+        script: unix-desktop.sh
+    - lcov
+
   emscripten:
     executor: emscripten
     steps:
-    - install-base
+    - install-base-linux
     - install-basis
     - build:
         script: emscripten.sh
@@ -320,4 +369,6 @@ workflows:
     - linux-nondeprecated
     - linux-sanitizers
     - linux-threadsanitizer
+    - macos
+    - macos-static
     - emscripten
