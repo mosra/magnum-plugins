@@ -138,10 +138,11 @@ const struct {
     {"Vulkan 1.1 SPIR-V 1.4 shader",
         Stage{}, "shader.vk.frag", nullptr,
         "", Format{}, "vulkan1.1 spv1.4", true},
-    /* Not tested because this is not present in glslang 7.13 yet */
-    //{"Vulkan 1.2 shader",
-    //    Stage{}, "shader.vk.frag", nullptr,
-    //    "", "vulkan1.2", true},
+    #if GLSLANG_PATCH_LEVEL >= 3743
+    {"Vulkan 1.2 shader",
+        Stage{}, "shader.vk.frag", nullptr,
+        "", Format{}, "vulkan1.2", true},
+    #endif
 };
 
 const struct {
