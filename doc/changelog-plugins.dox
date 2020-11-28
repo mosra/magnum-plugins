@@ -70,6 +70,7 @@ namespace Magnum {
 
 -   The `versionPlugins.h` header now gets populated from Git correctly also
     when inside a CMake subproject
+-   Linux, Emscripten and macOS builds were migrated from Travis to Circle CI
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
