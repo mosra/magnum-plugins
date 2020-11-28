@@ -37,6 +37,7 @@
 #include <Corrade/Utility/FormatStl.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
+#include <glslang/Include/revision.h>
 
 #include "configure.h"
 
@@ -82,6 +83,8 @@ struct GlslangConverterTest: TestSuite::Tester {
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractConverter> _converterManager{"nonexistent"};
 };
+
+using namespace Containers::Literals;
 
 const struct {
     const char* name;
@@ -347,6 +350,20 @@ GlslangConverterTest::GlslangConverterTest() {
 void GlslangConverterTest::validate() {
     auto&& data = ValidateData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    #if GLSLANG_PATCH_LEVEL < 3496
+    /* GL_ARB_explicit_uniform_location is implemented only since 7.13.3496,
+       https://github.com/KhronosGroup/glslang/pull/1880, earlier versions
+       spit out the following error and the only way to use explicit uniform
+       location is by forcing the version to 430
+
+        ERROR: shader.gl.frag:24: '#extension' : extension not supported: GL_ARB_explicit_uniform_location
+        ERROR: shader.gl.frag:27: 'location qualifier on uniform or buffer' : not supported for this version or the enabled extensions
+
+    */
+    if(data.filename == "shader.gl.frag"_s && data.spirvShouldBeValidated)
+        CORRADE_SKIP("GL_ARB_explicit_uniform_location only implemented since 7.13.3496.");
+    #endif
 
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
 
@@ -673,6 +690,20 @@ void GlslangConverterTest::validateFailIncludeNotFound() {
 void GlslangConverterTest::convert() {
     auto&& data = ConvertData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    #if GLSLANG_PATCH_LEVEL < 3496
+    /* GL_ARB_explicit_uniform_location is implemented only since 7.13.3496,
+       https://github.com/KhronosGroup/glslang/pull/1880, earlier versions
+       spit out the following error and the only way to use explicit uniform
+       location is by forcing the version to 430
+
+        ERROR: shader.gl.frag:24: '#extension' : extension not supported: GL_ARB_explicit_uniform_location
+        ERROR: shader.gl.frag:27: 'location qualifier on uniform or buffer' : not supported for this version or the enabled extensions
+
+    */
+    if(data.filename == "shader.gl.frag"_s)
+        CORRADE_SKIP("GL_ARB_explicit_uniform_location only implemented since 7.13.3496.");
+    #endif
 
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
 

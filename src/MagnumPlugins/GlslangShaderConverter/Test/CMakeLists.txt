@@ -48,7 +48,10 @@ corrade_add_test(GlslangShaderConverterTest GlslangConverterTest.cpp
         sub/directory/basics.glsl
         sub/directory/definitions.glsl
         sub/relative.glsl)
-target_include_directories(GlslangShaderConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+target_include_directories(GlslangShaderConverterTest PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
+    # We need #include <glslang/Include/revision.h> for version checking
+    $<TARGET_PROPERTY:Glslang::Glslang,INTERFACE_INCLUDE_DIRECTORIES>)
 if(MAGNUM_GLSLANGSHADERCONVERTER_BUILD_STATIC)
     target_link_libraries(GlslangShaderConverterTest PRIVATE GlslangShaderConverter)
 else()
