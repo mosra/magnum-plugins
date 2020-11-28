@@ -48,7 +48,7 @@
 /* For GLSLANG_PATCH_LEVEL because of course GLSLANG_MINOR_VERSION is always 13
    and GLSLANG_MAJOR_VERSION does not exist, so I have to compare numbers like
    7313 and 6268782757. And it's removed since version 11-10 (yes, a dash, A
-   FUCKING DASH) and replaced with an USELESS runtime API that CAN'T be used to
+   FUCKING DASH) and replaced with a USELESS runtime API that CAN'T be used to
    conditionally compile out a piece of code. But I won't bother until such
    version is available in package managers. Fuck this shit. Sideways. */
 #include <glslang/Include/revision.h>
@@ -262,7 +262,12 @@ OutputVersion parseOutputVersion(const char* const prefix, Format format, const 
         else if(split[2] == "spv1.2"_s) language = glslang::EShTargetSpv_1_2;
         else if(split[2] == "spv1.3"_s) language = glslang::EShTargetSpv_1_3;
         else if(split[2] == "spv1.4"_s) language = glslang::EShTargetSpv_1_4;
+        /* Available since 7.13.3496, not in 7.12.3352 or older, and no, we
+           can't compare minor versions either. YES, THE VERSIONING SCHEME IS
+           THIS FUCKING BAD. */
+        #if GLSLANG_PATCH_LEVEL >= 3496
         else if(split[2] == "spv1.5"_s) language = glslang::EShTargetSpv_1_5;
+        #endif
         else {
             Error{} << prefix << "output format version language should be spvX.Y but got" << split[2];
             return {};
