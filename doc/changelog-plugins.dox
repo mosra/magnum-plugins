@@ -71,6 +71,8 @@ namespace Magnum {
 -   The `versionPlugins.h` header now gets populated from Git correctly also
     when inside a CMake subproject
 -   Linux, Emscripten and macOS builds were migrated from Travis to Circle CI
+-   On CMake 3.16 and newer, `FindMagnumPlugins.cmake` can provide additional
+    details if some component is not found.
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
