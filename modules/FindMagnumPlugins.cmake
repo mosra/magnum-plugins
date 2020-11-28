@@ -137,8 +137,8 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
-set(_MAGNUMPLUGINS_LIBRARY_COMPONENT_LIST OpenDdl)
-set(_MAGNUMPLUGINS_PLUGIN_COMPONENT_LIST
+set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
+set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     AssimpImporter BasisImageConverter BasisImporter DdsImporter
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
     DrWavAudioImporter Faad2AudioImporter FreeTypeFont GlslangShaderConverter
@@ -173,13 +173,6 @@ if(MagnumPlugins_FIND_COMPONENTS)
     list(REMOVE_DUPLICATES MagnumPlugins_FIND_COMPONENTS)
 endif()
 
-# Convert components lists to regular expressions so I can use if(MATCHES).
-# TODO: Drop this once CMake 3.3 and if(IN_LIST) can be used
-foreach(_WHAT LIBRARY PLUGIN)
-    string(REPLACE ";" "|" _MAGNUMPLUGINS_${_WHAT}_COMPONENTS "${_MAGNUMPLUGINS_${_WHAT}_COMPONENT_LIST}")
-    set(_MAGNUMPLUGINS_${_WHAT}_COMPONENTS "^(${_MAGNUMPLUGINS_${_WHAT}_COMPONENTS})$")
-endforeach()
-
 # Find all components
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${_component} _COMPONENT)
@@ -191,7 +184,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         set(MagnumPlugins_${_component}_FOUND TRUE)
     else()
         # Library components
-        if(_component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
+        if(_component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
 
             # Set library defaults, find the library
@@ -206,7 +199,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Plugin components
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
+        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS)
             add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
 
             # AudioImporter plugin specific name suffixes
@@ -273,7 +266,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Library location for plugins/libraries
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
+        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE)
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     IMPORTED_CONFIGURATIONS RELEASE)
@@ -438,7 +431,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Find plugin/library includes
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
+        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
                 NAMES ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES}
                 HINTS ${MAGNUMPLUGINS_INCLUDE_DIR}/${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX})
@@ -446,7 +439,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Automatic import of static plugins
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS})
+        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS)
             file(READ ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR}/configure.h _magnumPlugins${_component}Configure)
             string(FIND "${_magnumPlugins${_component}Configure}" "#define MAGNUM_${_COMPONENT}_BUILD_STATIC" _magnumPlugins${_component}_BUILD_STATIC)
             if(NOT _magnumPlugins${_component}_BUILD_STATIC EQUAL -1)
@@ -455,7 +448,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             endif()
         endif()
 
-        if(_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS})
+        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             # Link to core Magnum library, add other Magnum dependencies
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Magnum::Magnum)
@@ -472,7 +465,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Decide if the plugin/library was found
-        if((_component MATCHES ${_MAGNUMPLUGINS_PLUGIN_COMPONENTS} OR _component MATCHES ${_MAGNUMPLUGINS_LIBRARY_COMPONENTS}) AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR AND (MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE))
+        if((_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS) AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR AND (MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE))
             set(MagnumPlugins_${_component}_FOUND TRUE)
         else()
             set(MagnumPlugins_${_component}_FOUND FALSE)
