@@ -551,9 +551,7 @@ void GlslangConverterTest::validateFailWrongStage() {
        wrong stage */
 
     converter->setDefinitions({
-        {"A_DEFINE", ""},
-        {"AN_UNDEFINE", "something awful!!"},
-        {"AN_UNDEFINE", nullptr}
+        {"A_DEFINE", ""}
     });
     /* We're interested in the first error only */
     converter->configuration().setValue("cascadingErrors", false);
@@ -574,9 +572,7 @@ void GlslangConverterTest::validateFailFileWrongStage() {
        wrong stage */
 
     converter->setDefinitions({
-        {"A_DEFINE", ""},
-        {"AN_UNDEFINE", "something awful!!"},
-        {"AN_UNDEFINE", nullptr}
+        {"A_DEFINE", ""}
     });
     /* We're interested in the first error only */
     converter->configuration().setValue("cascadingErrors", false);
@@ -840,9 +836,7 @@ void GlslangConverterTest::convertFailWrongStage() {
        wrong stage */
 
     converter->setDefinitions({
-        {"A_DEFINE", ""},
-        {"AN_UNDEFINE", "something awful!!"},
-        {"AN_UNDEFINE", nullptr}
+        {"A_DEFINE", ""}
     });
     /* We're interested in the first error only */
     converter->configuration().setValue("cascadingErrors", false);
@@ -866,9 +860,7 @@ void GlslangConverterTest::convertFailFileWrongStage() {
        wrong stage */
 
     converter->setDefinitions({
-        {"A_DEFINE", ""},
-        {"AN_UNDEFINE", "something awful!!"},
-        {"AN_UNDEFINE", nullptr}
+        {"A_DEFINE", ""}
     });
     /* We're interested in the first error only */
     converter->configuration().setValue("cascadingErrors", false);
