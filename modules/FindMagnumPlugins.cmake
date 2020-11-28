@@ -439,7 +439,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Automatic import of static plugins
-        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS)
+        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
             file(READ ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR}/configure.h _magnumPlugins${_component}Configure)
             string(FIND "${_magnumPlugins${_component}Configure}" "#define MAGNUM_${_COMPONENT}_BUILD_STATIC" _magnumPlugins${_component}_BUILD_STATIC)
             if(NOT _magnumPlugins${_component}_BUILD_STATIC EQUAL -1)
