@@ -105,10 +105,12 @@ find_package(MagnumPlugins REQUIRED JpegImageConverter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::JpegImageConverter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
-@section Trade-JpegImageConverter-implementations libJPEG implementations
+@section Trade-JpegImageConverter-behavior Behavior and limitations
+
+@subsection Trade-JpegImageConverter-behavior-implementations libJPEG implementations
 
 While some systems (such as macOS) still ship only with the vanilla libJPEG,
 you can get a much better performance and/or quality/size ratios by using other
@@ -118,6 +120,11 @@ implementations:
     decompression speed, though not necessarily the best quality/size ratio
 -   [MozJPEG](https://github.com/mozilla/mozjpeg), optimized for quality/size
     ratio, though generally much slower than libjpeg-turbo
+
+@subsection Trade-JpegImageConverter-behavior-arithmetic-coding Arithmetic JPEG encoding
+
+Libjpeg has a switch to enable [arithmetic coding](https://en.wikipedia.org/wiki/Arithmetic_coding)
+instead of Huffman, however it's currently not exposed in the plugin.
 
 @section Trade-JpegImageConverter-configuration Plugin-specific config
 

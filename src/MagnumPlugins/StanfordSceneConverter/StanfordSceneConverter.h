@@ -90,10 +90,15 @@ find_package(MagnumPlugins REQUIRED StanfordSceneConverter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::StanfordSceneConverter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
 @section Trade-StanfordSceneConverter-behavior Behavior and limitations
+
+Produces binary files, ASCII export is not implemented. The data are by default
+exported in machine endian, use the @cb{.ini} endianness @ce
+@ref Trade-StanfordImporter-configuration "configuration option" to perform an
+endian swap on the output data.
 
 Exports the following attributes, custom attributes and attributes not listed
 below are skipped with a warning:
@@ -130,10 +135,6 @@ and @ref MeshPrimitive::TriangleFan meshes are converted to indexed
 @ref MeshPrimitive::Triangles first; points, lines and other primitives are
 not supported.
 
-The data are by default exported in machine endian, use the
-@cb{.ini} endianness @ce
-@ref Trade-StanfordImporter-configuration "configuration option" to perform an
-endian swap on the output data.
 
 @section Trade-StanfordSceneConverter-configuration Plugin-specific config
 

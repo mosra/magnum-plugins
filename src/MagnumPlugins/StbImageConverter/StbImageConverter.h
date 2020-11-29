@@ -151,8 +151,20 @@ find_package(MagnumPlugins REQUIRED StbImageConverter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::StbImageConverter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
+
+@section Trade-StbImageConverter-behavior Behavior and limitations
+
+@subsection Trade-StbImageConverter-behavior-arithmetic-jpeg Arithmetic JPEG encoding
+
+[Arithmetic coding](https://en.wikipedia.org/wiki/Arithmetic_coding) is
+implemented neither in stb_image_write nor in stb_image.
+
+@subsection Trade-StbImageConverter-behavior-16bit-png 16-bit PNGs
+
+Conversion to 16-bit PNGs is not supported. Use @ref PngImageConverter instead
+if you need to deal with 16-bit pixel formats.
 
 @section Trade-StbImageConverter-configuration Plugin-specific configuration
 

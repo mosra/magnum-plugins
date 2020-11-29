@@ -102,8 +102,8 @@ find_package(MagnumPlugins REQUIRED PngImageConverter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::PngImageConverter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 */
 class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageConverter {
     public:

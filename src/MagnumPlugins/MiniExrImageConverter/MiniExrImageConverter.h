@@ -56,9 +56,9 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{OpenExrImageConverter}
 
-Supports images with format @ref PixelFormat::RGB16F or
-@ref PixelFormat::RGBA16F using the [miniexr](https://github.com/aras-p/miniexr)
-library.
+Creates OpenEXR (`*.exr`) files from images with format
+@ref PixelFormat::RGB16F or @ref PixelFormat::RGBA16F using the
+[miniexr](https://github.com/aras-p/miniexr) library.
 
 This plugins provides `OpenExrImageConverter` plugin, but note that this plugin
 generates only uncompressed files and the performance might be worse than when
@@ -102,8 +102,12 @@ find_package(MagnumPlugins REQUIRED MiniExrImageConverter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::MiniExrImageConverter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
+
+@section Trade-MiniExrImageConverter-behavior Behavior and limitations
+
+The output is always uncompressed.
 */
 class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:

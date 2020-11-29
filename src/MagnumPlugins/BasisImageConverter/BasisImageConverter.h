@@ -107,20 +107,23 @@ find_package(MagnumPlugins REQUIRED BasisImageConverter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::BasisImageConverter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
-@section Trade-BasisImageConverter-configuration Plugin-specific configuration
+@section Trade-BasisImageConverter-behavior Behavior and limitations
 
-Basis compression can be configured to produce better quality or reduce
-encoding time. Configuration options are equivalent to options of the `basisu`
-tool. The full form of the configuration is shown below:
+@subsection Trade-BasisImageConverter-behavior-multiple-images Multiple images in one file
 
-@snippet MagnumPlugins/BasisImageConverter/BasisImageConverter.conf configuration_
+Due to limitations in the @ref AbstractImageConverter API, it's currently not
+possible to create a Basis file containing multiple images --- you'd need to
+use the upstream `basisu` tool for that instead.
 
-<b></b>
+While it's possible to tell Basis to create mip levels from the top-level image
+using the @cb{.ini} mip_gen @ce @ref Trade-BasisImageConverter-configuration "configuration option",
+due to the same plugin API limitations it's not possible to supply the mip
+levels directly.
 
-@section Trade-BasisImageConverter-loading Loading the plugin fails undefined symbol: pthread_create
+@subsection Trade-BasisImageConverter-behavior-loading Loading the plugin fails undefined symbol: pthread_create
 
 On Linux it may happen that loading the plugin will fail with
 `undefined symbol: pthread_create`. The Basis encoder is optionally
@@ -136,6 +139,15 @@ like this:
 find_package(Threads REQUIRED)
 target_link_libraries(your-application PRIVATE Threads::Threads)
 @endcode
+
+@section Trade-BasisImageConverter-configuration Plugin-specific configuration
+
+Basis compression can be configured to produce better quality or reduce
+encoding time. Configuration options are equivalent to options of the `basisu`
+tool. The full form of the configuration is shown below:
+
+@snippet MagnumPlugins/BasisImageConverter/BasisImageConverter.conf configuration_
+
 */
 class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImageConverter {
     public:
