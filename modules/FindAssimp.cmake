@@ -130,13 +130,13 @@ find_package_handle_standard_args(Assimp DEFAULT_MSG
 if(NOT TARGET Assimp::Assimp)
     add_library(Assimp::Assimp UNKNOWN IMPORTED)
 
-    if(Assimp_LIBRARY_DEBUG AND Assimp_LIBRARY_RELEASE)
-        set_target_properties(Assimp::Assimp PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${Assimp_LIBRARY_DEBUG}
-            IMPORTED_LOCATION_RELEASE ${Assimp_LIBRARY_RELEASE})
-    else()
-        set_target_properties(Assimp::Assimp PROPERTIES
-            IMPORTED_LOCATION ${Assimp_LIBRARY})
+    if(Assimp_LIBRARY_DEBUG)
+        set_property(TARGET Assimp::Assimp APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+        set_target_properties(Assimp::Assimp PROPERTIES IMPORTED_LOCATION_DEBUG ${Assimp_LIBRARY_DEBUG})
+    endif()
+    if(Assimp_LIBRARY_RELEASE)
+        set_property(TARGET Assimp::Assimp APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+        set_target_properties(Assimp::Assimp PROPERTIES IMPORTED_LOCATION_RELEASE ${Assimp_LIBRARY_RELEASE})
     endif()
 
     # Link to IrrXML as well, if found. See the comment above for details.
