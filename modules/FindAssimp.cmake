@@ -39,14 +39,67 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# In case we have Assimp as a CMake subproject, simply alias our target to that
-if(TARGET assimp)
-    # The assimp target doesn't define any usable INTERFACE_INCLUDE_DIRECTORIES
-    # for some reason (apparently the $<BUILD_INTERFACE:> in there doesn't work
-    # or whatever), so let's do that ourselves.
-    get_target_property(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES assimp SOURCE_DIR)
-    get_filename_component(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES} DIRECTORY)
-    set(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES}/include)
+# Assimp installs a config file that can give us all its dependencies in case
+# of a static build. In case the assimp target is already present, we have it
+# as a CMake subproject, so don't attempt to look for it again.
+if(NOT TARGET assimp)
+    # Assimp's own config file contains if(ON) and because its CMake
+    # requirement is set to an insanely low version 2.6, CMake complains about
+    # a policy change. To suppress it, neither cmake_policy(SET CMP0012 NEW)
+    # nor find_package(... NO_POLICY_SCOPE) does anything, fortunately there's
+    # this variable that's able to punch through the scope created by
+    # find_package(): https://cmake.org/cmake/help/latest/variable/CMAKE_POLICY_DEFAULT_CMPNNNN.html
+    set(CMAKE_POLICY_DEFAULT_CMP0012 NEW)
+    find_package(assimp CONFIG QUIET)
+    unset(CMAKE_POLICY_DEFAULT_CMP0012)
+
+    # Vanilla Assimp config files are completely broken because they don't set
+    # IMPORTED_CONFIGURATIONS on anything except MSVC. Detect that case and
+    # then skip aliasing the target to assimp::assimp because it will warn
+    # about
+    #   IMPORTED_LOCATION not set for imported target "assimp::assimp"
+    # and subsequently fail with
+    #   ninja: error: 'assimp::assimp-NOTFOUND', needed by '<target>', missing
+    #   and no known rule to make it
+    # This should be fixed with https://github.com/assimp/assimp/pull/3455 and
+    # is also fixed in vcpkg, which creates its own non-broken config files:
+    # https://github.com/microsoft/vcpkg/pull/14554
+    #
+    # In addition, old config files (Assimp 3.2, i.e.) don't define any target
+    # at all, so don't event attempt to query anything there.
+    if(assimp_FOUND AND TARGET assimp::assimp)
+        get_target_property(_ASSIMP_IMPORTED_CONFIGURATIONS assimp::assimp IMPORTED_CONFIGURATIONS)
+        if(NOT _ASSIMP_IMPORTED_CONFIGURATIONS)
+            set(_ASSIMP_HAS_BROKEN_IMPORTED_TARGET ON)
+        endif()
+    endif()
+endif()
+
+# In case we have Assimp as a CMake subproject or the config file was present,
+# simply alias our target to that. The assimp config file is actually
+# assimp::assimp and while the CMake subproject defines assimp::assimp as well,
+# it's like that only since version 5:
+#   https://github.com/assimp/assimp/commit/b43cf9233703305cfd8dfe7844fce959879b4f0c
+#   https://github.com/assimp/assimp/commit/30d3c8c6a37a3b098702dfb714fe8e5e2abbfa5e
+# The target aliasing is skipped in case the config files are broken, see above
+if((TARGET assimp OR TARGET assimp::assimp) AND NOT _ASSIMP_HAS_BROKEN_IMPORTED_TARGET)
+    if(TARGET assimp)
+        set(_ASSIMP_TARGET assimp)
+    else()
+        set(_ASSIMP_TARGET assimp::assimp)
+    endif()
+
+    get_target_property(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+    # In case of a CMake subproject (which always has the assimp target, not
+    # assimp::assimp, so we don't need to use ${_ASSIMP_TARGET}), the target
+    # doesn't define any usable INTERFACE_INCLUDE_DIRECTORIES for some reason
+    # (the $<BUILD_INTERFACE:> in there doesn't get expanded), so let's extract
+    # that from the SOURCE_DIR property instead.
+    if(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES MATCHES "<BUILD_INTERFACE:")
+        get_target_property(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES assimp SOURCE_DIR)
+        get_filename_component(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES} DIRECTORY)
+        set(_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES}/include)
+    endif()
 
     if(NOT TARGET Assimp::Assimp)
         # Aliases of (global) targets are only supported in CMake 3.11, so we
@@ -55,9 +108,12 @@ if(TARGET assimp)
         # rebuild them into a new target.
         add_library(Assimp::Assimp INTERFACE IMPORTED)
         set_target_properties(Assimp::Assimp PROPERTIES
-            INTERFACE_LINK_LIBRARIES assimp)
-
-        set_target_properties(Assimp::Assimp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES})
+            INTERFACE_LINK_LIBRARIES ${_ASSIMP_TARGET})
+        set_target_properties(Assimp::Assimp PROPERTIES
+            # Needs to be wrapped in quotes because the shit Assimp config file
+            # sets it to "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
+            # (twice the same dir) for some reason.
+            INTERFACE_INCLUDE_DIRECTORIES "${_ASSIMP_INTERFACE_INCLUDE_DIRECTORIES}")
     endif()
 
     # Just to make FPHSA print some meaningful location, nothing else
