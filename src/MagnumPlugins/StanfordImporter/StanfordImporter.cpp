@@ -378,7 +378,7 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
                 /* Face element properties */
                 } else if(propertyType == PropertyType::Face) {
                     /* Face vertex indices */
-                    if(tokens.size() == 5 && tokens[1] == "list" && tokens[4] == "vertex_indices") {
+                    if(tokens.size() == 5 && tokens[1] == "list" && (tokens[4] == "vertex_indices" || tokens[4] == "vertex_index")) {
                         state->faceIndicesOffset = state->faceSkip;
                         state->faceSkip = 0;
 
