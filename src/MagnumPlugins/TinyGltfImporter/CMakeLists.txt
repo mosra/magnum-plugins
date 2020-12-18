@@ -46,7 +46,26 @@ endif()
 # I could include tinygltf directly, but I want to suppress the warnings from
 # it, so doing it this way. Also: it's PRIVATE, because the file is not (and
 # should *never* be) included in a public header due to its extreme size.
-target_include_directories(TinyGltfImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/MagnumExternal/TinyGltf)
+#
+# Unfortunately, json.hpp uses the weird `and`, `or` and `not` keywords instead
+# of &&, || and ! (WHY?!), and for some reason that breaks on clang-cl when the
+# directory is included as SYSTEM: https://github.com/nlohmann/json/issues/1818
+# However I refuse to upgrade because the new versions are more than twice as
+# large as what's embedded here and I have no interest in TinyGltfImporter
+# inflating my compile times even further. That damn thing takes 20 seconds
+# alone, ALL OTHER 30 plugins get fully compiled and linked in less than that.
+#
+# This. combined with CMake 3.19 that implements support for SYSTEM includes on
+# clang-cl (https://gitlab.kitware.com/cmake/cmake/-/merge_requests/5231, not
+# listed in the changelogs) and AppVeyor updating on 2020-12-15 to CMake 3.19
+# (https://www.appveyor.com/updates/2020/12/15/) resulted in a sudden
+# infuriating build failure on a FRIDAY EVENING. Working around this by not
+# using SYSTEM on clang-cl for now, the rewritten cgltf-based importer can't
+# come soon enough so I can throw this garbage away.
+if(NOT CORRADE_TARGET_CLANG_CL)
+    set(SYSTEM_EXCEPT_ON_CLANG_CL SYSTEM)
+endif()
+target_include_directories(TinyGltfImporter ${SYSTEM_EXCEPT_ON_CLANG_CL} PRIVATE ${PROJECT_SOURCE_DIR}/src/MagnumExternal/TinyGltf)
 target_include_directories(TinyGltfImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
