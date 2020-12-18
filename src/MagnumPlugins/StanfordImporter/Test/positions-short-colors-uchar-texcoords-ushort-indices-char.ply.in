@@ -9,7 +9,7 @@ property uchar blue
 property ushort u
 property uint16 v
 element face 2
-property list short char vertex_indices
+property list short char vertex_index
 """
 type = '<3h3B2H 3h3B2H 3h3B2H 3h3B2H 3h3B2H h4bh3b'
 def b(a): return int(a*255)

@@ -53,6 +53,8 @@ namespace Magnum {
     @ref Trade::JpegImporter "JpegImporter" build on older CMake versions
 -   **Igor Kalevatykh** ([\@ikalevatykh](https://github.com/ikalevatykh)) ---
     fixes for @ref Trade::AssimpImporter "AssimpImporter" workarounds and bugs
+-   **John Laxson** ([\@jlaxson](https://github.com/jlaxson)) ---
+    @ref Trade::StanfordImporter "StanfordImporter" improvements
 -   **Jonathan Hale** ([\@Squareys](https://github.com/Squareys)) ---
     @ref Trade::AssimpImporter "AssimpImporter",
     @ref Trade::BasisImageConverter "BasisImageConverter",

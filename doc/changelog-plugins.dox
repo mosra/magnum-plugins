@@ -62,6 +62,9 @@ namespace Magnum {
 -   @ref Text::FreeTypeFont "FreeTypeFont" now treats its internal global
     library handle as thread-local on all platforms except Windows, making it
     possible to be used in multi-threaded environments
+-   @ref Trade::StanfordImporter "StanfordImporter" now supports also indices
+    specified as `vertex_index`, which is what Assimp uses for export (see
+    [mosra/magnum-plugins#94](https://github.com/mosra/magnum-plugins/pull/94))
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now performs range checks
     on scene, node, camera, mesh, material, child and light references in the
     scene hierarchy for more robust handling of broken files

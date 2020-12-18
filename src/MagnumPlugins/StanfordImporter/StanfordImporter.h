@@ -138,12 +138,12 @@ of PLY features, which however shouldn't affect any real-world models.
     the identifier that's being looked for. Because there are real-world files
     with signed object IDs, signed types are allowed as well, but interpreted
     as unsigned.
--   Indices are imported as either @ref MeshIndexType::UnsignedByte,
-    @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt. Quads
-    are triangulated, but higher-order polygons are not supported. Because
-    there are real-world files with signed indices, signed types are allowed
-    for indices as well, but interpreted as unsigned (because negative values
-    wouldn't make sense anyway).
+-   Indices (`vertex_indices` or `vertex_index`) are imported as either
+    @ref MeshIndexType::UnsignedByte, @ref MeshIndexType::UnsignedShort or
+    @ref MeshIndexType::UnsignedInt. Quads are triangulated, but higher-order
+    polygons are not supported. Because there are real-world files with signed
+    indices, signed types are allowed for indices as well, but interpreted as
+    unsigned (because negative values wouldn't make sense anyway).
 
 The mesh is always indexed; positions are always present, other attributes are
 optional.
