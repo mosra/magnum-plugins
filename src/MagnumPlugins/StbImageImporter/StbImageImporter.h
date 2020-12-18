@@ -61,15 +61,15 @@ namespace Magnum { namespace Trade {
 Supports the following formats using the
 [stb_image](https://github.com/nothings/stb) library:
 
--   Windows Bitmap (`*.bmp`)
--   Graphics Interchange Format (`*.gif`), including animations
+-   Windows Bitmap (`*.bmp`), @ref Trade-StbImageImporter-behavior-bmp "details"
+-   Graphics Interchange Format (`*.gif`) including animations, @ref Trade-StbImageImporter-behavior-animated-gifs "details"
 -   Radiance HDR (`*.hdr`)
--   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`)
+-   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`), @ref Trade-StbImageImporter-behavior-arithmetic-jpeg "details"
 -   Portable Graymap (`*.pgm`)
 -   Softimage PIC (`*.pic`)
--   Portable Network Graphics (`*.png`)
+-   Portable Network Graphics (`*.png`), @ref Trade-StbImageImporter-behavior-cgbi "details"
 -   Portable Pixmap (`*.ppm`)
--   Adobe Photoshop (`*.psd`), only composited view
+-   Adobe Photoshop (`*.psd`), @ref Trade-StbImageImporter-behavior-psd "details"
 -   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`)
 
 Creates RGB, RGBA, grayscale or grayscale + alpha images with 8 bits per
@@ -169,6 +169,10 @@ mozjpeg instead.
 CgBI is a proprietary Apple-specific extension to PNG
 ([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). The
 importer detects those files and converts BGRA channels back to RGBA.
+
+@subsection Trade-StbImageImporter-behavior-psd PSD files
+
+Only the composited view, there's no way to import individual layers.
 
 @todo Enable ARM NEON when I'm able to test that
 */

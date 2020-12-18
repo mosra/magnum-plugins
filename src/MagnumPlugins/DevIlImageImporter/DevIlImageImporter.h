@@ -69,14 +69,14 @@ is incomplete):
 -   Dr. Halo (`*.cut`)
 -   Multi-PCX (`*.dcx`)
 -   Dicom (`*.dicom`, `*.dcm`)
--   DirectDraw Surface (`*.dds`)
+-   DirectDraw Surface (`*.dds`), @ref Trade-DevIlImageImporter-behavior-dds "details"
 -   OpenEXR (`*.exr`)
 -   Flexible Image Transport System (`*.fits`, `*.fit`)
 -   Heavy Metal: FAKK 2 (`*.ftx`)
--   Graphics Interchange Format (`*.gif`)
+-   Graphics Interchange Format (`*.gif`), @ref Trade-DevIlImageImporter-behavior-animated-gifs "details"
 -   Radiance HDR (`*.hdr`)
 -   Macintosh icon (`*.icns`)
--   Windows icon/cursor (`*.ico`, `*.cur`)
+-   Windows icon/cursor (`*.ico`, `*.cur`), @ref Trade-DevIlImageImporter-behavior-ico "details"
 -   Interchange File Format (`*.iff`)
 -   Infinity Ward Image (`*.iwi`)
 -   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`)
@@ -91,10 +91,10 @@ is incomplete):
 -   Kodak PhotoCD (`*.pcd`)
 -   ZSoft PCX (`*.pcx`)
 -   Softimage PIC (`*.pic`)
--   Portable Network Graphics (`*.png`)
+-   Portable Network Graphics (`*.png`), @ref Trade-DevIlImageImporter-behavior-cgbi "details"
 -   Portable Anymap (`*.pbm`, `*.pgm`, `*.ppm`, `*.pnm`)
 -   Alias PIX (`*.pix`)
--   Adobe Photoshop (`*.psd`)
+-   Adobe Photoshop (`*.psd`), @ref Trade-DevIlImageImporter-behavior-psd "details"
 -   PaintShop Pro (`*.psp`)
 -   Pixar (`*.pxr`)
 -   Raw data (`*.raw`)
@@ -201,6 +201,11 @@ reported as separate images instead of image levels.
 CgBI is a proprietary Apple-specific extension to PNG
 ([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). DevIL
 doesn't support these, use @ref StbImageImporter for loading these instead.
+
+@subsection Trade-DevIlImageImporter-behavior-psd PSD files
+
+Based on the source it seems that DevIL parses only the composited view,
+importing individual layers is not possible.
 
 @section Trade-DevIlImageImporter-configuration Plugin-specific config
 
