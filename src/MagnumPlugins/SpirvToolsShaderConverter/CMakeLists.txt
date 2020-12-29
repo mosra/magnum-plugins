@@ -28,7 +28,7 @@ find_package(Magnum REQUIRED ShaderTools)
 # See modules/FindSpirvTools.cmake for the complete rant
 find_package(SpirvTools REQUIRED)
 
-if(BUILD_PLUGINS_STATIC)
+if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_SPIRVTOOLSSHADERCONVERTER_BUILD_STATIC)
     set(MAGNUM_SPIRVTOOLSSHADERCONVERTER_BUILD_STATIC 1)
 endif()
 

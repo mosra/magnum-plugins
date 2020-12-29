@@ -35,7 +35,7 @@ endif()
 find_package(Magnum REQUIRED Trade)
 find_package(BasisUniversal REQUIRED Transcoder)
 
-if(BUILD_PLUGINS_STATIC)
+if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_BASISIMPORTER_BUILD_STATIC)
     set(MAGNUM_BASISIMPORTER_BUILD_STATIC 1)
 endif()
 

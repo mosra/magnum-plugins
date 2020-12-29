@@ -421,9 +421,9 @@ Options controlling the build are a subset of
 -   `BUILD_PLUGINS_STATIC` --- Build plugins as static. By default, plugins are
     built as dynamic. Independent of the `BUILD_STATIC` option to allow having
     static libraries with dynamic plugins and vice versa. To some extent it's
-    also possible to have only a subset of plugins built as static --- keep
-    this option `OFF` and enable `MAGNUM_<PLUGIN>_BUILD_STATIC` for particular
-    plugins instead.
+    also possible to have only a subset of plugins built as static --- set
+    `MAGNUM_<PLUGIN>_BUILD_STATIC` for particular plugins to `ON` or `OFF` to
+    override this option.
 -   Additional options are inherited from the
     @ref CORRADE_BUILD_MULTITHREADED and
     @ref MAGNUM_BUILD_STATIC_UNIQUE_GLOBALS options specified when building
