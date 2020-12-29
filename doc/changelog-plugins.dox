@@ -80,6 +80,11 @@ namespace Magnum {
     if they are not broken, to correctly find and link to all dependencies in
     case of a static build
 
+@subsection changelog-plugins-latest-bugfixes Bug fixes
+
+-   @ref Trade::JpegImageConverter was mistakenly using the `BUILD_STATIC`
+    CMake option instead of `BUILD_PLUGINS_STATIC`
+
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
 -   Variables `ASSIMP_LIBRARY_{DEBUG,RELEASE}` and `ASSIMP_INCLUDE_DIR` that

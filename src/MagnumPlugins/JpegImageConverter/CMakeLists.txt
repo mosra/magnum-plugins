@@ -26,7 +26,7 @@
 find_package(Magnum REQUIRED Trade)
 find_package(JPEG REQUIRED)
 
-if(BUILD_STATIC)
+if(BUILD_PLUGINS_STATIC)
     set(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC 1)
 endif()
 
