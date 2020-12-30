@@ -42,7 +42,8 @@ corrade_add_test(GlslangShaderConverterTest GlslangConverterTest.cpp
     FILES
         shader.gl.frag shader.gl.spv
         shader.oldgl.frag
-        shader.vk.frag shader.vk.spv shader.vk.debug.spv
+        shader.vk.frag shader.vk.spv
+        shader.vk.debug.spv shader.vk.debug-glslang8.spv
 
         includes.vert
         sub/directory/basics.glsl

@@ -45,13 +45,26 @@
    include path as well. */
 #include <SPIRV/GlslangToSpv.h>
 
-/* For GLSLANG_PATCH_LEVEL because of course GLSLANG_MINOR_VERSION is always 13
-   and GLSLANG_MAJOR_VERSION does not exist, so I have to compare numbers like
-   7313 and 6268782757. And it's removed since version 11-10 (yes, a dash, A
-   FUCKING DASH) and replaced with a USELESS runtime API that CAN'T be used to
-   conditionally compile out a piece of code. But I won't bother until such
-   version is available in package managers. Fuck this shit. Sideways. */
+/* In version 11-10 (yes, a dash!!) there's a new header containing sane build
+   info -- GLSLANG_VERSION_MAJOR, GLSLANG_VERSION_MINOR etc. To avoid CMake
+   try_compile() insanities like with SPIR-V Tools, assume that when we have
+   new glslang we also have a sufficiently recent compiler supporting
+   __has_include() -- and, conversely, if we have a compiler without
+   __has_include(), glslang is the old one. */
+#ifdef __has_include
+#if __has_include(<glslang/build_info.h>)
+#include <glslang/build_info.h>
+
+/* The old way is using GLSLANG_PATCH_LEVEL because of course
+   GLSLANG_MINOR_VERSION (note -- not GLSLANG_VERSION_MINOR, that's only in the
+   new-style build_info.h header) is always 13 and GLSLANG_MAJOR_VERSION does
+   not exist so I have to compare numbers like 7313 and 6268782757. */
+#else
 #include <glslang/Include/revision.h>
+#endif
+#else
+#include <glslang/Include/revision.h>
+#endif
 
 namespace Magnum { namespace ShaderTools {
 
@@ -242,9 +255,10 @@ OutputVersion parseOutputVersion(const char* const prefix, Format format, const 
         language = glslang::EShTargetSpv_1_3;
     }
     /* Available since 8.13.3743. Yes, we can't just compare major versions
-       because this shit is SHIT. See #include <glslang/Include/revision.h>
-       for a longer rant. */
-    #if GLSLANG_PATCH_LEVEL >= 3743
+       because this shit is SHIT. If we have GLSLANG_VERSION_MAJOR (from the
+       new build_info.h), then it's version 11 at least. See
+       #include <glslang/build_info.h> for a longer rant. */
+    #if defined(GLSLANG_VERSION_MAJOR) || GLSLANG_PATCH_LEVEL >= 3743
     else if(split[0] == "vulkan1.2"_s) {
         client = glslang::EShTargetVulkan_1_2;
         language = glslang::EShTargetSpv_1_5;
@@ -263,9 +277,10 @@ OutputVersion parseOutputVersion(const char* const prefix, Format format, const 
         else if(split[2] == "spv1.3"_s) language = glslang::EShTargetSpv_1_3;
         else if(split[2] == "spv1.4"_s) language = glslang::EShTargetSpv_1_4;
         /* Available since 7.13.3496, not in 7.12.3352 or older, and no, we
-           can't compare minor versions either. YES, THE VERSIONING SCHEME IS
-           THIS FUCKING BAD. */
-        #if GLSLANG_PATCH_LEVEL >= 3496
+           can't compare minor versions either. If we have
+           GLSLANG_VERSION_MAJOR (from the new build_info.h), then it's version
+           11 at least. */
+        #if defined(GLSLANG_VERSION_MAJOR) || GLSLANG_PATCH_LEVEL >= 3496
         else if(split[2] == "spv1.5"_s) language = glslang::EShTargetSpv_1_5;
         #endif
         else {
@@ -526,8 +541,8 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
     switch(outputVersion.client) {
         case glslang::EShTargetVulkan_1_0:
         case glslang::EShTargetVulkan_1_1:
-        /* See #include <glslang/Include/revision.h> for a longer rant. */
-        #if GLSLANG_PATCH_LEVEL >= 3743
+        /* See #include <glslang/build_info.h> for a longer rant. */
+        #if defined(GLSLANG_VERSION_MAJOR) || GLSLANG_PATCH_LEVEL >= 3743
         case glslang::EShTargetVulkan_1_2:
         #endif
             client = glslang::EShClientVulkan;
@@ -536,8 +551,8 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
             client = glslang::EShClientOpenGL;
             break;
 
-        /* FFS. See #include <glslang/Include/revision.h> for a longer rant. */
-        #if GLSLANG_PATCH_LEVEL >= 3743
+        /* FFS. See #include <glslang/build_info.h> for a longer rant. */
+        #if defined(GLSLANG_VERSION_MAJOR) || GLSLANG_PATCH_LEVEL >= 3743
         /* LCOV_EXCL_START */
         case glslang::EShTargetClientVersionCount:
             CORRADE_INTERNAL_ASSERT_UNREACHABLE();

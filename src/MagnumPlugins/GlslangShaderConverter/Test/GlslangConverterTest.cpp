@@ -37,7 +37,17 @@
 #include <Corrade/Utility/FormatStl.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
+
+/* Mirrors what's in the plugin source */
+#ifdef __has_include
+#if __has_include(<glslang/build_info.h>)
+#include <glslang/build_info.h>
+#else
 #include <glslang/Include/revision.h>
+#endif
+#else
+#include <glslang/Include/revision.h>
+#endif
 
 #include "configure.h"
 
@@ -138,7 +148,7 @@ const struct {
     {"Vulkan 1.1 SPIR-V 1.4 shader",
         Stage{}, "shader.vk.frag", nullptr,
         "", Format{}, "vulkan1.1 spv1.4", true},
-    #if GLSLANG_PATCH_LEVEL >= 3743
+    #if defined(GLSLANG_VERSION_MAJOR) || LSLANG_PATCH_LEVEL >= 3743
     {"Vulkan 1.2 shader",
         Stage{}, "shader.vk.frag", nullptr,
         "", Format{}, "vulkan1.2", true},
@@ -226,7 +236,14 @@ const struct {
     /* Vulkan 1.0 target puts OpModuleProcessed into the shader source which
        looks strange in the disassembly, but that's all */
     {"Vulkan 1.1 shader with debug info",
-        Stage{}, "shader.vk.frag", nullptr, "shader.vk.debug.spv",
+        Stage{}, "shader.vk.frag", nullptr,
+        /* Versions before 10 emit extra OpModuleProcessed "use-storage-buffer"
+           https://github.com/KhronosGroup/glslang/issues/1829 */
+        #if defined(GLSLANG_VERSION_MAJOR)
+        "shader.vk.debug.spv",
+        #else
+        "shader.vk.debug-glslang8.spv",
+        #endif
         "vulkan1.1", "1"},
 };
 
@@ -352,7 +369,7 @@ void GlslangConverterTest::validate() {
     auto&& data = ValidateData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    #if GLSLANG_PATCH_LEVEL < 3496
+    #if !defined(GLSLANG_VERSION_MAJOR) && GLSLANG_PATCH_LEVEL < 3496
     /* GL_ARB_explicit_uniform_location is implemented only since 7.13.3496,
        https://github.com/KhronosGroup/glslang/pull/1880, earlier versions
        spit out the following error and the only way to use explicit uniform
@@ -692,7 +709,7 @@ void GlslangConverterTest::convert() {
     auto&& data = ConvertData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    #if GLSLANG_PATCH_LEVEL < 3496
+    #if !defined(GLSLANG_VERSION_MAJOR) && GLSLANG_PATCH_LEVEL < 3496
     /* GL_ARB_explicit_uniform_location is implemented only since 7.13.3496,
        https://github.com/KhronosGroup/glslang/pull/1880, earlier versions
        spit out the following error and the only way to use explicit uniform
@@ -725,11 +742,11 @@ void GlslangConverterTest::convert() {
 
     Containers::Array<char> output = converter->convertFileToData(data.stage, data.alias ? data.alias : data.filename);
 
-    /* glslang 7.13 differs from 8.13 only in the generator version, patch
+    /* glslang 7.13 / 8.13 differs from 10 only in the generator version, patch
        that to have the same output */
     auto words = Containers::arrayCast<UnsignedInt>(output);
-    if(words.size() >= 3 && words[2] == 524295)
-        words[2] = 524296;
+    if(words.size() >= 3 && (words[2] == 524295 || words[2] == 524296))
+        words[2] = 524298;
 
     CORRADE_COMPARE_AS((std::string{output.begin(), output.end()}),
         Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.output),
