@@ -99,6 +99,10 @@ set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
 set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
 set(ENABLE_HLSL OFF CACHE BOOL "" FORCE)
 set(ENABLE_SPVREMAPPER OFF CACHE BOOL "" FORCE)
+# If you don't do this on version 10-11.0.0, CMake will complain that
+# Glslang::Glslang depends on a non-existent path <project>/build/include in
+# INTERFACE_INCLUDE_DIRECTORIES
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 add_subdirectory(glslang EXCLUDE_FROM_ALL)
 
 set(WITH_GLSLANGSHADERCONVERTER ON CACHE BOOL "" FORCE)
