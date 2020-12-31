@@ -180,13 +180,20 @@ else()
     find_library(Assimp_LIBRARY_DEBUG assimpd)
 endif()
 
-# Static build of Assimp (built with Vcpkg, any system) depends on IrrXML, find
-# that one as well. If not found, simply don't link to it --- it might be a
-# dynamic build (on Windows it's a *.lib either way), or a static build using
-# system IrrXML. Related issue: https://github.com/Microsoft/vcpkg/issues/5012
+# Static build of Assimp depends on IrrXML and zlib, find those as well. If not
+# found, simply don't link to them --- it might be a dynamic build (on Windows
+# it's a *.lib either way), or a static build using system IrrXML / zlib.
+# Related issue: https://github.com/Microsoft/vcpkg/issues/5012
 if(Assimp_LIBRARY_DEBUG MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$" OR Assimp_LIBRARY_RELEASE MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$")
     find_library(Assimp_IRRXML_LIBRARY_RELEASE IrrXML)
     find_library(Assimp_IRRXML_LIBRARY_DEBUG IrrXMLd)
+    find_library(Assimp_ZLIB_LIBRARY_RELEASE zlibstatic)
+    find_library(Assimp_ZLIB_LIBRARY_DEBUG zlibstaticd)
+    mark_as_advanced(
+        Assimp_IRRXML_LIBRARY_RELEASE
+        Assimp_IRRXML_LIBRARY_DEBUG
+        Assimp_ZLIB_LIBRARY_RELEASE
+        Assimp_ZLIB_LIBRARY_DEBUG)
 endif()
 
 include(SelectLibraryConfigurations)
@@ -209,15 +216,18 @@ if(NOT TARGET Assimp::Assimp)
         set_target_properties(Assimp::Assimp PROPERTIES IMPORTED_LOCATION_RELEASE ${Assimp_LIBRARY_RELEASE})
     endif()
 
-    # Link to IrrXML as well, if found. See the comment above for details.
-    if(Assimp_IRRXML_LIBRARY_RELEASE)
-        set_property(TARGET Assimp::Assimp APPEND PROPERTY
-            INTERFACE_LINK_LIBRARIES $<$<NOT:$<CONFIG:Debug>>:${Assimp_IRRXML_LIBRARY_RELEASE}>)
-    endif()
-    if(Assimp_IRRXML_LIBRARY_DEBUG)
-        set_property(TARGET Assimp::Assimp APPEND PROPERTY
-            INTERFACE_LINK_LIBRARIES $<$<CONFIG:Debug>:${Assimp_IRRXML_LIBRARY_DEBUG}>)
-    endif()
+    # Link to IrrXML / zlib as well, if found. See the comment above for
+    # details.
+    foreach(_extra IRRXML ZLIB)
+        if(Assimp_${_extra}_LIBRARY_RELEASE)
+            set_property(TARGET Assimp::Assimp APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES $<$<NOT:$<CONFIG:Debug>>:${Assimp_${_extra}_LIBRARY_RELEASE}>)
+        endif()
+        if(Assimp_${_extra}_LIBRARY_DEBUG)
+            set_property(TARGET Assimp::Assimp APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES $<$<CONFIG:Debug>:${Assimp_${_extra}_LIBRARY_DEBUG}>)
+        endif()
+    endforeach()
 
     set_target_properties(Assimp::Assimp PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES ${Assimp_INCLUDE_DIR})
