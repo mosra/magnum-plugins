@@ -796,6 +796,12 @@ MaterialAttributeData materialColor(MaterialAttribute attribute, const aiMateria
     else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
+#ifndef _CORRADE_HELPER_DEFER
+template<std::size_t size> constexpr Containers::StringView extractMaterialKey(const char(&data)[size], int, int) {
+    return Containers::Literals::operator"" _s(data, size - 1);
+}
+#endif
+
 }
 
 Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt id) {
@@ -850,14 +856,15 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 /* AI_MATKEY_* are in form "bla",0,0, so extract the first part
                    and turn it into a StringView for string comparison. The
                    _s literal is there to avoid useless strlen() calls in every
-                   branch, but MSVC gets extremely confused by that, so not
-                   doing that there. */
-                #ifndef CORRADE_MSVC2019_COMPATIBILITY
+                   branch. _CORRADE_HELPER_DEFER is not implementable on MSVC
+                   (see docs in Utility/Macros.h), so there it's a constexpr
+                   function instead. */
+                #ifdef _CORRADE_HELPER_DEFER
                 #define _str2(name, i, j) name ## _s
-                #else
-                #define _str2(name, i, j) name
-                #endif
                 #define _str(name) _CORRADE_HELPER_DEFER(_str2, name)
+                #else
+                #define _str extractMaterialKey
+                #endif
                 /* Properties not tied to a particular texture */
                 if(property.mSemantic == aiTextureType_NONE) {
                     /* Material name is available through materialName() /
