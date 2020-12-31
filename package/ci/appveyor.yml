@@ -62,9 +62,9 @@ install:
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\DevIL-SDK-x64-1.7.8.zip appveyor DownloadFile http://downloads.sourceforge.net/openil/DevIL-SDK-x64-1.7.8.zip
 - IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move unicode\*.lib lib\ && cd ..
 
-# FreeType, for MSVC 2019 and clang-cl only
-- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\freetype-2.10.4-windows-2019.zip appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2019.zip
-- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" 7z x freetype-2.10.4-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+# FreeType, for MSVC 2019, 2017 and clang-cl only
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2019.zip && 7z x freetype-2.10.4-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2016.zip && 7z x freetype-2.10.4-windows-2016.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 # Basis Universal
 - set BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed
@@ -74,16 +74,16 @@ install:
 # TODO: remove once we update to UASTC-enabled Basis
 - bash -c "cd basis_universal && patch -p1 < ../package/ci/basisu-msvc2019-16.6.patch"
 
-# SPIRV-Tools, for MSVC 2019 and clang-cl only
+# SPIRV-Tools, for MSVC 2019, 2017 and clang-cl only
 # This line REQUIRES the COMPILER variable to be set on rt builds, otherwise it
 # complains that "The syntax of the command is incorrect.". The same done in
 # build_script below works without problems. What the hell.
-- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\spirv-tools-2020.4-windows-2019-debug.zip appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2019-debug.zip
-- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" 7z x spirv-tools-2020.4-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2019-debug.zip && 7z x spirv-tools-2020.4-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2016-debug.zip && 7z x spirv-tools-2020.4-windows-2016-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
-# Glslang, for MSVC 2019 and clang-cl only
-- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\glslang-8.13.3743-windows-2019-debug.zip appveyor DownloadFile https://ci.magnum.graphics/glslang-8.13.3743-windows-2019-debug.zip
-- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" 7z x glslang-8.13.3743-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+# Glslang, for MSVC 2019, 2017 and clang-cl only
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/glslang-8.13.3743-windows-2019-debug.zip && 7z x glslang-8.13.3743-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/glslang-8.13.3743-windows-2016-debug.zip && 7z x glslang-8.13.3743-windows-2016-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 build_script:
 - IF NOT "%BUILD_STATIC%" == "ON" set BUILD_STATIC=OFF
@@ -99,4 +99,3 @@ cache:
 - basis_universal-%BASIS_VERSION%.zip -> package/ci/appveyor-cache-reset.txt
 # meshoptimizer
 - v0.14.zip -> package/ci/appveyor-cache-reset.txt
-- glslang-8.13.3743-windows-2019-debug.zip -> package/ci/appveyor-cache-reset.txt
