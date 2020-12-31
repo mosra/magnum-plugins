@@ -217,15 +217,21 @@ if(NOT TARGET Assimp::Assimp)
     endif()
 
     # Link to IrrXML / zlib as well, if found. See the comment above for
-    # details.
+    # details. Allow mixing up debug and release libraries because that's what
+    # the IMPORTED_LOCATION does as well -- if building as Debug and a Debug
+    # library is not available, it picks the Release one.
     foreach(_extra IRRXML ZLIB)
-        if(Assimp_${_extra}_LIBRARY_RELEASE)
+        if(Assimp_${_extra}_LIBRARY_RELEASE AND Assimp_${_extra}_LIBRARY_DEBUG)
             set_property(TARGET Assimp::Assimp APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES $<$<NOT:$<CONFIG:Debug>>:${Assimp_${_extra}_LIBRARY_RELEASE}>)
-        endif()
-        if(Assimp_${_extra}_LIBRARY_DEBUG)
             set_property(TARGET Assimp::Assimp APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES $<$<CONFIG:Debug>:${Assimp_${_extra}_LIBRARY_DEBUG}>)
+        elseif(Assimp_${_extra}_LIBRARY_DEBUG)
+            set_property(TARGET Assimp::Assimp APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES ${Assimp_${_extra}_LIBRARY_DEBUG})
+        elseif(Assimp_${_extra}_LIBRARY_RELEASE)
+            set_property(TARGET Assimp::Assimp APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES ${Assimp_${_extra}_LIBRARY_RELEASE})
         endif()
     endforeach()
 
