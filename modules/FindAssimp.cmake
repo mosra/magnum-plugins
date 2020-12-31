@@ -53,25 +53,39 @@ if(NOT TARGET assimp)
     find_package(assimp CONFIG QUIET)
     unset(CMAKE_POLICY_DEFAULT_CMP0012)
 
-    # Vanilla Assimp config files are completely broken because they don't set
-    # IMPORTED_CONFIGURATIONS on anything except MSVC. Detect that case and
-    # then skip aliasing the target to assimp::assimp because it will warn
-    # about
-    #   IMPORTED_LOCATION not set for imported target "assimp::assimp"
-    # and subsequently fail with
-    #   ninja: error: 'assimp::assimp-NOTFOUND', needed by '<target>', missing
-    #   and no known rule to make it
-    # This should be fixed with https://github.com/assimp/assimp/pull/3455 and
-    # is also fixed in vcpkg, which creates its own non-broken config files:
-    # https://github.com/microsoft/vcpkg/pull/14554
-    #
-    # In addition, old config files (Assimp 3.2, i.e.) don't define any target
-    # at all, so don't event attempt to query anything there.
+    # Old config files (Assimp 3.2, i.e.) don't define any target at all, in
+    # which case we don't even attempt to use anything from the config file
     if(assimp_FOUND AND TARGET assimp::assimp)
+        # Vanilla Assimp config files are completely broken because they don't
+        # set IMPORTED_CONFIGURATIONS on anything except MSVC. Detect that case
+        # and then skip aliasing the target to assimp::assimp because it will
+        # warn about
+        #   IMPORTED_LOCATION not set for imported target "assimp::assimp"
+        # and subsequently fail with
+        #   ninja: error: 'assimp::assimp-NOTFOUND', needed by '<target>',
+        #   missing and no known rule to make it
+        # This should be fixed with https://github.com/assimp/assimp/pull/3455
+        # and is also fixed in vcpkg, which creates its own non-broken config
+        # files: https://github.com/microsoft/vcpkg/pull/14554
         get_target_property(_ASSIMP_IMPORTED_CONFIGURATIONS assimp::assimp IMPORTED_CONFIGURATIONS)
         if(NOT _ASSIMP_IMPORTED_CONFIGURATIONS)
-            set(_ASSIMP_HAS_BROKEN_IMPORTED_TARGET ON)
+            set(_ASSIMP_HAS_USELESS_CONFIG ON)
         endif()
+
+        # It doesn't end there though -- on static builds there's nothing that
+        # would describe the actual static dependencies, which is THE MAIN
+        # REASON I wanted to use the config file. So instead, when it looks
+        # like a static build and there's no information about interface link
+        # libraries, we attempt to do it ourselves below.
+        get_target_property(_ASSIMP_INTERFACE_LINK_LIBRARIES assimp::assimp INTERFACE_LINK_LIBRARIES)
+        if(NOT ASSIMP_BUILD_SHARED_LIBS AND NOT _ASSIMP_INTERFACE_LINK_LIBRARIES)
+            set(_ASSIMP_HAS_USELESS_CONFIG ON)
+        endif()
+
+        # In conclusion, dynamic builds on MSVC are the only case where vanilla
+        # config files work, but we need to go through this pain for vcpkg as
+        # there the config files are not broken *and* there's extra static
+        # dependencies that would be otherwise too annoying to handle.
     endif()
 endif()
 
@@ -81,8 +95,8 @@ endif()
 # it's like that only since version 5:
 #   https://github.com/assimp/assimp/commit/b43cf9233703305cfd8dfe7844fce959879b4f0c
 #   https://github.com/assimp/assimp/commit/30d3c8c6a37a3b098702dfb714fe8e5e2abbfa5e
-# The target aliasing is skipped in case the config files are broken, see above
-if((TARGET assimp OR TARGET assimp::assimp) AND NOT _ASSIMP_HAS_BROKEN_IMPORTED_TARGET)
+# The target aliasing is skipped in case the config files are crap, see above
+if((TARGET assimp OR TARGET assimp::assimp) AND NOT _ASSIMP_HAS_USELESS_CONFIG)
     if(TARGET assimp)
         set(_ASSIMP_TARGET assimp)
     else()
