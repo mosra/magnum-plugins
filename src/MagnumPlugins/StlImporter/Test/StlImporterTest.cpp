@@ -57,7 +57,7 @@ struct StlImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
-constexpr const char data[]{
+constexpr const char Data[]{
     /* 80-byte header */
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -90,11 +90,11 @@ const struct {
 } InvalidData[] {
     {"four bytes of an ASCII file", Containers::arrayView("soli").except(1),
         "file too short, got only 4 bytes"},
-    {"83 bytes", Containers::arrayView(data).prefix(83),
+    {"83 bytes", Containers::arrayView(Data).prefix(83),
         "file too short, expected at least 84 bytes but got 83"},
-    {"too short", Containers::arrayView(data).except(2),
+    {"too short", Containers::arrayView(Data).except(2),
         "file size doesn't match triangle count, expected 234 but got 233 for 3 triangles"},
-    {"too long", Containers::arrayView(data),
+    {"too long", Containers::arrayView(Data),
         "file size doesn't match triangle count, expected 234 but got 235 for 3 triangles"}
 };
 
