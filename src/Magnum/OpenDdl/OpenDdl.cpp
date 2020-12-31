@@ -298,7 +298,7 @@ bool Document::parse(Containers::ArrayView<const char> data, const std::initiali
     }
 
     /* Everything parsed, dereference references */
-    for(const std::pair<std::size_t, Containers::ArrayView<const char>> reference: references) {
+    for(const std::pair<std::size_t, Containers::ArrayView<const char>>& reference: references) {
         /* Null reference */
         if(reference.second.empty())
             _references.push_back(NullReference);
@@ -810,7 +810,7 @@ bool Document::validateLevel(const Containers::Optional<Structure>& first, const
     /* Verify that all required structures are there */
     {
         std::size_t i = 0;
-        for(const std::pair<Int, std::pair<Int, Int>> allowedStructure: allowedStructures) {
+        for(const std::pair<Int, std::pair<Int, Int>>& allowedStructure: allowedStructures) {
             CORRADE_INTERNAL_ASSERT(allowedStructure.second.first >= 0 && (allowedStructure.second.second == 0 || allowedStructure.second.second >= allowedStructure.second.first));
 
             if(allowedStructure.second.first > counts[i]) {
