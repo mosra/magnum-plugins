@@ -38,7 +38,7 @@ rem MSVC version is 2019. Better than nothing, but eh.
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_ON_MSVC2019=ON
 IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_ON_MSVC2019=OFF
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2015=OFF
-IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2015=OFF
+IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2015=ON
 
 rem build meshoptimizer
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v0.14.zip appveyor DownloadFile https://github.com/zeux/meshoptimizer/archive/v0.14.zip || exit /b
