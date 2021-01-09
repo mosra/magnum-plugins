@@ -5,7 +5,31 @@ rem here we need to do that ourselves as we don't have Magnum's build dir in
 rem PATH
 set PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin;%APPVEYOR_BUILD_FOLDER%/openal/bin/Win64;%APPVEYOR_BUILD_FOLDER%\deps\bin;%APPVEYOR_BUILD_FOLDER%\devil\unicode;%PATH%
 
-rem Build LibJPEG
+rem Build LibJPEG. I spent a FUCKING WEEK trying to get libjpeg-turbo built on
+rem GH Actions for the older GCC 7.2 that's used here. NOT FUCKING POSSIBLE.
+rem
+rem -   When using the default GH Actions mingw setup, the built package fails
+rem     to link here with __imp___acrt_iob_func, similarly as described at
+rem     https://github.com/rust-lang/rust/issues/47048
+rem -   Downgrading a bunch of packages to make GCC 7.2 used on GH Actions is
+rem     IMPOSSIBLE as:
+rem     -   the "vanilla" cmake installed via pacman fails to recognize the
+rem         MSYS platform, and then the GCC crashes
+rem     -   the mingw-w64-x86_64-cmake package straight out crashes at runtime
+rem         so not usable either
+rem -   attempting to install the libjpeg packages here FUCKING FAILS TOO
+rem     because
+rem     -   they're either too old and 404,
+rem     -   or pacman is too old and needs to be manually upgraded to a
+rem         zstd-capable version, after which install works
+rem     -   but the packages are NOT FOUND, so one has to add c:/msys to
+rem         CMAKE_PREFIX_PATH
+rem     -   but that makes everything EXPLODE again and suddenly it's using
+rem         GCC 9.1 and Corrade installed in home/deps/ isn't found anymore
+rem
+rem So I'm just downloading and building by hand here. Every damn time.
+rem Fortunately at least, Assimp MinGW build from GH Actions works, so we don't
+rem need to build ALL THE STUFF, just some. FFS.
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.5.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.5.0/libjpeg-turbo-1.5.0.tar.gz || exit /b
 7z x libjpeg-turbo-1.5.0.tar.gz || exit /b
 7z x libjpeg-turbo-1.5.0.tar || exit /b

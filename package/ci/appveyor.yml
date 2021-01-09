@@ -56,6 +56,11 @@ install:
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.0.1-windows-2016-debug.zip && 7z x assimp-5.0.1-windows-2016-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.0.1-windows-mingw.zip && 7z x assimp-5.0.1-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
+# libjpeg-turbo, for MSVC 2019, 2017 and clang-cl only; MinGW builds it because
+# FFS
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libjpeg-turbo-2.0.6-windows-2019.zip && 7z x libjpeg-turbo-2.0.6-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libjpeg-turbo-2.0.6-windows-2016.zip && 7z x libjpeg-turbo-2.0.6-windows-2016.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+
 # OpenAL
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.19.1-bin.zip appveyor DownloadFile https://openal-soft.org/openal-binaries/openal-soft-1.19.1-bin.zip
 - IF NOT "%TARGET%" == "rt" 7z x openal-soft-1.19.1-bin.zip && ren openal-soft-1.19.1-bin openal && echo [General] > %APPDATA%/alsoft.ini & echo drivers=null >> %APPDATA%/alsoft.ini

@@ -12,21 +12,6 @@ rem for TestSuite we need to enable exceptions explicitly with /EH as these are
 rem currently disabled -- https://github.com/catchorg/Catch2/issues/1113
 if "%COMPILER%" == "msvc-clang" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc" -DCMAKE_CXX_FLAGS="-m64 /EHsc"
 
-rem Build LibJPEG
-IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.5.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.5.0/libjpeg-turbo-1.5.0.tar.gz || exit /b
-7z x libjpeg-turbo-1.5.0.tar.gz || exit /b
-7z x libjpeg-turbo-1.5.0.tar || exit /b
-ren libjpeg-turbo-1.5.0 libjpeg-turbo || exit /b
-cd libjpeg-turbo || exit /b
-mkdir build && cd build || exit /b
-cmake .. -DCMAKE_BUILD_TYPE=Debug ^
-    -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
-    -DWITH_JPEG8=ON ^
-    -DWITH_SIMD=OFF ^
-    %COMPILER_EXTRA% -G Ninja || exit /b
-cmake --build . --target install || exit /b
-cd .. && cd .. || exit /b
-
 rem Build libPNG. As of 2020-08-17, vcpkg is broken on the 2019 image and needs
 rem updating. Disabling the libPNG build there for now.
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set EXCEPT_IF_VCPKG_IS_BROKEN=OFF
@@ -112,8 +97,8 @@ cmake .. ^
     -DWITH_GLSLANGSHADERCONVERTER=%EXCEPT_MSVC2015% ^
     -DWITH_HARFBUZZFONT=OFF ^
     -DWITH_ICOIMPORTER=ON ^
-    -DWITH_JPEGIMAGECONVERTER=ON ^
-    -DWITH_JPEGIMPORTER=ON ^
+    -DWITH_JPEGIMAGECONVERTER=%EXCEPT_MSVC2015% ^
+    -DWITH_JPEGIMPORTER=%EXCEPT_MSVC2015% ^
     -DWITH_MESHOPTIMIZERSCENECONVERTER=ON ^
     -DWITH_MINIEXRIMAGECONVERTER=ON ^
     -DWITH_OPENGEXIMPORTER=ON ^
