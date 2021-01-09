@@ -954,6 +954,11 @@ template<class T> void MeshOptimizerSceneConverterTest::simplifySloppy() {
 void MeshOptimizerSceneConverterTest::simplifyVerbose() {
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
     converter->setFlags(SceneConverterFlag::Verbose);
+    /* Without these three, meshoptimizer 0.15 produces 12 vertices while 0.14
+       13 vertices */
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
     converter->configuration().setValue("simplify", true);
     converter->configuration().setValue("simplifyTargetIndexCountThreshold", 0.5f);
     /* The default 1.0e-2 is too little for this */
@@ -980,8 +985,8 @@ void MeshOptimizerSceneConverterTest::simplifyVerbose() {
     768 -> 448 bytes fetched
     overfetch 1.04348 -> 1.07692
   overdraw:
-    127149 -> 138617 shaded pixels
-    127149 -> 138617 covered pixels
+    127149 -> 131437 shaded pixels
+    127149 -> 131437 covered pixels
     overdraw 1 -> 1
 )";
     CORRADE_COMPARE(out.str(), expected);
