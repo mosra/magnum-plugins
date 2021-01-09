@@ -690,23 +690,26 @@ void SpirvToolsConverterTest::convertDisassembleExplicitFormatEmptyData() {
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: <data>: Missing module.\n");
 }
 
+constexpr UnsignedInt InvalidInstructionData[] {
+    /* Magic, version, generator magic, bound, reserved. Version low and
+       high byte has to be zero, otherwise 2020.5 and newer fails with
+       cryptic "Internal error: unhandled header parse failure". */
+    0x07230203, 0x00010000, 0xbadc0de, 666, 0xfffull,
+    /* length=2, OpCapability CapabilityShader */
+    (2 << 16) | 17, 1,
+    /* length=3, OpMemoryModel Logical GLSL450 */
+    (3 << 16) | 14, 0, 1,
+    0xdeadf00l /* third instruction */
+};
+
 void SpirvToolsConverterTest::convertDisassembleFail() {
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
     converter->setInputFormat(Format::Spirv);
     converter->setOutputFormat(Format::SpirvAssembly);
 
-    const UnsignedInt data[] {
-        0x07230203, 99, 0xbadc0de, 666, 0xfffull,
-        /* length=2, OpCapability CapabilityShader */
-        (2 << 16) | 17, 1,
-        /* length=3, OpMemoryModel Logical GLSL450 */
-        (3 << 16) | 14, 0, 1,
-        0xdeadf00l /* third instruction */
-    };
-
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertDataToData({}, data));
+    CORRADE_VERIFY(!converter->convertDataToData({}, InvalidInstructionData));
     CORRADE_COMPARE(out.str(),
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: <data>:3: Invalid opcode: 57088\n");
 }
@@ -716,16 +719,7 @@ void SpirvToolsConverterTest::convertDisassembleFailFile() {
     converter->setInputFormat(Format::Spirv);
     converter->setOutputFormat(Format::SpirvAssembly);
 
-    const UnsignedInt data[] {
-        0x07230203, 99, 0xbadc0de, 666, 0xfffull,
-        /* length=2, OpCapability CapabilityShader */
-        (2 << 16) | 17, 1,
-        /* length=3, OpMemoryModel Logical GLSL450 */
-        (3 << 16) | 14, 0, 1,
-        0xdeadf00l /* third instruction */
-    };
-
-    Containers::ArrayView<const UnsignedInt> dataView = data;
+    Containers::ArrayView<const UnsignedInt> dataView = InvalidInstructionData;
 
     /* Fake the file loading via a callback */
     converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, Containers::ArrayView<const UnsignedInt>& data) -> Containers::Optional<Containers::ArrayView<const char>> {
@@ -739,7 +733,7 @@ void SpirvToolsConverterTest::convertDisassembleFailFile() {
     /* Test the doConvertFileToFile() intercept too */
     CORRADE_VERIFY(!converter->convertFileToFile({}, "another.spv", ""));
     /* Converting data again should not be using the stale filename */
-    CORRADE_VERIFY(!converter->convertDataToData({}, data));
+    CORRADE_VERIFY(!converter->convertDataToData({}, InvalidInstructionData));
     CORRADE_COMPARE(out.str(),
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: deadfool.spv:3: Invalid opcode: 57088\n"
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: another.spv:3: Invalid opcode: 57088\n"
