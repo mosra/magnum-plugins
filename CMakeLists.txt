@@ -93,10 +93,6 @@ elseif(CORRADE_TARGET_IOS OR CORRADE_TARGET_WINDOWS_RT)
     set(BUILD_PLUGINS_STATIC ON)
 endif()
 
-if(CORRADE_TARGET_EMSCRIPTEN)
-    include(UseEmscripten)
-endif()
-
 if(BUILD_TESTS)
     find_package(Corrade REQUIRED TestSuite)
     if(CORRADE_TARGET_IOS)
