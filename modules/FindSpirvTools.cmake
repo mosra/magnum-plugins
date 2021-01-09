@@ -53,11 +53,16 @@
 # The dash in a package name and a separate package for each and every damn
 # target is just a minor hiccup in the grand scheme of things (A DASH?! ARE YOU
 # OUT OF YOUR #$@ MIND?!), nevertheless, this would be rather straightforward.
-# HOWEVER, in the GRIM reality of 2020, the spirv-tools package in Homebrew
-# doesn't bother installing the CMake config modules, so we have to find it the
-# old way. (Yes, I could submit a patch and bla, but in addition to that
-# suffering I would also have to suffer complaints from people who have an
-# older Homebrew package. Do I want that? NO!)
+# HOWEVER, in the GRIM reality of 2020, and now 2021:
+#
+# 1. The 2020.4 spirv-tools package in Homebrew doesn't bother installing the
+#    CMake config modules, so we have to find it the old way.
+# 2. The 2020.5 release has broken CMake config to the point of causing an
+#    *unrecoverable* CMake error. The only way to work around this is to
+#    override get_target_property() via a macro and insert an early-out for
+#    this case, then continuing to search the classic way. The 2020.6 package
+#    doesn't have this issue anymore but for some reason in certain cases
+#    Homebrew still gives people 2020.5.
 #
 # This module is thus *deliberately* called SpirvTools instead of SPIRV-Tools
 # to avoid conflicts with the upstream config file, if present.
@@ -75,6 +80,20 @@
 # In case we have SPIRV-Tools as a CMake subproject, SPIRV-Tools should be
 # defined. If it's not, try to find the installed config file.
 if(NOT TARGET SPIRV-Tools)
+    # Yes, I know this is extremely discouraged, but see Exhibit 2 above for
+    # details. The original (non-overriden) function is available under an
+    # underscore, unfortunately there's no way to undefine the macro again so
+    # we have to be extra careful to not break anything else.
+    macro(get_target_property var target property)
+        # For some reason if(target STREQUAL SPIRV-Tools) doesn't work (old
+        # CMake policies used by the config file?)
+        if("${target}" STREQUAL SPIRV-Tools AND NOT TARGET SPIRV-Tools)
+            message(WARNING "A broken SPIRV-Tools CMake config detected. Falling back to classic filesystem search.")
+            return()
+        endif()
+        _get_target_property(${var} ${target} ${property})
+    endmacro()
+
     find_package(SPIRV-Tools CONFIG QUIET)
 endif()
 
