@@ -1484,6 +1484,10 @@ void AssimpImporterTest::fileCallbackEmptyFile() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
+    #ifdef CORRADE_TARGET_MSVC
+    CORRADE_SKIP("This crashes (gets stuck on an assert popup?) on MSVC and clang-cl. Needs further investigation.");
+    #endif
+
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
         void*) {
             return Containers::Optional<Containers::ArrayView<const char>>{Containers::InPlaceInit};
