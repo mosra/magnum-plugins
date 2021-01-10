@@ -147,6 +147,8 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     PngImageConverter PngImporter PrimitiveImporter SpirvToolsShaderConverter
     StanfordImporter StanfordSceneConverter StbImageConverter StbImageImporter
     StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
+# Nothing is enabled by default right now
+set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
