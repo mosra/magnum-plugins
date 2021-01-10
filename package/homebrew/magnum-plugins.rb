@@ -43,8 +43,7 @@ class MagnumPlugins < Formula
     system "mkdir build"
     cd "build" do
       system "cmake",
-        "-DCMAKE_BUILD_TYPE=Release",
-        "-DCMAKE_INSTALL_PREFIX=#{prefix}",
+        *std_cmake_args,
         "-DWITH_ASSIMPIMPORTER=#{(build.with? 'assimp') ? 'ON' : 'OFF'}",
         "-DWITH_BASISIMAGECONVERTER=ON",
         "-DWITH_BASISIMPORTER=ON",
