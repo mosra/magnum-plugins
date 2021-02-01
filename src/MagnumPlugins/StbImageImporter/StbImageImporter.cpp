@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -58,7 +59,10 @@ struct StbImageImporter::State {
     Containers::Array<int> gifDelays;
 };
 
-StbImageImporter::StbImageImporter() = default;
+StbImageImporter::StbImageImporter() {
+    /** @todo horrible workaround, fix this properly */
+    configuration().setValue("forceChannelCount", 0);
+}
 
 StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
@@ -150,12 +154,17 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
     Vector2i size;
     Int components;
 
+    const Int forceChannelCount = configuration().value<Int>("forceChannelCount");
+
     stbi_uc* data;
     std::size_t channelSize;
     PixelFormat format;
     if(stbi_is_hdr_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size())) {
-        data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, 0));
+        data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount));
         channelSize = 4;
+        /* stb_image still returns the original component count in components,
+           which we don't want/need */
+        if(forceChannelCount) components = forceChannelCount;
         if(data) switch(components) {
             case 1: format = PixelFormat::R32F;         break;
             case 2: format = PixelFormat::RG32F;        break;
@@ -164,8 +173,11 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     } else {
-        data = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, 0);
+        data = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount);
         channelSize = 1;
+        /* stb_image still returns the original component count in components,
+           which we don't want/need */
+        if(forceChannelCount) components = forceChannelCount;
         if(data) switch(components) {
             case 1: format = PixelFormat::R8Unorm;      break;
             case 2: format = PixelFormat::RG8Unorm;     break;

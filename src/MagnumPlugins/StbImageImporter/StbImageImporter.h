@@ -129,13 +129,17 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-StbImageImporter-behavior Behavior and limitations
 
-The images are imported with @ref PixelFormat::RGB8Unorm,
+LDR images are imported as @ref PixelFormat::RGB8Unorm,
 @ref PixelFormat::RGBA8Unorm, @ref PixelFormat::R8Unorm for grayscale or
-@ref PixelFormat::RG8Unorm for grayscale + alpha for all format except HDR, HDR
-images are imported with @ref PixelFormat::RGB32F, @ref PixelFormat::RGBA32F,
-@ref PixelFormat::R32F or @ref PixelFormat::RG32F. Images are imported with
-default @ref PixelStorage parameters except for alignment, which may be changed
-to @cpp 1 @ce if the data require it.
+@ref PixelFormat::RG8Unorm for grayscale + alpha, HDR images as
+@ref PixelFormat::RGB32F, @ref PixelFormat::RGBA32F, @ref PixelFormat::R32F or
+@ref PixelFormat::RG32F. Certain formats support only some channel counts (for
+example Radiance HDR can only be three-component), however it's possible to
+override the desired channel count using the @cb{.ini} forceChannelCount @ce
+@ref Trade-StbImageImporter-configuration "configuration option".
+
+Images are imported with default @ref PixelStorage parameters except for
+alignment, which may be changed to @cpp 1 @ce if the data require it.
 
 The importer is thread-safe if Corrade and Magnum is compiled with
 @ref CORRADE_BUILD_MULTITHREADED enabled.
@@ -173,6 +177,13 @@ importer detects those files and converts BGRA channels back to RGBA.
 @subsection Trade-StbImageImporter-behavior-psd PSD files
 
 Only the composited view, there's no way to import individual layers.
+
+@section Trade-StbImageImporter-configuration Plugin-specific configuration
+
+For some formats, it's possible to tune various output options through
+@ref configuration(). See below for all options and their default values:
+
+@snippet MagnumPlugins/StbImageImporter/StbImageImporter.conf config
 
 @todo Enable ARM NEON when I'm able to test that
 */

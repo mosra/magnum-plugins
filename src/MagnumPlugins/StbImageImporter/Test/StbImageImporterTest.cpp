@@ -28,6 +28,7 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
@@ -50,11 +51,16 @@ struct StbImageImporterTest: TestSuite::Tester {
     void invalid();
 
     void grayPng();
+    void grayPngFourChannel();
+    void grayPngFiveChannel();
     void grayJpeg();
 
     void rgbPng();
+    void rgbPngOneChannel();
     void rgbJpeg();
     void rgbHdr();
+    void rgbHdrOneChannel();
+    void rgbHdrFourChannels();
     void rgbHdrInvalid();
 
     void rgbaPng();
@@ -85,11 +91,16 @@ StbImageImporterTest::StbImageImporterTest() {
               &StbImageImporterTest::invalid,
 
               &StbImageImporterTest::grayPng,
+              &StbImageImporterTest::grayPngFourChannel,
+              &StbImageImporterTest::grayPngFiveChannel,
               &StbImageImporterTest::grayJpeg,
 
               &StbImageImporterTest::rgbPng,
+              &StbImageImporterTest::rgbPngOneChannel,
               &StbImageImporterTest::rgbJpeg,
               &StbImageImporterTest::rgbHdr,
+              &StbImageImporterTest::rgbHdrOneChannel,
+              &StbImageImporterTest::rgbHdrFourChannels,
               &StbImageImporterTest::rgbHdrInvalid});
 
     addInstancedTests({&StbImageImporterTest::rgbaPng}, Containers::arraySize(RgbaPngTestData));
@@ -147,6 +158,40 @@ void StbImageImporterTest::grayPng() {
     }), TestSuite::Compare::Container);
 }
 
+void StbImageImporterTest::grayPngFourChannel() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+
+    importer->configuration().setValue("forceChannelCount", 4);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        /* First channel expanded three times, full alpha */
+        '\xff', '\xff', '\xff', '\xff',
+        '\x88', '\x88', '\x88', '\xff',
+        '\x00', '\x00', '\x00', '\xff',
+        '\x88', '\x88', '\x88', '\xff',
+        '\x00', '\x00', '\x00', '\xff',
+        '\xff', '\xff', '\xff', '\xff'
+    }), TestSuite::Compare::Container);
+}
+
+void StbImageImporterTest::grayPngFiveChannel() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+
+    importer->configuration().setValue("forceChannelCount", 5);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): cannot open the image: bad req_comp\n");
+}
+
 void StbImageImporterTest::grayJpeg() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
@@ -178,6 +223,24 @@ void StbImageImporterTest::rgbPng() {
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5'
+    }), TestSuite::Compare::Container);
+}
+
+void StbImageImporterTest::rgbPngOneChannel() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
+
+    importer->configuration().setValue("forceChannelCount", 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 1);
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        /* The RGB channels are converted to luminance */
+        '\xdf', '\xbc', '\xdf',
+        '\xbc', '\xdf', '\xbc',
     }), TestSuite::Compare::Container);
 }
 
@@ -215,6 +278,47 @@ void StbImageImporterTest::rgbHdr() {
             1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
             3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
             5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f
+        }), TestSuite::Compare::Container);
+}
+
+void StbImageImporterTest::rgbHdrOneChannel() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+
+    importer->configuration().setValue("forceChannelCount", 1);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::R32F);
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()),
+        Containers::arrayView<Float>({
+            1.0f, 2.0f,
+            3.0f, 4.0f,
+            5.0f, 6.0f
+        }), TestSuite::Compare::Container);
+}
+
+void StbImageImporterTest::rgbHdrFourChannels() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+
+    importer->configuration().setValue("forceChannelCount", 4);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()),
+        Containers::arrayView<Float>({
+            /* Implicit full alpha */
+            1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f, 1.0f,
+            3.0f, 3.0f, 3.0f, 1.0f, 4.0f, 4.0f, 4.0f, 1.0f,
+            5.0f, 5.0f, 5.0f, 1.0f, 6.0f, 6.0f, 6.0f, 1.0f
         }), TestSuite::Compare::Container);
 }
 
