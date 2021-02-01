@@ -68,6 +68,8 @@ namespace Magnum {
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now performs range checks
     on scene, node, camera, mesh, material, child and light references in the
     scene hierarchy for more robust handling of broken files
+-   @ref Trade::StbImageImporter "StbImageImporter" now imports 16-bit PNG and
+    PSD files as 16-bit instead of converting to 8 bit
 -   @ref Trade::StbImageImporter "StbImageImporter" now makes it possible to
     override imported image channel count using @cb{.ini} forceChannelCount @ce
 

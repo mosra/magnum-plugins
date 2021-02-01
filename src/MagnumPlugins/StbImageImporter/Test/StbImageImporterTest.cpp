@@ -53,10 +53,14 @@ struct StbImageImporterTest: TestSuite::Tester {
     void grayPng();
     void grayPngFourChannel();
     void grayPngFiveChannel();
+    void grayPng16();
+    void grayPng16FourChannel();
     void grayJpeg();
 
     void rgbPng();
     void rgbPngOneChannel();
+    void rgbPng16();
+    void rgbPng16OneChannel();
     void rgbJpeg();
     void rgbHdr();
     void rgbHdrOneChannel();
@@ -93,10 +97,14 @@ StbImageImporterTest::StbImageImporterTest() {
               &StbImageImporterTest::grayPng,
               &StbImageImporterTest::grayPngFourChannel,
               &StbImageImporterTest::grayPngFiveChannel,
+              &StbImageImporterTest::grayPng16,
+              &StbImageImporterTest::grayPng16FourChannel,
               &StbImageImporterTest::grayJpeg,
 
               &StbImageImporterTest::rgbPng,
               &StbImageImporterTest::rgbPngOneChannel,
+              &StbImageImporterTest::rgbPng16,
+              &StbImageImporterTest::rgbPng16OneChannel,
               &StbImageImporterTest::rgbJpeg,
               &StbImageImporterTest::rgbHdr,
               &StbImageImporterTest::rgbHdrOneChannel,
@@ -192,6 +200,43 @@ void StbImageImporterTest::grayPngFiveChannel() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): cannot open the image: bad req_comp\n");
 }
 
+void StbImageImporterTest::grayPng16() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
+
+    CORRADE_COMPARE_AS(image->pixels<UnsignedShort>().asContiguous(), Containers::arrayView<UnsignedShort>({
+        1, 2,
+        3, 4,
+        5, 6
+    }), TestSuite::Compare::Container);
+}
+
+void StbImageImporterTest::grayPng16FourChannel() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
+
+    importer->configuration().setValue("forceChannelCount", 4);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA16Unorm);
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(image->pixels().asContiguous()), Containers::arrayView<UnsignedShort>({
+        /* First channel expanded three times, full alpha */
+        1, 1, 1, 65535, 2, 2, 2, 65535,
+        3, 3, 3, 65535, 4, 4, 4, 65535,
+        5, 5, 5, 65535, 6, 6, 6, 65535
+    }), TestSuite::Compare::Container);
+}
+
 void StbImageImporterTest::grayJpeg() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
@@ -241,6 +286,45 @@ void StbImageImporterTest::rgbPngOneChannel() {
         /* The RGB channels are converted to luminance */
         '\xdf', '\xbc', '\xdf',
         '\xbc', '\xdf', '\xbc',
+    }), TestSuite::Compare::Container);
+}
+
+void StbImageImporterTest::rgbPng16() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(image->pixels().asContiguous()), Containers::arrayView<UnsignedShort>({
+        1, 2, 3, 2, 3, 4,
+        3, 4, 5, 4, 5, 6,
+        5, 6, 7, 6, 7, 8
+    }), TestSuite::Compare::Container);
+}
+
+void StbImageImporterTest::rgbPng16OneChannel() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
+
+    importer->configuration().setValue("forceChannelCount", 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(image->pixels().asContiguous()), Containers::arrayView<UnsignedShort>({
+        /* The RGB channels are converted to luminance... though with an 8-bit
+           equation so I have no idea what the heck is happening. Granted, the
+           result looks as if it would be just the first channel extracted. */
+        1, 2,
+        3, 4,
+        5, 6
     }), TestSuite::Compare::Container);
 }
 

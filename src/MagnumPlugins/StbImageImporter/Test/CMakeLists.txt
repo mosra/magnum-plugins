@@ -57,7 +57,9 @@ corrade_add_test(StbImageImporterTest StbImageImporterTest.cpp
         # https://github.com/python-pillow/Pillow/blob/8c9100e267f40a63081b344220abaa57325a3d6d/Tests/images/dispose_bgnd.gif
         dispose_bgnd.gif
         ../../PngImporter/Test/gray.png
+        ../../PngImporter/Test/gray16.png
         ../../PngImporter/Test/rgb.png
+        ../../PngImporter/Test/rgb16.png
         ../../PngImporter/Test/rgba.png
         ../../PngImporter/Test/rgba-iphone.png
         ../../JpegImporter/Test/gray.jpg

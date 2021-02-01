@@ -67,19 +67,19 @@ Supports the following formats using the
 -   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`), @ref Trade-StbImageImporter-behavior-arithmetic-jpeg "details"
 -   Portable Graymap (`*.pgm`)
 -   Softimage PIC (`*.pic`)
--   Portable Network Graphics (`*.png`), @ref Trade-StbImageImporter-behavior-cgbi "details"
+-   Portable Network Graphics (`*.png`), @ref Trade-StbImageImporter-behavior-png "details"
 -   Portable Pixmap (`*.ppm`)
 -   Adobe Photoshop (`*.psd`), @ref Trade-StbImageImporter-behavior-psd "details"
 -   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`)
 
-Creates RGB, RGBA, grayscale or grayscale + alpha images with 8 bits per
-channel. Palleted images are automatically converted to RGB(A).
+Creates RGB, RGBA, grayscale or grayscale + alpha images with 8, 16 or float 32
+bits per channel. Palleted images are automatically converted to RGB(A).
 
-This plugins provides `BmpImporter`, `GifImporter`, `HdrImporter`,
+This plugin provides the `BmpImporter`, `GifImporter`, `HdrImporter`,
 `JpegImporter`, `PgmImporter`, `PicImporter`, `PngImporter`, `PpmImporter`,
 `PsdImporter` and `TgaImporter` plugins, but note that this plugin doesn't have
 complete support for all format quirks and the performance might be worse than
-when using plugin dedicated for given format.
+when using a plugin dedicated for given format.
 
 @m_class{m-block m-primary}
 
@@ -129,9 +129,11 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-StbImageImporter-behavior Behavior and limitations
 
-LDR images are imported as @ref PixelFormat::RGB8Unorm,
-@ref PixelFormat::RGBA8Unorm, @ref PixelFormat::R8Unorm for grayscale or
-@ref PixelFormat::RG8Unorm for grayscale + alpha, HDR images as
+LDR images are imported as @ref PixelFormat::RGB8Unorm /
+@ref PixelFormat::RGB16Unorm, @ref PixelFormat::RGBA8Unorm /
+@ref PixelFormat::RGBA16Unorm, @ref PixelFormat::R8Unorm /
+@ref PixelFormat::R16Unorm for grayscale or @ref PixelFormat::RG8Unorm /
+@ref PixelFormat::RG16Unorm for grayscale + alpha, HDR images as
 @ref PixelFormat::RGB32F, @ref PixelFormat::RGBA32F, @ref PixelFormat::R32F or
 @ref PixelFormat::RG32F. Certain formats support only some channel counts (for
 example Radiance HDR can only be three-component), however it's possible to
@@ -168,7 +170,10 @@ Note that the support for GIF transitions is currently incomplete, see
 implemented in stb_image, use @ref JpegImporter together with libjpeg-turbo or
 mozjpeg instead.
 
-@subsection Trade-StbImageImporter-behavior-cgbi Apple CgBI PNGs
+@subsection Trade-StbImageImporter-behavior-png PNG files
+
+Both 8- and 16-bit images are supported, lower bit counts and paletted images
+are expanded to 8-bit.
 
 CgBI is a proprietary Apple-specific extension to PNG
 ([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). The
@@ -176,7 +181,8 @@ importer detects those files and converts BGRA channels back to RGBA.
 
 @subsection Trade-StbImageImporter-behavior-psd PSD files
 
-Only the composited view, there's no way to import individual layers.
+Both 8- and 16-bit images are supported. Only the composited view, there's no
+way to import individual layers.
 
 @section Trade-StbImageImporter-configuration Plugin-specific configuration
 

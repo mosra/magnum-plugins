@@ -172,6 +172,19 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
             case 4: format = PixelFormat::RGBA32F;      break;
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
+    } else if(stbi_is_16_bit_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size())) {
+        data = reinterpret_cast<stbi_uc*>(stbi_load_16_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount));
+        channelSize = 2;
+        /* stb_image still returns the original component count in components,
+           which we don't want/need */
+        if(forceChannelCount) components = forceChannelCount;
+        if(data) switch(components) {
+            case 1: format = PixelFormat::R16Unorm;     break;
+            case 2: format = PixelFormat::RG16Unorm;    break;
+            case 3: format = PixelFormat::RGB16Unorm;   break;
+            case 4: format = PixelFormat::RGBA16Unorm;  break;
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
     } else {
         data = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount);
         channelSize = 1;
