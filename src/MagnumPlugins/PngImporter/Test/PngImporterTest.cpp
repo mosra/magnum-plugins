@@ -80,7 +80,7 @@ constexpr struct {
 } GrayData[]{
     {"8bit", "gray.png"},
     /* convert gray.png -depth 4 -colorspace gray -define png:bit-depth=4 -define png:exclude-chunks=date gray-4bit.png */
-    {"4bit", "gray-4bit.png"},
+    {"4bit", "gray4.png"},
 };
 
 constexpr struct {
@@ -297,7 +297,7 @@ void PngImporterTest::rgbPalette1bit() {
     /* convert IcoImporter/Test/icon256x256.png rgb-palette-1bit.png
        (the file is all 0x0000ff, so I guess that makes it a 1-bit palette).
        Taking this file as a repro case because it crashed the importer. */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb-palette-1bit.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb-palette1.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
