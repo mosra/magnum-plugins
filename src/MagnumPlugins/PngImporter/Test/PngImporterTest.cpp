@@ -47,8 +47,10 @@ struct PngImporterTest: TestSuite::Tester {
     void invalid();
 
     void gray();
+    void gray16();
     void grayAlpha();
     void rgb();
+    void rgb16();
     void rgbPalette1bit();
     void rgba();
 
@@ -130,13 +132,16 @@ PngImporterTest::PngImporterTest() {
     addInstancedTests({&PngImporterTest::gray},
         Containers::arraySize(GrayData));
 
+    addTests({&PngImporterTest::gray16});
+
     addInstancedTests({&PngImporterTest::grayAlpha},
         Containers::arraySize(GrayAlphaData));
 
     addInstancedTests({&PngImporterTest::rgb},
         Containers::arraySize(RgbData));
 
-    addTests({&PngImporterTest::rgbPalette1bit});
+    addTests({&PngImporterTest::rgb16,
+              &PngImporterTest::rgbPalette1bit});
 
     addInstancedTests({&PngImporterTest::rgba},
         Containers::arraySize(RgbaData));
@@ -200,6 +205,22 @@ void PngImporterTest::gray() {
     }), TestSuite::Compare::Container);
 }
 
+void PngImporterTest::gray16() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
+
+    CORRADE_COMPARE_AS(image->pixels<UnsignedShort>().asContiguous(), Containers::arrayView<UnsignedShort>({
+        1, 2,
+        3, 4,
+        5, 6
+    }), TestSuite::Compare::Container);
+}
+
 void PngImporterTest::grayAlpha() {
     auto&& data = GrayAlphaData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -251,6 +272,22 @@ void PngImporterTest::rgb() {
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5', 0, 0, 0
+    }), TestSuite::Compare::Container);
+}
+
+void PngImporterTest::rgb16() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(image->pixels().asContiguous()), Containers::arrayView<UnsignedShort>({
+        1, 2, 3, 2, 3, 4,
+        3, 4, 5, 4, 5, 6,
+        5, 6, 7, 6, 7, 8
     }), TestSuite::Compare::Container);
 }
 
