@@ -243,7 +243,7 @@ void DdsImporterTest::rgb() {
     CORRADE_COMPARE(importer->image3DCount(), 0);
 
     std::ostringstream out;
-    Containers::Optional<Trade::ImageData2D> image;
+    Containers::Optional<ImageData2D> image;
     {
         Debug redirectOutput{&out};
         image = importer->image2D(0);
@@ -280,7 +280,7 @@ void DdsImporterTest::rgbWithMips() {
     std::ostringstream out;
 
     /* check image */
-    Containers::Optional<Trade::ImageData2D> image;
+    Containers::Optional<ImageData2D> image;
     {
         Debug redirectOutput{&out};
         image = importer->image2D(0);
@@ -301,7 +301,7 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_COMPARE(out.str(), data.message2D);
 
     /* check mip 0 */
-    Containers::Optional<Trade::ImageData2D> mip;
+    Containers::Optional<ImageData2D> mip;
     {
         out.str({});
         Debug redirectOutput{&out};
@@ -332,7 +332,7 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
     std::ostringstream out;
-    Containers::Optional<Trade::ImageData3D> image;
+    Containers::Optional<ImageData3D> image;
     {
         Debug redirectOutput{&out};
         image = importer->image3D(0);
@@ -376,7 +376,7 @@ void DdsImporterTest::dxt1() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt1.dds")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -392,7 +392,7 @@ void DdsImporterTest::dxt3() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt3.dds")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -409,7 +409,7 @@ void DdsImporterTest::dxt5() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt5.dds")));
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -429,7 +429,7 @@ void DdsImporterTest::dxt10Formats2D() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw(file.filename)));
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -445,7 +445,7 @@ void DdsImporterTest::dxt10Formats3D() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw(file.filename)));
-    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
@@ -458,7 +458,7 @@ void DdsImporterTest::dxt10Data() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
 
     CORRADE_VERIFY(importer->openData(resource.getRaw("2D_R8G8_UNORM.dds")));
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
@@ -500,11 +500,11 @@ void DdsImporterTest::useTwice() {
 
     /* Verify that the file is rewinded for second use */
     {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        Containers::Optional<ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        Containers::Optional<ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
     }
