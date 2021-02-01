@@ -72,9 +72,9 @@ Creates files in one of the following formats using the
 -   Radiance HDR (`*.hdr`) if the plugin was loaded as `StbHdrImageConverter`
     / `HdrImageConverter` or @ref Format::Hdr was passed to the constructor.
     Accepts @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
-    @ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. Single- and
-    two-channel inputs are converted to three-channel with the first channel
-    repeated three times (and second ignored), four-channel input loses alpha.
+    @ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. R and RG inputs are
+    converted to three-channel RRR with G ignored, four-channel input loses
+    alpha.
 -   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) if the plugin was loaded as
     `StbJpegImageConverter` / `JpegImageConverter` or @ref Format::Jpeg was
     passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
