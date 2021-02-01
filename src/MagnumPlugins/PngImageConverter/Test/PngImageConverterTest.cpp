@@ -25,6 +25,7 @@
 
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -175,7 +176,7 @@ void PngImageConverterTest::rgb16() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB16Unorm);
-    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(converted->data()),
+    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(converted->pixels().asContiguous()),
         Containers::arrayView(ConvertedRgbData16),
         TestSuite::Compare::Container);
 }
@@ -256,7 +257,7 @@ void PngImageConverterTest::grayscale16() {
 
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
     CORRADE_COMPARE(converted->format(), PixelFormat::R16Unorm);
-    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(converted->data()),
+    CORRADE_COMPARE_AS(converted->pixels<UnsignedShort>().asContiguous(),
         Containers::arrayView(ConvertedGrayscaleData16),
         TestSuite::Compare::Container);
 }
