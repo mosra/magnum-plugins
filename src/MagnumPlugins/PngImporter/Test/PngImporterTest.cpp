@@ -194,10 +194,10 @@ void PngImporterTest::gray() {
     CORRADE_COMPARE(image->data().size(), 8);
     image->mutableData()[3] = image->mutableData()[7] = 0;
 
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xff', '\x88', '\x00', 0,
         '\x88', '\x00', '\xff', 0
-    }}), TestSuite::Compare::Container);
+    }), TestSuite::Compare::Container);
 }
 
 void PngImporterTest::grayAlpha() {
@@ -218,10 +218,10 @@ void PngImporterTest::grayAlpha() {
     image->mutableData()[6] = image->mutableData()[7] =
         image->mutableData()[14] = image->mutableData()[15] = 0;
 
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xb8', '\xff', '\xe9', '\xff', '\x00', '\x00', 0, 0,
         '\xe9', '\xff', '\x00', '\x00', '\xb8', '\xff', 0, 0
-    }}), TestSuite::Compare::Container);
+    }), TestSuite::Compare::Container);
 }
 
 void PngImporterTest::rgb() {
@@ -243,7 +243,7 @@ void PngImporterTest::rgb() {
         image->mutableData()[11] = image->mutableData()[21] =
             image->mutableData()[22] = image->mutableData()[23] = 0;
 
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77', 0, 0, 0,
@@ -251,7 +251,7 @@ void PngImporterTest::rgb() {
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5', 0, 0, 0
-    }}), TestSuite::Compare::Container);
+    }), TestSuite::Compare::Container);
 }
 
 void PngImporterTest::rgbPalette1bit() {
@@ -288,14 +288,14 @@ void PngImporterTest::rgba() {
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(image->data(),  Containers::arrayView(Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(),  Containers::arrayView<char>({
         '\xde', '\xad', '\xb5', '\xff',
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
         '\xde', '\xad', '\xb5', '\xff'
-    }}), TestSuite::Compare::Container);
+    }), TestSuite::Compare::Container);
 }
 
 void PngImporterTest::openTwice() {

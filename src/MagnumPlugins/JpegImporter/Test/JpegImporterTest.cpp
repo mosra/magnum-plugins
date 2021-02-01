@@ -112,10 +112,10 @@ void JpegImporterTest::gray() {
     CORRADE_COMPARE(image->data().size(), 8);
     image->mutableData()[3] = image->mutableData()[7] = 0;
 
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xff', '\x88', '\x00', 0,
-        '\x88', '\x00', '\xff', 0}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\x88', '\x00', '\xff', 0
+    }), TestSuite::Compare::Container);
 }
 
 void JpegImporterTest::rgb() {
@@ -135,15 +135,15 @@ void JpegImporterTest::rgb() {
             image->mutableData()[22] = image->mutableData()[23] = 0;
 
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xca', '\xfe', '\x76',
         '\xdf', '\xad', '\xb6',
         '\xca', '\xfe', '\x76', 0, 0, 0,
 
         '\xe0', '\xad', '\xb6',
         '\xc9', '\xff', '\x76',
-        '\xdf', '\xad', '\xb6', 0, 0, 0}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\xdf', '\xad', '\xb6', 0, 0, 0
+    }), TestSuite::Compare::Container);
 }
 
 void JpegImporterTest::openTwice() {

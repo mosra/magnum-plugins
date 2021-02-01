@@ -242,13 +242,6 @@ void DdsImporterTest::rgb() {
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
     CORRADE_COMPARE(importer->image3DCount(), 0);
 
-    const char pixels[] = {'\xde', '\xad', '\xb5',
-                           '\xca', '\xfe', '\x77',
-                           '\xde', '\xad', '\xb5',
-                           '\xca', '\xfe', '\x77',
-                           '\xde', '\xad', '\xb5',
-                           '\xca', '\xfe', '\x77'};
-
     std::ostringstream out;
     Containers::Optional<Trade::ImageData2D> image;
     {
@@ -260,8 +253,14 @@ void DdsImporterTest::rgb() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77'
+    }), TestSuite::Compare::Container);
     CORRADE_COMPARE(out.str(), data.message2D);
 }
 
@@ -278,14 +277,6 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
     CORRADE_COMPARE(importer->image3DCount(), 0);
 
-    const char pixels[] = {'\xde', '\xad', '\xb5',
-                           '\xca', '\xfe', '\x77',
-                           '\xde', '\xad', '\xb5',
-                           '\xca', '\xfe', '\x77',
-                           '\xde', '\xad', '\xb5',
-                           '\xca', '\xfe', '\x77'};
-    const char mipPixels[] = {'\xd4', '\xd5', '\x96'};
-
     std::ostringstream out;
 
     /* check image */
@@ -299,8 +290,14 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
-            TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77'
+    }), TestSuite::Compare::Container);
     CORRADE_COMPARE(out.str(), data.message2D);
 
     /* check mip 0 */
@@ -315,8 +312,9 @@ void DdsImporterTest::rgbWithMips() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(mip->size(), Vector2i{1});
     CORRADE_COMPARE(mip->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(mip->data(), Containers::arrayView(mipPixels),
-            TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(mip->data(), Containers::arrayView<char>({
+        '\xd4', '\xd5', '\x96'
+    }), TestSuite::Compare::Container);
     CORRADE_COMPARE(out.str(), data.message2D);
 }
 
@@ -333,29 +331,6 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    const char pixels[] = {
-        /* slice 0 */
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        /* slice 1 */
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        /* slice 2 */
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77'};
-
     std::ostringstream out;
     Containers::Optional<Trade::ImageData3D> image;
     {
@@ -367,8 +342,31 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        /* slice 0 */
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+
+        /* slice 1 */
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+
+        /* slice 2 */
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77'
+    }), TestSuite::Compare::Container);
     CORRADE_COMPARE(out.str(), data.message3D);
 }
 
@@ -378,15 +376,14 @@ void DdsImporterTest::dxt1() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt1.dds")));
 
-    const char pixels[] = {'\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'};
-
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBAUnorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
-            TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
+    }), TestSuite::Compare::Container);
 }
 
 void DdsImporterTest::dxt3() {
@@ -395,16 +392,15 @@ void DdsImporterTest::dxt3() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt3.dds")));
 
-    const char pixels[] = {'\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff',
-                           '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'};
-
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc2RGBAUnorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
-            TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff',
+        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
+    }), TestSuite::Compare::Container);
 }
 
 void DdsImporterTest::dxt5() {
@@ -413,16 +409,15 @@ void DdsImporterTest::dxt5() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt5.dds")));
 
-    const char pixels[] = {'\xff', '\xff', '\x49', '\x92', '\x24', '\x49', '\x92', '\x24',
-                           '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'};
-
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc3RGBAUnorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
-            TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xff', '\xff', '\x49', '\x92', '\x24', '\x49', '\x92', '\x24',
+        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
+    }), TestSuite::Compare::Container);
 }
 
 void DdsImporterTest::dxt10Formats2D() {
@@ -462,19 +457,17 @@ void DdsImporterTest::dxt10Data() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
 
-    const char pixels[] = {
-        '\xde', '\xad', '\xca', '\xfe',
-        '\xde', '\xad', '\xca', '\xfe',
-        '\xde', '\xad', '\xca', '\xfe'};
-
     CORRADE_VERIFY(importer->openData(resource.getRaw("2D_R8G8_UNORM.dds")));
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels),
-            TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xde', '\xad', '\xca', '\xfe',
+        '\xde', '\xad', '\xca', '\xfe',
+        '\xde', '\xad', '\xca', '\xfe'
+    }), TestSuite::Compare::Container);
 }
 
 void DdsImporterTest::dxt10TooShort() {

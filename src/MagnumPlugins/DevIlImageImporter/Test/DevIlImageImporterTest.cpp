@@ -160,10 +160,10 @@ void DevIlImageImporterTest::grayPng() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\x88', '\x00', '\xff'
+    }), TestSuite::Compare::Container);
 }
 
 void DevIlImageImporterTest::grayJpeg() {
@@ -175,10 +175,10 @@ void DevIlImageImporterTest::grayJpeg() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\x88', '\x00', '\xff'
+    }), TestSuite::Compare::Container);
 }
 
 void DevIlImageImporterTest::rgbPng() {
@@ -190,14 +190,14 @@ void DevIlImageImporterTest::rgbPng() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\xde', '\xad', '\xb5'
+    }), TestSuite::Compare::Container);
 }
 
 void DevIlImageImporterTest::rgbJpeg() {
@@ -210,14 +210,14 @@ void DevIlImageImporterTest::rgbJpeg() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     /* Data should be similar to the PNG */
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xca', '\xfe', '\x76',
         '\xdf', '\xad', '\xb6',
         '\xca', '\xfe', '\x76',
         '\xe0', '\xad', '\xb6',
         '\xc9', '\xff', '\x76',
-        '\xdf', '\xad', '\xb6'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\xdf', '\xad', '\xb6'
+    }), TestSuite::Compare::Container);
 }
 
 void DevIlImageImporterTest::rgbaPng() {
@@ -229,14 +229,14 @@ void DevIlImageImporterTest::rgbaPng() {
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xde', '\xad', '\xb5', '\xff',
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
-        '\xde', '\xad', '\xb5', '\xff'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\xde', '\xad', '\xb5', '\xff'
+    }), TestSuite::Compare::Container);
 }
 
 void DevIlImageImporterTest::bgrTga() {
@@ -256,11 +256,11 @@ void DevIlImageImporterTest::bgrTga() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         3, 2, 1, 4, 3, 2,
         5, 4, 3, 6, 5, 4,
-        7, 6, 5, 8, 7, 6}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        7, 6, 5, 8, 7, 6
+    }), TestSuite::Compare::Container);
 }
 
 void DevIlImageImporterTest::bgraTga() {
@@ -280,11 +280,11 @@ void DevIlImageImporterTest::bgraTga() {
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         3, 2, 1, 4, 4, 3, 2, 5,
         5, 4, 3, 6, 6, 5, 4, 7,
-        7, 6, 5, 8, 8, 7, 6, 9}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        7, 6, 5, 8, 8, 7, 6, 9
+    }), TestSuite::Compare::Container);
 }
 
 void DevIlImageImporterTest::icoBmp() {
@@ -467,10 +467,10 @@ void DevIlImageImporterTest::utf8Filename() {
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
-    CORRADE_COMPARE_AS(image->data(), (Containers::Array<char>{Containers::InPlaceInit, {
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xff', '\x88', '\x00',
-        '\x88', '\x00', '\xff'}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+        '\x88', '\x00', '\xff'
+    }), TestSuite::Compare::Container);
 }
 
 }}}}
