@@ -39,16 +39,63 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# For Vcpkg we *have to* use CMake config files as there it's a huge tree of
+# static dependencies that would be impossible to figure out otherwise (see
+# https://github.com/microsoft/vcpkg/pull/14554 for details), however vanilla
+# Assimp config files are completely broken and thus we have to attempt to
+# detect & ignore / patch them in most cases:
+#
+# 1. On macOS, assimp::assimp references `libassimpd.dylib.5` while it should
+#    be `libassimpd.5.dylib`. The assimpTargets.cmake then commits an
+#    irreversible suicide as the file does not exist. This got fixed in
+#    https://github.com/assimp/assimp/commit/ae3236f4819f8b41e197694fd5f7a6df0f63c323
+#    and later replaced with https://github.com/assimp/assimp/pull/3455 but
+#    there's no version containing either of those yet. The only sane way to
+#    fix this is to not do find_package(assimp CONFIG) on macOS. We do that by
+#    setting CMAKE_DISABLE_FIND_PACKAGE_assimp so it's still possible to
+#    disable this behavior from the outside (for example when using vcpkg, or
+#    latest master) by explicitly setting that to OFF. (The automagic but
+#    insane way to fix this would be by overriding message() to ignore the
+#    FATAL_ERROR printed by assimpTargets.cmake, but overriden macros stay
+#    alive forever, even in outer scopes, and that's not something I want to
+#    live with. I had to do a similar hack for SPIRV-Tools already and I feel
+#    dirty.)
+# 2. On anything except Windows, the files doen't set IMPORTED_CONFIGURATIONS,
+#    resulting in a warning about
+#       IMPORTED_LOCATION not set for imported target "assimp::assimp"
+#    and subsequently failing with
+#       ninja: error: 'assimp::assimp-NOTFOUND', needed by '<target>',
+#       missing and no known rule to make it
+#    This got fixed with https://github.com/assimp/assimp/pull/3215 and again
+#    later replaced with https://github.com/assimp/assimp/pull/3455 but there's
+#    no version containing those yet either. This fortunately can be fixed "in
+#    post" so we just detect that case below and skip aliasing the target to
+#    assimp::assimp.
+# 3. It doesn't end there though -- on static builds there's nothing that would
+#    describe the actual static dependencies, which is THE MAIN REASON I wanted
+#    to use the config file. So instead, when it looks like a static build and
+#    there's no information about INTERFACE_LINK_LIBRARIES, we attempt to do it
+#    ourselves instead.
+# 4. Furthermore, the vanilla config file contains if(ON) and because its CMake
+#    requirement is set to an insanely low version 2.6, CMake complains about a
+#    policy change. To suppress it, neither cmake_policy(SET CMP0012 NEW) nor
+#    find_package(... NO_POLICY_SCOPE) does anything, fortunately there's this
+#    variable that's able to punch through the scope created by find_package():
+#    https://cmake.org/cmake/help/latest/variable/CMAKE_POLICY_DEFAULT_CMPNNNN.html
+#
+# In conclusion, dynamic builds on MSVC are the only case where vanilla config
+# files work, but we still need to go through this pain for vcpkg for the
+# static dependencies.
+
 # Assimp installs a config file that can give us all its dependencies in case
 # of a static build. In case the assimp target is already present, we have it
 # as a CMake subproject, so don't attempt to look for it again.
 if(NOT TARGET assimp)
-    # Assimp's own config file contains if(ON) and because its CMake
-    # requirement is set to an insanely low version 2.6, CMake complains about
-    # a policy change. To suppress it, neither cmake_policy(SET CMP0012 NEW)
-    # nor find_package(... NO_POLICY_SCOPE) does anything, fortunately there's
-    # this variable that's able to punch through the scope created by
-    # find_package(): https://cmake.org/cmake/help/latest/variable/CMAKE_POLICY_DEFAULT_CMPNNNN.html
+    # See Exhibit 1 above for details
+    if(APPLE AND NOT DEFINED CMAKE_DISABLE_FIND_PACKAGE_assimp)
+        set(CMAKE_DISABLE_FIND_PACKAGE_assimp ON)
+    endif()
+    # See Exhibit 4 above for details
     set(CMAKE_POLICY_DEFAULT_CMP0012 NEW)
     find_package(assimp CONFIG QUIET)
     unset(CMAKE_POLICY_DEFAULT_CMP0012)
@@ -56,36 +103,17 @@ if(NOT TARGET assimp)
     # Old config files (Assimp 3.2, i.e.) don't define any target at all, in
     # which case we don't even attempt to use anything from the config file
     if(assimp_FOUND AND TARGET assimp::assimp)
-        # Vanilla Assimp config files are completely broken because they don't
-        # set IMPORTED_CONFIGURATIONS on anything except MSVC. Detect that case
-        # and then skip aliasing the target to assimp::assimp because it will
-        # warn about
-        #   IMPORTED_LOCATION not set for imported target "assimp::assimp"
-        # and subsequently fail with
-        #   ninja: error: 'assimp::assimp-NOTFOUND', needed by '<target>',
-        #   missing and no known rule to make it
-        # This should be fixed with https://github.com/assimp/assimp/pull/3455
-        # and is also fixed in vcpkg, which creates its own non-broken config
-        # files: https://github.com/microsoft/vcpkg/pull/14554
+        # See Exhibit 2 above for details
         get_target_property(_ASSIMP_IMPORTED_CONFIGURATIONS assimp::assimp IMPORTED_CONFIGURATIONS)
         if(NOT _ASSIMP_IMPORTED_CONFIGURATIONS)
             set(_ASSIMP_HAS_USELESS_CONFIG ON)
         endif()
 
-        # It doesn't end there though -- on static builds there's nothing that
-        # would describe the actual static dependencies, which is THE MAIN
-        # REASON I wanted to use the config file. So instead, when it looks
-        # like a static build and there's no information about interface link
-        # libraries, we attempt to do it ourselves below.
+        # See Exhibit 3 above for details
         get_target_property(_ASSIMP_INTERFACE_LINK_LIBRARIES assimp::assimp INTERFACE_LINK_LIBRARIES)
         if(NOT ASSIMP_BUILD_SHARED_LIBS AND NOT _ASSIMP_INTERFACE_LINK_LIBRARIES)
             set(_ASSIMP_HAS_USELESS_CONFIG ON)
         endif()
-
-        # In conclusion, dynamic builds on MSVC are the only case where vanilla
-        # config files work, but we need to go through this pain for vcpkg as
-        # there the config files are not broken *and* there's extra static
-        # dependencies that would be otherwise too annoying to handle.
     endif()
 endif()
 
