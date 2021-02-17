@@ -100,11 +100,23 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 The file is always imported as a non-indexed triangle mesh with per-face
 normals (i.e., same normal for all vertices in the triangle). Both positions
-and normals are imported as @ref VertexFormat::Vector3.
+and normals are imported as @ref VertexFormat::Vector3. Using the
+@cb{.ini} perFaceToPerVertex @ce @ref Trade-StanfordImporter-configuration "configuration option"
+it's possible to import per-face normals separately without duplicating them
+for each vertex --- useful for example when you want to deduplicate the
+positions and generate smooth normals from these.
 
 Similarly to @ref StanfordImporter, ASCII files are not supported, only binary.
 The [non-standard extensions for vertex colors](https://en.wikipedia.org/wiki/STL_(file_format)#Color_in_binary_STL)
 are also not supported due to a lack of generally available files for testing.
+
+@section Trade-StlImporter-configuration Plugin-specific config
+
+It's possible to tune various import options through @ref configuration(). See
+below for all options and their default values:
+
+@snippet MagnumPlugins/StlImporter/StlImporter.conf config
+
 */
 class MAGNUM_STLIMPORTER_EXPORT StlImporter: public AbstractImporter {
     public:
