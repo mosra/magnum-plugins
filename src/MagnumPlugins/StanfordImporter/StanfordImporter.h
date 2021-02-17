@@ -55,6 +55,8 @@ namespace Magnum { namespace Trade {
 /**
 @brief Stanford PLY importer plugin
 
+@m_keywords{PLY}
+
 Supports Little- and Big-Endian binary formats with triangle and quad meshes.
 Imports vertex positions, normals, 2D texture coordinates, vertex colors,
 custom attributes and per-face data as well.

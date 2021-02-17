@@ -56,6 +56,8 @@ namespace Magnum { namespace Trade {
 @brief Stanford PLY converter plugin
 @m_since_{plugins,2020,06}
 
+@m_keywords{PLY}
+
 Exports to either Little- or Big-Endian binary files with triangle faces.
 
 @section Trade-StanfordSceneConverter-usage Usage
