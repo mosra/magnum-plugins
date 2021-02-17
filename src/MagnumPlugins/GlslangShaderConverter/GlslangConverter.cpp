@@ -697,7 +697,7 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateFile(const Stage
         filename);
 }
 
-std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage stage, Containers::ArrayView<const char> data) {
+std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage stage, const Containers::ArrayView<const char> data) {
     /* If we're validating a file, save the input filename for use in a
        potential error message. Clear it so next time plain data is validated
        the error messages aren't based on stale information. This is done as
