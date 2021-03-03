@@ -37,6 +37,7 @@
 #include <Corrade/Utility/FormatStl.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
+#include <Magnum/ShaderTools/Stage.h>
 
 /* Mirrors what's in the plugin source */
 #ifdef __has_include

@@ -36,6 +36,7 @@
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
 #include <Magnum/FileCallback.h>
+#include <Magnum/ShaderTools/Stage.h>
 
 #include <glslang/Public/ShaderLang.h> /* Haha what the fuck this name */
 /* This can't be <glslang/SPIRV/GlslangToSpv.h> because such path doesn't exist
@@ -136,7 +137,7 @@ using namespace Containers::Literals;
 
 Stage stageFromFilename(Containers::StringView filename) {
     if(filename.hasSuffix(".glsl"_s))
-        return stageFromFilename(filename.stripSuffix(".glsl"_s));
+        return stageFromFilename(filename.exceptSuffix(".glsl"_s));
 
     /* LCOV_EXCL_START */
     if(filename.hasSuffix(".vert"_s)) return Stage::Vertex;
@@ -181,6 +182,10 @@ EShLanguage translateStage(const Stage stage) {
         /* LCOV_EXCL_STOP */
 
         case Stage::Unspecified: return EShLangVertex;
+
+        /* OpenCL kernels can't be written in GLSL. Asserts below, this is just
+           to suppress compiler warning about an unhandled value. */
+        case Stage::Kernel: break; /* LCOV_EXCL_LINE */
     }
 
     /* Testing this would mean having a separate "graceful assert" build of the
