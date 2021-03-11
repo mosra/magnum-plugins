@@ -37,7 +37,6 @@
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/Resource.h>
-#include <Magnum/Array.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
@@ -3209,7 +3208,7 @@ void TinyGltfImporterTest::texture() {
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
     CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Nearest);
 
-    CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
+    CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
 
     /* Texture coordinates */
     auto mesh = importer->mesh(0);
@@ -3244,7 +3243,7 @@ void TinyGltfImporterTest::textureDefaultSampler() {
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
-    CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
+    CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
 }
 
 void TinyGltfImporterTest::textureEmptySampler() {
@@ -3264,7 +3263,7 @@ void TinyGltfImporterTest::textureEmptySampler() {
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
-    CORRADE_COMPARE(texture->wrapping(), Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
+    CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
 }
 
 void TinyGltfImporterTest::textureMissingSource() {

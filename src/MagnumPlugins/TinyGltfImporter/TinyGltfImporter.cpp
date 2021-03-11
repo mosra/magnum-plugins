@@ -2143,7 +2143,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
 
     /* There's wrapR that is a tiny_gltf extension and is set to zero. Ignoring
        that one and hardcoding it to Repeat. */
-    Array3D<SamplerWrapping> wrapping;
+    Math::Vector3<SamplerWrapping> wrapping;
     wrapping.z() = SamplerWrapping::Repeat;
     for(auto&& wrap: std::initializer_list<std::pair<int, int>>{
         {s.wrapS, 0}, {s.wrapT, 1}})

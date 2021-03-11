@@ -931,7 +931,7 @@ void OpenGexImporterTest::texture() {
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->wrapping(), SamplerWrapping::ClampToEdge);
+    CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>{SamplerWrapping::ClampToEdge});
     CORRADE_COMPARE(texture->image(), 1);
 }
 

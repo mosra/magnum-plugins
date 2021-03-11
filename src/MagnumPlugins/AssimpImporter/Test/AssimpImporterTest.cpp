@@ -1280,7 +1280,7 @@ void AssimpImporterTest::texture() {
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
-        Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
+        Math::Vector3<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->image(), 1);
@@ -1294,13 +1294,13 @@ void AssimpImporterTest::texture() {
            https://github.com/assimp/assimp/blob/0c3933ca7c460644d346d94ecbb1b118f598ced4/code/Collada/ColladaParser.cpp#L1977-L1978 */
         CORRADE_EXPECT_FAIL("Assimp ignores sampler properties (in COLLADA files, at least).");
         CORRADE_COMPARE(texture1->wrapping(),
-            Array3D<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
+            Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
         CORRADE_COMPARE(texture1->minificationFilter(), SamplerFilter::Nearest);
         CORRADE_COMPARE(texture1->magnificationFilter(), SamplerFilter::Nearest);
     } {
         /* It gives out the default always */
         CORRADE_COMPARE(texture->wrapping(),
-            Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
+            Math::Vector3<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
         CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
         CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
     }
@@ -1378,7 +1378,7 @@ void AssimpImporterTest::openStateTexture() {
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
-        Array3D<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
+        Math::Vector3<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->image(), 1);
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
