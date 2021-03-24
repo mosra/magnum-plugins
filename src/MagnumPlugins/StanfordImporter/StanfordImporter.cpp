@@ -461,7 +461,7 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
 
                     /* Fail on unknown lines */
                     } else {
-                        Error() << "Trade::StanfordImporter::openData(): invalid face property line" << line;
+                        Error{} << "Trade::StanfordImporter::openData(): invalid face property line" << line;
                         return;
                     }
 
