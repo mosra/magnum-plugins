@@ -80,7 +80,7 @@ add_dependencies(your-app MagnumPlugins::IcoImporter)
 
 To use as a static plugin or as a dependency of another plugin with CMake, put
 [FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-into your `modules/` directory, request the `DdsImporter` component of the
+into your `modules/` directory, request the `IcoImporter` component of the
 `MagnumPlugins` package in CMake and link to the `MagnumPlugins::IcoImporter`
 target:
 
