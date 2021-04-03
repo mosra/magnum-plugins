@@ -46,6 +46,7 @@ struct DrFlacImporterTest: TestSuite::Tester {
     void mono8();
     void mono16();
     void mono24();
+    void mono32();
 
     void stereo8();
     void stereo16();
@@ -71,6 +72,7 @@ DrFlacImporterTest::DrFlacImporterTest() {
               &DrFlacImporterTest::mono8,
               &DrFlacImporterTest::mono16,
               &DrFlacImporterTest::mono24,
+              &DrFlacImporterTest::mono32,
 
               &DrFlacImporterTest::stereo8,
               &DrFlacImporterTest::stereo16,
@@ -151,6 +153,15 @@ void DrFlacImporterTest::mono24() {
         Containers::arrayView<Float>({
             -0.000548482f, -3.45707e-06f, -0.00179672f, 0.000154614f
         }), TestSuite::Compare::Container);
+}
+
+void DrFlacImporterTest::mono32() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono32.flac")));
+    CORRADE_COMPARE(out.str(), "Audio::DrFlacImporter::openData(): unsupported channel count 1 with 32 bits per sample\n");
 }
 
 void DrFlacImporterTest::stereo8() {

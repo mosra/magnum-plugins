@@ -52,6 +52,9 @@ corrade_add_test(DrFlacAudioImporterTest DrFlacImporterTest.cpp
         mono8.flac
         mono16.flac
         mono24.flac
+        # Made by taking the mono8.flac file and patching it to say 32 bits per
+        # channel instead of 8
+        mono32.flac
 
         stereo8.flac
         stereo16.flac

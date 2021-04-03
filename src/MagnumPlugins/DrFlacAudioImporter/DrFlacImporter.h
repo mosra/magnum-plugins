@@ -74,10 +74,11 @@ the [dr_flac](https://github.com/mackron/dr_libs) library:
     @ref BufferFormat::MonoFloat, @ref BufferFormat::StereoFloat,
     @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
     @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
--   32 bit-per-channel, imported as
-    @ref BufferFormat::MonoDouble, @ref BufferFormat::StereoDouble,
-    @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
-    @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
+
+Although technically FLAC supports 32 bits per channel as well,
+[not even the reference encoder supports that](https://xiph.org/flac/format.html#metadata_block_streaminfo),
+which makes it impossible to verify whether dr_flac is capable of importing
+such files, and thus handling of such files is not implemented.
 
 This plugins provides `FlacAudioImporter`, but note that this plugin doesn't
 handle CRC checks, corrupt or perverse FLAC streams, or broadcast streams.
