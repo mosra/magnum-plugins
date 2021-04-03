@@ -116,9 +116,9 @@ void StbVorbisImporterTest::mono16() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 96000);
     CORRADE_COMPARE_AS(importer->data(),
-        (Containers::Array<char>{Containers::InPlaceInit, {
-            '\xcd', '\x0a', '\x2b', '\x0a'}}),
-        TestSuite::Compare::Container);
+        Containers::arrayView<char>({
+            '\xcd', '\x0a', '\x2b', '\x0a'
+        }), TestSuite::Compare::Container);
 }
 
 void StbVorbisImporterTest::stereo8() {
@@ -128,9 +128,9 @@ void StbVorbisImporterTest::stereo8() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 96000);
     CORRADE_COMPARE_AS(importer->data(),
-        (Containers::Array<char>{Containers::InPlaceInit, {
-            '\x3e', '\x19', '\x1d', '\x17'}}),
-        TestSuite::Compare::Container);
+        Containers::arrayView<char>({
+            '\x3e', '\x19', '\x1d', '\x17'
+        }), TestSuite::Compare::Container);
 }
 
 }}}}

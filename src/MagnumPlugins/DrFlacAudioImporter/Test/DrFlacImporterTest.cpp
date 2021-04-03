@@ -120,9 +120,10 @@ void DrFlacImporterTest::mono8() {
     CORRADE_COMPARE(importer->frequency(), 22050);
 
     CORRADE_COMPARE(importer->data().size(), 2136);
-    CORRADE_COMPARE_AS(importer->data().prefix(4),
-        (Containers::Array<char>{Containers::InPlaceInit, {127, 127, 127, 127}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(importer->data()).prefix(4),
+        Containers::arrayView<UnsignedByte>({
+            127, 127, 127, 127
+        }), TestSuite::Compare::Container);
 }
 
 void DrFlacImporterTest::mono16() {
@@ -132,9 +133,10 @@ void DrFlacImporterTest::mono16() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44000);
 
-    CORRADE_COMPARE_AS(importer->data(),
-        (Containers::Array<char>{Containers::InPlaceInit, {'\x1d', '\x10', '\x71', '\xc5'}}),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(Containers::arrayCast<Short>(importer->data()),
+        Containers::arrayView<Short>({
+            4125, -14991
+        }), TestSuite::Compare::Container);
 }
 
 void DrFlacImporterTest::mono24() {
@@ -145,9 +147,10 @@ void DrFlacImporterTest::mono24() {
     CORRADE_COMPARE(importer->frequency(), 48000);
 
     CORRADE_COMPARE(importer->data().size(), 3696);
-    CORRADE_COMPARE_AS(importer->data().prefix(4),
-        (Containers::Array<char>{Containers::InPlaceInit, {0, -56, 15, -70}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(importer->data()).prefix(4),
+        Containers::arrayView<Float>({
+            -0.000548482f, -3.45707e-06f, -0.00179672f, 0.000154614f
+        }), TestSuite::Compare::Container);
 }
 
 void DrFlacImporterTest::stereo8() {
@@ -157,9 +160,10 @@ void DrFlacImporterTest::stereo8() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo8);
     CORRADE_COMPARE(importer->frequency(), 96000);
 
-    CORRADE_COMPARE_AS(importer->data(),
-        (Containers::Array<char>{Containers::InPlaceInit, {'\xde', '\xfe', '\xca', '\x7e'}}),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(importer->data()),
+        Containers::arrayView<UnsignedByte>({
+            0xde, 0xfe, 0xca, 0x7e
+        }), TestSuite::Compare::Container);
 }
 
 void DrFlacImporterTest::stereo16() {
@@ -169,9 +173,10 @@ void DrFlacImporterTest::stereo16() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 44100);
 
-    CORRADE_COMPARE_AS(importer->data(),
-        (Containers::Array<char>{Containers::InPlaceInit, {39, 79, 39, 79}}),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(Containers::arrayCast<Short>(importer->data()),
+        Containers::arrayView<Short>({
+            20263, 20263
+        }), TestSuite::Compare::Container);
 }
 
 void DrFlacImporterTest::stereo24() {
@@ -182,13 +187,14 @@ void DrFlacImporterTest::stereo24() {
     CORRADE_COMPARE(importer->frequency(), 8000);
 
     CORRADE_COMPARE(importer->data().size(), 187944);
+    /** @todo find some range that isn't mostly zeros */
     CORRADE_COMPARE_AS(importer->data().prefix(32),
-        (Containers::Array<char>{Containers::InPlaceInit, {
+        Containers::arrayView<char>({
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 56, 0, 0, -128, 56, 0,
-            0, -64, -72, 0, 0, 0, 0}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+            0, -64, -72, 0, 0, 0, 0
+        }), TestSuite::Compare::Container);
 }
 
 void DrFlacImporterTest::quad16() {

@@ -99,9 +99,10 @@ void DrMp3ImporterTest::mono16() {
     CORRADE_COMPARE(importer->frequency(), 44100);
     CORRADE_COMPARE_AS(importer->data().size(), 6724,
         TestSuite::Compare::Greater);
-    CORRADE_COMPARE_AS(importer->data().slice(6720, 6724),
-        (Containers::Array<char>{Containers::InPlaceInit, {50, 3, -100, 9}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(importer->data().slice(6720, 6724)),
+        Containers::arrayView<UnsignedShort>({
+            0x0332, 0x099c
+        }), TestSuite::Compare::Container);
 }
 
 void DrMp3ImporterTest::stereo16() {
@@ -112,9 +113,10 @@ void DrMp3ImporterTest::stereo16() {
     CORRADE_COMPARE(importer->frequency(), 44100);
     CORRADE_COMPARE_AS(importer->data().size(), 9734,
         TestSuite::Compare::Greater);
-    CORRADE_COMPARE_AS(importer->data().slice(9730, 9734),
-        (Containers::Array<char>{Containers::InPlaceInit, {-90, -103, -79, -103}}),
-        TestSuite::Compare::Container<Containers::ArrayView<const char>>);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(importer->data().slice(9730, 9734)),
+        Containers::arrayView<UnsignedShort>({
+            0x99a6, 0x99b1
+        }), TestSuite::Compare::Container);
 }
 
 }}}}
