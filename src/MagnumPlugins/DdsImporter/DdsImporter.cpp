@@ -31,6 +31,7 @@
 #include <vector>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Magnum/PixelFormat.h>
@@ -493,7 +494,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* clear previous data */
     f->in = Containers::Array<char>{Containers::NoInit, data.size()};
-    std::copy(data.begin(), data.end(), f->in.begin());
+    Utility::copy(data, f->in);
 
     constexpr size_t MagicNumberSize = 4;
     /* read magic number to verify this is a dds file. */
@@ -641,7 +642,7 @@ Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt, const Unsi
 
     /* copy image data */
     Containers::Array<char> data{Containers::NoInit, dataOffset.data.size()};
-    std::copy(dataOffset.data.begin(), dataOffset.data.end(), data.begin());
+    Utility::copy(dataOffset.data, data);
 
     /* Compressed image */
     if(_f->compressed)
@@ -668,7 +669,7 @@ Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt, const Unsi
 
     /* copy image data */
     Containers::Array<char> data{Containers::NoInit, dataOffset.data.size()};
-    std::copy(dataOffset.data.begin(), dataOffset.data.end(), data.begin());
+    Utility::copy(dataOffset.data, data);
 
     /* Compressed image */
     if(_f->compressed)

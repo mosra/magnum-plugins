@@ -30,6 +30,7 @@
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/ConfigurationValue.h>
 #include <Corrade/Utility/Debug.h>
@@ -125,7 +126,7 @@ struct BasisImporter::State {
     /* There is only this type of codebook */
     basist::etc1_global_selector_codebook codebook;
     Containers::Optional<basist::basisu_transcoder> transcoder;
-    Containers::Array<unsigned char> in;
+    Containers::Array<char> in;
     basist::basisu_file_info fileInfo;
 
     bool noTranscodeFormatWarningPrinted = false;
@@ -204,8 +205,8 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* All good, release the transcoder guard and keep a copy of the data */
     transcoderGuard.release();
-    _state->in = Containers::Array<unsigned char>{Containers::NoInit, data.size()};
-    std::copy(data.begin(), data.end(), _state->in.begin());
+    _state->in = Containers::Array<char>{Containers::NoInit, data.size()};
+    Utility::copy(data, _state->in);
 }
 
 UnsignedInt BasisImporter::doImage2DCount() const {

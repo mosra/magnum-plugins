@@ -29,6 +29,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Unicode.h>
 #include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
@@ -83,7 +84,7 @@ bool FreeTypeFont::doIsOpened() const { return ftFont; }
 auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
     /* We need to preserve the data for whole FT_Face lifetime */
     _data = Containers::Array<unsigned char>{Containers::NoInit, data.size()};
-    std::copy(data.begin(), data.end(), _data.begin());
+    Utility::copy(Containers::arrayCast<const unsigned char>(data), _data);
 
     CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
     /** @todo ability to specify different font in TTC collection */

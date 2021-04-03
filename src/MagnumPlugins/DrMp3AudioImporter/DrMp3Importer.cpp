@@ -26,6 +26,7 @@
 
 #include "DrMp3Importer.h"
 
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
@@ -102,7 +103,7 @@ UnsignedInt DrMp3Importer::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrMp3Importer::doData() {
     Containers::Array<char> copy{Containers::NoInit, _data->size()};
-    std::copy(_data->begin(), _data->end(), copy.begin());
+    Utility::copy(*_data, copy);
     return copy;
 }
 

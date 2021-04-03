@@ -31,7 +31,9 @@
 #include <thread>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
@@ -210,7 +212,7 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
     const basisu::uint8_vec& out = basis.get_output_basis_file();
 
     Containers::Array<char> fileData{Containers::NoInit, out.size()};
-    std::copy(out.begin(), out.end(), fileData.data());
+    Utility::copy(Containers::arrayCast<const char>(out), fileData);
 
     return fileData;
 }

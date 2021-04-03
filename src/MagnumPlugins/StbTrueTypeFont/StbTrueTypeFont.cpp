@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Unicode.h>
 #include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
@@ -87,7 +88,7 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
     /* TrueType fonts are memory-mapped, thus we need to preserve the data for
        the whole plugin lifetime */
     font->data = Containers::Array<unsigned char>(Containers::NoInit, data.size());
-    std::copy(data.begin(), data.end(), font->data.begin());
+    Utility::copy(Containers::arrayCast<const unsigned char>(data), font->data);
 
     /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file
        (because of course it doesn't take a size, ffs), check explicitly */

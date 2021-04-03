@@ -40,6 +40,7 @@
 #include <csetjmp>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
@@ -73,7 +74,7 @@ void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     _in = Containers::Array<unsigned char>{Containers::NoInit, data.size()};
-    std::copy(data.begin(), data.end(), _in.begin());
+    Utility::copy(Containers::arrayCast<const unsigned char>(data), _in);
 }
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
