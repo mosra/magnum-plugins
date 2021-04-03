@@ -131,22 +131,19 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
 
     /* 24-bit needs to become float */
     } else if(normalizedBytesPerSample == 3) {
-        Containers::Array<Float> floatData(samples);
+        Containers::Array<char> floatData{Containers::NoInit, std::size_t(samples*sizeof(Float))};
 
+        const Containers::ArrayView<Float> floats = Containers::arrayCast<Float>(floatData);
         for(std::size_t i = 0; i != samples; ++i) {
             const UnsignedInt s0 = (*_data)[i*3 + 0];
             const UnsignedInt s1 = (*_data)[i*3 + 1];
             const UnsignedInt s2 = (*_data)[i*3 + 2];
 
             const Int intData = Int((s0 << 8) | (s1 << 16) | (s2 << 24));
-            floatData[i] = Math::unpack<Float>(intData);
+            floats[i] = Math::unpack<Float>(intData);
         }
 
-        const char* const floatBegin = reinterpret_cast<const char*>(floatData.begin());
-        const char* const floatEnd = reinterpret_cast<const char*>(floatData.end());
-
-        _data = Containers::Array<char>{Containers::NoInit, samples*sizeof(Float)};
-        std::copy(floatBegin, floatEnd, _data->begin());
+        _data = std::move(floatData);
     }
 }
 
