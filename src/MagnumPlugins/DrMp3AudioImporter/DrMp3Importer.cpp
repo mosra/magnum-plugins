@@ -26,7 +26,6 @@
 
 #include "DrMp3Importer.h"
 
-#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
@@ -69,14 +68,15 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
     config.outputChannels = config.outputSampleRate = 0;
     drmp3_uint64 frameCount;
 
-    drmp3_int16* decodedData = drmp3_open_memory_and_read_s16(data.data(), data.size(), &config, &frameCount);
-
-    if(!decodedData) {
+    drmp3_int16* const decodedPointer = drmp3_open_memory_and_read_s16(data.data(), data.size(), &config, &frameCount);
+    if(!decodedPointer) {
         Error() << "Audio::DrMp3Importer::openData(): failed to open and decode MP3 data";
         return;
     }
 
-    Containers::ScopeGuard drmp3Free{static_cast<void*>(decodedData), drmp3_free};
+    Containers::Array<char> decodedData{reinterpret_cast<char*>(decodedPointer), std::size_t(frameCount*sizeof(Short)), [](char* data, std::size_t) {
+        drmp3_free(data);
+    }};
 
     const std::uint32_t numChannels = config.outputChannels;
 
@@ -90,11 +90,8 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
     _format = mp3FormatTable[numChannels - 1][1];
     CORRADE_INTERNAL_ASSERT(_format != BufferFormat{});
 
-    const char* const dataBegin = reinterpret_cast<const char*>(decodedData);
-    const char* const dataEnd = reinterpret_cast<const char*>(decodedData + frameCount);
-
-    _data = Containers::Array<char>{Containers::NoInit, std::size_t(frameCount*sizeof(Short))};
-    std::copy(dataBegin, dataEnd, _data->begin());
+    /* All good, save the data */
+    _data = std::move(decodedData);
 }
 
 void DrMp3Importer::doClose() { _data = Containers::NullOpt; }
