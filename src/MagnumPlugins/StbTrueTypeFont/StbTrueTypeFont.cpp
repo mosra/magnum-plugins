@@ -83,19 +83,19 @@ FontFeatures StbTrueTypeFont::doFeatures() const { return FontFeature::OpenData;
 bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 
 auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
-    Containers::Pointer<Font> font{Containers::InPlaceInit};
-
-    /* TrueType fonts are memory-mapped, thus we need to preserve the data for
-       the whole plugin lifetime */
-    font->data = Containers::Array<unsigned char>(Containers::NoInit, data.size());
-    Utility::copy(Containers::arrayCast<const unsigned char>(data), font->data);
-
     /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file
        (because of course it doesn't take a size, ffs), check explicitly */
     if(data.empty()) {
         Error{} << "Text::StbTrueTypeFont::openData(): the file is empty";
         return {};
     }
+
+    Containers::Pointer<Font> font{Containers::InPlaceInit};
+
+    /* TrueType fonts are memory-mapped, thus we need to preserve the data for
+       the whole plugin lifetime */
+    font->data = Containers::Array<unsigned char>(Containers::NoInit, data.size());
+    Utility::copy(Containers::arrayCast<const unsigned char>(data), font->data);
 
     /** @todo ability to specify different font index in TTC collection */
     const int offset = stbtt_GetFontOffsetForIndex(font->data, 0);
