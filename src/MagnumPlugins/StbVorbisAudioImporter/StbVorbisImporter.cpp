@@ -92,7 +92,7 @@ BufferFormat StbVorbisImporter::doFormat() const { return _format; }
 UnsignedInt StbVorbisImporter::doFrequency() const { return _frequency; }
 
 Containers::Array<char> StbVorbisImporter::doData() {
-    Containers::Array<char> copy(_data.size());
+    Containers::Array<char> copy{Containers::NoInit, _data.size()};
     std::copy(_data.begin(), _data.end(), copy.begin());
     return copy;
 }

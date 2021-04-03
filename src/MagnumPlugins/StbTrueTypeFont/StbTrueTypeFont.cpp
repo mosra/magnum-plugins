@@ -86,7 +86,7 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
 
     /* TrueType fonts are memory-mapped, thus we need to preserve the data for
        the whole plugin lifetime */
-    font->data = Containers::Array<unsigned char>(data.size());
+    font->data = Containers::Array<unsigned char>(Containers::NoInit, data.size());
     std::copy(data.begin(), data.end(), font->data.begin());
 
     /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file

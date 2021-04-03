@@ -57,7 +57,7 @@ const BufferFormat flacFormatTable[8][4] = {
 
 /* Converts 32-bit PCM into lower bit levels by skipping bytes */
 Containers::Array<char> convert32PCM(const Containers::Array<char>& container, const UnsignedInt samples, const UnsignedInt size) {
-    Containers::Array<char> convertData(samples*size);
+    Containers::Array<char> convertData{Containers::NoInit, samples*size};
 
     UnsignedInt skip = -1, index = 0;
     for(char item: container) {
@@ -114,7 +114,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
 
     /* 32-bit integers need to be normalized to Double (with a 32 bit mantissa) */
     if(normalizedBytesPerSample == 4) {
-        Containers::Array<Int> tempData(samples);
+        Containers::Array<Int> tempData{Containers::NoInit, samples};
         drflac_read_s32(handle, samples, reinterpret_cast<Int*>(tempData.begin()));
 
         /* If the channel is mono/stereo, we can use double samples */
@@ -128,7 +128,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
             const char* doubleBegin = reinterpret_cast<const char*>(doubleData.begin());
             const char* doubleEnd = reinterpret_cast<const char*>(doubleData.end());
 
-            _data = Containers::Array<char>(samples*sizeof(Double));
+            _data = Containers::Array<char>{Containers::NoInit, samples*sizeof(Double)};
             std::copy(doubleBegin, doubleEnd, _data->begin());
 
         /* Otherwise, convert to float */
@@ -142,14 +142,14 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
             const char* floatBegin = reinterpret_cast<const char*>(floatData.begin());
             const char* floatEnd = reinterpret_cast<const char*>(floatData.end());
 
-            _data = Containers::Array<char>(samples*sizeof(Float));
+            _data = Containers::Array<char>{Containers::NoInit, samples*sizeof(Float)};
             std::copy(floatBegin, floatEnd, _data->begin());
         }
 
         return;
     }
 
-    Containers::Array<char> tempData(samples*sizeof(Int));
+    Containers::Array<char> tempData{Containers::NoInit, std::size_t(samples*sizeof(Int))};
     drflac_read_s32(handle, samples, reinterpret_cast<Int*>(tempData.begin()));
 
     _data = convert32PCM(tempData, samples, normalizedBytesPerSample);
@@ -174,7 +174,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
         const char* const floatBegin = reinterpret_cast<const char*>(floatData.begin());
         const char* const floatEnd = reinterpret_cast<const char*>(floatData.end());
 
-        _data = Containers::Array<char>(samples*sizeof(Float));
+        _data = Containers::Array<char>{Containers::NoInit, samples*sizeof(Float)};
         std::copy(floatBegin, floatEnd, _data->begin());
     }
 }
@@ -186,7 +186,7 @@ BufferFormat DrFlacImporter::doFormat() const { return _format; }
 UnsignedInt DrFlacImporter::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrFlacImporter::doData() {
-    Containers::Array<char> copy(_data->size());
+    Containers::Array<char> copy{Containers::NoInit, _data->size()};
     std::copy(_data->begin(), _data->end(), copy.begin());
     return copy;
 }

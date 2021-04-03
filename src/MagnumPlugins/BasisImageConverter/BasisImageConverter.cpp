@@ -209,7 +209,7 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
 
     const basisu::uint8_vec& out = basis.get_output_basis_file();
 
-    Containers::Array<char> fileData{Containers::DefaultInit, out.size()};
+    Containers::Array<char> fileData{Containers::NoInit, out.size()};
     std::copy(out.begin(), out.end(), fileData.data());
 
     return fileData;

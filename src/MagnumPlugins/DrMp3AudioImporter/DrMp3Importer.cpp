@@ -93,7 +93,7 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
     const char* const dataBegin = reinterpret_cast<const char*>(decodedData);
     const char* const dataEnd = reinterpret_cast<const char*>(decodedData + frameCount);
 
-    _data = Containers::Array<char>(frameCount*sizeof(Short));
+    _data = Containers::Array<char>{Containers::NoInit, std::size_t(frameCount*sizeof(Short))};
     std::copy(dataBegin, dataEnd, _data->begin());
 }
 
@@ -104,7 +104,7 @@ BufferFormat DrMp3Importer::doFormat() const { return _format; }
 UnsignedInt DrMp3Importer::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrMp3Importer::doData() {
-    Containers::Array<char> copy(_data->size());
+    Containers::Array<char> copy{Containers::NoInit, _data->size()};
     std::copy(_data->begin(), _data->end(), copy.begin());
     return copy;
 }

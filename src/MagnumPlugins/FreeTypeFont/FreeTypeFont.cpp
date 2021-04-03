@@ -82,7 +82,7 @@ bool FreeTypeFont::doIsOpened() const { return ftFont; }
 
 auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
     /* We need to preserve the data for whole FT_Face lifetime */
-    _data = Containers::Array<unsigned char>(data.size());
+    _data = Containers::Array<unsigned char>{Containers::NoInit, data.size()};
     std::copy(data.begin(), data.end(), _data.begin());
 
     CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});

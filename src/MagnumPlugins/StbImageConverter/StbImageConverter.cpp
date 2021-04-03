@@ -116,7 +116,7 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
     /* Reverse rows in image data. There is stbi_flip_vertically_on_write() but
        can't use that because the input image might be sparse (having padded
        rows, for example). The copy makes the data tightly packed. */
-    Containers::Array<unsigned char> reversedData{image.pixelSize()*image.size().product()};
+    Containers::Array<unsigned char> reversedData{Containers::NoInit, image.pixelSize()*image.size().product()};
     std::size_t outputStride = image.pixelSize()*image.size().x();
     for(Int y = 0; y != image.size().y(); ++y) {
         auto row = inputData.suffix(y*dataProperties.second.x()).prefix(outputStride);
@@ -157,7 +157,7 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
 
     /* Copy the data into array (I would *love* to have a detach() function on
        std::string) */
-    Containers::Array<char> fileData{data.size()};
+    Containers::Array<char> fileData{Containers::NoInit, data.size()};
     std::copy(data.begin(), data.end(), fileData.begin());
     return fileData;
 }

@@ -204,7 +204,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* All good, release the transcoder guard and keep a copy of the data */
     transcoderGuard.release();
-    _state->in = Containers::Array<unsigned char>(data.size());
+    _state->in = Containers::Array<unsigned char>{Containers::NoInit, data.size()};
     std::copy(data.begin(), data.end(), _state->in.begin());
 }
 

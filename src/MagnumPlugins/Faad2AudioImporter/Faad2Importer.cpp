@@ -108,7 +108,7 @@ BufferFormat Faad2Importer::doFormat() const { return _format; }
 UnsignedInt Faad2Importer::doFrequency() const { return _frequency; }
 
 Containers::Array<char> Faad2Importer::doData() {
-    Containers::Array<char> copy(_samples.size()*2);
+    Containers::Array<char> copy{Containers::NoInit, _samples.size()*2};
     std::memcpy(copy.begin(), _samples.data(), copy.size());
     return copy;
 }
