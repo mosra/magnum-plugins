@@ -203,21 +203,33 @@ usage documentation.
 
 -   [FindAssimp.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindAssimp.cmake)
     --- CMake module for finding Assimp. Copy this to your module directory if
-    you want to find and link to @ref Trade::AssimpImporter.
+    you want to find and link to the @ref Trade::AssimpImporter "AssimpImporter"
+    plugin.
 -   [FindBasisUniversal.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindBasisUniversal.cmake)
     --- CMake module for finding basis universal sources. Copy this to your module directory if
-    you want to find and link to @ref Trade::BasisImporter.
+    you want to find and link to the @ref Trade::BasisImporter "BasisImporter"
+    or @ref Trade::BasisImageConverter "BasisImageConverter" plugins.
 -   [FindDevIL.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindDevIL.cmake)
     --- CMake module for finding DevIL. This is a forked version of the upstream
     module that doesn't attempt to find the often not distributed ILUT library.
-    Copy this to your module directory if you want to find and link to
-    @ref Trade::DevIlImageImporter.
+    Copy this to your module directory if you want to find and link to the
+    @ref Trade::DevIlImageImporter "DevIlImageImporter" plugin.
 -   [FindFAAD2.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindFAAD2.cmake)
     --- CMake module for finding FAAD2. Copy this to your module directory if
-    you want to find and link to @ref Audio::Faad2Importer.
+    you want to find and link to the
+    @ref Audio::Faad2Importer "Faad2AudioImporter" plugin.
+-   [FindGlslang.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindGlslang.cmake)
+    --- CMake module for finding Glslang. Copy this to your module directory if
+    you want to find and link to the
+    @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin.
+-   [FindSpirvTools.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindSpirvTools.cmake)
+    --- CMake module for finding SPIRV-Tools. Copy this to your module
+    directory if you want to find and link to the
+    @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter" plugin.
 -   [FindHarfBuzz.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindHarfBuzz.cmake)
     --- CMake module for finding HarfBuzz. Copy this to your module directory
-    if you want to find and link to @ref Text::HarfBuzzFont.
+    if you want to find and link to the @ref Text::HarfBuzzFont "HarfBuzzFont"
+    plugin.
 
 See also @ref cmake-modules "relevant section for the main Magnum project".
 */
