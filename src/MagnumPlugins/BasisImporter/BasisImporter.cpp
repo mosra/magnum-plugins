@@ -138,7 +138,11 @@ void BasisImporter::initialize() {
     basist::basisu_transcoder_init();
 }
 
-BasisImporter::BasisImporter() = default;
+BasisImporter::BasisImporter(): _state{Containers::InPlaceInit} {
+    /* Initialize default configuration values */
+    /** @todo horrible workaround, fix this properly */
+    configuration().setValue("format", "");
+}
 
 BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {
     /* Initializes codebook */
