@@ -93,8 +93,10 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
--   @ref Trade::JpegImageConverter was mistakenly using the `BUILD_STATIC`
-    CMake option instead of `BUILD_PLUGINS_STATIC`
+-   @ref Trade::JpegImageConverter "JpegImageConverter" was mistakenly using
+    the `BUILD_STATIC` CMake option instead of `BUILD_PLUGINS_STATIC`
+-   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct
+    instantiation without a plugin manager (see [mosra/magnum-plugins#96](https://github.com/mosra/magnum-plugins/pull/96))
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
