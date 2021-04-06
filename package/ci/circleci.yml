@@ -146,6 +146,22 @@ commands:
           wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.tar.gz
           tar --strip-components 1 -xzf $BASIS_VERSION.tar.gz
 
+  install-openexr:
+    parameters:
+      build:
+        type: string
+    steps:
+    - run:
+        name: Install OpenEXR
+        # Zip from https://github.com/mosra/magnum-ci/tree/openexr and
+        # self-hosted because GH Actions would make it too simple for people if
+        # you could just download the artifacts directly, right? RIGHT?
+        command: |
+          apt install -y wget unzip
+          mkdir -p $HOME/deps && cd $HOME/deps
+          wget https://ci.magnum.graphics/openexr-2.5.5-<< parameters.build >>.zip
+          unzip openexr-2.5.5-<< parameters.build >>.zip
+
   install-glslang:
     parameters:
       build:
@@ -215,12 +231,14 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
     - install-meshoptimizer
     - install-glslang:
+        build: ubuntu-16.04-gcc4.8
+    - install-openexr:
         build: ubuntu-16.04-gcc4.8
     - install-spirv-tools:
         build: ubuntu-16.04-gcc4.8
@@ -238,12 +256,14 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
     - install-meshoptimizer
     - install-glslang:
+        build: ubuntu-16.04-gcc4.8
+    - install-openexr:
         build: ubuntu-16.04-gcc4.8
     - install-spirv-tools:
         build: ubuntu-16.04-gcc4.8
@@ -260,12 +280,14 @@ jobs:
       CONFIGURATION: Release
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
     - install-meshoptimizer
     - install-glslang:
+        build: ubuntu-16.04-gcc4.8
+    - install-openexr:
         build: ubuntu-16.04-gcc4.8
     - install-spirv-tools:
         build: ubuntu-16.04-gcc4.8
