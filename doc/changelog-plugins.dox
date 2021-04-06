@@ -38,6 +38,10 @@ namespace Magnum {
     plugin for SPIR-V shader (dis)assembly and validation
 -   New @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin for
     GLSL shader validation and GLSL->SPIR-V compilation
+-   New @ref Trade::OpenExrImporter "OpenExrImporter" and
+    @ref Trade::OpenExrImageConverter "OpenExrImageConverter" plugins for
+    reading and writing OpenEXR files, including cube map, custom channel,
+    multi-part and deep image support
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" material import was
     reworked for the new @ref Trade::MaterialData API, supporting all core
     properties as well as everything from the

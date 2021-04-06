@@ -215,7 +215,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
@@ -238,7 +238,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
@@ -260,7 +260,7 @@ jobs:
       CONFIGURATION: Release
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
     - install-basis
@@ -283,7 +283,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
     - install-clang-3_8
     - install-cmake-3_4
     - install-basis
@@ -306,7 +306,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
     - install-clang-3_8
     - install-cmake-3_4
     - install-basis
@@ -327,7 +327,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang wget
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget
     - install-basis
     - install-meshoptimizer
     - build:
@@ -345,7 +345,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang wget
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget
     - install-basis
     - install-meshoptimizer
     - build:

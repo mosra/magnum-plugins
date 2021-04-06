@@ -19,6 +19,7 @@ class MagnumPlugins < Formula
   depends_on "harfbuzz" => :optional
   depends_on "libpng" => :recommended
   depends_on "jpeg" => :recommended
+  depends_on "openexr" => :recommended
   depends_on "spirv-tools" => :recommended
 
   def install
@@ -60,6 +61,8 @@ class MagnumPlugins < Formula
         "-DWITH_JPEGIMPORTER=#{(build.with? 'jpeg') ? 'ON' : 'OFF'}",
         "-DWITH_MESHOPTIMIZERSCENECONVERTER=ON",
         "-DWITH_MINIEXRIMAGECONVERTER=ON",
+        "-DWITH_OPENEXRIMAGECONVERTER=#{(build.with? 'openexr') ? 'ON' : 'OFF'}",
+        "-DWITH_OPENEXRIMPORTER=#{(build.with? 'openexr') ? 'ON' : 'OFF'}",
         "-DWITH_OPENGEXIMPORTER=ON",
         "-DWITH_PNGIMAGECONVERTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-DWITH_PNGIMPORTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",

@@ -83,6 +83,14 @@
 /** @dir MagnumPlugins/MiniExrImageConverter
  * @brief Plugin @ref Magnum::Trade::MiniExrImageConverter
  */
+/** @dir MagnumPlugins/OpenExrImageConverter
+ * @brief Plugin @ref Magnum::Trade::OpenExrImageConverter
+ * @m_since_latest_{plugins}
+ */
+/** @dir MagnumPlugins/OpenExrImporter
+ * @brief Plugin @ref Magnum::Trade::OpenExrImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/OpenGexImporter
  * @brief Plugin @ref Magnum::Trade::OpenGexImporter
  */

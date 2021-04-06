@@ -107,6 +107,14 @@ if(WITH_OPENGEXIMPORTER)
     add_subdirectory(OpenGexImporter)
 endif()
 
+if(WITH_OPENEXRIMAGECONVERTER)
+    add_subdirectory(OpenExrImageConverter)
+endif()
+
+if(WITH_OPENEXRIMPORTER)
+    add_subdirectory(OpenExrImporter)
+endif()
+
 if(WITH_PNGIMAGECONVERTER)
     add_subdirectory(PngImageConverter)
 endif()

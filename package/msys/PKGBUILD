@@ -20,6 +20,7 @@ depends=("${MINGW_PACKAGE_PREFIX}-magnum>=$pkgver"
          "${MINGW_PACKAGE_PREFIX}-harfbuzz"
          "${MINGW_PACKAGE_PREFIX}-libjpeg-turbo"
          "${MINGW_PACKAGE_PREFIX}-libpng"
+         "${MINGW_PACKAGE_PREFIX}-openexr"
          "${MINGW_PACKAGE_PREFIX}-spirv-tools")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cmake" "${MINGW_PACKAGE_PREFIX}-ninja")
 options=('!strip')
@@ -52,6 +53,8 @@ build() {
             -DWITH_JPEGIMPORTER=ON \
             -DWITH_MESHOPTIMIZERSCENECONVERTER=OFF \
             -DWITH_MINIEXRIMAGECONVERTER=ON \
+            -DWITH_OPENEXRIMAGECONVERTER=ON \
+            -DWITH_OPENEXRIMPORTER=ON \
             -DWITH_OPENGEXIMPORTER=ON \
             -DWITH_PNGIMAGECONVERTER=ON \
             -DWITH_PNGIMPORTER=ON \

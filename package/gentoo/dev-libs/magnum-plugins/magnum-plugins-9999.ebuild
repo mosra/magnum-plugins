@@ -18,6 +18,7 @@ RDEPEND="
 	media-libs/faad2
 	media-libs/freetype
 	media-libs/harfbuzz
+	media-libs/openexr
 	virtual/jpeg
 	media-libs/libpng
 	media-libs/assimp
@@ -48,6 +49,8 @@ src_configure() {
 		-DWITH_JPEGIMPORTER=ON
 		-DWITH_MESHOPTIMIZERSCENECONVERTER=OFF
 		-DWITH_MINIEXRIMAGECONVERTER=ON
+		-DWITH_OPENEXRIMAGECONVERTER=ON
+		-DWITH_OPENEXRIMPORTER=ON
 		-DWITH_OPENGEXIMPORTER=ON
 		-DWITH_PNGIMAGECONVERTER=ON
 		-DWITH_PNGIMPORTER=ON

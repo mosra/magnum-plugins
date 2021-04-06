@@ -374,6 +374,10 @@ By default no plugins are built and you need to select them manually:
     plugin.
 -   `WITH_MINIEXRIMAGECONVERTER` --- Build the
     @ref Trade::MiniExrImageConverter "MiniExrImageConverter" plugin.
+-   `WITH_OPENEXRIMAGECONVERTER` --- Build the @ref Trade::OpenExrImageConverter "OpenExrImageConverter"
+    plugin. Depends on [OpenEXR](https://www.openexr.com/).
+-   `WITH_OPENEXRIMPORTER` --- Build the @ref Trade::OpenExrImporter "OpenExrImporter"
+    plugin. Depends on [OpenEXR](https://www.openexr.com/).
 -   `WITH_OPENGEXIMPORTER` --- Build the @ref Trade::OpenGexImporter "OpenGexImporter"
     plugin. Enables also building of the @ref OpenDdl library.
 -   `WITH_PNGIMAGECONVERTER` --- Build the

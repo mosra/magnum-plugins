@@ -143,10 +143,11 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
     DrWavAudioImporter Faad2AudioImporter FreeTypeFont GlslangShaderConverter
     HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
-    MeshOptimizerSceneConverter MiniExrImageConverter OpenGexImporter
-    PngImageConverter PngImporter PrimitiveImporter SpirvToolsShaderConverter
-    StanfordImporter StanfordSceneConverter StbImageConverter StbImageImporter
-    StbTrueTypeFont StbVorbisAudioImporter StlImporter TinyGltfImporter)
+    MeshOptimizerSceneConverter MiniExrImageConverter OpenExrImageConverter
+    OpenExrImporter OpenGexImporter PngImageConverter PngImporter
+    PrimitiveImporter SpirvToolsShaderConverter StanfordImporter
+    StanfordSceneConverter StbImageConverter StbImageImporter StbTrueTypeFont
+    StbVorbisAudioImporter StlImporter TinyGltfImporter)
 # Nothing is enabled by default right now
 set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 
@@ -393,6 +394,15 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             endif()
 
         # MiniExrImageConverter has no dependencies
+
+        # OpenExrImporter / OpenExrImageConverter plugin dependencies
+        elseif(_component STREQUAL OpenExrImporter OR _component STREQUAL OpenExrImageConverter)
+            # Force our own FindOpenEXR module, which then delegates to the
+            # config if appropriate
+            find_package(OpenEXR REQUIRED MODULE)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES OpenEXR::IlmImf)
+
         # No special setup for the OpenDdl library
         # OpenGexImporter has no dependencies
 
