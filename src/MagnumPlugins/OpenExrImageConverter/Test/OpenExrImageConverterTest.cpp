@@ -40,6 +40,8 @@
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
+#include <OpenEXR/OpenEXRConfig.h> /* for version-dependent checks */
+
 #include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
@@ -145,7 +147,15 @@ void OpenExrImageConverterTest::zeroSizeImage() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!_manager.instantiate("OpenExrImageConverter")->exportToData(image));
+
+    /* OpenEXR 2.5.3 and newer throw already in the Header constructor, older
+       versions only when writing the file so the message is different.
+       Arguably the older variant is more confusing. */
+    #if OPENEXR_VERSION_MAJOR*100 + OPENEXR_VERSION_MINOR*10 + OPENEXR_VERSION_PATCH >= 253
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::exportToData(): conversion error: Invalid display window in image header.\n");
+    #else
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::exportToData(): conversion error: Cannot open image file \"\". Invalid display window in image header.\n");
+    #endif
 }
 
 void OpenExrImageConverterTest::rgb16f() {
