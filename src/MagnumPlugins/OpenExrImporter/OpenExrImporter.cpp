@@ -116,7 +116,8 @@ void OpenExrImporter::doOpenData(const Containers::ArrayView<const char> data) {
     try {
         state.emplace(std::move(dataCopy));
     } catch(const Iex::BaseExc& e) {
-        Error{} << "Trade::OpenExrImporter::openData(): import error:" << e.message();
+        /* e.message() is only since 2.3.0, use what() for compatibility */
+        Error{} << "Trade::OpenExrImporter::openData(): import error:" << e.what();
         return;
     }
 
@@ -364,7 +365,8 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
 /* Good thing there are function try blocks, otherwise I would have to indent
    the whole thing. That would be awful. */
 } catch(const Iex::BaseExc& e) {
-    Error{} << "Trade::OpenExrImporter::image2D(): import error:" << e.message();
+    /* e.message() is only since 2.3.0, use what() for compatibility */
+    Error{} << "Trade::OpenExrImporter::image2D(): import error:" << e.what();
     return {};
 }
 

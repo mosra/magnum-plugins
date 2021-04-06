@@ -213,7 +213,8 @@ Containers::Array<char> OpenExrImageConverter::doExportToData(const ImageView2D&
 /* Good thing there are function try blocks, otherwise I would have to indent
    the whole thing. That would be awful. */
 } catch(const Iex::BaseExc& e) {
-    Error{} << "Trade::OpenExrImageConverter::exportToData(): conversion error:" << e.message();
+    /* e.message() is only since 2.3.0, use what() for compatibility */
+    Error{} << "Trade::OpenExrImageConverter::exportToData(): conversion error:" << e.what();
     return {};
 }
 
