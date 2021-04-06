@@ -53,16 +53,21 @@
 #
 
 # Try to find OpenEXR via its config files. These are available only since 2.5
-# (2.4?), for older versions we'll have to fall back to finding ourselves.
-find_package(OpenEXR CONFIG QUIET)
-if(OpenEXR_FOUND)
-    # Just to make FPHSA print some meaningful location, nothing else
-    get_target_property(_OPENEXR_INTERFACE_INCLUDE_DIRECTORIES OpenEXR::IlmImf INTERFACE_INCLUDE_DIRECTORIES)
-    include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(OpenEXR DEFAULT_MSG
-        _OPENEXR_INTERFACE_INCLUDE_DIRECTORIES)
+# (2.4?), for older versions we'll have to fall back to finding ourselves. Also
+# do that only on CMake 3.9 and greater, because the config files call
+# find_dependency() from CMakeFindDependencyMacro with 3 arguments, which isn't
+# supported before: https://github.com/Kitware/CMake/commit/ab358d6a859d8b7e257ed1e06ca000e097a32ef6
+if(NOT CMAKE_VERSION VERSION_LESS 3.9.0)
+    find_package(OpenEXR CONFIG QUIET)
+    if(OpenEXR_FOUND)
+        # Just to make FPHSA print some meaningful location, nothing else
+        get_target_property(_OPENEXR_INTERFACE_INCLUDE_DIRECTORIES OpenEXR::IlmImf INTERFACE_INCLUDE_DIRECTORIES)
+        include(FindPackageHandleStandardArgs)
+        find_package_handle_standard_args(OpenEXR DEFAULT_MSG
+            _OPENEXR_INTERFACE_INCLUDE_DIRECTORIES)
 
-    return()
+        return()
+    endif()
 endif()
 
 # ZLIB and threads are a dependency. Can't use CMakeFindDependencyMacro because
@@ -83,12 +88,49 @@ find_package(Threads ${_OPENEXR_FIND_QUIET} ${_OPENEXR_FIND_REQUIRED})
 
 # All the libraries. Don't bother with debug/release distinction, if people
 # have that, there's a high chance they have a non-ancient version with CMake
-# configs as well
-find_library(OPENEXR_ILMIMF_LIBRARY NAMES IlmImf)
-find_library(ILMBASE_HALF_LIBRARY NAMES Half)
-find_library(ILMBASE_IEX_LIBRARY NAMES Iex)
-find_library(ILMBASE_ILMTHREAD_LIBRARY NAMES IlmThread)
-find_library(ILMBASE_IMATH_LIBRARY NAMES Imath)
+# configs as well... except if they are on CMake <3.9, in which case they
+# can't. Not my problem.
+#
+# Also, imagine that, of all things that are possible with SOVERSION, you
+# choose to embed the version string IN THE FILENAME!!! When finding we prefer
+# a library without a suffix (which is the modicum of sanity distro packagers
+# add back to this lib) and then try from the latest to oldest in case someone
+# would really be so crazy and have multiple versions installed together.
+find_library(OPENEXR_ILMIMF_LIBRARY NAMES
+    IlmImf
+    IlmImf-3_0
+    IlmImf-2_5
+    IlmImf-2_4
+    IlmImf-2_3
+    IlmImf-2_2)
+find_library(ILMBASE_HALF_LIBRARY NAMES
+    Half
+    Half-3_0
+    Half-2_5
+    Half-2_4
+    Half-2_3
+    Half-2_2)
+find_library(ILMBASE_IEX_LIBRARY NAMES
+    Iex
+    Iex-3_0
+    Iex-2_5
+    Iex-2_4
+    Iex-2_3
+    Iex-2_2)
+find_library(ILMBASE_ILMTHREAD_LIBRARY NAMES
+    IlmThread
+    IlmThread-3_0
+    IlmThread-2_5
+    IlmThread-2_4
+    IlmThread-2_3
+    IlmThread-2_2)
+find_library(ILMBASE_IMATH_LIBRARY NAMES
+    Imath
+    Imath-3_0
+    Imath-2_5
+    Imath-2_4
+    Imath-2_3
+    Imath-2_2)
 
 # Include dir
 find_path(OPENEXR_INCLUDE_DIR NAMES OpenEXR/ImfHeader.h)
