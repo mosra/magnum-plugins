@@ -57,7 +57,8 @@ namespace Magnum { namespace Trade {
 
 Supports RGB or grayscale images with 8 bits per channel. The images are
 imported with @ref PixelFormat::RGB8Unorm or @ref PixelFormat::R8Unorm. All
-imported images use default @ref PixelStorage parameters.
+imported images use default @ref PixelStorage parameters. You can use
+@ref JpegImageConverter to encode images into this format.
 
 @m_class{m-block m-success}
 

@@ -58,7 +58,8 @@ Creates Portable Network Graphics (`*.png`) files from images with format
 @ref PixelFormat::R8Unorm / @ref PixelFormat::R16Unorm,
 @ref PixelFormat::RG8Unorm / @ref PixelFormat::RG16Unorm,
 @ref PixelFormat::RGB8Unorm / @ref PixelFormat::RGB16Unorm or
-@ref PixelFormat::RGBA8Unorm / @ref PixelFormat::RGBA16Unorm.
+@ref PixelFormat::RGBA8Unorm / @ref PixelFormat::RGBA16Unorm. You can use
+@ref PngImporter to import images in this format.
 
 @m_class{m-block m-success}
 

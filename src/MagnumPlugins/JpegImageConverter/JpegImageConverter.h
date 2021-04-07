@@ -60,7 +60,8 @@ Creates JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) files from images with format
 instead of vanilla libJPEG and the alpha channel gets ignored (with a warning
 printed to the console). @ref PixelFormat::RG8Unorm can't be easily supported,
 see @ref StbImageConverter for an alternative with a possibility to export RG
-images as a grayscale JPEG.
+images as a grayscale JPEG. You can use @ref JpegImporter to import images in
+this format.
 
 @m_class{m-block m-success}
 
@@ -132,7 +133,6 @@ It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
 @snippet MagnumPlugins/JpegImageConverter/JpegImageConverter.conf config
-
 */
 class MAGNUM_JPEGIMAGECONVERTER_EXPORT JpegImageConverter: public AbstractImageConverter {
     public:
