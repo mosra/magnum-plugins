@@ -60,9 +60,10 @@ Creates OpenEXR (`*.exr`) files from images with format
 @ref PixelFormat::RGB16F or @ref PixelFormat::RGBA16F using the
 [miniexr](https://github.com/aras-p/miniexr) library.
 
-This plugins provides `OpenExrImageConverter` plugin, but note that this plugin
-generates only uncompressed files and the performance might be worse than when
-using plugin dedicated for given format.
+This plugins provides the `OpenExrImageConverter` plugin, but note that this
+plugin generates only uncompressed files and the performance might be worse
+than when using a plugin dedicated for given format, i.e.
+@ref OpenExrImageConverter.
 
 @m_class{m-block m-primary}
 
@@ -107,7 +108,7 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-MiniExrImageConverter-behavior Behavior and limitations
 
-The output is always uncompressed.
+The output is always uncompressed, only half-float RGB and RGBA is supported.
 */
 class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:
