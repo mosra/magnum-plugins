@@ -70,7 +70,7 @@ is incomplete):
 -   Multi-PCX (`*.dcx`)
 -   Dicom (`*.dicom`, `*.dcm`)
 -   DirectDraw Surface (`*.dds`), @ref Trade-DevIlImageImporter-behavior-dds "details"
--   OpenEXR (`*.exr`)
+-   OpenEXR (`*.exr`), @ref Trade-DevIlImageImporter-behavior-exr "details"
 -   Flexible Image Transport System (`*.fits`, `*.fit`)
 -   Heavy Metal: FAKK 2 (`*.ftx`)
 -   Graphics Interchange Format (`*.gif`), @ref Trade-DevIlImageImporter-behavior-animated-gifs "details"
@@ -177,6 +177,15 @@ if the data require it.
 @subsection Trade-DevIlImageImporter-behavior-dds Compressed DDS files
 
 DDS files with BCn compression are always decompressed to RGBA on input.
+
+@subsection Trade-DevIlImageImporter-behavior-exr OpenEXR files
+
+Although DevIL advertises OpenEXR support, when trying any file it either
+complained about an invalid extension (@cpp 0x50b @ce) or, when specifying
+@cb{.ini} type=0x0442 @ce in the
+@ref Trade-DevIlImageImporter-configuration "configuration", failed with
+an invalid enum error (@cpp 0x501 @ce). Since DevIL internally uses OpenEXR
+anyway, you'll have a much better luck with @ref OpenExrImporter.
 
 @subsection Trade-DevIlImageImporter-behavior-animated-gifs Animated GIFs
 
