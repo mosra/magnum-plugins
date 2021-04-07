@@ -263,6 +263,7 @@ jobs:
     - install-meshoptimizer
     - install-glslang:
         build: ubuntu-16.04-gcc4.8
+    # Can't use libopenexr-dev because of GCC 4.8 / 5 ABI break in std::string
     - install-openexr:
         build: ubuntu-16.04-gcc4.8
     - install-spirv-tools:
@@ -287,6 +288,7 @@ jobs:
     - install-meshoptimizer
     - install-glslang:
         build: ubuntu-16.04-gcc4.8
+    # Can't use libopenexr-dev because of GCC 4.8 / 5 ABI break in std::string
     - install-openexr:
         build: ubuntu-16.04-gcc4.8
     - install-spirv-tools:
@@ -305,12 +307,19 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-clang-3_8
     - install-cmake-3_4
     - install-basis
     - install-meshoptimizer
     - install-glslang:
+        build: ubuntu-16.04-gcc5
+    # Even though Clang 3.8 is able to work with libopenexr-dev, the version
+    # 2.2 present in the 16.04 repos leaks like crazy, which is in direct
+    # conflict to what this job is trying to test for. The only job that
+    # actually runs against libopenexr-dev (and thus verifies compatibility
+    # with 2.2) is the ThreadSanitizer build below.
+    - install-openexr:
         build: ubuntu-16.04-gcc5
     - install-spirv-tools:
         build: ubuntu-16.04-gcc5
