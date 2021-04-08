@@ -35,9 +35,6 @@ endif()
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT MAGNUM_OPENEXRIMPORTER_BUILD_STATIC)
     set(OPENEXRIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:OpenExrImporter>)
-    if(WITH_STBIMAGEIMPORTER)
-        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
-    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -63,9 +60,9 @@ corrade_add_test(OpenExrImporterTest OpenExrImporterTest.cpp
 target_include_directories(OpenExrImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_OPENEXRIMPORTER_BUILD_STATIC)
     target_link_libraries(OpenExrImporterTest PRIVATE OpenExrImporter)
-    if(WITH_STBIMAGEIMPORTER)
-        target_link_libraries(OpenExrImporterTest PRIVATE StbImageImporter)
-    endif()
+else()
+    # So the plugins get properly built when building the test
+    add_dependencies(OpenExrImporterTest OpenExrImporter)
 endif()
 set_target_properties(OpenExrImporterTest PROPERTIES FOLDER "MagnumPlugins/OpenExrImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_OPENEXRIMPORTER_BUILD_STATIC)

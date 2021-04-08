@@ -72,7 +72,7 @@ else()
     # So the plugins get properly built when building the test
     add_dependencies(OpenExrImageConverterTest OpenExrImageConverter)
     if(WITH_OPENEXRIMPORTER)
-        add_dependencies(OpenExrImageConverter OpenExrImporter)
+        add_dependencies(OpenExrImageConverterTest OpenExrImporter)
     endif()
 endif()
 set_target_properties(OpenExrImageConverterTest PROPERTIES FOLDER "MagnumPlugins/OpenExrImageConverter/Test")
