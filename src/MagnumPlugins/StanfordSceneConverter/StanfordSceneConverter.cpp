@@ -345,4 +345,4 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
 }}
 
 CORRADE_PLUGIN_REGISTER(StanfordSceneConverter, Magnum::Trade::StanfordSceneConverter,
-    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1")
+    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1.1")
