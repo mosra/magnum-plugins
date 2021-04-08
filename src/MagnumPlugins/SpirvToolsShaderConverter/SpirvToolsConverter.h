@@ -279,7 +279,7 @@ class MAGNUM_SPIRVTOOLSSHADERCONVERTER_EXPORT SpirvToolsConverter: public Abstra
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateData(Stage stage, Containers::ArrayView<const char> data) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateFile(Stage stage, Containers::StringView filename) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL bool doConvertFileToFile(Stage stage, Containers::StringView from, Containers::StringView to) override;
-        MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL Containers::Array<char> doConvertFileToData(Stage stage, Containers::StringView from) override;
+        MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL Containers::Array<char> doConvertFileToData(Stage stage, Containers::StringView filename) override;
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL Containers::Array<char> doConvertDataToData(Magnum::ShaderTools::Stage stage, Containers::ArrayView<const char> data) override;
 
         struct State;

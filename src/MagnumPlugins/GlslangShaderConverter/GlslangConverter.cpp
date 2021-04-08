@@ -808,15 +808,15 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
     return {success.second, out};
 }
 
-Containers::Array<char> GlslangConverter::doConvertFileToData(const Stage stage, const Containers::StringView from) {
+Containers::Array<char> GlslangConverter::doConvertFileToData(const Stage stage, const Containers::StringView filename) {
     /* Save input filename for nicer error messages */
-    _state->inputFilename = Containers::String::nullTerminatedGlobalView(from);
+    _state->inputFilename = Containers::String::nullTerminatedGlobalView(filename);
 
     /* If stage is not specified, detect it from filename and then delegate
        into the default implementation */
     return AbstractConverter::doConvertFileToData(
-        stage == Stage::Unspecified ? stageFromFilename(from) : stage,
-        from);
+        stage == Stage::Unspecified ? stageFromFilename(filename) : stage,
+        filename);
 }
 
 bool GlslangConverter::doConvertFileToFile(const Stage stage, const Containers::StringView from, const Containers::StringView to) {

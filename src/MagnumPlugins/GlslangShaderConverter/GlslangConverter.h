@@ -340,7 +340,7 @@ class MAGNUM_GLSLANGSHADERCONVERTER_EXPORT GlslangConverter: public AbstractConv
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateFile(Stage stage, Containers::StringView filename) override;
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL std::pair<bool, Containers::String> doValidateData(Stage stage, Containers::ArrayView<const char> data) override;
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL bool doConvertFileToFile(Magnum::ShaderTools::Stage stage, Containers::StringView from, Containers::StringView to) override;
-        MAGNUM_GLSLANGSHADERCONVERTER_LOCAL Containers::Array<char> doConvertFileToData(Magnum::ShaderTools::Stage stage, Containers::StringView from) override;
+        MAGNUM_GLSLANGSHADERCONVERTER_LOCAL Containers::Array<char> doConvertFileToData(Magnum::ShaderTools::Stage stage, Containers::StringView filename) override;
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL Containers::Array<char> doConvertDataToData(Magnum::ShaderTools::Stage stage, Containers::ArrayView<const char> data) override;
 
         struct State;

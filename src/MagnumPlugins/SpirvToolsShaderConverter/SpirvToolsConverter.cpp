@@ -303,9 +303,9 @@ bool SpirvToolsConverter::doConvertFileToFile(const Stage stage, const Container
     return AbstractConverter::doConvertFileToFile(stage, from, to);
 }
 
-Containers::Array<char> SpirvToolsConverter::doConvertFileToData(const Stage stage, const Containers::StringView from) {
-    _state->inputFilename = Containers::String::nullTerminatedGlobalView(from);
-    return AbstractConverter::doConvertFileToData(stage, from);
+Containers::Array<char> SpirvToolsConverter::doConvertFileToData(const Stage stage, const Containers::StringView filename) {
+    _state->inputFilename = Containers::String::nullTerminatedGlobalView(filename);
+    return AbstractConverter::doConvertFileToData(stage, filename);
 }
 
 Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Containers::ArrayView<const char> data) {
