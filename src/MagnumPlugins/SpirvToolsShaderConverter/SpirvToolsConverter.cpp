@@ -116,11 +116,7 @@ void printDiagnostic(Debug& out, const Containers::StringView filename, const sp
 
     /* Drop trailing newline, if any. Messages that print disassembled
        instructions have those. */
-    /** @todo clean up once StringView::trimmed() exists */
-    Containers::StringView error = diagnostic->error;
-    if(error.back() == '\n') error = error.except(1);
-
-    out << error;
+    out << Containers::StringView{diagnostic->error}.trimmedSuffix();
 }
 
 bool readData(const spv_context context, const Utility::ConfigurationGroup& configuration, const Format inputFormat, const Containers::StringView inputFilename, const char* const prefix, spv_binary_t& binaryStorage, spv_binary& binary, Containers::ScopeGuard& binaryDestroy, const Containers::ArrayView<const char> data, Int options) {
@@ -281,15 +277,11 @@ std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, c
 
         /* Drop trailing newline, if any. Messages that print disassembled
            instructions have those. */
-        /** @todo clean up once StringView::trimmed() exists */
-        Containers::StringView error = diagnostic->error;
-        if(error.back() == '\n') error = error.except(1);
-
         return {false, Utility::formatString(
             diagnostic->position.index ? "{}:{}: {}" : "{0}: {2}",
             inputFilename.isEmpty() ? "<data>" : inputFilename,
             diagnostic->position.index,
-            error
+            Containers::StringView{diagnostic->error}.trimmedSuffix()
         )};
     }
 

@@ -787,25 +787,13 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
 
     /* Trim excessive newlines and spaces from the output. What the fuck, did
        nobody ever verify what mess it spits out?! */
-    /** @todo clean up once StringView::trimmed() exist */
+    const auto shaderLog = Containers::StringView{shader.getInfoLog()}.trimmedSuffix();
     /** @todo clean up also trailing newlines inside, ffs */
-    Containers::StringView shaderLog = shader.getInfoLog();
-    while(!shaderLog.isEmpty() && (shaderLog.back() == '\n' || shaderLog.back() == ' '))
-        shaderLog = shaderLog.except(1);
     if(!success.first) return {false, shaderLog};
 
     /* Trim excessive newlines and spaces here as well */
-    /** @todo clean up once StringView::trimmed() exist */
-    Containers::StringView programLog = program.getInfoLog();
-    while(!programLog.isEmpty() && (programLog.back() == '\n' || programLog.back() == ' '))
-        programLog = programLog.except(1);
-
-    /** @todo use Containers::String once it can concatenate */
-    std::string out = shaderLog;
-    if(!shaderLog.isEmpty() && !programLog.isEmpty())
-        out += '\n';
-    out += programLog;
-    return {success.second, out};
+    const auto programLog = Containers::StringView{program.getInfoLog()}.trimmedSuffix();
+    return {success.second, "\n"_s.joinWithoutEmptyParts({shaderLog, programLog})};
 }
 
 Containers::Array<char> GlslangConverter::doConvertFileToData(const Stage stage, const Containers::StringView filename) {
@@ -965,11 +953,8 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
 
     /* Trim excessive newlines and spaces from the output. What the fuck, did
        nobody ever verify what mess it spits out?! */
-    /** @todo clean up once StringView::trimmed() exist */
     /** @todo clean up also trailing newlines inside, ffs */
-    Containers::StringView shaderLog = shader.getInfoLog();
-    while(!shaderLog.isEmpty() && (shaderLog.back() == '\n' || shaderLog.back() == ' '))
-        shaderLog = shaderLog.except(1);
+    const auto shaderLog = Containers::StringView{shader.getInfoLog()}.trimmedSuffix();
     if(!success.first) {
         Error{} << "ShaderTools::GlslangConverter::convertDataToData(): compilation failed:" << Debug::newline << shaderLog;
         return {};
@@ -981,11 +966,7 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
         Warning{} << "ShaderTools::GlslangConverter::convertDataToData(): compilation succeeded with the following message:" << Debug::newline << shaderLog;
 
     /* Trim excessive newlines and spaces here as well */
-    /** @todo clean up once StringView::trimmed() exist */
-    Containers::StringView programLog = program.getInfoLog();
-    while(!programLog.isEmpty() && (programLog.back() == '\n' || programLog.back() == ' '))
-        programLog = programLog.except(1);
-
+    const auto programLog =  Containers::StringView{program.getInfoLog()}.trimmedSuffix();
     if(!success.second) {
         Error{} << "ShaderTools::GlslangConverter::convertDataToData(): linking failed:" << Debug::newline << programLog;
         return {};
