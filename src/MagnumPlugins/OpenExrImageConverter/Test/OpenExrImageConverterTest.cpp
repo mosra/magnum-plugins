@@ -137,8 +137,8 @@ void OpenExrImageConverterTest::wrongFormat() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!_manager.instantiate("OpenExrImageConverter")->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::exportToData(): unsupported format PixelFormat::RGBA8Unorm, only *16F, *32F, *32UI and Depth32F formats supported\n");
+    CORRADE_VERIFY(!_manager.instantiate("OpenExrImageConverter")->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unsupported format PixelFormat::RGBA8Unorm, only *16F, *32F, *32UI and Depth32F formats supported\n");
 }
 
 void OpenExrImageConverterTest::zeroSizeImage() {
@@ -146,20 +146,20 @@ void OpenExrImageConverterTest::zeroSizeImage() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!_manager.instantiate("OpenExrImageConverter")->exportToData(image));
+    CORRADE_VERIFY(!_manager.instantiate("OpenExrImageConverter")->convertToData(image));
 
     /* OpenEXR 2.5.3 and newer throw already in the Header constructor, older
        versions only when writing the file so the message is different.
        Arguably the older variant is more confusing. */
     #if OPENEXR_VERSION_MAJOR*100 + OPENEXR_VERSION_MINOR*10 + OPENEXR_VERSION_PATCH >= 253
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::exportToData(): conversion error: Invalid display window in image header.\n");
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): conversion error: Invalid display window in image header.\n");
     #else
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::exportToData(): conversion error: Cannot open image file \"\". Invalid display window in image header.\n");
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): conversion error: Cannot open image file \"\". Invalid display window in image header.\n");
     #endif
 }
 
 void OpenExrImageConverterTest::rgb16f() {
-    const auto data = _manager.instantiate("OpenExrImageConverter")->exportToData(Rgb16f);
+    const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Rgb16f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr"),
@@ -179,7 +179,7 @@ void OpenExrImageConverterTest::rgb16f() {
 }
 
 void OpenExrImageConverterTest::rgba32f() {
-    const auto data = _manager.instantiate("OpenExrImageConverter")->exportToData(Rgba32f);
+    const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Rgba32f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"),
@@ -199,7 +199,7 @@ void OpenExrImageConverterTest::rgba32f() {
 }
 
 void OpenExrImageConverterTest::rg32ui() {
-    const auto data = _manager.instantiate("OpenExrImageConverter")->exportToData(Rg32ui);
+    const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Rg32ui);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr"),
@@ -219,7 +219,7 @@ void OpenExrImageConverterTest::rg32ui() {
 }
 
 void OpenExrImageConverterTest::depth32f() {
-    const auto data = _manager.instantiate("OpenExrImageConverter")->exportToData(Depth32f);
+    const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Depth32f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr"),
@@ -245,7 +245,7 @@ void OpenExrImageConverterTest::customChannels() {
     converter->configuration().setValue("g", "Y");
     converter->configuration().setValue("b", "Z");
     converter->configuration().setValue("a", "handedness");
-    const auto data = converter->exportToData(Rgba32f);
+    const auto data = converter->convertToData(Rgba32f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f-custom-channels.exr"),
@@ -278,8 +278,8 @@ void OpenExrImageConverterTest::customChannelsDuplicated() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(Rgba32f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::exportToData(): duplicate mapping for channel G\n");
+    CORRADE_VERIFY(!converter->convertToData(Rgba32f));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): duplicate mapping for channel G\n");
 }
 
 void OpenExrImageConverterTest::customChannelsSomeUnassigned() {
@@ -289,7 +289,7 @@ void OpenExrImageConverterTest::customChannelsSomeUnassigned() {
     converter->configuration().setValue("g", "");
     converter->configuration().setValue("b", "Z");
     converter->configuration().setValue("a", "");
-    const auto data = converter->exportToData(Rgba32f);
+    const auto data = converter->convertToData(Rgba32f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMAGECONVERTER_TEST_DIR, "rb32f-custom-channels.exr"),
@@ -324,15 +324,15 @@ void OpenExrImageConverterTest::customChannelsAllUnassigned() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(Rgba32f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::exportToData(): no channels assigned in plugin configuration\n");
+    CORRADE_VERIFY(!converter->convertToData(Rgba32f));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration\n");
 }
 
 void OpenExrImageConverterTest::customChannelsDepth() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("layer", "left");
     converter->configuration().setValue("depth", "height");
-    const auto data = converter->exportToData(Depth32f);
+    const auto data = converter->convertToData(Depth32f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "depth32f-custom-channels.exr"),
@@ -361,8 +361,8 @@ void OpenExrImageConverterTest::customChannelsDepthUnassigned() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(Depth32f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::exportToData(): no channels assigned in plugin configuration\n");
+    CORRADE_VERIFY(!converter->convertToData(Depth32f));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration\n");
 }
 
 }}}}

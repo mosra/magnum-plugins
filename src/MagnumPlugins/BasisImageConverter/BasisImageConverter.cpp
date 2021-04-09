@@ -49,16 +49,16 @@ BasisImageConverter::BasisImageConverter() = default;
 
 BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
+ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& image) {
+Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& image) {
     /* Check input */
     if(image.format() != PixelFormat::RGB8Unorm &&
        image.format() != PixelFormat::RGBA8Unorm &&
        image.format() != PixelFormat::RG8Unorm &&
        image.format() != PixelFormat::R8Unorm)
     {
-        Error{} << "Trade::BasisImageConverter::exportToData(): unsupported format" << image.format();
+        Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << image.format();
         return {};
     }
 
@@ -130,12 +130,12 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
     params.m_pSel_codebook = &sel_codebook;
 
     if(image.size().x() <= 0 || image.size().y() <= 0) {
-        Error() << "Trade::BasisImageConverter::exportToData(): source image is empty";
+        Error() << "Trade::BasisImageConverter::convertToData(): source image is empty";
         return {};
     }
 
     if(!image.data()) {
-        Error() << "Trade::BasisImageConverter::exportToData(): source image data is nullptr";
+        Error() << "Trade::BasisImageConverter::convertToData(): source image data is nullptr";
         return {};
     }
 
@@ -180,22 +180,22 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
     if(errorCode != basisu::basis_compressor::error_code::cECSuccess) switch(errorCode) {
         case basisu::basis_compressor::error_code::cECFailedReadingSourceImages:
             /* Emitted e.g. when source image is 0-size */
-            Error{} << "Trade::BasisImageConverter::exportToData(): source image is invalid";
+            Error{} << "Trade::BasisImageConverter::convertToData(): source image is invalid";
             return {};
         case basisu::basis_compressor::error_code::cECFailedValidating:
             /* process() will have printed additional error information to stderr */
-            Error{} << "Trade::BasisImageConverter::exportToData(): type constraint validation failed";
+            Error{} << "Trade::BasisImageConverter::convertToData(): type constraint validation failed";
             return {};
         case basisu::basis_compressor::error_code::cECFailedFrontEnd:
             /* process() will have printed additional error information to stderr */
-            Error{} << "Trade::BasisImageConverter::exportToData(): frontend processing failed";
+            Error{} << "Trade::BasisImageConverter::convertToData(): frontend processing failed";
             return {};
         case basisu::basis_compressor::error_code::cECFailedBackend:
-            Error{} << "Trade::BasisImageConverter::exportToData(): encoding failed";
+            Error{} << "Trade::BasisImageConverter::convertToData(): encoding failed";
             return {};
         case basisu::basis_compressor::error_code::cECFailedCreateBasisFile:
             /* process() will have printed additional error information to stderr */
-            Error{} << "Trade::BasisImageConverter::exportToData(): assembling basis file data or transcoding failed";
+            Error{} << "Trade::BasisImageConverter::convertToData(): assembling basis file data or transcoding failed";
             return {};
 
         /* LCOV_EXCL_START */
@@ -220,4 +220,4 @@ Containers::Array<char> BasisImageConverter::doExportToData(const ImageView2D& i
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImageConverter, Magnum::Trade::BasisImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")

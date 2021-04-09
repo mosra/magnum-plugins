@@ -88,13 +88,13 @@ void MiniExrImageConverterTest::wrongFormat() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(image);
+    const auto data = _manager.instantiate("MiniExrImageConverter")->convertToData(image);
     CORRADE_VERIFY(!data);
-    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format PixelFormat::R16F\n");
+    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::convertToData(): unsupported pixel format PixelFormat::R16F\n");
 }
 
 void MiniExrImageConverterTest::rgb() {
-    const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(Rgb);
+    const auto data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgb);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
@@ -102,7 +102,7 @@ void MiniExrImageConverterTest::rgb() {
 }
 
 void MiniExrImageConverterTest::rgba() {
-    const auto data = _manager.instantiate("MiniExrImageConverter")->exportToData(Rgba);
+    const auto data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgba);
 
     /* Alpha is ignored, so it is the same file */
     CORRADE_COMPARE_AS((std::string{data, data.size()}),

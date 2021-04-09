@@ -159,7 +159,7 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
 
     private:
         MAGNUM_BASISIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
-        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
+        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
 };
 
 }}

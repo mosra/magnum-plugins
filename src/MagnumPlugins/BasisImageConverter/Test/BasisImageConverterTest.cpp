@@ -115,8 +115,8 @@ void BasisImageConverterTest::wrongFormat() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::exportToData(): unsupported format PixelFormat::RG32F\n");
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::RG32F\n");
 }
 
 void BasisImageConverterTest::zeroSize() {
@@ -125,9 +125,9 @@ void BasisImageConverterTest::zeroSize() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
     CORRADE_COMPARE(out.str(),
-        "Trade::BasisImageConverter::exportToData(): source image is empty\n");
+        "Trade::BasisImageConverter::convertToData(): source image is empty\n");
 }
 
 void BasisImageConverterTest::emptyData() {
@@ -136,9 +136,9 @@ void BasisImageConverterTest::emptyData() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {9192, 8192}}));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {9192, 8192}}));
     CORRADE_COMPARE(out.str(),
-        "Trade::BasisImageConverter::exportToData(): source image data is nullptr\n");
+        "Trade::BasisImageConverter::convertToData(): source image data is nullptr\n");
 }
 
 void BasisImageConverterTest::processError() {
@@ -152,9 +152,9 @@ void BasisImageConverterTest::processError() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(imageWithSkip));
+    CORRADE_VERIFY(!converter->convertToData(imageWithSkip));
     CORRADE_COMPARE(out.str(),
-        "Trade::BasisImageConverter::exportToData(): frontend processing failed\n");
+        "Trade::BasisImageConverter::convertToData(): frontend processing failed\n");
 }
 
 void BasisImageConverterTest::r() {
@@ -177,7 +177,7 @@ void BasisImageConverterTest::r() {
         originalImage->pixels<Color3ub>()),
         imageWithSkip.pixels<UnsignedByte>());
 
-    const auto compressedData = _converterManager.instantiate("BasisImageConverter")->exportToData(imageWithSkip);
+    const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
@@ -221,7 +221,7 @@ void BasisImageConverterTest::rg() {
         originalImage->pixels<Color3ub>()),
         imageWithSkip.pixels<Vector2ub>());
 
-    const auto compressedData = _converterManager.instantiate("BasisImageConverter")->exportToData(imageWithSkip);
+    const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
@@ -263,7 +263,7 @@ void BasisImageConverterTest::rgb() {
     Utility::copy(originalImage->pixels<Color3ub>(),
         imageWithSkip.pixels<Color3ub>());
 
-    const auto compressedData = _converterManager.instantiate("BasisImageConverter")->exportToData(imageWithSkip);
+    const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
@@ -305,7 +305,7 @@ void BasisImageConverterTest::rgba() {
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
     if(data.threads) converter->configuration().setValue("threads", data.threads);
-    const auto compressedData = converter->exportToData(imageWithSkip);
+    const auto compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)

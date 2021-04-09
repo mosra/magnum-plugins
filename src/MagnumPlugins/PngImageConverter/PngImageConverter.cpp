@@ -48,11 +48,11 @@ PngImageConverter::PngImageConverter() = default;
 
 PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-ImageConverterFeatures PngImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
+ImageConverterFeatures PngImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& image) {
+Containers::Array<char> PngImageConverter::doConvertToData(const ImageView2D& image) {
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
-        "Trade::PngImageConverter::exportToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, nullptr);
+        "Trade::PngImageConverter::convertToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, nullptr);
 
     Int bitDepth;
     Int colorType;
@@ -90,7 +90,7 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
             colorType = PNG_COLOR_TYPE_RGBA;
             break;
         default:
-            Error() << "Trade::PngImageConverter::exportToData(): unsupported pixel format" << image.format();
+            Error() << "Trade::PngImageConverter::convertToData(): unsupported pixel format" << image.format();
             return nullptr;
     }
 
@@ -108,10 +108,10 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
         return nullptr;
     }
     png_set_error_fn(file, nullptr, [](const png_structp file, const png_const_charp message) {
-        Error{} << "Trade::PngImageConverter::exportToData(): error:" << message;
+        Error{} << "Trade::PngImageConverter::convertToData(): error:" << message;
         std::longjmp(png_jmpbuf(file), 1);
     }, [](png_structp, const png_const_charp message) {
-        Warning{} << "Trade::PngImageConverter::exportToData(): warning:" << message;
+        Warning{} << "Trade::PngImageConverter::convertToData(): warning:" << message;
     });
 
     png_set_write_fn(file, &output, [](png_structp file, png_bytep data, png_size_t length){
@@ -160,4 +160,4 @@ Containers::Array<char> PngImageConverter::doExportToData(const ImageView2D& ima
 }}
 
 CORRADE_PLUGIN_REGISTER(PngImageConverter, Magnum::Trade::PngImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")

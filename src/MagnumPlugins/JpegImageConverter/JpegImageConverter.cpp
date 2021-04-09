@@ -60,9 +60,9 @@ JpegImageConverter::JpegImageConverter() {
 
 JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImageConverter(manager, std::move(plugin)) {}
 
-ImageConverterFeatures JpegImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
+ImageConverterFeatures JpegImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& image) {
+Containers::Array<char> JpegImageConverter::doConvertToData(const ImageView2D& image) {
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
 
     Int components;
@@ -80,14 +80,14 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
             #ifdef JCS_EXTENSIONS
             components = 4;
             colorSpace = JCS_EXT_RGBX;
-            Warning{} << "Trade::JpegImageConverter::exportToData(): ignoring alpha channel";
+            Warning{} << "Trade::JpegImageConverter::convertToData(): ignoring alpha channel";
             break;
             #else
-            Error{} << "Trade::JpegImageConverter::exportToData(): RGBA input (with alpha ignored) requires libjpeg-turbo";
+            Error{} << "Trade::JpegImageConverter::convertToData(): RGBA input (with alpha ignored) requires libjpeg-turbo";
             return nullptr;
             #endif
         default:
-            Error() << "Trade::JpegImageConverter::exportToData(): unsupported pixel format" << image.format();
+            Error() << "Trade::JpegImageConverter::convertToData(): unsupported pixel format" << image.format();
             return nullptr;
     }
 
@@ -116,7 +116,7 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
         std::longjmp(errorManager.setjmpBuffer, 1);
     };
     if(setjmp(errorManager.setjmpBuffer)) {
-        Error{} << "Trade::JpegImageConverter::exportToData(): error:" << errorManager.message;
+        Error{} << "Trade::JpegImageConverter::convertToData(): error:" << errorManager.message;
         jpeg_destroy_compress(&info);
         return nullptr;
     }
@@ -177,4 +177,4 @@ Containers::Array<char> JpegImageConverter::doExportToData(const ImageView2D& im
 }}
 
 CORRADE_PLUGIN_REGISTER(JpegImageConverter, Magnum::Trade::JpegImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")

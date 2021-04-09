@@ -96,8 +96,8 @@ void JpegImageConverterTest::wrongFormat() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): unsupported pixel format PixelFormat::R16F\n");
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): unsupported pixel format PixelFormat::R16F\n");
 }
 
 void JpegImageConverterTest::zeroSize() {
@@ -105,8 +105,8 @@ void JpegImageConverterTest::zeroSize() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): error: Empty JPEG image (DNL not supported)\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): error: Empty JPEG image (DNL not supported)\n");
 }
 
 constexpr const char OriginalRgbData[] = {
@@ -206,7 +206,7 @@ void JpegImageConverterTest::rgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    const auto data = converter->exportToData(OriginalRgb);
+    const auto data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
@@ -235,7 +235,7 @@ void JpegImageConverterTest::rgb100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    const auto data = converter->exportToData(OriginalRgb);
+    const auto data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
@@ -260,8 +260,8 @@ void JpegImageConverterTest::rgba80Percent() {
     {
         std::ostringstream out;
         Error redirectError{&out};
-        CORRADE_VERIFY(!converter->exportToData(OriginalRgba));
-        CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): RGBA input (with alpha ignored) requires libjpeg-turbo\n");
+        CORRADE_VERIFY(!converter->convertToData(OriginalRgba));
+        CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): RGBA input (with alpha ignored) requires libjpeg-turbo\n");
     }
 
     CORRADE_SKIP("libjpeg-turbo is required for RGBA support.");
@@ -273,10 +273,10 @@ void JpegImageConverterTest::rgba80Percent() {
     Containers::Array<char> data;
     {
         Warning redirectWarning{&out};
-        data = converter->exportToData(OriginalRgba);
+        data = converter->convertToData(OriginalRgba);
     }
     CORRADE_VERIFY(data);
-    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::exportToData(): ignoring alpha channel\n");
+    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): ignoring alpha channel\n");
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
@@ -302,7 +302,7 @@ void JpegImageConverterTest::rgba80Percent() {
     /* Finally, the output should be exactly the same as when exporting RGB,
        bit to bit, to ensure we don't produce anything that would cause
        problems for traditional non-turbo libjpeg */
-    const auto dataRgb = converter->exportToData(OriginalRgb);
+    const auto dataRgb = converter->convertToData(OriginalRgb);
     CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
 }
 
@@ -332,7 +332,7 @@ void JpegImageConverterTest::grayscale80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    const auto data = converter->exportToData(OriginalGrayscale);
+    const auto data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
@@ -361,7 +361,7 @@ void JpegImageConverterTest::grayscale100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    const auto data = converter->exportToData(OriginalGrayscale);
+    const auto data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)

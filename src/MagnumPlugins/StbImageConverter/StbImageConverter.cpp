@@ -41,7 +41,7 @@ namespace Magnum { namespace Trade {
 
 StbImageConverter::StbImageConverter(Format format): _format{format} {
     /* Passing an invalid Format enum is user error, we'll assert on that in
-       the exportToData() function */
+       the convertToData() function */
 
     /** @todo horrible workaround, fix this properly */
     configuration().setValue("jpegQuality", 0.8f);
@@ -62,11 +62,11 @@ StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, co
         _format = {}; /* Runtime error in doExportToData() */
 }
 
-ImageConverterFeatures StbImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
+ImageConverterFeatures StbImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& image) {
+Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& image) {
     if(!Int(_format)) {
-        Error() << "Trade::StbImageConverter::exportToData(): cannot determine output format (plugin loaded as" << plugin() << Error::nospace << ")";
+        Error() << "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as" << plugin() << Error::nospace << ")";
         return nullptr;
     }
 
@@ -76,33 +76,33 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
             case PixelFormat::R8Unorm:      components = 1; break;
             case PixelFormat::RG8Unorm:
                 if(_format == Format::Bmp || _format == Format::Jpeg)
-                    Warning{} << "Trade::StbImageConverter::exportToData(): ignoring green channel for BMP/JPEG output";
+                    Warning{} << "Trade::StbImageConverter::convertToData(): ignoring green channel for BMP/JPEG output";
                 components = 2;
                 break;
             case PixelFormat::RGB8Unorm:    components = 3; break;
             case PixelFormat::RGBA8Unorm:
                 if(_format == Format::Bmp || _format == Format::Jpeg)
-                    Warning{} << "Trade::StbImageConverter::exportToData(): ignoring alpha channel for BMP/JPEG output";
+                    Warning{} << "Trade::StbImageConverter::convertToData(): ignoring alpha channel for BMP/JPEG output";
                 components = 4;
                 break;
             default:
-                Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for BMP/JPEG/PNG/TGA output";
+                Error() << "Trade::StbImageConverter::convertToData():" << image.format() << "is not supported for BMP/JPEG/PNG/TGA output";
                 return nullptr;
         }
     } else if(_format == Format::Hdr) {
         switch(image.format()) {
             case PixelFormat::R32F:         components = 1; break;
             case PixelFormat::RG32F:
-                Warning{} << "Trade::StbImageConverter::exportToData(): ignoring green channel for HDR output";
+                Warning{} << "Trade::StbImageConverter::convertToData(): ignoring green channel for HDR output";
                 components = 2;
                 break;
             case PixelFormat::RGB32F:       components = 3; break;
             case PixelFormat::RGBA32F:
-                Warning{} << "Trade::StbImageConverter::exportToData(): ignoring alpha channel for HDR output";
+                Warning{} << "Trade::StbImageConverter::convertToData(): ignoring alpha channel for HDR output";
                 components = 4;
                 break;
             default:
-                Error() << "Trade::StbImageConverter::exportToData():" << image.format() << "is not supported for HDR output";
+                Error() << "Trade::StbImageConverter::convertToData():" << image.format() << "is not supported for HDR output";
                 return nullptr;
         }
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -130,27 +130,27 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
 
     if(_format == Format::Bmp) {
         if(!stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData)) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing the BMP file";
+            Error() << "Trade::StbImageConverter::convertToData(): error while writing the BMP file";
             return nullptr;
         }
     } else if(_format == Format::Jpeg) {
         if(!stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, Int(configuration().value<Float>("jpegQuality")*100.0f))) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing the JPEG file";
+            Error() << "Trade::StbImageConverter::convertToData(): error while writing the JPEG file";
             return nullptr;
         }
     } else if(_format == Format::Hdr) {
         if(!stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(reversedData.begin()))) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing the HDR file";
+            Error() << "Trade::StbImageConverter::convertToData(): error while writing the HDR file";
             return nullptr;
         }
     } else if(_format == Format::Png) {
         if(!stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, 0)) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing the PNG file";
+            Error() << "Trade::StbImageConverter::convertToData(): error while writing the PNG file";
             return nullptr;
         }
     } else if(_format == Format::Tga) {
         if(!stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData)) {
-            Error() << "Trade::StbImageConverter::exportToData(): error while writing the TGA file";
+            Error() << "Trade::StbImageConverter::convertToData(): error while writing the TGA file";
             return nullptr;
         }
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -165,4 +165,4 @@ Containers::Array<char> StbImageConverter::doExportToData(const ImageView2D& ima
 }}
 
 CORRADE_PLUGIN_REGISTER(StbImageConverter, Magnum::Trade::StbImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")

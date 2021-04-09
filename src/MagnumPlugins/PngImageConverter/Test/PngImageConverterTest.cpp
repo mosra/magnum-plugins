@@ -83,8 +83,8 @@ void PngImageConverterTest::wrongFormat() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::exportToData(): unsupported pixel format PixelFormat::RG32F\n");
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::convertToData(): unsupported pixel format PixelFormat::RG32F\n");
 }
 
 void PngImageConverterTest::zeroSize() {
@@ -93,11 +93,11 @@ void PngImageConverterTest::zeroSize() {
     std::ostringstream out;
     Warning redirectWarning{&out};
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
     CORRADE_COMPARE(out.str(),
-        "Trade::PngImageConverter::exportToData(): warning: Image width is zero in IHDR\n"
-        "Trade::PngImageConverter::exportToData(): warning: Image height is zero in IHDR\n"
-        "Trade::PngImageConverter::exportToData(): error: Invalid IHDR data\n");
+        "Trade::PngImageConverter::convertToData(): warning: Image width is zero in IHDR\n"
+        "Trade::PngImageConverter::convertToData(): warning: Image height is zero in IHDR\n"
+        "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
 }
 
 constexpr const char OriginalRgbData[] = {
@@ -119,7 +119,7 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void PngImageConverterTest::rgb() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalRgb);
+    const auto data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -163,7 +163,7 @@ constexpr const UnsignedShort ConvertedRgbData16[] = {
 };
 
 void PngImageConverterTest::rgb16() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalRgb16);
+    const auto data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb16);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -200,7 +200,7 @@ constexpr const char ConvertedGrayscaleData[] = {
 };
 
 void PngImageConverterTest::grayscale() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalGrayscale);
+    const auto data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -244,7 +244,7 @@ constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
 };
 
 void PngImageConverterTest::grayscale16() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->exportToData(OriginalGrayscale16);
+    const auto data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale16);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)

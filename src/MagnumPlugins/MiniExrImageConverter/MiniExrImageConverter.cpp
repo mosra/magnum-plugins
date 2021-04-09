@@ -45,15 +45,15 @@ MiniExrImageConverter::MiniExrImageConverter() = default;
 
 MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-ImageConverterFeatures MiniExrImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
+ImageConverterFeatures MiniExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D& image) {
+Containers::Array<char> MiniExrImageConverter::doConvertToData(const ImageView2D& image) {
     Int components;
     switch(image.format()) {
         case PixelFormat::RGB16F: components = 3; break;
         case PixelFormat::RGBA16F: components = 4; break;
         default:
-            Error() << "Trade::MiniExrImageConverter::exportToData(): unsupported pixel format" << image.format();
+            Error() << "Trade::MiniExrImageConverter::convertToData(): unsupported pixel format" << image.format();
             return nullptr;
     }
 
@@ -86,4 +86,4 @@ Containers::Array<char> MiniExrImageConverter::doExportToData(const ImageView2D&
 }}
 
 CORRADE_PLUGIN_REGISTER(MiniExrImageConverter, Magnum::Trade::MiniExrImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")

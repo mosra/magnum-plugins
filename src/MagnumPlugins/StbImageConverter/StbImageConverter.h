@@ -207,7 +207,7 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
 
     private:
         MAGNUM_STBIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
-        MAGNUM_STBIMAGECONVERTER_LOCAL Containers::Array<char> doExportToData(const ImageView2D& image) override;
+        MAGNUM_STBIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
 
         Format _format;
 };

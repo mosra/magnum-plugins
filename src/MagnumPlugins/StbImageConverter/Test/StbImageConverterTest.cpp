@@ -122,8 +122,8 @@ void StbImageConverterTest::wrongFormat() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelFormat::RGBA32F is not supported for BMP/JPEG/PNG/TGA output\n");
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): PixelFormat::RGBA32F is not supported for BMP/JPEG/PNG/TGA output\n");
 }
 
 void StbImageConverterTest::wrongFormatHdr() {
@@ -133,8 +133,8 @@ void StbImageConverterTest::wrongFormatHdr() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): PixelFormat::RGB8Unorm is not supported for HDR output\n");
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): PixelFormat::RGB8Unorm is not supported for HDR output\n");
 }
 
 void StbImageConverterTest::wrongOutputFormat() {
@@ -144,8 +144,8 @@ void StbImageConverterTest::wrongOutputFormat() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!converter->exportToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): cannot determine output format (plugin loaded as StbImageConverter)\n");
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter)\n");
 }
 
 constexpr const char OriginalRgData[] = {
@@ -175,10 +175,10 @@ void StbImageConverterTest::bmpRg() {
     Containers::Array<char> data;
     {
         Warning redirectWarning{&out};
-        data = converter->exportToData(OriginalRg);
+        data = converter->convertToData(OriginalRg);
     }
     CORRADE_VERIFY(data);
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): ignoring green channel for BMP/JPEG output\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): ignoring green channel for BMP/JPEG output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -201,8 +201,8 @@ void StbImageConverterTest::bmpNegativeSize() {
     /* Doesn't fail for zero size */
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the BMP file\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): error while writing the BMP file\n");
 }
 
 constexpr const Float OriginalGrayscale32FData[] = {
@@ -229,7 +229,7 @@ constexpr const Float ConvertedGrayscale32FData[] = {
 
 void StbImageConverterTest::hdrGrayscale() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
-    const auto data = converter->exportToData(OriginalGrayscale32F);
+    const auto data = converter->convertToData(OriginalGrayscale32F);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -256,10 +256,10 @@ void StbImageConverterTest::hdrRg() {
     Containers::Array<char> data;
     {
         Warning redirectWarning{&out};
-        data = converter->exportToData(OriginalRg32F);
+        data = converter->convertToData(OriginalRg32F);
     }
     CORRADE_VERIFY(data);
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): ignoring green channel for HDR output\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): ignoring green channel for HDR output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -294,7 +294,7 @@ const ImageView2D OriginalRgba32F{PixelFormat::RGBA32F, {2, 3}, OriginalRgba32FD
 
 void StbImageConverterTest::hdrRgb() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
-    const auto data = converter->exportToData(OriginalRgb32F);
+    const auto data = converter->convertToData(OriginalRgb32F);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -320,10 +320,10 @@ void StbImageConverterTest::hdrRgba() {
     Containers::Array<char> data;
     {
         Warning redirectWarning{&out};
-        data = converter->exportToData(OriginalRgba32F);
+        data = converter->convertToData(OriginalRgba32F);
     }
     CORRADE_VERIFY(data);
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): ignoring alpha channel for HDR output\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): ignoring alpha channel for HDR output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -345,8 +345,8 @@ void StbImageConverterTest::hdrZeroSize() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB32F, {}, nullptr}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the HDR file\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB32F, {}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): error while writing the HDR file\n");
 }
 
 constexpr const char OriginalJpegRgbData[] = {
@@ -426,7 +426,7 @@ void StbImageConverterTest::jpegRgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    const auto data = converter->exportToData(OriginalJpegRgb);
+    const auto data = converter->convertToData(OriginalJpegRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -446,7 +446,7 @@ void StbImageConverterTest::jpegRgb100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    const auto data = converter->exportToData(OriginalJpegRgb);
+    const auto data = converter->convertToData(OriginalJpegRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -472,10 +472,10 @@ void StbImageConverterTest::jpegRgba80Percent() {
     Containers::Array<char> data;
     {
         Warning redirectWarning{&out};
-        data = converter->exportToData(OriginalJpegRgba);
+        data = converter->convertToData(OriginalJpegRgba);
     }
     CORRADE_VERIFY(data);
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): ignoring alpha channel for BMP/JPEG output\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): ignoring alpha channel for BMP/JPEG output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -492,7 +492,7 @@ void StbImageConverterTest::jpegRgba80Percent() {
     /* Finally, the output should be exactly the same as when exporting RGB,
        bit to bit, to ensure we don't produce anything that would cause
        problems for traditional non-turbo libjpeg */
-    const auto dataRgb = converter->exportToData(OriginalJpegRgb);
+    const auto dataRgb = converter->convertToData(OriginalJpegRgb);
     CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
 }
 
@@ -534,7 +534,7 @@ void StbImageConverterTest::jpegGrayscale80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    const auto data = converter->exportToData(OriginalJpegGrayscale);
+    const auto data = converter->convertToData(OriginalJpegGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -555,8 +555,8 @@ void StbImageConverterTest::jpegZeroSize() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the JPEG file\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): error while writing the JPEG file\n");
 }
 
 constexpr const char OriginalRgbData[] = {
@@ -577,7 +577,7 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void StbImageConverterTest::pngRgb() {
-    const auto data = _converterManager.instantiate("StbPngImageConverter")->exportToData(OriginalRgb);
+    const auto data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -613,7 +613,7 @@ constexpr const char ConvertedGrayscaleData[] = {
 };
 
 void StbImageConverterTest::pngGrayscale() {
-    const auto data = _converterManager.instantiate("StbPngImageConverter")->exportToData(OriginalGrayscale);
+    const auto data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -645,8 +645,8 @@ void StbImageConverterTest::pngNegativeSize() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the PNG file\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): error while writing the PNG file\n");
 }
 
 constexpr const char OriginalRgbaData[] = {
@@ -667,7 +667,7 @@ constexpr const char ConvertedRgbaData[] = {
 };
 
 void StbImageConverterTest::tgaRgba() {
-    const auto data = _converterManager.instantiate("StbTgaImageConverter")->exportToData(OriginalRgba);
+    const auto data = _converterManager.instantiate("StbTgaImageConverter")->convertToData(OriginalRgba);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -689,8 +689,8 @@ void StbImageConverterTest::tgaNegativeSize() {
     /* Doesn't fail for zero size */
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->exportToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::exportToData(): error while writing the TGA file\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): error while writing the TGA file\n");
 }
 
 }}}}

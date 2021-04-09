@@ -72,9 +72,9 @@ class MemoryOStream: public Imf::OStream {
 
 OpenExrImageConverter::OpenExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::ConvertData; }
+ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> OpenExrImageConverter::doExportToData(const ImageView2D& image) try {
+Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D& image) try {
     /* Figure out type and channel count */
     Imf::PixelType type;
     std::size_t channelCount;
@@ -99,7 +99,7 @@ Containers::Array<char> OpenExrImageConverter::doExportToData(const ImageView2D&
             type = Imf::UINT;
             break;
         default:
-            Error{} << "Trade::OpenExrImageConverter::exportToData(): unsupported format" << image.format() << Debug::nospace << ", only *16F, *32F, *32UI and Depth32F formats supported";
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): unsupported format" << image.format() << Debug::nospace << ", only *16F, *32F, *32UI and Depth32F formats supported";
             return {};
     }
     switch(image.format()) {
@@ -174,7 +174,7 @@ Containers::Array<char> OpenExrImageConverter::doExportToData(const ImageView2D&
            maybe it overwrite the previous one. Not sure. Neither behavior
            seems desirable, so let's fail on that. */
         if(framebuffer.findSlice(name)) {
-            Error{} << "Trade::OpenExrImageConverter::exportToData(): duplicate mapping for channel" << name;
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): duplicate mapping for channel" << name;
             return {};
         }
 
@@ -192,7 +192,7 @@ Containers::Array<char> OpenExrImageConverter::doExportToData(const ImageView2D&
 
     /* There should be at least one channel written */
     if(framebuffer.begin() == framebuffer.end()) {
-        Error{} << "Trade::OpenExrImageConverter::exportToData(): no channels assigned in plugin configuration";
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration";
         return {};
     }
 
@@ -214,11 +214,11 @@ Containers::Array<char> OpenExrImageConverter::doExportToData(const ImageView2D&
    the whole thing. That would be awful. */
 } catch(const Iex::BaseExc& e) {
     /* e.message() is only since 2.3.0, use what() for compatibility */
-    Error{} << "Trade::OpenExrImageConverter::exportToData(): conversion error:" << e.what();
+    Error{} << "Trade::OpenExrImageConverter::convertToData(): conversion error:" << e.what();
     return {};
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenExrImageConverter, Magnum::Trade::OpenExrImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
