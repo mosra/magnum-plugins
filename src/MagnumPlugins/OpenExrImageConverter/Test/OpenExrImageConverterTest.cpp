@@ -35,7 +35,9 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
+#include <Magnum/Math/ConfigurationValue.h>
 #include <Magnum/Math/Half.h>
+#include <Magnum/Math/Vector4.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -63,6 +65,8 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     void customChannelsAllUnassigned();
     void customChannelsDepth();
     void customChannelsDepthUnassigned();
+
+    void customWindows();
 
     void compression();
     void compressionInvalid();
@@ -135,7 +139,9 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
               &OpenExrImageConverterTest::customChannelsSomeUnassigned,
               &OpenExrImageConverterTest::customChannelsAllUnassigned,
               &OpenExrImageConverterTest::customChannelsDepth,
-              &OpenExrImageConverterTest::customChannelsDepthUnassigned});
+              &OpenExrImageConverterTest::customChannelsDepthUnassigned,
+
+              &OpenExrImageConverterTest::customWindows});
 
     addInstancedTests({&OpenExrImageConverterTest::compression},
         Containers::arraySize(CompressionData));
@@ -169,14 +175,11 @@ void OpenExrImageConverterTest::zeroSizeImage() {
     Error redirectError{&out};
     CORRADE_VERIFY(!_manager.instantiate("OpenExrImageConverter")->convertToData(image));
 
-    /* OpenEXR 2.5.3 and newer throw already in the Header constructor, older
-       versions only when writing the file so the message is different.
-       Arguably the older variant is more confusing. */
-    #if OPENEXR_VERSION_MAJOR*100 + OPENEXR_VERSION_MINOR*10 + OPENEXR_VERSION_PATCH >= 253
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): conversion error: Invalid display window in image header.\n");
-    #else
+    /* Originally, before custom data windows got introduced in the converter,
+       in OpenEXR 2.5.3 and newer the message was just
+        conversion error: Invalid display window in image header.
+       Now it's the same in both older and newer versions. */
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): conversion error: Cannot open image file \"\". Invalid display window in image header.\n");
-    #endif
 }
 
 void OpenExrImageConverterTest::rgb16f() {
@@ -384,6 +387,30 @@ void OpenExrImageConverterTest::customChannelsDepthUnassigned() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Depth32f));
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration\n");
+}
+
+void OpenExrImageConverterTest::customWindows() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    converter->configuration().setValue("displayWindow", Vector4i{38, 56, 47, 72});
+    converter->configuration().setValue("dataOffset", Vector2i{375, 226});
+
+    const auto data = converter->convertToData(Rgb16f);
+
+    CORRADE_COMPARE_AS((std::string{data, data.size()}),
+        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f-custom-windows.exr"),
+        TestSuite::Compare::StringToFile);
+
+    if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openData(data));
+
+    /* No matter how crazy the windows are, the imported data should be the
+       same */
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE_AS(*image, Rgb16f, DebugTools::CompareImage);
 }
 
 void OpenExrImageConverterTest::compression() {

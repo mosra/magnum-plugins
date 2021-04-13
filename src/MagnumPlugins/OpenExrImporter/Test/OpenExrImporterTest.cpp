@@ -76,14 +76,24 @@ struct OpenExrImporterTest: TestSuite::Tester {
 
 using namespace Math::Literals;
 
+const struct {
+    const char* name;
+    const char* filename;
+} Rgb16fData[] {
+    {"", "rgb16f.exr"},
+    {"custom data/display window", "rgb16f-custom-windows.exr"},
+};
+
 OpenExrImporterTest::OpenExrImporterTest() {
     addTests({&OpenExrImporterTest::emptyFile,
               &OpenExrImporterTest::shortFile,
               &OpenExrImporterTest::inconsistentFormat,
-              &OpenExrImporterTest::inconsistentDepthFormat,
+              &OpenExrImporterTest::inconsistentDepthFormat});
 
-              &OpenExrImporterTest::rgb16f,
-              &OpenExrImporterTest::rgba32f,
+    addInstancedTests({&OpenExrImporterTest::rgb16f},
+        Containers::arraySize(Rgb16fData));
+
+    addTests({&OpenExrImporterTest::rgba32f,
               &OpenExrImporterTest::rg32ui,
               &OpenExrImporterTest::depth32f,
 
@@ -152,8 +162,11 @@ void OpenExrImporterTest::inconsistentDepthFormat() {
 }
 
 void OpenExrImporterTest::rgb16f() {
+    auto&& data = Rgb16fData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -163,10 +176,10 @@ void OpenExrImporterTest::rgb16f() {
     /* Data should be aligned to 4 bytes, clear padding to a zero value for
        predictable output. */
     CORRADE_COMPARE(image->data().size(), 3*8);
-    Containers::ArrayView<char> data = image->mutableData();
-    data[0*8 + 6] = data[0*8 + 7] =
-        data[1*8 + 6] = data[1*8 + 7] =
-            data[2*8 + 6] = data[2*8 + 7] = 0;
+    Containers::ArrayView<char> imageData = image->mutableData();
+    imageData[0*8 + 6] = imageData[0*8 + 7] =
+        imageData[1*8 + 6] = imageData[1*8 + 7] =
+            imageData[2*8 + 6] = imageData[2*8 + 7] = 0;
 
     CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
         0.0_h, 1.0_h, 2.0_h, {},

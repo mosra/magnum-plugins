@@ -38,6 +38,7 @@
 #include <Corrade/Utility/DebugStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/ConfigurationValue.h>
 
 namespace Magnum { namespace Trade {
 
@@ -161,9 +162,19 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
         return {};
     }
 
+    /* Data window */
+    const Vector2i dataOffsetMin = configuration().value<Vector2i>("dataOffset");
+    const Vector2i dataOffsetMax = dataOffsetMin + image.size() - Vector2i{1};
+    const Range2Di displayWindow = configuration().value("displayWindow").empty() ?
+        Range2Di{{}, image.size() - Vector2i{1}} :
+        configuration().value<Range2Di>("displayWindow");
+
     /* Header with basic info */
     Imf::Header header{
-        image.size().x(), image.size().y(),
+        {{displayWindow.min().x(), displayWindow.min().y()},
+         {displayWindow.max().x(), displayWindow.max().y()}},
+        {{dataOffsetMin.x(), dataOffsetMin.y()},
+         {dataOffsetMax.x(), dataOffsetMax.y()}},
         1.0f,                   /* pixel aspect ratio, default */
         Imath::V2f{0.0f, 0.0f}, /* screen window center, default */
         1.0f,                   /* screen window width, default */
@@ -173,8 +184,6 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
         Imf::INCREASING_Y,
         compression
     };
-    /** @todo data / display window (to test corner cases in the importer),
-        other useful properties? */
 
     /* Get image pixel view and do the Y flipping right away. */
     const Containers::StridedArrayView3D<const char> pixels = image.pixels().flipped<0>();
@@ -217,7 +226,13 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
             /* Same as with OpenExrImporter, this is actually a pointer to the
                *last* row and the stride is negative (pixels were flipped<0>()
                above) */
-            const_cast<char*>(static_cast<const char*>(pixels.data()) + ChannelSizes[type]*i),
+            const_cast<char*>(
+                static_cast<const char*>(pixels.data()) + ChannelSizes[type]*i
+                /* And we have to take into account any custom data window as
+                   well */
+                - dataOffsetMin.y()*std::size_t(pixels.stride()[0])
+                - dataOffsetMin.x()*std::size_t(pixels.stride()[1])
+            ),
             std::size_t(pixels.stride()[1]),
             std::size_t(pixels.stride()[0]),
         });

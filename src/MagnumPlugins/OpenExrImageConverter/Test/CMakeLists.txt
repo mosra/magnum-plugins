@@ -56,6 +56,7 @@ corrade_add_test(OpenExrImageConverterTest OpenExrImageConverterTest.cpp
         ../../OpenExrImporter/Test/depth32f.exr
         ../../OpenExrImporter/Test/depth32f-custom-channels.exr
         ../../OpenExrImporter/Test/rgb16f.exr
+        ../../OpenExrImporter/Test/rgb16f-custom-windows.exr
         ../../OpenExrImporter/Test/rgba32f.exr
         ../../OpenExrImporter/Test/rgba32f-custom-channels.exr
         ../../OpenExrImporter/Test/rg32ui.exr

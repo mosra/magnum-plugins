@@ -127,6 +127,15 @@ channel to be of a float type.
 If a file doesn't match ither of the above, custom channel mapping can be
 supplied @ref Trade-OpenExrImporter-configuration "in the configuration".
 
+@subsection Trade-OpenExrImporter-behavior-data-layout Data alignment, display and data windows
+
+Image rows are always aligned to four bytes.
+
+OpenEXR image metadata contain a display and data window, which can be used for
+annotating crop borders or specifying that the data is just a small portion of
+a larger image. The importer ignores the display window and imports everything
+that's inside the data window, without offseting it in any way.
+
 @subsection Trade-OpenExrImporter-behavior-multilayer-multipart Multilayer and multipart images
 
 Images with custom layers (for example with separate channels for a left and

@@ -51,6 +51,7 @@ corrade_add_test(OpenExrImporterTest OpenExrImporterTest.cpp
         depth32f-custom-channels.exr
         rg32ui.exr
         rgb16f.exr
+        rgb16f-custom-windows.exr
         rgba32f.exr
         rgba32f-custom-channels.exr
         # This one edited from rgba32f.exr by changing A channel type to UINT
