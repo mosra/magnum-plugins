@@ -64,6 +64,9 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     void customChannelsDepth();
     void customChannelsDepthUnassigned();
 
+    void compression();
+    void compressionInvalid();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _manager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
@@ -105,6 +108,19 @@ const Float Depth32fData[] = {
 
 const ImageView2D Depth32f{PixelFormat::Depth32F, {3, 2}, Depth32fData};
 
+const struct {
+    const char* compression;
+    std::size_t size;
+} CompressionData[] {
+    /* Just the lossless ones, I don't feel the need to bother with fuzzy
+       image comparison */
+    {"", 427},
+    {"rle", 427},
+    {"zip", 391},
+    {"zips", 427},
+    {"piz", 395}
+};
+
 OpenExrImageConverterTest::OpenExrImageConverterTest() {
     addTests({&OpenExrImageConverterTest::wrongFormat,
               &OpenExrImageConverterTest::zeroSizeImage,
@@ -120,6 +136,11 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
               &OpenExrImageConverterTest::customChannelsAllUnassigned,
               &OpenExrImageConverterTest::customChannelsDepth,
               &OpenExrImageConverterTest::customChannelsDepthUnassigned});
+
+    addInstancedTests({&OpenExrImageConverterTest::compression},
+        Containers::arraySize(CompressionData));
+
+    addTests({&OpenExrImageConverterTest::compressionInvalid});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -363,6 +384,42 @@ void OpenExrImageConverterTest::customChannelsDepthUnassigned() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Depth32f));
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration\n");
+}
+
+void OpenExrImageConverterTest::compression() {
+    auto&& data = CompressionData[testCaseInstanceId()];
+    setTestCaseDescription(data.compression);
+
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    converter->configuration().setValue("compression", data.compression);
+
+    const auto out = converter->convertToData(Rgba32f);
+    CORRADE_VERIFY(out);
+
+    /* The sizes should slightly differ at the very least -- this checks that
+       the setting isn't just plainly ignored */
+    CORRADE_COMPARE(out.size(), data.size);
+
+    if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openData(out));
+
+    /* Using only lossless compression here, so the data should match */
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE_AS(*image, Rgba32f, DebugTools::CompareImage);
+}
+
+void OpenExrImageConverterTest::compressionInvalid() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    converter->configuration().setValue("compression", "zstd");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData(Rgba32f));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown compression zstd, allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab or empty for uncompressed output\n");
 }
 
 }}}}

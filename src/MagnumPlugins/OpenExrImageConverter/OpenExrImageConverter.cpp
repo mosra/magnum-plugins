@@ -41,6 +41,8 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 namespace {
 
 /* Unlike IStream, this does not have an example snippet in the PDF so I just
@@ -128,6 +130,37 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
+    /* Output compression. Using the same naming scheme as exrenvmap does,
+       except for no compression: https://github.com/AcademySoftwareFoundation/openexr/blob/931618b9088fd03ed4fe30cade55664da94a5854/src/bin/exrenvmap/main.cpp#L138-L174 */
+    const Containers::StringView compressionString = configuration().value<Containers::StringView>("compression");
+    Imf::Compression compression;
+    if(compressionString.isEmpty())
+        compression = Imf::NO_COMPRESSION;
+    /* LCOV_EXCL_START */
+    else if(compressionString == "rle"_s)
+        compression = Imf::RLE_COMPRESSION;
+    else if(compressionString == "zip"_s)
+        compression = Imf::ZIP_COMPRESSION;
+    else if(compressionString == "zips"_s)
+        compression = Imf::ZIPS_COMPRESSION;
+    else if(compressionString == "piz"_s)
+        compression = Imf::PIZ_COMPRESSION;
+    else if(compressionString == "pxr24"_s)
+        compression = Imf::PXR24_COMPRESSION;
+    else if(compressionString == "b44"_s)
+        compression = Imf::B44_COMPRESSION;
+    else if(compressionString == "b44a"_s)
+        compression = Imf::B44A_COMPRESSION;
+    else if(compressionString == "dwaa"_s)
+        compression = Imf::DWAA_COMPRESSION;
+    else if(compressionString == "dwab"_s)
+        compression = Imf::DWAB_COMPRESSION;
+    /* LCOV_EXCL_STOP */
+    else {
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown compression" << compressionString << Debug::nospace << ", allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab or empty for uncompressed output";
+        return {};
+    }
+
     /* Header with basic info */
     Imf::Header header{
         image.size().x(), image.size().y(),
@@ -138,7 +171,7 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
            have any effect on anything (probably because we save all scanlines
            in one run?). So keep it at the default. */
         Imf::INCREASING_Y,
-        Imf::ZIP_COMPRESSION    /** @todo */
+        compression
     };
     /** @todo data / display window (to test corner cases in the importer),
         other useful properties? */
