@@ -25,6 +25,12 @@
 
 cmake_minimum_required(VERSION 3.4)
 
+# If CMAKE_AUTOMOC is set, all uses of corrade_add_resource() would otherwise
+# complain on 3.10 that AUTOMOC is not processing GENERATED files
+if(POLICY CMP0071)
+    cmake_policy(SET CMP0071 NEW)
+endif()
+
 project(MagnumPlugins CXX)
 
 # Use folders for nice tree in Visual Studio and XCode
