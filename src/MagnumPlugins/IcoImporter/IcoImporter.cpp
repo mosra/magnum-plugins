@@ -95,8 +95,8 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
     IconDir header = *reinterpret_cast<const IconDir*>(data.begin());
     Utility::Endianness::littleEndianInPlace(header.imageType, header.imageCount);
 
-    Containers::Pointer<State> state{Containers::InPlaceInit};
-    state->data = Containers::Array<char>{Containers::NoInit, data.size()};
+    Containers::Pointer<State> state{InPlaceInit};
+    state->data = Containers::Array<char>{NoInit, data.size()};
     state->levels = Containers::Array<Containers::ArrayView<const char>>{header.imageCount};
     Utility::copy(data, state->data);
 

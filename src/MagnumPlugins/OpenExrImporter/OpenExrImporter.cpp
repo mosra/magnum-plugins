@@ -108,7 +108,7 @@ void OpenExrImporter::doClose() { _state = nullptr; }
 
 void OpenExrImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Make an owned copy of the data */
-    Containers::Array<char> dataCopy{Containers::NoInit, data.size()};
+    Containers::Array<char> dataCopy{NoInit, data.size()};
     Utility::copy(data, dataCopy);
 
     /* Open the file */
@@ -184,7 +184,7 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
            no way to use a range-for, no nothing. CRAP. */
         Containers::Array<Containers::StringView> channelNames;
         for(auto it = channels.begin(); it != channels.end(); ++it)
-            arrayAppend(channelNames, Containers::InPlaceInit, it.name());
+            arrayAppend(channelNames, InPlaceInit, it.name());
 
         Error{} << "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {" << Debug::nospace << ", "_s.join(channelNames) << Debug::nospace << "}, to either {" << Debug::nospace << ", "_s.join({mapping[0], mapping[1], mapping[2], mapping[3]}) << Debug::nospace << "} or" << depthMapping << Debug::nospace << ", provide desired layer and/or channel names in plugin configuration";
         return {};
@@ -281,9 +281,9 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
         mapping[2].empty() ||
         mapping[3].empty()) && !isDepth)
     {
-        out = Containers::Array<char>{Containers::ValueInit, std::size_t{rowStride*size.y()}};
+        out = Containers::Array<char>{ValueInit, std::size_t{rowStride*size.y()}};
     } else {
-        out = Containers::Array<char>{Containers::NoInit, std::size_t{rowStride*size.y()}};
+        out = Containers::Array<char>{NoInit, std::size_t{rowStride*size.y()}};
     }
 
     /* Set up the output array and framebuffer layout for reading. The

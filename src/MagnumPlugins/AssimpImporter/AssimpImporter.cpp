@@ -137,7 +137,7 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
 }
 
 Containers::Pointer<Assimp::Importer> createImporter(Utility::ConfigurationGroup& conf) {
-    Containers::Pointer<Assimp::Importer> importer{Containers::InPlaceInit};
+    Containers::Pointer<Assimp::Importer> importer{InPlaceInit};
 
     importer->SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION,
         conf.value<bool>("ImportColladaIgnoreUpDirection"));
@@ -664,7 +664,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
     /* Allocate vertex data, fill in the attributes */
     const UnsignedInt vertexCount = mesh->mNumVertices;
-    Containers::Array<char> vertexData{Containers::NoInit, std::size_t(stride)*vertexCount};
+    Containers::Array<char> vertexData{NoInit, std::size_t(stride)*vertexCount};
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
     std::size_t attributeIndex = 0;
     std::size_t attributeOffset = 0;
@@ -968,7 +968,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 /* For string attributes we'd need to pass StringView instead
                    of mData, but there are none so far so assert for now */
                 CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{} && type != MaterialAttributeType::String);
-                arrayAppend(attributes, Containers::InPlaceInit, attribute, type, property.mData);
+                arrayAppend(attributes, InPlaceInit, attribute, type, property.mData);
 
             /* Otherwise ignore for now. At a later point remaining attributes
                will be imported as custom, but that needs a lot of testing
@@ -982,7 +982,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
 
     /* Can't use growable deleters in a plugin, convert back to the default
        deleter */
-    arrayShrink(attributes, Containers::DefaultInit);
+    arrayShrink(attributes, DefaultInit);
     /** @todo detect PBR properties and add relevant types accordingly */
     return MaterialData{MaterialType::Phong, std::move(attributes), std::move(layers), mat};
 }

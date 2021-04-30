@@ -73,7 +73,7 @@ void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    _in = Containers::Array<unsigned char>{Containers::NoInit, data.size()};
+    _in = Containers::Array<unsigned char>{NoInit, data.size()};
     Utility::copy(Containers::arrayCast<const unsigned char>(data), _in);
 }
 

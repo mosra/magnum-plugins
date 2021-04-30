@@ -493,7 +493,7 @@ void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
     Containers::Pointer<File> f{new File};
 
     /* clear previous data */
-    f->in = Containers::Array<char>{Containers::NoInit, data.size()};
+    f->in = Containers::Array<char>{NoInit, data.size()};
     Utility::copy(data, f->in);
 
     constexpr size_t MagicNumberSize = 4;
@@ -641,7 +641,7 @@ Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt, const Unsi
     const File::ImageDataOffset& dataOffset = _f->imageData[level];
 
     /* copy image data */
-    Containers::Array<char> data{Containers::NoInit, dataOffset.data.size()};
+    Containers::Array<char> data{NoInit, dataOffset.data.size()};
     Utility::copy(dataOffset.data, data);
 
     /* Compressed image */
@@ -668,7 +668,7 @@ Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt, const Unsi
     const File::ImageDataOffset& dataOffset = _f->imageData[level];
 
     /* copy image data */
-    Containers::Array<char> data{Containers::NoInit, dataOffset.data.size()};
+    Containers::Array<char> data{NoInit, dataOffset.data.size()};
     Utility::copy(dataOffset.data, data);
 
     /* Compressed image */

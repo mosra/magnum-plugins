@@ -84,7 +84,7 @@ void StanfordImporter::doOpenFile(const std::string& filename) {
 }
 
 void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
-    Containers::Array<char> copy{Containers::NoInit, data.size()};
+    Containers::Array<char> copy{NoInit, data.size()};
     Utility::copy(data, copy);
     openDataInternal(std::move(copy));
 }
@@ -526,7 +526,7 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
         }
 
         /* Add the attribute */
-        arrayAppend(state->attributeData, Containers::InPlaceInit,
+        arrayAppend(state->attributeData, InPlaceInit,
             MeshAttribute::Position,
             vertexFormat(positionFormats.x(), 3, false),
             positionOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
@@ -550,12 +550,12 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
         /* Add the attribute. If it is per-face, actual triangle face count is
            not known yet, using 0 until after all faces are parsed. */
         if(!perFaceNormals) arrayAppend(state->attributeData,
-            Containers::InPlaceInit, MeshAttribute::Normal,
+            InPlaceInit, MeshAttribute::Normal,
             /* We want integer types normalized */
             vertexFormat(normalFormats.x(), 3, normalFormats.x() != VertexFormat::Float),
             normalOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
         else arrayAppend(state->faceAttributeData,
-            Containers::InPlaceInit, MeshAttribute::Normal,
+            InPlaceInit, MeshAttribute::Normal,
             /* We want integer types normalized */
             vertexFormat(normalFormats.x(), 3, normalFormats.x() != VertexFormat::Float),
             normalOffsets.x(), 0u, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip));
@@ -577,7 +577,7 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
         }
 
         /* Add the attribute */
-        arrayAppend(state->attributeData, Containers::InPlaceInit,
+        arrayAppend(state->attributeData, InPlaceInit,
             MeshAttribute::TextureCoordinates,
             /* We want integer types normalized */
             vertexFormat(textureCoordinateFormats.x(), 2, textureCoordinateFormats.x() != VertexFormat::Float),
@@ -607,12 +607,12 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
         /* Add the attribute. If it is per-face, actual triangle face count is
            not known yet, using 0 until after all faces are parsed. */
         if(!perFaceColors) arrayAppend(state->attributeData,
-            Containers::InPlaceInit, MeshAttribute::Color,
+            InPlaceInit, MeshAttribute::Color,
             /* We want integer types normalized, 3 or 4 components */
             vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
             colorOffsets.x(), state->vertexCount, std::ptrdiff_t(state->vertexStride));
         else arrayAppend(state->faceAttributeData,
-            Containers::InPlaceInit, MeshAttribute::Color,
+            InPlaceInit, MeshAttribute::Color,
             /* We want integer types normalized, 3 or 4 components */
             vertexFormat(colorFormats.x(), colorFormats.w() == VertexFormat{} ? 3 : 4, colorFormats.x() != VertexFormat::Float),
             colorOffsets.x(), 0u, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip));
@@ -637,10 +637,10 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
         /* Add the attribute. If it is per-face, actual triangle face count is
            not known yet, using 0 until after all faces are parsed. */
         if(!perFaceObjectIds) arrayAppend(state->attributeData,
-            Containers::InPlaceInit, MeshAttribute::ObjectId, format,
+            InPlaceInit, MeshAttribute::ObjectId, format,
             objectIdOffset, state->vertexCount, std::ptrdiff_t(state->vertexStride));
         else arrayAppend(state->faceAttributeData,
-            Containers::InPlaceInit, MeshAttribute::ObjectId, format,
+            InPlaceInit, MeshAttribute::ObjectId, format,
             objectIdOffset, 0u, std::ptrdiff_t(state->faceIndicesOffset + state->faceSkip));
     }
 
@@ -674,7 +674,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
     /* Copy all vertex data */
     Containers::Array<char> vertexData;
     if(level == 0) {
-        vertexData = Containers::Array<char>{Containers::NoInit,
+        vertexData = Containers::Array<char>{NoInit,
         _state->vertexStride*_state->vertexCount};
         Utility::copy(in.prefix(vertexData.size()), vertexData);
     }
@@ -691,7 +691,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
        and per-face data directly without parsing anything */
     if(configuration().value<bool>("triangleFastPath") && in.size() == _state->faceCount*(_state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip)) {
         if(level == 0) {
-            indexData = Containers::Array<char>{Containers::NoInit,
+            indexData = Containers::Array<char>{NoInit,
                 _state->faceCount*3*faceIndexTypeSize};
             Containers::StridedArrayView2D<const char> src{in,
                 in + _state->faceIndicesOffset + faceSizeTypeSize,
@@ -703,7 +703,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
         }
 
         if(parsePerFaceAttributes) {
-            faceData = Containers::Array<char>{Containers::NoInit,
+            faceData = Containers::Array<char>{NoInit,
                 _state->faceCount*(_state->faceIndicesOffset + _state->faceSkip)};
             Containers::StridedArrayView2D<const char> src{in,
                 {_state->faceCount, _state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip}};

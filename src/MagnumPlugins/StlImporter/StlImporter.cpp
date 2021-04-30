@@ -61,7 +61,7 @@ void StlImporter::doOpenFile(const std::string& filename) {
 }
 
 void StlImporter::doOpenData(Containers::ArrayView<const char> data) {
-    Containers::Array<char> copy{Containers::NoInit, data.size()};
+    Containers::Array<char> copy{NoInit, data.size()};
     Utility::copy(data, copy);
     openDataInternal(std::move(copy));
 }
@@ -136,7 +136,7 @@ Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt leve
     } else vertexCount = triangleCount;
 
     /* Allocate output data */
-    Containers::Array<char> vertexData{Containers::NoInit, std::size_t(outputVertexStride*vertexCount)};
+    Containers::Array<char> vertexData{NoInit, std::size_t(outputVertexStride*vertexCount)};
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
 
     /* Copy positions */

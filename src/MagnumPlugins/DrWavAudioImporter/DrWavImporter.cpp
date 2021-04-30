@@ -79,7 +79,7 @@ constexpr const BufferFormat MuLawFormatTable[2][1] = {
 
 /* Converts 32-bit PCM into lower bit levels by skipping bytes */
 Containers::Array<char> convert32Pcm(const Containers::ArrayView<const char> container, const UnsignedInt samples, const UnsignedInt size) {
-    Containers::Array<char> convertData{Containers::NoInit, samples*size};
+    Containers::Array<char> convertData{NoInit, samples*size};
 
     UnsignedInt skip = -1, index = 0;
     for(char item: container) {
@@ -219,7 +219,7 @@ BufferFormat DrWavImporter::doFormat() const { return _format; }
 UnsignedInt DrWavImporter::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrWavImporter::doData() {
-    Containers::Array<char> copy{Containers::NoInit, _data->size()};
+    Containers::Array<char> copy{NoInit, _data->size()};
     Utility::copy(*_data, copy);
     return copy;
 }

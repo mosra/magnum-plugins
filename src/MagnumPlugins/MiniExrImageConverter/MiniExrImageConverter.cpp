@@ -66,7 +66,7 @@ Containers::Array<char> MiniExrImageConverter::doConvertToData(const ImageView2D
     const std::size_t rowSize = image.size().x()*image.pixelSize();
     const std::size_t rowStride = dataProperties.second.x();
     const std::size_t packedDataSize = rowSize*image.size().y();
-    Containers::Array<char> reversedPackedData{Containers::NoInit, packedDataSize};
+    Containers::Array<char> reversedPackedData{NoInit, packedDataSize};
     for(std::int_fast32_t y = 0; y != image.size().y(); ++y)
         std::copy_n(inputData.suffix((image.size().y() - y - 1)*rowStride).data(), rowSize, reversedPackedData + y*rowSize);
 
@@ -76,7 +76,7 @@ Containers::Array<char> MiniExrImageConverter::doConvertToData(const ImageView2D
 
     /* miniexr uses malloc to allocate and since we can't use custom deleters,
        copy the result into a new-allocated array instead */
-    Containers::Array<char> fileData{Containers::NoInit, size};
+    Containers::Array<char> fileData{NoInit, size};
     std::copy_n(data, size, fileData.begin());
     std::free(data);
 

@@ -92,7 +92,7 @@ void GlslangConverter::finalize() {
     glslang::FinalizeProcess();
 }
 
-GlslangConverter::GlslangConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{Containers::InPlaceInit} {}
+GlslangConverter::GlslangConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{InPlaceInit} {}
 
 ConverterFeatures GlslangConverter::doFeatures() const {
     return ConverterFeature::ConvertData|ConverterFeature::ValidateData|ConverterFeature::Preprocess|ConverterFeature::DebugInfo|
@@ -991,7 +991,7 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
 
     /* Copy the vector into something sane */
     Containers::ArrayView<const char> spirvBytes = Containers::arrayCast<const char>(Containers::arrayView(spirv));
-    Containers::Array<char> out{Containers::NoInit, spirvBytes.size()};
+    Containers::Array<char> out{NoInit, spirvBytes.size()};
     Utility::copy(spirvBytes, out);
     return out;
 }

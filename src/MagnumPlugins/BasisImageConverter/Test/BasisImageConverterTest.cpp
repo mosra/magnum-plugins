@@ -148,7 +148,7 @@ void BasisImageConverterTest::processError() {
         16128 /* basisu_frontend::cMaxEndpointClusters */ + 1);
 
     Image2D imageWithSkip{PixelFormat::RGBA8Unorm, Vector2i{16},
-        Containers::Array<char>{Containers::ValueInit, 16*16*4}};
+        Containers::Array<char>{ValueInit, 16*16*4}};
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -172,7 +172,7 @@ void BasisImageConverterTest::r() {
        to 4 bytes. During copy, we only use R channel to retrieve a R8 image */
     const UnsignedInt dataSize = (63 + 7 + 2)*(27 + 8);
     Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
-        PixelFormat::R8Unorm, originalImage->size(), Containers::Array<char>{Containers::ValueInit, dataSize}};
+        PixelFormat::R8Unorm, originalImage->size(), Containers::Array<char>{ValueInit, dataSize}};
     Utility::copy(Containers::arrayCast<const UnsignedByte>(
         originalImage->pixels<Color3ub>()),
         imageWithSkip.pixels<UnsignedByte>());
@@ -216,7 +216,7 @@ void BasisImageConverterTest::rg() {
        image. */
     const UnsignedInt dataSize = ((63 + 8)*2 + 2)*(27 + 7);
     Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
-        PixelFormat::RG8Unorm, originalImage->size(), Containers::Array<char>{Containers::ValueInit, dataSize}};
+        PixelFormat::RG8Unorm, originalImage->size(), Containers::Array<char>{ValueInit, dataSize}};
     Utility::copy(Containers::arrayCast<const Vector2ub>(
         originalImage->pixels<Color3ub>()),
         imageWithSkip.pixels<Vector2ub>());
@@ -259,7 +259,7 @@ void BasisImageConverterTest::rgb() {
     const UnsignedInt dataSize = ((63 + 7)*3 + 3)*(27 + 8);
     Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
         PixelFormat::RGB8Unorm, originalImage->size(),
-        Containers::Array<char>{Containers::ValueInit, dataSize}};
+        Containers::Array<char>{ValueInit, dataSize}};
     Utility::copy(originalImage->pixels<Color3ub>(),
         imageWithSkip.pixels<Color3ub>());
 
@@ -299,7 +299,7 @@ void BasisImageConverterTest::rgba() {
     const UnsignedInt dataSize = ((63 + 7)*4)*(27 + 7);
     Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
         PixelFormat::RGBA8Unorm, originalImage->size(),
-        Containers::Array<char>{Containers::ValueInit, dataSize}};
+        Containers::Array<char>{ValueInit, dataSize}};
     Utility::copy(originalImage->pixels<Color4ub>(),
         imageWithSkip.pixels<Color4ub>());
 

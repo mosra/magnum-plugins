@@ -1125,7 +1125,7 @@ Containers::Optional<SkinData3D> TinyGltfImporter::doSkin3D(const UnsignedInt id
     }
 
     /* Joint IDs */
-    Containers::Array<UnsignedInt> joints{Containers::NoInit, skin.joints.size()};
+    Containers::Array<UnsignedInt> joints{NoInit, skin.joints.size()};
     for(std::size_t i = 0; i != joints.size(); ++i) {
         if(std::size_t(skin.joints[i]) >= _d->model.nodes.size()) {
             Error{} << "Trade::TinyGltfImporter::skin3D(): target node" << skin.joints[i] << "out of bounds for" << _d->model.nodes.size() << "nodes";
@@ -1431,7 +1431,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
     CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
 
     /* Allocate & copy vertex data (if any) */
-    Containers::Array<char> vertexData{Containers::NoInit, bufferRange.size()};
+    Containers::Array<char> vertexData{NoInit, bufferRange.size()};
     if(vertexData.size()) Utility::copy(Containers::arrayCast<const char>(
         Containers::arrayView(_d->model.buffers[bufferId].data)
             .slice(bufferRange.min(), bufferRange.max())),
@@ -1617,14 +1617,14 @@ bool TinyGltfImporter::materialTexture(const char* name, const UnsignedInt textu
             matrix = Matrix3::translation(Vector2::yAxis(1.0f))*
                      Matrix3::scaling(Vector2::yScale(-1.0f))*matrix;
 
-            arrayAppend(attributes, Containers::InPlaceInit, matrixAttribute, matrix);
+            arrayAppend(attributes, InPlaceInit, matrixAttribute, matrix);
         }
     }
 
     /* In case the material had no texture transformation but still needs an
        Y-flip, put it there */
     if(!hasTextureTransform && _d->textureCoordinateYFlipInMaterial) {
-        arrayAppend(attributes, Containers::InPlaceInit, matrixAttribute,
+        arrayAppend(attributes, InPlaceInit, matrixAttribute,
             Matrix3::translation(Vector2::yAxis(1.0f))*
             Matrix3::scaling(Vector2::yScale(-1.0f)));
     }
@@ -1632,13 +1632,13 @@ bool TinyGltfImporter::materialTexture(const char* name, const UnsignedInt textu
     /* Add texture coordinate set if non-zero. The KHR_texture_transform
        could be modifying it, so do that after */
     if(texCoord != 0)
-        arrayAppend(attributes, Containers::InPlaceInit, coordinateAttribute, texCoord);
+        arrayAppend(attributes, InPlaceInit, coordinateAttribute, texCoord);
 
     /* In some cases (when dealing with packed textures), we're parsing &
        adding texture coordinates and matrix multiple times, but adding the
        packed texture ID just once. In other cases the attribute is invalid. */
     if(attribute != MaterialAttribute{})
-        arrayAppend(attributes, Containers::InPlaceInit, attribute, texture);
+        arrayAppend(attributes, InPlaceInit, attribute, texture);
 
     return true;
 }
@@ -1652,16 +1652,16 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
 
     /* Alpha mode and mask, double sided */
     if(material.alphaMode == "BLEND")
-        arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::AlphaBlend, true);
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::AlphaBlend, true);
     else if(material.alphaMode == "MASK")
-        arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::AlphaMask, Float(material.alphaCutoff));
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::AlphaMask, Float(material.alphaCutoff));
     else if(material.alphaMode != "OPAQUE") {
         Error{} << "Trade::TinyGltfImporter::material(): unknown alpha mode" << material.alphaMode;
         return Containers::NullOpt;
     }
 
     if(material.doubleSided)
-        arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DoubleSided, true);
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::DoubleSided, true);
 
     /* Core metallic/roughness material */
     /** @todo is there ANY way to check if these properties are actually
@@ -1670,15 +1670,15 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
         types |= MaterialType::PbrMetallicRoughness;
 
         if(Vector4d::from(material.pbrMetallicRoughness.baseColorFactor.data()) != Vector4d{1.0})
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::BaseColor,
                 Color4{Vector4d::from(material.pbrMetallicRoughness.baseColorFactor.data())});
         if(material.pbrMetallicRoughness.metallicFactor != 1.0)
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::Metalness,
                 Float(material.pbrMetallicRoughness.metallicFactor));
         if(material.pbrMetallicRoughness.roughnessFactor != 1.0)
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::Roughness,
                 Float(material.pbrMetallicRoughness.roughnessFactor));
 
@@ -1737,7 +1737,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
 
         auto diffuseColor = khrMaterialsPbrSpecularGlossiness->second.Get("diffuseFactor");
         if(diffuseColor.Type() != tinygltf::NULL_TYPE) {
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::DiffuseColor, Vector4{Vector4d{
                 diffuseColor.Get(0).Get<double>(),
                 diffuseColor.Get(1).Get<double>(),
@@ -1747,7 +1747,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
 
         auto specularColor = khrMaterialsPbrSpecularGlossiness->second.Get("specularFactor");
         if(specularColor.Type() != tinygltf::NULL_TYPE) {
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 /* Specular is 3-component in glTF, alpha should be 0 to not
                    affect transparent materials */
                 MaterialAttribute::SpecularColor, Color4{Vector3{Vector3d{
@@ -1758,7 +1758,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
 
         auto glossiness = khrMaterialsPbrSpecularGlossiness->second.Get("glossinessFactor");
         if(glossiness.Type() != tinygltf::NULL_TYPE) {
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::Glossiness,
                 Float(glossiness.Get<double>()));
         }
@@ -1827,7 +1827,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
             return Containers::NullOpt;
 
         if(material.normalTexture.scale != 1.0)
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::NormalTextureScale,
                 Float(material.normalTexture.scale));
     }
@@ -1849,14 +1849,14 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
             return Containers::NullOpt;
 
         if(material.occlusionTexture.strength != 1.0)
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::OcclusionTextureStrength,
                 Float(material.occlusionTexture.strength));
     }
 
     /* Emissive factor & texture */
     if(Vector3d::from(material.emissiveFactor.data()) != Vector3d{0.0})
-        arrayAppend(attributes, Containers::InPlaceInit,
+        arrayAppend(attributes, InPlaceInit,
             MaterialAttribute::EmissiveColor,
             Color3{Vector3d::from(material.emissiveFactor.data())});
     const Int emissiveTexture = material.emissiveTexture.index;
@@ -1912,13 +1912,13 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
         }
 
         if(diffuseColor)
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseColor, *diffuseColor);
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::DiffuseColor, *diffuseColor);
         if(diffuseTexture)
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTexture, *diffuseTexture);
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::DiffuseTexture, *diffuseTexture);
         if(diffuseTextureMatrix)
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTextureMatrix, *diffuseTextureMatrix);
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::DiffuseTextureMatrix, *diffuseTextureMatrix);
         if(diffuseTextureCoordinates)
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTextureCoordinates, *diffuseTextureCoordinates);
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::DiffuseTextureCoordinates, *diffuseTextureCoordinates);
     }
 
     /* Clear coat layer -- needs to be after all base material attributes */
@@ -1929,11 +1929,11 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
         /* Add a new layer -- this works both if layers are empty and if
            there's something already */
         arrayAppend(layers, UnsignedInt(attributes.size()));
-        arrayAppend(attributes, Containers::InPlaceInit, MaterialLayer::ClearCoat);
+        arrayAppend(attributes, InPlaceInit, MaterialLayer::ClearCoat);
 
         auto clearcoatFactor = khrMaterialsClearCoat->second.Get("clearcoatFactor");
         if(clearcoatFactor.Type() != tinygltf::NULL_TYPE) {
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::LayerFactor,
                 Float(clearcoatFactor.Get<double>()));
         } else {
@@ -1947,7 +1947,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
                In our MaterialData API the presence of the layer alone enables
                it and thus a default of 1 makes sense -- so one can specify
                just the texture, without the factor as well. */
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::LayerFactor, 0.0f);
         }
 
@@ -1967,14 +1967,14 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
 
         auto clearcoatRoughnessFactor = khrMaterialsClearCoat->second.Get("clearcoatRoughnessFactor");
         if(clearcoatRoughnessFactor.Type() != tinygltf::NULL_TYPE) {
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::Roughness,
                 Float(clearcoatRoughnessFactor.Get<double>()));
         } else {
             /* Default factor in glTF is 0, not 1. I assume there's a similar
                reasoning as with the clearcoatFactor above, but it makes less
                sense. */
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::Roughness, 0.0f);
         }
 
@@ -1994,7 +1994,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
             /* The extension description doesn't mention it, but the schema
                says the clearcoat roughness is actually in the G channel:
                https://github.com/KhronosGroup/glTF/blob/dc5519b9ce9834f07c30ec4c957234a0cd6280a2/extensions/2.0/Khronos/KHR_materials_clearcoat/schema/glTF.KHR_materials_clearcoat.schema.json#L32 */
-            arrayAppend(attributes, Containers::InPlaceInit,
+            arrayAppend(attributes, InPlaceInit,
                 MaterialAttribute::RoughnessTextureSwizzle,
                 MaterialTextureSwizzle::G);
         }
@@ -2014,7 +2014,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
 
             auto scale = clearcoatNormalTexture.Get("scale");
             if(scale.Type() != tinygltf::NULL_TYPE) {
-                arrayAppend(attributes, Containers::InPlaceInit,
+                arrayAppend(attributes, InPlaceInit,
                     MaterialAttribute::NormalTextureScale,
                     Float(scale.Get<double>()));
             }
@@ -2027,7 +2027,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
     /* Can't use growable deleters in a plugin, convert back to the default
        deleter */
     arrayShrink(layers);
-    arrayShrink(attributes, Containers::DefaultInit);
+    arrayShrink(attributes, DefaultInit);
     return MaterialData{types, std::move(attributes), std::move(layers), &material};
 }
 

@@ -211,7 +211,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
 
     const basisu::uint8_vec& out = basis.get_output_basis_file();
 
-    Containers::Array<char> fileData{Containers::NoInit, out.size()};
+    Containers::Array<char> fileData{NoInit, out.size()};
     Utility::copy(Containers::arrayCast<const char>(out), fileData);
 
     return fileData;

@@ -55,7 +55,7 @@ class MemoryOStream: public Imf::OStream {
 
         void write(const char c[], int n) override {
             if(_position + n > _data.size())
-                arrayAppend(_data, Containers::NoInit, _position + n - _data.size());
+                arrayAppend(_data, NoInit, _position + n - _data.size());
 
             std::memcpy(_data + _position, c, n);
             _position += n;

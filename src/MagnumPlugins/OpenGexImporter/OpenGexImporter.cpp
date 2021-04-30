@@ -128,7 +128,7 @@ void gatherNodes(OpenDdl::Structure node, std::vector<OpenDdl::Structure>& nodes
 }
 
 void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    Containers::Pointer<Document> d{Containers::InPlaceInit};
+    Containers::Pointer<Document> d{InPlaceInit};
 
     /* Parse the document */
     if(!d->document.parse(data, OpenGex::structures, OpenGex::properties)) return;
@@ -642,7 +642,7 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
     }
 
     /* Allocate vertex data, fill attributes */
-    Containers::Array<char> vertexData{Containers::NoInit, std::size_t(stride)*vertexCount};
+    Containers::Array<char> vertexData{NoInit, std::size_t(stride)*vertexCount};
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
     std::size_t attributeIndex = 0;
     std::size_t attributeOffset = 0;
@@ -768,9 +768,9 @@ Containers::Optional<MaterialData> OpenGexImporter::doMaterial(const UnsignedInt
     for(const OpenDdl::Structure texture: material.childrenOf(OpenGex::Texture)) {
         const auto& attrib = texture.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "diffuse") {
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseTexture, structureId(_d->textures, texture));
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::DiffuseTexture, structureId(_d->textures, texture));
         } else if(attrib == "specular") {
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::SpecularTexture, structureId(_d->textures, texture));
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::SpecularTexture, structureId(_d->textures, texture));
         }
     }
 
@@ -784,19 +784,19 @@ Containers::Optional<MaterialData> OpenGexImporter::doMaterial(const UnsignedInt
 
         const auto& attrib = color.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "diffuse")
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::DiffuseColor, extractColorData<Color4>(floatArray));
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::DiffuseColor, extractColorData<Color4>(floatArray));
         else if(attrib == "specular")
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::SpecularColor, extractColorData<Color4>(floatArray));
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::SpecularColor, extractColorData<Color4>(floatArray));
     }
 
     /* Parameters */
     for(const OpenDdl::Structure param: material.childrenOf(OpenGex::Param)) {
         const auto& attrib = param.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "specular_power")
-            arrayAppend(attributes, Containers::InPlaceInit, MaterialAttribute::Shininess, param.firstChild().as<Float>());
+            arrayAppend(attributes, InPlaceInit, MaterialAttribute::Shininess, param.firstChild().as<Float>());
     }
 
-    arrayShrink(attributes, Containers::DefaultInit);
+    arrayShrink(attributes, DefaultInit);
     return MaterialData{MaterialType::Phong, std::move(attributes), &material};
 }
 

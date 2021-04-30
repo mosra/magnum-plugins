@@ -311,7 +311,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
         }
 
         Containers::Array<UnsignedInt> outputIndices;
-        Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, Containers::NoInit, mesh.indexCount());
+        Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, NoInit, mesh.indexCount());
 
         UnsignedInt vertexCount;
         if(configuration().value<bool>("simplifySloppy"))

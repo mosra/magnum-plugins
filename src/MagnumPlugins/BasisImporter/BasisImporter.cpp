@@ -139,7 +139,7 @@ void BasisImporter::initialize() {
     basist::basisu_transcoder_init();
 }
 
-BasisImporter::BasisImporter(): _state{Containers::InPlaceInit} {
+BasisImporter::BasisImporter(): _state{InPlaceInit} {
     /* Initialize default configuration values */
     /** @todo horrible workaround, fix this properly */
     configuration().setValue("format", "");
@@ -205,7 +205,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* All good, release the transcoder guard and keep a copy of the data */
     transcoderGuard.release();
-    _state->in = Containers::Array<char>{Containers::NoInit, data.size()};
+    _state->in = Containers::Array<char>{NoInit, data.size()};
     Utility::copy(data, _state->in);
 }
 
@@ -271,7 +271,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
         outputSizeInBlocksOrPixels = totalBlocks;
         dataSize = basis_get_bytes_per_block(format)*totalBlocks;
     }
-    Containers::Array<char> dest{Containers::DefaultInit, dataSize};
+    Containers::Array<char> dest{DefaultInit, dataSize};
     if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, basist::transcoder_texture_format(format), flags, rowStride, nullptr, outputRowsInPixels)) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
         return Containers::NullOpt;

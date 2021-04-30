@@ -152,7 +152,7 @@ Containers::Array<char> PngImageConverter::doConvertToData(const ImageView2D& im
     png_destroy_write_struct(&file, &info);
 
     /* Copy the string into the output array (I would kill for having std::string::release()) */
-    Containers::Array<char> fileData{Containers::NoInit, output.size()};
+    Containers::Array<char> fileData{NoInit, output.size()};
     std::copy(output.begin(), output.end(), fileData.data());
     return fileData;
 }

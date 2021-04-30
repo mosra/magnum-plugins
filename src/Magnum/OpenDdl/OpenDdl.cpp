@@ -1167,9 +1167,9 @@ namespace Validation {
 
 Structure::Structure(Int identifier, Properties properties, Primitives primitives, std::size_t primitiveCount, std::size_t primitiveArraySize, Structures structures):
     _identifier{identifier},
-    _properties{Containers::InPlaceInit, properties},
-    _primitives{Containers::InPlaceInit, primitives},
-    _structures{Containers::InPlaceInit, structures},
+    _properties{InPlaceInit, properties},
+    _primitives{InPlaceInit, primitives},
+    _structures{InPlaceInit, structures},
     _primitiveCount{primitiveCount}, _primitiveArraySize{primitiveArraySize}
 {}
 

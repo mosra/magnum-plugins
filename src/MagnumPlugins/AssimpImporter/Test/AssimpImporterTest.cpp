@@ -1490,7 +1490,7 @@ void AssimpImporterTest::fileCallbackEmptyFile() {
 
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
         void*) {
-            return Containers::Optional<Containers::ArrayView<const char>>{Containers::InPlaceInit};
+            return Containers::Optional<Containers::ArrayView<const char>>{InPlaceInit};
         });
 
     std::ostringstream out;

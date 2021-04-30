@@ -51,7 +51,7 @@ struct SpirvToolsConverter::State {
     Containers::String optimizationLevel;
 };
 
-SpirvToolsConverter::SpirvToolsConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{Containers::InPlaceInit} {
+SpirvToolsConverter::SpirvToolsConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{InPlaceInit} {
     /* If the plugin was loaded through some of the aliases, set implicit
        input/output formats */
     if(plugin == "SpirvAssemblyToSpirvShaderConverter") {
@@ -252,7 +252,7 @@ std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, c
 
     spv_binary_t binaryStorage;
     spv_binary binary{};
-    Containers::ScopeGuard binaryDestroy{Containers::NoCreate};
+    Containers::ScopeGuard binaryDestroy{NoCreate};
     if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::validateData():", binaryStorage, binary, binaryDestroy, data,
         /* Implicitly preserve numeric IDs, so when we're validating a SPIR-V
            assembly, the disassembled instruction in the validation message
@@ -367,7 +367,7 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
 
     spv_binary_t binaryStorage;
     spv_binary binary{};
-    Containers::ScopeGuard binaryDestroy{Containers::NoCreate};
+    Containers::ScopeGuard binaryDestroy{NoCreate};
     if(!readData(context, configuration(), _state->inputFormat, inputFilename, "ShaderTools::SpirvToolsConverter::convertDataToData():", binaryStorage, binary, binaryDestroy, data, 0))
         return {};
 
@@ -469,7 +469,7 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
         /* Reference the vector guts in the binary again for the rest of the
            code. Replace the old scope guard with an empty one, which will
            also trigger the original deleter, if it was when disassembing. */
-        binaryDestroy = Containers::ScopeGuard{Containers::NoCreate};
+        binaryDestroy = Containers::ScopeGuard{NoCreate};
         binary = &binaryStorage;
         binary->code = optimizerOutputStorage.data();
         binary->wordCount = optimizerOutputStorage.size();
@@ -518,7 +518,7 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
            because it *might* have a different deleter (in reality it uses a
            plain delete[], but I don't want to depend on such an implementation
            detail, this is not a perf-critical code path). */
-        out = Containers::Array<char>{Containers::NoInit, text->length};
+        out = Containers::Array<char>{NoInit, text->length};
         Utility::copy(Containers::arrayView(text->str, text->length), out);
 
     /* Otherwise simply copy the binary to the output. We can't take ownership
@@ -526,7 +526,7 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
        binary could also point right at the input `data`. */
     } else {
         Containers::ArrayView<const char> in(reinterpret_cast<const char*>(binary->code), 4*binary->wordCount);
-        out = Containers::Array<char>{Containers::NoInit, in.size()};
+        out = Containers::Array<char>{NoInit, in.size()};
         Utility::copy(in, out);
     }
 

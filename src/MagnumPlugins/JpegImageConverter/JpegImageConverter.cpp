@@ -169,7 +169,7 @@ Containers::Array<char> JpegImageConverter::doConvertToData(const ImageView2D& i
     jpeg_destroy_compress(&info);
 
     /* Copy the string into the output array (I would kill for having std::string::release()) */
-    Containers::Array<char> fileData{Containers::NoInit, destinationManager.output.size()};
+    Containers::Array<char> fileData{NoInit, destinationManager.output.size()};
     std::copy(destinationManager.output.begin(), destinationManager.output.end(), fileData.data());
     return fileData;
 }

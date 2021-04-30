@@ -96,7 +96,7 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
     /* Write attribute header and calculate offsets for copying later.
        Attributes that can't be written because the type is not supported by
        PLY or the name is unknown will have offset kept at ~std::size_t{}. */
-    Containers::Array<std::size_t> offsets{Containers::DirectInit, triangles.attributeCount(), ~std::size_t{}};
+    Containers::Array<std::size_t> offsets{DirectInit, triangles.attributeCount(), ~std::size_t{}};
     std::size_t vertexSize = 0;
     header += Utility::formatString("element vertex {}\n", triangles.vertexCount());
     for(UnsignedInt i = 0; i != triangles.attributeCount(); ++i) {
@@ -239,7 +239,7 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
     }
 
     /* Allocate the data, copy header */
-    Containers::Array<char> out{Containers::NoInit, header.size() + vertexDataSize + indexDataSize};
+    Containers::Array<char> out{NoInit, header.size() + vertexDataSize + indexDataSize};
     /* Needs an explicit ArrayView constructor, otherwise MSVC 2015, 17 and 19
        creates ArrayView<const void> here (wtf!) */
     Utility::copy(Containers::ArrayView<const char>{header.data(), header.size()}, out.prefix(header.size()));

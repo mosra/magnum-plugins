@@ -102,7 +102,7 @@ BufferFormat DrMp3Importer::doFormat() const { return _format; }
 UnsignedInt DrMp3Importer::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrMp3Importer::doData() {
-    Containers::Array<char> copy{Containers::NoInit, _data->size()};
+    Containers::Array<char> copy{NoInit, _data->size()};
     Utility::copy(*_data, copy);
     return copy;
 }

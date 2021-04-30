@@ -164,43 +164,43 @@ const struct {
     const char* message;
 } ValidateFailData[] {
     {"compile warning",
-        {}, {Containers::InPlaceInit, {
+        {}, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""}
         }}, true,
         "WARNING: 0:4: 'reserved__word' : identifiers containing consecutive underscores (\"__\") are reserved"},
     {"compile warning, Quiet",
-        ConverterFlag::Quiet, {Containers::InPlaceInit, {
+        ConverterFlag::Quiet, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""}
         }}, true,
         ""},
     {"compile warning, WarningAsError",
-        ConverterFlag::WarningAsError, {Containers::InPlaceInit, {
+        ConverterFlag::WarningAsError, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""}
         }}, false,
         /* Glslang has no concept of warnings as error so this is the same as
            the "compile warning" case except that we fail the validation */
         "WARNING: 0:4: 'reserved__word' : identifiers containing consecutive underscores (\"__\") are reserved"},
     {"link error",
-        {}, {Containers::InPlaceInit, {
+        {}, {InPlaceInit, {
             {"NO_MAIN", ""}
         }}, false,
         "ERROR: Linking vertex stage: Missing entry point: Each stage requires one entry point"},
     {"compile warning + link error",
-        {}, {Containers::InPlaceInit, {
+        {}, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""},
             {"NO_MAIN", ""}
         }}, false,
         "WARNING: 0:4: 'reserved__word' : identifiers containing consecutive underscores (\"__\") are reserved\n"
         "ERROR: Linking vertex stage: Missing entry point: Each stage requires one entry point"},
     {"compile warning + link error, Quiet",
-        ConverterFlag::Quiet, {Containers::InPlaceInit, {
+        ConverterFlag::Quiet, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""},
             {"NO_MAIN", ""}
         }}, false,
         /* Same as the "link error" case */
         "ERROR: Linking vertex stage: Missing entry point: Each stage requires one entry point"},
     {"compile warning + link error, WarningAsError",
-        ConverterFlag::WarningAsError, {Containers::InPlaceInit, {
+        ConverterFlag::WarningAsError, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""},
             {"NO_MAIN", ""}
         }}, false,
@@ -258,13 +258,13 @@ const struct {
     /* Again just a subset of what's checked for validate(), to verify code
        paths specific to convert() */
     {"compile warning",
-        {}, {Containers::InPlaceInit, {
+        {}, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""}
         }}, true,
         "ShaderTools::GlslangConverter::convertDataToData(): compilation succeeded with the following message:\n"
         "WARNING: 0:4: 'reserved__word' : identifiers containing consecutive underscores (\"__\") are reserved\n"},
     {"compile warning, WarningAsError",
-        ConverterFlag::WarningAsError, {Containers::InPlaceInit, {
+        ConverterFlag::WarningAsError, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""}
         }}, false,
         /* Glslang has no concept of warnings as error so this is the same as
@@ -272,13 +272,13 @@ const struct {
         "ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n"
         "WARNING: 0:4: 'reserved__word' : identifiers containing consecutive underscores (\"__\") are reserved\n"},
     {"link error",
-        {}, {Containers::InPlaceInit, {
+        {}, {InPlaceInit, {
             {"NO_MAIN", ""}
         }}, false,
         "ShaderTools::GlslangConverter::convertDataToData(): linking failed:\n"
         "ERROR: Linking vertex stage: Missing entry point: Each stage requires one entry point\n"},
     {"compile warning + link error",
-        {}, {Containers::InPlaceInit, {
+        {}, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""},
             {"NO_MAIN", ""}
         }}, false,
@@ -386,14 +386,14 @@ void GlslangConverterTest::validate() {
 
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
 
-    Containers::Array<std::pair<Containers::StringView, Containers::StringView>> defines{Containers::InPlaceInit, {
+    Containers::Array<std::pair<Containers::StringView, Containers::StringView>> defines{InPlaceInit, {
         {"A_DEFINE", ""},
         {"AN_UNDEFINE", "something awful!!"},
         {"AN_UNDEFINE", nullptr},
     }};
 
     if(!data.spirvShouldBeValidated)
-        arrayAppend(defines, Containers::InPlaceInit, "VALIDATE_NON_SPIRV", "");
+        arrayAppend(defines, InPlaceInit, "VALIDATE_NON_SPIRV", "");
 
     converter->setDefinitions(defines);
     converter->setOutputFormat(data.outputFormat, data.outputVersion);
