@@ -162,3 +162,7 @@ endif()
 if(WITH_TINYGLTFIMPORTER)
     add_subdirectory(TinyGltfImporter)
 endif()
+
+if(WITH_TILEDIMPORTER)
+    add_subdirectory(TiledImporter)
+endif()
