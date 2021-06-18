@@ -401,6 +401,11 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doAnimationCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doAnimationName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doAnimationForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
+
         MAGNUM_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;
 
         Containers::Pointer<Assimp::Importer> _importer;
