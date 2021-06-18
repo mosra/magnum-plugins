@@ -313,11 +313,25 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
         Containers::Array<UnsignedInt> outputIndices;
         Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, NoInit, mesh.indexCount());
 
+        /* The nullptr at the end is not needed but without it GCC's
+           -Wzero-as-null-pointer-constant fires due to the default argument
+           being `= 0`. WHAT THE FUCK, how is this warning useful?! Why
+           everything today feels like hastily patched together by incompetent
+           idiots?! */
         UnsignedInt vertexCount;
-        if(configuration().value<bool>("simplifySloppy"))
-            vertexCount = meshopt_simplifySloppy(outputIndices.data(), inputIndices, out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount);
-        else
-            vertexCount = meshopt_simplify(outputIndices.data(), inputIndices, out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount, targetError);
+        if(configuration().value<bool>("simplifySloppy")) {
+            vertexCount = meshopt_simplifySloppy(outputIndices.data(), inputIndices.data(), out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount
+                #if MESHOPTIMIZER_VERSION >= 160
+                , targetError, nullptr
+                #endif
+            );
+        } else {
+            vertexCount = meshopt_simplify(outputIndices.data(), inputIndices.data(), out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount, targetError
+                #if MESHOPTIMIZER_VERSION >= 160
+                , nullptr
+                #endif
+            );
+        }
 
         Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, vertexCount);
 

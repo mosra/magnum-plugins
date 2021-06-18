@@ -901,6 +901,9 @@ template<class T> void MeshOptimizerSceneConverterTest::simplifySloppy() {
     converter->configuration().setValue("optimizeVertexFetch", false);
     converter->configuration().setValue("simplifySloppy", true);
     converter->configuration().setValue("simplifyTargetIndexCountThreshold", 0.5f);
+    /* Used only on 0.16+, on 0.15 simplifyTargetIndexCountThreshold is
+       enough. */
+    converter->configuration().setValue("simplifyTargetError", 0.5f);
 
     MeshData sphere = MeshTools::compressIndices(
         Primitives::uvSphereSolid(4, 6, Primitives::UVSphereFlag::TextureCoordinates),
