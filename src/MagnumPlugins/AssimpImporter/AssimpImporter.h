@@ -185,8 +185,8 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-AssimpImporter-behavior Behavior and limitations
 
-The plugin supports @ref ImporterFeature::OpenData and
-@ref ImporterFeature::FileCallback features. The Assimp library loads
+The plugin supports @ref ImporterFeature::OpenData, @ref ImporterFeature::OpenState
+and @ref ImporterFeature::FileCallback features. The Assimp library loads
 everything during initial import, meaning all external file loading callbacks
 are called with @ref InputFileCallbackPolicy::LoadTemporary and the resources
 can be safely freed right after the @ref openData() / @ref openFile() function
@@ -197,12 +197,45 @@ with @ref InputFileCallbackPolicy::LoadTemporary and
 @ref InputFileCallbackPolicy::Close is emitted right after the file is fully
 read.
 
-Import of animation data is not supported at the moment.
+Import of skeleton, skin and morph data is not supported at the moment.
 
 The importer recognizes @ref ImporterFlag::Verbose, enabling verbose logging
 in Assimp when the flag is enabled. However please note that since Assimp
 handles logging through a global singleton, it's not possible to have different
 verbosity levels in each instance.
+
+@subsection Trade-AssimpImporter-behavior-animation Animation import
+
+-   Quaternion rotation tracks are postprocessed in order to make it
+    possible to use the faster
+    @ref Math::lerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerp()" /
+    @ref Math::slerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerp()"
+    functions instead of
+    @ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
+    @ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()". Can be disabled per-animation with the
+    @cb{.ini} optimizeQuaternionShortestPath @ce option, see
+    @ref Trade-AssimpImporter-configuration "below".
+-   If quaternion rotation tracks are not normalized, the importer
+    prints a warning and normalizes them. Can be disabled per-animation with
+    the @cb{.ini} normalizeQuaternions @ce option, see
+    @ref Trade-AssimpImporter-configuration "below".
+-   Skeletons and skins are not supported
+-   Morph targets are not supported
+-   Animation tracks are always imported with
+    @ref Animation::Interpolation::Linear, because Assimp doesn't expose
+    any interpolation modes
+-   Animation tracks using `aiAnimBehaviour_DEFAULT` or `aiAnimBehaviour_REPEAT`
+    fall back to using @ref Animation::Extrapolation::Constant
+-   It's possible to request all animation clips to be merged into one using
+    the @cb{.ini} mergeAnimationClips @ce option in order to for example
+    preserve cinematic animations when using the Blender glTF exporter (as it
+    otherwise outputs a separate clip for each object). When this option is
+    enabled, @ref animationCount() always report either @cpp 0 @ce or
+    @cpp 1 @ce and the merged animation has no name. With this option enabled,
+    however, it can happen that multiple conflicting tracks affecting the same
+    node are merged in the same clip, causing the animation to misbehave.
+-   Assimp versions before commit [e3083c21f0a7beae6c37a2265b7919a02cbf83c4](https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4)
+    read spline-interpolated glTF animation tracks incorrectly and produce broken animations
 
 @subsection Trade-AssimpImporter-behavior-materials Material import
 
@@ -326,6 +359,7 @@ importer state methods:
     -   @ref LightData::importerState() returns `aiLight`
     -   @ref ImageData2D::importerState() may return `aiTexture`, if texture was embedded
         into the loaded file.
+    -   @ref AnimationData::importerState() returns `aiAnimation`
 -   @ref openState() expects a pointer to an Assimp scene (i.e., `const aiScene*`)
     and optionally a path (in order to be able to load textures, if needed)
 
@@ -400,6 +434,11 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
+
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doAnimationCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doAnimationName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doAnimationForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;
 

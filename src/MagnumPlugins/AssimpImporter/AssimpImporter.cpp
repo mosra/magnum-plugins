@@ -43,6 +43,7 @@
 #include <Magnum/Math/Vector.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/PixelStorage.h>
+#include <Magnum/Trade/AnimationData.h>
 #include <Magnum/Trade/ArrayAllocator.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
@@ -54,12 +55,13 @@
 #include <Magnum/Trade/TextureData.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
-#include <assimp/postprocess.h>
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/Importer.hpp>
+#include <assimp/importerdesc.h>
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
 #include <assimp/Logger.hpp>
+#include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
 namespace Magnum { namespace Math { namespace Implementation {
@@ -82,6 +84,7 @@ namespace Magnum { namespace Trade {
 
 struct AssimpImporter::File {
     Containers::Optional<std::string> filePath;
+    const char* importerName = nullptr;
     const aiScene* scene = nullptr;
     std::vector<aiNode*> nodes;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
@@ -95,6 +98,8 @@ struct AssimpImporter::File {
     std::unordered_map<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> nodeInstances;
     std::unordered_map<std::string, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
+
+    Containers::Optional<std::unordered_map<std::string, UnsignedInt>> animationIndicesForName;
 
     /* Mapping for multi-mesh nodes:
        (in the following, "node" is an aiNode,
@@ -127,6 +132,10 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     /** @todo horrible workaround, fix this properly */
 
     conf.setValue("forceWhiteAmbientToBlack", true);
+
+    conf.setValue("optimizeQuaternionShortestPath", true);
+    conf.setValue("normalizeQuaternions", true);
+    conf.setValue("mergeAnimationClips", false);
 
     conf.setValue("ImportColladaIgnoreUpDirection", false);
 
@@ -340,6 +349,14 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     CORRADE_INTERNAL_ASSERT(_f->scene);
+
+    /* Get name of importer. Useful for workarounds based on importer/file type. */
+    _f->importerName = "unknown";
+    const int importerIndex = _importer->GetPropertyInteger("importerIndex", -1);
+    if(importerIndex != -1) {
+        const aiImporterDesc* info = _importer->GetImporterInfo(importerIndex);
+        if(info) _f->importerName = info->mName;
+    }
 
     /* Fill hashmaps for index lookup for materials/textures/meshes/nodes */
     _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
@@ -1116,6 +1133,237 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
     if(!importer) return Containers::NullOpt;
 
     return importer->image2D(0, level);
+}
+
+UnsignedInt AssimpImporter::doAnimationCount() const {
+    /* If the animations are merged, there's at most one */
+    if(configuration().value<bool>("mergeAnimationClips"))
+        return _f->scene->mNumAnimations ? 1 : 0;
+
+    return _f->scene->mNumAnimations;
+}
+
+Int AssimpImporter::doAnimationForName(const std::string& name) {
+    /* If the animations are merged, don't report any names */
+    if(configuration().value<bool>("mergeAnimationClips")) return -1;
+
+    if(!_f->animationIndicesForName) {
+        _f->animationIndicesForName.emplace();
+        _f->animationIndicesForName->reserve(_f->scene->mNumAnimations);
+        for(std::size_t i = 0; i != _f->scene->mNumAnimations; ++i)
+            _f->animationIndicesForName->emplace(std::string(_f->scene->mAnimations[i]->mName.C_Str()), i);
+    }
+
+    const auto found = _f->animationIndicesForName->find(name);
+    return found == _f->animationIndicesForName->end() ? -1 : found->second;
+}
+
+std::string AssimpImporter::doAnimationName(UnsignedInt id) {
+    /* If the animations are merged, don't report any names */
+    if(configuration().value<bool>("mergeAnimationClips")) return {};
+    return _f->scene->mAnimations[id]->mName.C_Str();
+}
+
+namespace {
+
+Animation::Extrapolation extrapolationFor(aiAnimBehaviour behaviour) {
+    /* This code is not covered by tests since there is currently
+       no code in Assimp that sets this except for the .irr importer.
+       So it'll be aiAnimBehaviour_DEFAULT for 99.99% of users,
+       and there are tests that check that this becomes
+       Extrapolation::Constant. */
+    switch(behaviour) {
+        case aiAnimBehaviour_DEFAULT:
+            /** @todo emulate this correctly by inserting keyframes
+                with the default node transformation */
+            return Animation::Extrapolation::Constant;
+        case aiAnimBehaviour_CONSTANT:
+            return Animation::Extrapolation::Constant;
+        case aiAnimBehaviour_LINEAR:
+            return Animation::Extrapolation::Extrapolated;
+        case aiAnimBehaviour_REPEAT:
+            return Animation::Extrapolation::Constant;
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
+}
+
+}
+
+Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) {
+    /* Import either a single animation or all of them together. At the moment,
+       Blender doesn't really support cinematic animations (affecting multiple
+       objects): https://blender.stackexchange.com/q/5689. And since
+       https://github.com/KhronosGroup/glTF-Blender-Exporter/pull/166, these
+       are exported as a set of object-specific clips, which may not be wanted,
+       so we give the users an option to merge them all together. */
+    const std::size_t animationBegin =
+        configuration().value<bool>("mergeAnimationClips") ? 0 : id;
+    const std::size_t animationEnd =
+        configuration().value<bool>("mergeAnimationClips") ? _f->scene->mNumAnimations : id + 1;
+
+    /* Calculate total data size and track count. If merging all animations together,
+       this is the sum of all clip track counts. */
+    std::size_t dataSize = 0;
+    std::size_t trackCount = 0;
+    for (std::size_t a = animationBegin; a != animationEnd; ++a) {
+        const aiAnimation* animation = _f->scene->mAnimations[a];
+        for (std::size_t c = 0; c != animation->mNumChannels; ++c) {
+            const aiNodeAnim* channel = animation->mChannels[c];
+
+            /** @todo handle alignment once we do more than just four-byte types */
+            dataSize += channel->mNumPositionKeys*(sizeof(Float) + sizeof(Vector3)) +
+                channel->mNumRotationKeys*(sizeof(Float) + sizeof(Quaternion)) +
+                channel->mNumScalingKeys*(sizeof(Float) + sizeof(Vector3));
+
+            trackCount += (channel->mNumPositionKeys > 0 ? 1 : 0) +
+                (channel->mNumRotationKeys > 0 ? 1 : 0) +
+                (channel->mNumScalingKeys  > 0 ? 1 : 0);
+        }
+    }
+
+    /* Populate the data array */
+    Containers::Array<char> data{dataSize};
+
+    /* Import all tracks */
+    bool hadToRenormalize = false;
+    std::size_t dataOffset = 0;
+    std::size_t trackId = 0;
+    Containers::Array<Trade::AnimationTrackData> tracks{trackCount};
+    for(std::size_t a = animationBegin; a != animationEnd; ++a) {
+        const aiAnimation* animation = _f->scene->mAnimations[a];
+        for(std::size_t c = 0; c != animation->mNumChannels; ++c) {
+            const aiNodeAnim* channel = animation->mChannels[c];
+            const Int target = doObject3DForName(channel->mNodeName.C_Str());
+            CORRADE_INTERNAL_ASSERT(target != -1);
+
+            /* Assimp only supports linear interpolation. For glTF splines
+               it simply uses the spline control points. */
+            /** @todo Before https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4
+             *        Assimp incorrectly read the spline tangents as values.
+             *        Is there a way to detect this so we can work around it,
+             *        or at least emit a warning?
+             */
+            constexpr Animation::Interpolation interpolation = Animation::Interpolation::Linear;
+
+            /* Extrapolation modes */
+            const Animation::Extrapolation extrapolationBefore = extrapolationFor(channel->mPreState);
+            const Animation::Extrapolation extrapolationAfter = extrapolationFor(channel->mPostState);
+
+            /* Key times are given as ticks, convert to milliseconds. Default value of 25 is
+               taken from the assimp_view tool. */
+            double ticksPerSecond = animation->mTicksPerSecond != 0.0 ? animation->mTicksPerSecond : 25.0;
+
+            /* For glTF files mTicksPerSecond is completely useless before
+               https://github.com/assimp/assimp/commit/7a8b7ba88d6d84dde7fd43419ac2b022c9887856
+               but can be assumed to always be 1000. */
+            /** @todo Check if this is broken in other importers, too */
+            const bool isGltf = std::strcmp(_f->importerName, "glTF2 Importer") == 0;
+            if(isGltf) ticksPerSecond = 1000.0;
+
+            /* Translation */
+            if(channel->mNumPositionKeys > 0) {
+                const size_t keyCount = channel->mNumPositionKeys;
+                const auto keys = Containers::arrayCast<Float>(
+                    data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
+                dataOffset += keys.size()*sizeof(keys[0]);
+                const auto values = Containers::arrayCast<Vector3>(
+                    data.suffix(dataOffset).prefix(keyCount*sizeof(Vector3)));
+                dataOffset += values.size()*sizeof(values[0]);
+
+                for(size_t k = 0; k < channel->mNumPositionKeys; ++k) {
+                    /* Convert double to float keys */
+                    keys[k] = channel->mPositionKeys[k].mTime / ticksPerSecond;
+                    values[k] = Vector3::from(&channel->mPositionKeys[k].mValue[0]);
+                }
+
+                const auto track = Animation::TrackView<const Float, const Vector3>{
+                    keys, values, interpolation,
+                    animationInterpolatorFor<Vector3>(interpolation),
+                    extrapolationBefore, extrapolationAfter};
+
+                tracks[trackId++] = AnimationTrackData{AnimationTrackType::Vector3,
+                    AnimationTrackType::Vector3, AnimationTrackTargetType::Translation3D,
+                    static_cast<UnsignedInt>(target), track };
+            }
+
+            /* Rotation */
+            if(channel->mNumRotationKeys > 0) {
+                const size_t keyCount = channel->mNumRotationKeys;
+                const auto keys = Containers::arrayCast<Float>(
+                    data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
+                dataOffset += keys.size()*sizeof(keys[0]);
+                const auto values = Containers::arrayCast<Quaternion>(
+                    data.suffix(dataOffset).prefix(keyCount*sizeof(Quaternion)));
+                dataOffset += values.size()*sizeof(values[0]);
+
+                for(size_t k = 0; k < channel->mNumRotationKeys; ++k) {
+                    keys[k] = channel->mRotationKeys[k].mTime / ticksPerSecond;
+                    const aiQuaternion& quat = channel->mRotationKeys[k].mValue;
+                    values[k] = Quaternion({ quat.x, quat.y, quat.z }, quat.w);
+                }
+
+                /* Ensure shortest path is always chosen. */
+                if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
+                    Float flip = 1.0f;
+                    for(std::size_t i = 0; i != values.size() - 1; ++i) {
+                        if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
+                        values[i + 1] *= flip;
+                    }
+                }
+
+                /* Normalize the quaternions if not already. Don't attempt
+                   to normalize every time to avoid tiny differences, only
+                   when the quaternion looks to be off. */
+                if(configuration().value<bool>("normalizeQuaternions")) {
+                    for(auto& i: values) if(!i.isNormalized()) {
+                        i = i.normalized();
+                        hadToRenormalize = true;
+                    }
+                }
+
+                const auto track = Animation::TrackView<const Float, const Quaternion>{
+                    keys, values, interpolation,
+                    animationInterpolatorFor<Quaternion>(interpolation),
+                    extrapolationBefore, extrapolationAfter};
+
+                tracks[trackId++] = AnimationTrackData{AnimationTrackType::Quaternion,
+                    AnimationTrackType::Quaternion, AnimationTrackTargetType::Rotation3D,
+                    static_cast<UnsignedInt>(target), track};
+            }
+
+            /* Scale */
+            if(channel->mNumScalingKeys > 0) {
+                const size_t keyCount = channel->mNumScalingKeys;
+                const auto keys = Containers::arrayCast<Float>(
+                    data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
+                dataOffset += keys.size()*sizeof(keys[0]);
+                const auto values = Containers::arrayCast<Vector3>(
+                    data.suffix(dataOffset).prefix(keyCount*sizeof(Vector3)));
+                dataOffset += values.size()*sizeof(values[0]);
+
+                for(size_t k = 0; k < channel->mNumScalingKeys; ++k) {
+                    keys[k] = channel->mScalingKeys[k].mTime / ticksPerSecond;
+                    values[k] = Vector3::from(&channel->mScalingKeys[k].mValue[0]);
+                }
+
+                const auto track = Animation::TrackView<const Float, const Vector3>{
+                    keys, values, interpolation,
+                    animationInterpolatorFor<Vector3>(interpolation),
+                    extrapolationBefore,
+                    extrapolationAfter};
+                tracks[trackId++] = AnimationTrackData{AnimationTrackType::Vector3,
+                    AnimationTrackType::Vector3, AnimationTrackTargetType::Scaling3D,
+                    static_cast<UnsignedInt>(target), track};
+            }
+        }
+    }
+
+    if(hadToRenormalize)
+        Warning{} << "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized";
+
+    return AnimationData{std::move(data), std::move(tracks),
+        configuration().value<bool>("mergeAnimationClips") ? nullptr :
+        &_f->scene->mAnimations[id]};
 }
 
 const void* AssimpImporter::doImporterState() const {
