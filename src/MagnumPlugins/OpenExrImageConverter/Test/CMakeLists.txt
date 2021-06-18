@@ -63,7 +63,7 @@ corrade_add_test(OpenExrImageConverterTest OpenExrImageConverterTest.cpp
         rb32f-custom-channels.exr)
 target_include_directories(OpenExrImageConverterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
-    $<TARGET_PROPERTY:OpenEXR::IlmImf,INTERFACE_INCLUDE_DIRECTORIES>)
+    $<TARGET_PROPERTY:OpenEXR::OpenEXR,INTERFACE_INCLUDE_DIRECTORIES>)
 if(MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(OpenExrImageConverterTest PRIVATE OpenExrImageConverter)
     if(WITH_JPEGIMPORTER)

@@ -60,8 +60,18 @@
 if(NOT CMAKE_VERSION VERSION_LESS 3.9.0)
     find_package(OpenEXR CONFIG QUIET)
     if(OpenEXR_FOUND)
+        # OpenEXR before version 3.0 has some REALLY WEIRD target names. Alias
+        # them to the saner new targets.
+        if(NOT TARGET OpenEXR::OpenEXR)
+            add_library(OpenEXR::OpenEXR INTERFACE IMPORTED)
+            set_target_properties(OpenEXR::OpenEXR PROPERTIES
+                INTERFACE_LINK_LIBRARIES OpenEXR::IlmImf)
+            get_target_property(_OPENEXR_INTERFACE_INCLUDE_DIRECTORIES OpenEXR::IlmImf INTERFACE_INCLUDE_DIRECTORIES)
+        else()
+            get_target_property(_OPENEXR_INTERFACE_INCLUDE_DIRECTORIES OpenEXR::OpenEXR INTERFACE_INCLUDE_DIRECTORIES)
+        endif()
+
         # Just to make FPHSA print some meaningful location, nothing else
-        get_target_property(_OPENEXR_INTERFACE_INCLUDE_DIRECTORIES OpenEXR::IlmImf INTERFACE_INCLUDE_DIRECTORIES)
         include(FindPackageHandleStandardArgs)
         find_package_handle_standard_args(OpenEXR DEFAULT_MSG
             _OPENEXR_INTERFACE_INCLUDE_DIRECTORIES)
@@ -154,7 +164,7 @@ mark_as_advanced(FORCE
     ILMBASE_IMATH_LIBRARY)
 
 # Dependency treee reverse-engineered from the 2.5 config files. They also have
-# OpenEXR::IlmInfConfig / IlmBase::IlmBaseConfig which do just an include path
+# OpenEXR::IlmImfConfig / IlmBase::IlmBaseConfig which do just an include path
 # setup, I find that unnecessary, the include path gets added to the Half / Iex
 # libraries instead, which are needed by everything else.
 
@@ -194,4 +204,11 @@ if(NOT TARGET OpenEXR::IlmImf)
     set_target_properties(OpenEXR::IlmImf PROPERTIES
         IMPORTED_LOCATION ${OPENEXR_ILMIMF_LIBRARY}
         INTERFACE_LINK_LIBRARIES "IlmBase::Half;IlmBase::Iex;IlmBase::IlmThread;IlmBase::Imath;ZLIB::ZLIB")
+endif()
+
+# OpenEXR 3.0 compatible alias for versions 2.5 and below
+if(NOT TARGET OpenEXR::OpenEXR)
+    add_library(OpenEXR::OpenEXR INTERFACE IMPORTED)
+    set_target_properties(OpenEXR::OpenEXR PROPERTIES
+        INTERFACE_LINK_LIBRARIES OpenEXR::IlmImf)
 endif()

@@ -61,8 +61,10 @@ class MemoryOStream: public Imf::OStream {
             _position += n;
         }
 
-        Imath::Int64 tellp() override { return _position; }
-        void seekp(const Imath::Int64 pos) override { _position = pos; }
+        /* It's Imath::Int64 in 2.5 and older, which (what the fuck!) is
+           actually unsigned, Imath::SInt64 is signed instead */
+        std::uint64_t tellp() override { return _position; }
+        void seekp(const std::uint64_t pos) override { _position = pos; }
 
     private:
         Containers::Array<char>& _data;

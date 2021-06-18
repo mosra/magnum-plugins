@@ -29,6 +29,8 @@
 #include <OpenEXR/IexBaseExc.h>
 #include <OpenEXR/ImfChannelList.h>
 #include <OpenEXR/ImfFrameBuffer.h>
+#include <OpenEXR/ImfHeader.h>
+#include <OpenEXR/ImfInputFile.h>
 #include <OpenEXR/ImfInputPart.h>
 #include <OpenEXR/ImfMultiPartInputFile.h>
 #include <OpenEXR/ImfIO.h>
@@ -76,8 +78,10 @@ class MemoryIStream: public Imf::IStream {
             return _position < _data.size();
         }
 
-        Imath::Int64 tellg() override { return _position; }
-        void seekg(const Imath::Int64 pos) override { _position = pos; }
+        /* It's Imath::Int64 in 2.5 and older, which (what the fuck!) is
+           actually unsigned, Imath::SInt64 is signed instead */
+        std::uint64_t tellg() override { return _position; }
+        void seekg(const std::uint64_t pos) override { _position = pos; }
 
     private:
         Containers::ArrayView<const char> _data;

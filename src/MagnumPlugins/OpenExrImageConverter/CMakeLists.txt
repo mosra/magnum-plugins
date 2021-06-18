@@ -50,7 +50,7 @@ target_include_directories(OpenExrImageConverter SYSTEM PRIVATE ${PROJECT_SOURCE
 target_include_directories(OpenExrImageConverter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(OpenExrImageConverter PUBLIC Magnum::Trade OpenEXR::IlmImf)
+target_link_libraries(OpenExrImageConverter PUBLIC Magnum::Trade OpenEXR::OpenEXR)
 # Modify output location only if all are set, otherwise it makes no sense
 if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND CMAKE_LIBRARY_OUTPUT_DIRECTORY AND CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
     set_target_properties(OpenExrImageConverter PROPERTIES
