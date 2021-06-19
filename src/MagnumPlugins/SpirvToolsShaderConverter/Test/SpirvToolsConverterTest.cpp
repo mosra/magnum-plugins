@@ -40,6 +40,7 @@
 #include <Magnum/ShaderTools/AbstractConverter.h>
 
 #include "configure.h"
+#include "MagnumPlugins/SpirvToolsShaderConverter/configureInternal.h"
 
 namespace Magnum { namespace ShaderTools { namespace Test { namespace {
 
@@ -333,8 +334,15 @@ void SpirvToolsConverterTest::validateFailInstruction() {
        origin */
     converter->setOutputFormat({}, "vulkan1.1");
 
+    const char* const expected =
+        #if SPIRVTOOLS_VERSION >= 202007
+        "<data>:5: [VUID-StandaloneSpirv-OriginLowerLeft-04653] In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"
+        #else
+        "<data>:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"
+        #endif
+        ;
     CORRADE_COMPARE(converter->validateData({}, Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename))),
-        std::make_pair(false, "<data>:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"));
+        std::make_pair(false, expected));
 }
 
 void SpirvToolsConverterTest::validateFailFileWhole() {
@@ -378,11 +386,18 @@ void SpirvToolsConverterTest::validateFailFileInstruction() {
        origin */
     converter->setOutputFormat({}, "vulkan1.1");
 
+    const char* const expected =
+        #if SPIRVTOOLS_VERSION >= 202007
+        "[VUID-StandaloneSpirv-OriginLowerLeft-04653] In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"
+        #else
+        "In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"
+        #endif
+        ;
     CORRADE_COMPARE(converter->validateFile({}, data.filename),
-        std::make_pair(false, Utility::formatString("{}:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft", data.filename)));
-    /* Validating data again should nnot be using the stale filename */
+        std::make_pair(false, Utility::formatString("{}:5: {}", data.filename, expected)));
+    /* Validating data again should not be using the stale filename */
     CORRADE_COMPARE(converter->validateData({}, file),
-        std::make_pair(false, "<data>:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"));
+        std::make_pair(false, Utility::formatString("<data>:5: {}", expected)));
 }
 
 void SpirvToolsConverterTest::validateFailAssemble() {
@@ -832,10 +847,17 @@ void SpirvToolsConverterTest::convertOptimizeFail() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertFileToData({},
         Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.noopt.spv")));
-    CORRADE_COMPARE(out.str(),
+
+    const char* const expected =
+        #if SPIRVTOOLS_VERSION >= 202007
+        "[VUID-StandaloneSpirv-OriginLowerLeft-04653] In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"
+        #else
+        "In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"
+        #endif
+        ;
+    CORRADE_COMPARE(out.str(), Utility::formatString(
         "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization error:\n"
-        "<data>:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n"
-        "  OpExecutionMode %2 OriginLowerLeft\n");
+        "<data>:5: {}\n", expected));
 }
 
 }}}}
