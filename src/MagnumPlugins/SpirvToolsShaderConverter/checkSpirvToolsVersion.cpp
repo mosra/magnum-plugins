@@ -24,7 +24,6 @@
 */
 
 #include "spirv-tools/libspirv.h"
-#include "spirv-tools/optimizer.hpp"
 
 #ifndef CHECK_VERSION
 #error CHECK_VERSION not defined
@@ -35,7 +34,11 @@ int main() {
     spv_validator_options validatorOptions = spvValidatorOptionsCreate();
     spv_optimizer_options optimizerOptions = spvOptimizerOptionsCreate();
     spv_target_env env{};
-    spvtools::Optimizer optimizer{env};
+    spv_operand_type_t operandType{};
+
+    #if CHECK_VERSION >= 202007
+    operandType = SPV_OPERAND_TYPE_FPDENORM_MODE;
+    #endif
 
     #if CHECK_VERSION >= 202001
     env = SPV_ENV_VULKAN_1_2;
@@ -55,9 +58,6 @@ int main() {
     env = SPV_ENV_VULKAN_1_1_SPIRV_1_4;
     spvValidatorOptionsSetUniformBufferStandardLayout(validatorOptions, false);
     spvValidatorOptionsSetBeforeHlslLegalization(validatorOptions, false);
-
-    optimizer.RegisterVulkanToWebGPUPasses();
-    optimizer.RegisterWebGPUToVulkanPasses();
     #endif
 
     static_cast<void>(env);

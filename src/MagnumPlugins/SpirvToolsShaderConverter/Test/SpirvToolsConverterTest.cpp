@@ -70,8 +70,6 @@ struct SpirvToolsConverterTest: TestSuite::Tester {
     void convertWrongOutputFormat();
     void convertWrongOutputVersion();
     void convertWrongOptimizationLevel();
-    void convertWrongOutputVersionForWebGpuOptimization();
-    void convertWrongOutputVersionForVulkanOptimization();
     void convertDisassembleExplicitFormatEmptyData();
     void convertDisassembleFail();
     void convertDisassembleFailFile();
@@ -205,8 +203,6 @@ SpirvToolsConverterTest::SpirvToolsConverterTest() {
               &SpirvToolsConverterTest::convertWrongOutputFormat,
               &SpirvToolsConverterTest::convertWrongOutputVersion,
               &SpirvToolsConverterTest::convertWrongOptimizationLevel,
-              &SpirvToolsConverterTest::convertWrongOutputVersionForWebGpuOptimization,
-              &SpirvToolsConverterTest::convertWrongOutputVersionForVulkanOptimization,
               &SpirvToolsConverterTest::convertDisassembleExplicitFormatEmptyData,
               &SpirvToolsConverterTest::convertDisassembleFail,
               &SpirvToolsConverterTest::convertDisassembleFailFile,
@@ -642,39 +638,7 @@ void SpirvToolsConverterTest::convertWrongOptimizationLevel() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
     CORRADE_COMPARE(out.str(),
-        "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization level should be 0, 1, s, legalizeHlsl, vulkanToWebGpu, webGpuToVulkan or empty but got 2\n");
-}
-
-void SpirvToolsConverterTest::convertWrongOutputVersionForWebGpuOptimization() {
-    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
-
-    converter->setOutputFormat({}, "spv1.3");
-    converter->setOptimizationLevel("vulkanToWebGpu");
-    /* Force input format to binary so it doesn't go through disassembly (and
-       fail on that) */
-    converter->setInputFormat(Format::Spirv);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
-        "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target spv1.3 when optimizing for WebGPU, expected empty or webgpu0 instead\n");
-}
-
-void SpirvToolsConverterTest::convertWrongOutputVersionForVulkanOptimization() {
-    Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("SpirvToolsShaderConverter");
-
-    converter->setOutputFormat({}, "opengl4.2");
-    converter->setOptimizationLevel("webGpuToVulkan");
-    /* Force input format to binary so it doesn't go through disassembly (and
-       fail on that) */
-    converter->setInputFormat(Format::Spirv);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
-        "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target opengl4.2 when optimizing for WebGPU, expected empty or vulkanX.Y instead\n");
+        "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization level should be 0, 1, s, legalizeHlsl or empty but got 2\n");
 }
 
 void SpirvToolsConverterTest::convertDisassembleExplicitFormatEmptyData() {

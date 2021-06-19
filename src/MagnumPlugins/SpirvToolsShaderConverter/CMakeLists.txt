@@ -66,7 +66,7 @@ if(TARGET SPIRV-Tools)
 endif()
 
 # Go through all versions of interest and pick the highest one that compiles
-foreach(_version 202001 201905 201904 201903 201902)
+foreach(_version 202007 202001 201905 201904 201903 201902)
     try_compile(_works ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/checkSpirvToolsVersion.cpp
         LINK_LIBRARIES SpirvTools::SpirvTools SpirvTools::Opt

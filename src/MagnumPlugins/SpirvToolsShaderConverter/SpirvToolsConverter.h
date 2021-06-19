@@ -177,10 +177,6 @@ between SPIR-V binary and assembly @ref ShaderTools-SpirvToolsConverter-conversi
 -   `s` optimizes for size
 -   `legalizeHlsl` turns SPIR-V originating from a HLSL source to one that can
     be accepted by Vulkan
--   `vulkanToWebGpu` turns Vulkan-compatible SPIR-V to one that can be accepted
-    by WebGPU. Available since SPIRV-Tools 2019.3.
--   `webGpuToVulkan` turns WebGPU-compatible SPIR-V to one that can be accepted
-    by Vulkan. Available since SPIRV-Tools 2019.3.
 
 Compared to [spirv-opt](https://github.com/KhronosGroup/SPIRV-Tools#optimizer-tool)
 it can work with assembly on both input and output as well, but there's
@@ -250,7 +246,6 @@ ones:
 -   `opengl4.2` for OpenGL 4.2 plus @gl_extension{ARB,gl_spirv}
 -   `opengl4.3` for OpenGL 4.3 plus @gl_extension{ARB,gl_spirv}
 -   `opengl4.5` for OpenGL 4.5 plus @gl_extension{ARB,gl_spirv}
--   `webgpu0` for Work-In-Progress WebGPU 1.0
 
 Default if no version string is specified is `vulkan1.0`. There's no variant
 for OpenGL 4.4.

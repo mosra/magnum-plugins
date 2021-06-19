@@ -330,32 +330,11 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
         return {};
     }
 
-    /* Target environment. Default to Vulkan 1.0 except if optimizing for
-       WebGPU, in which case default to WebGPU 0 */
-    spv_target_env env = _state->optimizationLevel == "vulkanToWebGpu"_s ?
-        SPV_ENV_WEBGPU_0 : SPV_ENV_VULKAN_1_0;
+    /* Target environment, default to Vulkan 1.0. */
+    spv_target_env env = SPV_ENV_VULKAN_1_0;
     if(!_state->outputVersion.isEmpty()) {
         if(!spvParseTargetEnv(_state->outputVersion.data(), &env)) {
             Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): unrecognized output format version" << _state->outputVersion;
-            return {};
-        }
-
-        /* Check if the output is legal if we optimize for Vulkan / WebGPU */
-        if(_state->optimizationLevel == "vulkanToWebGpu"_s && env != SPV_ENV_WEBGPU_0) {
-            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target" << _state->outputVersion << "when optimizing for WebGPU, expected empty or webgpu0 instead";
-            return {};
-        }
-        if(_state->optimizationLevel == "webGpuToVulkan"_s
-            && env != SPV_ENV_VULKAN_1_0
-            && env != SPV_ENV_VULKAN_1_1
-            #if SPIRVTOOLS_VERSION >= 201903
-            && env != SPV_ENV_VULKAN_1_1_SPIRV_1_4
-            #endif
-            #if SPIRVTOOLS_VERSION >= 202001
-            && env != SPV_ENV_VULKAN_1_2
-            #endif
-        ) {
-            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): can't target" << _state->outputVersion << "when optimizing for WebGPU, expected empty or vulkanX.Y instead";
             return {};
         }
     }
@@ -375,8 +354,6 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
        again?! Is everyone mad or */
     std::vector<UnsignedInt> optimizerOutputStorage;
     if(!_state->optimizationLevel.isEmpty() && _state->optimizationLevel != "0"_s) {
-        /* The env should already be correct if using vulkanToWebGpu or
-           webGpuToVulkan */
         spvtools::Optimizer optimizer{env};
         if(_state->optimizationLevel == "1"_s)
             optimizer.RegisterPerformancePasses();
@@ -384,14 +361,8 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
             optimizer.RegisterSizePasses();
         else if(_state->optimizationLevel == "legalizeHlsl"_s)
             optimizer.RegisterLegalizationPasses();
-        #if SPIRVTOOLS_VERSION >= 201903
-        else if(_state->optimizationLevel == "vulkanToWebGpu"_s)
-            optimizer.RegisterVulkanToWebGPUPasses();
-        else if(_state->optimizationLevel == "webGpuToVulkan"_s)
-            optimizer.RegisterWebGPUToVulkanPasses();
-        #endif
         else {
-            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization level should be 0, 1, s, legalizeHlsl, vulkanToWebGpu, webGpuToVulkan or empty but got" << _state->optimizationLevel;
+            Error{} << "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization level should be 0, 1, s, legalizeHlsl or empty but got" << _state->optimizationLevel;
             return {};
         }
 
