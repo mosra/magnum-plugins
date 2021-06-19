@@ -117,13 +117,21 @@ endif()
 if(CORRADE_TARGET_WINDOWS OR _GLSLANG_IS_STATIC)
     # ARE YOU MAD?! Why the fuck can't you put everything into a single lib FFS
     set(_GLSLANG_STATIC_LIBRARIES HLSL OSDependent OGLCompiler)
-    # For FPHSA
+    # Update 2021-06-19: WHAT THE FUCK, why do you keep adding new fucking
+    # libs?! https://github.com/KhronosGroup/glslang/pull/2301 Also, why such a
+    # huge breaking change is not even hinted in the 11.0 changelog?!
+    set(_GLSLANG_STATIC_LIBRARIES_11 GenericCodeGen MachineIndependent)
+    # For FPHSA, except the libraries that got added in glslang 11 -- we'll
+    # treat them as optional, if they are there, we link them, if not, we
+    # assume it's version 10 or older.
     set(_GLSLANG_EXTRA_LIBRARIES )
-    foreach(_library ${_GLSLANG_STATIC_LIBRARIES})
+    foreach(_library ${_GLSLANG_STATIC_LIBRARIES} ${_GLSLANG_STATIC_LIBRARIES_11})
         find_library(Glslang_${_library}_LIBRARY_DEBUG NAMES ${_library}d)
         find_library(Glslang_${_library}_LIBRARY_RELEASE NAMES ${_library})
         select_library_configurations(Glslang_${_library})
-        list(APPEND _GLSLANG_EXTRA_LIBRARIES Glslang_${_library}_LIBRARY)
+        if(_library IN_LIST _GLSLANG_STATIC_LIBRARIES)
+            list(APPEND _GLSLANG_EXTRA_LIBRARIES Glslang_${_library}_LIBRARY)
+        endif()
     endforeach()
 else()
     set(_GLSLANG_STATIC_LIBRARIES )
@@ -145,9 +153,10 @@ find_package_handle_standard_args(Glslang DEFAULT_MSG
 mark_as_advanced(FORCE Glslang_INCLUDE_DIR)
 
 # Except for SPIRV these are all optional because needed only in a static
-# build, which is impossible to detect. And SPIRV was checked to be present in
-# the FPHSA above, so it's guaranteed to be present.
-foreach(_library SPIRV ${_GLSLANG_STATIC_LIBRARIES})
+# build, which is impossible to detect (and some are present only in newer
+# versions, FFS). And SPIRV was checked to be present in the FPHSA above, so
+# it's guaranteed to be present.
+foreach(_library SPIRV ${_GLSLANG_STATIC_LIBRARIES} ${_GLSLANG_STATIC_LIBRARIES_11})
     if(Glslang_${_library}_LIBRARY AND NOT TARGET Glslang::${_library})
         add_library(Glslang::${_library} UNKNOWN IMPORTED)
         if(Glslang_${_library}_LIBRARY_RELEASE)
@@ -215,5 +224,14 @@ if(NOT TARGET Glslang::Glslang)
     if(_GLSLANG_IS_STATIC OR (CORRADE_TARGET_WINDOWS AND TARGET Glslang::OGLCompiler))
         set_property(TARGET Glslang::Glslang APPEND PROPERTY
             INTERFACE_LINK_LIBRARIES Glslang::OGLCompiler)
+    endif()
+    # These two are new in 11.0, so link them only if they exist
+    if((_GLSLANG_IS_STATIC OR CORRADE_TARGET_WINDOWS) AND TARGET Glslang::GenericCodeGen)
+        set_property(TARGET Glslang::Glslang APPEND PROPERTY
+            INTERFACE_LINK_LIBRARIES Glslang::GenericCodeGen)
+    endif()
+    if((_GLSLANG_IS_STATIC OR CORRADE_TARGET_WINDOWS) AND TARGET Glslang::MachineIndependent)
+        set_property(TARGET Glslang::Glslang APPEND PROPERTY
+            INTERFACE_LINK_LIBRARIES Glslang::MachineIndependent)
     endif()
 endif()
