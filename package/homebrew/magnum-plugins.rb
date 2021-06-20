@@ -33,9 +33,14 @@ class MagnumPlugins < Formula
       system "tar", "xzvf", "basis-universal.tar.gz", "-C", "basis-universal", "--strip-components=1"
     end
 
-    # Bundle meshoptimizer 0.14 + a commit that fixes the build on old Apple
-    # Clang versions: https://github.com/zeux/meshoptimizer/pull/130
-    system "curl", "-L", "https://github.com/zeux/meshoptimizer/archive/97c52415c6d29f297a76482ddde22f739292446d.tar.gz", "-o", "src/external/meshoptimizer.tar.gz"
+    # Bundle meshoptimizer. 0.16 for HEAD builds, 0.14 + a commit that fixes
+    # the build on old Apple Clang versions on 2020.06:
+    # https://github.com/zeux/meshoptimizer/pull/130
+    if build.head?
+      system "curl", "-L", "https://github.com/zeux/meshoptimizer/archive/refs/tags/v0.16.tar.gz", "-o", "src/external/meshoptimizer.tar.gz"
+    else
+      system "curl", "-L", "https://github.com/zeux/meshoptimizer/archive/97c52415c6d29f297a76482ddde22f739292446d.tar.gz", "-o", "src/external/meshoptimizer.tar.gz"
+    end
     cd "src/external" do
       system "mkdir", "meshoptimizer"
       system "tar", "xzvf", "meshoptimizer.tar.gz", "-C", "meshoptimizer", "--strip-components=1"
