@@ -369,7 +369,6 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
 
     aiString matName;
-    aiString texturePath;
     UnsignedInt textureIndex = 0;
     std::unordered_map<std::string, UnsignedInt> uniqueImages;
     for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
@@ -383,22 +382,22 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
         /* Store first possible texture index for this material, next textures
            use successive indices. */
         _f->textureIndices[mat] = textureIndex;
-        for(std::size_t i = 0; i != mat->mNumProperties; ++i) {
+        for(std::size_t j = 0; j != mat->mNumProperties; ++j) {
             /* We're only interested in AI_MATKEY_TEXTURE_* properties */
-            const aiMaterialProperty& property = *mat->mProperties[i];
+            const aiMaterialProperty& property = *mat->mProperties[j];
             if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} != _AI_MATKEY_TEXTURE_BASE) continue;
 
             /* For images ensure we have an unique path so each file isn't
-               imported more than once. Each image then points to i-th property
+               imported more than once. Each image then points to j-th property
                of the material, which is then used to retrieve its path again. */
             Containers::StringView texturePath = materialPropertyString(property);
             auto uniqueImage = uniqueImages.emplace(texturePath, _f->images.size());
-            if(uniqueImage.second) _f->images.emplace_back(mat, i);
+            if(uniqueImage.second) _f->images.emplace_back(mat, j);
 
-            /* Each texture points to i-th property of the material, which is
+            /* Each texture points to j-th property of the material, which is
                then used to retrieve related info, plus an index into the
                unique images array */
-            _f->textures.emplace_back(mat, i, uniqueImage.first->second);
+            _f->textures.emplace_back(mat, j, uniqueImage.first->second);
             ++textureIndex;
         }
     }
