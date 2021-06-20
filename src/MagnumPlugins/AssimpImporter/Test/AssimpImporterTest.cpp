@@ -61,6 +61,7 @@
 #include <assimp/version.h>
 
 #include "configure.h"
+#include "MagnumPlugins/AssimpImporter/configureInternal.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 

@@ -64,6 +64,8 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
+#include "configureInternal.h"
+
 namespace Magnum { namespace Math { namespace Implementation {
 
 template<> struct VectorConverter<3, Float, aiColor3D> {
@@ -85,6 +87,7 @@ namespace Magnum { namespace Trade {
 struct AssimpImporter::File {
     Containers::Optional<std::string> filePath;
     const char* importerName = nullptr;
+    bool importerIsGltf = false;
     const aiScene* scene = nullptr;
     std::vector<aiNode*> nodes;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
@@ -358,6 +361,10 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
         if(info) _f->importerName = info->mName;
     }
 
+    using namespace Containers::Literals;
+
+    _f->importerIsGltf = _f->importerName == "glTF2 Importer"_s;
+
     /* Fill hashmaps for index lookup for materials/textures/meshes/nodes */
     _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
 
@@ -464,6 +471,18 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 _f->nodeInstances[lightNode] = {ObjectInstanceType3D::Light, i};
             }
         }
+    }
+
+    /* Before https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4
+       Assimp incorrectly read spline tangents as values in glTF animation tracks.
+       Quick and dirty check to see if we're dealing with a possibly affected file
+       and Assimp version. This might produce false-positives on files without
+       spline-interpolated animations, but for doOpenState and doOpenFile we 
+       have no access to the file content to check if the file contains "CUBICSPLINE". */
+    if (_f->scene->HasAnimations() && _f->importerIsGltf && ASSIMP_VERSION < 20201123) {
+        Warning{} << "Trade::AssimpImporter::open(): spline-interpolated animations imported" <<
+            "from this file are most likely broken using this version of Assimp. Consult the" <<
+            "importer documentation for more information.";
     }
 }
 
@@ -1236,11 +1255,6 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* Assimp only supports linear interpolation. For glTF splines
                it simply uses the spline control points. */
-            /** @todo Before https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4
-             *        Assimp incorrectly read the spline tangents as values.
-             *        Is there a way to detect this so we can work around it,
-             *        or at least emit a warning?
-             */
             constexpr Animation::Interpolation interpolation = Animation::Interpolation::Linear;
 
             /* Extrapolation modes */
@@ -1255,11 +1269,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                https://github.com/assimp/assimp/commit/7a8b7ba88d6d84dde7fd43419ac2b022c9887856
                but can be assumed to always be 1000. */
             /** @todo Check if this is broken in other importers, too */
-            using namespace Containers::Literals;
-
-            const bool isGltf = _f->importerName == "glTF2 Importer"_s;
             constexpr Double GltfTicksPerSecond = 1000.0;
-            if(isGltf && !Math::equal(ticksPerSecond, GltfTicksPerSecond)) {
+            if(_f->importerIsGltf && !Math::equal(ticksPerSecond, GltfTicksPerSecond)) {
                     Warning{} << "Trade::AssimpImporter::animation():" << ticksPerSecond <<
                         "ticks per second is incorrect for glTF, patching to" << GltfTicksPerSecond;
                     ticksPerSecond = GltfTicksPerSecond;
