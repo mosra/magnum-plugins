@@ -1255,8 +1255,15 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                https://github.com/assimp/assimp/commit/7a8b7ba88d6d84dde7fd43419ac2b022c9887856
                but can be assumed to always be 1000. */
             /** @todo Check if this is broken in other importers, too */
-            const bool isGltf = std::strcmp(_f->importerName, "glTF2 Importer") == 0;
-            if(isGltf) ticksPerSecond = 1000.0;
+            using namespace Containers::Literals;
+
+            const bool isGltf = _f->importerName == "glTF2 Importer"_s;
+            constexpr Double GltfTicksPerSecond = 1000.0;
+            if(isGltf && !Math::equal(ticksPerSecond, GltfTicksPerSecond)) {
+                    Warning{} << "Trade::AssimpImporter::animation():" << ticksPerSecond <<
+                        "ticks per second is incorrect for glTF, patching to" << GltfTicksPerSecond;
+                    ticksPerSecond = GltfTicksPerSecond;
+            }
 
             /* Translation */
             if(channel->mNumPositionKeys > 0) {
