@@ -353,9 +353,9 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Get name of importer. Useful for workarounds based on importer/file type. */
     _f->importerName = "unknown";
     const int importerIndex = _importer->GetPropertyInteger("importerIndex", -1);
-    if (importerIndex != -1) {
+    if(importerIndex != -1) {
         const aiImporterDesc* info = _importer->GetImporterInfo(importerIndex);
-        if (info) _f->importerName = info->mName;
+        if(info) _f->importerName = info->mName;
     }
 
     /* Fill hashmaps for index lookup for materials/textures/meshes/nodes */
@@ -1230,7 +1230,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             const aiNodeAnim* channel = animation->mChannels[c];
             const UnsignedInt target = doObject3DForName(channel->mNodeName.C_Str());
             if(target == -1) {
-                Error{} << "Trade::AssimpImporter::animation(): unknown target node " << channel->mNodeName.C_Str();
+                Error{} << "Trade::AssimpImporter::animation(): unknown target node" << channel->mNodeName.C_Str();
                 return Containers::NullOpt;
             }
 
@@ -1337,7 +1337,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             }
 
             /* Scale */
-            if (channel->mNumScalingKeys > 0) {
+            if(channel->mNumScalingKeys > 0) {
                 const size_t keyCount = channel->mNumScalingKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
