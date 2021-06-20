@@ -131,9 +131,9 @@ calls with @ref InputFileCallbackPolicy::LoadTemporary and
 @ref InputFileCallbackPolicy::Close is emitted right after the file is fully
 read.
 
-Import of skeleton, skin and morph data is not supported at the moment.
+Import of morph data is not supported at the moment.
 
-@subsection Trade-TinyGltfImporter-behavior-animation Animation import
+@subsection Trade-TinyGltfImporter-behavior-animation Animation and skin import
 
 -   Linear quaternion rotation tracks are postprocessed in order to make it
     possible to use the faster
@@ -399,6 +399,8 @@ importer-specific data accessors:
     structure
 -   @ref TextureData::importerState() returns pointer to the
     `tinygltf::Texture` structure
+-   @ref AnimationData::importerState() returns pointer to the
+    `tinygltf::Animation` structure
 
 The TinyGLTF header is installed alsongside the plugin and accessible like
 this:
