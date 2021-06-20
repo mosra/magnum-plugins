@@ -43,14 +43,6 @@ if(NOT MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     endif()
 endif()
 
-# Assimp 5. Of all the things that could break, this version reports itself as
-# 4.1. Since some of the insane awful bugs got fixed in version 5, the test has
-# to check against the version in order to adjust expectations. The only way I
-# could make this work is checking for the getEpsilon() function added in
-# https://github.com/assimp/assimp/commit/8b95479bb00b4bf8fb875f2c5b0605ddfd203b7f
-# Related bug: https://github.com/assimp/assimp/issues/2693
-try_compile(ASSIMP_IS_VERSION_5 ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/CheckAssimpVersion5.cpp LINK_LIBRARIES Assimp::Assimp)
-
 # First replace ${} variables, then $<> generator expressions
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
@@ -87,7 +79,12 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         y-up.dae
         z-up.dae)
 target_link_libraries(AssimpImporterTest PRIVATE Assimp::Assimp)
-target_include_directories(AssimpImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+target_include_directories(AssimpImporterTest PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
+    # The test needs access to configureInternal.h written by
+    # AssimpImporter. The dynamic library doesn't get linked to
+    # and hence doesn't get the binary dir in the include dirs.
+    ${PROJECT_BINARY_DIR}/src)
 if(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     target_link_libraries(AssimpImporterTest PRIVATE
         AssimpImporter Magnum::AnyImageImporter)

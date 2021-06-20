@@ -34,6 +34,30 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
+# Go through all versions of interest and pick the highest one that compiles
+foreach(_version 20201123 20190915 20151031)
+    try_compile(_works ${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/checkAssimpVersion.cpp
+        LINK_LIBRARIES Assimp::Assimp
+        COMPILE_DEFINITIONS
+            -DCHECK_VERSION=${_version}
+            # I thought I could make this use C++11 by linking to
+            # Corrade::Utility, but for some reason the effect of the
+            # CORRADE_CXX_STANDARD property doesn't get passed through. So I
+            # have to use an internal variable for that instead.
+            ${CORRADE_CXX11_STANDARD_FLAG}
+        OUTPUT_VARIABLE _version_output)
+    if(_works)
+        set(ASSIMP_VERSION ${_version})
+        break()
+    endif()
+endforeach()
+if(NOT ASSIMP_VERSION)
+    message(SEND_ERROR "Could not detect Assimp version. Maybe even older than 3.2? ${_version_output}")
+endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configureInternal.h.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/configureInternal.h)
+
 # AssimpImporter plugin
 add_plugin(AssimpImporter
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
@@ -41,6 +65,7 @@ add_plugin(AssimpImporter
     AssimpImporter.conf
     AssimpImporter.cpp
     AssimpImporter.h)
+target_include_directories(AssimpImporter PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 if(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(AssimpImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()

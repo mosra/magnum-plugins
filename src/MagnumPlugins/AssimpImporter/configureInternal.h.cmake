@@ -23,8 +23,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <assimp/MathFunctions.h>
-
-int main() {
-    return !(Assimp::Math::getEpsilon<float>() > 0.0f);
-}
+#define ASSIMP_VERSION ${ASSIMP_VERSION}
+#define ASSIMP_IS_VERSION_5 (ASSIMP_VERSION >= 20190915)
+#define ASSIMP_HAS_BROKEN_GLTF_SPLINES (ASSIMP_VERSION < 20201123)

@@ -235,7 +235,10 @@ verbosity levels in each instance.
     however, it can happen that multiple conflicting tracks affecting the same
     node are merged in the same clip, causing the animation to misbehave.
 -   Assimp versions before commit [e3083c21f0a7beae6c37a2265b7919a02cbf83c4](https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4)
-    read spline-interpolated glTF animation tracks incorrectly and produce broken animations
+    read spline-interpolated glTF animation tracks incorrectly and produce broken
+    animations. A warning is printed when importing glTF animations on these versions.
+    Because it's impossible to detect the actual brokenness, the warning is
+    printed even if the imported data may be correct.
 
 @subsection Trade-AssimpImporter-behavior-materials Material import
 
