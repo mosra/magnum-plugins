@@ -388,13 +388,13 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
             if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} != _AI_MATKEY_TEXTURE_BASE) continue;
 
             /* For images ensure we have an unique path so each file isn't
-               imported more than once. Each image then points to i-th property
+               imported more than once. Each image then points to j-th property
                of the material, which is then used to retrieve its path again. */
             Containers::StringView texturePath = materialPropertyString(property);
             auto uniqueImage = uniqueImages.emplace(texturePath, _f->images.size());
             if(uniqueImage.second) _f->images.emplace_back(mat, j);
 
-            /* Each texture points to i-th property of the material, which is
+            /* Each texture points to j-th property of the material, which is
                then used to retrieve related info, plus an index into the
                unique images array */
             _f->textures.emplace_back(mat, j, uniqueImage.first->second);
@@ -478,9 +478,9 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
        and Assimp version. This might produce false-positives on files without
        spline-interpolated animations, but for doOpenState and doOpenFile we 
        have no access to the file content to check if the file contains "CUBICSPLINE". */
-    if (_f->scene->HasAnimations() && _f->importerIsGltf && ASSIMP_VERSION < 20201123) {
-        Warning{} << "Trade::AssimpImporter::open(): spline-interpolated animations imported" <<
-            "from this file are most likely broken using this version of Assimp. Consult the" <<
+    if(_f->scene->HasAnimations() && _f->importerIsGltf && ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
+        Warning{} << "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
+            "from this file are most likely broken using this version of Assimp. Consult the "
             "importer documentation for more information.";
     }
 }
@@ -1265,7 +1265,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             double ticksPerSecond = animation->mTicksPerSecond != 0.0 ? animation->mTicksPerSecond : 25.0;
 
             /* For glTF files mTicksPerSecond is completely useless before
-               https://github.com/assimp/assimp/commit/7a8b7ba88d6d84dde7fd43419ac2b022c9887856
+               https://github.com/assimp/assimp/commit/09d80ff478d825a80bce6fb787e8b19df9f321a8
                but can be assumed to always be 1000. */
             /** @todo Check if this is broken in other importers, too */
             constexpr Double GltfTicksPerSecond = 1000.0;

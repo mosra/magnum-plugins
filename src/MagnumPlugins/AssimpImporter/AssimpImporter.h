@@ -236,7 +236,9 @@ verbosity levels in each instance.
     node are merged in the same clip, causing the animation to misbehave.
 -   Assimp versions before commit [e3083c21f0a7beae6c37a2265b7919a02cbf83c4](https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4)
     read spline-interpolated glTF animation tracks incorrectly and produce broken
-    animations. If this is detected, the importer produces a warning.
+    animations. A warning is printed when importing glTF animations on these versions.
+    Because it's impossible to detect the actual brokenness, the warning is 
+    printed even if the imported data may be correct.
 
 @subsection Trade-AssimpImporter-behavior-materials Material import
 
@@ -340,9 +342,6 @@ correspond to the [aiPostProcessSteps](http://assimp.sourceforge.net/lib_html/po
 enum. Some of them are enabled by default, some not; options for not yet
 supported features are omitted. These are passed to Assimp when opening a file,
 meaning a change in these will be always applied to the next opened file.
-
-Additional options exist to configure animation import. See
-below for all options and their default values.
 
 @snippet MagnumPlugins/AssimpImporter/AssimpImporter.conf configuration_
 
