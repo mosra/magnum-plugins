@@ -85,10 +85,10 @@ struct AssimpImporterTest: TestSuite::Tester {
     void animationGltfNoScene();
     void animationGltfBrokenSplineWarning();
     void animationGltfSpline();
-
     void animationGltfTicksPerSecondPatching();
-    void animationDummyTracksRemovalOutput();
 
+    void animationDummyTracksRemovalEnabled();
+    void animationDummyTracksRemovalDisabled();
     void animationShortestPathOptimizationEnabled();
     void animationShortestPathOptimizationDisabled();
     void animationQuaternionNormalizationEnabled();
@@ -192,7 +192,8 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::animationGltfSpline});
 
     addInstancedTests({&AssimpImporterTest::animationGltfTicksPerSecondPatching,
-                       &AssimpImporterTest::animationDummyTracksRemovalOutput},
+                       &AssimpImporterTest::animationDummyTracksRemovalEnabled,
+                       &AssimpImporterTest::animationDummyTracksRemovalDisabled},
         Containers::arraySize(VerboseData));
 
     addTests({&AssimpImporterTest::animationShortestPathOptimizationEnabled,
@@ -717,38 +718,123 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
         CORRADE_VERIFY(out.str().empty());
 }
 
-void AssimpImporterTest::animationDummyTracksRemovalOutput() {
+void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(!supportsAnimation(".gltf"))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
-    /* The actual removal is already implicitly tested in animationGltf(),
-       just check for the message here */
+    /* Correct removal is already implicitly tested in animationGltf(),
+       only check for track count/size and the message here */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->setFlags(data.flags);
+    /* Enabled by default */
+    CORRADE_VERIFY(importer->configuration().value<bool>("removeDummyAnimationTracks"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation.gltf")));
 
+    Containers::Optional<AnimationData> animation;
     std::ostringstream out;
     {
         Debug redirectDebug{&out};
-        CORRADE_VERIFY(importer->animation(1));
+        animation = importer->animation(1);
+        CORRADE_VERIFY(animation);
+    }
+
+    /* Animation for each target object id */
+    Containers::StaticArray<3, AnimationTarget> targets = AnimationGltfLinearTargets;
+
+    /* 1 track for each object */
+    CORRADE_COMPARE(animation->trackCount(), Containers::arraySize(targets));
+    for(UnsignedInt i = 0; i < animation->trackCount(); i++) {
+        CORRADE_VERIFY(animation->trackTarget(i) < Containers::arraySize(targets));
+        AnimationTarget& target = targets[animation->trackTarget(i)];
+        CORRADE_COMPARE(target.channel, ~0u);
+        target.channel = i;
+        CORRADE_COMPARE(animation->trackTargetType(i), target.type);
+        CORRADE_COMPARE(animation->track(i).size(), target.keyCount);
     }
 
     if(data.flags >= ImporterFlag::Verbose) {
-        CORRADE_COMPARE(out.str(),
-            "Trade::AssimpImporter::animation(): ignoring dummy translation track in channel 0\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy scaling track in channel 0\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy rotation track in channel 1\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy scaling track in channel 1\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy translation track in channel 2\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy rotation track in channel 2\n");
-    } else {
+        const std::string str = out.str();
+        CORRADE_VERIFY(Containers::StringView{str}.contains(
+            Utility::formatString(
+                "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
+                "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
+                targets[0].channel, targets[0].channel)));
+        CORRADE_VERIFY(Containers::StringView{str}.contains(
+            Utility::formatString(
+                "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n"
+                "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
+                targets[1].channel, targets[1].channel)));
+        CORRADE_VERIFY(Containers::StringView{str}.contains(
+            Utility::formatString(
+                "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
+                "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n",
+                targets[2].channel, targets[2].channel)));
+    } else
         CORRADE_VERIFY(out.str().empty());
+}
+
+void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->setFlags(data.flags);
+    /* Explicitly disable */
+    importer->configuration().setValue("removeDummyAnimationTracks", false);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation.gltf")));
+
+    Containers::Optional<AnimationData> animation;
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        animation = importer->animation(1);
+        CORRADE_VERIFY(animation);
     }
+
+    /* Non-dummy animation for each target object id */
+    Containers::StaticArray<3, AnimationTarget> targets = AnimationGltfLinearTargets;
+
+    /* Animation type for each track within a channel.
+       Tracks within channels are always added in the order T,R,S */
+    constexpr AnimationTrackTargetType trackAnimationType[]{
+        AnimationTrackTargetType::Translation3D,
+        AnimationTrackTargetType::Rotation3D,
+        AnimationTrackTargetType::Scaling3D
+    };
+
+    /* T/R/S tracks (1 original + 2 dummy tracks) for each object */
+    CORRADE_COMPARE(animation->trackCount(),
+        Containers::arraySize(targets)*Containers::arraySize(trackAnimationType));
+
+    for(UnsignedInt i = 0; i < animation->trackCount(); i++) {
+        CORRADE_VERIFY(animation->trackTarget(i) < Containers::arraySize(targets));
+        const UnsignedInt channel = i / Containers::arraySize(trackAnimationType);
+        const UnsignedInt indexWithinChannel = i % Containers::arraySize(trackAnimationType);
+        AnimationTarget& target = targets[animation->trackTarget(i)];
+        CORRADE_VERIFY(target.channel == ~0u || target.channel == channel);
+        target.channel = channel;
+        CORRADE_COMPARE(animation->trackTargetType(i), trackAnimationType[indexWithinChannel]);
+        const UnsignedInt keyCount = animation->trackTargetType(i) == target.type
+            ? target.keyCount : 1;
+        CORRADE_COMPARE(animation->track(i).size(), keyCount);
+    }
+
+    const std::string str = out.str();
+    CORRADE_VERIFY(!Containers::StringView{str}.contains(
+        "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation"));
+    CORRADE_VERIFY(!Containers::StringView{str}.contains(
+        "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation"));
+    CORRADE_VERIFY(!Containers::StringView{str}.contains(
+        "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation"));
 }
 
 void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
@@ -895,8 +981,8 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
         animation = importer->animation(1);
     }
     CORRADE_VERIFY(animation);
-    CORRADE_VERIFY(out.str().find("Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n")
-        != std::string::npos);
+    CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
+        "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n"));
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
 

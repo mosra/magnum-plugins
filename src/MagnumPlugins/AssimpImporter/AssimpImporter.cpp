@@ -30,6 +30,7 @@
 
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/BigEnumSet.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -40,6 +41,7 @@
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Matrix3.h>
+#include <Magnum/Math/Quaternion.h>
 #include <Magnum/Math/Vector.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/PixelStorage.h>
@@ -139,6 +141,7 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     conf.setValue("optimizeQuaternionShortestPath", true);
     conf.setValue("normalizeQuaternions", true);
     conf.setValue("mergeAnimationClips", false);
+    conf.setValue("removeDummyAnimationTracks", true);
 
     conf.setValue("ImportColladaIgnoreUpDirection", false);
 
@@ -1208,44 +1211,130 @@ Animation::Extrapolation extrapolationFor(aiAnimBehaviour behaviour) {
 }
 
 Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) {
+    const bool verbose{flags() & ImporterFlag::Verbose};
+    const bool removeDummyAnimationTracks = configuration().value<bool>("removeDummyAnimationTracks");
+    const bool mergeAnimationClips = configuration().value<bool>("mergeAnimationClips");
+
     /* Import either a single animation or all of them together. At the moment,
        Blender doesn't really support cinematic animations (affecting multiple
        objects): https://blender.stackexchange.com/q/5689. And since
        https://github.com/KhronosGroup/glTF-Blender-Exporter/pull/166, these
        are exported as a set of object-specific clips, which may not be wanted,
        so we give the users an option to merge them all together. */
-    const std::size_t animationBegin =
-        configuration().value<bool>("mergeAnimationClips") ? 0 : id;
-    const std::size_t animationEnd =
-        configuration().value<bool>("mergeAnimationClips") ? _f->scene->mNumAnimations : id + 1;
+    const std::size_t animationBegin = mergeAnimationClips ? 0 : id;
+    const std::size_t animationEnd = mergeAnimationClips ? _f->scene->mNumAnimations : id + 1;
+
+    /* Calculate total channel count */
+    std::size_t channelCount = 0;
+    for(std::size_t a = animationBegin; a != animationEnd; ++a) {
+        channelCount += _f->scene->mAnimations[a]->mNumChannels;
+    }
+
+    /* Presence of translation/rotation/scaling keys for each channel.
+       We might skip certain tracks (see comments in the next loop)
+       but we need to know the correct track count and data array size
+       up front, so determine this and remember it for the actual
+       loop that extracts the tracks.
+       BigEnumSet because EnumSet requires binary-exclusive enum
+       values. */
+    typedef Containers::BigEnumSet<AnimationTrackTargetType> TargetTypes;
+    Containers::Array<TargetTypes> channelTargetTypes{channelCount};
 
     /* Calculate total data size and track count. If merging all animations together,
        this is the sum of all clip track counts. */
     std::size_t dataSize = 0;
     std::size_t trackCount = 0;
-    for (std::size_t a = animationBegin; a != animationEnd; ++a) {
+    std::size_t currentChannel = 0;
+    for(std::size_t a = animationBegin; a != animationEnd; ++a) {
         const aiAnimation* animation = _f->scene->mAnimations[a];
-        for (std::size_t c = 0; c != animation->mNumChannels; ++c) {
+        for(std::size_t c = 0; c != animation->mNumChannels; ++c) {
             const aiNodeAnim* channel = animation->mChannels[c];
 
-            /** @todo handle alignment once we do more than just four-byte types */
-            dataSize += channel->mNumPositionKeys*(sizeof(Float) + sizeof(Vector3)) +
-                channel->mNumRotationKeys*(sizeof(Float) + sizeof(Quaternion)) +
-                channel->mNumScalingKeys*(sizeof(Float) + sizeof(Vector3));
+            UnsignedInt translationKeyCount = channel->mNumPositionKeys;
+            UnsignedInt rotationKeyCount = channel->mNumRotationKeys;
+            UnsignedInt scalingKeyCount = channel->mNumScalingKeys;
 
-            trackCount += (channel->mNumPositionKeys > 0 ? 1 : 0) +
-                (channel->mNumRotationKeys > 0 ? 1 : 0) +
-                (channel->mNumScalingKeys  > 0 ? 1 : 0);
+            /* Assimp adds useless 1-key tracks with default node
+               translation/rotation/scale if the channel doesn't
+               target all 3 of them. Ignore those. */
+            if(removeDummyAnimationTracks &&
+                (translationKeyCount == 1 || rotationKeyCount == 1 || scalingKeyCount == 1))
+            {
+                const aiNode* node = _f->scene->mRootNode->FindNode(channel->mNodeName);
+                CORRADE_INTERNAL_ASSERT(node);
+
+                aiVector3D nodeTranslation;
+                aiQuaternion nodeRotation;
+                aiVector3D nodeScaling;
+                /* This might not perfectly restore the T/R/S components, but it's okay
+                   if the comparison fails, this whole fix is a best-effort attempt */
+                node->mTransformation.Decompose(nodeScaling, nodeRotation, nodeTranslation);
+
+                if(translationKeyCount == 1 && channel->mPositionKeys[0].mTime == 0.0) {
+                    const Vector3 value = Vector3::from(&channel->mPositionKeys[0].mValue[0]);
+                    const Vector3 nodeValue = Vector3::from(&nodeTranslation[0]);
+                    if(value == nodeValue) {
+                        if(verbose) {
+                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy translation "
+                                "track in animation" << a << Debug::nospace << ", channel" << c;
+                        }
+                        translationKeyCount = 0;
+                    }
+                }
+                if(rotationKeyCount == 1 && channel->mRotationKeys[0].mTime == 0.0) {
+                    const aiQuaternion& valueQuat = channel->mRotationKeys[0].mValue;
+                    const Quaternion value{{valueQuat.x, valueQuat.y, valueQuat.z}, valueQuat.w};
+                    const aiQuaternion& nodeQuat = nodeRotation;
+                    const Quaternion nodeValue{{nodeQuat.x, nodeQuat.y, nodeQuat.z}, nodeQuat.w};
+                    if(value == nodeValue) {
+                        if(verbose) {
+                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy rotation "
+                                "track in animation" << a << Debug::nospace << ", channel" << c;
+                        }
+                        rotationKeyCount = 0;
+                    }
+                }
+                if(scalingKeyCount == 1 && channel->mScalingKeys[0].mTime == 0.0) {
+                    const Vector3 value = Vector3::from(&channel->mScalingKeys[0].mValue[0]);
+                    const Vector3 nodeValue = Vector3::from(&nodeScaling[0]);
+                    if(value == nodeValue) {
+                        if(verbose) {
+                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy scaling "
+                                "track in animation" << a << Debug::nospace << ", channel" << c;
+                        }
+                        scalingKeyCount = 0;
+                    }
+                }
+            }
+
+            TargetTypes targetTypes;
+            if(translationKeyCount > 0) targetTypes |= AnimationTrackTargetType::Translation3D;
+            if(rotationKeyCount > 0) targetTypes |= AnimationTrackTargetType::Rotation3D;
+            if(scalingKeyCount > 0) targetTypes |= AnimationTrackTargetType::Scaling3D;
+            channelTargetTypes[currentChannel++] = targetTypes;
+
+            /** @todo handle alignment once we do more than just four-byte types */
+            dataSize += translationKeyCount*(sizeof(Float) + sizeof(Vector3)) +
+                rotationKeyCount*(sizeof(Float) + sizeof(Quaternion)) +
+                scalingKeyCount*(sizeof(Float) + sizeof(Vector3));
+
+            trackCount += (translationKeyCount > 0 ? 1 : 0) +
+                (rotationKeyCount > 0 ? 1 : 0) +
+                (scalingKeyCount > 0 ? 1 : 0);
         }
     }
 
     /* Populate the data array */
     Containers::Array<char> data{dataSize};
 
+    const bool optimizeQuaternionShortestPath = configuration().value<bool>("optimizeQuaternionShortestPath");
+    const bool normalizeQuaternions = configuration().value<bool>("normalizeQuaternions");
+
     /* Import all tracks */
     bool hadToRenormalize = false;
     std::size_t dataOffset = 0;
     std::size_t trackId = 0;
+    currentChannel = 0;
     Containers::Array<Trade::AnimationTrackData> tracks{trackCount};
     for(std::size_t a = animationBegin; a != animationEnd; ++a) {
         const aiAnimation* animation = _f->scene->mAnimations[a];
@@ -1269,16 +1358,19 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             /* For glTF files mTicksPerSecond is completely useless before
                https://github.com/assimp/assimp/commit/09d80ff478d825a80bce6fb787e8b19df9f321a8
                but can be assumed to always be 1000. */
-            /** @todo Check if this is broken in other importers, too */
             constexpr Double GltfTicksPerSecond = 1000.0;
             if(_f->importerIsGltf && !Math::equal(ticksPerSecond, GltfTicksPerSecond)) {
-                    Warning{} << "Trade::AssimpImporter::animation():" << ticksPerSecond <<
+                if(verbose) {
+                    Debug{} << "Trade::AssimpImporter::animation():" << ticksPerSecond <<
                         "ticks per second is incorrect for glTF, patching to" << GltfTicksPerSecond;
-                    ticksPerSecond = GltfTicksPerSecond;
+                }
+                ticksPerSecond = GltfTicksPerSecond;
             }
 
+            const TargetTypes targetTypes = channelTargetTypes[currentChannel++];
+
             /* Translation */
-            if(channel->mNumPositionKeys > 0) {
+            if(targetTypes & AnimationTrackTargetType::Translation3D) {
                 const size_t keyCount = channel->mNumPositionKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
@@ -1304,7 +1396,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             }
 
             /* Rotation */
-            if(channel->mNumRotationKeys > 0) {
+            if(targetTypes & AnimationTrackTargetType::Rotation3D) {
                 const size_t keyCount = channel->mNumRotationKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
@@ -1316,11 +1408,11 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 for(size_t k = 0; k < channel->mNumRotationKeys; ++k) {
                     keys[k] = channel->mRotationKeys[k].mTime / ticksPerSecond;
                     const aiQuaternion& quat = channel->mRotationKeys[k].mValue;
-                    values[k] = Quaternion({ quat.x, quat.y, quat.z }, quat.w);
+                    values[k] = Quaternion{{quat.x, quat.y, quat.z}, quat.w};
                 }
 
                 /* Ensure shortest path is always chosen. */
-                if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
+                if(optimizeQuaternionShortestPath) {
                     Float flip = 1.0f;
                     for(std::size_t i = 0; i != values.size() - 1; ++i) {
                         if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
@@ -1331,7 +1423,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 /* Normalize the quaternions if not already. Don't attempt
                    to normalize every time to avoid tiny differences, only
                    when the quaternion looks to be off. */
-                if(configuration().value<bool>("normalizeQuaternions")) {
+                if(normalizeQuaternions) {
                     for(auto& i: values) if(!i.isNormalized()) {
                         i = i.normalized();
                         hadToRenormalize = true;
@@ -1349,7 +1441,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             }
 
             /* Scale */
-            if(channel->mNumScalingKeys > 0) {
+            if(targetTypes & AnimationTrackTargetType::Scaling3D) {
                 const size_t keyCount = channel->mNumScalingKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
@@ -1379,8 +1471,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
         Warning{} << "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized";
 
     return AnimationData{std::move(data), std::move(tracks),
-        configuration().value<bool>("mergeAnimationClips") ? nullptr :
-        &_f->scene->mAnimations[id]};
+        mergeAnimationClips ? nullptr : &_f->scene->mAnimations[id]};
 }
 
 const void* AssimpImporter::doImporterState() const {

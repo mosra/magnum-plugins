@@ -206,6 +206,11 @@ verbosity levels in each instance.
 
 @subsection Trade-AssimpImporter-behavior-animation Animation import
 
+-   Assimp adds dummy animation tracks with a single key-value pair
+    and the default node transformation. If found, the importer removes these dummy
+    tracks and prints a message if verbose logging is enabled. Can be disabled
+    per-animation with the @cb{.ini} removeDummyAnimationTracks @ce option, see
+    @ref Trade-AssimpImporter-configuration "below".
 -   Quaternion rotation tracks are postprocessed in order to make it
     possible to use the faster
     @ref Math::lerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerp()" /
