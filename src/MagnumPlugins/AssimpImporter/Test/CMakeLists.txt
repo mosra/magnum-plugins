@@ -24,9 +24,11 @@
 #
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(TINYGLTFIMPORTER_TEST_DIR ".")
     set(ASSIMPIMPORTER_TEST_DIR ".")
 else()
-    set(ASSIMPIMPORTER_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(TINYGLTFIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test)
+    set(ASSIMPIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
@@ -53,10 +55,19 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         empty.dae
-        empty.gltf
+        animation.gltf # Same as in TinyGltfImporterTest, but added a scene
+        animation.bin
+        animation-no-scene.gltf
+        animation-patching.bin
+        animation-patching.gltf
         camera.dae
         diffuse_texture.png
         embedded-texture.blend
+        exported-animation.dae # Converted from exported-animation.blend
+        exported-animation.fbx
+        exported-animation.gltf
+        exported-animation-curves.dae
+        exported-animation-curves-handles.dae
         image-filename-trailing-space.mtl
         image-filename-trailing-space.obj
         image-mips.mtl

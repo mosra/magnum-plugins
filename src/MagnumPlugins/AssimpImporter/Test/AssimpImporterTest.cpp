@@ -32,27 +32,31 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/StringStl.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Animation/Player.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/MeshTools/Transform.h>
 #include <Magnum/Trade/AbstractImporter.h>
+#include <Magnum/Trade/AnimationData.h>
+#include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
-#include <Magnum/Trade/CameraData.h>
-#include <Magnum/Trade/LightData.h>
 
 #include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
 #include <assimp/Importer.hpp>
@@ -74,6 +78,23 @@ struct AssimpImporterTest: TestSuite::Tester {
     void openFileFailed();
     void openData();
     void openDataFailed();
+
+    void animation();
+    void animationGltf();
+
+    void animationGltfNoScene();
+    void animationGltfBrokenSplineWarning();
+    void animationGltfSpline();
+
+    void animationGltfTicksPerSecondPatching();
+    void animationDummyTracksRemovalOutput();
+
+    void animationShortestPathOptimizationEnabled();
+    void animationShortestPathOptimizationDisabled();
+    void animationQuaternionNormalizationEnabled();
+    void animationQuaternionNormalizationDisabled();
+    void animationMergeEmpty();
+    void animationMerge();
 
     void camera();
     void light();
@@ -133,6 +154,17 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    const char* suffix;
+} ExportedAnimationFileData[]{
+    {"Collada", ".dae"},
+    {"Collada curves", "-curves.dae"},
+    {"Collada curves with handles", "-curves-handles.dae"},
+    {"FBX", ".fbx"},
+    {"glTF", ".gltf"}
+};
+
+constexpr struct {
+    const char* name;
     const char* file;
     bool importColladaIgnoreUpDirection;
     bool expectFail;
@@ -149,7 +181,26 @@ AssimpImporterTest::AssimpImporterTest() {
 
     addTests({&AssimpImporterTest::openFileFailed,
               &AssimpImporterTest::openData,
-              &AssimpImporterTest::openDataFailed,
+              &AssimpImporterTest::openDataFailed});
+
+    addInstancedTests({&AssimpImporterTest::animation},
+        Containers::arraySize(ExportedAnimationFileData));
+
+    addTests({&AssimpImporterTest::animationGltf,
+              &AssimpImporterTest::animationGltfNoScene,
+              &AssimpImporterTest::animationGltfBrokenSplineWarning,
+              &AssimpImporterTest::animationGltfSpline});
+
+    addInstancedTests({&AssimpImporterTest::animationGltfTicksPerSecondPatching,
+                       &AssimpImporterTest::animationDummyTracksRemovalOutput},
+        Containers::arraySize(VerboseData));
+
+    addTests({&AssimpImporterTest::animationShortestPathOptimizationEnabled,
+              &AssimpImporterTest::animationShortestPathOptimizationDisabled,
+              &AssimpImporterTest::animationQuaternionNormalizationEnabled,
+              &AssimpImporterTest::animationQuaternionNormalizationDisabled,
+              &AssimpImporterTest::animationMergeEmpty,
+              &AssimpImporterTest::animationMerge,
 
               &AssimpImporterTest::camera,
 
@@ -285,6 +336,700 @@ void AssimpImporterTest::openDataFailed() {
     constexpr const char data[] = "what";
     CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): loading failed: No suitable reader found for the file format of file \"$$$___magic___$$$.\".\n");
+}
+
+/* This does not indicate general assimp animation support, only used to skip
+   tests on certain versions and test files. */
+bool supportsAnimation(const Containers::StringView fileName) {
+    /* 5.0.0 supports all of Collada, FBX, glTF */
+    if(ASSIMP_IS_VERSION_5)
+        return true;
+    else if(fileName.hasSuffix(".gltf"))
+        return false;
+    else {
+        const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+        CORRADE_INTERNAL_ASSERT(fileName.hasSuffix(".dae") || fileName.hasSuffix(".fbx"));
+        /* That's as far back as I checked, both Collada and FBX animations supported */
+        return version >= 302;
+    }
+}
+
+void AssimpImporterTest::animation() {
+    auto&& data = ExportedAnimationFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(!supportsAnimation(data.suffix))
+        CORRADE_SKIP("Animation for this file type is not supported with the current version of Assimp");
+
+    /* Animation created and exported with Blender. Most animation tracks got
+       resampled during export, so there's no use comparing against exact
+       key/value pairs. The glTF specific tests cover that AssimpImporter correctly
+       passes on what assimp outputs. */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "exported-animation" + std::string{data.suffix})));
+    CORRADE_VERIFY(importer->animationCount() > 0);
+
+    struct Node {
+        const char* name;
+        Vector3 translation;
+        Quaternion rotation;
+        Vector3 scaling;
+    };
+
+    Node nodes[3] = {
+        { "Rotating" },
+        { "Scaling" },
+        { "Translating" }
+    };
+
+    Node* nodeMap[3]{};
+
+    const UnsignedInt objectCount = importer->object3DCount();
+    CORRADE_COMPARE(objectCount, Containers::arraySize(nodes));
+
+    for(UnsignedInt i = 0; i < objectCount; i++) {
+        const std::string name = importer->object3DName(i);
+        for(Node& n : nodes) {
+            /* Exported Collada files have spaces replaced with underscores,
+               so check for the first words only */
+            if(name.find(n.name) == 0) {
+                /* Node names in the test files are unique */
+                CORRADE_VERIFY(!nodeMap[i]);
+                nodeMap[i] = &n;
+            }
+        }
+        CORRADE_VERIFY(nodeMap[i]);
+    }
+
+    Animation::Player<std::chrono::nanoseconds, Float> player;
+    Containers::Array<Containers::Array<char>> animationData{importer->animationCount()};
+
+    for(UnsignedInt i = 0; i < importer->animationCount(); i++) {
+        auto animation = importer->animation(i);
+        CORRADE_VERIFY(animation);
+
+        for(UnsignedInt j = 0; j < animation->trackCount(); j++) {
+            /* all imported animations are linear */
+            const auto track = animation->track(j);
+            CORRADE_COMPARE(track.interpolation(), Animation::Interpolation::Linear);
+
+            const UnsignedInt target = animation->trackTarget(j);
+            switch(animation->trackTargetType(j)) {
+                case AnimationTrackTargetType::Translation3D:
+                    player.add(animation->track<Vector3>(j), nodeMap[target]->translation);
+                    break;
+                case AnimationTrackTargetType::Rotation3D:
+                    player.add(animation->track<Quaternion>(j), nodeMap[target]->rotation);
+                    break;
+                case AnimationTrackTargetType::Scaling3D:
+                    player.add(animation->track<Vector3>(j), nodeMap[target]->scaling);
+                    break;
+                default: CORRADE_FAIL_IF(true, "Unexpected track target type");
+            }
+        }
+
+        animationData[i] = animation->release();
+    }
+
+    CORRADE_VERIFY(player.duration().contains({2.5f, 7.5f}));
+
+    /** @todo verify player output at important keyframes. Requires
+     *        massaging the export/output a lot:
+     *        - ImportColladaIgnoreUpDirection seems to be ignored for
+     *          Collada files with curves. Blender export bug?
+     *        - FBX scales everything by 100, and Assimp ignores
+     *          AI_CONFIG_FBX_CONVERT_TO_M of course:
+     *          https://github.com/assimp/assimp/issues/3408
+     *        - FBX file seems to have all animations exported
+     *          targetting the same object, can't find a way to
+     *          correctly export this from Blender
+     */
+}
+
+void AssimpImporterTest::animationGltf() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    /* Using the same files as TinyGltfImporterTest, but modified to include a
+       scene, because Assimp refuses to import animations if there is no scene. */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 3);
+
+    /* Empty animation */
+    {
+        CORRADE_COMPARE(importer->animationName(0), "empty");
+        CORRADE_COMPARE(importer->animationForName("empty"), 0);
+
+        auto animation = importer->animation(0);
+        CORRADE_VERIFY(animation);
+        CORRADE_VERIFY(animation->data().empty());
+        CORRADE_COMPARE(animation->trackCount(), 0);
+
+    /* Translation/rotation/scaling animation */
+    } {
+        CORRADE_COMPARE(importer->animationName(1), "TRS animation");
+        CORRADE_COMPARE(importer->animationForName("TRS animation"), 1);
+
+        std::ostringstream out;
+        Debug redirectDebug{&out};
+
+        auto animation = importer->animation(1);
+        CORRADE_VERIFY(animation);
+        CORRADE_VERIFY(animation->importerState());
+        /* Two rotation keys, four translation and scaling keys. */
+        CORRADE_COMPARE(animation->data().size(),
+            2*(sizeof(Float) + sizeof(Quaternion)) +
+            2*4*(sizeof(Float) + sizeof(Vector3)));
+        CORRADE_COMPARE(animation->trackCount(), 3);
+
+        /* Rotation, linearly interpolated */
+        CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+        CORRADE_COMPARE(animation->trackResultType(0), AnimationTrackType::Quaternion);
+        CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Rotation3D);
+        CORRADE_COMPARE(animation->trackTarget(0), 0);
+        Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(0);
+        CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
+        CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
+        CORRADE_COMPARE(rotation.after(), Animation::Extrapolation::Constant);
+        constexpr Float rotationKeys[]{
+            1.25f,
+            2.50f
+        };
+        const Quaternion rotationValues[]{
+            Quaternion::rotation(0.0_degf, Vector3::xAxis()),
+            Quaternion::rotation(180.0_degf, Vector3::xAxis())
+        };
+        CORRADE_COMPARE_AS(rotation.keys(), Containers::stridedArrayView(rotationKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
+        CORRADE_COMPARE(rotation.at(1.875f), Quaternion::rotation(90.0_degf, Vector3::xAxis()));
+
+        constexpr Float translationScalingKeys[]{
+            0.0f,
+            1.25f,
+            2.5f,
+            3.75f
+        };
+
+        /* Translation, constant interpolated, sharing keys with scaling */
+        CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackTargetType(1), AnimationTrackTargetType::Translation3D);
+        CORRADE_COMPARE(animation->trackTarget(1), 1);
+        Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(1);
+        CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
+        CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
+        CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
+        constexpr Vector3 translationData[]{
+            Vector3::yAxis(0.0f),
+            Vector3::yAxis(2.5f),
+            Vector3::yAxis(2.5f),
+            Vector3::yAxis(0.0f)
+        };
+        CORRADE_COMPARE_AS(translation.keys(), Containers::stridedArrayView(translationScalingKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(translation.values(), Containers::stridedArrayView(translationData), TestSuite::Compare::Container);
+        CORRADE_COMPARE(translation.at(1.5f), Vector3::yAxis(2.5f));
+
+        /* Scaling, linearly interpolated, sharing keys with translation */
+        CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackResultType(2), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackTargetType(2), AnimationTrackTargetType::Scaling3D);
+        CORRADE_COMPARE(animation->trackTarget(2), 2);
+        Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(2);
+        CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
+        CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
+        CORRADE_COMPARE(scaling.after(), Animation::Extrapolation::Constant);
+        constexpr Vector3 scalingData[]{
+            Vector3{1.0f},
+            Vector3::zScale(5.0f),
+            Vector3::zScale(6.0f),
+            Vector3(1.0f),
+        };
+        CORRADE_COMPARE_AS(scaling.keys(), Containers::stridedArrayView(translationScalingKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
+        CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
+    }
+}
+
+void AssimpImporterTest::animationGltfNoScene() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    /* This reuses the TinyGltfImporter test files, not the corrected ones used by other tests. */
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation.gltf")));
+
+    CORRADE_EXPECT_FAIL("Assimp refuses to import glTF animations if the file has no scenes.");
+    CORRADE_COMPARE(importer->animationCount(), 3);
+}
+
+void AssimpImporterTest::animationGltfBrokenSplineWarning() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    if(!ASSIMP_HAS_BROKEN_GLTF_SPLINES)
+        CORRADE_SKIP("Current version of assimp correctly imports glTF spline-interpolated animations.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+            "animation.gltf")));
+    }
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
+        "from this file are most likely broken using this version of Assimp. Consult the "
+        "importer documentation for more information.\n");
+}
+
+void AssimpImporterTest::animationGltfSpline() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 3);
+    CORRADE_COMPARE(importer->animationName(2), "TRS animation, splines");
+
+    constexpr Float keys[]{ 0.5f, 3.5f, 4.0f, 5.0f };
+
+    auto animation = importer->animation(2);
+    CORRADE_VERIFY(animation);
+    CORRADE_VERIFY(animation->importerState());
+    /* Four T/R/S keys */
+    CORRADE_COMPARE(animation->data().size(),
+        4*(sizeof(Float) + sizeof(Quaternion)) +
+        2*4*(sizeof(Float) + sizeof(Vector3)));
+    CORRADE_COMPARE(animation->trackCount(), 3);
+
+    /* Rotation */
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackResultType(0), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTarget(0), 3);
+    Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(0);
+    CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
+    CORRADE_COMPARE(rotation.after(), Animation::Extrapolation::Constant);
+    CORRADE_COMPARE_AS(rotation.keys(), Containers::stridedArrayView(keys), TestSuite::Compare::Container);
+    {
+        #if ASSIMP_HAS_BROKEN_GLTF_SPLINES
+        CORRADE_EXPECT_FAIL("Current version of assimp incorrectly imports glTF spline-interpolated animations.");
+        #endif
+
+        constexpr Quaternion rotationValues[]{
+             {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
+             {{-0.711568f, 0.391362f, 0.355784f}, 0.462519f},
+             {{0.598059f, 0.182018f, 0.0260025f}, 0.780076f},
+             {{0.711568f, -0.355784f, -0.462519f}, -0.391362f}
+        };
+        CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
+    }
+
+    /* Translation */
+    CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(1), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTarget(1), 4);
+    Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(1);
+    CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
+    CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
+    CORRADE_COMPARE_AS(translation.keys(), Containers::stridedArrayView(keys), TestSuite::Compare::Container);
+    {
+        #if ASSIMP_HAS_BROKEN_GLTF_SPLINES
+        CORRADE_EXPECT_FAIL("Current version of assimp incorrectly imports glTF spline-interpolated animations.");
+        #endif
+
+        constexpr Vector3 translationValues[]{
+            {3.0f, 0.1f, 2.5f},
+            {-2.0f, 1.1f, -4.3f},
+            {1.5f, 9.8f, -5.1f},
+            {5.1f, 0.1f, -7.3f}
+        };
+        CORRADE_COMPARE_AS(translation.values(), Containers::stridedArrayView(translationValues), TestSuite::Compare::Container);
+    }
+
+    /* Scaling */
+    CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackResultType(2), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(2), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTarget(2), 5);
+    Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(2);
+    CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
+    CORRADE_COMPARE(scaling.after(), Animation::Extrapolation::Constant);
+    CORRADE_COMPARE_AS(scaling.keys(), Containers::stridedArrayView(keys), TestSuite::Compare::Container);
+    {
+        #if ASSIMP_HAS_BROKEN_GLTF_SPLINES
+        CORRADE_EXPECT_FAIL("Current version of assimp incorrectly imports glTF spline-interpolated animations.");
+        #endif
+
+        constexpr Vector3 scalingData[]{
+            {-2.0f, 1.1f, -4.3f},
+            {5.1f, 0.1f, -7.3f},
+            {3.0f, 0.1f, 2.5f},
+            {1.5f, 9.8f, -5.1f}
+        };
+        CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
+    }
+}
+
+void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    /* This was fixed right after 5.0.0, but 5.0.1 only selected compilation
+       fixes and didn't bump the minor version. Boldly assuming the next
+       minor version will have fixes from 2019. */
+    const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    const bool hasInvalidTicksPerSecond = version <= 500;
+    if(!hasInvalidTicksPerSecond)
+        CORRADE_SKIP("Current version of assimp correctly sets glTF ticks per second.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->setFlags(data.flags);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation.gltf")));
+
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->animation(1));
+    }
+
+    if(data.flags >= ImporterFlag::Verbose) {
+        CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
+            " ticks per second is incorrect for glTF, patching to 1000\n"));
+    } else
+        CORRADE_VERIFY(out.str().empty());
+}
+
+void AssimpImporterTest::animationDummyTracksRemovalOutput() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    /* The actual removal is already implicitly tested in animationGltf(),
+       just check for the message here */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->setFlags(data.flags);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation.gltf")));
+
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->animation(1));
+    }
+
+    if(data.flags >= ImporterFlag::Verbose) {
+        CORRADE_COMPARE(out.str(),
+            "Trade::AssimpImporter::animation(): ignoring dummy translation track in channel 0\n"
+            "Trade::AssimpImporter::animation(): ignoring dummy scaling track in channel 0\n"
+            "Trade::AssimpImporter::animation(): ignoring dummy rotation track in channel 1\n"
+            "Trade::AssimpImporter::animation(): ignoring dummy scaling track in channel 1\n"
+            "Trade::AssimpImporter::animation(): ignoring dummy translation track in channel 2\n"
+            "Trade::AssimpImporter::animation(): ignoring dummy rotation track in channel 2\n");
+    } else {
+        CORRADE_VERIFY(out.str().empty());
+    }
+}
+
+void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Enabled by default */
+    CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation-patching.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 2);
+    CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
+
+    auto animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+    CORRADE_COMPARE(animation->trackCount(), 1);
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+    Animation::TrackView<const Float, const Quaternion> track = animation->track<Quaternion>(0);
+    constexpr Quaternion rotationValues[]{
+        {{0.0f, 0.0f, 0.92388f}, -0.382683f},   // 0 s: 225°
+        {{0.0f, 0.0f, 0.707107f}, -0.707107f},  // 1 s: 270°
+        {{0.0f, 0.0f, 0.382683f}, -0.92388f},   // 2 s: 315°
+        {{0.0f, 0.0f, 0.0f}, -1.0f},            // 3 s: 360° / 0°
+        {{0.0f, 0.0f, -0.382683f}, -0.92388f},  // 4 s:  45° (flipped)
+        {{0.0f, 0.0f, -0.707107f}, -0.707107f}, // 5 s:  90° (flipped)
+        {{0.0f, 0.0f, -0.92388f}, -0.382683f},  // 6 s: 135° (flipped back)
+        {{0.0f, 0.0f, -1.0f}, 0.0f},            // 7 s: 180° (flipped back)
+        {{0.0f, 0.0f, -0.92388f}, 0.382683f}    // 8 s: 225° (flipped)
+    };
+    CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(track.at(Math::slerp, 0.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 1.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 2.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 3.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 4.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 5.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 6.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 7.5f).axis(), -Vector3::zAxis());
+
+    /* Some are negated because of the flipped axis but other than that it's
+       nicely monotonic */
+    CORRADE_COMPARE(track.at(Math::slerp, 0.5f).angle(), 247.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 1.5f).angle(), 292.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 2.5f).angle(), 337.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 3.5f).angle(), 360.0_degf - 22.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 4.5f).angle(), 360.0_degf - 67.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 5.5f).angle(), 360.0_degf - 112.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 6.5f).angle(), 360.0_degf - 157.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 7.5f).angle(), 360.0_degf - 202.5_degf);
+}
+
+void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Explicitly disable */
+    importer->configuration().setValue("optimizeQuaternionShortestPath", false);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation-patching.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 2);
+    CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
+
+    auto animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+    CORRADE_COMPARE(animation->trackCount(), 1);
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+    Animation::TrackView<const Float, const Quaternion> track = animation->track<Quaternion>(0);
+
+    /* Should be the same as in animation-patching.bin.in */
+    constexpr Quaternion rotationValues[]{
+        {{0.0f, 0.0f, 0.92388f}, -0.382683f},   // 0 s: 225°
+        {{0.0f, 0.0f, 0.707107f}, -0.707107f},  // 1 s: 270°
+        {{0.0f, 0.0f, 0.382683f}, -0.92388f},   // 2 s: 315°
+        {{0.0f, 0.0f, 0.0f}, -1.0f},            // 3 s: 360° / 0°
+        {{0.0f, 0.0f, 0.382683f}, 0.92388f},    // 4 s:  45° (longer path)
+        {{0.0f, 0.0f, 0.707107f}, 0.707107f},   // 5 s:  90°
+        {{0.0f, 0.0f, -0.92388f}, -0.382683f},  // 6 s: 135° (longer path)
+        {{0.0f, 0.0f, -1.0f}, 0.0f},            // 7 s: 180°
+        {{0.0f, 0.0f, 0.92388f}, -0.382683f}    // 8 s: 225° (longer path)
+    };
+    CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 0.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 1.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 2.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 3.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 4.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 5.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 6.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 7.5f).axis(), Vector3::zAxis());
+
+    /* Some are negated because of the flipped axis but other than that it's
+       nicely monotonic because slerpShortestPath() ensures that */
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 0.5f).angle(), 247.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 1.5f).angle(), 292.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 2.5f).angle(), 337.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 3.5f).angle(), 22.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 4.5f).angle(), 67.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 5.5f).angle(), 360.0_degf - 112.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 6.5f).angle(), 360.0_degf - 157.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerpShortestPath, 7.5f).angle(), 202.5_degf);
+
+    CORRADE_COMPARE(track.at(Math::slerp, 0.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 1.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 2.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 3.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 4.5f).axis(), Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 5.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 6.5f).axis(), -Vector3::zAxis());
+    CORRADE_COMPARE(track.at(Math::slerp, 7.5f).axis(), -Vector3::zAxis(1.00004f)); /* ?! */
+
+    /* Things are a complete chaos when using non-SP slerp */
+    CORRADE_COMPARE(track.at(Math::slerp, 0.5f).angle(), 247.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 1.5f).angle(), 292.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 2.5f).angle(), 337.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 3.5f).angle(), 202.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 4.5f).angle(), 67.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 5.5f).angle(), 67.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 6.5f).angle(), 202.5_degf);
+    CORRADE_COMPARE(track.at(Math::slerp, 7.5f).angle(), 337.5_degf);
+}
+
+void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Enabled by default */
+    CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation-patching.gltf")));
+    CORRADE_COMPARE(importer->animationCount(), 2);
+    CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
+
+    Containers::Optional<AnimationData> animation;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        animation = importer->animation(1);
+    }
+    CORRADE_VERIFY(animation);
+    CORRADE_VERIFY(out.str().find("Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n")
+        != std::string::npos);
+    CORRADE_COMPARE(animation->trackCount(), 1);
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+
+    Animation::TrackView<const Float, const Quaternion> track = animation->track<Quaternion>(0);
+    constexpr Quaternion rotationValues[]{
+        {{0.0f, 0.0f, 0.382683f}, 0.92388f},    // is normalized
+        {{0.0f, 0.0f, 0.707107f}, 0.707107f},   // is not, renormalized
+        {{0.0f, 0.0f, 0.382683f}, 0.92388f},    // is not, renormalized
+    };
+    /* There is a *ridiculous* bug in Assimp 5.0.1(?) with glTF animations that makes it
+       ignore the value sampler size and always uses the key sampler size
+       (instead of using the minimum of the two). Wouldn't be surprised
+       if this produces an out-of-bounds access somewhere, too. */
+    CORRADE_COMPARE_AS(track.values().prefix(Containers::arraySize(rotationValues)),
+        Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Explicitly disable */
+    CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation-patching.gltf")));
+    CORRADE_COMPARE(importer->animationCount(), 2);
+    CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
+
+    auto animation = importer->animation(1);
+    CORRADE_VERIFY(animation);
+    CORRADE_COMPARE(animation->trackCount(), 1);
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+
+    Animation::TrackView<const Float, const Quaternion> track = animation->track<Quaternion>(0);
+    const Quaternion rotationValues[]{
+        Quaternion{{0.0f, 0.0f, 0.382683f}, 0.92388f},      // is normalized
+        Quaternion{{0.0f, 0.0f, 0.707107f}, 0.707107f}*2,   // is not
+        Quaternion{{0.0f, 0.0f, 0.382683f}, 0.92388f}*2,    // is not
+    };
+    CORRADE_COMPARE_AS(track.values().prefix(Containers::arraySize(rotationValues)),
+        Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::animationMergeEmpty() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Enable animation merging */
+    importer->configuration().setValue("mergeAnimationClips", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "empty.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 0);
+    CORRADE_COMPARE(importer->animationForName(""), -1);
+}
+
+void AssimpImporterTest::animationMerge() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Enable animation merging */
+    importer->configuration().setValue("mergeAnimationClips", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation.gltf")));
+
+    CORRADE_COMPARE(importer->animationCount(), 1);
+    CORRADE_COMPARE(importer->animationName(0), "");
+    CORRADE_COMPARE(importer->animationForName(""), -1);
+
+    auto animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+    CORRADE_VERIFY(!animation->importerState()); /* No particular clip */
+    /*
+        -   Nothing from the first animation
+        -   Two rotation keys, four translation and scaling keys
+            from the second animation
+        -   Four T/R/S keys from the third animation
+    */
+    CORRADE_COMPARE(animation->data().size(),
+        2*(sizeof(Float) + sizeof(Quaternion)) +
+        2*4*(sizeof(Float) + sizeof(Vector3)) +
+        4*(sizeof(Float) + sizeof(Quaternion)) +
+        2*4*(sizeof(Float) + sizeof(Vector3)));
+
+    CORRADE_COMPARE(animation->trackCount(), 6);
+
+    /* Rotation, linearly interpolated */
+    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTarget(0), 0);
+    Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(0);
+    CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(rotation.at(1.875f), Quaternion::rotation(90.0_degf, Vector3::xAxis()));
+
+    /* Translation, constant interpolated, sharing keys with scaling */
+    CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(1), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTarget(1), 1);
+    Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(1);
+    CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(translation.at(1.5f), Vector3::yAxis(2.5f));
+
+    /* Scaling, linearly interpolated, sharing keys with translation */
+    CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(2), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTarget(2), 2);
+    Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(2);
+    CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
+
+    /* Rotation, spline interpolated */
+    CORRADE_COMPARE(animation->trackType(3), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackTargetType(3), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTarget(3), 3);
+    Animation::TrackView<const Float, const Quaternion> rotation2 = animation->track<Quaternion>(3);
+    CORRADE_COMPARE(rotation2.interpolation(), Animation::Interpolation::Linear);
+
+    /* Translation, spline interpolated */
+    CORRADE_COMPARE(animation->trackType(4), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(4), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTarget(4), 4);
+    Animation::TrackView<const Float, const Vector3> translation2 = animation->track<Vector3>(4);
+    CORRADE_COMPARE(translation2.interpolation(), Animation::Interpolation::Linear);
+
+    /* Scaling, spline interpolated */
+    CORRADE_COMPARE(animation->trackType(5), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(5), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTarget(5), 5);
+    Animation::TrackView<const Float, const Vector3> scaling2 = animation->track<Vector3>(5);
+    CORRADE_COMPARE(scaling2.interpolation(), Animation::Interpolation::Linear);
 }
 
 void AssimpImporterTest::camera() {
@@ -937,7 +1682,7 @@ void AssimpImporterTest::emptyGltf() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "empty.gltf")));
     CORRADE_COMPARE(importer->defaultScene(), -1);
     CORRADE_COMPARE(importer->sceneCount(), 0);
     CORRADE_COMPARE(importer->object3DCount(), 0);

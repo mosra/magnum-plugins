@@ -1,0 +1,281 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "animations": [
+        {
+            "name": "empty",
+            "channels": [],
+            "samplers": []
+        },
+        {
+            "name": "TRS animation",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "rotation"
+                    }
+                },
+                {
+                    "sampler": 1,
+                    "target": {
+                        "node": 1,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 2,
+                    "target": {
+                        "node": 2,
+                        "path": "scale"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 0,
+                    "interpolation": "LINEAR",
+                    "output": 1
+                },
+                {
+                    "input": 2,
+                    "interpolation": "STEP",
+                    "output": 3
+                },
+                {
+                    "input": 2,
+                    "interpolation": "LINEAR",
+                    "output": 4
+                }
+            ]
+        },
+        {
+            "name": "TRS animation, splines",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 3,
+                        "path": "rotation"
+                    }
+                },
+                {
+                    "sampler": 1,
+                    "target": {
+                        "node": 4,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 2,
+                    "target": {
+                        "node": 5,
+                        "path": "scale"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 7
+                },
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 8
+                },
+                {
+                    "input": 5,
+                    "interpolation": "CUBICSPLINE",
+                    "output": 9
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 2,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 2,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 8,
+            "componentType": 5126,
+            "count": 4,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 2,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 4,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 2,
+            "byteOffset": 12,
+            "componentType": 5126,
+            "count": 4,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 3,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 4,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 3,
+            "byteOffset": 16,
+            "componentType": 5126,
+            "count": 4,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 4,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 12,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 5,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 12,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 6,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 12,
+            "type": "VEC3"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 24
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 24,
+            "byteLength": 32
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 56,
+            "byteLength": 96,
+            "byteStride": 24
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 152,
+            "byteLength": 32
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 184,
+            "byteLength": 192
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 376,
+            "byteLength": 144
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 520,
+            "byteLength": 144
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 664,
+            "uri": "animation.bin"
+        }
+    ],
+    "nodes": [
+        {
+            "rotation": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "scale": [
+                1,
+                2,
+                3
+            ],
+            "translation": [
+                -4,
+                -5,
+                6
+            ]
+        },
+        {
+            "rotation": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "scale": [
+                1,
+                2,
+                3
+            ],
+            "translation": [
+                -4,
+                -5,
+                6
+            ]
+        },
+        {
+            "rotation": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "scale": [
+                1,
+                2,
+                3
+            ],
+            "translation": [
+                -4,
+                -5,
+                6
+            ]
+        },
+        {},
+        {},
+        {}
+    ],
+    "scenes": [
+        {
+            "nodes": [
+                0, 1, 2, 3, 4, 5
+            ]
+        }
+    ],
+    "scene": 0
+}
