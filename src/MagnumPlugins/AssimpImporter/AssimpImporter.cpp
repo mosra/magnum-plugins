@@ -1247,10 +1247,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
         for(std::size_t c = 0; c != animation->mNumChannels; ++c) {
             const aiNodeAnim* channel = animation->mChannels[c];
             const UnsignedInt target = doObject3DForName(channel->mNodeName.C_Str());
-            if(target == -1) {
-                Error{} << "Trade::AssimpImporter::animation(): unknown target node" << channel->mNodeName.C_Str();
-                return Containers::NullOpt;
-            }
+            CORRADE_ASSERT(target != -1, "Trade::AssimpImporter::animation(): target node must exist", {});
 
             /* Assimp only supports linear interpolation. For glTF splines
                it simply uses the spline control points. */
