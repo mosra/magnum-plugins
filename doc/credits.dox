@@ -77,6 +77,8 @@ namespace Magnum {
     buildsystem improvements
 -   **Olga Turanksaya** ([\@olga-python](https://github.com/olga-python)) ---
     Gentoo ebuild
+-   **Pablo Escobar** ([\@pezcode](https://github.com/pezcode)) ---
+    documentation updates
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports
 -   **[\@sigman78](https://github.com/sigman78)** --- initial MSVC 2017 port,

@@ -111,6 +111,10 @@ namespace Magnum {
     could be used to force Assimp location in `FindAssimp.cmake` are deprecated
     in favor of `Assimp_LIBRARY_{DEBUG,RELEASE}` and `Assimp_INCLUDE_DIR`
 
+@subsection changelog-plugins-latest-documentation Documentation
+
+-   Various fixes and updates (see [mosra/magnum-plugins#98](https://github.com/mosra/magnum-plugins/pull/98))
+
 @section changelog-plugins-2020-06 2020.06
 
 Released 2020-06-27, tagged as
