@@ -597,7 +597,7 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
        fixes and didn't bump the minor version. Boldly assuming the next
        minor version will have fixes from 2019. */
     const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    const bool hasInvalidTicksPerSecond = version > 500;
+    const bool hasInvalidTicksPerSecond = version <= 500;
     if(!hasInvalidTicksPerSecond)
         CORRADE_SKIP("Current version of assimp correctly sets glTF ticks per second.");
 
@@ -724,7 +724,7 @@ void AssimpImporterTest::animationDummyTracksRemovalOutput() {
     if(!supportsAnimation(".gltf"))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
-    /* The actual removal is already implicitly tested in animation(),
+    /* The actual removal is already implicitly tested in animationGltf(),
        just check for the message here */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
