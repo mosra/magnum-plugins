@@ -55,10 +55,22 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         empty.dae
-        empty.gltf
+        animation.gltf # animation*.* same as TinyGltfTest, but added a scene
+        animation.glb
+        animation.bin
+        animation-embedded.gltf
+        animation-embedded.glb
+        animation-no-scene.gltf
+        animation-patching.bin
+        animation-patching.gltf
         camera.dae
         diffuse_texture.png
         embedded-texture.blend
+        exported-animation.dae # Converted from exported-animation.blend
+        exported-animation.fbx
+        exported-animation.gltf
+        exported-animation-curves.dae
+        exported-animation-curves-handles.dae
         image-filename-trailing-space.mtl
         image-filename-trailing-space.obj
         image-mips.mtl
