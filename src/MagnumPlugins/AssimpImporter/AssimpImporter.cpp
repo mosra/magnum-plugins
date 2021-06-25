@@ -40,7 +40,6 @@
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Matrix3.h>
-#include <Magnum/Math/TypeTraits.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Math/Vector.h>
 #include <Magnum/PixelFormat.h>
@@ -141,6 +140,7 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     conf.setValue("optimizeQuaternionShortestPath", true);
     conf.setValue("normalizeQuaternions", true);
     conf.setValue("mergeAnimationClips", false);
+    conf.setValue("removeDummyAnimationTracks", true);
 
     conf.setValue("ImportColladaIgnoreUpDirection", false);
 
@@ -1205,16 +1205,18 @@ Animation::Extrapolation extrapolationFor(aiAnimBehaviour behaviour) {
 }
 
 Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) {
+    const bool verbose{flags() & ImporterFlag::Verbose};
+    const bool removeDummyAnimationTracks = configuration().value<bool>("removeDummyAnimationTracks");
+    const bool mergeAnimationClips = configuration().value<bool>("mergeAnimationClips");
+
     /* Import either a single animation or all of them together. At the moment,
        Blender doesn't really support cinematic animations (affecting multiple
        objects): https://blender.stackexchange.com/q/5689. And since
        https://github.com/KhronosGroup/glTF-Blender-Exporter/pull/166, these
        are exported as a set of object-specific clips, which may not be wanted,
        so we give the users an option to merge them all together. */
-    const std::size_t animationBegin =
-        configuration().value<bool>("mergeAnimationClips") ? 0 : id;
-    const std::size_t animationEnd =
-        configuration().value<bool>("mergeAnimationClips") ? _f->scene->mNumAnimations : id + 1;
+    const std::size_t animationBegin = mergeAnimationClips ? 0 : id;
+    const std::size_t animationEnd = mergeAnimationClips ? _f->scene->mNumAnimations : id + 1;
 
     /* Calculate total channel count */
     std::size_t channelCount = 0;
@@ -1246,7 +1248,9 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             /* Assimp adds useless 1-key tracks with default node
                translation/rotation/scale if the channel doesn't
                target all 3 of them. Ignore those. */
-            if(translationKeyCount == 1 || rotationKeyCount == 1 || scalingKeyCount == 1) {
+            if(removeDummyAnimationTracks &&
+                (translationKeyCount == 1 || rotationKeyCount == 1 || scalingKeyCount == 1))
+            {
                 const aiNode* node = _f->scene->mRootNode->FindNode(channel->mNodeName);
                 CORRADE_ASSERT(node, "Trade::AssimpImporter::animation(): Target node must exist", {});
 
@@ -1257,43 +1261,44 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                    if the comparison fails, this whole fix is a best-effort attempt */
                 node->mTransformation.Decompose(nodeScaling, nodeRotation, nodeTranslation);
 
-                const bool verbose{flags() & ImporterFlag::Verbose};
-
                 if(translationKeyCount == 1 && channel->mPositionKeys[0].mTime == 0.0) {
                     const Vector3 value = Vector3::from(&channel->mPositionKeys[0].mValue[0]);
                     const Vector3 nodeValue = Vector3::from(&nodeTranslation[0]);
-                    if(Math::TypeTraits<Vector3>::equals(value, nodeValue)) {
+                    if(value == nodeValue) {
+                        if(verbose) {
+                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy translation "
+                                "track in animation" << a << Debug::nospace << ", channel" << c;
+                        }
                         translationKeyCount = 0;
                     }
-                    if(verbose)
-                        Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy translation "
-                            "track in channel" << currentChannel;
                 }
                 if(rotationKeyCount == 1 && channel->mRotationKeys[0].mTime == 0.0) {
                     const aiQuaternion& valueQuat = channel->mRotationKeys[0].mValue;
                     const Quaternion value{{valueQuat.x, valueQuat.y, valueQuat.z}, valueQuat.w};
                     const aiQuaternion& nodeQuat = nodeRotation;
                     const Quaternion nodeValue{{nodeQuat.x, nodeQuat.y, nodeQuat.z}, nodeQuat.w};
-                    if(Math::TypeTraits<Quaternion>::equals(value, nodeValue)) {
+                    if(value == nodeValue) {
+                        if(verbose) {
+                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy rotation "
+                                "track in animation" << a << Debug::nospace << ", channel" << c;
+                        }
                         rotationKeyCount = 0;
                     }
-                    if(verbose)
-                        Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy rotation "
-                            "track in channel" << currentChannel;
                 }
                 if(scalingKeyCount == 1 && channel->mScalingKeys[0].mTime == 0.0) {
                     const Vector3 value = Vector3::from(&channel->mScalingKeys[0].mValue[0]);
                     const Vector3 nodeValue = Vector3::from(&nodeScaling[0]);
-                    if(Math::TypeTraits<Vector3>::equals(value, nodeValue)) {
+                    if(value == nodeValue) {
+                        if(verbose) {
+                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy scaling "
+                                "track in animation" << a << Debug::nospace << ", channel" << c;
+                        }
                         scalingKeyCount = 0;
                     }
-                    if(verbose)
-                        Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy scaling "
-                            "track in channel" << currentChannel;
                 }
             }
 
-            channelTrackPresence[currentChannel] = {
+            channelTrackPresence[currentChannel++] = {
                 translationKeyCount > 0, rotationKeyCount > 0, scalingKeyCount > 0
             };
 
@@ -1305,13 +1310,14 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             trackCount += (translationKeyCount > 0 ? 1 : 0) +
                 (rotationKeyCount > 0 ? 1 : 0) +
                 (scalingKeyCount > 0 ? 1 : 0);
-
-            currentChannel++;
         }
     }
 
     /* Populate the data array */
     Containers::Array<char> data{dataSize};
+
+    const bool optimizeQuaternionShortestPath = configuration().value<bool>("optimizeQuaternionShortestPath");
+    const bool normalizeQuaternions = configuration().value<bool>("normalizeQuaternions");
 
     /* Import all tracks */
     bool hadToRenormalize = false;
@@ -1341,17 +1347,18 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             /* For glTF files mTicksPerSecond is completely useless before
                https://github.com/assimp/assimp/commit/09d80ff478d825a80bce6fb787e8b19df9f321a8
                but can be assumed to always be 1000. */
-            /** @todo Check if this is broken in other importers, too */
             constexpr Double GltfTicksPerSecond = 1000.0;
             if(_f->importerIsGltf && !Math::equal(ticksPerSecond, GltfTicksPerSecond)) {
-                    Warning{} << "Trade::AssimpImporter::animation():" << ticksPerSecond <<
+                if(verbose) {
+                    Debug{} << "Trade::AssimpImporter::animation():" << ticksPerSecond <<
                         "ticks per second is incorrect for glTF, patching to" << GltfTicksPerSecond;
-                    ticksPerSecond = GltfTicksPerSecond;
+                }
+                ticksPerSecond = GltfTicksPerSecond;
             }
 
             bool hasTranslation, hasRotation, hasScaling;
             std::tie(hasTranslation, hasRotation, hasScaling) =
-                channelTrackPresence[currentChannel];
+                channelTrackPresence[currentChannel++];
 
             /* Translation */
             if(hasTranslation) {
@@ -1396,7 +1403,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 }
 
                 /* Ensure shortest path is always chosen. */
-                if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
+                if(optimizeQuaternionShortestPath) {
                     Float flip = 1.0f;
                     for(std::size_t i = 0; i != values.size() - 1; ++i) {
                         if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
@@ -1407,7 +1414,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 /* Normalize the quaternions if not already. Don't attempt
                    to normalize every time to avoid tiny differences, only
                    when the quaternion looks to be off. */
-                if(configuration().value<bool>("normalizeQuaternions")) {
+                if(normalizeQuaternions) {
                     for(auto& i: values) if(!i.isNormalized()) {
                         i = i.normalized();
                         hadToRenormalize = true;
@@ -1448,8 +1455,6 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     AnimationTrackType::Vector3, AnimationTrackTargetType::Scaling3D,
                     target, track};
             }
-
-            currentChannel++;
         }
     }
 
@@ -1457,8 +1462,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
         Warning{} << "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized";
 
     return AnimationData{std::move(data), std::move(tracks),
-        configuration().value<bool>("mergeAnimationClips") ? nullptr :
-        &_f->scene->mAnimations[id]};
+        mergeAnimationClips ? nullptr : &_f->scene->mAnimations[id]};
 }
 
 const void* AssimpImporter::doImporterState() const {
