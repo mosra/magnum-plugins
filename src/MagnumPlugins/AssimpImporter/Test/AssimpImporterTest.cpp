@@ -563,14 +563,11 @@ void AssimpImporterTest::animationGltf() {
 }
 
 void AssimpImporterTest::animationGltfNoScene() {
-    /* Assimp refuses to import glTF animations if the file
-       has no scenes. This reuses the TinyGltfImporter test
-       files, not the corrected ones used by other tests. */
+    /* This reuses the TinyGltfImporter test files, not the corrected ones used by other tests. */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 0);
 }
 
 void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
@@ -596,6 +593,8 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
     }
     CORRADE_VERIFY(out.str().find(" ticks per second is incorrect for glTF, patching to 1000\n")
         != std::string::npos);
+    CORRADE_EXPECT_FAIL("Assimp refuses to import glTF animations if the file has no scenes.");
+    CORRADE_COMPARE(importer->animationCount(), 3);
 }
 
 void AssimpImporterTest::animationGltfBrokenSplineWarning() {
@@ -649,8 +648,12 @@ void AssimpImporterTest::animationGltfSpline() {
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(rotation.after(), Animation::Extrapolation::Constant);
-    if(!ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
     CORRADE_COMPARE_AS(rotation.keys(), Containers::stridedArrayView(keys), TestSuite::Compare::Container);
+    {
+        #if ASSIMP_HAS_BROKEN_GLTF_SPLINES
+        CORRADE_EXPECT_FAIL("Current version of assimp incorrectly imports glTF spline-interpolated animations.");
+        #endif
+
         constexpr Quaternion rotationValues[]{
              {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
              {{-0.711568f, 0.391362f, 0.355784f}, 0.462519f},
@@ -669,8 +672,12 @@ void AssimpImporterTest::animationGltfSpline() {
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
-    if(!ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
     CORRADE_COMPARE_AS(translation.keys(), Containers::stridedArrayView(keys), TestSuite::Compare::Container);
+    {
+        #if ASSIMP_HAS_BROKEN_GLTF_SPLINES
+        CORRADE_EXPECT_FAIL("Current version of assimp incorrectly imports glTF spline-interpolated animations.");
+        #endif
+
         constexpr Vector3 translationValues[]{
             {3.0f, 0.1f, 2.5f},
             {-2.0f, 1.1f, -4.3f},
@@ -689,8 +696,12 @@ void AssimpImporterTest::animationGltfSpline() {
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(scaling.after(), Animation::Extrapolation::Constant);
-    CORRADE_COMPARE_AS(scaling.keys(), (Containers::StridedArrayView1D<const Float>{keys}), TestSuite::Compare::Container);
-    if(!ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
+    CORRADE_COMPARE_AS(scaling.keys(), Containers::stridedArrayView(keys), TestSuite::Compare::Container);
+    {
+        #if ASSIMP_HAS_BROKEN_GLTF_SPLINES
+        CORRADE_EXPECT_FAIL("Current version of assimp incorrectly imports glTF spline-interpolated animations.");
+        #endif
+
         constexpr Vector3 scalingData[]{
             {-2.0f, 1.1f, -4.3f},
             {5.1f, 0.1f, -7.3f},
