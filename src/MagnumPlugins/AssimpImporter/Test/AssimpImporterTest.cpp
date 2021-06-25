@@ -32,6 +32,7 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/StringStl.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -82,10 +83,10 @@ struct AssimpImporterTest: TestSuite::Tester {
     void animationGltf();
 
     void animationGltfNoScene();
-    void animationGltfTicksPerSecondPatching();
     void animationGltfBrokenSplineWarning();
     void animationGltfSpline();
 
+    void animationGltfTicksPerSecondPatching();
     void animationDummyTracksRemovalOutput();
 
     void animationShortestPathOptimizationEnabled();
@@ -185,13 +186,13 @@ AssimpImporterTest::AssimpImporterTest() {
     addInstancedTests({&AssimpImporterTest::animation},
                       Containers::arraySize(ExportedAnimationFileData));
 
-              &AssimpImporterTest::animationGltfTicksPerSecondPatching,
     addTests({&AssimpImporterTest::animationGltf,
               &AssimpImporterTest::animationGltfNoScene,
               &AssimpImporterTest::animationGltfBrokenSplineWarning,
               &AssimpImporterTest::animationGltfSpline});
 
-    addInstancedTests({&AssimpImporterTest::animationDummyTracksRemovalOutput},
+    addInstancedTests({&AssimpImporterTest::animationGltfTicksPerSecondPatching,
+                       &AssimpImporterTest::animationDummyTracksRemovalOutput},
                       Containers::arraySize(VerboseData));
 
     addTests({&AssimpImporterTest::animationShortestPathOptimizationEnabled,
@@ -568,31 +569,6 @@ void AssimpImporterTest::animationGltfNoScene() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation.gltf")));
 
-}
-
-void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
-    if(!supportsAnimation(".gltf"))
-        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
-
-    /* This was fixed right after 5.0.0, but 5.0.1 only selected compilation
-       fixes and didn't bump the minor version. Boldly assuming the next
-       minor version will have fixes from 2019. */
-    const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    const bool hasInvalidTicksPerSecond = version <= 500;
-    if(!hasInvalidTicksPerSecond)
-        CORRADE_SKIP("Current version of assimp correctly sets glTF ticks per second.");
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation.gltf")));
-
-    std::ostringstream out;
-    {
-        Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->animation(1));
-    }
-    CORRADE_VERIFY(out.str().find(" ticks per second is incorrect for glTF, patching to 1000\n")
-        != std::string::npos);
     CORRADE_EXPECT_FAIL("Assimp refuses to import glTF animations if the file has no scenes.");
     CORRADE_COMPARE(importer->animationCount(), 3);
 }
@@ -625,7 +601,7 @@ void AssimpImporterTest::animationGltfSpline() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 3);    
+    CORRADE_COMPARE(importer->animationCount(), 3);
     CORRADE_COMPARE(importer->animationName(2), "TRS animation, splines");
 
     constexpr Float keys[]{ 0.5f, 3.5f, 4.0f, 5.0f };
@@ -712,15 +688,20 @@ void AssimpImporterTest::animationGltfSpline() {
     }
 }
 
-void AssimpImporterTest::animationDummyTracksRemovalOutput() {
+void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(!supportsAnimation(".gltf"))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
-    /* The actual removal is already implicitly tested in animationGltf(),
-       just check for the message here */
+    /* This was fixed right after 5.0.0, but 5.0.1 only selected compilation
+       fixes and didn't bump the minor version. Boldly assuming the next
+       minor version will have fixes from 2019. */
+    const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    const bool hasInvalidTicksPerSecond = version <= 500;
+    if(!hasInvalidTicksPerSecond)
+        CORRADE_SKIP("Current version of assimp correctly sets glTF ticks per second.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->setFlags(data.flags);
@@ -734,16 +715,56 @@ void AssimpImporterTest::animationDummyTracksRemovalOutput() {
     }
 
     if(data.flags >= ImporterFlag::Verbose) {
-        CORRADE_COMPARE(out.str(),
-            "Trade::AssimpImporter::animation(): ignoring dummy translation track in channel 0\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy scaling track in channel 0\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy rotation track in channel 1\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy scaling track in channel 1\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy translation track in channel 2\n"
-            "Trade::AssimpImporter::animation(): ignoring dummy rotation track in channel 2\n");
-    } else {
+        CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
+            " ticks per second is incorrect for glTF, patching to 1000\n"));
+    } else
         CORRADE_VERIFY(out.str().empty());
+}
+
+void AssimpImporterTest::animationDummyTracksRemovalOutput() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
+    /* The actual removal is already implicitly tested in animationGltf(),
+       just check for the message here */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->setFlags(data.flags);
+    /* default value */
+    CORRADE_VERIFY(importer->configuration().value<bool>("removeDummyAnimationTracks"));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "animation.gltf")));
+
+    std::ostringstream out;
+
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->animation(1));
     }
+
+    if(data.flags >= ImporterFlag::Verbose) {
+        CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
+                "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel 0\n"
+                "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel 0\n"
+                "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel 1\n"
+                "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel 1\n"
+                "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel 2\n"
+                "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel 2\n"));
+    } else
+        CORRADE_VERIFY(out.str().empty());
+
+    {
+        out.str("");
+        Debug redirectDebug{&out};
+        importer->configuration().setValue("removeDummyAnimationTracks", false);
+        CORRADE_VERIFY(importer->animation(1));
+    }
+
+    CORRADE_VERIFY(!Containers::StringView{out.str()}.contains(
+        "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation "));
 }
 
 void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
@@ -890,8 +911,8 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
         animation = importer->animation(1);
     }
     CORRADE_VERIFY(animation);
-    CORRADE_VERIFY(out.str().find("Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n")
-        != std::string::npos);
+    CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
+        "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n"));
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
 
@@ -2208,10 +2229,11 @@ void AssimpImporterTest::fileCallbackNotFound() {
     /* Assimp 5.0 changed the error string. aiGetVersion*() returns 401 for
        assimp 5, FFS, so we have to check differently. See CMakeLists.txt for
        details. */
-    if(ASSIMP_IS_VERSION_5)
+    #if ASSIMP_IS_VERSION_5
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
-    else
+    #else
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
+    #endif
 }
 
 void AssimpImporterTest::fileCallbackEmptyFile() {
