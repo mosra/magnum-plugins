@@ -527,8 +527,8 @@ void AssimpImporterTest::animationGltf() {
             Quaternion::rotation(0.0_degf, Vector3::xAxis()),
             Quaternion::rotation(180.0_degf, Vector3::xAxis())
         };
-        CORRADE_COMPARE_AS(rotation.keys(), (Containers::StridedArrayView1D<const Float>{rotationKeys}), TestSuite::Compare::Container);
-        CORRADE_COMPARE_AS(rotation.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(rotation.keys(), Containers::stridedArrayView(rotationKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
         CORRADE_COMPARE(rotation.at(1.875f), Quaternion::rotation(90.0_degf, Vector3::xAxis()));
 
         constexpr Float translationScalingKeys[]{
@@ -553,8 +553,8 @@ void AssimpImporterTest::animationGltf() {
             Vector3::yAxis(2.5f),
             Vector3::yAxis(0.0f)
         };
-        CORRADE_COMPARE_AS(translation.keys(), (Containers::StridedArrayView1D<const Float>{translationScalingKeys}), TestSuite::Compare::Container);
-        CORRADE_COMPARE_AS(translation.values(), (Containers::StridedArrayView1D<const Vector3>{translationData}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(translation.keys(), Containers::stridedArrayView(translationScalingKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(translation.values(), Containers::stridedArrayView(translationData), TestSuite::Compare::Container);
         CORRADE_COMPARE(translation.at(1.5f), Vector3::yAxis(2.5f));
 
         /* Scaling, linearly interpolated, sharing keys with translation */
@@ -572,8 +572,8 @@ void AssimpImporterTest::animationGltf() {
             Vector3::zScale(6.0f),
             Vector3(1.0f),
         };
-        CORRADE_COMPARE_AS(scaling.keys(), (Containers::StridedArrayView1D<const Float>{translationScalingKeys}), TestSuite::Compare::Container);
-        CORRADE_COMPARE_AS(scaling.values(), (Containers::StridedArrayView1D<const Vector3>{scalingData}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scaling.keys(), Containers::stridedArrayView(translationScalingKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
         CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
     }
 }
@@ -665,15 +665,15 @@ void AssimpImporterTest::animationGltfSpline() {
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(rotation.after(), Animation::Extrapolation::Constant);
-    CORRADE_COMPARE_AS(rotation.keys(), (Containers::StridedArrayView1D<const Float>{keys}), TestSuite::Compare::Container);
     if(!ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
+    CORRADE_COMPARE_AS(rotation.keys(), Containers::stridedArrayView(keys), TestSuite::Compare::Container);
         constexpr Quaternion rotationValues[]{
              {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
              {{-0.711568f, 0.391362f, 0.355784f}, 0.462519f},
              {{0.598059f, 0.182018f, 0.0260025f}, 0.780076f},
              {{0.711568f, -0.355784f, -0.462519f}, -0.391362f}
         };
-        CORRADE_COMPARE_AS(rotation.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
     }
 
     /* Translation */
@@ -685,15 +685,15 @@ void AssimpImporterTest::animationGltfSpline() {
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
-    CORRADE_COMPARE_AS(translation.keys(), (Containers::StridedArrayView1D<const Float>{keys}), TestSuite::Compare::Container);
     if(!ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
+    CORRADE_COMPARE_AS(translation.keys(), Containers::stridedArrayView(keys), TestSuite::Compare::Container);
         constexpr Vector3 translationValues[]{
             {3.0f, 0.1f, 2.5f},
             {-2.0f, 1.1f, -4.3f},
             {1.5f, 9.8f, -5.1f},
             {5.1f, 0.1f, -7.3f}
         };
-        CORRADE_COMPARE_AS(translation.values(), (Containers::StridedArrayView1D<const Vector3>{translationValues}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(translation.values(), Containers::stridedArrayView(translationValues), TestSuite::Compare::Container);
     }
 
     /* Scaling */
@@ -713,7 +713,7 @@ void AssimpImporterTest::animationGltfSpline() {
             {3.0f, 0.1f, 2.5f},
             {1.5f, 9.8f, -5.1f}
         };
-        CORRADE_COMPARE_AS(scaling.values(), (Containers::StridedArrayView1D<const Vector3>{scalingData}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
     }
 }
 
@@ -780,7 +780,7 @@ void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
         {{0.0f, 0.0f, -1.0f}, 0.0f},            // 7 s: 180° (flipped back)
         {{0.0f, 0.0f, -0.92388f}, 0.382683f}    // 8 s: 225° (flipped)
     };
-    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 
     CORRADE_COMPARE(track.at(Math::slerp, 0.5f).axis(), Vector3::zAxis());
     CORRADE_COMPARE(track.at(Math::slerp, 1.5f).axis(), Vector3::zAxis());
@@ -834,7 +834,7 @@ void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
         {{0.0f, 0.0f, -1.0f}, 0.0f},            // 7 s: 180°
         {{0.0f, 0.0f, 0.92388f}, -0.382683f}    // 8 s: 225° (longer path)
     };
-    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 
     CORRADE_COMPARE(track.at(Math::slerpShortestPath, 0.5f).axis(), Vector3::zAxis());
     CORRADE_COMPARE(track.at(Math::slerpShortestPath, 1.5f).axis(), Vector3::zAxis());
@@ -910,11 +910,8 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
        ignore the value sampler size and always uses the key sampler size
        (instead of using the minimum of the two). Wouldn't be surprised
        if this produces an out-of-bounds access somewhere, too. */
-    /** @todo make the importer print a warning? this would be another
-        blanket warning like the spline animations */
     CORRADE_COMPARE_AS(track.values().prefix(Containers::arraySize(rotationValues)),
-        (Containers::StridedArrayView1D<const Quaternion>{rotationValues}),
-        TestSuite::Compare::Container);
+        Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
@@ -941,8 +938,7 @@ void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
         Quaternion{{0.0f, 0.0f, 0.382683f}, 0.92388f}*2,    // is not
     };
     CORRADE_COMPARE_AS(track.values().prefix(Containers::arraySize(rotationValues)),
-        (Containers::StridedArrayView1D<const Quaternion>{rotationValues}),
-        TestSuite::Compare::Container);
+        Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::animationMergeEmpty() {
