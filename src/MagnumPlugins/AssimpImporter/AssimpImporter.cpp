@@ -1257,7 +1257,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 (translationKeyCount == 1 || rotationKeyCount == 1 || scalingKeyCount == 1))
             {
                 const aiNode* node = _f->scene->mRootNode->FindNode(channel->mNodeName);
-                CORRADE_ASSERT(node, "Trade::AssimpImporter::animation(): Target node must exist", {});
+                CORRADE_INTERNAL_ASSERT(node);
 
                 aiVector3D nodeTranslation;
                 aiQuaternion nodeRotation;
@@ -1334,8 +1334,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
         const aiAnimation* animation = _f->scene->mAnimations[a];
         for(std::size_t c = 0; c != animation->mNumChannels; ++c) {
             const aiNodeAnim* channel = animation->mChannels[c];
-            const UnsignedInt target = doObject3DForName(channel->mNodeName.C_Str());
-            CORRADE_ASSERT(target != -1, "Trade::AssimpImporter::animation(): target node must exist", {});
+            const Int target = doObject3DForName(channel->mNodeName.C_Str());
+            CORRADE_INTERNAL_ASSERT(target != -1);
 
             /* Assimp only supports linear interpolation. For glTF splines
                it simply uses the spline control points. */
@@ -1388,7 +1388,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
                 tracks[trackId++] = AnimationTrackData{AnimationTrackType::Vector3,
                     AnimationTrackType::Vector3, AnimationTrackTargetType::Translation3D,
-                    target, track};
+                    static_cast<UnsignedInt>(target), track };
             }
 
             /* Rotation */
@@ -1433,7 +1433,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
                 tracks[trackId++] = AnimationTrackData{AnimationTrackType::Quaternion,
                     AnimationTrackType::Quaternion, AnimationTrackTargetType::Rotation3D,
-                    target, track};
+                    static_cast<UnsignedInt>(target), track};
             }
 
             /* Scale */
@@ -1458,7 +1458,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     extrapolationAfter};
                 tracks[trackId++] = AnimationTrackData{AnimationTrackType::Vector3,
                     AnimationTrackType::Vector3, AnimationTrackTargetType::Scaling3D,
-                    target, track};
+                    static_cast<UnsignedInt>(target), track};
             }
         }
     }
