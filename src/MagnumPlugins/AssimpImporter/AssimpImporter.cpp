@@ -478,7 +478,7 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
        Assimp incorrectly read spline tangents as values in glTF animation tracks.
        Quick and dirty check to see if we're dealing with a possibly affected file
        and Assimp version. This might produce false-positives on files without
-       spline-interpolated animations, but for doOpenState and doOpenFile we 
+       spline-interpolated animations, but for doOpenState and doOpenFile we
        have no access to the file content to check if the file contains "CUBICSPLINE". */
     if(_f->scene->HasAnimations() && _f->importerIsGltf && ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
         Warning{} << "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
@@ -1187,6 +1187,11 @@ std::string AssimpImporter::doAnimationName(UnsignedInt id) {
 namespace {
 
 Animation::Extrapolation extrapolationFor(aiAnimBehaviour behaviour) {
+    /* This code is not covered by tests since there is currently
+       no code in Assimp that sets this except for the .irr importer.
+       So it'll be aiAnimBehaviour_DEFAULT for 99.99% of users,
+       and there are tests that check that this becomes
+       Extrapolation::Constant. */
     switch(behaviour) {
         case aiAnimBehaviour_DEFAULT:
             /** @todo emulate this correctly by inserting keyframes
