@@ -55,11 +55,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         empty.dae
-        animation.gltf # animation*.* same as TinyGltfTest, but added a scene
-        animation.glb
+        animation.gltf # Same as in TinyGltfTest, but added a scene
         animation.bin
-        animation-embedded.gltf
-        animation-embedded.glb
         animation-no-scene.gltf
         animation-patching.bin
         animation-patching.gltf

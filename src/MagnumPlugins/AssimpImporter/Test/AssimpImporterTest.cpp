@@ -164,16 +164,6 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* suffix;
-} GltfAnimationFileData[]{
-    {"ascii external", ".gltf"},
-    {"ascii embedded", "-embedded.gltf"},
-    {"binary external", ".glb"},
-    {"binary embedded", "-embedded.glb"}
-};
-
-constexpr struct {
-    const char* name;
     const char* file;
     bool importColladaIgnoreUpDirection;
     bool expectFail;
@@ -195,11 +185,9 @@ AssimpImporterTest::AssimpImporterTest() {
     addInstancedTests({&AssimpImporterTest::animation},
                       Containers::arraySize(ExportedAnimationFileData));
 
-    addInstancedTests({&AssimpImporterTest::animationGltf},
-                      Containers::arraySize(GltfAnimationFileData));
-
-    addTests({&AssimpImporterTest::animationGltfNoScene,
               &AssimpImporterTest::animationGltfTicksPerSecondPatching,
+    addTests({&AssimpImporterTest::animationGltf,
+              &AssimpImporterTest::animationGltfNoScene,
               &AssimpImporterTest::animationGltfBrokenSplineWarning,
               &AssimpImporterTest::animationGltfSpline});
 
@@ -360,12 +348,11 @@ bool supportsAnimation(const std::string& fileName) {
 
     /* splitExtension returns empty extensions for files starting with a dot */
     const std::string extension = Utility::Directory::splitExtension("x" + fileName).second;
-    const bool isGltf = extension == ".gltf" || extension == ".glb";
-    if(isGltf) {
-        return false;
-    } else {
+    const bool isGltf = extension == ".gltf";
+    if(isGltf) return false;
+    else {
         const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-        CORRADE_ASSERT(extension == ".dae" || extension == ".fbx", "Unsupported file type", false);
+        CORRADE_INTERNAL_ASSERT(extension == ".dae" || extension == ".fbx");
         /* That's as far back as I checked, both Collada and FBX animations supported */
         return version > 302;
     }
@@ -468,9 +455,6 @@ void AssimpImporterTest::animation() {
 }
 
 void AssimpImporterTest::animationGltf() {
-    auto&& data = GltfAnimationFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     if(!supportsAnimation(".gltf"))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
@@ -479,7 +463,7 @@ void AssimpImporterTest::animationGltf() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation" + std::string{data.suffix})));
+        "animation.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 3);
 
