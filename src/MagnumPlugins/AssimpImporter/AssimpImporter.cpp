@@ -30,6 +30,7 @@
 
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/BigEnumSet.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -1233,8 +1234,11 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
        We might skip certain tracks (see comments in the next loop)
        but we need to know the correct track count and data array size
        up front, so determine this and remember it for the actual
-       loop that extracts the tracks. */
-    Containers::Array<std::tuple<bool, bool, bool>> channelTrackPresence{channelCount};
+       loop that extracts the tracks.
+       BigEnumSet because EnumSet requires binary-exclusive enum
+       values. */
+    typedef Containers::BigEnumSet<AnimationTrackTargetType> TargetTypes;
+    Containers::Array<TargetTypes> channelTargetTypes{channelCount};
 
     /* Calculate total data size and track count. If merging all animations together,
        this is the sum of all clip track counts. */
@@ -1303,9 +1307,11 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 }
             }
 
-            channelTrackPresence[currentChannel++] = {
-                translationKeyCount > 0, rotationKeyCount > 0, scalingKeyCount > 0
-            };
+            TargetTypes targetTypes;
+            if(translationKeyCount > 0) targetTypes |= AnimationTrackTargetType::Translation3D;
+            if(rotationKeyCount > 0) targetTypes |= AnimationTrackTargetType::Rotation3D;
+            if(scalingKeyCount > 0) targetTypes |= AnimationTrackTargetType::Scaling3D;
+            channelTargetTypes[currentChannel++] = targetTypes;
 
             /** @todo handle alignment once we do more than just four-byte types */
             dataSize += translationKeyCount*(sizeof(Float) + sizeof(Vector3)) +
@@ -1361,12 +1367,10 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 ticksPerSecond = GltfTicksPerSecond;
             }
 
-            bool hasTranslation, hasRotation, hasScaling;
-            std::tie(hasTranslation, hasRotation, hasScaling) =
-                channelTrackPresence[currentChannel++];
+            const TargetTypes targetTypes = channelTargetTypes[currentChannel++];
 
             /* Translation */
-            if(hasTranslation) {
+            if(targetTypes & AnimationTrackTargetType::Translation3D) {
                 const size_t keyCount = channel->mNumPositionKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
@@ -1392,7 +1396,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             }
 
             /* Rotation */
-            if(hasRotation) {
+            if(targetTypes & AnimationTrackTargetType::Rotation3D) {
                 const size_t keyCount = channel->mNumRotationKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
@@ -1437,7 +1441,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             }
 
             /* Scale */
-            if(hasScaling) {
+            if(targetTypes & AnimationTrackTargetType::Scaling3D) {
                 const size_t keyCount = channel->mNumScalingKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
