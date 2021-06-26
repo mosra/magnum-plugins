@@ -561,6 +561,9 @@ void AssimpImporterTest::animationGltf() {
 }
 
 void AssimpImporterTest::animationGltfNoScene() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
     /* This reuses the TinyGltfImporter test files, not the corrected ones used by other tests. */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
@@ -955,6 +958,9 @@ void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
 }
 
 void AssimpImporterTest::animationMergeEmpty() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
