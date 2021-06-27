@@ -373,7 +373,7 @@ bool supportsAnimation(const Containers::StringView fileName) {
         const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
         CORRADE_INTERNAL_ASSERT(fileName.hasSuffix(".dae") || fileName.hasSuffix(".fbx"));
         /* That's as far back as I checked, both Collada and FBX animations supported */
-        return version > 302;
+        return version >= 302;
     }
 }
 
@@ -482,9 +482,9 @@ void AssimpImporterTest::animation() {
 
     constexpr Vector3 rotationData[KeyCount]{
         {0.0f, 0.0f, 0.0f},
-        {0.0f, 0.0f, Float{Rad(-90.0_degf)}},
-        {Float{Rad(90.0_degf)}, 0.0f, Float{Rad(-90.0_degf)}},
-        {Float{Rad(135.0_degf)}, 0.0f, Float{Rad(-90.0_degf)}}
+        {0.0f, 0.0f, Float(Rad(-90.0_degf))},
+        {Float(Rad(90.0_degf)), 0.0f, Float(Rad(-90.0_degf))},
+        {Float(Rad(135.0_degf)), 0.0f, Float(Rad(-90.0_degf))}
     };
 
     constexpr Vector3 scalingData[KeyCount]{
@@ -501,6 +501,8 @@ void AssimpImporterTest::animation() {
 
     for(UnsignedInt i = 0; i < Containers::arraySize(keys); i++) {
         player.advance(keys[i]);
+        for(AnimationNode& n : nodes)
+            data.correctAnimationNode(n);
         const Vector3 rotation{(nodes[0].rotation * initialRotation[0].inverted()).toEuler()};
         /* For formats with non-zero initial rotation, we need to apply it
            to get the correct scale even though that object originally
