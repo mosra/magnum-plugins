@@ -145,6 +145,28 @@ struct AssimpImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
+/* Used by animation() to store transformation results */
+struct AnimationNode {
+    const char* name;
+    Vector3 translation;
+    Quaternion rotation;
+    Vector3 scaling;
+};
+
+void correctAnimationNodeDefault(AnimationNode&) { }
+
+void correctAnimationNodeCollada(AnimationNode& node) {
+    /* Blender's Collada exporter doesn't seem to apply axis change
+       inside animations correctly. Flip it manually, consistent with
+       export up and forward axis (see exported-animation.md):
+       y = z, z = -y */
+    /** @todo try the Godot Collada exporter:
+              https://github.com/godotengine/collada-exporter */
+    node.translation = Vector3{node.translation.x(), node.translation.z(), -node.translation.y()};
+    /** @todo correct rotation, currently untested in animation() for Collada */
+    node.scaling = Vector3{node.scaling.x(), node.scaling.z(), node.scaling.y()};
+}
+
 constexpr struct {
     const char* name;
     ImporterFlags flags;
@@ -156,12 +178,11 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* suffix;
+    void (*correctAnimationNode)(AnimationNode&);
 } ExportedAnimationFileData[]{
-    {"Collada", ".dae"},
-    {"Collada curves", "-curves.dae"},
-    {"Collada curves with handles", "-curves-handles.dae"},
-    {"FBX", ".fbx"},
-    {"glTF", ".gltf"}
+    {"Collada", ".dae", &correctAnimationNodeCollada},
+    {"FBX", ".fbx", &correctAnimationNodeDefault},
+    {"glTF", ".gltf", &correctAnimationNodeDefault}
 };
 
 constexpr struct {
@@ -340,8 +361,6 @@ void AssimpImporterTest::openDataFailed() {
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): loading failed: No suitable reader found for the file format of file \"$$$___magic___$$$.\".\n");
 }
 
-namespace {
-
 /* This does not indicate general assimp animation support, only used to skip
    tests on certain versions and test files. */
 bool supportsAnimation(const Containers::StringView fileName) {
@@ -358,8 +377,6 @@ bool supportsAnimation(const Containers::StringView fileName) {
     }
 }
 
-}
-
 void AssimpImporterTest::animation() {
     auto&& data = ExportedAnimationFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -367,37 +384,33 @@ void AssimpImporterTest::animation() {
     if(!supportsAnimation(data.suffix))
         CORRADE_SKIP("Animation for this file type is not supported with the current version of Assimp");
 
-    /* Animation created and exported with Blender. Most animation tracks got
-       resampled during export, so there's no use comparing against exact
-       key/value pairs. The glTF specific tests cover that AssimpImporter correctly
-       passes on what assimp outputs. */
+    /* Animation created and exported with Blender. Most animation tracks
+       got resampled and/or merged during export, so there's no use
+       comparing against exact key/value arrays. Just apply all tracks
+       and check if the transformation roughly matches at specific
+       points in time.
+       animationGltf() test covers that AssimpImporter correctly
+       passes on what Assimp outputs. */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "exported-animation" + std::string{data.suffix})));
-    CORRADE_VERIFY(importer->animationCount() > 0);
 
-    struct Node {
-        const char* name;
-        Vector3 translation;
-        Quaternion rotation;
-        Vector3 scaling;
-    };
-
-    Node nodes[3] = {
+    /* Find animation target nodes by their name */
+    AnimationNode nodes[3] = {
         { "Rotating" },
         { "Scaling" },
         { "Translating" }
     };
 
-    Node* nodeMap[3]{};
+    AnimationNode* nodeMap[3]{};
 
     const UnsignedInt objectCount = importer->object3DCount();
     CORRADE_COMPARE(objectCount, Containers::arraySize(nodes));
 
     for(UnsignedInt i = 0; i < objectCount; i++) {
         const std::string name = importer->object3DName(i);
-        for(Node& n : nodes) {
+        for(AnimationNode& n : nodes) {
             /* Exported Collada files have spaces replaced with underscores,
                so check for the first words only */
             if(name.find(n.name) == 0) {
@@ -409,7 +422,9 @@ void AssimpImporterTest::animation() {
         CORRADE_VERIFY(nodeMap[i]);
     }
 
-    Animation::Player<std::chrono::nanoseconds, Float> player;
+    CORRADE_VERIFY(importer->animationCount() > 0);
+
+    Animation::Player<Float, Float> player;
     Containers::Array<Containers::Array<char>> animationData{importer->animationCount()};
 
     for(UnsignedInt i = 0; i < importer->animationCount(); i++) {
@@ -417,8 +432,8 @@ void AssimpImporterTest::animation() {
         CORRADE_VERIFY(animation);
 
         for(UnsignedInt j = 0; j < animation->trackCount(); j++) {
-            /* all imported animations are linear */
             const auto track = animation->track(j);
+            /* All imported animations are linear */
             CORRADE_COMPARE(track.interpolation(), Animation::Interpolation::Linear);
 
             const UnsignedInt target = animation->trackTarget(j);
@@ -439,22 +454,69 @@ void AssimpImporterTest::animation() {
         animationData[i] = animation->release();
     }
 
-    CORRADE_VERIFY(player.duration().contains({2.5f, 7.5f}));
+    /* 4 keyframes at 0/60/120/180, exported at 24fps (60/24 = 2.5, etc.). */
+    constexpr UnsignedInt KeyCount = 4;
+    constexpr Float keys[KeyCount]{0.0f, 2.5f, 5.0f, 7.5f};
 
-    /** @todo verify player output at important keyframes. Requires
-     *        massaging the export/output a lot:
-     *        - ImportColladaIgnoreUpDirection seems to be ignored for
-     *          Collada files with curves. Blender export bug?
-     *        - FBX scales everything by 100, and Assimp ignores
-     *          AI_CONFIG_FBX_CONVERT_TO_M of course:
-     *          https://github.com/assimp/assimp/issues/3408
-     *        - FBX file seems to have all animations exported
-     *          targetting the same object, can't find a way to
-     *          correctly export this from Blender
-     */
+    CORRADE_VERIFY(player.duration().contains({ keys[0], keys[Containers::arraySize(keys) - 1] }));
+    player.play(0.0f);
+
+    /* Get initial rotation. Some formats (e.g. FBX) might have rotated meshes,
+       with nodes transformed to make up for it. We need this to check the rotation
+       from key 0 to key i. */
+    Quaternion initialRotation[Containers::arraySize(nodes)];
+
+    player.advance(keys[0]);
+    for(UnsignedInt i = 0; i < Containers::arraySize(nodes); i++) {
+        data.correctAnimationNode(nodes[i]);
+        initialRotation[i] = nodes[i].rotation;
+    }
+
+    /* Check values */
+    constexpr Vector3 translationData[KeyCount]{
+        {0.0f, 0.0f, 3.0f},
+        {5.0f, 0.0f, 3.0f},
+        {5.0f, 0.0f, 8.0f},
+        {0.0f, 0.0f, 8.0f}
+    };
+
+    constexpr Vector3 rotationData[KeyCount]{
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, Float{Rad(-90.0_degf)}},
+        {Float{Rad(90.0_degf)}, 0.0f, Float{Rad(-90.0_degf)}},
+        {Float{Rad(135.0_degf)}, 0.0f, Float{Rad(-90.0_degf)}}
+    };
+
+    constexpr Vector3 scalingData[KeyCount]{
+        {1.0f, 1.0f, 1.0f},
+        {5.0f, 1.0f, 1.0f},
+        {1.0f, 5.0f, 1.0f},
+        {0.5f, 0.5f, 0.5f}
+    };
+
+    /* Be lenient when checking the interpolated output; resampling during
+    export can make things be off by quite a bit. */
+    constexpr Vector3 Epsilon{0.05f};
+    const bool isCollada = Containers::StringView{data.suffix}.hasSuffix(".dae");
+
+    for(UnsignedInt i = 0; i < Containers::arraySize(keys); i++) {
+        player.advance(keys[i]);
+        const Vector3 rotation{(nodes[0].rotation * initialRotation[0].inverted()).toEuler()};
+        /* For formats with non-zero initial rotation, we need to apply it
+           to get the correct scale even though that object originally
+           has no rotation animation targetting it */
+        const Vector3 scaling = Math::abs(nodes[1].rotation.transformVector(nodes[1].scaling));
+        const Vector3& translation = nodes[2].translation;
+        {
+            /* I'm not sure how to correct the rotation to account for the axis swap. See
+               correctAnimationNodeCollada() for more info. */
+            CORRADE_EXPECT_FAIL_IF(isCollada && i > 0, "Collada rotation values are wrong");
+            CORRADE_VERIFY(Math::abs(rotation - rotationData[i]) < Epsilon);
+        }
+        CORRADE_VERIFY(Math::abs(scaling - scalingData[i]) < Epsilon);
+        CORRADE_VERIFY(Math::abs(translation - translationData[i]) < Epsilon);
+    }
 }
-
-namespace {
 
 struct AnimationTarget {
     AnimationTrackTargetType type;
@@ -467,8 +529,6 @@ const Containers::StaticArray<3, AnimationTarget> AnimationGltfLinearTargets{
     AnimationTarget{AnimationTrackTargetType::Translation3D, 4, ~0u},
     AnimationTarget{AnimationTrackTargetType::Scaling3D, 4, ~0u}
 };
-
-}
 
 void AssimpImporterTest::animationGltf() {
     if(!supportsAnimation(".gltf"))
