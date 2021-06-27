@@ -31,6 +31,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/StringStl.h>
 #include <Corrade/TestSuite/Tester.h>
@@ -449,6 +450,18 @@ void AssimpImporterTest::animation() {
      */
 }
 
+struct AnimationTarget {
+    AnimationTrackTargetType type;
+    UnsignedInt keyCount;
+    UnsignedInt channel;
+};
+
+const Containers::StaticArray<3, AnimationTarget> AnimationGltfLinearTargets{
+    AnimationTarget{AnimationTrackTargetType::Rotation3D, 2, ~0u},
+    AnimationTarget{AnimationTrackTargetType::Translation3D, 4, ~0u},
+    AnimationTarget{AnimationTrackTargetType::Scaling3D, 4, ~0u}
+};
+
 void AssimpImporterTest::animationGltf() {
     if(!supportsAnimation(".gltf"))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
@@ -489,12 +502,26 @@ void AssimpImporterTest::animationGltf() {
             2*4*(sizeof(Float) + sizeof(Vector3)));
         CORRADE_COMPARE(animation->trackCount(), 3);
 
+        /* Channel order is not preserved by Assimp so we can't directly
+           compare tracks by their glTF sampler id. Find channel through
+           target id, then use that. */
+
+        Containers::StaticArray<3, AnimationTarget> targets = AnimationGltfLinearTargets;
+
+        for(UnsignedInt i = 0; i < animation->trackCount(); i++) {
+            CORRADE_VERIFY(animation->trackTarget(i) < Containers::arraySize(targets));
+            AnimationTarget& target = targets[animation->trackTarget(i)];
+            CORRADE_COMPARE(target.channel, ~0u);
+            target.channel = i;
+        }
+
         /* Rotation, linearly interpolated */
-        CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
-        CORRADE_COMPARE(animation->trackResultType(0), AnimationTrackType::Quaternion);
-        CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Rotation3D);
-        CORRADE_COMPARE(animation->trackTarget(0), 0);
-        Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(0);
+        const UnsignedInt ch0 = targets[0].channel;
+        CORRADE_COMPARE(animation->trackType(ch0), AnimationTrackType::Quaternion);
+        CORRADE_COMPARE(animation->trackResultType(ch0), AnimationTrackType::Quaternion);
+        CORRADE_COMPARE(animation->trackTargetType(ch0), AnimationTrackTargetType::Rotation3D);
+        CORRADE_COMPARE(animation->trackTarget(ch0), 0);
+        Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(ch0);
         CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
         CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
         CORRADE_COMPARE(rotation.after(), Animation::Extrapolation::Constant);
@@ -518,11 +545,12 @@ void AssimpImporterTest::animationGltf() {
         };
 
         /* Translation, constant interpolated, sharing keys with scaling */
-        CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
-        CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
-        CORRADE_COMPARE(animation->trackTargetType(1), AnimationTrackTargetType::Translation3D);
-        CORRADE_COMPARE(animation->trackTarget(1), 1);
-        Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(1);
+        const UnsignedInt ch1 = targets[1].channel;
+        CORRADE_COMPARE(animation->trackType(ch1), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackResultType(ch1), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackTargetType(ch1), AnimationTrackTargetType::Translation3D);
+        CORRADE_COMPARE(animation->trackTarget(ch1), 1);
+        Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(ch1);
         CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
         CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
         CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
@@ -537,11 +565,12 @@ void AssimpImporterTest::animationGltf() {
         CORRADE_COMPARE(translation.at(1.5f), Vector3::yAxis(2.5f));
 
         /* Scaling, linearly interpolated, sharing keys with translation */
-        CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
-        CORRADE_COMPARE(animation->trackResultType(2), AnimationTrackType::Vector3);
-        CORRADE_COMPARE(animation->trackTargetType(2), AnimationTrackTargetType::Scaling3D);
-        CORRADE_COMPARE(animation->trackTarget(2), 2);
-        Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(2);
+        const UnsignedInt ch2 = targets[2].channel;
+        CORRADE_COMPARE(animation->trackType(ch2), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackResultType(ch2), AnimationTrackType::Vector3);
+        CORRADE_COMPARE(animation->trackTargetType(ch2), AnimationTrackTargetType::Scaling3D);
+        CORRADE_COMPARE(animation->trackTarget(ch2), 2);
+        Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(ch2);
         CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
         CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
         CORRADE_COMPARE(scaling.after(), Animation::Extrapolation::Constant);
@@ -612,12 +641,25 @@ void AssimpImporterTest::animationGltfSpline() {
         2*4*(sizeof(Float) + sizeof(Vector3)));
     CORRADE_COMPARE(animation->trackCount(), 3);
 
+    /* Map from target to channel id */
+    Containers::StaticArray<3, AnimationTarget> targets = AnimationGltfLinearTargets;
+
+    for(UnsignedInt i = 0; i < animation->trackCount(); i++) {
+        /* Nodes 3-5 */
+        CORRADE_VERIFY(animation->trackTarget(i) >= Containers::arraySize(targets) &&
+            animation->trackTarget(i) < (2*Containers::arraySize(targets)));
+        AnimationTarget& target = targets[animation->trackTarget(i) - Containers::arraySize(targets)];
+        CORRADE_COMPARE(target.channel, ~0u);
+        target.channel = i;
+    }
+
     /* Rotation */
-    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackResultType(0), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Rotation3D);
-    CORRADE_COMPARE(animation->trackTarget(0), 3);
-    Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(0);
+    const UnsignedInt ch0 = targets[0].channel;
+    CORRADE_COMPARE(animation->trackType(ch0), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackResultType(ch0), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackTargetType(ch0), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTarget(ch0), 3);
+    Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(ch0);
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(rotation.after(), Animation::Extrapolation::Constant);
@@ -637,11 +679,12 @@ void AssimpImporterTest::animationGltfSpline() {
     }
 
     /* Translation */
-    CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackResultType(1), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(1), AnimationTrackTargetType::Translation3D);
-    CORRADE_COMPARE(animation->trackTarget(1), 4);
-    Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(1);
+    const UnsignedInt ch1 = targets[1].channel;
+    CORRADE_COMPARE(animation->trackType(ch1), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackResultType(ch1), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(ch1), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTarget(ch1), 4);
+    Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(ch1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
@@ -661,11 +704,12 @@ void AssimpImporterTest::animationGltfSpline() {
     }
 
     /* Scaling */
-    CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackResultType(2), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(2), AnimationTrackTargetType::Scaling3D);
-    CORRADE_COMPARE(animation->trackTarget(2), 5);
-    Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(2);
+    const UnsignedInt ch2 = targets[2].channel;
+    CORRADE_COMPARE(animation->trackType(ch2), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackResultType(ch2), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(ch2), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTarget(ch2), 5);
+    Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(ch2);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(scaling.after(), Animation::Extrapolation::Constant);
@@ -1072,49 +1116,73 @@ void AssimpImporterTest::animationMerge() {
 
     CORRADE_COMPARE(animation->trackCount(), 6);
 
+    /* Map from target to channel id */
+
+    Containers::StaticArray<3, AnimationTarget> linearTargets = AnimationGltfLinearTargets;
+    /* The order is the same (target = linear target + 3), we can re-use
+       the data as long as we don't use keyCount */
+    Containers::StaticArray<3, AnimationTarget> splineTargets = AnimationGltfLinearTargets;
+
+    for(UnsignedInt i = 0; i < animation->trackCount(); i++) {
+        const UnsignedInt targetId = animation->trackTarget(i);
+        CORRADE_VERIFY(targetId < (Containers::arraySize(linearTargets) +
+            Containers::arraySize(splineTargets)));
+        AnimationTarget& target = targetId < Containers::arraySize(linearTargets)
+            ? linearTargets[targetId]
+            : splineTargets[targetId - Containers::arraySize(linearTargets)];
+        CORRADE_COMPARE(target.channel, ~0u);
+        target.channel = i;
+    }
+
     /* Rotation, linearly interpolated */
-    CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Rotation3D);
-    CORRADE_COMPARE(animation->trackTarget(0), 0);
-    Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(0);
+    const UnsignedInt ch0 = linearTargets[0].channel;
+    CORRADE_COMPARE(animation->trackType(ch0), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackTargetType(ch0), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTarget(ch0), 0);
+    Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(ch0);
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(rotation.at(1.875f), Quaternion::rotation(90.0_degf, Vector3::xAxis()));
 
     /* Translation, constant interpolated, sharing keys with scaling */
-    CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(1), AnimationTrackTargetType::Translation3D);
-    CORRADE_COMPARE(animation->trackTarget(1), 1);
-    Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(1);
+    const UnsignedInt ch1 = linearTargets[1].channel;
+    CORRADE_COMPARE(animation->trackType(ch1), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(ch1), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTarget(ch1), 1);
+    Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(ch1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(translation.at(1.5f), Vector3::yAxis(2.5f));
 
     /* Scaling, linearly interpolated, sharing keys with translation */
-    CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(2), AnimationTrackTargetType::Scaling3D);
-    CORRADE_COMPARE(animation->trackTarget(2), 2);
-    Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(2);
+    const UnsignedInt ch2 = linearTargets[2].channel;
+    CORRADE_COMPARE(animation->trackType(ch2), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(ch2), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTarget(ch2), 2);
+    Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(ch2);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
     CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
 
     /* Rotation, spline interpolated */
-    CORRADE_COMPARE(animation->trackType(3), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackTargetType(3), AnimationTrackTargetType::Rotation3D);
-    CORRADE_COMPARE(animation->trackTarget(3), 3);
-    Animation::TrackView<const Float, const Quaternion> rotation2 = animation->track<Quaternion>(3);
+    const UnsignedInt ch3 = splineTargets[0].channel;
+    CORRADE_COMPARE(animation->trackType(ch3), AnimationTrackType::Quaternion);
+    CORRADE_COMPARE(animation->trackTargetType(ch3), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTarget(ch3), 3);
+    Animation::TrackView<const Float, const Quaternion> rotation2 = animation->track<Quaternion>(ch3);
     CORRADE_COMPARE(rotation2.interpolation(), Animation::Interpolation::Linear);
 
     /* Translation, spline interpolated */
-    CORRADE_COMPARE(animation->trackType(4), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(4), AnimationTrackTargetType::Translation3D);
-    CORRADE_COMPARE(animation->trackTarget(4), 4);
-    Animation::TrackView<const Float, const Vector3> translation2 = animation->track<Vector3>(4);
+    const UnsignedInt ch4 = splineTargets[1].channel;
+    CORRADE_COMPARE(animation->trackType(ch4), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(ch4), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTarget(ch4), 4);
+    Animation::TrackView<const Float, const Vector3> translation2 = animation->track<Vector3>(ch4);
     CORRADE_COMPARE(translation2.interpolation(), Animation::Interpolation::Linear);
 
     /* Scaling, spline interpolated */
-    CORRADE_COMPARE(animation->trackType(5), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(5), AnimationTrackTargetType::Scaling3D);
-    CORRADE_COMPARE(animation->trackTarget(5), 5);
-    Animation::TrackView<const Float, const Vector3> scaling2 = animation->track<Vector3>(5);
+    const UnsignedInt ch5 = splineTargets[2].channel;
+    CORRADE_COMPARE(animation->trackType(ch5), AnimationTrackType::Vector3);
+    CORRADE_COMPARE(animation->trackTargetType(ch5), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTarget(ch5), 5);
+    Animation::TrackView<const Float, const Vector3> scaling2 = animation->track<Vector3>(ch5);
     CORRADE_COMPARE(scaling2.interpolation(), Animation::Interpolation::Linear);
 }
 
