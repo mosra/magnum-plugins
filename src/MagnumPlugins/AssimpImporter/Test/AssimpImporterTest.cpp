@@ -157,14 +157,12 @@ void correctAnimationNodeDefault(AnimationNode&) { }
 
 void correctAnimationNodeCollada(AnimationNode& node) {
     /* Blender's Collada exporter doesn't seem to apply axis change
-       inside animations correctly. Flip it manually, consistent with
+       inside animations correctly. Do it manually, consistent with
        export up and forward axis (see exported-animation.md):
        y = z, z = -y */
-    /** @todo try the Godot Collada exporter:
-              https://github.com/godotengine/collada-exporter */
-    node.translation = Vector3{node.translation.x(), node.translation.z(), -node.translation.y()};
-    /** @todo correct rotation, currently untested in animation() for Collada */
-    node.scaling = Vector3{node.scaling.x(), node.scaling.z(), node.scaling.y()};
+    const Quaternion correction = Quaternion::rotation(-90.0_degf, Vector3::xAxis());
+    node.translation = correction.transformVector(node.translation);
+    node.rotation = correction * node.rotation;
 }
 
 constexpr struct {
@@ -454,16 +452,17 @@ void AssimpImporterTest::animation() {
         animationData[i] = animation->release();
     }
 
-    /* 4 keyframes at 0/60/120/180, exported at 24fps (60/24 = 2.5, etc.). */
+    /* Check values at known keyframes:
+       4 keyframes at 0/60/120/180, exported at 24fps (60/24 = 2.5, etc.). */
     constexpr UnsignedInt KeyCount = 4;
     constexpr Float keys[KeyCount]{0.0f, 2.5f, 5.0f, 7.5f};
 
     CORRADE_VERIFY(player.duration().contains({ keys[0], keys[Containers::arraySize(keys) - 1] }));
     player.play(0.0f);
 
-    /* Get initial rotation. Some formats (e.g. FBX) might have rotated meshes,
-       with nodes transformed to make up for it. We need this to check the rotation
-       from key 0 to key i. */
+    /* Some Blender exporters (e.g. FBX) and our manual Collada correction
+       flip axes by adding a non-identity default rotation to all nodes. Store
+       them so we can later compare against the rotation from key 0 to key i. */
     Quaternion initialRotation[Containers::arraySize(nodes)];
 
     player.advance(keys[0]);
@@ -472,49 +471,39 @@ void AssimpImporterTest::animation() {
         initialRotation[i] = nodes[i].rotation;
     }
 
-    /* Check values */
     constexpr Vector3 translationData[KeyCount]{
         {0.0f, 0.0f, 3.0f},
         {5.0f, 0.0f, 3.0f},
         {5.0f, 0.0f, 8.0f},
         {0.0f, 0.0f, 8.0f}
     };
-
     constexpr Vector3 rotationData[KeyCount]{
         {0.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, Float(Rad(-90.0_degf))},
         {Float(Rad(90.0_degf)), 0.0f, Float(Rad(-90.0_degf))},
         {Float(Rad(135.0_degf)), 0.0f, Float(Rad(-90.0_degf))}
     };
-
     constexpr Vector3 scalingData[KeyCount]{
         {1.0f, 1.0f, 1.0f},
         {5.0f, 1.0f, 1.0f},
         {1.0f, 5.0f, 1.0f},
         {0.5f, 0.5f, 0.5f}
     };
-
-    /* Be lenient when checking the interpolated output; resampling during
-    export can make things be off by quite a bit. */
-    constexpr Vector3 Epsilon{0.05f};
-    const bool isCollada = Containers::StringView{data.suffix}.hasSuffix(".dae");
-
+    
     for(UnsignedInt i = 0; i < Containers::arraySize(keys); i++) {
         player.advance(keys[i]);
         for(AnimationNode& n : nodes)
             data.correctAnimationNode(n);
+        
+        /* Rotation from initial to current key */
         const Vector3 rotation{(nodes[0].rotation * initialRotation[0].inverted()).toEuler()};
-        /* For formats with non-zero initial rotation, we need to apply it
-           to get the correct scale even though that object originally
-           has no rotation animation targetting it */
+        /* Apply possible non-identity rotation to get the correct scale */
         const Vector3 scaling = Math::abs(nodes[1].rotation.transformVector(nodes[1].scaling));
         const Vector3& translation = nodes[2].translation;
-        {
-            /* I'm not sure how to correct the rotation to account for the axis swap. See
-               correctAnimationNodeCollada() for more info. */
-            CORRADE_EXPECT_FAIL_IF(isCollada && i > 0, "Collada rotation values are wrong");
-            CORRADE_VERIFY(Math::abs(rotation - rotationData[i]) < Epsilon);
-        }
+
+        /* Be lenient, resampling during export takes its toll */
+        constexpr Vector3 Epsilon{0.05f};
+        CORRADE_VERIFY(Math::abs(rotation - rotationData[i]) < Epsilon);
         CORRADE_VERIFY(Math::abs(scaling - scalingData[i]) < Epsilon);
         CORRADE_VERIFY(Math::abs(translation - translationData[i]) < Epsilon);
     }
