@@ -65,8 +65,8 @@ StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, co
 ImageConverterFeatures StbImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
 Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& image) {
-    if(!Int(_format)) {
-        Error() << "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as" << plugin() << Error::nospace << ")";
+    if(_format == Format{}) {
+        Error{} << "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)";
         return nullptr;
     }
 

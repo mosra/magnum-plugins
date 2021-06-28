@@ -143,9 +143,8 @@ void StbImageConverterTest::wrongOutputFormat() {
 
     std::ostringstream out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter)\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
 }
 
 constexpr const char OriginalRgData[] = {
