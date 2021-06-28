@@ -186,8 +186,7 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-AssimpImporter-behavior Behavior and limitations
 
-The plugin supports @ref ImporterFeature::OpenData, @ref ImporterFeature::OpenState
-and @ref ImporterFeature::FileCallback features. The Assimp library loads
+The plugin supports @ref ImporterFeature::OpenData, @relativeref{ImporterFeature,OpenState} and @relativeref{ImporterFeature,FileCallback} features. The Assimp library loads
 everything during initial import, meaning all external file loading callbacks
 are called with @ref InputFileCallbackPolicy::LoadTemporary and the resources
 can be safely freed right after the @ref openData() / @ref openFile() function
@@ -232,10 +231,11 @@ verbosity levels in each instance.
 -   Skeletons and skins are not supported
 -   Morph targets are not supported
 -   Animation tracks are always imported with
-    @ref Animation::Interpolation::Linear, because Assimp doesn't expose
-    any interpolation modes
+    @ref Animation::Interpolation::Linear, because Assimp doesn't expose any
+    interpolation modes
 -   Animation tracks using `aiAnimBehaviour_DEFAULT` or `aiAnimBehaviour_REPEAT`
-    fall back to using @ref Animation::Extrapolation::Constant
+    are currently not implemented and fall back to using
+    @ref Animation::Extrapolation::Constant
 -   It's possible to request all animation clips to be merged into one using
     the @cb{.ini} mergeAnimationClips @ce option in order to for example
     preserve cinematic animations when using the Blender glTF exporter (as it
