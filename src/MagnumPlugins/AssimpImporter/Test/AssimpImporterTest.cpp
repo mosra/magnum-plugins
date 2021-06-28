@@ -363,16 +363,18 @@ void AssimpImporterTest::openDataFailed() {
    tests on certain versions and test files. */
 bool supportsAnimation(const Containers::StringView fileName) {
     /* 5.0.0 supports all of Collada, FBX, glTF */
-    if(ASSIMP_IS_VERSION_5)
-        return true;
-    else if(fileName.hasSuffix(".gltf"))
-        return false;
-    else {
-        const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-        CORRADE_INTERNAL_ASSERT(fileName.hasSuffix(".dae") || fileName.hasSuffix(".fbx"));
-        /* That's as far back as I checked, both Collada and FBX animations supported */
-        return version >= 302;
-    }
+    #if ASSIMP_IS_VERSION_5
+    static_cast<void>(fileName);
+    return true;
+    #else
+    if(fileName.hasSuffix(".gltf")) return false;
+
+    const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
+    CORRADE_INTERNAL_ASSERT(fileName.hasSuffix(".dae") || fileName.hasSuffix(".fbx"));
+    /* That's as far back as I checked, both Collada and FBX animations
+       supported */
+    return version >= 302;
+    #endif
 }
 
 void AssimpImporterTest::animation() {
