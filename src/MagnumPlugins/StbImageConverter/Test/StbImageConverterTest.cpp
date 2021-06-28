@@ -29,6 +29,8 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -45,7 +47,8 @@ struct StbImageConverterTest: TestSuite::Tester {
 
     void wrongFormat();
     void wrongFormatHdr();
-    void wrongOutputFormat();
+    void unknownOutputFormatData();
+    void unknownOutputFormatFile();
 
     /** @todo test the enum constructor somehow (needs to be not loaded through plugin manager) */
 
@@ -72,15 +75,33 @@ struct StbImageConverterTest: TestSuite::Tester {
     void tgaRgba();
     void tgaNegativeSize();
 
+    void convertToFile();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 };
 
+using namespace Containers::Literals;
+
+const struct {
+    const char* name;
+    const char* pluginName;
+    const char* filename;
+    Containers::StringView prefix;
+} ConvertToFileData[] {
+    {"bmp", "StbImageConverter", "image.bmp", "BM"_s},
+    {"png", "StbImageConverter", "image.png", "\x89PNG\x0d\x0a\x1a\x0a"_s},
+    /* TGAs are too annoying to detect, skip */
+    {"tga", "StbImageConverter", "image.tga", nullptr},
+    {"bmp with explicit plugin name", "StbBmpImageConverter", "image.foo", "BM"_s}
+};
+
 StbImageConverterTest::StbImageConverterTest() {
     addTests({&StbImageConverterTest::wrongFormat,
               &StbImageConverterTest::wrongFormatHdr,
-              &StbImageConverterTest::wrongOutputFormat,
+              &StbImageConverterTest::unknownOutputFormatData,
+              &StbImageConverterTest::unknownOutputFormatFile,
 
               &StbImageConverterTest::bmpRg,
               &StbImageConverterTest::bmpNegativeSize,
@@ -104,6 +125,9 @@ StbImageConverterTest::StbImageConverterTest() {
               &StbImageConverterTest::tgaRgba,
               &StbImageConverterTest::tgaNegativeSize});
 
+    addInstancedTests({&StbImageConverterTest::convertToFile},
+        Containers::arraySize(ConvertToFileData));
+
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef STBIMAGECONVERTER_PLUGIN_FILENAME
@@ -113,6 +137,9 @@ StbImageConverterTest::StbImageConverterTest() {
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+
+    /* Create the output directory if it doesn't exist yet */
+    CORRADE_INTERNAL_ASSERT_OUTPUT(Utility::Directory::mkpath(STBIMAGECONVERTER_TEST_OUTPUT_DIR));
 }
 
 void StbImageConverterTest::wrongFormat() {
@@ -137,7 +164,7 @@ void StbImageConverterTest::wrongFormatHdr() {
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): PixelFormat::RGB8Unorm is not supported for HDR output\n");
 }
 
-void StbImageConverterTest::wrongOutputFormat() {
+void StbImageConverterTest::unknownOutputFormatData() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbImageConverter");
     ImageView2D image{PixelFormat::RGB8Unorm, {}, nullptr};
 
@@ -145,6 +172,18 @@ void StbImageConverterTest::wrongOutputFormat() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(image));
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
+}
+
+void StbImageConverterTest::unknownOutputFormatFile() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbImageConverter");
+    ImageView2D image{PixelFormat::RGB8Unorm, {}, nullptr};
+
+    std::string filename = Utility::Directory::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, "file.foo");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToFile(image, filename));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToFile(): cannot determine output format for file.foo (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)\n");
 }
 
 constexpr const char OriginalRgData[] = {
@@ -690,6 +729,45 @@ void StbImageConverterTest::tgaNegativeSize() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {-1, 0}, nullptr}));
     CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): error while writing the TGA file\n");
+}
+
+void StbImageConverterTest::convertToFile() {
+    auto&& data = ConvertToFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    constexpr const char RgbData[]{
+        1, 2, 3, 2, 3, 4,
+        3, 4, 5, 4, 5, 6,
+        5, 6, 7, 6, 7, 8
+    };
+    ImageView2D image{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Unorm, {2, 3}, RgbData};
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
+    std::string filename = Utility::Directory::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
+    CORRADE_VERIFY(converter->convertToFile(image, filename));
+
+    /* Verify it's actually the right format */
+    /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
+    if(!data.prefix.isEmpty())
+        CORRADE_VERIFY(Containers::StringView{Containers::ArrayView<const char>(Utility::Directory::read(filename))}.hasPrefix(data.prefix));
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE_AS(*converted, image, DebugTools::CompareImage);
+
+    /* The format should get reset again after so convertToData() isn't left
+       with some random format after */
+    if(data.pluginName == "StbImageConverter"_s) {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!converter->convertToData(image));
+        CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
+    }
 }
 
 }}}}

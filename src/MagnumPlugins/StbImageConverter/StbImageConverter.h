@@ -63,37 +63,42 @@ Creates files in one of the following formats using the
 [stb_image_write](https://github.com/nothings/stb) library:
 
 -   Windows Bitmap (`*.bmp`) if the plugin was loaded as `StbBmpImageConverter`
-    / `BmpImageConverter` or @ref Format::Bmp was passed to the constructor.
-    Accepts @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
+    / `BmpImageConverter`, if @ref convertToFile() was called with the
+    corresponding extension or if @ref Format::Bmp was passed to the
+    constructor. Accepts @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
     @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. Single- and
     two-channel inputs are converted to three-channel with the the first
     channel repeated three times (and second ignored), four-channel input
     loses alpha.
 -   Radiance HDR (`*.hdr`) if the plugin was loaded as `StbHdrImageConverter`
-    / `HdrImageConverter` or @ref Format::Hdr was passed to the constructor.
-    Accepts @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
+    / `HdrImageConverter`, if @ref convertToFile() was called with the
+    corresponding extension or if @ref Format::Hdr was passed to the
+    constructor. Accepts @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
     @ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. R and RG inputs are
     converted to three-channel RRR with G ignored, four-channel input loses
     alpha.
 -   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) if the plugin was loaded as
-    `StbJpegImageConverter` / `JpegImageConverter` or @ref Format::Jpeg was
+    `StbJpegImageConverter` / `JpegImageConverter`, if @ref convertToFile() was
+    called with one of the corresponding extensions or if @ref Format::Jpeg was
     passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
     @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
     @ref PixelFormat::RGBA8Unorm. Single- and two-channel inputs are converted
     to three-channel with the first channel repeated three times (and second
     ignored), four-channel input loses alpha.
 -   Portable Network Graphics (`*.png`) if the plugin was loaded as
-    `StbPngImageConverter` / `PngImageConverter` or @ref Format::Png was passed
+    `StbPngImageConverter` / `PngImageConverter`, if @ref convertToFile() was
+    called with the corresponding extension or if @ref Format::Png was passed
     to the constructor. Accepts @ref PixelFormat::R8Unorm,
     @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
     @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
     input.
 -   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`) if the plugin was
-    loaded as `StbTgaImageConverter` / `TgaImageConverter` or @ref Format::Tga
-    was passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
-    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
-    @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
-    input.
+    loaded as `StbTgaImageConverter` / `TgaImageConverter`, if
+    @ref convertToFile() was called with one of the corresponding extensions or
+    if @ref Format::Tga was passed to the constructor. Accepts
+    @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
+    @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm, output has
+    the same amount of channels as input.
 
 If the conversion results in lost channels (such as saving RGBA to a JPEG,
 losing the alpha in process), a warning is printed to the output.
@@ -208,6 +213,7 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
     private:
         MAGNUM_STBIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_STBIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
+        MAGNUM_STBIMAGECONVERTER_LOCAL bool doConvertToFile(const ImageView2D& image, Containers::StringView filename) override;
 
         Format _format;
 };

@@ -78,6 +78,10 @@ namespace Magnum {
     PSD files as 16-bit instead of converting to 8 bit
 -   @ref Trade::StbImageImporter "StbImageImporter" now makes it possible to
     override imported image channel count using @cb{.ini} forceChannelCount @ce
+-   @relativeref{Trade,StbImageConverter} can now detect output format from the
+    file extension when calling
+    @relativeref{Trade::AbstractImageConverter,convertToData()} without having
+    to load the plugin with a concrete format alias
 -   @ref Audio::DrFlacImporter "DrFlacAudioImporter" no longer advertises
     support for 32-bit-per-channel FLAC files, as there's no known way to
     produce them and thus the case is impossible to test for.

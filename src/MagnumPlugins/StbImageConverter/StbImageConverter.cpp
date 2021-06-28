@@ -29,6 +29,9 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/String.h>
+
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
@@ -38,6 +41,8 @@
 #include "stb_image_write.h"
 
 namespace Magnum { namespace Trade {
+
+using namespace Containers::Literals;
 
 StbImageConverter::StbImageConverter(Format format): _format{format} {
     /* Passing an invalid Format enum is user error, we'll assert on that in
@@ -160,6 +165,43 @@ Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& im
     Containers::Array<char> fileData{NoInit, data.size()};
     std::copy(data.begin(), data.end(), fileData.begin());
     return fileData;
+}
+
+bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containers::StringView filename) {
+    /** @todo once Directory is std::string-free, use splitExtension() */
+    const Containers::String normalized = Utility::String::lowercase(filename);
+
+    /* Save the previous format to restore it back after, detect the format
+       from extension if it's not supplied explicitly */
+    const Format previousFormat = _format;
+    if(_format == Format{}) {
+        if(normalized.hasSuffix(".bmp"_s))
+            _format = Format::Bmp;
+        else if(normalized.hasSuffix(".hdr"_s))
+            _format = Format::Hdr;
+        else if(normalized.hasSuffix(".jpg"_s) ||
+                normalized.hasSuffix(".jpeg"_s) ||
+                normalized.hasSuffix(".jpe"_s))
+            _format = Format::Jpeg;
+        else if(normalized.hasSuffix(".png"_s))
+            _format = Format::Png;
+        else if(normalized.hasSuffix(".tga"_s) ||
+                normalized.hasSuffix(".vda"_s) ||
+                normalized.hasSuffix(".icb"_s) ||
+                normalized.hasSuffix( ".vst"_s))
+            _format = Format::Tga;
+        else {
+            Error{} << "Trade::StbImageConverter::convertToFile(): cannot determine output format for" << Utility::Directory::filename(filename) << "(plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)";
+            return false;
+        }
+    }
+
+    /* Delegate to the base implementation which calls doConvertToData() */
+    const bool out = AbstractImageConverter::doConvertToFile(image, filename);
+
+    /* Restore the previous format and return the result */
+    _format = previousFormat;
+    return out;
 }
 
 }}
