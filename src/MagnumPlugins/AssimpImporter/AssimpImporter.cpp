@@ -1362,8 +1362,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             constexpr Double GltfTicksPerSecond = 1000.0;
             if(_f->importerIsGltf && !Math::equal(ticksPerSecond, GltfTicksPerSecond)) {
                 if(verbose) {
-                    Debug{} << "Trade::AssimpImporter::animation():" << ticksPerSecond <<
-                        "ticks per second is incorrect for glTF, patching to" << GltfTicksPerSecond;
+                    Debug{} << "Trade::AssimpImporter::animation():" << Float(ticksPerSecond) <<
+                        "ticks per second is incorrect for glTF, patching to" << Float(GltfTicksPerSecond);
                 }
                 ticksPerSecond = GltfTicksPerSecond;
             }
