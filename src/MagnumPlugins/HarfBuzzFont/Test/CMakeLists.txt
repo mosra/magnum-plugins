@@ -56,8 +56,9 @@ else()
 endif()
 set_target_properties(HarfBuzzFontTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont/Test")
 # Older HB versions give slightly different results, so we need to check the
-# version in the test
-target_include_directories(HarfBuzzFontTest PRIVATE
+# version in the test. Also use SYSTEM to avoid warning spam with old-style
+# casts.
+target_include_directories(HarfBuzzFontTest SYSTEM PRIVATE
     $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>)
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
