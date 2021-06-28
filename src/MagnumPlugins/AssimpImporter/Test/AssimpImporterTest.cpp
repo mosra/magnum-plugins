@@ -397,10 +397,10 @@ void AssimpImporterTest::animation() {
         "exported-animation" + std::string{data.suffix})));
 
     /* Find animation target nodes by their name */
-    AnimationNode nodes[3] = {
-        { "Rotating" },
-        { "Scaling" },
-        { "Translating" }
+    AnimationNode nodes[3]{
+        {"Rotating", {}, {}, {}},
+        {"Scaling", {}, {}, {}},
+        {"Translating", {}, {}, {}}
     };
 
     AnimationNode* nodeMap[3]{};
