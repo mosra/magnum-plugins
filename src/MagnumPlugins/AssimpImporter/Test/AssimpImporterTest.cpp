@@ -2302,10 +2302,11 @@ void AssimpImporterTest::fileCallbackNotFound() {
     /* Assimp 5.0 changed the error string. aiGetVersion*() returns 401 for
        assimp 5, FFS, so we have to check differently. See CMakeLists.txt for
        details. */
-    if(ASSIMP_IS_VERSION_5)
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
-    else
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
+    #if ASSIMP_IS_VERSION_5
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
+    #else
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
+    #endif
 }
 
 void AssimpImporterTest::fileCallbackEmptyFile() {
