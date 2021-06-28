@@ -708,8 +708,8 @@ void TinyGltfImporterTest::animation() {
             Quaternion::rotation(0.0_degf, Vector3::xAxis()),
             Quaternion::rotation(180.0_degf, Vector3::xAxis())
         };
-        CORRADE_COMPARE_AS(rotation.keys(), (Containers::StridedArrayView1D<const Float>{rotationKeys}), TestSuite::Compare::Container);
-        CORRADE_COMPARE_AS(rotation.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(rotation.keys(), Containers::stridedArrayView(rotationKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
         CORRADE_COMPARE(rotation.at(1.875f), Quaternion::rotation(90.0_degf, Vector3::xAxis()));
 
         const Float translationScalingKeys[]{
@@ -734,8 +734,8 @@ void TinyGltfImporterTest::animation() {
             Vector3::yAxis(2.5f),
             Vector3::yAxis(0.0f)
         };
-        CORRADE_COMPARE_AS(translation.keys(), (Containers::StridedArrayView1D<const Float>{translationScalingKeys}), TestSuite::Compare::Container);
-        CORRADE_COMPARE_AS(translation.values(), (Containers::StridedArrayView1D<const Vector3>{translationData}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(translation.keys(), Containers::stridedArrayView(translationScalingKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(translation.values(), Containers::stridedArrayView(translationData), TestSuite::Compare::Container);
         CORRADE_COMPARE(translation.at(1.5f), Vector3::yAxis(2.5f));
 
         /* Scaling, linearly interpolated, sharing keys with translation */
@@ -753,8 +753,8 @@ void TinyGltfImporterTest::animation() {
             Vector3::zScale(6.0f),
             Vector3(1.0f),
         };
-        CORRADE_COMPARE_AS(scaling.keys(), (Containers::StridedArrayView1D<const Float>{translationScalingKeys}), TestSuite::Compare::Container);
-        CORRADE_COMPARE_AS(scaling.values(), (Containers::StridedArrayView1D<const Vector3>{scalingData}), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scaling.keys(), Containers::stridedArrayView(translationScalingKeys), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
         CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
     }
 }
@@ -820,7 +820,7 @@ void TinyGltfImporterTest::animationSpline() {
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(rotation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(rotation.after(), Animation::Extrapolation::Constant);
-    CORRADE_COMPARE_AS(rotation.keys(), (Containers::StridedArrayView1D<const Float>{AnimationSplineTime1Keys}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(rotation.keys(), Containers::stridedArrayView(AnimationSplineTime1Keys), TestSuite::Compare::Container);
     constexpr CubicHermiteQuaternion rotationValues[]{
         {{{0.0f, 0.0f, 0.0f}, 0.0f},
          {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
@@ -835,7 +835,7 @@ void TinyGltfImporterTest::animationSpline() {
          {{0.711568f, -0.355784f, -0.462519f}, -0.391362f},
          {{0.0f, 0.0f, 0.0f}, 0.0f}}
     };
-    CORRADE_COMPARE_AS(rotation.values(), (Containers::StridedArrayView1D<const CubicHermiteQuaternion>{rotationValues}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
     /* The same as in CubicHermiteTest::splerpQuaternion() */
     CORRADE_COMPARE(rotation.at(0.5f + 0.35f*3),
         (Quaternion{{-0.309862f, 0.174831f, 0.809747f}, 0.466615f}));
@@ -849,8 +849,8 @@ void TinyGltfImporterTest::animationSpline() {
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
-    CORRADE_COMPARE_AS(translation.keys(), (Containers::StridedArrayView1D<const Float>{AnimationSplineTime1Keys}), TestSuite::Compare::Container);
-    CORRADE_COMPARE_AS(translation.values(), (Containers::StridedArrayView1D<const CubicHermite3D>{AnimationSplineTime1TranslationData}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(translation.keys(), Containers::stridedArrayView(AnimationSplineTime1Keys), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(translation.values(), Containers::stridedArrayView(AnimationSplineTime1TranslationData), TestSuite::Compare::Container);
     /* The same as in CubicHermiteTest::splerpVector() */
     CORRADE_COMPARE(translation.at(0.5f + 0.35f*3),
         (Vector3{1.04525f, 0.357862f, 0.540875f}));
@@ -864,7 +864,7 @@ void TinyGltfImporterTest::animationSpline() {
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(scaling.after(), Animation::Extrapolation::Constant);
-    CORRADE_COMPARE_AS(scaling.keys(), (Containers::StridedArrayView1D<const Float>{AnimationSplineTime1Keys}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scaling.keys(), Containers::stridedArrayView(AnimationSplineTime1Keys), TestSuite::Compare::Container);
     constexpr CubicHermite3D scalingData[]{
         {{0.0f, 0.0f, 0.0f},
          {-2.0f, 1.1f, -4.3f},
@@ -879,7 +879,7 @@ void TinyGltfImporterTest::animationSpline() {
          {1.5f, 9.8f, -5.1f},
          {0.0f, 0.0f, 0.0f}}
     };
-    CORRADE_COMPARE_AS(scaling.values(), (Containers::StridedArrayView1D<const CubicHermite3D>{scalingData}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
     CORRADE_COMPARE(scaling.at(0.5f + 0.35f*3),
         (Vector3{0.118725f, 0.8228f, -2.711f}));
 }
@@ -908,8 +908,8 @@ void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(translation.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(translation.after(), Animation::Extrapolation::Constant);
-    CORRADE_COMPARE_AS(translation.keys(), (Containers::StridedArrayView1D<const Float>{AnimationSplineTime1Keys}), TestSuite::Compare::Container);
-    CORRADE_COMPARE_AS(translation.values(), (Containers::StridedArrayView1D<const CubicHermite3D>{AnimationSplineTime1TranslationData}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(translation.keys(), Containers::stridedArrayView(AnimationSplineTime1Keys), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(translation.values(), Containers::stridedArrayView(AnimationSplineTime1TranslationData), TestSuite::Compare::Container);
     /* The same as in CubicHermiteTest::splerpVector() */
     CORRADE_COMPARE(translation.at(0.5f + 0.35f*3),
         (Vector3{1.04525f, 0.357862f, 0.540875f}));
@@ -926,8 +926,8 @@ void TinyGltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(scaling.before(), Animation::Extrapolation::Constant);
     CORRADE_COMPARE(scaling.after(), Animation::Extrapolation::Constant);
-    CORRADE_COMPARE_AS(scaling.keys(), (Containers::StridedArrayView1D<const Float>{AnimationSplineTime1Keys}), TestSuite::Compare::Container);
-    CORRADE_COMPARE_AS(scaling.values(), (Containers::StridedArrayView1D<const CubicHermite3D>{AnimationSplineTime1TranslationData}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scaling.keys(), Containers::stridedArrayView(AnimationSplineTime1Keys), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(AnimationSplineTime1TranslationData), TestSuite::Compare::Container);
     /* The same as in CubicHermiteTest::splerpVector() */
     CORRADE_COMPARE(scaling.at(0.5f + 0.35f*3),
         (Vector3{1.04525f, 0.357862f, 0.540875f}));
@@ -972,7 +972,7 @@ void TinyGltfImporterTest::animationShortestPathOptimizationEnabled() {
         {{0.0f, 0.0f, -1.0f}, 0.0f},            // 7 s: 180° (flipped back)
         {{0.0f, 0.0f, -0.92388f}, 0.382683f}    // 8 s: 225° (flipped)
     };
-    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 
     CORRADE_COMPARE(track.at(Math::slerp, 0.5f).axis(), Vector3::zAxis());
     CORRADE_COMPARE(track.at(Math::slerp, 1.5f).axis(), Vector3::zAxis());
@@ -1023,7 +1023,7 @@ void TinyGltfImporterTest::animationShortestPathOptimizationDisabled() {
         {{0.0f, 0.0f, -1.0f}, 0.0f},            // 7 s: 180°
         {{0.0f, 0.0f, 0.92388f}, -0.382683f}    // 8 s: 225° (longer path)
     };
-    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 
     CORRADE_COMPARE(track.at(Math::slerpShortestPath, 0.5f).axis(), Vector3::zAxis());
     CORRADE_COMPARE(track.at(Math::slerpShortestPath, 1.5f).axis(), Vector3::zAxis());
@@ -1091,7 +1091,7 @@ void TinyGltfImporterTest::animationQuaternionNormalizationEnabled() {
         {{0.0f, 0.0f, 0.707107f}, 0.707107f},   // is not, renormalized
         {{0.0f, 0.0f, 0.382683f}, 0.92388f},    // is not, renormalized
     };
-    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 }
 
 void TinyGltfImporterTest::animationQuaternionNormalizationDisabled() {
@@ -1114,7 +1114,7 @@ void TinyGltfImporterTest::animationQuaternionNormalizationDisabled() {
         Quaternion{{0.0f, 0.0f, 0.707107f}, 0.707107f}*2,   // is not
         Quaternion{{0.0f, 0.0f, 0.382683f}, 0.92388f}*2,    // is not
     };
-    CORRADE_COMPARE_AS(track.values(), (Containers::StridedArrayView1D<const Quaternion>{rotationValues}), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 }
 
 void TinyGltfImporterTest::animationMergeEmpty() {
