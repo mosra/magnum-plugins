@@ -504,10 +504,13 @@ void AssimpImporterTest::animation() {
         const Vector3& translation = nodes[2].translation;
 
         /* Be lenient, resampling during export takes its toll */
-        constexpr Vector3 Epsilon{0.05f};
-        CORRADE_VERIFY(Math::abs(rotation - rotationData[i]) < Epsilon);
-        CORRADE_VERIFY(Math::abs(scaling - scalingData[i]) < Epsilon);
-        CORRADE_VERIFY(Math::abs(translation - translationData[i]) < Epsilon);
+        constexpr Vector3 Epsilon{0.005f};
+        CORRADE_COMPARE_WITH(rotation, rotationData[i],
+            TestSuite::Compare::around(Epsilon));
+        CORRADE_COMPARE_WITH(scaling, scalingData[i],
+            TestSuite::Compare::around(Epsilon));
+        CORRADE_COMPARE_WITH(translation, translationData[i],
+            TestSuite::Compare::around(Epsilon));
     }
 }
 
