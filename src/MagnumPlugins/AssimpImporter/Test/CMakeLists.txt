@@ -66,8 +66,6 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         exported-animation.dae # Converted from exported-animation.blend
         exported-animation.fbx
         exported-animation.gltf
-        exported-animation-curves.dae
-        exported-animation-curves-handles.dae
         image-filename-trailing-space.mtl
         image-filename-trailing-space.obj
         image-mips.mtl
