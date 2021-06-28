@@ -1,7 +1,7 @@
 # Exporting the animation files
 
-1.  Open the `exported-animation.blend` file, make desired changes and save the blend
-    file.
+1.  Open the `exported-animation.blend` file, make desired changes and save the
+    blend file.
 2.  Export to Collada:
     -   set *Forward Axis* to *Y*
     -   set *Up Axis* to *Z*
@@ -21,5 +21,5 @@
             - enable *Always Sample Animations*
     -   overwrite the `exported-animation.gltf` file
 5.  Verify the animations play back correctly
-6.  Commit the updated `exported-animation.*` files, do a sanity check that the sizes
-    didn't change much.
+6.  Commit the updated `exported-animation.*` files, do a sanity check that the
+    sizes didn't change much.

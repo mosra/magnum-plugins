@@ -1231,18 +1231,16 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
         channelCount += _f->scene->mAnimations[a]->mNumChannels;
     }
 
-    /* Presence of translation/rotation/scaling keys for each channel.
-       We might skip certain tracks (see comments in the next loop)
-       but we need to know the correct track count and data array size
-       up front, so determine this and remember it for the actual
-       loop that extracts the tracks.
-       BigEnumSet because EnumSet requires binary-exclusive enum
-       values. */
+    /* Presence of translation/rotation/scaling keys for each channel. We might
+       skip certain tracks (see comments in the next loop) but we need to know
+       the correct track count and data array size up front, so determine this
+       and remember it for the actual loop that extracts the tracks. BigEnumSet
+       because EnumSet requires binary-exclusive enum values. */
     typedef Containers::BigEnumSet<AnimationTrackTargetType> TargetTypes;
     Containers::Array<TargetTypes> channelTargetTypes{channelCount};
 
-    /* Calculate total data size and track count. If merging all animations together,
-       this is the sum of all clip track counts. */
+    /* Calculate total data size and track count. If merging all animations
+       together, this is the sum of all clip track counts. */
     std::size_t dataSize = 0;
     std::size_t trackCount = 0;
     std::size_t currentChannel = 0;
@@ -1255,9 +1253,9 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             UnsignedInt rotationKeyCount = channel->mNumRotationKeys;
             UnsignedInt scalingKeyCount = channel->mNumScalingKeys;
 
-            /* Assimp adds useless 1-key tracks with default node
-               translation/rotation/scale if the channel doesn't
-               target all 3 of them. Ignore those. */
+            /* Assimp adds useless 1-key tracks with default node translation/
+               rotation/scale if the channel doesn't target all 3 of them.
+               Ignore those. */
             if(removeDummyAnimationTracks &&
                 (translationKeyCount == 1 || rotationKeyCount == 1 || scalingKeyCount == 1))
             {
@@ -1267,18 +1265,19 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 aiVector3D nodeTranslation;
                 aiQuaternion nodeRotation;
                 aiVector3D nodeScaling;
-                /* This might not perfectly restore the T/R/S components, but it's okay
-                   if the comparison fails, this whole fix is a best-effort attempt */
+                /* This might not perfectly restore the T/R/S components, but
+                   it's okay if the comparison fails, this whole fix is a
+                   best-effort attempt */
                 node->mTransformation.Decompose(nodeScaling, nodeRotation, nodeTranslation);
 
                 if(translationKeyCount == 1 && channel->mPositionKeys[0].mTime == 0.0) {
                     const Vector3 value = Vector3::from(&channel->mPositionKeys[0].mValue[0]);
                     const Vector3 nodeValue = Vector3::from(&nodeTranslation[0]);
                     if(value == nodeValue) {
-                        if(verbose) {
-                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy translation "
-                                "track in animation" << a << Debug::nospace << ", channel" << c;
-                        }
+                        if(verbose) Debug{}
+                            << "Trade::AssimpImporter::animation(): ignoring "
+                               "dummy translation track in animation"
+                            << a << Debug::nospace << ", channel" << c;
                         translationKeyCount = 0;
                     }
                 }
@@ -1288,10 +1287,10 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     const aiQuaternion& nodeQuat = nodeRotation;
                     const Quaternion nodeValue{{nodeQuat.x, nodeQuat.y, nodeQuat.z}, nodeQuat.w};
                     if(value == nodeValue) {
-                        if(verbose) {
-                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy rotation "
-                                "track in animation" << a << Debug::nospace << ", channel" << c;
-                        }
+                        if(verbose) Debug{}
+                            << "Trade::AssimpImporter::animation(): ignoring "
+                               "dummy rotation track in animation"
+                            << a << Debug::nospace << ", channel" << c;
                         rotationKeyCount = 0;
                     }
                 }
@@ -1299,19 +1298,22 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     const Vector3 value = Vector3::from(&channel->mScalingKeys[0].mValue[0]);
                     const Vector3 nodeValue = Vector3::from(&nodeScaling[0]);
                     if(value == nodeValue) {
-                        if(verbose) {
-                            Debug{} << "Trade::AssimpImporter::animation(): ignoring dummy scaling "
-                                "track in animation" << a << Debug::nospace << ", channel" << c;
-                        }
+                        if(verbose) Debug{}
+                            << "Trade::AssimpImporter::animation(): ignoring "
+                               "dummy scaling track in animation"
+                            << a << Debug::nospace << ", channel" << c;
                         scalingKeyCount = 0;
                     }
                 }
             }
 
             TargetTypes targetTypes;
-            if(translationKeyCount > 0) targetTypes |= AnimationTrackTargetType::Translation3D;
-            if(rotationKeyCount > 0) targetTypes |= AnimationTrackTargetType::Rotation3D;
-            if(scalingKeyCount > 0) targetTypes |= AnimationTrackTargetType::Scaling3D;
+            if(translationKeyCount > 0)
+                targetTypes |= AnimationTrackTargetType::Translation3D;
+            if(rotationKeyCount > 0)
+                targetTypes |= AnimationTrackTargetType::Rotation3D;
+            if(scalingKeyCount > 0)
+                targetTypes |= AnimationTrackTargetType::Scaling3D;
             channelTargetTypes[currentChannel++] = targetTypes;
 
             /** @todo handle alignment once we do more than just four-byte types */
@@ -1361,10 +1363,10 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                but can be assumed to always be 1000. */
             constexpr Double GltfTicksPerSecond = 1000.0;
             if(_f->importerIsGltf && !Math::equal(ticksPerSecond, GltfTicksPerSecond)) {
-                if(verbose) {
-                    Debug{} << "Trade::AssimpImporter::animation():" << Float(ticksPerSecond) <<
-                        "ticks per second is incorrect for glTF, patching to" << Float(GltfTicksPerSecond);
-                }
+                if(verbose) Debug{}
+                    << "Trade::AssimpImporter::animation():" << Float(ticksPerSecond)
+                    << "ticks per second is incorrect for glTF, patching to"
+                    << Float(GltfTicksPerSecond);
                 ticksPerSecond = GltfTicksPerSecond;
             }
 

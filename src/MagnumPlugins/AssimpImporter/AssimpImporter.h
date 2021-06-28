@@ -208,10 +208,10 @@ verbosity levels in each instance.
 @subsection Trade-AssimpImporter-behavior-animation Animation import
 
 -   Assimp sometimes adds dummy animation tracks with a single key-value pair
-    and the default node transformation. If found, the importer removes these dummy
-    tracks and prints a message if verbose logging is enabled. Can be disabled
-    per-animation with the @cb{.ini} removeDummyAnimationTracks @ce option, see
-    @ref Trade-AssimpImporter-configuration "below".
+    and the default node transformation. If found, the importer removes these
+    dummy tracks and prints a message if verbose logging is enabled. Can be
+    disabled per-animation with the @cb{.ini} removeDummyAnimationTracks @ce
+    option, see @ref Trade-AssimpImporter-configuration "below".
 -   Channel order within animations is not always preserved
     by Assimp, depending on file type and compiler. You may have to manually
     order tracks by type and target after importing.
@@ -221,7 +221,8 @@ verbosity levels in each instance.
     @ref Math::slerp(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerp()"
     functions instead of
     @ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
-    @ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()". Can be disabled per-animation with the
+    @ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()".
+    Can be disabled per-animation with the
     @cb{.ini} optimizeQuaternionShortestPath @ce option, see
     @ref Trade-AssimpImporter-configuration "below".
 -   If quaternion rotation tracks are not normalized, the importer
@@ -244,8 +245,9 @@ verbosity levels in each instance.
     however, it can happen that multiple conflicting tracks affecting the same
     node are merged in the same clip, causing the animation to misbehave.
 -   Assimp versions before commit [e3083c21f0a7beae6c37a2265b7919a02cbf83c4](https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4)
-    read spline-interpolated glTF animation tracks incorrectly and produce broken
-    animations. A warning is printed when importing glTF animations on these versions.
+    read spline-interpolated glTF animation tracks incorrectly and produce
+    broken animations. A warning is printed when importing glTF animations on
+    these versions.
     Because it's impossible to detect the actual brokenness, the warning is
     printed even if the imported data may be correct.
 

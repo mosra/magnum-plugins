@@ -385,13 +385,12 @@ void AssimpImporterTest::animation() {
     if(!supportsAnimation(data.suffix))
         CORRADE_SKIP("Animation for this file type is not supported with the current version of Assimp");
 
-    /* Animation created and exported with Blender. Most animation tracks
-       got resampled and/or merged during export, so there's no use
-       comparing against exact key/value arrays. Just apply all tracks
-       and check if the transformation roughly matches at specific
-       points in time.
-       animationGltf() test covers that AssimpImporter correctly
-       passes on what Assimp outputs. */
+    /* Animation created and exported with Blender. Most animation tracks got
+       resampled and/or merged during export, so there's no use comparing
+       against exact key/value arrays. Just apply all tracks and check if the
+       transformation roughly matches at specific points in time.
+       animationGltf() test covers that AssimpImporter correctly passes on what
+       Assimp outputs. */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
@@ -411,7 +410,7 @@ void AssimpImporterTest::animation() {
 
     for(UnsignedInt i = 0; i < objectCount; i++) {
         const std::string name = importer->object3DName(i);
-        for(AnimationNode& n : nodes) {
+        for(AnimationNode& n: nodes) {
             /* Exported Collada files have spaces replaced with underscores,
                so check for the first words only */
             if(name.find(n.name) == 0) {
@@ -495,7 +494,7 @@ void AssimpImporterTest::animation() {
 
     for(UnsignedInt i = 0; i < Containers::arraySize(keys); i++) {
         player.advance(keys[i]);
-        for(AnimationNode& n : nodes)
+        for(AnimationNode& n: nodes)
             data.correctAnimationNode(n);
 
         /* Rotation from initial to current key */
@@ -732,10 +731,10 @@ void AssimpImporterTest::animationGltfSpline() {
         #endif
 
         constexpr Quaternion rotationValues[]{
-             {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
-             {{-0.711568f, 0.391362f, 0.355784f}, 0.462519f},
-             {{0.598059f, 0.182018f, 0.0260025f}, 0.780076f},
-             {{0.711568f, -0.355784f, -0.462519f}, -0.391362f}
+            {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
+            {{-0.711568f, 0.391362f, 0.355784f}, 0.462519f},
+            {{0.598059f, 0.182018f, 0.0260025f}, 0.780076f},
+            {{0.711568f, -0.355784f, -0.462519f}, -0.391362f}
         };
         CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
     }
