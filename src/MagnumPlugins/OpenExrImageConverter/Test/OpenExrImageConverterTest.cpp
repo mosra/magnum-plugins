@@ -42,7 +42,11 @@
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
-#include <OpenEXR/OpenEXRConfig.h> /* for version-dependent checks */
+/* OpenEXR as a CMake subproject adds the OpenEXR/ directory to include path
+   but not the parent directory, so we can't #include <OpenEXR/blah>. This
+   can't really be fixed from outside, so unfortunately we have to do the same
+   in case of an external OpenEXR. */
+#include <OpenEXRConfig.h> /* for version-dependent checks */
 
 #include "configure.h"
 

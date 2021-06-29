@@ -77,12 +77,44 @@ dynamic plugin, load @cpp "OpenExrImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
-[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
-following. Using OpenEXR itself as a CMake subproject isn't tested at the
-moment, so you need to provide it as a system dependency and point
-`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+[magnum-plugins](https://github.com/mosra/magnum-plugins) and
+[openexr](https://github.com/AcademySoftwareFoundation/openexr) repositories
+(pin OpenEXR at `v3.0.1` at least) and do the following. OpenEXR depends on
+zlib and Imath, however it's capable of fetching those dependencies on its own
+so bundling them isn't necessary. If you want to use system-installed OpenEXR,
+omit the  first part and point `CMAKE_PREFIX_PATH` to its installation dir if
+necessary.
 
 @code{.cmake}
+# Disable unneeded functionality
+set(PYILMBASE_ENABLE OFF CACHE BOOL "" FORCE)
+set(IMATH_INSTALL_PKG_CONFIG OFF CACHE BOOL "" FORCE)
+set(IMATH_INSTALL_SYM_LINK OFF CACHE BOOL "" FORCE)
+set(OPENEXR_INSTALL OFF CACHE BOOL "" FORCE)
+set(OPENEXR_INSTALL_DOCS OFF CACHE BOOL "" FORCE)
+set(OPENEXR_INSTALL_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(OPENEXR_INSTALL_PKG_CONFIG OFF CACHE BOOL "" FORCE)
+set(OPENEXR_INSTALL_TOOLS OFF CACHE BOOL "" FORCE)
+set(OPENEXR_BUILD_UTILS OFF CACHE BOOL "" FORCE)
+# Otherwise OpenEXR uses C++14, and before OpenEXR 3.0.2 also forces C++14 on
+# all libraries that link to it.
+set(OPENEXR_CXX_STANDARD 11 CACHE STRING "" FORCE)
+# OpenEXR implicitly bundles Imath. However, without this only the first CMake
+# run will pass and subsequent runs will fail.
+set(CMAKE_DISABLE_FIND_PACKAGE_Imath ON)
+# These variables may be used by other projects, so ensure they're reset back
+# to their original values after. OpenEXR forces CMAKE_DEBUG_POSTFIX to _d,
+# which isn't desired outside of that library.
+set(_PREV_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+set(_PREV_BUILD_TESTING ${BUILD_TESTING})
+set(BUILD_SHARED_LIBS OFF)
+set(BUILD_TESTING OFF)
+set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
+add_subdirectory(openexr)
+set(BUILD_SHARED_LIBS ${_PREV_BUILD_SHARED_LIBS})
+set(BUILD_TESTING ${_PREV_BUILD_TESTING})
+unset(CMAKE_DEBUG_POSTFIX CACHE)
+
 set(WITH_OPENEXRIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 

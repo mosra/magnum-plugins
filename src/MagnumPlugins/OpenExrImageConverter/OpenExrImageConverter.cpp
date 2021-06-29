@@ -26,11 +26,6 @@
 #include "OpenExrImageConverter.h"
 
 #include <cstring>
-#include <OpenEXR/ImfChannelList.h>
-#include <OpenEXR/ImfFrameBuffer.h>
-#include <OpenEXR/ImfIO.h>
-#include <OpenEXR/ImfOutputFile.h>
-#include <OpenEXR/ImfStandardAttributes.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -39,6 +34,16 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/ConfigurationValue.h>
+
+/* OpenEXR as a CMake subproject adds the OpenEXR/ directory to include path
+   but not the parent directory, so we can't #include <OpenEXR/blah>. This
+   can't really be fixed from outside, so unfortunately we have to do the same
+   in case of an external OpenEXR. */
+#include <ImfChannelList.h>
+#include <ImfFrameBuffer.h>
+#include <ImfIO.h>
+#include <ImfOutputFile.h>
+#include <ImfStandardAttributes.h>
 
 namespace Magnum { namespace Trade {
 
