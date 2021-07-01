@@ -10,8 +10,8 @@
                         "_TBN": 0,
                         "_UV_ROTATION": 1,
                         "_TBN_PRECISER": 2,
-                        "_DOUBLE_SHOT": 3,
-                        "_OBJECT_ID3": 4,
+                        "_OBJECT_ID3": 3,
+                        "_DOUBLE_SHOT": 4,
                         "_NEGATIVE_PADDING": 5,
                         "_NOT_AN_IDENTITY": 6
                     }
@@ -47,16 +47,16 @@
         {
             "bufferView": 0,
             "byteOffset": 44,
-            "componentType": 5130,
-            "count": 1,
-            "type": "VEC2"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 60,
             "componentType": 5125,
             "count": 1,
             "type": "SCALAR"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 48,
+            "componentType": 5130,
+            "count": 1,
+            "type": "VEC2"
         },
         {
             "bufferView": 0,
