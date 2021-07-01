@@ -35,11 +35,33 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
+# Use try_compile() to figure out a concrete Assimp insanity level, as most
+# relevant bugfixes are either not in any stable version yet or the version
+# info is broken. Unfortunately, because try_compile() is run at configure
+# time, LINK_LIBRARIES only works for imported targets as targets defined
+# *inside* the project as are not built at that point yet. So when Assimp is a
+# CMake subproject, it'll complain that Assimp::Assimp doesn't exist. To work
+# around that issue, we build a static library (to avoid linking to anything)
+# and supply INCLUDE_DIRECTORIES. Static library is only available since CMake
+# 3.6, but eh, we can't have everything.
+if(TARGET assimp) # Only defined if we have a CMake subproject
+    get_target_property(_ASSIMP_INCLUDE_DIRECTORIES assimp SOURCE_DIR)
+    get_filename_component(_ASSIMP_INCLUDE_DIRECTORIES ${_ASSIMP_INCLUDE_DIRECTORIES} DIRECTORY)
+    set(_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${_ASSIMP_INCLUDE_DIRECTORIES}/include)
+    if(CMAKE_VERSION VERSION_LESS 3.6)
+        message(FATAL_ERROR "Sorry, using Assimp as a CMake submodule requires CMake 3.6 in order to check for presence of various bugs. To continue, either upgrade CMake or use an external build of Assimp.")
+    else()
+        set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+    endif()
+else()
+    set(_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE LINK_LIBRARIES Assimp::Assimp)
+endif()
+
 # Go through all versions of interest and pick the highest one that compiles
 foreach(_version 20201123 20190915 20151031)
     try_compile(_works ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/checkAssimpVersion.cpp
-        LINK_LIBRARIES Assimp::Assimp
+        ${_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE}
         COMPILE_DEFINITIONS
             -DCHECK_VERSION=${_version}
             # I thought I could make this use C++11 by linking to
