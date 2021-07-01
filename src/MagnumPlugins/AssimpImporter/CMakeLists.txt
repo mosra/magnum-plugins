@@ -46,8 +46,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 # 3.6, but eh, we can't have everything.
 if(TARGET assimp) # Only defined if we have a CMake subproject
     get_target_property(_ASSIMP_INCLUDE_DIRECTORIES assimp SOURCE_DIR)
+    get_target_property(_ASSIMP_BINARY_INCLUDE_DIRECTORIES assimp BINARY_DIR)
     get_filename_component(_ASSIMP_INCLUDE_DIRECTORIES ${_ASSIMP_INCLUDE_DIRECTORIES} DIRECTORY)
-    set(_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${_ASSIMP_INCLUDE_DIRECTORIES}/include)
+    get_filename_component(_ASSIMP_BINARY_INCLUDE_DIRECTORIES ${_ASSIMP_BINARY_INCLUDE_DIRECTORIES} DIRECTORY)
+    set(_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${_ASSIMP_INCLUDE_DIRECTORIES}/include\;${_ASSIMP_BINARY_INCLUDE_DIRECTORIES}/include")
     if(CMAKE_VERSION VERSION_LESS 3.6)
         message(FATAL_ERROR "Sorry, using Assimp as a CMake submodule requires CMake 3.6 in order to check for presence of various bugs. To continue, either upgrade CMake or use an external build of Assimp.")
     else()
