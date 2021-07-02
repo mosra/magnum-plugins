@@ -105,7 +105,9 @@ struct AssimpImporter::File {
     std::unordered_map<std::string, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
 
-    Containers::Optional<std::unordered_map<std::string, UnsignedInt>> animationIndicesForName;
+    Containers::Optional<std::unordered_map<std::string, Int>>
+        animationsForName,
+        meshesForName;
 
     /* Mapping for multi-mesh nodes:
        (in the following, "node" is an aiNode,
@@ -661,6 +663,23 @@ UnsignedInt AssimpImporter::doMeshCount() const {
     return _f->scene->mNumMeshes;
 }
 
+Int AssimpImporter::doMeshForName(const std::string& name) {
+    if(!_f->meshesForName) {
+        _f->meshesForName.emplace();
+        _f->meshesForName->reserve(_f->scene->mNumMeshes);
+        for(std::size_t i = 0; i != _f->scene->mNumMeshes; ++i) {
+            _f->meshesForName->emplace(_f->scene->mMeshes[i]->mName.C_Str(), i);
+        }
+    }
+
+    const auto found = _f->meshesForName->find(name);
+    return found == _f->meshesForName->end() ? -1 : found->second;
+}
+
+std::string AssimpImporter::doMeshName(const UnsignedInt id) {
+    return _f->scene->mMeshes[id]->mName.C_Str();
+}
+
 Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, UnsignedInt) {
     const aiMesh* mesh = _f->scene->mMeshes[id];
 
@@ -1169,15 +1188,15 @@ Int AssimpImporter::doAnimationForName(const std::string& name) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return -1;
 
-    if(!_f->animationIndicesForName) {
-        _f->animationIndicesForName.emplace();
-        _f->animationIndicesForName->reserve(_f->scene->mNumAnimations);
+    if(!_f->animationsForName) {
+        _f->animationsForName.emplace();
+        _f->animationsForName->reserve(_f->scene->mNumAnimations);
         for(std::size_t i = 0; i != _f->scene->mNumAnimations; ++i)
-            _f->animationIndicesForName->emplace(std::string(_f->scene->mAnimations[i]->mName.C_Str()), i);
+            _f->animationsForName->emplace(std::string(_f->scene->mAnimations[i]->mName.C_Str()), i);
     }
 
-    const auto found = _f->animationIndicesForName->find(name);
-    return found == _f->animationIndicesForName->end() ? -1 : found->second;
+    const auto found = _f->animationsForName->find(name);
+    return found == _f->animationsForName->end() ? -1 : found->second;
 }
 
 std::string AssimpImporter::doAnimationName(UnsignedInt id) {
