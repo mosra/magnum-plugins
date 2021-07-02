@@ -1493,7 +1493,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
         Warning{} << "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized";
 
     return AnimationData{std::move(data), std::move(tracks),
-        mergeAnimationClips ? nullptr : &_f->scene->mAnimations[id]};
+        mergeAnimationClips ? nullptr : _f->scene->mAnimations[id]};
 }
 
 const void* AssimpImporter::doImporterState() const {
