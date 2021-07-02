@@ -1652,6 +1652,9 @@ void AssimpImporterTest::mesh() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
+    CORRADE_COMPARE(importer->meshName(0), "Cube");
+    CORRADE_COMPARE(importer->meshForName("Cube"), 0);
+
     Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
@@ -1767,10 +1770,13 @@ void AssimpImporterTest::meshMultiplePrimitives() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "mesh-multiple-primitives.dae")));
 
-    /* Four meshes, but one has three primitives and one two. Distinguishing
-       using the primitive type, hopefully that's enough. */
+    /* Four meshes, but one has three primitives and one two. */
     CORRADE_COMPARE(importer->meshCount(), 5);
     {
+        CORRADE_COMPARE(importer->meshName(0), "Multi-primitive triangle fan, line strip");
+        CORRADE_COMPARE(importer->meshName(1), "Multi-primitive triangle fan, line strip");
+        CORRADE_COMPARE(importer->meshForName("Multi-primitive triangle fan, line strip"), 0);
+
         auto mesh0 = importer->mesh(0);
         CORRADE_VERIFY(mesh0);
         CORRADE_COMPARE(mesh0->primitive(), MeshPrimitive::Triangles);
@@ -1778,6 +1784,11 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_VERIFY(mesh1);
         CORRADE_COMPARE(mesh1->primitive(), MeshPrimitive::Lines);
     } {
+        CORRADE_COMPARE(importer->meshName(2), "Multi-primitive lines, triangles, triangle strip");
+        CORRADE_COMPARE(importer->meshName(3), "Multi-primitive lines, triangles, triangle strip");
+        CORRADE_COMPARE(importer->meshName(4), "Multi-primitive lines, triangles, triangle strip");
+        CORRADE_COMPARE(importer->meshForName("Multi-primitive lines, triangles, triangle strip"), 2);
+
         auto mesh2 = importer->mesh(2);
         CORRADE_VERIFY(mesh2);
         CORRADE_COMPARE(mesh2->primitive(), MeshPrimitive::Lines);
