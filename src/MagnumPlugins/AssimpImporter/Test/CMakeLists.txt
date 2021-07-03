@@ -84,6 +84,12 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         points.obj
         scene.dae
         scene+mesh.dae
+        skin.dae # Converted from skin.blend
+        skin.fbx
+        skin.gltf
+        skin-multiple-sets.dae
+        skin-shared.gltf
+        skin-shared.bin
         texture-ambient.obj
         texture-ambient.mtl
         quad.stl
