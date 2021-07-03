@@ -308,6 +308,14 @@ verbosity levels in each instance.
 -   The imported model always has either both @ref MeshAttribute::Tangent
     @ref MeshAttribute::Bitangent or neither of them, tangents are always
     three-component with binormals separate.
+-   Joint Ids and weights for skinning are imported as custom vertex attributes
+    named "JOINTS_0", "JOINTS_1", etc. and "WEIGHTS_0", "WEIGHTS_1", etc. with
+    formats @ref VertexFormat::Vector4ui and @ref VertexFormat::Vector4,
+    respectively. Imported meshes always have either both or neither of them.
+    Their mapping to/from a string can be queried using @ref meshAttributeName()
+    and @ref meshAttributeForName().
+    By default, the number of weights per vertex is limited to 4, but you can
+    change this limit by setting the @cb{.ini} maxJointWeights @ce option.
 -   Multi-mesh nodes and multi-primitive meshes are loaded as follows,
     consistently with the behavior of @link TinyGltfImporter @endlink:
     -   Multi-primitive meshes are split by Assimp into individual meshes
@@ -445,6 +453,8 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL std::string doMeshName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doMeshAttributeName(UnsignedShort name) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;

@@ -38,6 +38,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
@@ -111,6 +112,9 @@ struct AssimpImporter::File {
         meshesForName,
         skinsForName;
 
+    std::unordered_map<std::string, MeshAttribute>
+        meshAttributesForName;
+    Containers::Array<std::string> meshAttributeNames;
 
     bool mergeSkins = false;
     std::vector<std::size_t> meshesWithBones;
@@ -151,6 +155,7 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     conf.setValue("normalizeQuaternions", true);
     conf.setValue("mergeAnimationClips", false);
     conf.setValue("removeDummyAnimationTracks", true);
+    conf.setValue("maxJointWeights", 4);
     conf.setValue("mergeSkins", false);
 
     conf.setValue("ImportColladaIgnoreUpDirection", false);
@@ -171,6 +176,8 @@ Containers::Pointer<Assimp::Importer> createImporter(Utility::ConfigurationGroup
 
     importer->SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION,
         conf.value<bool>("ImportColladaIgnoreUpDirection"));
+    importer->SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS,
+        conf.value<int>("maxJointWeights"));
 
     return importer;
 }
@@ -337,6 +344,7 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
     _c(OptimizeGraph)
     _c(FlipUVs)
     _c(FlipWindingOrder)
+    _c(LimitBoneWeights) /* enabled by default */
     #undef _c
     return flags;
 }
@@ -728,17 +736,21 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
     }
 
     /* Gather all attributes. Position is there always, others are optional */
+    const UnsignedInt vertexCount = mesh->mNumVertices;
     std::size_t attributeCount = 1;
     std::ptrdiff_t stride = sizeof(Vector3);
+
     if(mesh->HasNormals()) {
         ++attributeCount;
         stride += sizeof(Vector3);
     }
+
     /* Assimp provides either none or both, never just one of these */
     if(mesh->HasTangentsAndBitangents()) {
         attributeCount += 2;
         stride += 2*sizeof(Vector3);
     }
+
     for(std::size_t layer = 0; layer < mesh->GetNumUVChannels(); ++layer) {
         if(mesh->mNumUVComponents[layer] != 2) {
             Warning() << "Trade::AssimpImporter::mesh(): skipping texture coordinate layer" << layer << "which has" << mesh->mNumUVComponents[layer] << "components per coordinate. Only two dimensional texture coordinates are supported.";
@@ -748,11 +760,56 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         ++attributeCount;
         stride += sizeof(Vector2);
     }
+
     attributeCount += mesh->GetNumColorChannels();
     stride += mesh->GetNumColorChannels()*sizeof(Color4);
 
+    /* Determine the number of joint weight layers */
+    std::size_t jointLayerCount = 0;
+    if(mesh->HasBones()) {
+        /* Assimp does things the roundabout way of storing per-vertex weights
+           in the bones affecting the mesh, we have to undo that */
+        Containers::Array<UnsignedInt> jointCounts{ValueInit, vertexCount};
+        UnsignedInt maxJointCount = 0;
+        for(std::size_t i = 0; i < mesh->mNumBones; ++i) {
+            const aiBone* bone = mesh->mBones[i];
+            for(std::size_t j = 0; j < bone->mNumWeights; ++j) {
+                const aiVertexWeight& weight = bone->mWeights[j];
+                /* Without IMPORT_NO_SKELETON_MESHES Assimp produces bogus meshes
+                   with bones that have invalid vertex ids. We enable that setting
+                   but who knows what other rogue settings produce invalid data... */
+                CORRADE_ASSERT(weight.mVertexId < vertexCount,
+                    "Trade::AssimpImporter::mesh(): invalid vertex id in bone data", {});
+                UnsignedInt& jointCount = jointCounts[weight.mVertexId];
+                jointCount++;
+                maxJointCount = Math::max(jointCount, maxJointCount);
+            }
+        }
+
+        CORRADE_INTERNAL_ASSERT(!configuration().group("postprocess")->value<bool>("LimitBoneWeights") ||
+            maxJointCount <= configuration().value<UnsignedInt>("maxJointWeights"));
+
+        jointLayerCount = (maxJointCount + 3)/4;
+        attributeCount += jointLayerCount*2;
+        stride += jointLayerCount*(sizeof(Vector4ui) + sizeof(Vector4));
+
+        /* Register custom attributes for each set, analogous to TinyGltfImporter.
+           Joint ids and weights are the only custom attributes in this importer
+           so we can simply check the number of existing custom attributes. */
+        const char* attributes[]{"JOINTS", "WEIGHTS"};
+        CORRADE_INTERNAL_ASSERT(_f->meshAttributeNames.size() % Containers::arraySize(attributes) == 0);
+        const std::size_t firstAttributeLayer = _f->meshAttributeNames.size()/Containers::arraySize(attributes);
+        for(std::size_t layer = firstAttributeLayer; layer < jointLayerCount; ++layer) {
+            for(UnsignedInt i = 0; i < Containers::arraySize(attributes); ++i) {
+                const std::string attribute = Utility::formatString("{}_{}", attributes[i], layer);
+                const UnsignedShort attributeId = layer*Containers::arraySize(attributes) + i;
+                _f->meshAttributesForName.emplace(attribute, meshAttributeCustom(attributeId));
+                arrayAppend(_f->meshAttributeNames, attribute);
+            }
+        }
+    }
+
     /* Allocate vertex data, fill in the attributes */
-    const UnsignedInt vertexCount = mesh->mNumVertices;
     Containers::Array<char> vertexData{NoInit, std::size_t(stride)*vertexCount};
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
     std::size_t attributeIndex = 0;
@@ -837,6 +894,49 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         attributeOffset += sizeof(Color4);
     }
 
+    /* Joints and joint weights */
+    if(mesh->HasBones()) {
+        Containers::Array<Containers::StridedArrayView1D<Vector4ui>> jointIds{jointLayerCount};
+        Containers::Array<Containers::StridedArrayView1D<Vector4>> jointWeights{jointLayerCount};
+        for(std::size_t layer = 0; layer < jointLayerCount; ++layer) {
+            jointIds[layer] = {vertexData, reinterpret_cast<Vector4ui*>(vertexData + attributeOffset),
+                vertexCount, stride};
+
+            attributeData[attributeIndex++] = MeshAttributeData{
+                _f->meshAttributesForName[Utility::formatString("JOINTS_{}", layer)], jointIds[layer]};
+            attributeOffset += sizeof(Vector4ui);
+
+            jointWeights[layer] = {vertexData, reinterpret_cast<Vector4*>(vertexData + attributeOffset),
+                vertexCount, stride};
+
+            attributeData[attributeIndex++] = MeshAttributeData{
+                _f->meshAttributesForName[Utility::formatString("WEIGHTS_{}", layer)], jointWeights[layer]};
+            attributeOffset += sizeof(Vector4);
+
+            /* zero-fill, single vertices can have less than the max joint count */
+            for(std::size_t i = 0; i < vertexCount; ++i) {
+                jointIds[layer][i] = {};
+                jointWeights[layer][i] = {};
+            }
+        }
+
+        /** @todo use bone remapping if mergeSkins is set */
+
+        Containers::Array<UnsignedInt> jointCounts{ValueInit, vertexCount};
+        for(std::size_t i = 0; i < mesh->mNumBones; ++i) {
+            const aiBone* bone = mesh->mBones[i];
+            for(std::size_t j = 0; j < bone->mNumWeights; ++j) {
+                const aiVertexWeight& weight = bone->mWeights[j];
+                UnsignedInt& jointCount = jointCounts[weight.mVertexId];
+                const UnsignedInt layer = jointCount / 4;
+                const UnsignedInt element = jointCount % 4;
+                jointIds[layer][weight.mVertexId][element] = i;
+                jointWeights[layer][weight.mVertexId][element] = weight.mWeight;
+                jointCount++;
+            }
+        }
+    }
+
     /* Check we pre-calculated well */
     CORRADE_INTERNAL_ASSERT(attributeOffset == std::size_t(stride));
     CORRADE_INTERNAL_ASSERT(attributeIndex == attributeCount);
@@ -858,6 +958,15 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         indices,
         std::move(vertexData), std::move(attributeData),
         MeshData::ImplicitVertexCount, mesh};
+}
+
+std::string AssimpImporter::doMeshAttributeName(UnsignedShort name) {
+    return _f && name < _f->meshAttributeNames.size() ?
+        _f->meshAttributeNames[name] : "";
+}
+
+MeshAttribute AssimpImporter::doMeshAttributeForName(const std::string& name) {
+    return _f ? _f->meshAttributesForName[name] : MeshAttribute{};
 }
 
 UnsignedInt AssimpImporter::doMaterialCount() const { return _f->scene->mNumMaterials; }
