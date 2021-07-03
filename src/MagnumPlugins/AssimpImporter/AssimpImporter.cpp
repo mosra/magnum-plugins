@@ -55,6 +55,7 @@
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
@@ -107,7 +108,12 @@ struct AssimpImporter::File {
 
     Containers::Optional<std::unordered_map<std::string, Int>>
         animationsForName,
-        meshesForName;
+        meshesForName,
+        skinsForName;
+
+
+    bool mergeSkins = false;
+    std::vector<std::size_t> meshesWithBones;
 
     /* Mapping for multi-mesh nodes:
        (in the following, "node" is an aiNode,
@@ -145,6 +151,7 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     conf.setValue("normalizeQuaternions", true);
     conf.setValue("mergeAnimationClips", false);
     conf.setValue("removeDummyAnimationTracks", true);
+    conf.setValue("mergeSkins", false);
 
     conf.setValue("ImportColladaIgnoreUpDirection", false);
 
@@ -493,6 +500,25 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
         Warning{} << "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
             "from this file are most likely broken using this version of Assimp. Consult the "
             "importer documentation for more information.";
+    }
+
+    /** @todo calculate bone remapping if mergeSkins is set */
+
+    /* <mesh id, bone id> -> <global bone id>
+       better: array of <bone id> -> <global bone id>, one entry for each mesh
+       and one vector of global bones, just reuse aiBone*
+       how best to identify duplicates?
+    */
+
+    /* Can't be changed per skin-import because it affects joint id
+       vertex attributes during doMesh */
+    _f->mergeSkins = configuration().value<bool>("mergeSkins");
+
+    /* Find meshes with bone data */
+    _f->meshesWithBones.reserve(_f->scene->mNumMeshes);
+    for(std::size_t i = 0; i < _f->scene->mNumMeshes; ++i) {
+        if(_f->scene->mMeshes[i]->HasBones())
+            _f->meshesWithBones.push_back(i);
     }
 }
 
@@ -1499,6 +1525,75 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
     return AnimationData{std::move(data), std::move(tracks),
         mergeAnimationClips ? nullptr : _f->scene->mAnimations[id]};
+}
+
+UnsignedInt AssimpImporter::doSkin3DCount() const {
+    /* If the skins are merged, there's at most one */
+    if(_f->mergeSkins)
+        return _f->meshesWithBones.empty() ? 0 : 1;
+
+    return _f->meshesWithBones.size();
+}
+
+Int AssimpImporter::doSkin3DForName(const std::string& name) {
+    /* If the skins are merged, don't report any names */
+    if(_f->mergeSkins) return -1;
+
+    if(!_f->skinsForName) {
+        _f->skinsForName.emplace();
+        _f->skinsForName->reserve(_f->meshesWithBones.size());
+        for(std::size_t i = 0; i != _f->meshesWithBones.size(); ++i)
+            _f->skinsForName->emplace(
+                _f->scene->mMeshes[_f->meshesWithBones[i]]->mName.C_Str(), i);
+    }
+
+    const auto found = _f->skinsForName->find(name);
+    return found == _f->skinsForName->end() ? -1 : found->second;
+}
+
+std::string AssimpImporter::doSkin3DName(const UnsignedInt id) {
+    /* If the skins are merged, don't report any names */
+    if(_f->mergeSkins) return {};
+    return _f->scene->mMeshes[_f->meshesWithBones[id]]->mName.C_Str();
+}
+
+Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) {
+    /* Import either a single mesh skin or all of them together.
+       Since Assimp gives us no way to enumerate the original skins
+       and assumes that one mesh = one skins, we give the users
+       an option to merge them all together. */
+    const std::size_t skinBegin = _f->mergeSkins ? 0 : id;
+    const std::size_t skinEnd = _f->mergeSkins ? _f->meshesWithBones.size() : id + 1;
+
+    /** @todo This just collects all bones without removing duplicates. Calculate
+              bone remapping in doOpenData() and use that. That should directly
+              gives us the total joint count, too. */
+    size_t jointCount = 0;
+    for(std::size_t s = skinBegin; s != skinEnd; ++s) {
+        const aiMesh* mesh = _f->scene->mMeshes[_f->meshesWithBones[s]];
+        jointCount += mesh->mNumBones;
+    }
+
+    Containers::Array<UnsignedInt> joints{NoInit, jointCount};
+    /* NoInit for Matrix4 creates an array with a non-default deleter,
+       we're not allowed to return those. */
+    Containers::Array<Matrix4> inverseBindMatrices{ValueInit, jointCount};
+    std::size_t currentJoint = 0;
+    for(std::size_t s = skinBegin; s != skinEnd; ++s) {
+        const aiMesh* mesh = _f->scene->mMeshes[_f->meshesWithBones[s]];
+        for(std::size_t i = 0; i != mesh->mNumBones; ++i) {
+            const aiBone* bone = mesh->mBones[i];
+            const Int node = doObject3DForName(bone->mName.C_Str());
+            CORRADE_INTERNAL_ASSERT(node != -1);
+            joints[currentJoint] = node;
+            inverseBindMatrices[currentJoint] = Matrix4::from(
+                reinterpret_cast<const float*>(&bone->mOffsetMatrix)).transposed();
+            currentJoint++;
+        }
+    }
+
+    return SkinData3D{std::move(joints), std::move(inverseBindMatrices),
+        _f->mergeSkins ? nullptr : _f->scene->mMeshes[_f->meshesWithBones[id]]};
 }
 
 const void* AssimpImporter::doImporterState() const {

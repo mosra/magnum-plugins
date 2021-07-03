@@ -197,7 +197,7 @@ with @ref InputFileCallbackPolicy::LoadTemporary and
 @ref InputFileCallbackPolicy::Close is emitted right after the file is fully
 read.
 
-Import of skeleton, skin and morph data is not supported at the moment.
+Import of morph data is not supported at the moment.
 
 The importer recognizes @ref ImporterFlag::Verbose, enabling verbose logging
 in Assimp when the flag is enabled. However please note that since Assimp
@@ -228,7 +228,6 @@ verbosity levels in each instance.
     prints a warning and normalizes them. Can be disabled per-animation with
     the @cb{.ini} normalizeQuaternions @ce option, see
     @ref Trade-AssimpImporter-configuration "below".
--   Skeletons and skins are not supported
 -   Morph targets are not supported
 -   Animation tracks are always imported with
     @ref Animation::Interpolation::Linear, because Assimp doesn't expose any
@@ -250,6 +249,16 @@ verbosity levels in each instance.
     these versions.
     Because it's impossible to detect the actual brokenness, the warning is
     printed even if the imported data may be correct.
+-   Original skins are not exposed by Assimp, so each mesh with joint weights
+    produces its own skin. Skin names will be equal to their corresponding
+    mesh names.
+-   You can request to merge all mesh skins into one using the
+    @cb{.ini} mergeSkins @ce option. Duplicate joints (same object index and
+    inverse bind matrix) will be merged and joint ids in vertex attributes
+    adjusted accordingly. When this option is enabled,
+    @ref skinCount() always report either @cpp 0 @ce or @cpp 1 @ce and
+    the merged skin has no name. This option needs to be set before opening
+    a file because it affects skin as well as mesh loading.
 
 @subsection Trade-AssimpImporter-behavior-materials Material import
 
@@ -370,7 +379,10 @@ importer state methods:
     -   @ref LightData::importerState() returns `aiLight`
     -   @ref ImageData2D::importerState() may return `aiTexture`, if texture was embedded
         into the loaded file.
-    -   @ref AnimationData::importerState() returns `aiAnimation`
+    -   @ref AnimationData::importerState() returns `aiAnimation`, or `nullptr` if the
+        @cb{.ini} mergeAnimationClips @ce option is enabled
+    -   @ref SkinData::importerState() returns `aiMesh`, or `nullptr` if the
+        @cb{.ini} mergeSkins @ce option is enabled
 -   @ref openState() expects a pointer to an Assimp scene (i.e., `const aiScene*`)
     and optionally a path (in order to be able to load textures, if needed)
 
@@ -452,6 +464,11 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL std::string doAnimationName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doAnimationForName(const std::string& name) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
+
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doSkin3DForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doSkin3DName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;
 

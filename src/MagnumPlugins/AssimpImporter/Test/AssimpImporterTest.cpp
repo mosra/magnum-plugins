@@ -42,6 +42,7 @@
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
@@ -58,6 +59,7 @@
 #include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/TextureData.h>
 
 #include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
@@ -97,6 +99,11 @@ struct AssimpImporterTest: TestSuite::Tester {
     void animationQuaternionNormalizationDisabled();
     void animationMergeEmpty();
     void animationMerge();
+
+    void skin();
+    void skinNoMeshes();
+    void skinMergeEmpty();
+    void skinMerge();
 
     void camera();
     void light();
@@ -178,7 +185,7 @@ constexpr struct {
     const char* name;
     const char* suffix;
     void (*correctAnimationNode)(AnimationNode&);
-} ExportedAnimationFileData[]{
+} ExportedFileData[]{
     {"Collada", ".dae", &correctAnimationNodeCollada},
     {"FBX", ".fbx", &correctAnimationNodeDefault},
     {"glTF", ".gltf", &correctAnimationNodeDefault}
@@ -205,7 +212,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::openDataFailed});
 
     addInstancedTests({&AssimpImporterTest::animation},
-        Containers::arraySize(ExportedAnimationFileData));
+        Containers::arraySize(ExportedFileData));
 
     addTests({&AssimpImporterTest::animationGltf,
               &AssimpImporterTest::animationGltfNoScene,
@@ -222,7 +229,14 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::animationQuaternionNormalizationEnabled,
               &AssimpImporterTest::animationQuaternionNormalizationDisabled,
               &AssimpImporterTest::animationMergeEmpty,
-              &AssimpImporterTest::animationMerge,
+              &AssimpImporterTest::animationMerge});
+
+    addInstancedTests({&AssimpImporterTest::skin},
+        Containers::arraySize(ExportedFileData));
+
+    addTests({&AssimpImporterTest::skinNoMeshes,
+              &AssimpImporterTest::skinMergeEmpty,
+              &AssimpImporterTest::skinMerge,
 
               &AssimpImporterTest::camera,
 
@@ -371,7 +385,7 @@ bool supportsAnimation(const Containers::StringView fileName) {
 }
 
 void AssimpImporterTest::animation() {
-    auto&& data = ExportedAnimationFileData[testCaseInstanceId()];
+    auto&& data = ExportedFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(!supportsAnimation(data.suffix))
@@ -1240,6 +1254,117 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(ch5), 5);
     Animation::TrackView<const Float, const Vector3> scaling2 = animation->track<Vector3>(ch5);
     CORRADE_COMPARE(scaling2.interpolation(), Animation::Interpolation::Linear);
+}
+
+/* The checks are identical to animation support so re-use that. */
+bool supportsSkinning(const Containers::StringView fileName) {
+    return supportsAnimation(fileName);
+}
+
+void AssimpImporterTest::skin() {
+    auto&& data = ExportedFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(!supportsSkinning(data.suffix))
+        CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
+
+    /* Skinned mesh imported into Blender and then exported */
+
+    // TODO attribution:
+    // https://github.com/KhronosGroup/glTF-Tutorials/blob/master/gltfTutorial/gltfTutorial_019_SimpleSkin.md
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "skin" + std::string{data.suffix})));
+
+    CORRADE_COMPARE(importer->meshCount(), 2);
+    CORRADE_COMPARE(importer->skin3DCount(), 1);
+    CORRADE_COMPARE(importer->skin3DForName("nonexistent"), -1);
+
+    {
+        /* Skin names are taken from mesh names */
+        const char* name = "Mesh_0";
+        CORRADE_VERIFY(importer->meshForName(name) != -1);
+        CORRADE_COMPARE(importer->skin3DName(0), name);
+        CORRADE_COMPARE(importer->skin3DForName(name), 0);
+
+        auto skin = importer->skin3D(0);
+        CORRADE_VERIFY(skin);
+        CORRADE_VERIFY(skin->importerState());
+
+        constexpr const char* jointNames[]{
+            "Node_1", "Node_2"
+        };
+        auto joints = skin->joints();
+        CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames));
+        /* Blender's Collada exporter adds Armature_ prefix to object names */
+        for(std::size_t i = 0; i < joints.size(); ++i)
+            CORRADE_VERIFY(Utility::String::endsWith(importer->object3DName(joints[i]), jointNames[i]));
+
+        // TODO account for node rotation
+        CORRADE_COMPARE_AS(skin->inverseBindMatrices(),
+            Containers::arrayView({
+                //Matrix4::rotationX(35.0_degf),
+                Matrix4::translation({0.0f, 0.0f, -1.0f}),
+                Matrix4::translation({0.0f, 0.0f, -1.0f}),
+                //Matrix4::scaling({2.0f, 3.0f, 4.0f})
+            }), TestSuite::Compare::Container);
+    }
+}
+
+void AssimpImporterTest::skinNoMeshes() {
+    if(!supportsSkinning(".gltf"))
+        CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+
+    /* Reusing the TinyGltfImporter test file without meshes */
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "skin.gltf")));
+
+    /* Assimp only lets us access joints for each mesh. No mesh = no joints. */
+    CORRADE_COMPARE(importer->meshCount(), 0);
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
+}
+
+void AssimpImporterTest::skinMergeEmpty() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Enable skin merging */
+    importer->configuration().setValue("mergeSkins", true);
+    // TODO use fbx file here so we can test on version < 5.0
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "empty.gltf")));
+
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
+    CORRADE_COMPARE(importer->skin3DForName(""), -1);
+}
+
+void AssimpImporterTest::skinMerge() {
+    if(!supportsAnimation(".gltf"))
+        CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Enable skin merging, disabled by default */
+    CORRADE_VERIFY(!importer->configuration().value<bool>("mergeSkins"));
+    importer->configuration().setValue("mergeSkins", true);
+    // TODO adapt skin.gltf to have two skins with overlapping bones?
+    //      if that's too hard, load the file and construct some skins and
+    //      bones manually and use openState
+    // TODO use fbx file here so we can test on version < 5.0
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "skin.gltf")));
+
+    CORRADE_COMPARE(importer->skin3DCount(), 1);
+    CORRADE_COMPARE(importer->skin3DName(0), "");
+    CORRADE_COMPARE(importer->skin3DForName(""), -1);
+
+    auto skin = importer->skin3D(0);
+    CORRADE_VERIFY(skin);
+    CORRADE_VERIFY(!skin->importerState()); /* No particular skin */
+
+    // TODO
 }
 
 void AssimpImporterTest::camera() {
