@@ -42,6 +42,7 @@
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
@@ -58,9 +59,11 @@
 #include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/TextureData.h>
 
 #include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
+#include <assimp/cexport.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -98,6 +101,11 @@ struct AssimpImporterTest: TestSuite::Tester {
     void animationMergeEmpty();
     void animationMerge();
 
+    void skin();
+    void skinNoMeshes();
+    void skinMergeEmpty();
+    void skinMerge();
+
     void camera();
     void light();
     void lightUnsupported();
@@ -112,6 +120,11 @@ struct AssimpImporterTest: TestSuite::Tester {
     void mesh();
     void pointMesh();
     void lineMesh();
+    void meshCustomAttributes();
+    void meshSkinningAttributes();
+    void meshSkinningAttributesMultiple();
+    void meshSkinningAttributesMaxJointWeights();
+    void meshSkinningAttributesMerge();
     void meshMultiplePrimitives();
 
     void emptyCollada();
@@ -146,26 +159,6 @@ struct AssimpImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
-/* Used by animation() to store transformation results */
-struct AnimationNode {
-    const char* name;
-    Vector3 translation;
-    Quaternion rotation;
-    Vector3 scaling;
-};
-
-void correctAnimationNodeDefault(AnimationNode&) { }
-
-void correctAnimationNodeCollada(AnimationNode& node) {
-    /* Blender's Collada exporter doesn't seem to apply axis change
-       inside animations correctly. Do it manually, consistent with
-       export up and forward axis (see exported-animation.md):
-       y = z, z = -y */
-    const Quaternion correction = Quaternion::rotation(-90.0_degf, Vector3::xAxis());
-    node.translation = correction.transformVector(node.translation);
-    node.rotation = correction * node.rotation;
-}
-
 constexpr struct {
     const char* name;
     ImporterFlags flags;
@@ -174,14 +167,18 @@ constexpr struct {
     {"verbose", ImporterFlag::Verbose}
 };
 
-constexpr struct {
+const struct {
     const char* name;
     const char* suffix;
-    void (*correctAnimationNode)(AnimationNode&);
-} ExportedAnimationFileData[]{
-    {"Collada", ".dae", &correctAnimationNodeCollada},
-    {"FBX", ".fbx", &correctAnimationNodeDefault},
-    {"glTF", ".gltf", &correctAnimationNodeDefault}
+    const Quaternion correction;
+} ExportedFileData[]{
+    /* Blender's Collada exporter doesn't seem to apply axis change
+       inside animations/skins correctly. Do it manually, consistent
+       with export up and forward axis (see exported-animation.md):
+       y = z, z = -y */
+    {"Collada", ".dae", Quaternion::rotation(-90.0_degf, Vector3::xAxis())},
+    {"FBX", ".fbx", {}},
+    {"glTF", ".gltf", {}}
 };
 
 constexpr struct {
@@ -205,7 +202,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::openDataFailed});
 
     addInstancedTests({&AssimpImporterTest::animation},
-        Containers::arraySize(ExportedAnimationFileData));
+        Containers::arraySize(ExportedFileData));
 
     addTests({&AssimpImporterTest::animationGltf,
               &AssimpImporterTest::animationGltfNoScene,
@@ -222,7 +219,14 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::animationQuaternionNormalizationEnabled,
               &AssimpImporterTest::animationQuaternionNormalizationDisabled,
               &AssimpImporterTest::animationMergeEmpty,
-              &AssimpImporterTest::animationMerge,
+              &AssimpImporterTest::animationMerge});
+
+    addInstancedTests({&AssimpImporterTest::skin},
+        Containers::arraySize(ExportedFileData));
+
+    addTests({&AssimpImporterTest::skinNoMeshes,
+              &AssimpImporterTest::skinMergeEmpty,
+              &AssimpImporterTest::skinMerge,
 
               &AssimpImporterTest::camera,
 
@@ -240,8 +244,15 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
               &AssimpImporterTest::lineMesh,
-              &AssimpImporterTest::meshMultiplePrimitives,
+              &AssimpImporterTest::meshCustomAttributes});
 
+    addInstancedTests({&AssimpImporterTest::meshSkinningAttributes},
+        Containers::arraySize(ExportedFileData));
+
+    addTests({&AssimpImporterTest::meshSkinningAttributesMultiple,
+              &AssimpImporterTest::meshSkinningAttributesMaxJointWeights,
+              &AssimpImporterTest::meshSkinningAttributesMerge,
+              &AssimpImporterTest::meshMultiplePrimitives,
               &AssimpImporterTest::emptyCollada,
               &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
@@ -306,6 +317,8 @@ void AssimpImporterTest::openFile() {
         CORRADE_COMPARE(importer->sceneCount(), 1);
         CORRADE_COMPARE(importer->object3DCount(), 2);
         CORRADE_COMPARE(importer->meshCount(), 0);
+        CORRADE_COMPARE(importer->animationCount(), 0);
+        CORRADE_COMPARE(importer->skin3DCount(), 0);
 
         importer->close();
         CORRADE_VERIFY(!importer->isOpened());
@@ -334,6 +347,8 @@ void AssimpImporterTest::openData() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 2);
     CORRADE_COMPARE(importer->meshCount(), 0);
+    CORRADE_COMPARE(importer->animationCount(), 0);
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
 
     importer->close();
     CORRADE_VERIFY(!importer->isOpened());
@@ -369,7 +384,7 @@ bool supportsAnimation(const Containers::StringView fileName) {
 }
 
 void AssimpImporterTest::animation() {
-    auto&& data = ExportedAnimationFileData[testCaseInstanceId()];
+    auto&& data = ExportedFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(!supportsAnimation(data.suffix))
@@ -386,21 +401,34 @@ void AssimpImporterTest::animation() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "exported-animation" + std::string{data.suffix})));
 
+    struct Node {
+        const char* name;
+        Vector3 translation;
+        Quaternion rotation;
+        Vector3 scaling;
+    };
+
+    /* Some Blender exporters don't transform animations correctly.
+       Also see the comment for ExportedFileData. */
+    auto correctNode = [&](Node& node) {
+        node.translation = data.correction.transformVector(node.translation);
+        node.rotation = data.correction * node.rotation;
+    };
+
     /* Find animation target nodes by their name */
-    AnimationNode nodes[3]{
+    Node nodes[3]{
         {"Rotating", {}, {}, {}},
         {"Scaling", {}, {}, {}},
         {"Translating", {}, {}, {}}
     };
-
-    AnimationNode* nodeMap[3]{};
+    Node* nodeMap[3]{};
 
     const UnsignedInt objectCount = importer->object3DCount();
     CORRADE_COMPARE(objectCount, Containers::arraySize(nodes));
 
     for(UnsignedInt i = 0; i < objectCount; i++) {
         const std::string name = importer->object3DName(i);
-        for(AnimationNode& n: nodes) {
+        for(Node& n: nodes) {
             /* Exported Collada files have spaces replaced with underscores,
                so check for the first words only */
             if(name.find(n.name) == 0) {
@@ -420,6 +448,7 @@ void AssimpImporterTest::animation() {
     for(UnsignedInt i = 0; i < importer->animationCount(); i++) {
         auto animation = importer->animation(i);
         CORRADE_VERIFY(animation);
+        CORRADE_VERIFY(animation->importerState());
 
         for(UnsignedInt j = 0; j < animation->trackCount(); j++) {
             const auto track = animation->track(j);
@@ -459,7 +488,7 @@ void AssimpImporterTest::animation() {
 
     player.advance(keys[0]);
     for(UnsignedInt i = 0; i < Containers::arraySize(nodes); i++) {
-        data.correctAnimationNode(nodes[i]);
+        correctNode(nodes[i]);
         initialRotation[i] = nodes[i].rotation;
     }
 
@@ -484,8 +513,8 @@ void AssimpImporterTest::animation() {
 
     for(UnsignedInt i = 0; i < Containers::arraySize(keys); i++) {
         player.advance(keys[i]);
-        for(AnimationNode& n: nodes)
-            data.correctAnimationNode(n);
+        for(Node& n: nodes)
+            correctNode(n);
 
         /* Rotation from initial to current key */
         const Vector3 rotation{(nodes[0].rotation * initialRotation[0].inverted()).toEuler()};
@@ -1144,7 +1173,8 @@ void AssimpImporterTest::animationMerge() {
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    /* Enable animation merging */
+    /* Enable animation merging, disabled by default */
+    CORRADE_VERIFY(!importer->configuration().value<bool>("mergeAnimationClips"));
     importer->configuration().setValue("mergeAnimationClips", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation.gltf")));
@@ -1238,6 +1268,255 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(ch5), 5);
     Animation::TrackView<const Float, const Vector3> scaling2 = animation->track<Vector3>(ch5);
     CORRADE_COMPARE(scaling2.interpolation(), Animation::Interpolation::Linear);
+}
+
+/* The checks are identical to animation support so re-use that. */
+bool supportsSkinning(const Containers::StringView fileName) {
+    return supportsAnimation(fileName);
+}
+
+void calculateTransforms(Containers::ArrayView<Matrix4> transforms, Containers::ArrayView<ObjectData3D> objects, UnsignedInt objectId, const Matrix4& parentTransform = {}) {
+    const Matrix4 transform = objects[objectId].transformation() * parentTransform;
+    transforms[objectId] = transform;
+    for(UnsignedInt childId: objects[objectId].children())
+        calculateTransforms(transforms, objects, childId, transform);
+}
+
+void AssimpImporterTest::skin() {
+    auto&& data = ExportedFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(!supportsSkinning(data.suffix))
+        CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
+
+    /* Skinned mesh imported into Blender and then exported */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "skin" + std::string{data.suffix})));
+
+    /* Two skins with their own meshes, one unskinned mesh */
+    CORRADE_COMPARE(importer->meshCount(), 3);
+    CORRADE_COMPARE(importer->skin3DCount(), 2);
+    CORRADE_COMPARE(importer->skin3DForName("nonexistent"), -1);
+
+    /* Get global node transforms, needed for testing inverse bind matrices */
+    Containers::Array<ObjectData3D> objects{NoInit, importer->object3DCount()};
+    Containers::Array<Matrix4> globalTransforms{importer->object3DCount()};
+
+    for(UnsignedInt i = 0; i < importer->object3DCount(); ++i) {
+        auto object = importer->object3D(i);
+        CORRADE_VERIFY(object);
+        new (&objects[i]) ObjectData3D{std::move(*object)};
+    }
+
+    const Int sceneId = importer->defaultScene();
+    CORRADE_VERIFY(sceneId != -1);
+    auto scene = importer->scene(sceneId);
+    CORRADE_VERIFY(scene);
+
+    for(UnsignedInt i: scene->children3D()) {
+        calculateTransforms(globalTransforms, objects, i);
+    }
+
+    constexpr const char* meshNames[]{"Mesh_1", "Mesh_2"};
+    constexpr const char* jointNames[][2]{
+        {"Node_1", "Node_2"},
+        {"Node_3", "Node_4"}
+    };
+
+    /* Some Blender exporters don't transform skin matrices correctly.
+       Also see the comment for ExportedFileData. */
+    const Matrix4 correction{data.correction.toMatrix()};
+
+    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+        /* Skin names are taken from mesh names, skin order is arbitrary */
+        const Int index = importer->skin3DForName(meshNames[i]);
+        CORRADE_VERIFY(index != -1);
+        CORRADE_COMPARE(importer->skin3DName(index), meshNames[i]);
+        CORRADE_VERIFY(importer->meshForName(meshNames[i]) != -1);
+
+        auto skin = importer->skin3D(index);
+        CORRADE_VERIFY(skin);
+        CORRADE_VERIFY(skin->importerState());
+
+        /* Don't check joint order, only presence */
+        auto joints = skin->joints();
+        CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames[i]));
+        for(const char* name: jointNames[i]) {
+            auto found = std::find_if(joints.begin(), joints.end(), [&](UnsignedInt joint) {
+                    /* Blender's Collada exporter adds an Armature_ prefix to object names */
+                    return Utility::String::endsWith(importer->object3DName(joint), name);
+                });
+            CORRADE_VERIFY(found != joints.end());
+        }
+
+        /* The exporters transform the inverse bind matrices quite a bit, making them hard to compare.
+           Instead, check that their defining property holds: they're the inverse of the joint's
+           original global transform. */
+        auto bindMatrices = skin->inverseBindMatrices();
+        CORRADE_COMPARE(bindMatrices.size(), joints.size());
+        auto meshObject = importer->object3D(meshNames[i]);
+        CORRADE_VERIFY(meshObject);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), index);
+        const Matrix4 meshTransform = meshObject->transformation();
+        for(UnsignedInt j = 0; j != joints.size(); ++j) {
+            const Matrix4 invertedTransform = correction * meshTransform * globalTransforms[joints[j]].inverted();
+            CORRADE_COMPARE(bindMatrices[j], invertedTransform);
+        }
+    }
+
+    {
+        /* Unskinned meshes and mesh nodes shouldn't have a skin */
+        CORRADE_VERIFY(importer->meshForName("Plane") != -1);
+        CORRADE_COMPARE(importer->skin3DForName("Plane"), -1);
+        auto meshObject = importer->object3D("Plane");
+        CORRADE_VERIFY(meshObject);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), -1);
+    }
+}
+
+void AssimpImporterTest::skinNoMeshes() {
+    if(!supportsSkinning(".gltf"))
+        CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+
+    /* Reusing the TinyGltfImporter test file without meshes */
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "skin.gltf")));
+
+    /* Assimp only lets us access joints for each mesh. No mesh = no joints. */
+    CORRADE_COMPARE(importer->meshCount(), 0);
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
+}
+
+void AssimpImporterTest::skinMergeEmpty() {
+    if(!supportsAnimation(".dae"))
+        CORRADE_SKIP("Collada skinning is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Enable skin merging */
+    importer->configuration().setValue("mergeSkins", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
+    CORRADE_COMPARE(importer->skin3DForName(""), -1);
+
+    for(UnsignedInt i = 0; i != importer->object3DCount(); ++i) {
+        auto object = importer->object3D(i);
+        if(object->instanceType() == ObjectInstanceType3D::Mesh)
+            CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), -1);
+    }
+}
+
+void AssimpImporterTest::skinMerge() {
+    if(!supportsAnimation(".fbx"))
+        CORRADE_SKIP("FBX skinning is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> _importer = _manager.instantiate("AssimpImporter");
+    /* Disabled by default */
+    CORRADE_VERIFY(!_importer->configuration().value<bool>("mergeSkins"));
+    CORRADE_VERIFY(_importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin.fbx")));
+
+    /* Manually construct bone data and add it to a scene */
+    const aiScene* original = static_cast<const aiScene*>(_importer->importerState());
+    CORRADE_VERIFY(original);
+    aiScene* scene{};
+    aiCopyScene(original, &scene);
+
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->mNumMeshes, _importer->meshCount());
+    CORRADE_COMPARE(scene->mNumMeshes, 3);
+    CORRADE_VERIFY(_importer->object3DCount() >= 3);
+
+    constexpr UnsignedInt objects[6]{0, 0, 0, 1, 2, 2};
+    aiBone bones[6]{};
+
+    /* 0 and 1: same name and matrix */
+    aiMatrix4x4::Translation({1.0f, 0.0f, 0.0f}, bones[0].mOffsetMatrix);
+    aiMatrix4x4::Translation({1.0f, 0.0f, 0.0f}, bones[1].mOffsetMatrix);
+    /* 2: common name with 0 and 1, but different matrix */
+    aiMatrix4x4::Translation({0.0f, 0.0f, 1.0f}, bones[2].mOffsetMatrix);
+    /* 3 and 4: same matrix, but different name */
+    aiMatrix4x4::Translation({0.0f, 1.0f, 0.0f}, bones[3].mOffsetMatrix);
+    aiMatrix4x4::Translation({0.0f, 1.0f, 0.0f}, bones[4].mOffsetMatrix);
+    /* unique */
+    aiMatrix4x4::Translation({0.0f, 0.0f, 1.0f}, bones[5].mOffsetMatrix);
+
+    aiVertexWeight weights[2]{};
+    for(UnsignedInt i = 0; i != Containers::arraySize(bones); ++i) {
+        bones[i].mName = _importer->object3DName(objects[i]);
+        /* Random weights, they're ignored */
+        bones[i].mNumWeights = Containers::arraySize(weights);
+        bones[i].mWeights = weights;
+    }
+
+    aiBone* newBones[2][4]{
+        {&bones[0], &bones[2], &bones[3], &bones[4]},
+        {&bones[1], &bones[2], &bones[4], &bones[5]}
+    };
+    aiBone** oldBones[2]{};
+    unsigned int oldNumBones[2]{};
+    constexpr const char* meshNames[2]{"Mesh_1", "Mesh_2"};
+
+    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+        const Int id = _importer->meshForName(meshNames[i]);
+        CORRADE_VERIFY(id != -1);
+        oldBones[i] = scene->mMeshes[id]->mBones;
+        oldNumBones[i] = scene->mMeshes[id]->mNumBones;
+        scene->mMeshes[id]->mBones = newBones[i];
+        scene->mMeshes[id]->mNumBones = Containers::arraySize(newBones[i]);
+    }
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Enable skin merging */
+    importer->configuration().setValue("mergeSkins", true);
+    CORRADE_VERIFY(importer->openState(scene));
+
+    /* Restore state for aiFreeScene */
+    for(aiBone& bone: bones) {
+        bone.mNumWeights = 0;
+        bone.mWeights = nullptr;
+    }
+
+    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+        const Int id = _importer->meshForName(meshNames[i]);
+        scene->mMeshes[id]->mBones = oldBones[i];
+        scene->mMeshes[id]->mNumBones = oldNumBones[i];
+    }
+
+    CORRADE_COMPARE(importer->skin3DCount(), 1);
+    CORRADE_COMPARE(importer->skin3DName(0), "");
+    CORRADE_COMPARE(importer->skin3DForName(""), -1);
+
+    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+        auto meshObject = importer->object3D(meshNames[i]);
+        CORRADE_VERIFY(meshObject);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), 0);
+    }
+
+    auto skin = importer->skin3D(0);
+    CORRADE_VERIFY(skin);
+    CORRADE_VERIFY(!skin->importerState()); /* No particular skin */
+
+    /* Relying on the skin order here, this *might* break in the future */
+    constexpr UnsignedInt mergeOrder[]{1, 2, 4, 5, 3};
+
+    auto joints = skin->joints();
+    auto inverseBindMatrices = skin->inverseBindMatrices();
+    CORRADE_COMPARE(joints.size(), inverseBindMatrices.size());
+    CORRADE_COMPARE(joints.size(), Containers::arraySize(mergeOrder));
+
+    for(UnsignedInt i = 0; i != joints.size(); ++i) {
+        CORRADE_COMPARE(joints[i], objects[mergeOrder[i]]);
+        const Matrix4 matrix = Matrix4::from(reinterpret_cast<const float*>(&bones[mergeOrder[i]].mOffsetMatrix)).transposed();
+        CORRADE_COMPARE(inverseBindMatrices[i], matrix);
+    }
+
+    importer->close();
+    aiFreeScene(scene);
 }
 
 void AssimpImporterTest::camera() {
@@ -1695,6 +1974,7 @@ void AssimpImporterTest::mesh() {
     Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
+    CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), -1);
 }
 
 void AssimpImporterTest::pointMesh() {
@@ -1749,6 +2029,214 @@ void AssimpImporterTest::lineMesh() {
     Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
+}
+
+void AssimpImporterTest::meshCustomAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "mesh.dae")));
+
+    /* Custom attributes should be available right after loading a file,
+       even for files without joint weights */
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
+    CORRADE_COMPARE(importer->meshAttributeName(jointsAttribute), "JOINTS");
+
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+    CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
+    CORRADE_COMPARE(importer->meshAttributeName(weightsAttribute), "WEIGHTS");
+
+    /* These two are the only possible custom attributes */
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(2)), "");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
+    CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
+}
+
+constexpr Vector4ui MeshSkinningAttributesJointData[]{
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {1, 0, 0, 0},
+    {1, 0, 0, 0}
+};
+
+constexpr Vector4 MeshSkinningAttributesWeightData[]{
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {0.75f, 0.25f, 0.0f, 0.0f},
+    {0.75f, 0.25f, 0.0f, 0.0f},
+    {0.5f, 0.5f, 0.0f, 0.0f},
+    {0.5f, 0.5f, 0.0f, 0.0f},
+    {0.25f, 0.75f, 0.0f, 0.0f},
+    {0.25f, 0.75f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f, 0.0f}
+};
+
+void AssimpImporterTest::meshSkinningAttributes() {
+    auto&& data = ExportedFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(!supportsSkinning(data.suffix))
+        CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "skin" + std::string{data.suffix})));
+
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+    for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
+        auto mesh = importer->mesh(meshName);
+        CORRADE_VERIFY(mesh);
+        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
+            Containers::arrayView(MeshSkinningAttributesJointData),
+            TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+            Containers::arrayView(MeshSkinningAttributesWeightData),
+            TestSuite::Compare::Container);
+    }
+
+    /* No skin joint node using this mesh */
+    auto mesh = importer->mesh("Plane");
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(!mesh->hasAttribute(jointsAttribute));
+}
+
+void AssimpImporterTest::meshSkinningAttributesMultiple() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Disable default limit, 0 = no limit  */
+    CORRADE_COMPARE(importer->configuration().value<UnsignedInt>("maxJointWeights"), 4);
+    importer->configuration().setValue("maxJointWeights", 0);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
+
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+    constexpr UnsignedInt AttributeCount = 3;
+
+    auto mesh = importer->mesh("Mesh_1");
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
+    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+    CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), AttributeCount);
+    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+
+    for(UnsignedInt i = 0; i != AttributeCount; ++i) {
+        auto joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+        auto weights = mesh->attribute<Vector4>(weightsAttribute, i);
+        const Vector4ui jointValues = Vector4ui{0, 1, 2, 3} + Vector4ui{i*4};
+        constexpr Vector4 weightValues = Vector4{0.083333f};
+        for(UnsignedInt v = 0; v != joints.size(); ++v) {
+            CORRADE_COMPARE(joints[v], jointValues);
+            CORRADE_COMPARE(weights[v], weightValues);
+        }
+    }
+}
+
+void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("maxJointWeights", 6);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
+
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+    /* 6 weights = 2 sets of 4, last two weights zero */
+    constexpr UnsignedInt AttributeCount = 2;
+
+    auto mesh = importer->mesh("Mesh_1");
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
+    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+    CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), AttributeCount);
+    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+
+    constexpr Vector4ui jointValues[]{{0, 1, 2, 3}, {4, 5, 0, 0}};
+    /* Assimp normalized the weights */
+    constexpr Float Weight = 0.083333f * 2.0f;
+    constexpr Vector4 weightValues[]{Vector4{Weight}, Vector4::pad(Vector2{Weight})};
+
+    for(UnsignedInt i = 0; i != AttributeCount; ++i) {
+        auto joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+        auto weights = mesh->attribute<Vector4>(weightsAttribute, i);
+        for(UnsignedInt v = 0; v != joints.size(); ++v) {
+            CORRADE_COMPARE(joints[v], jointValues[i]);
+            CORRADE_COMPARE(weights[v], weightValues[i]);
+        }
+    }
+}
+
+void AssimpImporterTest::meshSkinningAttributesMerge() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("mergeSkins", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin.dae")));
+
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+    /* The first mesh (inside aiScene::mMeshes, order is arbitrary) has its bones added
+       to the global bone list first, only the second one has shifted joint indices */
+    Containers::Array<Vector4ui> shiftedJointData{Containers::arraySize(MeshSkinningAttributesJointData)};
+    for(UnsignedInt i = 0; i != shiftedJointData.size(); ++i) {
+        /* Shift by 2 where weight is non-zero */
+        const BoolVector4 nonZero = Math::notEqual(MeshSkinningAttributesWeightData[i], Vector4{0.0f});
+        const Vector4ui mask{nonZero[0], nonZero[1], nonZero[2], nonZero[3]};
+        shiftedJointData[i] = MeshSkinningAttributesJointData[i] + (mask * 2);
+    }
+
+    {
+        const Int id = importer->meshForName("Mesh_1");
+        CORRADE_VERIFY(id != -1);
+        auto mesh = importer->mesh(id);
+        CORRADE_VERIFY(mesh);
+        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+        auto jointData = id == 0
+            ? Containers::arrayView(MeshSkinningAttributesJointData)
+            : Containers::arrayView(shiftedJointData);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
+            Containers::arrayView(jointData), TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+            Containers::arrayView(MeshSkinningAttributesWeightData),
+            TestSuite::Compare::Container);
+    } {
+        const Int id = importer->meshForName("Mesh_2");
+        CORRADE_VERIFY(id != -1);
+        auto mesh = importer->mesh(id);
+        CORRADE_VERIFY(mesh);
+        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+        auto jointData = id == 0
+            ? Containers::arrayView(MeshSkinningAttributesJointData)
+            : Containers::arrayView(shiftedJointData);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
+            Containers::arrayView(jointData), TestSuite::Compare::Container);
+        /* Weights should stay the same */
+        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+            Containers::arrayView(MeshSkinningAttributesWeightData),
+            TestSuite::Compare::Container);
+    }
 }
 
 void AssimpImporterTest::meshMultiplePrimitives() {
