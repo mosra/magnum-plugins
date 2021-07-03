@@ -117,7 +117,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void emptyCollada();
     void emptyGltf();
     void scene();
-    void sceneCollapsedNode();
+    void sceneNoCollapsedNode();
     void upDirectionPatching();
     void upDirectionPatchingPreTransformVertices();
 
@@ -245,7 +245,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::emptyCollada,
               &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
-              &AssimpImporterTest::sceneCollapsedNode});
+              &AssimpImporterTest::sceneNoCollapsedNode});
 
     addInstancedTests({&AssimpImporterTest::upDirectionPatching,
                        &AssimpImporterTest::upDirectionPatchingPreTransformVertices},
@@ -305,12 +305,8 @@ void AssimpImporterTest::openFile() {
         CORRADE_VERIFY(importer->importerState());
         CORRADE_COMPARE(importer->sceneCount(), 1);
         CORRADE_COMPARE(importer->object3DCount(), 2);
-
-        {
-            /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
-            CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
-            CORRADE_VERIFY(!importer->meshCount());
-        }
+        CORRADE_COMPARE(importer->meshCount(), 0);
+        CORRADE_COMPARE(importer->animationCount(), 0);
 
         importer->close();
         CORRADE_VERIFY(!importer->isOpened());
@@ -338,12 +334,8 @@ void AssimpImporterTest::openData() {
     CORRADE_VERIFY(importer->openData(data));
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 2);
-
-    {
-        /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
-        CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
-        CORRADE_VERIFY(!importer->meshCount());
-    }
+    CORRADE_COMPARE(importer->meshCount(), 0);
+    CORRADE_COMPARE(importer->animationCount(), 0);
 
     importer->close();
     CORRADE_VERIFY(!importer->isOpened());
@@ -1915,9 +1907,6 @@ void AssimpImporterTest::emptyGltf() {
     CORRADE_COMPARE(importer->defaultScene(), -1);
     CORRADE_COMPARE(importer->sceneCount(), 0);
     CORRADE_COMPARE(importer->object3DCount(), 0);
-
-    /* No crazy meshes created for an empty glTF file, unlike with COLLADA
-       files that have no meshes */
     CORRADE_COMPARE(importer->meshCount(), 0);
 }
 
@@ -1953,38 +1942,27 @@ void AssimpImporterTest::scene() {
     CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
 }
 
-void AssimpImporterTest::sceneCollapsedNode() {
+void AssimpImporterTest::sceneNoCollapsedNode() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    /* This collapses all nodes into one. Neither OptimizeGraph nor
-       OptimizeMeshes does that, but this one does it. Um. */
+    /* Without IMPORT_NO_SKELETON_MESHES, this collapses all nodes into one.
+       AssimpImporter unconditionally sets this so this shouldn't happen. Neither
+       OptimizeGraph nor OptimizeMeshes does that, but this one does it. Um. */
     importer->configuration().group("postprocess")->setValue("PreTransformVertices", true);
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
 
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 1); /* Just the root node */
+    CORRADE_COMPARE(importer->object3DCount(), 2);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), {0});
 
-    /* Assimp makes some bogus mesh for this one */
-    Containers::Pointer<ObjectData3D> collapsedNode = importer->object3D(0);
-    CORRADE_COMPARE(collapsedNode->children(), {});
-    CORRADE_COMPARE(collapsedNode->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_COMPARE(collapsedNode->transformation(), Matrix4{});
-
-    /* Name of the scene is used for the root object */
-    {
-        const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-        /** @todo Possibly works with other versions (definitely not 3.0) */
-        CORRADE_EXPECT_FAIL_IF(version <= 302,
-            "Assimp 3.2 and below doesn't use name of the root node for collapsed nodes.");
-        CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
-        CORRADE_COMPARE(importer->object3DName(0), "Scene");
-    }
+    Containers::Pointer<ObjectData3D> parent = importer->object3D(0);
+    CORRADE_COMPARE(parent->children(), {1});
+    CORRADE_COMPARE(parent->instanceType(), ObjectInstanceType3D::Empty);
 }
 
 void AssimpImporterTest::upDirectionPatching() {
