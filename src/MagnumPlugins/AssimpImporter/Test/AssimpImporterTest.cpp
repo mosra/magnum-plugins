@@ -328,6 +328,7 @@ void AssimpImporterTest::openFile() {
         CORRADE_COMPARE(importer->object3DCount(), 2);
         CORRADE_COMPARE(importer->meshCount(), 0);
         CORRADE_COMPARE(importer->animationCount(), 0);
+        CORRADE_COMPARE(importer->skin3DCount(), 0);
 
         importer->close();
         CORRADE_VERIFY(!importer->isOpened());
@@ -357,6 +358,7 @@ void AssimpImporterTest::openData() {
     CORRADE_COMPARE(importer->object3DCount(), 2);
     CORRADE_COMPARE(importer->meshCount(), 0);
     CORRADE_COMPARE(importer->animationCount(), 0);
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
 
     importer->close();
     CORRADE_VERIFY(!importer->isOpened());
@@ -443,6 +445,7 @@ void AssimpImporterTest::animation() {
     for(UnsignedInt i = 0; i < importer->animationCount(); i++) {
         auto animation = importer->animation(i);
         CORRADE_VERIFY(animation);
+        CORRADE_VERIFY(animation->importerState());
 
         for(UnsignedInt j = 0; j < animation->trackCount(); j++) {
             const auto track = animation->track(j);
@@ -1167,7 +1170,8 @@ void AssimpImporterTest::animationMerge() {
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    /* Enable animation merging */
+    /* Enable animation merging, disabled by default */
+    CORRADE_VERIFY(!importer->configuration().value<bool>("mergeAnimationClips"));
     importer->configuration().setValue("mergeAnimationClips", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation.gltf")));
@@ -1778,6 +1782,7 @@ void AssimpImporterTest::mesh() {
 
     CORRADE_COMPARE(importer->meshName(0), "Cube");
     CORRADE_COMPARE(importer->meshForName("Cube"), 0);
+    CORRADE_COMPARE(importer->meshForName("nonexistent"), -1);
 
     Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
