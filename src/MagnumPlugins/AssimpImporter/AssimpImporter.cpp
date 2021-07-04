@@ -31,6 +31,7 @@
 
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/BigEnumSet.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
@@ -119,8 +120,11 @@ struct AssimpImporter::File {
     };
     std::vector<std::string> meshAttributeNames{"JOINTS", "WEIGHTS"};
 
-    bool mergeSkins = false;
     std::vector<std::size_t> meshesWithBones;
+    bool mergeSkins = false;
+    /* For each mesh, map from mesh-relative bones to merged bone list */
+    std::vector<std::vector<UnsignedInt>> boneMap;
+    std::vector<const aiBone*> mergedBones;
 
     /* Mapping for multi-mesh nodes:
        (in the following, "node" is an aiNode,
@@ -515,23 +519,44 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
             "importer documentation for more information.";
     }
 
-    /** @todo calculate bone remapping if mergeSkins is set */
-
-    /* <mesh id, bone id> -> <global bone id>
-       better: array of <bone id> -> <global bone id>, one entry for each mesh
-       and one vector of global bones, just reuse aiBone*
-       how best to identify duplicates?
-    */
+    /* Find meshes with bone data, those are our skins */
+    _f->meshesWithBones.reserve(_f->scene->mNumMeshes);
+    for(std::size_t i = 0; i != _f->scene->mNumMeshes; ++i) {
+        if(_f->scene->mMeshes[i]->HasBones())
+            _f->meshesWithBones.push_back(i);
+    }
 
     /* Can't be changed per skin-import because it affects joint id
        vertex attributes during doMesh */
     _f->mergeSkins = configuration().value<bool>("mergeSkins");
 
-    /* Find meshes with bone data */
-    _f->meshesWithBones.reserve(_f->scene->mNumMeshes);
-    for(std::size_t i = 0; i < _f->scene->mNumMeshes; ++i) {
-        if(_f->scene->mMeshes[i]->HasBones())
-            _f->meshesWithBones.push_back(i);
+    /* De-duplicate bones across all skinned meshes */
+    if(_f->mergeSkins) {
+        /* One for each mesh (even without bones) to save us an
+           extra indirection for doMesh() */
+        _f->boneMap.resize(_f->scene->mNumMeshes);
+        for(UnsignedInt id: _f->meshesWithBones) {
+            const aiMesh* mesh = _f->scene->mMeshes[id];
+            auto& map = _f->boneMap[id];
+            map.reserve(mesh->mNumBones);
+            for(const aiBone* bone: Containers::arrayView(mesh->mBones, mesh->mNumBones)) {
+                Int index = -1;
+                for(Int i = 0; i != _f->mergedBones.size(); ++i) {
+                    const aiBone* other = _f->mergedBones[i];
+                    if(bone->mName == other->mName &&
+                        bone->mOffsetMatrix.Equal(other->mOffsetMatrix))
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+                if(index == -1) {
+                    index = _f->mergedBones.size();
+                    _f->mergedBones.push_back(bone);
+                }
+                map.push_back(index);
+            }
+        }
     }
 }
 
@@ -771,23 +796,23 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
     /* Determine the number of joint weight layers */
     std::size_t jointLayerCount = 0;
+    Containers::Array<UnsignedByte> jointCounts{ValueInit, vertexCount};
     if(mesh->HasBones()) {
         /* Assimp does things the roundabout way of storing per-vertex weights
            in the bones affecting the mesh, we have to undo that */
-        Containers::Array<UnsignedInt> jointCounts{ValueInit, vertexCount};
-        UnsignedInt maxJointCount = 0;
-        for(std::size_t i = 0; i < mesh->mNumBones; ++i) {
-            const aiBone* bone = mesh->mBones[i];
-            for(std::size_t j = 0; j < bone->mNumWeights; ++j) {
-                const aiVertexWeight& weight = bone->mWeights[j];
+        std::size_t maxJointCount = 0;
+        for(const aiBone* bone: Containers::arrayView(mesh->mBones, mesh->mNumBones)) {
+            for(const aiVertexWeight& weight : Containers::arrayView(bone->mWeights, bone->mNumWeights)) {
                 /* Without IMPORT_NO_SKELETON_MESHES Assimp produces bogus meshes
                    with bones that have invalid vertex ids. We enable that setting
                    but who knows what other rogue settings produce invalid data... */
                 CORRADE_ASSERT(weight.mVertexId < vertexCount,
                     "Trade::AssimpImporter::mesh(): invalid vertex id in bone data", {});
-                UnsignedInt& jointCount = jointCounts[weight.mVertexId];
+                UnsignedByte& jointCount = jointCounts[weight.mVertexId];
+                CORRADE_ASSERT(jointCount != std::numeric_limits<UnsignedByte>::max(),
+                    "Trade::AssimpImporter::mesh(): too many joint weights", {});
                 jointCount++;
-                maxJointCount = Math::max(jointCount, maxJointCount);
+                maxJointCount = Math::max<std::size_t>(jointCount, maxJointCount);
             }
         }
 
@@ -908,17 +933,17 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             }
         }
 
-        /** @todo use bone remapping if mergeSkins is set */
-
-        Containers::Array<UnsignedInt> jointCounts{ValueInit, vertexCount};
-        for(std::size_t i = 0; i < mesh->mNumBones; ++i) {
-            const aiBone* bone = mesh->mBones[i];
-            for(std::size_t j = 0; j < bone->mNumWeights; ++j) {
-                const aiVertexWeight& weight = bone->mWeights[j];
-                UnsignedInt& jointCount = jointCounts[weight.mVertexId];
-                const UnsignedInt layer = jointCount / 4;
-                const UnsignedInt element = jointCount % 4;
-                jointIds[layer][weight.mVertexId][element] = i;
+        std::fill(jointCounts.begin(), jointCounts.end(), 0);
+        for(std::size_t b = 0; b != mesh->mNumBones; ++b) {
+            const UnsignedInt boneIndex = _f->mergeSkins ? _f->boneMap[id][b] : b;
+            /* Use the original weights, we only need the remapping to patch
+               the joint id */
+            const aiBone* bone = mesh->mBones[b];
+            for(const aiVertexWeight& weight : Containers::arrayView(bone->mWeights, bone->mNumWeights)) {
+                UnsignedByte& jointCount = jointCounts[weight.mVertexId];
+                const UnsignedByte layer = jointCount / 4;
+                const UnsignedByte element = jointCount % 4;
+                jointIds[layer][weight.mVertexId][element] = boneIndex;
                 jointWeights[layer][weight.mVertexId][element] = weight.mWeight;
                 jointCount++;
             }
@@ -1659,38 +1684,29 @@ Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) 
        Since Assimp gives us no way to enumerate the original skins
        and assumes that one mesh = one skins, we give the users
        an option to merge them all together. */
-    const std::size_t skinBegin = _f->mergeSkins ? 0 : id;
-    const std::size_t skinEnd = _f->mergeSkins ? _f->meshesWithBones.size() : id + 1;
-
-    /** @todo This just collects all bones without removing duplicates. Calculate
-              bone remapping in doOpenData() and use that. That should directly
-              gives us the total joint count, too. */
-    size_t jointCount = 0;
-    for(std::size_t s = skinBegin; s != skinEnd; ++s) {
-        const aiMesh* mesh = _f->scene->mMeshes[_f->meshesWithBones[s]];
-        jointCount += mesh->mNumBones;
+    const aiMesh* mesh = nullptr;
+    Containers::ArrayView<const aiBone* const> bones;
+    if(_f->mergeSkins)
+        bones = Containers::arrayView(_f->mergedBones);
+    else {
+        mesh = _f->scene->mMeshes[_f->meshesWithBones[id]];
+        bones = Containers::arrayView(mesh->mBones, mesh->mNumBones);
     }
 
-    Containers::Array<UnsignedInt> joints{NoInit, jointCount};
+    Containers::Array<UnsignedInt> joints{NoInit, bones.size()};
     /* NoInit for Matrix4 creates an array with a non-default deleter,
-       we're not allowed to return those. */
-    Containers::Array<Matrix4> inverseBindMatrices{ValueInit, jointCount};
-    std::size_t currentJoint = 0;
-    for(std::size_t s = skinBegin; s != skinEnd; ++s) {
-        const aiMesh* mesh = _f->scene->mMeshes[_f->meshesWithBones[s]];
-        for(std::size_t i = 0; i != mesh->mNumBones; ++i) {
-            const aiBone* bone = mesh->mBones[i];
-            const Int node = doObject3DForName(bone->mName.C_Str());
-            CORRADE_INTERNAL_ASSERT(node != -1);
-            joints[currentJoint] = node;
-            inverseBindMatrices[currentJoint] = Matrix4::from(
-                reinterpret_cast<const float*>(&bone->mOffsetMatrix)).transposed();
-            currentJoint++;
-        }
+       we're not allowed to return those */
+    Containers::Array<Matrix4> inverseBindMatrices{ValueInit, bones.size()};
+    for(std::size_t i = 0; i != bones.size(); ++i) {
+        const aiBone* bone = bones[i];
+        const Int node = doObject3DForName(bone->mName.C_Str());
+        CORRADE_INTERNAL_ASSERT(node != -1);
+        joints[i] = node;
+        inverseBindMatrices[i] = Matrix4::from(
+            reinterpret_cast<const float*>(&bone->mOffsetMatrix)).transposed();
     }
 
-    return SkinData3D{std::move(joints), std::move(inverseBindMatrices),
-        _f->mergeSkins ? nullptr : _f->scene->mMeshes[_f->meshesWithBones[id]]};
+    return SkinData3D{std::move(joints), std::move(inverseBindMatrices), mesh};
 }
 
 const void* AssimpImporter::doImporterState() const {
