@@ -112,9 +112,12 @@ struct AssimpImporter::File {
         meshesForName,
         skinsForName;
 
-    std::unordered_map<std::string, MeshAttribute>
-        meshAttributesForName;
-    Containers::Array<std::string> meshAttributeNames;
+    /* Joint ids and weights are the only custom attributes in this importer */
+    std::unordered_map<std::string, MeshAttribute> meshAttributesForName{
+        {"JOINTS", meshAttributeCustom(0)},
+        {"WEIGHTS", meshAttributeCustom(1)}
+    };
+    std::vector<std::string> meshAttributeNames{"JOINTS", "WEIGHTS"};
 
     bool mergeSkins = false;
     std::vector<std::size_t> meshesWithBones;
@@ -794,21 +797,6 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         jointLayerCount = (maxJointCount + 3)/4;
         attributeCount += jointLayerCount*2;
         stride += jointLayerCount*(sizeof(Vector4ui) + sizeof(Vector4));
-
-        /* Register custom attributes for each set, analogous to TinyGltfImporter.
-           Joint ids and weights are the only custom attributes in this importer
-           so we can simply check the number of existing custom attributes. */
-        const char* attributes[]{"JOINTS", "WEIGHTS"};
-        CORRADE_INTERNAL_ASSERT(_f->meshAttributeNames.size() % Containers::arraySize(attributes) == 0);
-        const std::size_t firstAttributeLayer = _f->meshAttributeNames.size()/Containers::arraySize(attributes);
-        for(std::size_t layer = firstAttributeLayer; layer < jointLayerCount; ++layer) {
-            for(UnsignedInt i = 0; i < Containers::arraySize(attributes); ++i) {
-                const std::string attribute = Utility::formatString("{}_{}", attributes[i], layer);
-                const UnsignedShort attributeId = layer*Containers::arraySize(attributes) + i;
-                _f->meshAttributesForName.emplace(attribute, meshAttributeCustom(attributeId));
-                arrayAppend(_f->meshAttributeNames, attribute);
-            }
-        }
     }
 
     /* Allocate vertex data, fill in the attributes */
@@ -898,21 +886,19 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
     /* Joints and joint weights */
     if(mesh->HasBones()) {
+        const MeshAttribute jointsAttribute = _f->meshAttributesForName["JOINTS"];
+        const MeshAttribute weightsAttribute = _f->meshAttributesForName["WEIGHTS"];
         Containers::Array<Containers::StridedArrayView1D<Vector4ui>> jointIds{jointLayerCount};
         Containers::Array<Containers::StridedArrayView1D<Vector4>> jointWeights{jointLayerCount};
         for(std::size_t layer = 0; layer < jointLayerCount; ++layer) {
             jointIds[layer] = {vertexData, reinterpret_cast<Vector4ui*>(vertexData + attributeOffset),
                 vertexCount, stride};
-
-            attributeData[attributeIndex++] = MeshAttributeData{
-                _f->meshAttributesForName[Utility::formatString("JOINTS_{}", layer)], jointIds[layer]};
+            attributeData[attributeIndex++] = MeshAttributeData{jointsAttribute, jointIds[layer]};
             attributeOffset += sizeof(Vector4ui);
 
             jointWeights[layer] = {vertexData, reinterpret_cast<Vector4*>(vertexData + attributeOffset),
                 vertexCount, stride};
-
-            attributeData[attributeIndex++] = MeshAttributeData{
-                _f->meshAttributesForName[Utility::formatString("WEIGHTS_{}", layer)], jointWeights[layer]};
+            attributeData[attributeIndex++] = MeshAttributeData{weightsAttribute, jointWeights[layer]};
             attributeOffset += sizeof(Vector4);
 
             /* zero-fill, single vertices can have less than the max joint count */

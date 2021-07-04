@@ -119,6 +119,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void mesh();
     void pointMesh();
     void lineMesh();
+    void meshCustomAttributes();
     void meshSkinningAttributes();
     void meshSkinningAttributesJointLimit();
     void meshMultiplePrimitives();
@@ -255,7 +256,8 @@ AssimpImporterTest::AssimpImporterTest() {
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
-              &AssimpImporterTest::lineMesh});
+              &AssimpImporterTest::lineMesh,
+              &AssimpImporterTest::meshCustomAttributes});
 
     addInstancedTests({&AssimpImporterTest::meshSkinningAttributes,
                        &AssimpImporterTest::meshSkinningAttributesJointLimit},
@@ -1889,6 +1891,27 @@ void AssimpImporterTest::lineMesh() {
     CORRADE_COMPARE(meshObject->instance(), 0);
 }
 
+void AssimpImporterTest::meshCustomAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "mesh.dae")));
+
+    /* Custom attributes should be available right after loading a file,
+       even for files without joint weights */
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
+    CORRADE_COMPARE(importer->meshAttributeName(jointsAttribute), "JOINTS");
+
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+    CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
+    CORRADE_COMPARE(importer->meshAttributeName(weightsAttribute), "WEIGHTS");
+
+    /* These two are the only possible custom attributes */
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(2)), "");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
+    CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
+}
+
 void AssimpImporterTest::meshSkinningAttributes() {
     auto&& data = ExportedFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -1899,28 +1922,19 @@ void AssimpImporterTest::meshSkinningAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "skin" + std::string{data.suffix})));
+
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
     CORRADE_COMPARE(importer->meshCount(), 2);
-
-    /* Custom attributes should not be available until a mesh is imported.
-       These should return nothing (and not crash). */
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(0)), "");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
-    CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
-
     auto mesh = importer->mesh(importer->meshForName("Mesh_0"));
     CORRADE_VERIFY(mesh);
 
-    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS_0");
-    CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
-    CORRADE_COMPARE(importer->meshAttributeName(jointsAttribute), "JOINTS_0");
-
-    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS_0");
-    CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
-    CORRADE_COMPARE(importer->meshAttributeName(weightsAttribute), "WEIGHTS_0");
-
     /* Position, normal, joint ids, joint weights */
     CORRADE_COMPARE(mesh->attributeCount(), 4);
+
     CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
     CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
     // TODO
     /*
@@ -1930,9 +1944,12 @@ void AssimpImporterTest::meshSkinningAttributes() {
             Vector4ui{4, 5, 6, 0},
             Vector4ui{7, 8, 9, 0}
         }), TestSuite::Compare::Container);
-
+    */
     CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
     CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+    // TODO
+    /*
     CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
         Containers::arrayView<Vector4>({
             Vector4{10, 11, 0, 0},
@@ -1949,6 +1966,7 @@ void AssimpImporterTest::meshSkinningAttributesJointLimit() {
         CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
 
     // TODO
+    CORRADE_VERIFY(true);
 }
 
 void AssimpImporterTest::meshMultiplePrimitives() {
