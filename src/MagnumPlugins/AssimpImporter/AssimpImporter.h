@@ -309,13 +309,13 @@ verbosity levels in each instance.
     @ref MeshAttribute::Bitangent or neither of them, tangents are always
     three-component with binormals separate.
 -   Joint Ids and weights for skinning are imported as custom vertex attributes
-    named "JOINTS_0", "JOINTS_1", etc. and "WEIGHTS_0", "WEIGHTS_1", etc. with
-    formats @ref VertexFormat::Vector4ui and @ref VertexFormat::Vector4,
-    respectively. Imported meshes always have either both or neither of them.
-    Their mapping to/from a string can be queried using @ref meshAttributeName()
-    and @ref meshAttributeForName().
+    named "JOINTS" and "WEIGHTS" with formats @ref VertexFormat::Vector4ui and
+    @ref VertexFormat::Vector4, respectively. Imported meshes always have
+    either both or neither of them. Their mapping to/from a string can be
+    queried using @ref meshAttributeName() and @ref meshAttributeForName().
     By default, the number of weights per vertex is limited to 4, but you can
-    change this limit by setting the @cb{.ini} maxJointWeights @ce option.
+    change this limit by setting the @cb{.ini} maxJointWeights @ce option,
+    see @ref Trade-AssimpImporter-configuration "below".
 -   Multi-mesh nodes and multi-primitive meshes are loaded as follows,
     consistently with the behavior of @link TinyGltfImporter @endlink:
     -   Multi-primitive meshes are split by Assimp into individual meshes

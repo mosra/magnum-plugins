@@ -321,6 +321,9 @@ namespace {
 
 UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
     UnsignedInt flags = 0;
+    if(conf.value<UnsignedInt>("maxJointWeights"))
+        flags |= aiProcess_LimitBoneWeights;
+
     const Utility::ConfigurationGroup& postprocess = *conf.group("postprocess");
     #define _c(val) if(postprocess.value<bool>(#val)) flags |= aiProcess_ ## val;
     /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
@@ -344,7 +347,6 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
     _c(OptimizeGraph)
     _c(FlipUVs)
     _c(FlipWindingOrder)
-    _c(LimitBoneWeights) /* enabled by default */
     #undef _c
     return flags;
 }
@@ -786,8 +788,8 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             }
         }
 
-        CORRADE_INTERNAL_ASSERT(!configuration().group("postprocess")->value<bool>("LimitBoneWeights") ||
-            maxJointCount <= configuration().value<UnsignedInt>("maxJointWeights"));
+        const UnsignedInt jointCountLimit = configuration().value<UnsignedInt>("maxJointWeights");
+        CORRADE_INTERNAL_ASSERT(jointCountLimit == 0 || maxJointCount <= jointCountLimit);
 
         jointLayerCount = (maxJointCount + 3)/4;
         attributeCount += jointLayerCount*2;
