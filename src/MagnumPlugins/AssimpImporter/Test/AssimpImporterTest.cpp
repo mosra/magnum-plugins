@@ -123,6 +123,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void meshSkinningAttributes();
     void meshSkinningAttributesMultiple();
     void meshSkinningAttributesMaxJointWeights();
+    void meshSkinningAttributesDummyWeightRemoval();
     void meshSkinningAttributesMerge();
     void meshMultiplePrimitives();
 
@@ -250,6 +251,7 @@ AssimpImporterTest::AssimpImporterTest() {
 
     addTests({&AssimpImporterTest::meshSkinningAttributesMultiple,
               &AssimpImporterTest::meshSkinningAttributesMaxJointWeights,
+              &AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval,
               &AssimpImporterTest::meshSkinningAttributesMerge,
               &AssimpImporterTest::meshMultiplePrimitives,
               &AssimpImporterTest::emptyCollada,
@@ -2125,6 +2127,36 @@ void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
             CORRADE_COMPARE(weights[v], weightValues[i]);
         }
     }
+}
+
+void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
+    if(!supportsSkinning(".gltf"))
+        CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("maxJointWeights", 0);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-dummy-weights.gltf")));
+
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+    auto mesh = importer->mesh("Mesh");
+    CORRADE_VERIFY(mesh);
+
+    /* Without ignoring dummy weights, the max joint count per vertex
+       would be too high, giving us extra sets of (empty) weights. */
+    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
+    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
+
+    auto joints = mesh->attribute<Vector4ui>(jointsAttribute);
+    CORRADE_VERIFY(joints);
+    auto weights = mesh->attribute<Vector4>(weightsAttribute);
+    CORRADE_VERIFY(weights);
+
+    constexpr Vector4ui joint{0, 1, 2, 5};
+    constexpr Vector4 weight{0.25f};
+    CORRADE_COMPARE(joints.front(), joint);
+    CORRADE_COMPARE(weights.front(), weight);
 }
 
 void AssimpImporterTest::meshSkinningAttributesMerge() {

@@ -1,0 +1,128 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0, 1, 2, 3, 4, 5, 6, 7, 8
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "skin" : 0,
+            "name" : "Node1"
+        },
+        {
+            "name" : "Node2"
+        },
+        {
+            "name" : "Node3"
+        },
+        {
+            "name" : "Node4"
+        },
+        {
+            "name" : "Node5"
+        },
+        {
+            "name" : "Node6"
+        },
+        {
+            "name" : "Node7"
+        },
+        {
+            "name" : "Node8"
+        },
+        {
+            "name" : "Node9"
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5123,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 2,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 3,
+            "componentType": 5126,
+            "count": 8,
+            "type": "MAT4"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 36
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 36,
+            "byteLength": 24
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 60,
+            "byteLength": 48
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 108,
+            "byteLength": 512
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 620,
+            "uri": "skin-dummy-weights.bin"
+        }
+    ],
+    "meshes": [
+        {
+            "name": "Mesh",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 0,
+                        "JOINTS_0": 1,
+                        "WEIGHTS_0": 2
+                    }
+                }
+            ]
+        }
+    ],
+    "skins" : [
+        {
+            "inverseBindMatrices" : 3,
+            "joints" : [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+            ]
+        }
+    ]
+}
