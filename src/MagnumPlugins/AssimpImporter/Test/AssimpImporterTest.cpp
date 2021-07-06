@@ -157,26 +157,6 @@ struct AssimpImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
-/* Used by animation() to store transformation results */
-struct AnimationNode {
-    const char* name;
-    Vector3 translation;
-    Quaternion rotation;
-    Vector3 scaling;
-};
-
-void correctAnimationNodeDefault(AnimationNode&) { }
-
-void correctAnimationNodeCollada(AnimationNode& node) {
-    /* Blender's Collada exporter doesn't seem to apply axis change
-       inside animations correctly. Do it manually, consistent with
-       export up and forward axis (see exported-animation.md):
-       y = z, z = -y */
-    const Quaternion correction = Quaternion::rotation(-90.0_degf, Vector3::xAxis());
-    node.translation = correction.transformVector(node.translation);
-    node.rotation = correction * node.rotation;
-}
-
 constexpr struct {
     const char* name;
     ImporterFlags flags;
@@ -185,14 +165,18 @@ constexpr struct {
     {"verbose", ImporterFlag::Verbose}
 };
 
-constexpr struct {
+const struct {
     const char* name;
     const char* suffix;
-    void (*correctAnimationNode)(AnimationNode&);
+    const Quaternion correction;
 } ExportedFileData[]{
-    {"Collada", ".dae", &correctAnimationNodeCollada},
-    {"FBX", ".fbx", &correctAnimationNodeDefault},
-    {"glTF", ".gltf", &correctAnimationNodeDefault}
+    /* Blender's Collada exporter doesn't seem to apply axis change
+       inside animations/skins correctly. Do it manually, consistent
+       with export up and forward axis (see exported-animation.md):
+       y = z, z = -y */
+    {"Collada", ".dae", Quaternion::rotation(-90.0_degf, Vector3::xAxis())},
+    {"FBX", ".fbx", {}},
+    {"glTF", ".gltf", {}}
 };
 
 constexpr struct {
@@ -415,21 +399,34 @@ void AssimpImporterTest::animation() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "exported-animation" + std::string{data.suffix})));
 
+    struct Node {
+        const char* name;
+        Vector3 translation;
+        Quaternion rotation;
+        Vector3 scaling;
+    };
+
+    /* Some Blender exporters don't transform animations correctly.
+       Also see the comment for ExportedFileData. */
+    auto correctNode = [&](Node& node) {
+        node.translation = data.correction.transformVector(node.translation);
+        node.rotation = data.correction * node.rotation;
+    };
+
     /* Find animation target nodes by their name */
-    AnimationNode nodes[3]{
+    Node nodes[3]{
         {"Rotating", {}, {}, {}},
         {"Scaling", {}, {}, {}},
         {"Translating", {}, {}, {}}
     };
-
-    AnimationNode* nodeMap[3]{};
+    Node* nodeMap[3]{};
 
     const UnsignedInt objectCount = importer->object3DCount();
     CORRADE_COMPARE(objectCount, Containers::arraySize(nodes));
 
     for(UnsignedInt i = 0; i < objectCount; i++) {
         const std::string name = importer->object3DName(i);
-        for(AnimationNode& n: nodes) {
+        for(Node& n: nodes) {
             /* Exported Collada files have spaces replaced with underscores,
                so check for the first words only */
             if(name.find(n.name) == 0) {
@@ -489,7 +486,7 @@ void AssimpImporterTest::animation() {
 
     player.advance(keys[0]);
     for(UnsignedInt i = 0; i < Containers::arraySize(nodes); i++) {
-        data.correctAnimationNode(nodes[i]);
+        correctNode(nodes[i]);
         initialRotation[i] = nodes[i].rotation;
     }
 
@@ -514,8 +511,8 @@ void AssimpImporterTest::animation() {
 
     for(UnsignedInt i = 0; i < Containers::arraySize(keys); i++) {
         player.advance(keys[i]);
-        for(AnimationNode& n: nodes)
-            data.correctAnimationNode(n);
+        for(Node& n: nodes)
+            correctNode(n);
 
         /* Rotation from initial to current key */
         const Vector3 rotation{(nodes[0].rotation * initialRotation[0].inverted()).toEuler()};
@@ -1276,6 +1273,13 @@ bool supportsSkinning(const Containers::StringView fileName) {
     return supportsAnimation(fileName);
 }
 
+void calculateTransforms(Containers::ArrayView<Matrix4> transforms, Containers::ArrayView<ObjectData3D> objects, UnsignedInt objectId, const Matrix4& parentTransform = {}) {
+    const Matrix4 transform = objects[objectId].transformation() * parentTransform;
+    transforms[objectId] = transform;
+    for(UnsignedInt childId: objects[objectId].children())
+        calculateTransforms(transforms, objects, childId, transform);
+}
+
 void AssimpImporterTest::skin() {
     auto&& data = ExportedFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -1285,45 +1289,84 @@ void AssimpImporterTest::skin() {
 
     /* Skinned mesh imported into Blender and then exported */
 
-    // TODO attribution:
-    // https://github.com/KhronosGroup/glTF-Tutorials/blob/master/gltfTutorial/gltfTutorial_019_SimpleSkin.md
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "skin" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->meshCount(), 2);
-    CORRADE_COMPARE(importer->skin3DCount(), 1);
+    /* Two skins with their own meshes, one unskinned mesh */
+    CORRADE_COMPARE(importer->meshCount(), 3);
+    CORRADE_COMPARE(importer->skin3DCount(), 2);
     CORRADE_COMPARE(importer->skin3DForName("nonexistent"), -1);
 
-    {
-        /* Skin names are taken from mesh names */
-        const char* name = "Mesh_0";
-        CORRADE_VERIFY(importer->meshForName(name) != -1);
-        CORRADE_COMPARE(importer->skin3DName(0), name);
-        CORRADE_COMPARE(importer->skin3DForName(name), 0);
+    /* Get global node transforms, needed for testing inverse bind matrices */
+    Containers::Array<ObjectData3D> objects{NoInit, importer->object3DCount()};
+    Containers::Array<Matrix4> globalTransforms{importer->object3DCount()};
 
-        auto skin = importer->skin3D(0);
+    for(UnsignedInt i = 0; i < importer->object3DCount(); ++i) {
+        auto object = importer->object3D(i);
+        CORRADE_VERIFY(object);
+        new (&objects[i]) ObjectData3D{std::move(*object)};
+    }
+
+    const Int sceneId = importer->defaultScene();
+    CORRADE_VERIFY(sceneId != -1);
+    auto scene = importer->scene(sceneId);
+    CORRADE_VERIFY(scene);
+
+    for(UnsignedInt i: scene->children3D()) {
+        calculateTransforms(globalTransforms, objects, i);
+    }
+
+    constexpr const char* meshNames[]{"Mesh_1", "Mesh_2"};
+    constexpr const char* jointNames[][2]{
+        {"Node_1", "Node_2"},
+        {"Node_3", "Node_4"}
+    };
+
+    /* Some Blender exporters don't transform skin matrices correctly.
+       Also see the comment for ExportedFileData. */
+    const Matrix4 correction{data.correction.toMatrix()};
+
+    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+        /* Skin names are taken from mesh names, skin order is arbitrary */
+        const Int index = importer->skin3DForName(meshNames[i]);
+        CORRADE_VERIFY(index != -1);
+        CORRADE_COMPARE(importer->skin3DName(index), meshNames[i]);
+        CORRADE_VERIFY(importer->meshForName(meshNames[i]) != -1);
+
+        auto skin = importer->skin3D(index);
         CORRADE_VERIFY(skin);
         CORRADE_VERIFY(skin->importerState());
 
-        constexpr const char* jointNames[]{
-            "Node_1", "Node_2"
-        };
+        /* Don't check joint order, only presence */
         auto joints = skin->joints();
-        CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames));
-        /* Blender's Collada exporter adds Armature_ prefix to object names */
-        for(std::size_t i = 0; i < joints.size(); ++i)
-            CORRADE_VERIFY(Utility::String::endsWith(importer->object3DName(joints[i]), jointNames[i]));
+        CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames[i]));
 
-        // TODO account for node rotation
-        CORRADE_COMPARE_AS(skin->inverseBindMatrices(),
-            Containers::arrayView({
-                //Matrix4::rotationX(35.0_degf),
-                Matrix4::translation({0.0f, 0.0f, -1.0f}),
-                Matrix4::translation({0.0f, 0.0f, -1.0f}),
-                //Matrix4::scaling({2.0f, 3.0f, 4.0f})
-            }), TestSuite::Compare::Container);
+        for(std::size_t j = 0; j < joints.size(); ++j) {
+            const std::string name = importer->object3DName(joints[j]);
+            bool found = false;
+            for(const char* node: jointNames[i]) {
+                /* Blender's Collada exporter adds an Armature_ prefix to object names */
+                if(Utility::String::endsWith(name, node)) {
+                    found = true;
+                    break;
+                }
+            }
+            CORRADE_VERIFY(found);
+        }
+
+        /* The exporters transform the inverse bind matrices quite a bit, making them hard to compare.
+           Instead, check that their defining property holds: they're the inverse of the joint's
+           original global transform. */
+        auto bindMatrices = skin->inverseBindMatrices();
+        CORRADE_COMPARE(bindMatrices.size(), joints.size());
+        auto meshObject = importer->object3D(meshNames[i]);
+        CORRADE_VERIFY(meshObject);
+        const Matrix4 meshTransform = meshObject->transformation();
+        for(UnsignedInt j = 0; j != joints.size(); ++j) {
+            const Matrix4 invertedTransform = correction * meshTransform * globalTransforms[joints[j]].inverted();
+            CORRADE_COMPARE(bindMatrices[j], invertedTransform);
+        }
     }
 }
 
