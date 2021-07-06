@@ -1972,6 +1972,32 @@ void AssimpImporterTest::meshCustomAttributes() {
     CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
 }
 
+constexpr Vector4ui MeshSkinningAttributesJointData[]{
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 0, 0},
+    {1, 0, 0, 0},
+    {1, 0, 0, 0}
+};
+
+constexpr Vector4 MeshSkinningAttributesWeightData[]{
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {0.75f, 0.25f, 0.0f, 0.0f},
+    {0.75f, 0.25f, 0.0f, 0.0f},
+    {0.5f, 0.5f, 0.0f, 0.0f},
+    {0.5f, 0.5f, 0.0f, 0.0f},
+    {0.25f, 0.75f, 0.0f, 0.0f},
+    {0.25f, 0.75f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f, 0.0f}
+};
+
 void AssimpImporterTest::meshSkinningAttributes() {
     auto&& data = ExportedFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -1986,9 +2012,28 @@ void AssimpImporterTest::meshSkinningAttributes() {
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
-    CORRADE_COMPARE(importer->meshCount(), 2);
-    auto mesh = importer->mesh(importer->meshForName("Mesh_0"));
+    for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
+        auto mesh = importer->mesh(meshName);
+        CORRADE_VERIFY(mesh);
+        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
+            Containers::arrayView(MeshSkinningAttributesJointData),
+            TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+            Containers::arrayView(MeshSkinningAttributesWeightData),
+            TestSuite::Compare::Container);
+    }
+
+    /* No skin joint node using this mesh */
+    auto mesh = importer->mesh("Plane");
     CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(!mesh->hasAttribute(jointsAttribute));
+}
 
     /* Position, normal, joint ids, joint weights */
     CORRADE_COMPARE(mesh->attributeCount(), 4);
