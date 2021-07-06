@@ -119,6 +119,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void mesh();
     void pointMesh();
     void lineMesh();
+    void meshObjectSkin();
     void meshCustomAttributes();
     void meshSkinningAttributes();
     void meshSkinningAttributesJointLimit();
@@ -257,7 +258,8 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
               &AssimpImporterTest::lineMesh,
-              &AssimpImporterTest::meshCustomAttributes});
+              &AssimpImporterTest::meshCustomAttributes,
+              &AssimpImporterTest::meshObjectSkin});
 
     addInstancedTests({&AssimpImporterTest::meshSkinningAttributes,
                        &AssimpImporterTest::meshSkinningAttributesJointLimit},
@@ -1889,6 +1891,21 @@ void AssimpImporterTest::lineMesh() {
     Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
+}
+
+void AssimpImporterTest::meshObjectSkin() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin.fbx")));
+
+    for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
+        auto object = importer->object3D(meshName);
+        CORRADE_VERIFY(object);
+        CORRADE_VERIFY(object->importerState());
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+        Int skin = static_cast<MeshObjectData3D&>(*object).skin();
+        CORRADE_VERIFY(skin != -1);
+        CORRADE_COMPARE(importer->skin3DName(skin), meshName);
+    }
 }
 
 void AssimpImporterTest::meshCustomAttributes() {

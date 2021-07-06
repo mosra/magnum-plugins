@@ -249,9 +249,11 @@ verbosity levels in each instance.
     these versions.
     Because it's impossible to detect the actual brokenness, the warning is
     printed even if the imported data may be correct.
--   Original skins are not exposed by Assimp, so each mesh with joint weights
-    produces its own skin. Skin names will be equal to their corresponding
-    mesh names.
+-   Original skins are not exposed by Assimp, instead each mesh with joint
+    weights produces its own skin. Skin names will be equal to their
+    corresponding mesh names. A consequence of this is that Assimp only
+    imports joint weight attributes for one skin and ignores all other
+    skins targetting the same mesh.
 -   You can request to merge all mesh skins into one using the
     @cb{.ini} mergeSkins @ce option. Duplicate joints (same object index and
     inverse bind matrix) will be merged and joint ids in vertex attributes
