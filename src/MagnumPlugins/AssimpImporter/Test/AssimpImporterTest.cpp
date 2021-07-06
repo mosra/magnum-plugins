@@ -119,7 +119,6 @@ struct AssimpImporterTest: TestSuite::Tester {
     void mesh();
     void pointMesh();
     void lineMesh();
-    void meshObjectSkin();
     void meshCustomAttributes();
     void meshSkinningAttributes();
     void meshSkinningAttributesJointLimit();
@@ -242,8 +241,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
               &AssimpImporterTest::lineMesh,
-              &AssimpImporterTest::meshCustomAttributes,
-              &AssimpImporterTest::meshObjectSkin});
+              &AssimpImporterTest::meshCustomAttributes});
 
     addInstancedTests({&AssimpImporterTest::meshSkinningAttributes,
                        &AssimpImporterTest::meshSkinningAttributesJointLimit},
@@ -1362,11 +1360,23 @@ void AssimpImporterTest::skin() {
         CORRADE_COMPARE(bindMatrices.size(), joints.size());
         auto meshObject = importer->object3D(meshNames[i]);
         CORRADE_VERIFY(meshObject);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), index);
         const Matrix4 meshTransform = meshObject->transformation();
         for(UnsignedInt j = 0; j != joints.size(); ++j) {
             const Matrix4 invertedTransform = correction * meshTransform * globalTransforms[joints[j]].inverted();
             CORRADE_COMPARE(bindMatrices[j], invertedTransform);
         }
+    }
+
+    {
+        /* Unskinned meshes and mesh nodes shouldn't have a skin */
+        CORRADE_VERIFY(importer->mesh3DForName("Plane") != -1);
+        CORRADE_COMPARE(importer->skin3DForName("Plane"), -1);
+        auto meshObject = importer->object3D("Plane");
+        CORRADE_VERIFY(meshObject);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), -1);
     }
 }
 
@@ -1376,8 +1386,7 @@ void AssimpImporterTest::skinNoMeshes() {
 
     /* Reusing the TinyGltfImporter test file without meshes */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "skin.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "skin.gltf")));
 
     /* Assimp only lets us access joints for each mesh. No mesh = no joints. */
     CORRADE_COMPARE(importer->meshCount(), 0);
@@ -1385,18 +1394,23 @@ void AssimpImporterTest::skinNoMeshes() {
 }
 
 void AssimpImporterTest::skinMergeEmpty() {
-    if(!supportsAnimation(".gltf"))
-        CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+    if(!supportsAnimation(".dae"))
+        CORRADE_SKIP("Collada skinning is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enable skin merging */
     importer->configuration().setValue("mergeSkins", true);
-    // TODO use fbx file here so we can test on version < 5.0
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "empty.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
     CORRADE_COMPARE(importer->skin3DCount(), 0);
     CORRADE_COMPARE(importer->skin3DForName(""), -1);
+
+    for(UnsignedInt i = 0; i != importer->object3DCount(); ++i) {
+        auto object = importer->object3D(i);
+        if(object->instanceType() == ObjectInstanceType3D::Mesh)
+            CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), -1);
+    }
+}
 }
 
 void AssimpImporterTest::skinMerge() {
@@ -1880,6 +1894,7 @@ void AssimpImporterTest::mesh() {
     Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
+    CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), -1);
 }
 
 void AssimpImporterTest::pointMesh() {
@@ -1934,21 +1949,6 @@ void AssimpImporterTest::lineMesh() {
     Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_COMPARE(meshObject->instance(), 0);
-}
-
-void AssimpImporterTest::meshObjectSkin() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin.fbx")));
-
-    for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
-        auto object = importer->object3D(meshName);
-        CORRADE_VERIFY(object);
-        CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        Int skin = static_cast<MeshObjectData3D&>(*object).skin();
-        CORRADE_VERIFY(skin != -1);
-        CORRADE_COMPARE(importer->skin3DName(skin), meshName);
-    }
 }
 
 void AssimpImporterTest::meshCustomAttributes() {

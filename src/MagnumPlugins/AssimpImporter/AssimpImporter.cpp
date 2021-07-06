@@ -121,7 +121,7 @@ struct AssimpImporter::File {
     std::vector<std::string> meshAttributeNames{"JOINTS", "WEIGHTS"};
 
     std::vector<std::size_t> meshesWithBones;
-    /* For each mesh: the index of its skin, or -1 */
+    /* For each mesh: the index of its skin (before any merging), or -1 */
     std::vector<Int> meshSkins;
     bool mergeSkins = false;
     /* For each mesh, map from mesh-relative bones to merged bone list */
@@ -672,7 +672,9 @@ Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt i
             const Int index = (*instance).second.second;
             if(type == ObjectInstanceType3D::Mesh) {
                 const aiMesh* mesh = _f->scene->mMeshes[index];
-                const Int skin = _f->meshSkins[index];
+                Int skin = _f->meshSkins[index];
+                if(_f->mergeSkins && skin != -1)
+                    skin = 0;
                 return Containers::pointer(new MeshObjectData3D(children, transformation, index,
                     mesh->mMaterialIndex, skin, node));
             }
@@ -687,7 +689,9 @@ Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt i
 
         const Int index = node->mMeshes[spec.second];
         const aiMesh* mesh = _f->scene->mMeshes[index];
-        const Int skin = _f->meshSkins[index];
+        Int skin = _f->meshSkins[index];
+        if(_f->mergeSkins && skin != -1)
+            skin = 0;
         Vector3 translation{};
         Quaternion rotation{};
         Vector3 scaling{1.0};
