@@ -88,6 +88,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         skin.fbx
         skin.gltf
         skin-multiple-sets.dae
+        skin-shared.gltf
+        skin-shared.bin
         texture-ambient.obj
         texture-ambient.mtl
         quad.stl

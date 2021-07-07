@@ -1,0 +1,163 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [ 0, 5, 6 ]
+        }
+    ],
+    "nodes": [
+        {
+            "name" : "A",
+            "children" : [ 1, 2, 3, 4 ] },
+        {
+            "name" : "B"
+        },
+        {
+            "name" : "C"
+        },
+        {
+            "name" : "D"
+        },
+        {
+            "name" : "E"
+        },
+        {
+            "mesh" : 0,
+            "name" : "Mesh_1",
+            "skin" : 0
+        },
+        {
+            "mesh" : 1,
+            "name" : "Mesh_2",
+            "skin" : 1
+        }
+    ],
+    "skins": [
+        {
+            "name": "Skin1",
+            "inverseBindMatrices": 0,
+            "joints": [0, 1, 2]
+        },
+        {
+            "name": "Skin2",
+            "inverseBindMatrices": 1,
+            "joints": [0, 3, 4]
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "SkinnedMesh1_mesh",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 2,
+                        "JOINTS_0" : 3,
+                        "WEIGHTS_0" : 4
+                    },
+                    "indices" : 5
+                }
+            ]
+        },
+        {
+            "name" : "SkinnedMesh2_mesh",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 2,
+                        "JOINTS_0" : 3,
+                        "WEIGHTS_0" : 4
+                    },
+                    "indices" : 5
+                }
+            ]
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 426,
+            "uri": "skin-shared.bin"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 192
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 192,
+            "byteLength": 192
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 384,
+            "byteLength": 12
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 396,
+            "byteLength": 8
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 404,
+            "byteLength": 16
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 420,
+            "byteLength": 6
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "MAT4"
+        },
+        {
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "MAT4"
+        },
+        {
+            "bufferView": 2,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3",
+            "min": [ 1.2, 3.4, 5.6 ],
+            "max": [ 1.2, 3.4, 5.6 ]
+        },
+        {
+            "bufferView": 3,
+            "byteOffset": 0,
+            "componentType": 5123,
+            "count": 1,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 4,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 5,
+            "byteOffset": 0,
+            "componentType": 5123,
+            "count": 3,
+            "type": "SCALAR"
+        }
+    ]
+}
