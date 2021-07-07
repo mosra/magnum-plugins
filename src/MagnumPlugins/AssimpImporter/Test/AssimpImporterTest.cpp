@@ -2300,6 +2300,9 @@ void AssimpImporterTest::texture() {
 
 void AssimpImporterTest::openState() {
     Assimp::Importer _importer;
+    /* Explicitly *not* setting AI_CONFIG_IMPORT_NO_SKELETON_MESHES here to
+       verify that we survive all the shit it summons from within the bug
+       swamp. */
     const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
     CORRADE_VERIFY(sc != nullptr);
 
@@ -2331,6 +2334,11 @@ void AssimpImporterTest::openState() {
     CORRADE_COMPARE(importer->object3DForName("Child"), 1);
     CORRADE_COMPARE(importer->object3DName(0), "Parent");
     CORRADE_COMPARE(importer->object3DName(1), "Child");
+
+    /* Verify that closing works as well, without double frees or null pointer
+       accesses */
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
 }
 
 void AssimpImporterTest::openStateTexture() {

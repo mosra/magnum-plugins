@@ -87,6 +87,8 @@ template<> struct VectorConverter<4, Float, aiColor4D> {
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 struct AssimpImporter::File {
     Containers::Optional<std::string> filePath;
     const char* importerName = nullptr;
@@ -351,9 +353,12 @@ Containers::StringView materialPropertyString(const aiMaterialProperty& property
 }
 
 void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    if(!_importer) _importer = createImporter(configuration());
-
+    /* If we already have the file, we got delegated from doOpenFile() or
+       doOpenState(). If we got called from doOpenState(), we don't even have
+       the _importer. No need to create it. */
     if(!_f) {
+        if(!_importer) _importer = createImporter(configuration());
+
         _f.reset(new File);
         /* File callbacks are set up in doSetFileCallbacks() */
         if(!(_f->scene = _importer->ReadFileFromMemory(data.data(), data.size(), flagsFromConfiguration(configuration())))) {
@@ -364,17 +369,19 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     CORRADE_INTERNAL_ASSERT(_f->scene);
 
-    /* Get name of importer. Useful for workarounds based on importer/file type. */
+    /* Get name of importer. Useful for workarounds based on importer/file
+       type. If the _importer isn't populated, we got called from doOpenState()
+       and we can't really do much here. */
     _f->importerName = "unknown";
-    const int importerIndex = _importer->GetPropertyInteger("importerIndex", -1);
-    if(importerIndex != -1) {
-        const aiImporterDesc* info = _importer->GetImporterInfo(importerIndex);
-        if(info) _f->importerName = info->mName;
+    if(_importer) {
+        const int importerIndex = _importer->GetPropertyInteger("importerIndex", -1);
+        if(importerIndex != -1) {
+            const aiImporterDesc* info = _importer->GetImporterInfo(importerIndex);
+            if(info) _f->importerName = info->mName;
+        }
+
+        _f->importerIsGltf = _f->importerName == "glTF2 Importer"_s;
     }
-
-    using namespace Containers::Literals;
-
-    _f->importerIsGltf = _f->importerName == "glTF2 Importer"_s;
 
     /* Fill hashmaps for index lookup for materials/textures/meshes/nodes */
     _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
@@ -419,27 +426,34 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
        that's not the documented behavior. */
     aiNode* const root = _f->scene->mRootNode;
     if(root) {
-        /* I would assert here on !root->mNumMeshes to verify I didn't miss
-           anything in the root node, but at least for COLLADA, if the file has
-           no meshes, it adds some bogus one, thinking it's a skeleton-only
-           file and trying to be helpful. Ugh.
-           https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
-
         /* If there is more than just a root node, extract children of the root
            node, as we treat the root node as the scene here. In some cases
            (for example for a COLLADA file with Z_UP defined) the root node can
            contain a transformation, save it. This root transformation is then
-           applied to all direct children of mRootNode inside doObject3D(). */
+           applied to all direct children of mRootNode inside doObject3D().
+           Apart from that it shouldn't contain anything else. */
         if(root->mNumChildren) {
+            /* In case of openState() (which is when _importer isn't populated)
+               it might happen that AI_CONFIG_IMPORT_NO_SKELETON_MESHES was not
+               enabled, in which case, and at least for COLLADA, if the file
+               has no meshes, it adds some bogus one, thinking it's a
+               skeleton-only file and trying to be helpful. Ugh.
+                https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225
+               Don't die on the assert in this case, but otherwise check that
+               we didn't miss anything in the root node. */
+            CORRADE_INTERNAL_ASSERT(!_importer || !root->mNumMeshes);
+
             _f->nodes.reserve(root->mNumChildren);
             _f->nodes.insert(_f->nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
             _f->nodeIndices.reserve(root->mNumChildren);
             _f->rootTransformation = Matrix4::from(reinterpret_cast<const float*>(&root->mTransformation)).transposed();
 
-        /* In some pathological cases there's just one root node --- for
-           example the DART integration depends on that. Import it as a single
-           node. In this case applying the root transformation is not desired,
-           so set it to identity. */
+        /* In various cases (PreTransformVertices enabled when the file has a
+           mesh, COLLADA files with Z-up patching not set, STL files...)
+           there's just one root node, and the DART integration depends on
+           that. Import it as a single node. In this case applying the root
+           transformation is not desired, so set it to identity. This branch is
+           explicitly verified in the sceneCollapsedNode() test case. */
         } else {
             _f->nodes.push_back(root);
             _f->nodeIndices.reserve(1);
@@ -520,7 +534,9 @@ void AssimpImporter::doOpenFile(const std::string& filename) {
 }
 
 void AssimpImporter::doClose() {
-    _importer->FreeScene();
+    /* In case of doOpenState(), the _importer isn't populated at all and
+       the scene is owned by the caller */
+    if(_importer) _importer->FreeScene();
     _f.reset();
 }
 
