@@ -560,7 +560,7 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
             map.reserve(mesh->mNumBones);
             for(const aiBone* bone: Containers::arrayView(mesh->mBones, mesh->mNumBones)) {
                 Int index = -1;
-                for(Int i = 0; i != _f->mergedBones.size(); ++i) {
+                for(std::size_t i = 0; i != _f->mergedBones.size(); ++i) {
                     const aiBone* other = _f->mergedBones[i];
                     if(bone->mName == other->mName &&
                         bone->mOffsetMatrix.Equal(other->mOffsetMatrix))
