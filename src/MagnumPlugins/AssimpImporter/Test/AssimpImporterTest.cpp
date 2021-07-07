@@ -63,6 +63,7 @@
 #include <Magnum/Trade/TextureData.h>
 
 #include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
+#include <assimp/cexport.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -1411,32 +1412,114 @@ void AssimpImporterTest::skinMergeEmpty() {
             CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), -1);
     }
 }
-}
 
 void AssimpImporterTest::skinMerge() {
-    if(!supportsAnimation(".gltf"))
-        CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+    if(!supportsAnimation(".fbx"))
+        CORRADE_SKIP("FBX skinning is not supported with the current version of Assimp");
+
+    Containers::Pointer<AbstractImporter> _importer = _manager.instantiate("AssimpImporter");
+    /* Disabled by default */
+    CORRADE_VERIFY(!_importer->configuration().value<bool>("mergeSkins"));
+    CORRADE_VERIFY(_importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin.fbx")));
+
+    /* Manually construct bone data and add it to a scene */
+    const aiScene* original = static_cast<const aiScene*>(_importer->importerState());
+    CORRADE_VERIFY(original);
+    aiScene* scene{};
+    aiCopyScene(original, &scene);
+
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->mNumMeshes, _importer->meshCount());
+    CORRADE_COMPARE(scene->mNumMeshes, 3);
+    CORRADE_VERIFY(_importer->object3DCount() >= 3);
+
+    constexpr UnsignedInt objects[6]{0, 0, 0, 1, 2, 2};
+    aiBone bones[6]{};
+
+    /* 0 and 1: same name and matrix */
+    aiMatrix4x4::Translation({1.0f, 0.0f, 0.0f}, bones[0].mOffsetMatrix);
+    aiMatrix4x4::Translation({1.0f, 0.0f, 0.0f}, bones[1].mOffsetMatrix);
+    /* 2: common name with 0 and 1, but different matrix */
+    aiMatrix4x4::Translation({0.0f, 0.0f, 1.0f}, bones[2].mOffsetMatrix);
+    /* 3 and 4: same matrix, but different name */
+    aiMatrix4x4::Translation({0.0f, 1.0f, 0.0f}, bones[3].mOffsetMatrix);
+    aiMatrix4x4::Translation({0.0f, 1.0f, 0.0f}, bones[4].mOffsetMatrix);
+    /* unique */
+    aiMatrix4x4::Translation({0.0f, 0.0f, 1.0f}, bones[5].mOffsetMatrix);
+
+    aiVertexWeight weights[2]{};
+    for(UnsignedInt i = 0; i != Containers::arraySize(bones); ++i) {
+        bones[i].mName = _importer->object3DName(objects[i]);
+        /* Random weights, they're ignored */
+        bones[i].mNumWeights = Containers::arraySize(weights);
+        bones[i].mWeights = weights;
+    }
+
+    aiBone* newBones[2][4]{
+        {&bones[0], &bones[2], &bones[3], &bones[4]},
+        {&bones[1], &bones[2], &bones[4], &bones[5]}
+    };
+    aiBone** oldBones[2]{};
+    unsigned int oldNumBones[2]{};
+    constexpr const char* meshNames[2]{"Mesh_1", "Mesh_2"};
+    
+    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+        const Int id = _importer->meshForName(meshNames[i]);
+        CORRADE_VERIFY(id != -1);
+        oldBones[i] = scene->mMeshes[id]->mBones;
+        oldNumBones[i] = scene->mMeshes[id]->mNumBones;
+        scene->mMeshes[id]->mBones = newBones[i];
+        scene->mMeshes[id]->mNumBones = Containers::arraySize(newBones[i]);
+    }
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    /* Enable skin merging, disabled by default */
-    CORRADE_VERIFY(!importer->configuration().value<bool>("mergeSkins"));
+    /* Enable skin merging */
     importer->configuration().setValue("mergeSkins", true);
-    // TODO adapt skin.gltf to have two skins with overlapping bones?
-    //      if that's too hard, load the file and construct some skins and
-    //      bones manually and use openState
-    // TODO use fbx file here so we can test on version < 5.0
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "skin.gltf")));
+    CORRADE_VERIFY(importer->openState(scene));
+
+    /* Restore state for aiFreeScene */
+    for(aiBone& bone: bones) {
+        bone.mNumWeights = 0;
+        bone.mWeights = nullptr;
+    }
+
+    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+        const Int id = _importer->meshForName(meshNames[i]);
+        scene->mMeshes[id]->mBones = oldBones[i];
+        scene->mMeshes[id]->mNumBones = oldNumBones[i];
+    }
 
     CORRADE_COMPARE(importer->skin3DCount(), 1);
     CORRADE_COMPARE(importer->skin3DName(0), "");
     CORRADE_COMPARE(importer->skin3DForName(""), -1);
 
+    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+        auto meshObject = importer->object3D(meshNames[i]);
+        CORRADE_VERIFY(meshObject);
+        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), 0);
+    }
+
     auto skin = importer->skin3D(0);
     CORRADE_VERIFY(skin);
     CORRADE_VERIFY(!skin->importerState()); /* No particular skin */
 
-    // TODO
+    /* Relying on the skin order here, this *might* break in the future */
+    constexpr UnsignedInt mergeOrder[]{1, 2, 4, 5, 3};
+
+    auto joints = skin->joints();
+    auto inverseBindMatrices = skin->inverseBindMatrices();
+    CORRADE_COMPARE(joints.size(), inverseBindMatrices.size());
+    CORRADE_COMPARE(joints.size(), Containers::arraySize(mergeOrder));
+    
+    for(UnsignedInt i = 0; i != joints.size(); ++i) {
+        CORRADE_COMPARE(joints[i], objects[mergeOrder[i]]);
+        const Matrix4 matrix = Matrix4::from(reinterpret_cast<const float*>(&bones[mergeOrder[i]].mOffsetMatrix)).transposed();
+        CORRADE_COMPARE(inverseBindMatrices[i], matrix);
+    }
+
+    importer->close();
+    aiFreeScene(scene);
 }
 
 void AssimpImporterTest::camera() {
