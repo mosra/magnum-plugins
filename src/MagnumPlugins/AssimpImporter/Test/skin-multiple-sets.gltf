@@ -1,0 +1,176 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0, 1, 2, 3, 4, 5, 6, 7, 8
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "skin": 0,
+            "name" : "Node1"
+        },
+        {
+            "name" : "Node2"
+        },
+        {
+            "name" : "Node3"
+        },
+        {
+            "name" : "Node4"
+        },
+        {
+            "name" : "Node5"
+        },
+        {
+            "name" : "Node6"
+        },
+        {
+            "name" : "Node7"
+        },
+        {
+            "name" : "Node8"
+        },
+        {
+            "name" : "Node9"
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 2,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 3,
+            "componentType": 5123,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 4,
+            "componentType": 5123,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 5,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 6,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 7,
+            "componentType": 5126,
+            "count": 8,
+            "type": "MAT4"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 36
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 36,
+            "byteLength": 48
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 84,
+            "byteLength": 48
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 132,
+            "byteLength": 24
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 156,
+            "byteLength": 24
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 180,
+            "byteLength": 48
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 228,
+            "byteLength": 48
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 276,
+            "byteLength": 512
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 788,
+            "uri": "skin-multiple-sets.bin"
+        }
+    ],
+    "meshes": [
+        {
+            "name": "Mesh",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 0,
+                        "COLOR_0": 1,
+                        "COLOR_1": 2,
+                        "JOINTS_0": 3,
+                        "JOINTS_1": 4,
+                        "WEIGHTS_0": 5,
+                        "WEIGHTS_1": 6
+                    }
+                }
+            ]
+        }
+    ],
+    "skins" : [
+        {
+            "inverseBindMatrices" : 7,
+            "joints" : [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+            ]
+        }
+    ]
+}

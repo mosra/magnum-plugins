@@ -318,6 +318,10 @@ verbosity levels in each instance.
     By default, the number of weights per vertex is limited to 4, but you can
     change this limit by setting the @cb{.ini} maxJointWeights @ce option,
     see @ref Trade-AssimpImporter-configuration "below".
+-   Assimp doesn't correctly import glTF meshes with multiple sets of joint
+    weights, only the last set will be imported. A warning is printed when
+    this is detected, but it may misfire for other meshes with non-normalized
+    weights.
 -   Multi-mesh nodes and multi-primitive meshes are loaded as follows,
     consistently with the behavior of @link TinyGltfImporter @endlink:
     -   Multi-primitive meshes are split by Assimp into individual meshes
