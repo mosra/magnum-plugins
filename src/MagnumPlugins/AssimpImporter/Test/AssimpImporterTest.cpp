@@ -1396,9 +1396,6 @@ void AssimpImporterTest::skinNoMeshes() {
 }
 
 void AssimpImporterTest::skinMergeEmpty() {
-    if(!supportsAnimation(".dae"))
-        CORRADE_SKIP("Collada skinning is not supported with the current version of Assimp");
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enable skin merging */
     importer->configuration().setValue("mergeSkins", true);
@@ -1415,9 +1412,6 @@ void AssimpImporterTest::skinMergeEmpty() {
 }
 
 void AssimpImporterTest::skinMerge() {
-    if(!supportsAnimation(".fbx"))
-        CORRADE_SKIP("FBX skinning is not supported with the current version of Assimp");
-
     Containers::Pointer<AbstractImporter> _importer = _manager.instantiate("AssimpImporter");
     /* Disabled by default */
     CORRADE_VERIFY(!_importer->configuration().value<bool>("mergeSkins"));
