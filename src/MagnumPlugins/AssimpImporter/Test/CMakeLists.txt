@@ -86,6 +86,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         skin.dae # Converted from skin.blend
         skin.fbx
         skin.gltf
+        skin-dummy-weights.bin
+        skin-dummy-weights.gltf
         skin-multiple-sets.dae
         skin-multiple-sets.bin
         skin-multiple-sets.gltf

@@ -191,6 +191,14 @@ Containers::Pointer<Assimp::Importer> createImporter(Utility::ConfigurationGroup
     return importer;
 }
 
+bool isDummyBone(const aiBone* bone) {
+    /* Dummy bone weights inserted by Assimp:
+       https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Importer.cpp#L1099 */
+    return bone->mNumWeights == 1 &&
+        bone->mWeights[0].mVertexId == 0 &&
+        Math::equal(bone->mWeights[0].mWeight, 0.0f);
+}
+
 }
 
 AssimpImporter::AssimpImporter() {
@@ -811,10 +819,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
            in the bones affecting the mesh, we have to undo that */
         std::size_t maxJointCount = 0;
         for(const aiBone* bone: Containers::arrayView(mesh->mBones, mesh->mNumBones)) {
-            /* Ignore dummy weights inserted by Assimp:
-               https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Importer.cpp#L1099 */
-            if(bone->mNumWeights == 1 && bone->mWeights[0].mVertexId == 0 &&
-                Math::equal(bone->mWeights[0].mWeight, 0.0f))
+            if(isDummyBone(bone))
                 continue;
             for(const aiVertexWeight& weight : Containers::arrayView(bone->mWeights, bone->mNumWeights)) {
                 /* Without IMPORT_NO_SKELETON_MESHES Assimp produces bogus meshes
@@ -958,9 +963,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
                the joint id */
             const aiBone* bone = mesh->mBones[b];
             for(const aiVertexWeight& weight : Containers::arrayView(bone->mWeights, bone->mNumWeights)) {
-                /* Ignore dummy weights inserted by Assimp */
-                if(bone->mNumWeights == 1 && bone->mWeights[0].mVertexId == 0 &&
-                    Math::equal(bone->mWeights[0].mWeight, 0.0f))
+                if(isDummyBone(bone))
                     continue;
                 UnsignedByte& jointCount = jointCounts[weight.mVertexId];
                 const UnsignedByte layer = jointCount / 4;
