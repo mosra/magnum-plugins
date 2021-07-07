@@ -78,7 +78,7 @@ namespace Magnum {
 -   **Olga Turanksaya** ([\@olga-python](https://github.com/olga-python)) ---
     Gentoo ebuild
 -   **Pablo Escobar** ([\@pezcode](https://github.com/pezcode)) ---
-    animation support in @ref Trade::AssimpImporter "AssimpImporter",
+    animation and skinning support in @ref Trade::AssimpImporter "AssimpImporter",
     documentation updates
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports
