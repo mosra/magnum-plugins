@@ -1725,7 +1725,7 @@ std::string AssimpImporter::doSkin3DName(const UnsignedInt id) {
 Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) {
     /* Import either a single mesh skin or all of them together.
        Since Assimp gives us no way to enumerate the original skins
-       and assumes that one mesh = one skins, we give the users
+       and assumes that one mesh = one skin, we give the users
        an option to merge them all together. */
     const aiMesh* mesh = nullptr;
     Containers::ArrayView<const aiBone* const> bones;
