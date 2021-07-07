@@ -122,7 +122,9 @@ struct AssimpImporterTest: TestSuite::Tester {
     void lineMesh();
     void meshCustomAttributes();
     void meshSkinningAttributes();
-    void meshSkinningAttributesJointLimit();
+    void meshSkinningAttributesMultiple();
+    void meshSkinningAttributesMaxJointWeights();
+    void meshSkinningAttributesMerge();
     void meshMultiplePrimitives();
 
     void emptyCollada();
@@ -244,12 +246,13 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::lineMesh,
               &AssimpImporterTest::meshCustomAttributes});
 
-    addInstancedTests({&AssimpImporterTest::meshSkinningAttributes,
-                       &AssimpImporterTest::meshSkinningAttributesJointLimit},
+    addInstancedTests({&AssimpImporterTest::meshSkinningAttributes},
         Containers::arraySize(ExportedFileData));
 
-    addTests({&AssimpImporterTest::meshMultiplePrimitives,
-
+    addTests({&AssimpImporterTest::meshSkinningAttributesMultiple,
+              &AssimpImporterTest::meshSkinningAttributesMaxJointWeights,
+              &AssimpImporterTest::meshSkinningAttributesMerge,
+              &AssimpImporterTest::meshMultiplePrimitives,
               &AssimpImporterTest::emptyCollada,
               &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
@@ -1340,18 +1343,12 @@ void AssimpImporterTest::skin() {
         /* Don't check joint order, only presence */
         auto joints = skin->joints();
         CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames[i]));
-
-        for(std::size_t j = 0; j < joints.size(); ++j) {
-            const std::string name = importer->object3DName(joints[j]);
-            bool found = false;
-            for(const char* node: jointNames[i]) {
-                /* Blender's Collada exporter adds an Armature_ prefix to object names */
-                if(Utility::String::endsWith(name, node)) {
-                    found = true;
-                    break;
-                }
-            }
-            CORRADE_VERIFY(found);
+        for(const char* name: jointNames[i]) {
+            auto found = std::find_if(joints.begin(), joints.end(), [&](UnsignedInt joint) {
+                    /* Blender's Collada exporter adds an Armature_ prefix to object names */
+                    return Utility::String::endsWith(importer->object3DName(joint), name);
+                });
+            CORRADE_VERIFY(found != joints.end());
         }
 
         /* The exporters transform the inverse bind matrices quite a bit, making them hard to compare.
@@ -1372,7 +1369,7 @@ void AssimpImporterTest::skin() {
 
     {
         /* Unskinned meshes and mesh nodes shouldn't have a skin */
-        CORRADE_VERIFY(importer->mesh3DForName("Plane") != -1);
+        CORRADE_VERIFY(importer->meshForName("Plane") != -1);
         CORRADE_COMPARE(importer->skin3DForName("Plane"), -1);
         auto meshObject = importer->object3D("Plane");
         CORRADE_VERIFY(meshObject);
@@ -2118,43 +2115,128 @@ void AssimpImporterTest::meshSkinningAttributes() {
     CORRADE_VERIFY(!mesh->hasAttribute(jointsAttribute));
 }
 
-    /* Position, normal, joint ids, joint weights */
-    CORRADE_COMPARE(mesh->attributeCount(), 4);
+void AssimpImporterTest::meshSkinningAttributesMultiple() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Disable default limit, 0 = no limit  */
+    CORRADE_COMPARE(importer->configuration().value<UnsignedInt>("maxJointWeights"), 4);
+    importer->configuration().setValue("maxJointWeights", 0);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
 
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+    constexpr UnsignedInt AttributeCount = 3;
+
+    auto mesh = importer->mesh("Mesh_1");
+    CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
+    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
     CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-    // TODO
-    /*
-    CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
-        Containers::arrayView<Vector4ui>({
-            Vector4ui{1, 2, 3, 0},
-            Vector4ui{4, 5, 6, 0},
-            Vector4ui{7, 8, 9, 0}
-        }), TestSuite::Compare::Container);
-    */
     CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
+    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), AttributeCount);
     CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
-    // TODO
-    /*
-    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
-        Containers::arrayView<Vector4>({
-            Vector4{10, 11, 0, 0},
-            Vector4{12, 13, 0, 0},
-        }), TestSuite::Compare::Container);
-    */
+
+    for(UnsignedInt i = 0; i != AttributeCount; ++i) {
+        auto joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+        auto weights = mesh->attribute<Vector4>(weightsAttribute, i);
+        const Vector4ui jointValues = Vector4ui{0, 1, 2, 3} + Vector4ui{i*4};
+        constexpr Vector4 weightValues = Vector4{0.083333f};
+        for(UnsignedInt v = 0; v != joints.size(); ++v) {
+            CORRADE_COMPARE(joints[v], jointValues);
+            CORRADE_COMPARE(weights[v], weightValues);
+        }
+    }
 }
 
-void AssimpImporterTest::meshSkinningAttributesJointLimit() {
-    auto&& data = ExportedFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
+void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("maxJointWeights", 6);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
 
-    if(!supportsSkinning(data.suffix))
-        CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
-    // TODO
-    CORRADE_VERIFY(true);
+    /* 6 weights = 2 sets of 4, last two weights zero */
+    constexpr UnsignedInt AttributeCount = 2;
+
+    auto mesh = importer->mesh("Mesh_1");
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
+    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+    CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), AttributeCount);
+    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+
+    constexpr Vector4ui jointValues[]{{0, 1, 2, 3}, {4, 5, 0, 0}};
+    /* Assimp normalized the weights */
+    constexpr Float Weight = 0.083333f * 2.0f;
+    constexpr Vector4 weightValues[]{Vector4{Weight}, Vector4::pad(Vector2{Weight})};
+
+    for(UnsignedInt i = 0; i != AttributeCount; ++i) {
+        auto joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+        auto weights = mesh->attribute<Vector4>(weightsAttribute, i);
+        for(UnsignedInt v = 0; v != joints.size(); ++v) {
+            CORRADE_COMPARE(joints[v], jointValues[i]);
+            CORRADE_COMPARE(weights[v], weightValues[i]);
+        }
+    }
+}
+
+void AssimpImporterTest::meshSkinningAttributesMerge() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("mergeSkins", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin.dae")));
+    
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+    /* The first mesh (inside aiScene::mMeshes, order is arbitrary) has its bones added
+       to the global bone list first, only the second one has shifted joint indices */
+    Containers::Array<Vector4ui> shiftedJointData{Containers::arraySize(MeshSkinningAttributesJointData)};
+    for(UnsignedInt i = 0; i != shiftedJointData.size(); ++i) {
+        /* Shift by 2 where weight is non-zero */
+        const BoolVector4 nonZero = Math::notEqual(MeshSkinningAttributesWeightData[i], Vector4{0.0f});
+        const Vector4ui mask{nonZero[0], nonZero[1], nonZero[2], nonZero[3]};
+        shiftedJointData[i] = MeshSkinningAttributesJointData[i] + (mask * 2);
+    }
+
+    {
+        const Int id = importer->meshForName("Mesh_1");
+        CORRADE_VERIFY(id != -1);
+        auto mesh = importer->mesh(id);
+        CORRADE_VERIFY(mesh);
+        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+        auto jointData = id == 0
+            ? Containers::arrayView(MeshSkinningAttributesJointData)
+            : Containers::arrayView(shiftedJointData);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
+            Containers::arrayView(jointData), TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+            Containers::arrayView(MeshSkinningAttributesWeightData),
+            TestSuite::Compare::Container);
+    } {
+        const Int id = importer->meshForName("Mesh_2");
+        CORRADE_VERIFY(id != -1);
+        auto mesh = importer->mesh(id);
+        CORRADE_VERIFY(mesh);
+        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+        auto jointData = id == 0
+            ? Containers::arrayView(MeshSkinningAttributesJointData)
+            : Containers::arrayView(shiftedJointData);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
+            Containers::arrayView(jointData), TestSuite::Compare::Container);
+        /* Weights should stay the same */
+        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+            Containers::arrayView(MeshSkinningAttributesWeightData),
+            TestSuite::Compare::Container);
+    }
 }
 
 void AssimpImporterTest::meshMultiplePrimitives() {
