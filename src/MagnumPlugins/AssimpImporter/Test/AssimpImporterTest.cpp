@@ -32,6 +32,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/StringStl.h>
@@ -63,11 +64,25 @@
 #include <Magnum/Trade/TextureData.h>
 
 #include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
-#include <assimp/cexport.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/version.h>
+
+/* Use the SceneCombiner.h header for modifying the scene if available. On
+   ancient systems it's not (and we can assume __has_include is neither), so
+   we fall back to the C API that has a wrapper, but which needs Assimp with
+   export functionality built in. */
+#ifdef __has_include
+#if __has_include(<assimp/SceneCombiner.h>)
+#define ASSIMP_HAS_SCENE_COMBINER
+#endif
+#endif
+#ifdef ASSIMP_HAS_SCENE_COMBINER
+#include <assimp/SceneCombiner.h>
+#else
+#include <assimp/cexport.h>
+#endif
 
 #include "configure.h"
 #include "MagnumPlugins/AssimpImporter/configureInternal.h"
@@ -1423,7 +1438,28 @@ void AssimpImporterTest::skinMerge() {
     const aiScene* original = static_cast<const aiScene*>(_importer->importerState());
     CORRADE_VERIFY(original);
     aiScene* scene{};
+
+    /* aiCopyScene() is for some reason not present in builds without export
+       functionality (which we have on Windows CIs). The code inside does this
+       and then sets some private mIsCopy field which we don't care about.
+       Unfortunately, <assimp/SceneCombiner.h> is available only since 4.0, so
+       on the ancient 3.2 use the C API (and assume nobody needs the insane corner case of running the test against Assimp 3.2 that has export APIs
+       disabled). */
+    #ifdef ASSIMP_HAS_SCENE_COMBINER
+    Assimp::SceneCombiner::CopyScene(&scene, original, true);
+    #else
     aiCopyScene(original, &scene);
+    #endif
+
+    /* Same as above. The code inside aiFreeScene() is just a plain delete, so
+       do that. */
+    Containers::ScopeGuard deleteScene{scene, [](aiScene*& scene) {
+        #ifdef ASSIMP_HAS_SCENE_COMBINER
+        delete scene;
+        #else
+        aiFreeScene(scene);
+        #endif
+    }};
 
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->mNumMeshes, _importer->meshCount());
@@ -1516,7 +1552,6 @@ void AssimpImporterTest::skinMerge() {
     }
 
     importer->close();
-    aiFreeScene(scene);
 }
 
 void AssimpImporterTest::camera() {
