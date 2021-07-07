@@ -157,6 +157,11 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
 Containers::Pointer<Assimp::Importer> createImporter(Utility::ConfigurationGroup& conf) {
     Containers::Pointer<Assimp::Importer> importer{InPlaceInit};
 
+    /* Without this setting, Assimp adds bogus skeleton visualization meshes
+       to files that don't have any meshes. It claims to only do this when
+       there is animation data, but at least for Collada it always does it. */
+    importer->SetPropertyBool(AI_CONFIG_IMPORT_NO_SKELETON_MESHES, true);
+
     importer->SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION,
         conf.value<bool>("ImportColladaIgnoreUpDirection"));
 

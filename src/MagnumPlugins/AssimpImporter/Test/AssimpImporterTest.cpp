@@ -305,12 +305,7 @@ void AssimpImporterTest::openFile() {
         CORRADE_VERIFY(importer->importerState());
         CORRADE_COMPARE(importer->sceneCount(), 1);
         CORRADE_COMPARE(importer->object3DCount(), 2);
-
-        {
-            /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
-            CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
-            CORRADE_VERIFY(!importer->meshCount());
-        }
+        CORRADE_COMPARE(importer->meshCount(), 0);
 
         importer->close();
         CORRADE_VERIFY(!importer->isOpened());
@@ -338,12 +333,7 @@ void AssimpImporterTest::openData() {
     CORRADE_VERIFY(importer->openData(data));
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 2);
-
-    {
-        /* https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225 */
-        CORRADE_EXPECT_FAIL("Assimp adds some bogus skeleton visualizer mesh to COLLADA files that don't have any mesh.");
-        CORRADE_VERIFY(!importer->meshCount());
-    }
+    CORRADE_COMPARE(importer->meshCount(), 0);
 
     importer->close();
     CORRADE_VERIFY(!importer->isOpened());
@@ -1958,10 +1948,22 @@ void AssimpImporterTest::sceneCollapsedNode() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     /* This collapses all nodes into one. Neither OptimizeGraph nor
-       OptimizeMeshes does that, but this one does it. Um. */
+       OptimizeMeshes does that, but this one does it. Um. It also works only
+       if the scene contains at least one mesh, if it doesn't then this
+       postprocess step just silently quits, doing nothing. And they ultimately
+       "fixed" it by updating the docs to say it doesn't always work:
+       https://github.com/assimp/assimp/issues/3820
+
+       It needs to be noted that originally this worked, however that was due
+       to AI_CONFIG_IMPORT_NO_SKELETON_MESHES *not* being set, which caused
+       COLLADA files to have some random mesh added, which then made this
+       option work. Since we had to disable this option to avoid broken
+       skins with out-of-bounds vertex references getting added, this file
+       didn't have any mesh anymore and this feature stopped working. "Fixed"
+       by adding an (otherwise unused/untested) mesh to the file. */
     importer->configuration().group("postprocess")->setValue("PreTransformVertices", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene+mesh.dae")));
 
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);

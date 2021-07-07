@@ -287,9 +287,6 @@ verbosity levels in each instance.
 -   Custom mesh attributes (such as `object_id` in Stanford PLY files) are
     not imported.
 -   Texture coordinate layers with other than two components are skipped
--   For some file formats (such as COLLADA), Assimp may create a dummy
-    "skeleton visualizer" mesh if the file has no mesh data. For others (such
-    as glTF) not.
 -   Per-face attributes in Stanford PLY files are not imported.
 -   Stanford PLY files that contain a comment before the format line fail to
     import.

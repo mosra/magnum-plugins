@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <!-- Same as scene.dae except for the added mesh because the
+       sceneCollapsedNode() test doesn't work without. See a comment there for
+       more info. -->
+  <library_geometries>
+    <geometry id="Cube-mesh" name="Cube">
+      <mesh>
+        <source id="Cube-mesh-positions">
+          <float_array id="Cube-mesh-positions-array" count="9">-1 -1 1 -1 1 1 1 -1 1</float_array>
+          <technique_common>
+            <accessor source="#Cube-mesh-positions-array" count="3" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Cube-mesh-vertices">
+          <input semantic="POSITION" source="#Cube-mesh-positions"/>
+        </vertices>
+        <polylist count="1">
+          <input semantic="VERTEX" source="#Cube-mesh-vertices" offset="0"/>
+          <vcount>3</vcount>
+          <p>1 0 2</p>
+        </polylist>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Parent" name="Parent" type="NODE">
+        <translate sid="location">0 0 0</translate>
+        <rotate sid="rotationZ">0 0 1 0</rotate>
+        <rotate sid="rotationY">0 1 0 0</rotate>
+        <rotate sid="rotationX">1 0 0 0</rotate>
+        <scale sid="scale">1 2 3</scale>
+        <node id="Child" name="Child" type="NODE">
+          <translate sid="location">1 2 3</translate>
+          <rotate sid="rotationZ">0 0 1 30</rotate>
+          <rotate sid="rotationY">0 1 0 20</rotate>
+          <rotate sid="rotationX">1 0 0 10</rotate>
+          <scale sid="scale">1 1 1</scale>
+          <instance_geometry url="#Cube-mesh" name="Cube"/>
+        </node>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
