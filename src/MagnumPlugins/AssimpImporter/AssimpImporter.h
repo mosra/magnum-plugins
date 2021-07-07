@@ -112,7 +112,8 @@ Imports various formats using [Assimp](http://assimp.org), in particular:
 -   3D GameStudio (3DGS), 3D GameStudio (3DGS) Terrain (`*.mdl`, `*.hmp`)
 -   Izware Nendo (`*.ndo`)
 
-Supports importing of scene, object, camera, mesh, texture and image data.
+Supports importing of scene, object, camera, mesh, texture, image, animation
+and skin data.
 
 This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
 `BvhImporter`, `CsmImporter`, `ColladaImporter`, `DirectXImporter`,
@@ -197,20 +198,18 @@ with @ref InputFileCallbackPolicy::LoadTemporary and
 @ref InputFileCallbackPolicy::Close is emitted right after the file is fully
 read.
 
-Import of morph data is not supported at the moment.
-
 The importer recognizes @ref ImporterFlag::Verbose, enabling verbose logging
 in Assimp when the flag is enabled. However please note that since Assimp
 handles logging through a global singleton, it's not possible to have different
 verbosity levels in each instance.
 
-@subsection Trade-AssimpImporter-behavior-animation Animation import
+@subsection Trade-AssimpImporter-behavior-animation Animation and skin import
 
 -   Assimp sometimes adds dummy animation tracks with a single key-value pair
     and the default node transformation. If found, the importer removes these
     dummy tracks and prints a message if verbose logging is enabled. Can be
     disabled per-animation with the @cb{.ini} removeDummyAnimationTracks @ce
-    option, see @ref Trade-AssimpImporter-configuration "below".
+    @ref Trade-AssimpImporter-configuration "configuration option".
 -   Channel order within animations is not always preserved
     by Assimp, depending on file type and compiler. You may have to manually
     order tracks by type and target after importing.
@@ -222,12 +221,12 @@ verbosity levels in each instance.
     @ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
     @ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()".
     Can be disabled per-animation with the
-    @cb{.ini} optimizeQuaternionShortestPath @ce option, see
-    @ref Trade-AssimpImporter-configuration "below".
+    @cb{.ini} optimizeQuaternionShortestPath @ce
+    @ref Trade-AssimpImporter-configuration "configuration option".
 -   If quaternion rotation tracks are not normalized, the importer
     prints a warning and normalizes them. Can be disabled per-animation with
-    the @cb{.ini} normalizeQuaternions @ce option, see
-    @ref Trade-AssimpImporter-configuration "below".
+    the @cb{.ini} normalizeQuaternions @ce
+    @ref Trade-AssimpImporter-configuration "configuration option".
 -   Morph targets are not supported
 -   Animation tracks are always imported with
     @ref Animation::Interpolation::Linear, because Assimp doesn't expose any
@@ -251,16 +250,16 @@ verbosity levels in each instance.
     printed even if the imported data may be correct.
 -   Original skins are not exposed by Assimp, instead each mesh with joint
     weights produces its own skin. Skin names will be equal to their
-    corresponding mesh names. A consequence of this is that Assimp only
-    imports joint weight attributes for one skin and ignores all other
-    skins targetting the same mesh.
+    corresponding mesh names. A consequence of this is that Assimp only imports
+    joint weight attributes for one skin and ignores all other skins targetting
+    the same mesh.
 -   You can request to merge all mesh skins into one using the
     @cb{.ini} mergeSkins @ce option. Duplicate joints (same object index and
     inverse bind matrix) will be merged and joint ids in vertex attributes
-    adjusted accordingly. When this option is enabled,
-    @ref skinCount() always report either @cpp 0 @ce or @cpp 1 @ce and
-    the merged skin has no name. This option needs to be set before opening
-    a file because it affects skin as well as mesh loading.
+    adjusted accordingly. When this option is enabled, @ref skin3DCount()
+    always report either @cpp 0 @ce or @cpp 1 @ce and the merged skin has no
+    name. This option needs to be set before opening a file because it affects
+    skin as well as mesh loading.
 
 @subsection Trade-AssimpImporter-behavior-materials Material import
 
@@ -310,14 +309,14 @@ verbosity levels in each instance.
 -   The imported model always has either both @ref MeshAttribute::Tangent
     @ref MeshAttribute::Bitangent or neither of them, tangents are always
     three-component with binormals separate.
--   Joint Ids and weights for skinning are imported as custom vertex attributes
+-   Joint IDs and weights for skinning are imported as custom vertex attributes
     named "JOINTS" and "WEIGHTS" with formats @ref VertexFormat::Vector4ui and
     @ref VertexFormat::Vector4, respectively. Imported meshes always have
     either both or neither of them. Their mapping to/from a string can be
-    queried using @ref meshAttributeName() and @ref meshAttributeForName().
-    By default, the number of weights per vertex is limited to 4, but you can
-    change this limit by setting the @cb{.ini} maxJointWeights @ce option,
-    see @ref Trade-AssimpImporter-configuration "below".
+    queried using @ref meshAttributeName() and @ref meshAttributeForName(). By
+    default, the number of weights per vertex is limited to 4, but you can
+    change this limit by setting the @cb{.ini} maxJointWeights @ce
+    @ref Trade-AssimpImporter-configuration "configuration option".
 -   Multi-mesh nodes and multi-primitive meshes are loaded as follows,
     consistently with the behavior of @link TinyGltfImporter @endlink:
     -   Multi-primitive meshes are split by Assimp into individual meshes
