@@ -1328,8 +1328,8 @@ void AssimpImporterTest::skin() {
         {"Node_3", "Node_4"}
     };
 
-    /* Some Blender exporters don't transform skin matrices correctly.
-       Also see the comment for ExportedFileData. */
+    /* Some Blender exporters don't transform skin matrices correctly. Also see
+       the comment for ExportedFileData. */
     const Matrix4 correction{data.correction.toMatrix()};
 
     for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
@@ -1348,15 +1348,17 @@ void AssimpImporterTest::skin() {
         CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames[i]));
         for(const char* name: jointNames[i]) {
             auto found = std::find_if(joints.begin(), joints.end(), [&](UnsignedInt joint) {
-                    /* Blender's Collada exporter adds an Armature_ prefix to object names */
+                    /* Blender's Collada exporter adds an Armature_ prefix to
+                       object names */
                     return Utility::String::endsWith(importer->object3DName(joint), name);
                 });
             CORRADE_VERIFY(found != joints.end());
         }
 
-        /* The exporters transform the inverse bind matrices quite a bit, making them hard to compare.
-           Instead, check that their defining property holds: they're the inverse of the joint's
-           original global transform. */
+        /* The exporters transform the inverse bind matrices quite a bit,
+           making them hard to compare. Instead, check that their defining
+           property holds: they're the inverse of the joint's original global
+           transform. */
         auto bindMatrices = skin->inverseBindMatrices();
         CORRADE_COMPARE(bindMatrices.size(), joints.size());
         auto meshObject = importer->object3D(meshNames[i]);
@@ -2239,8 +2241,9 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
-    /* The first mesh (inside aiScene::mMeshes, order is arbitrary) has its bones added
-       to the global bone list first, only the second one has shifted joint indices */
+    /* The first mesh (inside aiScene::mMeshes, order is arbitrary) has its
+       bones added to the global bone list first, only the second one has
+       shifted joint indices */
     Containers::Array<Vector4ui> shiftedJointData{Containers::arraySize(MeshSkinningAttributesJointData)};
     for(UnsignedInt i = 0; i != shiftedJointData.size(); ++i) {
         /* Shift by 2 where weight is non-zero */

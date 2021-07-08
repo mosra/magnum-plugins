@@ -532,11 +532,12 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     /* Before https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4
-       Assimp incorrectly read spline tangents as values in glTF animation tracks.
-       Quick and dirty check to see if we're dealing with a possibly affected file
-       and Assimp version. This might produce false-positives on files without
-       spline-interpolated animations, but for doOpenState and doOpenFile we
-       have no access to the file content to check if the file contains "CUBICSPLINE". */
+       Assimp incorrectly read spline tangents as values in glTF animation
+       tracks. Quick and dirty check to see if we're dealing with a possibly
+       affected file and Assimp version. This might produce false-positives on
+       files without spline-interpolated animations, but for doOpenState and
+       doOpenFile we have no access to the file content to check if the file
+       contains "CUBICSPLINE". */
     if(_f->scene->HasAnimations() && _f->importerIsGltf && ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
         Warning{} << "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
             "from this file are most likely broken using this version of Assimp. Consult the "
@@ -554,8 +555,8 @@ void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
         _f->meshSkins.push_back(skin);
     }
 
-    /* Can't be changed per skin-import because it affects joint id
-       vertex attributes during doMesh */
+    /* Can't be changed per skin-import because it affects joint id vertex
+       attributes during doMesh */
     _f->mergeSkins = configuration().value<bool>("mergeSkins");
 
     /* De-duplicate bones across all skinned meshes */
@@ -837,10 +838,10 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         for(const aiBone* bone: Containers::arrayView(mesh->mBones, mesh->mNumBones)) {
             if(isDummyBone(bone))
                 continue;
-            for(const aiVertexWeight& weight : Containers::arrayView(bone->mWeights, bone->mNumWeights)) {
-                /* Without IMPORT_NO_SKELETON_MESHES Assimp produces bogus meshes
-                   with bones that have invalid vertex ids. We enable that setting
-                   but who knows what other rogue settings produce invalid data... */
+            for(const aiVertexWeight& weight: Containers::arrayView(bone->mWeights, bone->mNumWeights)) {
+                /* Without IMPORT_NO_SKELETON_MESHES Assimp produces bogus
+                   meshes with bones that have invalid vertex ids. We enable
+                   that setting but who knows what other rogue settings produce invalid data... */
                 CORRADE_ASSERT(weight.mVertexId < vertexCount,
                     "Trade::AssimpImporter::mesh(): invalid vertex id in bone data", {});
                 UnsignedByte& jointCount = jointCounts[weight.mVertexId];
@@ -962,7 +963,8 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             attributeData[attributeIndex++] = MeshAttributeData{weightsAttribute, jointWeights[layer]};
             attributeOffset += sizeof(Vector4);
 
-            /* zero-fill, single vertices can have less than the max joint count */
+            /* zero-fill, single vertices can have less than the max joint
+               count */
             for(std::size_t i = 0; i < vertexCount; ++i) {
                 jointIds[layer][i] = {};
                 jointWeights[layer][i] = {};
@@ -978,7 +980,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             /* Use the original weights, we only need the remapping to patch
                the joint id */
             const aiBone* bone = mesh->mBones[b];
-            for(const aiVertexWeight& weight : Containers::arrayView(bone->mWeights, bone->mNumWeights)) {
+            for(const aiVertexWeight& weight: Containers::arrayView(bone->mWeights, bone->mNumWeights)) {
                 if(isDummyBone(bone))
                     continue;
                 UnsignedByte& jointCount = jointCounts[weight.mVertexId];
@@ -990,21 +992,25 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             }
         }
 
-        /* Assimp glTF 2 importer only reads one set of joint weight attributes:
-           https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Importer.cpp#L940
-           Even worse, it's the last(!!) set because they're getting the attribute
-           name wrong (JOINT instead of JOINTS) which breaks their index extraction:
-           https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Asset.inl#L1499 */
+        /* Assimp glTF 2 importer only reads one set of joint weight
+           attributes:
+            https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Importer.cpp#L940
+           Even worse, it's the last(!!) set because they're getting the
+           attribute name wrong (JOINT instead of JOINTS) which breaks their
+           index extraction:
+            https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Asset.inl#L1499
+        */
         if(_f->importerIsGltf && jointLayerCount == 1) {
             for(const Vector4& weight: jointWeights[0]) {
                 const Float sum = weight.sum();
-                /* Be very lenient here for shitty exporters. This should still catch
-                   most cases of the first set of weights being discarded. */
+                /* Be very lenient here for shitty exporters. This should still
+                   catch most cases of the first set of weights being
+                   discarded. */
                 constexpr Float Epsilon = 0.1f;
-                if(!Math::equal(sum, 0.0f) && (Math::abs(1.0f - sum) > Epsilon)) {
+                if(!Math::equal(sum, 0.0f) && Math::abs(1.0f - sum) > Epsilon) {
                     Warning{} <<
-                        "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly "
-                        "a result of Assimp reading joint weights incorrectly. Consult the importer "
+                        "Trade::AssimpImporter::mesh(): found non-normalized " "joint weights, possibly a result of Assimp reading "
+                        "joint weights incorrectly. Consult the importer "
                         "documentation for more information";
                     break;
                 }
@@ -1588,8 +1594,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             const Animation::Extrapolation extrapolationBefore = extrapolationFor(channel->mPreState);
             const Animation::Extrapolation extrapolationAfter = extrapolationFor(channel->mPostState);
 
-            /* Key times are given as ticks, convert to milliseconds. Default value of 25 is
-               taken from the assimp_view tool. */
+            /* Key times are given as ticks, convert to milliseconds. Default
+               value of 25 is taken from the assimp_view tool. */
             double ticksPerSecond = animation->mTicksPerSecond != 0.0 ? animation->mTicksPerSecond : 25.0;
 
             /* For glTF files mTicksPerSecond is completely useless before
@@ -1657,9 +1663,9 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     }
                 }
 
-                /* Normalize the quaternions if not already. Don't attempt
-                   to normalize every time to avoid tiny differences, only
-                   when the quaternion looks to be off. */
+                /* Normalize the quaternions if not already. Don't attempt to
+                   normalize every time to avoid tiny differences, only when
+                   the quaternion looks to be off. */
                 if(normalizeQuaternions) {
                     for(auto& i: values) if(!i.isNormalized()) {
                         i = i.normalized();
@@ -1679,7 +1685,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* Scale */
             if(targetTypes & AnimationTrackTargetType::Scaling3D) {
-                const size_t keyCount = channel->mNumScalingKeys;
+                const std::size_t keyCount = channel->mNumScalingKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
@@ -1687,7 +1693,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     data.suffix(dataOffset).prefix(keyCount*sizeof(Vector3)));
                 dataOffset += values.size()*sizeof(values[0]);
 
-                for(size_t k = 0; k < channel->mNumScalingKeys; ++k) {
+                for(std::size_t k = 0; k < channel->mNumScalingKeys; ++k) {
                     keys[k] = channel->mScalingKeys[k].mTime / ticksPerSecond;
                     values[k] = Vector3::from(&channel->mScalingKeys[k].mValue[0]);
                 }
@@ -1742,10 +1748,10 @@ std::string AssimpImporter::doSkin3DName(const UnsignedInt id) {
 }
 
 Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) {
-    /* Import either a single mesh skin or all of them together.
-       Since Assimp gives us no way to enumerate the original skins
-       and assumes that one mesh = one skin, we give the users
-       an option to merge them all together. */
+    /* Import either a single mesh skin or all of them together. Since Assimp
+       gives us no way to enumerate the original skins and assumes that one
+       mesh = one skin, we give the users an option to merge them all
+       together. */
     const aiMesh* mesh = nullptr;
     Containers::ArrayView<const aiBone* const> bones;
     if(_f->mergeSkins)
@@ -1756,8 +1762,8 @@ Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) 
     }
 
     Containers::Array<UnsignedInt> joints{NoInit, bones.size()};
-    /* NoInit for Matrix4 creates an array with a non-default deleter,
-       we're not allowed to return those */
+    /* NoInit for Matrix4 creates an array with a non-default deleter, we're
+       not allowed to return those */
     Containers::Array<Matrix4> inverseBindMatrices{ValueInit, bones.size()};
     for(std::size_t i = 0; i != bones.size(); ++i) {
         const aiBone* bone = bones[i];
