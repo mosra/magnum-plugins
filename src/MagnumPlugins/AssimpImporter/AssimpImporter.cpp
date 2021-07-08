@@ -989,6 +989,27 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
                 jointCount++;
             }
         }
+
+        /* Assimp glTF 2 importer only reads one set of joint weight attributes:
+           https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Importer.cpp#L940
+           Even worse, it's the last(!!) set because they're getting the attribute
+           name wrong (JOINT instead of JOINTS) which breaks their index extraction:
+           https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Asset.inl#L1499 */
+        if(_f->importerIsGltf && jointLayerCount == 1) {
+            for(const Vector4& weight: jointWeights[0]) {
+                const Float sum = weight.sum();
+                /* Be very lenient here for shitty exporters. This should still catch
+                   most cases of the first set of weights being discarded. */
+                constexpr Float Epsilon = 0.1f;
+                if(!Math::equal(sum, 0.0f) && (Math::abs(1.0f - sum) > Epsilon)) {
+                    Warning{} <<
+                        "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly "
+                        "a result of Assimp reading joint weights incorrectly. Consult the importer "
+                        "documentation for more information";
+                    break;
+                }
+            }
+        }
     }
 
     /* Check we pre-calculated well */

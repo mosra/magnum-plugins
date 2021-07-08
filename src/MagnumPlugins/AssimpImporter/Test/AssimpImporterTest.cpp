@@ -122,6 +122,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void meshCustomAttributes();
     void meshSkinningAttributes();
     void meshSkinningAttributesMultiple();
+    void meshSkinningAttributesMultipleGltf();
     void meshSkinningAttributesMaxJointWeights();
     void meshSkinningAttributesDummyWeightRemoval();
     void meshSkinningAttributesMerge();
@@ -250,6 +251,7 @@ AssimpImporterTest::AssimpImporterTest() {
         Containers::arraySize(ExportedFileData));
 
     addTests({&AssimpImporterTest::meshSkinningAttributesMultiple,
+              &AssimpImporterTest::meshSkinningAttributesMultipleGltf,
               &AssimpImporterTest::meshSkinningAttributesMaxJointWeights,
               &AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval,
               &AssimpImporterTest::meshSkinningAttributesMerge,
@@ -1910,7 +1912,7 @@ void AssimpImporterTest::mesh() {
     const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     {
         CORRADE_EXPECT_FAIL_IF(version < 302,
-            "Assimp < 3.2 loads incorrect alpha value for the last color");
+            "Assimp < 3.2 loads incorrect alpha value for the last color.");
         CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Color),
         Containers::arrayView<Vector4>({
             {1.0f, 0.25f, 0.24f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.1f, 0.2f, 0.3f, 1.0f}
@@ -2039,7 +2041,15 @@ void AssimpImporterTest::meshSkinningAttributes() {
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
     for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
-        auto mesh = importer->mesh(meshName);
+        Containers::Optional<MeshData> mesh;
+        std::ostringstream out;
+        {
+            Warning redirectWarning{&out};
+            mesh = importer->mesh(meshName);
+        }
+        /* No warning about glTF dropping sets of weights */
+        CORRADE_VERIFY(out.str().empty());
+
         CORRADE_VERIFY(mesh);
         CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
         CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
@@ -2092,6 +2102,68 @@ void AssimpImporterTest::meshSkinningAttributesMultiple() {
             CORRADE_COMPARE(weights[v], weightValues);
         }
     }
+}
+
+void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
+    if(!supportsSkinning(".gltf"))
+        CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+
+    /* Assimp glTF 2 importer only reads the last(!) set of joint weights */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("maxJointWeights", 0);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
+
+    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+    Containers::Optional<MeshData> mesh;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        mesh = importer->mesh("Mesh");
+    }
+
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+    CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+
+    {
+        CORRADE_EXPECT_FAIL("glTF 2 importer only reads one set of joint weights.");
+        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 2);
+        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 2);
+    }
+
+    auto joints = mesh->attribute<Vector4ui>(jointsAttribute);
+    CORRADE_VERIFY(joints);
+    auto weights = mesh->attribute<Vector4>(weightsAttribute);
+    CORRADE_VERIFY(weights);
+
+    CORRADE_COMPARE(out.str(),
+        "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly "
+        "a result of Assimp reading joint weights incorrectly. Consult the importer "
+        "documentation for more information\n");
+
+    {
+        CORRADE_EXPECT_FAIL("glTF 2 importer only reads the last set of joint weights.");
+        constexpr Vector4ui joint{0, 1, 2, 3};
+        constexpr Vector4 weight{0.125f};
+        CORRADE_COMPARE(joints.front(), joint);
+        CORRADE_COMPARE(weights.front(), weight);
+    }
+
+    /* Colors, on the other hand, work */
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color), 2);
+
+    auto colors1 = mesh->attribute<Vector4>(MeshAttribute::Color, 0);
+    auto colors2 = mesh->attribute<Vector4>(MeshAttribute::Color, 1);
+    CORRADE_VERIFY(colors1);
+    CORRADE_VERIFY(colors2);
+    CORRADE_COMPARE(colors1.front(), Color4{1.0f});
+    CORRADE_COMPARE(colors2.front(), Color4{0.5f});
 }
 
 void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
