@@ -2749,11 +2749,6 @@ void AssimpImporterTest::imagePathNonNormalized() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<ImageData2D> image = importer->image2D(0);
-#ifndef CORRADE_TARGET_WINDOWS
-    CORRADE_EXPECT_FAIL("Assimp does not normalize filepaths on non-Windows systems");
-    CORRADE_VERIFY(image);
-    return;
-#endif
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
