@@ -140,6 +140,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void imageExternalNotFound();
     void imageExternalNoPathNoCallback();
     void imagePathMtlSpaceAtTheEnd();
+    void imagePathBackslash();
     void imageMipLevels();
 
     void texture();
@@ -270,6 +271,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::imageExternalNotFound,
               &AssimpImporterTest::imageExternalNoPathNoCallback,
               &AssimpImporterTest::imagePathMtlSpaceAtTheEnd,
+              &AssimpImporterTest::imagePathBackslash,
               &AssimpImporterTest::imageMipLevels,
 
               &AssimpImporterTest::texture,
@@ -2725,6 +2727,21 @@ void AssimpImporterTest::imagePathMtlSpaceAtTheEnd() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-trailing-space.obj")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i{1});
+    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::imagePathBackslash() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-backslash.obj")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<ImageData2D> image = importer->image2D(0);
