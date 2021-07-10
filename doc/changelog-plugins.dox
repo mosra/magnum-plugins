@@ -113,6 +113,10 @@ namespace Magnum {
     skeletons in the first place. Turns out this was due to insane defaults and
     it was enough to just disable such misfeature. See also
     [mosra/magnum-plugins#99](https://github.com/mosra/magnum-plugins/pull/99).
+-   @ref Trade::AssimpImporter "AssimpImporter" now correctly imports files
+    with backslashes in image paths also on non-Windows platforms (see
+    [mosra/magnum-plugins#101](https://github.com/mosra/magnum-plugins/issues/101)
+    and [mosra/magnum-plugins#102](https://github.com/mosra/magnum-plugins/pull/102))
 -   @ref Trade::JpegImageConverter "JpegImageConverter" was mistakenly using
     the `BUILD_STATIC` CMake option instead of `BUILD_PLUGINS_STATIC`
 -   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct
