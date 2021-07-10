@@ -73,6 +73,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         exported-animation.gltf
         image-filename-trailing-space.mtl
         image-filename-trailing-space.obj
+        image-filename-backslash.mtl
+        image-filename-backslash.obj
         image-mips.mtl
         image-mips.obj
         light.dae

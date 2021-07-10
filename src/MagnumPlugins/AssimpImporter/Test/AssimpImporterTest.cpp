@@ -140,6 +140,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void imageExternalNotFound();
     void imageExternalNoPathNoCallback();
     void imagePathMtlSpaceAtTheEnd();
+    void imagePathNonNormalized();
     void imageMipLevels();
 
     void texture();
@@ -270,6 +271,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::imageExternalNotFound,
               &AssimpImporterTest::imageExternalNoPathNoCallback,
               &AssimpImporterTest::imagePathMtlSpaceAtTheEnd,
+              &AssimpImporterTest::imagePathNonNormalized,
               &AssimpImporterTest::imageMipLevels,
 
               &AssimpImporterTest::texture,
@@ -2732,6 +2734,26 @@ void AssimpImporterTest::imagePathMtlSpaceAtTheEnd() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i{1});
+    constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::imagePathNonNormalized() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-non-normalized.obj")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+#ifndef CORRADE_TARGET_WINDOWS
+    CORRADE_EXPECT_FAIL("Assimp does not normalize filepaths on non-Windows systems");
+    CORRADE_VERIFY(image);
+    return;
+#endif
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
