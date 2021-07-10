@@ -4,6 +4,7 @@
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
 #               2020, 2021 Vladimír Vondruš <mosra@centrum.cz>
 #   Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+#   Copyright © 2021 Jonathan Hale <squareys@googlemail.com>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -43,6 +44,9 @@ if(NOT MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     endif()
     if(WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
+    if(WITH_PNGIMPORTER)
+        set(PNGIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:PngImporter>)
     endif()
 endif()
 

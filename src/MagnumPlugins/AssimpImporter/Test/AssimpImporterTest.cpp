@@ -302,6 +302,10 @@ AssimpImporterTest::AssimpImporterTest() {
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+    /* The PngImporter (for PNG image loading) is optional */
+    #ifdef PNGIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(PNGIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
 }
 
 void AssimpImporterTest::openFile() {
