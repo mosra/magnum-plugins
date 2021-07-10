@@ -87,6 +87,8 @@ namespace Magnum {
 -   @ref Audio::DrFlacImporter "DrFlacAudioImporter" no longer advertises
     support for 32-bit-per-channel FLAC files, as there's no known way to
     produce them and thus the case is impossible to test for.
+-   @ref Trade::AssimpImporter "AssimpImporter" now imports files with
+    non-normalized external image paths also on non-Windows platforms
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
