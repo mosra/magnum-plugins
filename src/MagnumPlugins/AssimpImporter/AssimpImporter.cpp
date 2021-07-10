@@ -3,7 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020, 2021 Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2017, 2020 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2017, 2020, 2021 Jonathan Hale <squareys@googlemail.com>
     Copyright © 2018 Konstantinos Chatzilygeroudis <costashatz@gmail.com>
     Copyright © 2019, 2020 Max Schwarz <max.schwarz@ais.uni-bonn.de>
     Copyright © 2021 Pablo Escobar <mail@rvrs.in>
@@ -1369,6 +1369,8 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
 
         AnyImageImporter importer{*manager()};
         if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
+        /* Assimp loads image path references as-is. It might contain windows path separators if the exporter didn't normalize */
+        std::replace(path.begin(), path.end(), '\\', '/');
         /* Assimp doesn't trim spaces from the end of image paths in OBJ
            materials so we have to. See the image-filename-space.mtl test. */
         if(!importer.openFile(Utility::String::trim(Utility::Directory::join(_f->filePath ? *_f->filePath : "", path))))
