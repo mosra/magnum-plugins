@@ -95,6 +95,10 @@ if(WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
 
+if(WITH_KTXIMPORTER)
+    add_subdirectory(KtxImporter)
+endif()
+
 if(WITH_MESHOPTIMIZERSCENECONVERTER)
     add_subdirectory(MeshOptimizerSceneConverter)
 endif()
