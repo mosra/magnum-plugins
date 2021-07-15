@@ -307,7 +307,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
        but we don't need them for now. */
     Utility::Endianness::littleEndianInPlace(
         header.vkFormat, header.typeSize,
-        header.pixelWidth, header.pixelHeight, header.pixelDepth,
+        header.pixelSize[0], header.pixelSize[1], header.pixelSize[2],
         header.layerCount, header.faceCount, header.levelCount,
         header.supercompressionScheme);
 
@@ -358,13 +358,12 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    const Vector3ui originalSize{header.pixelWidth, header.pixelHeight, header.pixelDepth};
-    CORRADE_INTERNAL_ASSERT(originalSize.x() > 0);
+    CORRADE_INTERNAL_ASSERT(header.pixelSize.x() > 0);
 
-    if(originalSize.z() > 0) {
-        CORRADE_INTERNAL_ASSERT(originalSize.y() > 0);
+    if(header.pixelSize.z() > 0) {
+        CORRADE_INTERNAL_ASSERT(header.pixelSize.y() > 0);
         f->dimensions = 3;
-    } else if(originalSize.y() > 0)
+    } else if(header.pixelSize.y() > 0)
         f->dimensions = 2;
     else
         f->dimensions = 1;
@@ -373,7 +372,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* Make size in each dimension at least 1 so we don't choke on size
        calculations using product(). */
-    const Vector3i size = Math::max(Vector3i{originalSize}, Vector3i{1});
+    const Vector3i size = Math::max(Vector3i{header.pixelSize}, Vector3i{1});
 
     /* Number of array layers, imported as separate images */
     const UnsignedInt numLayers = Math::max(header.layerCount, 1u);

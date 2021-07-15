@@ -25,7 +25,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "Magnum/Types.h"
+#include <Magnum/Magnum.h>
 
 /* Used by both KtxImporter and KtxImageConverter, which is why it isn't
    directly inside KtxImporter.cpp. OTOH it doesn't need to be exposed
@@ -33,27 +33,23 @@
 
 namespace Magnum { namespace Trade { namespace Implementation {
 
-#pragma pack(1)
-
 /* KTX2 file header */
 struct KtxHeader {
-    UnsignedByte    identifier[12]; /* File identifier */
-    UnsignedInt     vkFormat;       /* VkFormat enum value, VK_FORMAT_UNDEFINED = custom */
-    UnsignedInt     typeSize;       /* Size of data type in bytes */
-    UnsignedInt     pixelWidth;     /* Image level 0 width */
-    UnsignedInt     pixelHeight;    /* Image level 0 height */
-    UnsignedInt     pixelDepth;     /* Image level 0 depth */
-    UnsignedInt     layerCount;     /* Number of array elements */
-    UnsignedInt     faceCount;      /* Number of cubemap faces */
-    UnsignedInt     levelCount;     /* Number of mip levels */
-    UnsignedInt     supercompressionScheme; 
+    char         identifier[12]; /* File identifier */
+    UnsignedInt  vkFormat;       /* VkFormat enum value, VK_FORMAT_UNDEFINED = custom */
+    UnsignedInt  typeSize;       /* Size of data type in bytes */
+    Vector3ui    pixelSize;      /* Image level 0 size */
+    UnsignedInt  layerCount;     /* Number of array elements */
+    UnsignedInt  faceCount;      /* Number of cubemap faces */
+    UnsignedInt  levelCount;     /* Number of mip levels */
+    UnsignedInt  supercompressionScheme; 
     /* Index */
-    UnsignedInt     dfdByteOffset;  /* Offset of Data Format Descriptor */
-    UnsignedInt     dfdByteLength;  /* Length of Data Format Descriptor */
-    UnsignedInt     kvdByteOffset;  /* Offset of Key/Value Data */
-    UnsignedInt     kvdByteLength;  /* Length of Key/Value Data */
-    UnsignedLong    sgdByteOffset;  /* Offset of Supercompression Global Data */
-    UnsignedLong    sgdByteLength;  /* Length of Supercompression Global Data */
+    UnsignedInt  dfdByteOffset;  /* Offset of Data Format Descriptor */
+    UnsignedInt  dfdByteLength;  /* Length of Data Format Descriptor */
+    UnsignedInt  kvdByteOffset;  /* Offset of Key/Value Data */
+    UnsignedInt  kvdByteLength;  /* Length of Key/Value Data */
+    UnsignedLong sgdByteOffset;  /* Offset of Supercompression Global Data */
+    UnsignedLong sgdByteLength;  /* Length of Supercompression Global Data */
 };
 
 static_assert(sizeof(KtxHeader) == 80, "Improper size of KtxHeader struct");
@@ -67,14 +63,15 @@ struct KtxLevel {
 
 static_assert(sizeof(KtxLevel) == 24, "Improper size of KtxLevel struct");
 
-#pragma pack()
-
-constexpr UnsignedByte KtxFileIdentifier[12]{
-    /* "«KTX 20»\r\n\x1A\n" */
-    0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
+constexpr char KtxFileIdentifier[12]{
+    /* https://github.khronos.org/KTX-Specification/#_identifier */
+    '\xab', 'K', 'T', 'X', ' ', '2', '0', '\xbb', '\r', '\n', '\x1a', '\n'
 };
 
 static_assert(sizeof(KtxFileIdentifier) == sizeof(KtxHeader::identifier), "Improper size of KtxFileIdentifier data");
+
+constexpr std::size_t KtxFileVersionOffset = 5;
+static_assert(KtxFileVersionOffset < sizeof(KtxFileIdentifier), "KtxFileVersionOffset out of bounds");
 
 }}}
 
