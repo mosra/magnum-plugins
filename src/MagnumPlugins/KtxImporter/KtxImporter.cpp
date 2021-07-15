@@ -26,6 +26,7 @@
 #include "KtxImporter.h"
 
 #include <algorithm>
+#include <map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
@@ -304,13 +305,15 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     Implementation::KtxHeader header = *reinterpret_cast<const Implementation::KtxHeader*>(data.data());
     std::size_t offset = sizeof(Implementation::KtxHeader);
 
-    /* Members after supercompressionScheme need endian swapping as well,
+    /* Members after kvdByteLength need endian swapping as well,
        but we don't need them for now. */
     Utility::Endianness::littleEndianInPlace(
         header.vkFormat, header.typeSize,
         header.pixelSize[0], header.pixelSize[1], header.pixelSize[2],
         header.layerCount, header.faceCount, header.levelCount,
-        header.supercompressionScheme);
+        header.supercompressionScheme,
+        header.dfdByteOffset, header.dfdByteLength,
+        header.kvdByteOffset, header.kvdByteLength);
 
     /* Check magic string to verify this is a KTX2 file */
     const auto identifier = Containers::StringView{header.identifier, sizeof(header.identifier)};
@@ -415,6 +418,58 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             return;
         }
     }
+
+    CORRADE_INTERNAL_ASSERT(header.kvdByteLength > 0 || header.kvdByteOffset == 0);
+    CORRADE_INTERNAL_ASSERT(header.dfdByteLength > 0 || header.dfdByteOffset == 0);
+
+    /** @todo Read Data Format Descriptor */
+    if(header.dfdByteLength > 0) {
+        if(data.size() < header.dfdByteOffset + header.dfdByteLength) {
+            Error{} << "Trade::KtxImporter::openData(): data format descriptor too short, expected at least" <<
+                header.dfdByteOffset + header.dfdByteLength << "bytes but got" << data.size();
+            return;
+        }
+        const auto DataFormatDescriptorData = f->in.suffix(header.dfdByteOffset).prefix(header.dfdByteLength);
+    }
+
+    /* Read Key/Value Data, optional */
+    std::map<Containers::StringView, Containers::ArrayView<const char>> keyValueMap;
+    if(header.kvdByteLength > 0) {
+        if(data.size() < header.kvdByteOffset + header.kvdByteLength) {
+            Error{} << "Trade::KtxImporter::openData(): key/value data too short, expected at least" <<
+                header.kvdByteOffset + header.kvdByteLength << "bytes but got" << data.size();
+            return;
+        }
+        auto keyValueData = f->in.suffix(header.kvdByteOffset).prefix(header.kvdByteLength);
+        UnsignedInt current = 0;
+        while(current + sizeof(UnsignedInt) < keyValueData.size()) {
+            const UnsignedInt length = *reinterpret_cast<const UnsignedInt*>(keyValueData.suffix(current).data());
+            current += sizeof(length);
+            if(current + length < keyValueData.size()) {
+                const auto entry = keyValueData.suffix(current).prefix(length);
+                /* Key is zero-terminated, value is any remaining bytes. Value
+                   alignment must be implicitly done through key length, hence
+                   the funny KTX keys with multiple underscores. Any multi-byte
+                   numbers in values must be endian-swapped later. */
+                const std::size_t keyLength = entry.end() - std::find(entry.begin(), entry.end(), '\0');
+                if(keyLength == 0 || keyLength >= entry.size()) {
+                    Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
+                } else {
+                    const Containers::StringView key{entry.data()};
+                    CORRADE_INTERNAL_ASSERT(key.size() == keyLength);
+                    CORRADE_INTERNAL_ASSERT(keyValueMap.count(key) == 0);
+                    keyValueMap[key] = entry.suffix(keyLength + 1);
+                }
+            }
+            /* Length value is dword-aligned, guaranteed for the first length
+               by the file layout. Padding is not included in the length. */
+            current += (length + 3)/4*4;
+        }
+        CORRADE_INTERNAL_ASSERT(current == keyValueData.size());
+    }
+
+    /** @todo Determine if format needs swizzling */
+    f->needsSwizzle = false;
 
     f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numLayers};
 
