@@ -29,6 +29,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
@@ -311,9 +312,16 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         header.layerCount, header.faceCount, header.levelCount,
         header.supercompressionScheme);
 
-    /* Check magic string to verify this is a KTX file */
-    if(std::memcmp(&header.identifier, Implementation::KtxFileIdentifier, sizeof(header.identifier)) != 0) {
-        Error() << "Trade::KtxImporter::openData(): wrong file signature";
+    /* Check magic string to verify this is a KTX2 file */
+    const auto identifier = Containers::StringView{header.identifier, sizeof(header.identifier)};
+    if(identifier != Implementation::KtxFileIdentifier) {
+        /* Print a useful error if this is a KTX file with an unsupported
+           version. KTX1 uses the same identifier but different version string. */
+        if(std::memcmp(identifier.data(), Implementation::KtxFileIdentifier, Implementation::KtxFileVersionOffset) == 0)
+            Error() << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" <<
+                identifier.suffix(Implementation::KtxFileVersionOffset).prefix(2);
+        else
+            Error() << "Trade::KtxImporter::openData(): wrong file signature";
         return;
     }
 
