@@ -94,6 +94,108 @@ void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, cons
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
+bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSize, const char* prefix) {
+    /* Check magic string to verify this is a KTX2 file */
+    const auto identifier = Containers::StringView{header.identifier, sizeof(header.identifier)};
+    if(identifier != Implementation::KtxFileIdentifier) {
+        /* Print a useful error if this is a KTX file with an unsupported
+           version. KTX1 uses the same identifier but different version string. */
+        if(std::memcmp(identifier.data(), Implementation::KtxFileIdentifier, Implementation::KtxFileVersionOffset) == 0)
+            Error() << prefix << "unsupported KTX version, expected 20 but got" <<
+                identifier.suffix(Implementation::KtxFileVersionOffset).prefix(2);
+        else
+            Error() << prefix << "wrong file signature";
+        return false;
+    }
+
+    /* typeSize is the size of the format's underlying type, not the texel
+       size, e.g. 2 for RG16F. For any sane format it should be a
+       power-of-two between 1 and 8. */
+    if(header.typeSize < 1 || header.typeSize > 8 ||
+        (header.typeSize & (header.typeSize - 1)))
+    {
+        Error{} << prefix << "unsupported type size" << header.typeSize;
+        return false;
+    }
+
+    if(header.pixelSize.x() == 0) {
+        Error{} << prefix << "invalid image size, width is 0";
+        return false;
+    }
+    if(header.pixelSize.y() == 0 && header.pixelSize.z() > 0) {
+        Error{} << prefix << "invalid image size, depth is" << header.pixelSize.z() << "but height is 0";
+        return false;
+    }
+
+    if(header.faceCount != 1) {
+        if(header.faceCount != 6) {
+            Error{} << prefix << "invalid cubemap face count, expected 1 or 6 but got" << header.faceCount;
+            return false;
+        }
+        if(header.pixelSize.z() > 0 ||header.pixelSize.x() != header.pixelSize.y()) {
+            Error{} << prefix << "invalid cubemap dimensions, must be 2D and square, but got" << header.pixelSize;
+            return false;
+        }
+    }
+
+    const UnsignedInt maxLevelCount = Math::log2(header.pixelSize.max()) + 1;
+    if(header.levelCount > maxLevelCount) {
+        Error{} << prefix << "too many mipmap levels, expected at most" <<
+            maxLevelCount << "but got" << header.levelCount;
+        return false;
+    }
+
+    const std::size_t levelIndexEnd = sizeof(header) + Math::max(header.levelCount, 1u)*sizeof(Implementation::KtxLevel);
+    if(fileSize < levelIndexEnd) {
+        Error{} << prefix << "level index too short, expected at least" <<
+            levelIndexEnd << "bytes but got" << fileSize;
+        return false;
+    }
+
+    const std::size_t dfdEnd = header.dfdByteOffset + header.dfdByteLength;
+    if(fileSize < dfdEnd) {
+        Error{} << prefix << "data format descriptor out of bounds, expected at least" <<
+            dfdEnd << "bytes but got" << fileSize;
+        return false;
+    }
+
+    const std::size_t kvdEnd = header.kvdByteOffset + header.kvdByteLength;
+    if(fileSize < kvdEnd) {
+        Error{} << prefix << "key/value data out of bounds, expected at least" <<
+            kvdEnd << "bytes but got" << fileSize;
+        return false;
+    }
+
+    return true;
+}
+
+bool validateLevel(const Implementation::KtxHeader& header, std::size_t fileSize, const Implementation::KtxLevel& level, std::size_t imageLength, const char* prefix) {
+    /* Both lengths should be equal without supercompression. Be lenient
+        here and only emit a warning in case some shitty exporter gets this
+        wrong. */
+    if(header.supercompressionScheme == 0 && level.byteLength != level.uncompressedByteLength) {
+        Warning{} << prefix << "mismatching image data sizes, both compressed "
+            "and uncompressed should be equal but got" <<
+            level.byteLength << "and" << level.uncompressedByteLength;
+    }
+
+    const std::size_t levelEnd = level.byteOffset + level.byteLength;
+    if(fileSize < levelEnd) {
+        Error{} << prefix << "level data out of bounds, expected at least" <<
+            levelEnd << "bytes but got" << fileSize;
+        return false;
+    }
+
+    const std::size_t totalLength = imageLength*Math::max(header.layerCount, 1u)*header.faceCount;
+    if(level.byteLength < totalLength) {
+        Error{} << prefix << "level data too short, expected at least" <<
+            totalLength << "bytes but got" << level.byteLength;
+        return false;
+    }
+
+    return true;
+}
+
 /** @todo Swizzle channels if necessary. Vk::PixelFormat doesn't contain any
           of the swizzled formats like B8G8R8A8. */
 /** @todo Support all Vulkan formats allowed by the KTX spec. Create custom
@@ -296,7 +398,7 @@ bool KtxImporter::doIsOpened() const { return !!_f; }
 void KtxImporter::doClose() { _f = nullptr; }
 
 void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    /* Check if the file is long enough */
+    /* Check if the file is long enough for the header */
     if(data.size() < sizeof(Implementation::KtxHeader)) {
         Error{} << "Trade::KtxImporter::openData(): file header too short, expected at least" << sizeof(Implementation::KtxHeader) << "bytes but got" << data.size();
         return;
@@ -305,28 +407,21 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     Implementation::KtxHeader header = *reinterpret_cast<const Implementation::KtxHeader*>(data.data());
     std::size_t offset = sizeof(Implementation::KtxHeader);
 
-    /* Members after kvdByteLength need endian swapping as well,
-       but we don't need them for now. */
+    /* KTX2 uses little-endian everywhere */
     Utility::Endianness::littleEndianInPlace(
         header.vkFormat, header.typeSize,
         header.pixelSize[0], header.pixelSize[1], header.pixelSize[2],
         header.layerCount, header.faceCount, header.levelCount,
         header.supercompressionScheme,
         header.dfdByteOffset, header.dfdByteLength,
-        header.kvdByteOffset, header.kvdByteLength);
+        header.kvdByteOffset, header.kvdByteLength,
+        header.sgdByteOffset, header.sgdByteLength);
 
-    /* Check magic string to verify this is a KTX2 file */
-    const auto identifier = Containers::StringView{header.identifier, sizeof(header.identifier)};
-    if(identifier != Implementation::KtxFileIdentifier) {
-        /* Print a useful error if this is a KTX file with an unsupported
-           version. KTX1 uses the same identifier but different version string. */
-        if(std::memcmp(identifier.data(), Implementation::KtxFileIdentifier, Implementation::KtxFileVersionOffset) == 0)
-            Error() << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" <<
-                identifier.suffix(Implementation::KtxFileVersionOffset).prefix(2);
-        else
-            Error() << "Trade::KtxImporter::openData(): wrong file signature";
+    /* Perform some sanity checks on header data and check if
+       there is enough space for the level index, data format
+       descriptor and key/value data */
+    if(!validateHeader(header, data.size(), "Trade::KtxImporter::openData():"))
         return;
-    }
 
     Containers::Pointer<File> f{new File};
     f->in = Containers::Array<char>{NoInit, data.size()};
@@ -347,20 +442,10 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         f->compressed = false;
     }
 
-    /** @todo Determine if format needs swizzling */
-    f->needsSwizzle = false;
-
-    /* typeSize is the size of the format's underlying type, not the texel
-       size, e.g. 2 for RG16F. For any sane format it should be a
-       power-of-two between 1 and 8. */
-    if(header.typeSize < 1 || header.typeSize > 8 ||
-        (header.typeSize & (header.typeSize - 1)))
-    {
-        Error{} << "Trade::KtxImporter::openData(): unsupported type size" << header.typeSize;
+    if(f->compressed && header.typeSize != 1) {
+        Error{} << "Trade::KtxImporter::openData(): invalid type size for compressed format, expected 1 but got" << header.typeSize;
         return;
     }
-    /* Block-compressed formats must have typeSize set to 1 */
-    CORRADE_INTERNAL_ASSERT(!f->compressed || header.typeSize == 1);
     f->typeSize = header.typeSize;
 
     /** @todo Support supercompression */
@@ -369,15 +454,8 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    CORRADE_INTERNAL_ASSERT(header.pixelSize.x() > 0);
-
-    if(header.pixelSize.z() > 0) {
-        CORRADE_INTERNAL_ASSERT(header.pixelSize.y() > 0);
-        f->dimensions = 3;
-    } else if(header.pixelSize.y() > 0)
-        f->dimensions = 2;
-    else
-        f->dimensions = 1;
+    f->dimensions = Math::min(header.pixelSize, Vector3ui{1}).sum();
+    CORRADE_INTERNAL_ASSERT(f->dimensions >= 1 && f->dimensions <= 3);
 
     /** @todo Assert that 3D images can't have depth format */
 
@@ -391,81 +469,88 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Cubemap faces, either 1 or 6. KTX allows incomplete cubemaps but those
        have to be array layers with extra metadata inside key/value data. */
     const UnsignedInt numFaces = header.faceCount;
-    if(numFaces != 1) {
-        CORRADE_INTERNAL_ASSERT(numFaces == 6);
-        /* Cubemaps must be 2D and square */
-        CORRADE_INTERNAL_ASSERT(f->dimensions == 2);
-        CORRADE_INTERNAL_ASSERT(size.x() == size.y());
-    }
 
+    /* levelCount of 0 indicates to the user to generate mipmaps, not allowed
+       for block-compressed formats. We don't really care either way
+       and treat 0 as 1. */
     const UnsignedInt numMipmaps = Math::max(header.levelCount, 1u);
 
-    /* KTX stores byte ranges for each mipmap, from largest to smallest. The
-       actual pixel data is usually arranged in reverse order for streaming
-       but we only need the ranges. */
-    const std::size_t levelIndexSize = numMipmaps * sizeof(Implementation::KtxLevel);
-    if(f->in.suffix(offset).size() < levelIndexSize) {
-        Error{} << "Trade::KtxImporter::openData(): image header too short, expected at least" << offset + levelIndexSize << "bytes but got" << data.size();
-        return;
-    }
-    const auto levelIndex = Containers::arrayCast<Implementation::KtxLevel>(f->in.slice(offset, offset + levelIndexSize));
-    for(Implementation::KtxLevel& level: levelIndex) {
-        Utility::Endianness::littleEndianInPlace(level.byteOffset, level.byteLength, level.uncompressedByteLength);
-        CORRADE_INTERNAL_ASSERT(header.supercompressionScheme != 0 || level.byteLength == level.uncompressedByteLength);
-        CORRADE_INTERNAL_ASSERT(level.uncompressedByteLength % (numFaces * numLayers) == 0);
-        if(data.size() < level.byteOffset + level.byteLength) {
-            Error{} << "Trade::KtxImporter::openData(): mip data too short, expected at least" << level.byteOffset + level.byteLength << "bytes but got" << data.size();
+    /* KTX stores byte ranges for each mipmap in the level index, from largest
+       to smallest. The  actual pixel data is usually arranged in reverse order
+       for streaming but we only need the ranges. */
+    const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
+    const auto levelIndex = Containers::arrayCast<Implementation::KtxLevel>(
+        f->in.suffix(offset).prefix(levelIndexSize));
+
+    /* We later loop over all levels multiple times, so prepare and validate
+       a few things up-front. */
+    Containers::Array<std::size_t> levelLengths{numMipmaps};
+    Vector3i mipSize{size};
+    for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
+        auto& level = levelIndex[i];
+        Utility::Endianness::littleEndianInPlace(level.byteOffset,
+            level.byteLength, level.uncompressedByteLength);
+
+        levelLengths[i] = f->compressed
+            ? imageLength(mipSize, f->pixelFormat.compressed)
+            : imageLength(mipSize, f->pixelFormat.uncompressed);
+
+        if(!validateLevel(header, data.size(), level, levelLengths[i], "Trade::KtxImporter::openData():"))
             return;
-        }
+
+        /* Shrink to next power of 2 */
+        mipSize = Math::max(mipSize >> 1, Vector3i{1});
     }
 
-    CORRADE_INTERNAL_ASSERT(header.kvdByteLength > 0 || header.kvdByteOffset == 0);
-    CORRADE_INTERNAL_ASSERT(header.dfdByteLength > 0 || header.dfdByteOffset == 0);
-
-    /** @todo Read Data Format Descriptor */
+    /** @todo Read data format descriptor */
     if(header.dfdByteLength > 0) {
-        if(data.size() < header.dfdByteOffset + header.dfdByteLength) {
-            Error{} << "Trade::KtxImporter::openData(): data format descriptor too short, expected at least" <<
-                header.dfdByteOffset + header.dfdByteLength << "bytes but got" << data.size();
-            return;
-        }
         const auto DataFormatDescriptorData = f->in.suffix(header.dfdByteOffset).prefix(header.dfdByteLength);
     }
 
-    /* Read Key/Value Data, optional */
+    /* Read key/value data, optional */
     std::map<Containers::StringView, Containers::ArrayView<const char>> keyValueMap;
     if(header.kvdByteLength > 0) {
-        if(data.size() < header.kvdByteOffset + header.kvdByteLength) {
-            Error{} << "Trade::KtxImporter::openData(): key/value data too short, expected at least" <<
-                header.kvdByteOffset + header.kvdByteLength << "bytes but got" << data.size();
-            return;
-        }
         auto keyValueData = f->in.suffix(header.kvdByteOffset).prefix(header.kvdByteLength);
+        /* Loop through entries, each one consisting of:
+        
+           UnsignedInt length
+           Byte data[length]
+           Byte padding[...]
+
+           data begins with a zero-terminated key, the rest of the bytes is the
+           value content. Value alignment must be implicitly done through key
+           length, hence the funny KTX keys with multiple underscores. Any
+           multi-byte numbers in values must be endian-swapped later. */
         UnsignedInt current = 0;
         while(current + sizeof(UnsignedInt) < keyValueData.size()) {
+            /* Length without padding */
             const UnsignedInt length = *reinterpret_cast<const UnsignedInt*>(keyValueData.suffix(current).data());
             current += sizeof(length);
+
             if(current + length < keyValueData.size()) {
                 const auto entry = keyValueData.suffix(current).prefix(length);
-                /* Key is zero-terminated, value is any remaining bytes. Value
-                   alignment must be implicitly done through key length, hence
-                   the funny KTX keys with multiple underscores. Any multi-byte
-                   numbers in values must be endian-swapped later. */
+
+                /* Split at zero terminating the key string */
                 const std::size_t keyLength = entry.end() - std::find(entry.begin(), entry.end(), '\0');
-                if(keyLength == 0 || keyLength >= entry.size()) {
+                if(keyLength == 0 || keyLength >= entry.size())
                     Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
-                } else {
+                else {
                     const Containers::StringView key{entry.data()};
                     CORRADE_INTERNAL_ASSERT(key.size() == keyLength);
-                    CORRADE_INTERNAL_ASSERT(keyValueMap.count(key) == 0);
-                    keyValueMap[key] = entry.suffix(keyLength + 1);
+
+                    if(keyValueMap.count(key) > 0)
+                        keyValueMap[key] = entry.suffix(keyLength + 1);
+                    else
+                        Warning{} << "Trade::KtxImporter::openData(): key" <<
+                            key << "already set, skipping";
                 }
             }
             /* Length value is dword-aligned, guaranteed for the first length
-               by the file layout. Padding is not included in the length. */
+               by the file layout */
             current += (length + 3)/4*4;
         }
-        CORRADE_INTERNAL_ASSERT(current == keyValueData.size());
+        /** @todo Remove after testing */
+        CORRADE_INTERNAL_ASSERT(current <= keyValueData.size());
     }
 
     /** @todo Determine if format needs swizzling */
@@ -474,28 +559,23 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numLayers};
 
     for(UnsignedInt layer = 0; layer != numLayers; ++layer) {
-        f->imageData[layer] = Containers::Array<File::LevelData>{numFaces * numMipmaps};
-        /* This matches the image order of DdsImporter: faces, mipmaps */
+        f->imageData[layer] = Containers::Array<File::LevelData>{numFaces*numMipmaps};
+        /* This matches the level order of DdsImporter: faces, mipmaps */
         std::size_t currentLevel = 0;
         for(UnsignedInt face = 0; face != numFaces; ++face) {
-            Vector3i mipSize{size};
+            mipSize = size;
 
             /* Load all mipmaps for current face */
-            for(const Implementation::KtxLevel& level: levelIndex) {
-                const std::size_t length = f->compressed
-                    ? imageLength(mipSize, f->pixelFormat.compressed)
-                    : imageLength(mipSize, f->pixelFormat.uncompressed);
-
+            for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
                 /* Each mipmap byte range contains tightly packed images,
                    ordered as follows:
                    layers, faces, (slices, rows, columns) */
-                const std::size_t imageOffset = (layer * numFaces + face) * length;
-                if(level.byteLength < imageOffset + length) {
-                    Error{} << "Trade::KtxImporter::openData(): image data too short, expected at least" << imageOffset + length << "bytes but got" << level.byteLength;
-                    return;
-                }
+                const std::size_t length = levelLengths[i];
+                const std::size_t imageOffset = (layer*numFaces + face)*length;
 
-                f->imageData[layer][currentLevel++] = {mipSize, f->in.suffix(level.byteOffset).slice(imageOffset, imageOffset + length)};
+                /* validateLevel already checked if the level data is large
+                   enough for all images */
+                f->imageData[layer][currentLevel++] = {mipSize, f->in.suffix(levelIndex[i].byteOffset).suffix(imageOffset).prefix(length)};
 
                 /* Shrink to next power of 2 */
                 mipSize = Math::max(mipSize >> 1, Vector3i{1});
