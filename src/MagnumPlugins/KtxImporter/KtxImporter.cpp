@@ -31,6 +31,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
@@ -133,16 +134,21 @@ void swizzlePixels(SwizzleType type, UnsignedInt typeSize, Containers::ArrayView
 }
 
 bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSize, const char* prefix) {
-    /* Check magic string to verify this is a KTX2 file */
-    const auto identifier = Containers::StringView{header.identifier, sizeof(header.identifier)};
-    if(identifier != Implementation::KtxFileIdentifier) {
-        /* Print a useful error if this is a KTX file with an unsupported
-           version. KTX1 uses the same identifier but different version string. */
-        if(std::memcmp(identifier.data(), Implementation::KtxFileIdentifier, Implementation::KtxFileVersionOffset) == 0)
-            Error() << prefix << "unsupported KTX version, expected 20 but got" <<
-                identifier.suffix(Implementation::KtxFileVersionOffset).prefix(2);
-        else
-            Error() << prefix << "wrong file signature";
+    /* Check magic string */
+    const Containers::StringView identifier{header.identifier, sizeof(header.identifier)};
+    const Containers::StringView expected{Implementation::KtxFileIdentifier, sizeof(header.identifier)};
+    if(identifier != expected) {
+        /* Print a useful error for a KTX file with an unsupported version.
+           KTX1 uses the same magic string but with a different version string. */
+        if(identifier.hasPrefix(expected.prefix(Implementation::KtxFileVersionOffset))) {
+            const auto version = identifier.suffix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
+            if(version != "20") {
+                Error() << prefix << "unsupported KTX version, expected 20 but got" << version;
+                return false;
+            }
+        }
+        
+        Error() << prefix << "wrong file signature";
         return false;
     }
 
@@ -212,9 +218,8 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
 bool validateLevel(const Implementation::KtxHeader& header, std::size_t fileSize, const Implementation::KtxLevel& level, std::size_t imageLength, const char* prefix) {
     CORRADE_INTERNAL_ASSERT(imageLength > 0);
 
-    /* Both lengths should be equal without supercompression. Be lenient
-       here and only emit a warning in case some shitty exporter gets this
-       wrong. */
+    /* Both lengths should be equal without supercompression. Be lenient here
+       and only emit a warning in case some shitty exporter gets this wrong. */
     if(header.supercompressionScheme == 0 && level.byteLength != level.uncompressedByteLength) {
         Warning{} << prefix << "mismatching image data sizes, both compressed "
             "and uncompressed should be equal but got" <<
@@ -285,7 +290,7 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
     }
 
     /* PixelFormat doesn't contain any of the swizzled formats. Figure it out
-       from the Vulkan format and remember that we need to swizzle in doImage. */
+       from the Vulkan format and remember that we need to swizzle in doImage(). */
     if(format == PixelFormat{}) {
         switch(vkFormat) {
             case Implementation::VK_FORMAT_B8G8R8_UNORM:   format = PixelFormat::RGB8Unorm;  break;
@@ -305,7 +310,7 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
         if(format != PixelFormat{}) {
             const UnsignedInt size = pixelSize(format);
             CORRADE_INTERNAL_ASSERT(size == 3 || size == 4);
-            swizzle = size == 3 ? SwizzleType::BGR : SwizzleType::BGRA;
+            swizzle = (size == 3) ? SwizzleType::BGR : SwizzleType::BGRA;
         }
     }
 
@@ -330,7 +335,7 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
         return true;
     }
 
-    /* Find block-compressed pixel format. No swizzling necessary (or possible!). */
+    /* Find block-compressed pixel format, no swizzling possible */
     CompressedPixelFormat compressedFormat{};
     switch(vkFormat) {
         #define _c(vulkan, magnum) case Implementation::VK_FORMAT_ ## vulkan: compressedFormat = CompressedPixelFormat:: ## magnum; break;
@@ -373,7 +378,10 @@ void KtxImporter::doClose() { _f = nullptr; }
 
 void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Check if the file is long enough for the header */
-    if(data.size() < sizeof(Implementation::KtxHeader)) {
+    if(data.empty()) {
+        Error{} << "Trade::KtxImporter::openData(): the file is empty";
+        return;
+    } else if(data.size() < sizeof(Implementation::KtxHeader)) {
         Error{} << "Trade::KtxImporter::openData(): file header too short, expected at least" << sizeof(Implementation::KtxHeader) << "bytes but got" << data.size();
         return;
     }
@@ -391,9 +399,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         header.kvdByteOffset, header.kvdByteLength,
         header.sgdByteOffset, header.sgdByteLength);
 
-    /* Perform some sanity checks on header data and check if
-       there is enough space for the level index, data format
-       descriptor and key/value data */
+    /* Perform some sanity checks on header data, including byte ranges */
     if(!validateHeader(header, data.size(), "Trade::KtxImporter::openData():"))
         return;
 
@@ -436,8 +442,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    /* Make size in each dimension at least 1 so we don't choke on size
-       calculations using product(). */
+    /* Make sure we don't choke on size calculations using product() */
     const Vector3i size = Math::max(Vector3i{header.pixelSize}, Vector3i{1});
 
     /* Number of array layers, imported as separate images */
@@ -447,9 +452,9 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
        have to be array layers with extra metadata inside key/value data. */
     const UnsignedInt numFaces = header.faceCount;
 
-    /* levelCount of 0 indicates to the user to generate mipmaps, not allowed
-       for block-compressed formats. We don't really care either way
-       and treat 0 and 1 the same. */
+    /* levelCount == 0 indicates to the user/importer to generate mipmaps. We
+       don't really care either way since we don't generate mipmaps or pass
+       this on to the user. */
     const UnsignedInt numMipmaps = Math::max(header.levelCount, 1u);
 
     /* KTX stores byte ranges for each mipmap in the level index, from largest
@@ -479,15 +484,17 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         mipSize = Math::max(mipSize >> 1, Vector3i{1});
     }
 
+    /* Read metadata */
+
     /** @todo Read data format descriptor */
     if(header.dfdByteLength > 0) {
-        const auto DataFormatDescriptorData = f->in.suffix(header.dfdByteOffset).prefix(header.dfdByteLength);
+        Containers::ArrayView<const char> dataFormatDescriptorData = f->in.suffix(header.dfdByteOffset).prefix(header.dfdByteLength);
     }
 
     /* Read key/value data, optional */
     std::map<Containers::StringView, Containers::ArrayView<const char>> keyValueMap;
     if(header.kvdByteLength > 0) {
-        auto keyValueData = f->in.suffix(header.kvdByteOffset).prefix(header.kvdByteLength);
+        Containers::ArrayView<const char> keyValueData{f->in.suffix(header.kvdByteOffset).prefix(header.kvdByteLength)};
         /* Loop through entries, each one consisting of:
 
            UnsignedInt length
@@ -505,36 +512,22 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             current += sizeof(length);
 
             if(current + length < keyValueData.size()) {
-                const auto entry = keyValueData.suffix(current).prefix(length);
+                const Containers::StringView entry{keyValueData.suffix(current).prefix(length)};
+                const Containers::Array3<Containers::StringView> split = entry.partition('\0');
+                const auto key = split[0];
+                const auto value = split[2];
 
-                /* Split at zero separating the key string and value */
-                const std::size_t keyLength = std::find(entry.begin(), entry.end(), '\0') - entry.begin();
-                if(keyLength == 0 || keyLength >= entry.size())
-                    Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
-                else {
-                    const Containers::StringView key{entry.data()};
-                    CORRADE_INTERNAL_ASSERT(key.size() == keyLength);
-
-                    if(keyValueMap.count(key) > 0)
-                        keyValueMap[key] = entry.suffix(keyLength + 1);
-                    else
-                        Warning{} << "Trade::KtxImporter::openData(): key" <<
-                            key << "already set, skipping";
-                }
+                if(key.isEmpty() || value.isEmpty())
+                    Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";                    
+                else if(keyValueMap.count(key) > 0)
+                    Warning{} << "Trade::KtxImporter::openData(): key" << key << "already set, skipping";
+                else
+                    keyValueMap[key] = value;
             }
             /* Length value is dword-aligned, guaranteed for the first length
                by the file layout */
             current += (length + 3)/4*4;
         }
-    }
-
-    /** @todo Remove, only for debugging */
-    Debug{} << "Key/value data:";
-    for(const auto& entry : keyValueMap) {
-        if(entry.first == "KTXorientation" ||
-            entry.first == "KTXswizzle" ||
-            entry.first == "KTXcubemapIncomplete")
-        Debug{} << entry.first << ":" << Containers::StringView{entry.second};
     }
 
     using namespace Containers::Literals;
@@ -545,8 +538,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
        u/d = up/down
        o/i = out of/into screen
 
-       Default is assumed to be rdi, Magnum expects ruo. */
-    /** @todo Is it really ruo? I can't find any info on z texture origin in GL. */
+       Default is assumed to be rdi, Magnum/GL expects ruo. */
     {
         constexpr auto targetOrientation = "ruo"_s;
         constexpr auto defaultOrientation = "rdi"_s;
@@ -585,6 +577,8 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /** @todo KTX spec seems to really insist on rd for cubemaps but the
               wording is odd, I can't tell if they're saying it's mandatory or
               not: https://github.khronos.org/KTX-Specification/#cubemapOrientation
+              The toktx tool from Khronos Texture Tools also forces rd for
+              cubemaps, so we should probably do that too.
               Face orientation (+X, -X, etc.) is based on a left-handed y-up
               coordinate system, but neither GL nor Vulkan have that. The
               appendix implies that both need coordinate transformations. Do we
@@ -593,15 +587,9 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* Incomplete cubemaps are a 'feature' of KTX files. We just import them
        as layers (which is how they're exposed to us). */
-    if(header.faceCount != 6) {
-        const auto found = keyValueMap.find("KTXcubemapIncomplete"_s);
-        if(found != keyValueMap.end() && !found->second.empty()) {
-            const UnsignedByte mask = found->second.front();
-            /* 0x3F = 00111111b = all cubemaps present, seems to be allowed */
-            if((mask & 0x3F) != 0x3F)
-                Warning{} << "Trade::KtxImporter::openData(): image contains incomplete "
-                    "cubemap faces, importing faces as array layers";
-        }
+    if(header.faceCount != 6 && keyValueMap.count("KTXcubemapIncomplete"_s) > 0) {
+        Warning{} << "Trade::KtxImporter::openData(): image contains incomplete "
+            "cubemap faces, importing faces as array layers";
     }
 
     {
@@ -707,9 +695,10 @@ Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, Unsigne
     /* Swizzle BGR(A) if necessary */
     swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
 
-    /* Rows are tightly packed */
+    /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    storage.setAlignment(1);
+    if((levelData.size.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
+        storage.setAlignment(1);
 
     return ImageData1D{storage, _f->pixelFormat.uncompressed, levelData.size.x(), std::move(data)};
 }
@@ -738,9 +727,10 @@ Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, Unsigne
     /* Swizzle BGR(A) if necessary */
     swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
 
-    /* Rows are tightly packed */
+    /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    storage.setAlignment(1);
+    if((levelData.size.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
+        storage.setAlignment(1);
 
     return ImageData2D{storage, _f->pixelFormat.uncompressed, levelData.size.xy(), std::move(data)};
 }
@@ -769,9 +759,10 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
     /* Swizzle BGR(A) if necessary */
     swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
 
-    /* Rows are tightly packed */
+    /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    storage.setAlignment(1);
+    if((levelData.size.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
+        storage.setAlignment(1);
 
     return ImageData3D{storage, _f->pixelFormat.uncompressed, levelData.size, std::move(data)};
 }

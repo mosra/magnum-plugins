@@ -66,9 +66,5 @@ if(MAGNUM_KTXIMPORTER_BUILD_STATIC)
     target_sources(KtxImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
-    add_subdirectory(Test)
-endif()
-
 # MagnumPlugins KtxImporter target alias for superprojects
 add_library(MagnumPlugins::KtxImporter ALIAS KtxImporter)

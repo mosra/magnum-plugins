@@ -27,6 +27,7 @@
 */
 
 #include <Magnum/Magnum.h>
+#include <Magnum/Math/Vector3.h>
 
 /* Used by both KtxImporter and KtxImageConverter, which is why it isn't
    directly inside KtxImporter.cpp. OTOH it doesn't need to be exposed
@@ -321,7 +322,8 @@ constexpr char KtxFileIdentifier[12]{
 static_assert(sizeof(KtxFileIdentifier) == sizeof(KtxHeader::identifier), "Improper size of KtxFileIdentifier data");
 
 constexpr std::size_t KtxFileVersionOffset = 5;
-static_assert(KtxFileVersionOffset < sizeof(KtxFileIdentifier), "KtxFileVersionOffset out of bounds");
+constexpr std::size_t KtxFileVersionLength = 2;
+static_assert(KtxFileVersionOffset + KtxFileVersionLength <= sizeof(KtxFileIdentifier), "KtxFileVersion(Offset|Length) out of bounds");
 
 }}}
 

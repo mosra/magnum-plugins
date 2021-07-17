@@ -26,13 +26,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @file
- * @brief Class @ref Magnum::Trade::KtxImporter
- */
-
-#include <Corrade/Containers/Array.h>
-#include <Corrade/Utility/VisibilityMacros.h>
-
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "MagnumPlugins/KtxImporter/configure.h"
