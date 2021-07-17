@@ -60,19 +60,27 @@ std::size_t imageLength(const Vector3i& size, CompressedPixelFormat format) {
     return blockCount.product()*compressedBlockDataSize(format);
 }
 
+template<std::size_t Size> struct TypeForSize {};
+template<> struct TypeForSize<1> { typedef UnsignedByte  Type; };
+template<> struct TypeForSize<2> { typedef UnsignedShort Type; };
+template<> struct TypeForSize<4> { typedef UnsignedInt   Type; };
+template<> struct TypeForSize<8> { typedef UnsignedLong  Type; };
+
+/** @todo Can we perform endian-swap together with the swizzle? Might get messy
+          and it'll be untested... */
 void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
     switch(typeSize) {
         case 1:
             /* Single-byte or block-compressed format, nothing to do */
             break;
         case 2:
-            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<UnsignedShort>(data));
+            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<2>::Type>(data));
             break;
         case 4:
-            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<UnsignedInt>(data));
+            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<4>::Type>(data));
             break;
         case 8:
-            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<UnsignedLong>(data));
+            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<8>::Type>(data));
             break;
         default:
             CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -80,24 +88,48 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
     }
 }
 
-void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, const char* verbosePrefix) {
-    if(format == PixelFormat::RGB8Unorm) {
-        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGR to RGB";
-        auto pixels = reinterpret_cast<Math::Vector3<UnsignedByte>*>(data.data());
-        std::transform(pixels, pixels + data.size()/sizeof(Math::Vector3<UnsignedByte>), pixels,
-            [](Math::Vector3<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r'>(pixel); });
-    } else if(format == PixelFormat::RGBA8Unorm) {
-        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGRA to RGBA";
-        auto pixels = reinterpret_cast<Math::Vector4<UnsignedByte>*>(data.data());
-        std::transform(pixels, pixels + data.size()/sizeof(Math::Vector4<UnsignedByte>), pixels,
-            [](Math::Vector4<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r', 'a'>(pixel); });
-
-    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 enum SwizzleType : UnsignedByte {
     None = 0,
     BGR,
     BGRA
 };
+
+inline SwizzleType& operator ^=(SwizzleType& a, SwizzleType b)
+{
+    /* This is meant to toggle single enum values, make sure it's not being
+       used for other bit-fiddling crimes */
+    CORRADE_INTERNAL_ASSERT(a == SwizzleType::None || a == b);
+    return a = SwizzleType(a ^ b);
+}
+
+template<typename T> void swizzlePixels(SwizzleType type, Containers::ArrayView<char> data) {
+    if(type == SwizzleType::BGR) {
+        for(auto& pixel: Containers::arrayCast<Math::Vector3<T>>(data))
+            pixel = Math::gather<'b', 'g', 'r'>(pixel);
+    } else if(type == SwizzleType::BGRA) {
+        for(auto& pixel: Containers::arrayCast<Math::Vector4<T>>(data))
+            pixel = Math::gather<'b', 'g', 'r', 'a'>(pixel);
+    }
+}
+
+void swizzlePixels(SwizzleType type, UnsignedInt typeSize, Containers::ArrayView<char> data) {
+    switch(typeSize) {
+        case 1:
+            swizzlePixels<TypeForSize<1>::Type>(type, data);
+            break;
+        case 2:
+            swizzlePixels<TypeForSize<2>::Type>(type, data);
+            break;
+        case 4:
+            swizzlePixels<TypeForSize<4>::Type>(type, data);
+            break;
+        case 8:
+            swizzlePixels<TypeForSize<8>::Type>(type, data);
+            break;
+        default:
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            break;
+    }
 }
 
 bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSize, const char* prefix) {
@@ -495,6 +527,44 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
+    {
+        const auto found = keyValueMap.find("KTXswizzle"_s);
+        if(found != keyValueMap.end()) {
+            const Containers::StringView swizzle{found->second.prefix(Math::min<std::size_t>(f->dimensions, found->second.size()))};
+            if(swizzle != "rgba"_s.prefix(f->dimensions)) {
+                bool handled = false;
+                /* Special cases already supported for 8-bit Vulkan formats */
+                if(!f->pixelFormat.isCompressed) {
+                    if(swizzle == "bgr"_s) {
+                        f->pixelFormat.swizzle ^= SwizzleType::BGR;
+                        handled = true;
+                    } else if(swizzle == "bgra"_s) {
+                        f->pixelFormat.swizzle ^= SwizzleType::BGRA;
+                        handled = true;
+                    }
+                }
+                if(!handled) {
+                    Error{} << "Trade::KtxImporter::openData(): unsupported channel "
+                        "mapping:" << swizzle;
+                    return;
+                }
+            }
+        }
+    }
+
+    /** @todo More verbose output */
+    if(flags() & ImporterFlag::Verbose) {
+        switch(f->pixelFormat.swizzle) {
+            case SwizzleType::BGR:
+                Debug{} << "Trade::KtxImporter::openData(): format requires conversion from BGR to RGB";
+                break;
+            case SwizzleType::BGRA:
+                Debug{} << "Trade::KtxImporter::openData(): format requires conversion from BGRA to RGBA";
+                break;
+            default:
+                break;
+        }
+    }
 
     f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numLayers};
 
@@ -527,7 +597,6 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     /** @todo Read KTXorientation and flip image? What is the default? */
-    /** @todo Read KTXswizzle and apply it. Can't do that for block-compressed formats, just ignore in that case? */
     /** @todo Read KTXanimData and expose frame time between images through
               doImporterState (same as StbImageImporter). What if we need
               doImporterState for something else, like other API format
@@ -555,8 +624,9 @@ Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, Unsigne
         return ImageData1D(_f->pixelFormat.compressed, levelData.size.x(), std::move(data));
 
     /* Uncompressed */
-    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
-        flags() & ImporterFlag::Verbose ? "Trade::KtxImporter::image2D():" : nullptr);
+
+    /* Swizzle BGR(A) if necessary */
+    swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
 
     /* Rows are tightly packed */
     PixelStorage storage;
@@ -584,8 +654,9 @@ Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, Unsigne
         return ImageData2D(_f->pixelFormat.compressed, levelData.size.xy(), std::move(data));
 
     /* Uncompressed */
-    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
-        flags() & ImporterFlag::Verbose ? "Trade::KtxImporter::image2D():" : nullptr);
+
+    /* Swizzle BGR(A) if necessary */
+    swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
 
     /* Rows are tightly packed */
     PixelStorage storage;
@@ -613,8 +684,9 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
         return ImageData3D(_f->pixelFormat.compressed, levelData.size, std::move(data));
 
     /* Uncompressed */
-    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
-        flags() & ImporterFlag::Verbose ? "Trade::KtxImporter::image3D():" : nullptr);
+
+    /* Swizzle BGR(A) if necessary */
+    swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
 
     /* Rows are tightly packed */
     PixelStorage storage;
