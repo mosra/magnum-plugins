@@ -93,6 +93,11 @@ void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, cons
             [](Math::Vector4<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r', 'a'>(pixel); });
 
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+enum SwizzleType : UnsignedByte {
+    None = 0,
+    BGR,
+    BGRA
+};
 }
 
 bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSize, const char* prefix) {
@@ -201,171 +206,6 @@ bool validateLevel(const Implementation::KtxHeader& header, std::size_t fileSize
     return true;
 }
 
-/** @todo Swizzle channels if necessary. Vk::PixelFormat doesn't contain any
-          of the swizzled formats like B8G8R8A8. */
-/** @todo Support all Vulkan formats allowed by the KTX spec. Create custom
-          PixelFormat with pixelFormatWrap and manually fill PixelStorage/
-          CompressedPixelStorage. We can take all the necessary info from
-          https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json
-          Do we also need this for the KtxImageConverter? This would allow
-          users to pass in images with implementation-specific PixelFormat
-          using the Vulkan format enum directly. */
-PixelFormat pixelFormat(Vk::PixelFormat format) {
-    #define _c(val) case Vk::PixelFormat:: ## val: return PixelFormat:: ## val;
-    switch(format) {
-        _c(R8Unorm)
-        _c(RG8Unorm)
-        _c(RGB8Unorm)
-        _c(RGBA8Unorm)
-        _c(R8Snorm)
-        _c(RG8Snorm)
-        _c(RGB8Snorm)
-        _c(RGBA8Snorm)
-        _c(R8Srgb)
-        _c(RG8Srgb)
-        _c(RGB8Srgb)
-        _c(RGBA8Srgb)
-        _c(R8UI)
-        _c(RG8UI)
-        _c(RGB8UI)
-        _c(RGBA8UI)
-        _c(R8I)
-        _c(RG8I)
-        _c(RGB8I)
-        _c(RGBA8I)
-        _c(R16Unorm)
-        _c(RG16Unorm)
-        _c(RGB16Unorm)
-        _c(RGBA16Unorm)
-        _c(R16Snorm)
-        _c(RG16Snorm)
-        _c(RGB16Snorm)
-        _c(RGBA16Snorm)
-        _c(R16UI)
-        _c(RG16UI)
-        _c(RGB16UI)
-        _c(RGBA16UI)
-        _c(R16I)
-        _c(RG16I)
-        _c(RGB16I)
-        _c(RGBA16I)
-        _c(R32UI)
-        _c(RG32UI)
-        _c(RGB32UI)
-        _c(RGBA32UI)
-        _c(R32I)
-        _c(RG32I)
-        _c(RGB32I)
-        _c(RGBA32I)
-        _c(R16F)
-        _c(RG16F)
-        _c(RGB16F)
-        _c(RGBA16F)
-        _c(R32F)
-        _c(RG32F)
-        _c(RGB32F)
-        _c(RGBA32F)
-        _c(Depth16Unorm)
-        _c(Depth24Unorm)
-        _c(Depth32F)
-        _c(Stencil8UI)
-        _c(Depth16UnormStencil8UI)
-        _c(Depth24UnormStencil8UI)
-        _c(Depth32FStencil8UI)
-        default:
-            return {};
-    }
-    #undef _c
-}
-
-CompressedPixelFormat compressedPixelFormat(Vk::PixelFormat format) {
-    #define _c(val) case Vk::PixelFormat::Compressed ## val: return CompressedPixelFormat:: ## val;
-    switch(format) {
-        _c(Bc1RGBUnorm)
-        _c(Bc1RGBSrgb)
-        _c(Bc1RGBAUnorm)
-        _c(Bc1RGBASrgb)
-        _c(Bc2RGBAUnorm)
-        _c(Bc2RGBASrgb)
-        _c(Bc3RGBAUnorm)
-        _c(Bc3RGBASrgb)
-        _c(Bc4RUnorm)
-        _c(Bc4RSnorm)
-        _c(Bc5RGUnorm)
-        _c(Bc5RGSnorm)
-        _c(Bc6hRGBUfloat)
-        _c(Bc6hRGBSfloat)
-        _c(Bc7RGBAUnorm)
-        _c(Bc7RGBASrgb)
-        _c(EacR11Unorm)
-        _c(EacR11Snorm)
-        _c(EacRG11Unorm)
-        _c(EacRG11Snorm)
-        _c(Etc2RGB8Unorm)
-        _c(Etc2RGB8Srgb)
-        _c(Etc2RGB8A1Unorm)
-        _c(Etc2RGB8A1Srgb)
-        _c(Etc2RGBA8Unorm)
-        _c(Etc2RGBA8Srgb)
-        _c(Astc4x4RGBAUnorm)
-        _c(Astc4x4RGBASrgb)
-        _c(Astc4x4RGBAF)
-        _c(Astc5x4RGBAUnorm)
-        _c(Astc5x4RGBASrgb)
-        _c(Astc5x4RGBAF)
-        _c(Astc5x5RGBAUnorm)
-        _c(Astc5x5RGBASrgb)
-        _c(Astc5x5RGBAF)
-        _c(Astc6x5RGBAUnorm)
-        _c(Astc6x5RGBASrgb)
-        _c(Astc6x5RGBAF)
-        _c(Astc6x6RGBAUnorm)
-        _c(Astc6x6RGBASrgb)
-        _c(Astc6x6RGBAF)
-        _c(Astc8x5RGBAUnorm)
-        _c(Astc8x5RGBASrgb)
-        _c(Astc8x5RGBAF)
-        _c(Astc8x6RGBAUnorm)
-        _c(Astc8x6RGBASrgb)
-        _c(Astc8x6RGBAF)
-        _c(Astc8x8RGBAUnorm)
-        _c(Astc8x8RGBASrgb)
-        _c(Astc8x8RGBAF)
-        _c(Astc10x5RGBAUnorm)
-        _c(Astc10x5RGBASrgb)
-        _c(Astc10x5RGBAF)
-        _c(Astc10x6RGBAUnorm)
-        _c(Astc10x6RGBASrgb)
-        _c(Astc10x6RGBAF)
-        _c(Astc10x8RGBAUnorm)
-        _c(Astc10x8RGBASrgb)
-        _c(Astc10x8RGBAF)
-        _c(Astc10x10RGBAUnorm)
-        _c(Astc10x10RGBASrgb)
-        _c(Astc10x10RGBAF)
-        _c(Astc12x10RGBAUnorm)
-        _c(Astc12x10RGBASrgb)
-        _c(Astc12x10RGBAF)
-        _c(Astc12x12RGBAUnorm)
-        _c(Astc12x12RGBASrgb)
-        _c(Astc12x12RGBAF)
-        _c(PvrtcRGBA2bppUnorm)
-        _c(PvrtcRGBA2bppSrgb)
-        _c(PvrtcRGBA4bppUnorm)
-        _c(PvrtcRGBA4bppSrgb)
-        /* CompressedPixelFormat has no Pvrtc2 */
-        /*
-        _c(Pvrtc2RGBA2bppUnorm)
-        _c(Pvrtc2RGBA2bppSrgb)
-        _c(Pvrtc2RGBA4bppUnorm)
-        _c(Pvrtc2RGBA4bppSrgb)
-        */
-        default:
-            return {};
-    }
-    #undef _c
-}
-
 }
 
 struct KtxImporter::File {
@@ -377,18 +217,114 @@ struct KtxImporter::File {
     Containers::Array<char> in;
 
     UnsignedByte dimensions;
-    bool needsSwizzle;
 
-    union {
-        PixelFormat uncompressed;
-        CompressedPixelFormat compressed;
+    struct Format {
+        bool decode(Implementation::VkFormat vkFormat);
+
+        union {
+            PixelFormat uncompressed;
+            CompressedPixelFormat compressed;
+        };
+
+        bool isCompressed;
+        bool isDepth;
+        UnsignedInt typeSize;
+        SwizzleType swizzle;
     } pixelFormat;
-    bool compressed;
-    UnsignedInt typeSize;
 
     /* Each array layer is an image with faces and mipmaps as levels */
     Containers::Array<Containers::Array<LevelData>> imageData;
 };
+
+bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
+    isCompressed = false;
+    isDepth = false;
+    swizzle = SwizzleType::None;
+
+    /* Find uncompressed pixel format */
+    PixelFormat format{};
+    switch(vkFormat) {
+        #define _p(vulkan, magnum) case Implementation::VK_FORMAT_ ## vulkan: format = PixelFormat:: ## magnum; break;
+        #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
+        #undef _p
+        default:
+            break;
+    }
+
+    /* PixelFormat doesn't contain any of the swizzled formats. Figure it out
+       from the Vulkan format and remember that we need to swizzle in doImage. */
+    if(format == PixelFormat{}) {
+        switch(vkFormat) {
+            case Implementation::VK_FORMAT_B8G8R8_UNORM:   format = PixelFormat::RGB8Unorm;  break;
+            case Implementation::VK_FORMAT_B8G8R8_SNORM:   format = PixelFormat::RGB8Snorm;  break;
+            case Implementation::VK_FORMAT_B8G8R8_UINT:    format = PixelFormat::RGB8UI;     break;
+            case Implementation::VK_FORMAT_B8G8R8_SINT:    format = PixelFormat::RGB8I;      break;
+            case Implementation::VK_FORMAT_B8G8R8_SRGB:    format = PixelFormat::RGB8Srgb;   break;
+            case Implementation::VK_FORMAT_B8G8R8A8_UNORM: format = PixelFormat::RGBA8Unorm; break;
+            case Implementation::VK_FORMAT_B8G8R8A8_SNORM: format = PixelFormat::RGBA8Snorm; break;
+            case Implementation::VK_FORMAT_B8G8R8A8_UINT:  format = PixelFormat::RGBA8UI;    break;
+            case Implementation::VK_FORMAT_B8G8R8A8_SINT:  format = PixelFormat::RGBA8I;     break;
+            case Implementation::VK_FORMAT_B8G8R8A8_SRGB:  format = PixelFormat::RGBA8Srgb;  break;
+            default:
+                break;
+        }
+
+        if(format != PixelFormat{}) {
+            const UnsignedInt size = pixelSize(format);
+            CORRADE_INTERNAL_ASSERT(size == 3 || size == 4);
+            swizzle = size == 3 ? SwizzleType::BGR : SwizzleType::BGRA;
+        }
+    }
+
+    if(format != PixelFormat{}) {
+        /* Depth formats are allowed by KTX. We only really use isDepth for
+           validation. */
+        switch(format) {
+            case PixelFormat::Depth16Unorm:
+            case PixelFormat::Depth24Unorm:
+            case PixelFormat::Depth32F:
+            case PixelFormat::Stencil8UI:
+            case PixelFormat::Depth16UnormStencil8UI:
+            case PixelFormat::Depth24UnormStencil8UI:
+            case PixelFormat::Depth32FStencil8UI:
+                isDepth = true;
+            default:
+                /* PixelFormat covers all of Vulkan's depth formats */
+                break;
+        }
+
+        uncompressed = format;
+        return true;
+    }
+
+    /* Find block-compressed pixel format. No swizzling necessary (or possible!). */
+    CompressedPixelFormat compressedFormat{};
+    switch(vkFormat) {
+        #define _c(vulkan, magnum) case Implementation::VK_FORMAT_ ## vulkan: compressedFormat = CompressedPixelFormat:: ## magnum; break;
+        #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
+        #undef _c
+        default:
+            break;
+    }
+
+    if(compressedFormat != CompressedPixelFormat{}) {
+        compressed = compressedFormat;
+        isCompressed = true;
+        return true;
+    }
+
+    /** @todo Support all Vulkan formats allowed by the KTX spec. Create custom
+              PixelFormat with pixelFormatWrap and manually fill PixelStorage/
+              CompressedPixelStorage. We can take all the necessary info from
+              https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json
+              Do we also need this for the KtxImageConverter? This would allow
+              users to pass in images with implementation-specific PixelFormat
+              using the Vulkan format enum directly.
+              Is this actually worth the effort? Which Vulkan formats are not
+              supported by PixelFormat? */
+
+    return false;
+}
 
 KtxImporter::KtxImporter() = default;
 
@@ -433,25 +369,25 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     Utility::copy(data, f->in);
 
     /** @todo Support Basis compression */
-    const PixelFormat format = pixelFormat(Vk::PixelFormat(header.vkFormat));
-    if(format == PixelFormat{}) {
-        const CompressedPixelFormat compressedFormat = compressedPixelFormat(Vk::PixelFormat(header.vkFormat));
-        if(compressedFormat == CompressedPixelFormat{}) {
-            Error{} << "Trade::KtxImporter::openData(): unsupported format" << header.vkFormat;
-            return;
-        }
-        f->pixelFormat.compressed = compressedFormat;
-        f->compressed = true;
-    } else {
-        f->pixelFormat.uncompressed = format;
-        f->compressed = false;
+    if(header.vkFormat == Implementation::VK_FORMAT_UNDEFINED) {
+        Error{} << "Trade::KtxImporter::openData(): custom formats are not supported";
+        return;
     }
 
-    if(f->compressed && header.typeSize != 1) {
+    /* Get generic format info from Vulkan format */
+    if(!f->pixelFormat.decode(header.vkFormat)) {
+        Error{} << "Trade::KtxImporter::openData(): unsupported format" << header.vkFormat;
+        return;
+    }
+
+    /* There is no block-compressed format we can swizzle */
+    CORRADE_INTERNAL_ASSERT(!f->pixelFormat.isCompressed || f->pixelFormat.swizzle == SwizzleType::None);
+
+    if(f->pixelFormat.isCompressed && header.typeSize != 1) {
         Error{} << "Trade::KtxImporter::openData(): invalid type size for compressed format, expected 1 but got" << header.typeSize;
         return;
     }
-    f->typeSize = header.typeSize;
+    f->pixelFormat.typeSize = header.typeSize;
 
     /** @todo Support supercompression */
     if(header.supercompressionScheme != 0) {
@@ -462,7 +398,10 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     f->dimensions = Math::min(header.pixelSize, Vector3ui{1}).sum();
     CORRADE_INTERNAL_ASSERT(f->dimensions >= 1 && f->dimensions <= 3);
 
-    /** @todo Assert that 3D images can't have depth format */
+    if(f->dimensions == 3 && f->pixelFormat.isDepth) {
+        Error{} << "Trade::KtxImporter::openData(): 3D images can't have depth/stencil format";
+        return;
+    }
 
     /* Make size in each dimension at least 1 so we don't choke on size
        calculations using product(). */
@@ -496,7 +435,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         Utility::Endianness::littleEndianInPlace(level.byteOffset,
             level.byteLength, level.uncompressedByteLength);
 
-        levelLengths[i] = f->compressed
+        levelLengths[i] = f->pixelFormat.isCompressed
             ? imageLength(mipSize, f->pixelFormat.compressed)
             : imageLength(mipSize, f->pixelFormat.uncompressed);
 
@@ -517,7 +456,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(header.kvdByteLength > 0) {
         auto keyValueData = f->in.suffix(header.kvdByteOffset).prefix(header.kvdByteLength);
         /* Loop through entries, each one consisting of:
-        
+
            UnsignedInt length
            Byte data[length]
            Byte padding[...]
@@ -556,8 +495,6 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
-    /** @todo Determine if format needs swizzling */
-    f->needsSwizzle = false;
 
     f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numLayers};
 
@@ -611,14 +548,11 @@ Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, Unsigne
     Utility::copy(levelData.data, data);
 
     /* Endian-swap if necessary */
-    endianSwap(data, _f->typeSize);
+    endianSwap(data, _f->pixelFormat.typeSize);
 
     /* Compressed image */
-    if(_f->compressed) {
-        /* Using default CompressedPixelStorage, need explicit one once we
-           support all Vulkan formats */
+    if(_f->pixelFormat.isCompressed)
         return ImageData1D(_f->pixelFormat.compressed, levelData.size.x(), std::move(data));
-    }
 
     /* Uncompressed */
     if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
@@ -643,14 +577,11 @@ Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, Unsigne
     Utility::copy(levelData.data, data);
 
     /* Endian-swap if necessary */
-    endianSwap(data, _f->typeSize);
+    endianSwap(data, _f->pixelFormat.typeSize);
 
     /* Compressed image */
-    if(_f->compressed) {
-        /* Using default CompressedPixelStorage, need explicit one once we
-           support all Vulkan formats */
+    if(_f->pixelFormat.isCompressed)
         return ImageData2D(_f->pixelFormat.compressed, levelData.size.xy(), std::move(data));
-    }
 
     /* Uncompressed */
     if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
@@ -675,14 +606,11 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
     Utility::copy(levelData.data, data);
 
     /* Endian-swap if necessary */
-    endianSwap(data, _f->typeSize);
+    endianSwap(data, _f->pixelFormat.typeSize);
 
     /* Compressed image */
-    if(_f->compressed) {
-        /* Using default CompressedPixelStorage, need explicit one once we
-           support all Vulkan formats */
+    if(_f->pixelFormat.isCompressed)
         return ImageData3D(_f->pixelFormat.compressed, levelData.size, std::move(data));
-    }
 
     /* Uncompressed */
     if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,

@@ -24,7 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED Trade Vk)
+find_package(Magnum REQUIRED Trade)
 
 if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_KTXIMPORTER_BUILD_STATIC)
     set(MAGNUM_KTXIMPORTER_BUILD_STATIC 1)
@@ -40,16 +40,15 @@ add_plugin(KtxImporter
     KtxImporter.conf
     KtxImporter.cpp
     KtxImporter.h
-    KtxHeader.h)
+    KtxHeader.h
+    formatMapping.hpp)
 if(MAGNUM_KTXIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(KtxImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(KtxImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(KtxImporter PUBLIC
-    Magnum::Trade
-    Magnum::Vk)
+target_link_libraries(KtxImporter PUBLIC Magnum::Trade)
 # Modify output location only if all are set, otherwise it makes no sense
 if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND CMAKE_LIBRARY_OUTPUT_DIRECTORY AND CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
     set_target_properties(KtxImporter PROPERTIES
@@ -65,6 +64,10 @@ install(FILES KtxImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
 if(MAGNUM_KTXIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/KtxImporter)
     target_sources(KtxImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
+endif()
+
+if(BUILD_TESTS)
+    add_subdirectory(Test)
 endif()
 
 # MagnumPlugins KtxImporter target alias for superprojects
