@@ -249,6 +249,7 @@ struct KtxImporter::File {
     Containers::Array<char> in;
 
     UnsignedByte dimensions;
+    BoolVector3 flip;
 
     struct Format {
         bool decode(Implementation::VkFormat vkFormat);
@@ -527,6 +528,82 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
+    /** @todo Remove, only for debugging */
+    Debug{} << "Key/value data:";
+    for(const auto& entry : keyValueMap) {
+        if(entry.first == "KTXorientation" ||
+            entry.first == "KTXswizzle" ||
+            entry.first == "KTXcubemapIncomplete")
+        Debug{} << entry.first << ":" << Containers::StringView{entry.second};
+    }
+
+    using namespace Containers::Literals;
+
+    /* Read image orientation so we can flip if needed.
+
+       l/r = left/right
+       u/d = up/down
+       o/i = out of/into screen
+
+       Default is assumed to be rdi, Magnum expects ruo. */
+    /** @todo Is it really ruo? I can't find any info on z texture origin in GL. */
+    {
+        constexpr auto targetOrientation = "ruo"_s;
+        constexpr auto defaultOrientation = "rdi"_s;
+
+        bool useDefaultOrientation = true;
+        const auto found = keyValueMap.find("KTXorientation"_s);
+        if(found != keyValueMap.end()) {
+            const Containers::StringView orientation{found->second};
+            if(orientation.size() >= f->dimensions) {
+                constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
+                for(UnsignedByte i = 0; i != f->dimensions; ++i) {
+                    useDefaultOrientation = !validOrientations[i].contains(orientation[i]);
+                    if(useDefaultOrientation) break;
+                    f->flip.set(i, orientation[i] != targetOrientation[i]);
+                }
+            }
+        }
+
+        if(useDefaultOrientation) {
+            Warning{} << "Trade::KtxImporter::openData(): missing or invalid "
+                "orientation, falling back to" << defaultOrientation;
+            f->flip = Math::Vector3<char>::from(defaultOrientation.data()) !=
+                Math::Vector3<char>::from(targetOrientation.data());
+        }
+    }
+
+    /* We can't reasonably perform axis flips on block-compressed data.
+       Emit a warning and pretend there is no flipping necessary. */
+    if(f->pixelFormat.isCompressed && f->flip.any()) {
+        f->flip = BoolVector3{};
+        Warning{} << "Trade::KtxImporter::openData(): block-compressed image "
+            "was encoded with non-default axis orientations, imported data "
+            "will have wrong orientation";
+    }
+
+    /** @todo KTX spec seems to really insist on rd for cubemaps but the
+              wording is odd, I can't tell if they're saying it's mandatory or
+              not: https://github.khronos.org/KTX-Specification/#cubemapOrientation
+              Face orientation (+X, -X, etc.) is based on a left-handed y-up
+              coordinate system, but neither GL nor Vulkan have that. The
+              appendix implies that both need coordinate transformations. Do we
+              have to do anything here? Flip faces/axes to match GL or Vulkan
+              expectations? */
+
+    /* Incomplete cubemaps are a 'feature' of KTX files. We just import them
+       as layers (which is how they're exposed to us). */
+    if(header.faceCount != 6) {
+        const auto found = keyValueMap.find("KTXcubemapIncomplete"_s);
+        if(found != keyValueMap.end() && !found->second.empty()) {
+            const UnsignedByte mask = found->second.front();
+            /* 0x3F = 00111111b = all cubemaps present, seems to be allowed */
+            if((mask & 0x3F) != 0x3F)
+                Warning{} << "Trade::KtxImporter::openData(): image contains incomplete "
+                    "cubemap faces, importing faces as array layers";
+        }
+    }
+
     {
         const auto found = keyValueMap.find("KTXswizzle"_s);
         if(found != keyValueMap.end()) {
@@ -596,7 +673,6 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
-    /** @todo Read KTXorientation and flip image? What is the default? */
     /** @todo Read KTXanimData and expose frame time between images through
               doImporterState (same as StbImageImporter). What if we need
               doImporterState for something else, like other API format
@@ -614,6 +690,9 @@ Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, Unsigne
 
     /* Copy image data */
     Containers::Array<char> data{NoInit, levelData.data.size()};
+    /** @todo Flip axes if necessary. This should be simple(?) with StridedArrayView
+              and negative stride. Note that we already disable flipping for
+              block-compressed data, so no need to check here. */
     Utility::copy(levelData.data, data);
 
     /* Endian-swap if necessary */
@@ -644,6 +723,7 @@ Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, Unsigne
 
     /* Copy image data */
     Containers::Array<char> data{NoInit, levelData.data.size()};
+    /** @todo Flip axes if necessary */
     Utility::copy(levelData.data, data);
 
     /* Endian-swap if necessary */
@@ -674,6 +754,7 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
 
     /* Copy image data */
     Containers::Array<char> data{NoInit, levelData.data.size()};
+    /** @todo Flip axes if necessary */
     Utility::copy(levelData.data, data);
 
     /* Endian-swap if necessary */
