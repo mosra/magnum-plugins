@@ -122,6 +122,7 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
         Error{} << prefix << "invalid image size, width is 0";
         return false;
     }
+
     if(header.pixelSize.y() == 0 && header.pixelSize.z() > 0) {
         Error{} << prefix << "invalid image size, depth is" << header.pixelSize.z() << "but height is 0";
         return false;
@@ -132,7 +133,8 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
             Error{} << prefix << "invalid cubemap face count, expected 1 or 6 but got" << header.faceCount;
             return false;
         }
-        if(header.pixelSize.z() > 0 ||header.pixelSize.x() != header.pixelSize.y()) {
+
+        if(header.pixelSize.z() > 0 || header.pixelSize.x() != header.pixelSize.y()) {
             Error{} << prefix << "invalid cubemap dimensions, must be 2D and square, but got" << header.pixelSize;
             return false;
         }
@@ -170,9 +172,11 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
 }
 
 bool validateLevel(const Implementation::KtxHeader& header, std::size_t fileSize, const Implementation::KtxLevel& level, std::size_t imageLength, const char* prefix) {
+    CORRADE_INTERNAL_ASSERT(imageLength > 0);
+
     /* Both lengths should be equal without supercompression. Be lenient
-        here and only emit a warning in case some shitty exporter gets this
-        wrong. */
+       here and only emit a warning in case some shitty exporter gets this
+       wrong. */
     if(header.supercompressionScheme == 0 && level.byteLength != level.uncompressedByteLength) {
         Warning{} << prefix << "mismatching image data sizes, both compressed "
             "and uncompressed should be equal but got" <<
@@ -450,7 +454,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /** @todo Support supercompression */
     if(header.supercompressionScheme != 0) {
-        Error{} << "Trade::KtxImporter::openData(): supercompression is not supported";
+        Error{} << "Trade::KtxImporter::openData(): supercompression is currently not supported";
         return;
     }
 
@@ -472,18 +476,18 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* levelCount of 0 indicates to the user to generate mipmaps, not allowed
        for block-compressed formats. We don't really care either way
-       and treat 0 as 1. */
+       and treat 0 and 1 the same. */
     const UnsignedInt numMipmaps = Math::max(header.levelCount, 1u);
 
     /* KTX stores byte ranges for each mipmap in the level index, from largest
-       to smallest. The  actual pixel data is usually arranged in reverse order
+       to smallest. The actual pixel data is usually arranged in reverse order
        for streaming but we only need the ranges. */
     const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
     const auto levelIndex = Containers::arrayCast<Implementation::KtxLevel>(
         f->in.suffix(offset).prefix(levelIndexSize));
 
     /* We later loop over all levels multiple times, so prepare and validate
-       a few things up-front. */
+       a few things up-front */
     Containers::Array<std::size_t> levelLengths{numMipmaps};
     Vector3i mipSize{size};
     for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
@@ -530,8 +534,8 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             if(current + length < keyValueData.size()) {
                 const auto entry = keyValueData.suffix(current).prefix(length);
 
-                /* Split at zero terminating the key string */
-                const std::size_t keyLength = entry.end() - std::find(entry.begin(), entry.end(), '\0');
+                /* Split at zero separating the key string and value */
+                const std::size_t keyLength = std::find(entry.begin(), entry.end(), '\0') - entry.begin();
                 if(keyLength == 0 || keyLength >= entry.size())
                     Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
                 else {
@@ -549,8 +553,6 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                by the file layout */
             current += (length + 3)/4*4;
         }
-        /** @todo Remove after testing */
-        CORRADE_INTERNAL_ASSERT(current <= keyValueData.size());
     }
 
     /** @todo Determine if format needs swizzling */
@@ -558,10 +560,13 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numLayers};
 
+    /** @todo Export cubemaps as 3D images instead of levels */
+
     for(UnsignedInt layer = 0; layer != numLayers; ++layer) {
         f->imageData[layer] = Containers::Array<File::LevelData>{numFaces*numMipmaps};
         /* This matches the level order of DdsImporter: faces, mipmaps */
         std::size_t currentLevel = 0;
+        /* +X, -X, +Y, -Y, +Z, -Z */
         for(UnsignedInt face = 0; face != numFaces; ++face) {
             mipSize = size;
 
