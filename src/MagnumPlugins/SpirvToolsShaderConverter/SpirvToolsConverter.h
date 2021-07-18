@@ -259,6 +259,8 @@ and their default values.
 
 @snippet MagnumPlugins/SpirvToolsShaderConverter/SpirvToolsShaderConverter.conf config
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_SPIRVTOOLSSHADERCONVERTER_EXPORT SpirvToolsConverter: public AbstractConverter {
     public:

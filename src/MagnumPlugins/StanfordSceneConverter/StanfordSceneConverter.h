@@ -145,6 +145,8 @@ below for all options and their default values:
 
 @snippet MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.conf config
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_STANFORDSCENECONVERTER_EXPORT StanfordSceneConverter: public AbstractSceneConverter {
     public:

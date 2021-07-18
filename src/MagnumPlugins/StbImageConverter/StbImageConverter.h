@@ -177,6 +177,9 @@ For some formats, it's possible to tune various output options through
 @ref configuration(). See below for all options and their default values:
 
 @snippet MagnumPlugins/StbImageConverter/StbImageConverter.conf config
+
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageConverter {
     public:

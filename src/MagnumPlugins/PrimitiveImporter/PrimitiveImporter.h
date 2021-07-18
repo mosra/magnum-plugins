@@ -115,6 +115,9 @@ customized through various import options through @ref configuration(). See
 below for all options and their default values:
 
 @snippet MagnumPlugins/PrimitiveImporter/PrimitiveImporter.conf config
+
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_PRIMITIVEIMPORTER_EXPORT PrimitiveImporter: public AbstractImporter {
     public:

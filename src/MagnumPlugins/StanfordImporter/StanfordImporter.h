@@ -190,6 +190,8 @@ below for all options and their default values:
 
 @snippet MagnumPlugins/StanfordImporter/StanfordImporter.conf config
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
     public:

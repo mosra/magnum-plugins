@@ -374,6 +374,9 @@ below for all options and their default values.
 
 @snippet MagnumPlugins/TinyGltfImporter/TinyGltfImporter.conf config
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
+
 @section Trade-TinyGltfImporter-state Access to internal importer state
 
 Access to the underlying TinyGLTF structures it is provided through

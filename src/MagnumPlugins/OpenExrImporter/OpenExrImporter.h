@@ -188,6 +188,9 @@ It's possible to tune various options mainly for channel mapping through
 @ref configuration(). See below for all options and their default values:
 
 @snippet MagnumPlugins/OpenExrImporter/OpenExrImporter.conf config
+
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_OPENEXRIMPORTER_EXPORT OpenExrImporter: public AbstractImporter {
     public:

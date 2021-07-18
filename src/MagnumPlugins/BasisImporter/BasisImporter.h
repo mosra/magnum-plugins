@@ -125,6 +125,9 @@ The full form of the configuration is shown below:
 
 @snippet MagnumPlugins/BasisImporter/BasisImporter.conf configuration_
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
+
 @subsection Trade-BasisImporter-target-format Target format
 
 Basis is a compressed format that is *transcoded* into a compressed GPU format.

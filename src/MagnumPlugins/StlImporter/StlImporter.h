@@ -117,6 +117,8 @@ below for all options and their default values:
 
 @snippet MagnumPlugins/StlImporter/StlImporter.conf config
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_STLIMPORTER_EXPORT StlImporter: public AbstractImporter {
     public:

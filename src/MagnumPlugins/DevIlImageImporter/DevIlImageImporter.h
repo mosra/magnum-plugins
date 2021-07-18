@@ -222,6 +222,9 @@ It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
 @snippet MagnumPlugins/DevIlImageImporter/DevIlImageImporter.conf config
+
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImporter {
     public:

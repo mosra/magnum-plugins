@@ -375,6 +375,9 @@ meaning a change in these will be always applied to the next opened file.
 
 @snippet MagnumPlugins/AssimpImporter/AssimpImporter.conf configuration_
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
+
 @section Trade-AssimpImporter-state Access to internal importer state
 
 The Assimp structures used to import data from a file can be accessed through

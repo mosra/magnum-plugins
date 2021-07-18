@@ -159,6 +159,8 @@ below for all options and their default values:
 
 @snippet MagnumPlugins/MeshOptimizerSceneConverter/MeshOptimizerSceneConverter.conf config
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_MESHOPTIMIZERSCENECONVERTER_EXPORT MeshOptimizerSceneConverter: public AbstractSceneConverter {
     public:

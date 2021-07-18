@@ -148,6 +148,8 @@ tool. The full form of the configuration is shown below:
 
 @snippet MagnumPlugins/BasisImageConverter/BasisImageConverter.conf configuration_
 
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImageConverter {
     public:
