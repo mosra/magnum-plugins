@@ -133,7 +133,7 @@ StbImageConverterTest::StbImageConverterTest() {
     #ifdef STBIMAGECONVERTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(STBIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
-    /* The PngImporter is optional */
+    /* The StbImageImporter is optional */
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
