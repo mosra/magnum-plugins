@@ -36,6 +36,7 @@
 #  SpirvToolsShaderConverter    - SPIR-V Tools shader converter
 #  StanfordImporter             - Stanford PLY importer
 #  StanfordSceneConverter       - Stanford PLY converter
+#  StbDxtImageConverter         - BC1/BC3 image compressor using stb_dxt
 #  StbImageConverter            - Image converter using stb_image_write
 #  StbImageImporter             - Image importer using stb_image
 #  StbTrueTypeFont              - TrueType font using stb_truetype
@@ -146,8 +147,9 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     MeshOptimizerSceneConverter MiniExrImageConverter OpenExrImageConverter
     OpenExrImporter OpenGexImporter PngImageConverter PngImporter
     PrimitiveImporter SpirvToolsShaderConverter StanfordImporter
-    StanfordSceneConverter StbImageConverter StbImageImporter StbTrueTypeFont
-    StbVorbisAudioImporter StlImporter TinyGltfImporter)
+    StanfordSceneConverter StbDxtImageConverter StbImageConverter
+    StbImageImporter StbTrueTypeFont StbVorbisAudioImporter StlImporter
+    TinyGltfImporter)
 # Nothing is enabled by default right now
 set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 
@@ -434,6 +436,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # StanfordImporter has no dependencies
         # StanfordSceneConverter has no dependencies
+        # StbDxtImageConverter has no dependencies
         # StbImageConverter has no dependencies
         # StbImageImporter has no dependencies
         # StbTrueTypeFont has no dependencies

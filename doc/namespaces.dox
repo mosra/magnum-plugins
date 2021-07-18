@@ -115,6 +115,10 @@
  * @brief Plugin @ref Magnum::Trade::StanfordSceneConverter
  * @m_since_{plugins,2020,06}
  */
+/** @dir MagnumPlugins/StbDxtImageConverter
+ * @brief Plugin @ref Magnum::Trade::StbDxtImageConverter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/StbImageConverter
  * @brief Plugin @ref Magnum::Trade::StbImageConverter
  */

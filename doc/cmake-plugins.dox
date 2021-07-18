@@ -159,6 +159,7 @@ This command will not try to find any actual plugin. The plugins are:
     plugin
 -   `StanfordSceneConverter` --- @ref Trade::StanfordSceneConverter "StanfordSceneConverter"
     plugin
+-   `StbDxtImageConverter` --- @relativeref{Trade,StbDxtImageConverter} plugin
 -   `StbImageConverter` --- @ref Trade::StbImageConverter "StbImageConverter"
     plugin
 -   `StbImageImporter` --- @ref Trade::StbImageImporter "StbImageImporter"

@@ -139,6 +139,10 @@ if(WITH_STANFORDSCENECONVERTER)
     add_subdirectory(StanfordSceneConverter)
 endif()
 
+if(WITH_STBDXTIMAGECONVERTER)
+    add_subdirectory(StbDxtImageConverter)
+endif()
+
 if(WITH_STBIMAGECONVERTER)
     add_subdirectory(StbImageConverter)
 endif()
