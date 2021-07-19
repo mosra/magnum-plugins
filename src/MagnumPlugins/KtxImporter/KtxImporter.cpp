@@ -43,6 +43,7 @@
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/TextureData.h>
 #include <Magnum/Vk/PixelFormat.h>
 #include "MagnumPlugins/KtxImporter/KtxHeader.h"
 
@@ -253,7 +254,12 @@ struct KtxImporter::File {
 
     Containers::Array<char> in;
 
-    UnsignedByte dimensions;
+    /* Dimensions of the source image (1-3) */
+    UnsignedByte numDimensions;
+    /* Dimensions of the imported image data, including extra dimensions for
+       array layers or cubemap faces */
+    UnsignedByte numDataDimensions;
+    TextureData::Type type;
     BoolVector3 flip;
 
     struct Format {
@@ -387,7 +393,6 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     Implementation::KtxHeader header = *reinterpret_cast<const Implementation::KtxHeader*>(data.data());
-    std::size_t offset = sizeof(Implementation::KtxHeader);
 
     /* KTX2 uses little-endian everywhere */
     Utility::Endianness::littleEndianInPlace(
@@ -434,10 +439,10 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    f->dimensions = Math::min(header.pixelSize, Vector3ui{1}).sum();
-    CORRADE_INTERNAL_ASSERT(f->dimensions >= 1 && f->dimensions <= 3);
+    f->numDimensions = Math::min(header.pixelSize, Vector3ui{1}).sum();
+    CORRADE_INTERNAL_ASSERT(f->numDimensions >= 1 && f->numDimensions <= 3);
 
-    if(f->dimensions == 3 && f->pixelFormat.isDepth) {
+    if(f->numDimensions == 3 && f->pixelFormat.isDepth) {
         Error{} << "Trade::KtxImporter::openData(): 3D images can't have depth/stencil format";
         return;
     }
@@ -445,11 +450,16 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Make sure we don't choke on size calculations using product() */
     const Vector3i size = Math::max(Vector3i{header.pixelSize}, Vector3i{1});
 
-    /* Number of array layers, imported as separate images */
+    /* Number of array layers, imported as extra image dimensions (except
+       for 3D images, there it's one Image3D per layer).
+
+       layerCount == 1 is a 2D array image with one level, we export it as such
+       so that there are no surprises. This is equivalent to how we handle
+       depth == 1. */
+    const bool isLayered = header.layerCount > 0;
     const UnsignedInt numLayers = Math::max(header.layerCount, 1u);
 
-    /* Cubemap faces, either 1 or 6. KTX allows incomplete cubemaps but those
-       have to be array layers with extra metadata inside key/value data. */
+    const bool isCubemap = header.faceCount == 6;
     const UnsignedInt numFaces = header.faceCount;
 
     /* levelCount == 0 indicates to the user/importer to generate mipmaps. We
@@ -457,32 +467,70 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
        this on to the user. */
     const UnsignedInt numMipmaps = Math::max(header.levelCount, 1u);
 
-    /* KTX stores byte ranges for each mipmap in the level index, from largest
-       to smallest. The actual pixel data is usually arranged in reverse order
-       for streaming but we only need the ranges. */
+    /* The level index contains byte ranges for each mipmap, from largest to
+       smallest. Each mipmap contains tightly packed images ordered by
+       layers, faces, slices, rows, columns. */
     const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
     const auto levelIndex = Containers::arrayCast<Implementation::KtxLevel>(
-        f->in.suffix(offset).prefix(levelIndexSize));
+        f->in.suffix(sizeof(Implementation::KtxHeader)).prefix(levelIndexSize));
 
-    /* We later loop over all levels multiple times, so prepare and validate
-       a few things up-front */
-    Containers::Array<std::size_t> levelLengths{numMipmaps};
+    /* Extract image data views */
+
+    const UnsignedInt numImages = (f->numDimensions == 3) ? numLayers : 1;
+    f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numImages};
+    for(UnsignedInt image = 0; image != numImages; ++image)
+        f->imageData[image] = Containers::Array<File::LevelData>{numMipmaps};
+
     Vector3i mipSize{size};
-    for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
+    for(UnsignedInt i = 0; i != numMipmaps; ++i) {
         auto& level = levelIndex[i];
         Utility::Endianness::littleEndianInPlace(level.byteOffset,
             level.byteLength, level.uncompressedByteLength);
 
-        levelLengths[i] = f->pixelFormat.isCompressed
+        const std::size_t partLength = f->pixelFormat.isCompressed
             ? imageLength(mipSize, f->pixelFormat.compressed)
             : imageLength(mipSize, f->pixelFormat.uncompressed);
 
-        if(!validateLevel(header, data.size(), level, levelLengths[i], "Trade::KtxImporter::openData():"))
+        if(!validateLevel(header, data.size(), level, partLength, "Trade::KtxImporter::openData():"))
             return;
+
+        for(UnsignedInt image = 0; image != numImages; ++image) {
+            std::size_t length = partLength * numFaces;
+            std::size_t imageOffset = 0;
+
+            if(numImages == numLayers)
+                imageOffset = image * length;
+            else
+                length *= numLayers;
+
+            f->imageData[image][i] = {mipSize, f->in.suffix(level.byteOffset).suffix(imageOffset).prefix(length)};
+        }
 
         /* Shrink to next power of 2 */
         mipSize = Math::max(mipSize >> 1, Vector3i{1});
     }
+
+    /* Remember the image type for doImage() */
+    switch(f->numDimensions) {
+        /** @todo array enums */
+        case 1:
+            f->type = isLayered ? TextureData::Type::Texture1D/*Array*/ : TextureData::Type::Texture1D;
+            break;
+        case 2:
+            if(isCubemap)
+                f->type = isLayered ? TextureData::Type::Cube/*Array*/ : TextureData::Type::Cube;
+            else
+                f->type = isLayered ? TextureData::Type::Texture2D/*Array*/ : TextureData::Type::Texture2D;
+            break;
+        case 3:
+            f->type = TextureData::Type::Texture3D;
+            break;
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
+
+    f->numDataDimensions = f->numDimensions;
+    if(f->numDimensions != 3 && (isLayered || isCubemap))
+        f->numDataDimensions++;
 
     /* Read metadata */
 
@@ -547,9 +595,9 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         const auto found = keyValueMap.find("KTXorientation"_s);
         if(found != keyValueMap.end()) {
             const Containers::StringView orientation{found->second};
-            if(orientation.size() >= f->dimensions) {
+            if(orientation.size() >= f->numDimensions) {
                 constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
-                for(UnsignedByte i = 0; i != f->dimensions; ++i) {
+                for(UnsignedByte i = 0; i != f->numDimensions; ++i) {
                     useDefaultOrientation = !validOrientations[i].contains(orientation[i]);
                     if(useDefaultOrientation) break;
                     f->flip.set(i, orientation[i] != targetOrientation[i]);
@@ -593,10 +641,11 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     {
+        /** @todo We need the channel count to correctly validate swizzle length. Read the DFD! */
         const auto found = keyValueMap.find("KTXswizzle"_s);
         if(found != keyValueMap.end()) {
-            const Containers::StringView swizzle{found->second.prefix(Math::min<std::size_t>(f->dimensions, found->second.size()))};
-            if(swizzle != "rgba"_s.prefix(f->dimensions)) {
+            const Containers::StringView swizzle{found->second.prefix(Math::min<std::size_t>(f->numDimensions, found->second.size()))};
+            if(swizzle != "rgba"_s.prefix(f->numDimensions)) {
                 bool handled = false;
                 /* Special cases already supported for 8-bit Vulkan formats */
                 if(!f->pixelFormat.isCompressed) {
@@ -631,45 +680,12 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
-    f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numLayers};
-
-    /** @todo Export cubemaps as 3D images instead of levels */
-
-    for(UnsignedInt layer = 0; layer != numLayers; ++layer) {
-        f->imageData[layer] = Containers::Array<File::LevelData>{numFaces*numMipmaps};
-        /* This matches the level order of DdsImporter: faces, mipmaps */
-        std::size_t currentLevel = 0;
-        /* +X, -X, +Y, -Y, +Z, -Z */
-        for(UnsignedInt face = 0; face != numFaces; ++face) {
-            mipSize = size;
-
-            /* Load all mipmaps for current face */
-            for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
-                /* Each mipmap byte range contains tightly packed images,
-                   ordered as follows:
-                   layers, faces, (slices, rows, columns) */
-                const std::size_t length = levelLengths[i];
-                const std::size_t imageOffset = (layer*numFaces + face)*length;
-
-                /* validateLevel already checked if the level data is large
-                   enough for all images */
-                f->imageData[layer][currentLevel++] = {mipSize, f->in.suffix(levelIndex[i].byteOffset).suffix(imageOffset).prefix(length)};
-
-                /* Shrink to next power of 2 */
-                mipSize = Math::max(mipSize >> 1, Vector3i{1});
-            }
-        }
-    }
-
-    /** @todo Read KTXanimData and expose frame time between images through
-              doImporterState (same as StbImageImporter). What if we need
-              doImporterState for something else, like other API format
-              enum values (KTXdxgiFormat__ etc.)? */
+    /** @todo Read KTXanimData and expose frame time between images */
 
     _f = std::move(f);
 }
 
-UnsignedInt KtxImporter::doImage1DCount() const { return (_f->dimensions == 1) ? _f->imageData.size() : 0; }
+UnsignedInt KtxImporter::doImage1DCount() const { return (_f->numDataDimensions == 1) ? _f->imageData.size() : 0; }
 
 UnsignedInt KtxImporter::doImage1DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
 
@@ -703,7 +719,7 @@ Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, Unsigne
     return ImageData1D{storage, _f->pixelFormat.uncompressed, levelData.size.x(), std::move(data)};
 }
 
-UnsignedInt KtxImporter::doImage2DCount() const { return (_f->dimensions == 2) ? _f->imageData.size() : 0; }
+UnsignedInt KtxImporter::doImage2DCount() const { return (_f->numDataDimensions == 2) ? _f->imageData.size() : 0; }
 
 UnsignedInt KtxImporter::doImage2DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
 
@@ -735,7 +751,7 @@ Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, Unsigne
     return ImageData2D{storage, _f->pixelFormat.uncompressed, levelData.size.xy(), std::move(data)};
 }
 
-UnsignedInt KtxImporter::doImage3DCount() const { return (_f->dimensions == 3) ? _f->imageData.size() : 0; }
+UnsignedInt KtxImporter::doImage3DCount() const { return (_f->numDataDimensions == 3) ? _f->imageData.size() : 0; }
 
 UnsignedInt KtxImporter::doImage3DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
 
@@ -765,6 +781,13 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
         storage.setAlignment(1);
 
     return ImageData3D{storage, _f->pixelFormat.uncompressed, levelData.size, std::move(data)};
+}
+
+UnsignedInt KtxImporter::doTextureCount() const { return _f->imageData.size(); }
+
+Containers::Optional<TextureData> KtxImporter::doTexture(UnsignedInt id) {
+    return TextureData{_f->type, SamplerFilter::Nearest, SamplerFilter::Nearest,
+        SamplerMipmap::Base, SamplerWrapping::Repeat, id};
 }
 
 }}

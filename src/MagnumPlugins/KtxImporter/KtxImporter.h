@@ -76,6 +76,9 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doImage3DLevelCount(UnsignedInt id) override;
         MAGNUM_KTXIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
 
+        MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_KTXIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
+
     private:
         struct File;
         Containers::Pointer<File> _f;
