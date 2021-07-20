@@ -42,7 +42,7 @@ file_out = args.output
 
 print('Writing to', file_out)
 
-Format = namedtuple('Format', 'compressed magnum vulkan')
+Format = namedtuple('Format', 'compressed magnum vulkan type')
 formats = []
 
 file_in = os.path.join(magnum_dir, 'src/Magnum/Vk/PixelFormat.h')
@@ -54,7 +54,13 @@ with open(file_in, encoding='utf-8') as f:
         # PixelFormat and Vk::PixelFormat names are identical
         match = re.search('^\s+(Compressed)?(\w+) = VK_FORMAT_(\w+),?$', line)
         if match:
-            formats.append(Format(match.group(1) != None, match.group(2), match.group(3)))
+            compressed = match.group(1) != None
+            magnum = match.group(2)
+            vulkan = match.group(3)
+            type = re.search('\w+_([U|S](NORM|INT|FLOAT|RGB))\w*', vulkan)
+            assert type != None
+            assert type.group(1) != 'URGB'
+            formats.append(Format(compressed, magnum, vulkan, type.group(1)))
 
 if len(formats) != 135:
     print('Unexpected number of formats')
@@ -105,10 +111,10 @@ with open(file_out, 'w', encoding='utf-8') as outfile:
 
     outfile.write('#ifdef _p /* PixelFormat */\n')
     for format in formats:
-        outfile.write('_p(' + format.vulkan + ', ' + format.magnum + ')\n')
+        outfile.write('_p(' + format.vulkan + ', ' + format.magnum + ', ' + format.type + ')\n')
     outfile.write('#endif\n')
 
     outfile.write('#ifdef _c /* CompressedPixelFormat */\n')
     for format in compressed_formats:
-        outfile.write('_c(' + format.vulkan + ', ' + format.magnum + ')\n')
+        outfile.write('_c(' + format.vulkan + ', ' + format.magnum + ', ' + format.type + ')\n')
     outfile.write('#endif\n')

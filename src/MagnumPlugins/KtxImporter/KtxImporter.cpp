@@ -26,18 +26,19 @@
 
 #include "KtxImporter.h"
 
-#include <algorithm>
 #include <map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StaticArray.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/BoolVector.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Swizzle.h>
 #include <Magnum/Math/Vector3.h>
@@ -163,13 +164,13 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
         return false;
     }
 
-    if(header.pixelSize.x() == 0) {
+    if(header.imageSize.x() == 0) {
         Error{} << prefix << "invalid image size, width is 0";
         return false;
     }
 
-    if(header.pixelSize.y() == 0 && header.pixelSize.z() > 0) {
-        Error{} << prefix << "invalid image size, depth is" << header.pixelSize.z() << "but height is 0";
+    if(header.imageSize.y() == 0 && header.imageSize.z() > 0) {
+        Error{} << prefix << "invalid image size, depth is" << header.imageSize.z() << "but height is 0";
         return false;
     }
 
@@ -179,13 +180,13 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
             return false;
         }
 
-        if(header.pixelSize.z() > 0 || header.pixelSize.x() != header.pixelSize.y()) {
-            Error{} << prefix << "invalid cubemap dimensions, must be 2D and square, but got" << header.pixelSize;
+        if(header.imageSize.z() > 0 || header.imageSize.x() != header.imageSize.y()) {
+            Error{} << prefix << "invalid cubemap dimensions, must be 2D and square, but got" << header.imageSize;
             return false;
         }
     }
 
-    const UnsignedInt maxLevelCount = Math::log2(header.pixelSize.max()) + 1;
+    const UnsignedInt maxLevelCount = Math::log2(header.imageSize.max()) + 1;
     if(header.levelCount > maxLevelCount) {
         Error{} << prefix << "too many mipmap levels, expected at most" <<
             maxLevelCount << "but got" << header.levelCount;
@@ -194,7 +195,7 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
 
     const std::size_t levelIndexEnd = sizeof(header) + Math::max(header.levelCount, 1u)*sizeof(Implementation::KtxLevel);
     if(fileSize < levelIndexEnd) {
-        Error{} << prefix << "level index too short, expected at least" <<
+        Error{} << prefix << "level index out of bounds, expected at least" <<
             levelIndexEnd << "bytes but got" << fileSize;
         return false;
     }
@@ -203,6 +204,13 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
     if(fileSize < dfdEnd) {
         Error{} << prefix << "data format descriptor out of bounds, expected at least" <<
             dfdEnd << "bytes but got" << fileSize;
+        return false;
+    }
+
+    const std::size_t dfdMinSize = sizeof(Implementation::KdfBasicBlockHeader) + sizeof(Implementation::KdfBasicBlockSample);
+    if(dfdMinSize > header.dfdByteLength) {
+        Error{} << prefix << "data format descriptor too short, expected at least" <<
+            dfdMinSize << "bytes but got" << header.dfdByteLength;
         return false;
     }
 
@@ -221,7 +229,9 @@ bool validateLevel(const Implementation::KtxHeader& header, std::size_t fileSize
 
     /* Both lengths should be equal without supercompression. Be lenient here
        and only emit a warning in case some shitty exporter gets this wrong. */
-    if(header.supercompressionScheme == 0 && level.byteLength != level.uncompressedByteLength) {
+    if(header.supercompressionScheme == Implementation::SuperCompressionScheme::None &&
+        level.byteLength != level.uncompressedByteLength)
+    {
         Warning{} << prefix << "mismatching image data sizes, both compressed "
             "and uncompressed should be equal but got" <<
             level.byteLength << "and" << level.uncompressedByteLength;
@@ -272,7 +282,12 @@ struct KtxImporter::File {
 
         bool isCompressed;
         bool isDepth;
+
+        /* Size of entire pixel/block */
+        UnsignedInt size;
+        /* Size of underlying data type, 1 for block-compressed formats */
         UnsignedInt typeSize;
+
         SwizzleType swizzle;
     } pixelFormat;
 
@@ -281,14 +296,10 @@ struct KtxImporter::File {
 };
 
 bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
-    isCompressed = false;
-    isDepth = false;
-    swizzle = SwizzleType::None;
-
     /* Find uncompressed pixel format */
     PixelFormat format{};
     switch(vkFormat) {
-        #define _p(vulkan, magnum) case Implementation::VK_FORMAT_ ## vulkan: format = PixelFormat:: ## magnum; break;
+        #define _p(vulkan, magnum, _type) case Implementation::VK_FORMAT_ ## vulkan: format = PixelFormat::magnum; break;
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _p
         default:
@@ -314,11 +325,12 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
         }
 
         if(format != PixelFormat{}) {
-            const UnsignedInt size = pixelSize(format);
+            size = pixelSize(format);
             CORRADE_INTERNAL_ASSERT(size == 3 || size == 4);
             swizzle = (size == 3) ? SwizzleType::BGR : SwizzleType::BGRA;
         }
-    }
+    } else
+        size = pixelSize(format);
 
     if(format != PixelFormat{}) {
         /* Depth formats are allowed by KTX. We only really use isDepth for
@@ -344,7 +356,7 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
     /* Find block-compressed pixel format, no swizzling possible */
     CompressedPixelFormat compressedFormat{};
     switch(vkFormat) {
-        #define _c(vulkan, magnum) case Implementation::VK_FORMAT_ ## vulkan: compressedFormat = CompressedPixelFormat:: ## magnum; break;
+        #define _c(vulkan, magnum, _type) case Implementation::VK_FORMAT_ ## vulkan: compressedFormat = CompressedPixelFormat::magnum; break;
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _c
         default:
@@ -352,6 +364,7 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
     }
 
     if(compressedFormat != CompressedPixelFormat{}) {
+        size = compressedBlockDataSize(compressedFormat);
         compressed = compressedFormat;
         isCompressed = true;
         return true;
@@ -397,7 +410,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* KTX2 uses little-endian everywhere */
     Utility::Endianness::littleEndianInPlace(
         header.vkFormat, header.typeSize,
-        header.pixelSize[0], header.pixelSize[1], header.pixelSize[2],
+        header.imageSize[0], header.imageSize[1], header.imageSize[2],
         header.layerCount, header.faceCount, header.levelCount,
         header.supercompressionScheme,
         header.dfdByteOffset, header.dfdByteLength,
@@ -408,7 +421,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(!validateHeader(header, data.size(), "Trade::KtxImporter::openData():"))
         return;
 
-    Containers::Pointer<File> f{new File};
+    Containers::Pointer<File> f{new File{}};
     f->in = Containers::Array<char>{NoInit, data.size()};
     Utility::copy(data, f->in);
 
@@ -434,12 +447,12 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     f->pixelFormat.typeSize = header.typeSize;
 
     /** @todo Support supercompression */
-    if(header.supercompressionScheme != 0) {
+    if(header.supercompressionScheme != Implementation::SuperCompressionScheme::None) {
         Error{} << "Trade::KtxImporter::openData(): supercompression is currently not supported";
         return;
     }
 
-    f->numDimensions = Math::min(header.pixelSize, Vector3ui{1}).sum();
+    f->numDimensions = Math::min(header.imageSize, Vector3ui{1}).sum();
     CORRADE_INTERNAL_ASSERT(f->numDimensions >= 1 && f->numDimensions <= 3);
 
     if(f->numDimensions == 3 && f->pixelFormat.isDepth) {
@@ -448,7 +461,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     /* Make sure we don't choke on size calculations using product() */
-    const Vector3i size = Math::max(Vector3i{header.pixelSize}, Vector3i{1});
+    const Vector3i size = Math::max(Vector3i{header.imageSize}, Vector3i{1});
 
     /* Number of array layers, imported as extra image dimensions (except
        for 3D images, there it's one Image3D per layer).
@@ -512,7 +525,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* Remember the image type for doImage() */
     switch(f->numDimensions) {
-        /** @todo array enums */
+        /** @todo Use array enums once they're added to Magnum */
         case 1:
             f->type = isLayered ? TextureData::Type::Texture1D/*Array*/ : TextureData::Type::Texture1D;
             break;
@@ -528,15 +541,60 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
-    f->numDataDimensions = f->numDimensions;
-    if(f->numDimensions != 3 && (isLayered || isCubemap))
-        f->numDataDimensions++;
+    f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubemap), 3);
 
     /* Read metadata */
 
-    /** @todo Read data format descriptor */
-    if(header.dfdByteLength > 0) {
-        Containers::ArrayView<const char> dataFormatDescriptorData = f->in.suffix(header.dfdByteOffset).prefix(header.dfdByteLength);
+    /* Read data format descriptor (DFD) */
+    {
+        /* Only do some very basic sanity checks, the DFD is terribly
+           over-engineered and the data is redundant if we have a
+           (Compressed)PixelFormat. */
+        bool valid = false;
+        const auto descriptorData = f->in.suffix(header.dfdByteOffset).prefix(header.dfdByteLength);
+        const UnsignedInt length = *reinterpret_cast<UnsignedInt*>(descriptorData.data());
+        if(length == descriptorData.size()) {
+            const auto& block = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(descriptorData.suffix(sizeof(length)).data());
+            Utility::Endianness::littleEndianInPlace(block.vendorId,
+                block.descriptorType, block.versionNumber,
+                block.descriptorBlockSize);
+
+            /* Basic block must be the first block in the DFD */
+            if(block.vendorId == Implementation::KdfBasicBlockHeader::VendorId::Khronos &&
+                block.descriptorType == Implementation::KdfBasicBlockHeader::DescriptorType::Basic &&
+                block.versionNumber == Implementation::KdfBasicBlockHeader::VersionNumber::Kdf1_3 &&
+                block.descriptorBlockSize > sizeof(block) &&
+                block.descriptorBlockSize + sizeof(length) <= length)
+            {
+                valid = true;
+
+                /* Check if pixel/block size and channel count match the format */
+                if(f->pixelFormat.isCompressed) {
+                    /* Block size */
+                    const Vector4i expected = Vector4i::pad(compressedBlockSize(f->pixelFormat.compressed), 1);
+                    const Vector4i actual{Vector4ub::from(block.texelBlockDimension)};
+                    valid = valid && actual == expected;
+                } else {
+                    /* Pixel size. For supercompressed data, bytePlanes is all
+                       zeros to indicate an unsized format. */
+                    /** @todo Does this work with depth-stencil formats? */
+                    if(header.supercompressionScheme == Implementation::SuperCompressionScheme::None) {
+                        const UnsignedInt expected = f->pixelFormat.size;
+                        const UnsignedInt actual = block.bytesPlane[0];
+                        valid = valid && actual == expected;
+                    }
+                    /* Channel count */
+                    const UnsignedInt expected = f->pixelFormat.size / f->pixelFormat.typeSize;
+                    const UnsignedInt actual = (block.descriptorBlockSize - sizeof(block))/sizeof(Implementation::KdfBasicBlockSample);
+                    valid = valid && actual == expected;
+                }
+            }
+        }
+
+        if(!valid) {
+            Error{} << "Trade::KtxImporter::openData(): invalid data format descriptor";
+            return;
+        }
     }
 
     /* Read key/value data, optional */
@@ -640,12 +698,13 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             "cubemap faces, importing faces as array layers";
     }
 
+    /* Read swizzle information */
     {
-        /** @todo We need the channel count to correctly validate swizzle length. Read the DFD! */
         const auto found = keyValueMap.find("KTXswizzle"_s);
         if(found != keyValueMap.end()) {
-            const Containers::StringView swizzle{found->second.prefix(Math::min<std::size_t>(f->numDimensions, found->second.size()))};
-            if(swizzle != "rgba"_s.prefix(f->numDimensions)) {
+            const UnsignedInt numChannels = f->pixelFormat.size / f->pixelFormat.typeSize;
+            const Containers::StringView swizzle{found->second.prefix(Math::min<std::size_t>(numChannels, found->second.size()))};
+            if(swizzle != "rgba"_s.prefix(numChannels)) {
                 bool handled = false;
                 /* Special cases already supported for 8-bit Vulkan formats */
                 if(!f->pixelFormat.isCompressed) {
@@ -666,7 +725,6 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
-    /** @todo More verbose output */
     if(flags() & ImporterFlag::Verbose) {
         switch(f->pixelFormat.swizzle) {
             case SwizzleType::BGR:
@@ -713,7 +771,7 @@ Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, Unsigne
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    if((levelData.size.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
+    if((levelData.size.x()*_f->pixelFormat.size)%4 != 0)
         storage.setAlignment(1);
 
     return ImageData1D{storage, _f->pixelFormat.uncompressed, levelData.size.x(), std::move(data)};
@@ -726,26 +784,17 @@ UnsignedInt KtxImporter::doImage2DLevelCount(UnsignedInt id) { return _f->imageD
 Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, UnsignedInt level) {
     const File::LevelData& levelData = _f->imageData[id][level];
 
-    /* Copy image data */
     Containers::Array<char> data{NoInit, levelData.data.size()};
-    /** @todo Flip axes if necessary */
     Utility::copy(levelData.data, data);
-
-    /* Endian-swap if necessary */
     endianSwap(data, _f->pixelFormat.typeSize);
 
-    /* Compressed image */
     if(_f->pixelFormat.isCompressed)
         return ImageData2D(_f->pixelFormat.compressed, levelData.size.xy(), std::move(data));
 
-    /* Uncompressed */
-
-    /* Swizzle BGR(A) if necessary */
     swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
 
-    /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    if((levelData.size.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
+    if((levelData.size.x()*_f->pixelFormat.size)%4 != 0)
         storage.setAlignment(1);
 
     return ImageData2D{storage, _f->pixelFormat.uncompressed, levelData.size.xy(), std::move(data)};
@@ -758,26 +807,17 @@ UnsignedInt KtxImporter::doImage3DLevelCount(UnsignedInt id) { return _f->imageD
 Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const UnsignedInt level) {
     const File::LevelData& levelData = _f->imageData[id][level];
 
-    /* Copy image data */
     Containers::Array<char> data{NoInit, levelData.data.size()};
-    /** @todo Flip axes if necessary */
     Utility::copy(levelData.data, data);
-
-    /* Endian-swap if necessary */
     endianSwap(data, _f->pixelFormat.typeSize);
 
-    /* Compressed image */
     if(_f->pixelFormat.isCompressed)
         return ImageData3D(_f->pixelFormat.compressed, levelData.size, std::move(data));
 
-    /* Uncompressed */
-
-    /* Swizzle BGR(A) if necessary */
     swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
 
-    /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    if((levelData.size.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
+    if((levelData.size.x()*_f->pixelFormat.size)%4 != 0)
         storage.setAlignment(1);
 
     return ImageData3D{storage, _f->pixelFormat.uncompressed, levelData.size, std::move(data)};
