@@ -133,6 +133,46 @@ void swizzlePixels(SwizzleType type, UnsignedInt typeSize, Containers::ArrayView
             CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
             break;
     }
+
+template<UnsignedInt dimensions> void copyPixels(Math::Vector<dimensions, Int> size, BoolVector3 flip, UnsignedInt texelSize, Containers::ArrayView<const char> src, Containers::ArrayView<char> dst) {
+    static_assert(dimensions >= 1 && dimensions <= 3, "");
+
+    /* Nothing to flip, just memcpy */
+    if(flip.none()) {
+        Utility::copy(src, dst);
+        return;
+    }
+
+    /* Flip selected axes by using StridedArrayView with negative stride.
+       Ideally we'd just call flipped() on the view but we can't conditionally
+       call it with a dimension larger than the actual view dimensions. We'd
+       need a template specialization (more code) or constexpr if (requires
+       C++ 17), so we manually calculate negative strides and adjust the data
+       pointer. */
+    std::size_t sizes[dimensions + 1];
+    std::ptrdiff_t strides[dimensions + 1];
+
+    sizes[dimensions] = texelSize;
+    strides[dimensions] = 1;
+    for(UnsignedInt i = 0; i != dimensions; ++i) {
+        sizes[dimensions - 1 - i] = size[i];
+        strides[dimensions - 1 - i] = strides[dimensions - i]*sizes[dimensions - i];
+    }        
+
+    const Containers::StridedArrayView<dimensions + 1, char> dstView{dst, sizes, strides};
+
+    const char* srcData = src.data();
+    for(UnsignedInt i = 0; i != dimensions; ++i) {
+        if(flip[i]) {
+            /* Point to the last item of the dimension */
+            srcData += strides[dimensions - 1 - i]*(sizes[dimensions - 1 - i] - 1);
+            strides[dimensions - 1 - i] *= -1;
+        }
+    }
+
+    Containers::StridedArrayView<dimensions + 1, const char> srcView{{srcData, src.size()}, sizes, strides};
+
+    Utility::copy(srcView, dstView);
 }
 
 bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSize, const char* prefix) {
@@ -644,10 +684,9 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
        u/d = up/down
        o/i = out of/into screen
 
-       Default is assumed to be rdi, Magnum/GL expects ruo. */
+       The spec strongly recommends defaulting to rdi, Magnum/GL expects ruo. */
     {
         constexpr auto targetOrientation = "ruo"_s;
-        constexpr auto defaultOrientation = "rdi"_s;
 
         bool useDefaultOrientation = true;
         const auto found = keyValueMap.find("KTXorientation"_s);
@@ -664,10 +703,17 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
 
         if(useDefaultOrientation) {
+            constexpr Containers::StringView defaultDirections[3]{
+                "right"_s, "down"_s, "forward"_s
+            };
             Warning{} << "Trade::KtxImporter::openData(): missing or invalid "
-                "orientation, falling back to" << defaultOrientation;
-            f->flip = Math::Vector3<char>::from(defaultOrientation.data()) !=
-                Math::Vector3<char>::from(targetOrientation.data());
+                "orientation, assuming" << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
+
+            constexpr auto defaultOrientation = "rdi"_s;
+            const BoolVector3 flip = Math::notEqual(Math::Vector3<char>::from(defaultOrientation.data()),
+                Math::Vector3<char>::from(targetOrientation.data()));
+            for(UnsignedByte i = 0; i != f->numDimensions; ++i)
+                f->flip.set(i, flip[i]);
         }
     }
 
@@ -699,11 +745,12 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     /* Read swizzle information */
-    {
+    if(!f->pixelFormat.isDepth) {
         const auto found = keyValueMap.find("KTXswizzle"_s);
         if(found != keyValueMap.end()) {
-            const UnsignedInt numChannels = f->pixelFormat.size / f->pixelFormat.typeSize;
-            const Containers::StringView swizzle{found->second.prefix(Math::min<std::size_t>(numChannels, found->second.size()))};
+            /** @todo This is broken for block-compressed formats. Get numChannels from DFD */
+            const std::size_t numChannels = f->pixelFormat.size / f->pixelFormat.typeSize;
+            const Containers::StringView swizzle{found->second.prefix(Math::min(numChannels, found->second.size()))};
             if(swizzle != "rgba"_s.prefix(numChannels)) {
                 bool handled = false;
                 /* Special cases already supported for 8-bit Vulkan formats */
@@ -726,6 +773,16 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     if(flags() & ImporterFlag::Verbose) {
+        if(f->flip.any()) {
+            const Containers::StringView axes[3]{
+                f->flip[0] ? "x"_s : ""_s,
+                f->flip[1] ? "y"_s : ""_s,
+                f->flip[2] ? "z"_s : ""_s,
+            };
+            Debug{} << "Trade::KtxImporter::openData(): image will be flipped along" <<
+                " and "_s.joinWithoutEmptyParts(axes);
+        }
+
         switch(f->pixelFormat.swizzle) {
             case SwizzleType::BGR:
                 Debug{} << "Trade::KtxImporter::openData(): format requires conversion from BGR to RGB";
@@ -750,21 +807,16 @@ UnsignedInt KtxImporter::doImage1DLevelCount(UnsignedInt id) { return _f->imageD
 Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, UnsignedInt level) {
     const File::LevelData& levelData = _f->imageData[id][level];
 
-    /* Copy image data */
+    /* Copy image data. If we don't have to flip any axes, this is just a memcpy.
+       We already cleared flip for block-compressed data because we can't
+       reliably flip blocks, so there we always memcpy. */
     Containers::Array<char> data{NoInit, levelData.data.size()};
-    /** @todo Flip axes if necessary. This should be simple(?) with StridedArrayView
-              and negative stride. Note that we already disable flipping for
-              block-compressed data, so no need to check here. */
-    Utility::copy(levelData.data, data);
+    copyPixels<1>(levelData.size.x(), _f->flip, _f->pixelFormat.size, levelData.data, data);
 
-    /* Endian-swap if necessary */
     endianSwap(data, _f->pixelFormat.typeSize);
 
-    /* Compressed image */
     if(_f->pixelFormat.isCompressed)
         return ImageData1D(_f->pixelFormat.compressed, levelData.size.x(), std::move(data));
-
-    /* Uncompressed */
 
     /* Swizzle BGR(A) if necessary */
     swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
@@ -785,7 +837,8 @@ Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, Unsigne
     const File::LevelData& levelData = _f->imageData[id][level];
 
     Containers::Array<char> data{NoInit, levelData.data.size()};
-    Utility::copy(levelData.data, data);
+    copyPixels<2>(levelData.size.xy(), _f->flip, _f->pixelFormat.size, levelData.data, data);
+
     endianSwap(data, _f->pixelFormat.typeSize);
 
     if(_f->pixelFormat.isCompressed)
@@ -808,7 +861,8 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
     const File::LevelData& levelData = _f->imageData[id][level];
 
     Containers::Array<char> data{NoInit, levelData.data.size()};
-    Utility::copy(levelData.data, data);
+    copyPixels<3>(levelData.size, _f->flip, _f->pixelFormat.size, levelData.data, data);
+
     endianSwap(data, _f->pixelFormat.typeSize);
 
     if(_f->pixelFormat.isCompressed)
