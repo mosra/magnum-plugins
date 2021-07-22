@@ -76,6 +76,12 @@
 /** @dir MagnumPlugins/JpegImporter
  * @brief Plugin @ref Magnum::Trade::JpegImporter
  */
+/** @dir MagnumPlugins/KtxImageConverter
+ * @brief Plugin @ref Magnum::Trade::KtxImageConverter
+ */
+/** @dir MagnumPlugins/KtxImporter
+ * @brief Plugin @ref Magnum::Trade::KtxImporter
+ */
 /** @dir MagnumPlugins/MeshOptimizerSceneConverter
  * @brief Plugin @ref Magnum::Trade::MeshOptimizerSceneConverter
  * @m_since_{plugins,2020,06}

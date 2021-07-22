@@ -64,6 +64,8 @@ class MagnumPlugins < Formula
         "-DWITH_HARFBUZZFONT=#{(build.with? 'harfbuzz') ? 'ON' : 'OFF'}",
         "-DWITH_JPEGIMAGECONVERTER=#{(build.with? 'jpeg') ? 'ON' : 'OFF'}",
         "-DWITH_JPEGIMPORTER=#{(build.with? 'jpeg') ? 'ON' : 'OFF'}",
+        "-DWITH_KTXIMAGECONVERTER=ON",
+        "-DWITH_KTXIMAGEIMPORTER=ON",
         "-DWITH_MESHOPTIMIZERSCENECONVERTER=ON",
         "-DWITH_MINIEXRIMAGECONVERTER=ON",
         "-DWITH_OPENEXRIMAGECONVERTER=#{(build.with? 'openexr') ? 'ON' : 'OFF'}",

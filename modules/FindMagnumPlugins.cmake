@@ -27,6 +27,8 @@
 #  IcoImporter                  - ICO importer
 #  JpegImageConverter           - JPEG image converter
 #  JpegImporter                 - JPEG importer
+#  KtxImageConverter            - KTX image converter
+#  KtxImporter                  - KTX importer
 #  MeshOptimizerSceneConverter  - MeshOptimizer scene converter
 #  MiniExrImageConverter        - OpenEXR image converter using miniexr
 #  OpenGexImporter              - OpenGEX importer
@@ -144,11 +146,12 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
     DrWavAudioImporter Faad2AudioImporter FreeTypeFont GlslangShaderConverter
     HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
-    MeshOptimizerSceneConverter MiniExrImageConverter OpenExrImageConverter
-    OpenExrImporter OpenGexImporter PngImageConverter PngImporter
-    PrimitiveImporter SpirvToolsShaderConverter StanfordImporter
-    StanfordSceneConverter StbDxtImageConverter StbImageConverter
-    StbImageImporter StbTrueTypeFont StbVorbisAudioImporter StlImporter
+    KtxImageConverter KtxImporter MeshOptimizerSceneConverter
+    MiniExrImageConverter OpenExrImageConverter OpenExrImporter
+    OpenGexImporter PngImageConverter PngImporter PrimitiveImporter
+    SpirvToolsShaderConverter StanfordImporter StanfordSceneConverter
+    StbDxtImageConverter StbImageConverter StbImageImporter
+    StbTrueTypeFont StbVorbisAudioImporter StlImporter
     TinyGltfImporter)
 # Nothing is enabled by default right now
 set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
@@ -383,6 +386,9 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
             endif()
+
+        # KtxImageConverter has no dependencies
+        # KtxImporter has no dependencies
 
         # MeshOptimizerSceneConverter plugin dependencies
         elseif(_component STREQUAL MeshOptimizerSceneConverter)
