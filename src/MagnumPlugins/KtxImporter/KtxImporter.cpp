@@ -75,20 +75,19 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
     switch(typeSize) {
         case 1:
             /* Single-byte or block-compressed format, nothing to do */
-            break;
+            return;
         case 2:
             Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<2>::Type>(data));
-            break;
+            return;
         case 4:
             Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<4>::Type>(data));
-            break;
+            return;
         case 8:
             Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<8>::Type>(data));
-            break;
-        default:
-            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-            break;
+            return;
     }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 enum SwizzleType : UnsignedByte {
@@ -119,20 +118,20 @@ void swizzlePixels(SwizzleType type, UnsignedInt typeSize, Containers::ArrayView
     switch(typeSize) {
         case 1:
             swizzlePixels<TypeForSize<1>::Type>(type, data);
-            break;
+            return;
         case 2:
             swizzlePixels<TypeForSize<2>::Type>(type, data);
-            break;
+            return;
         case 4:
             swizzlePixels<TypeForSize<4>::Type>(type, data);
-            break;
+            return;
         case 8:
             swizzlePixels<TypeForSize<8>::Type>(type, data);
-            break;
-        default:
-            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-            break;
+            return;
     }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
 
 template<UnsignedInt dimensions> void copyPixels(Math::Vector<dimensions, Int> size, BoolVector3 flip, UnsignedInt texelSize, Containers::ArrayView<const char> src, Containers::ArrayView<char> dst) {
     static_assert(dimensions >= 1 && dimensions <= 3, "");
@@ -247,7 +246,7 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
         return false;
     }
 
-    const std::size_t dfdMinSize = sizeof(Implementation::KdfBasicBlockHeader) + sizeof(Implementation::KdfBasicBlockSample);
+    const std::size_t dfdMinSize = sizeof(UnsignedInt) + sizeof(Implementation::KdfBasicBlockHeader) + sizeof(Implementation::KdfBasicBlockSample);
     if(dfdMinSize > header.dfdByteLength) {
         Error{} << prefix << "data format descriptor too short, expected at least" <<
             dfdMinSize << "bytes but got" << header.dfdByteLength;
@@ -331,12 +330,16 @@ struct KtxImporter::File {
         SwizzleType swizzle;
     } pixelFormat;
 
-    /* Each array layer is an image with faces and mipmaps as levels */
+    /* Usually only one image with n or n+1 dimensions, multiple images for
+       3D array layers */
     Containers::Array<Containers::Array<LevelData>> imageData;
 };
 
 bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
-    /* Find uncompressed pixel format */
+    /* Find uncompressed pixel format. Note that none of the formats forbidden
+       by KTX are supported by Magnum, so we filter those at the same time.
+       This might change in the future, but we'll be fine as long as
+       formatMapping.hpp isn't updated without adding an extra check. */
     PixelFormat format{};
     switch(vkFormat) {
         #define _p(vulkan, magnum, _type) case Implementation::VK_FORMAT_ ## vulkan: format = PixelFormat::magnum; break;
@@ -501,7 +504,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     /* Make sure we don't choke on size calculations using product() */
-    const Vector3i size = Math::max(Vector3i{header.imageSize}, Vector3i{1});
+    const Vector3i size = Math::max(Vector3i{header.imageSize}, 1);
 
     /* Number of array layers, imported as extra image dimensions (except
        for 3D images, there it's one Image3D per layer).
@@ -522,13 +525,12 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* The level index contains byte ranges for each mipmap, from largest to
        smallest. Each mipmap contains tightly packed images ordered by
-       layers, faces, slices, rows, columns. */
+       layers, faces/slices, rows, columns. */
     const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
     const auto levelIndex = Containers::arrayCast<Implementation::KtxLevel>(
         f->in.suffix(sizeof(Implementation::KtxHeader)).prefix(levelIndexSize));
 
     /* Extract image data views */
-
     const UnsignedInt numImages = (f->numDimensions == 3) ? numLayers : 1;
     f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numImages};
     for(UnsignedInt image = 0; image != numImages; ++image)
@@ -560,12 +562,12 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
 
         /* Shrink to next power of 2 */
-        mipSize = Math::max(mipSize >> 1, Vector3i{1});
+        mipSize = Math::max(mipSize >> 1, 1);
     }
 
-    /* Remember the image type for doImage() */
+    /* Remember the type for doTexture() */
     switch(f->numDimensions) {
-        /** @todo Use array enums once they're added to Magnum */
+        /** @todo Use *Array enums once they're added to Magnum */
         case 1:
             f->type = isLayered ? TextureData::Type::Texture1D/*Array*/ : TextureData::Type::Texture1D;
             break;
@@ -583,18 +585,17 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubemap), 3);
 
-    /* Read metadata */
-
     /* Read data format descriptor (DFD) */
     {
         /* Only do some very basic sanity checks, the DFD is terribly
            over-engineered and the data is redundant if we have a
-           (Compressed)PixelFormat. */
+           (Compressed)PixelFormat */
         bool valid = false;
         const auto descriptorData = f->in.suffix(header.dfdByteOffset).prefix(header.dfdByteLength);
         const UnsignedInt length = *reinterpret_cast<UnsignedInt*>(descriptorData.data());
+        Utility::Endianness::littleEndianInPlace(length);
         if(length == descriptorData.size()) {
-            const auto& block = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(descriptorData.suffix(sizeof(length)).data());
+            auto& block = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(descriptorData.suffix(sizeof(length)).data());
             Utility::Endianness::littleEndianInPlace(block.vendorId,
                 block.descriptorType, block.versionNumber,
                 block.descriptorBlockSize);
@@ -612,7 +613,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 if(f->pixelFormat.isCompressed) {
                     /* Block size */
                     const Vector4i expected = Vector4i::pad(compressedBlockSize(f->pixelFormat.compressed), 1);
-                    const Vector4i actual{Vector4ub::from(block.texelBlockDimension)};
+                    const Vector4i actual{Math::max(Vector4ub::from(block.texelBlockDimension), {1})};
                     valid = valid && actual == expected;
                 } else {
                     /* Pixel size. For supercompressed data, bytePlanes is all
@@ -647,7 +648,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
            Byte data[length]
            Byte padding[...]
 
-           data begins with a zero-terminated key, the rest of the bytes is the
+           data[] begins with a zero-terminated key, the rest of the bytes is the
            value content. Value alignment must be implicitly done through key
            length, hence the funny KTX keys with multiple underscores. Any
            multi-byte numbers in values must be endian-swapped later. */
@@ -655,6 +656,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         while(current + sizeof(UnsignedInt) < keyValueData.size()) {
             /* Length without padding */
             const UnsignedInt length = *reinterpret_cast<const UnsignedInt*>(keyValueData.suffix(current).data());
+            Utility::Endianness::littleEndianInPlace(length);
             current += sizeof(length);
 
             if(current + length < keyValueData.size()) {
@@ -765,7 +767,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 }
                 if(!handled) {
                     Error{} << "Trade::KtxImporter::openData(): unsupported channel "
-                        "mapping:" << swizzle;
+                        "mapping" << swizzle;
                     return;
                 }
             }
