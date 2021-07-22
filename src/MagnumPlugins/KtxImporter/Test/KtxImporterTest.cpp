@@ -112,14 +112,14 @@ constexpr Color3ub Black{0};
 constexpr Color3ub White{0xff};
 constexpr Color3ub Purple{0x7f, 0, 0x7f};
 
-constexpr Color3ub PatternRgb2DData[3][4]{
+const Color3ub PatternRgb2DData[3][4]{
     /* Origin bottom-left */
     {Color3ub::red(),  White,             Black,  Color3ub::green()},
     {White,            Color3ub::red(),   Black,  Color3ub::green()},
     {Color3ub::blue(), Color3ub::green(), Purple, Purple}
 };
 
-constexpr Color4ub PatternRgba2DData[3][4]{
+const Color4ub PatternRgba2DData[3][4] = {
     {PatternRgb2DData[0][0], PatternRgb2DData[0][1], PatternRgb2DData[0][2], PatternRgb2DData[0][3]},
     {PatternRgb2DData[1][0], PatternRgb2DData[1][1], PatternRgb2DData[1][2], PatternRgb2DData[1][3]},
     {PatternRgb2DData[2][0], PatternRgb2DData[2][1], PatternRgb2DData[2][2], PatternRgb2DData[2][3]}
@@ -252,12 +252,12 @@ const struct {
     {"BGRA8 format", "bgra.ktx2",
         PixelFormat::RGBA8Srgb, Implementation::VK_FORMAT_B8G8R8A8_SRGB,
         "format requires conversion from BGRA to RGBA", Containers::arrayCast<const char>(PatternRgba2DData)},
+    {"BGR8 format+header cancel", "swizzle-bgr.ktx2",
+        PixelFormat::RGB8Srgb, Implementation::VK_FORMAT_B8G8R8_SRGB,
+        nullptr, Containers::arrayCast<const char>(PatternRgb2DData)},
     {"BGRA8 format+header cancel", "swizzle-bgra.ktx2",
         PixelFormat::RGBA8Srgb, Implementation::VK_FORMAT_B8G8R8A8_SRGB,
         nullptr, Containers::arrayCast<const char>(PatternRgba2DData)},
-    {"BGR8 format+header cancel", "swizzle-bgr.ktx2",
-        PixelFormat::RGB8Srgb, Implementation::VK_FORMAT_B8G8R8_SRGB,
-        nullptr, Containers::arrayCast<const char>(PatternRgb2DData)}
     /** @todo Check swizzle of larger formats */
 };
 

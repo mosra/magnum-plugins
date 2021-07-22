@@ -45,7 +45,6 @@
 #include <Magnum/Math/Vector4.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/TextureData.h>
-#include <Magnum/Vk/PixelFormat.h>
 #include "MagnumPlugins/KtxImporter/KtxHeader.h"
 
 namespace Magnum { namespace Trade {
@@ -613,7 +612,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 if(f->pixelFormat.isCompressed) {
                     /* Block size */
                     const Vector4i expected = Vector4i::pad(compressedBlockSize(f->pixelFormat.compressed), 1);
-                    const Vector4i actual{Math::max(Vector4ub::from(block.texelBlockDimension), {1})};
+                    const Vector4i actual{Math::max(Vector4ub::from(block.texelBlockDimension), UnsignedByte(1))};
                     valid = valid && actual == expected;
                 } else {
                     /* Pixel size. For supercompressed data, bytePlanes is all

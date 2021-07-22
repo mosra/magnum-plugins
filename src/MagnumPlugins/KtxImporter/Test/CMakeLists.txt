@@ -44,8 +44,23 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(KtxImporterTest KtxImporterTest.cpp
-    LIBRARIES MagnumTrade
-    FILES file.tga)
+    LIBRARIES Magnum::Trade
+    FILES
+        1d.ktx2
+        1d-mipmaps.ktx2
+        bgr.ktx2
+        bgra.ktx2
+        bgra-swizzle-bgra.ktx2
+        bgr-swizzle-bgr.ktx2
+        orientation-empty.ktx2
+        rgb.ktx2
+        rgba.ktx2
+        rgb-mipmaps.ktx2
+        swizzle-bgr.ktx2
+        swizzle-bgra.ktx2
+        swizzle-identity.ktx2
+        swizzle-unsupported.ktx2
+        version1.ktx)
 target_include_directories(KtxImporterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
     ${PROJECT_SOURCE_DIR}/src)

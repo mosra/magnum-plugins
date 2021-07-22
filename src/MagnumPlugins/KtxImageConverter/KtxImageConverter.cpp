@@ -27,8 +27,8 @@
 #include "KtxImageConverter.h"
 
 #include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Endianness.h>
@@ -172,7 +172,7 @@ UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix, Implementation
                 : Implementation::KdfBasicBlockSample::ChannelFormat{};
     }
 
-    CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << suffix, {});
+    CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << UnsignedInt(suffix), {});
 }
 
 Containers::Array2<UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedByte typeSize) {
@@ -214,7 +214,7 @@ Containers::Array2<UnsignedInt> channelMapping(Implementation::VkFormatSuffix su
             return {Corrade::Utility::bitCast<UnsignedInt>(-1.0f), Corrade::Utility::bitCast<UnsignedInt>(1.0f)};
     }
 
-    CORRADE_ASSERT_UNREACHABLE("channelLimits(): invalid format suffix" << suffix, {});
+    CORRADE_ASSERT_UNREACHABLE("channelLimits(): invalid format suffix" << UnsignedInt(suffix), {});
 }
 
 bool isSrgb(PixelFormat format) {
