@@ -882,8 +882,8 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
 UnsignedInt KtxImporter::doTextureCount() const { return _f->imageData.size(); }
 
 Containers::Optional<TextureData> KtxImporter::doTexture(UnsignedInt id) {
-    return TextureData{_f->type, SamplerFilter::Nearest, SamplerFilter::Nearest,
-        SamplerMipmap::Base, SamplerWrapping::Repeat, id};
+    return TextureData{_f->type, SamplerFilter::Linear, SamplerFilter::Linear,
+        SamplerMipmap::Linear, SamplerWrapping::Repeat, id};
 }
 
 }}
