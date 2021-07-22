@@ -369,6 +369,10 @@ By default no plugins are built and you need to select them manually:
     @ref Trade::JpegImageConverter "JpegImageConverter" plugin.
 -   `WITH_JPEGIMPORTER` --- Build the @ref Trade::JpegImporter "JpegImporter"
     plugin. Depends on [libJPEG](http://libjpeg.sourceforge.net/).
+-   `WITH_KTXIMAGECONVERTER` --- Build the
+    @relativeref{Trade,KtxImageConverter} plugin.
+-   `WITH_KTXIMPORTER` --- Build the
+    @relativeref{Trade,KtxImporter} plugin.
 -   `WITH_MESHOPTIMIZERSCENECONVERTER` --- Build the
     @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter"
     plugin.
