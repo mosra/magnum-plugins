@@ -168,8 +168,8 @@ not required to be present. Indices are optional as well.
 
 -   Texture coordinate transformation is ignored.
 -   Textures using other than the first coordinate set are not supported.
--   Texture type is always @ref Trade::TextureData::Type::Texture2D, wrapping
-    is always @ref SamplerWrapping::ClampToEdge, minification and
+-   Texture type is always @ref Trade::TextureType::Texture2D, wrapping is
+    always @ref SamplerWrapping::ClampToEdge, minification and
     magnification is @ref SamplerFilter::Linear and mipmap selection is
     @ref SamplerMipmap::Linear.
 -   If multiple textures have the same image filename string, given image is

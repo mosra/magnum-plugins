@@ -1300,7 +1300,7 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
     if(mat->Get(AI_MATKEY_MAPPINGMODE_V(type, 0), mapMode) == AI_SUCCESS)
         wrappingV = toWrapping(mapMode);
 
-    return TextureData{TextureData::Type::Texture2D,
+    return TextureData{TextureType::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
         {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, std::get<2>(_f->textures[id]), &_f->textures[id]};
 }

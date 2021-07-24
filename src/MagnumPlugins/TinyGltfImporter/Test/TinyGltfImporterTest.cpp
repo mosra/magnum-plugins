@@ -3202,7 +3202,7 @@ void TinyGltfImporterTest::texture() {
     CORRADE_VERIFY(texture);
     CORRADE_VERIFY(texture->importerState());
     CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
 
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Nearest);
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
@@ -3237,7 +3237,7 @@ void TinyGltfImporterTest::textureDefaultSampler() {
     auto texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
 
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
@@ -3257,7 +3257,7 @@ void TinyGltfImporterTest::textureEmptySampler() {
     auto texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
 
     CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);

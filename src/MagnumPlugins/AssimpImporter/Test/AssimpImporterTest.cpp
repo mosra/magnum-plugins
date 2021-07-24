@@ -2812,7 +2812,7 @@ void AssimpImporterTest::texture() {
     /* Diffuse texture */
     Containers::Optional<TextureData> texture = importer->texture(2);
     CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
         Math::Vector3<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
@@ -2822,7 +2822,7 @@ void AssimpImporterTest::texture() {
     /* Specular texture */
     Containers::Optional<TextureData> texture1 = importer->texture(1);
     CORRADE_VERIFY(texture1);
-    CORRADE_COMPARE(texture1->type(), TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture1->type(), TextureType::Texture2D);
     {
         /* I assume this "don't care for remaining stuff" part is responsible:
            https://github.com/assimp/assimp/blob/0c3933ca7c460644d346d94ecbb1b118f598ced4/code/Collada/ColladaParser.cpp#L1977-L1978 */
@@ -2843,7 +2843,7 @@ void AssimpImporterTest::texture() {
     /* Normal texture, reusing the diffuse image (so the same index) */
     Containers::Optional<TextureData> texture2 = importer->texture(3);
     CORRADE_VERIFY(texture2);
-    CORRADE_COMPARE(texture2->type(), TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture2->type(), TextureType::Texture2D);
     CORRADE_COMPARE(texture2->image(), 1);
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
@@ -2918,7 +2918,7 @@ void AssimpImporterTest::openStateTexture() {
     /* Diffuse texture */
     Containers::Optional<TextureData> texture = importer->texture(2);
     CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->type(), TextureData::Type::Texture2D);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
     CORRADE_COMPARE(texture->wrapping(),
         Math::Vector3<SamplerWrapping>(SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge));
     CORRADE_COMPARE(texture->image(), 1);

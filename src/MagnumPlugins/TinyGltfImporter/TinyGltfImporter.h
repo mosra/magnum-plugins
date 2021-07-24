@@ -301,8 +301,8 @@ fail.
 @subsection Trade-TinyGltfImporter-behavior-textures Texture and image import
 
 <ul>
-<li>Texture type is always @ref Trade::TextureData::Type::Texture2D, as glTF
-doesn't support anything else</li>
+<li>Texture type is always @ref Trade::TextureType::Texture2D, as glTF doesn't
+support anything else</li>
 <li>Z coordinate of @ref Trade::TextureData::wrapping() is always
 @ref SamplerWrapping::Repeat, as glTF doesn't support 3D textures</li>
 <li>

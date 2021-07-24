@@ -812,7 +812,7 @@ Containers::Optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt i
 
     /** @todo texture coordinate transformations */
 
-    return TextureData{TextureData::Type::Texture2D, SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear, SamplerWrapping::ClampToEdge, _d->imagesForName[texture.firstChildOf(OpenDdl::Type::String).as<std::string>()], &texture};
+    return TextureData{TextureType::Texture2D, SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear, SamplerWrapping::ClampToEdge, _d->imagesForName[texture.firstChildOf(OpenDdl::Type::String).as<std::string>()], &texture};
 }
 
 UnsignedInt OpenGexImporter::doImage2DCount() const { return _d->images.size(); }
