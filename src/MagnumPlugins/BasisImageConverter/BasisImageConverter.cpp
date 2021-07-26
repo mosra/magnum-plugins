@@ -220,4 +220,4 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImageConverter, Magnum::Trade::BasisImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")

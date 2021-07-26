@@ -108,4 +108,4 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
 }}
 
 CORRADE_PLUGIN_REGISTER(StbDxtImageConverter, Magnum::Trade::StbDxtImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")

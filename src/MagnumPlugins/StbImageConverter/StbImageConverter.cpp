@@ -207,4 +207,4 @@ bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containe
 }}
 
 CORRADE_PLUGIN_REGISTER(StbImageConverter, Magnum::Trade::StbImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")

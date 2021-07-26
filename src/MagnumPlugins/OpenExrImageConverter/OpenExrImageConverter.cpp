@@ -276,4 +276,4 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenExrImageConverter, Magnum::Trade::OpenExrImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")

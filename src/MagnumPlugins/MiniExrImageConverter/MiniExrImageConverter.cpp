@@ -86,4 +86,4 @@ Containers::Array<char> MiniExrImageConverter::doConvertToData(const ImageView2D
 }}
 
 CORRADE_PLUGIN_REGISTER(MiniExrImageConverter, Magnum::Trade::MiniExrImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")

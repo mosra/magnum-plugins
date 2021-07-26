@@ -177,4 +177,4 @@ Containers::Array<char> JpegImageConverter::doConvertToData(const ImageView2D& i
 }}
 
 CORRADE_PLUGIN_REGISTER(JpegImageConverter, Magnum::Trade::JpegImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")

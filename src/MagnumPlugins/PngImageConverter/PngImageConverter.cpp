@@ -160,4 +160,4 @@ Containers::Array<char> PngImageConverter::doConvertToData(const ImageView2D& im
 }}
 
 CORRADE_PLUGIN_REGISTER(PngImageConverter, Magnum::Trade::PngImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")
