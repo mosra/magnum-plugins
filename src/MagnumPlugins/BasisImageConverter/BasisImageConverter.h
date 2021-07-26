@@ -118,12 +118,12 @@ Due to limitations in the @ref AbstractImageConverter API, it's currently not
 possible to create a Basis file containing multiple images --- you'd need to
 use the upstream `basisu` tool for that instead.
 
-While it's possible to tell Basis to create mip levels from the top-level image
-using the @cb{.ini} mip_gen @ce @ref Trade-BasisImageConverter-configuration "configuration option",
-due to the same plugin API limitations it's not possible to supply the mip
-levels directly.
+Supplying custom mip levels will be possible when the converter gets updated to
+[the upcoming version 1.16](https://github.com/BinomialLLC/basis_universal/commit/ee626cec19e8e2d206bfc127296dfd9519352dc6). Right now, there's only a
+possibility to generate the mip levels from the top-level image using the
+@cb{.ini} mip_gen @ce @ref Trade-BasisImageConverter-configuration "configuration option".
 
-@subsection Trade-BasisImageConverter-behavior-loading Loading the plugin fails undefined symbol: pthread_create
+@subsection Trade-BasisImageConverter-behavior-loading Loading the plugin fails with undefined symbol: pthread_create
 
 On Linux it may happen that loading the plugin will fail with
 `undefined symbol: pthread_create`. The Basis encoder is optionally
