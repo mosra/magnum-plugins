@@ -241,10 +241,10 @@ const struct {
     const Containers::ArrayView<const char> data;
 } SwizzleData[] {
     {"BGR8 header", "bgr-swizzle-bgr.ktx2",
-        PixelFormat::RGB8Srgb, Implementation::VK_FORMAT_R8G8B8_SRGB, /* Unchanged */
+        PixelFormat::RGB8Srgb, Implementation::VK_FORMAT_UNDEFINED,
         "format requires conversion from BGR to RGB", Containers::arrayCast<const char>(PatternRgb2DData)},
     {"BGRA8 header", "bgra-swizzle-bgra.ktx2",
-        PixelFormat::RGBA8Srgb, Implementation::VK_FORMAT_R8G8B8A8_SRGB, /* Unchanged */
+        PixelFormat::RGBA8Srgb, Implementation::VK_FORMAT_UNDEFINED,
         "format requires conversion from BGRA to RGBA", Containers::arrayCast<const char>(PatternRgba2DData)},
     {"BGR8 format", "bgr.ktx2",
         PixelFormat::RGB8Srgb, Implementation::VK_FORMAT_B8G8R8_SRGB,
@@ -382,20 +382,43 @@ void KtxImporterTest::invalidFormat() {
 
     Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
 
+    /* Implementation::VkFormat only contains swizzled 8-bit formats. Taken
+       from magnum/src/MagnumExternal/Vulkan/flextVk.h (9d4a8b49943a084cff64550792bb2eba223e0e03) */
+    enum VkFormat : UnsignedInt {
+        VK_FORMAT_R4G4_UNORM_PACK8 = 1,
+        VK_FORMAT_A1R5G5B5_UNORM_PACK16 = 8,
+        VK_FORMAT_R8_USCALED = 11,
+        VK_FORMAT_R16_SSCALED = 73,
+        VK_FORMAT_R64_UINT = 110,
+        VK_FORMAT_R64G64B64A64_SFLOAT = 121,
+        VK_FORMAT_G8B8G8R8_422_UNORM = 1000156000,
+        VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM = 1000156002,
+        VK_FORMAT_R10X6G10X6_UNORM_2PACK16 = 1000156008,
+        VK_FORMAT_G16B16G16R16_422_UNORM = 1000156027,
+        VK_FORMAT_B16G16R16G16_422_UNORM = 1000156028,
+        VK_FORMAT_G16_B16_R16_3PLANE_420_UNORM = 1000156029,
+        VK_FORMAT_G16_B16R16_2PLANE_420_UNORM = 1000156030,
+        VK_FORMAT_G16_B16_R16_3PLANE_422_UNORM = 1000156031,
+        VK_FORMAT_G16_B16R16_2PLANE_422_UNORM = 1000156032,
+        VK_FORMAT_G16_B16_R16_3PLANE_444_UNORM = 1000156033,
+        VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG = 1000054006,
+    };
+
     constexpr Implementation::VkFormat formats[]{
         /* Not allowed by KTX. All of the unsupported formats happen to not be
            supported by Magnum, either. */
-        Implementation::VK_FORMAT_R4G4_UNORM_PACK8,
-        Implementation::VK_FORMAT_A1R5G5B5_UNORM_PACK16,
-        Implementation::VK_FORMAT_R8_USCALED,
-        Implementation::VK_FORMAT_R16_SSCALED,
-        Implementation::VK_FORMAT_G8B8G8R8_422_UNORM,
-        Implementation::VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM,
-        Implementation::VK_FORMAT_R10X6G10X6_UNORM_2PACK16,
-        Implementation::VK_FORMAT_G16B16G16R16_422_UNORM,
+        VK_FORMAT_R4G4_UNORM_PACK8,
+        VK_FORMAT_A1R5G5B5_UNORM_PACK16,
+        VK_FORMAT_R8_USCALED,
+        VK_FORMAT_R16_SSCALED,
+        VK_FORMAT_G8B8G8R8_422_UNORM,
+        VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM,
+        VK_FORMAT_R10X6G10X6_UNORM_2PACK16,
+        VK_FORMAT_G16B16G16R16_422_UNORM,
         /* Not supported by Magnum */
-        Implementation::VK_FORMAT_R64G64B64A64_SFLOAT,
-        Implementation::VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG
+        VK_FORMAT_R64_UINT,
+        VK_FORMAT_R64G64B64A64_SFLOAT,
+        VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG
     };
 
     std::ostringstream out;
@@ -690,8 +713,10 @@ void KtxImporterTest::swizzle() {
 
     /* toktx lets us swizzle the input data, but doesn't turn the format into
        a swizzled one. Patch the header manually. */
-    auto& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
-    header.vkFormat = Utility::Endianness::littleEndian(data.vkFormat);
+    if(data.vkFormat != Implementation::VK_FORMAT_UNDEFINED) {
+        auto& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
+        header.vkFormat = Utility::Endianness::littleEndian(data.vkFormat);
+    }
 
     std::ostringstream outDebug;
     Debug redirectDebug{&outDebug};

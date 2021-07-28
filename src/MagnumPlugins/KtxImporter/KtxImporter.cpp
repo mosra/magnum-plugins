@@ -341,7 +341,7 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
        formatMapping.hpp isn't updated without adding an extra check. */
     PixelFormat format{};
     switch(vkFormat) {
-        #define _p(vulkan, magnum, _type) case Implementation::VK_FORMAT_ ## vulkan: format = PixelFormat::magnum; break;
+        #define _p(vulkan, magnum, _type) case Implementation::VkFormat(vulkan): format = PixelFormat::magnum; break;
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _p
         default:
@@ -396,9 +396,14 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
     }
 
     /* Find block-compressed pixel format, no swizzling possible */
+    /** @todo KTX supports 3D ASTC formats through an unreleased extension.
+              Supposedly the enum values won't change so we could manually map
+              them, although it'd be easier if Magnum did this.
+              See https://github.com/KhronosGroup/KTX-Specification/pull/97 and
+              https://github.com/KhronosGroup/KTX-Software/blob/f99221eb1c5ad92fd859765a0c66517ea4059160/lib/dfdutils/vulkan/vulkan_core.h#L1061*/
     CompressedPixelFormat compressedFormat{};
     switch(vkFormat) {
-        #define _c(vulkan, magnum, _type) case Implementation::VK_FORMAT_ ## vulkan: compressedFormat = CompressedPixelFormat::magnum; break;
+        #define _c(vulkan, magnum, _type) case Implementation::VkFormat(vulkan): compressedFormat = CompressedPixelFormat::magnum; break;
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _c
         default:

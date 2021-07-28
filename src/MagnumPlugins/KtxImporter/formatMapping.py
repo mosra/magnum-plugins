@@ -42,12 +42,27 @@ file_out = args.output
 
 print('Writing to', file_out)
 
+vulkan_header = os.path.join(magnum_dir, 'src/MagnumExternal/Vulkan/flextVk.h')
+
+vulkan_formats = {}
+
+with open(vulkan_header, encoding='utf-8') as f:
+    lines = f.readlines()
+    for line in lines:
+        # Get numeric VkFormat values so we can dereference them directly
+        # This also finds VK_FORMAT_FEATURE_* but that's no big deal since
+        # there are no formats that start with FEATURE_
+        match = re.search('^\s+VK_FORMAT_(\w+) = (\d+),?$', line)
+        if match:
+            assert(not match.group(1) in vulkan_formats)
+            vulkan_formats[match.group(1)] = match.group(2)
+
 Format = namedtuple('Format', 'compressed magnum vulkan type')
 formats = []
 
-file_in = os.path.join(magnum_dir, 'src/Magnum/Vk/PixelFormat.h')
+format_header = os.path.join(magnum_dir, 'src/Magnum/Vk/PixelFormat.h')
 
-with open(file_in, encoding='utf-8') as f:
+with open(format_header, encoding='utf-8') as f:
     lines = f.readlines()
     for line in lines:
         # Get mapping from VkFormat to Magnum::Vk::PixelFormat
@@ -55,12 +70,15 @@ with open(file_in, encoding='utf-8') as f:
         match = re.search('^\s+(Compressed)?(\w+) = VK_FORMAT_(\w+),?$', line)
         if match:
             compressed = match.group(1) != None
-            magnum = match.group(2)
-            vulkan = match.group(3)
-            type = re.search('\w+_([U|S](NORM|INT|FLOAT|RGB))\w*', vulkan)
+            magnum_name = match.group(2)
+            vulkan_name = match.group(3)
+            assert(vulkan_name in vulkan_formats)
+
+            type = re.search('\w+_([U|S](NORM|INT|FLOAT|RGB))\w*', vulkan_name)
             assert type != None
             assert type.group(1) != 'URGB'
-            formats.append(Format(compressed, magnum, vulkan, type.group(1)))
+
+            formats.append(Format(compressed, magnum_name, vulkan_formats[vulkan_name], type.group(1)))
 
 if len(formats) != 135:
     print('Unexpected number of formats')
