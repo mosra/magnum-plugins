@@ -50,9 +50,6 @@ namespace Magnum { namespace Trade {
 
 class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit KtxImporter();
-
         /** @brief Plugin manager constructor */
         explicit KtxImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
@@ -82,6 +79,9 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
     private:
         struct File;
         Containers::Pointer<File> _f;
+
+        template<UnsignedInt dimensions>
+        ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
 };
 
 }}

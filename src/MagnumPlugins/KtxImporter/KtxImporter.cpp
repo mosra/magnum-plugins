@@ -50,17 +50,6 @@ namespace Magnum { namespace Trade {
 
 namespace {
 
-std::size_t imageLength(const Vector3i& size, PixelFormat format) {
-    return size.product()*pixelSize(format);
-}
-
-/** @todo Use CompressedPixelStorage::dataProperties for this */
-std::size_t imageLength(const Vector3i& size, CompressedPixelFormat format) {
-    const Vector3i blockSize = compressedBlockSize(format);
-    const Vector3i blockCount = (size + (blockSize - Vector3i{1})) / blockSize;
-    return blockCount.product()*compressedBlockDataSize(format);
-}
-
 template<std::size_t Size> struct TypeForSize {};
 template<> struct TypeForSize<1> { typedef UnsignedByte  Type; };
 template<> struct TypeForSize<2> { typedef UnsignedShort Type; };
@@ -131,151 +120,22 @@ void swizzlePixels(SwizzleType type, UnsignedInt typeSize, Containers::ArrayView
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
-template<UnsignedInt dimensions> void copyPixels(Math::Vector<dimensions, Int> size, BoolVector3 flip, UnsignedInt texelSize, Containers::ArrayView<const char> src, Containers::ArrayView<char> dst) {
-    static_assert(dimensions >= 1 && dimensions <= 3, "");
+struct Format {
+    union {
+        PixelFormat uncompressed;
+        CompressedPixelFormat compressed;
+    };
 
-    /* Nothing to flip, just memcpy */
-    if(flip.none()) {
-        Utility::copy(src, dst);
-        return;
-    }
+    bool isCompressed;
+    bool isDepth;
 
-    /* Flip selected axes by using StridedArrayView with negative stride.
-       Ideally we'd just call flipped() on the view but we can't conditionally
-       call it with a dimension larger than the actual view dimensions. We'd
-       need a template specialization (more code) or constexpr if (requires
-       C++ 17), so we manually calculate negative strides and adjust the data
-       pointer. */
-    std::size_t sizes[dimensions + 1];
-    std::ptrdiff_t strides[dimensions + 1];
+    /* Size of entire pixel/block */
+    UnsignedInt size;
+    /* Size of underlying data type, 1 for block-compressed formats */
+    UnsignedInt typeSize;
 
-    sizes[dimensions] = texelSize;
-    strides[dimensions] = 1;
-    for(UnsignedInt i = 0; i != dimensions; ++i) {
-        sizes[dimensions - 1 - i] = size[i];
-        strides[dimensions - 1 - i] = strides[dimensions - i]*sizes[dimensions - i];
-    }        
-
-    const Containers::StridedArrayView<dimensions + 1, char> dstView{dst, sizes, strides};
-
-    const char* srcData = src.data();
-    for(UnsignedInt i = 0; i != dimensions; ++i) {
-        if(flip[i]) {
-            /* Point to the last item of the dimension */
-            srcData += strides[dimensions - 1 - i]*(sizes[dimensions - 1 - i] - 1);
-            strides[dimensions - 1 - i] *= -1;
-        }
-    }
-
-    Containers::StridedArrayView<dimensions + 1, const char> srcView{{srcData, src.size()}, sizes, strides};
-
-    Utility::copy(srcView, dstView);
-}
-
-bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSize, const char* prefix) {
-    /* Check magic string */
-    const Containers::StringView identifier{header.identifier, sizeof(header.identifier)};
-    const Containers::StringView expected{Implementation::KtxFileIdentifier, sizeof(header.identifier)};
-    if(identifier != expected) {
-        /* Print a useful error for a KTX file with an unsupported version.
-           KTX1 uses the same magic string but with a different version string. */
-        if(identifier.hasPrefix(expected.prefix(Implementation::KtxFileVersionOffset))) {
-            const auto version = identifier.suffix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
-            if(version != "20") {
-                Error() << prefix << "unsupported KTX version, expected 20 but got" << version;
-                return false;
-            }
-        }
-        
-        Error() << prefix << "wrong file signature";
-        return false;
-    }
-
-    /* typeSize is the size of the format's underlying type, not the texel
-       size, e.g. 2 for RG16F. For any sane format it should be a
-       power-of-two between 1 and 8. */
-    if(header.typeSize < 1 || header.typeSize > 8 ||
-        (header.typeSize & (header.typeSize - 1)))
-    {
-        Error{} << prefix << "unsupported type size" << header.typeSize;
-        return false;
-    }
-
-    if(header.imageSize.x() == 0) {
-        Error{} << prefix << "invalid image size, width is 0";
-        return false;
-    }
-
-    if(header.imageSize.y() == 0 && header.imageSize.z() > 0) {
-        Error{} << prefix << "invalid image size, depth is" << header.imageSize.z() << "but height is 0";
-        return false;
-    }
-
-    if(header.faceCount != 1) {
-        if(header.faceCount != 6) {
-            Error{} << prefix << "invalid cubemap face count, expected 1 or 6 but got" << header.faceCount;
-            return false;
-        }
-
-        if(header.imageSize.z() > 0 || header.imageSize.x() != header.imageSize.y()) {
-            Error{} << prefix << "invalid cubemap dimensions, must be 2D and square, but got" << header.imageSize;
-            return false;
-        }
-    }
-
-    const UnsignedInt maxLevelCount = Math::log2(header.imageSize.max()) + 1;
-    if(header.levelCount > maxLevelCount) {
-        Error{} << prefix << "too many mipmap levels, expected at most" <<
-            maxLevelCount << "but got" << header.levelCount;
-        return false;
-    }
-
-    const std::size_t levelIndexEnd = sizeof(header) + Math::max(header.levelCount, 1u)*sizeof(Implementation::KtxLevel);
-    if(fileSize < levelIndexEnd) {
-        Error{} << prefix << "level index out of bounds, expected at least" <<
-            levelIndexEnd << "bytes but got" << fileSize;
-        return false;
-    }
-
-    const std::size_t kvdEnd = header.kvdByteOffset + header.kvdByteLength;
-    if(fileSize < kvdEnd) {
-        Error{} << prefix << "key/value data out of bounds, expected at least" <<
-            kvdEnd << "bytes but got" << fileSize;
-        return false;
-    }
-
-    return true;
-}
-
-bool validateLevel(const Implementation::KtxHeader& header, std::size_t fileSize, const Implementation::KtxLevel& level, std::size_t imageLength, const char* prefix) {
-    CORRADE_INTERNAL_ASSERT(imageLength > 0);
-
-    /* Both lengths should be equal without supercompression. Be lenient here
-       and only emit a warning in case some shitty exporter gets this wrong. */
-    if(header.supercompressionScheme == Implementation::SuperCompressionScheme::None &&
-        level.byteLength != level.uncompressedByteLength)
-    {
-        Warning{} << prefix << "mismatching image data sizes, both compressed "
-            "and uncompressed should be equal but got" <<
-            level.byteLength << "and" << level.uncompressedByteLength;
-    }
-
-    const std::size_t levelEnd = level.byteOffset + level.byteLength;
-    if(fileSize < levelEnd) {
-        Error{} << prefix << "level data out of bounds, expected at least" <<
-            levelEnd << "bytes but got" << fileSize;
-        return false;
-    }
-
-    const std::size_t totalLength = imageLength*Math::max(header.layerCount, 1u)*header.faceCount;
-    if(level.byteLength < totalLength) {
-        Error{} << prefix << "level data too short, expected at least" <<
-            totalLength << "bytes but got" << level.byteLength;
-        return false;
-    }
-
-    return true;
-}
+    SwizzleType swizzle;
+};
 
 }
 
@@ -290,36 +150,21 @@ struct KtxImporter::File {
     /* Dimensions of the source image (1-3) */
     UnsignedByte numDimensions;
     /* Dimensions of the imported image data, including extra dimensions for
-       array layers or cubemap faces */
+       array layers or cube map faces */
     UnsignedByte numDataDimensions;
-    TextureData::Type type;
+    TextureType type;
     BoolVector3 flip;
 
-    struct Format {
-        bool decode(Implementation::VkFormat vkFormat);
-
-        union {
-            PixelFormat uncompressed;
-            CompressedPixelFormat compressed;
-        };
-
-        bool isCompressed;
-        bool isDepth;
-
-        /* Size of entire pixel/block */
-        UnsignedInt size;
-        /* Size of underlying data type, 1 for block-compressed formats */
-        UnsignedInt typeSize;
-
-        SwizzleType swizzle;
-    } pixelFormat;
+    Format pixelFormat;
 
     /* Usually only one image with n or n+1 dimensions, multiple images for
        3D array layers */
     Containers::Array<Containers::Array<LevelData>> imageData;
 };
 
-bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
+Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
+    Format f{};
+
     /* Find uncompressed pixel format. Note that none of the formats forbidden
        by KTX are supported by Magnum, so we filter those at the same time.
        This might change in the future, but we'll be fine as long as
@@ -352,12 +197,12 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
         }
 
         if(format != PixelFormat{}) {
-            size = pixelSize(format);
-            CORRADE_INTERNAL_ASSERT(size == 3 || size == 4);
-            swizzle = (size == 3) ? SwizzleType::BGR : SwizzleType::BGRA;
+            f.size = pixelSize(format);
+            CORRADE_INTERNAL_ASSERT(f.size == 3 || f.size == 4);
+            f.swizzle = (f.size == 3) ? SwizzleType::BGR : SwizzleType::BGRA;
         }
     } else
-        size = pixelSize(format);
+        f.size = pixelSize(format);
 
     if(format != PixelFormat{}) {
         /* Depth formats are allowed by KTX. We only really use isDepth for
@@ -370,14 +215,14 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
             case PixelFormat::Depth16UnormStencil8UI:
             case PixelFormat::Depth24UnormStencil8UI:
             case PixelFormat::Depth32FStencil8UI:
-                isDepth = true;
+                f.isDepth = true;
             default:
                 /* PixelFormat covers all of Vulkan's depth formats */
                 break;
         }
 
-        uncompressed = format;
-        return true;
+        f.uncompressed = format;
+        return f;
     }
 
     /* Find block-compressed pixel format, no swizzling possible */
@@ -396,10 +241,10 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
     }
 
     if(compressedFormat != CompressedPixelFormat{}) {
-        size = compressedBlockDataSize(compressedFormat);
-        compressed = compressedFormat;
-        isCompressed = true;
-        return true;
+        f.size = compressedBlockDataSize(compressedFormat);
+        f.compressed = compressedFormat;
+        f.isCompressed = true;
+        return f;
     }
 
     /** @todo Support all Vulkan formats allowed by the KTX spec. Create custom
@@ -412,10 +257,8 @@ bool KtxImporter::File::Format::decode(Implementation::VkFormat vkFormat) {
               Is this actually worth the effort? Which Vulkan formats are not
               supported by PixelFormat? */
 
-    return false;
+    return {};
 }
-
-KtxImporter::KtxImporter() = default;
 
 KtxImporter::KtxImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
@@ -429,11 +272,9 @@ void KtxImporter::doClose() { _f = nullptr; }
 
 void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Check if the file is long enough for the header */
-    if(data.empty()) {
-        Error{} << "Trade::KtxImporter::openData(): the file is empty";
-        return;
-    } else if(data.size() < sizeof(Implementation::KtxHeader)) {
-        Error{} << "Trade::KtxImporter::openData(): file header too short, expected at least" << sizeof(Implementation::KtxHeader) << "bytes but got" << data.size();
+    if(data.size() < sizeof(Implementation::KtxHeader)) {
+        Error{} << "Trade::KtxImporter::openData(): file too short, expected" <<
+            sizeof(Implementation::KtxHeader) << "bytes for the header but got only" << data.size();
         return;
     }
 
@@ -447,13 +288,27 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         header.supercompressionScheme,
         header.kvdByteOffset, header.kvdByteLength);
 
-    /* Perform some sanity checks on header data, including byte ranges */
-    if(!validateHeader(header, data.size(), "Trade::KtxImporter::openData():"))
-        return;
+    using namespace Containers::Literals;
 
-    Containers::Pointer<File> f{new File{}};
-    f->in = Containers::Array<char>{NoInit, data.size()};
-    Utility::copy(data, f->in);
+    /* Check magic string */
+    const Containers::StringView identifier{header.identifier, sizeof(header.identifier)};
+    const Containers::StringView expected{Implementation::KtxFileIdentifier, sizeof(header.identifier)};
+    if(identifier != expected) {
+        /* Print a useful error for a KTX file with an unsupported version.
+           KTX1 uses the same magic string but with a different version string. */
+        if(identifier.hasPrefix(expected.prefix(Implementation::KtxFileVersionOffset))) {
+            const auto version = identifier.suffix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
+            if(version != "20"_s) {
+                Error() << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" << version;
+                return;
+            }
+        }
+        
+        Error() << "Trade::KtxImporter::openData(): wrong file signature";
+        return;
+    }
+
+    /* Read header data and perform some sanity checks, including byte ranges */
 
     /** @todo Support Basis compression */
     if(header.vkFormat == Implementation::VK_FORMAT_UNDEFINED) {
@@ -461,37 +316,28 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    /* Get generic format info from Vulkan format */
-    if(!f->pixelFormat.decode(header.vkFormat)) {
-        Error{} << "Trade::KtxImporter::openData(): unsupported format" << header.vkFormat;
-        return;
-    }
-
-    /* There is no block-compressed format we can swizzle */
-    CORRADE_INTERNAL_ASSERT(!f->pixelFormat.isCompressed || f->pixelFormat.swizzle == SwizzleType::None);
-
-    if(f->pixelFormat.isCompressed && header.typeSize != 1) {
-        Error{} << "Trade::KtxImporter::openData(): invalid type size for compressed format, expected 1 but got" << header.typeSize;
-        return;
-    }
-    f->pixelFormat.typeSize = header.typeSize;
-
     /** @todo Support supercompression */
     if(header.supercompressionScheme != Implementation::SuperCompressionScheme::None) {
         Error{} << "Trade::KtxImporter::openData(): supercompression is currently not supported";
         return;
     }
 
-    f->numDimensions = Math::min(header.imageSize, Vector3ui{1}).sum();
-    CORRADE_INTERNAL_ASSERT(f->numDimensions >= 1 && f->numDimensions <= 3);
-
-    if(f->numDimensions == 3 && f->pixelFormat.isDepth) {
-        Error{} << "Trade::KtxImporter::openData(): 3D images can't have depth/stencil format";
+    /* typeSize is the size of the format's underlying type, not the texel
+       size, e.g. 2 for RG16F. For any sane format it should be a
+       power-of-two between 1 and 8. */
+    if(header.typeSize < 1 || header.typeSize > 8 ||
+        (header.typeSize & (header.typeSize - 1)))
+    {
+        Error{} << "Trade::KtxImporter::openData(): unsupported type size" << header.typeSize;
         return;
     }
 
-    /* Make sure we don't choke on size calculations using product() */
-    const Vector3i size = Math::max(Vector3i{header.imageSize}, 1);
+    if(header.imageSize.x() == 0) {
+        Error{} << "Trade::KtxImporter::openData(): invalid image size, width is 0";
+        return;
+    }
+
+    Containers::Pointer<File> f{InPlaceInit};
 
     /* Number of array layers, imported as extra image dimensions (except
        for 3D images, there it's one Image3D per layer).
@@ -502,13 +348,98 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     const bool isLayered = header.layerCount > 0;
     const UnsignedInt numLayers = Math::max(header.layerCount, 1u);
 
-    const bool isCubemap = header.faceCount == 6;
+    const bool isCubeMap = header.faceCount == 6;
     const UnsignedInt numFaces = header.faceCount;
+
+    /* Get image dimensions and remember the type for doTexture() */
+    if(header.imageSize.y() > 0) {
+        if(header.imageSize.z() > 0) {
+            f->numDimensions = 3;
+            f->type = TextureData::Type::Texture3D;
+        } else {
+            f->numDimensions = 2;
+            if(isCubeMap)
+                f->type = isLayered ? TextureType::CubeMapArray : TextureType::CubeMap;
+            else
+                f->type = isLayered ? TextureType::Texture2DArray : TextureType::Texture2D;
+        }
+    } else if(header.imageSize.z() > 0) {
+        Error{} << "Trade::KtxImporter::openData(): invalid image size, depth is" << header.imageSize.z() << "but height is 0";
+        return;
+    } else {
+        f->numDimensions = 1;
+        f->type = isLayered ? TextureType::Texture1DArray : TextureType::Texture1D;
+    }
+
+    CORRADE_INTERNAL_ASSERT(f->numDimensions >= 1 && f->numDimensions <= 3);
+    f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubeMap), 3);
+
+    /* Make sure we don't choke on size calculations using product() */
+    const Vector3i size = Math::max(Vector3i{header.imageSize}, 1);
+
+    if(numFaces != 1) {
+        if(numFaces != 6) {
+            Error{} << "Trade::KtxImporter::openData(): expected either 1 or 6 faces for cube maps but got" << numFaces;
+            return;
+        }
+
+        if(f->numDimensions != 2 || size.x() != size.y()) {
+            Error{} << "Trade::KtxImporter::openData(): cube map dimensions must be 2D and square, but got" << header.imageSize;
+            return;
+        }
+    }
 
     /* levelCount == 0 indicates to the user/importer to generate mipmaps. We
        don't really care either way since we don't generate mipmaps or pass
        this on to the user. */
     const UnsignedInt numMipmaps = Math::max(header.levelCount, 1u);
+
+    const UnsignedInt maxLevelCount = Math::log2(size.max()) + 1;
+    if(numMipmaps > maxLevelCount) {
+        Error{} << "Trade::KtxImporter::openData(): expected at most" <<
+            maxLevelCount << "mip levels but got" << numMipmaps;
+        return;
+    }
+
+    const std::size_t levelIndexEnd = sizeof(header) + numMipmaps*sizeof(Implementation::KtxLevel);
+    if(data.size() < levelIndexEnd) {
+        Error{} << "Trade::KtxImporter::openData(): file too short, expected" <<
+            levelIndexEnd << "bytes for level index but got only" << data.size();
+        return;
+    }
+
+    const std::size_t kvdEnd = header.kvdByteOffset + header.kvdByteLength;
+    if(data.size() < kvdEnd) {
+        Error{} << "Trade::KtxImporter::openData(): file too short, expected" <<
+            kvdEnd << "bytes for key/value data but got only" << data.size();
+        return;
+    }
+
+    /* Get generic format info from Vulkan format */
+    const auto pixelFormat = decodeFormat(header.vkFormat);
+    if(!pixelFormat) {
+        Error{} << "Trade::KtxImporter::openData(): unsupported format" << header.vkFormat;
+        return;
+    }
+    f->pixelFormat = *pixelFormat;
+
+    if(f->pixelFormat.isDepth && f->numDimensions == 3) {
+        Error{} << "Trade::KtxImporter::openData(): 3D images can't have depth/stencil format";
+        return;
+    }
+
+    /* Block-compressed formats have no implicit swizzle */
+    CORRADE_INTERNAL_ASSERT(!f->pixelFormat.isCompressed || f->pixelFormat.swizzle == SwizzleType::None);
+
+    if(f->pixelFormat.isCompressed && header.typeSize != 1) {
+        Error{} << "Trade::KtxImporter::openData(): invalid type size for compressed format, expected 1 but got" << header.typeSize;
+        return;
+    }
+    f->pixelFormat.typeSize = header.typeSize;
+
+    /* Copy file data */
+    f->in = Containers::Array<char>{NoInit, data.size()};
+    Utility::copy(data, f->in);
 
     /* The level index contains byte ranges for each mipmap, from largest to
        smallest. Each mipmap contains tightly packed images ordered by
@@ -517,7 +448,9 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     const auto levelIndex = Containers::arrayCast<Implementation::KtxLevel>(
         f->in.suffix(sizeof(Implementation::KtxHeader)).prefix(levelIndexSize));
 
-    /* Extract image data views */
+    /* Extract image data views. Only one image with extra dimensions for array
+       layers and/or cube map faces, except for 3D array images where it's one
+       image per layer. */
     const UnsignedInt numImages = (f->numDimensions == 3) ? numLayers : 1;
     f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numImages};
     for(UnsignedInt image = 0; image != numImages; ++image)
@@ -529,19 +462,45 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         Utility::Endianness::littleEndianInPlace(level.byteOffset,
             level.byteLength, level.uncompressedByteLength);
 
-        const std::size_t partLength = f->pixelFormat.isCompressed
-            ? imageLength(mipSize, f->pixelFormat.compressed)
-            : imageLength(mipSize, f->pixelFormat.uncompressed);
+        /* Both lengths should be equal without supercompression. Be lenient here
+           and only emit a warning in case some shitty exporter gets this wrong. */
+        if(header.supercompressionScheme == Implementation::SuperCompressionScheme::None &&
+            level.byteLength != level.uncompressedByteLength)
+        {
+            Warning{} << "Trade::KtxImporter::openData(): byte length" << level.byteLength 
+                << "is not equal to uncompressed byte length" << level.uncompressedByteLength
+                << "for an image without supercompression, ignoring the latter";
+        }
 
-        if(!validateLevel(header, data.size(), level, partLength, "Trade::KtxImporter::openData():"))
+        const std::size_t levelEnd = level.byteOffset + level.byteLength;
+        if(data.size() < levelEnd) {
+            Error{} << "Trade::KtxImporter::openData(): file too short, expected"
+                << levelEnd << "bytes for level data but got only" << data.size();
             return;
+        }
+
+        /* Size of a single layer or face */
+        std::size_t partLength;
+        if (f->pixelFormat.isCompressed) {
+            const Vector3i blockSize = compressedBlockSize(f->pixelFormat.compressed);
+            const Vector3i blockCount = (mipSize + (blockSize - Vector3i{1}))/blockSize;
+            partLength = blockCount.product()*compressedBlockDataSize(f->pixelFormat.compressed);
+        } else
+            partLength = mipSize.product()*pixelSize(f->pixelFormat.uncompressed);
+
+        const std::size_t totalLength = partLength*numLayers*numFaces;
+        if(level.byteLength < totalLength) {
+            Error{} << "Trade::KtxImporter::openData(): level data too short, "
+                "expected at least" << totalLength << "bytes but got" << level.byteLength;
+            return;
+        }
 
         for(UnsignedInt image = 0; image != numImages; ++image) {
-            std::size_t length = partLength * numFaces;
+            std::size_t length = partLength*numFaces;
             std::size_t imageOffset = 0;
 
-            if(numImages == numLayers)
-                imageOffset = image * length;
+            if(numImages > 1) /* 3D array image, import layers separately */
+                imageOffset = image*length;
             else
                 length *= numLayers;
 
@@ -552,25 +511,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         mipSize = Math::max(mipSize >> 1, 1);
     }
 
-    /* Remember the type for doTexture() */
-    switch(f->numDimensions) {
-        /** @todo Use *Array enums once they're added to Magnum */
-        case 1:
-            f->type = isLayered ? TextureData::Type::Texture1D/*Array*/ : TextureData::Type::Texture1D;
-            break;
-        case 2:
-            if(isCubemap)
-                f->type = isLayered ? TextureData::Type::Cube/*Array*/ : TextureData::Type::Cube;
-            else
-                f->type = isLayered ? TextureData::Type::Texture2D/*Array*/ : TextureData::Type::Texture2D;
-            break;
-        case 3:
-            f->type = TextureData::Type::Texture3D;
-            break;
-        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-    }
-
-    f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubemap), 3);
+    /* Read key/value data, optional */
 
     enum KeyValueType : UnsignedByte {
         CubeMapIncomplete,
@@ -633,8 +574,6 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
     }
 
-    using namespace Containers::Literals;
-
     /* Read image orientation so we can flip if needed.
 
        l/r = left/right
@@ -660,17 +599,21 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
 
         if(useDefaultOrientation) {
+            constexpr auto defaultOrientation = "rdi"_s;
             constexpr Containers::StringView defaultDirections[3]{
                 "right"_s, "down"_s, "forward"_s
             };
-            Warning{} << "Trade::KtxImporter::openData(): missing or invalid "
-                "orientation, assuming" << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
 
-            constexpr auto defaultOrientation = "rdi"_s;
-            const BoolVector3 flip = Math::notEqual(Math::Vector3<char>::from(defaultOrientation.data()),
+            const BoolVector3 flip = Math::notEqual(
+                Math::Vector3<char>::from(defaultOrientation.data()),
                 Math::Vector3<char>::from(targetOrientation.data()));
+            /* Leave non-existing dimensions unset, otherwise they affect the
+               result of any() and none() */
             for(UnsignedByte i = 0; i != f->numDimensions; ++i)
                 f->flip.set(i, flip[i]);
+
+            Warning{} << "Trade::KtxImporter::openData(): missing or invalid "
+                "orientation, assuming" << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
         }
     }
 
@@ -757,23 +700,40 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _f = std::move(f);
 }
 
-UnsignedInt KtxImporter::doImage1DCount() const { return (_f->numDataDimensions == 1) ? _f->imageData.size() : 0; }
-
-UnsignedInt KtxImporter::doImage1DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
-
-Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, UnsignedInt level) {
+template<UnsignedInt dimensions>
+ImageData<dimensions> KtxImporter::doImage(UnsignedInt id, UnsignedInt level) {
     const File::LevelData& levelData = _f->imageData[id][level];
 
-    /* Copy image data. If we don't have to flip any axes, this is just a memcpy.
-       We already cleared flip for block-compressed data because we can't
-       reliably flip blocks, so there we always memcpy. */
+    /* Copy image data, flipping along axes if necessary */
     Containers::Array<char> data{NoInit, levelData.data.size()};
-    copyPixels<1>(levelData.size.x(), _f->flip, _f->pixelFormat.size, levelData.data, data);
 
-    endianSwap(data, _f->pixelFormat.typeSize);
+    /* Block-compressed images don't have any flipping performed on them */
+    CORRADE_INTERNAL_ASSERT(!_f->pixelFormat.isCompressed || _f->flip.none());
+
+    /* Assuming src is tightly packed, stride gets calculated implicitly */
+    Containers::StridedArrayView4D<const char> src{levelData.data, {
+        std::size_t(levelData.size.z()),
+        std::size_t(levelData.size.y()),
+        std::size_t(levelData.size.x()),
+        _f->pixelFormat.size
+    }};
+    Containers::StridedArrayView4D<char> dst{data, src.size()};
+
+    if(_f->flip[2]) src = src.flipped<0>();
+    if(_f->flip[1]) src = src.flipped<1>();
+    if(_f->flip[0]) src = src.flipped<2>();
+
+    /* Without flipped dimensions this becomes a single memcpy */
+    Utility::copy(src, dst);
+
+    const auto size = Math::Vector<dimensions, Int>::pad(levelData.size);
 
     if(_f->pixelFormat.isCompressed)
-        return ImageData1D(_f->pixelFormat.compressed, levelData.size.x(), std::move(data));
+        return ImageData<dimensions>(_f->pixelFormat.compressed, size, std::move(data));
+
+    /* Uncompressed image */
+
+    endianSwap(data, _f->pixelFormat.typeSize);
 
     /* Swizzle BGR(A) if necessary */
     swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
@@ -783,7 +743,15 @@ Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, Unsigne
     if((levelData.size.x()*_f->pixelFormat.size)%4 != 0)
         storage.setAlignment(1);
 
-    return ImageData1D{storage, _f->pixelFormat.uncompressed, levelData.size.x(), std::move(data)};
+    return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, size, std::move(data)};
+}
+
+UnsignedInt KtxImporter::doImage1DCount() const { return (_f->numDataDimensions == 1) ? _f->imageData.size() : 0; }
+
+UnsignedInt KtxImporter::doImage1DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
+
+Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, UnsignedInt level) {
+    return doImage<1>(id, level);
 }
 
 UnsignedInt KtxImporter::doImage2DCount() const { return (_f->numDataDimensions == 2) ? _f->imageData.size() : 0; }
@@ -791,23 +759,7 @@ UnsignedInt KtxImporter::doImage2DCount() const { return (_f->numDataDimensions 
 UnsignedInt KtxImporter::doImage2DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
 
 Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, UnsignedInt level) {
-    const File::LevelData& levelData = _f->imageData[id][level];
-
-    Containers::Array<char> data{NoInit, levelData.data.size()};
-    copyPixels<2>(levelData.size.xy(), _f->flip, _f->pixelFormat.size, levelData.data, data);
-
-    endianSwap(data, _f->pixelFormat.typeSize);
-
-    if(_f->pixelFormat.isCompressed)
-        return ImageData2D(_f->pixelFormat.compressed, levelData.size.xy(), std::move(data));
-
-    swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
-
-    PixelStorage storage;
-    if((levelData.size.x()*_f->pixelFormat.size)%4 != 0)
-        storage.setAlignment(1);
-
-    return ImageData2D{storage, _f->pixelFormat.uncompressed, levelData.size.xy(), std::move(data)};
+    return doImage<2>(id, level);
 }
 
 UnsignedInt KtxImporter::doImage3DCount() const { return (_f->numDataDimensions == 3) ? _f->imageData.size() : 0; }
@@ -815,23 +767,7 @@ UnsignedInt KtxImporter::doImage3DCount() const { return (_f->numDataDimensions 
 UnsignedInt KtxImporter::doImage3DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
 
 Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const UnsignedInt level) {
-    const File::LevelData& levelData = _f->imageData[id][level];
-
-    Containers::Array<char> data{NoInit, levelData.data.size()};
-    copyPixels<3>(levelData.size, _f->flip, _f->pixelFormat.size, levelData.data, data);
-
-    endianSwap(data, _f->pixelFormat.typeSize);
-
-    if(_f->pixelFormat.isCompressed)
-        return ImageData3D(_f->pixelFormat.compressed, levelData.size, std::move(data));
-
-    swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
-
-    PixelStorage storage;
-    if((levelData.size.x()*_f->pixelFormat.size)%4 != 0)
-        storage.setAlignment(1);
-
-    return ImageData3D{storage, _f->pixelFormat.uncompressed, levelData.size, std::move(data)};
+    return doImage<3>(id, level);
 }
 
 UnsignedInt KtxImporter::doTextureCount() const { return _f->imageData.size(); }

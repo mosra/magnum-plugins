@@ -68,7 +68,6 @@ struct KtxImporterTest: TestSuite::Tester {
     void openShort();
 
     void invalid();
-    void invalidDataFormatDescriptor();
     void invalidVersion();
     void invalidFormat();
 
@@ -77,13 +76,13 @@ struct KtxImporterTest: TestSuite::Tester {
     void rgb8();
     void rgba8();
 
-    void image1d();
-    void image1dMipmaps();
+    void image1D();
+    void image1DMipmaps();
 
-    void image2dMipmaps();
+    void image2DMipmaps();
 
-    //void image3d();
-    //void image3dMipmaps();
+    //void image3D();
+    //void image3DMipmaps();
 
     void keyValueDataEmpty();
     void keyValueDataInvalid();
@@ -108,18 +107,15 @@ struct KtxImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
-constexpr Color3ub Black{0};
-constexpr Color3ub White{0xff};
-constexpr Color3ub Purple{0x7f, 0, 0x7f};
-
+using namespace Math::Literals;
 const Color3ub PatternRgb2DData[3][4]{
     /* Origin bottom-left */
-    {Color3ub::red(),  White,             Black,  Color3ub::green()},
-    {White,            Color3ub::red(),   Black,  Color3ub::green()},
-    {Color3ub::blue(), Color3ub::green(), Purple, Purple}
+    {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x00ff00_rgb},
+    {0xffffff_rgb, 0xff0000_rgb, 0x000000_rgb, 0x00ff00_rgb},
+    {0x0000ff_rgb, 0x00ff00_rgb, 0x7f007f_rgb, 0x7f007f_rgb}
 };
 
-const Color4ub PatternRgba2DData[3][4] = {
+const Color4ub PatternRgba2DData[3][4]{
     {PatternRgb2DData[0][0], PatternRgb2DData[0][1], PatternRgb2DData[0][2], PatternRgb2DData[0][3]},
     {PatternRgb2DData[1][0], PatternRgb2DData[1][1], PatternRgb2DData[1][2], PatternRgb2DData[1][3]},
     {PatternRgb2DData[2][0], PatternRgb2DData[2][1], PatternRgb2DData[2][2], PatternRgb2DData[2][3]}
@@ -130,20 +126,16 @@ const struct {
     const std::size_t length;
     const char* message;
 } ShortData[] {
-    {"empty", 0,
-        "the file is empty"},
     {"identifier", sizeof(Implementation::KtxHeader::identifier) - 1,
-        "file header too short, expected at least 80 bytes but got 11"},
+        "file too short, expected 80 bytes for the header but got only 11"},
     {"header", sizeof(Implementation::KtxHeader) - 1,
-        "file header too short, expected at least 80 bytes but got 79"},
+        "file too short, expected 80 bytes for the header but got only 79"},
     {"level index", sizeof(Implementation::KtxHeader) + sizeof(Implementation::KtxLevel) - 1,
-        "level index out of bounds, expected at least 104 bytes but got 103"},
-    {"data format descriptor", sizeof(Implementation::KtxHeader) + sizeof(Implementation::KtxLevel) + sizeof(UnsignedInt) + sizeof(Implementation::KdfBasicBlockHeader),
-        "data format descriptor out of bounds, expected at least 180 bytes but got 132"},
+        "file too short, expected 104 bytes for level index but got only 103"},
     {"key/value data", sizeof(Implementation::KtxHeader) + sizeof(Implementation::KtxLevel) + sizeof(UnsignedInt) + sizeof(Implementation::KdfBasicBlockHeader) + 3*sizeof(Implementation::KdfBasicBlockSample),
-        "key/value data out of bounds, expected at least 252 bytes but got 180"},
+        "file too short, expected 252 bytes for key/value data but got only 180"},
     {"level data", 287,
-        "level data out of bounds, expected at least 288 bytes but got 287"}
+        "file too short, expected 288 bytes for level data but got only 287"}
 };
 
 const struct {
@@ -168,17 +160,17 @@ const struct {
     //    "invalid image size, depth is 5 but height is 0"},
     {"face count", "rgb.ktx2",
         offsetof(Implementation::KtxHeader, faceCount), 3,
-        "invalid cubemap face count, expected 1 or 6 but got 3"},
+        "expected either 1 or 6 faces for cube maps but got 3"},
     {"cube not square", "rgb.ktx2",
         offsetof(Implementation::KtxHeader, faceCount), 6,
-        "invalid cubemap dimensions, must be 2D and square, but got Vector(4, 3, 0)"},
+        "cube map dimensions must be 2D and square, but got Vector(4, 3, 0)"},
     /** @todo */
     //{"cube 3d", "rgb.ktx2",
     //    offsetof(Implementation::KtxHeader, faceCount), 6,
     //    "invalid cubemap dimensions, must be 2D and square, but got Vector(4, 3, 0)"},
     {"level count", "rgb.ktx2",
         offsetof(Implementation::KtxHeader, levelCount), 7,
-        "too many mipmap levels, expected at most 3 but got 7"},
+        "expected at most 3 mip levels but got 7"},
     {"custom format", "rgb.ktx2",
         offsetof(Implementation::KtxHeader, vkFormat), 0,
         "custom formats are not supported"},
@@ -193,12 +185,6 @@ const struct {
     //{"3d depth", "rgb.ktx2",
     //    0, 0,
     //    "3D images can't have depth/stencil format"},
-    {"DFD header too short", "rgb.ktx2",
-        offsetof(Implementation::KtxHeader, dfdByteLength), 1,
-        "data format descriptor too short, expected at least 44 bytes but got 1"},
-    {"DFD no space for block", "rgb.ktx2",
-        offsetof(Implementation::KtxHeader, dfdByteLength), sizeof(UnsignedInt) + sizeof(Implementation::KdfBasicBlockHeader) + sizeof(Implementation::KdfBasicBlockSample),
-        "invalid data format descriptor"},
     {"level data too short", "rgb.ktx2",
         sizeof(Implementation::KtxHeader) + offsetof(Implementation::KtxLevel, byteLength), 1,
         "level data too short, expected at least 36 bytes but got 1"}
@@ -207,28 +193,10 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const std::size_t offset;
-    const char value;
-} InvalidDataFormatDescriptorData[] {
-    {"vendor", "rgb.ktx2", offsetof(Implementation::KdfBasicBlockHeader, vendorId), 1},
-    {"type", "rgb.ktx2", offsetof(Implementation::KdfBasicBlockHeader, descriptorType), 1},
-    {"version", "rgb.ktx2", offsetof(Implementation::KdfBasicBlockHeader, versionNumber), 0},
-    {"block too short", "rgb.ktx2", offsetof(Implementation::KdfBasicBlockHeader, descriptorBlockSize), 1},
-    {"block too long", "rgb.ktx2", offsetof(Implementation::KdfBasicBlockHeader, descriptorBlockSize), sizeof(Implementation::KdfBasicBlockHeader) + 4*sizeof(Implementation::KdfBasicBlockSample)},
-    {"texel size", "rgb.ktx2", offsetof(Implementation::KdfBasicBlockHeader, bytesPlane), 2},
-    {"channel count", "rgb.ktx2", offsetof(Implementation::KdfBasicBlockHeader, descriptorBlockSize), sizeof(Implementation::KdfBasicBlockHeader) + 1*sizeof(Implementation::KdfBasicBlockSample)},
-    /** @todo */
-    //{"texel block dimensions", "rgb.ktx2", offsetof(Implementation::KdfBasicBlockHeader, texelBlockDimension), 24},
-};
-
-const struct {
-    const char* name;
-    const char* file;
-    const Trade::TextureData::Type type;
+    const Trade::TextureType type;
 } TextureData[] {
-    /** @todo Use *Array enums once they're added to Magnum */
-    {"1D", "1d.ktx2", Trade::TextureData::Type::Texture1D},
-    {"2D", "rgb.ktx2", Trade::TextureData::Type::Texture2D}
+    {"1D", "1d.ktx2", Trade::TextureType::Texture1D},
+    {"2D", "rgb.ktx2", Trade::TextureType::Texture2D}
     /** @todo one of each texture type */
 };
 
@@ -268,9 +236,6 @@ KtxImporterTest::KtxImporterTest() {
     addInstancedTests({&KtxImporterTest::invalid},
         Containers::arraySize(InvalidData));
 
-    addInstancedTests({&KtxImporterTest::invalidDataFormatDescriptor},
-        Containers::arraySize(InvalidDataFormatDescriptorData));
-
     addTests({&KtxImporterTest::invalidVersion,
               &KtxImporterTest::invalidFormat});
 
@@ -280,9 +245,9 @@ KtxImporterTest::KtxImporterTest() {
     addTests({&KtxImporterTest::rgb8,
               &KtxImporterTest::rgba8,
 
-              & KtxImporterTest::image1d,
-              & KtxImporterTest::image1dMipmaps,
-              & KtxImporterTest::image2dMipmaps,
+              & KtxImporterTest::image1D,
+              & KtxImporterTest::image1DMipmaps,
+              & KtxImporterTest::image2DMipmaps,
 
               &KtxImporterTest::keyValueDataEmpty,
               &KtxImporterTest::keyValueDataInvalid,
@@ -345,28 +310,9 @@ void KtxImporterTest::invalid() {
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message));
 }
 
-void KtxImporterTest::invalidDataFormatDescriptor() {
-    auto&& data = InvalidDataFormatDescriptorData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file));
-    CORRADE_VERIFY(!fileData.empty());
-
-    const Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
-    const std::size_t dfdBlock = header.dfdByteOffset + sizeof(UnsignedInt);
-    fileData[dfdBlock + data.offset] = data.value;
-
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    CORRADE_VERIFY(!importer->openData(fileData));
-    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): invalid data format descriptor\n");
-}
-
 void KtxImporterTest::invalidVersion() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    
+
     std::ostringstream out;
     Error redirectError{&out};
 
@@ -464,20 +410,19 @@ void KtxImporterTest::texture() {
         CORRADE_COMPARE(texture->type(), data.type);
     }
 
-    /** @todo Use *Array enums once they're added to Magnum */
     UnsignedInt dimensions;
     switch(data.type) {
         case TextureData::Type::Texture1D:
             dimensions = 1;
             break;
-        //case TextureData::Type::Texture1DArray:
+        case TextureData::Type::Texture1DArray:
         case TextureData::Type::Texture2D:
             dimensions = 2;
             break;
-        //case TextureData::Type::Texture2DArray:
-        //case TextureData::Type::Texture3DArray:
+        case TextureData::Type::Texture2DArray:
         case TextureData::Type::Texture3D:
-        case TextureData::Type::Cube:
+        case TextureData::Type::CubeMap:
+        case TextureData::Type::CubeMapArray:
             dimensions = 3;
             break;
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE();
@@ -531,7 +476,7 @@ void KtxImporterTest::rgba8() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgba2DData), TestSuite::Compare::Container);
 }
 
-void KtxImporterTest::image1d() {
+void KtxImporterTest::image1D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d.ktx2")));
 
@@ -551,20 +496,20 @@ void KtxImporterTest::image1d() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    constexpr Color3ub data[3]{
-        Color3ub::red(), White, Black
+    const Color3ub data[3]{
+        0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb
     };
 
     CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(data), TestSuite::Compare::Container);
 }
 
-void KtxImporterTest::image1dMipmaps() {
+void KtxImporterTest::image1DMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d-mipmaps.ktx2")));
 
     const Containers::Array<Color3ub> mipData[2]{
-        {InPlaceInit, {Color3ub::red(), White, Black}},
-        {InPlaceInit, {White}}
+        {InPlaceInit, {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb}},
+        {InPlaceInit, {0xffffff_rgb}}
     };
 
     CORRADE_COMPARE(importer->image1DCount(), 1);
@@ -572,6 +517,8 @@ void KtxImporterTest::image1dMipmaps() {
 
     Math::Vector<1, Int> mipSize{3};
     for(UnsignedInt i = 0; i != importer->image1DLevelCount(0); ++i) {
+        CORRADE_ITERATION(i);
+
         auto image = importer->image1D(0, i);
         CORRADE_VERIFY(image);
 
@@ -591,7 +538,7 @@ void KtxImporterTest::image1dMipmaps() {
     }
 }
 
-void KtxImporterTest::image2dMipmaps() {
+void KtxImporterTest::image2DMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "rgb-mipmaps.ktx2")));
 
@@ -599,8 +546,8 @@ void KtxImporterTest::image2dMipmaps() {
     const auto mipData0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(PatternRgb2DData));
     Containers::Array<Color3ub> mipData[3]{
         Containers::Array<Color3ub>{mipData0.size()},
-        {InPlaceInit, {Color3ub::red(), Black}},
-        {InPlaceInit, {Black}}
+        {InPlaceInit, {0xff0000_rgb, 0x000000_rgb}},
+        {InPlaceInit, {0x000000_rgb}}
     };
     Utility::copy(mipData0, mipData[0]);
 
@@ -609,6 +556,8 @@ void KtxImporterTest::image2dMipmaps() {
 
     Vector2i mipSize{4, 3};
     for(UnsignedInt i = 0; i != importer->image2DLevelCount(0); ++i) {
+        CORRADE_ITERATION(i);
+
         auto image = importer->image2D(0, i);
         CORRADE_VERIFY(image);
 
@@ -723,8 +672,12 @@ void KtxImporterTest::swizzle() {
 
     CORRADE_VERIFY(importer->openData(fileData));
 
+    /** @todo Change origin to top-left for the swizzle test files so we can
+              check the relevant messages only. Relevant for swizzleIdentity(), too */
+    std::string expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along y\n";
     if(data.message)
-        CORRADE_VERIFY(Containers::StringView{outDebug.str()}.contains(Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message)));
+        expectedMessage += Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message);
+    CORRADE_COMPARE(outDebug.str(), expectedMessage);
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     auto image = importer->image2D(0);
@@ -745,8 +698,8 @@ void KtxImporterTest::swizzleIdentity() {
        count is used, since swizzle is always a constant length 4 in the
        key/value data. */
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "swizzle-identity.ktx2")));
-    CORRADE_VERIFY(!Containers::StringView{out.str()}.contains("unsupported channel mapping"));
-    CORRADE_VERIFY(!Containers::StringView{out.str()}.contains("format requires conversion from"));
+    /* No message about format requiring conversion */
+    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): image will be flipped along y\n");
 }
 
 void KtxImporterTest::swizzleUnsupported() {
