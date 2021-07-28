@@ -238,20 +238,6 @@ bool validateHeader(const Implementation::KtxHeader& header, std::size_t fileSiz
         return false;
     }
 
-    const std::size_t dfdEnd = header.dfdByteOffset + header.dfdByteLength;
-    if(fileSize < dfdEnd) {
-        Error{} << prefix << "data format descriptor out of bounds, expected at least" <<
-            dfdEnd << "bytes but got" << fileSize;
-        return false;
-    }
-
-    const std::size_t dfdMinSize = sizeof(UnsignedInt) + sizeof(Implementation::KdfBasicBlockHeader) + sizeof(Implementation::KdfBasicBlockSample);
-    if(dfdMinSize > header.dfdByteLength) {
-        Error{} << prefix << "data format descriptor too short, expected at least" <<
-            dfdMinSize << "bytes but got" << header.dfdByteLength;
-        return false;
-    }
-
     const std::size_t kvdEnd = header.kvdByteOffset + header.kvdByteLength;
     if(fileSize < kvdEnd) {
         Error{} << prefix << "key/value data out of bounds, expected at least" <<
@@ -460,9 +446,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         header.imageSize[0], header.imageSize[1], header.imageSize[2],
         header.layerCount, header.faceCount, header.levelCount,
         header.supercompressionScheme,
-        header.dfdByteOffset, header.dfdByteLength,
-        header.kvdByteOffset, header.kvdByteLength,
-        header.sgdByteOffset, header.sgdByteLength);
+        header.kvdByteOffset, header.kvdByteLength);
 
     /* Perform some sanity checks on header data, including byte ranges */
     if(!validateHeader(header, data.size(), "Trade::KtxImporter::openData():"))
@@ -589,58 +573,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubemap), 3);
 
-    /* Read data format descriptor (DFD) */
-    {
-        /* Only do some very basic sanity checks, the DFD is terribly
-           over-engineered and the data is redundant if we have a
-           (Compressed)PixelFormat */
-        bool valid = false;
-        const auto descriptorData = f->in.suffix(header.dfdByteOffset).prefix(header.dfdByteLength);
-        const UnsignedInt length = *reinterpret_cast<UnsignedInt*>(descriptorData.data());
-        Utility::Endianness::littleEndianInPlace(length);
-        if(length == descriptorData.size()) {
-            auto& block = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(descriptorData.suffix(sizeof(length)).data());
-            Utility::Endianness::littleEndianInPlace(block.vendorId,
-                block.descriptorType, block.versionNumber,
-                block.descriptorBlockSize);
 
-            /* Basic block must be the first block in the DFD */
-            if(block.vendorId == Implementation::KdfBasicBlockHeader::VendorId::Khronos &&
-                block.descriptorType == Implementation::KdfBasicBlockHeader::DescriptorType::Basic &&
-                block.versionNumber == Implementation::KdfBasicBlockHeader::VersionNumber::Kdf1_3 &&
-                block.descriptorBlockSize > sizeof(block) &&
-                block.descriptorBlockSize + sizeof(length) <= length)
-            {
-                valid = true;
-
-                /* Check if pixel/block size and channel count match the format */
-                if(f->pixelFormat.isCompressed) {
-                    /* Block size */
-                    const Vector4i expected = Vector4i::pad(compressedBlockSize(f->pixelFormat.compressed), 1);
-                    const Vector4i actual{Math::max(Vector4ub::from(block.texelBlockDimension), UnsignedByte(1))};
-                    valid = valid && actual == expected;
-                } else {
-                    /* Pixel size. For supercompressed data, bytePlanes is all
-                       zeros to indicate an unsized format. */
-                    /** @todo Does this work with depth-stencil formats? */
-                    if(header.supercompressionScheme == Implementation::SuperCompressionScheme::None) {
-                        const UnsignedInt expected = f->pixelFormat.size;
-                        const UnsignedInt actual = block.bytesPlane[0];
-                        valid = valid && actual == expected;
-                    }
-                    /* Channel count */
-                    const UnsignedInt expected = f->pixelFormat.size / f->pixelFormat.typeSize;
-                    const UnsignedInt actual = (block.descriptorBlockSize - sizeof(block))/sizeof(Implementation::KdfBasicBlockSample);
-                    valid = valid && actual == expected;
-                }
-            }
-        }
-
-        if(!valid) {
-            Error{} << "Trade::KtxImporter::openData(): invalid data format descriptor";
-            return;
-        }
-    }
 
     /* Read key/value data, optional */
     std::map<Containers::StringView, Containers::ArrayView<const char>> keyValueMap;
