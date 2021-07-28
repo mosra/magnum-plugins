@@ -26,7 +26,6 @@
 
 #include "KtxImporter.h"
 
-#include <map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
@@ -573,10 +572,22 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubemap), 3);
 
+    enum KeyValueType : UnsignedByte {
+        CubeMapIncomplete,
+        Orientation,
+        Swizzle,
+        Count
+    };
 
+    struct KeyValueEntry {
+        Containers::StringView key;
+        Containers::ArrayView<const char> value;
+    } keyValueEntries[KeyValueType::Count]{
+        {"KTXcubemapIncomplete"_s, {}},
+        {"KTXorientation"_s, {}},
+        {"KTXswizzle"_s, {}},
+    };
 
-    /* Read key/value data, optional */
-    std::map<Containers::StringView, Containers::ArrayView<const char>> keyValueMap;
     if(header.kvdByteLength > 0) {
         Containers::ArrayView<const char> keyValueData{f->in.suffix(header.kvdByteOffset).prefix(header.kvdByteLength)};
         /* Loop through entries, each one consisting of:
@@ -585,9 +596,9 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
            Byte data[length]
            Byte padding[...]
 
-           data[] begins with a zero-terminated key, the rest of the bytes is the
-           value content. Value alignment must be implicitly done through key
-           length, hence the funny KTX keys with multiple underscores. Any
+           data[] begins with a zero-terminated key, the rest of the bytes is
+           the value content. Value alignment must be implicitly done through
+           key length, hence the funny KTX keys with multiple underscores. Any
            multi-byte numbers in values must be endian-swapped later. */
         UnsignedInt current = 0;
         while(current + sizeof(UnsignedInt) < keyValueData.size()) {
@@ -603,11 +614,18 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 const auto value = split[2];
 
                 if(key.isEmpty() || value.isEmpty())
-                    Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";                    
-                else if(keyValueMap.count(key) > 0)
-                    Warning{} << "Trade::KtxImporter::openData(): key" << key << "already set, skipping";
-                else
-                    keyValueMap[key] = value;
+                    Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
+                else {
+                    for(UnsignedInt i = 0; i != Containers::arraySize(keyValueEntries); ++i) {
+                        if(key == keyValueEntries[i].key) {
+                            if(!keyValueEntries[i].value.empty())
+                                Warning{} << "Trade::KtxImporter::openData(): key" << key << "already set, skipping";
+                            else
+                                keyValueEntries[i].value = value;
+                            break;
+                        }
+                    }
+                }
             }
             /* Length value is dword-aligned, guaranteed for the first length
                by the file layout */
@@ -628,9 +646,9 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         constexpr auto targetOrientation = "ruo"_s;
 
         bool useDefaultOrientation = true;
-        const auto found = keyValueMap.find("KTXorientation"_s);
-        if(found != keyValueMap.end()) {
-            const Containers::StringView orientation{found->second};
+        const Containers::StringView orientation{keyValueEntries[KeyValueType::Orientation].value};
+        if(!orientation.isEmpty()) {
+            /* If it's too short, a warning gets printed and the default is used */
             if(orientation.size() >= f->numDimensions) {
                 constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
                 for(UnsignedByte i = 0; i != f->numDimensions; ++i) {
@@ -665,31 +683,31 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             "will have wrong orientation";
     }
 
-    /** @todo KTX spec seems to really insist on rd for cubemaps but the
+    /** @todo KTX spec seems to really insist on rd for cube maps but the
               wording is odd, I can't tell if they're saying it's mandatory or
               not: https://github.khronos.org/KTX-Specification/#cubemapOrientation
               The toktx tool from Khronos Texture Tools also forces rd for
-              cubemaps, so we should probably do that too.
+              cube maps, so we should probably do that too.
               Face orientation (+X, -X, etc.) is based on a left-handed y-up
               coordinate system, but neither GL nor Vulkan have that. The
               appendix implies that both need coordinate transformations. Do we
               have to do anything here? Flip faces/axes to match GL or Vulkan
               expectations? */
 
-    /* Incomplete cubemaps are a 'feature' of KTX files. We just import them
+    /* Incomplete cube maps are a 'feature' of KTX files. We just import them
        as layers (which is how they're exposed to us). */
-    if(header.faceCount != 6 && keyValueMap.count("KTXcubemapIncomplete"_s) > 0) {
+    if(numFaces != 6 && !keyValueEntries[KeyValueType::CubeMapIncomplete].value.empty()) {
         Warning{} << "Trade::KtxImporter::openData(): image contains incomplete "
-            "cubemap faces, importing faces as array layers";
+            "cube map faces, importing faces as array layers";
     }
 
     /* Read swizzle information */
     if(!f->pixelFormat.isDepth) {
-        const auto found = keyValueMap.find("KTXswizzle"_s);
-        if(found != keyValueMap.end()) {
-            /** @todo This is broken for block-compressed formats. Get numChannels from DFD */
+        Containers::StringView swizzle{keyValueEntries[KeyValueType::Swizzle].value};
+        if(!swizzle.isEmpty()) {
+            /** @todo This is broken for block-compressed formats. Get numChannels from DFD? */
             const std::size_t numChannels = f->pixelFormat.size / f->pixelFormat.typeSize;
-            const Containers::StringView swizzle{found->second.prefix(Math::min(numChannels, found->second.size()))};
+            swizzle = swizzle.prefix(Math::min(numChannels, swizzle.size()));
             if(swizzle != "rgba"_s.prefix(numChannels)) {
                 bool handled = false;
                 /* Special cases already supported for 8-bit Vulkan formats */
