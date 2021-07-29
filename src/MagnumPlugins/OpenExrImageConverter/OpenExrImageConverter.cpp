@@ -83,7 +83,7 @@ class MemoryOStream: public Imf::OStream {
 
 OpenExrImageConverter::OpenExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
+ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData|ImageConverterFeature::Convert3DToData; }
 
 namespace {
 
@@ -196,6 +196,15 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
         compression
     };
 
+    /* Set envmap metadata, if specified. The 2D/3D doConvertToData() already
+       guards that latlong is only set for 2D and cubemap only for 3D plus all
+       the size restrictions, so we can just assert here. */
+    if(configuration.value("envmap") == "latlong") {
+        Imf::addEnvmap(header, Imf::Envmap::ENVMAP_LATLONG);
+    } else if(configuration.value("envmap") == "cube") {
+        Imf::addEnvmap(header, Imf::Envmap::ENVMAP_CUBE);
+    } else CORRADE_INTERNAL_ASSERT(configuration.value("envmap").empty());
+
     /* If a layer is specified, prefix all channels with it */
     std::string layerPrefix = configuration.value("layer");
     if(!layerPrefix.empty()) layerPrefix += '.';
@@ -275,6 +284,16 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
 }
 
 Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D& image) {
+    if(configuration().value("envmap") == "latlong") {
+        if(image.size().x() != 2*image.size().y()) {
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): a lat/long environment map has to have a 2:1 aspect ratio, got" << image.size();
+            return {};
+        }
+    } else if(!configuration().value("envmap").empty()) {
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown envmap option" << configuration().value("envmap") << "for a 2D image, expected either empty or latlong for 2D images and cube for 3D images";
+        return {};
+    }
+
     /* According to my tests, Y flip could be done during image writing the
        same as when reading by supplying `std::size_t(-rowStride)`, as
        described in OpenExrImporter::doImage2D(). However, again, although it
@@ -292,6 +311,74 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
     Utility::copy(image.pixels().flipped<0>(), flippedPixels);
 
     return convertToDataInternal(configuration(), image.format(), flippedPixels);
+}
+
+Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView3D& image) {
+    /* Only cube map saving is supported right now, no deep data */
+    if(configuration().value("envmap").empty()) {
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, the envmap option has to be set to cube in the configuration in order to save a cube map";
+        return {};
+    }
+
+    if(configuration().value("envmap") == "cube") {
+        if(image.size().x() != image.size().y() || image.size().z() != 6) {
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): a cubemap has to have six square slices, got" << image.size();
+            return {};
+        }
+    } else {
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown envmap option" << configuration().value("envmap") << "for a 3D image, expected either empty or latlong for 2D images and cube for 3D images";
+        return {};
+    }
+
+    /* Compared to the (simple) 2D case, the cube map case is a lot more
+       complex -- either GL or EXR is insane and so we have to flip differently
+       for each face:
+
+        +X is X-flipped
+        -X is X-flipped
+        +Y is Y-flipped
+        -Y is Y-flipped
+        +Z is X-flipped
+        -Z is X-flipped
+
+       Moreover, the image can have arbitrary imageHeight() in its pixel
+       storage, however OpenEXR treats even the cubemap as a 2D framebuffer and
+       so there's no possibility to have arbitrary gaps between faces.
+
+       Originally I had this implemented as a straight copy of the 2D
+       conversion code, with each face getting a dedicated framebuffer, with Y
+       flips done by OpenEXR itself and X flips done manually to a scratch
+       memory first (because, as described in OpenExrImporter::doImage3D(), it
+       can't do them on their own). So basically three slightly different
+       copies of the same code doing framebuffer setup, channel mapping etc.,
+       and then I realized I would need to extend & test *each* for mipmap
+       support.
+
+       This variant, which copies everything to a scratch memory first, doing
+       desired flips in the process, is less efficient, but far easier to
+       maintain. */
+    Containers::Array<char> flippedData{NoInit, std::size_t(image.size().product()*image.pixelSize())};
+    const Containers::StridedArrayView4D<const char> pixels = image.pixels();
+    const Containers::StridedArrayView4D<char> flippedPixels{flippedData, {
+        std::size_t(image.size().z()),
+        std::size_t(image.size().y()),
+        std::size_t(image.size().x()),
+        image.pixelSize()
+    }};
+    Utility::copy(pixels[0].flipped<1>(), flippedPixels[0]);
+    Utility::copy(pixels[1].flipped<1>(), flippedPixels[1]);
+    Utility::copy(pixels[2].flipped<0>(), flippedPixels[2]);
+    Utility::copy(pixels[3].flipped<0>(), flippedPixels[3]);
+    Utility::copy(pixels[4].flipped<1>(), flippedPixels[4]);
+    Utility::copy(pixels[5].flipped<1>(), flippedPixels[5]);
+
+    /* Turn this back into a 2D framebuffer for OpenEXR */
+    Containers::StridedArrayView3D<char> flippedPixelsFlattened{flippedData, {
+        std::size_t(image.size().z()*image.size().y()),
+        std::size_t(image.size().x()),
+        image.pixelSize()
+    }};
+    return convertToDataInternal(configuration(), image.format(), flippedPixelsFlattened);
 }
 
 }}

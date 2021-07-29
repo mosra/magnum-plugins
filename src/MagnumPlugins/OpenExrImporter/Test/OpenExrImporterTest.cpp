@@ -54,6 +54,8 @@ struct OpenExrImporterTest: TestSuite::Tester {
     void rg32ui();
     void depth32f();
 
+    void cubeMap();
+
     void forceChannelCountMore();
     void forceChannelCountLess();
     void forceChannelCountWrong();
@@ -84,6 +86,14 @@ const struct {
     {"custom data/display window", "rgb16f-custom-windows.exr"},
 };
 
+const struct {
+    const char* name;
+    const char* filename;
+} CubeMapData[] {
+    {"", "envmap-cube.exr"},
+    {"custom data/display window", "envmap-cube-custom-windows.exr"},
+};
+
 OpenExrImporterTest::OpenExrImporterTest() {
     addTests({&OpenExrImporterTest::emptyFile,
               &OpenExrImporterTest::shortFile,
@@ -95,9 +105,12 @@ OpenExrImporterTest::OpenExrImporterTest() {
 
     addTests({&OpenExrImporterTest::rgba32f,
               &OpenExrImporterTest::rg32ui,
-              &OpenExrImporterTest::depth32f,
+              &OpenExrImporterTest::depth32f});
 
-              &OpenExrImporterTest::forceChannelCountMore,
+    addInstancedTests({&OpenExrImporterTest::cubeMap},
+        Containers::arraySize(CubeMapData));
+
+    addTests({&OpenExrImporterTest::forceChannelCountMore,
               &OpenExrImporterTest::forceChannelCountLess,
               &OpenExrImporterTest::forceChannelCountWrong,
 
@@ -234,6 +247,42 @@ void OpenExrImporterTest::depth32f() {
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView<Float>({
         0.125f, 0.250f, 0.375f,
         0.500f, 0.625f, 0.750f,
+    }), TestSuite::Compare::Container);
+}
+
+void OpenExrImporterTest::cubeMap() {
+    auto&& data = CubeMapData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+
+    /* A cube map image should be exposed only as a 3D image, not 2D */
+    CORRADE_COMPARE(importer->image2DCount(), 0);
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), (Vector3i{2, 2, 6}));
+    CORRADE_COMPARE(image->format(), PixelFormat::RG16F);
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView({
+        00.0_h, 01.0_h, 02.0_h, 03.0_h,
+        04.0_h, 05.0_h, 06.0_h, 07.0_h,
+
+        10.0_h, 11.0_h, 12.0_h, 13.0_h,
+        14.0_h, 15.0_h, 16.0_h, 17.0_h,
+
+        20.0_h, 21.0_h, 22.0_h, 23.0_h,
+        24.0_h, 25.0_h, 26.0_h, 27.0_h,
+
+        30.0_h, 31.0_h, 32.0_h, 33.0_h,
+        34.0_h, 35.0_h, 36.0_h, 37.0_h,
+
+        40.0_h, 41.0_h, 42.0_h, 43.0_h,
+        44.0_h, 45.0_h, 46.0_h, 47.0_h,
+
+        50.0_h, 51.0_h, 52.0_h, 53.0_h,
+        54.0_h, 55.0_h, 56.0_h, 57.0_h,
     }), TestSuite::Compare::Container);
 }
 

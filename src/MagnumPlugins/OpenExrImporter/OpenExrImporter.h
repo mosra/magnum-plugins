@@ -168,19 +168,20 @@ annotating crop borders or specifying that the data is just a small portion of
 a larger image. The importer ignores the display window and imports everything
 that's inside the data window, without offseting it in any way.
 
-@subsection Trade-OpenExrImporter-behavior-multilayer-multipart Multilayer and multipart images
+@subsection Trade-OpenExrImporter-behavior-multilayer-multipart Multilayer and multipart images, deep images
 
 Images with custom layers (for example with separate channels for a left and
 right view) can be imported by specifying the @cb{.ini} layer @ce
 @ref Trade-OpenExrImporter-configuration "configuration option".
 
-Multipart images are not supported right now.
+Multipart and deep images are not supported right now --- only the first part /
+sample gets imported.
 
-@subsection Trade-OpenExrImporter-behavior-deep Cube map, environment map and deep images
+@subsection Trade-OpenExrImporter-behavior-cubemap Cube and lat/lon environment maps
 
-Deep images are not supported right now, cube map and environment map images
-are currently imported as two-dimensional images without any indication of
-image type.
+A lat/long environment map is imported as a 2D image without any indication of
+its type. A cube map is imported as a 3D image with each face being one slice,
+in order +X, -X, +Y, -Y, +Z and -Z.
 
 @section Trade-OpenExrImporter-configuration Plugin-specific configuration
 
@@ -207,6 +208,8 @@ class MAGNUM_OPENEXRIMPORTER_EXPORT OpenExrImporter: public AbstractImporter {
 
         MAGNUM_OPENEXRIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_OPENEXRIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
+        MAGNUM_OPENEXRIMPORTER_LOCAL UnsignedInt doImage3DCount() const override;
+        MAGNUM_OPENEXRIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
 
         struct State;
         Containers::Pointer<State> _state;

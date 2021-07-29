@@ -44,6 +44,7 @@
 #include <ImfHeader.h>
 #include <ImfInputFile.h>
 #include <ImfIO.h>
+#include <ImfStandardAttributes.h>
 
 namespace Magnum { namespace Trade {
 
@@ -101,6 +102,7 @@ struct OpenExrImporter::State {
     Containers::Array<char> data;
     MemoryIStream stream;
     Imf::InputFile file;
+    bool isCubeMap;
 };
 
 OpenExrImporter::OpenExrImporter(PluginManager::AbstractManager& manager, const std::string& plugin) : AbstractImporter{manager, plugin} {}
@@ -130,6 +132,9 @@ void OpenExrImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /** @todo thread setup */
     /** @todo multipart support */
+
+    /* Cube map files will be exposed as 3D images */
+    state->isCubeMap = Imf::hasEnvmap(state->file.header()) && Imf::envmap(state->file.header()) == Imf::ENVMAP_CUBE;
 
     /* All good, save the state */
     _state = std::move(state);
@@ -345,7 +350,9 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
 
 }
 
-UnsignedInt OpenExrImporter::doImage2DCount() const { return 1; }
+UnsignedInt OpenExrImporter::doImage2DCount() const {
+    return _state->isCubeMap ? 0 : 1;
+}
 
 Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, UnsignedInt) {
     Containers::Optional<ImageData2D> image = imageInternal(configuration(), _state->file, "Trade::OpenExrImporter::image2D():");
@@ -384,10 +391,72 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
 
        But then I patted myself on the back for being such a 1337 H4X0R and
        deleted all that. For my sanity I'm doing a flip on the resulting data
-       instead. */
+       instead, which is also consistent with what needs to be done for
+       cubemaps below. */
     if(image) Utility::flipInPlace<0>(image->mutablePixels());
 
     return image;
+}
+
+UnsignedInt OpenExrImporter::doImage3DCount() const {
+    return _state->isCubeMap ? 1 : 0;
+}
+
+Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, UnsignedInt) {
+    Containers::Optional<ImageData2D> image2D = imageInternal(configuration(), _state->file, "Trade::OpenExrImporter::image3D():");
+    if(!image2D) return {};
+
+    /* Compared to the (simple) 2D case, the cube map case is a lot more
+       complex -- either GL or EXR is insane and so I have to flip differently
+       for each face:
+
+        +X is X-flipped
+        -X is X-flipped
+        +Y is Y-flipped
+        -Y is Y-flipped
+        +Z is X-flipped
+        -Z is X-flipped
+
+       It could have worked by creating six different framebuffers, with each
+       set up differently, however while Y flip would be possible using the
+       `std::size_t(-rowStride)` hack mentioned above unfortunately I can't do
+       the same for X. The scanline copying code in question
+       (copyIntoFrameBuffer() in ImfMisc.cpp and the code calling it from
+       ImfScanLineInputFile.cpp) is along these lines, i.e. endPtr being
+       already smaller than writePtr to begin with and thus the loop never
+       entered:
+
+        char* writePtr = linePtr + dMinX*xStride;
+        char* endPtr = linePtr + dmaxX*xStride;
+        …
+        while(writePtr <= endPtr) {
+            …
+            writePtr += xStride;
+        }
+
+       Which means I'd have to special-case the ±X/±Z faces and perform X flip
+       manually, at which point I realized I could just throw it all away and
+       do the flip in post on the imported data, thus happily sharing all code
+       between the 2D and cubemap case. */
+    const Containers::StridedArrayView3D<const char> pixels2D = image2D->pixels();
+    const Containers::StridedArrayView4D<char> pixels{image2D->mutableData(),
+        {6,
+         pixels2D.size()[0]/6,
+         pixels2D.size()[1],
+         pixels2D.size()[2]},
+        {std::ptrdiff_t(pixels2D.stride()[0]*(pixels2D.size()[0]/6)),
+         pixels2D.stride()[0],
+         pixels2D.stride()[1],
+         pixels2D.stride()[2]}
+    };
+    Utility::flipInPlace<1>(pixels[0]);
+    Utility::flipInPlace<1>(pixels[1]);
+    Utility::flipInPlace<0>(pixels[2]);
+    Utility::flipInPlace<0>(pixels[3]);
+    Utility::flipInPlace<1>(pixels[4]);
+    Utility::flipInPlace<1>(pixels[5]);
+
+    return ImageData3D{image2D->format(), {Int(pixels.size()[2]), Int(pixels.size()[1]), Int(pixels.size()[0])}, image2D->release()};
 }
 
 }}

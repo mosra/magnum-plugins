@@ -160,17 +160,23 @@ implicitly written to channels named `R`, `G`, `B` and `A`; images with
 If the default behavior is not sufficient, custom channel mapping can be
 supplied @ref Trade-OpenExrImageConverter-configuration "in the configuration".
 
-@subsection Trade-OpenExrImageConverter-behavior-multilayer-multipart Multilayer and multipart images
+@subsection Trade-OpenExrImageConverter-behavior-multilayer-multipart Multilayer and multipart images, deep images
 
 Channels can be prefixed with a custom layer name by specifying the
-@cb{.ini} layer @ce @ref Trade-OpenExrImporter-configuration "configuration option". Combining multiple layers into a single image isn't supported right
-now, writing multiple images into a multipart file is not supported either.
+@cb{.ini} layer @ce @ref Trade-OpenExrImporter-configuration "configuration option".
+Combining multiple layers into a single image isn't supported right now,
+writing multipart files or deep images is not supported either.
 
-@subsection Trade-OpenExrImageConverter-behavior-deep Cube map, environment map and deep images
+@subsection Trade-OpenExrImageConverter-behavior-cubemap Cube and lat/lon environment maps
 
-Creating deep images is not supported right now, cube map and environment map
-images can be only written from a two-dimensional input, however there's
-currently no way to mark them properly in the metadata.
+A 2D image can be annotated as being a lat/lon environment map by setting
+@cb{.ini} envmap=latlon @ce @ref Trade-OpenExrImporter-configuration "in the configuration". This requires it to have the width twice of the height.
+
+A cube map image can be saved from an @ref ImageView3D where each slice is one
+face in order +X, -X, +Y, -Y, +Z and -Z if you set @cb{.ini} envmap=cube @ce.
+In this case, the image is expected to have six rectangular faces.
+
+Creating deep images is not supported right now.
 
 @section Trade-OpenExrImageConverter-configuration Plugin-specific configuration
 
@@ -190,6 +196,7 @@ class MAGNUM_OPENEXRIMAGECONVERTER_EXPORT OpenExrImageConverter: public Abstract
     private:
         MAGNUM_OPENEXRIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
+        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView3D& image) override;
 };
 
 }}

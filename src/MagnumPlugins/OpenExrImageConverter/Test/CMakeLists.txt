@@ -60,7 +60,10 @@ corrade_add_test(OpenExrImageConverterTest OpenExrImageConverterTest.cpp
         ../../OpenExrImporter/Test/rgba32f.exr
         ../../OpenExrImporter/Test/rgba32f-custom-channels.exr
         ../../OpenExrImporter/Test/rg32ui.exr
-        rb32f-custom-channels.exr)
+        ../../OpenExrImporter/Test/envmap-cube.exr
+        ../../OpenExrImporter/Test/envmap-cube-custom-windows.exr
+        rb32f-custom-channels.exr
+        envmap-latlong.exr)
 target_include_directories(OpenExrImageConverterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
     $<TARGET_PROPERTY:OpenEXR::OpenEXR,INTERFACE_INCLUDE_DIRECTORIES>)

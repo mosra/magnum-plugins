@@ -40,8 +40,8 @@ namespace Magnum {
     GLSL shader validation and GLSL->SPIR-V compilation
 -   New @ref Trade::OpenExrImporter "OpenExrImporter" and
     @ref Trade::OpenExrImageConverter "OpenExrImageConverter" plugins for
-    reading and writing OpenEXR files, including cube map, custom channel,
-    multi-part and deep image support
+    reading and writing OpenEXR files including cube maps and custom channel
+    support
 -   New @relativeref{Trade,StbDxtImageConverter} for compressing RGBA images
     into block-compressed BC1/BC3.
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" material import was

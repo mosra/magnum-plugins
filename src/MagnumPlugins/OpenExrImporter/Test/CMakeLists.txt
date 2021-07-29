@@ -57,7 +57,10 @@ corrade_add_test(OpenExrImporterTest OpenExrImporterTest.cpp
         # This one edited from rgba32f.exr by changing A channel type to UINT
         rgb32fa32ui.exr
         # This one edited from depth32f.exr by changing Z channel type to UINT
-        depth32ui.exr)
+        depth32ui.exr
+
+        envmap-cube.exr
+        envmap-cube-custom-windows.exr)
 target_include_directories(OpenExrImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_OPENEXRIMPORTER_BUILD_STATIC)
     target_link_libraries(OpenExrImporterTest PRIVATE OpenExrImporter)
