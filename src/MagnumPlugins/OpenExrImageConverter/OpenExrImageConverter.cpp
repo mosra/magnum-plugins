@@ -220,7 +220,7 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
         /* OpenEXR uses a std::map inside the Imf::FrameBuffer, but doesn't
            actually do any error checking on top, which means if we
            accidentally supply the same channel twice, it'll get ignored ... or
-           maybe it overwrite the previous one. Not sure. Neither behavior
+           maybe it overwrites the previous one. Not sure. Neither behavior
            seems desirable, so let's fail on that. */
         if(framebuffer.findSlice(name)) {
             Error{} << "Trade::OpenExrImageConverter::convertToData(): duplicate mapping for channel" << name;
@@ -233,13 +233,11 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
             /* Same as with OpenExrImporter, this is actually a pointer to the
                *last* row and the stride is negative (pixels were flipped<0>()
                above) */
-            const_cast<char*>(
-                static_cast<const char*>(pixels.data()) + ChannelSizes[type]*i
+            const_cast<char*>(static_cast<const char*>(pixels.data()) + ChannelSizes[type]*i)
                 /* And we have to take into account any custom data window as
                    well */
                 - dataOffsetMin.y()*std::size_t(pixels.stride()[0])
-                - dataOffsetMin.x()*std::size_t(pixels.stride()[1])
-            ),
+                - dataOffsetMin.x()*std::size_t(pixels.stride()[1]),
             std::size_t(pixels.stride()[1]),
             std::size_t(pixels.stride()[0]),
         });
