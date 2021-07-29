@@ -29,6 +29,7 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Magnum/ImageView.h>
@@ -84,11 +85,13 @@ OpenExrImageConverter::OpenExrImageConverter(PluginManager::AbstractManager& man
 
 ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D& image) try {
+namespace {
+
+Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const PixelFormat format, const Containers::StridedArrayView3D<const char>& pixels) try {
     /* Figure out type and channel count */
     Imf::PixelType type;
     std::size_t channelCount;
-    switch(image.format()) {
+    switch(format) {
         case PixelFormat::R16F:
         case PixelFormat::RG16F:
         case PixelFormat::RGB16F:
@@ -109,10 +112,10 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
             type = Imf::UINT;
             break;
         default:
-            Error{} << "Trade::OpenExrImageConverter::convertToData(): unsupported format" << image.format() << Debug::nospace << ", only *16F, *32F, *32UI and Depth32F formats supported";
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): unsupported format" << format << Debug::nospace << ", only *16F, *32F, *32UI and Depth32F formats supported";
             return {};
     }
-    switch(image.format()) {
+    switch(format) {
         case PixelFormat::R16F:
         case PixelFormat::R32F:
         case PixelFormat::R32UI:
@@ -140,7 +143,7 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
 
     /* Output compression. Using the same naming scheme as exrenvmap does,
        except for no compression: https://github.com/AcademySoftwareFoundation/openexr/blob/931618b9088fd03ed4fe30cade55664da94a5854/src/bin/exrenvmap/main.cpp#L138-L174 */
-    const Containers::StringView compressionString = configuration().value<Containers::StringView>("compression");
+    const Containers::StringView compressionString = configuration.value<Containers::StringView>("compression");
     Imf::Compression compression;
     if(compressionString.isEmpty())
         compression = Imf::NO_COMPRESSION;
@@ -170,11 +173,12 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
     }
 
     /* Data window */
-    const Vector2i dataOffsetMin = configuration().value<Vector2i>("dataOffset");
-    const Vector2i dataOffsetMax = dataOffsetMin + image.size() - Vector2i{1};
-    const Range2Di displayWindow = configuration().value("displayWindow").empty() ?
-        Range2Di{{}, image.size() - Vector2i{1}} :
-        configuration().value<Range2Di>("displayWindow");
+    const Vector2i imageSize{Int(pixels.size()[1]), Int(pixels.size()[0])};
+    const Vector2i dataOffsetMin = configuration.value<Vector2i>("dataOffset");
+    const Vector2i dataOffsetMax = dataOffsetMin + imageSize - Vector2i{1};
+    const Range2Di displayWindow = configuration.value("displayWindow").empty() ?
+        Range2Di{{}, imageSize - Vector2i{1}} :
+        configuration.value<Range2Di>("displayWindow");
 
     /* Header with basic info */
     Imf::Header header{
@@ -192,18 +196,15 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
         compression
     };
 
-    /* Get image pixel view and do the Y flipping right away. */
-    const Containers::StridedArrayView3D<const char> pixels = image.pixels().flipped<0>();
-
     /* If a layer is specified, prefix all channels with it */
-    std::string layerPrefix = configuration().value("layer");
+    std::string layerPrefix = configuration.value("layer");
     if(!layerPrefix.empty()) layerPrefix += '.';
 
     /* Write all channels that have assigned names */
     const char* const ChannelOptions[] {
         /* This will be insufficient once there's more than one allowed depth
            format */
-        image.format() == PixelFormat::Depth32F ? "depth" : "r", "g", "b", "a"
+        format == PixelFormat::Depth32F ? "depth" : "r", "g", "b", "a"
     };
     constexpr std::size_t ChannelSizes[] {
         4, /* UINT */
@@ -212,7 +213,7 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
     };
     Imf::FrameBuffer framebuffer;
     for(std::size_t i = 0; i != channelCount; ++i) {
-        std::string name = configuration().value(ChannelOptions[i]);
+        std::string name = configuration.value(ChannelOptions[i]);
         if(name.empty()) continue;
 
         name = layerPrefix + name;
@@ -230,16 +231,16 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
         header.channels().insert(name, Imf::Channel{type});
         framebuffer.insert(name, Imf::Slice{
             type,
-            /* Same as with OpenExrImporter, this is actually a pointer to the
-               *last* row and the stride is negative (pixels were flipped<0>()
-               above) */
-            const_cast<char*>(static_cast<const char*>(pixels.data()) + ChannelSizes[type]*i)
-                /* And we have to take into account any custom data window as
-                   well */
+            const_cast<char*>(static_cast<const char*>(pixels.data()))
+                /* For some strange reason I have to supply a pointer to the
+                   first pixel ever, not the first pixel inside the data
+                   window */
                 - dataOffsetMin.y()*std::size_t(pixels.stride()[0])
-                - dataOffsetMin.x()*std::size_t(pixels.stride()[1]),
+                - dataOffsetMin.x()*std::size_t(pixels.stride()[1])
+                /* And an offset to this channel, as they're interleaved */
+                + i*ChannelSizes[type],
             std::size_t(pixels.stride()[1]),
-            std::size_t(pixels.stride()[0]),
+            std::size_t(pixels.stride()[0])
         });
     }
 
@@ -255,7 +256,7 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
         MemoryOStream stream{data};
         Imf::OutputFile file{stream, header};
         file.setFrameBuffer(framebuffer);
-        file.writePixels(image.size().y());
+        file.writePixels(imageSize.y());
     }
 
     /* Convert the growable array back to a non-growable with the default
@@ -269,6 +270,28 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
     /* e.message() is only since 2.3.0, use what() for compatibility */
     Error{} << "Trade::OpenExrImageConverter::convertToData(): conversion error:" << e.what();
     return {};
+}
+
+}
+
+Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D& image) {
+    /* According to my tests, Y flip could be done during image writing the
+       same as when reading by supplying `std::size_t(-rowStride)`, as
+       described in OpenExrImporter::doImage2D(). However, again, although it
+       requires allocating a copy to perform the manual flip, I think it's the
+       saner approach after all. */
+    Containers::Array<char> flippedData{NoInit, std::size_t(image.size().product()*image.pixelSize())};
+    const Containers::StridedArrayView3D<char> flippedPixels{flippedData, {
+        std::size_t(image.size().y()),
+        std::size_t(image.size().x()),
+        /* pixels() returns a zero stride if the view is empty, do that here as
+           well to avoid hitting an assert inside copy() */
+        /** @todo why?! figure out and fix */
+        image.size().isZero() ? 0 : image.pixelSize()
+    }};
+    Utility::copy(image.pixels().flipped<0>(), flippedPixels);
+
+    return convertToDataInternal(configuration(), image.format(), flippedPixels);
 }
 
 }}

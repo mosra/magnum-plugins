@@ -135,10 +135,10 @@ void OpenExrImporter::doOpenData(const Containers::ArrayView<const char> data) {
     _state = std::move(state);
 }
 
-UnsignedInt OpenExrImporter::doImage2DCount() const { return 1; }
+namespace {
 
-Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, UnsignedInt) try {
-    const Imf::Header header = _state->file.header();
+Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGroup& configuration, Imf::InputFile& file, const char* messagePrefix) try {
+    const Imf::Header header = file.header();
     const Imath::Box2i dataWindow = header.dataWindow();
     const Vector2i size{dataWindow.max.x - dataWindow.min.x + 1,
                         dataWindow.max.y - dataWindow.min.y + 1};
@@ -146,16 +146,16 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
     /* Figure out channel mapping */
     const Imf::ChannelList& channels = header.channels();
     std::string mapping[]{
-        configuration().value("r"),
-        configuration().value("g"),
-        configuration().value("b"),
-        configuration().value("a")
+        configuration.value("r"),
+        configuration.value("g"),
+        configuration.value("b"),
+        configuration.value("a")
     };
-    std::string depthMapping = configuration().value("depth");
+    std::string depthMapping = configuration.value("depth");
 
     /* If a layer is specified, prefix all channels with it. Channels that are
        empty will stay so. */
-    std::string layerPrefix = configuration().value("layer");
+    std::string layerPrefix = configuration.value("layer");
     if(!layerPrefix.empty()) {
         layerPrefix += '.';
         for(std::string* i: {mapping, mapping + 1, mapping + 2, mapping + 3, &depthMapping})
@@ -193,7 +193,7 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
         for(auto it = channels.begin(); it != channels.end(); ++it)
             arrayAppend(channelNames, InPlaceInit, it.name());
 
-        Error{} << "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {" << Debug::nospace << ", "_s.join(channelNames) << Debug::nospace << "}, to either {" << Debug::nospace << ", "_s.join({mapping[0], mapping[1], mapping[2], mapping[3]}) << Debug::nospace << "} or" << depthMapping << Debug::nospace << ", provide desired layer and/or channel names in plugin configuration";
+        Error{} << messagePrefix << "can't perform automatic mapping for channels named {" << Debug::nospace << ", "_s.join(channelNames) << Debug::nospace << "}, to either {" << Debug::nospace << ", "_s.join({mapping[0], mapping[1], mapping[2], mapping[3]}) << Debug::nospace << "} or" << depthMapping << Debug::nospace << ", provide desired layer and/or channel names in plugin configuration";
         return {};
     }
 
@@ -224,7 +224,7 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
 
             /* For depth, the type is already set to FLOAT above, so this will
                double as a consistency check there as well */
-            Error{} << "Trade::OpenExrImporter::image2D(): channel" << mapping[i] << "expected to be a" << PixelTypeName[*type] << "but got" << PixelTypeName[channels[mapping[i]].type];
+            Error{} << messagePrefix << "channel" << mapping[i] << "expected to be a" << PixelTypeName[*type] << "but got" << PixelTypeName[channels[mapping[i]].type];
             return {};
         }
     }
@@ -233,9 +233,9 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
     CORRADE_INTERNAL_ASSERT(type);
 
     /* Force channel count for RGBA, if requested */
-    if(!isDepth) if(const Int forceChannelCount = configuration().value<Int>("forceChannelCount")) {
+    if(!isDepth) if(const Int forceChannelCount = configuration.value<Int>("forceChannelCount")) {
         if(forceChannelCount < 0 || forceChannelCount > 4) {
-            Error{} << "Trade::OpenExrImporter::image2D(): forceChannelCount is expected to be 0-4, got" << forceChannelCount;
+            Error{} << messagePrefix << "forceChannelCount is expected to be 0-4, got" << forceChannelCount;
             return {};
         }
 
@@ -293,13 +293,70 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
         out = Containers::Array<char>{NoInit, std::size_t{rowStride*size.y()}};
     }
 
-    /* Set up the output array and framebuffer layout for reading. The
-       framebuffer contains mapping of particular channels to strided 2D memory
-       locations, which sounds extremely great... in theory. In practice,
-       UNFORTUNATELY:
+    Imf::FrameBuffer framebuffer;
+    constexpr const char* FillOptions[] {
+        "rFill", "gFill", "bFill", "aFill"
+    };
+    for(std::size_t i = 0; i != channelCount; ++i) {
+        if(mapping[i].empty()) continue;
 
-        1.  Strides are a size_t, which means the library doesn't want us to
-            use it to do an Y flip.
+        /* OpenEXR uses a std::map inside the Imf::FrameBuffer, but doesn't
+           actually do any error checking on top, which means if we
+           accidentally supply the same channel twice, it'll get ignored ... or
+           maybe it overwrite the previous one. Not sure. Neither behavior
+           seems desirable, so let's fail on that. */
+        if(framebuffer.findSlice(mapping[i])) {
+            Error{} << messagePrefix << "duplicate mapping for channel" << mapping[i];
+            return {};
+        }
+
+        framebuffer.insert(mapping[i], Imf::Slice{
+            *type,
+            out.data()
+                /* For some strange reason I have to supply a pointer to the
+                   first pixel ever, not the first pixel inside the data
+                   window */
+                - dataWindow.min.y*rowStride
+                - dataWindow.min.x*pixelSize
+                /* And an offset to this channel, as they're interleaved */
+                + i*channelSize,
+            pixelSize,
+            rowStride,
+            1, 1,
+            configuration.value<Double>(FillOptions[i])
+        });
+    }
+
+    /* Sanity check, implied from the fact that the mappings are not empty */
+    CORRADE_INTERNAL_ASSERT(framebuffer.begin() != framebuffer.end());
+
+    file.setFrameBuffer(framebuffer);
+    file.readPixels(dataWindow.min.y, dataWindow.max.y);
+
+    return Trade::ImageData2D{format, size, std::move(out)};
+
+/* Good thing there are function try blocks, otherwise I would have to indent
+   the whole thing. That would be awful. */
+} catch(const Iex::BaseExc& e) {
+    /* e.message() is only since 2.3.0, use what() for compatibility */
+    Error{} << messagePrefix << "import error:" << e.what();
+    return {};
+}
+
+}
+
+UnsignedInt OpenExrImporter::doImage2DCount() const { return 1; }
+
+Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, UnsignedInt) {
+    Containers::Optional<ImageData2D> image = imageInternal(configuration(), _state->file, "Trade::OpenExrImporter::image2D():");
+
+    /* Let's stop here for a bit and contemplate on all the missed
+       opportunities. The OpenEXR framebuffer contains mapping of particular
+       channels to strided 2D memory locations, which sounds extremely great...
+       in theory. In practice, UNFORTUNATELY:
+
+        1.  Strides are a size_t, which means the library doesn't want me to
+            use it to do an Y flip (or an X flip, for that matter).
         2.  The file contains an INCREASING_Y or DECREASING_Y attribute, but
             that's only used when writing the file, I suppose to allow
             streaming the data in Y up direction without having to buffer
@@ -320,61 +377,17 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, Unsign
        industry but nah, it's the same poorly implemented shit with pointless
        restrictions as everything else.
 
-       FORTUNATELY, the library has very poor checks for out of bounds accesses
-       and so it seems we can force a `-rowStride` together with a specially
-       crafted base pointer and it'll work without throwing confused exceptions
-       at us. Hopefully  */
-    Imf::FrameBuffer framebuffer;
-    constexpr const char* FillOptions[] {
-        "rFill", "gFill", "bFill", "aFill"
-    };
-    for(std::size_t i = 0; i != channelCount; ++i) {
-        if(mapping[i].empty()) continue;
+       Later I discovered that the library has very poor checks for out of
+       bounds accesses and so it seems I can force `std::size_t(-rowStride)`
+       together with a specially crafted base pointer and it'll work without
+       throwing confused exceptions at us.
 
-        /* OpenEXR uses a std::map inside the Imf::FrameBuffer, but doesn't
-           actually do any error checking on top, which means if we
-           accidentally supply the same channel twice, it'll get ignored ... or
-           maybe it overwrite the previous one. Not sure. Neither behavior
-           seems desirable, so let's fail on that. */
-        if(framebuffer.findSlice(mapping[i])) {
-            Error{} << "Trade::OpenExrImporter::image2D(): duplicate mapping for channel" << mapping[i];
-            return {};
-        }
+       But then I patted myself on the back for being such a 1337 H4X0R and
+       deleted all that. For my sanity I'm doing a flip on the resulting data
+       instead. */
+    if(image) Utility::flipInPlace<0>(image->mutablePixels());
 
-        framebuffer.insert(mapping[i], Imf::Slice{
-            *type,
-            out.data()
-                /* For some strange reason I have to supply a pointer to the
-                   channel of the first pixel ever, not the first pixel inside
-                   the data window */
-                - dataWindow.min.y*rowStride - dataWindow.min.x*pixelSize
-                /* This, however, actually has to points to the first pixel of
-                   the *last* row (plus the minimal offset agin, which then
-                   cancels out with the above), as we do an Y flip */
-                + dataWindow.min.y*rowStride + dataWindow.max.y*rowStride
-                /* And an offset to this channel, as they're interleaved */
-                + i*channelSize,
-            pixelSize,
-            -rowStride, /* Y flip */
-            1, 1,
-            configuration().value<Double>(FillOptions[i])
-        });
-    }
-
-    /* Sanity check, implied from the fact that the mappings are not empty */
-    CORRADE_INTERNAL_ASSERT(framebuffer.begin() != framebuffer.end());
-
-    _state->file.setFrameBuffer(framebuffer);
-    _state->file.readPixels(dataWindow.min.y, dataWindow.max.y);
-
-    return Trade::ImageData2D{format, size, std::move(out)};
-
-/* Good thing there are function try blocks, otherwise I would have to indent
-   the whole thing. That would be awful. */
-} catch(const Iex::BaseExc& e) {
-    /* e.message() is only since 2.3.0, use what() for compatibility */
-    Error{} << "Trade::OpenExrImporter::image2D(): import error:" << e.what();
-    return {};
+    return image;
 }
 
 }}
