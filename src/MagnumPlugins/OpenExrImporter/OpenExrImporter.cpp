@@ -43,8 +43,6 @@
 #include <ImfFrameBuffer.h>
 #include <ImfHeader.h>
 #include <ImfInputFile.h>
-#include <ImfInputPart.h>
-#include <ImfMultiPartInputFile.h>
 #include <ImfIO.h>
 
 namespace Magnum { namespace Trade {
