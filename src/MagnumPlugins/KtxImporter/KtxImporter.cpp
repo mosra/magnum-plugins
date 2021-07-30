@@ -173,7 +173,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
        formatMapping.hpp isn't updated without adding an extra check. */
     PixelFormat format{};
     switch(vkFormat) {
-        #define _p(vulkan, magnum, _type) case Implementation::VkFormat(vulkan): format = PixelFormat::magnum; break;
+        #define _p(vulkan, magnum, _type) case vulkan: format = PixelFormat::magnum; break;
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _p
         default:
@@ -237,7 +237,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
               https://github.com/KhronosGroup/KTX-Software/blob/f99221eb1c5ad92fd859765a0c66517ea4059160/lib/dfdutils/vulkan/vulkan_core.h#L1061*/
     CompressedPixelFormat compressedFormat{};
     switch(vkFormat) {
-        #define _c(vulkan, magnum, _type) case Implementation::VkFormat(vulkan): compressedFormat = CompressedPixelFormat::magnum; break;
+        #define _c(vulkan, magnum, _type) case vulkan: compressedFormat = CompressedPixelFormat::magnum; break;
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _c
         default:
@@ -376,8 +376,11 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         f->type = isLayered ? TextureType::Texture1DArray : TextureType::Texture1D;
     }
 
-    CORRADE_INTERNAL_ASSERT(f->numDimensions >= 1 && f->numDimensions <= 3);
     f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubeMap), 3);
+
+    CORRADE_INTERNAL_ASSERT(f->numDimensions >= 1 && f->numDimensions <= 3);
+    CORRADE_INTERNAL_ASSERT(f->numDataDimensions >= f->numDimensions);
+    CORRADE_INTERNAL_ASSERT(f->numDataDimensions - f->numDimensions <= 1);
 
     /* Make sure we don't choke on size calculations using product() */
     const Vector3i size = Math::max(Vector3i{header.imageSize}, 1);
@@ -442,7 +445,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
     f->pixelFormat.typeSize = header.typeSize;
 
-    /* Copy file data */
+    /* Make an owned copy of the data */
     f->in = Containers::Array<char>{NoInit, data.size()};
     Utility::copy(data, f->in);
 
@@ -592,15 +595,16 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
         bool useDefaultOrientation = true;
         const Containers::StringView orientation{keyValueEntries[KeyValueType::Orientation].value};
-        if(!orientation.isEmpty()) {
-            /* If it's too short, a warning gets printed and the default is used */
-            if(orientation.size() >= f->numDimensions) {
-                constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
-                for(UnsignedByte i = 0; i != f->numDimensions; ++i) {
-                    useDefaultOrientation = !validOrientations[i].contains(orientation[i]);
-                    if(useDefaultOrientation) break;
-                    f->flip.set(i, orientation[i] != targetOrientation[i]);
-                }
+        /* If the orientation string is too short or invalid, a warning gets
+           printed and the default is used.
+           Strings that are null-terminated but too short pass the first if
+           but get caught by the test for valid orientation characters. */
+        if(orientation.size() >= f->numDimensions) {
+            constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
+            for(UnsignedByte i = 0; i != f->numDimensions; ++i) {
+                useDefaultOrientation = !validOrientations[i].contains(orientation[i]);
+                if(useDefaultOrientation) break;
+                f->flip.set(i, orientation[i] != targetOrientation[i]);
             }
         }
 
@@ -652,12 +656,23 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* Read swizzle information */
     if(!f->pixelFormat.isDepth) {
-        Containers::StringView swizzle{keyValueEntries[KeyValueType::Swizzle].value};
+        /* Remove trailing zero and anything after it */
+        auto swizzle = Containers::StringView{keyValueEntries[KeyValueType::Swizzle].value}.partition('\0')[0];
         if(!swizzle.isEmpty()) {
-            /** @todo This is broken for block-compressed formats. Get numChannels from DFD? */
-            const std::size_t numChannels = f->pixelFormat.size / f->pixelFormat.typeSize;
-            swizzle = swizzle.prefix(Math::min(numChannels, swizzle.size()));
-            if(swizzle != "rgba"_s.prefix(numChannels)) {
+            /* We don't know the channel count of block-compressed formats so
+               comparing only the necessary prefix of the swizzle string can't
+               be done for them. The spec says to use 0 and 1 for missing
+               channels so in theory this is possible, but anyone who wants an
+               identity swizzle simply won't have an entry in the key/value
+               data in the first place. Reading the DFD for getting the channel
+               count is terrible overkill, so try our best for normal formats
+               and leave it at that.
+               */
+            if(!f->pixelFormat.isCompressed) {
+                const std::size_t numChannels = f->pixelFormat.size / f->pixelFormat.typeSize;
+                swizzle = swizzle.prefix(Math::min(numChannels, swizzle.size()));
+            }
+            if(!"rgba"_s.hasPrefix(swizzle)) {
                 bool handled = false;
                 /* Special cases already supported for 8-bit Vulkan formats */
                 if(!f->pixelFormat.isCompressed) {
@@ -709,14 +724,26 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 template<UnsignedInt dimensions>
 ImageData<dimensions> KtxImporter::doImage(UnsignedInt id, UnsignedInt level) {
     const File::LevelData& levelData = _f->imageData[id][level];
-
-    /* Copy image data, flipping along axes if necessary */
+    const auto size = Math::Vector<dimensions, Int>::pad(levelData.size);
     Containers::Array<char> data{NoInit, levelData.data.size()};
 
-    /* Block-compressed images don't have any flipping performed on them */
-    CORRADE_INTERNAL_ASSERT(!_f->pixelFormat.isCompressed || _f->flip.none());
+    /* Block-compressed images don't have any flipping, swizzling or endian
+       swapping performed on them. Special-casing this mainly to avoid having
+       to calculate the block count for the strided array view. We already know
+       the entire data size. */
+    if(_f->pixelFormat.isCompressed) {
+        CORRADE_INTERNAL_ASSERT(_f->flip.none());
+        CORRADE_INTERNAL_ASSERT(_f->pixelFormat.swizzle == SwizzleType::None);
+        CORRADE_INTERNAL_ASSERT(_f->pixelFormat.typeSize == 1);
 
-    /* Assuming src is tightly packed, stride gets calculated implicitly */
+        Utility::copy(levelData.data, data);
+        return ImageData<dimensions>(_f->pixelFormat.compressed, size, std::move(data));
+    }
+
+    /* Uncompressed image */
+
+    /* Copy image data, flipping along axes if necessary. Assuming src is
+       tightly packed, stride gets calculated implicitly. */
     Containers::StridedArrayView4D<const char> src{levelData.data, {
         std::size_t(levelData.size.z()),
         std::size_t(levelData.size.y()),
@@ -732,17 +759,10 @@ ImageData<dimensions> KtxImporter::doImage(UnsignedInt id, UnsignedInt level) {
     /* Without flipped dimensions this becomes a single memcpy */
     Utility::copy(src, dst);
 
-    const auto size = Math::Vector<dimensions, Int>::pad(levelData.size);
-
-    if(_f->pixelFormat.isCompressed)
-        return ImageData<dimensions>(_f->pixelFormat.compressed, size, std::move(data));
-
-    /* Uncompressed image */
-
-    endianSwap(data, _f->pixelFormat.typeSize);
-
     /* Swizzle BGR(A) if necessary */
     swizzlePixels(_f->pixelFormat.swizzle, _f->pixelFormat.typeSize, data);
+
+    endianSwap(data, _f->pixelFormat.typeSize);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
