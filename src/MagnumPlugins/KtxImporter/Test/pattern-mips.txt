@@ -1,3 +1,0 @@
-pattern.png
-pattern-mip1.png
-pattern-mip2.png

@@ -1,2 +1,0 @@
-pattern1d.png
-pattern1d-mip1.png
