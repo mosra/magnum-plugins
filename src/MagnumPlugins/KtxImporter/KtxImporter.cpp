@@ -560,7 +560,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 const auto key = split[0];
                 const auto value = split[2];
 
-                if(key.isEmpty() || value.isEmpty())
+                if(key.isEmpty())
                     Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
                 else {
                     for(UnsignedInt i = 0; i != Containers::arraySize(keyValueEntries); ++i) {
