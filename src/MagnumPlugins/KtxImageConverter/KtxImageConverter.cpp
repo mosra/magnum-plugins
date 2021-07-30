@@ -217,66 +217,6 @@ Containers::Array2<UnsignedInt> channelMapping(Implementation::VkFormatSuffix su
     CORRADE_ASSERT_UNREACHABLE("channelLimits(): invalid format suffix" << UnsignedInt(suffix), {});
 }
 
-bool isSrgb(PixelFormat format) {
-    CORRADE_INTERNAL_ASSERT(!isPixelFormatImplementationSpecific(format));
-
-    switch(format) {
-        case PixelFormat::R8Srgb:
-        case PixelFormat::RG8Srgb:
-        case PixelFormat::RGB8Srgb:
-        case PixelFormat::RGBA8Srgb:
-            return true;
-        default:
-            return false;
-    }
-}
-
-bool isSrgb(CompressedPixelFormat format) {
-    CORRADE_INTERNAL_ASSERT(!isCompressedPixelFormatImplementationSpecific(format));
-
-    switch(format) {
-        case CompressedPixelFormat::Bc1RGBSrgb:
-        case CompressedPixelFormat::Bc1RGBASrgb:
-        case CompressedPixelFormat::Bc2RGBASrgb:
-        case CompressedPixelFormat::Bc3RGBASrgb:
-        case CompressedPixelFormat::Bc7RGBASrgb:
-        case CompressedPixelFormat::Etc2RGB8Srgb:
-        case CompressedPixelFormat::Etc2RGB8A1Srgb:
-        case CompressedPixelFormat::Etc2RGBA8Srgb:
-        case CompressedPixelFormat::Astc4x4RGBASrgb:
-        case CompressedPixelFormat::Astc5x4RGBASrgb:
-        case CompressedPixelFormat::Astc5x5RGBASrgb:
-        case CompressedPixelFormat::Astc6x5RGBASrgb:
-        case CompressedPixelFormat::Astc6x6RGBASrgb:
-        case CompressedPixelFormat::Astc8x5RGBASrgb:
-        case CompressedPixelFormat::Astc8x6RGBASrgb:
-        case CompressedPixelFormat::Astc8x8RGBASrgb:
-        case CompressedPixelFormat::Astc10x5RGBASrgb:
-        case CompressedPixelFormat::Astc10x6RGBASrgb:
-        case CompressedPixelFormat::Astc10x8RGBASrgb:
-        case CompressedPixelFormat::Astc10x10RGBASrgb:
-        case CompressedPixelFormat::Astc12x10RGBASrgb:
-        case CompressedPixelFormat::Astc12x12RGBASrgb:
-        case CompressedPixelFormat::Astc3x3x3RGBASrgb:
-        case CompressedPixelFormat::Astc4x3x3RGBASrgb:
-        case CompressedPixelFormat::Astc4x4x3RGBASrgb:
-        case CompressedPixelFormat::Astc4x4x4RGBASrgb:
-        case CompressedPixelFormat::Astc5x4x4RGBASrgb:
-        case CompressedPixelFormat::Astc5x5x4RGBASrgb:
-        case CompressedPixelFormat::Astc5x5x5RGBASrgb:
-        case CompressedPixelFormat::Astc6x5x5RGBASrgb:
-        case CompressedPixelFormat::Astc6x6x5RGBASrgb:
-        case CompressedPixelFormat::Astc6x6x6RGBASrgb:
-        case CompressedPixelFormat::PvrtcRGB2bppSrgb:
-        case CompressedPixelFormat::PvrtcRGBA2bppSrgb:
-        case CompressedPixelFormat::PvrtcRGB4bppSrgb:
-        case CompressedPixelFormat::PvrtcRGBA4bppSrgb:
-            return true;
-        default:
-            return false;
-    }
-}
-
 Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementation::VkFormatSuffix suffix) {
     const UnsignedInt texelSize = pixelSize(format);
     const UnsignedInt typeSize = componentSize(format);
@@ -310,7 +250,7 @@ Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementat
 
     header.colorModel = Implementation::KdfBasicBlockHeader::ColorModel::Rgbsda;
     header.colorPrimaries = Implementation::KdfBasicBlockHeader::ColorPrimaries::Srgb;
-    header.transferFunction = isSrgb(format)
+    header.transferFunction = suffix == Implementation::VkFormatSuffix::SRGB
         ? Implementation::KdfBasicBlockHeader::TransferFunction::Srgb
         : Implementation::KdfBasicBlockHeader::TransferFunction::Linear;
     /** @todo Do we ever have premultiplied alpha? */
