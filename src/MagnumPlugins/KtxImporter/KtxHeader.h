@@ -199,8 +199,9 @@ struct KdfBasicBlockSample {
         Alpha = 15,
         /* Compressed color models. Some use Red/Green/Alpha from Rgbsda if
            applicable. */
-        Data = 0,
-        AlphaPresent = 0 /* DXT1 */
+        Color = 0,
+        Bc1Alpha = 1,
+        Etc2Color = 2
     };
 
     /* Channel data type bit mask encoded in upper half of channelType */
