@@ -554,7 +554,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             Utility::Endianness::littleEndianInPlace(length);
             current += sizeof(length);
 
-            if(current + length < keyValueData.size()) {
+            if(current + length <= keyValueData.size()) {
                 const Containers::StringView entry{keyValueData.suffix(current).prefix(length)};
                 const Containers::Array3<Containers::StringView> split = entry.partition('\0');
                 const auto key = split[0];
