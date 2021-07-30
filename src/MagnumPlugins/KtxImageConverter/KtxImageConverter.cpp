@@ -36,21 +36,28 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
-#include <Magnum/Math/Swizzle.h>
 #include <Magnum/Math/Vector3.h>
-#include <Magnum/Math/Vector4.h>
 #include "MagnumPlugins/KtxImporter/KtxHeader.h"
 
 namespace Magnum { namespace Trade {
 
 namespace {
 
+/* Need overloaded functions to use different pixel formats in templated code */
+bool isFormatImplementationSpecific(PixelFormat format) {
+    return isPixelFormatImplementationSpecific(format);
+}
+
+bool isFormatImplementationSpecific(CompressedPixelFormat format) {
+    return isCompressedPixelFormatImplementationSpecific(format);
+}
+
 typedef Containers::Pair<Implementation::VkFormat, Implementation::VkFormatSuffix> FormatPair;
 
 FormatPair vulkanFormat(PixelFormat format) {
     switch(format) {
         #define _p(vulkan, magnum, type) case PixelFormat::magnum: \
-            return {Implementation::VK_FORMAT_ ## vulkan, Implementation::VkFormatSuffix::type};
+            return {vulkan, Implementation::VkFormatSuffix::type};
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _p
         default:
@@ -59,9 +66,32 @@ FormatPair vulkanFormat(PixelFormat format) {
 }
 
 FormatPair vulkanFormat(CompressedPixelFormat format) {
+    /* In Vulkan there is no distinction between RGB and RGBA PVRTC:
+       https://github.com/KhronosGroup/Vulkan-Docs/issues/512#issuecomment-307768667
+       formatMapping.hpp (generated from Vk::PixelFormat) contains the RGBA
+       variants, so we manually alias them here. We can't do this inside
+       formatMapping.hpp because both Magnum and Vulkan formats must be unique
+       for switch cases. */
+    switch(format) {
+        case CompressedPixelFormat::PvrtcRGB2bppUnorm:
+            format = CompressedPixelFormat::PvrtcRGBA2bppUnorm;
+            break;
+        case CompressedPixelFormat::PvrtcRGB2bppSrgb:
+            format = CompressedPixelFormat::PvrtcRGBA2bppSrgb;
+            break;
+        case CompressedPixelFormat::PvrtcRGB4bppUnorm:
+            format = CompressedPixelFormat::PvrtcRGBA4bppUnorm;
+            break;
+        case CompressedPixelFormat::PvrtcRGB4bppSrgb:
+            format = CompressedPixelFormat::PvrtcRGBA4bppSrgb;
+            break;
+        default:
+            break;
+    }
+
     switch(format) {
         #define _c(vulkan, magnum, type) case CompressedPixelFormat::magnum: \
-            return {Implementation::VK_FORMAT_ ## vulkan, Implementation::VkFormatSuffix::type};
+            return {vulkan, Implementation::VkFormatSuffix::type};
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _c
         default:
@@ -70,12 +100,6 @@ FormatPair vulkanFormat(CompressedPixelFormat format) {
 }
 
 UnsignedByte componentSize(PixelFormat format) {
-    CORRADE_INTERNAL_ASSERT(!isPixelFormatImplementationSpecific(format));
-
-    #ifdef __GNUC__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic error "-Wswitch"
-    #endif
     switch(format) {
         case PixelFormat::R8Unorm:
         case PixelFormat::RG8Unorm:
@@ -139,12 +163,11 @@ UnsignedByte componentSize(PixelFormat format) {
         case PixelFormat::Depth24UnormStencil8UI:
         case PixelFormat::Depth32FStencil8UI:
             return 4;
+        default:
+            break;
     }
-    #ifdef __GNUC__
-    #pragma GCC diagnostic pop
-    #endif
 
-    CORRADE_ASSERT_UNREACHABLE("componentSize(): invalid format" << format, {});
+    CORRADE_ASSERT_UNREACHABLE("componentSize(): unsupported format" << format, {});
 }
 
 UnsignedByte componentSize(CompressedPixelFormat) {
@@ -308,35 +331,11 @@ Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementat
     return data;
 }
 
-typedef Containers::Pair<Containers::StringView, Containers::StringView> KeyValuePair;
 
-Containers::Array<char> packKeyValueData(Containers::ArrayView<const KeyValuePair> pairs) {
     /* Calculate size */
-    std::size_t kvdSize = 0;
-    for(const KeyValuePair& entry: pairs) {
-        const UnsignedInt length = entry.first().size() + 1 + entry.second().size() + 1;
-        kvdSize += sizeof(length) + (length + 3)/4*4;
-    }
-    CORRADE_INTERNAL_ASSERT(kvdSize % 4 == 0);
 
-    /* Pack. We assume that values are actual text strings and don't need any
-       endian-swapping. */
     std::size_t offset = 0;
-    Containers::Array<char> data{ValueInit, kvdSize};
-    for(const KeyValuePair& entry: pairs) {
-        const auto key = entry.first();
-        const auto value = entry.second();
-        const UnsignedInt length = key.size() + 1 + value.size() + 1;
-        *reinterpret_cast<UnsignedInt*>(data.suffix(offset).data()) = length;
-        Utility::Endianness::littleEndianInPlace(length);
-        offset += sizeof(length);
-        Utility::copy(key, data.suffix(offset).prefix(key.size()));
-        offset += entry.first().size() + 1;
-        Utility::copy(value, data.suffix(offset).prefix(value.size()));
-        offset += entry.second().size() + 1;
-        offset = (offset + 3)/4*4;
     }
-    CORRADE_INTERNAL_ASSERT(offset == kvdSize);
 
     return data;
 }
@@ -381,58 +380,151 @@ UnsignedInt leastCommonMultiple(UnsignedInt a, UnsignedInt b) {
 }
 
 template<UnsignedInt dimensions>
-Containers::Array<char> convertImage(const BasicImageView<dimensions>& image) {
-    if(isPixelFormatImplementationSpecific(image.format())) {
+void copyPixels(const BasicImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
+    std::size_t sizes[dimensions + 1];
+    sizes[dimensions] = image.pixelSize();
+    for(UnsignedInt i = 0; i != dimensions; ++i) {
+        sizes[dimensions - 1 - i] = image.size()[i];
+    }
+
+    /* Copy the pixels into output, dropping padding (if any) */
+    Utility::copy(image.pixels(), Containers::StridedArrayView<dimensions + 1, char>{pixels, sizes});
+}
+
+template<UnsignedInt dimensions>
+void copyPixels(const BasicCompressedImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
+    /** @todo How do we deal with CompressedPixelStorage::skip?
+              ImageView::pixels handles this for non-compressed images. */
+    Utility::copy(image.data(), pixels);
+}
+
+/* Using a template template parameter to deduce the image dimensions while
+   matching both ImageView and CompressedImageView. Matching on the ImageView
+   typedefs doesn't work, so we need the extra parameter of BasicImageView. */
+template<UnsignedInt dimensions, typename T, template<UnsignedInt, typename> class View>
+Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, T>> imageLevels) {
+    if(imageLevels.empty()) {
+        Error() << "Trade::KtxImageConverter::convertToData(): expected at least 1 mip level";
+        return {};
+    }
+
+    const auto format = imageLevels.front().format();
+
+    if(isFormatImplementationSpecific(format)) {
         Error{} << "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported";
         return {};
     }
 
-    const auto vkFormat = vulkanFormat(image.format());
+    const auto vkFormat = vulkanFormat(format);
     if(vkFormat.first() == Implementation::VK_FORMAT_UNDEFINED) {
-        Error{} << "Trade::KtxImageConverter::convertToData(): unsupported format" << image.format();
+        Error{} << "Trade::KtxImageConverter::convertToData(): unsupported format" << format;
         return {};
     }
 
-    const Containers::Array<char> dataFormatDescriptor = fillDataFormatDescriptor(image.format(), vkFormat.second());
+    const Containers::Array<char> dataFormatDescriptor = fillDataFormatDescriptor(format, vkFormat.second());
 
-    /* Fill key/value data. Values can be any byte-string but the values we
-       write are all constant text strings. Keys must be sorted alphabetically.*/
+    /* Fill key/value data. Values can be any byte-string but we only write
+       constant text strings. Keys must be sorted alphabetically.*/
     using namespace Containers::Literals;
 
-    const Containers::StaticArray<2, const KeyValuePair> keyValueMap{
+    const Containers::Pair<Containers::StringView, Containers::StringView> keyValueMap[]{
         /* Origin left, bottom, back (increasing right, up, out) */
-        /** @todo KTX spec says "most other APIs and the majority of texture compression tools use [r, rd, rdi]".
-                  Should we just always flip image data? Maybe make this configurable. */
+        /** @todo KTX spec says "most other APIs and the majority of texture
+                  compression tools use [r, rd, rdi]".
+                  Should we just always flip image data? Maybe make this
+                  configurable. */
         Containers::pair("KTXorientation"_s, "ruo"_s.prefix(dimensions)),
         Containers::pair("KTXwriter"_s, "Magnum::KtxImageConverter 1.0"_s)
     };
 
-    const Containers::Array<char> keyValueData = packKeyValueData(keyValueMap);
+    /* Calculate size */
+    std::size_t kvdSize = 0;
+    for(const auto& entry: keyValueMap) {
+        const UnsignedInt length = entry.first().size() + 1 + entry.second().size() + 1;
+        kvdSize += sizeof(length) + (length + 3)/4*4;
+    }
+    CORRADE_INTERNAL_ASSERT(kvdSize % 4 == 0);
 
-    /* Calculate level offsets. Needs to be aligned to the least common
-       multiple of the texel/block size and 4. */
-    constexpr UnsignedInt numMipmaps = 1;
+    /* Pack. We assume that values are text strings, no endian-swapping needed. */
+    std::size_t kvdOffset = 0;
+    Containers::Array<char> keyValueData{ValueInit, kvdSize};
+    for(const auto& entry: keyValueMap) {
+        const auto key = entry.first();
+        const auto value = entry.second();
+        const UnsignedInt length = key.size() + 1 + value.size() + 1;
+        *reinterpret_cast<UnsignedInt*>(keyValueData.suffix(kvdOffset).data()) = length;
+        Utility::Endianness::littleEndianInPlace(length);
+        kvdOffset += sizeof(length);
+        Utility::copy(key, keyValueData.suffix(kvdOffset).prefix(key.size()));
+        kvdOffset += entry.first().size() + 1;
+        Utility::copy(value, keyValueData.suffix(kvdOffset).prefix(value.size()));
+        kvdOffset += entry.second().size() + 1;
+        kvdOffset = (kvdOffset + 3)/4*4;
+    }
+    CORRADE_INTERNAL_ASSERT(kvdOffset == kvdSize);
+
+    /* Fill level index */
+    const Math::Vector<dimensions, Int> size = imageLevels.front().size();
+    if(size.product() == 0) {
+        Error() << "Trade::KtxImageConverter::convertToData(): image for level 0 is empty";
+        return {};
+    }
+
+    const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2(size.max()) + 1);
+    if(imageLevels.size() > numMipmaps)
+        Warning{} << "Trade::KtxImageConverter::convertToData(): expected at most" <<
+            numMipmaps << "mip level images but got" << imageLevels.size() << Debug::nospace <<
+            ", extra images will be ignored";
+
     Containers::Array<Implementation::KtxLevel> levelIndex{numMipmaps};
-    const std::size_t levelIndexSize = levelIndex.size()*sizeof(Implementation::KtxLevel);
 
-    const UnsignedInt pixelSize = UnsignedByte(image.pixelSize());
+    const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
     std::size_t levelOffset = sizeof(Implementation::KtxHeader) + levelIndexSize +
         dataFormatDescriptor.size() + keyValueData.size();
 
-    /* @todo Store mip levels from smallest to lowest for efficient streaming */
+    /** @todo Handle block-compressed formats. Need block size and block count
+              in each dimension. How should skip be handled, if it's not a
+              multiple of the block size? */
+    const UnsignedInt pixelSize = imageLevels.front().pixelSize();
+
     for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
+        /* Store mip levels from smallest to largest for efficient streaming */
+        const UnsignedInt mip = levelIndex.size() - 1 - i;
+        const Math::Vector<dimensions, Int> mipSize = Math::max(size >> mip, 1);
+
+        const View<dimensions, T>& image = imageLevels[mip];
+
+        if(image.format() != format) {
+            Error() << "Trade::KtxImageConverter::convertToData(): expected "
+                "format" << format << "for level" << mip << "but got" << image.format();
+            return {};
+        }
+
+        if(image.size() != mipSize) {
+            Error() << "Trade::KtxImageConverter::convertToData(): expected "
+                "size" << mipSize << "for level" << mip << "but got" << image.size();
+            return {};
+        }
+
+        if(!image.data()) {
+            Error() << "Trade::KtxImageConverter::convertToData(): image data "
+                "for level" << mip << "is nullptr";
+            return {};
+        }
+        
+        /* Offset needs to be aligned to the least common multiple of the
+           texel/block size and 4. Not needed with supercompression. */
         const std::size_t alignment = leastCommonMultiple(pixelSize, 4);
-        levelOffset = (levelOffset + (alignment - 1)) / alignment * alignment;
+        levelOffset = (levelOffset + (alignment - 1))/alignment*alignment;
         const std::size_t levelSize = pixelSize*image.size().product();
 
-        levelIndex[i].byteOffset = levelOffset;
-        levelIndex[i].byteLength = levelSize;
-        levelIndex[i].uncompressedByteLength = levelSize;
+        levelIndex[mip].byteOffset = levelOffset;
+        levelIndex[mip].byteLength = levelSize;
+        levelIndex[mip].uncompressedByteLength = levelSize;
 
         levelOffset += levelSize;
     }
 
-    /* Initialize data buffer */
     const std::size_t dataSize = levelOffset;
     Containers::Array<char> data{ValueInit, dataSize};
 
@@ -444,24 +536,20 @@ Containers::Array<char> convertImage(const BasicImageView<dimensions>& image) {
     Utility::copy(Containers::arrayView(Implementation::KtxFileIdentifier), Containers::arrayView(header.identifier));
 
     header.vkFormat = vkFormat.first();
-    header.typeSize = componentSize(image.format());
-    header.imageSize = Vector3ui{Vector3i::pad(image.size(), 0u)};
+    header.typeSize = componentSize(format);
+    header.imageSize = Vector3ui{Vector3i::pad(size, 0u)};
+    /** @todo Handle different image types (cube and/or array) once this can be
+              queried from images */
     header.layerCount = 0;
     header.faceCount = 1;
     header.levelCount = levelIndex.size();
     header.supercompressionScheme = Implementation::SuperCompressionScheme::None;
 
-    for(auto& level: levelIndex) {
-        /* Copy the pixels into output, dropping padding (if any) */
-        auto pixels = data.suffix(level.byteOffset).prefix(level.byteLength);
-
-        std::size_t sizes[dimensions + 1];
-        sizes[dimensions] = pixelSize;
-        for(UnsignedInt i = 0; i != dimensions; ++i) {
-            sizes[dimensions - 1 - i] = image.size()[i];
-        }
-
-        Utility::copy(image.pixels(), Containers::StridedArrayView<dimensions + 1, char>{pixels, sizes});
+    for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
+        const Implementation::KtxLevel& level = levelIndex[i];
+        const View<dimensions, T>& image = imageLevels[i];
+        const auto pixels = data.suffix(level.byteOffset).prefix(level.byteLength);
+        copyPixels(image, pixels);
 
         endianSwap(pixels, header.typeSize);
 
@@ -497,52 +585,47 @@ Containers::Array<char> convertImage(const BasicImageView<dimensions>& image) {
     return data;
 }
 
-/** @todo */
-template<UnsignedInt dimensions>
-Containers::Array<char> convertImage(const BasicCompressedImageView<dimensions>&) {
-    return {};
 }
-
-}
-
-KtxImageConverter::KtxImageConverter() = default;
 
 KtxImageConverter::KtxImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures KtxImageConverter::doFeatures() const {
-    return ImageConverterFeature::Convert1DToData |
-        ImageConverterFeature::Convert2DToData |
-        ImageConverterFeature::Convert3DToData |
-        ImageConverterFeature::ConvertCompressed1DToData |
-        ImageConverterFeature::ConvertCompressed2DToData |
-        ImageConverterFeature::ConvertCompressed3DToData;
+    return ImageConverterFeature::ConvertLevels1DToData |
+        ImageConverterFeature::ConvertLevels2DToData |
+        ImageConverterFeature::ConvertLevels3DToData |
+        ImageConverterFeature::ConvertCompressedLevels1DToData |
+        ImageConverterFeature::ConvertCompressedLevels2DToData |
+        ImageConverterFeature::ConvertCompressedLevels3DToData;
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(const ImageView1D& image) {
-    return convertImage(image);
+Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) {
+    return convertLevels(imageLevels);
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(const ImageView2D& image) {
-    return convertImage(image);
+Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
+    return convertLevels(imageLevels);
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(const ImageView3D& image) {
-    return convertImage(image);
+Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) {
+    return convertLevels(imageLevels);
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(const CompressedImageView1D& image) {
-    return convertImage(image);
+Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) {
+    //return convertLevels(imageLevels);
+    return {};
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(const CompressedImageView2D& image) {
-    return convertImage(image);
+Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) {
+    //return convertLevels(imageLevels);
+    return {};
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(const CompressedImageView3D& image) {
-    return convertImage(image);
+Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) {
+    //return convertLevels(imageLevels);
+    return {};
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(KtxImageConverter, Magnum::Trade::KtxImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")

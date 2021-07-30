@@ -50,22 +50,19 @@ namespace Magnum { namespace Trade {
 
 class MAGNUM_KTXIMAGECONVERTER_EXPORT KtxImageConverter: public AbstractImageConverter {
     public:
-        /** @brief Default constructor */
-        explicit KtxImageConverter();
-
         /** @brief Plugin manager constructor */
         explicit KtxImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
     private:
         ImageConverterFeatures MAGNUM_KTXIMAGECONVERTER_LOCAL doFeatures() const override;
 
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(const ImageView1D& image) override;
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(const ImageView2D& image) override;
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(const ImageView3D& image) override;
+        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) override;
+        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
+        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
 
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(const CompressedImageView1D& image) override;
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(const CompressedImageView2D& image) override;
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(const CompressedImageView3D& image) override;
+        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) override;
+        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) override;
+        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) override;
 };
 
 }}
