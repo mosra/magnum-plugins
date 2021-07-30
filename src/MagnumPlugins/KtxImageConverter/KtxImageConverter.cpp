@@ -28,7 +28,6 @@
 
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Pair.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Endianness.h>
@@ -170,8 +169,234 @@ UnsignedByte componentSize(PixelFormat format) {
     CORRADE_ASSERT_UNREACHABLE("componentSize(): unsupported format" << format, {});
 }
 
-UnsignedByte componentSize(CompressedPixelFormat) {
-    return 1;
+Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const Implementation::KdfBasicBlockSample>> samples(CompressedPixelFormat format) {
+    /* There is no good way to auto-generate these. The KDF spec has a
+       format.json (https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json)
+       but that doesn't contain any information on how to fill the DFD.
+       Then there's Khronos' own dfdutils (https://github.com/KhronosGroup/KTX-Software/tree/master/lib/dfdutils)
+       but that generates headers through Perl scripts, and the headers need
+       the original VkFormat enum to be defined.
+
+       DFD content is taken directly from the KDF spec:
+       https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#CompressedFormatModels */
+
+    constexpr UnsignedInt Min = 0u;
+    constexpr UnsignedInt Max = ~0u;
+    constexpr UnsignedInt SignedMin = 1u << 31;
+    constexpr UnsignedInt SignedMax = ~0u >> 1;
+    /* BC6h has unsigned floats, but the spec says to use a sampleLower of 
+       -1.0 anyway:
+       https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#bc6h_channel
+       So we don't need to distinguish between Ufloat and Sfloat*/
+    constexpr UnsignedInt FloatMin = 0xBF800000u; /* -1.0f */
+    constexpr UnsignedInt FloatMax = 0x7F800000u; /*  1.0f */
+
+    /** @todo Remove the upper, lower, ChannelFormat flags and patch it later?
+              There are a few oddities that need to be treated differently from
+              the non-compressed DFDs... */
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc1[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
+            {}, Min, Max}
+    };
+    /* The DFD examples in the spec don't set ChannelFormat::Linear in any of
+       the block-compressed alpha channels */
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc1AlphaPunchThrough[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Bc1Alpha,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc2And3[]{
+        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Alpha,
+            {}, Min, Max},
+        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc4[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc4Signed[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
+            {}, SignedMin, SignedMax}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc5[]{
+        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red,
+            {}, Min, Max},
+        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Green,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc5Signed[]{
+        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
+            {}, SignedMin, SignedMax},
+        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Green | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
+            {}, SignedMin, SignedMax}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc6h[]{
+        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color | Implementation::KdfBasicBlockSample::ChannelFormat::Float,
+            {}, FloatMin, FloatMax}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc6hSigned[]{
+        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color | Implementation::KdfBasicBlockSample::ChannelFormat::Float |
+            Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
+            {}, FloatMin, FloatMax}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesBc7[]{
+        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesEacR11[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesEacR11Signed[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
+            {}, SignedMin, SignedMax}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesEacRG11[]{
+        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red,
+            {}, Min, Max},
+        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Green,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesEacRG11Signed[]{
+        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
+            {}, SignedMin, SignedMax},
+        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Green | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
+            {}, SignedMin, SignedMax}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesEtc2[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesEtc2AlphaPunchThrough[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color,
+            {}, Min, Max},
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Alpha,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesEtc2Alpha[]{
+        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Alpha,
+            {}, Min, Max},
+        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesAstc[]{
+        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
+            {}, Min, Max}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesAstcHdr[]{
+        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color | Implementation::KdfBasicBlockSample::ChannelFormat::Float |
+            Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
+            {}, FloatMin, FloatMax}
+    };
+    static constexpr Implementation::KdfBasicBlockSample SamplesPvrtc[]{
+        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
+            {}, Min, Max}
+    };
+
+    switch(format) {
+        case CompressedPixelFormat::Bc1RGBUnorm:
+        case CompressedPixelFormat::Bc1RGBSrgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc1, SamplesBc1};
+        case CompressedPixelFormat::Bc1RGBAUnorm:
+        case CompressedPixelFormat::Bc1RGBASrgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc1, SamplesBc1AlphaPunchThrough};
+        case CompressedPixelFormat::Bc2RGBAUnorm:
+        case CompressedPixelFormat::Bc2RGBASrgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc2, SamplesBc2And3};
+        case CompressedPixelFormat::Bc3RGBAUnorm:
+        case CompressedPixelFormat::Bc3RGBASrgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc3, SamplesBc2And3};
+        case CompressedPixelFormat::Bc4RUnorm:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc4, SamplesBc4};
+        case CompressedPixelFormat::Bc4RSnorm:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc4, SamplesBc4Signed};
+        case CompressedPixelFormat::Bc5RGUnorm:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc5, SamplesBc5};
+        case CompressedPixelFormat::Bc5RGSnorm:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc5, SamplesBc5Signed};
+        case CompressedPixelFormat::Bc6hRGBUfloat:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc6h, SamplesBc6h};
+        case CompressedPixelFormat::Bc6hRGBSfloat:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc6h, SamplesBc6hSigned};
+        case CompressedPixelFormat::Bc7RGBAUnorm:
+        case CompressedPixelFormat::Bc7RGBASrgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Bc7, SamplesBc7};
+        case CompressedPixelFormat::EacR11Unorm:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Etc2, SamplesEacR11};
+        case CompressedPixelFormat::EacR11Snorm:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Etc2, SamplesEacR11Signed};
+        case CompressedPixelFormat::EacRG11Unorm:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Etc2, SamplesEacRG11};
+        case CompressedPixelFormat::EacRG11Snorm:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Etc2, SamplesEacRG11Signed};
+        case CompressedPixelFormat::Etc2RGB8Unorm:
+        case CompressedPixelFormat::Etc2RGB8Srgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Etc2, SamplesEtc2};
+        case CompressedPixelFormat::Etc2RGB8A1Unorm:
+        case CompressedPixelFormat::Etc2RGB8A1Srgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Etc2, SamplesEtc2AlphaPunchThrough};
+        case CompressedPixelFormat::Etc2RGBA8Unorm:
+        case CompressedPixelFormat::Etc2RGBA8Srgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Etc2, SamplesEtc2Alpha};
+        case CompressedPixelFormat::Astc4x4RGBAUnorm:
+        case CompressedPixelFormat::Astc4x4RGBASrgb:
+        case CompressedPixelFormat::Astc5x4RGBAUnorm:
+        case CompressedPixelFormat::Astc5x4RGBASrgb:
+        case CompressedPixelFormat::Astc5x5RGBAUnorm:
+        case CompressedPixelFormat::Astc5x5RGBASrgb:
+        case CompressedPixelFormat::Astc6x5RGBAUnorm:
+        case CompressedPixelFormat::Astc6x5RGBASrgb:
+        case CompressedPixelFormat::Astc6x6RGBAUnorm:
+        case CompressedPixelFormat::Astc6x6RGBASrgb:
+        case CompressedPixelFormat::Astc8x5RGBAUnorm:
+        case CompressedPixelFormat::Astc8x5RGBASrgb:
+        case CompressedPixelFormat::Astc8x6RGBAUnorm:
+        case CompressedPixelFormat::Astc8x6RGBASrgb:
+        case CompressedPixelFormat::Astc8x8RGBAUnorm:
+        case CompressedPixelFormat::Astc8x8RGBASrgb:
+        case CompressedPixelFormat::Astc10x5RGBAUnorm:
+        case CompressedPixelFormat::Astc10x5RGBASrgb:
+        case CompressedPixelFormat::Astc10x6RGBAUnorm:
+        case CompressedPixelFormat::Astc10x6RGBASrgb:
+        case CompressedPixelFormat::Astc10x8RGBAUnorm:
+        case CompressedPixelFormat::Astc10x8RGBASrgb:
+        case CompressedPixelFormat::Astc10x10RGBAUnorm:
+        case CompressedPixelFormat::Astc10x10RGBASrgb:
+        case CompressedPixelFormat::Astc12x10RGBAUnorm:
+        case CompressedPixelFormat::Astc12x10RGBASrgb:
+        case CompressedPixelFormat::Astc12x12RGBAUnorm:
+        case CompressedPixelFormat::Astc12x12RGBASrgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Astc, SamplesAstc};
+        case CompressedPixelFormat::Astc4x4RGBAF:
+        case CompressedPixelFormat::Astc5x4RGBAF:
+        case CompressedPixelFormat::Astc5x5RGBAF:
+        case CompressedPixelFormat::Astc6x5RGBAF:
+        case CompressedPixelFormat::Astc6x6RGBAF:
+        case CompressedPixelFormat::Astc8x5RGBAF:
+        case CompressedPixelFormat::Astc8x6RGBAF:
+        case CompressedPixelFormat::Astc8x8RGBAF:
+        case CompressedPixelFormat::Astc10x5RGBAF:
+        case CompressedPixelFormat::Astc10x6RGBAF:
+        case CompressedPixelFormat::Astc10x8RGBAF:
+        case CompressedPixelFormat::Astc10x10RGBAF:
+        case CompressedPixelFormat::Astc12x10RGBAF:
+        case CompressedPixelFormat::Astc12x12RGBAF:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Astc, SamplesAstcHdr};
+        /* 3D ASTC formats are not exposed in Vulkan */
+        case CompressedPixelFormat::PvrtcRGB2bppUnorm:
+        case CompressedPixelFormat::PvrtcRGB2bppSrgb:
+        case CompressedPixelFormat::PvrtcRGBA2bppUnorm:
+        case CompressedPixelFormat::PvrtcRGBA2bppSrgb:
+        case CompressedPixelFormat::PvrtcRGB4bppUnorm:
+        case CompressedPixelFormat::PvrtcRGB4bppSrgb:
+        case CompressedPixelFormat::PvrtcRGBA4bppUnorm:
+        case CompressedPixelFormat::PvrtcRGBA4bppSrgb:
+            return {Implementation::KdfBasicBlockHeader::ColorModel::Pvrtc, SamplesPvrtc};
+        default:
+            break;
+    }
+
+    CORRADE_ASSERT_UNREACHABLE("samples(): unsupported format" << format, {});
 }
 
 UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix, Implementation::KdfBasicBlockSample::ChannelId id) {
@@ -198,7 +423,7 @@ UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix, Implementation
     CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << UnsignedInt(suffix), {});
 }
 
-Containers::Array2<UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedByte typeSize) {
+Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedByte typeSize) {
     /* sampleLower and sampleUpper define how to interpret the range of values
        found in a channel.
        samplerLower = black value or -1 for signed values
@@ -214,7 +439,7 @@ Containers::Array2<UnsignedInt> channelMapping(Implementation::VkFormatSuffix su
               Magnum doesn't expose 64-bit formats. */
     CORRADE_INTERNAL_ASSERT(typeSize <= 4);
 
-    const UnsignedInt typeMask = ~0u >> ((4 - typeSize) * 8);
+    const UnsignedInt typeMask = ~0u >> ((4 - typeSize)*8);
 
     switch(suffix) {
         case Implementation::VkFormatSuffix::UNORM:
@@ -243,11 +468,10 @@ Containers::Array2<UnsignedInt> channelMapping(Implementation::VkFormatSuffix su
 Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementation::VkFormatSuffix suffix) {
     const UnsignedInt texelSize = pixelSize(format);
     const UnsignedInt typeSize = componentSize(format);
-    /** @todo numChannels will be wrong for block-compressed formats */
-    const UnsignedInt numChannels = texelSize / typeSize;
+    const UnsignedInt numChannels = texelSize/typeSize;
 
     /* Calculate size */
-    const std::size_t dfdSamplesSize = numChannels * sizeof(Implementation::KdfBasicBlockSample);
+    const std::size_t dfdSamplesSize = numChannels*sizeof(Implementation::KdfBasicBlockSample);
     const std::size_t dfdBlockSize = sizeof(Implementation::KdfBasicBlockHeader) + dfdSamplesSize;
     const std::size_t dfdSize = sizeof(UnsignedInt) + dfdBlockSize;
     CORRADE_INTERNAL_ASSERT(dfdSize % 4 == 0);
@@ -279,31 +503,50 @@ Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementat
     /** @todo Do we ever have premultiplied alpha? */
     header.bytesPlane[0] = texelSize;
 
-    /* Color channels */
+    /* Channels */
     const auto samples = Containers::arrayCast<Implementation::KdfBasicBlockSample>(data.suffix(offset));
     offset += dfdSamplesSize;
 
     const UnsignedByte bitLength = typeSize*8;
 
-    static const Implementation::KdfBasicBlockSample::ChannelId channelIdsRgba[4]{
+    constexpr Implementation::KdfBasicBlockSample::ChannelId UncompressedChannelIds[]{
         Implementation::KdfBasicBlockSample::ChannelId::Red,
         Implementation::KdfBasicBlockSample::ChannelId::Green,
         Implementation::KdfBasicBlockSample::ChannelId::Blue,
-        Implementation::KdfBasicBlockSample::ChannelId::Alpha
-    };
-    /*
-    static const Implementation::KdfBasicBlockSample::ChannelId channelIdsDepthStencil[2]{
+        Implementation::KdfBasicBlockSample::ChannelId::Alpha,
         Implementation::KdfBasicBlockSample::ChannelId::Depth,
         Implementation::KdfBasicBlockSample::ChannelId::Stencil
     };
-    static const Implementation::KdfBasicBlockSample::ChannelId channelIdsStencil[1]{
-        Implementation::KdfBasicBlockSample::ChannelId::Stencil
-    };
-    */
 
-    /** @todo detect depth/stencil */
-    Containers::ArrayView<const Implementation::KdfBasicBlockSample::ChannelId> channelIds =
-        Containers::arrayView(channelIdsRgba);
+    /** @todo Special-case depth+stencil formats. Channel count is wrong
+              for packed formats (only Depth24UnormStencil8UI) and they need
+              correct stencil offset+length */
+    Containers::ArrayView<const Implementation::KdfBasicBlockSample::ChannelId> channelIds;
+    /*
+    switch(format) {
+        case PixelFormat::Stencil8UI:
+            channelIds = {&UncompressedChannelIds[5], 1};
+            break;
+        case PixelFormat::Depth16Unorm:
+        case PixelFormat::Depth24Unorm:
+        case PixelFormat::Depth32F:
+            channelIds = {&UncompressedChannelIds[4], 1};
+            break;
+        case PixelFormat::Depth16UnormStencil8UI:
+        case PixelFormat::Depth24UnormStencil8UI:
+        case PixelFormat::Depth32FStencil8UI:
+            channelIds = {&UncompressedChannelIds[4], 2};
+            break;
+        default:
+            channelIds = {&UncompressedChannelIds[0], numChannels};
+            break;
+    }
+    */
+    channelIds = {&UncompressedChannelIds[0], numChannels};
+
+    CORRADE_INTERNAL_ASSERT(channelIds.size() == numChannels);
+
+    const auto mapping = channelMapping(suffix, typeSize);
 
     UnsignedShort bitOffset = 0;
     for(UnsignedInt i = 0; i != numChannels; ++i) {
@@ -312,9 +555,10 @@ Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementat
         sample.bitLength = bitLength - 1;
         const auto channelId = channelIds[i];
         sample.channelType = channelId | channelFormat(suffix, channelId);
-        const auto mapping = channelMapping(suffix, typeSize);
-        sample.lower = mapping[0];
-        sample.upper = mapping[1];
+        if(channelId == Implementation::KdfBasicBlockSample::ChannelId::Alpha)
+            sample.channelType |= Implementation::KdfBasicBlockSample::ChannelFormat::Linear;
+        sample.lower = mapping.first();
+        sample.upper = mapping.second();
 
         bitOffset += bitLength;
 
@@ -331,11 +575,68 @@ Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementat
     return data;
 }
 
+Containers::Array<char> fillDataFormatDescriptor(CompressedPixelFormat format, Implementation::VkFormatSuffix suffix) {
+    const auto sampleData = samples(format);
 
     /* Calculate size */
+    const std::size_t dfdSamplesSize = sampleData.second().size()*sizeof(Implementation::KdfBasicBlockSample);
+    const std::size_t dfdBlockSize = sizeof(Implementation::KdfBasicBlockHeader) + dfdSamplesSize;
+    const std::size_t dfdSize = sizeof(UnsignedInt) + dfdBlockSize;
+    CORRADE_INTERNAL_ASSERT(dfdSize % 4 == 0);
+
+    Containers::Array<char> data{ValueInit, dfdSize};
 
     std::size_t offset = 0;
+
+    /* Length */
+    UnsignedInt& length = *reinterpret_cast<UnsignedInt*>(data.suffix(offset).data());
+    offset += sizeof(length);
+
+    length = dfdSize;
+
+    /* Block header */
+    Implementation::KdfBasicBlockHeader& header = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(data.suffix(offset).data());
+    offset += sizeof(header);
+
+    header.vendorId = Implementation::KdfBasicBlockHeader::VendorId::Khronos;
+    header.descriptorType = Implementation::KdfBasicBlockHeader::DescriptorType::Basic;
+    header.versionNumber = Implementation::KdfBasicBlockHeader::VersionNumber::Kdf1_3;
+    header.descriptorBlockSize = dfdBlockSize;
+
+    header.colorModel = sampleData.first();
+    header.colorPrimaries = Implementation::KdfBasicBlockHeader::ColorPrimaries::Srgb;
+    header.transferFunction = suffix == Implementation::VkFormatSuffix::SRGB
+        ? Implementation::KdfBasicBlockHeader::TransferFunction::Srgb
+        : Implementation::KdfBasicBlockHeader::TransferFunction::Linear;
+    /** @todo Do we ever have premultiplied alpha? */
+    const Vector3i blockSize = compressedBlockSize(format);
+    for(UnsignedInt i = 0; i != blockSize.Size; ++i) {
+        if(blockSize[i] > 1)
+            header.texelBlockDimension[i] = blockSize[i] - 1;
     }
+    header.bytesPlane[0] = compressedBlockDataSize(format);
+
+    /* Channels */
+    auto samples = Containers::arrayCast<Implementation::KdfBasicBlockSample>(data.suffix(offset));
+    offset += dfdSamplesSize;
+
+    Utility::copy(sampleData.second(), samples);
+
+    UnsignedShort extent = 0;
+    for(auto& sample: samples) {
+        extent = Math::max<UnsignedShort>(sample.bitOffset + sample.bitLength + 1, extent);
+        Utility::Endianness::littleEndianInPlace(sample.bitOffset,
+            sample.lower, sample.upper);
+    }
+
+    /* Just making sure we didn't make any major mistake in samples() */
+    CORRADE_INTERNAL_ASSERT(extent == header.bytesPlane[0]*8);
+
+    Utility::Endianness::littleEndianInPlace(length);
+    Utility::Endianness::littleEndianInPlace(header.vendorId, header.descriptorType,
+        header.versionNumber, header.descriptorBlockSize);
+
+    CORRADE_INTERNAL_ASSERT(offset == dfdSize);
 
     return data;
 }
