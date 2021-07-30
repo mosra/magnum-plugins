@@ -131,6 +131,8 @@ struct Format {
 
     /* Size of entire pixel/block */
     UnsignedInt size;
+    /* Compressed block size, (1,1,1) for uncompressed formats */
+    Vector3i blockSize;
     /* Size of underlying data type, 1 for block-compressed formats */
     UnsignedInt typeSize;
 
@@ -201,8 +203,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
             CORRADE_INTERNAL_ASSERT(f.size == 3 || f.size == 4);
             f.swizzle = (f.size == 3) ? SwizzleType::BGR : SwizzleType::BGRA;
         }
-    } else
-        f.size = pixelSize(format);
+    }
 
     if(format != PixelFormat{}) {
         /* Depth formats are allowed by KTX. We only really use isDepth for
@@ -216,11 +217,14 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
             case PixelFormat::Depth24UnormStencil8UI:
             case PixelFormat::Depth32FStencil8UI:
                 f.isDepth = true;
+                break;
             default:
                 /* PixelFormat covers all of Vulkan's depth formats */
                 break;
         }
 
+        f.size = pixelSize(format);
+        f.blockSize = {1, 1, 1};
         f.uncompressed = format;
         return f;
     }
@@ -242,6 +246,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
 
     if(compressedFormat != CompressedPixelFormat{}) {
         f.size = compressedBlockDataSize(compressedFormat);
+        f.blockSize = compressedBlockSize(compressedFormat);
         f.compressed = compressedFormat;
         f.isCompressed = true;
         return f;
@@ -451,7 +456,8 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Extract image data views. Only one image with extra dimensions for array
        layers and/or cube map faces, except for 3D array images where it's one
        image per layer. */
-    const UnsignedInt numImages = (f->numDimensions == 3) ? numLayers : 1;
+    const bool is3DArrayImage = f->numDimensions == 3 && isLayered;
+    const UnsignedInt numImages = is3DArrayImage ? numLayers : 1;
     f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numImages};
     for(UnsignedInt image = 0; image != numImages; ++image)
         f->imageData[image] = Containers::Array<File::LevelData>{numMipmaps};
@@ -479,32 +485,32 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             return;
         }
 
-        /* Size of a single layer or face */
-        std::size_t partLength;
-        if (f->pixelFormat.isCompressed) {
-            const Vector3i blockSize = compressedBlockSize(f->pixelFormat.compressed);
-            const Vector3i blockCount = (mipSize + (blockSize - Vector3i{1}))/blockSize;
-            partLength = blockCount.product()*compressedBlockDataSize(f->pixelFormat.compressed);
-        } else
-            partLength = mipSize.product()*pixelSize(f->pixelFormat.uncompressed);
+        Vector3i levelSize = mipSize;
+        if(f->numDimensions < f->numDataDimensions) {
+            CORRADE_INTERNAL_ASSERT(!is3DArrayImage);
+            CORRADE_INTERNAL_ASSERT(levelSize[f->numDimensions] == 1);
+            levelSize[f->numDimensions] = numFaces*numLayers;
+        }
 
-        const std::size_t totalLength = partLength*numLayers*numFaces;
-        if(level.byteLength < totalLength) {
+        std::size_t length;
+        if(f->pixelFormat.isCompressed) {
+            /** @todo This will probably break for layered 3D block-compressed
+                      data once we support those formats */
+            const Vector3i blockSize = f->pixelFormat.blockSize;
+            const Vector3i blockCount = (levelSize + (blockSize - Vector3i{1}))/blockSize;
+            length = blockCount.product()*f->pixelFormat.size;
+        } else
+            length = levelSize.product()*f->pixelFormat.size;
+
+        if(level.byteLength < length) {
             Error{} << "Trade::KtxImporter::openData(): level data too short, "
-                "expected at least" << totalLength << "bytes but got" << level.byteLength;
+                "expected at least" << length << "bytes but got" << level.byteLength;
             return;
         }
 
         for(UnsignedInt image = 0; image != numImages; ++image) {
-            std::size_t length = partLength*numFaces;
-            std::size_t imageOffset = 0;
-
-            if(numImages > 1) /* 3D array image, import layers separately */
-                imageOffset = image*length;
-            else
-                length *= numLayers;
-
-            f->imageData[image][i] = {mipSize, f->in.suffix(level.byteOffset).suffix(imageOffset).prefix(length)};
+            const std::size_t imageOffset = is3DArrayImage ? image*length : 0;
+            f->imageData[image][i] = {levelSize, f->in.suffix(level.byteOffset + imageOffset).prefix(length)};
         }
 
         /* Shrink to next power of 2 */
