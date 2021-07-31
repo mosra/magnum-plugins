@@ -42,7 +42,7 @@ namespace Magnum { namespace Trade {
 
 namespace {
 
-/* Need overloaded functions to use different pixel formats in templated code */
+/* Overloaded functions to use different pixel formats in templated code */
 bool isFormatImplementationSpecific(PixelFormat format) {
     return isPixelFormatImplementationSpecific(format);
 }
@@ -98,7 +98,23 @@ FormatPair vulkanFormat(CompressedPixelFormat format) {
     }
 }
 
-UnsignedByte componentSize(PixelFormat format) {
+Vector3i formatUnitSize(PixelFormat) {
+    return {1, 1, 1};
+}
+
+Vector3i formatUnitSize(CompressedPixelFormat format) {
+    return compressedBlockSize(format);
+}
+
+UnsignedInt formatUnitDataSize(PixelFormat format) {
+    return pixelSize(format);
+}
+
+UnsignedInt formatUnitDataSize(CompressedPixelFormat format) {
+    return compressedBlockDataSize(format);
+}
+
+UnsignedByte formatTypeSize(PixelFormat format) {
     switch(format) {
         case PixelFormat::R8Unorm:
         case PixelFormat::RG8Unorm:
@@ -167,6 +183,10 @@ UnsignedByte componentSize(PixelFormat format) {
     }
 
     CORRADE_ASSERT_UNREACHABLE("componentSize(): unsupported format" << format, {});
+}
+
+UnsignedByte formatTypeSize(CompressedPixelFormat) {
+    return 1;
 }
 
 Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const Implementation::KdfBasicBlockSample>> samples(CompressedPixelFormat format) {
@@ -399,7 +419,7 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
     CORRADE_ASSERT_UNREACHABLE("samples(): unsupported format" << format, {});
 }
 
-UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix, Implementation::KdfBasicBlockSample::ChannelId id) {
+UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix) {
     switch(suffix) {
         case Implementation::VkFormatSuffix::UNORM:
             return {};
@@ -415,9 +435,7 @@ UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix, Implementation
             return Implementation::KdfBasicBlockSample::ChannelFormat::Float |
                 Implementation::KdfBasicBlockSample::ChannelFormat::Signed;
         case Implementation::VkFormatSuffix::SRGB:
-            return (id == Implementation::KdfBasicBlockSample::ChannelId::Alpha)
-                ? Implementation::KdfBasicBlockSample::ChannelFormat::Linear
-                : Implementation::KdfBasicBlockSample::ChannelFormat{};
+            return {};
     }
 
     CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << UnsignedInt(suffix), {});
@@ -467,7 +485,7 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
 
 Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementation::VkFormatSuffix suffix) {
     const UnsignedInt texelSize = pixelSize(format);
-    const UnsignedInt typeSize = componentSize(format);
+    const UnsignedInt typeSize = formatTypeSize(format);
     const UnsignedInt numChannels = texelSize/typeSize;
 
     /* Calculate size */
@@ -554,7 +572,7 @@ Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementat
         sample.bitOffset = bitOffset;
         sample.bitLength = bitLength - 1;
         const auto channelId = channelIds[i];
-        sample.channelType = channelId | channelFormat(suffix, channelId);
+        sample.channelType = channelId | channelFormat(suffix);
         if(channelId == Implementation::KdfBasicBlockSample::ChannelId::Alpha)
             sample.channelType |= Implementation::KdfBasicBlockSample::ChannelFormat::Linear;
         sample.lower = mapping.first();
@@ -641,31 +659,6 @@ Containers::Array<char> fillDataFormatDescriptor(CompressedPixelFormat format, I
     return data;
 }
 
-template<std::size_t Size> struct TypeForSize {};
-template<> struct TypeForSize<1> { typedef UnsignedByte  Type; };
-template<> struct TypeForSize<2> { typedef UnsignedShort Type; };
-template<> struct TypeForSize<4> { typedef UnsignedInt   Type; };
-template<> struct TypeForSize<8> { typedef UnsignedLong  Type; };
-
-void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
-    switch(typeSize) {
-        case 1:
-            /* Single-byte or block-compressed format, nothing to do */
-            return;
-        case 2:
-            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<2>::Type>(data));
-            return;
-        case 4:
-            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<4>::Type>(data));
-            return;
-        case 8:
-            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<8>::Type>(data));
-            return;
-    }
-
-    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-}
-
 UnsignedInt leastCommonMultiple(UnsignedInt a, UnsignedInt b) {
     const UnsignedInt product = a*b;
 
@@ -696,7 +689,32 @@ template<UnsignedInt dimensions>
 void copyPixels(const BasicCompressedImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
     /** @todo How do we deal with CompressedPixelStorage::skip?
               ImageView::pixels handles this for non-compressed images. */
-    Utility::copy(image.data(), pixels);
+    Utility::copy(image.data().prefix(pixels.size()), pixels);
+}
+
+template<std::size_t Size> struct TypeForSize {};
+template<> struct TypeForSize<1> { typedef UnsignedByte  Type; };
+template<> struct TypeForSize<2> { typedef UnsignedShort Type; };
+template<> struct TypeForSize<4> { typedef UnsignedInt   Type; };
+template<> struct TypeForSize<8> { typedef UnsignedLong  Type; };
+
+void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
+    switch(typeSize) {
+        case 1:
+            /* Single-byte or block-compressed format, nothing to do */
+            return;
+        case 2:
+            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<2>::Type>(data));
+            return;
+        case 4:
+            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<4>::Type>(data));
+            return;
+        case 8:
+            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<8>::Type>(data));
+            return;
+    }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 /* Using a template template parameter to deduce the image dimensions while
@@ -783,10 +801,9 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
     std::size_t levelOffset = sizeof(Implementation::KtxHeader) + levelIndexSize +
         dataFormatDescriptor.size() + keyValueData.size();
 
-    /** @todo Handle block-compressed formats. Need block size and block count
-              in each dimension. How should skip be handled, if it's not a
-              multiple of the block size? */
-    const UnsignedInt pixelSize = imageLevels.front().pixelSize();
+    /* A "unit" is either a pixel or a block in a compressed format */
+    const Vector3i unitSize = formatUnitSize(format);
+    const UnsignedInt unitDataSize = formatUnitDataSize(format);
 
     for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
         /* Store mip levels from smallest to largest for efficient streaming */
@@ -812,12 +829,14 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
                 "for level" << mip << "is nullptr";
             return {};
         }
-        
+
         /* Offset needs to be aligned to the least common multiple of the
            texel/block size and 4. Not needed with supercompression. */
-        const std::size_t alignment = leastCommonMultiple(pixelSize, 4);
-        levelOffset = (levelOffset + (alignment - 1))/alignment*alignment;
-        const std::size_t levelSize = pixelSize*image.size().product();
+        const std::size_t alignment = leastCommonMultiple(unitDataSize, 4);
+        levelOffset = (levelOffset + alignment - 1)/alignment*alignment;
+
+        const Vector3i unitCount = (Vector3i::pad(mipSize, 1) + unitSize - Vector3i{1})/unitSize;
+        const std::size_t levelSize = unitDataSize*unitCount.product();
 
         levelIndex[mip].byteOffset = levelOffset;
         levelIndex[mip].byteLength = levelSize;
@@ -837,7 +856,7 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
     Utility::copy(Containers::arrayView(Implementation::KtxFileIdentifier), Containers::arrayView(header.identifier));
 
     header.vkFormat = vkFormat.first();
-    header.typeSize = componentSize(format);
+    header.typeSize = formatTypeSize(format);
     header.imageSize = Vector3ui{Vector3i::pad(size, 0u)};
     /** @todo Handle different image types (cube and/or array) once this can be
               queried from images */
@@ -912,18 +931,15 @@ Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) {
-    //return convertLevels(imageLevels);
-    return {};
+    return convertLevels(imageLevels);
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) {
-    //return convertLevels(imageLevels);
-    return {};
+    return convertLevels(imageLevels);
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) {
-    //return convertLevels(imageLevels);
-    return {};
+    return convertLevels(imageLevels);
 }
 
 }}

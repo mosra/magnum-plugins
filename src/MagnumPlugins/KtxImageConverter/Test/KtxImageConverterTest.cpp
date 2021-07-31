@@ -216,8 +216,6 @@ const CompressedPixelFormat UnsupportedCompressedFormats[]{
 };
 
 void KtxImageConverterTest::supportedCompressedFormat() {
-    CORRADE_SKIP("Compressed image export isn't implemented yet");
-
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
     const UnsignedByte bytes[32]{};
@@ -237,8 +235,6 @@ void KtxImageConverterTest::supportedCompressedFormat() {
 }
 
 void KtxImageConverterTest::unsupportedCompressedFormat() {
-    CORRADE_SKIP("Compressed image export isn't implemented yet");
-
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
     std::ostringstream out;
@@ -317,14 +313,17 @@ void KtxImageConverterTest::pvrtcRgb() {
     auto&& data = PvrtcRgbData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    CORRADE_SKIP("Compressed image export isn't implemented yet");
-
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
     const UnsignedByte bytes[16]{};
-    CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= compressedBlockDataSize(data.inputFormat));
 
-    const CompressedImageView2D inputImage{data.inputFormat, {2, 2}, bytes};
+    const UnsignedInt dataSize = compressedBlockDataSize(data.inputFormat);
+    CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= dataSize);
+
+    const Vector2i imageSize = {2, 2};
+    CORRADE_INTERNAL_ASSERT((Vector3i{imageSize, 1}) <= compressedBlockSize(data.inputFormat));
+
+    const CompressedImageView2D inputImage{data.inputFormat, imageSize, Containers::arrayView(bytes).prefix(dataSize)};
     const auto output = converter->convertToData(inputImage);
     CORRADE_VERIFY(output);
 
@@ -338,7 +337,7 @@ void KtxImageConverterTest::pvrtcRgb() {
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->compressedFormat(), data.outputFormat);
-    CORRADE_COMPARE(image->data(), inputImage.data());
+    CORRADE_COMPARE_AS(image->data(), inputImage.data(), TestSuite::Compare::Container);
 }
 
 void KtxImageConverterTest::levelZeroSize() {
