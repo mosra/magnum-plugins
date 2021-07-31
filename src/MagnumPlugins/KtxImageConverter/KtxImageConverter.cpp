@@ -55,10 +55,10 @@ typedef Containers::Pair<Implementation::VkFormat, Implementation::VkFormatSuffi
 
 FormatPair vulkanFormat(PixelFormat format) {
     switch(format) {
-        #define _p(vulkan, magnum, type) case PixelFormat::magnum: \
+        #define _c(vulkan, magnum, type) case PixelFormat::magnum: \
             return {vulkan, Implementation::VkFormatSuffix::type};
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
-        #undef _p
+        #undef _c
         default:
             return {{}, {}};
     }
@@ -67,10 +67,10 @@ FormatPair vulkanFormat(PixelFormat format) {
 FormatPair vulkanFormat(CompressedPixelFormat format) {
     /* In Vulkan there is no distinction between RGB and RGBA PVRTC:
        https://github.com/KhronosGroup/Vulkan-Docs/issues/512#issuecomment-307768667
-       formatMapping.hpp (generated from Vk::PixelFormat) contains the RGBA
-       variants, so we manually alias them here. We can't do this inside
-       formatMapping.hpp because both Magnum and Vulkan formats must be unique
-       for switch cases. */
+       compressedFormatMapping.hpp (generated from Vk::PixelFormat) contains the
+       RGBA variants, so we manually alias them here. We can't do this inside
+       compressedFormatMapping.hpp because both Magnum and Vulkan formats must
+       be unique for switch cases. */
     switch(format) {
         case CompressedPixelFormat::PvrtcRGB2bppUnorm:
             format = CompressedPixelFormat::PvrtcRGBA2bppUnorm;
@@ -91,7 +91,7 @@ FormatPair vulkanFormat(CompressedPixelFormat format) {
     switch(format) {
         #define _c(vulkan, magnum, type) case CompressedPixelFormat::magnum: \
             return {vulkan, Implementation::VkFormatSuffix::type};
-        #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
+        #include "MagnumPlugins/KtxImporter/compressedFormatMapping.hpp"
         #undef _c
         default:
             return {{}, {}};

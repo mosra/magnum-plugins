@@ -34,14 +34,9 @@ import re
 
 parser = argparse.ArgumentParser()
 parser.add_argument('magnum_source')
-parser.add_argument('-o', '--output', default='formatMapping.hpp')
 args = parser.parse_args()
 
 magnum_dir = args.magnum_source
-file_out = args.output
-
-print('Writing to', file_out)
-
 vulkan_header = os.path.join(magnum_dir, 'src/MagnumExternal/Vulkan/flextVk.h')
 
 vulkan_formats = {}
@@ -57,7 +52,7 @@ with open(vulkan_header, encoding='utf-8') as f:
             assert(not match.group(1) in vulkan_formats)
             vulkan_formats[match.group(1)] = match.group(2)
 
-Format = namedtuple('Format', 'compressed magnum vulkan type')
+Format = namedtuple('Format', 'compressed magnum vulkan_name vulkan suffix')
 formats = []
 
 format_header = os.path.join(magnum_dir, 'src/Magnum/Vk/PixelFormat.h')
@@ -74,11 +69,11 @@ with open(format_header, encoding='utf-8') as f:
             vulkan_name = match.group(3)
             assert(vulkan_name in vulkan_formats)
 
-            type = re.search('\w+_([U|S](NORM|INT|FLOAT|RGB))\w*', vulkan_name)
-            assert type != None
-            assert type.group(1) != 'URGB'
+            suffix = re.search('\w+_([U|S](NORM|INT|FLOAT|RGB))\w*', vulkan_name)
+            assert suffix != None
+            assert suffix.group(1) != 'URGB'
 
-            formats.append(Format(compressed, magnum_name, vulkan_formats[vulkan_name], type.group(1)))
+            formats.append(Format(compressed, magnum_name, vulkan_name, vulkan_formats[vulkan_name], suffix.group(1)))
 
 if len(formats) != 135:
     print('Unexpected number of formats')
@@ -88,8 +83,11 @@ def partition(pred, iterable):
     t1, t2 = itertools.tee(iterable)
     return itertools.filterfalse(pred, t1), filter(pred, t2)
 
-# There's no PVRTC2 in Magnum::PixelFormat
-formats = [f for f in formats if not f.magnum.startswith('Pvrtc2')]
+compressed = lambda f : f.compressed
+formats, compressed_formats = partition(compressed, formats)
+
+# There's no PVRTC2 in CompressedPixelFormat
+compressed_formats = [f for f in compressed_formats if not f.magnum.startswith('Pvrtc2')]
 
 header = '''/*
     This file is part of Magnum.
@@ -121,18 +119,18 @@ header = '''/*
 
 '''
 
-with open(file_out, 'w', encoding='utf-8') as outfile:
-    compressed = lambda f : f.compressed
-    formats, compressed_formats = partition(compressed, formats)
-
+with open('formatMapping.hpp', 'w', encoding='utf-8') as outfile:
     outfile.write(header)
-
-    outfile.write('#ifdef _p /* PixelFormat */\n')
+    outfile.write('/* VkFormat, PixelFormat, Implementation::VkFormatSuffix */\n')
+    outfile.write('#ifdef _c\n')
     for format in formats:
-        outfile.write('_p(' + format.vulkan + ', ' + format.magnum + ', ' + format.type + ')\n')
+        outfile.write('_c({}, {}, {}) /* VK_FORMAT_{} */\n'.format(format.vulkan , format.magnum, format.suffix, format.vulkan_name))
     outfile.write('#endif\n')
 
-    outfile.write('#ifdef _c /* CompressedPixelFormat */\n')
+with open('compressedFormatMapping.hpp', 'w', encoding='utf-8') as outfile:
+    outfile.write(header)
+    outfile.write('/* VkFormat, CompressedPixelFormat, Implementation::VkFormatSuffix */\n')
+    outfile.write('#ifdef _c\n')
     for format in compressed_formats:
-        outfile.write('_c(' + format.vulkan + ', ' + format.magnum + ', ' + format.type + ')\n')
+        outfile.write('_c({}, {}, {}) /* VK_FORMAT_{} */\n'.format(format.vulkan , format.magnum, format.suffix, format.vulkan_name))
     outfile.write('#endif\n')

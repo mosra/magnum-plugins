@@ -173,9 +173,9 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
        formatMapping.hpp isn't updated without adding an extra check. */
     PixelFormat format{};
     switch(vkFormat) {
-        #define _p(vulkan, magnum, _type) case vulkan: format = PixelFormat::magnum; break;
+        #define _c(vulkan, magnum, _type) case vulkan: format = PixelFormat::magnum; break;
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
-        #undef _p
+        #undef _c
         default:
             break;
     }
@@ -238,7 +238,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
     CompressedPixelFormat compressedFormat{};
     switch(vkFormat) {
         #define _c(vulkan, magnum, _type) case vulkan: compressedFormat = CompressedPixelFormat::magnum; break;
-        #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
+        #include "MagnumPlugins/KtxImporter/compressedFormatMapping.hpp"
         #undef _c
         default:
             break;
