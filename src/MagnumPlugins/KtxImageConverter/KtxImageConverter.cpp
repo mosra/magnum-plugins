@@ -720,8 +720,8 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
 /* Using a template template parameter to deduce the image dimensions while
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
-template<UnsignedInt dimensions, typename T, template<UnsignedInt, typename> class View>
-Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, T>> imageLevels) {
+template<UnsignedInt dimensions, template<UnsignedInt, typename> class View>
+Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels) {
     if(imageLevels.empty()) {
         Error() << "Trade::KtxImageConverter::convertToData(): expected at least 1 mip level";
         return {};
@@ -810,7 +810,7 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
         const UnsignedInt mip = levelIndex.size() - 1 - i;
         const Math::Vector<dimensions, Int> mipSize = Math::max(size >> mip, 1);
 
-        const View<dimensions, T>& image = imageLevels[mip];
+        const auto& image = imageLevels[mip];
 
         if(image.format() != format) {
             Error() << "Trade::KtxImageConverter::convertToData(): expected "
@@ -867,7 +867,7 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
 
     for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
         const Implementation::KtxLevel& level = levelIndex[i];
-        const View<dimensions, T>& image = imageLevels[i];
+        const auto& image = imageLevels[i];
         const auto pixels = data.suffix(level.byteOffset).prefix(level.byteLength);
         copyPixels(image, pixels);
 
