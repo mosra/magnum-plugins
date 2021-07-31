@@ -495,25 +495,24 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             levelSize[f->numDimensions] = numFaces*numLayers;
         }
 
-        std::size_t length;
+        std::size_t imageLength;
         if(f->pixelFormat.isCompressed) {
-            /** @todo This will probably break for layered 3D block-compressed
-                      data once we support those formats */
             const Vector3i blockSize = f->pixelFormat.blockSize;
             const Vector3i blockCount = (levelSize + (blockSize - Vector3i{1}))/blockSize;
-            length = blockCount.product()*f->pixelFormat.size;
+            imageLength = blockCount.product()*f->pixelFormat.size;
         } else
-            length = levelSize.product()*f->pixelFormat.size;
+            imageLength = levelSize.product()*f->pixelFormat.size;
+        const std::size_t totalLength = imageLength*numImages;
 
-        if(level.byteLength < length) {
+        if(level.byteLength < totalLength) {
             Error{} << "Trade::KtxImporter::openData(): level data too short, "
-                "expected at least" << length << "bytes but got" << level.byteLength;
+                "expected at least" << totalLength << "bytes but got" << level.byteLength;
             return;
         }
 
         for(UnsignedInt image = 0; image != numImages; ++image) {
-            const std::size_t imageOffset = is3DArrayImage ? image*length : 0;
-            f->imageData[image][i] = {levelSize, f->in.suffix(level.byteOffset + imageOffset).prefix(length)};
+            const std::size_t offset = level.byteOffset + image*imageLength;
+            f->imageData[image][i] = {levelSize, f->in.suffix(offset).prefix(imageLength)};
         }
 
         /* Shrink to next power of 2 */
@@ -640,12 +639,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
               wording is odd, I can't tell if they're saying it's mandatory or
               not: https://github.khronos.org/KTX-Specification/#cubemapOrientation
               The toktx tool from Khronos Texture Tools also forces rd for
-              cube maps, so we should probably do that too.
-              Face orientation (+X, -X, etc.) is based on a left-handed y-up
-              coordinate system, but neither GL nor Vulkan have that. The
-              appendix implies that both need coordinate transformations. Do we
-              have to do anything here? Flip faces/axes to match GL or Vulkan
-              expectations? */
+              cube maps, so we might want to do that in the converter as well. */
 
     /* Incomplete cube maps are a 'feature' of KTX files. We just import them
        as layers (which is how they're exposed to us). */

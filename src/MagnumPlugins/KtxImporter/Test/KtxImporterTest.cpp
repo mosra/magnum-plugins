@@ -201,7 +201,10 @@ const struct {
         "3D images can't have depth/stencil format"},
     {"level data too short", "2d-rgb.ktx2",
         sizeof(Implementation::KtxHeader) + offsetof(Implementation::KtxLevel, byteLength), 1,
-        "level data too short, expected at least 36 bytes but got 1"}
+        "level data too short, expected at least 36 bytes but got 1"},
+    {"3D layered level data too short", "3d-layers.ktx2",
+        sizeof(Implementation::KtxHeader) + offsetof(Implementation::KtxLevel, byteLength), 108,
+        "level data too short, expected at least 216 bytes but got 108"}
 };
 
 const struct {
