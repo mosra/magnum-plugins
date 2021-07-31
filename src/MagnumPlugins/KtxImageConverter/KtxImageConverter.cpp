@@ -26,10 +26,13 @@
 
 #include "KtxImageConverter.h"
 
+#include <string>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/ImageView.h>
@@ -717,16 +720,29 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
+}
+
+KtxImageConverter::KtxImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
+
+ImageConverterFeatures KtxImageConverter::doFeatures() const {
+    return ImageConverterFeature::ConvertLevels1DToData |
+        ImageConverterFeature::ConvertLevels2DToData |
+        ImageConverterFeature::ConvertLevels3DToData |
+        ImageConverterFeature::ConvertCompressedLevels1DToData |
+        ImageConverterFeature::ConvertCompressedLevels2DToData |
+        ImageConverterFeature::ConvertCompressedLevels3DToData;
+}
+
 /* Using a template template parameter to deduce the image dimensions while
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
 template<UnsignedInt dimensions, template<UnsignedInt, typename> class View>
-Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels) {
     if(imageLevels.empty()) {
         Error() << "Trade::KtxImageConverter::convertToData(): expected at least 1 mip level";
         return {};
     }
 
+Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels) {
     const auto format = imageLevels.front().format();
 
     if(isFormatImplementationSpecific(format)) {
@@ -743,8 +759,23 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
     const Containers::Array<char> dataFormatDescriptor = fillDataFormatDescriptor(format, vkFormat.second());
 
     /* Fill key/value data. Values can be any byte-string but we only write
-       constant text strings. Keys must be sorted alphabetically.*/
+       constant text strings. Keys must be sorted alphabetically.
+       Entries with an empty value won't be written. */
     using namespace Containers::Literals;
+
+    const std::string writerName = configuration().value("writerName");
+    const std::string swizzle = configuration().value("swizzle");
+
+    if(!swizzle.empty() && swizzle.size() != 4) {
+        Error{} << "Trade::KtxImageConverter::convertToData(): invalid swizzle length, expected 4 but got" << swizzle.size();
+        return {};
+    }
+
+    if(swizzle.find_first_not_of("rgba01") != std::string::npos) {
+        /* operator << is ambiguous, could be Containers::String or Containers::StringView */
+        Error{} << "Trade::KtxImageConverter::convertToData(): invalid characters in swizzle" << Containers::StringView{swizzle};
+        return {};
+    }
 
     const Containers::Pair<Containers::StringView, Containers::StringView> keyValueMap[]{
         /* Origin left, bottom, back (increasing right, up, out) */
@@ -753,14 +784,18 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
                   Should we just always flip image data? Maybe make this
                   configurable. */
         Containers::pair("KTXorientation"_s, "ruo"_s.prefix(dimensions)),
-        Containers::pair("KTXwriter"_s, "Magnum::KtxImageConverter 1.0"_s)
+        Containers::pair("KTXswizzle"_s, Containers::StringView{swizzle}),
+        Containers::pair("KTXwriter"_s, Containers::StringView{writerName})
     };
 
     /* Calculate size */
     std::size_t kvdSize = 0;
     for(const auto& entry: keyValueMap) {
-        const UnsignedInt length = entry.first().size() + 1 + entry.second().size() + 1;
-        kvdSize += sizeof(length) + (length + 3)/4*4;
+        CORRADE_INTERNAL_ASSERT(!entry.first().isEmpty());
+        if(!entry.second().isEmpty()) {
+            const UnsignedInt length = entry.first().size() + 1 + entry.second().size() + 1;
+            kvdSize += sizeof(length) + (length + 3)/4*4;
+        }
     }
     CORRADE_INTERNAL_ASSERT(kvdSize % 4 == 0);
 
@@ -768,17 +803,19 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
     std::size_t kvdOffset = 0;
     Containers::Array<char> keyValueData{ValueInit, kvdSize};
     for(const auto& entry: keyValueMap) {
-        const auto key = entry.first();
-        const auto value = entry.second();
-        const UnsignedInt length = key.size() + 1 + value.size() + 1;
-        *reinterpret_cast<UnsignedInt*>(keyValueData.suffix(kvdOffset).data()) = length;
-        Utility::Endianness::littleEndianInPlace(length);
-        kvdOffset += sizeof(length);
-        Utility::copy(key, keyValueData.suffix(kvdOffset).prefix(key.size()));
-        kvdOffset += entry.first().size() + 1;
-        Utility::copy(value, keyValueData.suffix(kvdOffset).prefix(value.size()));
-        kvdOffset += entry.second().size() + 1;
-        kvdOffset = (kvdOffset + 3)/4*4;
+        if(!entry.second().isEmpty()) {
+            const auto key = entry.first();
+            const auto value = entry.second();
+            const UnsignedInt length = key.size() + 1 + value.size() + 1;
+            *reinterpret_cast<UnsignedInt*>(keyValueData.suffix(kvdOffset).data()) = length;
+            Utility::Endianness::littleEndianInPlace(length);
+            kvdOffset += sizeof(length);
+            Utility::copy(key, keyValueData.suffix(kvdOffset).prefix(key.size()));
+            kvdOffset += entry.first().size() + 1;
+            Utility::copy(value, keyValueData.suffix(kvdOffset).prefix(value.size()));
+            kvdOffset += entry.second().size() + 1;
+            kvdOffset = (kvdOffset + 3)/4*4;
+        }
     }
     CORRADE_INTERNAL_ASSERT(kvdOffset == kvdSize);
 
@@ -903,19 +940,6 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
         header.kvdByteOffset, header.kvdByteLength);
 
     return data;
-}
-
-}
-
-KtxImageConverter::KtxImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
-
-ImageConverterFeatures KtxImageConverter::doFeatures() const {
-    return ImageConverterFeature::ConvertLevels1DToData |
-        ImageConverterFeature::ConvertLevels2DToData |
-        ImageConverterFeature::ConvertLevels3DToData |
-        ImageConverterFeature::ConvertCompressedLevels1DToData |
-        ImageConverterFeature::ConvertCompressedLevels2DToData |
-        ImageConverterFeature::ConvertCompressedLevels3DToData;
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) {

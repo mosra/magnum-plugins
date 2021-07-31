@@ -63,6 +63,10 @@ class MAGNUM_KTXIMAGECONVERTER_EXPORT KtxImageConverter: public AbstractImageCon
         Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) override;
         Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) override;
         Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) override;
+
+    private:
+        template<UnsignedInt dimensions, template<UnsignedInt, typename> class View>
+        Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels);
 };
 
 }}
