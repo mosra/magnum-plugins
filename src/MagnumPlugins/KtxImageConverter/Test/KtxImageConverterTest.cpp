@@ -52,21 +52,14 @@ struct KtxImageConverterTest: TestSuite::Tester {
     /** @todo - depth/stencil
     */
 
-    void zeroSize();
-    void emptyData();
-
-    void noLevels();
-    void tooManyLevels();
-
     void supportedFormat();
     void supportedCompressedFormat();
     void unsupportedCompressedFormat();
     void implementationSpecificFormat();
 
+    void tooManyLevels();
     void levelWrongFormat();
     void levelWrongSize();
-    void levelZeroSize();
-    void levelEmptyData();
 
     void pvrtcRgb();
 
@@ -87,21 +80,15 @@ const struct {
 };
 
 KtxImageConverterTest::KtxImageConverterTest() {
-    addTests({&KtxImageConverterTest::zeroSize,
-              &KtxImageConverterTest::emptyData,
 
-              &KtxImageConverterTest::noLevels,
-              &KtxImageConverterTest::tooManyLevels,
-
-              &KtxImageConverterTest::supportedFormat,
+    addTests({&KtxImageConverterTest::supportedFormat,
               &KtxImageConverterTest::supportedCompressedFormat,
               &KtxImageConverterTest::unsupportedCompressedFormat,
               &KtxImageConverterTest::implementationSpecificFormat,
 
+              &KtxImageConverterTest::tooManyLevels,
               &KtxImageConverterTest::levelWrongFormat,
-              &KtxImageConverterTest::levelWrongSize,
-              &KtxImageConverterTest::levelZeroSize,
-              &KtxImageConverterTest::levelEmptyData});
+              &KtxImageConverterTest::levelWrongSize});
 
     addInstancedTests({&KtxImageConverterTest::pvrtcRgb},
         Containers::arraySize(PvrtcRgbData));
@@ -117,51 +104,6 @@ KtxImageConverterTest::KtxImageConverterTest() {
     #endif
 }
 
-void KtxImageConverterTest::zeroSize() {
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {1, 0}}));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): image for level 0 is empty\n");
-}
-
-void KtxImageConverterTest::emptyData() {
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}}));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): image data for level 0 is nullptr\n");
-}
-
-void KtxImageConverterTest::noLevels() {
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(Containers::ArrayView<ImageView2D>{}));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): expected at least 1 mip level\n");
-}
-
-void KtxImageConverterTest::tooManyLevels() {
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-
-    const UnsignedByte bytes[4]{};
-
-    std::ostringstream out;
-    Warning redirectWarning{&out};
-    CORRADE_VERIFY(converter->convertToData({
-        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes},
-        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes}
-    }));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): expected at most 1 mip "
-        "level images but got 2, extra images will be ignored\n");
-}
 
 void KtxImageConverterTest::supportedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
@@ -278,6 +220,22 @@ void KtxImageConverterTest::implementationSpecificFormat() {
         "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
 }
 
+void KtxImageConverterTest::tooManyLevels() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+
+    const UnsignedByte bytes[4]{};
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    CORRADE_VERIFY(converter->convertToData({
+        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes},
+        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes}
+    }));
+    CORRADE_COMPARE(out.str(),
+        "Trade::KtxImageConverter::convertToData(): expected at most 1 mip "
+        "level images but got 2, extra images will be ignored\n");
+}
+
 void KtxImageConverterTest::levelWrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
@@ -338,36 +296,6 @@ void KtxImageConverterTest::pvrtcRgb() {
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->compressedFormat(), data.outputFormat);
     CORRADE_COMPARE_AS(image->data(), inputImage.data(), TestSuite::Compare::Container);
-}
-
-void KtxImageConverterTest::levelZeroSize() {
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-
-    const UnsignedByte data[16]{};
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData({
-        ImageView2D{PixelFormat::RGB8Unorm, {2, 2}, data},
-        ImageView2D{PixelFormat::RGB8Unorm, {0, 1}, data}
-    }));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): expected size Vector(1, 1) for level 1 but got Vector(0, 1)\n");
-}
-
-void KtxImageConverterTest::levelEmptyData() {
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-
-    const UnsignedByte data[16]{};
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData({
-        ImageView2D{PixelFormat::RGB8Unorm, {2, 2}, data},
-        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}}
-    }));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): image data for level 1 is nullptr\n");
 }
 
 }}}}

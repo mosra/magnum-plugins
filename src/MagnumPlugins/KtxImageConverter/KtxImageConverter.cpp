@@ -737,11 +737,6 @@ ImageConverterFeatures KtxImageConverter::doFeatures() const {
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
 template<UnsignedInt dimensions, template<UnsignedInt, typename> class View>
-    if(imageLevels.empty()) {
-        Error() << "Trade::KtxImageConverter::convertToData(): expected at least 1 mip level";
-        return {};
-    }
-
 Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels) {
     const auto format = imageLevels.front().format();
 
@@ -821,10 +816,6 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
 
     /* Fill level index */
     const Math::Vector<dimensions, Int> size = imageLevels.front().size();
-    if(size.product() == 0) {
-        Error() << "Trade::KtxImageConverter::convertToData(): image for level 0 is empty";
-        return {};
-    }
 
     const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2(size.max()) + 1);
     if(imageLevels.size() > numMipmaps)
@@ -858,12 +849,6 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
         if(image.size() != mipSize) {
             Error() << "Trade::KtxImageConverter::convertToData(): expected "
                 "size" << mipSize << "for level" << mip << "but got" << image.size();
-            return {};
-        }
-
-        if(!image.data()) {
-            Error() << "Trade::KtxImageConverter::convertToData(): image data "
-                "for level" << mip << "is nullptr";
             return {};
         }
 
