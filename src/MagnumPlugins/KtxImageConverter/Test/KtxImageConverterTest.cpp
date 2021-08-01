@@ -81,8 +81,8 @@ struct KtxImageConverterTest: TestSuite::Tester {
 
 const struct {
     const char* name;
-    CompressedPixelFormat inputFormat;
-    CompressedPixelFormat outputFormat;
+    const CompressedPixelFormat inputFormat;
+    const CompressedPixelFormat outputFormat;
 } PvrtcRgbData[]{
     {"2bppUnorm", CompressedPixelFormat::PvrtcRGB2bppUnorm, CompressedPixelFormat::PvrtcRGBA2bppUnorm},
     {"2bppSrgb", CompressedPixelFormat::PvrtcRGB2bppSrgb, CompressedPixelFormat::PvrtcRGBA2bppSrgb},
@@ -139,7 +139,7 @@ void KtxImageConverterTest::supportedFormat() {
     const UnsignedByte data[32]{};
 
     /* All the formats in PixelFormat are supported */
-    /** @todo This needs to be extended when formats are added to PixelFormat */
+    /** @todo This needs to be extended when new formats are added to PixelFormat */
     constexpr PixelFormat start = PixelFormat::R8Unorm;
     constexpr PixelFormat end = PixelFormat::Depth32FStencil8UI;
 
@@ -152,7 +152,7 @@ void KtxImageConverterTest::supportedFormat() {
 
 const CompressedPixelFormat UnsupportedCompressedFormats[]{
     /* Vulkan has no support (core or extension) for 3D ASTC formats.
-        KTX supports them, but through an unreleased extension. */
+       KTX supports them, but through an unreleased extension. */
     CompressedPixelFormat::Astc3x3x3RGBAUnorm,
     CompressedPixelFormat::Astc3x3x3RGBASrgb,
     CompressedPixelFormat::Astc3x3x3RGBAF,
@@ -191,7 +191,7 @@ void KtxImageConverterTest::supportedCompressedFormat() {
     const UnsignedByte bytes[32]{};
     const auto unsupported = Containers::arrayView(UnsupportedCompressedFormats);
 
-    /** @todo This needs to be extended when formats are added to CompressedPixelFormat */
+    /** @todo This needs to be extended when new formats are added to CompressedPixelFormat */
     constexpr CompressedPixelFormat start = CompressedPixelFormat::Bc1RGBUnorm;
     constexpr CompressedPixelFormat end = CompressedPixelFormat::PvrtcRGBA4bppSrgb;
 
@@ -207,12 +207,11 @@ void KtxImageConverterTest::supportedCompressedFormat() {
 void KtxImageConverterTest::unsupportedCompressedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
-    std::ostringstream out;
-    Error redirectError{&out};
-
     for(CompressedPixelFormat format: UnsupportedCompressedFormats) {
         CORRADE_ITERATION(format);
-        out.str({}); /* Reset stream */
+
+        std::ostringstream out;
+        Error redirectError{&out};
         CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{format, {1, 1}, {}}));
 
         /** @todo Is there no better way to do this? */
@@ -222,15 +221,6 @@ void KtxImageConverterTest::unsupportedCompressedFormat() {
 
         CORRADE_COMPARE(out.str(), formattedOut.str());
     }
-}
-
-/* Actual type needed for ADL, typedef of integer type isn't enough */
-enum CustomPixelFormat : UnsignedInt {
-    Value
-};
-
-UnsignedInt pixelSize(CustomPixelFormat) {
-    return 1u;
 }
 
 void KtxImageConverterTest::implementationSpecificFormat() {
@@ -243,7 +233,7 @@ void KtxImageConverterTest::implementationSpecificFormat() {
 
     PixelStorage storage;
     storage.setAlignment(1);
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{storage, CustomPixelFormat{}, {1, 1}, bytes}));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{storage, 0, 0, 1, {1, 1}, bytes}));
     CORRADE_COMPARE(out.str(),
         "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
 }
