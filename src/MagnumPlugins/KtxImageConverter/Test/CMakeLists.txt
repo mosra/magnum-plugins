@@ -43,7 +43,9 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 
 corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
     LIBRARIES Magnum::Trade)
-target_include_directories(KtxImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+target_include_directories(KtxImageConverterTest PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
+    ${PROJECT_SOURCE_DIR}/src)
 if(MAGNUM_KTXIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(KtxImageConverterTest PRIVATE KtxImageConverter)
     if(WITH_KTXIMPORTER)

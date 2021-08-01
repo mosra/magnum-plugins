@@ -30,8 +30,11 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/FormatStl.h>
 
 #include <Magnum/ImageView.h>
@@ -41,6 +44,8 @@
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
+
+#include "MagnumPlugins/KtxImporter/KtxHeader.h"
 
 #include "configure.h"
 
@@ -63,6 +68,12 @@ struct KtxImageConverterTest: TestSuite::Tester {
 
     void pvrtcRgb();
 
+    void configurationWriterName();
+    void configurationWriterNameEmpty();
+    void configurationSwizzle();
+    void configurationSwizzleEmpty();
+    void configurationSwizzleInvalid();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
@@ -79,8 +90,16 @@ const struct {
     {"4bppSrgb", CompressedPixelFormat::PvrtcRGB4bppSrgb, CompressedPixelFormat::PvrtcRGBA4bppSrgb},
 };
 
-KtxImageConverterTest::KtxImageConverterTest() {
+const struct {
+    const char* name;
+    const char* value;
+    const char* message;
+} InvalidSwizzleData[]{
+    {"too short", "r", "invalid swizzle length, expected 4 but got 1"},
+    {"invalid characters", "rxba", "invalid characters in swizzle rxba"}
+};
 
+KtxImageConverterTest::KtxImageConverterTest() {
     addTests({&KtxImageConverterTest::supportedFormat,
               &KtxImageConverterTest::supportedCompressedFormat,
               &KtxImageConverterTest::unsupportedCompressedFormat,
@@ -93,6 +112,14 @@ KtxImageConverterTest::KtxImageConverterTest() {
     addInstancedTests({&KtxImageConverterTest::pvrtcRgb},
         Containers::arraySize(PvrtcRgbData));
 
+    addTests({&KtxImageConverterTest::configurationWriterName,
+              &KtxImageConverterTest::configurationWriterNameEmpty,
+              &KtxImageConverterTest::configurationSwizzle,
+              &KtxImageConverterTest::configurationSwizzleEmpty});
+
+    addInstancedTests({&KtxImageConverterTest::configurationSwizzleInvalid},
+        Containers::arraySize(InvalidSwizzleData));
+
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef KTXIMAGECONVERTER_PLUGIN_FILENAME
@@ -104,6 +131,7 @@ KtxImageConverterTest::KtxImageConverterTest() {
     #endif
 }
 
+using namespace Containers::Literals;
 
 void KtxImageConverterTest::supportedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
@@ -296,6 +324,87 @@ void KtxImageConverterTest::pvrtcRgb() {
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->compressedFormat(), data.outputFormat);
     CORRADE_COMPARE_AS(image->data(), inputImage.data(), TestSuite::Compare::Container);
+}
+
+Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) {
+    CORRADE_INTERNAL_ASSERT(fileData.size() >= sizeof(Implementation::KtxHeader));
+    const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(fileData.data());
+
+    const UnsignedInt offset = Utility::Endianness::littleEndian(header.kvdByteOffset);
+    const UnsignedInt length = Utility::Endianness::littleEndian(header.kvdByteLength);
+    Containers::String data{ValueInit, length};
+    Utility::copy(fileData.suffix(offset).prefix(length), data);
+
+    return data;
+}
+
+void KtxImageConverterTest::configurationWriterName() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    /* Default value */
+    CORRADE_COMPARE(converter->configuration().value("writerName"), "Magnum::KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("writerName", "KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"));
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    const auto keyValueData = readKeyValueData(data);
+    CORRADE_VERIFY(keyValueData.contains("KTXwriter\0KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"_s));
+}
+
+void KtxImageConverterTest::configurationWriterNameEmpty() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("writerName", ""));
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    /* Empty writer name doesn't write the key to the key/value data at all */
+    const auto keyValueData = readKeyValueData(data);
+    CORRADE_VERIFY(!keyValueData.contains("KTXwriter"_s));
+}
+
+void KtxImageConverterTest::configurationSwizzle() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    /* Default value */
+    CORRADE_COMPARE(converter->configuration().value("swizzle"), "");
+    CORRADE_VERIFY(converter->configuration().setValue("swizzle", "rgba"));
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    const auto keyValueData = readKeyValueData(data);
+    CORRADE_VERIFY(keyValueData.contains("KTXswizzle\0rgba"_s));
+}
+
+void KtxImageConverterTest::configurationSwizzleEmpty() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    /* Swizzle is empty by default, tested in configurationSwizzle() */
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    /* Empty swizzle doesn't write the key to the key/value data at all */
+    const auto keyValueData = readKeyValueData(data);
+    CORRADE_VERIFY(!keyValueData.contains("KTXswizzle"_s));
+}
+
+void KtxImageConverterTest::configurationSwizzleInvalid() {
+    auto&& data = InvalidSwizzleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("swizzle", data.value));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    const UnsignedByte bytes[4]{};
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes}));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}
