@@ -154,7 +154,7 @@ const struct {
         "file too short, expected 288 bytes for level data but got only 287"}
 };
 
-constexpr UnsignedByte VK_FORMAT_S8_UINT = 127;
+constexpr UnsignedByte VK_FORMAT_D32_SFLOAT = 126;
 
 const struct {
     const char* name;
@@ -197,7 +197,7 @@ const struct {
         offsetof(Implementation::KtxHeader, supercompressionScheme), 1,
         "supercompression is currently not supported"},
     {"3d depth", "3d.ktx2",
-        offsetof(Implementation::KtxHeader, vkFormat), VK_FORMAT_S8_UINT,
+        offsetof(Implementation::KtxHeader, vkFormat), VK_FORMAT_D32_SFLOAT,
         "3D images can't have depth/stencil format"},
     {"level data too short", "2d-rgb.ktx2",
         sizeof(Implementation::KtxHeader) + offsetof(Implementation::KtxLevel, byteLength), 1,
@@ -323,6 +323,19 @@ const struct {
         nullptr, Containers::arrayCast<const char>(PatternRgba2DData)},
     /** @todo Check swizzle of larger formats */
 };
+
+void patchKeyValueData(Containers::ArrayView<const char> keyValueData, Containers::ArrayView<char> fileData) {
+    CORRADE_INTERNAL_ASSERT(fileData.size() >= sizeof(Implementation::KtxHeader));
+    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
+    Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
+
+    CORRADE_INTERNAL_ASSERT(header.kvdByteOffset + keyValueData.size() <= fileData.size());
+    CORRADE_INTERNAL_ASSERT(header.kvdByteLength >= keyValueData.size());
+    header.kvdByteLength = keyValueData.size();
+    Utility::copy(keyValueData, fileData.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
+
+    Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
+}
 
 KtxImporterTest::KtxImporterTest() {
     addInstancedTests({&KtxImporterTest::openShort},
@@ -480,13 +493,12 @@ void KtxImporterTest::invalidFormat() {
         VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG
     };
 
-    std::ostringstream out;
-    Error redirectError{&out};
-
     for(UnsignedInt i = 0; i != Containers::arraySize(formats); ++i) {
         CORRADE_ITERATION(i);
-        out.str({}); /* Reset stream content */
         header.vkFormat = Utility::Endianness::littleEndian(formats[i]);
+
+        std::ostringstream out;
+        Error redirectError{&out};
         CORRADE_VERIFY(!importer->openData(fileData));
         CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): unsupported format {}\n", UnsignedInt(formats[i])));
     }
@@ -868,13 +880,7 @@ void KtxImporterTest::imageCubeMapIncomplete() {
         header.layerCount = Utility::Endianness::littleEndian(6u);
         header.faceCount = Utility::Endianness::littleEndian(1u);
 
-        Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
-
-        CORRADE_VERIFY(header.kvdByteLength >= keyValueData.size());
-        header.kvdByteLength = keyValueData.size();
-        Utility::copy(keyValueData, fileData.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
-
-        Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
+        patchKeyValueData(keyValueData, fileData);
     }
 
     std::ostringstream outWarning;
@@ -1093,10 +1099,8 @@ void KtxImporterTest::keyValueDataEmpty() {
     auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
     CORRADE_VERIFY(fileData.size() >= sizeof(Implementation::KtxHeader));
 
-    {
-        Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
-        header.kvdByteLength = Utility::Endianness::littleEndian(0u);
-    }
+    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
+    header.kvdByteLength = Utility::Endianness::littleEndian(0u);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
@@ -1116,19 +1120,8 @@ void KtxImporterTest::keyValueDataInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
-    CORRADE_VERIFY(fileData.size() >= sizeof(Implementation::KtxHeader));
-
-    {
-        Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
-
-        Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
-
-        CORRADE_VERIFY(header.kvdByteLength >= data.data.size());
-        header.kvdByteLength = data.data.size();
-        Utility::copy(data.data, fileData.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
-
-        Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
-    }
+    
+    patchKeyValueData(data.data, fileData);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
@@ -1150,19 +1143,8 @@ void KtxImporterTest::keyValueDataInvalidIgnored() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
-    CORRADE_VERIFY(fileData.size() >= sizeof(Implementation::KtxHeader));
 
-    {
-        Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
-
-        Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
-
-        CORRADE_VERIFY(header.kvdByteLength >= data.data.size());
-        header.kvdByteLength = data.data.size();
-        Utility::copy(data.data, fileData.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
-
-        Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
-    }
+    patchKeyValueData(data.data, fileData);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
@@ -1192,24 +1174,14 @@ void KtxImporterTest::orientationInvalid() {
     offset += key.size() + 1;
     Utility::copy(data.orientation, keyValueData.suffix(offset).prefix(data.orientation.size()));
 
-    {
-        Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
-
-        Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
-
-        CORRADE_VERIFY(header.kvdByteLength >= keyValueData.size());
-        header.kvdByteLength = keyValueData.size();
-        Utility::copy(keyValueData, fileData.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
-
-        Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
-    }
+    patchKeyValueData(keyValueData, fileData);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
 
     constexpr Containers::StringView orientations[]{"right"_s, "down"_s, "forward"_s};
     const Containers::String orientationString = ", "_s.join(Containers::arrayView(orientations).prefix(data.dimensions));
-                
+    
     CORRADE_VERIFY(importer->openData(fileData));
     CORRADE_COMPARE(outWarning.str(), Utility::formatString("Trade::KtxImporter::openData(): missing or invalid orientation, assuming {}\n", orientationString));
 }
