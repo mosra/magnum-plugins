@@ -840,12 +840,6 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
 
         const auto& image = imageLevels[mip];
 
-        if(image.format() != format) {
-            Error() << "Trade::KtxImageConverter::convertToData(): expected "
-                "format" << format << "for level" << mip << "but got" << image.format();
-            return {};
-        }
-
         if(image.size() != mipSize) {
             Error() << "Trade::KtxImageConverter::convertToData(): expected "
                 "size" << mipSize << "for level" << mip << "but got" << image.size();

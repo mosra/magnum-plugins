@@ -63,7 +63,6 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void implementationSpecificFormat();
 
     void tooManyLevels();
-    void levelWrongFormat();
     void levelWrongSize();
 
     void pvrtcRgb();
@@ -106,7 +105,6 @@ KtxImageConverterTest::KtxImageConverterTest() {
               &KtxImageConverterTest::implementationSpecificFormat,
 
               &KtxImageConverterTest::tooManyLevels,
-              &KtxImageConverterTest::levelWrongFormat,
               &KtxImageConverterTest::levelWrongSize});
 
     addInstancedTests({&KtxImageConverterTest::pvrtcRgb},
@@ -252,22 +250,6 @@ void KtxImageConverterTest::tooManyLevels() {
     CORRADE_COMPARE(out.str(),
         "Trade::KtxImageConverter::convertToData(): expected at most 1 mip "
         "level images but got 2, extra images will be ignored\n");
-}
-
-void KtxImageConverterTest::levelWrongFormat() {
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-
-    const UnsignedByte bytes[16]{};
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData({
-        ImageView2D{PixelFormat::RGB8Unorm, {2, 2}, bytes},
-        ImageView2D{PixelFormat::RGB8Snorm, {1, 1}, bytes}
-    }));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): expected format PixelFormat::RGB8Unorm "
-        "for level 1 but got PixelFormat::RGB8Snorm\n");
 }
 
 void KtxImageConverterTest::levelWrongSize() {
