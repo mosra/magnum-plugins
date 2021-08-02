@@ -56,7 +56,7 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     explicit OpenExrImageConverterTest();
 
     void wrongFormat();
-    void zeroSizeImage();
+    void conversionError();
 
     void rgb16f();
     void rgba32f();
@@ -131,7 +131,7 @@ const struct {
 
 OpenExrImageConverterTest::OpenExrImageConverterTest() {
     addTests({&OpenExrImageConverterTest::wrongFormat,
-              &OpenExrImageConverterTest::zeroSizeImage,
+              &OpenExrImageConverterTest::conversionError,
 
               &OpenExrImageConverterTest::rgb16f,
               &OpenExrImageConverterTest::rgba32f,
@@ -164,25 +164,28 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
 }
 
 void OpenExrImageConverterTest::wrongFormat() {
-    ImageView2D image{PixelFormat::RGBA8Unorm, {}, nullptr};
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
 
+    const char data[4]{};
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!_manager.instantiate("OpenExrImageConverter")->convertToData(image));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unsupported format PixelFormat::RGBA8Unorm, only *16F, *32F, *32UI and Depth32F formats supported\n");
 }
 
-void OpenExrImageConverterTest::zeroSizeImage() {
-    ImageView2D image{PixelFormat::RGBA16F, {}, nullptr};
+void OpenExrImageConverterTest::conversionError() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
 
+    /* Because zero-size images are disallowed by the base implementation
+       already, we can't abuse that for checking conversion errors. Instead we
+       set the display window size to a negative value. */
+    converter->configuration().setValue("displayWindow", Vector4i{1, 1, 0, 0});
+
+    const char data[8]{};
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!_manager.instantiate("OpenExrImageConverter")->convertToData(image));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA16F, {1, 1}, data}));
 
-    /* Originally, before custom data windows got introduced in the converter,
-       in OpenEXR 2.5.3 and newer the message was just
-        conversion error: Invalid display window in image header.
-       Now it's the same in both older and newer versions. */
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): conversion error: Cannot open image file \"\". Invalid display window in image header.\n");
 }
 

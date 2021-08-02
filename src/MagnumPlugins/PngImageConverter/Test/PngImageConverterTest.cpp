@@ -43,7 +43,7 @@ struct PngImageConverterTest: TestSuite::Tester {
     explicit PngImageConverterTest();
 
     void wrongFormat();
-    void zeroSize();
+    void conversionError();
 
     void rgb();
     void rgb16();
@@ -58,7 +58,7 @@ struct PngImageConverterTest: TestSuite::Tester {
 
 PngImageConverterTest::PngImageConverterTest() {
     addTests({&PngImageConverterTest::wrongFormat,
-              &PngImageConverterTest::zeroSize,
+              &PngImageConverterTest::conversionError,
 
               &PngImageConverterTest::rgb,
               &PngImageConverterTest::rgb16,
@@ -79,24 +79,28 @@ PngImageConverterTest::PngImageConverterTest() {
 
 void PngImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
-    ImageView2D image{PixelFormat::RG32F, {}, nullptr};
 
+    const char data[8]{};
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RG32F, {1, 1}, data}));
     CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::convertToData(): unsupported pixel format PixelFormat::RG32F\n");
 }
 
-void PngImageConverterTest::zeroSize() {
+void PngImageConverterTest::conversionError() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
 
+    /* Because zero-size images are disallowed by the base implementation
+       already, we can't abuse that for checking conversion errors. PNG image
+       width/height is limited to 31 bits, so let's pretend we have a 2 GB
+       image. Hope this won't trigger sanitizers. */
+    const char data[1]{};
     std::ostringstream out;
     Warning redirectWarning{&out};
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R8Unorm, {0x7fffffff, 1}, {data, 1u << 31}}));
     CORRADE_COMPARE(out.str(),
-        "Trade::PngImageConverter::convertToData(): warning: Image width is zero in IHDR\n"
-        "Trade::PngImageConverter::convertToData(): warning: Image height is zero in IHDR\n"
+        "Trade::PngImageConverter::convertToData(): warning: Image width exceeds user limit in IHDR\n"
         "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
 }
 

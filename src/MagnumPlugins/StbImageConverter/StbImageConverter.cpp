@@ -133,31 +133,21 @@ Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& im
         static_cast<std::string*>(context)->append(static_cast<char*>(data), size);
     };
 
+    /* All these functions can only fail if the size is zero/negative, if the
+       data pointer is null or if allocation fails. Except for the allocation
+       failure (which isn't really recoverable as the whole OS is a mess at
+       that point anyway) all of them are checked by AbstractImageConverter
+       already so it's fine to just assert here. */
     if(_format == Format::Bmp) {
-        if(!stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData)) {
-            Error() << "Trade::StbImageConverter::convertToData(): error while writing the BMP file";
-            return nullptr;
-        }
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData));
     } else if(_format == Format::Jpeg) {
-        if(!stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, Int(configuration().value<Float>("jpegQuality")*100.0f))) {
-            Error() << "Trade::StbImageConverter::convertToData(): error while writing the JPEG file";
-            return nullptr;
-        }
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, Int(configuration().value<Float>("jpegQuality")*100.0f)));
     } else if(_format == Format::Hdr) {
-        if(!stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(reversedData.begin()))) {
-            Error() << "Trade::StbImageConverter::convertToData(): error while writing the HDR file";
-            return nullptr;
-        }
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(reversedData.begin())));
     } else if(_format == Format::Png) {
-        if(!stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, 0)) {
-            Error() << "Trade::StbImageConverter::convertToData(): error while writing the PNG file";
-            return nullptr;
-        }
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, 0));
     } else if(_format == Format::Tga) {
-        if(!stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData)) {
-            Error() << "Trade::StbImageConverter::convertToData(): error while writing the TGA file";
-            return nullptr;
-        }
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData));
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Copy the data into array (I would *love* to have a detach() function on

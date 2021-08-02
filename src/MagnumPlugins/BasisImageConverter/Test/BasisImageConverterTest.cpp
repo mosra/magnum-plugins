@@ -51,8 +51,6 @@ struct BasisImageConverterTest: TestSuite::Tester {
     explicit BasisImageConverterTest();
 
     void wrongFormat();
-    void zeroSize();
-    void emptyData();
     void processError();
 
     void r();
@@ -78,8 +76,6 @@ constexpr struct {
 
 BasisImageConverterTest::BasisImageConverterTest() {
     addTests({&BasisImageConverterTest::wrongFormat,
-              &BasisImageConverterTest::zeroSize,
-              &BasisImageConverterTest::emptyData,
               &BasisImageConverterTest::processError,
 
               &BasisImageConverterTest::r,
@@ -111,34 +107,12 @@ BasisImageConverterTest::BasisImageConverterTest() {
 void BasisImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter =
         _converterManager.instantiate("BasisImageConverter");
-    ImageView2D image{PixelFormat::RG32F, {}, nullptr};
 
+    const char data[8]{};
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RG32F, {1, 1}, data}));
     CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::RG32F\n");
-}
-
-void BasisImageConverterTest::zeroSize() {
-    Containers::Pointer<AbstractImageConverter> converter =
-        _converterManager.instantiate("BasisImageConverter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
-    CORRADE_COMPARE(out.str(),
-        "Trade::BasisImageConverter::convertToData(): source image is empty\n");
-}
-
-void BasisImageConverterTest::emptyData() {
-    Containers::Pointer<AbstractImageConverter> converter =
-        _converterManager.instantiate("BasisImageConverter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {9192, 8192}}));
-    CORRADE_COMPARE(out.str(),
-        "Trade::BasisImageConverter::convertToData(): source image data is nullptr\n");
 }
 
 void BasisImageConverterTest::processError() {

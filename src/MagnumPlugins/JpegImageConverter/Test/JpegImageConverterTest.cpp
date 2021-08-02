@@ -51,7 +51,7 @@ struct JpegImageConverterTest: TestSuite::Tester {
     explicit JpegImageConverterTest();
 
     void wrongFormat();
-    void zeroSize();
+    void conversionError();
 
     void rgb80Percent();
     void rgb100Percent();
@@ -68,7 +68,7 @@ struct JpegImageConverterTest: TestSuite::Tester {
 
 JpegImageConverterTest::JpegImageConverterTest() {
     addTests({&JpegImageConverterTest::wrongFormat,
-              &JpegImageConverterTest::zeroSize,
+              &JpegImageConverterTest::conversionError,
 
               &JpegImageConverterTest::rgb80Percent,
               &JpegImageConverterTest::rgb100Percent,
@@ -91,22 +91,26 @@ JpegImageConverterTest::JpegImageConverterTest() {
 
 void JpegImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
-    ImageView2D image{PixelFormat::R16F, {}, nullptr};
 
+    const char data[4]{};
     std::ostringstream out;
     Error redirectError{&out};
-
-    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R16F, {1, 1}, data}));
     CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): unsupported pixel format PixelFormat::R16F\n");
 }
 
-void JpegImageConverterTest::zeroSize() {
+void JpegImageConverterTest::conversionError() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
 
+    /* Because zero-size images are disallowed by the base implementation
+       already, we can't abuse that for checking conversion errors. JPEG image
+       width/height is limited to 24 bits, so let's pretend we have a 16 MB
+       image. Hope this won't trigger sanitizers. */
+    const char data[1]{};
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {}, nullptr}));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): error: Empty JPEG image (DNL not supported)\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R8Unorm, {16*1024*1024, 1}, {data, 16*1024*1024}}));
+    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): error: Maximum supported image dimension is 65500 pixels\n");
 }
 
 constexpr const char OriginalRgbData[] = {

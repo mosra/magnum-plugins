@@ -83,13 +83,12 @@ MiniExrImageConverterTest::MiniExrImageConverterTest() {
 }
 
 void MiniExrImageConverterTest::wrongFormat() {
-    ImageView2D image{PixelFormat::R16F, {}, nullptr};
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("MiniExrImageConverter");
 
+    const char data[4]{};
     std::ostringstream out;
     Error redirectError{&out};
-
-    const auto data = _manager.instantiate("MiniExrImageConverter")->convertToData(image);
-    CORRADE_VERIFY(!data);
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R16F, {1, 1}, data}));
     CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::convertToData(): unsupported pixel format PixelFormat::R16F\n");
 }
 

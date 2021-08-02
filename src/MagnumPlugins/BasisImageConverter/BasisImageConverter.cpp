@@ -129,16 +129,6 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
     params.m_pSel_codebook = &sel_codebook;
 
-    if(image.size().x() <= 0 || image.size().y() <= 0) {
-        Error() << "Trade::BasisImageConverter::convertToData(): source image is empty";
-        return {};
-    }
-
-    if(!image.data()) {
-        Error() << "Trade::BasisImageConverter::convertToData(): source image data is nullptr";
-        return {};
-    }
-
     /* Copy image data into the basis image. There is no way to construct a
        basis image from existing data as it is based on a std::vector, moreover
        we need to tightly pack it and flip Y. The `dst` is an Y-flipped view
