@@ -690,8 +690,8 @@ void copyPixels(const BasicImageView<dimensions>& image, Containers::ArrayView<c
 
 template<UnsignedInt dimensions>
 void copyPixels(const BasicCompressedImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
-    /** @todo How do we deal with CompressedPixelStorage::skip?
-              ImageView::pixels handles this for non-compressed images. */
+    /** @todo Support CompressedPixelStorage::skip */
+    CORRADE_ASSERT(image.storage() == CompressedPixelStorage{}, "Trade::KtxImageConverter::convertToData(): non-default compressed storage is not supported", );
     Utility::copy(image.data().prefix(pixels.size()), pixels);
 }
 
