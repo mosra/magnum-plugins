@@ -181,8 +181,6 @@ UnsignedByte formatTypeSize(PixelFormat format) {
         case PixelFormat::Depth24UnormStencil8UI:
         case PixelFormat::Depth32FStencil8UI:
             return 4;
-        default:
-            break;
     }
 
     CORRADE_ASSERT_UNREACHABLE("componentSize(): unsupported format" << format, {});
@@ -192,9 +190,70 @@ UnsignedByte formatTypeSize(CompressedPixelFormat) {
     return 1;
 }
 
-Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const Implementation::KdfBasicBlockSample>> samples(CompressedPixelFormat format) {
-    /* There is no good way to auto-generate these. The KDF spec has a
-       format.json (https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json)
+struct SampleData {
+    UnsignedShort bitOffset;
+    UnsignedShort bitLength;
+    Implementation::KdfBasicBlockSample::ChannelId channelId;
+};
+
+Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const SampleData>> samples(PixelFormat format) {
+    constexpr auto ColorModel = Implementation::KdfBasicBlockHeader::ColorModel::Rgbsda;
+
+    /* We later multiply the offset and length by the type size. This works as
+       long as the channels are all the same size. If PixelFormat ever supports
+       formats like R10G10B10A2 this needs to be changed. For depth formats
+       this assumption already doesn't hold, so we have to specialize and
+       later code needs to make sure to not multiply by the type size. */
+    static constexpr SampleData SamplesRgba[]{
+        {0, 8, Implementation::KdfBasicBlockSample::ChannelId::Red},
+        {8, 8, Implementation::KdfBasicBlockSample::ChannelId::Green},
+        {16, 8, Implementation::KdfBasicBlockSample::ChannelId::Blue},
+        {24, 8, Implementation::KdfBasicBlockSample::ChannelId::Alpha}
+    };
+    static constexpr SampleData SamplesDepth16Stencil[]{
+        {0, 16, Implementation::KdfBasicBlockSample::ChannelId::Depth},
+        {16, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil}
+    };
+    static constexpr SampleData SamplesDepth24Stencil[]{
+        {0, 24, Implementation::KdfBasicBlockSample::ChannelId::Depth},
+        {24, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil}
+    };
+    static constexpr SampleData SamplesDepth32Stencil[]{
+        {0, 32, Implementation::KdfBasicBlockSample::ChannelId::Depth},
+        {32, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil}
+    };
+    static constexpr SampleData SamplesStencil[]{
+        {0, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil}
+    };
+
+    switch(format) {
+        case PixelFormat::Stencil8UI:
+            return {ColorModel, SamplesStencil};
+        case PixelFormat::Depth16Unorm:
+            return {ColorModel, Containers::arrayView(SamplesDepth16Stencil).prefix(1)};
+        case PixelFormat::Depth16UnormStencil8UI:
+            return {ColorModel, SamplesDepth16Stencil};
+        case PixelFormat::Depth24Unorm:
+            return {ColorModel, Containers::arrayView(SamplesDepth24Stencil).prefix(1)};
+        case PixelFormat::Depth24UnormStencil8UI:
+            return {ColorModel, SamplesDepth24Stencil};
+        case PixelFormat::Depth32F:
+            return {ColorModel, Containers::arrayView(SamplesDepth32Stencil).prefix(1)};
+        case PixelFormat::Depth32FStencil8UI:
+            return {ColorModel, SamplesDepth32Stencil};
+        default: {
+            const UnsignedInt size = pixelSize(format);
+            const UnsignedInt typeSize = formatTypeSize(format);
+            CORRADE_INTERNAL_ASSERT(size%typeSize == 0);
+            const UnsignedInt numChannels = size/typeSize;
+            return {ColorModel, Containers::arrayView(SamplesRgba).prefix(numChannels)};
+        }
+    }
+}
+
+Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const SampleData>> samples(CompressedPixelFormat format) {
+    /* There is no good way to auto-generate these from data. The KDF spec has
+       a format.json (https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json)
        but that doesn't contain any information on how to fill the DFD.
        Then there's Khronos' own dfdutils (https://github.com/KhronosGroup/KTX-Software/tree/master/lib/dfdutils)
        but that generates headers through Perl scripts, and the headers need
@@ -203,117 +262,72 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
        DFD content is taken directly from the KDF spec:
        https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#CompressedFormatModels */
 
-    constexpr UnsignedInt Min = 0u;
-    constexpr UnsignedInt Max = ~0u;
-    constexpr UnsignedInt SignedMin = 1u << 31;
-    constexpr UnsignedInt SignedMax = ~0u >> 1;
-    /* BC6h has unsigned floats, but the spec says to use a sampleLower of 
-       -1.0 anyway:
-       https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#bc6h_channel
-       So we don't need to distinguish between Ufloat and Sfloat*/
-    constexpr UnsignedInt FloatMin = 0xBF800000u; /* -1.0f */
-    constexpr UnsignedInt FloatMax = 0x7F800000u; /*  1.0f */
-
-    /** @todo Remove the upper, lower, ChannelFormat flags and patch it later?
-              There are a few oddities that need to be treated differently from
-              the non-compressed DFDs... */
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc1[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
-            {}, Min, Max}
+    static constexpr SampleData SamplesBc1[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    /* The DFD examples in the spec don't set ChannelFormat::Linear in any of
-       the block-compressed alpha channels */
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc1AlphaPunchThrough[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Bc1Alpha,
-            {}, Min, Max}
+    static constexpr SampleData SamplesBc1AlphaPunchThrough[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Bc1Alpha}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc2And3[]{
-        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Alpha,
-            {}, Min, Max},
-        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
-            {}, Min, Max}
+    static constexpr SampleData SamplesBc2And3[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Alpha},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc4[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
-            {}, Min, Max}
+    static constexpr SampleData SamplesBc4[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc4Signed[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
-            {}, SignedMin, SignedMax}
+    static constexpr SampleData SamplesBc4Signed[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc5[]{
-        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red,
-            {}, Min, Max},
-        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Green,
-            {}, Min, Max}
+    static constexpr SampleData SamplesBc5[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc5Signed[]{
-        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
-            {}, SignedMin, SignedMax},
-        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Green | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
-            {}, SignedMin, SignedMax}
+    static constexpr SampleData SamplesBc5Signed[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc6h[]{
-        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color | Implementation::KdfBasicBlockSample::ChannelFormat::Float,
-            {}, FloatMin, FloatMax}
+    static constexpr SampleData SamplesBc6h[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc6hSigned[]{
-        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color | Implementation::KdfBasicBlockSample::ChannelFormat::Float |
-            Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
-            {}, FloatMin, FloatMax}
+    static constexpr SampleData SamplesBc6hSigned[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesBc7[]{
-        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
-            {}, Min, Max}
+    static constexpr SampleData SamplesBc7[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesEacR11[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red,
-            {}, Min, Max}
+    static constexpr SampleData SamplesEacR11[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Red}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesEacR11Signed[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
-            {}, SignedMin, SignedMax}
+    static constexpr SampleData SamplesEacR11Signed[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Red}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesEacRG11[]{
-        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red,
-            {}, Min, Max},
-        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Green,
-            {}, Min, Max}
+    static constexpr SampleData SamplesEacRG11[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesEacRG11Signed[]{
-        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Red | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
-            {}, SignedMin, SignedMax},
-        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Green | Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
-            {}, SignedMin, SignedMax}
+    static constexpr SampleData SamplesEacRG11Signed[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesEtc2[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color,
-            {}, Min, Max}
+    static constexpr SampleData SamplesEtc2[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesEtc2AlphaPunchThrough[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color,
-            {}, Min, Max},
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Alpha,
-            {}, Min, Max}
+    static constexpr SampleData SamplesEtc2AlphaPunchThrough[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color},
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Alpha}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesEtc2Alpha[]{
-        {0,  64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Alpha,
-            {}, Min, Max},
-        {64, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color,
-            {}, Min, Max}
+    static constexpr SampleData SamplesEtc2Alpha[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Alpha},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesAstc[]{
-        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
-            {}, Min, Max}
+    static constexpr SampleData SamplesAstc[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesAstcHdr[]{
-        {0, 128 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color | Implementation::KdfBasicBlockSample::ChannelFormat::Float |
-            Implementation::KdfBasicBlockSample::ChannelFormat::Signed,
-            {}, FloatMin, FloatMax}
+    static constexpr SampleData SamplesAstcHdr[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
-    static constexpr Implementation::KdfBasicBlockSample SamplesPvrtc[]{
-        {0, 64 - 1, Implementation::KdfBasicBlockSample::ChannelId::Color,
-            {}, Min, Max}
+    static constexpr SampleData SamplesPvrtc[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color}
     };
 
     switch(format) {
@@ -454,10 +468,6 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
        simple version is enough for our needs.
 
        Signed integer values are sign-extended. Floats need to be bitcast. */
-
-    /** @todo If we support custom formats, this might require changes for
-              typeSize == 8 because these values are only 32-bit. Currently,
-              Magnum doesn't expose 64-bit formats. */
     CORRADE_INTERNAL_ASSERT(typeSize <= 4);
 
     const UnsignedInt typeMask = ~0u >> ((4 - typeSize)*8);
@@ -483,139 +493,29 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
             return {Corrade::Utility::bitCast<UnsignedInt>(-1.0f), Corrade::Utility::bitCast<UnsignedInt>(1.0f)};
     }
 
-    CORRADE_ASSERT_UNREACHABLE("channelLimits(): invalid format suffix" << UnsignedInt(suffix), {});
+    CORRADE_ASSERT_UNREACHABLE("channelMapping(): invalid format suffix" << UnsignedInt(suffix), {});
 }
 
-Containers::Array<char> fillDataFormatDescriptor(PixelFormat format, Implementation::VkFormatSuffix suffix) {
-    const UnsignedInt texelSize = pixelSize(format);
-    const UnsignedInt typeSize = formatTypeSize(format);
-    const UnsignedInt numChannels = texelSize/typeSize;
-
-    /* Calculate size */
-    const std::size_t dfdSamplesSize = numChannels*sizeof(Implementation::KdfBasicBlockSample);
-    const std::size_t dfdBlockSize = sizeof(Implementation::KdfBasicBlockHeader) + dfdSamplesSize;
-    const std::size_t dfdSize = sizeof(UnsignedInt) + dfdBlockSize;
-    CORRADE_INTERNAL_ASSERT(dfdSize % 4 == 0);
-
-    Containers::Array<char> data{ValueInit, dfdSize};
-
-    std::size_t offset = 0;
-
-    /* Length */
-    UnsignedInt& length = *reinterpret_cast<UnsignedInt*>(data.suffix(offset).data());
-    offset += sizeof(length);
-
-    length = dfdSize;
-
-    /* Block header */
-    Implementation::KdfBasicBlockHeader& header = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(data.suffix(offset).data());
-    offset += sizeof(header);
-
-    header.vendorId = Implementation::KdfBasicBlockHeader::VendorId::Khronos;
-    header.descriptorType = Implementation::KdfBasicBlockHeader::DescriptorType::Basic;
-    header.versionNumber = Implementation::KdfBasicBlockHeader::VersionNumber::Kdf1_3;
-    header.descriptorBlockSize = dfdBlockSize;
-
-    header.colorModel = Implementation::KdfBasicBlockHeader::ColorModel::Rgbsda;
-    header.colorPrimaries = Implementation::KdfBasicBlockHeader::ColorPrimaries::Srgb;
-    header.transferFunction = suffix == Implementation::VkFormatSuffix::SRGB
-        ? Implementation::KdfBasicBlockHeader::TransferFunction::Srgb
-        : Implementation::KdfBasicBlockHeader::TransferFunction::Linear;
-    /** @todo Do we ever have premultiplied alpha? */
-    header.bytesPlane[0] = texelSize;
-
-    /* Channels */
-    const auto samples = Containers::arrayCast<Implementation::KdfBasicBlockSample>(data.suffix(offset));
-    offset += dfdSamplesSize;
-
-    const UnsignedByte bitLength = typeSize*8;
-
-    constexpr Implementation::KdfBasicBlockSample::ChannelId UncompressedChannelIds[]{
-        Implementation::KdfBasicBlockSample::ChannelId::Red,
-        Implementation::KdfBasicBlockSample::ChannelId::Green,
-        Implementation::KdfBasicBlockSample::ChannelId::Blue,
-        Implementation::KdfBasicBlockSample::ChannelId::Alpha,
-        Implementation::KdfBasicBlockSample::ChannelId::Depth,
-        Implementation::KdfBasicBlockSample::ChannelId::Stencil
-    };
-
-    /** @todo Special-case depth+stencil formats. Channel count is wrong
-              for packed formats (only Depth24UnormStencil8UI) and they need
-              correct stencil offset+length */
-    Containers::ArrayView<const Implementation::KdfBasicBlockSample::ChannelId> channelIds;
-    /*
-    switch(format) {
-        case PixelFormat::Stencil8UI:
-            channelIds = {&UncompressedChannelIds[5], 1};
-            break;
-        case PixelFormat::Depth16Unorm:
-        case PixelFormat::Depth24Unorm:
-        case PixelFormat::Depth32F:
-            channelIds = {&UncompressedChannelIds[4], 1};
-            break;
-        case PixelFormat::Depth16UnormStencil8UI:
-        case PixelFormat::Depth24UnormStencil8UI:
-        case PixelFormat::Depth32FStencil8UI:
-            channelIds = {&UncompressedChannelIds[4], 2};
-            break;
-        default:
-            channelIds = {&UncompressedChannelIds[0], numChannels};
-            break;
-    }
-    */
-    channelIds = {&UncompressedChannelIds[0], numChannels};
-
-    CORRADE_INTERNAL_ASSERT(channelIds.size() == numChannels);
-
-    const auto mapping = channelMapping(suffix, typeSize);
-
-    UnsignedShort bitOffset = 0;
-    for(UnsignedInt i = 0; i != numChannels; ++i) {
-        auto& sample = samples[i];
-        sample.bitOffset = bitOffset;
-        sample.bitLength = bitLength - 1;
-        const auto channelId = channelIds[i];
-        sample.channelType = channelId | channelFormat(suffix);
-        if(channelId == Implementation::KdfBasicBlockSample::ChannelId::Alpha)
-            sample.channelType |= Implementation::KdfBasicBlockSample::ChannelFormat::Linear;
-        sample.lower = mapping.first();
-        sample.upper = mapping.second();
-
-        bitOffset += bitLength;
-
-        Utility::Endianness::littleEndianInPlace(sample.bitOffset,
-            sample.lower, sample.upper);
-    }
-
-    Utility::Endianness::littleEndianInPlace(length);
-    Utility::Endianness::littleEndianInPlace(header.vendorId, header.descriptorType,
-        header.versionNumber, header.descriptorBlockSize);
-
-    CORRADE_INTERNAL_ASSERT(offset == dfdSize);
-
-    return data;
-}
-
-Containers::Array<char> fillDataFormatDescriptor(CompressedPixelFormat format, Implementation::VkFormatSuffix suffix) {
+template<typename Format>
+Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::VkFormatSuffix suffix) {
     const auto sampleData = samples(format);
+    CORRADE_INTERNAL_ASSERT(!sampleData.second().empty());
 
-    /* Calculate size */
+    /* Calculate total size */
     const std::size_t dfdSamplesSize = sampleData.second().size()*sizeof(Implementation::KdfBasicBlockSample);
     const std::size_t dfdBlockSize = sizeof(Implementation::KdfBasicBlockHeader) + dfdSamplesSize;
     const std::size_t dfdSize = sizeof(UnsignedInt) + dfdBlockSize;
     CORRADE_INTERNAL_ASSERT(dfdSize % 4 == 0);
 
     Containers::Array<char> data{ValueInit, dfdSize};
-
     std::size_t offset = 0;
 
-    /* Length */
     UnsignedInt& length = *reinterpret_cast<UnsignedInt*>(data.suffix(offset).data());
     offset += sizeof(length);
 
     length = dfdSize;
 
-    /* Block header */
+    /* Basic block header */
     Implementation::KdfBasicBlockHeader& header = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(data.suffix(offset).data());
     offset += sizeof(header);
 
@@ -630,28 +530,60 @@ Containers::Array<char> fillDataFormatDescriptor(CompressedPixelFormat format, I
         ? Implementation::KdfBasicBlockHeader::TransferFunction::Srgb
         : Implementation::KdfBasicBlockHeader::TransferFunction::Linear;
     /** @todo Do we ever have premultiplied alpha? */
-    const Vector3i blockSize = compressedBlockSize(format);
-    for(UnsignedInt i = 0; i != blockSize.Size; ++i) {
-        if(blockSize[i] > 1)
-            header.texelBlockDimension[i] = blockSize[i] - 1;
-    }
-    header.bytesPlane[0] = compressedBlockDataSize(format);
 
-    /* Channels */
+    const Vector3i unitSize = formatUnitSize(format);
+    const UnsignedInt unitDataSize = formatUnitDataSize(format);
+
+    for(UnsignedInt i = 0; i != unitSize.Size; ++i) {
+        if(unitSize[i] > 1)
+            header.texelBlockDimension[i] = unitSize[i] - 1;
+    }
+    header.bytesPlane[0] = unitDataSize;
+
+    /* Sample blocks, one per channel */
     auto samples = Containers::arrayCast<Implementation::KdfBasicBlockSample>(data.suffix(offset));
     offset += dfdSamplesSize;
 
-    Utility::copy(sampleData.second(), samples);
+    constexpr bool isCompressedFormat = std::is_same<Format, CompressedPixelFormat>::value;
+    const bool isDepthStencil = !isCompressedFormat &&
+        sampleData.second().front().channelId != Implementation::KdfBasicBlockSample::ChannelId::Red;
+    
+    const UnsignedByte typeSize = formatTypeSize(format);
+    /* Compressed integer formats must use 32-bit lower/upper */
+    /* @todo BC6h has unsigned floats, but the spec says to use a sampleLower
+             of -1.0. Is this an error?
+       https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#bc6h_channel
+       The signed channel format flag is still set, however. */
+    const auto lowerUpper = channelMapping(suffix, isCompressedFormat ? sizeof(UnsignedInt) : typeSize);
+    const UnsignedByte formatFlags = channelFormat(suffix);
+    const UnsignedByte bitRangeMultiplier = isDepthStencil ? 1 : typeSize;
 
     UnsignedShort extent = 0;
-    for(auto& sample: samples) {
+    for(UnsignedInt i = 0; i != samples.size(); ++i) {
+        const auto& sampleContent = sampleData.second()[i];
+        auto& sample = samples[i];
+        sample.bitOffset = sampleContent.bitOffset*bitRangeMultiplier;
+        sample.bitLength = sampleContent.bitLength*bitRangeMultiplier - 1;
+        sample.channelType = sampleContent.channelId | formatFlags;
+        if(header.transferFunction != Implementation::KdfBasicBlockHeader::TransferFunction::Linear &&
+           sampleContent.channelId == Implementation::KdfBasicBlockSample::ChannelId::Alpha)
+        {
+           sample.channelType |= Implementation::KdfBasicBlockSample::ChannelFormat::Linear;
+        }
+
+        sample.lower = lowerUpper.first();
+        sample.upper = lowerUpper.second();
+
         extent = Math::max<UnsignedShort>(sample.bitOffset + sample.bitLength + 1, extent);
+
         Utility::Endianness::littleEndianInPlace(sample.bitOffset,
             sample.lower, sample.upper);
     }
 
-    /* Just making sure we didn't make any major mistake in samples() */
-    CORRADE_INTERNAL_ASSERT(extent == header.bytesPlane[0]*8);
+    /* Make sure channel bit ranges returned by samples() are plausible.
+       Can't use equals because some formats have channels smaller than the
+       pixel size, e.g. Depth24Unorm. */
+    CORRADE_INTERNAL_ASSERT(extent <= unitDataSize*8);
 
     Utility::Endianness::littleEndianInPlace(length);
     Utility::Endianness::littleEndianInPlace(header.vendorId, header.descriptorType,
