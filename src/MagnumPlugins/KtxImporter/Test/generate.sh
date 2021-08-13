@@ -18,6 +18,7 @@ toktx --t2 --target_type RGBA --swizzle rgb1 swizzle-unsupported.ktx2 pattern.pn
 # data should come out normally after the importer swizzles it
 toktx --t2 --input_swizzle bgra --swizzle bgr1 bgr-swizzle-bgr.ktx2 pattern.png
 toktx --t2 --target_type RGBA --input_swizzle bgra --swizzle bgra bgra-swizzle-bgra.ktx2 pattern.png
+toktx --t2 --input_swizzle bgra --swizzle bgr1 bgr-swizzle-bgr-16bit.ktx2 pattern-16bit.png
 
 # swizzled header
 # with patched swizzled vkFormat data should come out normally because both cancel each other out

@@ -59,8 +59,6 @@ struct KtxImporterTest: TestSuite::Tester {
               - cube face order to match GL expectations
               - all formats should be supported
               - depth/stencil formats
-              - depth swizzle is ignored
-              - non-identity swizzle is invalid for compressed formats
               - orientation flips (+ cubes?)
               - larger formats
     */
@@ -103,8 +101,10 @@ struct KtxImporterTest: TestSuite::Tester {
     void orientationFlipCompressed();
 
     void swizzle();
+    void swizzleMultipleBytes();
     void swizzleIdentity();
     void swizzleUnsupported();
+    void swizzleCompressed();
 
     void openTwice();
     void importTwice();
@@ -321,7 +321,9 @@ const struct {
     {"BGRA8 format+header cancel", "swizzle-bgra.ktx2",
         PixelFormat::RGBA8Srgb, Implementation::VK_FORMAT_B8G8R8A8_SRGB,
         nullptr, Containers::arrayCast<const char>(PatternRgba2DData)},
-    /** @todo Check swizzle of larger formats */
+    {"depth header ignored", "swizzle-bgra.ktx2",
+        PixelFormat::Depth32F, VK_FORMAT_D32_SFLOAT,
+        nullptr, Containers::arrayCast<const char>(PatternRgba2DData)}
 };
 
 void patchKeyValueData(Containers::ArrayView<const char> keyValueData, Containers::ArrayView<char> fileData) {
@@ -394,8 +396,10 @@ KtxImporterTest::KtxImporterTest() {
     addInstancedTests({&KtxImporterTest::swizzle},
         Containers::arraySize(SwizzleData));
 
-    addTests({&KtxImporterTest::swizzleIdentity,
+    addTests({&KtxImporterTest::swizzleMultipleBytes,
+              &KtxImporterTest::swizzleIdentity,
               &KtxImporterTest::swizzleUnsupported,
+              &KtxImporterTest::swizzleCompressed,
 
               &KtxImporterTest::openTwice,
               &KtxImporterTest::importTwice});
@@ -1232,7 +1236,8 @@ void KtxImporterTest::swizzle() {
     CORRADE_VERIFY(importer->openData(fileData));
 
     /** @todo Change origin to top-left for the swizzle test files so we can
-              check the relevant messages only. Also for swizzleIdentity(). */
+              check the relevant messages only. Also for swizzleMultipleBytes()
+              and swizzleIdentity(). */
     std::string expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along y\n";
     if(data.message)
         expectedMessage += Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message);
@@ -1244,6 +1249,41 @@ void KtxImporterTest::swizzle() {
     CORRADE_COMPARE(image->format(), data.format);
     CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
     CORRADE_COMPARE_AS(image->data(), data.data, TestSuite::Compare::Container);
+}
+
+void KtxImporterTest::swizzleMultipleBytes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->addFlags(ImporterFlag::Verbose);
+
+    std::ostringstream outDebug;
+    Debug redirectDebug{&outDebug};
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "bgr-swizzle-bgr-16bit.ktx2")));
+
+    CORRADE_COMPARE(outDebug.str(),
+        "Trade::KtxImporter::openData(): image will be flipped along y\n"
+        "Trade::KtxImporter::openData(): format requires conversion from BGR to RGB\n");
+
+    /* For some reason a 16-bit PNG sent through toktx ends up with 8-bit
+       channels duplicated to 16 bits instead of being remapped. Not sure if
+       this is a bug in GIMP or toktx, although the PNG shows correctly in
+       several viewers so probably the latter. PVRTexTool does the same thing,
+       see imageRgb32U(). This is PatternRgbData[0], but each byte extended to
+       unsigned short by just repeating the byte twice. */
+    constexpr UnsignedShort Half = 0x7f7f;
+    constexpr Math::Color3<UnsignedShort> content[4*3]{
+        {0xffff,      0,      0}, {0xffff, 0xffff, 0xffff}, {   0, 0,    0}, {   0, 0xffff,    0},
+        {0xffff, 0xffff, 0xffff}, {0xffff,      0,      0}, {   0, 0,    0}, {   0, 0xffff,    0},
+        {     0,      0, 0xffff}, {     0, 0xffff,      0}, {Half, 0, Half}, {Half,      0, Half}
+    };
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
+    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Math::Color3<UnsignedShort>>(image->data()),
+        Containers::arrayView(content), TestSuite::Compare::Container);
 }
 
 void KtxImporterTest::swizzleIdentity() {
@@ -1272,6 +1312,21 @@ void KtxImporterTest::swizzleUnsupported() {
        of RGB, so the 1 shouldn't be ignored. */
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "swizzle-unsupported.ktx2")));
     CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported channel mapping rgb1\n");
+}
+
+void KtxImporterTest::swizzleCompressed() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+
+    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2"));
+
+    constexpr auto keyValueData = "\x10\x00\x00\x00KTXswizzle\0bgra\0"_s;
+    patchKeyValueData(keyValueData, fileData);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openData(fileData));
+    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported channel mapping bgra\n");
 }
 
 void KtxImporterTest::openTwice() {
