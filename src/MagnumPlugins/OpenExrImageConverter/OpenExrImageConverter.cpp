@@ -45,6 +45,7 @@
 #include <ImfIO.h>
 #include <ImfOutputFile.h>
 #include <ImfStandardAttributes.h>
+#include <ImfTiledOutputFile.h>
 
 namespace Magnum { namespace Trade {
 
@@ -83,11 +84,11 @@ class MemoryOStream: public Imf::OStream {
 
 OpenExrImageConverter::OpenExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData|ImageConverterFeature::Convert3DToData; }
+ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::ConvertLevels2DToData|ImageConverterFeature::ConvertLevels3DToData; }
 
 namespace {
 
-Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const PixelFormat format, const Containers::StridedArrayView3D<const char>& pixels) try {
+Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const PixelFormat format, const Int levelCount, void(*const preparePixelsForLevel)(Int, const Containers::StridedArrayView3D<char>&, void*), const Containers::StridedArrayView3D<char>& pixels, void* const state) try {
     /* Figure out type and channel count */
     Imf::PixelType type;
     std::size_t channelCount;
@@ -263,9 +264,51 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
     Containers::Array<char> data;
     {
         MemoryOStream stream{data};
-        Imf::OutputFile file{stream, header};
-        file.setFrameBuffer(framebuffer);
-        file.writePixels(imageSize.y());
+
+        /* Scanline output. Only if we have just one level and the output
+           wasn't forced to be tiled. */
+        if(levelCount == 1 && !configuration.value<bool>("forceTiledOutput")) {
+            Imf::OutputFile file{stream, header};
+            file.setFrameBuffer(framebuffer);
+
+            /* For consistency, the pixels are assumed to be ready only after
+               the prepareLevel() is called also in the single-level case */
+            preparePixelsForLevel(0, pixels, state);
+            file.writePixels(imageSize.y());
+
+        /* Tiled output */
+        } else {
+            const Vector2i tileSize = configuration.value<Vector2i>("tileSize");
+            header.setTileDescription(Imf::TileDescription{
+                UnsignedInt(tileSize.x()),
+                UnsignedInt(tileSize.y()),
+                /* If we have just one level (because forceTiledOutput was
+                   set), don't save as a mipmapped file because then it would
+                   report all remaining levels as missing. */
+                /** @todo ripmaps? */
+                levelCount == 1 ? Imf::ONE_LEVEL : Imf::MIPMAP_LEVELS,
+                Imf::ROUND_DOWN}); /** @todo configurable? can't use a >> 1 then */
+
+            Imf::TiledOutputFile file{stream, header};
+            file.setFrameBuffer(framebuffer);
+
+            /* There doesn't seem to be a way to set level count, it's
+               implicitly from the base size and rounding mode. For sanity
+               check that we don't have more levels than the OpenEXR expects,
+               this is expected to be checked gracefully by the caller. OTOH if
+               we have less levels, the unwritten mips will get automatically
+               marked as incomplete. */
+            CORRADE_INTERNAL_ASSERT(file.numLevels() >= levelCount);
+
+            /* Generate pixels for each levels and write them. This implicitly
+               assumes that the first level is the largest and the remaining
+               levels are each 2x smaller with ROUND_DOWN, the callers are
+               checking for that to prevent garbled output. */
+            for(Int level = 0; level != levelCount; ++level) {
+                preparePixelsForLevel(level, pixels, state);
+                file.writeTiles(0, file.numXTiles(level) - 1, 0, file.numYTiles(level) - 1, level);
+            }
+        }
     }
 
     /* Convert the growable array back to a non-growable with the default
@@ -283,10 +326,10 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
 
 }
 
-Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D& image) {
+Containers::Array<char> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView2D> imageLevels) {
     if(configuration().value("envmap") == "latlong") {
-        if(image.size().x() != 2*image.size().y()) {
-            Error{} << "Trade::OpenExrImageConverter::convertToData(): a lat/long environment map has to have a 2:1 aspect ratio, got" << image.size();
+        if(imageLevels[0].size().x() != 2*imageLevels[0].size().y()) {
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): a lat/long environment map has to have a 2:1 aspect ratio, got" << imageLevels[0].size();
             return {};
         }
     } else if(!configuration().value("envmap").empty()) {
@@ -294,26 +337,51 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView2D
         return {};
     }
 
+    /* Verify that the image size gets divided by 2 in each level, rounded
+       down, all the way to a 1x1 pixel image. If the image is not square, the
+       shorter side stays at 1 px until the longer side gets there as well,
+       however there should be only one 1x1 level at most. */
+    for(std::size_t i = 1; i != imageLevels.size(); ++i) {
+        const Vector2i expectedSize = imageLevels[0].size() >> i;
+        if(expectedSize.isZero()) {
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): there can be only" << i << "levels with base image size" << imageLevels[0].size() << "but got" << imageLevels.size();
+            return {};
+        }
+        if(imageLevels[i].size() != Math::max(expectedSize, Vector2i{1})) {
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): size of image at level" << i << "expected to be" << Math::max(expectedSize, Vector2i{1}) << "but got" << imageLevels[i].size();
+            return {};
+        }
+    }
+
     /* According to my tests, Y flip could be done during image writing the
        same as when reading by supplying `std::size_t(-rowStride)`, as
        described in OpenExrImporter::doImage2D(). However, again, although it
        requires allocating a copy to perform the manual flip, I think it's the
        saner approach after all. */
-    Containers::Array<char> flippedData{NoInit, std::size_t(image.size().product()*image.pixelSize())};
-    const Containers::StridedArrayView3D<char> flippedPixels{flippedData, {
-        std::size_t(image.size().y()),
-        std::size_t(image.size().x()),
+    struct State {
+        Containers::ArrayView<const ImageView2D> imageLevels;
+        Containers::Array<char> flippedData;
+    } state{
+        imageLevels,
+        Containers::Array<char>{NoInit, std::size_t(imageLevels[0].size().product()*imageLevels[0].pixelSize())},
+    };
+    const Containers::StridedArrayView3D<char> flippedPixels{state.flippedData, {
+        std::size_t(imageLevels[0].size().y()),
+        std::size_t(imageLevels[0].size().x()),
         /* pixels() returns a zero stride if the view is empty, do that here as
            well to avoid hitting an assert inside copy() */
         /** @todo why?! figure out and fix */
-        image.size().isZero() ? 0 : image.pixelSize()
+        imageLevels[0].size().isZero() ? 0 : imageLevels[0].pixelSize()
     }};
-    Utility::copy(image.pixels().flipped<0>(), flippedPixels);
-
-    return convertToDataInternal(configuration(), image.format(), flippedPixels);
+    return convertToDataInternal(configuration(), imageLevels[0].format(), imageLevels.size(), [](Int level, const Containers::StridedArrayView3D<char>& flippedPixels, void* const data) {
+        State& state = *reinterpret_cast<State*>(data);
+        const Containers::StridedArrayView3D<const char> pixels = state.imageLevels[level].pixels();
+        const Containers::StridedArrayView3D<char> flippedPixelsForLevel = flippedPixels.prefix(pixels.size());
+        Utility::copy(pixels.flipped<0>(), flippedPixelsForLevel);
+    }, flippedPixels, &state);
 }
 
-Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView3D& image) {
+Containers::Array<char> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView3D> imageLevels) {
     /* Only cube map saving is supported right now, no deep data */
     if(configuration().value("envmap").empty()) {
         Error{} << "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, the envmap option has to be set to cube in the configuration in order to save a cube map";
@@ -321,10 +389,27 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView3D
     }
 
     if(configuration().value("envmap") == "cube") {
-        if(image.size().x() != image.size().y() || image.size().z() != 6) {
-            Error{} << "Trade::OpenExrImageConverter::convertToData(): a cubemap has to have six square slices, got" << image.size();
+        if(imageLevels[0].size().x() != imageLevels[0].size().y() || imageLevels[0].size().z() != 6) {
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): a cubemap has to have six square slices, got" << imageLevels[0].size();
             return {};
         }
+
+        /* Verify that the image size gets divided by 2 in each level, rounded
+           down, all the way to a 1x1 pixel image, but still with 6 slices. The
+           image has to be square so the additional complexity with rounding
+           up to 1 from the 2D case doesn't apply here. */
+        for(std::size_t i = 1; i != imageLevels.size(); ++i) {
+            const Vector3i expectedSize{imageLevels[0].size().xy() >> i, 6};
+            if(expectedSize.xy().isZero()) {
+                Error{} << "Trade::OpenExrImageConverter::convertToData(): there can be only" << i << "levels with base cubemap image size" << imageLevels[0].size() << "but got" << imageLevels.size();
+                return {};
+            }
+            if(imageLevels[i].size() != expectedSize) {
+                Error{} << "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level" << i << "expected to be" << expectedSize << "but got" << imageLevels[i].size();
+                return {};
+            }
+        }
+
     } else {
         Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown envmap option" << configuration().value("envmap") << "for a 3D image, expected either empty or latlong for 2D images and cube for 3D images";
         return {};
@@ -357,28 +442,39 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const ImageView3D
        This variant, which copies everything to a scratch memory first, doing
        desired flips in the process, is less efficient, but far easier to
        maintain. */
-    Containers::Array<char> flippedData{NoInit, std::size_t(image.size().product()*image.pixelSize())};
-    const Containers::StridedArrayView4D<const char> pixels = image.pixels();
-    const Containers::StridedArrayView4D<char> flippedPixels{flippedData, {
-        std::size_t(image.size().z()),
-        std::size_t(image.size().y()),
-        std::size_t(image.size().x()),
-        image.pixelSize()
+    struct State {
+        Containers::ArrayView<const ImageView3D> imageLevels;
+        Containers::Array<char> flippedData;
+    } state{
+        imageLevels,
+        Containers::Array<char>{NoInit, std::size_t(imageLevels[0].size().product()*imageLevels[0].pixelSize())}
+    };
+    /* A 2D framebuffer for OpenEXR. From this we have to recreate a 3D view
+       every time to access particular layers. Can't create a 3D view upfront
+       and slice it because it has to be contiguous in Y. */
+    Containers::StridedArrayView3D<char> flippedPixelsFlattened{state.flippedData, {
+        std::size_t(imageLevels[0].size().z()*imageLevels[0].size().y()),
+        std::size_t(imageLevels[0].size().x()),
+        imageLevels[0].pixelSize()
     }};
-    Utility::copy(pixels[0].flipped<1>(), flippedPixels[0]);
-    Utility::copy(pixels[1].flipped<1>(), flippedPixels[1]);
-    Utility::copy(pixels[2].flipped<0>(), flippedPixels[2]);
-    Utility::copy(pixels[3].flipped<0>(), flippedPixels[3]);
-    Utility::copy(pixels[4].flipped<1>(), flippedPixels[4]);
-    Utility::copy(pixels[5].flipped<1>(), flippedPixels[5]);
-
-    /* Turn this back into a 2D framebuffer for OpenEXR */
-    Containers::StridedArrayView3D<char> flippedPixelsFlattened{flippedData, {
-        std::size_t(image.size().z()*image.size().y()),
-        std::size_t(image.size().x()),
-        image.pixelSize()
-    }};
-    return convertToDataInternal(configuration(), image.format(), flippedPixelsFlattened);
+    return convertToDataInternal(configuration(), imageLevels[0].format(), imageLevels.size(), [](const Int level, const Containers::StridedArrayView3D<char>& flippedPixelsFlattened, void* const data) {
+        State& state = *reinterpret_cast<State*>(data);
+        const Containers::StridedArrayView4D<const char> pixels = state.imageLevels[level].pixels();
+        const Containers::StridedArrayView4D<char> flippedPixelsForLevel{
+            state.flippedData,
+            pixels.size(),
+            {flippedPixelsFlattened.stride()[0]*std::ptrdiff_t(pixels.size()[1]),
+             flippedPixelsFlattened.stride()[0],
+             flippedPixelsFlattened.stride()[1],
+             flippedPixelsFlattened.stride()[2]}
+        };
+        Utility::copy(pixels[0].flipped<1>(), flippedPixelsForLevel[0]);
+        Utility::copy(pixels[1].flipped<1>(), flippedPixelsForLevel[1]);
+        Utility::copy(pixels[2].flipped<0>(), flippedPixelsForLevel[2]);
+        Utility::copy(pixels[3].flipped<0>(), flippedPixelsForLevel[3]);
+        Utility::copy(pixels[4].flipped<1>(), flippedPixelsForLevel[4]);
+        Utility::copy(pixels[5].flipped<1>(), flippedPixelsForLevel[5]);
+    }, flippedPixelsFlattened, &state);
 }
 
 }}

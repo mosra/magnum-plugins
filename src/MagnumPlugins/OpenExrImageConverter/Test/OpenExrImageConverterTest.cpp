@@ -86,6 +86,15 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     void compressionCubeMap();
     void compressionInvalid();
 
+    void levels2D();
+    void levels2DIncomplete();
+    void levels2DInvalidLevelSize();
+    void levels2DInvalidTileSize();
+    void levelsCubeMap();
+    void levelsCubeMapIncomplete();
+    void levelsCubeMapInvalidLevelSize();
+    void levelsCubeMapInvalidLevelSlices();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _manager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
@@ -93,6 +102,15 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
 
 using namespace Containers::Literals;
 using namespace Math::Literals;
+
+const struct {
+    const char* name;
+    const char* filename;
+    bool tiled;
+} TiledData[] {
+    {"", "rgb16f.exr", false},
+    {"force tiled output", "rgb16f-tiled.exr", true}
+};
 
 const Half Rgb16fData[] = {
     /* Skip */
@@ -176,12 +194,23 @@ const struct {
     {"piz", 395, 426}
 };
 
+const struct {
+    const char* name;
+    const char* filename;
+    Vector2i tileSize;
+} Levels2DData[]{
+    {"", "levels2D.exr", {}},
+    {"custom tile size", "levels2D-tile1x1.exr", {1, 1}}
+};
+
 OpenExrImageConverterTest::OpenExrImageConverterTest() {
     addTests({&OpenExrImageConverterTest::wrongFormat,
-              &OpenExrImageConverterTest::conversionError,
+              &OpenExrImageConverterTest::conversionError});
 
-              &OpenExrImageConverterTest::rgb16f,
-              &OpenExrImageConverterTest::rgba32f,
+    addInstancedTests({&OpenExrImageConverterTest::rgb16f},
+        Containers::arraySize(TiledData));
+
+    addTests({&OpenExrImageConverterTest::rgba32f,
               &OpenExrImageConverterTest::rg32ui,
               &OpenExrImageConverterTest::depth32f,
 
@@ -209,6 +238,17 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
         Containers::arraySize(CompressionData));
 
     addTests({&OpenExrImageConverterTest::compressionInvalid});
+
+    addInstancedTests({&OpenExrImageConverterTest::levels2D},
+        Containers::arraySize(Levels2DData));
+
+    addTests({&OpenExrImageConverterTest::levels2DIncomplete,
+              &OpenExrImageConverterTest::levels2DInvalidLevelSize,
+              &OpenExrImageConverterTest::levels2DInvalidTileSize,
+              &OpenExrImageConverterTest::levelsCubeMap,
+              &OpenExrImageConverterTest::levelsCubeMapIncomplete,
+              &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize,
+              &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSlices});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -248,17 +288,34 @@ void OpenExrImageConverterTest::conversionError() {
 }
 
 void OpenExrImageConverterTest::rgb16f() {
-    const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Rgb16f);
+    auto&& data = TiledData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr"),
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    if(data.tiled)
+        converter->configuration().setValue("forceTiledOutput", true);
+
+    const auto out = converter->convertToData(Rgb16f);
+    CORRADE_COMPARE_AS((std::string{out, out.size()}),
+        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename),
         TestSuite::Compare::StringToFile);
+
+    /* By default we're exporting scanline files, so the metadata should
+       contain no tile-related information. */
+    if(!data.tiled) {
+        CORRADE_VERIFY(!Containers::StringView{arrayView(out)}.contains("tiles"_s));
+        CORRADE_VERIFY(!Containers::StringView{arrayView(out)}.contains("tiledesc"_s));
+    /* In case of a tiled file the imported data should show no difference, but
+       the metadata should contain tile-related information. */
+    } else {
+        CORRADE_VERIFY(Containers::StringView{arrayView(out)}.contains("tiles\0tiledesc"_s));
+    }
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(out));
 
     /* This is thoroughly tested in OpenExrImporter, do just a basic check of
        the contents and not the actual data layout */
@@ -722,6 +779,383 @@ void OpenExrImageConverterTest::compressionInvalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rgba32f));
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown compression zstd, allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab or empty for uncompressed output\n");
+}
+
+void OpenExrImageConverterTest::levels2D() {
+    auto&& data = Levels2DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+
+    /* There's not really a way to verify the config is applied except for
+       checking the output with exrheader, the imported data should be the same
+       for both. */
+    if(!data.tileSize.isZero()) {
+        converter->configuration().setValue("tileSize", data.tileSize);
+    }
+
+    /* Test that round down is done correctly and that the larger dimension is
+       used to calculate level count (otherwise image2 would have zero height).
+       Sizes divisible by two are tested in levelsCubeMap(). */
+    const Half data0[] = {
+         0.0_h,  1.0_h,  2.0_h,  3.0_h,  4.0_h,
+         5.0_h,  6.0_h,  7.0_h,  8.0_h,  9.0_h,
+        10.0_h, 11.0_h, 12.0_h, 13.0_h, 14.0_h
+    };
+    const Half data1[] = {
+        0.5_h, 2.5_h,
+    };
+    const Half data2[] = {
+        1.5_h
+    };
+    ImageView2D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 3}, data0};
+    ImageView2D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 1}, data1};
+    ImageView2D image2{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1}, data2};
+    Containers::Array<char> out = converter->convertToData({image0, image1, image2});
+    CORRADE_COMPARE_AS((std::string{out, out.size()}),
+        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename),
+        TestSuite::Compare::StringToFile);
+
+    if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
+
+    /* This is thoroughly tested in OpenExrImporter, do just a basic check of
+       the contents and not the actual data layout */
+    {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE_AS(*image, image0, DebugTools::CompareImage);
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE_AS(*image, image1, DebugTools::CompareImage);
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 2);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE_AS(*image, image2, DebugTools::CompareImage);
+    }
+}
+
+void OpenExrImageConverterTest::levels2DIncomplete() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+
+    /* Use nicely rounded sizes here to test this case as well */
+    const Half data0[] = {
+         0.0_h,  1.0_h,  2.0_h,  3.0_h,  4.0_h,
+         5.0_h,  6.0_h,  7.0_h,  8.0_h,  9.0_h,
+        10.0_h, 11.0_h, 12.0_h, 13.0_h, 14.0_h
+    };
+    const Half data1[] = {
+        0.5_h, 2.5_h,
+    };
+    ImageView2D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 3}, data0};
+    ImageView2D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 1}, data1};
+    Containers::Array<char> data = converter->convertToData({image0, image1});
+    CORRADE_COMPARE_AS((std::string{data, data.size()}),
+        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "levels2D-incomplete.exr"),
+        TestSuite::Compare::StringToFile);
+
+    if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+
+    /* This is thoroughly tested in OpenExrImporter, do just a basic check of
+       the contents and not the actual data layout */
+    {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE_AS(*image, image0, DebugTools::CompareImage);
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE_AS(*image, image1, DebugTools::CompareImage);
+    }
+}
+
+void OpenExrImageConverterTest::levels2DInvalidLevelSize() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+
+    const Half data[16];
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData({
+        ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 3}, data},
+        ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {3, 2}, data}
+    }));
+    /* Test also that it doesn't say "expected Vector(2, 0)" */
+    CORRADE_VERIFY(!converter->convertToData({
+        ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {8, 2}, data},
+        ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 1}, data},
+        ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1}, data},
+    }));
+    CORRADE_VERIFY(!converter->convertToData({
+        ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2}, data},
+        ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1}, data},
+        ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1}, data},
+    }));
+    CORRADE_COMPARE(out.str(),
+        "Trade::OpenExrImageConverter::convertToData(): size of image at level 1 expected to be Vector(2, 1) but got Vector(3, 2)\n"
+        "Trade::OpenExrImageConverter::convertToData(): size of image at level 2 expected to be Vector(2, 1) but got Vector(1, 1)\n"
+        "Trade::OpenExrImageConverter::convertToData(): there can be only 2 levels with base image size Vector(2, 2) but got 3\n");
+}
+
+void OpenExrImageConverterTest::levels2DInvalidTileSize() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    /* Force tiled output to avoid the need to invent two images */
+    converter->configuration().setValue("forceTiledOutput", true);
+    converter->configuration().setValue("tileSize", Vector2i{});
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData(Rgb16f));
+    CORRADE_COMPARE(out.str(),
+        "Trade::OpenExrImageConverter::convertToData(): conversion error: Cannot open image file \"\". Invalid tile size in image header.\n");
+}
+
+void OpenExrImageConverterTest::levelsCubeMap() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    converter->configuration().setValue("envmap", "cube");
+
+    const Half data0[]{
+         0.0_h,  1.0_h,  2.0_h,  3.0_h,
+         4.0_h,  5.0_h,  6.0_h,  7.0_h,
+         8.0_h,  9.0_h, 10.0_h, 11.0_h,
+        12.0_h, 13.0_h, 14.0_h, 15.0_h,
+
+        16.0_h, 17.0_h, 18.0_h, 19.0_h,
+        20.0_h, 21.0_h, 22.0_h, 23.0_h,
+        24.0_h, 25.0_h, 26.0_h, 27.0_h,
+        28.0_h, 29.0_h, 30.0_h, 31.0_h,
+
+        32.0_h, 33.0_h, 34.0_h, 35.0_h,
+        36.0_h, 37.0_h, 38.0_h, 39.0_h,
+        40.0_h, 41.0_h, 42.0_h, 43.0_h,
+        44.0_h, 45.0_h, 46.0_h, 47.0_h,
+
+        48.0_h, 49.0_h, 50.0_h, 51.0_h,
+        52.0_h, 53.0_h, 54.0_h, 55.0_h,
+        56.0_h, 57.0_h, 58.0_h, 59.0_h,
+        60.0_h, 61.0_h, 62.0_h, 63.0_h,
+
+        64.0_h, 65.0_h, 66.0_h, 67.0_h,
+        68.0_h, 69.0_h, 70.0_h, 71.0_h,
+        72.0_h, 73.0_h, 74.0_h, 75.0_h,
+        76.0_h, 77.0_h, 78.0_h, 79.0_h,
+
+        80.0_h, 81.0_h, 82.0_h, 83.0_h,
+        84.0_h, 85.0_h, 86.0_h, 87.0_h,
+        88.0_h, 89.0_h, 90.0_h, 91.0_h,
+        92.0_h, 93.0_h, 94.0_h, 95.0_h
+    };
+    const Half data1[]{
+         0.5_h,  2.5_h,  8.5_h, 10.5_h,
+        16.5_h, 18.5_h, 24.5_h, 26.5_h,
+        32.5_h, 34.5_h, 40.5_h, 42.5_h,
+        48.5_h, 50.5_h, 56.5_h, 58.5_h,
+        64.5_h, 66.5_h, 72.5_h, 74.5_h,
+        80.5_h, 82.5_h, 88.5_h, 90.5_h
+    };
+    const Half data2[]{
+         0.5_h,
+         4.5_h,
+         8.5_h,
+        12.5_h,
+        16.5_h,
+        20.5_h
+    };
+    ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0};
+    ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1};
+    ImageView3D image2{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data2};
+    Containers::Array<char> data = converter->convertToData({image0, image1, image2});
+    CORRADE_COMPARE_AS((std::string{data, data.size()}),
+        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr"),
+        TestSuite::Compare::StringToFile);
+
+    if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 3);
+
+    /* This is thoroughly tested in OpenExrImporter, do just a basic check of
+       the contents and not the actual data layout */
+    {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 0);
+        CORRADE_VERIFY(image);
+        /** @todo clean up once we can compare 3D images, or at least slice
+            them */
+        for(Int i = 0; i != 6; ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE_AS(
+                (ImageView2D{image->storage().setSkip({0, 0, i}), image->format(), image->size().xy(), image->data()}),
+                (ImageView2D{image0.storage().setSkip({0, 0, i}), image0.format(), image0.size().xy(), image0.data()}),
+                DebugTools::CompareImage);
+        }
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 1);
+        CORRADE_VERIFY(image);
+        /** @todo clean up once we can compare 3D images, or at least slice
+            them */
+        for(Int i = 0; i != 6; ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE_AS(
+                (ImageView2D{image->storage().setSkip({0, 0, i}), image->format(), image->size().xy(), image->data()}),
+                (ImageView2D{image1.storage().setSkip({0, 0, i}), image1.format(), image1.size().xy(), image1.data()}),
+                DebugTools::CompareImage);
+        }
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 2);
+        CORRADE_VERIFY(image);
+        /** @todo clean up once we can compare 3D images, or at least slice
+            them */
+        for(Int i = 0; i != 6; ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE_AS(
+                (ImageView2D{image->storage().setSkip({0, 0, i}), image->format(), image->size().xy(), image->data()}),
+                (ImageView2D{image2.storage().setSkip({0, 0, i}), image2.format(), image2.size().xy(), image2.data()}),
+                DebugTools::CompareImage);
+        }
+    }
+}
+
+void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    converter->configuration().setValue("envmap", "cube");
+
+    const Half data0[]{
+         0.0_h,  1.0_h,  2.0_h,  3.0_h,
+         4.0_h,  5.0_h,  6.0_h,  7.0_h,
+         8.0_h,  9.0_h, 10.0_h, 11.0_h,
+        12.0_h, 13.0_h, 14.0_h, 15.0_h,
+
+        16.0_h, 17.0_h, 18.0_h, 19.0_h,
+        20.0_h, 21.0_h, 22.0_h, 23.0_h,
+        24.0_h, 25.0_h, 26.0_h, 27.0_h,
+        28.0_h, 29.0_h, 30.0_h, 31.0_h,
+
+        32.0_h, 33.0_h, 34.0_h, 35.0_h,
+        36.0_h, 37.0_h, 38.0_h, 39.0_h,
+        40.0_h, 41.0_h, 42.0_h, 43.0_h,
+        44.0_h, 45.0_h, 46.0_h, 47.0_h,
+
+        48.0_h, 49.0_h, 50.0_h, 51.0_h,
+        52.0_h, 53.0_h, 54.0_h, 55.0_h,
+        56.0_h, 57.0_h, 58.0_h, 59.0_h,
+        60.0_h, 61.0_h, 62.0_h, 63.0_h,
+
+        64.0_h, 65.0_h, 66.0_h, 67.0_h,
+        68.0_h, 69.0_h, 70.0_h, 71.0_h,
+        72.0_h, 73.0_h, 74.0_h, 75.0_h,
+        76.0_h, 77.0_h, 78.0_h, 79.0_h,
+
+        80.0_h, 81.0_h, 82.0_h, 83.0_h,
+        84.0_h, 85.0_h, 86.0_h, 87.0_h,
+        88.0_h, 89.0_h, 90.0_h, 91.0_h,
+        92.0_h, 93.0_h, 94.0_h, 95.0_h
+    };
+    const Half data1[]{
+         0.5_h,  2.5_h,  8.5_h, 10.5_h,
+        16.5_h, 18.5_h, 24.5_h, 26.5_h,
+        32.5_h, 34.5_h, 40.5_h, 42.5_h,
+        48.5_h, 50.5_h, 56.5_h, 58.5_h,
+        64.5_h, 66.5_h, 72.5_h, 74.5_h,
+        80.5_h, 82.5_h, 88.5_h, 90.5_h
+    };
+    ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0};
+    ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1};
+    Containers::Array<char> out = converter->convertToData({image0, image1});
+    CORRADE_COMPARE_AS((std::string{out, out.size()}),
+        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube-incomplete.exr"),
+        TestSuite::Compare::StringToFile);
+
+    if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 2);
+
+    /* This is thoroughly tested in OpenExrImporter, do just a basic check of
+       the contents and not the actual data layout */
+    {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 0);
+        CORRADE_VERIFY(image);
+        /** @todo clean up once we can compare 3D images, or at least slice
+            them */
+        for(Int i = 0; i != 6; ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE_AS(
+                (ImageView2D{image->storage().setSkip({0, 0, i}), image->format(), image->size().xy(), image->data()}),
+                (ImageView2D{image0.storage().setSkip({0, 0, i}), image0.format(), image0.size().xy(), image0.data()}),
+                DebugTools::CompareImage);
+        }
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 1);
+        CORRADE_VERIFY(image);
+        /** @todo clean up once we can compare 3D images, or at least slice
+            them */
+        for(Int i = 0; i != 6; ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE_AS(
+                (ImageView2D{image->storage().setSkip({0, 0, i}), image->format(), image->size().xy(), image->data()}),
+                (ImageView2D{image1.storage().setSkip({0, 0, i}), image1.format(), image1.size().xy(), image1.data()}),
+                DebugTools::CompareImage);
+        }
+    }
+}
+
+void OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    converter->configuration().setValue("envmap", "cube");
+
+    const Half data[150];
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData({
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 5, 6}, data},
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {3, 3, 6}, data}
+    }));
+    /* Unlike with the 2D case, the slices have to be square so there's no
+       way this could say e.g. "expected Vector(2, 0, 6)" so that test is
+       omitted. */
+    CORRADE_VERIFY(!converter->convertToData({
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data},
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data},
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data},
+    }));
+    CORRADE_COMPARE(out.str(),
+        "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level 1 expected to be Vector(2, 2, 6) but got Vector(3, 3, 6)\n"
+        "Trade::OpenExrImageConverter::convertToData(): there can be only 2 levels with base cubemap image size Vector(2, 2, 6) but got 3\n");
+}
+
+void OpenExrImageConverterTest::levelsCubeMapInvalidLevelSlices() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    converter->configuration().setValue("envmap", "cube");
+
+    const Half data[96];
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData({
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data},
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {3, 3, 7}, data}
+    }));
+    CORRADE_COMPARE(out.str(),
+        "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level 1 expected to be Vector(2, 2, 6) but got Vector(3, 3, 7)\n");
 }
 
 }}}}

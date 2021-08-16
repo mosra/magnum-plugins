@@ -57,11 +57,18 @@ corrade_add_test(OpenExrImageConverterTest OpenExrImageConverterTest.cpp
         ../../OpenExrImporter/Test/depth32f-custom-channels.exr
         ../../OpenExrImporter/Test/rgb16f.exr
         ../../OpenExrImporter/Test/rgb16f-custom-windows.exr
+        ../../OpenExrImporter/Test/rgb16f-tiled.exr
         ../../OpenExrImporter/Test/rgba32f.exr
         ../../OpenExrImporter/Test/rgba32f-custom-channels.exr
         ../../OpenExrImporter/Test/rg32ui.exr
         ../../OpenExrImporter/Test/envmap-cube.exr
         ../../OpenExrImporter/Test/envmap-cube-custom-windows.exr
+
+        ../../OpenExrImporter/Test/levels2D.exr
+        ../../OpenExrImporter/Test/levels2D-tile1x1.exr
+        ../../OpenExrImporter/Test/levels2D-incomplete.exr
+        ../../OpenExrImporter/Test/levels-cube.exr
+        ../../OpenExrImporter/Test/levels-cube-incomplete.exr
         rb32f-custom-channels.exr
         envmap-latlong.exr)
 target_include_directories(OpenExrImageConverterTest PRIVATE

@@ -56,8 +56,8 @@ namespace Magnum { namespace Trade {
 @brief OpenEXR image converter plugin
 @m_since_latest_{plugins}
 
-Creates OpenEXR (`*.exr`) files from images with
-@ref PixelFormat::R16F / @relativeref{PixelFormat,RG16F} /
+Creates OpenEXR (`*.exr`) files from 2D and cubemap images with optional mip
+levels and @ref PixelFormat::R16F / @relativeref{PixelFormat,RG16F} /
 @relativeref{PixelFormat,RGB16F} / @relativeref{PixelFormat,RGBA16F},
 @ref PixelFormat::R32F / @relativeref{PixelFormat,RG32F} /
 @relativeref{PixelFormat,RGB32F} / @relativeref{PixelFormat,RGBA32F} or
@@ -178,6 +178,22 @@ In this case, the image is expected to have six rectangular faces.
 
 Creating deep images is not supported right now.
 
+@subsection Trade-OpenExrImageConverter-behavior-multilevel Multilevel images
+
+Both 2D and cube map images can be saved with multiple levels by using the list
+variants of @ref convertToFile() / @ref convertToData(). Largest level is
+expected to be first, with each following level having width and height divided
+by two, rounded down. Cube map images additionally have the restrictions
+specified above. OpenEXR has no builtin concept of an incomplete mip chain,
+unspecified levels at the end result in a file with missing tiles. This *may*
+cause problems with 3rd party tools, however the @ref OpenExrImporter detects
+such case and reports the file as having less levels.
+
+Multilevel images result in a tiled OpenEXR file, with a tile size taken from
+the @cb{.ini} tileSize @ce @ref Trade-OpenExrImporter-configuration "configuration option".
+Single-level images are implicitly written as scanline files, you can override
+that with the @cpp forceTiledOutput @ce option.
+
 @section Trade-OpenExrImageConverter-configuration Plugin-specific configuration
 
 It's possible to tune various options mainly for channel mapping through
@@ -195,8 +211,8 @@ class MAGNUM_OPENEXRIMAGECONVERTER_EXPORT OpenExrImageConverter: public Abstract
 
     private:
         MAGNUM_OPENEXRIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
-        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
-        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView3D& image) override;
+        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
+        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
 };
 
 }}

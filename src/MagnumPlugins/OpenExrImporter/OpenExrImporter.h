@@ -57,9 +57,10 @@ namespace Magnum { namespace Trade {
 @brief OpenEXR importer plugin
 @m_since_latest_{plugins}
 
-Supports single-part OpenEXR (`*.exr`) images with half-float, float and
-unsigned integer channels. You can use @ref OpenExrImageConverter to encode
-images into this format.
+Supports single-part scanline and tile-based OpenEXR (`*.exr`) 2D and cubemap
+images with optional mip levels and half-float, float and unsigned integer
+channels. You can use @ref OpenExrImageConverter to encode images into this
+format.
 
 @m_class{m-block m-success}
 
@@ -177,11 +178,34 @@ right view) can be imported by specifying the @cb{.ini} layer @ce
 Multipart and deep images are not supported right now --- only the first part /
 sample gets imported.
 
+@subsection Trade-OpenExrImporter-behavior-multilevel Multilevel images
+
+Tiled OpenEXR images with multiple mip levels are imported with the largest
+level first, with the size divided by 2 in each following level. For
+non-power-of-two sizes, the file format supports sizes rounded either up or
+down.
+
+The file format doesn't have a builtin way to describe level count for
+incomplete mip chains, instead the file can have some tiles missing. This is
+detected on import and empty levels at the end are not counted into the
+reported level count, with a message printed if @ref ImporterFlag::Verbose is
+enabled.
+
+[Ripmap](https://en.wikipedia.org/wiki/Anisotropic_filtering#An_improvement_on_isotropic_MIP_mapping)
+files are imported as a single-level image right now.
+
 @subsection Trade-OpenExrImporter-behavior-cubemap Cube and lat/lon environment maps
 
 A lat/long environment map is imported as a 2D image without any indication of
-its type. A cube map is imported as a 3D image with each face being one slice,
-in order +X, -X, +Y, -Y, +Z and -Z.
+its type.
+
+OpenEXR stores cubemaps as 2D images with the height being six times of its
+width. For convenience these are imported as a 3D image with each face being
+one slice, in order +X, -X, +Y, -Y, +Z and -Z. Cube maps can have mip levels as
+well, however because OpenEXR treats them internally as 2D images, it includes
+also levels with @cpp height < 6 @ce. Because those would result in a 3D image
+with zero height, the smallest levels are ignored, with a message printed if
+@ref ImporterFlag::Verbose is enabled.
 
 @section Trade-OpenExrImporter-configuration Plugin-specific configuration
 
@@ -207,8 +231,10 @@ class MAGNUM_OPENEXRIMPORTER_EXPORT OpenExrImporter: public AbstractImporter {
         MAGNUM_OPENEXRIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
 
         MAGNUM_OPENEXRIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_OPENEXRIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
         MAGNUM_OPENEXRIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
         MAGNUM_OPENEXRIMPORTER_LOCAL UnsignedInt doImage3DCount() const override;
+        MAGNUM_OPENEXRIMPORTER_LOCAL UnsignedInt doImage3DLevelCount(UnsignedInt id) override;
         MAGNUM_OPENEXRIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
 
         struct State;

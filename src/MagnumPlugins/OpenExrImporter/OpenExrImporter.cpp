@@ -45,6 +45,9 @@
 #include <ImfInputFile.h>
 #include <ImfIO.h>
 #include <ImfStandardAttributes.h>
+#include <ImfTiledInputFile.h>
+#include <ImfTiledOutputFile.h>
+#include <ImfTestFile.h>
 
 namespace Magnum { namespace Trade {
 
@@ -72,12 +75,20 @@ class MemoryIStream: public Imf::IStream {
         }
 
         bool read(char c[], const int n) override {
-            /* Sigh, couldn't you just query file size and then do bounds check
-               on your side?!?! */
-            if(_position + n > _data.size())
-                throw Iex::InputExc{"Reading past end of file."};
+            /* For some reason rawTileData() that does a very nasty checks for
+               missing mip levels is calling this function with a null pointer
+               (I assume it's due to the TileBuffer missing or whatever?) but
+               expects the seek to be performed and all that so just pretend
+               this is totally fine. */
+            if(c) {
+                /* Sigh, couldn't you just query file size and then do bounds
+                   check on your side?!?! */
+                if(_position + n > _data.size())
+                    throw Iex::InputExc{"Reading past end of file."};
 
-            std::memcpy(c, _data + _position, n);
+                std::memcpy(c, _data + _position, n);
+            }
+
             _position += n;
             return _position < _data.size();
         }
@@ -97,12 +108,17 @@ class MemoryIStream: public Imf::IStream {
 }
 
 struct OpenExrImporter::State {
-    explicit State(Containers::Array<char>&& data): data{std::move(data)}, stream{this->data}, file{stream} {}
+    explicit State(Containers::Array<char>&& data): data{std::move(data)}, stream{this->data} {}
 
     Containers::Array<char> data;
     MemoryIStream stream;
-    Imf::InputFile file;
+    /* There's always just one or the other so ideally this should be in some
+       sort of a union, but those are rather small (16 bytes) so it doesn't
+       matter much. */
+    Containers::Optional<Imf::InputFile> file;
+    Containers::Optional<Imf::TiledInputFile> tiledFile;
     bool isCubeMap;
+    Int completeLevelCount;
 };
 
 OpenExrImporter::OpenExrImporter(PluginManager::AbstractManager& manager, const std::string& plugin) : AbstractImporter{manager, plugin} {}
@@ -120,10 +136,37 @@ void OpenExrImporter::doOpenData(const Containers::ArrayView<const char> data) {
     Containers::Array<char> dataCopy{NoInit, data.size()};
     Utility::copy(data, dataCopy);
 
-    /* Open the file */
-    Containers::Pointer<State> state;
+    /* Set up the input stream using the MemoryIStream class above */
+    Containers::Pointer<State> state{InPlaceInit, std::move(dataCopy)};
+
+    /* Open the file. There's two kinds of files, scanline and tiled. Tiled
+       files support mipmaps. While tiled files can be opened through the
+       scanline interface, scanline files can't be opened through the tiled
+       interface and so it's not possible to have a single interface for
+       dealing with mipmaps and regular files. */
+    const Imf::Header* header;
     try {
-        state.emplace(std::move(dataCopy));
+        if(Imf::isTiledOpenExrFile(state->stream)) {
+            state->tiledFile.emplace(state->stream);
+
+            /* Ripmap files need extra care, we don't support those at the
+               moment. */
+            if(state->tiledFile->levelMode() == Imf::RIPMAP_LEVELS) {
+                Warning{} << "Trade::OpenExrImporter::openData(): ripmap files not supported, importing only the top level";
+                state->tiledFile = Containers::NullOpt;
+                state->stream.seekg(0);
+                state->file.emplace(state->stream);
+                state->completeLevelCount = 1;
+                header = &state->file->header();
+            } else {
+                state->completeLevelCount = state->tiledFile->numLevels();
+                header = &state->tiledFile->header();
+            }
+        } else {
+            state->file.emplace(state->stream);
+            state->completeLevelCount = 1;
+            header = &state->file->header();
+        }
     } catch(const Iex::BaseExc& e) {
         /* e.message() is only since 2.3.0, use what() for compatibility */
         Error{} << "Trade::OpenExrImporter::openData(): import error:" << e.what();
@@ -133,8 +176,96 @@ void OpenExrImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /** @todo thread setup */
     /** @todo multipart support */
 
-    /* Cube map files will be exposed as 3D images */
-    state->isCubeMap = Imf::hasEnvmap(state->file.header()) && Imf::envmap(state->file.header()) == Imf::ENVMAP_CUBE;
+    /* Cube map files will be exposed as 3D images. However, because they're
+       actually just a metadata bit slapped on a plain 2D image, guess what
+       happens when they're mipmapped! Yes of course, they get mipmapped even
+       PAST the point of 1x6, so at the end you'll end up with 1x3 and 1x1
+       levels that are absolutely useless. And because OpenEXR has no concept
+       of an incomplete mip chain, this is always the case. To point that out,
+       we print a verbose message. */
+    if(Imf::hasEnvmap(*header) && Imf::envmap(*header) == Imf::ENVMAP_CUBE) {
+        state->isCubeMap = true;
+        if(state->tiledFile) {
+            for(Int i = 0; i != state->tiledFile->numLevels(); ++i) {
+                if(state->tiledFile->levelHeight(i) < 6) {
+                    if(flags() >= ImporterFlag::Verbose) Debug{} << "Trade::OpenExrImporter::openData(): last" << state->tiledFile->numLevels() - i << "levels are too small to represent six cubemap faces (" << Debug::nospace << Vector2i{state->tiledFile->levelWidth(i), state->tiledFile->levelHeight(i)} << Debug::nospace <<"), capping at" << i << "levels";
+                    state->completeLevelCount = i;
+                    break;
+                }
+            }
+        }
+    } else state->isCubeMap = false;
+
+    /* OpenEXR has no concept of an incomplete mip chain (for example having no
+       4x4, 2x2 and 1x1 images), instead a level (or particular tiles in it)
+       can be missing. We'll ignore missing levels at the end, but still treat
+       missing levels in the middle and partially missing levels as import
+       error (which will fail with "Tile (a, b, c, d) is missing").
+
+       OF COURSE nothing is ever easy and there's just a SINGLE boolean getter
+       for whether the whole file is complete, with the docs suggesting that I
+       catch some stupid exception DURING A READ when a tile is missing. HAHA
+       FUCK, I NEED THAT SOONER THO. The info for particular tiles *is* there
+       (because that's how the exception gets thrown, eh?), but hidden in a
+       private struct, and even though I could use Imf::TileOffsets::readFrom()
+       to reparse this information from the file header and then go somewhat
+       sanely tile by tile, the corresponding include file isn't installed.
+
+       "Fortunately" there's rawTileData(). The docs are useless and after
+       wasting a ton of time deep in the sources, I realized that the only
+       thing it does is sequentially reading through the file and DISCOVERING
+       tiles and their coordinates as it goes:
+        https://github.com/AcademySoftwareFoundation/openexr/blob/v3.0.4/src/lib/OpenEXR/ImfTiledInputFile.cpp#L470-L474
+       And because the EXR file has the tile data at its very end, when this
+       thing reaches the end, it'll simply cause the MemoryIStream::read() to
+       throw up. Not to mention this function calls it with a NULL POINTER,
+       which is very amazing, very -- or is that because the TileBuffer thing
+       isn't initialized properly? Hmmm. OTOH that could mean all the data
+       actually aren't copied during the process, which would make it kinda
+       the same efficiency as TileOffsets::readFrom()?
+        https://github.com/AcademySoftwareFoundation/openexr/blob/v3.0.4/src/lib/OpenEXR/ImfTiledInputFile.cpp#L1408
+       */
+    if(state->tiledFile && !state->tiledFile->isComplete()) {
+        /** @todo BitArray */
+        Containers::Array<bool> tilesPresentInLevel{DirectInit, std::size_t(state->tiledFile->numLevels()), false};
+        try {
+            for(Int level = 0; level != state->tiledFile->numLevels(); ++level) {
+                for(Int y = 0; y != state->tiledFile->numYTiles(level); ++y) {
+                    for(Int x = 0; x != state->tiledFile->numXTiles(level); ++x) {
+                        /* For multipart files rawTileData() needs the actual
+                           tile index as it seeks, for single-part it ignores
+                           them and overwrites with whatever is there at that
+                           point. */
+                        Int dx = x, dy = y, lx = level, ly = level, pixelDataSize;
+                        const char* pixelData{};
+                        state->tiledFile->rawTileData(dx, dy, lx, ly, pixelData, pixelDataSize);
+
+                        /* If it didn't throw, mark this level as present */
+                        tilesPresentInLevel[lx] = true;
+                    }
+                }
+            }
+        } catch(const Iex::InputExc&) {
+            /* It gotta throw at some point, but we have nothing to do about
+               that */
+        }
+
+        /* Find the last level that has at least one tile (but at least one),
+           everything after is going to be cut away. In case of a cubemap the
+           level count might already be cut away, so print the message only if
+           we're cutting further than that. */
+        for(Int level = state->tiledFile->numLevels(); level > 0; --level) {
+            if(tilesPresentInLevel[level - 1]) {
+                if(level < state->completeLevelCount) {
+                    if(flags() & ImporterFlag::Verbose)
+                        Debug{} << "Trade::OpenExrImporter::openData(): last" << state->tiledFile->numLevels() - level << "levels are missing in the file, capping at" << level << "levels";
+                    state->completeLevelCount = level;
+                }
+
+                break;
+            }
+        }
+    }
 
     /* All good, save the state */
     _state = std::move(state);
@@ -142,14 +273,23 @@ void OpenExrImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
 namespace {
 
-Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGroup& configuration, Imf::InputFile& file, const char* messagePrefix) try {
-    const Imf::Header header = file.header();
-    const Imath::Box2i dataWindow = header.dataWindow();
+/* level = -1 means file is InputFile, non-negative value is TiledInputFile */
+Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGroup& configuration, Imf::GenericInputFile& file, const Int level, const char* messagePrefix) try {
+    const Imf::Header* header;
+    Imath::Box2i dataWindow;
+    if(level == -1) {
+        header = &static_cast<Imf::InputFile&>(file).header();
+        dataWindow = header->dataWindow();
+    } else {
+        auto& actual = static_cast<Imf::TiledInputFile&>(file);
+        header = &actual.header();
+        dataWindow = actual.dataWindowForLevel(level);
+    }
     const Vector2i size{dataWindow.max.x - dataWindow.min.x + 1,
                         dataWindow.max.y - dataWindow.min.y + 1};
 
     /* Figure out channel mapping */
-    const Imf::ChannelList& channels = header.channels();
+    const Imf::ChannelList& channels = header->channels();
     std::string mapping[]{
         configuration.value("r"),
         configuration.value("g"),
@@ -335,8 +475,15 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
     /* Sanity check, implied from the fact that the mappings are not empty */
     CORRADE_INTERNAL_ASSERT(framebuffer.begin() != framebuffer.end());
 
-    file.setFrameBuffer(framebuffer);
-    file.readPixels(dataWindow.min.y, dataWindow.max.y);
+    if(level == -1) {
+        auto& actual = static_cast<Imf::InputFile&>(file);
+        actual.setFrameBuffer(framebuffer);
+        actual.readPixels(dataWindow.min.y, dataWindow.max.y);
+    } else {
+        auto& actual = static_cast<Imf::TiledInputFile&>(file);
+        actual.setFrameBuffer(framebuffer);
+        actual.readTiles(0, actual.numXTiles(level) - 1, 0, actual.numYTiles(level) - 1, level);
+    }
 
     return Trade::ImageData2D{format, size, std::move(out)};
 
@@ -354,8 +501,19 @@ UnsignedInt OpenExrImporter::doImage2DCount() const {
     return _state->isCubeMap ? 0 : 1;
 }
 
-Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, UnsignedInt) {
-    Containers::Optional<ImageData2D> image = imageInternal(configuration(), _state->file, "Trade::OpenExrImporter::image2D():");
+UnsignedInt OpenExrImporter::doImage2DLevelCount(UnsignedInt) {
+    /* This gets called only if _state->isCubeMap is false (guarded by
+       doImage2DCount()) so we don't need to check for that here again */
+    return _state->completeLevelCount;
+}
+
+Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, const UnsignedInt level) {
+    Containers::Optional<ImageData2D> image;
+    if(_state->file) {
+        image = imageInternal(configuration(), *_state->file, -1, "Trade::OpenExrImporter::image2D():");
+    } else {
+        image = imageInternal(configuration(), *_state->tiledFile, level, "Trade::OpenExrImporter::image2D():");
+    }
 
     /* Let's stop here for a bit and contemplate on all the missed
        opportunities. The OpenEXR framebuffer contains mapping of particular
@@ -402,8 +560,19 @@ UnsignedInt OpenExrImporter::doImage3DCount() const {
     return _state->isCubeMap ? 1 : 0;
 }
 
-Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, UnsignedInt) {
-    Containers::Optional<ImageData2D> image2D = imageInternal(configuration(), _state->file, "Trade::OpenExrImporter::image3D():");
+UnsignedInt OpenExrImporter::doImage3DLevelCount(UnsignedInt) {
+    /* This gets called only if _state->isCubeMap is true (guarded by
+       doImage3DCount()) so we don't need to check for that here again */
+    return _state->completeLevelCount;
+}
+
+Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, const UnsignedInt level) {
+    Containers::Optional<ImageData2D> image2D;
+    if(_state->file) {
+        image2D = imageInternal(configuration(), *_state->file, -1, "Trade::OpenExrImporter::image3D():");
+    } else {
+        image2D = imageInternal(configuration(), *_state->tiledFile, level, "Trade::OpenExrImporter::image3D():");
+    }
     if(!image2D) return {};
 
     /* Compared to the (simple) 2D case, the cube map case is a lot more

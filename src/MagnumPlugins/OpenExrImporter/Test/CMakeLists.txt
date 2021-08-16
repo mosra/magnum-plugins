@@ -52,6 +52,9 @@ corrade_add_test(OpenExrImporterTest OpenExrImporterTest.cpp
         rg32ui.exr
         rgb16f.exr
         rgb16f-custom-windows.exr
+        rgb16f-tiled.exr
+        # exrmaketiled -r rgb16f.exr rgb16f-ripmap.exr
+        rgb16f-ripmap.exr
         rgba32f.exr
         rgba32f-custom-channels.exr
         # This one edited from rgba32f.exr by changing A channel type to UINT
@@ -60,7 +63,13 @@ corrade_add_test(OpenExrImporterTest OpenExrImporterTest.cpp
         depth32ui.exr
 
         envmap-cube.exr
-        envmap-cube-custom-windows.exr)
+        envmap-cube-custom-windows.exr
+
+        levels2D.exr
+        levels2D-tile1x1.exr
+        levels2D-incomplete.exr
+        levels-cube.exr
+        levels-cube-incomplete.exr)
 target_include_directories(OpenExrImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_OPENEXRIMPORTER_BUILD_STATIC)
     target_link_libraries(OpenExrImporterTest PRIVATE OpenExrImporter)

@@ -69,6 +69,11 @@ struct OpenExrImporterTest: TestSuite::Tester {
     void customChannelsDepthUnassigned();
     void customChannelsNoMatch();
 
+    void levels2D();
+    void levels2DIncomplete();
+    void levelsCubeMap();
+    void levelsCubeMapIncomplete();
+
     void openTwice();
     void importTwice();
 
@@ -81,9 +86,12 @@ using namespace Math::Literals;
 const struct {
     const char* name;
     const char* filename;
+    const char* message;
 } Rgb16fData[] {
-    {"", "rgb16f.exr"},
-    {"custom data/display window", "rgb16f-custom-windows.exr"},
+    {"", "rgb16f.exr", ""},
+    {"custom data/display window", "rgb16f-custom-windows.exr", ""},
+    {"tiled", "rgb16f-tiled.exr", ""},
+    {"ripmap", "rgb16f-ripmap.exr", "Trade::OpenExrImporter::openData(): ripmap files not supported, importing only the top level\n"}
 };
 
 const struct {
@@ -92,6 +100,49 @@ const struct {
 } CubeMapData[] {
     {"", "envmap-cube.exr"},
     {"custom data/display window", "envmap-cube-custom-windows.exr"},
+};
+
+const struct {
+    const char* name;
+    const char* filename;
+} Levels2DData[]{
+    {"", "levels2D.exr"},
+    {"custom tile size", "levels2D-tile1x1.exr"}
+};
+
+const struct {
+    const char* name;
+    const char* filename;
+    Int levelCount;
+    bool verbose;
+    const char* message;
+} Incomplete2DData[] {
+    {"", "levels2D.exr", 3, false,
+        ""},
+    {"incomplete", "levels2D-incomplete.exr", 2, false,
+        ""},
+    {"verbose", "levels2D.exr", 3, true,
+        ""},
+    {"incomplete, verbose", "levels2D-incomplete.exr", 2, true,
+        "Trade::OpenExrImporter::openData(): last 1 levels are missing in the file, capping at 2 levels\n"},
+};
+
+const struct {
+    const char* name;
+    const char* filename;
+    Int levelCount;
+    bool verbose;
+    const char* message;
+} IncompletelCubeMapData[] {
+    {"subpixel levels missing", "levels-cube.exr", 3, false,
+        ""},
+    {"subpixel levels missing, verbose", "levels-cube.exr", 3, true,
+        "Trade::OpenExrImporter::openData(): last 2 levels are too small to represent six cubemap faces (Vector(1, 3)), capping at 3 levels\n"},
+    {"larger levels missing", "levels-cube-incomplete.exr", 2, false,
+        ""},
+    {"larger levels missing, verbose", "levels-cube-incomplete.exr", 2, true,
+        "Trade::OpenExrImporter::openData(): last 2 levels are too small to represent six cubemap faces (Vector(1, 3)), capping at 3 levels\n"
+        "Trade::OpenExrImporter::openData(): last 3 levels are missing in the file, capping at 2 levels\n"},
 };
 
 OpenExrImporterTest::OpenExrImporterTest() {
@@ -121,9 +172,20 @@ OpenExrImporterTest::OpenExrImporterTest() {
               &OpenExrImporterTest::customChannelsFilled,
               &OpenExrImporterTest::customChannelsDepth,
               &OpenExrImporterTest::customChannelsDepthUnassigned,
-              &OpenExrImporterTest::customChannelsNoMatch,
+              &OpenExrImporterTest::customChannelsNoMatch});
 
-              &OpenExrImporterTest::openTwice,
+    addInstancedTests({&OpenExrImporterTest::levels2D},
+        Containers::arraySize(Levels2DData));
+
+    addInstancedTests({&OpenExrImporterTest::levels2DIncomplete},
+        Containers::arraySize(Incomplete2DData));
+
+    addTests({&OpenExrImporterTest::levelsCubeMap});
+
+    addInstancedTests({&OpenExrImporterTest::levelsCubeMapIncomplete},
+        Containers::arraySize(IncompletelCubeMapData));
+
+    addTests({&OpenExrImporterTest::openTwice,
               &OpenExrImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -179,10 +241,16 @@ void OpenExrImporterTest::rgb16f() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+    }
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(out.str(), data.message);
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16F);
 
@@ -478,6 +546,267 @@ void OpenExrImporterTest::customChannelsNoMatch() {
     /* The order is only because std::map orders keys and string orders
        alphabetically */
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {A, B, G, R}, to either {left.R, left.G, left.B, left.A} or left.Z, provide desired layer and/or channel names in plugin configuration\n");
+}
+
+void OpenExrImporterTest::levels2D() {
+    auto&& data = Levels2DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
+
+    {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{5, 3}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        /* Data should be aligned to 4 bytes, clear padding to a zero value for
+           predictable output. */
+        CORRADE_COMPARE(image->data().size(), 3*12);
+        Containers::ArrayView<char> imageData = image->mutableData();
+        imageData[0*12 + 10] = imageData[0*12 + 11] =
+            imageData[1*12 + 10] = imageData[1*12 + 11] =
+                imageData[2*12 + 10] = imageData[2*12 + 11] = 0;
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.0_h,  1.0_h,  2.0_h,  3.0_h,  4.0_h, {},
+             5.0_h,  6.0_h,  7.0_h,  8.0_h,  9.0_h, {},
+            10.0_h, 11.0_h, 12.0_h, 13.0_h, 14.0_h, {}
+        }), TestSuite::Compare::Container);
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{2, 1}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.5_h,  2.5_h
+        }), TestSuite::Compare::Container);
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 2);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        /* Data should be aligned to 4 bytes, clear padding to a zero value for
+           predictable output. */
+        CORRADE_COMPARE(image->data().size(), 4);
+        Containers::ArrayView<char> imageData = image->mutableData();
+        imageData[2] = imageData[3] = 0;
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             1.5_h, {}
+        }), TestSuite::Compare::Container);
+    }
+}
+
+void OpenExrImporterTest::levels2DIncomplete() {
+    auto&& data = Incomplete2DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+    }
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), data.levelCount);
+    CORRADE_COMPARE(out.str(), data.message);
+
+    /* The first two level should be the same as with levels2D() */
+    {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{5, 3}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        /* Data should be aligned to 4 bytes, clear padding to a zero value for
+           predictable output. */
+        CORRADE_COMPARE(image->data().size(), 3*12);
+        Containers::ArrayView<char> imageData = image->mutableData();
+        imageData[0*12 + 10] = imageData[0*12 + 11] =
+            imageData[1*12 + 10] = imageData[1*12 + 11] =
+                imageData[2*12 + 10] = imageData[2*12 + 11] = 0;
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.0_h,  1.0_h,  2.0_h,  3.0_h,  4.0_h, {},
+             5.0_h,  6.0_h,  7.0_h,  8.0_h,  9.0_h, {},
+            10.0_h, 11.0_h, 12.0_h, 13.0_h, 14.0_h, {}
+        }), TestSuite::Compare::Container);
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{2, 1}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.5_h,  2.5_h
+        }), TestSuite::Compare::Container);
+    }
+}
+
+void OpenExrImporterTest::levelsCubeMap() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr")));
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 3);
+
+    {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector3i{4, 4, 6}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.0_h,  1.0_h,  2.0_h,  3.0_h,
+             4.0_h,  5.0_h,  6.0_h,  7.0_h,
+             8.0_h,  9.0_h, 10.0_h, 11.0_h,
+            12.0_h, 13.0_h, 14.0_h, 15.0_h,
+
+            16.0_h, 17.0_h, 18.0_h, 19.0_h,
+            20.0_h, 21.0_h, 22.0_h, 23.0_h,
+            24.0_h, 25.0_h, 26.0_h, 27.0_h,
+            28.0_h, 29.0_h, 30.0_h, 31.0_h,
+
+            32.0_h, 33.0_h, 34.0_h, 35.0_h,
+            36.0_h, 37.0_h, 38.0_h, 39.0_h,
+            40.0_h, 41.0_h, 42.0_h, 43.0_h,
+            44.0_h, 45.0_h, 46.0_h, 47.0_h,
+
+            48.0_h, 49.0_h, 50.0_h, 51.0_h,
+            52.0_h, 53.0_h, 54.0_h, 55.0_h,
+            56.0_h, 57.0_h, 58.0_h, 59.0_h,
+            60.0_h, 61.0_h, 62.0_h, 63.0_h,
+
+            64.0_h, 65.0_h, 66.0_h, 67.0_h,
+            68.0_h, 69.0_h, 70.0_h, 71.0_h,
+            72.0_h, 73.0_h, 74.0_h, 75.0_h,
+            76.0_h, 77.0_h, 78.0_h, 79.0_h,
+
+            80.0_h, 81.0_h, 82.0_h, 83.0_h,
+            84.0_h, 85.0_h, 86.0_h, 87.0_h,
+            88.0_h, 89.0_h, 90.0_h, 91.0_h,
+            92.0_h, 93.0_h, 94.0_h, 95.0_h
+        }), TestSuite::Compare::Container);
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector3i{2, 2, 6}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.5_h,  2.5_h,  8.5_h, 10.5_h,
+            16.5_h, 18.5_h, 24.5_h, 26.5_h,
+            32.5_h, 34.5_h, 40.5_h, 42.5_h,
+            48.5_h, 50.5_h, 56.5_h, 58.5_h,
+            64.5_h, 66.5_h, 72.5_h, 74.5_h,
+            80.5_h, 82.5_h, 88.5_h, 90.5_h
+        }), TestSuite::Compare::Container);
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 2);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector3i{1, 1, 6}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        /* Data should be aligned to 4 bytes, clear padding to a zero value for
+           predictable output. */
+        CORRADE_COMPARE(image->data().size(), 6*4);
+        Containers::ArrayView<char> imageData = image->mutableData();
+        imageData[0*4 + 2] = imageData[0*4 + 3] =
+            imageData[1*4 + 2] = imageData[1*4 + 3] =
+                imageData[2*4 + 2] = imageData[2*4 + 3] =
+                    imageData[3*4 + 2] = imageData[3*4 + 3] =
+                        imageData[4*4 + 2] = imageData[4*4 + 3] =
+                            imageData[5*4 + 2] = imageData[5*4 + 3] = 0;
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.5_h, {},
+             4.5_h, {},
+             8.5_h, {},
+            12.5_h, {},
+            16.5_h, {},
+            20.5_h, {}
+        }), TestSuite::Compare::Container);
+    }
+}
+
+void OpenExrImporterTest::levelsCubeMapIncomplete() {
+    auto&& data = IncompletelCubeMapData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+    }
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), data.levelCount);
+    CORRADE_COMPARE(out.str(), data.message);
+
+    /* The first two level should be the same as with levelsCubeMap() */
+    {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector3i{4, 4, 6}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.0_h,  1.0_h,  2.0_h,  3.0_h,
+             4.0_h,  5.0_h,  6.0_h,  7.0_h,
+             8.0_h,  9.0_h, 10.0_h, 11.0_h,
+            12.0_h, 13.0_h, 14.0_h, 15.0_h,
+
+            16.0_h, 17.0_h, 18.0_h, 19.0_h,
+            20.0_h, 21.0_h, 22.0_h, 23.0_h,
+            24.0_h, 25.0_h, 26.0_h, 27.0_h,
+            28.0_h, 29.0_h, 30.0_h, 31.0_h,
+
+            32.0_h, 33.0_h, 34.0_h, 35.0_h,
+            36.0_h, 37.0_h, 38.0_h, 39.0_h,
+            40.0_h, 41.0_h, 42.0_h, 43.0_h,
+            44.0_h, 45.0_h, 46.0_h, 47.0_h,
+
+            48.0_h, 49.0_h, 50.0_h, 51.0_h,
+            52.0_h, 53.0_h, 54.0_h, 55.0_h,
+            56.0_h, 57.0_h, 58.0_h, 59.0_h,
+            60.0_h, 61.0_h, 62.0_h, 63.0_h,
+
+            64.0_h, 65.0_h, 66.0_h, 67.0_h,
+            68.0_h, 69.0_h, 70.0_h, 71.0_h,
+            72.0_h, 73.0_h, 74.0_h, 75.0_h,
+            76.0_h, 77.0_h, 78.0_h, 79.0_h,
+
+            80.0_h, 81.0_h, 82.0_h, 83.0_h,
+            84.0_h, 85.0_h, 86.0_h, 87.0_h,
+            88.0_h, 89.0_h, 90.0_h, 91.0_h,
+            92.0_h, 93.0_h, 94.0_h, 95.0_h
+        }), TestSuite::Compare::Container);
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector3i{2, 2, 6}));
+        CORRADE_COMPARE(image->format(), PixelFormat::R16F);
+
+        CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+             0.5_h,  2.5_h,  8.5_h, 10.5_h,
+            16.5_h, 18.5_h, 24.5_h, 26.5_h,
+            32.5_h, 34.5_h, 40.5_h, 42.5_h,
+            48.5_h, 50.5_h, 56.5_h, 58.5_h,
+            64.5_h, 66.5_h, 72.5_h, 74.5_h,
+            80.5_h, 82.5_h, 88.5_h, 90.5_h
+        }), TestSuite::Compare::Container);
+    }
 }
 
 void OpenExrImporterTest::openTwice() {
