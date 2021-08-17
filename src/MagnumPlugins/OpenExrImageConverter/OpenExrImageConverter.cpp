@@ -26,6 +26,7 @@
 #include "OpenExrImageConverter.h"
 
 #include <cstring>
+#include <thread> /* std::thread::hardware_concurrency(), sigh */
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -88,7 +89,7 @@ ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageC
 
 namespace {
 
-Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const PixelFormat format, const Int levelCount, void(*const preparePixelsForLevel)(Int, const Containers::StridedArrayView3D<char>&, void*), const Containers::StridedArrayView3D<char>& pixels, void* const state) try {
+Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const ImageConverterFlags flags, const PixelFormat format, const Int levelCount, void(*const preparePixelsForLevel)(Int, const Containers::StridedArrayView3D<char>&, void*), const Containers::StridedArrayView3D<char>& pixels, void* const state) try {
     /* Figure out type and channel count */
     Imf::PixelType type;
     std::size_t channelCount;
@@ -260,6 +261,20 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
         return {};
     }
 
+    /* Increase global thread count if it's not enough. Value of 0 means single
+       thread, while we use 1 for the same (consistent with BasisImageConverter and potential other plugins). */
+    Int threadCount = configuration.value<Int>("threads");
+    if(!threadCount) {
+        threadCount = std::thread::hardware_concurrency();
+        if(flags & ImageConverterFlag::Verbose)
+            Debug{} << "Trade::OpenExrImageConverter::convertToData(): autodetected hardware concurrency to" << threadCount << "threads";
+    }
+    if(Imf::globalThreadCount() < threadCount - 1) {
+        if(flags & ImageConverterFlag::Verbose)
+            Debug{} << "Trade::OpenExrImageConverter::convertToData(): increasing global OpenEXR thread pool from" << Imf::globalThreadCount() << "to" << threadCount - 1 << "extra worker threads";
+        Imf::setGlobalThreadCount(threadCount - 1);
+    }
+
     /* Play it safe and destruct everything before we touch the array */
     Containers::Array<char> data;
     {
@@ -268,7 +283,7 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
         /* Scanline output. Only if we have just one level and the output
            wasn't forced to be tiled. */
         if(levelCount == 1 && !configuration.value<bool>("forceTiledOutput")) {
-            Imf::OutputFile file{stream, header};
+            Imf::OutputFile file{stream, header, threadCount - 1};
             file.setFrameBuffer(framebuffer);
 
             /* For consistency, the pixels are assumed to be ready only after
@@ -289,7 +304,7 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
                 levelCount == 1 ? Imf::ONE_LEVEL : Imf::MIPMAP_LEVELS,
                 Imf::ROUND_DOWN}); /** @todo configurable? can't use a >> 1 then */
 
-            Imf::TiledOutputFile file{stream, header};
+            Imf::TiledOutputFile file{stream, header, threadCount - 1};
             file.setFrameBuffer(framebuffer);
 
             /* There doesn't seem to be a way to set level count, it's
@@ -373,7 +388,7 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const Containers:
         /** @todo why?! figure out and fix */
         imageLevels[0].size().isZero() ? 0 : imageLevels[0].pixelSize()
     }};
-    return convertToDataInternal(configuration(), imageLevels[0].format(), imageLevels.size(), [](Int level, const Containers::StridedArrayView3D<char>& flippedPixels, void* const data) {
+    return convertToDataInternal(configuration(), flags(), imageLevels[0].format(), imageLevels.size(), [](Int level, const Containers::StridedArrayView3D<char>& flippedPixels, void* const data) {
         State& state = *reinterpret_cast<State*>(data);
         const Containers::StridedArrayView3D<const char> pixels = state.imageLevels[level].pixels();
         const Containers::StridedArrayView3D<char> flippedPixelsForLevel = flippedPixels.prefix(pixels.size());
@@ -457,7 +472,7 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const Containers:
         std::size_t(imageLevels[0].size().x()),
         imageLevels[0].pixelSize()
     }};
-    return convertToDataInternal(configuration(), imageLevels[0].format(), imageLevels.size(), [](const Int level, const Containers::StridedArrayView3D<char>& flippedPixelsFlattened, void* const data) {
+    return convertToDataInternal(configuration(), flags(), imageLevels[0].format(), imageLevels.size(), [](const Int level, const Containers::StridedArrayView3D<char>& flippedPixelsFlattened, void* const data) {
         State& state = *reinterpret_cast<State*>(data);
         const Containers::StridedArrayView4D<const char> pixels = state.imageLevels[level].pixels();
         const Containers::StridedArrayView4D<char> flippedPixelsForLevel{

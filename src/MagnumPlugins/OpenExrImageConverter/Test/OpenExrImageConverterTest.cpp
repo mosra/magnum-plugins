@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <thread> /* std::thread::hardware_concurrency(), sigh */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
@@ -32,6 +33,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -94,6 +96,8 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     void levelsCubeMapIncomplete();
     void levelsCubeMapInvalidLevelSize();
     void levelsCubeMapInvalidLevelSlices();
+
+    void threads();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _manager{"nonexistent"};
@@ -203,6 +207,27 @@ const struct {
     {"custom tile size", "levels2D-tile1x1.exr", {1, 1}}
 };
 
+const struct {
+    const char* name;
+    Int threads;
+    bool verbose;
+    const char* message;
+} ThreadsData[]{
+    {"default", 1, true,
+        ""},
+    {"two, verbose", 2, true,
+        "Trade::OpenExrImageConverter::convertToData(): increasing global OpenEXR thread pool from 0 to 1 extra worker threads\n"},
+    {"three, quiet", 3, false,
+        ""},
+    /* This gets skipped if the detected thread count is not more than 3 as the
+       second message won't get printed then */
+    {"all, verbose", 0, true,
+        "Trade::OpenExrImageConverter::convertToData(): autodetected hardware concurrency to {} threads\n"
+        "Trade::OpenExrImageConverter::convertToData(): increasing global OpenEXR thread pool from 2 to {} extra worker threads\n"},
+    {"all, quiet", 0, false,
+        ""}
+};
+
 OpenExrImageConverterTest::OpenExrImageConverterTest() {
     addTests({&OpenExrImageConverterTest::wrongFormat,
               &OpenExrImageConverterTest::conversionError});
@@ -249,6 +274,14 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
               &OpenExrImageConverterTest::levelsCubeMapIncomplete,
               &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize,
               &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSlices});
+
+    /* Could be addInstancedBenchmarks() to verify there's a difference but
+       this would mean the test case gets skipped when CORRADE_NO_BENCHMARKS is
+       enabled for a faster build. OTOH the improvement on a 5x3 image would be
+       negative so that's useless to measure anyway. */
+    /** @todo some way to say "run this but not as a bechmark if those are
+        disabled"? */
+    addInstancedTests({&OpenExrImageConverterTest::threads}, Containers::arraySize(ThreadsData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -1156,6 +1189,35 @@ void OpenExrImageConverterTest::levelsCubeMapInvalidLevelSlices() {
     }));
     CORRADE_COMPARE(out.str(),
         "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level 1 expected to be Vector(2, 2, 6) but got Vector(3, 3, 7)\n");
+}
+
+void OpenExrImageConverterTest::threads() {
+    auto&& data = ThreadsData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Assuming the tests were run in order, if the autodetected thread count
+       is less than 3 then the message about increasing global thread pool size
+       won't be printed. Skip the test in that case. */
+    if(data.threads == 0 && std::thread::hardware_concurrency() <= 3 && data.verbose)
+        CORRADE_SKIP("Autodetected thread count less than expected, can't verify the full message.");
+
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    if(data.threads != 1)
+        converter->configuration().setValue("threads", data.threads);
+    if(data.verbose)
+        converter->addFlags(ImageConverterFlag::Verbose);
+
+    std::ostringstream out;
+    Debug redirectOutput{&out};
+    Containers::Array<char> outData = converter->convertToData(Rgb16f);
+
+    /* The file should be always the same, no need to test the contents */
+    CORRADE_COMPARE_AS((std::string{outData, outData.size()}),
+        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr"),
+        TestSuite::Compare::StringToFile);
+    CORRADE_COMPARE(out.str(), Utility::formatString(data.message,
+        std::thread::hardware_concurrency(),
+        std::thread::hardware_concurrency() - 1));
 }
 
 }}}}

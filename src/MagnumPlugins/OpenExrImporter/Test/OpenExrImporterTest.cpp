@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <thread> /* std::thread::hardware_concurrency(), sigh */
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/PluginManager/Manager.h>
@@ -33,6 +34,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Half.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -74,6 +76,8 @@ struct OpenExrImporterTest: TestSuite::Tester {
     void levels2DIncomplete();
     void levelsCubeMap();
     void levelsCubeMapIncomplete();
+
+    void threads();
 
     void openMemory();
     void openTwice();
@@ -147,6 +151,27 @@ const struct {
         "Trade::OpenExrImporter::openData(): last 3 levels are missing in the file, capping at 2 levels\n"},
 };
 
+const struct {
+    const char* name;
+    Int threads;
+    bool verbose;
+    const char* message;
+} ThreadsData[]{
+    {"default", 1, true,
+        ""},
+    {"two, verbose", 2, true,
+        "Trade::OpenExrImporter::openData(): increasing global OpenEXR thread pool from 0 to 1 extra worker threads\n"},
+    {"three, quiet", 3, false,
+        ""},
+    /* This gets skipped if the detected thread count is not more than 3 as the
+       second message won't get printed then */
+    {"all, verbose", 0, true,
+        "Trade::OpenExrImporter::openData(): autodetected hardware concurrency to {} threads\n"
+        "Trade::OpenExrImporter::openData(): increasing global OpenEXR thread pool from 2 to {} extra worker threads\n"},
+    {"all, quiet", 0, false,
+        ""}
+};
+
 /* Shared among all plugins that implement data copying optimizations */
 const struct {
     const char* name;
@@ -202,6 +227,15 @@ OpenExrImporterTest::OpenExrImporterTest() {
 
     addInstancedTests({&OpenExrImporterTest::levelsCubeMapIncomplete},
         Containers::arraySize(IncompletelCubeMapData));
+
+    /* Could be addInstancedBenchmarks() to verify there's a difference but
+       this would mean the test case gets skipped when CORRADE_NO_BENCHMARKS is
+       enabled for a faster build. OTOH the improvement on a 5x3 image would be
+       negative so that's useless to measure anyway. */
+    /** @todo some way to say "run this but not as a bechmark if those are
+        disabled"? */
+    addInstancedTests({&OpenExrImporterTest::threads},
+        Containers::arraySize(ThreadsData));
 
     addInstancedTests({&OpenExrImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -828,6 +862,51 @@ void OpenExrImporterTest::levelsCubeMapIncomplete() {
             80.5_h, 82.5_h, 88.5_h, 90.5_h
         }), TestSuite::Compare::Container);
     }
+}
+
+void OpenExrImporterTest::threads() {
+    auto&& data = ThreadsData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Assuming the tests were run in order, if the autodetected thread count
+       is less than 3 then the message about increasing global thread pool size
+       won't be printed. Skip the test in that case. */
+    if(data.threads == 0 && std::thread::hardware_concurrency() <= 3 && data.verbose)
+        CORRADE_SKIP("Autodetected thread count less than expected, can't verify the full message.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    if(data.threads != 1)
+        importer->configuration().setValue("threads", data.threads);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
+
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
+    }
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(out.str(), Utility::formatString(data.message,
+        std::thread::hardware_concurrency(),
+        std::thread::hardware_concurrency() - 1));
+    CORRADE_COMPARE(image->size(), Vector2i(1, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB16F);
+
+    /* Data should be aligned to 4 bytes, clear padding to a zero value for
+       predictable output. */
+    CORRADE_COMPARE(image->data().size(), 3*8);
+    Containers::ArrayView<char> imageData = image->mutableData();
+    imageData[0*8 + 6] = imageData[0*8 + 7] =
+        imageData[1*8 + 6] = imageData[1*8 + 7] =
+            imageData[2*8 + 6] = imageData[2*8 + 7] = 0;
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView<Half>({
+        0.0_h, 1.0_h, 2.0_h, {},
+        3.0_h, 4.0_h, 5.0_h, {},
+        6.0_h, 7.0_h, 8.0_h, {}
+    }), TestSuite::Compare::Container);
 }
 
 void OpenExrImporterTest::openMemory() {

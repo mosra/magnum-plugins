@@ -203,6 +203,21 @@ It's possible to tune various options mainly for channel mapping through
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
+
+@subsection Trade-OpenExrImageConverter-configuration-threads Enabling multithreading
+
+On Linux it may happen that setting the @cb{.ini} threads @ce option to
+something else than `1` will cause @ref std::system_error to be thrown (or,
+worst case, crashing with a null function pointer call on some systems).
+There's no way to solve this from within the dynamically loaded module itself,
+* *the application* has to be linked to `pthread` instead. With CMake it can be
+done like this:
+
+@code{.cmake}
+find_package(Threads REQUIRED)
+target_link_libraries(your-application PRIVATE Threads::Threads)
+@endcode
+
 */
 class MAGNUM_OPENEXRIMAGECONVERTER_EXPORT OpenExrImageConverter: public AbstractImageConverter {
     public:

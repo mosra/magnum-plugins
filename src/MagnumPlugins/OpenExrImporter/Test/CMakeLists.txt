@@ -23,6 +23,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# See OpenExrImporter.h for details -- the plugin itself can't be linked to
+# pthread, the app has to be instead
+find_package(Threads REQUIRED)
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(OPENEXRIMPORTER_TEST_DIR ".")
 else()
@@ -44,7 +48,11 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(OpenExrImporterTest OpenExrImporterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES
+        Magnum::Trade
+        # See OpenExrImporter.h for details -- the plugin itself can't be
+        # linked to pthread, the app has to be instead
+        Threads::Threads
     FILES
         # Most of these produced directly by OpenExrImageConverter
         depth32f.exr

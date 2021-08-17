@@ -26,6 +26,7 @@
 #include "OpenExrImporter.h"
 
 #include <cstring>
+#include <thread> /* std::thread::hardware_concurrency(), sigh */
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -144,6 +145,20 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
     /* Set up the input stream using the MemoryIStream class above */
     Containers::Pointer<State> state{InPlaceInit, std::move(dataCopy)};
 
+    /* Increase global thread count if it's not enough. Value of 0 means single
+       thread, while we use 1 for the same (consistent with BasisImageConverter and potential other plugins). */
+    Int threadCount = configuration().value<Int>("threads");
+    if(!threadCount) {
+        threadCount = std::thread::hardware_concurrency();
+        if(flags() & ImporterFlag::Verbose)
+            Debug{} << "Trade::OpenExrImporter::openData(): autodetected hardware concurrency to" << threadCount << "threads";
+    }
+    if(Imf::globalThreadCount() < threadCount - 1) {
+        if(flags() & ImporterFlag::Verbose)
+            Debug{} << "Trade::OpenExrImporter::openData(): increasing global OpenEXR thread pool from" << Imf::globalThreadCount() << "to" << threadCount - 1 << "extra worker threads";
+        Imf::setGlobalThreadCount(threadCount - 1);
+    }
+
     /* Open the file. There's two kinds of files, scanline and tiled. Tiled
        files support mipmaps. While tiled files can be opened through the
        scanline interface, scanline files can't be opened through the tiled
@@ -152,7 +167,7 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
     const Imf::Header* header;
     try {
         if(Imf::isTiledOpenExrFile(state->stream)) {
-            state->tiledFile.emplace(state->stream);
+            state->tiledFile.emplace(state->stream, threadCount - 1);
 
             /* Ripmap files need extra care, we don't support those at the
                moment. */
@@ -160,7 +175,7 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
                 Warning{} << "Trade::OpenExrImporter::openData(): ripmap files not supported, importing only the top level";
                 state->tiledFile = Containers::NullOpt;
                 state->stream.seekg(0);
-                state->file.emplace(state->stream);
+                state->file.emplace(state->stream, threadCount - 1);
                 state->completeLevelCount = 1;
                 header = &state->file->header();
             } else {
@@ -168,7 +183,7 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
                 header = &state->tiledFile->header();
             }
         } else {
-            state->file.emplace(state->stream);
+            state->file.emplace(state->stream, threadCount - 1);
             state->completeLevelCount = 1;
             header = &state->file->header();
         }
@@ -178,7 +193,6 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
         return;
     }
 
-    /** @todo thread setup */
     /** @todo multipart support */
 
     /* Cube map files will be exposed as 3D images. However, because they're
