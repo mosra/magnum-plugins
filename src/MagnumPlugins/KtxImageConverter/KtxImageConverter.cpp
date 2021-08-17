@@ -851,11 +851,12 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
 
     Utility::copy(dataFormatDescriptor, data.suffix(header.dfdByteOffset).prefix(header.dfdByteLength));
 
-    header.kvdByteOffset = offset;
-    header.kvdByteLength = keyValueData.size();
-    offset += header.kvdByteLength;
+    if(!keyValueData.empty()) {
+        header.kvdByteOffset = offset;
+        header.kvdByteLength = keyValueData.size();
     
-    Utility::copy(keyValueData, data.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
+        Utility::copy(keyValueData, data.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
+    }
 
     /* Endian-swap once we're done using the header data */
     Utility::Endianness::littleEndianInPlace(
