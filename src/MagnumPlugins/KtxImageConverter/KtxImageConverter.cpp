@@ -671,7 +671,6 @@ ImageConverterFeatures KtxImageConverter::doFeatures() const {
 template<UnsignedInt dimensions, template<UnsignedInt, typename> class View>
 Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels) {
     const auto format = imageLevels.front().format();
-
     if(isFormatImplementationSpecific(format)) {
         Error{} << "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported";
         return {};
@@ -690,8 +689,29 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
        Entries with an empty value won't be written. */
     using namespace Containers::Literals;
 
-    const std::string writerName = configuration().value("writerName");
+    const std::string orientation = configuration().value("orientation");
     const std::string swizzle = configuration().value("swizzle");
+    const std::string writerName = configuration().value("writerName");
+
+    if(!orientation.empty()) {
+        if(orientation.size() < dimensions) {
+            Error{} << "Trade::KtxImageConverter::convertToData(): invalid orientation length, expected at least" <<
+                dimensions << "but got" << orientation.size();
+            return {};
+        }
+
+        constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
+        for(UnsignedByte i = 0; i != dimensions; ++i) {
+            if(!validOrientations[i].contains(orientation[i])) {
+                /* Error{} prints char as int value so use StringViews to get
+                   text output */
+                Error{} << "Trade::KtxImageConverter::convertToData(): invalid character in orientation, expected" <<
+                    validOrientations[i].prefix(1) << "or" << validOrientations[i].suffix(1) <<
+                    "but got" << Containers::StringView{orientation}.suffix(i).prefix(1);
+                return {};
+            }
+        }
+    }
 
     if(!swizzle.empty() && swizzle.size() != 4) {
         Error{} << "Trade::KtxImageConverter::convertToData(): invalid swizzle length, expected 4 but got" << swizzle.size();
@@ -706,11 +726,7 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
 
     const Containers::Pair<Containers::StringView, Containers::StringView> keyValueMap[]{
         /* Origin left, bottom, back (increasing right, up, out) */
-        /** @todo KTX spec says "most other APIs and the majority of texture
-                  compression tools use [r, rd, rdi]".
-                  Should we just always flip image data? Maybe make this
-                  configurable. */
-        Containers::pair("KTXorientation"_s, "ruo"_s.prefix(dimensions)),
+        Containers::pair("KTXorientation"_s, Containers::StringView{orientation}.prefix(Math::min(size_t(dimensions), orientation.size()))),
         Containers::pair("KTXswizzle"_s, Containers::StringView{swizzle}),
         Containers::pair("KTXwriter"_s, Containers::StringView{writerName})
     };
