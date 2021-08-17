@@ -62,14 +62,15 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(BasisImageConverterTest BasisImageConverterTest.cpp
-    LIBRARIES Magnum::Trade Magnum::DebugTools
+    LIBRARIES
+        # See BasisImageConverter.h for details -- the plugin itself can't be
+        # linked to pthread, the app has to be instead
+        Magnum::Trade Magnum::DebugTools
+        Threads::Threads
     FILES
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgb-63x27.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-63x27.png)
 target_include_directories(BasisImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-# See BasisImageConverter.h for details -- the plugin itself can't be linked to
-# pthread, the app has to be instead
-target_link_libraries(BasisImageConverterTest PRIVATE Threads::Threads)
 if(MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(BasisImageConverterTest PRIVATE BasisImageConverter)
     if(Magnum_AnyImageImporter_FOUND)
