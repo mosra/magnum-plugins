@@ -62,6 +62,10 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void unsupportedCompressedFormat();
     void implementationSpecificFormat();
 
+    /* Non-default compressed pixel storage is currently not supported.
+       It's firing an internal assert, so we're not testing that. */
+    void pixelStorage();
+
     void tooManyLevels();
     void levelWrongSize();
 
@@ -120,6 +124,8 @@ KtxImageConverterTest::KtxImageConverterTest() {
               &KtxImageConverterTest::supportedCompressedFormat,
               &KtxImageConverterTest::unsupportedCompressedFormat,
               &KtxImageConverterTest::implementationSpecificFormat,
+
+              &KtxImageConverterTest::pixelStorage,
 
               &KtxImageConverterTest::tooManyLevels,
               &KtxImageConverterTest::levelWrongSize});
@@ -261,6 +267,35 @@ void KtxImageConverterTest::implementationSpecificFormat() {
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{storage, 0, 0, 1, {1, 1}, bytes}));
     CORRADE_COMPARE(out.str(),
         "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
+}
+
+
+void KtxImageConverterTest::pixelStorage() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+
+    constexpr UnsignedByte bytes[4*3]{
+        0, 1, 2, 3,
+        4, 5, 6, 7,
+        8, 9, 10, 11
+    };
+
+    PixelStorage storage;
+    storage.setAlignment(4);
+    storage.setSkip({1, 1, 0});
+
+    const ImageView2D inputImage{storage, PixelFormat::R8UI, {2, 2}, Containers::arrayView(bytes)};
+    const auto output = converter->convertToData(inputImage);
+    CORRADE_VERIFY(output);
+
+    if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openData(output));
+
+    const auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({5, 6, 9, 10}), TestSuite::Compare::Container);
 }
 
 void KtxImageConverterTest::tooManyLevels() {
