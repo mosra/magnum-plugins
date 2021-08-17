@@ -61,6 +61,7 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void supportedCompressedFormat();
     void unsupportedCompressedFormat();
     void implementationSpecificFormat();
+    void implementationSpecificCompressedFormat();
 
     /* Non-default compressed pixel storage is currently not supported.
        It's firing an internal assert, so we're not testing that. */
@@ -124,6 +125,7 @@ KtxImageConverterTest::KtxImageConverterTest() {
               &KtxImageConverterTest::supportedCompressedFormat,
               &KtxImageConverterTest::unsupportedCompressedFormat,
               &KtxImageConverterTest::implementationSpecificFormat,
+              &KtxImageConverterTest::implementationSpecificCompressedFormat,
 
               &KtxImageConverterTest::pixelStorage,
 
@@ -213,7 +215,7 @@ const CompressedPixelFormat UnsupportedCompressedFormats[]{
     CompressedPixelFormat::Astc6x6x5RGBAF,
     CompressedPixelFormat::Astc6x6x6RGBAUnorm,
     CompressedPixelFormat::Astc6x6x6RGBASrgb,
-    CompressedPixelFormat::Astc6x6x6RGBAF,
+    CompressedPixelFormat::Astc6x6x6RGBAF
 };
 
 void KtxImageConverterTest::supportedCompressedFormat() {
@@ -238,12 +240,15 @@ void KtxImageConverterTest::supportedCompressedFormat() {
 void KtxImageConverterTest::unsupportedCompressedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
+    const UnsignedByte bytes[32]{};
+
     for(CompressedPixelFormat format: UnsupportedCompressedFormats) {
         CORRADE_ITERATION(format);
+        CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= compressedBlockDataSize(CompressedPixelFormat(format)));
 
         std::ostringstream out;
         Error redirectError{&out};
-        CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{format, {1, 1}, {}}));
+        CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{format, {1, 1}, bytes}));
 
         /** @todo Is there no better way to do this? */
         std::ostringstream formattedOut;
@@ -269,6 +274,19 @@ void KtxImageConverterTest::implementationSpecificFormat() {
         "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
 }
 
+void KtxImageConverterTest::implementationSpecificCompressedFormat() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+
+    const UnsignedByte bytes[]{1};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CompressedPixelStorage storage;
+    CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{storage, 0, {1, 1}, bytes}));
+    CORRADE_COMPARE(out.str(),
+        "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
+}
 
 void KtxImageConverterTest::pixelStorage() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
@@ -336,11 +354,9 @@ void KtxImageConverterTest::pvrtcRgb() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
     const UnsignedByte bytes[16]{};
-
     const UnsignedInt dataSize = compressedBlockDataSize(data.inputFormat);
+    const Vector2i imageSize = { 2, 2 };
     CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= dataSize);
-
-    const Vector2i imageSize = {2, 2};
     CORRADE_INTERNAL_ASSERT((Vector3i{imageSize, 1}) <= compressedBlockSize(data.inputFormat));
 
     const CompressedImageView2D inputImage{data.inputFormat, imageSize, Containers::arrayView(bytes).prefix(dataSize)};
