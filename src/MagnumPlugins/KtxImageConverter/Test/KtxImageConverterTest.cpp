@@ -67,11 +67,18 @@ struct KtxImageConverterTest: TestSuite::Tester {
 
     void pvrtcRgb();
 
-    void configurationWriterName();
-    void configurationWriterNameEmpty();
+    void configurationOrientation();
+    void configurationOrientationLessDimensions();
+    void configurationOrientationEmpty();
+    void configurationOrientationInvalid();
     void configurationSwizzle();
     void configurationSwizzleEmpty();
     void configurationSwizzleInvalid();
+    void configurationWriterName();
+    void configurationWriterNameEmpty();
+
+    void configurationEmpty();
+    void configurationSorted();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -87,6 +94,16 @@ const struct {
     {"2bppSrgb", CompressedPixelFormat::PvrtcRGB2bppSrgb, CompressedPixelFormat::PvrtcRGBA2bppSrgb},
     {"4bppUnorm", CompressedPixelFormat::PvrtcRGB4bppUnorm, CompressedPixelFormat::PvrtcRGBA4bppUnorm},
     {"4bppSrgb", CompressedPixelFormat::PvrtcRGB4bppSrgb, CompressedPixelFormat::PvrtcRGBA4bppSrgb},
+};
+
+const struct {
+    const char* name;
+    const char* value;
+    const char* message;
+} InvalidOrientationData[]{
+    {"too short", "r", "invalid orientation length, expected at least 3 but got 1"},
+    {"invalid character", "xxx", "invalid character in orientation, expected r or l but got x"},
+    {"invalid order", "rid", "invalid character in orientation, expected d or u but got i"},
 };
 
 const struct {
@@ -110,13 +127,23 @@ KtxImageConverterTest::KtxImageConverterTest() {
     addInstancedTests({&KtxImageConverterTest::pvrtcRgb},
         Containers::arraySize(PvrtcRgbData));
 
-    addTests({&KtxImageConverterTest::configurationWriterName,
-              &KtxImageConverterTest::configurationWriterNameEmpty,
-              &KtxImageConverterTest::configurationSwizzle,
+    addTests({&KtxImageConverterTest::configurationOrientation,
+              &KtxImageConverterTest::configurationOrientationLessDimensions,
+              &KtxImageConverterTest::configurationOrientationEmpty});
+
+    addInstancedTests({&KtxImageConverterTest::configurationOrientationInvalid},
+        Containers::arraySize(InvalidOrientationData));
+
+    addTests({&KtxImageConverterTest::configurationSwizzle,
               &KtxImageConverterTest::configurationSwizzleEmpty});
 
     addInstancedTests({&KtxImageConverterTest::configurationSwizzleInvalid},
         Containers::arraySize(InvalidSwizzleData));
+
+    addTests({&KtxImageConverterTest::configurationWriterName,
+              &KtxImageConverterTest::configurationWriterNameEmpty,
+              &KtxImageConverterTest::configurationEmpty,
+              &KtxImageConverterTest::configurationSorted});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -310,31 +337,59 @@ Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) 
     return data;
 }
 
-void KtxImageConverterTest::configurationWriterName() {
+void KtxImageConverterTest::configurationOrientation() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     /* Default value */
-    CORRADE_COMPARE(converter->configuration().value("writerName"), "Magnum::KtxImageConverter");
-    CORRADE_VERIFY(converter->configuration().setValue("writerName", "KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"));
+    CORRADE_COMPARE(converter->configuration().value("orientation"), "ruo");
+    CORRADE_VERIFY(converter->configuration().setValue("orientation", "ldo"));
 
     const UnsignedByte bytes[4]{};
-    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    const auto data = converter->convertToData(ImageView3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, bytes});
     CORRADE_VERIFY(data);
 
     const auto keyValueData = readKeyValueData(data);
-    CORRADE_VERIFY(keyValueData.contains("KTXwriter\0KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"_s));
+    CORRADE_VERIFY(keyValueData.contains("KTXorientation\0ldo\0"_s));
 }
 
-void KtxImageConverterTest::configurationWriterNameEmpty() {
+void KtxImageConverterTest::configurationOrientationLessDimensions() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-    CORRADE_VERIFY(converter->configuration().setValue("writerName", ""));
+    /* Orientation string is shortened to the number of dimensions, extra characters are ignored */
+    CORRADE_VERIFY(converter->configuration().setValue("orientation", "rdxxx"));
 
     const UnsignedByte bytes[4]{};
     const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
     CORRADE_VERIFY(data);
 
-    /* Empty writer name doesn't write the key to the key/value data at all */
     const auto keyValueData = readKeyValueData(data);
-    CORRADE_VERIFY(!keyValueData.contains("KTXwriter"_s));
+    CORRADE_VERIFY(keyValueData.contains("KTXorientation\0rd\0"_s));
+}
+
+void KtxImageConverterTest::configurationOrientationEmpty() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("orientation", ""));
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    /* Empty orientation doesn't write the key to the key/value data at all */
+    const auto keyValueData = readKeyValueData(data);
+    CORRADE_VERIFY(!keyValueData.contains("KTXorientation"_s));
+}
+
+void KtxImageConverterTest::configurationOrientationInvalid() {
+    auto&& data = InvalidOrientationData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("orientation", data.value));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    const UnsignedByte bytes[4]{};
+    CORRADE_VERIFY(!converter->convertToData(ImageView3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, bytes}));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
 void KtxImageConverterTest::configurationSwizzle() {
@@ -348,7 +403,7 @@ void KtxImageConverterTest::configurationSwizzle() {
     CORRADE_VERIFY(data);
 
     const auto keyValueData = readKeyValueData(data);
-    CORRADE_VERIFY(keyValueData.contains("KTXswizzle\0rgba"_s));
+    CORRADE_VERIFY(keyValueData.contains("KTXswizzle\0rgba\0"_s));
 }
 
 void KtxImageConverterTest::configurationSwizzleEmpty() {
@@ -377,6 +432,73 @@ void KtxImageConverterTest::configurationSwizzleInvalid() {
     const UnsignedByte bytes[4]{};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes}));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
+}
+
+void KtxImageConverterTest::configurationWriterName() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    /* Default value */
+    CORRADE_COMPARE(converter->configuration().value("writerName"), "Magnum::KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("writerName", "KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"));
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    /* Writer doesn't have to be null-terminated, don't test for \0 */
+    const auto keyValueData = readKeyValueData(data);
+    CORRADE_VERIFY(keyValueData.contains("KTXwriter\0KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"_s));
+}
+
+void KtxImageConverterTest::configurationWriterNameEmpty() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("writerName", ""));
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    /* Empty writer name doesn't write the key to the key/value data at all */
+    const auto keyValueData = readKeyValueData(data);
+    CORRADE_VERIFY(!keyValueData.contains("KTXwriter"_s));
+}
+
+void KtxImageConverterTest::configurationEmpty() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().removeValue("writerName"));
+    CORRADE_VERIFY(converter->configuration().removeValue("swizzle"));
+    CORRADE_VERIFY(converter->configuration().removeValue("orientation"));
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(data.data());
+    CORRADE_COMPARE(header.kvdByteOffset, 0);
+    CORRADE_COMPARE(header.kvdByteLength, 0);
+}
+
+void KtxImageConverterTest::configurationSorted() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("writerName", "x"));
+    CORRADE_VERIFY(converter->configuration().setValue("swizzle", "barg"));
+    CORRADE_VERIFY(converter->configuration().setValue("orientation", "rd"));
+
+    const UnsignedByte bytes[4]{};
+    const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    const auto keyValueData = readKeyValueData(data);
+    const auto writerOffset = keyValueData.find("KTXwriter"_s);
+    const auto swizzleOffset = keyValueData.find("KTXswizzle"_s);
+    const auto orientationOffset = keyValueData.find("KTXorientation"_s);
+
+    CORRADE_VERIFY(!writerOffset.isEmpty());
+    CORRADE_VERIFY(!swizzleOffset.isEmpty());
+    CORRADE_VERIFY(!orientationOffset.isEmpty());
+
+    /* Entries are sorted alphabetically */
+    CORRADE_VERIFY(orientationOffset.begin() < swizzleOffset.begin());
+    CORRADE_VERIFY(swizzleOffset.begin() < writerOffset.begin());
 }
 
 }}}}
