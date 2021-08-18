@@ -26,6 +26,11 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+/** @file
+ * @brief Class @ref Magnum::Trade::KtxImporter
+ * @m_since_latest_{plugins}
+ */
+
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "MagnumPlugins/KtxImporter/configure.h"
@@ -48,6 +53,68 @@
 
 namespace Magnum { namespace Trade {
 
+/**
+@brief KTX2 image importer plugin
+@m_since_latest_{plugins}
+
+Supports Khronos Texture 2.0 images (`*.ktx2`).
+
+@section Trade-KtxImporter-usage Usage
+
+This plugin depends on the @ref Trade library and is built if
+`WITH_KTXIMPORTER` is enabled when building Magnum Plugins. To use as a dynamic
+plugin, load @cpp "KtxImporter" @ce via @ref Corrade::PluginManager::Manager.
+
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
+following:
+
+@code{.cmake}
+set(WITH_KTXIMPORTER ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+
+# So the dynamically loaded plugin gets built implicitly
+add_dependencies(your-app MagnumPlugins::KtxImporter)
+@endcode
+
+To use as a static plugin or as a dependency of another plugin with CMake, put
+[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+into your `modules/` directory, request the `KtxImporter` component of the
+`MagnumPlugins` package in CMake and link to the `MagnumPlugins::KtxImporter`
+target:
+
+@code{.cmake}
+find_package(MagnumPlugins REQUIRED KtxImporter)
+
+# ...
+target_link_libraries(your-app PRIVATE MagnumPlugins::KtxImporter)
+@endcode
+
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
+
+@section Trade-KtxImporter-behavior Behavior and limitations
+
+Imports images in the following formats:
+
+-   KTX2 with all uncompressed Vulkan formats that have an equivalent in
+    @ref PixelFormat, with component swizzling as necessary
+-   KTX2 with most compressed Vulkan formats that have an equivalent in
+    @ref CompressedPixelFormat. None of the 3D ASTC formats are supported.
+
+With compressed pixel formats, the image will not be flipped if the Y- or Z-axis
+orientation doesn't match the output orientation. The nontrivial amount of work
+involved with flipping block-compressed data makes this unfeasible. The import
+will succeed but a warning will be emitted.
+
+The importer recognizes @ref ImporterFlag::Verbose, printing additional info
+when the flag is enabled.
+
+@subsection Trade-KtxImporter-behavior-swizzle Swizzle support
+
+Explicit swizzling via the KTXswizzle header entry supports BGR and BGRA. Any
+other non-identity channel remapping is unsupported and results in an error.
+*/
 class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
     public:
         /** @brief Plugin manager constructor */
