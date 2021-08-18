@@ -56,14 +56,6 @@ namespace Magnum { namespace Trade { namespace Test { namespace {
 struct KtxImporterTest: TestSuite::Tester {
     explicit KtxImporterTest();
 
-    /** @todo - combined mip + array textures
-              - cube face order to match GL expectations
-              - all formats should be supported
-              - depth/stencil formats
-              - orientation flips (+ cubes?)
-              - larger formats
-    */
-
     void openShort();
 
     void invalid();
@@ -72,17 +64,25 @@ struct KtxImporterTest: TestSuite::Tester {
 
     void texture();
 
+    void imageRgba();
+    void imageRgb32U();
+    void imageRgb32F();
+    void imageDepthStencil();
+
     void image1D();
     void image1DMipmaps();
     void image1DLayers();
     void image1DCompressed();
+    void image1DCompressedMipmaps();
 
     void image2D();
-    void image2DRgba();
     void image2DMipmaps();
     void image2DMipmapsIncomplete();
     void image2DLayers();
+    void image2DMipmapsAndLayers();
     void image2DCompressed();
+    void image2DCompressedMipmaps();
+    void image2DCompressedLayers();
 
     void imageCubeMapIncomplete();
     void imageCubeMap();
@@ -92,13 +92,15 @@ struct KtxImporterTest: TestSuite::Tester {
     void image3D();
     void image3DMipmaps();
     void image3DLayers();
+    void image3DCompressed();
+    /** @todo Compressed 3D image with mipmaps */
 
     void keyValueDataEmpty();
     void keyValueDataInvalid();
     void keyValueDataInvalidIgnored();
 
     void orientationInvalid();
-    void orientationFlip();
+    void orientationFlip(); /** @todo */
     void orientationFlipCompressed();
 
     void swizzle();
@@ -136,6 +138,32 @@ const Color4ub PatternRgba2DData[3][4]{
     {PatternRgbData[0][0][0], PatternRgbData[0][0][1], PatternRgbData[0][0][2], PatternRgbData[0][0][3]},
     {PatternRgbData[0][1][0], PatternRgbData[0][1][1], PatternRgbData[0][1][2], PatternRgbData[0][1][3]},
     {PatternRgbData[0][2][0], PatternRgbData[0][2][1], PatternRgbData[0][2][2], PatternRgbData[0][2][3]}
+};
+
+constexpr UnsignedByte PatternStencil8UIData[4*3]{
+    1,  2,  3,  4,
+    5,  6,  7,  8,
+    9, 10, 11, 12
+};
+
+constexpr UnsignedShort PatternDepth16UnormData[4*3]{
+    0xff01, 0xff02, 0xff03, 0xff04,
+    0xff05, 0xff06, 0xff07, 0xff08,
+    0xff09, 0xff10, 0xff11, 0xff12
+};
+
+constexpr UnsignedInt PatternDepth24UnormStencil8UIData[4*3]{
+    0xffffff01, 0xffffff02, 0xffffff03, 0xffffff04,
+    0xffffff05, 0xffffff06, 0xffffff07, 0xffffff08,
+    0xffffff09, 0xffffff10, 0xffffff11, 0xffffff12
+};
+
+constexpr UnsignedLong HalfL = 0x7f7f7f7f7f7f7f7f;
+constexpr UnsignedLong FullL = 0xffffffffffffffff;
+constexpr UnsignedLong PatternDepth32FStencil8UIData[4*3]{
+    0,     0,     0, HalfL,
+    0, FullL, FullL, HalfL,
+    0, FullL,     0, FullL
 };
 
 const struct {
@@ -226,6 +254,18 @@ const struct {
 const struct {
     const char* name;
     const char* file;
+    const PixelFormat format;
+    const Containers::ArrayView<const char> data;
+} DepthStencilImageData[]{
+    {"Stencil8UI", "2d-s8.ktx2", PixelFormat::Stencil8UI, Containers::arrayCast<const char>(PatternStencil8UIData)},
+    {"Depth16Unorm", "2d-d16.ktx2", PixelFormat::Depth16Unorm, Containers::arrayCast<const char>(PatternDepth16UnormData)},
+    {"Depth24UnormStencil8UI", "2d-d24s8.ktx2", PixelFormat::Depth24UnormStencil8UI, Containers::arrayCast<const char>(PatternDepth24UnormStencil8UIData)},
+    {"Depth32FStencil8UI", "2d-d32fs8.ktx2", PixelFormat::Depth32FStencil8UI, Containers::arrayCast<const char>(PatternDepth32FStencil8UIData)}
+};
+
+const struct {
+    const char* name;
+    const char* file;
     const CompressedPixelFormat format;
     const Math::Vector<1, Int> size;
 } CompressedImage1DData[]{
@@ -245,7 +285,8 @@ const struct {
     {"BC3", "2d-compressed-bc3.ktx2", CompressedPixelFormat::Bc3RGBASrgb, {8, 8}},
     {"BC4", "2d-compressed-bc4.ktx2", CompressedPixelFormat::Bc4RUnorm, {8, 8}},
     {"BC5", "2d-compressed-bc5.ktx2", CompressedPixelFormat::Bc5RGUnorm, {8, 8}},
-    {"ETC2", "2d-compressed-etc2.ktx2", CompressedPixelFormat::Etc2RGB8Srgb, {9, 10}}
+    {"ETC2", "2d-compressed-etc2.ktx2", CompressedPixelFormat::Etc2RGB8Srgb, {9, 10}},
+    {"ASTC", "2d-compressed-astc.ktx2", CompressedPixelFormat::Astc12x10RGBASrgb, {9, 10}}
 };
 
 using namespace Containers::Literals;
@@ -353,6 +394,13 @@ KtxImporterTest::KtxImporterTest() {
     addInstancedTests({&KtxImporterTest::texture},
         Containers::arraySize(TextureData));
 
+    addTests({&KtxImporterTest::imageRgba,
+              &KtxImporterTest::imageRgb32U,
+              &KtxImporterTest::imageRgb32F});
+
+    addInstancedTests({&KtxImporterTest::imageDepthStencil},
+        Containers::arraySize(DepthStencilImageData));
+
     addTests({&KtxImporterTest::image1D,
               &KtxImporterTest::image1DMipmaps,
               &KtxImporterTest::image1DLayers});
@@ -360,16 +408,21 @@ KtxImporterTest::KtxImporterTest() {
     addInstancedTests({&KtxImporterTest::image1DCompressed},
         Containers::arraySize(CompressedImage1DData));
 
-    addTests({&KtxImporterTest::image2D,
-              &KtxImporterTest::image2DRgba,
+    addTests({&KtxImporterTest::image1DCompressedMipmaps,
+
+              &KtxImporterTest::image2D,
               &KtxImporterTest::image2DMipmaps,
               &KtxImporterTest::image2DMipmapsIncomplete,
-              &KtxImporterTest::image2DLayers});
+              &KtxImporterTest::image2DLayers,
+              &KtxImporterTest::image2DMipmapsAndLayers});
 
     addInstancedTests({&KtxImporterTest::image2DCompressed},
         Containers::arraySize(CompressedImage2DData));
 
-    addTests({&KtxImporterTest::imageCubeMapIncomplete,
+    addTests({&KtxImporterTest::image2DCompressedMipmaps,
+              &KtxImporterTest::image2DCompressedLayers,
+
+              &KtxImporterTest::imageCubeMapIncomplete,
               &KtxImporterTest::imageCubeMap,
               &KtxImporterTest::imageCubeMapLayers,
               &KtxImporterTest::imageCubeMapMipmaps,
@@ -377,6 +430,7 @@ KtxImporterTest::KtxImporterTest() {
               &KtxImporterTest::image3D,
               &KtxImporterTest::image3DMipmaps,
               &KtxImporterTest::image3DLayers,
+              &KtxImporterTest::image3DCompressed,
 
               &KtxImporterTest::keyValueDataEmpty});
 
@@ -560,6 +614,121 @@ void KtxImporterTest::texture() {
     CORRADE_COMPARE(counts[dimensions - 1], total);
 }
 
+void KtxImporterTest::imageRgba() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
+
+    const PixelStorage storage = image->storage();
+    CORRADE_COMPARE(storage.alignment(), 4);
+    CORRADE_COMPARE(storage.rowLength(), 0);
+    CORRADE_COMPARE(storage.imageHeight(), 0);
+    CORRADE_COMPARE(storage.skip(), Vector3i{});
+
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgba2DData), TestSuite::Compare::Container);
+}
+
+void KtxImporterTest::imageRgb32U() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb32.ktx2")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB32UI);
+    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
+
+    const PixelStorage storage = image->storage();
+    CORRADE_COMPARE(storage.alignment(), 4);
+    CORRADE_COMPARE(storage.rowLength(), 0);
+    CORRADE_COMPARE(storage.imageHeight(), 0);
+    CORRADE_COMPARE(storage.skip(), Vector3i{});
+
+    /* Output of PVRTexTool with format conversion. This is PatternRgbData[0],
+       but each byte extended to uint by just repeating the byte 4 times. */
+    constexpr UnsignedInt Half = 0x7f7f7f7f;
+    constexpr Math::Color3<UnsignedInt> content[4*3]{
+        {~0u,   0,   0}, {~0u, ~0u, ~0u}, {   0, 0,    0}, {   0, ~0u,    0},
+        {~0u, ~0u, ~0u}, {~0u,   0,   0}, {   0, 0,    0}, {   0, ~0u,    0},
+        {  0,   0, ~0u}, {  0, ~0u,   0}, {Half, 0, Half}, {Half,   0, Half}
+    };
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Math::Color3<UnsignedInt>>(image->data()),
+        Containers::arrayView(content), TestSuite::Compare::Container);
+}
+
+void KtxImporterTest::imageRgb32F() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgbf32.ktx2")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB32F);
+    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
+
+    const PixelStorage storage = image->storage();
+    CORRADE_COMPARE(storage.alignment(), 4);
+    CORRADE_COMPARE(storage.rowLength(), 0);
+    CORRADE_COMPARE(storage.imageHeight(), 0);
+    CORRADE_COMPARE(storage.skip(), Vector3i{});
+
+    /* Output of PVRTexTool with format conversion. This is PatternRgbData[0],
+       but each byte mapped to the range 0.0 - 1.0. */
+    constexpr Float Half = 127.0f/255.0f;
+    constexpr Math::Color3<Float> content[4*3]{
+        {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
+        {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {Half, 0.0f, Half}, {Half, 0.0f, Half}
+    };
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Math::Color3<Float>>(image->data()),
+        Containers::arrayView(content), TestSuite::Compare::Container);
+}
+
+void KtxImporterTest::imageDepthStencil() {
+    auto&& data = DepthStencilImageData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file)));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), data.format);
+    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
+
+    const PixelStorage storage = image->storage();
+    CORRADE_COMPARE(storage.alignment(), 4);
+    CORRADE_COMPARE(storage.rowLength(), 0);
+    CORRADE_COMPARE(storage.imageHeight(), 0);
+    CORRADE_COMPARE(storage.skip(), Vector3i{});
+
+    CORRADE_COMPARE_AS(image->data(), data.data, TestSuite::Compare::Container);
+}
+
 void KtxImporterTest::image1D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d.ktx2")));
@@ -686,6 +855,38 @@ void KtxImporterTest::image1DCompressed() {
         TestSuite::Compare::StringToFile);
 }
 
+void KtxImporterTest::image1DCompressedMipmaps() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d-compressed-mipmaps.ktx2")));
+
+    CORRADE_COMPARE(importer->image1DCount(), 1);
+    CORRADE_COMPARE(importer->image1DLevelCount(0), 3);
+
+    Math::Vector<1, Int> mipSize{7};
+    for(UnsignedInt i = 0; i != importer->image1DLevelCount(0); ++i) {
+        CORRADE_ITERATION(i);
+
+        auto image = importer->image1D(0, i);
+        CORRADE_VERIFY(image);
+
+        CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
+        CORRADE_COMPARE(image->size(), mipSize);
+
+        const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
+        const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
+        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
+        /* This is suboptimal because when generating ground-truth data with
+           --save-diagnostic the test needs to be run 4 times to save all mips.
+           But hopefully this won't really be necessary. */
+        CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
+            Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::formatString("1d-compressed-mipmaps-mip{}.bin", i)),
+            TestSuite::Compare::StringToFile);
+
+        mipSize = Math::max(mipSize >> 1, 1);
+    }
+}
+
 void KtxImporterTest::image2D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
@@ -707,29 +908,6 @@ void KtxImporterTest::image2D() {
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
     CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgbData[0]), TestSuite::Compare::Container);
-}
-
-void KtxImporterTest::image2DRgba() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2")));
-
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
-
-    auto image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
-
-    const PixelStorage storage = image->storage();
-    CORRADE_COMPARE(storage.alignment(), 4);
-    CORRADE_COMPARE(storage.rowLength(), 0);
-    CORRADE_COMPARE(storage.imageHeight(), 0);
-    CORRADE_COMPARE(storage.skip(), Vector3i{});
-
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgba2DData), TestSuite::Compare::Container);
 }
 
 void KtxImporterTest::image2DMipmaps() {
@@ -819,6 +997,54 @@ void KtxImporterTest::image2DLayers() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgbData), TestSuite::Compare::Container);
 }
 
+void KtxImporterTest::image2DMipmapsAndLayers() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps-and-layers.ktx2")));
+
+    const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(PatternRgbData));
+    /* Mip data generated by PVRTexTool since it doesn't allow specifying our
+       own mip data. toktx doesn't seem to support array textures at all, so
+       this is our best option. Colors were extracted with an external viewer. */
+    const Color3ub mip1[2*1*3]{
+        0x0000ff_rgb, 0x7f007f_rgb,
+        0x0000ff_rgb, 0x7f007f_rgb,
+        0x000000_rgb, 0x000000_rgb
+    };
+    const Color3ub mip2[1*1*3]{
+        0x0000ff_rgb,
+        0x0000ff_rgb,
+        0x000000_rgb
+    };
+    const Containers::ArrayView<const Color3ub> mipViews[3]{mip0, mip1, mip2};
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), Containers::arraySize(mipViews));
+
+    Vector2i mipSize{4, 3};
+    for(UnsignedInt i = 0; i != importer->image3DLevelCount(0); ++i) {
+        CORRADE_ITERATION(i);
+
+        auto image = importer->image3D(0, i);
+        CORRADE_VERIFY(image);
+
+        CORRADE_VERIFY(!image->isCompressed());
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector3i{mipSize, 3}));
+
+        const PixelStorage storage = image->storage();
+        /* Alignment is 4 when row length is a multiple of 4 */
+        const Int alignment = ((mipSize.x()*image->pixelSize())%4 == 0) ? 4 : 1;
+        CORRADE_COMPARE(storage.alignment(), alignment);
+        CORRADE_COMPARE(storage.rowLength(), 0);
+        CORRADE_COMPARE(storage.imageHeight(), 0);
+        CORRADE_COMPARE(storage.skip(), Vector3i{});
+
+        CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(mipViews[i]), TestSuite::Compare::Container);
+
+        mipSize = Math::max(mipSize >> 1, 1);
+    }
+}
+
 void KtxImporterTest::image2DCompressed() {
     auto&& data = CompressedImage2DData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -846,6 +1072,57 @@ void KtxImporterTest::image2DCompressed() {
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
     CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
         Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::Directory::splitExtension(data.file).first + ".bin"),
+        TestSuite::Compare::StringToFile);
+}
+
+void KtxImporterTest::image2DCompressedMipmaps() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps.ktx2")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 4);
+
+    Vector2i mipSize{9, 10};
+    for(UnsignedInt i = 0; i != importer->image2DLevelCount(0); ++i) {
+        CORRADE_ITERATION(i);
+
+        auto image = importer->image2D(0, i);
+        CORRADE_VERIFY(image);
+
+        CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
+        CORRADE_COMPARE(image->size(), mipSize);
+
+        const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
+        const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
+        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
+        CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
+            Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::formatString("2d-compressed-mipmaps-mip{}.bin", i)),
+            TestSuite::Compare::StringToFile);
+
+        mipSize = Math::max(mipSize >> 1, 1);
+    }
+}
+
+void KtxImporterTest::image2DCompressedLayers() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.ktx2")));
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
+
+    auto image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+
+    CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector3i{9, 10, 2}));
+
+    const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
+    const Vector3i blockCount = (Vector3i::pad(image->size(), 1) + (blockSize - Vector3i{1}))/blockSize;
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
+    CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
+        Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.bin"),
         TestSuite::Compare::StringToFile);
 }
 
@@ -1036,14 +1313,11 @@ void KtxImporterTest::image3D() {
 }
 
 void KtxImporterTest::image3DMipmaps() {
-    /** @todo */
-    CORRADE_SKIP("Need a valid test file");
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-mipmaps.ktx2")));
 
     const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(PatternRgbData));
-    const Color3ub mip1[2]{0x000000_rgb, 0x000000_rgb};
+    const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
     const Color3ub mip2[1]{0x000000_rgb};
     const Containers::ArrayView<const Color3ub> mipViews[3]{mip0, mip1, mip2};
 
@@ -1108,6 +1382,36 @@ void KtxImporterTest::image3DLayers() {
 
         CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(imageViews[i]), TestSuite::Compare::Container);
     }
+}
+
+void KtxImporterTest::image3DCompressed() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed.ktx2")));
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
+
+    auto image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+
+    constexpr CompressedPixelFormat format = CompressedPixelFormat::Etc2RGB8Srgb;
+    constexpr Vector3i size{9, 10, 3};
+
+    CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->compressedFormat(), format);
+    CORRADE_COMPARE(image->size(), size);
+
+    const CompressedPixelStorage storage = image->compressedStorage();
+    CORRADE_COMPARE(storage.rowLength(), 0);
+    CORRADE_COMPARE(storage.imageHeight(), 0);
+    CORRADE_COMPARE(storage.skip(), Vector3i{});
+
+    const Vector3i blockSize = compressedBlockSize(format);
+    const Vector3i blockCount = (size + (blockSize - Vector3i{1}))/blockSize;
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(format));
+    CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
+        Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"),
+        TestSuite::Compare::StringToFile);
 }
 
 void KtxImporterTest::keyValueDataEmpty() {
