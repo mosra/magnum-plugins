@@ -1168,25 +1168,44 @@ void KtxImporterTest::image2DCompressedLayers() {
 /* Origin bottom-left. There's some weird color shift happening in the test
    files, probably the sampling in PVRTexTool. Non-white pixels in the original
    files are multiples of 0x101010. */
-const Color3ub FacesRgbData[6][2][2]{
+const Color3ub FacesRgbData[2][6][2][2]{
     /* cube+x.png */
-    {{0xffffff_rgb, 0x0d0d0d_rgb},
-     {0x0d0d0d_rgb, 0x0d0d0d_rgb}},
+    {{{0xffffff_rgb, 0x0d0d0d_rgb},
+      {0x0d0d0d_rgb, 0x0d0d0d_rgb}},
     /* cube-x.png */
-    {{0xffffff_rgb, 0x222222_rgb},
-     {0x222222_rgb, 0x222222_rgb}},
+     {{0xffffff_rgb, 0x222222_rgb},
+      {0x222222_rgb, 0x222222_rgb}},
     /* cube+y.png */
-    {{0xffffff_rgb, 0x323232_rgb},
-     {0x323232_rgb, 0x323232_rgb}},
+     {{0xffffff_rgb, 0x323232_rgb},
+      {0x323232_rgb, 0x323232_rgb}},
     /* cube-y.png */
-    {{0xffffff_rgb, 0x404040_rgb},
-     {0x404040_rgb, 0x404040_rgb}},
+     {{0xffffff_rgb, 0x404040_rgb},
+      {0x404040_rgb, 0x404040_rgb}},
     /* cube+z.png */
-    {{0xffffff_rgb, 0x4f4f4f_rgb},
-     {0x4f4f4f_rgb, 0x4f4f4f_rgb}},
+     {{0xffffff_rgb, 0x4f4f4f_rgb},
+      {0x4f4f4f_rgb, 0x4f4f4f_rgb}},
     /* cube-z.png */
-    {{0xffffff_rgb, 0x606060_rgb},
-     {0x606060_rgb, 0x606060_rgb}}
+     {{0xffffff_rgb, 0x606060_rgb},
+      {0x606060_rgb, 0x606060_rgb}}},
+
+    /* cube+z.png */
+    {{{0xffffff_rgb, 0x4f4f4f_rgb},
+      {0x4f4f4f_rgb, 0x4f4f4f_rgb}},
+    /* cube-z.png */
+     {{0xffffff_rgb, 0x606060_rgb},
+      {0x606060_rgb, 0x606060_rgb}},
+    /* cube+x.png */
+     {{0xffffff_rgb, 0x0d0d0d_rgb},
+      {0x0d0d0d_rgb, 0x0d0d0d_rgb}},
+    /* cube-x.png */
+     {{0xffffff_rgb, 0x222222_rgb},
+      {0x222222_rgb, 0x222222_rgb}},
+    /* cube+y.png */
+     {{0xffffff_rgb, 0x323232_rgb},
+      {0x323232_rgb, 0x323232_rgb}},
+    /* cube-y.png */
+     {{0xffffff_rgb, 0x404040_rgb},
+      {0x404040_rgb, 0x404040_rgb}}}
 };
 
 void KtxImporterTest::imageCubeMapIncomplete() {
@@ -1194,26 +1213,16 @@ void KtxImporterTest::imageCubeMapIncomplete() {
     auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "cubemap.ktx2"));
     CORRADE_VERIFY(fileData.size() >= sizeof(Implementation::KtxHeader));
 
-    constexpr auto key = "KTXcubemapIncomplete"_s;
-    /* Value is a single byte */
-    UnsignedInt size = key.size() + 1 + 1;
-    size = (size + 3)/4*4;
-    Containers::Array<char> keyValueData{ValueInit, sizeof(UnsignedInt) + size};
+    /* All 6 bits set, should still emit a warning because the check only happens
+       when face count is not 6 */
+    const char data[1]{0x3f};
+    /* Not a string, so no terminating 0 */
+    const auto keyValueData = createKeyValueData("KTXcubemapIncomplete"_s, Containers::arrayView(data));
+    patchKeyValueData(keyValueData, fileData);
 
-    std::size_t offset = 0;
-    *reinterpret_cast<UnsignedInt*>(keyValueData.data()) = Utility::Endianness::littleEndian(size);
-    offset += sizeof(size);
-    Utility::copy(key, keyValueData.suffix(offset).prefix(key.size()));
-    offset += key.size() + 1;
-    keyValueData[offset] = 0x3f;
-
-    {
-        Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
-        header.layerCount = Utility::Endianness::littleEndian(6u);
-        header.faceCount = Utility::Endianness::littleEndian(1u);
-
-        patchKeyValueData(keyValueData, fileData);
-    }
+    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
+    header.layerCount = Utility::Endianness::littleEndian(6u);
+    header.faceCount = Utility::Endianness::littleEndian(1u);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
@@ -1225,6 +1234,10 @@ void KtxImporterTest::imageCubeMapIncomplete() {
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
+
+    const auto texture = importer->texture(0);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
 
     auto image = importer->image3D(0);
     CORRADE_VERIFY(image);
@@ -1239,7 +1252,7 @@ void KtxImporterTest::imageCubeMapIncomplete() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(FacesRgbData), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(FacesRgbData[0]), TestSuite::Compare::Container);
 }
 
 void KtxImporterTest::imageCubeMap() {
@@ -1262,21 +1275,21 @@ void KtxImporterTest::imageCubeMap() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(FacesRgbData), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(FacesRgbData[0]), TestSuite::Compare::Container);
 }
 
 void KtxImporterTest::imageCubeMapMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "cubemap-mipmaps.ktx2")));
 
-    const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(FacesRgbData));
+    const auto mip0 = Containers::arrayCast<const Color3ub>(FacesRgbData[0]);
     const Color3ub mip1[1*1*6]{
-        FacesRgbData[0][1][0],
-        FacesRgbData[1][1][0],
-        FacesRgbData[2][1][0],
-        FacesRgbData[3][1][0],
-        FacesRgbData[4][1][0],
-        FacesRgbData[5][1][0]
+        FacesRgbData[0][0][1][0],
+        FacesRgbData[0][1][1][0],
+        FacesRgbData[0][2][1][0],
+        FacesRgbData[0][3][1][0],
+        FacesRgbData[0][4][1][0],
+        FacesRgbData[0][5][1][0]
     };
     const Containers::ArrayView<const Color3ub> mipViews[2]{mip0, mip1};
 
@@ -1324,7 +1337,7 @@ void KtxImporterTest::imageCubeMapLayers() {
 
     for(UnsignedInt i = 0; i != NumLayers; ++i) {
         CORRADE_ITERATION(i);
-        CORRADE_COMPARE_AS(image->data().suffix(i*faceSize).prefix(faceSize), Containers::arrayCast<const char>(FacesRgbData), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(image->data().suffix(i*faceSize).prefix(faceSize), Containers::arrayCast<const char>(FacesRgbData[i]), TestSuite::Compare::Container);
     }
 }
 
@@ -1348,6 +1361,9 @@ void KtxImporterTest::image3D() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
+    /* Same expected data as image2DLayers but the input images were created
+       with reversed slice order to account for the z-flip on import from rdi
+       to ruo */
     CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgbData), TestSuite::Compare::Container);
 }
 
@@ -1355,7 +1371,7 @@ void KtxImporterTest::image3DMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-mipmaps.ktx2")));
 
-    const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(PatternRgbData));
+    const auto mip0 = Containers::arrayCast<const Color3ub>(PatternRgbData);
     const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
     const Color3ub mip2[1]{0x000000_rgb};
     const Containers::ArrayView<const Color3ub> mipViews[3]{mip0, mip1, mip2};
@@ -1393,7 +1409,7 @@ void KtxImporterTest::image3DLayers() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-layers.ktx2")));
 
     const auto layer0 = Containers::arrayCast<const Color3ub>(PatternRgbData);
-    /* Pattern, black, black*/
+    /* Pattern, black, black */
     Color3ub layer1Data[3][3][4]{};
     Utility::copy(Containers::arrayView(PatternRgbData[0]), layer1Data[0]);
     const auto layer1 = Containers::arrayCast<const Color3ub>(layer1Data);
@@ -1497,7 +1513,7 @@ void KtxImporterTest::keyValueDataInvalidIgnored() {
     auto&& data = IgnoredInvalidKeyValueData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    /* "Invalid" (according to the spec) key/value data that can just be
+    /* Invalid (according to the spec) key/value data that can just be
        ignored without warning because it doesn't affect the import */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
@@ -1519,29 +1535,14 @@ void KtxImporterTest::orientationInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file));
-    CORRADE_VERIFY(fileData.size() >= sizeof(Implementation::KtxHeader));
-
-    constexpr auto key = "KTXorientation"_s;
-    UnsignedInt size = key.size() + 1 + data.orientation.size() + 1;
-    size = (size + 3)/4*4;
-    Containers::Array<char> keyValueData{ValueInit, sizeof(UnsignedInt) + size};
-
-    std::size_t offset = 0;
-    *reinterpret_cast<UnsignedInt*>(keyValueData.data()) = Utility::Endianness::littleEndian(size);
-    offset += sizeof(size);
-    Utility::copy(key, keyValueData.suffix(offset).prefix(key.size()));
-    offset += key.size() + 1;
-    Utility::copy(data.orientation, keyValueData.suffix(offset).prefix(data.orientation.size()));
-
-    patchKeyValueData(keyValueData, fileData);
+    patchKeyValueData(createKeyValueData("KTXorientation"_s, data.orientation), fileData);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
+    CORRADE_VERIFY(importer->openData(fileData));
 
     constexpr Containers::StringView orientations[]{"right"_s, "down"_s, "forward"_s};
     const Containers::String orientationString = ", "_s.join(Containers::arrayView(orientations).prefix(data.dimensions));
-    
-    CORRADE_VERIFY(importer->openData(fileData));
     CORRADE_COMPARE(outWarning.str(), Utility::formatString("Trade::KtxImporter::openData(): missing or invalid orientation, assuming {}\n", orientationString));
 }
 
@@ -1602,6 +1603,9 @@ void KtxImporterTest::orientationFlip() {
 void KtxImporterTest::orientationFlipCompressed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
 
+    /* Just check for the warning, image2DCompressed checks that the output is
+       as expected */
+
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
 
@@ -1634,9 +1638,6 @@ void KtxImporterTest::swizzle() {
 
     CORRADE_VERIFY(importer->openData(fileData));
 
-    /** @todo Change origin to top-left for the swizzle test files so we can
-              check the relevant messages only. Also for swizzleMultipleBytes()
-              and swizzleIdentity(). */
     std::string expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along y\n";
     if(data.message)
         expectedMessage += Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message);
@@ -1717,9 +1718,7 @@ void KtxImporterTest::swizzleCompressed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
 
     auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2"));
-
-    constexpr auto keyValueData = "\x10\x00\x00\x00KTXswizzle\0bgra\0"_s;
-    patchKeyValueData(keyValueData, fileData);
+    patchKeyValueData(createKeyValueData("KTXswizzle"_s, "bgra"_s), fileData);
 
     std::ostringstream out;
     Error redirectError{&out};
