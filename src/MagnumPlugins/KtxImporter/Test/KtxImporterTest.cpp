@@ -120,11 +120,11 @@ using namespace Math::Literals;
 
 const Color3ub PatternRgb1DData[3][4]{
     /* pattern-1d.png */
-    0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb,
+    {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb},
     /* pattern-1d.png */
-    0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb,
+    {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb},
     /* black-1d.png */
-    0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb
+    {0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb}
 };
 
 /* Origin bottom-left */
@@ -248,16 +248,16 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const Trade::TextureType type;
+    const TextureType type;
 } TextureData[]{
-    {"1D", "1d.ktx2", Trade::TextureType::Texture1D},
-    {"1D array", "1d-layers.ktx2", Trade::TextureType::Texture1DArray},
-    {"2D", "2d-rgb.ktx2", Trade::TextureType::Texture2D},
-    {"2D array", "2d-layers.ktx2", Trade::TextureType::Texture2DArray},
-    {"cube map", "cubemap.ktx2", Trade::TextureType::CubeMap},
-    {"cube map array", "cubemap-layers.ktx2", Trade::TextureType::CubeMapArray},
-    {"3D", "3d.ktx2", Trade::TextureType::Texture3D},
-    {"3D array", "3d-layers.ktx2", Trade::TextureType::Texture3D}
+    {"1D", "1d.ktx2", TextureType::Texture1D},
+    {"1D array", "1d-layers.ktx2", TextureType::Texture1DArray},
+    {"2D", "2d-rgb.ktx2", TextureType::Texture2D},
+    {"2D array", "2d-layers.ktx2", TextureType::Texture2DArray},
+    {"cube map", "cubemap.ktx2", TextureType::CubeMap},
+    {"cube map array", "cubemap-layers.ktx2", TextureType::CubeMapArray},
+    {"3D", "3d.ktx2", TextureType::Texture3D},
+    {"3D array", "3d-layers.ktx2", TextureType::Texture3D}
 };
 
 const struct {
@@ -1747,11 +1747,11 @@ void KtxImporterTest::importTwice() {
 
     /* Verify that everything is working the same way on second use */
     {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        Containers::Optional<ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
     } {
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        Containers::Optional<ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
     }

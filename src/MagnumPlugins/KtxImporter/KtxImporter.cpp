@@ -139,31 +139,6 @@ struct Format {
     SwizzleType swizzle;
 };
 
-}
-
-struct KtxImporter::File {
-    struct LevelData {
-        Vector3i size;
-        Containers::ArrayView<char> data;
-    };
-
-    Containers::Array<char> in;
-
-    /* Dimensions of the source image (1-3) */
-    UnsignedByte numDimensions;
-    /* Dimensions of the imported image data, including extra dimensions for
-       array layers or cube map faces */
-    UnsignedByte numDataDimensions;
-    TextureType type;
-    BoolVector3 flip;
-
-    Format pixelFormat;
-
-    /* Usually only one image with n or n+1 dimensions, multiple images for
-       3D array layers */
-    Containers::Array<Containers::Array<LevelData>> imageData;
-};
-
 Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
     Format f{};
 
@@ -265,6 +240,31 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
     return {};
 }
 
+}
+
+struct KtxImporter::File {
+    struct LevelData {
+        Vector3i size;
+        Containers::ArrayView<char> data;
+    };
+
+    Containers::Array<char> in;
+
+    /* Dimensions of the source image (1-3) */
+    UnsignedByte numDimensions;
+    /* Dimensions of the imported image data, including extra dimensions for
+       array layers or cube map faces */
+    UnsignedByte numDataDimensions;
+    TextureType type;
+    BoolVector3 flip;
+
+    Format pixelFormat;
+
+    /* Usually only one image with n or n+1 dimensions, multiple images for
+       3D array layers */
+    Containers::Array<Containers::Array<LevelData>> imageData;
+};
+
 KtxImporter::KtxImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 KtxImporter::~KtxImporter() = default;
@@ -360,7 +360,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     if(header.imageSize.y() > 0) {
         if(header.imageSize.z() > 0) {
             f->numDimensions = 3;
-            f->type = TextureData::Type::Texture3D;
+            f->type = TextureType::Texture3D;
         } else {
             f->numDimensions = 2;
             if(isCubeMap)
