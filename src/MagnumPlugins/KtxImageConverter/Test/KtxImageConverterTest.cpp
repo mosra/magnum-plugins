@@ -259,7 +259,8 @@ const struct {
     const char* message;
 } InvalidSwizzleData[]{
     {"too short", "r", "invalid swizzle length, expected 4 but got 1"},
-    {"invalid characters", "rxba", "invalid characters in swizzle rxba"}
+    {"invalid characters", "rxba", "invalid characters in swizzle rxba"},
+    {"invalid characters", "1012", "invalid characters in swizzle 1012"}
 };
 
 KtxImageConverterTest::KtxImageConverterTest() {
@@ -416,7 +417,7 @@ void KtxImageConverterTest::unsupportedCompressedFormat() {
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{format, {1, 1}, bytes}));
 
-        /** @todo Is there no better way to do this? */
+        /** @todo Is there a better way to do this? */
         std::ostringstream formattedOut;
         Debug redirectDebug{&formattedOut};
         Debug{} << "Trade::KtxImageConverter::convertToData(): unsupported format" << format;
@@ -428,7 +429,7 @@ void KtxImageConverterTest::unsupportedCompressedFormat() {
 void KtxImageConverterTest::implementationSpecificFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
-    const UnsignedByte bytes[]{1};
+    const UnsignedByte bytes[1]{};
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -443,7 +444,7 @@ void KtxImageConverterTest::implementationSpecificFormat() {
 void KtxImageConverterTest::implementationSpecificCompressedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
-    const UnsignedByte bytes[]{1};
+    const UnsignedByte bytes[1]{};
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -548,7 +549,7 @@ void KtxImageConverterTest::convert1DMipmaps() {
     const ImageView1D inputImages[3]{
         ImageView1D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 0, 1), mip0},
         ImageView1D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 1, 1), mip1},
-        ImageView1D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2},
+        ImageView1D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2}
     };
 
     const auto output = converter->convertToData(inputImages);
@@ -590,7 +591,7 @@ void KtxImageConverterTest::convert1DCompressedMipmaps() {
     const CompressedImageView1D inputImages[3]{
         CompressedImageView1D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 0, 1), mip0},
         CompressedImageView1D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 1, 1), mip1},
-        CompressedImageView1D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 2, 1), mip2},
+        CompressedImageView1D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 2, 1), mip2}
     };
 
     const auto output = converter->convertToData(inputImages);
@@ -631,7 +632,7 @@ void KtxImageConverterTest::convert2DMipmaps() {
     const ImageView2D inputImages[3]{
         ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 0, 1), mip0},
         ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 1, 1), mip1},
-        ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2},
+        ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2}
     };
 
     const auto output = converter->convertToData(inputImages);
@@ -700,7 +701,7 @@ void KtxImageConverterTest::convert2DCompressedMipmaps() {
     const ImageView2D inputImages[3]{
         ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 0, 1), mip0},
         ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 1, 1), mip1},
-        ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2},
+        ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2}
     };
 
     const auto output = converter->convertToData(inputImages);
@@ -745,7 +746,7 @@ void KtxImageConverterTest::convert3DMipmaps() {
     const ImageView3D inputImages[3]{
         ImageView3D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 0, 1), mip0},
         ImageView3D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 1, 1), mip1},
-        ImageView3D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2},
+        ImageView3D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2}
     };
 
     const auto output = converter->convertToData(inputImages);
@@ -805,7 +806,7 @@ void KtxImageConverterTest::pvrtcRgb() {
 
     const UnsignedByte bytes[16]{};
     const UnsignedInt dataSize = compressedBlockDataSize(data.inputFormat);
-    const Vector2i imageSize = { 2, 2 };
+    const Vector2i imageSize = {2, 2};
     CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= dataSize);
     CORRADE_INTERNAL_ASSERT((Vector3i{imageSize, 1}) <= compressedBlockSize(data.inputFormat));
 
@@ -873,7 +874,7 @@ void KtxImageConverterTest::configurationOrientationEmpty() {
     const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
     CORRADE_VERIFY(data);
 
-    /* Empty orientation doesn't write the key to the key/value data at all */
+    /* Empty orientation isn't written to key/value data at all */
     const auto keyValueData = readKeyValueData(data);
     CORRADE_VERIFY(!keyValueData.contains("KTXorientation"_s));
 }
@@ -915,7 +916,7 @@ void KtxImageConverterTest::configurationSwizzleEmpty() {
     const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
     CORRADE_VERIFY(data);
 
-    /* Empty swizzle doesn't write the key to the key/value data at all */
+    /* Empty swizzle isn't written to key/value data at all */
     const auto keyValueData = readKeyValueData(data);
     CORRADE_VERIFY(!keyValueData.contains("KTXswizzle"_s));
 }
@@ -958,7 +959,7 @@ void KtxImageConverterTest::configurationWriterNameEmpty() {
     const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
     CORRADE_VERIFY(data);
 
-    /* Empty writer name doesn't write the key to the key/value data at all */
+    /* Empty writer name isn't written to key/value data at all */
     const auto keyValueData = readKeyValueData(data);
     CORRADE_VERIFY(!keyValueData.contains("KTXwriter"_s));
 }
@@ -972,6 +973,8 @@ void KtxImageConverterTest::configurationEmpty() {
     const UnsignedByte bytes[4]{};
     const auto data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
     CORRADE_VERIFY(data);
+
+    /* Key/value data should not be written if it only contains empty values */
 
     const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(data.data());
     CORRADE_COMPARE(header.kvdByteOffset, 0);
