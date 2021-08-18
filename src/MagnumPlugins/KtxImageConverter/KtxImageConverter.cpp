@@ -196,8 +196,9 @@ struct SampleData {
     Implementation::KdfBasicBlockSample::ChannelId id;
     /* For pixel formats where not all channels share the same suffix (only
        combined depth + stencil for now) we have to specify it manually.
-       Is there a good way to automate this in formatMapping.hpp? */
-    Implementation::VkFormatSuffix suffix = {};
+       Note that the (invalid) default value is 0. */
+    /** @todo Is there a good way to automate this in formatMapping.hpp? */
+    Implementation::VkFormatSuffix suffix;
 };
 
 Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const SampleData>> samples(PixelFormat format) {
@@ -465,7 +466,7 @@ UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix) {
     CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << UnsignedInt(suffix), {});
 }
 
-Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedByte typeSize) {
+Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedInt bitLength) {
     /* sampleLower and sampleUpper define how to interpret the range of values
        found in a channel.
        samplerLower = black value or -1 for signed values
@@ -475,9 +476,9 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
        simple version is enough for our needs.
 
        Signed integer values are sign-extended. Floats need to be bitcast. */
-    CORRADE_INTERNAL_ASSERT(typeSize <= 4);
+    CORRADE_INTERNAL_ASSERT(bitLength <= 32);
 
-    const UnsignedInt typeMask = ~0u >> ((4 - typeSize)*8);
+    const UnsignedInt typeMask = ~0u >> (32 - bitLength);
 
     switch(suffix) {
         case Implementation::VkFormatSuffix::UNORM:
@@ -559,12 +560,12 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
     
     const UnsignedByte typeSize = formatTypeSize(format);
     /* Compressed integer formats must use 32-bit lower/upper */
-    const UnsignedByte mappingTypeSize = isCompressedFormat ? sizeof(UnsignedInt) : typeSize;
+    const UnsignedByte mappingBitLength = (isCompressedFormat ? sizeof(UnsignedInt) : typeSize)*8;
     /* @todo BC6h has unsigned floats, but the spec says to use a sampleLower
              of -1.0. Is this an error?
              https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#bc6h_channel
              The signed channel format flag is still set, however. */
-    const auto lowerUpper = channelMapping(suffix, mappingTypeSize);
+    const auto lowerUpper = channelMapping(suffix, mappingBitLength);
     const UnsignedByte formatFlags = channelFormat(suffix);
     /* For non-compressed RGBA channels, we get */
     const UnsignedByte bitRangeMultiplier = isDepthStencil ? 1 : typeSize;
@@ -582,8 +583,9 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
         UnsignedByte sampleFormatFlags;
         Containers::Pair<UnsignedInt, UnsignedInt> sampleLowerUpper;
         if(sampleContent.suffix != Implementation::VkFormatSuffix{}) {
+            CORRADE_INTERNAL_ASSERT(!isCompressedFormat);
             sampleFormatFlags = channelFormat(sampleContent.suffix);
-            sampleLowerUpper = channelMapping(sampleContent.suffix, mappingTypeSize);
+            sampleLowerUpper = channelMapping(sampleContent.suffix, sample.bitLength + 1);
         } else {
             sampleFormatFlags = formatFlags;
             sampleLowerUpper = lowerUpper;
