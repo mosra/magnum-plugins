@@ -109,6 +109,8 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void configurationEmpty();
     void configurationSorted();
 
+    void convertTwice();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
@@ -313,7 +315,9 @@ KtxImageConverterTest::KtxImageConverterTest() {
     addTests({&KtxImageConverterTest::configurationWriterName,
               &KtxImageConverterTest::configurationWriterNameEmpty,
               &KtxImageConverterTest::configurationEmpty,
-              &KtxImageConverterTest::configurationSorted});
+              &KtxImageConverterTest::configurationSorted,
+
+              &KtxImageConverterTest::convertTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -996,6 +1000,18 @@ void KtxImageConverterTest::configurationSorted() {
     /* Entries are sorted alphabetically */
     CORRADE_VERIFY(orientationOffset.begin() < swizzleOffset.begin());
     CORRADE_VERIFY(swizzleOffset.begin() < writerOffset.begin());
+}
+
+void KtxImageConverterTest::convertTwice() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+
+    const UnsignedByte bytes[4]{};
+    const auto data1 = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data1);
+    const auto data2 = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+
+    /* Shouldn't crash, output should be identical */
+    CORRADE_COMPARE_AS(data1, data2, TestSuite::Compare::Container);
 }
 
 }}}}
