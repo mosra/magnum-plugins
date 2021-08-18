@@ -33,6 +33,7 @@
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -228,7 +229,7 @@ const struct {
     const CompressedPixelFormat format;
     const Math::Vector<1, Int> size;
 } CompressedImage1DData[]{
-    {"PVRTC", "1d-compressed-bc1.ktx2", CompressedPixelFormat::Bc1RGBASrgb, {4}},
+    {"BC1", "1d-compressed-bc1.ktx2", CompressedPixelFormat::Bc1RGBASrgb, {4}},
     {"ETC2", "1d-compressed-etc2.ktx2", CompressedPixelFormat::Etc2RGB8Srgb, {7}}
 };
 
@@ -674,8 +675,15 @@ void KtxImporterTest::image1DCompressed() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    /** @todo Can we test ground truth data here? Probably have to generate it
-              using KtxImageConverter. */
+    /* The compressed data is the output of PVRTexTool, nothing hand-crafted.
+       Use --save-diagnostic to extract them if they're missing or wrong. The
+       same files are re-used in the tests for KtxImageConverter as input data. */
+    const Vector3i blockSize = compressedBlockSize(data.format);
+    const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
+    CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
+        Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::Directory::splitExtension(data.file).first + ".bin"),
+        TestSuite::Compare::StringToFile);
 }
 
 void KtxImporterTest::image2D() {
@@ -833,8 +841,12 @@ void KtxImporterTest::image2DCompressed() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    /** @todo Can we test ground truth data here? Probably have to generate it
-            using KtxImageConverter. */
+    const Vector3i blockSize = compressedBlockSize(data.format);
+    const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
+    CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
+        Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::Directory::splitExtension(data.file).first + ".bin"),
+        TestSuite::Compare::StringToFile);
 }
 
 /* Origin bottom-left. There's some weird color shift happening in the test
