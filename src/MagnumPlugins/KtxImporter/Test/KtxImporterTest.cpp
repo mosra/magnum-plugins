@@ -645,17 +645,17 @@ void KtxImporterTest::texture() {
 
     UnsignedInt dimensions;
     switch(data.type) {
-        case TextureData::Type::Texture1D:
+        case TextureType::Texture1D:
             dimensions = 1;
             break;
-        case TextureData::Type::Texture1DArray:
-        case TextureData::Type::Texture2D:
+        case TextureType::Texture1DArray:
+        case TextureType::Texture2D:
             dimensions = 2;
             break;
-        case TextureData::Type::Texture2DArray:
-        case TextureData::Type::Texture3D:
-        case TextureData::Type::CubeMap:
-        case TextureData::Type::CubeMapArray:
+        case TextureType::Texture2DArray:
+        case TextureType::Texture3D:
+        case TextureType::CubeMap:
+        case TextureType::CubeMapArray:
             dimensions = 3;
             break;
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE();
