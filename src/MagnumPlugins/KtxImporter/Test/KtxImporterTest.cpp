@@ -100,7 +100,7 @@ struct KtxImporterTest: TestSuite::Tester {
     void keyValueDataInvalidIgnored();
 
     void orientationInvalid();
-    void orientationFlip(); /** @todo */
+    void orientationFlip();
     void orientationFlipCompressed();
 
     void swizzle();
@@ -117,6 +117,15 @@ struct KtxImporterTest: TestSuite::Tester {
 };
 
 using namespace Math::Literals;
+
+const Color3ub PatternRgb1DData[3][4]{
+    /* pattern-1d.png */
+    0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb,
+    /* pattern-1d.png */
+    0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb,
+    /* black-1d.png */
+    0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb
+};
 
 /* Origin bottom-left */
 const Color3ub PatternRgbData[3][3][4]{
@@ -257,10 +266,14 @@ const struct {
     const PixelFormat format;
     const Containers::ArrayView<const char> data;
 } DepthStencilImageData[]{
-    {"Stencil8UI", "2d-s8.ktx2", PixelFormat::Stencil8UI, Containers::arrayCast<const char>(PatternStencil8UIData)},
-    {"Depth16Unorm", "2d-d16.ktx2", PixelFormat::Depth16Unorm, Containers::arrayCast<const char>(PatternDepth16UnormData)},
-    {"Depth24UnormStencil8UI", "2d-d24s8.ktx2", PixelFormat::Depth24UnormStencil8UI, Containers::arrayCast<const char>(PatternDepth24UnormStencil8UIData)},
-    {"Depth32FStencil8UI", "2d-d32fs8.ktx2", PixelFormat::Depth32FStencil8UI, Containers::arrayCast<const char>(PatternDepth32FStencil8UIData)}
+    {"Stencil8UI", "2d-s8.ktx2", PixelFormat::Stencil8UI,
+        Containers::arrayCast<const char>(PatternStencil8UIData)},
+    {"Depth16Unorm", "2d-d16.ktx2", PixelFormat::Depth16Unorm,
+        Containers::arrayCast<const char>(PatternDepth16UnormData)},
+    {"Depth24UnormStencil8UI", "2d-d24s8.ktx2", PixelFormat::Depth24UnormStencil8UI,
+        Containers::arrayCast<const char>(PatternDepth24UnormStencil8UIData)},
+    {"Depth32FStencil8UI", "2d-d32fs8.ktx2", PixelFormat::Depth32FStencil8UI,
+        Containers::arrayCast<const char>(PatternDepth32FStencil8UIData)}
 };
 
 const struct {
@@ -330,11 +343,28 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const UnsignedByte dimensions;
+    const Vector3i size;
+    const PixelFormat format;
+    const Containers::ArrayView<const char> data;
+    const Vector3ub flipped;
 } FlipData[]{
-    {"1D", "1D.ktx2", 1},
-    {"2D", "2d-rgb.ktx2", 2},
-    {"3D", "3d.ktx2", 3}
+    /* Don't test everything, just a few common and interesting orientations */
+    {"l", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgb1DData[0]), {true, false, false}},
+    {"r", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgb1DData[0]), {false, false, false}},
+    /* Value of flipped is relative to the orientation on disk. Files are rd[i],
+       the ground truth data expects a flip to ru[o]. */
+    {"lu", "2d-rgb.ktx2", {4, 3, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData[0]), {true, true, false}},
+    {"rd", "2d-rgb.ktx2", {4, 3, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData[0]), {false, false, false}},
+    {"luo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData), {true, true, true}},
+    {"rdo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData), {false, false, true}},
+    {"rdi", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData), {false, false, false}}
 };
 
 const struct {
@@ -367,6 +397,25 @@ const struct {
         PixelFormat::Depth32F, VK_FORMAT_D32_SFLOAT,
         nullptr, Containers::arrayCast<const char>(PatternRgba2DData)}
 };
+
+Containers::Array<char> createKeyValueData(Containers::StringView key, Containers::ArrayView<const char> value, bool terminatingZero = false) {
+    UnsignedInt size = key.size() + 1 + value.size() + UnsignedInt(terminatingZero);
+    size = (size + 3)/4*4;
+    Containers::Array<char> keyValueData{ValueInit, sizeof(UnsignedInt) + size};
+
+    std::size_t offset = 0;
+    *reinterpret_cast<UnsignedInt*>(keyValueData.data()) = Utility::Endianness::littleEndian(size);
+    offset += sizeof(size);
+    Utility::copy(key, keyValueData.suffix(offset).prefix(key.size()));
+    offset += key.size() + 1;
+    Utility::copy(value, keyValueData.suffix(offset).prefix(value.size()));
+
+    return keyValueData;
+}
+
+Containers::Array<char> createKeyValueData(Containers::StringView key, Containers::StringView value) {
+    return createKeyValueData(key, value, true);
+}
 
 void patchKeyValueData(Containers::ArrayView<const char> keyValueData, Containers::ArrayView<char> fileData) {
     CORRADE_INTERNAL_ASSERT(fileData.size() >= sizeof(Implementation::KtxHeader));
@@ -749,18 +798,14 @@ void KtxImporterTest::image1D() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    const Color3ub data[4]{
-        0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb
-    };
-
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(data), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgb1DData[0]), TestSuite::Compare::Container);
 }
 
 void KtxImporterTest::image1DMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d-mipmaps.ktx2")));
 
-    const Color3ub mip0[4]{0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb};
+    const auto mip0 = Containers::arrayView(PatternRgb1DData[0]);
     const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
     const Color3ub mip2[1]{0x000000_rgb};
     const Containers::ArrayView<const Color3ub> mipViews[3]{mip0, mip1, mip2};
@@ -797,12 +842,6 @@ void KtxImporterTest::image1DLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d-layers.ktx2")));
 
-    const Color3ub data[4*3]{
-        0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb,
-        0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb,
-        0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb
-    };
-
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
@@ -819,7 +858,7 @@ void KtxImporterTest::image1DLayers() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(data), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgb1DData), TestSuite::Compare::Container);
 }
 
 void KtxImporterTest::image1DCompressed() {
@@ -915,7 +954,7 @@ void KtxImporterTest::image2DMipmaps() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps.ktx2")));
 
     /* Is there a nicer way to get a flat view for a multi-dimensional array? */
-    const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(PatternRgbData[0]));
+    const auto mip0 = Containers::arrayCast<const Color3ub>(PatternRgbData[0]);
     const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
     const Color3ub mip2[1]{0x000000_rgb};
     const Containers::ArrayView<const Color3ub> mipViews[3]{mip0, mip1, mip2};
@@ -952,7 +991,7 @@ void KtxImporterTest::image2DMipmapsIncomplete() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps-incomplete.ktx2")));
 
-    const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(PatternRgbData[0]));
+    const auto mip0 = Containers::arrayCast<const Color3ub>(PatternRgbData[0]);
     const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
     const Containers::ArrayView<const Color3ub> mipViews[2]{mip0, mip1};
 
@@ -1001,7 +1040,7 @@ void KtxImporterTest::image2DMipmapsAndLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps-and-layers.ktx2")));
 
-    const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(PatternRgbData));
+    const auto mip0 = Containers::arrayCast<const Color3ub>(PatternRgbData);
     /* Mip data generated by PVRTexTool since it doesn't allow specifying our
        own mip data. toktx doesn't seem to support array textures at all, so
        this is our best option. Colors were extracted with an external viewer. */
@@ -1511,9 +1550,53 @@ void KtxImporterTest::orientationFlip() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
+    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file));
+    patchKeyValueData(createKeyValueData("KTXorientation"_s, data.name), fileData);
 
-    /** @todo */
+    CORRADE_VERIFY(importer->openData(fileData));
+
+    const Vector3i size = Math::max(data.size, 1);
+    const Int dimensions = Math::min(data.size, 1).sum();
+    Containers::Array<char> imageData;
+    switch(dimensions) {
+        case 1: {
+            const auto image = importer->image1D(0);
+            imageData = Containers::Array<char>{image->data().size()};
+            Utility::copy(image->data(), imageData);
+            break;
+        }
+        case 2: {
+            const auto image = importer->image2D(0);
+            imageData = Containers::Array<char>{image->data().size()};
+            Utility::copy(image->data(), imageData);
+            break;
+        }
+        case 3: {
+            const auto image = importer->image3D(0);
+            imageData = Containers::Array<char>{image->data().size()};
+            Utility::copy(image->data(), imageData);
+            break;
+        }
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+    }
+
+    Containers::StridedArrayView4D<const char> src{imageData, {
+        std::size_t(size.z()),
+        std::size_t(size.y()),
+        std::size_t(size.x()),
+        pixelSize(data.format)
+    }};
+
+    Containers::Array<char> flippedData{imageData.size()};
+    Containers::StridedArrayView4D<char> dst{flippedData, src.size()};
+
+    if(data.flipped[2]) src = src.flipped<0>();
+    if(data.flipped[1]) src = src.flipped<1>();
+    if(data.flipped[0]) src = src.flipped<2>();
+
+    Utility::copy(src, dst);
+
+    CORRADE_COMPARE_AS(data.data, flippedData, TestSuite::Compare::Container);
 }
 
 void KtxImporterTest::orientationFlipCompressed() {
