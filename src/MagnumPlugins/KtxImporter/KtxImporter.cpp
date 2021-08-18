@@ -382,7 +382,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     CORRADE_INTERNAL_ASSERT(f->numDataDimensions >= f->numDimensions);
     CORRADE_INTERNAL_ASSERT(f->numDataDimensions - f->numDimensions <= 1);
 
-    /* Make sure we don't choke on size calculations using product() */
+    /* Make size 1 instead of 0 in missing dimensions for simpler calculations */
     const Vector3i size = Math::max(Vector3i{header.imageSize}, 1);
 
     if(numFaces != 1) {
