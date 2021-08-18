@@ -193,7 +193,11 @@ UnsignedByte formatTypeSize(CompressedPixelFormat) {
 struct SampleData {
     UnsignedShort bitOffset;
     UnsignedShort bitLength;
-    Implementation::KdfBasicBlockSample::ChannelId channelId;
+    Implementation::KdfBasicBlockSample::ChannelId id;
+    /* For pixel formats where not all channels share the same suffix (only
+       combined depth + stencil for now) we have to specify it manually.
+       Is there a good way to automate this in formatMapping.hpp? */
+    Implementation::VkFormatSuffix suffix = {};
 };
 
 Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const SampleData>> samples(PixelFormat format) {
@@ -211,15 +215,18 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
         {24, 8, Implementation::KdfBasicBlockSample::ChannelId::Alpha}
     };
     static constexpr SampleData SamplesDepth16Stencil[]{
-        {0, 16, Implementation::KdfBasicBlockSample::ChannelId::Depth},
+        {0, 16, Implementation::KdfBasicBlockSample::ChannelId::Depth,
+            Implementation::VkFormatSuffix::UNORM},
         {16, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil}
     };
     static constexpr SampleData SamplesDepth24Stencil[]{
-        {0, 24, Implementation::KdfBasicBlockSample::ChannelId::Depth},
+        {0, 24, Implementation::KdfBasicBlockSample::ChannelId::Depth,
+            Implementation::VkFormatSuffix::UNORM},
         {24, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil}
     };
-    static constexpr SampleData SamplesDepth32Stencil[]{
-        {0, 32, Implementation::KdfBasicBlockSample::ChannelId::Depth},
+    static constexpr SampleData SamplesDepth32FStencil[]{
+        {0, 32, Implementation::KdfBasicBlockSample::ChannelId::Depth,
+            Implementation::VkFormatSuffix::SFLOAT},
         {32, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil}
     };
     static constexpr SampleData SamplesStencil[]{
@@ -238,9 +245,9 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
         case PixelFormat::Depth24UnormStencil8UI:
             return {ColorModel, SamplesDepth24Stencil};
         case PixelFormat::Depth32F:
-            return {ColorModel, Containers::arrayView(SamplesDepth32Stencil).prefix(1)};
+            return {ColorModel, Containers::arrayView(SamplesDepth32FStencil).prefix(1)};
         case PixelFormat::Depth32FStencil8UI:
-            return {ColorModel, SamplesDepth32Stencil};
+            return {ColorModel, SamplesDepth32FStencil};
         default: {
             const UnsignedInt size = pixelSize(format);
             const UnsignedInt typeSize = formatTypeSize(format);
@@ -501,7 +508,7 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
     const auto sampleData = samples(format);
     CORRADE_INTERNAL_ASSERT(!sampleData.second().empty());
 
-    /* Calculate total size */
+    /* Calculate total size. Header + one sample block per channel. */
     const std::size_t dfdSamplesSize = sampleData.second().size()*sizeof(Implementation::KdfBasicBlockSample);
     const std::size_t dfdBlockSize = sizeof(Implementation::KdfBasicBlockHeader) + dfdSamplesSize;
     const std::size_t dfdSize = sizeof(UnsignedInt) + dfdBlockSize;
@@ -534,6 +541,8 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
     const Vector3i unitSize = formatUnitSize(format);
     const UnsignedInt unitDataSize = formatUnitDataSize(format);
 
+    /* Value of texelBlockDimension is saved as one less than the actual size.
+       The intent is to allow 256 but it's a wonderful bug source. */
     for(UnsignedInt i = 0; i != unitSize.Size; ++i) {
         if(unitSize[i] > 1)
             header.texelBlockDimension[i] = unitSize[i] - 1;
@@ -546,33 +555,51 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
 
     constexpr bool isCompressedFormat = std::is_same<Format, CompressedPixelFormat>::value;
     const bool isDepthStencil = !isCompressedFormat &&
-        sampleData.second().front().channelId != Implementation::KdfBasicBlockSample::ChannelId::Red;
+        sampleData.second().front().id != Implementation::KdfBasicBlockSample::ChannelId::Red;
     
     const UnsignedByte typeSize = formatTypeSize(format);
     /* Compressed integer formats must use 32-bit lower/upper */
+    const UnsignedByte mappingTypeSize = isCompressedFormat ? sizeof(UnsignedInt) : typeSize;
     /* @todo BC6h has unsigned floats, but the spec says to use a sampleLower
              of -1.0. Is this an error?
-       https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#bc6h_channel
-       The signed channel format flag is still set, however. */
-    const auto lowerUpper = channelMapping(suffix, isCompressedFormat ? sizeof(UnsignedInt) : typeSize);
+             https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#bc6h_channel
+             The signed channel format flag is still set, however. */
+    const auto lowerUpper = channelMapping(suffix, mappingTypeSize);
     const UnsignedByte formatFlags = channelFormat(suffix);
+    /* For non-compressed RGBA channels, we get */
     const UnsignedByte bitRangeMultiplier = isDepthStencil ? 1 : typeSize;
 
     UnsignedShort extent = 0;
     for(UnsignedInt i = 0; i != samples.size(); ++i) {
         const auto& sampleContent = sampleData.second()[i];
         auto& sample = samples[i];
+        /* Value of bitLength is saved as one less than the actual size */
         sample.bitOffset = sampleContent.bitOffset*bitRangeMultiplier;
         sample.bitLength = sampleContent.bitLength*bitRangeMultiplier - 1;
-        sample.channelType = sampleContent.channelId | formatFlags;
+
+        /* Some channels have custom suffixes, can't use data calculated
+           from the main suffix */
+        UnsignedByte sampleFormatFlags;
+        Containers::Pair<UnsignedInt, UnsignedInt> sampleLowerUpper;
+        if(sampleContent.suffix != Implementation::VkFormatSuffix{}) {
+            sampleFormatFlags = channelFormat(sampleContent.suffix);
+            sampleLowerUpper = channelMapping(sampleContent.suffix, mappingTypeSize);
+        } else {
+            sampleFormatFlags = formatFlags;
+            sampleLowerUpper = lowerUpper;
+        }
+
+        sample.channelType = sampleContent.id | sampleFormatFlags;
+        sample.lower = sampleLowerUpper.first();
+        sample.upper = sampleLowerUpper.second();
+
+        /* The linear format flag should only be set when the transfer function
+           is non-linear */
         if(header.transferFunction != Implementation::KdfBasicBlockHeader::TransferFunction::Linear &&
-           sampleContent.channelId == Implementation::KdfBasicBlockSample::ChannelId::Alpha)
+           sampleContent.id == Implementation::KdfBasicBlockSample::ChannelId::Alpha)
         {
            sample.channelType |= Implementation::KdfBasicBlockSample::ChannelFormat::Linear;
         }
-
-        sample.lower = lowerUpper.first();
-        sample.upper = lowerUpper.second();
 
         extent = Math::max<UnsignedShort>(sample.bitOffset + sample.bitLength + 1, extent);
 
