@@ -109,9 +109,17 @@ Cube map and array images can be written but there is currently no way to mark
 them properly in the metadata. Exported files will be 3D images with cube map
 faces and array layers exposed as depth slices.
 
+@subsection Trade-KtxImageConverter-behavior-multilevel Multilevel images
+
+All image types can be saved with multiple levels by using the list
+variants of @ref convertToFile() / @ref convertToData(). Largest level is
+expected to be first, with each following level having width and height divided
+by two, rounded down. Incomplete mip chains are supported.
+
 @subsection Trade-KtxImageConverter-behavior-supercompression Supercompression
 
-Supercompression is not supported.
+Saving files with [supercompression](https://github.khronos.org/KTX-Specification/#supercompressionSchemes)
+is not supported.
 
 @section Trade-KtxImageConverter-configuration Plugin-specific configuration
 
