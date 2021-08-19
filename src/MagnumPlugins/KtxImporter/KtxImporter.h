@@ -110,10 +110,51 @@ will succeed but a warning will be emitted.
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled.
 
+@subsection Trade-KtxImporter-behavior-types Image types
+
+All image types supported by KTX2 are imported, including 1D, 2D, cube maps,
+and 3D images. They can, in turn, all have multiple array layers as well as
+multiple mip levels. The image type can be determined from @ref texture() and
+@ref TextureData::type().
+
+For layered images and (layered) cube maps, the array layers and faces are
+exposed as an additional image dimension. 1D array textures import
+@ref ImageData2D with n y-slices, (layered) 2D textures and cube maps import
+@ref ImageData3D with 6*n z-slices. 3D array textures behave differently:
+because there is no `ImageData4D`, each layer is imported as a separate
+@ref ImageData3D, with @ref image3DCount() determining the number of layers.
+
+@subsection Trade-KtxImporter-behavior-multilevel Multilevel images
+
+Files with multiple mip levels are imported with the largest level first, with
+the size of each following level divided by 2, rounded down. Mip chains can be
+incomplete, ie. they don't have to extend all the way down to a level of size
+1x1.
+
+@subsection Trade-KtxImporter-behavior-cube Cube maps
+
+Cube map faces are imported in the order +X, -X, +Y, -Y, +Z, -Z as seen from a
+left-handed coordinate system (+X is right, +Y is up, +Z is forward). Layered
+cube maps are stored as multiple sets of faces, ie. all faces +X through -Z for
+the first layer, then all faces of the second layer, etc.
+
+Incomplete cube maps (determined by the `KTXcubemapIncomplete` metadata entry)
+are imported as a 2D array image, but information about which faces it contains
+can't be imported.
+
+@subsection Trade-KtxImporter-behavior-supercompression Supercompression
+
+Importing files with [supercompression](https://github.khronos.org/KTX-Specification/#supercompressionSchemes)
+is not supported.
+
 @subsection Trade-KtxImporter-behavior-swizzle Swizzle support
 
 Explicit swizzling via the KTXswizzle header entry supports BGR and BGRA. Any
 other non-identity channel remapping is unsupported and results in an error.
+
+For reasons similar to the restriction on axis-flips, compressed formats don't
+support any swizzling, and the import fails if an image with a compressed
+format contains a swizzle that isn't RGBA.
 */
 class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
     public:
