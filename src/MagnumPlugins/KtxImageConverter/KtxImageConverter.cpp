@@ -680,24 +680,11 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
-}
-
-KtxImageConverter::KtxImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
-
-ImageConverterFeatures KtxImageConverter::doFeatures() const {
-    return ImageConverterFeature::ConvertLevels1DToData |
-        ImageConverterFeature::ConvertLevels2DToData |
-        ImageConverterFeature::ConvertLevels3DToData |
-        ImageConverterFeature::ConvertCompressedLevels1DToData |
-        ImageConverterFeature::ConvertCompressedLevels2DToData |
-        ImageConverterFeature::ConvertCompressedLevels3DToData;
-}
-
 /* Using a template template parameter to deduce the image dimensions while
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
 template<UnsignedInt dimensions, template<UnsignedInt, typename> class View>
-Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels) {
+Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Corrade::Utility::ConfigurationGroup& configuration) {
     const auto format = imageLevels.front().format();
     if(isFormatImplementationSpecific(format)) {
         Error{} << "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported";
@@ -717,9 +704,9 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
        Entries with an empty value won't be written. */
     using namespace Containers::Literals;
 
-    const std::string orientation = configuration().value("orientation");
-    const std::string swizzle = configuration().value("swizzle");
-    const std::string writerName = configuration().value("writerName");
+    const std::string orientation = configuration.value("orientation");
+    const std::string swizzle = configuration.value("swizzle");
+    const std::string writerName = configuration.value("writerName");
 
     if(!orientation.empty()) {
         if(orientation.size() < dimensions) {
@@ -728,7 +715,7 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
             return {};
         }
 
-        const Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
+        constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
         for(UnsignedByte i = 0; i != dimensions; ++i) {
             if(!validOrientations[i].contains(orientation[i])) {
                 /* Error{} prints char as int value so use StringViews to get
@@ -899,28 +886,41 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
     return data;
 }
 
+}
+
+KtxImageConverter::KtxImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
+
+ImageConverterFeatures KtxImageConverter::doFeatures() const {
+    return ImageConverterFeature::ConvertLevels1DToData |
+        ImageConverterFeature::ConvertLevels2DToData |
+        ImageConverterFeature::ConvertLevels3DToData |
+        ImageConverterFeature::ConvertCompressedLevels1DToData |
+        ImageConverterFeature::ConvertCompressedLevels2DToData |
+        ImageConverterFeature::ConvertCompressedLevels3DToData;
+}
+
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) {
-    return convertLevels(imageLevels);
+    return convertLevels(imageLevels, configuration());
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
-    return convertLevels(imageLevels);
+    return convertLevels(imageLevels, configuration());
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) {
-    return convertLevels(imageLevels);
+    return convertLevels(imageLevels, configuration());
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) {
-    return convertLevels(imageLevels);
+    return convertLevels(imageLevels, configuration());
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) {
-    return convertLevels(imageLevels);
+    return convertLevels(imageLevels, configuration());
 }
 
 Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) {
-    return convertLevels(imageLevels);
+    return convertLevels(imageLevels, configuration());
 }
 
 }}
