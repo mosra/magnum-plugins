@@ -83,8 +83,7 @@ enum SwizzleType : UnsignedByte {
     BGRA
 };
 
-inline SwizzleType& operator ^=(SwizzleType& a, SwizzleType b)
-{
+inline SwizzleType& operator ^=(SwizzleType& a, SwizzleType b) {
     /* This is meant to toggle single enum values, make sure it's not being
        used for other bit-fiddling crimes */
     CORRADE_INTERNAL_ASSERT(a == SwizzleType::None || a == b);
@@ -308,7 +307,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 return;
             }
         }
-        
+
         Error() << "Trade::KtxImporter::openData(): wrong file signature";
         return;
     }
@@ -347,7 +346,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Number of array layers, imported as extra image dimensions (except
        for 3D images, there it's one Image3D per layer).
 
-       layerCount == 1 is a 2D array image with one level, we export it as such
+       layerCount == 1 is an array image with one level, we export it as such
        so that there are no surprises. This is equivalent to how we handle
        depth == 1. */
     const bool isLayered = header.layerCount > 0;
@@ -476,7 +475,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         if(header.supercompressionScheme == Implementation::SuperCompressionScheme::None &&
             level.byteLength != level.uncompressedByteLength)
         {
-            Warning{} << "Trade::KtxImporter::openData(): byte length" << level.byteLength 
+            Warning{} << "Trade::KtxImporter::openData(): byte length" << level.byteLength
                 << "is not equal to uncompressed byte length" << level.uncompressedByteLength
                 << "for an image without supercompression, ignoring the latter";
         }
@@ -497,7 +496,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
         std::size_t imageLength;
         if(f->pixelFormat.isCompressed) {
-            const Vector3i blockSize = f->pixelFormat.blockSize;
+            const Vector3i& blockSize = f->pixelFormat.blockSize;
             const Vector3i blockCount = (levelSize + (blockSize - Vector3i{1}))/blockSize;
             imageLength = blockCount.product()*f->pixelFormat.size;
         } else
@@ -515,7 +514,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
             f->imageData[image][i] = {levelSize, f->in.suffix(offset).prefix(imageLength)};
         }
 
-        /* Shrink to next power of 2 */
+        /* Halve each dimension, rounding down */
         mipSize = Math::max(mipSize >> 1, 1);
     }
 
