@@ -28,7 +28,6 @@
 
 #include <string>
 #include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/StringView.h>
@@ -198,7 +197,7 @@ struct SampleData {
     /* For pixel formats where not all channels share the same suffix (only
        combined depth + stencil for now) we have to specify it manually */
     /** @todo Is there a good way to automate this in formatMapping.hpp? */
-    Containers::Optional<Implementation::VkFormatSuffix> suffix;
+    Implementation::VkFormatSuffix suffix;
 };
 
 Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const SampleData>> samples(PixelFormat format) {
@@ -209,29 +208,26 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
        formats like R10G10B10A2 this needs to be changed. For depth formats
        this assumption already doesn't hold, so we have to specialize and
        later code needs to make sure to not multiply by the type size. */
-    static const SampleData SamplesRgba[]{
-        {0, 8, Implementation::KdfBasicBlockSample::ChannelId::Red, {}},
-        {8, 8, Implementation::KdfBasicBlockSample::ChannelId::Green, {}},
-        {16, 8, Implementation::KdfBasicBlockSample::ChannelId::Blue, {}},
-        {24, 8, Implementation::KdfBasicBlockSample::ChannelId::Alpha, {}}
+    static constexpr SampleData SamplesRgba[]{
+        {0, 8, Implementation::KdfBasicBlockSample::ChannelId::Red, Implementation::VkFormatSuffix{}},
+        {8, 8, Implementation::KdfBasicBlockSample::ChannelId::Green, Implementation::VkFormatSuffix{}},
+        {16, 8, Implementation::KdfBasicBlockSample::ChannelId::Blue, Implementation::VkFormatSuffix{}},
+        {24, 8, Implementation::KdfBasicBlockSample::ChannelId::Alpha, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesDepth16Stencil[]{
-        {0, 16, Implementation::KdfBasicBlockSample::ChannelId::Depth,
-            Implementation::VkFormatSuffix::UNORM},
-        {16, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil, {}}
+    static constexpr SampleData SamplesDepth16Stencil[]{
+        {0, 16, Implementation::KdfBasicBlockSample::ChannelId::Depth, Implementation::VkFormatSuffix::UNORM},
+        {16, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesDepth24Stencil[]{
-        {0, 24, Implementation::KdfBasicBlockSample::ChannelId::Depth,
-            Implementation::VkFormatSuffix::UNORM},
-        {24, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil, {}}
+    static constexpr SampleData SamplesDepth24Stencil[]{
+        {0, 24, Implementation::KdfBasicBlockSample::ChannelId::Depth, Implementation::VkFormatSuffix::UNORM},
+        {24, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesDepth32FStencil[]{
-        {0, 32, Implementation::KdfBasicBlockSample::ChannelId::Depth,
-            Implementation::VkFormatSuffix::SFLOAT},
-        {32, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil, {}}
+    static constexpr SampleData SamplesDepth32FStencil[]{
+        {0, 32, Implementation::KdfBasicBlockSample::ChannelId::Depth, Implementation::VkFormatSuffix::SFLOAT},
+        {32, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesStencil[]{
-        {0, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil, {}}
+    static constexpr SampleData SamplesStencil[]{
+        {0, 8, Implementation::KdfBasicBlockSample::ChannelId::Stencil, Implementation::VkFormatSuffix{}}
     };
 
     switch(format) {
@@ -270,72 +266,75 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
        DFD content is taken directly from the KDF spec:
        https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#CompressedFormatModels */
 
-    static const SampleData SamplesBc1[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesBc1[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc1AlphaPunchThrough[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Bc1Alpha, {}}
+    static constexpr SampleData SamplesBc1AlphaPunchThrough[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Bc1Alpha, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc2And3[]{
-        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Alpha, {}},
-        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesBc2And3[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Alpha, Implementation::VkFormatSuffix{}},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc4[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesBc4[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc4Signed[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesBc4Signed[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc5[]{
-        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red, {}},
-        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green, {}}
+    static constexpr SampleData SamplesBc5[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red, Implementation::VkFormatSuffix{}},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc5Signed[]{
-        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red, {}},
-        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green, {}}
+    static constexpr SampleData SamplesBc5Signed[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red, Implementation::VkFormatSuffix{}},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc6h[]{
-        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesBc6h[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc6hSigned[]{
-        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesBc6hSigned[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesBc7[]{
-        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesBc7[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesEacR11[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Red, {}}
+    static constexpr SampleData SamplesEacR11[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Red, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesEacR11Signed[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Red, {}}
+    static constexpr SampleData SamplesEacR11Signed[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Red, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesEacRG11[]{
-        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red, {}},
-        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green, {}}
+    static constexpr SampleData SamplesEacRG11[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red, Implementation::VkFormatSuffix{}},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesEacRG11Signed[]{
-        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red, {}},
-        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green, {}}
+    static constexpr SampleData SamplesEacRG11Signed[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Red, Implementation::VkFormatSuffix{}},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Green, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesEtc2[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color, {}}
+    static constexpr SampleData SamplesEtc2[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesEtc2AlphaPunchThrough[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color, {}},
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Alpha, {}}
+    static constexpr SampleData SamplesEtc2AlphaPunchThrough[]{
+        /* Both samples have the same offset, the KDF spec wants it that way.
+           BC1 indicates punch-through alpha with a different channel id,
+           but ETC2 is special. */
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color, Implementation::VkFormatSuffix{}},
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Alpha, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesEtc2Alpha[]{
-        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Alpha, {}},
-        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color, {}}
+    static constexpr SampleData SamplesEtc2Alpha[]{
+        {0,  64, Implementation::KdfBasicBlockSample::ChannelId::Alpha, Implementation::VkFormatSuffix{}},
+        {64, 64, Implementation::KdfBasicBlockSample::ChannelId::Etc2Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesAstc[]{
-        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesAstc[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesAstcHdr[]{
-        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesAstcHdr[]{
+        {0, 128, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
-    static const SampleData SamplesPvrtc[]{
-        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, {}}
+    static constexpr SampleData SamplesPvrtc[]{
+        {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
 
     switch(format) {
@@ -582,10 +581,10 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
            from the main suffix */
         UnsignedByte sampleFormatFlags;
         Containers::Pair<UnsignedInt, UnsignedInt> sampleLowerUpper;
-        if(sampleContent.suffix) {
+        if(sampleContent.suffix != Implementation::VkFormatSuffix{}) {
             CORRADE_INTERNAL_ASSERT(!isCompressedFormat);
-            sampleFormatFlags = channelFormat(*sampleContent.suffix);
-            sampleLowerUpper = channelMapping(*sampleContent.suffix, sample.bitLength + 1);
+            sampleFormatFlags = channelFormat(sampleContent.suffix);
+            sampleLowerUpper = channelMapping(sampleContent.suffix, sample.bitLength + 1);
         } else {
             sampleFormatFlags = formatFlags;
             sampleLowerUpper = lowerUpper;
