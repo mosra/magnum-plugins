@@ -566,7 +566,8 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
              The signed channel format flag is still set, however. */
     const auto lowerUpper = channelMapping(suffix, mappingBitLength);
     const UnsignedByte formatFlags = channelFormat(suffix);
-    /* For non-compressed RGBA channels, we get */
+    /* For non-compressed RGBA channels, we get the 1-byte channel data
+       and then multiply by the actual typeSize in the loop below */
     const UnsignedByte bitRangeMultiplier = isDepthStencil ? 1 : typeSize;
 
     UnsignedShort extent = 0;
@@ -798,7 +799,8 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
     const UnsignedInt unitDataSize = formatUnitDataSize(format);
 
     for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
-        /* Store mip levels from smallest to largest for efficient streaming */
+        /* Mip levels are required to be stored from smallest to largest for
+           efficient streaming */
         const UnsignedInt mip = levelIndex.size() - 1 - i;
         const Math::Vector<dimensions, Int> mipSize = Math::max(size >> mip, 1);
 
