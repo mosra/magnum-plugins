@@ -33,6 +33,7 @@
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/ImageView.h>
@@ -484,13 +485,12 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
         case Implementation::VkFormatSuffix::UNORM:
         case Implementation::VkFormatSuffix::SRGB:
             return {0u, typeMask};
-        case Implementation::VkFormatSuffix::SNORM:
-            {
+        case Implementation::VkFormatSuffix::SNORM: {
             /* Remove sign bit to get largest positive value. If we flip the
                bits of that, we get the sign-extended lowest negative value. */
             const UnsignedInt positiveTypeMask = typeMask >> 1;
             return {~positiveTypeMask, positiveTypeMask};
-            }
+        }
         case Implementation::VkFormatSuffix::UINT:
             return {0u, 1u};
         case Implementation::VkFormatSuffix::SINT:
@@ -557,7 +557,7 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
     constexpr bool isCompressedFormat = std::is_same<Format, CompressedPixelFormat>::value;
     const bool isDepthStencil = !isCompressedFormat &&
         sampleData.second().front().id != Implementation::KdfBasicBlockSample::ChannelId::Red;
-    
+
     const UnsignedByte typeSize = formatTypeSize(format);
     /* Compressed integer formats must use 32-bit lower/upper */
     const UnsignedByte mappingBitLength = (isCompressedFormat ? sizeof(UnsignedInt) : typeSize)*8;
@@ -615,11 +615,11 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
        pixel size, e.g. Depth24Unorm. */
     CORRADE_INTERNAL_ASSERT(extent <= unitDataSize*8);
 
+    CORRADE_INTERNAL_ASSERT(offset == dfdSize);
+
     Utility::Endianness::littleEndianInPlace(length);
     Utility::Endianness::littleEndianInPlace(header.vendorId, header.descriptorType,
         header.versionNumber, header.descriptorBlockSize);
-
-    CORRADE_INTERNAL_ASSERT(offset == dfdSize);
 
     return data;
 }
@@ -640,14 +640,9 @@ UnsignedInt leastCommonMultiple(UnsignedInt a, UnsignedInt b) {
 
 template<UnsignedInt dimensions>
 void copyPixels(const BasicImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
-    std::size_t sizes[dimensions + 1];
-    sizes[dimensions] = image.pixelSize();
-    for(UnsignedInt i = 0; i != dimensions; ++i) {
-        sizes[dimensions - 1 - i] = image.size()[i];
-    }
-
     /* Copy the pixels into output, dropping padding (if any) */
-    Utility::copy(image.pixels(), Containers::StridedArrayView<dimensions + 1, char>{pixels, sizes});
+    const Containers::StridedArrayView<dimensions + 1, const char> srcPixels = image.pixels();
+    Utility::copy(srcPixels, Containers::StridedArrayView<dimensions + 1, char>{pixels, srcPixels.size()});
 }
 
 template<UnsignedInt dimensions>
@@ -736,13 +731,11 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
     }
 
     if(swizzle.find_first_not_of("rgba01") != std::string::npos) {
-        /* operator << is ambiguous, could be Containers::String or Containers::StringView */
-        Error{} << "Trade::KtxImageConverter::convertToData(): invalid characters in swizzle" << Containers::StringView{swizzle};
+        Error{} << "Trade::KtxImageConverter::convertToData(): invalid characters in swizzle" << swizzle;
         return {};
     }
 
     const Containers::Pair<Containers::StringView, Containers::StringView> keyValueMap[]{
-        /* Origin left, bottom, back (increasing right, up, out) */
         Containers::pair("KTXorientation"_s, Containers::StringView{orientation}.prefix(Math::min(size_t(dimensions), orientation.size()))),
         Containers::pair("KTXswizzle"_s, Containers::StringView{swizzle}),
         Containers::pair("KTXwriter"_s, Containers::StringView{writerName})
@@ -873,7 +866,7 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
     if(!keyValueData.empty()) {
         header.kvdByteOffset = offset;
         header.kvdByteLength = keyValueData.size();
-    
+
         Utility::copy(keyValueData, data.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
     }
 
