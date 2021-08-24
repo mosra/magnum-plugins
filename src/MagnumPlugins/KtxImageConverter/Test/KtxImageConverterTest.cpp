@@ -489,14 +489,13 @@ void KtxImageConverterTest::tooManyLevels() {
     const UnsignedByte bytes[4]{};
 
     std::ostringstream out;
-    Warning redirectWarning{&out};
-    CORRADE_VERIFY(converter->convertToData({
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData({
         ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes},
         ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes}
     }));
     CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): expected at most 1 mip "
-        "level images but got 2, extra images will be ignored\n");
+        "Trade::KtxImageConverter::convertToData(): there can be only 1 levels with base image size Vector(1, 1) but got 2\n");
 }
 
 void KtxImageConverterTest::levelWrongSize() {

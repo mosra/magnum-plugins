@@ -794,10 +794,11 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
     const Math::Vector<dimensions, Int> size = imageLevels.front().size();
 
     const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2(size.max()) + 1);
-    if(imageLevels.size() > numMipmaps)
-        Warning{} << "Trade::KtxImageConverter::convertToData(): expected at most" <<
-            numMipmaps << "mip level images but got" << imageLevels.size() << Debug::nospace <<
-            ", extra images will be ignored";
+    if(imageLevels.size() > numMipmaps) {
+        Error{} << "Trade::KtxImageConverter::convertToData(): there can be only" << numMipmaps <<
+            "levels with base image size" << imageLevels[0].size() << "but got" << imageLevels.size();
+        return {};
+    }
 
     Containers::Array<Implementation::KtxLevel> levelIndex{numMipmaps};
 
