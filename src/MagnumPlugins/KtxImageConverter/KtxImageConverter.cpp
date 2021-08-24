@@ -723,8 +723,8 @@ Containers::Array<char> KtxImageConverter::convertLevels(Containers::ArrayView<c
 
     if(!orientation.empty()) {
         if(orientation.size() < dimensions) {
-            Error{} << "Trade::KtxImageConverter::convertToData(): invalid orientation length, expected at least" <<
-                dimensions << "but got" << orientation.size();
+            Error{} << "Trade::KtxImageConverter::convertToData(): invalid orientation string, expected at least" <<
+                dimensions << "characters but got" << orientation;
             return {};
         }
 

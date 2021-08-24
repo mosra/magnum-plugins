@@ -248,7 +248,7 @@ const struct {
     const char* value;
     const char* message;
 } InvalidOrientationData[]{
-    {"too short", "r", "invalid orientation length, expected at least 3 but got 1"},
+    {"too short", "r", "invalid orientation string, expected at least 3 characters but got r"},
     {"invalid character", "xxx", "invalid character in orientation, expected r or l but got x"},
     {"invalid order", "rid", "invalid character in orientation, expected d or u but got i"},
 };
