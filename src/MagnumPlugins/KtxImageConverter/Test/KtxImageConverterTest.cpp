@@ -939,7 +939,7 @@ void KtxImageConverterTest::configurationSwizzleInvalid() {
 void KtxImageConverterTest::configurationWriterName() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     /* Default value */
-    CORRADE_COMPARE(converter->configuration().value("writerName"), "Magnum::KtxImageConverter");
+    CORRADE_COMPARE(converter->configuration().value("writerName"), "Magnum KtxImageConverter");
     CORRADE_VERIFY(converter->configuration().setValue("writerName", "KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"));
 
     const UnsignedByte bytes[4]{};
