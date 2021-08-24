@@ -413,16 +413,10 @@ void KtxImageConverterTest::unsupportedCompressedFormat() {
         CORRADE_ITERATION(format);
         CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= compressedBlockDataSize(CompressedPixelFormat(format)));
 
-        std::ostringstream out;
-        Error redirectError{&out};
         CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{format, {1, 1}, bytes}));
 
-        /** @todo Is there a better way to do this? */
-        std::ostringstream formattedOut;
-        Debug redirectDebug{&formattedOut};
-        Debug{} << "Trade::KtxImageConverter::convertToData(): unsupported format" << format;
-
-        CORRADE_COMPARE(out.str(), formattedOut.str());
+        /* Not testing the output message so that it shows up as a friendly
+           nagging reminder to add support for these formats */
     }
 }
 
