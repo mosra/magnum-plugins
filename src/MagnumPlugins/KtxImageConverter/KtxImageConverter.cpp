@@ -183,7 +183,7 @@ UnsignedByte formatTypeSize(PixelFormat format) {
             return 4;
     }
 
-    CORRADE_ASSERT_UNREACHABLE("componentSize(): unsupported format" << format, {});
+    CORRADE_ASSERT_UNREACHABLE("componentSize(): unsupported format" << format, {}); /* LCOV_EXCL_LINE */
 }
 
 UnsignedByte formatTypeSize(CompressedPixelFormat) {
@@ -437,10 +437,11 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
         case CompressedPixelFormat::PvrtcRGBA4bppSrgb:
             return {Implementation::KdfBasicBlockHeader::ColorModel::Pvrtc, SamplesPvrtc};
         default:
-            break;
+            /* Default switch to suppress warnings about unhandled 3D ASTC formats */
+            break; /* LCOV_EXCL_LINE */
     }
 
-    CORRADE_ASSERT_UNREACHABLE("samples(): unsupported format" << format, {});
+    CORRADE_ASSERT_UNREACHABLE("samples(): unsupported format" << format, {}); /* LCOV_EXCL_LINE */
 }
 
 UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix) {
@@ -462,7 +463,7 @@ UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix) {
             return {};
     }
 
-    CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << UnsignedInt(suffix), {});
+    CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << UnsignedInt(suffix), {}); /* LCOV_EXCL_LINE */
 }
 
 Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedInt bitLength) {
@@ -500,7 +501,7 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
             return {Corrade::Utility::bitCast<UnsignedInt>(-1.0f), Corrade::Utility::bitCast<UnsignedInt>(1.0f)};
     }
 
-    CORRADE_ASSERT_UNREACHABLE("channelMapping(): invalid format suffix" << UnsignedInt(suffix), {});
+    CORRADE_ASSERT_UNREACHABLE("channelMapping(): invalid format suffix" << UnsignedInt(suffix), {}); /* LCOV_EXCL_LINE */
 }
 
 template<typename Format>
