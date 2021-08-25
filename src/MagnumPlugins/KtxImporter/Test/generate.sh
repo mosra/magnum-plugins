@@ -88,14 +88,9 @@ printf '\x03\x00\x00\x00\x02\x00\x00\x00' | dd conv=notrunc of=3d-layers.ktx2 bs
 
 # Compressed
 # PVRTC and BC* don't support non-power-of-2
-# Generating a whole slew of formats here mainly for testing the DFD output of
-# KtxImageConverter, best way to get known good data from an external tool
 PVRTexToolCLI -i pattern-pot.png -o 2d-compressed-pvrtc.ktx2 -f PVRTC1_4,UBN,sRGB
 PVRTexToolCLI -i pattern-pot.png -o 2d-compressed-bc1.ktx2 -f BC1,UBN,sRGB
-PVRTexToolCLI -i pattern-pot.png -o 2d-compressed-bc2.ktx2 -f BC2,UBN,sRGB
 PVRTexToolCLI -i pattern-pot.png -o 2d-compressed-bc3.ktx2 -f BC3,UBN,sRGB
-PVRTexToolCLI -i pattern-pot.png -o 2d-compressed-bc4.ktx2 -f BC4,UBN,sRGB
-PVRTexToolCLI -i pattern-pot.png -o 2d-compressed-bc5.ktx2 -f BC5,UBN,sRGB
 PVRTexToolCLI -i pattern-uneven.png -o 2d-compressed-etc2.ktx2 -f ETC2_RGB,UBN,sRGB
 PVRTexToolCLI -i pattern-uneven.png -o 2d-compressed-astc.ktx2 -f ASTC_12x10,UBN,sRGB
 

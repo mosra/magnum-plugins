@@ -294,10 +294,7 @@ const struct {
 } CompressedImage2DData[]{
     {"PVRTC", "2d-compressed-pvrtc.ktx2", CompressedPixelFormat::PvrtcRGBA4bppSrgb, {8, 8}},
     {"BC1", "2d-compressed-bc1.ktx2", CompressedPixelFormat::Bc1RGBASrgb, {8, 8}},
-    {"BC2", "2d-compressed-bc2.ktx2", CompressedPixelFormat::Bc2RGBASrgb, {8, 8}},
     {"BC3", "2d-compressed-bc3.ktx2", CompressedPixelFormat::Bc3RGBASrgb, {8, 8}},
-    {"BC4", "2d-compressed-bc4.ktx2", CompressedPixelFormat::Bc4RUnorm, {8, 8}},
-    {"BC5", "2d-compressed-bc5.ktx2", CompressedPixelFormat::Bc5RGUnorm, {8, 8}},
     {"ETC2", "2d-compressed-etc2.ktx2", CompressedPixelFormat::Etc2RGB8Srgb, {9, 10}},
     {"ASTC", "2d-compressed-astc.ktx2", CompressedPixelFormat::Astc12x10RGBASrgb, {9, 10}}
 };

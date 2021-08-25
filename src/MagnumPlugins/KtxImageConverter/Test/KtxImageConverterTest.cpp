@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
@@ -61,6 +62,9 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void unsupportedCompressedFormat();
     void implementationSpecificFormat();
     void implementationSpecificCompressedFormat();
+
+    void dataFormatDescriptor();
+    void dataFormatDescriptorCompressed();
 
     /* Non-default compressed pixel storage is currently not supported.
        It's firing an internal assert, so we're not testing that. */
@@ -111,8 +115,12 @@ struct KtxImageConverterTest: TestSuite::Tester {
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
+
+    Containers::Array<char> dfdData;
+    std::unordered_map<Implementation::VkFormat, Containers::ArrayView<const char>> dfdMap;
 };
 
+using namespace Containers::Literals;
 using namespace Math::Literals;
 
 /* Origin top-left-back */
@@ -197,10 +205,7 @@ const struct {
 } Convert2DCompressedData[]{
     {"PVRTC", "2d-compressed-pvrtc.ktx2", CompressedPixelFormat::PvrtcRGBA4bppSrgb, {8, 8}},
     {"BC1", "2d-compressed-bc1.ktx2", CompressedPixelFormat::Bc1RGBASrgb, {8, 8}},
-    {"BC2", "2d-compressed-bc2.ktx2", CompressedPixelFormat::Bc2RGBASrgb, {8, 8}},
     {"BC3", "2d-compressed-bc3.ktx2", CompressedPixelFormat::Bc3RGBASrgb, {8, 8}},
-    {"BC4", "2d-compressed-bc4.ktx2", CompressedPixelFormat::Bc4RUnorm, {8, 8}},
-    {"BC5", "2d-compressed-bc5.ktx2", CompressedPixelFormat::Bc5RGUnorm, {8, 8}},
     {"ETC2", "2d-compressed-etc2.ktx2", CompressedPixelFormat::Etc2RGB8Srgb, {9, 10}},
     {"ASTC", "2d-compressed-astc.ktx2", CompressedPixelFormat::Astc12x10RGBASrgb, {9, 10}}
 };
@@ -260,12 +265,39 @@ const struct {
     {"invalid characters", "1012", "invalid characters in swizzle 1012"}
 };
 
+Containers::Array<char> readDataFormatDescriptor(Containers::ArrayView<const char> fileData) {
+    CORRADE_INTERNAL_ASSERT(fileData.size() >= sizeof(Implementation::KtxHeader));
+    const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(fileData.data());
+
+    const UnsignedInt offset = Utility::Endianness::littleEndian(header.dfdByteOffset);
+    const UnsignedInt length = Utility::Endianness::littleEndian(header.dfdByteLength);
+    Containers::Array<char> data{ValueInit, length};
+    Utility::copy(fileData.suffix(offset).prefix(length), data);
+
+    return data;
+}
+
+Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) {
+    CORRADE_INTERNAL_ASSERT(fileData.size() >= sizeof(Implementation::KtxHeader));
+    const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(fileData.data());
+
+    const UnsignedInt offset = Utility::Endianness::littleEndian(header.kvdByteOffset);
+    const UnsignedInt length = Utility::Endianness::littleEndian(header.kvdByteLength);
+    Containers::String data{ValueInit, length};
+    Utility::copy(fileData.suffix(offset).prefix(length), data);
+
+    return data;
+}
+
 KtxImageConverterTest::KtxImageConverterTest() {
     addTests({&KtxImageConverterTest::supportedFormat,
               &KtxImageConverterTest::supportedCompressedFormat,
               &KtxImageConverterTest::unsupportedCompressedFormat,
               &KtxImageConverterTest::implementationSpecificFormat,
               &KtxImageConverterTest::implementationSpecificCompressedFormat,
+
+              &KtxImageConverterTest::dataFormatDescriptor,
+              &KtxImageConverterTest::dataFormatDescriptorCompressed,
 
               &KtxImageConverterTest::pixelStorage,
 
@@ -327,24 +359,41 @@ KtxImageConverterTest::KtxImageConverterTest() {
     #ifdef KTXIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(KTXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
-}
 
-using namespace Containers::Literals;
+    /* Extract VkFormat and DFD content from merged DFD file */
+    dfdData = Utility::Directory::read(Utility::Directory::join(KTXIMAGECONVERTER_TEST_DIR, "dfd-data.bin"));
+    CORRADE_INTERNAL_ASSERT(!dfdData.empty());
+    CORRADE_INTERNAL_ASSERT(dfdData.size()%4 == 0);
+    std::size_t offset = 0;
+    while(offset < dfdData.size()) {
+        /* Each entry is a VkFormat, followed directly by the DFD. The first
+           uint32_t of the DFD is its size. */
+        const Implementation::VkFormat format = *reinterpret_cast<Implementation::VkFormat*>(dfdData.data() + offset);
+        offset += sizeof(format);
+        const UnsignedInt size = *reinterpret_cast<UnsignedInt*>(dfdData.data() + offset);
+        CORRADE_INTERNAL_ASSERT(size > 0);
+        CORRADE_INTERNAL_ASSERT(size%4 == 0);
+        dfdMap.emplace(format, dfdData.suffix(offset).prefix(size));
+        offset += size;
+    }
+    CORRADE_INTERNAL_ASSERT(offset == dfdData.size());
+}
 
 void KtxImageConverterTest::supportedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
-    const UnsignedByte data[32]{};
+    const UnsignedByte bytes[32]{};
 
     /* All the formats in PixelFormat are supported */
-    /** @todo This needs to be extended when new formats are added to PixelFormat */
+    /** @todo This needs to be extended when new formats are added to
+              PixelFormat. In dataFormatDescriptor as well. */
     constexpr PixelFormat start = PixelFormat::R8Unorm;
     constexpr PixelFormat end = PixelFormat::Depth32FStencil8UI;
 
-    for(UnsignedInt format = UnsignedInt(start); format != UnsignedInt(end); ++format) {
+    for(UnsignedInt format = UnsignedInt(start); format <= UnsignedInt(end); ++format) {
         CORRADE_ITERATION(format);
-        CORRADE_INTERNAL_ASSERT(Containers::arraySize(data) >= pixelSize(PixelFormat(format)));
-        CORRADE_VERIFY(converter->convertToData(ImageView2D{PixelFormat(format), {1, 1}, data}));
+        CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= pixelSize(PixelFormat(format)));
+        CORRADE_VERIFY(converter->convertToData(ImageView2D{PixelFormat(format), {1, 1}, bytes}));
     }
 }
 
@@ -387,14 +436,16 @@ void KtxImageConverterTest::supportedCompressedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
     const UnsignedByte bytes[32]{};
-    const auto unsupported = Containers::arrayView(UnsupportedCompressedFormats);
 
-    /** @todo This needs to be extended when new formats are added to CompressedPixelFormat */
+    /** @todo This needs to be extended when new formats are added to
+              CompressedPixelFormat. In dataFormatDescriptorCompressed as well. */
     constexpr CompressedPixelFormat start = CompressedPixelFormat::Bc1RGBUnorm;
     constexpr CompressedPixelFormat end = CompressedPixelFormat::PvrtcRGBA4bppSrgb;
 
-    for(UnsignedInt format = UnsignedInt(start); format != UnsignedInt(end); ++format) {
-        if(std::find(unsupported.begin(), unsupported.end(), CompressedPixelFormat(format)) == unsupported.end()) {
+    for(UnsignedInt format = UnsignedInt(start); format <= UnsignedInt(end); ++format) {
+        if(std::find(std::begin(UnsupportedCompressedFormats), std::end(UnsupportedCompressedFormats),
+            CompressedPixelFormat(format)) == std::end(UnsupportedCompressedFormats))
+        {
             CORRADE_ITERATION(format);
             CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= compressedBlockDataSize(CompressedPixelFormat(format)));
             CORRADE_VERIFY(converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes}));
@@ -445,6 +496,56 @@ void KtxImageConverterTest::implementationSpecificCompressedFormat() {
     CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{storage, 0, {1, 1}, bytes}));
     CORRADE_COMPARE(out.str(),
         "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
+}
+
+void KtxImageConverterTest::dataFormatDescriptor() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+
+    const UnsignedByte bytes[32]{};
+
+    constexpr PixelFormat start = PixelFormat::R8Unorm;
+    constexpr PixelFormat end = PixelFormat::Depth32FStencil8UI;
+
+    for(UnsignedInt format = UnsignedInt(start); format <= UnsignedInt(end); ++format) {
+        CORRADE_ITERATION(format);
+        CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= pixelSize(PixelFormat(format)));
+        const auto output = converter->convertToData(ImageView2D{PixelFormat(format), {1, 1}, bytes});
+        CORRADE_VERIFY(output);
+
+        const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(output.data());
+        const Implementation::VkFormat vkFormat = Utility::Endianness::littleEndian(header.vkFormat);
+
+        const auto dfd = readDataFormatDescriptor(output);
+        CORRADE_COMPARE(dfdMap.count(vkFormat), 1);
+        CORRADE_COMPARE_AS(dfd, dfdMap[vkFormat], TestSuite::Compare::Container);
+    }
+}
+
+void KtxImageConverterTest::dataFormatDescriptorCompressed() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+
+    const UnsignedByte bytes[32]{};
+
+    constexpr CompressedPixelFormat start = CompressedPixelFormat::Bc1RGBUnorm;
+    constexpr CompressedPixelFormat end = CompressedPixelFormat::PvrtcRGBA4bppSrgb;
+
+    for(UnsignedInt format = UnsignedInt(start); format <= UnsignedInt(end); ++format) {
+        if(std::find(std::begin(UnsupportedCompressedFormats), std::end(UnsupportedCompressedFormats),
+            CompressedPixelFormat(format)) == std::end(UnsupportedCompressedFormats))
+        {
+            CORRADE_ITERATION(format);
+            CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= compressedBlockDataSize(CompressedPixelFormat(format)));
+            const auto output = converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes});
+            CORRADE_VERIFY(output);
+
+            const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(output.data());
+            const Implementation::VkFormat vkFormat = Utility::Endianness::littleEndian(header.vkFormat);
+
+            const auto dfd = readDataFormatDescriptor(output);
+            CORRADE_COMPARE(dfdMap.count(vkFormat), 1);
+            CORRADE_COMPARE_AS(dfd, dfdMap[vkFormat], TestSuite::Compare::Container);
+        }
+    }
 }
 
 void KtxImageConverterTest::pixelStorage() {
@@ -847,18 +948,6 @@ void KtxImageConverterTest::pvrtcRgb() {
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->compressedFormat(), data.outputFormat);
     CORRADE_COMPARE_AS(image->data(), inputImage.data(), TestSuite::Compare::Container);
-}
-
-Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) {
-    CORRADE_INTERNAL_ASSERT(fileData.size() >= sizeof(Implementation::KtxHeader));
-    const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(fileData.data());
-
-    const UnsignedInt offset = Utility::Endianness::littleEndian(header.kvdByteOffset);
-    const UnsignedInt length = Utility::Endianness::littleEndian(header.kvdByteLength);
-    Containers::String data{ValueInit, length};
-    Utility::copy(fileData.suffix(offset).prefix(length), data);
-
-    return data;
 }
 
 void KtxImageConverterTest::configurationOrientation() {

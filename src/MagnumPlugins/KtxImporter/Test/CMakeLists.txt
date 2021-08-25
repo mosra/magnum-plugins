@@ -62,14 +62,8 @@ corrade_add_test(KtxImporterTest KtxImporterTest.cpp
         2d-compressed-astc.ktx2
         2d-compressed-bc1.bin
         2d-compressed-bc1.ktx2
-        2d-compressed-bc2.bin
-        2d-compressed-bc2.ktx2
         2d-compressed-bc3.bin
         2d-compressed-bc3.ktx2
-        2d-compressed-bc4.bin
-        2d-compressed-bc4.ktx2
-        2d-compressed-bc5.bin
-        2d-compressed-bc5.ktx2
         2d-compressed-etc2.bin
         2d-compressed-etc2.ktx2
         2d-compressed-layers.bin
