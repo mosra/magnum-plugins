@@ -49,7 +49,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
-file(GLOB DFD_FILES "dfd/*.dfd")
+file(GLOB DFD_FILES "${CMAKE_CURRENT_SOURCE_DIR}/dfd/*.dfd")
 corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
@@ -89,6 +89,7 @@ corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-mipmaps-mip2.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-mipmaps-mip3.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-mipmaps.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps.ktx2

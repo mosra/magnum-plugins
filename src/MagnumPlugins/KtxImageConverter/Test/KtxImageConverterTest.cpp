@@ -359,8 +359,14 @@ KtxImageConverterTest::KtxImageConverterTest() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(KTXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 
-    /* Map VkFormat to DFD test file. The VkFormat value is in the file name. */
+    #ifdef CORRADE_TARGET_EMSCRIPTEN
+    /* Test files are embedded into the root of the virtual filesystem */
+    const std::string folder = KTXIMAGECONVERTER_TEST_DIR;
+    #else
     const std::string folder = Utility::Directory::join(KTXIMAGECONVERTER_TEST_DIR, "dfd");
+    #endif
+
+    /* Map VkFormat to DFD test file. The VkFormat value is in the file name. */
     const auto files = Utility::Directory::list(folder, Utility::Directory::Flag::SkipDirectories | Utility::Directory::Flag::SkipSpecial);
     CORRADE_INTERNAL_ASSERT(!files.empty());
     for(const auto& f: files) {
