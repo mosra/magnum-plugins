@@ -679,26 +679,25 @@ void KtxImageConverterTest::convert2DCompressed() {
 void KtxImageConverterTest::convert2DCompressedMipmaps() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterToktx);
+    converter->configuration().setValue("writerName", WriterPVRTexTool);
 
-    const Vector2i size{4, 3};
-    const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(
-        PatternRgbData[Containers::arraySize(PatternRgbData) - 1]));
-    const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
-    const Color3ub mip2[1]{0x000000_rgb};
+    constexpr Vector2i size{9, 10};
+    const auto mip0 = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps-mip0.bin"));
+    const auto mip1 = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps-mip1.bin"));
+    const auto mip2 = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps-mip2.bin"));
+    const auto mip3 = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps-mip3.bin"));
 
-    PixelStorage storage;
-    storage.setAlignment(1);
-    const ImageView2D inputImages[3]{
-        ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 0, 1), mip0},
-        ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 1, 1), mip1},
-        ImageView2D{storage, PixelFormat::RGB8Srgb, Math::max(size >> 2, 1), mip2}
+    const CompressedImageView2D inputImages[4]{
+        CompressedImageView2D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 0, 1), mip0},
+        CompressedImageView2D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 1, 1), mip1},
+        CompressedImageView2D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 2, 1), mip2},
+        CompressedImageView2D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 3, 1), mip3}
     };
 
     const auto output = converter->convertToData(inputImages);
     CORRADE_VERIFY(output);
 
-    const auto expected = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps.ktx2"));
+    const auto expected = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps.ktx2"));
     CORRADE_COMPARE_AS(output, expected, TestSuite::Compare::Container);
 }
 
