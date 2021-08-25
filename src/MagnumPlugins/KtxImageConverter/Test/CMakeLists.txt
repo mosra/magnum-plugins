@@ -49,8 +49,54 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
+file(GLOB DFD_FILES "dfd/*.dfd")
 corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
-    LIBRARIES Magnum::Trade)
+    LIBRARIES Magnum::Trade
+    FILES
+        ${DFD_FILES}
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-mipmaps.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-bc1.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-bc1.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-etc2.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-etc2.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-mipmaps.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-mipmaps-mip0.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-mipmaps-mip1.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-mipmaps-mip2.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-rgb.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-rgb32.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-rgbf32.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-s8.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-d16.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-d24s8.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-d32fs8.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-mipmaps.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-mipmaps-incomplete.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-pvrtc.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-pvrtc.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-bc1.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-bc1.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-bc3.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-bc3.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-etc2.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-etc2.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-astc.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-astc.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-mipmaps.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-mipmaps-mip0.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-mipmaps-mip1.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-mipmaps-mip2.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-mipmaps-mip3.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip0.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip1.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip2.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip3.bin)
+
 target_include_directories(KtxImageConverterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
     ${PROJECT_SOURCE_DIR}/src)
