@@ -95,6 +95,11 @@ corrade_add_test(KtxImporterTest KtxImporterTest.cpp
         2d-s8.ktx2
         3d-compressed.bin
         3d-compressed.ktx2
+        3d-compressed-mipmaps-mip0.bin
+        3d-compressed-mipmaps-mip1.bin
+        3d-compressed-mipmaps-mip2.bin
+        3d-compressed-mipmaps-mip3.bin
+        3d-compressed-mipmaps.ktx2
         3d-layers.ktx2
         3d-mipmaps.ktx2
         3d.ktx2

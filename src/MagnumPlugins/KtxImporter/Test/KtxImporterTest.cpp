@@ -93,7 +93,7 @@ struct KtxImporterTest: TestSuite::Tester {
     void image3DMipmaps();
     void image3DLayers();
     void image3DCompressed();
-    /** @todo Compressed 3D image with mipmaps */
+    void image3DCompressedMipmaps();
 
     void keyValueDataEmpty();
     void keyValueDataInvalid();
@@ -480,6 +480,7 @@ KtxImporterTest::KtxImporterTest() {
               &KtxImporterTest::image3DMipmaps,
               &KtxImporterTest::image3DLayers,
               &KtxImporterTest::image3DCompressed,
+              &KtxImporterTest::image3DCompressedMipmaps,
 
               &KtxImporterTest::keyValueDataEmpty});
 
@@ -1467,6 +1468,37 @@ void KtxImporterTest::image3DCompressed() {
     CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
         Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"),
         TestSuite::Compare::StringToFile);
+}
+
+void KtxImporterTest::image3DCompressedMipmaps() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps.ktx2")));
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 4);
+
+    Vector3i mipSize{9, 10, 5};
+    for(UnsignedInt i = 0; i != importer->image3DLevelCount(0); ++i) {
+        CORRADE_ITERATION(i);
+
+        auto image = importer->image3D(0, i);
+        CORRADE_VERIFY(image);
+
+        CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
+        CORRADE_COMPARE(image->size(), mipSize);
+
+        const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
+        const Vector3i blockCount = (mipSize + (blockSize - Vector3i{1}))/blockSize;
+        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
+        /* Compressed .bin data is manually generated in generate.sh, don't
+           need to save it like the 1D/2D files */
+        const auto data = Utility::Directory::read(
+            Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::formatString("3d-compressed-mipmaps-mip{}.bin", i)));
+        CORRADE_COMPARE_AS(image->data(), data, TestSuite::Compare::Container);
+
+        mipSize = Math::max(mipSize >> 1, 1);
+    }
 }
 
 void KtxImporterTest::keyValueDataEmpty() {
