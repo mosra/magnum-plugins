@@ -84,10 +84,7 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void convert3D();
     void convert3DMipmaps();
     void convert3DCompressed();
-    /** @todo 3D compressed + mipmaps. We could generate it here, but we can't
-              verify the output is correct using an external viewer. Revisit
-              once toktx or PVRTexTool support generating these?
-              Then again, we're doing it for depth-stencil formats, too... */
+    void convert3DCompressedMipmaps();
 
     /** @todo Add tests for cube and layered (and combined) images once the
               converter supports those */
@@ -292,7 +289,8 @@ KtxImageConverterTest::KtxImageConverterTest() {
     addTests({&KtxImageConverterTest::convert2DCompressedMipmaps,
               &KtxImageConverterTest::convert3D,
               &KtxImageConverterTest::convert3DMipmaps,
-              &KtxImageConverterTest::convert3DCompressed});
+              &KtxImageConverterTest::convert3DCompressed,
+              &KtxImageConverterTest::convert3DCompressedMipmaps});
 
     addInstancedTests({&KtxImageConverterTest::convertFormats},
         Containers::arraySize(ConvertFormatsData));
@@ -763,6 +761,38 @@ void KtxImageConverterTest::convert3DCompressed() {
 
     const auto expected = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed.ktx2"));
     CORRADE_COMPARE_AS(output, expected, TestSuite::Compare::Container);
+}
+
+void KtxImageConverterTest::convert3DCompressedMipmaps() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->configuration().setValue("orientation", "rdi");
+
+    /* Same as convert3DMipmaps, we generate this file here because none of the
+       tools can do it. The other compressed .bin data is extracted from files
+       created by toktx/PVRTexTool. In this case we handishly created data from
+       existing 2D ETC2 data. Oh well, better than nothing until there's a
+       better way to generate these images. */
+
+    constexpr Vector3i size{9, 10, 5};
+    const auto mip0 = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps-mip0.bin"));
+    const auto mip1 = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps-mip1.bin"));
+    const auto mip2 = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps-mip2.bin"));
+    const auto mip3 = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps-mip3.bin"));
+
+    const CompressedImageView3D inputImages[4]{
+        CompressedImageView3D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 0, 1), mip0},
+        CompressedImageView3D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 1, 1), mip1},
+        CompressedImageView3D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 2, 1), mip2},
+        CompressedImageView3D{CompressedPixelFormat::Etc2RGB8Srgb, Math::max(size >> 3, 1), mip3}
+    };
+
+    const auto output = converter->convertToData(inputImages);
+    CORRADE_VERIFY(output);
+
+    const auto expected = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps.ktx2"));
+    CORRADE_COMPARE_AS(std::string(output.data(), output.size()),
+            Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps.ktx2"),
+            TestSuite::Compare::StringToFile);
 }
 
 void KtxImageConverterTest::convertFormats() {
