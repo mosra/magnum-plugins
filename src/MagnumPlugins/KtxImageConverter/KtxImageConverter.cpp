@@ -691,6 +691,12 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
+using namespace Containers::Literals;
+
+/* Having this inside convertLevels() leads to errors with GCC 4.8:
+   "cannot initialize aggregate [...] with a compound literal" */
+constexpr Containers::StringView ValidOrientations[3]{"rl"_s, "du"_s, "io"_s};
+
 /* Using a template template parameter to deduce the image dimensions while
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
@@ -713,7 +719,6 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
     /* Fill key/value data. Values can be any byte-string but we only write
        constant text strings. Keys must be sorted alphabetically.
        Entries with an empty value won't be written. */
-    using namespace Containers::Literals;
 
     const std::string orientation = configuration.value("orientation");
     const std::string swizzle = configuration.value("swizzle");
@@ -726,13 +731,12 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
             return {};
         }
 
-        constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
         for(UnsignedByte i = 0; i != dimensions; ++i) {
-            if(!validOrientations[i].contains(orientation[i])) {
+            if(!ValidOrientations[i].contains(orientation[i])) {
                 /* Error{} prints char as int value so use StringViews to get
                    text output */
                 Error{} << "Trade::KtxImageConverter::convertToData(): invalid character in orientation, expected" <<
-                    validOrientations[i].prefix(1) << "or" << validOrientations[i].suffix(1) <<
+                    ValidOrientations[i].prefix(1) << "or" << ValidOrientations[i].suffix(1) <<
                     "but got" << Containers::StringView{orientation}.suffix(i).prefix(1);
                 return {};
             }
