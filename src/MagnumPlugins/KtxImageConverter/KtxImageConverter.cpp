@@ -467,7 +467,7 @@ UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix) {
     CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << UnsignedInt(suffix), {}); /* LCOV_EXCL_LINE */
 }
 
-Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedInt bitLength) {
+Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedInt bitLength, bool isCompressed) {
     /* sampleLower and sampleUpper define how to interpret the range of values
        found in a channel.
        samplerLower = black value or -1 for signed values
@@ -487,9 +487,12 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
             return {0u, typeMask};
         case Implementation::VkFormatSuffix::SNORM: {
             /* Remove sign bit to get largest positive value. If we flip the
-               bits of that, we get the sign-extended lowest negative value. */
+               bits of that, we get the sign-extended smallest negative value. */
             const UnsignedInt positiveTypeMask = typeMask >> 1;
-            return {~positiveTypeMask, positiveTypeMask};
+            /* Uncompressed formats need -MAX (= MIN + 1) for symmetry around 0
+               but block-compressed formats need INT32_MIN according to the
+               KDF spec. */
+            return {~positiveTypeMask + UnsignedInt(!isCompressed), positiveTypeMask};
         }
         case Implementation::VkFormatSuffix::UINT:
             return {0u, 1u};
@@ -513,7 +516,7 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
     const std::size_t dfdSamplesSize = sampleData.second().size()*sizeof(Implementation::KdfBasicBlockSample);
     const std::size_t dfdBlockSize = sizeof(Implementation::KdfBasicBlockHeader) + dfdSamplesSize;
     const std::size_t dfdSize = sizeof(UnsignedInt) + dfdBlockSize;
-    CORRADE_INTERNAL_ASSERT(dfdSize % 4 == 0);
+    CORRADE_INTERNAL_ASSERT(dfdSize%4 == 0);
 
     Containers::Array<char> data{ValueInit, dfdSize};
     std::size_t offset = 0;
@@ -548,7 +551,6 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
         if(unitSize[i] > 1)
             header.texelBlockDimension[i] = unitSize[i] - 1;
     }
-    header.bytesPlane[0] = unitDataSize;
 
     /* Sample blocks, one per channel */
     auto samples = Containers::arrayCast<Implementation::KdfBasicBlockSample>(data.suffix(offset));
@@ -562,10 +564,9 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
     /* Compressed integer formats must use 32-bit lower/upper */
     const UnsignedByte mappingBitLength = (isCompressedFormat ? sizeof(UnsignedInt) : typeSize)*8;
     /* @todo BC6h has unsigned floats, but the spec says to use a sampleLower
-             of -1.0. Is this an error?
-             https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#bc6h_channel
-             The signed channel format flag is still set, however. */
-    const auto lowerUpper = channelMapping(suffix, mappingBitLength);
+             of -1.0. The signed channel format flag is still set, however.
+             See https://github.com/KhronosGroup/DataFormat/issues/16 */
+    const auto lowerUpper = channelMapping(suffix, mappingBitLength, isCompressedFormat);
     const UnsignedByte formatFlags = channelFormat(suffix);
     /* For non-compressed RGBA channels, we get the 1-byte channel data
        and then multiply by the actual typeSize in the loop below */
@@ -586,7 +587,7 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
         if(sampleContent.suffix != Implementation::VkFormatSuffix{}) {
             CORRADE_INTERNAL_ASSERT(!isCompressedFormat);
             sampleFormatFlags = channelFormat(sampleContent.suffix);
-            sampleLowerUpper = channelMapping(sampleContent.suffix, sample.bitLength + 1);
+            sampleLowerUpper = channelMapping(sampleContent.suffix, sample.bitLength + 1, isCompressedFormat);
         } else {
             sampleFormatFlags = formatFlags;
             sampleLowerUpper = lowerUpper;
@@ -612,8 +613,21 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
 
     /* Make sure channel bit ranges returned by samples() are plausible.
        Can't use equals because some formats have channels smaller than the
-       pixel size, e.g. Depth24Unorm. */
+       pixel size (mainly the combined depth formats). */
+    CORRADE_INTERNAL_ASSERT(extent%8 == 0);
     CORRADE_INTERNAL_ASSERT(extent <= unitDataSize*8);
+
+    /* The byte count is the actual occupied number of bytes. For most formats
+       this is equal to unitDataSize, but for some formats with different-sized
+       channels it can be less (e.g. Depth16UnormStencil8UI). Depth24Unorm is
+       an odd exception because as far as Vulkan is concerned, it's a packed
+       type (_PACK32), so the byte count is 4, not 3. The check below works
+       because Depth24Unorm is the only single-channel format where
+       extent/8 < unitDataSize. */
+    if(samples.size() > 1)
+        header.bytesPlane[0] = extent/8;
+    else
+        header.bytesPlane[0] = unitDataSize;
 
     CORRADE_INTERNAL_ASSERT(offset == dfdSize);
 
@@ -629,7 +643,7 @@ UnsignedInt leastCommonMultiple(UnsignedInt a, UnsignedInt b) {
 
     /* Greatest common divisor */
     while(b != 0) {
-        const UnsignedInt t = a % b;
+        const UnsignedInt t = a%b;
         a = b;
         b = t;
     }
@@ -750,7 +764,7 @@ Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimension
             kvdSize += sizeof(length) + (length + 3)/4*4;
         }
     }
-    CORRADE_INTERNAL_ASSERT(kvdSize % 4 == 0);
+    CORRADE_INTERNAL_ASSERT(kvdSize%4 == 0);
 
     /* Pack. We assume that values are text strings, no endian-swapping needed. */
     std::size_t kvdOffset = 0;
