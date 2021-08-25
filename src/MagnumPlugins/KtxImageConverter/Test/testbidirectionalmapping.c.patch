@@ -1,0 +1,56 @@
+diff --git a/testbidirectionalmapping.c b/testbidirectionalmapping.c
+index 480d103..6c80e73 100644
+--- a/testbidirectionalmapping.c
++++ b/testbidirectionalmapping.c
+@@ -568,6 +568,19 @@ uint32_t *getmap(enum VkFormat f)
+     }
+ }
+ 
++void savemap(unsigned int format, const char* formatname, uint32_t* dfd)
++{
++  // assumes little-endian system
++  size_t dfdsize = dfd[0];
++
++  char filename[256];
++  sprintf(filename, "%d_%s.dfd", format, formatname);
++
++  FILE *f = fopen(filename, "wb");
++  fwrite(dfd, dfdsize, 1, f);
++  fclose(f);
++}
++
+ enum VkFormat unmap(uint32_t *dfd)
+ {
+ #include "dfd2vk.inl"
+@@ -581,6 +594,7 @@ int main()
+         VkFormat f = unmap(dfd);
+         if (i != f) printf("Input and output enums differ: %s (%d) -> %s (%d)\n",
+                            formatname(i),i, formatname(f),f);
++        else savemap(i, formatname(f), dfd);
+         free((void *)dfd);
+     }
+ 
+@@ -591,6 +605,7 @@ int main()
+         VkFormat f = unmap(dfd);
+         if (i != f) printf("Input and output enums differ: %s (%d) -> %s (%d)\n",
+                            formatname(i),i, formatname(f),f);
++        else savemap(i, formatname(f), dfd);
+         free((void *)dfd);
+     }
+ 
+@@ -600,6 +615,7 @@ int main()
+         VkFormat f = unmap(dfd);
+         if (i != f) printf("Input and output enums differ: %s (%d) -> %s (%d)\n",
+                            formatname(i),i, formatname(f),f);
++        else savemap(i, formatname(f), dfd);
+         free((void *)dfd);
+     }
+ 
+@@ -609,6 +625,7 @@ int main()
+         VkFormat f = unmap(dfd);
+         if (i != f) printf("Input and output enums differ: %s (%d) -> %s (%d)\n",
+                            formatname(i),i, formatname(f),f);
++        else savemap(i, formatname(f), dfd);
+         free((void *)dfd);
+     }
+     return 0;

@@ -26,8 +26,10 @@
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(KTXIMPORTER_TEST_DIR ".")
+    set(KTXIMAGECONVERTER_TEST_DIR ".")
 else()
     set(KTXIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test)
+    set(KTXIMAGECONVERTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
