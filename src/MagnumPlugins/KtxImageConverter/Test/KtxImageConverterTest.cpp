@@ -116,7 +116,8 @@ struct KtxImageConverterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 
-    std::unordered_map<Implementation::VkFormat, Containers::Array<char>> dataFormatDescriptors;
+    Containers::Array<char> dfdData;
+    std::unordered_map<Implementation::VkFormat, Containers::ArrayView<const char>> dfdMap;
 };
 
 using namespace Containers::Literals;
@@ -359,31 +360,23 @@ KtxImageConverterTest::KtxImageConverterTest() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(KTXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 
-    #ifdef CORRADE_TARGET_EMSCRIPTEN
-    /* Test files are embedded into the root of the virtual filesystem */
-    const std::string folder = KTXIMAGECONVERTER_TEST_DIR;
-    #else
-    const std::string folder = Utility::Directory::join(KTXIMAGECONVERTER_TEST_DIR, "dfd");
-    #endif
-
-    /* Map VkFormat to DFD test file. The VkFormat value is in the file name. */
-    const auto files = Utility::Directory::list(folder, Utility::Directory::Flag::SkipDirectories | Utility::Directory::Flag::SkipSpecial);
-    CORRADE_INTERNAL_ASSERT(!files.empty());
-    for(const auto& f: files) {
-        Containers::StringView file{f};
-        if(file.hasSuffix(".dfd"_s)) {
-            const auto found = file.find("_VK_FORMAT_"_s);
-            CORRADE_INTERNAL_ASSERT(!found.isEmpty());
-            const std::size_t prefix = found.data() - f.data();
-            CORRADE_INTERNAL_ASSERT(prefix > 0);
-            std::size_t read = 0;
-            const Implementation::VkFormat format = std::stoi(file.prefix(prefix), &read);
-            CORRADE_INTERNAL_ASSERT(read == prefix);
-            auto dfd = Utility::Directory::read(Utility::Directory::join(folder, file));
-            CORRADE_INTERNAL_ASSERT(!dfd.empty());
-            dataFormatDescriptors.emplace(format, std::move(dfd));
-        }
+    /* Extract VkFormat and DFD content from merged DFD file */
+    dfdData = Utility::Directory::read(Utility::Directory::join(KTXIMAGECONVERTER_TEST_DIR, "dfd-data.bin"));
+    CORRADE_INTERNAL_ASSERT(!dfdData.empty());
+    CORRADE_INTERNAL_ASSERT(dfdData.size()%4 == 0);
+    std::size_t offset = 0;
+    while(offset < dfdData.size()) {
+        /* Each entry is a VkFormat, followed directly by the DFD. The first
+           uint32_t of the DFD is its size. */
+        const Implementation::VkFormat format = *reinterpret_cast<Implementation::VkFormat*>(dfdData.data() + offset);
+        offset += sizeof(format);
+        const UnsignedInt size = *reinterpret_cast<UnsignedInt*>(dfdData.data() + offset);
+        CORRADE_INTERNAL_ASSERT(size > 0);
+        CORRADE_INTERNAL_ASSERT(size%4 == 0);
+        dfdMap.emplace(format, dfdData.suffix(offset).prefix(size));
+        offset += size;
     }
+    CORRADE_INTERNAL_ASSERT(offset == dfdData.size());
 }
 
 void KtxImageConverterTest::supportedFormat() {
@@ -523,8 +516,8 @@ void KtxImageConverterTest::dataFormatDescriptor() {
         const Implementation::VkFormat vkFormat = Utility::Endianness::littleEndian(header.vkFormat);
 
         const auto dfd = readDataFormatDescriptor(output);
-        CORRADE_COMPARE(dataFormatDescriptors.count(vkFormat), 1);
-        CORRADE_COMPARE_AS(dfd, dataFormatDescriptors[vkFormat], TestSuite::Compare::Container);
+        CORRADE_COMPARE(dfdMap.count(vkFormat), 1);
+        CORRADE_COMPARE_AS(dfd, dfdMap[vkFormat], TestSuite::Compare::Container);
     }
 }
 
@@ -549,8 +542,8 @@ void KtxImageConverterTest::dataFormatDescriptorCompressed() {
             const Implementation::VkFormat vkFormat = Utility::Endianness::littleEndian(header.vkFormat);
 
             const auto dfd = readDataFormatDescriptor(output);
-            CORRADE_COMPARE(dataFormatDescriptors.count(vkFormat), 1);
-            CORRADE_COMPARE_AS(dfd, dataFormatDescriptors[vkFormat], TestSuite::Compare::Container);
+            CORRADE_COMPARE(dfdMap.count(vkFormat), 1);
+            CORRADE_COMPARE_AS(dfd, dfdMap[vkFormat], TestSuite::Compare::Container);
         }
     }
 }

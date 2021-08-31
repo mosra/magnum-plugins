@@ -49,11 +49,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
-file(GLOB DFD_FILES "${CMAKE_CURRENT_SOURCE_DIR}/dfd/*.dfd")
 corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
-        ${DFD_FILES}
+        dfd-data.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-mipmaps.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-bc1.ktx2
