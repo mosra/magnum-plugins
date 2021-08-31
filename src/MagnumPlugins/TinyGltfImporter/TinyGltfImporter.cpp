@@ -477,7 +477,7 @@ template<class V> void postprocessSplineTrack(const std::size_t timeTrackUsed, c
     if(keys.size() < 2) return;
 
     /* Convert the `a` values to `n` and the `b` values to `m` as described in
-       https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#appendix-c-spline-interpolation
+       https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#appendix-c-spline-interpolation
        Unfortunately I was not able to find any concrete name for this, so it's
        not part of the CubicHermite implementation but is kept here locally. */
     for(std::size_t i = 0; i < keys.size() - 1; ++i) {
@@ -782,7 +782,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
 Containers::Optional<CameraData> TinyGltfImporter::doCamera(UnsignedInt id) {
     const tinygltf::Camera& camera = _d->model.cameras[id];
 
-    /* https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#projection-matrices */
+    /* https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#projection-matrices */
 
     /* Perspective camera. glTF uses vertical FoV and X/Y aspect ratio, so to
        avoid accidental bugs we will directly calculate the near plane size and
@@ -889,11 +889,12 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
 }
 
 Int TinyGltfImporter::doDefaultScene() const {
-    /* While https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#scenes
-       says that "When scene is undefined, runtime is not required to render
-       anything at load time.", several official sample glTF models (e.g. the
-       AnimatedTriangle) have no "scene" property, so that's a bit stupid
-       behavior to have. As per discussion at https://github.com/KhronosGroup/glTF/issues/815#issuecomment-274286889,
+    /* While https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#scenes
+       says that "When scene is undefined, client implementations MAY delay
+       rendering until a particular scene is requested.", several official
+       sample glTF models (e.g. the AnimatedTriangle) have no "scene" property,
+       so that's a bit stupid behavior to have. As per discussion at
+       https://github.com/KhronosGroup/glTF/issues/815#issuecomment-274286889,
        if a default scene isn't defined and there is at least one scene, just
        use the first one. */
     if(_d->model.defaultScene == -1 && !_d->model.scenes.empty())

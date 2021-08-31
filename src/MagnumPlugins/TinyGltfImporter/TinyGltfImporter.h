@@ -403,7 +403,8 @@ importer-specific data accessors:
 -   @ref TextureData::importerState() returns pointer to the
     `tinygltf::Texture` structure
 -   @ref AnimationData::importerState() returns pointer to the
-    `tinygltf::Animation` structure
+    `tinygltf::Animation` structure, or `nullptr` if the
+    @cb{.ini} mergeAnimationClips @ce option is enabled
 
 The TinyGLTF header is installed alsongside the plugin and accessible like
 this:
