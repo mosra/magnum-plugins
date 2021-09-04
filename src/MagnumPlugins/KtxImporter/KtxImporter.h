@@ -102,10 +102,10 @@ Imports images in the following formats:
 -   KTX2 with most compressed Vulkan formats that have an equivalent in
     @ref CompressedPixelFormat. None of the 3D ASTC formats are supported.
 
-With compressed pixel formats, the image will not be flipped if the Y- or Z-axis
-orientation doesn't match the output orientation. The nontrivial amount of work
-involved with flipping block-compressed data makes this unfeasible. The import
-will succeed but a warning will be emitted.
+With compressed pixel formats, the image will not be flipped if the Y- or
+Z-axis orientation doesn't match the output orientation. The nontrivial amount
+of work involved with flipping block-compressed data makes this unfeasible. The
+import will succeed but a warning will be emitted.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled.

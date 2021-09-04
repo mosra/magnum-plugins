@@ -40,7 +40,7 @@ typedef UnsignedInt VkFormat;
 /* Selected Vulkan 1.0 formats for detecting implicit swizzling to PixelFormat.
    VkFormat is UnsignedInt instead of this enum to prevent warnings when using
    arbitrary numeric values from formatMapping.hpp in switches. */
-enum : UnsignedInt {
+enum: UnsignedInt {
     VK_FORMAT_UNDEFINED = 0,
     VK_FORMAT_B8G8R8_UNORM = 30,
     VK_FORMAT_B8G8R8_SNORM = 31,
@@ -54,7 +54,7 @@ enum : UnsignedInt {
     VK_FORMAT_B8G8R8A8_SRGB = 50
 };
 
-enum VkFormatSuffix : UnsignedByte {
+enum VkFormatSuffix: UnsignedByte {
     UNORM = 1,
     SNORM,
     UINT,
@@ -66,7 +66,7 @@ enum VkFormatSuffix : UnsignedByte {
        They're usually used as vertex formats. */
 };
 
-enum SuperCompressionScheme : UnsignedInt {
+enum SuperCompressionScheme: UnsignedInt {
     None = 0,
     BasisLZ = 1,
     Zstandard = 2,
@@ -92,7 +92,8 @@ struct KtxHeader {
     UnsignedLong           sgdByteLength;          /* Length of Supercompression Global Data */
 };
 
-static_assert(sizeof(KtxHeader) == 80, "Improper size of KtxHeader struct");
+static_assert(sizeof(KtxHeader) == 80,
+    "Improper size of KtxHeader struct");
 
 /* KTX2 mip level index element */
 struct KtxLevel {
@@ -101,34 +102,37 @@ struct KtxLevel {
     UnsignedLong uncompressedByteLength; /* Total size of image data before supercompression */
 };
 
-static_assert(sizeof(KtxLevel) == 24, "Improper size of KtxLevel struct");
+static_assert(sizeof(KtxLevel) == 24,
+    "Improper size of KtxLevel struct");
 
 constexpr char KtxFileIdentifier[12]{
     /* https://github.khronos.org/KTX-Specification/#_identifier */
     '\xab', 'K', 'T', 'X', ' ', '2', '0', '\xbb', '\r', '\n', '\x1a', '\n'
 };
 
-static_assert(sizeof(KtxFileIdentifier) == sizeof(KtxHeader::identifier), "Improper size of KtxFileIdentifier data");
+static_assert(sizeof(KtxFileIdentifier) == sizeof(KtxHeader::identifier),
+    "Improper size of KtxFileIdentifier data");
 
 constexpr std::size_t KtxFileVersionOffset = 5;
 constexpr std::size_t KtxFileVersionLength = 2;
-static_assert(KtxFileVersionOffset + KtxFileVersionLength <= sizeof(KtxFileIdentifier), "KtxFileVersion(Offset|Length) out of bounds");
+static_assert(KtxFileVersionOffset + KtxFileVersionLength <= sizeof(KtxFileIdentifier),
+    "KtxFileVersion(Offset|Length) out of bounds");
 
 /* Khronos Data Format: basic block header */
 struct KdfBasicBlockHeader {
-    enum class VendorId : UnsignedShort {
+    enum class VendorId: UnsignedShort {
         Khronos = 0
     };
 
-    enum class DescriptorType : UnsignedShort {
+    enum class DescriptorType: UnsignedShort {
         Basic = 0
     };
 
-    enum class VersionNumber : UnsignedShort {
+    enum class VersionNumber: UnsignedShort {
         Kdf1_3 = 2
     };
 
-    enum class ColorModel : UnsignedByte {
+    enum class ColorModel: UnsignedByte {
         /* Uncompressed formats. There are a lot more, but KTX doesn't allow
            those. */
         Rgbsda = 1,   /* Additive colors: red, green, blue, stencil, depth, alpha */
@@ -153,18 +157,18 @@ struct KdfBasicBlockHeader {
         BasisEtc1s = Etc1s
     };
 
-    enum class ColorPrimaries : UnsignedByte {
+    enum class ColorPrimaries: UnsignedByte {
         /* We have no way to guess color space, this is the recommended default */
         Srgb = 1 /* BT.709 */
     };
 
-    enum class TransferFunction : UnsignedByte {
+    enum class TransferFunction: UnsignedByte {
         /* There are a lot more, but KTX doesn't allow those */
         Linear = 1,
         Srgb = 2
     };
 
-    enum Flags : UnsignedByte {
+    enum Flags: UnsignedByte {
         AlphaPremultiplied = 1
     };
 
@@ -189,7 +193,7 @@ static_assert(sizeof(KdfBasicBlockHeader) == 24, "Improper size of KdfBasicBlock
 /* Khronos Data Format: Basic block sample element, one for each color channel */
 struct KdfBasicBlockSample {
     /* Channel id encoded in lower half of channelType */
-    enum ChannelId : UnsignedByte {
+    enum ChannelId: UnsignedByte {
         /* ColorModel::Rgbsda */
         Red = 0,
         Green = 1,
@@ -205,7 +209,7 @@ struct KdfBasicBlockSample {
     };
 
     /* Channel data type bit mask encoded in upper half of channelType */
-    enum ChannelFormat : UnsignedByte {
+    enum ChannelFormat: UnsignedByte {
         Linear   = 1 << (4 + 0), /* Ignore the transfer function */
         Exponent = 1 << (4 + 1),
         Signed   = 1 << (4 + 2),

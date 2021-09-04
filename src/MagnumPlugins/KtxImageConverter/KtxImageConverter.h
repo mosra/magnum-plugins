@@ -57,8 +57,9 @@ namespace Magnum { namespace Trade {
 @brief KTX2 image converter plugin
 @m_since_latest_{plugins}
 
-Creates Khronos Texture 2.0 (`*.ktx2`) files from images. You can use
-@ref KtxImporter to import images in this format.
+Creates Khronos Texture 2.0 (`*.ktx2`) files from 1D, 2D and 3D images with
+optional mip levels. You can use @ref KtxImporter to import images in this
+format.
 
 @section Trade-KtxImageConverter-usage Usage
 

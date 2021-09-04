@@ -91,7 +91,7 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void convert3DCompressedMipmaps();
 
     /** @todo Add tests for cube and layered (and combined) images once the
-              converter supports those */
+        converter supports those */
 
     void convertFormats();
 
@@ -386,7 +386,8 @@ void KtxImageConverterTest::supportedFormat() {
 
     /* All the formats in PixelFormat are supported */
     /** @todo This needs to be extended when new formats are added to
-              PixelFormat. In dataFormatDescriptor as well. */
+        PixelFormat. In dataFormatDescriptor() as well. Ideally Magnum itself
+        should provide some kind of a "pixel format count" constant. */
     constexpr PixelFormat start = PixelFormat::R8Unorm;
     constexpr PixelFormat end = PixelFormat::Depth32FStencil8UI;
 
@@ -438,7 +439,9 @@ void KtxImageConverterTest::supportedCompressedFormat() {
     const UnsignedByte bytes[32]{};
 
     /** @todo This needs to be extended when new formats are added to
-              CompressedPixelFormat. In dataFormatDescriptorCompressed as well. */
+        CompressedPixelFormat. In dataFormatDescriptorCompressed() as well.
+        Ideally Magnum itself should provide some kind of a "pixel format
+        count" constant. */
     constexpr CompressedPixelFormat start = CompressedPixelFormat::Bc1RGBUnorm;
     constexpr CompressedPixelFormat end = CompressedPixelFormat::PvrtcRGBA4bppSrgb;
 

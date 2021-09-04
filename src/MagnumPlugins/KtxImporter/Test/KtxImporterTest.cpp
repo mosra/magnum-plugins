@@ -306,7 +306,8 @@ const struct {
     const Containers::StringView data;
     const char* message;
 } InvalidKeyValueData[]{
-    /* Entry has length 0, followed by a valid entry (with an empty value, that's allowed) */
+    /* Entry has length 0, followed by a valid entry (with an empty value,
+       that's allowed) */
     {"zero length", "\x00\x00\x00\x00\x02\x00\x00\x00k\x00\x00\x00"_s, "invalid key/value entry, skipping"},
     /* Key has length 0, followed by padding + a valid entry */
     {"empty key", "\x02\x00\x00\x00\x00v\x00\x00\x02\x00\x00\x00k\x00\x00\x00"_s, "invalid key/value entry, skipping"},

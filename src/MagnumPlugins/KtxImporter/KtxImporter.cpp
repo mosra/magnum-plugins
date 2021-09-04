@@ -50,14 +50,12 @@ namespace Magnum { namespace Trade {
 
 namespace {
 
-template<std::size_t Size> struct TypeForSize {};
+template<std::size_t> struct TypeForSize {};
 template<> struct TypeForSize<1> { typedef UnsignedByte  Type; };
 template<> struct TypeForSize<2> { typedef UnsignedShort Type; };
 template<> struct TypeForSize<4> { typedef UnsignedInt   Type; };
 template<> struct TypeForSize<8> { typedef UnsignedLong  Type; };
 
-/** @todo Can we perform endian-swap together with the swizzle? Might get messy
-          and it'll be untested... */
 void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
     switch(typeSize) {
         case 1:
@@ -77,19 +75,21 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
-enum SwizzleType : UnsignedByte {
+enum SwizzleType: UnsignedByte {
     None = 0,
     BGR,
     BGRA
 };
 
-inline SwizzleType& operator ^=(SwizzleType& a, SwizzleType b) {
+inline SwizzleType& operator^=(SwizzleType& a, SwizzleType b) {
     /* This is meant to toggle single enum values, make sure it's not being
        used for other bit-fiddling crimes */
     CORRADE_INTERNAL_ASSERT(a == SwizzleType::None || a == b);
     return a = SwizzleType(a ^ b);
 }
 
+/** @todo implement these in TextureTools(?) with proper optimizations,
+    together with an ability to endian-swap on the fly */
 template<typename T> void swizzlePixels(SwizzleType type, Containers::ArrayView<char> data) {
     if(type == SwizzleType::BGR) {
         for(auto& pixel: Containers::arrayCast<Math::Vector3<T>>(data))
@@ -155,19 +155,30 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
     }
 
     /* PixelFormat doesn't contain any of the swizzled formats. Figure it out
-       from the Vulkan format and remember that we need to swizzle in doImage(). */
+       from the Vulkan format and remember that we need to swizzle in
+       doImage(). */
     if(format == PixelFormat{}) {
         switch(vkFormat) {
-            case Implementation::VK_FORMAT_B8G8R8_UNORM:   format = PixelFormat::RGB8Unorm;  break;
-            case Implementation::VK_FORMAT_B8G8R8_SNORM:   format = PixelFormat::RGB8Snorm;  break;
-            case Implementation::VK_FORMAT_B8G8R8_UINT:    format = PixelFormat::RGB8UI;     break;
-            case Implementation::VK_FORMAT_B8G8R8_SINT:    format = PixelFormat::RGB8I;      break;
-            case Implementation::VK_FORMAT_B8G8R8_SRGB:    format = PixelFormat::RGB8Srgb;   break;
-            case Implementation::VK_FORMAT_B8G8R8A8_UNORM: format = PixelFormat::RGBA8Unorm; break;
-            case Implementation::VK_FORMAT_B8G8R8A8_SNORM: format = PixelFormat::RGBA8Snorm; break;
-            case Implementation::VK_FORMAT_B8G8R8A8_UINT:  format = PixelFormat::RGBA8UI;    break;
-            case Implementation::VK_FORMAT_B8G8R8A8_SINT:  format = PixelFormat::RGBA8I;     break;
-            case Implementation::VK_FORMAT_B8G8R8A8_SRGB:  format = PixelFormat::RGBA8Srgb;  break;
+            case Implementation::VK_FORMAT_B8G8R8_UNORM:
+                format = PixelFormat::RGB8Unorm;  break;
+            case Implementation::VK_FORMAT_B8G8R8_SNORM:
+                format = PixelFormat::RGB8Snorm;  break;
+            case Implementation::VK_FORMAT_B8G8R8_UINT:
+                format = PixelFormat::RGB8UI;     break;
+            case Implementation::VK_FORMAT_B8G8R8_SINT:
+                format = PixelFormat::RGB8I;      break;
+            case Implementation::VK_FORMAT_B8G8R8_SRGB:
+                format = PixelFormat::RGB8Srgb;   break;
+            case Implementation::VK_FORMAT_B8G8R8A8_UNORM:
+                format = PixelFormat::RGBA8Unorm; break;
+            case Implementation::VK_FORMAT_B8G8R8A8_SNORM:
+                format = PixelFormat::RGBA8Snorm; break;
+            case Implementation::VK_FORMAT_B8G8R8A8_UINT:
+                format = PixelFormat::RGBA8UI;    break;
+            case Implementation::VK_FORMAT_B8G8R8A8_SINT:
+                format = PixelFormat::RGBA8I;     break;
+            case Implementation::VK_FORMAT_B8G8R8A8_SRGB:
+                format = PixelFormat::RGBA8Srgb;  break;
             default:
                 break;
         }
@@ -205,10 +216,10 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
 
     /* Find block-compressed pixel format, no swizzling possible */
     /** @todo KTX supports 3D ASTC formats through an unreleased extension.
-              Supposedly the enum values won't change so we could manually map
-              them, although it'd be easier if Magnum did this.
-              See https://github.com/KhronosGroup/KTX-Specification/pull/97 and
-              https://github.com/KhronosGroup/KTX-Software/blob/f99221eb1c5ad92fd859765a0c66517ea4059160/lib/dfdutils/vulkan/vulkan_core.h#L1061*/
+        Supposedly the enum values won't change so we could manually map them,
+        although it'd be easier if Magnum did this. See
+        https://github.com/KhronosGroup/KTX-Specification/pull/97 and
+        https://github.com/KhronosGroup/KTX-Software/blob/f99221eb1c5ad92fd859765a0c66517ea4059160/lib/dfdutils/vulkan/vulkan_core.h#L1061 */
     CompressedPixelFormat compressedFormat{};
     switch(vkFormat) {
         #define _c(vulkan, magnum, _type) case vulkan: compressedFormat = CompressedPixelFormat::magnum; break;
@@ -227,14 +238,15 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
     }
 
     /** @todo Support all Vulkan formats allowed by the KTX spec. Create custom
-              PixelFormat with pixelFormatWrap and manually fill PixelStorage/
-              CompressedPixelStorage. We can take all the necessary info from
-              https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json
-              Do we also need this for the KtxImageConverter? This would allow
-              users to pass in images with implementation-specific PixelFormat
-              using the Vulkan format enum directly.
-              Is this actually worth the effort? Which Vulkan formats are not
-              supported by PixelFormat? */
+        PixelFormat with pixelFormatWrap and manually fill PixelStorage/
+        CompressedPixelStorage. We can take all the necessary info from
+        https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json
+
+        Do we also want this for the KtxImageConverter? This would allow users
+        to pass in images with implementation-specific PixelFormat using the
+        Vulkan format enum directly, however it's unclear how to fill in the
+        DFD for formats we're not aware of. Isn't it easier to just support all
+        Vulkan formats in PixelFormat? */
 
     return {};
 }
@@ -277,8 +289,9 @@ void KtxImporter::doClose() { _f = nullptr; }
 void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     /* Check if the file is long enough for the header */
     if(data.size() < sizeof(Implementation::KtxHeader)) {
-        Error{} << "Trade::KtxImporter::openData(): file too short, expected" <<
-            sizeof(Implementation::KtxHeader) << "bytes for the header but got only" << data.size();
+        Error{} << "Trade::KtxImporter::openData(): file too short, expected"
+            << sizeof(Implementation::KtxHeader)
+            << "bytes for the header but got only" << data.size();
         return;
     }
 
@@ -301,7 +314,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         /* Print a useful error for a KTX file with an unsupported version.
            KTX1 uses the same magic string but with a different version string. */
         if(identifier.hasPrefix(expected.prefix(Implementation::KtxFileVersionOffset))) {
-            const auto version = identifier.suffix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
+            const Containers::StringView version = identifier.suffix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
             if(version != "20"_s) {
                 Error() << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" << version;
                 return;
@@ -520,7 +533,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     /* Read key/value data, optional */
 
-    enum KeyValueType : UnsignedByte {
+    enum KeyValueType: UnsignedByte {
         CubeMapIncomplete,
         Orientation,
         Swizzle,
@@ -635,10 +648,10 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
 
     /** @todo KTX spec seems to really insist on rd for cube maps but the
-              wording is odd, I can't tell if they're saying it's mandatory or
-              not: https://github.khronos.org/KTX-Specification/#cubemapOrientation
-              The toktx tool from Khronos Texture Tools also forces rd for
-              cube maps, so we might want to do that in the converter as well. */
+        wording is odd, I can't tell if they're saying it's mandatory or not:
+        https://github.khronos.org/KTX-Specification/#cubemapOrientation
+        The toktx tool from Khronos Texture Tools also forces rd for cube maps,
+        so we might want to do that in the converter as well. */
 
     /* Incomplete cube maps are a 'feature' of KTX files. We just import them
        as layers (which is how they're exposed to us). */
@@ -659,8 +672,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                identity swizzle simply won't have an entry in the key/value
                data in the first place. Reading the DFD for getting the channel
                count is terrible overkill, so try our best for normal formats
-               and leave it at that.
-               */
+               and leave it at that. */
             if(!f->pixelFormat.isCompressed) {
                 const std::size_t numChannels = f->pixelFormat.size / f->pixelFormat.typeSize;
                 swizzle = swizzle.prefix(Math::min(numChannels, swizzle.size()));
@@ -678,8 +690,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                     }
                 }
                 if(!handled) {
-                    Error{} << "Trade::KtxImporter::openData(): unsupported channel "
-                        "mapping" << swizzle;
+                    Error{} << "Trade::KtxImporter::openData(): unsupported channel mapping" << swizzle;
                     return;
                 }
             }
@@ -693,8 +704,7 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 f->flip[1] ? "y"_s : ""_s,
                 f->flip[2] ? "z"_s : ""_s,
             };
-            Debug{} << "Trade::KtxImporter::openData(): image will be flipped along" <<
-                " and "_s.joinWithoutEmptyParts(axes);
+            Debug{} << "Trade::KtxImporter::openData(): image will be flipped along" << " and "_s.joinWithoutEmptyParts(axes);
         }
 
         switch(f->pixelFormat.swizzle) {

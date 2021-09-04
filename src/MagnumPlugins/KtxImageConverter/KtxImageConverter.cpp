@@ -46,6 +46,32 @@ namespace Magnum { namespace Trade {
 
 namespace {
 
+/* Most of the following code is needed for generating a Data Format Descriptor
+   embedded in the file. Because Magnum itself doesn't care about the DFD and
+   relies just on the format enum, the ideal way would be to have a
+   pre-generated DFD blob for each format and then just copy that. However:
+
+    -   There is no upstream-maintained way to generate such data. The KDF spec
+        has a format.json (https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json)
+        but that doesn't contain any information on how to fill the DFD. Then
+        there's Khronos' own dfdutils (https://github.com/KhronosGroup/KTX-Software/tree/master/lib/dfdutils)
+        but that generates headers through Perl scripts (a hell for long-term
+        maintenance hell), and the headers need the original VkFormat enum to
+        be defined. Finally, there's a testbidirectionalmapping.c that can be
+        patched and abused to populate the DFD information, however we can't
+        rely on it being useful long-term either.
+    -   The generated DFD data for all formats are over 12 kB, which could
+        become a deal breaker for embedding KtxImageConverter in Emscripten
+        apps -- the same done with code should *hopefully* be smaller.
+
+   Thus to ensure we're always able to add new formats, the information gets
+   populated manually, using information directly from the KDF spec:
+    https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#CompressedFormatModels
+   On the other hand, to minimize the chance of error, the tests verify against ground-truth DFDs created using the testbidirectionalmapping.c utility.
+   Worst case, if that one changes and we can't generate new formats with it
+   anymore, we only would have certain DFDs untested, but it won't block us
+   from adding new formats. */
+
 /* Overloaded functions to use different pixel formats in templated code */
 bool isFormatImplementationSpecific(PixelFormat format) {
     return isPixelFormatImplementationSpecific(format);
@@ -71,10 +97,10 @@ FormatPair vulkanFormat(PixelFormat format) {
 FormatPair vulkanFormat(CompressedPixelFormat format) {
     /* In Vulkan there is no distinction between RGB and RGBA PVRTC:
        https://github.com/KhronosGroup/Vulkan-Docs/issues/512#issuecomment-307768667
-       compressedFormatMapping.hpp (generated from Vk::PixelFormat) contains the
-       RGBA variants, so we manually alias them here. We can't do this inside
-       compressedFormatMapping.hpp because both Magnum and Vulkan formats must
-       be unique for switch cases. */
+       compressedFormatMapping.hpp (generated from Vk::PixelFormat) contains
+       the RGBA variants, so we manually alias them here. We can't do this
+       inside compressedFormatMapping.hpp because both Magnum and Vulkan
+       formats must be unique for switch cases. */
     switch(format) {
         case CompressedPixelFormat::PvrtcRGB2bppUnorm:
             format = CompressedPixelFormat::PvrtcRGBA2bppUnorm;
@@ -257,16 +283,6 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
 }
 
 Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::ArrayView<const SampleData>> samples(CompressedPixelFormat format) {
-    /* There is no good way to auto-generate these from data. The KDF spec has
-       a format.json (https://github.com/KhronosGroup/KTX-Specification/blob/master/formats.json)
-       but that doesn't contain any information on how to fill the DFD.
-       Then there's Khronos' own dfdutils (https://github.com/KhronosGroup/KTX-Software/tree/master/lib/dfdutils)
-       but that generates headers through Perl scripts, and the headers need
-       the original VkFormat enum to be defined.
-
-       DFD content is taken directly from the KDF spec:
-       https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#CompressedFormatModels */
-
     static constexpr SampleData SamplesBc1[]{
         {0, 64, Implementation::KdfBasicBlockSample::ChannelId::Color, Implementation::VkFormatSuffix{}}
     };
@@ -537,9 +553,9 @@ Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::
 
     header.colorModel = sampleData.first();
     header.colorPrimaries = Implementation::KdfBasicBlockHeader::ColorPrimaries::Srgb;
-    header.transferFunction = suffix == Implementation::VkFormatSuffix::SRGB
-        ? Implementation::KdfBasicBlockHeader::TransferFunction::Srgb
-        : Implementation::KdfBasicBlockHeader::TransferFunction::Linear;
+    header.transferFunction = suffix == Implementation::VkFormatSuffix::SRGB ?
+        Implementation::KdfBasicBlockHeader::TransferFunction::Srgb :
+        Implementation::KdfBasicBlockHeader::TransferFunction::Linear;
     /** @todo Do we ever have premultiplied alpha? */
 
     const Vector3i unitSize = formatUnitSize(format);

@@ -1,7 +1,8 @@
 Updating test files
 ===================
 
-The file dfd-data.bin is created using a patch to `testbidirectionalmapping` from [dfdutils](https://github.com/KhronosGroup/dfdutils):
+The file dfd-data.bin is created using a patch to `testbidirectionalmapping`
+from [dfdutils](https://github.com/KhronosGroup/dfdutils):
 
 ```bash
 git clone https://github.com/KhronosGroup/dfdutils.git

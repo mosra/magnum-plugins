@@ -78,9 +78,11 @@
  */
 /** @dir MagnumPlugins/KtxImageConverter
  * @brief Plugin @ref Magnum::Trade::KtxImageConverter
+ * @m_since_latest_{plugins}
  */
 /** @dir MagnumPlugins/KtxImporter
  * @brief Plugin @ref Magnum::Trade::KtxImporter
+ * @m_since_latest_{plugins}
  */
 /** @dir MagnumPlugins/MeshOptimizerSceneConverter
  * @brief Plugin @ref Magnum::Trade::MeshOptimizerSceneConverter
