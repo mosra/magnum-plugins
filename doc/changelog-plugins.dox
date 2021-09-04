@@ -38,6 +38,9 @@ namespace Magnum {
     plugin for SPIR-V shader (dis)assembly and validation
 -   New @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin for
     GLSL shader validation and GLSL->SPIR-V compilation
+-   New @relativeref{Trade,KtxImporter} and @relativeref{Trade,KtxImageConverter}
+    plugins for reading and writing 1D/2D/3D KTX2 files in arbitrary pixel
+    formats (see [mosra/magnum-plugins#103](https://github.com/mosra/magnum-plugins/pull/103))
 -   New @ref Trade::OpenExrImporter "OpenExrImporter" and
     @ref Trade::OpenExrImageConverter "OpenExrImageConverter" plugins for
     reading and writing OpenEXR files including cube maps and custom channel
