@@ -110,6 +110,9 @@ namespace Magnum {
 -   The Homebrew package now uses `std_cmake_args` instead of hardcoded build
     type and install prefix, which resolves certain build issues (see
     [mosra/homebrew-magnum#6](https://github.com/mosra/homebrew-magnum/pull/6))
+-   Suppressed a GCC 10 warning about a (harmless) uninitialized variable in
+    @relativeref{Trade,TinyGltfImporter} (see
+    [mosra/magnum-plugins#104](https://github.com/mosra/magnum-plugins/issues/104))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 

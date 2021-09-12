@@ -309,6 +309,9 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
             out->assign(data.begin(), data.end());
             return true;
         };
+    /* This field is not used (we're just importing here) but GCC 10 warns
+       about a "maybe uninitialized" variable otherwise. */
+    callbacks.WriteWholeFile = nullptr;
     loader.SetFsCallbacks(callbacks);
 
     loader.SetImageLoader(&loadImageData, nullptr);
