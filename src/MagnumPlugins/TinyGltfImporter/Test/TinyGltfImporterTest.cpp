@@ -96,6 +96,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void light();
     void lightInvalid();
+    void lightInvalidColorSize();
     void lightMissingType();
     void lightMissingSpot();
 
@@ -501,7 +502,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::lightInvalid},
         Containers::arraySize(LightInvalidData));
 
-    addTests({&TinyGltfImporterTest::lightMissingType,
+    addTests({&TinyGltfImporterTest::lightInvalidColorSize,
+              &TinyGltfImporterTest::lightMissingType,
               &TinyGltfImporterTest::lightMissingSpot});
 
     addInstancedTests({&TinyGltfImporterTest::scene,
@@ -1470,6 +1472,19 @@ void TinyGltfImporterTest::lightInvalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(data.name));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::light(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::lightInvalidColorSize() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "light-invalid-color-size.gltf")));
+    CORRADE_COMPARE(importer->lightCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->light(0));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::light(): expected three values for a color, got 4\n");
 }
 
 void TinyGltfImporterTest::lightMissingType() {
