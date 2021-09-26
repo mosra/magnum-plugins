@@ -128,6 +128,8 @@ corrade_add_test(TinyGltfImporterTest
         přívodní-šňůra.gltf
         přívodní-šňůra.bin
         přívodní-šňůra.png
+        required-extensions.gltf
+        required-extensions-unsupported.gltf
         scene.gltf
         scene.glb
         scene-nodefault.gltf

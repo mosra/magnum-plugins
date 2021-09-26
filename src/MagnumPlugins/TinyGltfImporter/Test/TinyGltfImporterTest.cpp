@@ -73,6 +73,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void openExternalDataNoPathNoCallback();
     void openExternalDataWrongSize();
 
+    void requiredExtensions();
+    void requiredExtensionsUnsupported();
+
     void animation();
     void animationInvalid();
 
@@ -446,6 +449,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::openExternalDataWrongSize},
                       Containers::arraySize(SingleFileData));
 
+    addTests({&TinyGltfImporterTest::requiredExtensions,
+              &TinyGltfImporterTest::requiredExtensionsUnsupported});
+
     addInstancedTests({&TinyGltfImporterTest::animation},
                       Containers::arraySize(MultiFileData));
 
@@ -661,6 +667,21 @@ void TinyGltfImporterTest::openExternalDataWrongSize() {
         CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
             "buffer-wrong-size" + std::string{data.suffix})));
         CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File size mismatch : external-data.bin, requestedBytes 6, but got 12\n");
+    }
+}
+
+void TinyGltfImporterTest::requiredExtensions() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "required-extensions.gltf")));
+}
+
+void TinyGltfImporterTest::requiredExtensionsUnsupported() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    {
+        CORRADE_EXPECT_FAIL("TinyGltfImporter ignores required extensions.");
+        CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+            "required-extensions-unsupported.gltf")));
     }
 }
 
