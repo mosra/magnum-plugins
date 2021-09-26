@@ -9,6 +9,49 @@
             "samplers": []
         },
         {
+            "name": "empty TRS animation",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "rotation"
+                    }
+                },
+                {
+                    "sampler": 1,
+                    "target": {
+                        "node": 1,
+                        "path": "translation"
+                    }
+                },
+                {
+                    "sampler": 2,
+                    "target": {
+                        "node": 2,
+                        "path": "scale"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 10,
+                    "interpolation": "LINEAR",
+                    "output": 12
+                },
+                {
+                    "input": 10,
+                    "interpolation": "STEP",
+                    "output": 11
+                },
+                {
+                    "input": 10,
+                    "interpolation": "LINEAR",
+                    "output": 11
+                }
+            ]
+        },
+        {
             "name": "TRS animation",
             "channels": [
                 {
@@ -165,6 +208,27 @@
             "componentType": 5126,
             "count": 12,
             "type": "VEC3"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 0,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 0,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 0,
+            "type": "VEC4"
         }
     ],
     "bufferViews": [
