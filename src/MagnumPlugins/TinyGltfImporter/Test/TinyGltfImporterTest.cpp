@@ -154,6 +154,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void fileCallbackImageNotFound();
 
     void utf8filenames();
+    void escapedStrings();
+    void encodedUris();
 
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -558,7 +560,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                        &TinyGltfImporterTest::fileCallbackImageNotFound},
                       Containers::arraySize(SingleFileData));
 
-    addTests({&TinyGltfImporterTest::utf8filenames});
+    addTests({&TinyGltfImporterTest::utf8filenames,
+              &TinyGltfImporterTest::escapedStrings,
+              &TinyGltfImporterTest::encodedUris});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -3631,6 +3635,99 @@ void TinyGltfImporterTest::utf8filenames() {
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::escapedStrings() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "escaped-strings.gltf")));
+
+    CORRADE_COMPARE(importer->object3DCount(), 6);
+    CORRADE_COMPARE(importer->object3DName(0), "");
+    CORRADE_COMPARE(importer->object3DName(1), "UTF-8: Лорем ипсум долор сит амет");
+    CORRADE_COMPARE(importer->object3DName(2), "UTF-8 escaped: Лорем ипсум долор сит амет");
+    CORRADE_COMPARE(importer->object3DName(3), "Special: \"/\\\b\f\r\n\t");
+    CORRADE_COMPARE(importer->object3DName(4), "Everything: říční člun \t\t\n حليب اللوز");
+    /* Tinygltf decodes JSON keys (in this case, "name"). Old versions of the
+       the spec used to forbid non-ASCII keys or enums:
+       https://github.com/KhronosGroup/glTF/tree/fd3ab461a1114fb0250bd76099153d2af50a7a1d/specification/2.0#json-encoding
+       Newer spec versions changed this to "ASCII characters [...] SHOULD be
+       written without JSON escaping" */
+    CORRADE_COMPARE(importer->object3DName(5), "Key UTF-8 escaped");
+
+    /* All user-facing strings are unescaped. URIs are tested in encodedUris(). */
+    CORRADE_COMPARE(importer->animationCount(), 1);
+    CORRADE_COMPARE(importer->animationName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->cameraCount(), 1);
+    CORRADE_COMPARE(importer->cameraName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->lightCount(), 1);
+    CORRADE_COMPARE(importer->lightName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->materialCount(), 1);
+    CORRADE_COMPARE(importer->materialName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->sceneName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->skin3DCount(), 1);
+    CORRADE_COMPARE(importer->skin3DName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    CORRADE_COMPARE(importer->textureName(0), "Everything: říční člun \t\t\n حليب اللوز");
+}
+
+void TinyGltfImporterTest::encodedUris() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
+
+    std::string strings[6];
+
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy, std::string (&strings)[6])
+            -> Containers::Optional<Containers::ArrayView<const char>>
+        {
+            static const char bytes[4]{};
+            if(filename.find("buffer-unencoded") == 0)
+                strings[0] = filename;
+            else if(filename.find("buffer-encoded") == 0)
+                strings[1] = filename;
+            else if(filename.find("buffer-escaped") == 0)
+                strings[2] = filename;
+            else if(filename.find("image-unencoded") == 0)
+                strings[3] = filename;
+            else if(filename.find("image-encoded") == 0)
+                strings[4] = filename;
+            else if(filename.find("image-escaped") == 0)
+                strings[5] = filename;
+            return Containers::arrayView(bytes);
+        }, strings);
+
+    /* Prevent the file callback being used for the main glTF content */
+    const auto data = Utility::Directory::read(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "encoded-uris.gltf"));
+    CORRADE_VERIFY(importer->openData(data));
+
+    CORRADE_COMPARE(importer->image2DCount(), 3);
+    /* We don't care about the result, only the callback being invoked */
+    importer->image2D(0);
+    importer->image2D(1);
+    importer->image2D(2);
+
+    CORRADE_COMPARE(strings[0], "buffer-unencoded/@file#.bin");
+    CORRADE_COMPARE(strings[3], "image-unencoded/image #1.png");
+
+    {
+        CORRADE_EXPECT_FAIL("tinygltf doesn't decode special characters in URIs.");
+
+        CORRADE_COMPARE(strings[1], "buffer-encoded/@file#.bin");
+        CORRADE_COMPARE(strings[2], "buffer-escaped/říční člun.bin");
+        CORRADE_COMPARE(strings[4], "image-encoded/image #1.png");
+        CORRADE_COMPARE(strings[5], "image-escaped/říční člun.png");
+    }
+
+    CORRADE_COMPARE(strings[1], "buffer-encoded%2F%40file%23.bin");
+    CORRADE_COMPARE(strings[2], "buffer-escaped%2Fříční%20člun.bin");
+    CORRADE_COMPARE(strings[4], "image-encoded%2Fimage%20%231.png");
+    CORRADE_COMPARE(strings[5], "image-escaped%2Fříční%20člun.png");
 }
 
 }}}}

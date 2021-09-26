@@ -75,6 +75,8 @@ corrade_add_test(TinyGltfImporterTest
         animation-splines-sharing.gltf
         camera.gltf
         camera.glb
+        encoded-uris.gltf
+        escaped-strings.gltf
         external-data.bin
         # external-data.* packed via a resource (but *.bin needed also by
         # buffer-wrong-size.gltf, so added separately as well)
