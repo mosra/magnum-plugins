@@ -1,0 +1,74 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_2": 0,
+                        "TEXCOORD_0": 1,
+                        "TEXCOORD_1": 2,
+                        "COLOR_9": 3,
+                        "COLOR_3": 4,
+                        "_CUSTOM_4": 0,
+                        "_CUSTOM_1": 3
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "name": "0",
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC2"
+        },
+        {
+            "name": "1",
+            "bufferView": 0,
+            "componentType": 5123,
+            "normalized": true,
+            "count": 1,
+            "type": "VEC2"
+        },
+        {
+            "name": "2",
+            "bufferView": 0,
+            "componentType": 5121,
+            "normalized": true,
+            "count": 1,
+            "type": "VEC2"
+        },
+        {
+            "name": "3",
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3"
+        },
+        {
+            "name": "4",
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC4"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 124,
+            "byteLength": 24
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 160,
+            "uri": "mesh.bin"
+        }
+    ]
+}

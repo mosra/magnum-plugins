@@ -111,8 +111,11 @@ corrade_add_test(TinyGltfImporterTest
         mesh.gltf
         mesh.bin
         mesh.glb
+        mesh-colors.gltf
+        mesh-colors.bin
         mesh-custom-attributes.bin
         mesh-custom-attributes.gltf
+        mesh-duplicate-attributes.gltf
         mesh-embedded.gltf
         mesh-embedded.glb
         mesh-index-accessor-oob.gltf
@@ -121,8 +124,7 @@ corrade_add_test(TinyGltfImporterTest
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
         mesh-primitives-types.bin
-        mesh-colors.gltf
-        mesh-colors.bin
+        mesh-unordered-attributes.gltf
         přívodní-šňůra.gltf
         přívodní-šňůra.bin
         přívodní-šňůra.png
