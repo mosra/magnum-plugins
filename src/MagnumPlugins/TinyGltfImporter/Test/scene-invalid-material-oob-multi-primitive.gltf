@@ -1,0 +1,27 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                },
+                {
+                    "attributes": {},
+                    "material": 5
+                }
+            ]
+        }
+    ],
+    "materials": [
+        {}, {}, {}, {}
+    ],
+    "nodes": [
+        {
+            "name": "material in a multi-primitive mesh out of bounds",
+            "mesh": 0
+        }
+    ]
+}

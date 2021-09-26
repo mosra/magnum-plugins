@@ -202,44 +202,46 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    const char* file;
     const char* message;
 } AnimationInvalidData[]{
-    {"unexpected time type", "time track has unexpected type 4/5126"},
-    {"unsupported interpolation type", "unsupported interpolation QUADRATIC"},
-    {"unexpected translation type", "translation track has unexpected type 4/5126"},
-    {"unexpected rotation type", "rotation track has unexpected type 65/5126"},
-    {"unexpected scaling type", "scaling track has unexpected type 4/5126"},
-    {"unsupported path", "unsupported track target color"},
-    {"sampler index out of bounds", "sampler 1 out of bounds for 1 samplers"},
-    {"node index out of bounds", "target node 2 out of bounds for 2 nodes"},
-    {"sampler input accessor index out of bounds", "accessor 3 out of bounds for 3 accessors"},
-    {"sampler output accessor index out of bounds", "accessor 3 out of bounds for 3 accessors"}
+    {"unexpected time type", "animation-invalid.gltf", "time track has unexpected type 4/5126"},
+    {"unsupported interpolation type", "animation-invalid.gltf", "unsupported interpolation QUADRATIC"},
+    {"unexpected translation type", "animation-invalid.gltf", "translation track has unexpected type 4/5126"},
+    {"unexpected rotation type", "animation-invalid.gltf", "rotation track has unexpected type 65/5126"},
+    {"unexpected scaling type", "animation-invalid.gltf", "scaling track has unexpected type 4/5126"},
+    {"unsupported path", "animation-invalid.gltf", "unsupported track target color"},
+    {"sampler index out of bounds", "animation-invalid-sampler-oob.gltf", "sampler 1 out of bounds for 1 samplers"},
+    {"node index out of bounds", "animation-invalid-node-oob.gltf", "target node 2 out of bounds for 2 nodes"},
+    {"sampler input accessor index out of bounds", "animation-invalid-input-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},
+    {"sampler output accessor index out of bounds", "animation-invalid-output-accessor-oob.gltf", "accessor 4 out of bounds for 2 accessors"}
 };
 
 constexpr struct {
     const char* name;
+    const char* file;
     const char* message;
 } LightInvalidData[]{
-    {"unknown type", "invalid light type what"},
-    {"directional with range", "range can't be defined for a directional light"},
-    {"spot with too small inner angle", "inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
+    {"unknown type", "light-invalid.gltf", "invalid light type what"},
+    {"directional with range", "light-invalid.gltf", "range can't be defined for a directional light"},
+    {"spot with too small inner angle", "light-invalid.gltf", "inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
     /* These are kinda silly (not sure why we should limit to 90° and why inner
        can't be the same as outer), but let's follow the spec */
-    {"spot with too large outer angle", "inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
-    {"spot with inner angle same as outer", "inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
-    {"four color values", "expected three values for a color, got 4"}
+    {"spot with too large outer angle", "light-invalid.gltf", "inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
+    {"spot with inner angle same as outer", "light-invalid.gltf", "inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"}
 };
 
 constexpr struct {
     const char* name;
+    const char* file;
     const char* message;
 } SkinInvalidData[]{
-    {"no joints", "skin has no joints"},
-    {"joint out of bounds", "target node 2 out of bounds for 2 nodes"},
-    {"accessor out of bounds", "accessor 4 out of bounds for 4 accessors"},
-    {"wrong accessor type", "inverse bind matrices have unexpected type 35/5126"},
-    {"wrong accessor component type", "inverse bind matrices have unexpected type 36/5123"},
-    {"wrong accessor count", "invalid inverse bind matrix count, expected 2 but got 3"}
+    {"no joints", "skin-invalid.gltf", "skin has no joints"},
+    {"joint out of bounds", "skin-invalid-joint-oob.gltf", "target node 2 out of bounds for 2 nodes"},
+    {"accessor out of bounds", "skin-invalid-accessor-oob.gltf", "accessor 1 out of bounds for 1 accessors"},
+    {"wrong accessor type", "skin-invalid.gltf", "inverse bind matrices have unexpected type 35/5126"},
+    {"wrong accessor component type", "skin-invalid.gltf", "inverse bind matrices have unexpected type 36/5123"},
+    {"wrong accessor count", "skin-invalid.gltf", "invalid inverse bind matrix count, expected 2 but got 3"}
 };
 
 constexpr struct {
@@ -304,67 +306,72 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    const char* file;
     const char* message;
 } MeshInvalidData[]{
-    {"invalid primitive", "unrecognized primitive 666"},
-    {"different vertex count for each accessor", "mismatched vertex count for attribute TEXCOORD_1, expected 3 but got 4"},
-    {"unexpected position type", "unexpected POSITION type 2"},
-    {"unsupported position component type", "unsupported POSITION component type unnormalized 5130"},
-    {"unexpected normal type", "unexpected NORMAL type 2"},
-    {"unsupported normal component type", "unsupported NORMAL component type unnormalized 5130"},
-    {"unexpected tangent type", "unexpected TANGENT type 3"},
-    {"unsupported tangent component type", "unsupported TANGENT component type unnormalized 5120"},
-    {"unexpected texcoord type", "unexpected TEXCOORD type 3"},
-    {"unsupported texcoord component type", "unsupported TEXCOORD component type normalized 5125"},
-    {"unexpected color type", "unexpected COLOR type 2"},
-    {"unsupported color component type", "unsupported COLOR component type unnormalized 5120"},
-    {"unexpected object id type", "unexpected object ID type 2"},
-    {"unsupported object id component type", "unsupported object ID component type unnormalized 5124"},
-    {"unexpected index type", "unexpected index type 2"},
-    {"unsupported index component type", "unexpected index component type 5124"},
-    {"normalized index type", "index type can't be normalized"},
-    {"strided index view", "index bufferView is not contiguous"},
-    {"accessor type size larger than buffer stride", "16-byte type defined by accessor 10 can't fit into bufferView 0 stride of 12"},
-    {"accessor count larger than buffer size", "accessor 11 needs 33 bytes but bufferView 1 has only 32"},
-    {"buffer view range out of bounds", "bufferView 2 needs 72 bytes but buffer 0 has only 68"},
-    {"buffer index out of bounds", "buffer 1 out of bounds for 1 buffers"},
-    {"buffer view index out of bounds", "bufferView 4 out of bounds for 4 views"},
-    {"normalized float", "floating-point component types can't be normalized"},
-    {"non-normalized byte matrix", "unsupported matrix component type unnormalized 5120"},
-    {"accessor index out of bounds", "accessor 17 out of bounds for 17 accessors"}
+    {"invalid primitive", "mesh-invalid.gltf", "unrecognized primitive 666"},
+    {"different vertex count for each accessor", "mesh-invalid-mismatching-attribute-count.gltf", "mismatched vertex count for attribute TEXCOORD_0, expected 3 but got 4"},
+    {"unexpected position type", "mesh-invalid.gltf", "unexpected POSITION type 2"},
+    {"unsupported position component type", "mesh-invalid.gltf", "unsupported POSITION component type unnormalized 5125"},
+    {"unexpected normal type", "mesh-invalid.gltf", "unexpected NORMAL type 2"},
+    {"unsupported normal component type", "mesh-invalid.gltf", "unsupported NORMAL component type unnormalized 5125"},
+    {"unexpected tangent type", "mesh-invalid.gltf", "unexpected TANGENT type 3"},
+    {"unsupported tangent component type", "mesh-invalid.gltf", "unsupported TANGENT component type unnormalized 5120"},
+    {"unexpected texcoord type", "mesh-invalid.gltf", "unexpected TEXCOORD type 3"},
+    {"unsupported texcoord component type", "mesh-invalid.gltf", "unsupported TEXCOORD component type normalized 5125"},
+    {"unexpected color type", "mesh-invalid.gltf", "unexpected COLOR type 2"},
+    {"unsupported color component type", "mesh-invalid.gltf", "unsupported COLOR component type unnormalized 5120"},
+    {"unexpected object id type", "mesh-invalid.gltf", "unexpected object ID type 2"},
+    {"unsupported object id component type", "mesh-invalid.gltf", "unsupported object ID component type unnormalized 5122"},
+    {"unexpected index type", "mesh-invalid.gltf", "unexpected index type 2"},
+    {"unsupported index component type", "mesh-invalid.gltf", "unexpected index component type 5122"},
+    {"normalized index type", "mesh-invalid.gltf", "index type can't be normalized"},
+    {"strided index view", "mesh-invalid.gltf", "index bufferView is not contiguous"},
+    {"accessor type size larger than buffer stride", "mesh-invalid.gltf", "16-byte type defined by accessor 10 can't fit into bufferView 0 stride of 12"},
+    {"normalized float", "mesh-invalid.gltf", "floating-point component types can't be normalized"},
+    {"normalized double", "mesh-invalid.gltf", "floating-point component types can't be normalized"},
+    {"non-normalized byte matrix", "mesh-invalid.gltf", "unsupported matrix component type unnormalized 5120"},
+    {"accessor count larger than buffer size", "mesh-invalid-accessor-short.gltf", "accessor 0 needs 33 bytes but bufferView 0 has only 32"},
+    {"buffer view range out of bounds", "mesh-invalid-bufferview-short.gltf", "bufferView 0 needs 72 bytes but buffer 0 has only 68"},
+    {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf", "buffer 1 out of bounds for 1 buffers"},
+    {"buffer view index out of bounds", "mesh-invalid-bufferview-oob.gltf", "bufferView 4 out of bounds for 1 views"},
+    {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"}
 };
 
 constexpr struct {
     const char* name;
+    const char* file;
     const char* message;
 } MaterialInvalidData[]{
-    {"unknown alpha mode", "unknown alpha mode WAT"},
-    {"invalid texture index pbrMetallicRoughness base color", "baseColorTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrMetallicRoughness metallic/roughness", "metallicRoughnessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness diffuse", "diffuseTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index normal", "normalTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index occlusion", "occlusionTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index emissive", "emissiveTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat factor", "clearcoatTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat roughness", "clearcoatRoughnessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat normal", "clearcoatNormalTexture index 2 out of bounds for 2 textures"},
+    {"unknown alpha mode", "material-invalid-alpha-mode.gltf", "unknown alpha mode WAT"},
+    {"invalid texture index pbrMetallicRoughness base color", "material-invalid-pbr-base-color-oob.gltf", "baseColorTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index pbrMetallicRoughness metallic/roughness", "material-invalid-pbr-metallic-roughness-oob.gltf", "metallicRoughnessTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness diffuse", "material-invalid-pbr-diffuse-oob.gltf", "diffuseTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness specular", "material-invalid-pbr-specular-oob.gltf", "specularGlossinessTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index normal", "material-invalid-normal-oob.gltf", "normalTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index occlusion", "material-invalid-occlusion-oob.gltf", "occlusionTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index emissive", "material-invalid-emissive-oob.gltf", "emissiveTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat factor", "material-invalid-clearcoat-factor-oob.gltf", "clearcoatTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat roughness", "material-invalid-clearcoat-roughness-oob.gltf", "clearcoatRoughnessTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat normal", "material-invalid-clearcoat-normal-oob.gltf", "clearcoatNormalTexture index 2 out of bounds for 2 textures"}
 };
 
 constexpr struct {
     const char* name;
+    const char* file;
     Int idOffset;
     const char* message;
 } SceneInvalidObjectData[]{
-    {"camera out of bounds", 0, "camera index 1 out of bounds for 1 cameras"},
-    {"child out of bounds", 0, "child index 7 out of bounds for 7 nodes"},
-    {"material out of bounds", 0, "material index 4 out of bounds for 4 materials"},
-    {"material in a multi-primitive mesh out of bounds", 1, "material index 5 out of bounds for 4 materials"},
-    {"skin out of bounds", 0, "skin index 3 out of bounds for 3 skins"},
+    {"camera out of bounds", "scene-invalid-camera-oob.gltf", 0, "camera index 1 out of bounds for 1 cameras"},
+    {"child out of bounds", "scene-invalid-child-oob.gltf", 0, "child index 7 out of bounds for 7 nodes"},
+    {"material out of bounds", "scene-invalid-material-oob.gltf", 0, "material index 4 out of bounds for 4 materials"},
+    {"material in a multi-primitive mesh out of bounds", "scene-invalid-material-oob-multi-primitive.gltf", 1, "material index 5 out of bounds for 4 materials"},
+    {"skin out of bounds", "scene-invalid-skin-oob.gltf", 0, "skin index 3 out of bounds for 3 skins"},
     /* The skin should be checked for both duplicates of the primitive */
-    {"skin for a multi-primitive mesh out of bounds", 0, "skin index 3 out of bounds for 3 skins"},
-    {"skin for a multi-primitive mesh out of bounds", 1, "skin index 3 out of bounds for 3 skins"},
-    {"light out of bounds", 0, "light index 2 out of bounds for 2 lights"}
+    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-skin-oob-multi-primitive.gltf", 0, "skin index 3 out of bounds for 3 skins"},
+    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-skin-oob-multi-primitive.gltf", 1, "skin index 3 out of bounds for 3 skins"},
+    {"light out of bounds", "scene-invalid-light-oob.gltf", 0, "light index 2 out of bounds for 2 lights"}
+};
 
 constexpr struct {
     const char* name;
@@ -483,11 +490,12 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::animationMergeEmpty,
               &TinyGltfImporterTest::animationMerge});
 
-    addInstancedTests({&TinyGltfImporterTest::camera,
+    addInstancedTests({&TinyGltfImporterTest::camera},
+                      Containers::arraySize(SingleFileData));
 
     addTests({&TinyGltfImporterTest::cameraInvalidType});
 
-                       &TinyGltfImporterTest::light},
+    addInstancedTests({&TinyGltfImporterTest::light},
                       Containers::arraySize(SingleFileData));
 
     addInstancedTests({&TinyGltfImporterTest::lightInvalid},
@@ -840,11 +848,10 @@ void TinyGltfImporterTest::animationInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
     /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidData));
+    CORRADE_VERIFY(Containers::arraySize(AnimationInvalidData) >= importer->animationCount());
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -1454,8 +1461,7 @@ void TinyGltfImporterTest::lightInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "light-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->lightCount(), Containers::arraySize(LightInvalidData));
@@ -1609,12 +1615,7 @@ void TinyGltfImporterTest::sceneInvalidObject() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "scene-invalid.gltf")));
-
-    /* Check we didn't forget to test anything. There are some extra nodes for
-       multi-primitive meshes, ignore those. */
-    CORRADE_COMPARE(importer->object3DCount() - 1, Containers::arraySize(SceneInvalidObjectData));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
     /* For testing bounds checks for multi-primitive meshes we need to import
        Nth mesh of the same name */
@@ -1634,14 +1635,14 @@ void TinyGltfImporterTest::sceneInvalidMesh() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "scene-invalid-mesh.gltf")));
+        "scene-invalid-mesh-oob.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): mesh index 1 out of bounds for 1 meshes\n");
 }
 
 void TinyGltfImporterTest::sceneInvalidScene() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "scene-invalid.gltf")));
+        "scene-invalid-node-oob.gltf")));
 
     CORRADE_COMPARE(importer->sceneCount(), 1);
 
@@ -1657,7 +1658,7 @@ void TinyGltfImporterTest::sceneInvalidDefaultScene() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "scene-invalid-default.gltf")));
+        "scene-invalid-default-oob.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of bounds for 0 scenes\n");
 }
 
@@ -1883,11 +1884,10 @@ void TinyGltfImporterTest::skinInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "skin-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
     /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->skin3DCount(), Containers::arraySize(SkinInvalidData));
+    CORRADE_VERIFY(Containers::arraySize(SkinInvalidData) >= importer->skin3DCount());
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -2665,11 +2665,10 @@ void TinyGltfImporterTest::meshInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "mesh-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
     /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->meshCount(), Containers::arraySize(MeshInvalidData));
+    CORRADE_VERIFY(Containers::arraySize(MeshInvalidData) >= importer->meshCount());
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -3348,11 +3347,9 @@ void TinyGltfImporterTest::materialInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "material-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
-    /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(MaterialInvalidData));
+    CORRADE_VERIFY(Containers::arraySize(MaterialInvalidData) >= importer->materialCount());
 
     std::ostringstream out;
     Error redirectError{&out};

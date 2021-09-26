@@ -70,6 +70,10 @@ corrade_add_test(TinyGltfImporterTest
         animation-embedded.gltf
         animation-embedded.glb
         animation-invalid.gltf
+        animation-invalid-node-oob.gltf
+        animation-invalid-sampler-input-accessor-oob.gltf
+        animation-invalid-sampler-oob.gltf
+        animation-invalid-sampler-output-accessor-oob.gltf
         animation-missing-target-node.gltf
         animation-patching.bin
         animation-patching.gltf
@@ -102,7 +106,17 @@ corrade_add_test(TinyGltfImporterTest
         light-missing-spot.gltf
         material-common.gltf
         material-clearcoat.gltf
-        material-invalid.gltf
+        material-invalid-alpha-mode.gltf
+        material-invalid-clearcoat-factor-oob.gltf
+        material-invalid-clearcoat-normal-oob.gltf
+        material-invalid-clearcoat-roughness-oob.gltf
+        material-invalid-emissive-oob.gltf
+        material-invalid-normal-oob.gltf
+        material-invalid-occlusion-oob.gltf
+        material-invalid-pbr-base-color-oob.gltf
+        material-invalid-pbr-diffuse-oob.gltf
+        material-invalid-pbr-metallic-roughness-oob.gltf
+        material-invalid-pbr-specular-oob.gltf
         material-metallicroughness.gltf
         material-phong-fallback.gltf
         material-specularglossiness.gltf
@@ -123,6 +137,12 @@ corrade_add_test(TinyGltfImporterTest
         mesh-index-accessor-oob.gltf
         mesh-invalid.bin
         mesh-invalid.gltf
+        mesh-invalid-accessor-oob.gltf
+        mesh-invalid-accessor-short.gltf
+        mesh-invalid-buffer-oob.gltf
+        mesh-invalid-bufferview-oob.gltf
+        mesh-invalid-bufferview-short.gltf
+        mesh-invalid-mismatching-attribute-count.gltf
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
         mesh-primitives-types.bin
@@ -138,12 +158,21 @@ corrade_add_test(TinyGltfImporterTest
         scene-cycle-deep.gltf
         scene-nodefault.gltf
         scene-nodefault.glb
-        scene-invalid.gltf
-        scene-invalid-mesh.gltf
-        scene-invalid-default.gltf
+        scene-invalid-camera-oob.gltf
+        scene-invalid-child-oob.gltf
+        scene-invalid-default-oob.gltf
+        scene-invalid-light-oob.gltf
+        scene-invalid-material-oob-multi-primitive.gltf
+        scene-invalid-material-oob.gltf
+        scene-invalid-mesh-oob.gltf
+        scene-invalid-node-oob.gltf
+        scene-invalid-skin-oob-multi-primitive.gltf
+        scene-invalid-skin-oob.gltf
         skin-embedded.glb
         skin-embedded.gltf
         skin-invalid.gltf
+        skin-invalid-accessor-oob.gltf
+        skin-invalid-joint-oob.gltf
         skin-no-joints.gltf
         skin.gltf
         skin.bin

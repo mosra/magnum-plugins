@@ -1,0 +1,36 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                },
+                {
+                    "attributes": {}
+                }
+            ]
+        }
+    ],
+    "nodes": [
+        {
+            "name": "skin for a multi-primitive mesh out of bounds",
+            "mesh": 0,
+            "skin": 3
+        },
+        {}, {}, {}
+    ],
+    "skins": [
+        {
+            "joints": [1, 2, 3]
+        },
+        {
+            "joints": [1]
+        },
+        {
+            "joints": [3, 1]
+        }
+    ]
+}

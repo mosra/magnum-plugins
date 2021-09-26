@@ -1,0 +1,20 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "materials": [
+        {
+            "name": "invalid texture index pbrSpecularGlossiness diffuse",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseTexture": {
+                        "index": 2
+                    }
+                }
+            }
+        }
+    ],
+    "textures": [
+        {}, {}
+    ]
+}
