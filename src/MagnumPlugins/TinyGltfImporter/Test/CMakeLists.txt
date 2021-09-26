@@ -70,6 +70,7 @@ corrade_add_test(TinyGltfImporterTest
         animation-embedded.gltf
         animation-embedded.glb
         animation-invalid.gltf
+        animation-missing-target-node.gltf
         animation-patching.bin
         animation-patching.gltf
         animation-splines-sharing.gltf
