@@ -2042,82 +2042,95 @@ void TinyGltfImporterTest::meshCustomAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh-custom-attributes.gltf")));
-    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 2);
 
     /* The mapping should be available even before the mesh is imported.
-       Attributes are sorted by name by JSON so the ID isn't in declaration
-       order. */
+       Attributes are sorted per-mesh by name by JSON so the ID isn't in
+       declaration order. */
     const MeshAttribute tbnAttribute = importer->meshAttributeForName("_TBN");
-    CORRADE_COMPARE(tbnAttribute, meshAttributeCustom(4));
+    CORRADE_COMPARE(tbnAttribute, meshAttributeCustom(1));
     CORRADE_COMPARE(importer->meshAttributeName(tbnAttribute), "_TBN");
 
     const MeshAttribute uvRotation = importer->meshAttributeForName("_UV_ROTATION");
-    CORRADE_COMPARE(uvRotation, meshAttributeCustom(6));
+    CORRADE_COMPARE(uvRotation, meshAttributeCustom(3));
     CORRADE_COMPARE(importer->meshAttributeName(uvRotation), "_UV_ROTATION");
 
     const MeshAttribute tbnPreciserAttribute = importer->meshAttributeForName("_TBN_PRECISER");
-    const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
     const MeshAttribute objectIdAttribute = importer->meshAttributeForName("_OBJECT_ID3");
+
+    const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
+    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(5));
     const MeshAttribute negativePaddingAttribute = importer->meshAttributeForName("_NEGATIVE_PADDING");
-    const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("_NOT_AN_IDENTITY");
+    CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(6));
+    const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("NOT_AN_IDENTITY");
 
-    auto mesh = importer->mesh(0);
-    CORRADE_VERIFY(mesh);
+    /* Core glTF attribute types */
+    {
+        auto mesh = importer->mesh("standard types");
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->attributeCount(), 4);
 
-    CORRADE_COMPARE(mesh->attributeCount(), 7);
-    CORRADE_VERIFY(mesh->hasAttribute(tbnAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(tbnAttribute), VertexFormat::Matrix3x3bNormalizedAligned);
-    CORRADE_COMPARE_AS(mesh->attribute<Matrix3x4b>(tbnAttribute),
-        Containers::arrayView<Matrix3x4b>({{
-            Vector4b{1, 2, 3, 0},
-            Vector4b{4, 5, 6, 0},
-            Vector4b{7, 8, 9, 0}
-        }}), TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(tbnAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(tbnAttribute), VertexFormat::Matrix3x3bNormalizedAligned);
+        CORRADE_COMPARE_AS(mesh->attribute<Matrix3x4b>(tbnAttribute),
+            Containers::arrayView<Matrix3x4b>({{
+                Vector4b{1, 2, 3, 0},
+                Vector4b{4, 5, 6, 0},
+                Vector4b{7, 8, 9, 0}
+            }}), TestSuite::Compare::Container);
 
-    CORRADE_VERIFY(mesh->hasAttribute(uvRotation));
-    CORRADE_COMPARE(mesh->attributeFormat(uvRotation), VertexFormat::Matrix2x2bNormalizedAligned);
-    CORRADE_COMPARE_AS(mesh->attribute<Matrix2x4b>(uvRotation),
-        Containers::arrayView<Matrix2x4b>({{
-            Vector4b{10, 11, 0, 0},
-            Vector4b{12, 13, 0, 0},
-        }}), TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(uvRotation));
+        CORRADE_COMPARE(mesh->attributeFormat(uvRotation), VertexFormat::Matrix2x2bNormalizedAligned);
+        CORRADE_COMPARE_AS(mesh->attribute<Matrix2x4b>(uvRotation),
+            Containers::arrayView<Matrix2x4b>({{
+                Vector4b{10, 11, 0, 0},
+                Vector4b{12, 13, 0, 0},
+            }}), TestSuite::Compare::Container);
 
-    CORRADE_VERIFY(mesh->hasAttribute(tbnPreciserAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(tbnPreciserAttribute), VertexFormat::Matrix3x3sNormalizedAligned);
-    CORRADE_COMPARE_AS(mesh->attribute<Matrix3x4s>(tbnPreciserAttribute),
-        Containers::arrayView<Matrix3x4s>({{
-            Vector4s{-1, -2, -3, 0},
-            Vector4s{-4, -5, -6, 0},
-            Vector4s{-7, -8, -9, 0}
-        }}), TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(tbnPreciserAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(tbnPreciserAttribute), VertexFormat::Matrix3x3sNormalizedAligned);
+        CORRADE_COMPARE_AS(mesh->attribute<Matrix3x4s>(tbnPreciserAttribute),
+            Containers::arrayView<Matrix3x4s>({{
+                Vector4s{-1, -2, -3, 0},
+                Vector4s{-4, -5, -6, 0},
+                Vector4s{-7, -8, -9, 0}
+            }}), TestSuite::Compare::Container);
 
-    CORRADE_VERIFY(mesh->hasAttribute(doubleShotAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(doubleShotAttribute), VertexFormat::Vector2d);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector2d>(doubleShotAttribute),
-        Containers::arrayView<Vector2d>({{31.2, 28.8}}),
-        TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(objectIdAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(objectIdAttribute), VertexFormat::UnsignedInt);
+        CORRADE_COMPARE_AS(mesh->attribute<UnsignedInt>(objectIdAttribute),
+            Containers::arrayView<UnsignedInt>({5678125}),
+            TestSuite::Compare::Container);
 
-    CORRADE_VERIFY(mesh->hasAttribute(objectIdAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(objectIdAttribute), VertexFormat::UnsignedInt);
-    CORRADE_COMPARE_AS(mesh->attribute<UnsignedInt>(objectIdAttribute),
-        Containers::arrayView<UnsignedInt>({5678125}),
-        TestSuite::Compare::Container);
+    /* Attribute types not in core glTF but allowed by tinygltf */
+    } {
+        auto mesh = importer->mesh("non-standard types");
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->attributeCount(), 3);
 
-    CORRADE_VERIFY(mesh->hasAttribute(negativePaddingAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(negativePaddingAttribute), VertexFormat::Int);
-    CORRADE_COMPARE_AS(mesh->attribute<Int>(negativePaddingAttribute),
-        Containers::arrayView<Int>({-3548415}),
-        TestSuite::Compare::Container);
+        CORRADE_VERIFY(mesh->hasAttribute(doubleShotAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(doubleShotAttribute), VertexFormat::Vector2d);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector2d>(doubleShotAttribute),
+            Containers::arrayView<Vector2d>({{31.2, 28.8}}),
+            TestSuite::Compare::Container);
 
-    CORRADE_VERIFY(mesh->hasAttribute(notAnIdentityAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(notAnIdentityAttribute), VertexFormat::Matrix4x4d);
-    CORRADE_COMPARE_AS(mesh->attribute<Matrix4d>(notAnIdentityAttribute),
-        Containers::arrayView<Matrix4d>({{
-            {0.1, 0.2, 0.3, 0.4},
-            {0.5, 0.6, 0.7, 0.8},
-            {0.9, 1.0, 1.1, 1.2},
-            {1.3, 1.4, 1.5, 1.6}
-        }}), TestSuite::Compare::Container);
+
+        CORRADE_VERIFY(mesh->hasAttribute(negativePaddingAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(negativePaddingAttribute), VertexFormat::Int);
+        CORRADE_COMPARE_AS(mesh->attribute<Int>(negativePaddingAttribute),
+            Containers::arrayView<Int>({-3548415}),
+            TestSuite::Compare::Container);
+
+        CORRADE_VERIFY(mesh->hasAttribute(notAnIdentityAttribute));
+        CORRADE_COMPARE(mesh->attributeFormat(notAnIdentityAttribute), VertexFormat::Matrix4x4d);
+        CORRADE_COMPARE_AS(mesh->attribute<Matrix4d>(notAnIdentityAttribute),
+            Containers::arrayView<Matrix4d>({{
+                {0.1, 0.2, 0.3, 0.4},
+                {0.5, 0.6, 0.7, 0.8},
+                {0.9, 1.0, 1.1, 1.2},
+                {1.3, 1.4, 1.5, 1.6}
+            }}), TestSuite::Compare::Container);
+    }
 }
 
 void TinyGltfImporterTest::meshCustomAttributesNoFileOpened() {
