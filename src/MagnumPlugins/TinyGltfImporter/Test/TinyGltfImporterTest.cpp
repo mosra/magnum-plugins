@@ -78,6 +78,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void animation();
     void animationInvalid();
+    void animationMissingTargetNode();
 
     void animationSpline();
     void animationSplineSharedWithSameTimeTrack();
@@ -466,6 +467,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::animationInvalid},
         Containers::arraySize(AnimationInvalidData));
 
+    addTests({&TinyGltfImporterTest::animationMissingTargetNode});
+
     addInstancedTests({&TinyGltfImporterTest::animationSpline},
                       Containers::arraySize(MultiFileData));
 
@@ -844,6 +847,24 @@ void TinyGltfImporterTest::animationInvalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(data.name));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::animation(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::animationMissingTargetNode() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-missing-target-node.gltf")));
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    /* tinygltf skips channels that don't have a target node */
+
+    auto animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+    CORRADE_COMPARE(animation->trackCount(), 2);
+
+    CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTarget(0), 1);
+    CORRADE_COMPARE(animation->trackTargetType(1), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTarget(1), 0);
 }
 
 constexpr Float AnimationSplineTime1Keys[]{ 0.5f, 3.5f, 4.0f, 5.0f };
