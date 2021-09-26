@@ -1,0 +1,79 @@
+{
+    "asset" : {
+        "version" : "2.0"
+    },
+    "nodes" : [
+        { "name" : "" },
+        { "name" : "UTF-8: Лорем ипсум долор сит амет" },
+        { "name" : "UTF-8 escaped: \u041B\u043E\u0440\u0435\u043C \u0438\u043F\u0441\u0443\u043C \u0434\u043E\u043B\u043E\u0440 \u0441\u0438\u0442 \u0430\u043C\u0435\u0442" },
+        { "name" : "Special: \"\/\\\b\f\r\n\t" },
+        { "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز" },
+        { "\u006Eame" : "Key UTF-8 escaped" }
+    ],
+    "animations" : [
+        {
+            "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز"
+        }
+    ],
+    "cameras" : [
+        {
+            "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز",
+            "type" : "perspective",
+            "perspective" : {
+                "yfov" : 0.8,
+                "znear" : 0.1
+            }
+        }
+    ],
+    "images" : [
+        {
+            "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز",
+            "uri": "nonexisting-file.png"
+        }
+    ],
+    "materials" : [
+        {
+            "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز",
+            "primitives": [
+                {
+                    "attributes": { }
+                }
+            ]
+        }
+    ],
+    "scenes" : [
+        {
+            "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز"
+        }
+    ],
+    "skins" : [
+        {
+            "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز",
+            "joints" : [ 0 ]
+        }
+    ],
+    "textures" : [
+        {
+            "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز",
+            "source" : 0
+        }
+    ],
+    "extensions" : {
+        "KHR_lights_punctual" : {
+            "lights" : [
+                {
+                    "name" : "Everything: \u0159\u00ed\u010dn\u00ed \u010dlun \t\t\n حليب اللوز",
+                    "type": "directional"
+                }
+            ]
+        }
+    },
+    "extensionsUsed": [
+        "KHR_lights_punctual"
+    ]
+}

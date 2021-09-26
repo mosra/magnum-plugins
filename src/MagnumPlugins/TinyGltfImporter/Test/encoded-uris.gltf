@@ -1,0 +1,99 @@
+{
+    "asset" : {
+        "version" : "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "COLOR_0": 0
+                    }
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "COLOR_0": 1
+                    }
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "COLOR_0": 2
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5121,
+            "count": 1,
+            "type": "VEC4",
+            "normalized": true
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5121,
+            "count": 1,
+            "type": "VEC4",
+            "normalized": true
+        },
+        {
+            "bufferView": 2,
+            "componentType": 5121,
+            "count": 1,
+            "type": "VEC4",
+            "normalized": true
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 4
+        },
+        {
+            "buffer": 1,
+            "byteOffset": 0,
+            "byteLength": 4
+        },
+        {
+            "buffer": 2,
+            "byteOffset": 0,
+            "byteLength": 4
+        }
+    ],
+    "buffers" : [
+        {
+            "uri" : "buffer-unencoded/@file#.bin",
+            "byteLength" : 4
+        },
+        {
+            "uri" : "buffer-encoded%2F%40file%23.bin",
+            "byteLength" : 4
+        },
+        {
+            "uri" : "buffer-escaped%2F\u0159\u00ed\u010dn\u00ed%20\u010dlun.bin",
+            "byteLength" : 4
+        }
+    ],
+    "images" : [
+        {
+            "uri" : "image-unencoded/image #1.png"
+        },
+        {
+            "uri" : "image-encoded%2Fimage%20%231.png"
+        },
+        {
+            "uri" : "image-escaped%2F\u0159\u00ed\u010dn\u00ed%20\u010dlun.png"
+        }
+    ]
+}
