@@ -104,6 +104,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void sceneInvalidMesh();
     void sceneInvalidScene();
     void sceneInvalidDefaultScene();
+    void sceneCycle();
 
     void objectTransformation();
     void objectTransformationQuaternionNormalizationEnabled();
@@ -362,6 +363,13 @@ constexpr struct {
     {"skin for a multi-primitive mesh out of bounds", 0, "skin index 3 out of bounds for 3 skins"},
     {"skin for a multi-primitive mesh out of bounds", 1, "skin index 3 out of bounds for 3 skins"},
     {"light out of bounds", 0, "light index 2 out of bounds for 2 lights"}
+
+constexpr struct {
+    const char* name;
+    const char* file;
+} SceneCycleData[]{
+    {"child is self", "scene-cycle.gltf"},
+    {"great-grandchild is self", "scene-cycle-deep.gltf"}
 };
 
 constexpr struct {
@@ -494,6 +502,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addTests({&TinyGltfImporterTest::sceneInvalidScene,
               &TinyGltfImporterTest::sceneInvalidDefaultScene});
+
+    addInstancedTests({&TinyGltfImporterTest::sceneCycle},
+        Containers::arraySize(SceneCycleData));
 
     addInstancedTests({&TinyGltfImporterTest::objectTransformation},
                       Containers::arraySize(SingleFileData));
@@ -1613,6 +1624,17 @@ void TinyGltfImporterTest::sceneInvalidDefaultScene() {
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "scene-invalid-default.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of bounds for 0 scenes\n");
+}
+
+void TinyGltfImporterTest::sceneCycle() {
+    auto&& data = SceneCycleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+
+    CORRADE_EXPECT_FAIL("Cyclic node hierarchy is not checked.");
+    CORRADE_VERIFY(!importer->object3D(data.name));
 }
 
 void TinyGltfImporterTest::objectTransformation() {
