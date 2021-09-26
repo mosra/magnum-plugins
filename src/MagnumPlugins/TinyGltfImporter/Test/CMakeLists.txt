@@ -71,9 +71,9 @@ corrade_add_test(TinyGltfImporterTest
         animation-embedded.glb
         animation-invalid.gltf
         animation-invalid-node-oob.gltf
-        animation-invalid-sampler-input-accessor-oob.gltf
+        animation-invalid-input-accessor-oob.gltf
         animation-invalid-sampler-oob.gltf
-        animation-invalid-sampler-output-accessor-oob.gltf
+        animation-invalid-output-accessor-oob.gltf
         animation-missing-target-node.gltf
         animation-patching.bin
         animation-patching.gltf

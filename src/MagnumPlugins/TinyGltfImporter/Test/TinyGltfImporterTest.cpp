@@ -3874,7 +3874,7 @@ void TinyGltfImporterTest::encodedUris() {
                 strings[4] = filename;
             else if(filename.find("image-escaped") == 0)
                 strings[5] = filename;
-            return bytes;
+            return Containers::arrayView(bytes);
         }, strings);
 
     /* Prevent the file callback being used for the main glTF content */
