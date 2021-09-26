@@ -132,6 +132,8 @@ corrade_add_test(TinyGltfImporterTest
         required-extensions-unsupported.gltf
         scene.gltf
         scene.glb
+        scene-cycle.gltf
+        scene-cycle-deep.gltf
         scene-nodefault.gltf
         scene-nodefault.glb
         scene-invalid.gltf
