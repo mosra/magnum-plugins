@@ -35,16 +35,6 @@
                         "innerConeAngle" : 0.25,
                         "outerConeAngle" : 0.25
                     }
-                },
-                {
-                    "name": "four color values",
-                    "type": "directional",
-                    "color": [
-                        1.0,
-                        0.08,
-                        0.14,
-                        0.5
-                    ]
                 }
             ]
         }

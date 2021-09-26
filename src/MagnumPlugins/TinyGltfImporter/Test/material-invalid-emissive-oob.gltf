@@ -1,0 +1,16 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "materials": [
+        {
+            "name": "invalid texture index emissive",
+            "emissiveTexture": {
+                "index": 2
+            }
+        }
+    ],
+    "textures": [
+        {}, {}
+    ]
+}

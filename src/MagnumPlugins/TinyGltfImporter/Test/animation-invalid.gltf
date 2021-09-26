@@ -12,7 +12,7 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "rotation"
                     }
                 }
@@ -31,7 +31,7 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "rotation"
                     }
                 }
@@ -50,7 +50,7 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "translation"
                     }
                 }
@@ -69,7 +69,7 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "rotation"
                     }
                 }
@@ -88,7 +88,7 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "scale"
                     }
                 }
@@ -107,7 +107,7 @@
                 {
                     "sampler": 0,
                     "target": {
-                        "node": 1337,
+                        "node": 0,
                         "path": "color"
                     }
                 }
@@ -117,82 +117,6 @@
                     "input": 1,
                     "interpolation": "STEP",
                     "output": 0
-                }
-            ]
-        },
-        {
-            "name": "sampler index out of bounds",
-            "channels": [
-                {
-                    "sampler": 1,
-                    "target": {
-                        "node": 1337,
-                        "path": "scale"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "LINEAR",
-                    "output": 2
-                }
-            ]
-        },
-        {
-            "name": "node index out of bounds",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 2,
-                        "path": "scale"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "LINEAR",
-                    "output": 2
-                }
-            ]
-        },
-        {
-            "name": "sampler input accessor index out of bounds",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 1,
-                        "path": "scale"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 3,
-                    "interpolation": "LINEAR",
-                    "output": 2
-                }
-            ]
-        },
-        {
-            "name": "sampler output accessor index out of bounds",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 1,
-                        "path": "scale"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "LINEAR",
-                    "output": 3
                 }
             ]
         }

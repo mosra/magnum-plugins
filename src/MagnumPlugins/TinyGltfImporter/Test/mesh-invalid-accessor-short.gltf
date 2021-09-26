@@ -1,0 +1,38 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "name": "accessor count larger than buffer size",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 0
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 1,
+            "componentType": 5125,
+            "count": 8,
+            "type": "SCALAR"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 36,
+            "byteLength": 32
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 68,
+            "uri": "mesh-invalid.bin"
+        }
+    ]
+}

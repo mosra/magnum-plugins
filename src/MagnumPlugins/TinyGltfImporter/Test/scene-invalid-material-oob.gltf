@@ -4,13 +4,21 @@
     },
     "meshes": [
         {
-            "name": "mesh index accessor out of bounds",
             "primitives": [
                 {
                     "attributes": {},
-                    "indices": 0
+                    "material": 4
                 }
             ]
+        }
+    ],
+    "materials": [
+        {}, {}, {}, {}
+    ],
+    "nodes": [
+        {
+            "name": "material out of bounds",
+            "mesh": 0
         }
     ]
 }
