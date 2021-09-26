@@ -682,7 +682,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                     const auto values = Containers::arrayCast<Quaternion>(outputData);
                     if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
                         Float flip = 1.0f;
-                        for(std::size_t i = 0; i != values.size() - 1; ++i) {
+                        for(std::size_t i = 0; i + 1 < values.size(); ++i) {
                             if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
                             values[i + 1] *= flip;
                         }
