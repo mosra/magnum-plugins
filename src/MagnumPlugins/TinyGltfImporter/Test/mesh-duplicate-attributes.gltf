@@ -1,0 +1,68 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "note": "duplicate attributes should override previously declared attributes with the same name",
+                    "attributes": {
+                        "_THING": 0,
+                        "_THING": 2,
+                        "COLOR_0": 1,
+                        "COLOR_1": 1,
+                        "COLOR_0": 3
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 12,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC2"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 24,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 4,
+            "byteLength": 120,
+            "byteStride": 40
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 124,
+            "byteLength": 24
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 160,
+            "uri": "mesh.bin"
+        }
+    ]
+}

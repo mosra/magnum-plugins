@@ -117,6 +117,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshColors();
     void meshCustomAttributes();
     void meshCustomAttributesNoFileOpened();
+    void meshDuplicateAttributes();
+    void meshUnorderedAttributes();
     void meshMultiplePrimitives();
     void meshPrimitivesTypes();
     /* This is THE ONE AND ONLY OOB check done by tinygltf, so it fails right
@@ -510,6 +512,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::meshColors,
               &TinyGltfImporterTest::meshCustomAttributes,
               &TinyGltfImporterTest::meshCustomAttributesNoFileOpened,
+              &TinyGltfImporterTest::meshDuplicateAttributes,
+              &TinyGltfImporterTest::meshUnorderedAttributes,
               &TinyGltfImporterTest::meshMultiplePrimitives});
 
     addInstancedTests({&TinyGltfImporterTest::meshPrimitivesTypes},
@@ -2079,6 +2083,75 @@ void TinyGltfImporterTest::meshCustomAttributesNoFileOpened() {
     /* These should return nothing (and not crash) */
     CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
     CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
+}
+
+void TinyGltfImporterTest::meshDuplicateAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-duplicate-attributes.gltf")));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    const MeshAttribute thingAttribute = importer->meshAttributeForName("_THING");
+    CORRADE_VERIFY(thingAttribute != MeshAttribute{});
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(), 3);
+
+    /* Duplicate attributes replace previously declared attributes with the
+       same name. Checking the formats should be enough to test the right
+       accessor is being used. */
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color), 2);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color, 0), VertexFormat::Vector4);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color, 1), VertexFormat::Vector3);
+
+    CORRADE_VERIFY(mesh->hasAttribute(thingAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(thingAttribute), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(thingAttribute), VertexFormat::Vector2);
+}
+
+void TinyGltfImporterTest::meshUnorderedAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-unordered-attributes.gltf")));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    const MeshAttribute customAttribute4 = importer->meshAttributeForName("_CUSTOM_4");
+    CORRADE_VERIFY(customAttribute4 != MeshAttribute{});
+    const MeshAttribute customAttribute1 = importer->meshAttributeForName("_CUSTOM_1");
+    CORRADE_VERIFY(customAttribute1 != MeshAttribute{});
+
+    /* Custom attributes are sorted in alphabetical order */
+    CORRADE_VERIFY(customAttribute1 < customAttribute4);
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(), 7);
+
+    /* Sets of the same attribute are imported in ascending set order. Checking
+       the formats should be enough to test the import order. */
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 3);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates, 0), VertexFormat::Vector2usNormalized);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates, 1), VertexFormat::Vector2ubNormalized);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates, 2), VertexFormat::Vector2);
+
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color), 2);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color, 0), VertexFormat::Vector4);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color, 1), VertexFormat::Vector3);
+
+    /* Custom attributes don't have sets */
+    CORRADE_VERIFY(mesh->hasAttribute(customAttribute4));
+    CORRADE_COMPARE(mesh->attributeCount(customAttribute4), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(customAttribute4), VertexFormat::Vector2);
+    
+    CORRADE_VERIFY(mesh->hasAttribute(customAttribute1));
+    CORRADE_COMPARE(mesh->attributeCount(customAttribute1), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(customAttribute1), VertexFormat::Vector3);
 }
 
 void TinyGltfImporterTest::meshMultiplePrimitives() {
