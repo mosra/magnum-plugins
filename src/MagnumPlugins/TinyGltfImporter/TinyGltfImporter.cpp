@@ -2251,7 +2251,7 @@ AbstractImporter* TinyGltfImporter::setupOrReuseImporterForImage(const UnsignedI
 }
 
 UnsignedInt TinyGltfImporter::doImage2DLevelCount(const UnsignedInt id) {
-    CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+    CORRADE_ASSERT(manager(), "Trade::TinyGltfImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::TinyGltfImporter::image2DLevelCount():");
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
