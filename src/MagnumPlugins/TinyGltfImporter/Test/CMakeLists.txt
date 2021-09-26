@@ -76,6 +76,7 @@ corrade_add_test(TinyGltfImporterTest
         animation-splines-sharing.gltf
         camera.gltf
         camera.glb
+        camera-invalid-type.gltf
         encoded-uris.gltf
         escaped-strings.gltf
         external-data.bin

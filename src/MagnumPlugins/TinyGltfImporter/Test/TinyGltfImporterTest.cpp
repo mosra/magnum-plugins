@@ -92,6 +92,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void animationMerge();
 
     void camera();
+    void cameraInvalidType();
 
     void light();
     void lightInvalid();
@@ -483,6 +484,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::animationMerge});
 
     addInstancedTests({&TinyGltfImporterTest::camera,
+
+    addTests({&TinyGltfImporterTest::cameraInvalidType});
 
                        &TinyGltfImporterTest::light},
                       Containers::arraySize(SingleFileData));
@@ -1385,6 +1388,17 @@ void TinyGltfImporterTest::camera() {
         CORRADE_COMPARE(cam->near(), 0.1f);
         CORRADE_COMPARE(cam->far(), Constants::inf());
     }
+}
+
+void TinyGltfImporterTest::cameraInvalidType() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "camera-invalid-type.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: Invalid camera type: \"oblique\". Must be \"perspective\" or \"orthographic\"\n");
 }
 
 void TinyGltfImporterTest::light() {
