@@ -332,6 +332,8 @@ constexpr struct {
     {"normalized float", "mesh-invalid.gltf", "floating-point component types can't be normalized"},
     {"normalized double", "mesh-invalid.gltf", "floating-point component types can't be normalized"},
     {"non-normalized byte matrix", "mesh-invalid.gltf", "unsupported matrix component type unnormalized 5120"},
+    {"sparse accessor", "mesh-invalid.gltf", "accessor 14 is using sparse storage, which is unsupported"},
+    {"no bufferview", "mesh-invalid.gltf", "accessor 15 has no bufferView"},
     {"accessor count larger than buffer size", "mesh-invalid-accessor-short.gltf", "accessor 0 needs 33 bytes but bufferView 0 has only 32"},
     {"buffer view range out of bounds", "mesh-invalid-bufferview-short.gltf", "bufferView 0 needs 72 bytes but buffer 0 has only 68"},
     {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf", "buffer 1 out of bounds for 1 buffers"},
