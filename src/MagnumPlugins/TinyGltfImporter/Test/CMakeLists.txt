@@ -62,6 +62,8 @@ corrade_add_test(TinyGltfImporterTest
         empty.glb
         buffer-notfound.gltf
         buffer-notfound.glb
+        buffer-no-uri.gltf
+        buffer-no-uri.glb
         buffer-wrong-size.gltf
         buffer-wrong-size.glb
         animation.gltf

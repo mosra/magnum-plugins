@@ -72,6 +72,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void openExternalDataNotFound();
     void openExternalDataNoPathNoCallback();
     void openExternalDataWrongSize();
+    void openExternalDataNoUri();
 
     void requiredExtensions();
     void requiredExtensionsUnsupported();
@@ -477,7 +478,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addInstancedTests({&TinyGltfImporterTest::openExternalDataNotFound,
                        &TinyGltfImporterTest::openExternalDataNoPathNoCallback,
-                       &TinyGltfImporterTest::openExternalDataWrongSize},
+                       &TinyGltfImporterTest::openExternalDataWrongSize,
+                       &TinyGltfImporterTest::openExternalDataNoUri},
                       Containers::arraySize(SingleFileData));
 
     addTests({&TinyGltfImporterTest::requiredExtensions,
@@ -712,6 +714,26 @@ void TinyGltfImporterTest::openExternalDataWrongSize() {
         CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
             "buffer-wrong-size" + std::string{data.suffix})));
         CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File size mismatch : external-data.bin, requestedBytes 6, but got 12\n");
+    }
+}
+
+void TinyGltfImporterTest::openExternalDataNoUri() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "buffer-no-uri" + std::string{data.suffix})));
+    {
+        CORRADE_EXPECT_FAIL_IF(data.suffix == std::string{".glb"},
+            "tinygltf incorrectly detects all buffers without URI as GLB BIN buffer.");
+        CORRADE_COMPARE(out.str(),
+            "Trade::TinyGltfImporter::openData(): error opening file: 'uri' is missing from non binary glTF file buffer.\n"
+            "File not found :\n" /* tinygltf seems to continue to try to load a file from an empty URI */);
     }
 }
 

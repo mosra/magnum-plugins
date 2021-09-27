@@ -19,4 +19,5 @@ done
 
 # special cases
 ./gltf2glb.py buffer-notfound.gltf --no-embed
+./gltf2glb.py buffer-no-uri.gltf --no-embed
 ./gltf2glb.py external-data.gltf --no-embed

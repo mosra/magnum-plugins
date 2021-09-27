@@ -1,0 +1,42 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "buffers": [
+        {
+            "name": "valid buffer with id 0 because otherwise tinygltf thinks id 0 is the .glb buffer but the .glb has no buffer section",
+            "uri": "external-data.bin",
+            "byteLength": 12
+        },
+        {
+            "byteLength": 12
+        }
+    ],
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "mode": 0,
+                    "attributes": {
+                        "COLOR_0": 0
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5123,
+            "normalized": true,
+            "count": 1,
+            "type": "VEC3"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 1,
+            "byteLength": 6
+        }
+    ]
+}
