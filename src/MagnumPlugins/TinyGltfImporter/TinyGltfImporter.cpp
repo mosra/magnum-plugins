@@ -2137,7 +2137,9 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
             minFilter = SamplerFilter::Linear;
             mipmap = SamplerMipmap::Linear;
             break;
-        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default:
+            Error{} << "Trade::TinyGltfImporter::texture(): invalid minFilter" << s.minFilter;
+            return Containers::NullOpt;
     }
 
     SamplerFilter magFilter;
@@ -2152,7 +2154,9 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
         case -1:
             magFilter = SamplerFilter::Linear;
             break;
-        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default:
+            Error{} << "Trade::TinyGltfImporter::texture(): invalid magFilter" << s.magFilter;
+            return Containers::NullOpt;
     }
 
     /* There's wrapR that is a tiny_gltf extension and is set to zero. Ignoring
@@ -2172,7 +2176,9 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
             case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT:
                 wrapping[wrap.second] = SamplerWrapping::MirroredRepeat;
                 break;
-            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            default:
+                Error{} << "Trade::TinyGltfImporter::texture(): invalid wrap mode" << wrap.first;
+                return Containers::NullOpt;
         }
     }
 
