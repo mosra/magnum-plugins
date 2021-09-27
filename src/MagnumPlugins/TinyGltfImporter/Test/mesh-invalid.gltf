@@ -207,6 +207,26 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "sparse accessor",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 14
+                    }
+                }
+            ]
+        },
+        {
+            "name": "no bufferview",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 15
+                    }
+                }
+            ]
         }
     ],
     "accessors": [
@@ -313,6 +333,29 @@
             "normalized": false,
             "count": 1,
             "type": "MAT2"
+        },
+        {
+            "name": "14",
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3",
+            "sparse": {
+                "count": 1,
+                "indices": {
+                    "bufferView": 1,
+                    "componentType": 5123
+                },
+                "values": {
+                    "bufferView": 0
+                }
+            }
+        },
+        {
+            "name": "15",
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3"
         }
     ],
     "bufferViews": [

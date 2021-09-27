@@ -119,6 +119,16 @@ const tinygltf::Accessor* checkedAccessor(const tinygltf::Model& model, const ch
     }
 
     const tinygltf::Accessor& accessor = model.accessors[id];
+    if(accessor.sparse.isSparse) {
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << id << "is using sparse storage, which is unsupported";
+        return nullptr;
+    }
+    if(accessor.bufferView < 0) {
+        /* Bufferviews are optional in accessors, we're supposed to fill the view
+           with zeros. Only makes sense with sparse data and we don't support that. */
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << id << "has no bufferView";
+        return nullptr;
+    }
     if(std::size_t(accessor.bufferView) >= model.bufferViews.size()) {
         Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): bufferView" << accessor.bufferView << "out of bounds for" << model.bufferViews.size() << "views";
         return nullptr;
