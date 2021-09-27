@@ -145,6 +145,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void materialTexCoordFlip();
 
     void texture();
+    void textureInvalid();
     void textureDefaultSampler();
     void textureEmptySampler();
     void textureMissingSource();
@@ -427,6 +428,16 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    const char* message;
+} TextureInvalidData[]{
+    {"invalid sampler minFilter", "invalid minFilter 1"},
+    {"invalid sampler magFilter", "invalid magFilter 2"},
+    {"invalid sampler wrapS", "invalid wrap mode 3"},
+    {"invalid sampler wrapT", "invalid wrap mode 4"}
+};
+
+constexpr struct {
+    const char* name;
     const char* suffix;
 } ImageEmbeddedData[]{
     {"ascii", "-embedded.gltf"},
@@ -572,8 +583,13 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::materialTexCoordFlip},
         Containers::arraySize(MaterialTexCoordFlipData));
 
-    addInstancedTests({&TinyGltfImporterTest::texture,
-                       &TinyGltfImporterTest::textureDefaultSampler,
+    addInstancedTests({&TinyGltfImporterTest::texture},
+                      Containers::arraySize(SingleFileData));
+
+    addInstancedTests({&TinyGltfImporterTest::textureInvalid},
+                      Containers::arraySize(TextureInvalidData));
+
+    addInstancedTests({&TinyGltfImporterTest::textureDefaultSampler,
                        &TinyGltfImporterTest::textureEmptySampler},
                       Containers::arraySize(SingleFileData));
 
@@ -3464,6 +3480,23 @@ void TinyGltfImporterTest::texture() {
         Containers::arrayView<Vector2>({
             {0.5f, 0.5f}, {0.3f, 0.7f}, {0.2f, 0.42f}
         }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::textureInvalid() {
+    auto&& data = TextureInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "texture-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureInvalidData));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->texture(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::texture(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::textureDefaultSampler() {

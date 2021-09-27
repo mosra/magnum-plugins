@@ -189,6 +189,7 @@ corrade_add_test(TinyGltfImporterTest
         texture-default-sampler.glb
         texture-empty-sampler.gltf
         texture-empty-sampler.glb
+        texture-invalid.gltf
         texture-missing-source.gltf)
 target_include_directories(TinyGltfImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC)
