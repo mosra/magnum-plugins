@@ -34,5 +34,8 @@
             "sampler": 0,
             "source": 0
         }
+    ],
+    "extensionsUsed": [
+        "KHR_materials_unlit"
     ]
 }
