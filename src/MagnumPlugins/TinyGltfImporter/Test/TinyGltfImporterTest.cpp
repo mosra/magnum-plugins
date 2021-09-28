@@ -2296,7 +2296,7 @@ void TinyGltfImporterTest::meshUnorderedAttributes() {
     CORRADE_VERIFY(mesh->hasAttribute(customAttribute4));
     CORRADE_COMPARE(mesh->attributeCount(customAttribute4), 1);
     CORRADE_COMPARE(mesh->attributeFormat(customAttribute4), VertexFormat::Vector2);
-    
+
     CORRADE_VERIFY(mesh->hasAttribute(customAttribute1));
     CORRADE_COMPARE(mesh->attributeCount(customAttribute1), 1);
     CORRADE_COMPARE(mesh->attributeFormat(customAttribute1), VertexFormat::Vector3);
