@@ -133,5 +133,8 @@
     ],
     "textures": [
         {}
+    ],
+    "extensionsUsed": [
+        "KHR_texture_transform"
     ]
 }

@@ -121,5 +121,8 @@
             "sampler": 0,
             "source": 0
         }
+    ],
+    "extensionsUsed": [
+        "KHR_texture_transform"
     ]
 }

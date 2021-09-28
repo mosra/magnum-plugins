@@ -16,5 +16,8 @@
     ],
     "textures": [
         {}, {}
+    ],
+    "extensionsUsed": [
+        "KHR_materials_pbrSpecularGlossiness"
     ]
 }
