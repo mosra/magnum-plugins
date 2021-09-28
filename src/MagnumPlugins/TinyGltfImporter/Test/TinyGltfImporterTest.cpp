@@ -2146,13 +2146,15 @@ void TinyGltfImporterTest::meshCustomAttributes() {
     CORRADE_COMPARE(importer->meshAttributeName(uvRotation), "_UV_ROTATION");
 
     const MeshAttribute tbnPreciserAttribute = importer->meshAttributeForName("_TBN_PRECISER");
-    const MeshAttribute objectIdAttribute = importer->meshAttributeForName("_OBJECT_ID3");
+    const MeshAttribute objectIdAttribute = importer->meshAttributeForName("OBJECT_ID3");
 
-    const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
-    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(5));
     const MeshAttribute negativePaddingAttribute = importer->meshAttributeForName("_NEGATIVE_PADDING");
     CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(6));
+
     const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("NOT_AN_IDENTITY");
+    CORRADE_COMPARE(notAnIdentityAttribute, meshAttributeCustom(4));
+
+    const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
 
     /* Core glTF attribute types */
     {
