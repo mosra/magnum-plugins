@@ -134,6 +134,13 @@ namespace Magnum {
     the `BUILD_STATIC` CMake option instead of `BUILD_PLUGINS_STATIC`
 -   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct
     instantiation without a plugin manager (see [mosra/magnum-plugins#96](https://github.com/mosra/magnum-plugins/pull/96))
+-   Assorted @relativeref{Trade,TinyGltfImporter} robustness improvements
+    (see [mosra/magnum-plugins#106](https://github.com/mosra/magnum-plugins/pull/106)):
+    -   Fixed an out-of-bounds read happening with empty animations when
+        @cb{.ini} optimizeQuaternionShortestPath @ce is enabled
+    -   Graceful handling of invalid texture sampler values, instead of
+        asserting
+    -   Better warning messages in certain pathological cases
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
