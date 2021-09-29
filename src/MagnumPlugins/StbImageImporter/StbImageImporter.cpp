@@ -92,11 +92,21 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
     /* NOTE: the StbImageImporterTest::multithreaded() test depends on these
        two being located here. If that changes, the test needs to be adapted to
        check those elsewhere. */
-    stbi_set_flip_vertically_on_load_thread(true);
+    #ifdef CORRADE_BUILD_MULTITHREADED
+    stbi_set_flip_vertically_on_load_thread
+    #else
+    stbi_set_flip_vertically_on_load
+    #endif
+        (true);
     /* The docs say this is enabled by default, but it's *not*. Ugh. */
     /** @todo do BGR -> RGB processing here instead, this may get obsolete:
         https://github.com/nothings/stb/pull/950 */
-    stbi_convert_iphone_png_to_rgb_thread(true);
+    #ifdef CORRADE_BUILD_MULTITHREADED
+    stbi_convert_iphone_png_to_rgb_thread
+    #else
+    stbi_convert_iphone_png_to_rgb
+    #endif
+        (true);
 
     /* Try to open as a gif. If that succeeds, great. If that fails, the actual
        opening (and error handling) is done in doImage2D(). */

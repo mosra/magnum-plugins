@@ -118,6 +118,8 @@ namespace Magnum {
     people to think the packaging failed (see [mosra/magnum-plugins#105](https://github.com/mosra/magnum-plugins/issues/105))
 -   Fixed Debian packages to use correctly named OpenEXR dependency on Ubuntu
     20.04 (see [mosra/magnum-plugins#105](https://github.com/mosra/magnum-plugins/issues/105))
+-   Fixed @relativeref{Trade,StbImageImporter} to build again with
+    @ref CORRADE_BUILD_MULTITHREADED disabled.
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
