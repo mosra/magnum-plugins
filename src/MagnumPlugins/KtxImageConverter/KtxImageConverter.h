@@ -127,7 +127,7 @@ is not supported.
 It's possible to tune various metadata options through @ref configuration().
 See below for all options and their default values:
 
-@snippet MagnumPlugins/KtxImageConverter/KtxImageConverter.conf config
+@snippet MagnumPlugins/KtxImageConverter/KtxImageConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
