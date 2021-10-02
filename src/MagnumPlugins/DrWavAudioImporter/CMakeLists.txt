@@ -40,7 +40,7 @@ add_plugin(DrWavAudioImporter
     DrWavAudioImporter.conf
     DrWavImporter.cpp
     DrWavImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_DRWAVAUDIOIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(DrWavAudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # Include the dr_*.h files as a system directory to supress warnings
@@ -61,7 +61,7 @@ install(FILES DrWavImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrWavAudioImporter)
 
 # Automatic static plugin import
-if(BUILD_PLUGINS_STATIC)
+if(MAGNUM_DRWAVAUDIOIMPORTER_BUILD_STATIC)
     install(FILES importStaticPlugin.cpp DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/DrWavAudioImporter)
     target_sources(DrWavAudioImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()

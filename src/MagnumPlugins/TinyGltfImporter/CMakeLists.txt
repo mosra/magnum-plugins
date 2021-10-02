@@ -40,7 +40,7 @@ add_plugin(TinyGltfImporter
     TinyGltfImporter.conf
     TinyGltfImporter.cpp
     TinyGltfImporter.h)
-if(BUILD_PLUGINS_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(TinyGltfImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # I could include tinygltf directly, but I want to suppress the warnings from
