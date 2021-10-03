@@ -61,7 +61,9 @@ cd ../..
 
 # Crosscompile FAAD2. Basically a copy of the emscripten-faad2 PKGBUILD from
 # https://github.com/mosra/archlinux.
-wget https://downloads.sourceforge.net/sourceforge/faac/faad2-2.8.8.tar.gz
+# As of 2021-09-30, CircleCI fails with an "expired certificate" error, so we
+# explicitly disable the certificate check.
+wget --no-check-certificate https://downloads.sourceforge.net/sourceforge/faac/faad2-2.8.8.tar.gz
 tar -xzvf faad2-2.8.8.tar.gz
 cd faad2-2.8.8
 emconfigure ./configure --prefix=$HOME/deps
