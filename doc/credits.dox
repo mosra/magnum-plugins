@@ -83,6 +83,7 @@ namespace Magnum {
     @relativeref{Trade,KtxImporter}, @relativeref{Trade,KtxImageConverter},
     animation and skinning support in @ref Trade::AssimpImporter "AssimpImporter",
     documentation updates
+-   **[\@playgroo](https://github.com/playgroo)** --- Debian package updates
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports
 -   **[\@sigman78](https://github.com/sigman78)** --- initial MSVC 2017 port,
