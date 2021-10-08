@@ -1491,8 +1491,10 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             vertexCount = accessor.count;
         } else {
             /* ... and probably never will be */
-            CORRADE_ASSERT(std::size_t(bufferView.buffer) == bufferId,
-                "Trade::TinyGltfImporter::mesh(): meshes spanning multiple buffers are not supported, sorry", {});
+            if(std::size_t(bufferView.buffer) != bufferId) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): meshes spanning multiple buffers are not supported";
+                return Containers::NullOpt;
+            }
 
             bufferRange = Math::join(bufferRange, Math::Range1D<std::size_t>::fromSize(bufferView.byteOffset, bufferView.byteLength));
 
