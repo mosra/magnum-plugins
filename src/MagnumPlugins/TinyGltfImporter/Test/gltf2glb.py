@@ -55,6 +55,7 @@ print("Converting to", file_out)
 with open(file_in) as f:
     data = json.load(f)
 
+bin_length = 0
 bin_data = bytearray()
 
 if not args.no_embed and "buffers" in data:
@@ -66,6 +67,7 @@ if not args.no_embed and "buffers" in data:
         else:
             with open(uri, 'rb') as bf:
                 d = bf.read()
+        bin_length = data['buffers'][0]['byteLength']
         bin_data.extend(d)
 
 if args.bundle_images:
@@ -99,12 +101,14 @@ if args.bundle_images:
         del image['uri']
         image['bufferView'] = len(data['bufferViews']) - 1
 
+    bin_length = len(bin_data)
+
 # Pad the buffer, update its length
 if not args.no_embed and 'buffers' in data and data['buffers']:
     bin_data.extend(b' '*pad_size_32b(len(bin_data)))
 
     del data['buffers'][0]['uri']
-    data['buffers'][0]['byteLength'] = len(bin_data)
+    data['buffers'][0]['byteLength'] = bin_length
 
 json_data = json.dumps(data, separators=(',', ':')).encode('utf-8')
 # Append padding bytes so that BIN chunk is aligned to 4 bytes
