@@ -1,0 +1,70 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 12,
+            "componentType": 5121,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 16,
+            "componentType": 5123,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 24,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 40,
+            "componentType": 5123,
+            "normalized": true,
+            "count": 3,
+            "type": "VEC4"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 144,
+            "byteStride": 48
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 144,
+            "uri": "mesh-skin-attributes.bin"
+        }
+    ],
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "JOINTS_0": 1,
+                        "JOINTS_1": 2,
+                        "WEIGHTS_0": 3,
+                        "WEIGHTS_1": 4,
+                        "POSITION": 0
+                    }
+                }
+            ]
+        }
+    ]
+}

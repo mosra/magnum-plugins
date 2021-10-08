@@ -1,0 +1,9 @@
+type = '<3f4B4H4f4H 3f4B4H4f4H 3f4B4H4f4H'
+input = [
+    # positions,        # joints 0,     # joints 1       # weights 0                # weights 1 (normalized ushort)
+     1.5, -1.0, -0.5,   1,  2,  3,  4,  13, 14, 15, 16,  0.125, 0.25, 0.375, 0.0,           0, 0xffff//8,          0, 0xffff//8,
+    -0.5,  2.5,  0.75,  5,  6,  7,  8,  17, 18, 19, 20,  0.1,   0.05, 0.05,  0.05,  0xffff//2, 0xffff//8, 0xffff//16, 0xffff//16,
+    -2.0,  1.0,  0.3,   9, 10, 11, 12,  21, 22, 23, 24,  0.2,   0.0,  0.3,   0.0,           0, 0xffff//4, 0xffff//4,  0
+]
+
+# kate: hl python
