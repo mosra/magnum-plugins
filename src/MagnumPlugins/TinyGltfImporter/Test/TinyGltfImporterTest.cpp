@@ -453,7 +453,8 @@ constexpr struct {
     {"invalid sampler magFilter", "texture-invalid.gltf", "invalid magFilter 2"},
     {"invalid sampler wrapS", "texture-invalid.gltf", "invalid wrap mode 3"},
     {"invalid sampler wrapT", "texture-invalid.gltf", "invalid wrap mode 4"},
-    {"image out of bounds", "texture-invalid-image-oob.gltf", "image 3 out of bounds for 1 images"}
+    {"sampler out of bounds", "texture-invalid-sampler-oob.gltf", "sampler 1 out of bounds for 1 samplers"},
+    {"image out of bounds", "texture-invalid-image-oob.gltf", "image 3 out of bounds for 1 images"},
 };
 
 constexpr struct {

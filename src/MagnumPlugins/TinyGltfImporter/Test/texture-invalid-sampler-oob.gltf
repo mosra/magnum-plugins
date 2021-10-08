@@ -1,0 +1,26 @@
+{
+    "asset" : {
+        "generator" : "Khronos Blender glTF 2.0 exporter",
+        "version" : "2.0"
+    },
+    "images" : [
+        {
+            "uri" : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP4z/D/PwAG/gL+0yubzgAAAABJRU5ErkJggg=="
+        }
+    ],
+    "samplers" : [
+        {
+            "wrapS": 33648,
+            "wrapT": 33071,
+            "minFilter": 9984,
+            "magFilter": 9728
+        }
+    ],
+    "textures" : [
+        {
+            "name": "sampler out of bounds",
+            "sampler": 1,
+            "source": 0
+        }
+    ]
+}

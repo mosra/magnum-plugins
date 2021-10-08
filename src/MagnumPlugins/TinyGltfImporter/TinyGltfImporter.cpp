@@ -2263,12 +2263,18 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
     CORRADE_INTERNAL_ASSERT(imageId < _d->model.images.size());
 
     /* Sampler */
-    if(tex.sampler < 0) {
+    if(tex.sampler == -1) {
         /* The specification instructs to use "auto sampling", i.e. it is left
            to the implementor to decide on the default values... */
         return TextureData{TextureType::Texture2D, SamplerFilter::Linear, SamplerFilter::Linear,
             SamplerMipmap::Linear, {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat}, imageId, &tex};
     }
+
+    if(UnsignedInt(tex.sampler) >= _d->model.samplers.size()) {
+        Error{} << "Trade::TinyGltfImporter::texture(): sampler" << tex.sampler << "out of bounds for" << _d->model.samplers.size() << "samplers";
+        return Containers::NullOpt;
+    }
+
     const tinygltf::Sampler& s = _d->model.samplers[tex.sampler];
 
     SamplerFilter minFilter;
