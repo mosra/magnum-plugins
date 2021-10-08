@@ -2039,6 +2039,10 @@ void TinyGltfImporterTest::mesh() {
     CORRADE_COMPARE(importer->meshName(0), "Non-indexed mesh");
     CORRADE_COMPARE(importer->meshForName("Non-indexed mesh"), 0);
 
+    /* _OBJECT_ID is the only custom attribute */
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(0)), "_OBJECT_ID");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(1)), "");
+
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->importerState());
@@ -2160,6 +2164,7 @@ void TinyGltfImporterTest::meshColors() {
         "mesh-colors.gltf")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(0)), "");
 
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);

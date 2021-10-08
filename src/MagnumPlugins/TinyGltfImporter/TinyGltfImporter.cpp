@@ -491,6 +491,7 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
                    the attribute to custom if not there already */
                 } else if(attribute.first != "POSITION" &&
                     attribute.first != "NORMAL" &&
+                    attribute.first != "TANGENT" &&
                     semantic != "COLOR")
                 {
                     if(_d->meshAttributesForName.emplace(attribute.first,
