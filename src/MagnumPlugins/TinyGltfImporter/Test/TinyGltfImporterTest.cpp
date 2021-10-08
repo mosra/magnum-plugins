@@ -321,7 +321,7 @@ constexpr struct {
     const char* message;
 } MeshInvalidData[]{
     {"invalid primitive", "mesh-invalid.gltf", "unrecognized primitive 666"},
-    {"different vertex count for each accessor", "mesh-invalid-mismatching-attribute-count.gltf", "mismatched vertex count for attribute TEXCOORD_0, expected 3 but got 4"},
+    {"different vertex count for each accessor", "mesh-invalid.gltf", "mismatched vertex count for attribute TEXCOORD_0, expected 3 but got 4"},
     {"unexpected position type", "mesh-invalid.gltf", "unexpected POSITION type 2"},
     {"unsupported position component type", "mesh-invalid.gltf", "unsupported POSITION component type unnormalized 5125"},
     {"unexpected normal type", "mesh-invalid.gltf", "unexpected NORMAL type 2"},
@@ -348,8 +348,8 @@ constexpr struct {
     {"non-normalized byte matrix", "mesh-invalid.gltf", "unsupported matrix component type unnormalized 5120"},
     {"sparse accessor", "mesh-invalid.gltf", "accessor 14 is using sparse storage, which is unsupported"},
     {"no bufferview", "mesh-invalid.gltf", "accessor 15 has no bufferView"},
-    {"accessor count larger than buffer size", "mesh-invalid-accessor-short.gltf", "accessor 0 needs 33 bytes but bufferView 0 has only 32"},
-    {"buffer view range out of bounds", "mesh-invalid-bufferview-short.gltf", "bufferView 0 needs 72 bytes but buffer 0 has only 68"},
+    {"accessor range out of bounds", "mesh-invalid.gltf", "accessor 18 needs 48 bytes but bufferView 0 has only 36"},
+    {"buffer view range out of bounds", "mesh-invalid.gltf", "bufferView 3 needs 164 bytes but buffer 1 has only 160"},
     {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf", "buffer 1 out of bounds for 1 buffers"},
     {"buffer view index out of bounds", "mesh-invalid-bufferview-oob.gltf", "bufferView 4 out of bounds for 1 views"},
     {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},

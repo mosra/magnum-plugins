@@ -141,11 +141,8 @@ corrade_add_test(TinyGltfImporterTest
         mesh-invalid.bin
         mesh-invalid.gltf
         mesh-invalid-accessor-oob.gltf
-        mesh-invalid-accessor-short.gltf
         mesh-invalid-buffer-oob.gltf
         mesh-invalid-bufferview-oob.gltf
-        mesh-invalid-bufferview-short.gltf
-        mesh-invalid-mismatching-attribute-count.gltf
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
         mesh-primitives-types.bin
