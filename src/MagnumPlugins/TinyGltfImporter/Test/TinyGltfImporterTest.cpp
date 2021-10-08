@@ -108,7 +108,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void sceneInvalidMesh();
     void sceneInvalidScene();
     void sceneInvalidDefaultScene();
-    void sceneCycle();
+    void sceneInvalidHierarchy();
 
     void objectTransformation();
     void objectTransformationQuaternionNormalizationEnabled();
@@ -384,9 +384,12 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
-} SceneCycleData[]{
-    {"child is self", "scene-cycle.gltf"},
-    {"great-grandchild is self", "scene-cycle-deep.gltf"}
+    const char* message;
+} SceneInvalidHierarchyData[]{
+    {"scene node has parent", "scene-invalid-child-not-root.gltf", "node 1 in scene 0 is not a root node"},
+    {"node has multiple parents", "scene-invalid-multiple-parents.gltf", "node 2 has multiple parents"},
+    {"child is self", "scene-cycle.gltf", "node tree contains cycle starting at node 0"},
+    {"great-grandchild is self", "scene-cycle-deep.gltf", "node tree contains cycle starting at node 0"}
 };
 
 constexpr struct {
@@ -547,8 +550,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addTests({&TinyGltfImporterTest::sceneInvalidScene,
               &TinyGltfImporterTest::sceneInvalidDefaultScene});
 
-    addInstancedTests({&TinyGltfImporterTest::sceneCycle},
-        Containers::arraySize(SceneCycleData));
+    addInstancedTests({&TinyGltfImporterTest::sceneInvalidHierarchy},
+        Containers::arraySize(SceneInvalidHierarchyData));
 
     addInstancedTests({&TinyGltfImporterTest::objectTransformation},
                       Containers::arraySize(SingleFileData));
@@ -1735,15 +1738,16 @@ void TinyGltfImporterTest::sceneInvalidDefaultScene() {
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of bounds for 0 scenes\n");
 }
 
-void TinyGltfImporterTest::sceneCycle() {
-    auto&& data = SceneCycleData[testCaseInstanceId()];
+void TinyGltfImporterTest::sceneInvalidHierarchy() {
+    auto&& data = SceneInvalidHierarchyData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
-    CORRADE_EXPECT_FAIL("Cyclic node hierarchy is not checked.");
-    CORRADE_VERIFY(!importer->object3D(data.name));
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::openData(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::objectTransformation() {

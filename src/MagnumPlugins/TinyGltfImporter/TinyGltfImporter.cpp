@@ -363,6 +363,61 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
+    /* Check node hierarchy for forbidden parent-child relationships and
+       non-root scene nodes */
+
+    Containers::Array<Int> parentFor{DirectInit, _d->model.nodes.size(), -1};
+    for(std::size_t i = 0; i != _d->model.nodes.size(); ++i) {
+        for(Int child: _d->model.nodes[i].children) {
+            /* Ignore out-of-bounds child nodes, those produce an error later
+               in doObject3D() */
+            if(UnsignedInt(child) >= _d->model.nodes.size())
+                continue;
+
+            if(parentFor[child] != -1) {
+                Error{} << "Trade::TinyGltfImporter::openData(): node" << child << "has multiple parents";
+                doClose();
+                return;
+            }
+            parentFor[child] = i;
+        }
+    }
+
+    for(std::size_t i = 0; i != _d->model.scenes.size(); ++i) {
+        for(Int node: _d->model.scenes[i].nodes) {
+            /* Ignore out-of-bounds scene nodes, those produce an error later
+               in doScene() */
+            if(UnsignedInt(node) >= _d->model.nodes.size())
+                continue;
+
+            if(parentFor[node] != -1) {
+                Error{} << "Trade::TinyGltfImporter::openData(): node" << node << "in scene" << i << "is not a root node";
+                doClose();
+                return;
+            }
+        }
+    }
+
+    for(std::size_t i = 0; i != _d->model.nodes.size(); ++i) {
+        auto getParent = [&](Int node) -> Int {
+            return node != -1 ? parentFor[node] : -1;
+        };
+
+        Int p1 = getParent(i);
+        Int p2 = getParent(p1);
+
+        while(p1 != -1 && p2 != -1) {
+            if(p1 == p2) {
+                Error{} << "Trade::TinyGltfImporter::openData(): node tree contains cycle starting at node" << i;
+                doClose();
+                return;
+            }
+
+            p1 = getParent(p1);
+            p2 = getParent(getParent(p2));
+        }
+    }
+
     /* Treat meshes with multiple primitives as separate meshes. Each mesh gets
        duplicated as many times as is the size of the primitives array. */
     _d->meshSizeOffsets.emplace_back(0);
