@@ -1422,6 +1422,41 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
                 return Containers::NullOpt;
             }
 
+        /* Joint IDs attribute ends with _0, _1 ... */
+        } else if(semantic == "JOINTS") {
+            name = _d->meshAttributesForName.at(attribute.first);
+
+            if(accessor.type != TINYGLTF_TYPE_VEC4) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unexpected JOINTS type" << accessor.type;
+                return Containers::NullOpt;
+            }
+
+            if(!(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE && !accessor.normalized) &&
+               !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT && !accessor.normalized)) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unsupported JOINTS component type"
+                    << (accessor.normalized ? "normalized" : "unnormalized")
+                    << accessor.componentType;
+                return Containers::NullOpt;
+            }
+
+        /* Joint weights attribute ends with _0, _1 ... */
+        } else if(semantic == "WEIGHTS") {
+            name = _d->meshAttributesForName.at(attribute.first);
+
+            if(accessor.type != TINYGLTF_TYPE_VEC4) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unexpected WEIGHTS type" << accessor.type;
+                return Containers::NullOpt;
+            }
+
+            if(!(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT && !accessor.normalized) &&
+               !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE && accessor.normalized) &&
+               !(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT && accessor.normalized)) {
+                Error{} << "Trade::TinyGltfImporter::mesh(): unsupported WEIGHTS component type"
+                    << (accessor.normalized ? "normalized" : "unnormalized")
+                    << accessor.componentType;
+                return Containers::NullOpt;
+            }
+
         /* Object ID, name user-configurable */
         } else if(attribute.first == configuration().value("objectIdAttribute")) {
             name = MeshAttribute::ObjectId;

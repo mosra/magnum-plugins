@@ -113,6 +113,46 @@
             ]
         },
         {
+            "name": "unexpected joints type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "JOINTS_0": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsupported joints component type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "JOINTS_0": 5
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unexpected weights type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "WEIGHTS_0": 7
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unsupported weights component type",
+            "primitives": [
+                {
+                    "attributes": {
+                        "WEIGHTS_0": 5
+                    }
+                }
+            ]
+        },
+        {
             "name": "unexpected object id type",
             "primitives": [
                 {

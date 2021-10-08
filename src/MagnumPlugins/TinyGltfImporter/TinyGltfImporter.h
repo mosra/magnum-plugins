@@ -236,6 +236,14 @@ Import of morph data is not supported at the moment.
     @ref VertexFormat::Vector4ubNormalized,
     @ref VertexFormat::Vector3usNormalized or
     @ref VertexFormat::Vector4usNormalized
+-   Joint IDs and weights for skinning are imported as custom vertex attributes
+    named "JOINTS_0", "JOINTS_1", etc. and "WEIGHTS_0", "WEIGHTS_1", etc.
+    Their mapping to/from a string can be queried using
+    @ref meshAttributeName() and @ref meshAttributeForName(). Joint IDs are
+    imported as @ref VertexFormat::Vector4ub or @ref VertexFormat::Vector4us.
+    Joint weights are imported as @ref VertexFormat::Vector4,
+    @ref VertexFormat::Vector4ubNormalized or
+    @ref VertexFormat::Vector4usNormalized.
 -   Per-vertex object ID attribute is imported as either
     @ref VertexFormat::UnsignedInt, @ref VertexFormat::UnsignedShort or
     @ref VertexFormat::UnsignedByte. By default `_OBJECT_ID` is the recognized
