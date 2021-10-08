@@ -119,6 +119,44 @@
                     "output": 0
                 }
             ]
+        },
+        {
+            "name": "invalid input accessor",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 3,
+                    "interpolation": "STEP",
+                    "output": 2
+                }
+            ]
+        },
+        {
+            "name": "invalid output accessor",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 1,
+                    "interpolation": "STEP",
+                    "output": 4
+                }
+            ]
         }
     ],
     "note": "additional accessor bounds checks are tested inside mesh-invalid.gltf",
@@ -142,6 +180,20 @@
             "byteOffset": 0,
             "componentType": 5126,
             "count": 0,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 10,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 10,
             "type": "VEC3"
         }
     ],

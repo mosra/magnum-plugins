@@ -26,6 +26,11 @@
             "name": "wrong accessor count",
             "inverseBindMatrices": 2,
             "joints": [0, 1]
+        },
+        {
+            "name": "invalid accessor",
+            "inverseBindMatrices": 3,
+            "joints": [0, 1]
         }
     ],
     "accessors": [
@@ -48,6 +53,13 @@
             "byteOffset": 0,
             "componentType": 5126,
             "count": 3,
+            "type": "MAT4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 68,
+            "componentType": 5126,
+            "count": 2,
             "type": "MAT4"
         }
     ],
