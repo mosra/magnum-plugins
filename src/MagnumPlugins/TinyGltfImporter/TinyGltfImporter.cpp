@@ -2234,8 +2234,8 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
     for(const auto& ext: extensions) {
         const auto found = tex.extensions.find(ext);
         if(found != tex.extensions.end()) {
-            int source = found->second.Get("source").Get<int>();
-            if(source < 0 || UnsignedInt(source) >= _d->model.images.size()) {
+            const int source = found->second.Get("source").Get<int>();
+            if(UnsignedInt(source) >= _d->model.images.size()) {
                 Error{} << "Trade::TinyGltfImporter::texture():" << ext << "image" << source << "out of bounds for" << _d->model.images.size() << "images";
                 return Containers::NullOpt;
             }
@@ -2247,9 +2247,14 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
     if(imageId == ~0u) {
         /* If not overwritten by an extension, use the standard 'source'
            attribute. It's not mandatory, so this can still fail. */
-        if(tex.source != -1)
+        if(tex.source != -1) {
+            if(UnsignedInt(tex.source) >= _d->model.images.size()) {
+                Error{} << "Trade::TinyGltfImporter::texture(): image" << tex.source << "out of bounds for" << _d->model.images.size() << "images";
+                return Containers::NullOpt;
+            }
+
             imageId = UnsignedInt(tex.source);
-        else {
+        } else {
             Error{} << "Trade::TinyGltfImporter::texture(): no image source found";
             return Containers::NullOpt;
         }
