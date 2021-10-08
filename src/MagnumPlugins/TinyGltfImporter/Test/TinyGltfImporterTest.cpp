@@ -446,12 +446,14 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    const char* file;
     const char* message;
 } TextureInvalidData[]{
-    {"invalid sampler minFilter", "invalid minFilter 1"},
-    {"invalid sampler magFilter", "invalid magFilter 2"},
-    {"invalid sampler wrapS", "invalid wrap mode 3"},
-    {"invalid sampler wrapT", "invalid wrap mode 4"}
+    {"invalid sampler minFilter", "texture-invalid.gltf", "invalid minFilter 1"},
+    {"invalid sampler magFilter", "texture-invalid.gltf", "invalid magFilter 2"},
+    {"invalid sampler wrapS", "texture-invalid.gltf", "invalid wrap mode 3"},
+    {"invalid sampler wrapT", "texture-invalid.gltf", "invalid wrap mode 4"},
+    {"image out of bounds", "texture-invalid-image-oob.gltf", "image 3 out of bounds for 1 images"}
 };
 
 constexpr struct {
@@ -3658,11 +3660,10 @@ void TinyGltfImporterTest::textureInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "texture-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
     /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureInvalidData));
+    CORRADE_VERIFY(Containers::arraySize(TextureInvalidData) >= importer->textureCount());
 
     std::ostringstream out;
     Error redirectError{&out};

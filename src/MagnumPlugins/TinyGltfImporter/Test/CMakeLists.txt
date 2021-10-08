@@ -196,6 +196,7 @@ corrade_add_test(TinyGltfImporterTest
         texture-extensions-invalid.gltf
         texture-extensions-invalid-basisu-oob.gltf
         texture-invalid.gltf
+        texture-invalid-image-oob.gltf
         texture-missing-source.gltf
         version-legacy.gltf
         version-supported.gltf
