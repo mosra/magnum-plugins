@@ -219,6 +219,8 @@ constexpr struct {
     {"unexpected rotation type", "animation-invalid.gltf", "rotation track has unexpected type 65/5126"},
     {"unexpected scaling type", "animation-invalid.gltf", "scaling track has unexpected type 4/5126"},
     {"unsupported path", "animation-invalid.gltf", "unsupported track target color"},
+    {"invalid input accessor", "animation-invalid.gltf", "accessor 3 needs 40 bytes but bufferView 0 has only 0"},
+    {"invalid output accessor", "animation-invalid.gltf", "accessor 4 needs 120 bytes but bufferView 0 has only 0"},
     {"sampler index out of bounds", "animation-invalid-sampler-oob.gltf", "sampler 1 out of bounds for 1 samplers"},
     {"node index out of bounds", "animation-invalid-node-oob.gltf", "target node 2 out of bounds for 2 nodes"},
     {"sampler input accessor index out of bounds", "animation-invalid-input-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},
@@ -249,7 +251,8 @@ constexpr struct {
     {"accessor out of bounds", "skin-invalid-accessor-oob.gltf", "accessor 1 out of bounds for 1 accessors"},
     {"wrong accessor type", "skin-invalid.gltf", "inverse bind matrices have unexpected type 35/5126"},
     {"wrong accessor component type", "skin-invalid.gltf", "inverse bind matrices have unexpected type 36/5123"},
-    {"wrong accessor count", "skin-invalid.gltf", "invalid inverse bind matrix count, expected 2 but got 3"}
+    {"wrong accessor count", "skin-invalid.gltf", "invalid inverse bind matrix count, expected 2 but got 3"},
+    {"invalid accessor", "skin-invalid.gltf", "accessor 3 needs 196 bytes but bufferView 0 has only 192"}
 };
 
 constexpr struct {
@@ -350,7 +353,8 @@ constexpr struct {
     {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf", "buffer 1 out of bounds for 1 buffers"},
     {"buffer view index out of bounds", "mesh-invalid-bufferview-oob.gltf", "bufferView 4 out of bounds for 1 views"},
     {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},
-    {"multiple buffers", "mesh-invalid.gltf", "meshes spanning multiple buffers are not supported"}
+    {"multiple buffers", "mesh-invalid.gltf", "meshes spanning multiple buffers are not supported"},
+    {"invalid index accessor", "mesh-invalid.gltf", "accessor 17 needs 40 bytes but bufferView 0 has only 36"},
 };
 
 constexpr struct {

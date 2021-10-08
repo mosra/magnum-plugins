@@ -278,6 +278,15 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "invalid index accessor",
+            "primitives": [
+                {
+                    "attributes": {},
+                    "indices": 17
+                }
+            ]
         }
     ],
     "accessors": [
@@ -414,6 +423,13 @@
             "componentType": 5126,
             "count": 3,
             "type": "VEC2"
+        },
+        {
+            "name": "17",
+            "bufferView": 0,
+            "componentType": 5125,
+            "count": 4,
+            "type": "SCALAR"
         }
     ],
     "bufferViews": [
