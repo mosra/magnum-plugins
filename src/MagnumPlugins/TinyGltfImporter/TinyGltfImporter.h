@@ -135,6 +135,11 @@ read.
 external file paths are not decoded before loading files. If you need to
 support those paths, you can intercept and decode them with a file callback.
 
+The content of the global [`extensionsRequired`](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#specifying-extensions)
+array is ignored. If a glTF file requires an unknown extension, the import will
+most likely succeed, but some things might be missing or not get imported
+correctly.
+
 Import of morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-behavior-animation Animation and skin import
