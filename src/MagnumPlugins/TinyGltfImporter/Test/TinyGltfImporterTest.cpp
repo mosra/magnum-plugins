@@ -150,6 +150,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void textureDefaultSampler();
     void textureEmptySampler();
     void textureMissingSource();
+    void textureExtensions();
+    void textureExtensionsInvalid();
 
     void imageEmbedded();
     void imageExternal();
@@ -446,6 +448,31 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    const UnsignedInt id;
+} TextureExtensionsData[]{
+    {"GOOGLE_texture_basis", 1},
+    {"KHR_texture_basisu", 2},
+    /* unknown extension, falls back to default source */
+    {"MSFT_texture_dds", 0},
+    {"MSFT_texture_dds and GOOGLE_texture_basis", 1},
+    /* KHR_texture_basisu has preference */
+    {"GOOGLE_texture_basis and KHR_texture_basisu", 2},
+    {"unknown extension", 0},
+    {"GOOGLE_texture_basis and unknown", 1}
+};
+
+constexpr struct {
+    const char* name;
+    const char* file;
+    const char* message;
+} TextureExtensionsInvalidData[]{
+    {"out of bounds GOOGLE_texture_basis", "texture-extensions-invalid.gltf", "GOOGLE_texture_basis image 3 out of bounds for 3 images"},
+    {"out of bounds KHR_texture_basisu", "texture-extensions-invalid-basisu-oob.gltf", "KHR_texture_basisu image 0 out of bounds for 0 images"},
+    {"unknown extension, no fallback", "texture-extensions-invalid.gltf", "no image source found"}
+};
+
+constexpr struct {
+    const char* name;
     const char* suffix;
 } ImageEmbeddedData[]{
     {"ascii", "-embedded.gltf"},
@@ -613,6 +640,12 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
                       Containers::arraySize(SingleFileData));
 
     addTests({&TinyGltfImporterTest::textureMissingSource});
+
+    addInstancedTests({&TinyGltfImporterTest::textureExtensions},
+                      Containers::arraySize(TextureExtensionsData));
+
+    addInstancedTests({&TinyGltfImporterTest::textureExtensionsInvalid},
+                      Containers::arraySize(TextureExtensionsInvalidData));
 
     addInstancedTests({&TinyGltfImporterTest::imageEmbedded},
                       Containers::arraySize(ImageEmbeddedData));
@@ -3597,6 +3630,40 @@ void TinyGltfImporterTest::textureMissingSource() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->texture(0));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::texture(): no image source found\n");
+}
+
+void TinyGltfImporterTest::textureExtensions() {
+    auto&& data = TextureExtensionsData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "texture-extensions.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureExtensionsData));
+
+    auto texture = importer->texture(data.name);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->image(), data.id);
+}
+
+void TinyGltfImporterTest::textureExtensionsInvalid() {
+    auto&& data = TextureExtensionsInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_VERIFY(Containers::arraySize(TextureExtensionsInvalidData) >= importer->textureCount());
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->texture(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::texture(): {}\n", data.message));
 }
 
 constexpr char ExpectedImageData[] =
