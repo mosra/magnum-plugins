@@ -1529,9 +1529,13 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             vectorCount = 4;
         } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
-        /* Floats should not be normalized */
-        if(accessor.normalized && (componentFormat == VertexFormat::Float || componentFormat == VertexFormat::Double)) {
-            Error{} << "Trade::TinyGltfImporter::mesh(): floating-point component types can't be normalized";
+        /* Check for illegal normalized types */
+        if(accessor.normalized &&
+           componentFormat != VertexFormat::Byte &&
+           componentFormat != VertexFormat::UnsignedByte &&
+           componentFormat != VertexFormat::Short &&
+           componentFormat != VertexFormat::UnsignedShort) {
+            Error{} << "Trade::TinyGltfImporter::mesh(): component type" << accessor.componentType << "can't be normalized";
             return Containers::NullOpt;
         }
 

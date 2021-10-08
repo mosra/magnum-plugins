@@ -317,6 +317,16 @@
                     "indices": 19
                 }
             ]
+        },
+        {
+            "name": "normalized int",
+            "primitives": [
+                {
+                    "attributes": {
+                        "_THING": 20
+                    }
+                }
+            ]
         }
     ],
     "accessors": [
@@ -352,7 +362,6 @@
             "name": "4",
             "bufferView": 0,
             "componentType": 5125,
-            "normalized": true,
             "count": 3,
             "type": "VEC2"
         },
@@ -474,6 +483,14 @@
             "componentType": 5126,
             "count": 3,
             "type": "VEC3"
+        },
+        {
+            "name": "20",
+            "bufferView": 0,
+            "componentType": 5125,
+            "normalized": true,
+            "count": 1,
+            "type": "SCALAR"
         }
     ],
     "bufferViews": [
