@@ -2331,9 +2331,18 @@ void TinyGltfImporterTest::meshUnorderedAttributes() {
     /* Custom attributes are sorted in alphabetical order */
     CORRADE_VERIFY(customAttribute1 < customAttribute4);
 
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(), 7);
+
+    /* No warning about _CUSTOM_4 and _CUSTOM_1 */
+    CORRADE_COMPARE(out.str(),
+        "Trade::TinyGltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
+        "Trade::TinyGltfImporter::mesh(): found attribute COLOR_9 but expected COLOR_4\n"
+    );
 
     /* Sets of the same attribute are imported in ascending set order. Checking
        the formats should be enough to test the import order. */

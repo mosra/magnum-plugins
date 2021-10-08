@@ -34,6 +34,7 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -172,6 +173,17 @@ Containers::StridedArrayView2D<const char> bufferView(const tinygltf::Model& mod
         reinterpret_cast<const char*>(buffer.data.data()) + bufferView.byteOffset + accessor.byteOffset,
         {accessor.count, bufferElementSize},
         {std::ptrdiff_t(stride), 1}};
+}
+
+Containers::StringView attributeSemantic(Containers::StringView attribute) {
+    /* Get the semantic base name ([semantic]_[set_index]) */
+    const Containers::Array3<Containers::StringView> parts = attribute.partition('_');
+    const bool isNumbered = !parts.back().isEmpty() &&
+        std::all_of(parts.back().begin(), parts.back().end(), [](unsigned char c) { return std::isdigit(c); });
+    /* Return empty semantic for invalid or non-numbered attribute names. This
+       ensures they don't get recognized as one of the numbered attributes like
+       TEXCOORD, etc. just because they share the prefix. */
+    return isNumbered ? parts.front() : Containers::StringView{};
 }
 
 }
@@ -456,9 +468,10 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
     for(const tinygltf::Mesh& mesh: _d->model.meshes) {
         for(const tinygltf::Primitive& primitive: mesh.primitives) {
             for(const std::pair<const std::string, int>& attribute: primitive.attributes) {
-                if(Utility::String::beginsWith(attribute.first, "TEXCOORD_")) {
+                const Containers::StringView semantic = attributeSemantic(attribute.first);
+                if(semantic == "TEXCOORD") {
                     if(!_d->textureCoordinateYFlipInMaterial) {
-                        /* Ignore aaccessor is out of bounds, this will fail
+                        /* Ignore accessor is out of bounds, this will fail
                            later during mesh import */
                         if(std::size_t(attribute.second) >= _d->model.accessors.size())
                             continue;
@@ -474,11 +487,11 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
                         }
                     }
 
-                /* If the name isn't recognized, add the attribute to custom if
-                   not there already */
+                /* If the name isn't recognized or not in MeshAttribute, add
+                   the attribute to custom if not there already */
                 } else if(attribute.first != "POSITION" &&
                     attribute.first != "NORMAL" &&
-                    !Utility::String::beginsWith(attribute.first, "COLOR_"))
+                    semantic != "COLOR")
                 {
                     if(_d->meshAttributesForName.emplace(attribute.first,
                         meshAttributeCustom(_d->meshAttributeNames.size())).second)
@@ -1288,12 +1301,31 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
     std::size_t bufferId;
     UnsignedInt vertexCount = 0;
     std::size_t attributeId = 0;
+    Containers::StringView lastAttributeSemantic;
+    Int lastAttributeIndex = -1;
     Math::Range1D<std::size_t> bufferRange;
     Containers::Array<MeshAttributeData> attributeData{primitive.attributes.size()};
     for(auto& attribute: primitive.attributes) {
         auto* acessorPointer = checkedAccessor(_d->model, "mesh", attribute.second);
         if(!acessorPointer) return Containers::NullOpt;
         const tinygltf::Accessor& accessor = *acessorPointer;
+
+        const Containers::StringView semantic = attributeSemantic(attribute.first);
+
+        /* Numbered attributes are expected to be contiguous (COLORS_0,
+           COLORS_1...). If not, print a warning, because in the MeshData they
+           will appear as contiguous. */
+        if(!semantic.isEmpty()) {
+            if(semantic != lastAttributeSemantic)
+                lastAttributeIndex = -1;
+
+            const Int index = std::atoi(attribute.first.c_str() + semantic.size() + 1);
+            if(index != lastAttributeIndex + 1)
+                Warning{} << "Trade::TinyGltfImporter::mesh(): found attribute" << attribute.first << "but expected" << semantic << Debug::nospace << "_" << Debug::nospace << lastAttributeIndex + 1;
+
+            lastAttributeSemantic = semantic;
+            lastAttributeIndex = index;
+        }
 
         /* Whitelist supported name and type combinations */
         MeshAttribute name;
@@ -1352,7 +1384,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             }
 
         /* Texture coordinate attribute ends with _0, _1 ... */
-        } else if(Utility::String::beginsWith(attribute.first, "TEXCOORD")) {
+        } else if(semantic == "TEXCOORD") {
             name = MeshAttribute::TextureCoordinates;
 
             if(accessor.type != TINYGLTF_TYPE_VEC2) {
@@ -1373,7 +1405,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             }
 
         /* Color attribute ends with _0, _1 ... */
-        } else if(Utility::String::beginsWith(attribute.first, "COLOR")) {
+        } else if(semantic == "COLOR") {
             name = MeshAttribute::Color;
 
             if(accessor.type != TINYGLTF_TYPE_VEC4 && accessor.type != TINYGLTF_TYPE_VEC3) {
