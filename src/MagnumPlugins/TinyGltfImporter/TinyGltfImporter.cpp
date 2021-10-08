@@ -28,6 +28,7 @@
 #include "TinyGltfImporter.h"
 
 #include <algorithm>
+#include <cctype>
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/GrowableArray.h>
