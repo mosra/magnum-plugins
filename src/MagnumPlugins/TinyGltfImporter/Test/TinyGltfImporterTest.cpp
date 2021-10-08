@@ -168,6 +168,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void escapedStrings();
     void encodedUris();
 
+    void versionSupported();
+    void versionUnsupported();
+
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -467,6 +470,16 @@ constexpr struct {
     {"embedded binary", "-embedded.glb"},
 };
 
+constexpr struct {
+    const char* name;
+    const char* file;
+    const char* message;
+} UnsupportedVersionData[]{
+    {"legacy major version", "version-legacy.gltf", "unsupported version 1.0, expected 2.x"},
+    {"unknown major version", "version-unsupported.gltf", "unsupported version 3.0, expected 2.x"},
+    {"unknown minor version", "version-unsupported-min.gltf", "unsupported minVersion 2.1, expected 2.0"}
+};
+
 using namespace Magnum::Math::Literals;
 
 TinyGltfImporterTest::TinyGltfImporterTest() {
@@ -619,7 +632,12 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addTests({&TinyGltfImporterTest::utf8filenames,
               &TinyGltfImporterTest::escapedStrings,
-              &TinyGltfImporterTest::encodedUris});
+              &TinyGltfImporterTest::encodedUris,
+
+              &TinyGltfImporterTest::versionSupported});
+
+    addInstancedTests({&TinyGltfImporterTest::versionUnsupported},
+                      Containers::arraySize(UnsupportedVersionData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -3963,6 +3981,25 @@ void TinyGltfImporterTest::encodedUris() {
     CORRADE_COMPARE(strings[2], "buffer-escaped%2Fříční%20člun.bin");
     CORRADE_COMPARE(strings[4], "image-encoded%2Fimage%20%231.png");
     CORRADE_COMPARE(strings[5], "image-escaped%2Fříční%20člun.png");
+}
+
+void TinyGltfImporterTest::versionSupported() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "version-supported.gltf")));
+}
+
+void TinyGltfImporterTest::versionUnsupported() {
+    auto&& data = UnsupportedVersionData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
 }
 
 }}}}

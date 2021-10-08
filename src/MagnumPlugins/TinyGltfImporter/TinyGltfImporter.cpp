@@ -340,6 +340,21 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
+    /* Major versions are forward- and backward-compatible, but minVersion can
+       be used to require support for features added in new minor versions.
+       So far there's only 2.0 so we can use an exact comparison. */
+    const tinygltf::Asset& asset = _d->model.asset;
+    if(!asset.minVersion.empty() && asset.minVersion != "2.0") {
+        Error{} << "Trade::CgltfImporter::openData(): unsupported minVersion" << asset.minVersion << Debug::nospace << ", expected 2.0";
+        doClose();
+        return;
+    }
+    if(!asset.version.empty() && asset.version.find("2.") != 0) {
+        Error{} << "Trade::CgltfImporter::openData(): unsupported version" << asset.version << Debug::nospace << ", expected 2.x";
+        doClose();
+        return;
+    }
+
     /* Bounds checks that can't be deferred to later. No, tinygltf doesn't
        check for this. */
     if(_d->model.defaultScene != -1 && UnsignedInt(_d->model.defaultScene) >= _d->model.scenes.size()) {
