@@ -122,7 +122,7 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @section Trade-TinyGltfImporter-behavior Behavior and limitations
 
 The plugin supports @ref ImporterFeature::OpenData and
-@ref ImporterFeature::FileCallback features. The `tiny_gltf` library loads
+@ref ImporterFeature::FileCallback features. The TinyGLTF library loads
 everything during initial import, meaning all external file loading callbacks
 are called with @ref InputFileCallbackPolicy::LoadTemporary and the resources
 can be safely freed right after the @ref openData() / @ref openFile() function
@@ -170,7 +170,7 @@ Import of morph data is not supported at the moment.
 
 -   If no @cb{.json} "scene" @ce property is present and the file contains at
     least one scene, @ref defaultScene() returns @cpp 0 @ce instead of
-    @cpp -1 @ce. According to the [glTF 2.0 specification](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#scenes)
+    @cpp -1 @ce. According to the [glTF 2.0 specification](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#scenes)
     the importer is free to not render anything, but the suggested behavior
     would break even some official sample models.
 -   In case object transformation is set via separate
@@ -189,7 +189,7 @@ Import of morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-behavior-lights Light import
 
--   The importer supports the [KHR_lights_punctual](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual)
+-   The importer supports the [KHR_lights_punctual](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md)
     extension
 
 @subsection Trade-TinyGltfImporter-behavior-meshes Mesh import
@@ -203,7 +203,7 @@ Import of morph data is not supported at the moment.
     @ref VertexFormat::Vector3bNormalized,
     @ref VertexFormat::Vector3usNormalized or
     @ref VertexFormat::Vector3sNormalized (which includes the additional types
-    specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_mesh_quantization/README.md))
+    specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md))
 -   Normals, if any, are imported as @ref VertexFormat::Vector3,
     @ref VertexFormat::Vector3bNormalized or
     @ref VertexFormat::Vector3sNormalized
@@ -214,7 +214,7 @@ Import of morph data is not supported at the moment.
     @ref VertexFormat::Vector3bNormalized,
     @ref VertexFormat::Vector3usNormalized or
     @ref VertexFormat::Vector3sNormalized (which includes the additional types
-    specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)). The
+    specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)). The
     data are by default Y-flipped on import unless
     @cb{.conf} textureCoordinateYFlipInMaterial @ce is either explicitly
     enabled, or if the file contains non-normalized integer or normalized
@@ -268,24 +268,24 @@ fail.
 
 @subsection Trade-TinyGltfImporter-behavior-materials Material import
 
--   Builtin [metallic/roughness](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material) material is imported always,
+-   Builtin [metallic/roughness](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material) material is imported always,
     setting @ref MaterialType::PbrMetallicRoughness on the @ref MaterialData.
     Unfortunately TinyGLTF doesn't provide a way to detect if
     metallic/roughness properties are actually present, so this type is set
     always.
--   If the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
+-   If the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness/README.md)
     extension is present, its properties are imported with
     @ref MaterialType::PbrSpecularGlossiness present in material types.
 -   Additional normal, occlusion and emissive maps are imported, together with
     related properties
--   If the [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
+-   If the [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
     extension is present, @ref MaterialType::Flat is set in material types,
     replacing @ref MaterialType::PbrMetallicRoughness or
     @ref MaterialType::PbrSpecularGlossiness.
--   If the [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_clearcoat)
+-   If the [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md)
     extension is present, @ref MaterialType::PbrClearCoat is set in material
     types, and a new layer with clearcoat properties is added
--   Custom texture coordinate sets as well as [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_texture_transform/README.md)
+-   Custom texture coordinate sets as well as [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md)
     properties are imported on all textures.
 -   If the on-by-default @cb{.ini} phongMaterialFallback @ce
     @ref Trade-TinyGltfImporter-configuration "configuration option" is
