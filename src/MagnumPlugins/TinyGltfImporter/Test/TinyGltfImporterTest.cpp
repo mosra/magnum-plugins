@@ -343,7 +343,8 @@ constexpr struct {
     {"buffer view range out of bounds", "mesh-invalid-bufferview-short.gltf", "bufferView 0 needs 72 bytes but buffer 0 has only 68"},
     {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf", "buffer 1 out of bounds for 1 buffers"},
     {"buffer view index out of bounds", "mesh-invalid-bufferview-oob.gltf", "bufferView 4 out of bounds for 1 views"},
-    {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"}
+    {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},
+    {"multiple buffers", "mesh-invalid.gltf", "meshes spanning multiple buffers are not supported"}
 };
 
 constexpr struct {

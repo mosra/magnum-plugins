@@ -227,6 +227,17 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "multiple buffers",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 0,
+                        "TEXCOORD_0": 16
+                    }
+                }
+            ]
         }
     ],
     "accessors": [
@@ -356,6 +367,13 @@
             "componentType": 5126,
             "count": 1,
             "type": "VEC3"
+        },
+        {
+            "name": "16",
+            "bufferView": 2,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC2"
         }
     ],
     "bufferViews": [
@@ -369,12 +387,21 @@
             "buffer": 0,
             "byteOffset": 36,
             "byteLength": 32
+        },
+        {
+            "buffer": 1,
+            "byteOffset": 124,
+            "byteLength": 24
         }
     ],
     "buffers": [
         {
             "byteLength": 68,
             "uri": "mesh-invalid.bin"
+        },
+        {
+            "byteLength": 160,
+            "uri": "mesh.bin"
         }
     ]
 }
