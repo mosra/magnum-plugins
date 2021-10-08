@@ -325,10 +325,14 @@ following defaults have been chosen for this importer:
 -   Wrapping (all axes): @ref SamplerWrapping::Repeat
 </li>
 <li>
-    The importer supports the non-standard `GOOGLE_texture_basis` extension
-    for referencing [Basis Universal](https://github.com/binomialLLC/basis_universal)
-    files, which then get loaded using @ref BasisImporter (or an equivalent
-    alias). The use is like this, [equivalently to Basis own glTF example](https://github.com/BinomialLLC/basis_universal/blob/1cae1d57266e2c95bc011b0bf1ccb9940988c184/webgl/gltf/assets/AgiHqSmall.gltf#L230-L240):
+    The importer supports the following extensions for image types not defined
+    in the [core glTF 2.0 specification](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#gltf-basics):
+    [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)
+    for Khronos Texture 2.0 images (`*.ktx2`) with [Basis Universal](https://github.com/binomialLLC/basis_universal)
+    supercompression and the original provisional `GOOGLE_texture_basis`
+    extension for referencing plain Basis Universal files (`*.basis`). There was
+    no formal specification of the extension but the use is like below,
+    [equivalently to Basis own glTF example](https://github.com/BinomialLLC/basis_universal/blob/1cae1d57266e2c95bc011b0bf1ccb9940988c184/webgl/gltf/assets/AgiHqSmall.gltf#L230-L240):
 
     @code{.json}
     {
@@ -357,17 +361,18 @@ following defaults have been chosen for this importer:
     }
     @endcode
 
-    The MIME type is not standard either and the importer doesn't check its
-    value. However, in case of embedded data URIs, the prefix *has to* be set
-    to `data:application/octet-stream` as TinyGLTF has a whitelist for data URI
-    detection and would treat the URI as a filename otherwise:
+    While the `mimeType` field isn't checked by the importer, embedded data
+    URIs for both extensions *need to have* their prefix set to
+    `data:application/octet-stream`. TinyGLTF has a whitelist for data URI
+    detection that doesn't know `image/ktx2` or `image/x-basis` and would treat
+    the URI as a filename otherwise:
 
     @code{.json}
     {
         ...
         "images": [
             {
-                "mimeType": "image/x-basis",
+                "mimeType": "image/ktx2",
                 "uri": "data:application/octet-stream;base64,..."
             }
         ]

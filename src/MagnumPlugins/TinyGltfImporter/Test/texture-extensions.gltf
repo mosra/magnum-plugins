@@ -1,0 +1,107 @@
+{
+    "asset" : {
+        "version" : "2.0"
+    },
+    "images" : [
+        {
+            "uri": "data:application/octet-stream;base64,AAA=",
+            "mimeType": "image/png"
+        },
+        {
+            "uri" : "data:application/octet-stream;base64,AAA=",
+            "mimeType": "image/x-basis"
+        },
+        {
+            "uri" : "data:application/octet-stream;base64,AAA=",
+            "mimeType": "image/ktx2"
+        },
+        {
+            "uri" : "data:application/octet-stream;base64,AAA=",
+            "mimeType": "image/vnd-ms.dds"
+        },
+        {
+            "uri" : "data:application/octet-stream;base64,AAA=",
+            "mimeType": "image/mgn"
+        }
+    ],
+    "textures" : [
+        {
+            "name": "GOOGLE_texture_basis",
+            "source": 0,
+            "extensions": {
+                "GOOGLE_texture_basis": {
+                    "source": 1
+                }
+            }
+        },
+        {
+            "name": "KHR_texture_basisu",
+            "source": 0,
+            "extensions": {
+                "KHR_texture_basisu": {
+                    "source": 2
+                }
+            }
+        },
+        {
+            "name": "MSFT_texture_dds",
+            "source": 0,
+            "extensions": {
+                "MSFT_texture_dds": {
+                    "source": 3
+                }
+            }
+        },
+        {
+            "name": "MSFT_texture_dds and GOOGLE_texture_basis",
+            "source": 0,
+            "extensions": {
+                "MSFT_texture_dds": {
+                    "source": 3
+                },
+                "GOOGLE_texture_basis": {
+                    "source": 1
+                }
+            }
+        },
+        {
+            "name": "GOOGLE_texture_basis and KHR_texture_basisu",
+            "source": 0,
+            "extensions": {
+                "GOOGLE_texture_basis": {
+                    "source": 1
+                },
+                "KHR_texture_basisu": {
+                    "source": 2
+                }
+            }
+        },
+        {
+            "name": "unknown extension",
+            "source": 0,
+            "extensions": {
+                "MGNM_fake_extension": {
+                    "source": 4
+                }
+            }
+        },
+        {
+            "name": "GOOGLE_texture_basis and unknown",
+            "source": 0,
+            "extensions": {
+                "MGNM_fake_extension": {
+                    "source": 4
+                },
+                "GOOGLE_texture_basis": {
+                    "source": 1
+                }
+            }
+        }
+    ],
+    "extensionsUsed": [
+        "GOOGLE_texture_basis",
+        "KHR_texture_basisu",
+        "MSFT_texture_dds",
+        "MGNM_fake_extension"
+    ]
+}

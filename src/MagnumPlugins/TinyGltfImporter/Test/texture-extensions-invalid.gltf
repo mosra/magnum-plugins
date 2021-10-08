@@ -1,0 +1,42 @@
+{
+    "asset" : {
+        "version" : "2.0"
+    },
+    "images" : [
+        {
+            "uri": "data:application/octet-stream;base64,AAA=",
+            "mimeType": "image/x-basis"
+        },
+        {
+            "uri" : "data:application/octet-stream;base64,AAA=",
+            "mimeType": "image/jpeg"
+        },
+        {
+            "uri" : "data:application/octet-stream;base64,AAA=",
+            "mimeType": "image/mgn"
+        }
+    ],
+    "textures" : [
+        {
+            "name": "out of bounds GOOGLE_texture_basis",
+            "source" : 1,
+            "extensions": {
+                "GOOGLE_texture_basis": {
+                    "source": 3
+                }
+            }
+        },
+        {
+            "name": "unknown extension, no fallback",
+            "extensions": {
+                "MGNM_fake_extension": {
+                    "source": 2
+                }
+            }
+        }
+    ],
+    "extensionsUsed": [
+        "MGNM_fake_extension",
+        "GOOGLE_texture_basis"
+    ]
+}
