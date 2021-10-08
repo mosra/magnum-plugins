@@ -131,6 +131,10 @@ calls with @ref InputFileCallbackPolicy::LoadTemporary and
 @ref InputFileCallbackPolicy::Close is emitted right after the file is fully
 read.
 
+[Percent-encoded](https://datatracker.ietf.org/doc/html/rfc3986#section-2.1)
+external file paths are not decoded before loading files. If you need to
+support those paths, you can intercept and decode them with a file callback.
+
 Import of morph data is not supported at the moment.
 
 @subsection Trade-TinyGltfImporter-behavior-animation Animation and skin import
