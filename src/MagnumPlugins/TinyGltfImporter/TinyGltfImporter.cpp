@@ -363,6 +363,54 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
         return;
     }
 
+    /* Check node hierarchy for forbidden parent-child relationships and
+       non-root scene nodes */
+
+    std::unordered_map<Int, Int> parentFor;
+    for(std::size_t i = 0; i != _d->model.nodes.size(); ++i) {
+        for(Int child: _d->model.nodes[i].children) {
+            const auto inserted = parentFor.emplace(child, i);
+            if(!inserted.second) {
+                Error{} << "Trade::TinyGltfImporter::openData(): node" << child << "has multiple parents";
+                doClose();
+                return;
+            }
+        }
+    }
+
+    for(std::size_t i = 0; i != _d->model.scenes.size(); ++i) {
+        for(Int node: _d->model.scenes[i].nodes) {
+            if(parentFor.count(node)) {
+                Error{} << "Trade::TinyGltfImporter::openData(): node" << node << "in scene" << i << "is not a root node";
+                doClose();
+                return;
+            }
+        }
+    }
+
+    for(std::size_t i = 0; i != _d->model.nodes.size(); ++i) {
+        auto getParent = [&](Int node) -> Int {
+            const auto it = parentFor.find(node);
+            if(it == parentFor.end())
+                return -1;
+            return it->second;
+        };
+
+        Int p1 = getParent(i);
+        Int p2 = getParent(p1);
+
+        while(p1 != -1 && p2 != -1) {
+            if(p1 == p2) {
+                Error{} << "Trade::TinyGltfImporter::openData(): node tree contains cycle starting at node" << i;
+                doClose();
+                return;
+            }
+
+            p1 = getParent(p1);
+            p2 = getParent(getParent(p2));
+        }
+    }
+
     /* Treat meshes with multiple primitives as separate meshes. Each mesh gets
        duplicated as many times as is the size of the primitives array. */
     _d->meshSizeOffsets.emplace_back(0);
