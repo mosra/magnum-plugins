@@ -149,6 +149,8 @@ corrade_add_test(TinyGltfImporterTest
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
         mesh-primitives-types.bin
+        mesh-skin-attributes.gltf
+        mesh-skin-attributes.bin
         mesh-unordered-attributes.gltf
         přívodní-šňůra.gltf
         přívodní-šňůra.bin

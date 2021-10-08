@@ -123,6 +123,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void meshIndexed();
     void meshIndexedAttributeless();
     void meshColors();
+    void meshSkinAttributes();
     void meshCustomAttributes();
     void meshCustomAttributesNoFileOpened();
     void meshDuplicateAttributes();
@@ -606,6 +607,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::meshIndexed,
               &TinyGltfImporterTest::meshIndexedAttributeless,
               &TinyGltfImporterTest::meshColors,
+              &TinyGltfImporterTest::meshSkinAttributes,
               &TinyGltfImporterTest::meshCustomAttributes,
               &TinyGltfImporterTest::meshCustomAttributesNoFileOpened,
               &TinyGltfImporterTest::meshDuplicateAttributes,
@@ -2185,6 +2187,74 @@ void TinyGltfImporterTest::meshColors() {
             {0.1f, 0.2f, 0.3f, 0.4f},
             {0.5f, 0.6f, 0.7f, 0.8f},
             {0.9f, 1.0f, 1.1f, 1.2f}
+        }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::meshSkinAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "mesh-skin-attributes.gltf")));
+
+    /* The mapping should be available even before the mesh is imported */
+    const MeshAttribute joints0Attribute = importer->meshAttributeForName("JOINTS_0");
+    CORRADE_COMPARE(joints0Attribute, meshAttributeCustom(0));
+    const MeshAttribute joints1Attribute = importer->meshAttributeForName("JOINTS_1");
+    CORRADE_COMPARE(joints1Attribute, meshAttributeCustom(1));
+    const MeshAttribute weights0Attribute = importer->meshAttributeForName("WEIGHTS_0");
+    CORRADE_COMPARE(weights0Attribute, meshAttributeCustom(2));
+    const MeshAttribute weights1Attribute = importer->meshAttributeForName("WEIGHTS_1");
+    CORRADE_COMPARE(weights1Attribute, meshAttributeCustom(3));
+
+    /* One attribute for each set, not one for all sets */
+    CORRADE_COMPARE(importer->meshAttributeForName("JOINTS"), MeshAttribute{});
+    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS"), MeshAttribute{});
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(!mesh->isIndexed());
+
+    CORRADE_COMPARE(mesh->attributeCount(), 5);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {1.5f, -1.0f, -0.5f},
+            {-0.5f, 2.5f, 0.75f},
+            {-2.0f, 1.0f, 0.3f}
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(joints0Attribute), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(joints0Attribute), VertexFormat::Vector4ub);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4ub>(joints0Attribute),
+        Containers::arrayView<Vector4ub>({
+            {1,  2,  3,  4},
+            {5,  6,  7,  8},
+            {9, 10, 11, 12}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(joints1Attribute), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(joints1Attribute), VertexFormat::Vector4us);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4us>(joints1Attribute),
+        Containers::arrayView<Vector4us>({
+            {13, 14, 15, 16},
+            {17, 18, 19, 20},
+            {21, 22, 23, 24}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(weights0Attribute), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(weights0Attribute), VertexFormat::Vector4);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weights0Attribute),
+        Containers::arrayView<Vector4>({
+            {0.125f, 0.25f, 0.375f, 0.0f},
+            {0.1f,   0.05f, 0.05f,  0.05f},
+            {0.2f,   0.0f,  0.3f,   0.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(weights1Attribute), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(weights1Attribute), VertexFormat::Vector4usNormalized);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4us>(weights1Attribute),
+        Containers::arrayView<Vector4us>({
+            {       0, 0xffff/8,         0, 0xffff/8},
+            {0xffff/2, 0xffff/8, 0xffff/16, 0xffff/16},
+            {       0, 0xffff/4, 0xffff/4,  0}
         }), TestSuite::Compare::Container);
 }
 
