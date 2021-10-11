@@ -379,21 +379,31 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
     /* Check node hierarchy for forbidden parent-child relationships and
        non-root scene nodes */
 
-    std::unordered_map<Int, Int> parentFor;
+    Containers::Array<Int> parentFor{DirectInit, _d->model.nodes.size(), -1};
     for(std::size_t i = 0; i != _d->model.nodes.size(); ++i) {
         for(Int child: _d->model.nodes[i].children) {
-            const auto inserted = parentFor.emplace(child, i);
-            if(!inserted.second) {
+            /* Ignore out-of-bounds child nodes, those produce an error later
+               in doObject3D() */
+            if(UnsignedInt(child) >= _d->model.nodes.size())
+                continue;
+
+            if(parentFor[child] != -1) {
                 Error{} << "Trade::TinyGltfImporter::openData(): node" << child << "has multiple parents";
                 doClose();
                 return;
             }
+            parentFor[child] = i;
         }
     }
 
     for(std::size_t i = 0; i != _d->model.scenes.size(); ++i) {
         for(Int node: _d->model.scenes[i].nodes) {
-            if(parentFor.count(node)) {
+            /* Ignore out-of-bounds scene nodes, those produce an error later
+               in doScene() */
+            if(UnsignedInt(node) >= _d->model.nodes.size())
+                continue;
+
+            if(parentFor[node] != -1) {
                 Error{} << "Trade::TinyGltfImporter::openData(): node" << node << "in scene" << i << "is not a root node";
                 doClose();
                 return;
@@ -403,10 +413,7 @@ void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) 
 
     for(std::size_t i = 0; i != _d->model.nodes.size(); ++i) {
         auto getParent = [&](Int node) -> Int {
-            const auto it = parentFor.find(node);
-            if(it == parentFor.end())
-                return -1;
-            return it->second;
+            return node != -1 ? parentFor[node] : -1;
         };
 
         Int p1 = getParent(i);
