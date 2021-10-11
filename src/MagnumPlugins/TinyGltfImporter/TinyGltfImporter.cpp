@@ -1321,7 +1321,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             if(semantic != lastAttributeSemantic)
                 lastAttributeIndex = -1;
 
-            const Int index = std::atoi(attribute.first.c_str() + semantic.size() + 1);
+            const Int index = std::strtol(attribute.first.c_str() + semantic.size() + 1, nullptr, 10);
             if(index != lastAttributeIndex + 1)
                 Warning{} << "Trade::TinyGltfImporter::mesh(): found attribute" << attribute.first << "but expected" << semantic << Debug::nospace << "_" << Debug::nospace << lastAttributeIndex + 1;
 
