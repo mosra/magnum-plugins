@@ -82,7 +82,8 @@ namespace Magnum {
 -   **Pablo Escobar** ([\@pezcode](https://github.com/pezcode)) ---
     @relativeref{Trade,KtxImporter}, @relativeref{Trade,KtxImageConverter},
     animation and skinning support in @ref Trade::AssimpImporter "AssimpImporter",
-    documentation updates
+    improved @relativeref{Trade,TinyGltfImporter} robustness, documentation
+    updates
 -   **[\@playgroo](https://github.com/playgroo)** --- Debian package updates
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports
