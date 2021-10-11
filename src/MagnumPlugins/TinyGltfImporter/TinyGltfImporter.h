@@ -122,7 +122,7 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @section Trade-TinyGltfImporter-behavior Behavior and limitations
 
 The plugin supports @ref ImporterFeature::OpenData and
-@ref ImporterFeature::FileCallback features. The `TinyGLTF` library loads
+@ref ImporterFeature::FileCallback features. The TinyGLTF library loads
 everything during initial import, meaning all external file loading callbacks
 are called with @ref InputFileCallbackPolicy::LoadTemporary and the resources
 can be safely freed right after the @ref openData() / @ref openFile() function
