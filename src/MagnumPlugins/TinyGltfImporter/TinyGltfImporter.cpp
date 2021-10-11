@@ -1307,9 +1307,11 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
 
     /* Gather all (whitelisted) attributes and the total buffer range spanning
        them */
-    std::size_t bufferId;
     UnsignedInt vertexCount = 0;
     std::size_t attributeId = 0;
+    /* This gets always filled for the first attribute, however GCC 11 fails to
+       see that and fires a -Wmaybe-uninitialized warning if I don't init. */
+    std::size_t bufferId = ~std::size_t{};
     Containers::StringView lastAttributeSemantic;
     Int lastAttributeIndex = -1;
     Math::Range1D<std::size_t> bufferRange;
