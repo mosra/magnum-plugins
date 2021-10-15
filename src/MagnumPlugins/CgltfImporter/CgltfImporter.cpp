@@ -66,7 +66,7 @@
    Even if we patched .glb files in memory, we'd still need to convert all
    buffers from little-endian. Adds a lot of complexity, and not testable. */
 #ifdef CORRADE_TARGET_BIG_ENDIAN
-#error Big-endian systems are not supported by cgltf
+#error big-endian systems are not supported by cgltf
 #endif
 
 /* Since we set custom allocator callbacks for cgltf_parse, we can override
@@ -103,7 +103,7 @@ namespace std {
 namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
-using namespace Magnum::Math::Literals;
+using namespace Math::Literals;
 
 namespace {
 
@@ -141,8 +141,8 @@ Containers::StringView gltfComponentTypeName(cgltf_component_type type) {
 
 std::size_t elementSize(const cgltf_accessor* accessor) {
     /* Technically cgltf_calc_size isn't part of the public API but we bundle
-       cgltf so there shouldn't be any surprises. Worst case we'll have
-       to copy its content from an old version if it gets removed. */
+       cgltf so there shouldn't be any surprises. Worst case we'll have to copy
+       its content from an old version if it gets removed. */
     return cgltf_calc_size(accessor->type, accessor->component_type);
 }
 
@@ -158,7 +158,8 @@ bool checkAccessor(const cgltf_data* data, const char* const function, const cgl
         return false;
     }
     /* Buffer views are optional in accessors, we're supposed to fill the view
-       with zeros. Only makes sense with sparse data and we don't support that. */
+       with zeros. Only makes sense with sparse data and we don't support
+       that. */
     if(!accessor->buffer_view) {
         Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << accessorId << "has no buffer view";
         return false;
@@ -263,8 +264,8 @@ struct CgltfImporter::Document {
        with views on strings from cgltf_data.
 
        Note that parsing inside cgltf happens with unescaped strings, but we
-       have no influence on that. In practice, this shouldn't be a problem.
-       Old versions of the spec used to explicitly forbid non-ASCII keys/enums:
+       have no influence on that. In practice, this shouldn't be a problem. Old
+       versions of the spec used to explicitly forbid non-ASCII keys/enums:
        https://github.com/KhronosGroup/glTF/tree/fd3ab461a1114fb0250bd76099153d2af50a7a1d/specification/2.0#json-encoding
        Newer spec versions changed this to "ASCII characters [...] SHOULD be
        written without JSON escaping" */
@@ -644,9 +645,9 @@ void CgltfImporter::doOpenData(const Containers::ArrayView<const char> data) {
         "MSFT_texture_dds"_s
     };
 
-    /* M*N loop should be okay here, extensionsRequired should usually have no or
-        very few entries. Consider binary search if the list of supported
-        extensions reaches a few dozen. */
+    /* M*N loop should be okay here, extensionsRequired should usually have no
+       or very few entries. Consider binary search if the list of supported
+       extensions reaches a few dozen. */
     for(Containers::StringView required: Containers::arrayView(_d->data->extensions_required, _d->data->extensions_required_count)) {
         bool found = false;
         for(const auto& supported: supportedExtensions) {
@@ -998,8 +999,9 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                 target = AnimationTrackTargetType::Translation3D;
                 resultType = AnimationTrackType::Vector3;
                 if(interpolation == Animation::Interpolation::Spline) {
-                    /* Postprocess the spline track. This can be done only once for
-                    every track -- postprocessSplineTrack() checks that. */
+                    /* Postprocess the spline track. This can be done only once
+                       for every track -- postprocessSplineTrack() checks
+                       that. */
                     const auto values = Containers::arrayCast<CubicHermite3D>(outputData);
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
@@ -2023,22 +2025,22 @@ void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture,
         Matrix3 matrix;
 
         /* If material needs an Y-flip, the mesh doesn't have the texture
-            coordinates flipped and thus we don't need to unflip them first */
+           coordinates flipped and thus we don't need to unflip them first */
         if(!textureCoordinateYFlipInMaterial)
             matrix = Matrix3::translation(Vector2::yAxis(1.0f))*
                      Matrix3::scaling(Vector2::yScale(-1.0f));
 
         /* The extension can override texture coordinate index (for example
-            to have the unextended coordinates already transformed, and
-            applying transformation to a different set) */
+           to have the unextended coordinates already transformed, and applying
+           transformation to a different set) */
         if(texture.transform.has_texcoord)
             texCoord = texture.transform.texcoord;
 
         matrix = Matrix3::scaling(Vector2::from(texture.transform.scale))*matrix;
 
-        /* Because we import images with Y flipped, counterclockwise
-            rotation is now clockwise. This has to be done in addition
-            to the Y flip/unflip. */
+        /* Because we import images with Y flipped, counterclockwise rotation
+           is now clockwise. This has to be done in addition to the Y
+           flip/unflip. */
         matrix = Matrix3::rotation(-Rad(texture.transform.rotation))*matrix;
 
         matrix = Matrix3::translation(Vector2::from(texture.transform.offset))*matrix;
@@ -2057,8 +2059,8 @@ void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture,
             Matrix3::scaling(Vector2::yScale(-1.0f)));
     }
 
-    /* Add texture coordinate set if non-zero. The KHR_texture_transform
-       could be modifying it, so do that after */
+    /* Add texture coordinate set if non-zero. The KHR_texture_transform could
+       be modifying it, so do that after */
     if(texCoord != 0)
         arrayAppend(attributes, InPlaceInit, coordinateAttribute, texCoord);
 

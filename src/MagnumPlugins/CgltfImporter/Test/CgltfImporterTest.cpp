@@ -3028,11 +3028,11 @@ void CgltfImporterTest::meshPrimitivesTypes() {
                   vertexFormatComponentFormat(data.positionFormat) == VertexFormat::Short) {
 
             constexpr Vector3 expected[]{
-                    {-0.133333f, -0.333333f, -0.2f},
-                    {-0.8f, -0.133333f, -0.4f},
-                    {-1.0f, -0.933333f, -0.0f},
-                    {-0.4f, -0.6f, -0.333333f},
-                    {-0.666667f, -0.733333f, -0.933333f}
+                {-0.133333f, -0.333333f, -0.2f},
+                {-0.8f, -0.133333f, -0.4f},
+                {-1.0f, -0.933333f, -0.0f},
+                {-0.4f, -0.6f, -0.333333f},
+                {-0.666667f, -0.733333f, -0.933333f}
             };
 
             /* Because the signed packed formats are extremely imprecise, we

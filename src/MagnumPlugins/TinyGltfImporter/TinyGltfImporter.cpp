@@ -618,16 +618,16 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
 
             /** @todo handle alignment once we do more than just four-byte types */
 
-            /* If the input view is not yet present in the output data buffer, add
-            it */
+            /* If the input view is not yet present in the output data buffer,
+               add it */
             if(samplerData.find(sampler.input) == samplerData.end()) {
                 Containers::StridedArrayView2D<const char> view = bufferView(_d->model, *input);
                 samplerData.emplace(sampler.input, std::make_tuple(view, dataSize, ~std::size_t{}));
                 dataSize += view.size()[0]*view.size()[1];
             }
 
-            /* If the output view is not yet present in the output data buffer, add
-            it */
+            /* If the output view is not yet present in the output data buffer,
+               add it */
             if(samplerData.find(sampler.output) == samplerData.end()) {
                 Containers::StridedArrayView2D<const char> view = bufferView(_d->model, *output);
                 samplerData.emplace(sampler.output, std::make_tuple(view, dataSize, ~std::size_t{}));
@@ -727,8 +727,9 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 target = AnimationTrackTargetType::Translation3D;
                 resultType = AnimationTrackType::Vector3;
                 if(interpolation == Animation::Interpolation::Spline) {
-                    /* Postprocess the spline track. This can be done only once for
-                    every track -- postprocessSplineTrack() checks that. */
+                    /* Postprocess the spline track. This can be done only once
+                       for every track -- postprocessSplineTrack() checks
+                       that. */
                     const auto values = Containers::arrayCast<CubicHermite3D>(outputData);
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
@@ -1977,8 +1978,8 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
         if(!materialTexture("normalTexture", normalTexture,
             material.normalTexture.texCoord,
             /* YES, you guessed right, this does a deep copy of the nested
-                std::maps because tinygltf is SO GREAT that there's NO WAY
-                to access extension structures in a consistent way */
+               std::maps because tinygltf is SO GREAT that there's NO WAY
+               to access extension structures in a consistent way */
             tinygltf::Value(material.normalTexture.extensions),
             attributes,
             MaterialAttribute::NormalTexture,
@@ -1999,8 +2000,8 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
         if(!materialTexture("occlusionTexture", occlusionTexture,
             material.occlusionTexture.texCoord,
             /* YES, you guessed right, this does a deep copy of the nested
-                std::maps because tinygltf is SO GREAT that there's NO WAY
-                to access extension structures in a consistent way */
+               std::maps because tinygltf is SO GREAT that there's NO WAY
+               to access extension structures in a consistent way */
             tinygltf::Value(material.occlusionTexture.extensions),
             attributes,
             MaterialAttribute::OcclusionTexture,
@@ -2025,8 +2026,8 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
         if(!materialTexture("emissiveTexture", emissiveTexture,
             material.emissiveTexture.texCoord,
             /* YES, you guessed right, this does a deep copy of the nested
-                std::maps because tinygltf is SO GREAT that there's NO WAY
-                to access extension structures in a consistent way */
+               std::maps because tinygltf is SO GREAT that there's NO WAY
+               to access extension structures in a consistent way */
             tinygltf::Value(material.emissiveTexture.extensions),
             attributes,
             MaterialAttribute::EmissiveTexture,
