@@ -116,6 +116,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
     if(_component STREQUAL AssimpImporter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
+    elseif(_component STREQUAL CgltfImporter)
+        list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     elseif(_component STREQUAL MeshOptimizerSceneConverter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES MeshTools)
     elseif(_component STREQUAL OpenGexImporter)
@@ -143,7 +145,7 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
-    AssimpImporter BasisImageConverter BasisImporter DdsImporter
+    AssimpImporter BasisImageConverter BasisImporter CgltfImporter DdsImporter
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
     DrWavAudioImporter Faad2AudioImporter FreeTypeFont GlslangShaderConverter
     HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
