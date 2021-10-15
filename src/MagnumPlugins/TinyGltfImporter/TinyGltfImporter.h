@@ -151,14 +151,14 @@ Import of morph data is not supported at the moment.
     functions instead of
     @ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
     @ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()". Can be disabled per-animation with the
-    @cb{.ini} optimizeQuaternionShortestPath @ce option, see
-    @ref Trade-TinyGltfImporter-configuration "below". This doesn't affect
-    spline-interpolated rotation tracks.
+    @cb{.ini} optimizeQuaternionShortestPath @ce
+    @ref Trade-TinyGltfImporter-configuration "configuration option". This
+    doesn't affect spline-interpolated rotation tracks.
 -   If linear quaternion rotation tracks are not normalized, the importer
     prints a warning and normalizes them. Can be disabled per-animation with
     the @cb{.ini} normalizeQuaternions @ce option, see
-    @ref Trade-TinyGltfImporter-configuration "below". This doesn't affect
-    spline-interpolated rotation tracks.
+    @ref Trade-TinyGltfImporter-configuration "configuration option". This
+    doesn't affect spline-interpolated rotation tracks.
 -   Skin `skeleton` property is not imported, but you can retrieve it via
     @ref SkinData::importerState() --- see @ref Trade-TinyGltfImporter-state
     for more information
@@ -187,8 +187,8 @@ Import of morph data is not supported at the moment.
     @ref ObjectData3D is created with @ref ObjectFlag3D::HasTranslationRotationScaling and these separate properties accessible
 -   If object rotation quaternion is not normalized, the importer prints a
     warning and normalizes it. Can be disabled per-object with the
-    @cb{.ini} normalizeQuaternions @ce option, see
-    @ref Trade-TinyGltfImporter-configuration "below".
+    @cb{.ini} normalizeQuaternions @ce
+    @ref Trade-TinyGltfImporter-configuration "configuration option".
 
 @subsection Trade-TinyGltfImporter-behavior-camera Camera import
 

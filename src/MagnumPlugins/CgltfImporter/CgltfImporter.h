@@ -130,11 +130,11 @@ messages and no line numbers for several classes of errors, including
 out-of-bounds indices and missing required attributes. If you need more
 detailed errors, consider using the [glTF Validator](https://github.khronos.org/glTF-Validator/).
 
-The content of the global [`extensionsRequired`](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#specifying-extensions)
+The content of the global [extensionsRequired](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#specifying-extensions)
 array is checked against all extensions supported by the plugin. If a glTF file
 requires an unknown extension, the import will fail. This behaviour can be
-disabled with the @cb{.ini} ignoreRequiredExtensions @ce option, see
-@ref Trade-CgltfImporter-configuration "below".
+disabled with the @cb{.ini} ignoreRequiredExtensions @ce
+@ref Trade-CgltfImporter-configuration "configuration option".
 
 Import of morph data is not supported at the moment.
 
@@ -147,14 +147,14 @@ Import of morph data is not supported at the moment.
     functions instead of
     @ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
     @ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()". Can be disabled per-animation with the
-    @cb{.ini} optimizeQuaternionShortestPath @ce option, see
-    @ref Trade-CgltfImporter-configuration "below". This doesn't affect
-    spline-interpolated rotation tracks.
+    @cb{.ini} optimizeQuaternionShortestPath @ce
+    @ref Trade-CgltfImporter-configuration "configuration option". This doesn't
+    affect spline-interpolated rotation tracks.
 -   If linear quaternion rotation tracks are not normalized, the importer
     prints a warning and normalizes them. Can be disabled per-animation with
-    the @cb{.ini} normalizeQuaternions @ce option, see
-    @ref Trade-CgltfImporter-configuration "below". This doesn't affect
-    spline-interpolated rotation tracks.
+    the @cb{.ini} normalizeQuaternions @ce
+    @ref Trade-CgltfImporter-configuration "configuration option". This doesn't
+    affect spline-interpolated rotation tracks.
 -   Skin `skeleton` property is not imported
 -   Morph targets are not supported
 -   Animation tracks are always imported with
@@ -181,8 +181,8 @@ Import of morph data is not supported at the moment.
     @ref ObjectData3D is created with @ref ObjectFlag3D::HasTranslationRotationScaling and these separate properties accessible
 -   If object rotation quaternion is not normalized, the importer prints a
     warning and normalizes it. Can be disabled per-object with the
-    @cb{.ini} normalizeQuaternions @ce option, see
-    @ref Trade-CgltfImporter-configuration "below".
+    @cb{.ini} normalizeQuaternions @ce
+    @ref Trade-CgltfImporter-configuration "configuration option".
 
 @subsection Trade-CgltfImporter-behavior-camera Camera import
 
