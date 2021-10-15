@@ -49,7 +49,8 @@ namespace Magnum {
     into block-compressed BC1/BC3.
 -   New @relativeref{Trade,CgltfImporter} plugin for importing glTF files,
     which is a smaller, faster-compiling, faster-importing and more
-    memory-friendly drop-in replacement for @relativeref{Trade,TinyGltfImporter}.
+    memory-friendly drop-in replacement for @relativeref{Trade,TinyGltfImporter}
+    (see [mosra/magnum-plugins#107](https://github.com/mosra/magnum-plugins/pull/107)).
     The only significant behavioral difference is that
     @relativeref{Trade,CgltfImporter} by default fails the import if the file
     requires an extension the importer is not aware of, but that can be
