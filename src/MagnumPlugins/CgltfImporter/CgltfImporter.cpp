@@ -932,6 +932,8 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                tinygltf's behavior, currently there are no extensions for
                animating materials or anything else so there's no point in
                importing such animations. */
+            /** @todo revisit once KHR_animation2 is a thing:
+                https://github.com/KhronosGroup/glTF/pull/2033 */
             if(!channel.target_node)
                 continue;
 
