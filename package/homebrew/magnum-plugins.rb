@@ -53,6 +53,7 @@ class MagnumPlugins < Formula
         "-DWITH_ASSIMPIMPORTER=#{(build.with? 'assimp') ? 'ON' : 'OFF'}",
         "-DWITH_BASISIMAGECONVERTER=ON",
         "-DWITH_BASISIMPORTER=ON",
+        "-DWITH_CGLTFIMPORTER=ON",
         "-DWITH_DDSIMPORTER=ON",
         "-DWITH_DEVILIMAGEIMPORTER=#{(build.with? 'devil') ? 'ON' : 'OFF'}",
         "-DWITH_DRFLACAUDIOIMPORTER=ON",

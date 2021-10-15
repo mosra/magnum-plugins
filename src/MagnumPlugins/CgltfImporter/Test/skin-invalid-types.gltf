@@ -1,0 +1,66 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "nodes": [
+        {},
+        {}
+    ],
+    "skins": [
+        {
+            "name": "unknown type",
+            "note": "not in TinyGltfImporter tests because TinyGLTF produces an error during parsing",
+            "inverseBindMatrices": 0,
+            "joints": [0, 1]
+        },
+        {
+            "name": "unknown component type",
+            "note": "not in TinyGltfImporter tests because TinyGLTF produces an error during parsing",
+            "inverseBindMatrices": 1,
+            "joints": [0, 1]
+        },
+        {
+            "name": "normalized float",
+            "note": "not in TinyGltfImporter tests because it doesn't check for normalized floats",
+            "inverseBindMatrices": 2,
+            "joints": [0, 1]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 2,
+            "type": "NANI?"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 999,
+            "count": 2,
+            "type": "MAT4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "normalized": true,
+            "count": 2,
+            "type": "MAT4"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 192
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 192,
+            "uri": "external-data.bin"
+        }
+    ]
+}

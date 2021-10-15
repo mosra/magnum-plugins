@@ -37,6 +37,10 @@
  * @brief Plugin @ref Magnum::Trade::BasisImporter
  * @m_since_{plugins,2019,10}
  */
+/** @dir MagnumPlugins/CgltfImporter
+ * @brief Plugin @ref Magnum::Trade::CgltfImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/DdsImporter
  * @brief Plugin @ref Magnum::Trade::DdsImporter
  */

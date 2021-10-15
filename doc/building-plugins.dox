@@ -342,6 +342,8 @@ By default no plugins are built and you need to select them manually:
     --- if you are on Vcpkg, it will "just work", otherwise you need to
     download the sources and point `BASIS_UNIVERSAL_DIR` to their directory so
     CMake can find them.
+-   `WITH_CGLTFIMPORTER` --- Build the
+    @ref Trade::CgltfImporter "CgltfImporter" plugin.
 -   `WITH_DDSIMPORTER` --- Build the @ref Trade::DdsImporter "DdsImporter"
     plugin.
 -   `WITH_DEVILIMAGEIMPORTER` --- Build the

@@ -1,0 +1,126 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "animations": [
+        {
+            "name": "unknown type",
+            "note": "not in TinyGltfImporter tests because TinyGLTF produces an error during parsing",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "rotation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 0,
+                    "interpolation": "LINEAR",
+                    "output": 2
+                }
+            ]
+        },
+        {
+            "name": "unknown component type",
+            "note": "not in TinyGltfImporter tests because TinyGLTF produces an error during parsing",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 3,
+                    "interpolation": "LINEAR",
+                    "output": 1
+                }
+            ]
+        },
+        {
+            "name": "normalized float",
+            "note": "not in TinyGltfImporter tests because it doesn't check for normalized floats",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "scale"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 0,
+                    "interpolation": "LINEAR",
+                    "output": 4
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 3,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5121,
+            "count": 3,
+            "type": "WAT"
+        },
+        {
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 1234,
+            "count": 3,
+            "type": "MAT2"
+        },
+        {
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "normalized": true,
+            "count": 3,
+            "type": "VEC3"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 36
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 36,
+            "byteLength": 192
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 228,
+            "uri": "animation-patching-fixed.bin"
+        }
+    ],
+    "nodes": [
+        {}
+    ]
+}

@@ -1,0 +1,113 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "mode": 0,
+                    "attributes": {
+                        "POSITION": 0
+                    }
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "mode": 0,
+                    "attributes": {
+                        "POSITION": 1
+                    }
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "mode": 0,
+                    "attributes": {
+                        "POSITION": 2
+                    }
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "mode": 0,
+                    "attributes": {
+                        "POSITION": 3
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 1,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 2,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 3,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC3"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 12
+        },
+        {
+            "buffer": 1,
+            "byteLength": 12
+        },
+        {
+            "buffer": 0,
+            "byteLength": 12
+        },
+        {
+            "buffer": 2,
+            "byteLength": 12
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 12,
+            "uri": "data1.bin"
+        },
+        {
+            "byteLength": 12,
+            "uri": "data2.bin"
+        },
+        {
+            "byteLength": 12,
+            "uri": "data1.bin"
+        }
+    ],
+    "images": [
+        {
+            "uri": "data.png"
+        },
+        {
+            "uri": "data.png"
+        }
+    ]
+}

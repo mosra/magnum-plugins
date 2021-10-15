@@ -15,6 +15,7 @@
 #  AssimpImporter               - Assimp importer
 #  BasisImageConverter          - Basis image converter
 #  BasisImporter                - Basis importer
+#  CgltfImporter                - GLTF importer using cgltf
 #  DdsImporter                  - DDS importer
 #  DevIlImageImporter           - Image importer using DevIL
 #  DrFlacAudioImporter          - FLAC audio importer using dr_flac
@@ -316,6 +317,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                     INTERFACE_LINK_LIBRARIES basisu_transcoder)
             endif()
 
+        # CgltfImporter has no dependencies
         # DdsImporter has no dependencies
 
         # DevIlImageImporter plugin dependencies

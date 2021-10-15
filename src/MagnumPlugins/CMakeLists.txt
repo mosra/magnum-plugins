@@ -47,6 +47,10 @@ if(WITH_BASISIMPORTER)
     add_subdirectory(BasisImporter)
 endif()
 
+if(WITH_CGLTFIMPORTER)
+    add_subdirectory(CgltfImporter)
+endif()
+
 if(WITH_DDSIMPORTER)
     add_subdirectory(DdsImporter)
 endif()
