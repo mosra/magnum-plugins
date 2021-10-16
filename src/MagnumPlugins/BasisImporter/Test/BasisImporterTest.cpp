@@ -154,7 +154,7 @@ void BasisImporterTest::invalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData("NotABasisFile"));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid header\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid basis header\n");
 }
 
 void BasisImporterTest::unconfigured() {
@@ -217,7 +217,7 @@ void BasisImporterTest::fileTooShort() {
     CORRADE_VERIFY(!importer->openData(basisData));
 
     CORRADE_COMPARE(out.str(),
-        "Trade::BasisImporter::openData(): invalid header\n"
+        "Trade::BasisImporter::openData(): invalid basis header\n"
         "Trade::BasisImporter::openData(): bad basis file\n");
 }
 
