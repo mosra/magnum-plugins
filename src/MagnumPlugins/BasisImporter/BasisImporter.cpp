@@ -44,44 +44,42 @@ namespace Magnum { namespace Trade { namespace {
 
 /* Map BasisImporter::TargetFormat to (Compressed)PixelFormat. See the
    TargetFormat enum for details. */
-PixelFormat pixelFormat(BasisImporter::TargetFormat type) {
+PixelFormat pixelFormat(BasisImporter::TargetFormat type, bool isSrgb) {
     switch(type) {
         case BasisImporter::TargetFormat::RGBA8:
-            return PixelFormat::RGBA8Unorm;
+            return isSrgb ? PixelFormat::RGBA8Srgb : PixelFormat::RGBA8Unorm;
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 }
 
-CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type) {
+CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type, bool isSrgb) {
     switch(type) {
-        /** @todo sRGB once https://github.com/BinomialLLC/basis_universal/issues/66
-            is fixed */
         case BasisImporter::TargetFormat::Etc1RGB:
-            return CompressedPixelFormat::Etc2RGB8Unorm;
+            return isSrgb ? CompressedPixelFormat::Etc2RGB8Srgb : CompressedPixelFormat::Etc2RGB8Unorm;
         case BasisImporter::TargetFormat::Etc2RGBA:
-            return CompressedPixelFormat::Etc2RGBA8Unorm;
+            return isSrgb ? CompressedPixelFormat::Etc2RGBA8Srgb : CompressedPixelFormat::Etc2RGBA8Unorm;
         case BasisImporter::TargetFormat::Bc1RGB:
-            return CompressedPixelFormat::Bc1RGBUnorm;
+            return isSrgb ? CompressedPixelFormat::Bc1RGBSrgb : CompressedPixelFormat::Bc1RGBUnorm;
         case BasisImporter::TargetFormat::Bc3RGBA:
-            return CompressedPixelFormat::Bc3RGBAUnorm;
-        /** @todo use bc7/bc4/bc5 based on channel count? needs a bit from the
-            above issue as well */
+            return isSrgb ? CompressedPixelFormat::Bc3RGBASrgb : CompressedPixelFormat::Bc3RGBAUnorm;
+        /** @todo use bc7/bc4/bc5 based on channel count? needs a bit from
+            https://github.com/BinomialLLC/basis_universal/issues/66 */
         case BasisImporter::TargetFormat::Bc4R:
             return CompressedPixelFormat::Bc4RUnorm;
         case BasisImporter::TargetFormat::Bc5RG:
             return CompressedPixelFormat::Bc5RGUnorm;
         case BasisImporter::TargetFormat::Bc7RGB:
-            return CompressedPixelFormat::Bc7RGBAUnorm;
+            return isSrgb ? CompressedPixelFormat::Bc7RGBASrgb : CompressedPixelFormat::Bc7RGBAUnorm;
         case BasisImporter::TargetFormat::Bc7RGBA:
-            return CompressedPixelFormat::Bc7RGBAUnorm;
+            return isSrgb ? CompressedPixelFormat::Bc7RGBASrgb : CompressedPixelFormat::Bc7RGBAUnorm;
         case BasisImporter::TargetFormat::PvrtcRGB4bpp:
-            return CompressedPixelFormat::PvrtcRGB4bppUnorm;
+            return isSrgb ? CompressedPixelFormat::PvrtcRGB4bppSrgb : CompressedPixelFormat::PvrtcRGB4bppUnorm;
         case BasisImporter::TargetFormat::PvrtcRGBA4bpp:
-            return CompressedPixelFormat::PvrtcRGBA4bppUnorm;
+            return isSrgb ? CompressedPixelFormat::PvrtcRGBA4bppSrgb : CompressedPixelFormat::PvrtcRGBA4bppUnorm;
         case BasisImporter::TargetFormat::Astc4x4RGBA:
-            return CompressedPixelFormat::Astc4x4RGBAUnorm;
+            return isSrgb ? CompressedPixelFormat::Astc4x4RGBASrgb : CompressedPixelFormat::Astc4x4RGBAUnorm;
         /** @todo use etc2/eacR/eacRG based on channel count? needs a bit from
-            the above issue as well */
+            https://github.com/BinomialLLC/basis_universal/issues/66 */
         case BasisImporter::TargetFormat::EacR:
             return CompressedPixelFormat::EacR11Unorm;
         case BasisImporter::TargetFormat::EacRG:
@@ -149,6 +147,7 @@ struct BasisImporter::State {
     Containers::Array<UnsignedInt> numLevels;
     basist::basis_tex_format compressionType;
     bool isYFlipped;
+    bool isSrgb;
 
     bool noTranscodeFormatWarningPrinted = false;
 
@@ -257,6 +256,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         const basisu::uint8_vec* orientation = _state->ktx2Transcoder->find_key("KTXorientation");
         /* The default without orientation key is Y-down. Y-up = flipped. */
         _state->isYFlipped = orientation && orientation->size() >= 2 && (*orientation)[1] == 'u';
+        _state->isSrgb = _state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
         #endif
     } else {
         _state->basisTranscoder.emplace(&_state->codebook);
@@ -283,6 +283,11 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
         _state->compressionType = fileInfo.m_tex_format;
         _state->isYFlipped = fileInfo.m_y_flipped;
+
+        /* For some reason cBASISHeaderFlagSRGB is not exposed in basisu_file_info,
+           get it from the header directly */
+        const basist::basis_file_header& pHeader = *reinterpret_cast<const basist::basis_file_header*>(_state->in.data());
+        _state->isSrgb = pHeader.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
     }
 
     /* There has to be exactly one transcoder */
@@ -399,9 +404,9 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
     }
 
     if(isUncompressed)
-        return Trade::ImageData2D{pixelFormat(targetFormat), size, std::move(dest)};
+        return Trade::ImageData2D{pixelFormat(targetFormat, _state->isSrgb), size, std::move(dest)};
     else
-        return Trade::ImageData2D{compressedPixelFormat(targetFormat), size, std::move(dest)};
+        return Trade::ImageData2D{compressedPixelFormat(targetFormat, _state->isSrgb), size, std::move(dest)};
 }
 
 void BasisImporter::setTargetFormat(TargetFormat format) {
