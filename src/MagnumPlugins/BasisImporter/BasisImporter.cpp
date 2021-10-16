@@ -269,7 +269,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
         rowStride = 0; /* left up to Basis to calculate */
         outputRowsInPixels = 0; /* not used for compressed data */
         outputSizeInBlocksOrPixels = totalBlocks;
-        dataSize = basis_get_bytes_per_block(format)*totalBlocks;
+        dataSize = basis_get_bytes_per_block_or_pixel(format)*totalBlocks;
     }
     Containers::Array<char> dest{DefaultInit, dataSize};
     if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, basist::transcoder_texture_format(format), flags, rowStride, nullptr, outputRowsInPixels)) {

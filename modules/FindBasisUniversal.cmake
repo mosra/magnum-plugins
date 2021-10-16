@@ -58,6 +58,12 @@ if(${_index} GREATER -1)
 endif()
 
 macro(_basis_setup_source_file source)
+    # Compile any .c files as C++ since we can't guarantee that C is enabled
+    # in the calling scope, either inside project() or with enable_language().
+    # Otherwise, they won't get compiled at all, leading to undefined symbols.
+    set_property(SOURCE ${source} PROPERTY LANGUAGE
+        CXX)
+
     # Basis shouldn't override the MSVC iterator debug level as it would make
     # it inconsistent with the rest of the code
     if(CORRADE_TARGET_WINDOWS)
@@ -73,7 +79,7 @@ macro(_basis_setup_source_file source)
             " -w")
     # Clang supports -w, but it doesn't have any effect on all the
     # -Wall -Wold-style-cast etc flags specified before. -Wno-everything does.
-    # Funnily enough this is not an issue on Emscripten.;
+    # Funnily enough this is not an issue on Emscripten.
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "(Apple)?Clang" AND NOT CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
         set_property(SOURCE ${source} APPEND_STRING PROPERTY COMPILE_FLAGS
             " -Wno-everything")
@@ -126,19 +132,24 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 endif()
 
                 set(BasisUniversalEncoder_SOURCES
+                    ${BasisUniversalEncoder_DIR}/apg_bmp.c
                     ${BasisUniversalEncoder_DIR}/basisu_astc_decomp.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_backend.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_basis_file.cpp
+                    ${BasisUniversalEncoder_DIR}/basisu_bc7enc.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_comp.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_enc.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_etc.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_frontend.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_global_selector_palette_helpers.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_gpu_texture.cpp
+                    ${BasisUniversalEncoder_DIR}/basisu_kernels_sse.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_pvrtc1_4.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_resampler.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_resample_filters.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_ssim.cpp
+                    ${BasisUniversalEncoder_DIR}/basisu_uastc_enc.cpp
+                    ${BasisUniversalEncoder_DIR}/jpgd.cpp
                     ${BasisUniversalEncoder_DIR}/lodepng.cpp)
 
                 foreach(_file ${BasisUniversalEncoder_SOURCES})
@@ -173,8 +184,6 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 # The rest is documented in the BasisImageConverter plugin itself.
                 set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES BasisUniversal::Transcoder)
-                set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
-                    INTERFACE_COMPILE_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
             endif()
         else()
             set(BasisUniversal_Encoder_FOUND TRUE)
@@ -226,6 +235,17 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 endif()
                 set(BasisUniversalTranscoder_SOURCES
                     ${BasisUniversalTranscoder_DIR}/basisu_transcoder.cpp)
+
+                # Not linking to zstddeclib.c because that leads to multiple
+                # definition errors in BasisUniversal::Encoder which links to
+                # BasisUniversal::Transcoder
+                find_path(BasisUniversalZstd_DIR NAMES zstd.c
+                    HINTS "${BASIS_UNIVERSAL_DIR}/zstd" "${BASIS_UNIVERSAL_DIR}"
+                    NO_CMAKE_FIND_ROOT_PATH)
+                if(BasisUniversalZstd_DIR)
+                    list(APPEND BasisUniversalTranscoder_SOURCES
+                        ${BasisUniversalZstd_DIR}/zstd.c)
+                endif()
 
                 foreach(_file ${BasisUniversalTranscoder_SOURCES})
                     _basis_setup_source_file(${_file})

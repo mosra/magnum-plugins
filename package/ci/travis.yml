@@ -196,7 +196,7 @@ install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TARGET" == "desktop-sanitizers" ]; then cd $HOME ; wget https://ci.magnum.graphics/spirv-tools-2020.4-ubuntu-16.04-gcc5.zip && cd $HOME/deps && unzip $HOME/spirv-tools-2020.4-ubuntu-16.04-gcc5.zip && cd $TRAVIS_BUILD_DIR ; fi
 
 # Basis Universal
-- export BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed && wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.zip && unzip -q $BASIS_VERSION; mv basis_universal-$BASIS_VERSION $HOME/basis_universal
+- export BASIS_VERSION=v1_15_update2 && wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.zip && unzip -q $BASIS_VERSION; mv basis_universal-$BASIS_VERSION $HOME/basis_universal
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && ( [ "$TARGET" == "desktop" ] || [ "$TARGET" == "desktop-sanitizers" ] ); then ./package/ci/unix-desktop.sh; fi

@@ -31,10 +31,10 @@
 #include <thread>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
-#include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Swizzle.h>
@@ -81,7 +81,33 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     PARAM_CONFIG(y_flip, bool);
     PARAM_CONFIG(check_for_alpha, bool);
     PARAM_CONFIG(force_alpha, bool);
-    PARAM_CONFIG_FIX_NAME(seperate_rg_to_color_alpha, bool, "separate_rg_to_color_alpha");
+
+    std::string swizzle = configuration().value("swizzle");
+    /* swizzle has precedence in the basisu commandline tool, do the same */
+    if(swizzle.empty() && configuration().value<bool>("separate_rg_to_color_alpha"))
+        swizzle = "rrrg";
+
+    if(!swizzle.empty()) {
+        if(swizzle.size() != 4) {
+            Error{} << "Trade::BasisImageConverter::convertToData(): invalid swizzle length, expected 4 but got" << swizzle.size();
+            return {};
+        }
+
+        if(swizzle.find_first_not_of("rgba") != std::string::npos) {
+            Error{} << "Trade::BasisImageConverter::convertToData(): invalid characters in swizzle" << swizzle;
+            return {};
+        }
+
+        for(std::size_t i = 0; i != 4; ++i) {
+            switch(swizzle[i]) {
+                case 'r': params.m_swizzle[i] = 0; break;
+                case 'g': params.m_swizzle[i] = 1; break;
+                case 'b': params.m_swizzle[i] = 2; break;
+                case 'a': params.m_swizzle[i] = 3; break;
+                default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            }
+        }
+    }
 
     UnsignedInt threadCount = configuration().value<Int>("threads");
     if(threadCount == 0) threadCount = std::thread::hardware_concurrency();
@@ -133,7 +159,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
        basis image from existing data as it is based on a std::vector, moreover
        we need to tightly pack it and flip Y. The `dst` is an Y-flipped view
        already to make the following loops simpler. */
-    params.m_source_images.emplace_back(image.size().x(), image.size().y());
+    params.m_source_images.push_back({uint32_t(image.size().x()), uint32_t(image.size().y())});
     auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({params.m_source_images.back().get_ptr(), params.m_source_images.back().get_total_pixels()}, {std::size_t(image.size().y()), std::size_t(image.size().x())})).flipped<0>();
 
     /* basis image is always RGBA, fill in alpha if necessary */
@@ -202,7 +228,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     const basisu::uint8_vec& out = basis.get_output_basis_file();
 
     Containers::Array<char> fileData{NoInit, out.size()};
-    Utility::copy(Containers::arrayCast<const char>(out), fileData);
+    Utility::copy(Containers::arrayView(out.data(), out.size()), fileData);
 
     return fileData;
 }
