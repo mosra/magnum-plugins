@@ -301,8 +301,6 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         void setTargetFormat(TargetFormat format);
 
     private:
-        struct State;
-
         MAGNUM_BASISIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_BASISIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_BASISIMPORTER_LOCAL void doClose() override;
@@ -312,7 +310,18 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
         MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
+        MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage3DCount() const override;
+        MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage3DLevelCount(UnsignedInt id) override;
+        MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
+
+        MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
+
+        struct State;
         Containers::Pointer<State> _state;
+
+        template<UnsignedInt dimensions>
+        Containers::Optional<ImageData<dimensions>> doImage(UnsignedInt id, UnsignedInt level);
 };
 
 }}
