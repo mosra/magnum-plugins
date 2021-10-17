@@ -54,9 +54,12 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void wrongFormat();
     void unknownOutputFormatData();
     void unknownOutputFormatFile();
+    void tooManyLevels();
+    void levelWrongSize();
     void processError();
 
     void configPerceptual();
+    void configMipGen();
 
     void r();
     void rg();
@@ -67,6 +70,7 @@ struct BasisImageConverterTest: TestSuite::Tester {
 
     void threads();
     void ktx();
+    void customLevels();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -130,9 +134,12 @@ BasisImageConverterTest::BasisImageConverterTest() {
     addTests({&BasisImageConverterTest::wrongFormat,
               &BasisImageConverterTest::unknownOutputFormatData,
               &BasisImageConverterTest::unknownOutputFormatFile,
+              &BasisImageConverterTest::tooManyLevels,
+              &BasisImageConverterTest::levelWrongSize,
               &BasisImageConverterTest::processError,
 
-              &BasisImageConverterTest::configPerceptual});
+              &BasisImageConverterTest::configPerceptual,
+              &BasisImageConverterTest::configMipGen});
 
     addInstancedTests({&BasisImageConverterTest::r,
                        &BasisImageConverterTest::rg,
@@ -148,6 +155,8 @@ BasisImageConverterTest::BasisImageConverterTest() {
 
     addInstancedTests({&BasisImageConverterTest::ktx},
         Containers::arraySize(FlippedData));
+
+    addTests({&BasisImageConverterTest::customLevels});
 
     /* Pull in the AnyImageImporter dependency for image comparison, load
        StbImageImporter from the build tree, if defined. Otherwise it's static
@@ -216,6 +225,38 @@ void BasisImageConverterTest::unknownOutputFormatFile() {
     CORRADE_VERIFY(importer->openFile(filename));
 }
 
+void BasisImageConverterTest::tooManyLevels() {
+    Containers::Pointer<AbstractImageConverter> converter =
+        _converterManager.instantiate("BasisImageConverter");
+
+    const UnsignedByte bytes[4]{};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData({
+        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes},
+        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes}
+    }));
+    CORRADE_COMPARE(out.str(),
+        "Trade::BasisImageConverter::convertToData(): there can be only 1 levels with base image size Vector(1, 1) but got 2\n");
+}
+
+void BasisImageConverterTest::levelWrongSize() {
+    Containers::Pointer<AbstractImageConverter> converter =
+        _converterManager.instantiate("BasisImageConverter");
+
+    const UnsignedByte bytes[16]{};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData({
+        ImageView2D{PixelFormat::RGB8Unorm, {2, 2}, bytes},
+        ImageView2D{PixelFormat::RGB8Unorm, {2, 1}, bytes}
+    }));
+    CORRADE_COMPARE(out.str(),
+        "Trade::BasisImageConverter::convertToData(): expected size Vector(1, 1) for level 1 but got Vector(2, 1)\n");
+}
+
 void BasisImageConverterTest::processError() {
     Containers::Pointer<AbstractImageConverter> converter =
         _converterManager.instantiate("BasisImageConverter");
@@ -267,6 +308,38 @@ void BasisImageConverterTest::configPerceptual() {
     image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+}
+
+void BasisImageConverterTest::configMipGen() {
+    const char bytes[16*16*4]{};
+    ImageView2D originalLevel0{PixelFormat::RGBA8Unorm, Vector2i{16}, bytes};
+    ImageView2D originalLevel1{PixelFormat::RGBA8Unorm, Vector2i{8}, bytes};
+
+    Containers::Pointer<AbstractImageConverter> converter =
+        _converterManager.instantiate("BasisImageConverter");
+    /* Empty by default */
+    CORRADE_COMPARE(converter->configuration().value<bool>("mip_gen"), false);
+    converter->configuration().setValue("mip_gen", "");
+
+    const auto compressedDataGenerated = converter->convertToData({originalLevel0});
+    CORRADE_VERIFY(compressedDataGenerated);
+
+    const auto compressedDataProvided = converter->convertToData({originalLevel0, originalLevel1});
+    CORRADE_VERIFY(compressedDataProvided);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+
+    /* Empty mip_gen config means to use the level count to determine if mip
+       levels should be generated */
+    CORRADE_VERIFY(importer->openData(compressedDataGenerated));
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 5);
+
+    CORRADE_VERIFY(importer->openData(compressedDataProvided));
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
 }
 
 template<typename SourceType, typename DestinationType = SourceType>
@@ -463,12 +536,17 @@ void BasisImageConverterTest::convertToFile() {
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
-    const auto originalImage = pngImporter->image2D(0);
-    CORRADE_VERIFY(originalImage);
+    const auto originalLevel0 = pngImporter->image2D(0);
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png")));
+    const auto originalLevel1 = pngImporter->image2D(0);
+    CORRADE_VERIFY(originalLevel0);
+    CORRADE_VERIFY(originalLevel1);
+
+    const ImageView2D originalLevels[2]{*originalLevel0, *originalLevel1};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
     std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
-    CORRADE_VERIFY(converter->convertToFile(*originalImage, filename));
+    CORRADE_VERIFY(converter->convertToFile(originalLevels, filename));
 
     /* Verify it's actually the right format */
     /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
@@ -479,17 +557,25 @@ void BasisImageConverterTest::convertToFile() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openFile(filename));
-    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
-    CORRADE_VERIFY(converted);
-    CORRADE_COMPARE_WITH(originalImage->pixels<Color4ub>(),
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+    Containers::Optional<Trade::ImageData2D> level0 = importer->image2D(0, 0);
+    Containers::Optional<Trade::ImageData2D> level1 = importer->image2D(0, 1);
+    CORRADE_VERIFY(level0);
+    CORRADE_VERIFY(level1);
+    CORRADE_COMPARE_WITH(level0->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 97.25f, 7.914f}));
+        (DebugTools::CompareImageToFile{_manager, 74.25f, 8.095f}));
+    CORRADE_COMPARE_WITH(level1->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 90.75f, 13.83f}));
 
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
     if(data.pluginName == "BasisImageConverter"_s) {
-        const auto compressedData = converter->convertToData(*originalImage);
+        const auto compressedData = converter->convertToData(originalLevels);
         CORRADE_VERIFY(compressedData);
         CORRADE_VERIFY(Containers::StringView{Containers::arrayView(compressedData)}.hasPrefix(BasisPrefix));
     }
@@ -581,6 +667,82 @@ void BasisImageConverterTest::ktx() {
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 104.0f, 9.301f}));
+}
+
+void BasisImageConverterTest::customLevels() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    const auto originalLevel0 = pngImporter->image2D(0);
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png")));
+    const auto originalLevel1 = pngImporter->image2D(0);
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png")));
+    const auto originalLevel2 = pngImporter->image2D(0);
+    CORRADE_VERIFY(originalLevel0);
+    CORRADE_VERIFY(originalLevel1);
+    CORRADE_VERIFY(originalLevel2);
+
+    /* Use the original images and add a skip to ensure the converter reads the
+       image data properly */
+    const Image2D level0WithSkip = copyImageWithSkip<Color4ub>(
+        *originalLevel0, {7, 8, 0}, PixelFormat::RGBA8Unorm);
+    const Image2D level1WithSkip = copyImageWithSkip<Color4ub>(
+        *originalLevel1, {7, 8, 0}, PixelFormat::RGBA8Unorm);
+    const Image2D level2WithSkip = copyImageWithSkip<Color4ub>(
+        *originalLevel2, {7, 8, 0}, PixelFormat::RGBA8Unorm);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+
+    /* Off by default */
+    CORRADE_COMPARE(converter->configuration().value<bool>("mip_gen"), false);
+    /* Making sure that providing custom levels turns off automatic mip level
+       generation. We only provide an incomplete mip chain so we can tell if
+       basis generated any extra levels beyond that. */
+    converter->configuration().setValue("mip_gen", true);
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
+    const auto compressedData = converter->convertToData({level0WithSkip, level1WithSkip, level2WithSkip});
+    CORRADE_VERIFY(compressedData);
+    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): found user-supplied mip levels, ignoring mip_gen config value\n");
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openData(compressedData));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
+
+    Containers::Optional<Trade::ImageData2D> level0 = importer->image2D(0, 0);
+    Containers::Optional<Trade::ImageData2D> level1 = importer->image2D(0, 1);
+    Containers::Optional<Trade::ImageData2D> level2 = importer->image2D(0, 2);
+    CORRADE_VERIFY(level0);
+    CORRADE_VERIFY(level1);
+    CORRADE_VERIFY(level2);
+
+    CORRADE_COMPARE(level0->size(), (Vector2i{63, 27}));
+    CORRADE_COMPARE(level1->size(), (Vector2i{31, 13}));
+    CORRADE_COMPARE(level2->size(), (Vector2i{15, 6}));
+
+    /* Basis can only load RGBA8 uncompressed data, which corresponds to RGB1
+       from our RGB8 image data. */
+    CORRADE_COMPARE_WITH(level0->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 74.25f, 8.095f}));
+    CORRADE_COMPARE_WITH(level1->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 90.75f, 13.83f}));
+    CORRADE_COMPARE_WITH(level2->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 85.25f, 23.59f}));
 }
 
 }}}}
