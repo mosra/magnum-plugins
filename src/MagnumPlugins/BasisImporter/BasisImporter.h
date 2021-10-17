@@ -59,18 +59,19 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{BasisImporterEacR BasisImporterEacRG BasisImporterEtc1RGB} @m_keywords{BasisImporterEtc2RGBA BasisImporterBc1RGB BasisImporterBc3RGBA} @m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc7RGB} @m_keywords{BasisImporterBc7RGBA BasisImporterPvrtc1RGB4bpp}
 @m_keywords{BasisImporterPvrtc1RGBA4bpp BasisImporterAstc4x4RGBA}
-@m_keywords{BasisImporterRGBA8}
+@m_keywords{BasisImporterRGBA8 KtxImporter}
 
 Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
-(`*.basis`) compressed images by parsing and transcoding files into an
-explicitly specified GPU format (see @ref Trade-BasisImporter-target-format).
+compressed images (`*.basis` or `.ktx2`) by parsing and transcoding files into
+an explicitly specified GPU format (see @ref Trade-BasisImporter-target-format).
 You can use @ref BasisImageConverter to transcode images into this format.
 
 This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,
 `BasisImporterEtc1RGB`, `BasisImporterEtc2RGBA`, `BasisImporterBc1RGB`,
 `BasisImporterBc3RGBA`, `BasisImporterBc4R`, `BasisImporterBc5RG`,
 `BasisImporterBc7RGB`, `BasisImporterBc7RGBA`, `BasisImporterPvrtc1RGB4bpp`,
-`BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`, `BasisImporterRGBA8`.
+`BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`, `BasisImporterRGBA8`,
+`KtxImporter`.
 
 @m_class{m-block m-success}
 
