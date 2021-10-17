@@ -236,15 +236,25 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 set(BasisUniversalTranscoder_SOURCES
                     ${BasisUniversalTranscoder_DIR}/basisu_transcoder.cpp)
 
-                # Not linking to zstddeclib.c because that leads to multiple
-                # definition errors in BasisUniversal::Encoder which links to
-                # BasisUniversal::Transcoder
+                set(BasisUniversalTranscoder_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
+
+                # Not linking to zstddeclib.c because together with Encoder
+                # linking to zstd.c this would lead to duplicate symbol
+                # errors.
+                # @todo Unused functions *should* be removed by LTO but is
+                # there a better way?
                 find_path(BasisUniversalZstd_DIR NAMES zstd.c
                     HINTS "${BASIS_UNIVERSAL_DIR}/zstd" "${BASIS_UNIVERSAL_DIR}"
                     NO_CMAKE_FIND_ROOT_PATH)
                 if(BasisUniversalZstd_DIR)
                     list(APPEND BasisUniversalTranscoder_SOURCES
                         ${BasisUniversalZstd_DIR}/zstd.c)
+                else()
+                    # If zstd wasn't found, disable Zstandard supercompression
+                    # support at compile time. The zstd.h include is hidden
+                    # behind this definition as well.
+                    list(APPEND BasisUniversalTranscoder_DEFINITIONS
+                        "BASISD_SUPPORT_KTX2_ZSTD=0")
                 endif()
 
                 foreach(_file ${BasisUniversalTranscoder_SOURCES})
@@ -263,7 +273,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
                     INTERFACE_INCLUDE_DIRECTORIES ${BasisUniversalTranscoder_INCLUDE_DIR})
                 set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
-                    INTERFACE_COMPILE_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
+                    INTERFACE_COMPILE_DEFINITIONS ${BasisUniversalTranscoder_DEFINITIONS})
                 set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
                     INTERFACE_SOURCES "${BasisUniversalTranscoder_SOURCES}")
             endif()

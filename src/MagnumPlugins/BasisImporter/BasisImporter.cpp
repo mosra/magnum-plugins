@@ -228,15 +228,27 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }};
 
     if(isKTX2) {
-        #if !BASISD_SUPPORT_KTX2
-        Error() << "Trade::BasisImporter::openData(): opening a KTX2 file but Basis Universal was compiled without KTX2 support";
-        return;
-        #else
+        if(!basist::basisu_transcoder_supports_ktx2()) {
+            Error() << "Trade::BasisImporter::openData(): opening a KTX2 file but Basis Universal was compiled without KTX2 support";
+            return;
+        }
+
+        #if BASISD_SUPPORT_KTX2
         _state->ktx2Transcoder.emplace(&_state->codebook);
 
-        /* Init handles all the validation checks, there's no extra function */
+        /* Init handles all the validation checks, there's no extra function
+           for that */
         if(!_state->ktx2Transcoder->init(_state->in.data(), _state->in.size())) {
             Error() << "Trade::BasisImporter::openData(): invalid KTX2 header";
+            return;
+        }
+
+        /* Check for supercompression and print a useful error if basisu was
+           compiled without Zstandard support. Not exposed in ktx2_transcoder,
+           get it from the KTX2 header directly. */
+        const basist::ktx2_header& header = *reinterpret_cast<const basist::ktx2_header*>(_state->in.data());
+        if(header.m_supercompression_scheme == basist::KTX2_SS_ZSTANDARD && !basist::basisu_transcoder_supports_ktx2_zstd()) {
+            Error() << "Trade::BasisImporter::openData(): file uses Zstandard supercompression but Basis Universal was compiled without Zstandard support";
             return;
         }
 
@@ -285,9 +297,9 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         _state->isYFlipped = fileInfo.m_y_flipped;
 
         /* For some reason cBASISHeaderFlagSRGB is not exposed in basisu_file_info,
-           get it from the header directly */
-        const basist::basis_file_header& pHeader = *reinterpret_cast<const basist::basis_file_header*>(_state->in.data());
-        _state->isSrgb = pHeader.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
+           get it from the basis header directly */
+        const basist::basis_file_header& header = *reinterpret_cast<const basist::basis_file_header*>(_state->in.data());
+        _state->isSrgb = header.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
     }
 
     /* There has to be exactly one transcoder */
