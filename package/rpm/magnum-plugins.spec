@@ -7,24 +7,37 @@ License:        MIT
 URL:            https://magnum.graphics/
 Source0:        %{name}-%{version}-%{release}.tar.gz
 Requires:       magnum
+%if %{defined suse_version}
+Requires:       libIL1
+Requires:       faad2
+Requires:       openexr
+Requires:       assimp-devel
+Requires:       libjpeg62
+%else
 Requires:       DevIL
-Requires:       openal-soft
-Requires:       libjpeg-turbo
-Requires:       libpng
-Requires:       assimp
-Requires:       freetype
 Requires:       faad2-libs
 Requires:       OpenEXR-libs
+Requires:       assimp
+Requires:       libjpeg-turbo
+%endif
+Requires:       openal-soft
+Requires:       libpng
+Requires:       freetype
 BuildRequires:  gcc-c++
 BuildRequires:  cmake >= 3.6.0
 BuildRequires:  magnum-devel
 BuildRequires:  DevIL-devel
 BuildRequires:  openal-soft-devel
+%if %{defined suse_version}
+BuildRequires:  libjpeg62-devel
+BuildRequires:  libfaad-devel
+%else
 BuildRequires:  libjpeg-turbo-devel
+BuildRequires:  faad2-devel
+%endif
 BuildRequires:  libpng-devel
 BuildRequires:  assimp-devel
 BuildRequires:  freetype-devel
-BuildRequires:  faad2-devel
 BuildRequires:  OpenEXR-devel
 
 %description

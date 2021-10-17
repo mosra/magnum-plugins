@@ -13,6 +13,17 @@ sudo dnf install DevIL \
                     OpenEXR-libs
 ```
 
+```
+sudo zypper install libIL1 \
+                    openal-soft \
+                    libjpeg62 \
+                    libpng \
+                    assimp-devel \
+                    freetype \
+                    faad2 \
+                    openexr
+```
+
 ## for build and devel package
 magnum-devel should be installed and others:
 ```
@@ -24,6 +35,18 @@ sudo dnf install git gcc-c++ cmake make rpmdevtools \
                     assimp-devel \
                     freetype-devel \
                     faad2-devel \
+                    OpenEXR-devel
+```
+
+```
+sudo zypper install git gcc-c++ cmake make rpmdevtools \
+                    DevIL-devel \
+                    openal-soft-devel \
+                    libjpeg62-devel \
+                    libpng-devel \
+                    assimp-devel \
+                    freetype2-devel \
+                    libfaad-devel \
                     OpenEXR-devel
 ```
 
@@ -60,4 +83,16 @@ sudo dnf install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-fr
 ### for OpenEXR enable powertools
 ```
 sudo dnf config-manager --enable powertools
+```
+
+## on openSUSE Tumbleweed
+```
+sudo zypper addrepo https://download.opensuse.org/repositories/home:Simmphonie:ham/openSUSE_Tumbleweed/home:Simmphonie:ham.repo
+sudo zypper refresh
+```
+
+## on openSUSE Leap 15.2
+```
+sudo zypper addrepo https://download.opensuse.org/repositories/home:Simmphonie:ham/openSUSE_Leap_15.2/home:Simmphonie:ham.repo
+sudo zypper refresh
 ```
