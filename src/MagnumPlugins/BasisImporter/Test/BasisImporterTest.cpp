@@ -39,6 +39,7 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/TextureData.h>
 
 #include "configure.h"
 
@@ -59,6 +60,8 @@ struct BasisImporterTest: TestSuite::Tester {
     void transcodingFailure();
     void nonBasisKtx();
 
+    void texture();
+
     void rgbUncompressed();
     void rgbUncompressedNoFlip();
     void rgbUncompressedLinear();
@@ -70,6 +73,14 @@ struct BasisImporterTest: TestSuite::Tester {
     void rgba();
 
     void linear();
+
+    void array2D();
+    void array2DMipmaps();
+    void video();
+    void image3D();
+    void image3DMipmaps();
+    void cubeMap();
+    void cubeMapArray();
 
     void openMemory();
     void openSameTwice();
@@ -118,6 +129,19 @@ constexpr struct {
 } FileTooShortData[] {
     {"Basis", "rgb.basis", 64, "invalid basis header"},
     {"KTX2", "rgb.ktx2", 64, "invalid KTX2 header, or not Basis compressed"}
+};
+
+const struct {
+    const char* name;
+    const char* fileBase;
+    const TextureType type;
+} TextureData[]{
+    {"2D", "rgb", TextureType::Texture2D},
+    {"2D array", "rgba-array", TextureType::Texture2DArray},
+    {"Cube map", "rgba-cubemap", TextureType::CubeMap},
+    {"Cube map array", "rgba-cubemap-array", TextureType::CubeMapArray},
+    {"3D", "rgba-3d", TextureType::Texture3D},
+    {"3D mipmaps", "rgba-3d-mips", TextureType::Texture2DArray}
 };
 
 constexpr struct {
@@ -189,6 +213,9 @@ BasisImporterTest::BasisImporterTest() {
               &BasisImporterTest::transcodingFailure,
               &BasisImporterTest::nonBasisKtx});
 
+    addInstancedTests({&BasisImporterTest::texture},
+                      Containers::arraySize(TextureData));
+
     addInstancedTests({&BasisImporterTest::rgbUncompressed,
                        &BasisImporterTest::rgbUncompressedNoFlip,
                        &BasisImporterTest::rgbUncompressedLinear,
@@ -202,6 +229,15 @@ BasisImporterTest::BasisImporterTest() {
                        &BasisImporterTest::rgba,
                        &BasisImporterTest::linear},
                       Containers::arraySize(FormatData));
+
+    addInstancedTests({&BasisImporterTest::array2D,
+                       &BasisImporterTest::array2DMipmaps,
+                       &BasisImporterTest::video,
+                       &BasisImporterTest::image3D,
+                       &BasisImporterTest::image3DMipmaps,
+                       &BasisImporterTest::cubeMap,
+                       &BasisImporterTest::cubeMapArray},
+                      Containers::arraySize(FileTypeData));
 
     addInstancedTests({&BasisImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -371,12 +407,75 @@ void BasisImporterTest::nonBasisKtx() {
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed\n");
 }
 
+void BasisImporterTest::texture() {
+    auto&& data = TextureData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+
+    for(const auto& fileType: FileTypeData) {
+        CORRADE_ITERATION(fileType.name);
+
+        CORRADE_VERIFY(importer->openFile(
+            Utility::Directory::join(BASISIMPORTER_TEST_DIR, std::string{data.fileBase} + fileType.extension)));
+
+        const Vector3ui counts{
+            importer->image1DCount(),
+            importer->image2DCount(),
+            importer->image3DCount()
+        };
+        const UnsignedInt total = counts.sum();
+
+        CORRADE_VERIFY(total > 0);
+        CORRADE_COMPARE(counts.max(), total);
+        CORRADE_COMPARE(importer->textureCount(), total);
+
+        const bool isKtx2 = std::string{fileType.name} == "KTX2";
+        const bool is3D = data.type == TextureType::Texture3D;
+        const TextureType realType = (isKtx2 && is3D) ? TextureType::Texture2DArray : data.type;
+
+        for(UnsignedInt i = 0; i != total; ++i) {
+            CORRADE_ITERATION(i);
+
+            const auto texture = importer->texture(i);
+            CORRADE_VERIFY(texture);
+            CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+            CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+            CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
+            CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat});
+            CORRADE_COMPARE(texture->image(), i);
+            CORRADE_COMPARE(texture->importerState(), nullptr);
+            {
+                CORRADE_EXPECT_FAIL_IF(isKtx2 && is3D,
+                    "basisu saves volume textures as KTX2 2D arrays and the transcoder can't read 3D textures.");
+                CORRADE_COMPARE(texture->type(), data.type);
+            }
+            CORRADE_COMPARE(texture->type(), realType);
+        }
+
+        UnsignedInt dimensions;
+        switch(realType) {
+            case TextureType::Texture2D:
+                dimensions = 2;
+                break;
+            case TextureType::Texture2DArray:
+            case TextureType::Texture3D:
+            case TextureType::CubeMap:
+            case TextureType::CubeMapArray:
+                dimensions = 3;
+                break;
+            /* No 1D (array) allowed */
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+        }
+        CORRADE_COMPARE(counts[dimensions - 1], total);
+    }
+}
+
 void BasisImporterTest::rgbUncompressed() {
     auto&& data = FileTypeData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
@@ -688,6 +787,327 @@ void BasisImporterTest::linear() {
             own / we're able to decode the data ourselves */
         CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedLinearFormat)*((image->size() + compressedBlockSize(formatData.expectedLinearFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedLinearFormat).xy()).product());
     }
+}
+
+void BasisImporterTest::array2D() {
+    auto& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-array"} + data.extension)));
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+
+    CORRADE_COMPARE(image->size(), (Vector3i{63, 27, 3}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* There are moderately significant compression artifacts */
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.064f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.481f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 88.0f, 8.426f}));
+}
+
+void BasisImporterTest::array2DMipmaps() {
+    auto& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-array-mips"} + data.extension)));
+
+    Containers::Optional<Trade::ImageData3D> levels[3];
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), Containers::arraySize(levels));
+
+    for(std::size_t i = 0; i != Containers::arraySize(levels); ++i) {
+        CORRADE_ITERATION(i);
+        levels[i] = importer->image3D(0, i);
+        CORRADE_VERIFY(levels[i]);
+
+        CORRADE_VERIFY(!levels[i]->isCompressed());
+        CORRADE_COMPARE(levels[i]->format(), PixelFormat::RGBA8Srgb);
+        CORRADE_COMPARE(levels[i]->size(), (Vector3i{Vector2i{63, 27} >> i, 3}));
+    }
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* There are moderately significant compression artifacts */
+    CORRADE_COMPARE_WITH(levels[0]->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 96.0f, 8.027f}));
+    CORRADE_COMPARE_WITH(levels[0]->pixels<Color4ub>()[1],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.482f}));
+    CORRADE_COMPARE_WITH(levels[0]->pixels<Color4ub>()[2],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 90.0f, 8.399f}));
+
+    /* Only testing the first layer's mips so we don't need all the slices'
+       mips as ground truth data, too */
+    CORRADE_COMPARE_WITH(levels[1]->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        (DebugTools::CompareImageToFile{_manager, 75.75f, 14.132f}));
+    CORRADE_COMPARE_WITH(levels[2]->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
+        (DebugTools::CompareImageToFile{_manager, 65.0f, 23.47f}));
+}
+
+void BasisImporterTest::video() {
+    auto& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-video"} + data.extension)));
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+
+    CORRADE_COMPARE(image->size(), (Vector3i{63, 27, 3}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* There are moderately significant compression artifacts */
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 96.25f, 8.198f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.507f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 76.0f, 8.311f}));
+}
+
+void BasisImporterTest::image3D() {
+    auto& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-3d"} + data.extension)));
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+
+    CORRADE_COMPARE(image->size(), (Vector3i{63, 27, 3}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* There are moderately significant compression artifacts */
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.064f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.481f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 88.0f, 8.426f}));
+}
+
+void BasisImporterTest::image3DMipmaps() {
+    auto& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Data is identical to array2DMipmaps. Mip levels in basis are per 2D
+       image, for 3D images they consequently don't halve in the z-dimension.
+       The importer prints a warning (unless it's a KTX2 file, those don't
+       indicate 3D images at all) and imports as Texture2DArray. The texture
+       type is tested in texture(). */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-3d-mips"} + data.extension)));
+
+    const bool isKtx2 = std::string{data.name} == "KTX2";
+
+    {
+        CORRADE_EXPECT_FAIL_IF(isKtx2, "basisu saves volume textures as KTX2 2D arrays and the transcoder can't read 3D textures.");
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): found a 3D image with 2D mipmaps, importing as a 2D array texture\n");
+    }
+
+    if(isKtx2)
+            CORRADE_COMPARE(out.str(), "");
+
+    Containers::Optional<Trade::ImageData3D> levels[3];
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), Containers::arraySize(levels));
+
+    for(std::size_t i = 0; i != Containers::arraySize(levels); ++i) {
+        CORRADE_ITERATION(i);
+        levels[i] = importer->image3D(0, i);
+        CORRADE_VERIFY(levels[i]);
+
+        CORRADE_VERIFY(!levels[i]->isCompressed());
+        CORRADE_COMPARE(levels[i]->format(), PixelFormat::RGBA8Srgb);
+        CORRADE_COMPARE(levels[i]->size(), (Vector3i{Vector2i{63, 27} >> i, 3}));
+    }
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* There are moderately significant compression artifacts */
+    CORRADE_COMPARE_WITH(levels[0]->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 96.0f, 8.027f}));
+    CORRADE_COMPARE_WITH(levels[0]->pixels<Color4ub>()[1],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.482f}));
+    CORRADE_COMPARE_WITH(levels[0]->pixels<Color4ub>()[2],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 90.0f, 8.399f}));
+
+    /* Only testing the first layer's mips so we don't need all the slices'
+       mips as ground truth data, too */
+    CORRADE_COMPARE_WITH(levels[1]->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        (DebugTools::CompareImageToFile{_manager, 75.75f, 14.132f}));
+    CORRADE_COMPARE_WITH(levels[2]->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
+        (DebugTools::CompareImageToFile{_manager, 65.0f, 23.47f}));
+}
+
+void BasisImporterTest::cubeMap() {
+    auto& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-cubemap"} + data.extension)));
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+
+    CORRADE_COMPARE(image->size(), (Vector3i{27, 27, 6}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* There are moderately significant compression artifacts */
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 10.83f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.972f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 88.0f, 10.591f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[3],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 10.83f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[4],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.972f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[5],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 88.0f, 10.591f}));
+}
+
+void BasisImporterTest::cubeMapArray() {
+    auto& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-cubemap-array"} + data.extension)));
+
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+
+    CORRADE_COMPARE(image->size(), (Vector3i{27, 27, 12}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* There are moderately significant compression artifacts */
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 10.83f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.972f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 88.0f, 10.591f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[3],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 10.83f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[4],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.972f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[5],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 88.0f, 10.591f}));
+
+    /* Second layer, 2nd and 3rd face are switched */
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[6],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 10.83f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[8],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.972f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[7],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 88.0f, 10.591f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[9],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 10.83f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[10],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 74.0f, 6.972f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[11],
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 88.0f, 10.591f}));
 }
 
 void BasisImporterTest::openMemory() {

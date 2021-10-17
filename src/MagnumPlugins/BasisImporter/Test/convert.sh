@@ -27,6 +27,35 @@ basisu rgba-63x27.png -output_file rgba-uastc.ktx2  -uastc -force_alpha -y_flip 
 # Multiple images, not possible with KTX2
 basisu rgba-63x27.png rgba-27x63.png -output_file rgba-2images-mips.basis -y_flip -mipmap -mip_smallest 16 -mip_filter box
 
+# 2D array
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2darray -output_file rgba-array.basis -force_alpha -y_flip
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2darray -output_file rgba-array.ktx2  -force_alpha -y_flip -ktx2
+
+# 2D array with mipmaps
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2darray -output_file rgba-array-mips.basis -force_alpha -y_flip -mipmap -mip_smallest 16 -mip_filter box
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2darray -output_file rgba-array-mips.ktx2  -force_alpha -y_flip -mipmap -mip_smallest 16 -mip_filter box -ktx2
+
+# Video
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type video -output_file rgba-video.basis -force_alpha -y_flip
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type video -output_file rgba-video.ktx2  -force_alpha -y_flip -ktx2
+
+# 3D
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 3d -output_file rgba-3d.basis -force_alpha -y_flip
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 3d -output_file rgba-3d.ktx2  -force_alpha -y_flip -ktx2
+
+# 3D with mipmaps
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 3d -output_file rgba-3d-mips.basis -force_alpha -y_flip -mipmap -mip_smallest 16 -mip_filter box
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 3d -output_file rgba-3d-mips.ktx2  -force_alpha -y_flip -mipmap -mip_smallest 16 -mip_filter box -ktx2
+
+# Cube map
+basisu rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png -tex_type cubemap -output_file rgba-cubemap.basis -force_alpha -y_flip
+basisu rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png -tex_type cubemap -output_file rgba-cubemap.ktx2  -force_alpha -y_flip -ktx2
+
+# Cube map array
+# Second layer has the 2nd and 3rd face switched
+basisu rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png rgba-27x27.png rgba-27x27-slice2.png rgba-27x27-slice1.png rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png -tex_type cubemap -output_file rgba-cubemap-array.basis -force_alpha -y_flip
+basisu rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png rgba-27x27.png rgba-27x27-slice2.png rgba-27x27-slice1.png rgba-27x27.png rgba-27x27-slice1.png rgba-27x27-slice2.png -tex_type cubemap -output_file rgba-cubemap-array.ktx2  -force_alpha -y_flip -ktx2
+
 # Required for PVRTC1 target, which requires pow2 dimensions
 basisu rgb-64x32.png -output_file rgb-pow2.basis -y_flip
 basisu rgb-64x32.png -output_file rgb-pow2.ktx2  -y_flip -ktx2

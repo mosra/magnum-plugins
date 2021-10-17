@@ -37,6 +37,7 @@
 #include <Corrade/Utility/String.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/TextureData.h>
 
 #include <basisu_transcoder.h>
 
@@ -147,8 +148,15 @@ struct BasisImporter::State {
 
     Containers::Array<char> in;
 
+    TextureType textureType;
+    /* Only > 1 for plain 2D .basis files with multiple images. Anything else
+       (cube/array/volume) contains a single logical image. KTX2 only supports
+       one image to begin with. */
     UnsignedInt numImages;
+    /* Number of faces/layers/z-slices in the third image dimension, 1 if 2D */
+    UnsignedInt numSlices;
     Containers::Array<UnsignedInt> numLevels;
+
     basist::basis_tex_format compressionType;
     bool isYFlipped;
     bool isSrgb;
@@ -271,14 +279,25 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
 
         /* Save some global file info we need later */
 
+        /* Remember the type for doTexture(). ktx2_transcoder::init() already
+           checked we're dealing with a valid 2D texture. */
+        if(_state->ktx2Transcoder->get_faces() != 1)
+            _state->textureType = _state->ktx2Transcoder->get_layers() > 0 ? TextureType::CubeMapArray : TextureType::CubeMap;
+        else
+            _state->textureType = _state->ktx2Transcoder->get_layers() > 0 ? TextureType::Texture2DArray : TextureType::Texture2D;
+
         /* KTX2 files only ever contain one image */
         _state->numImages = 1;
+        _state->numSlices = _state->ktx2Transcoder->get_faces()*Math::max(_state->ktx2Transcoder->get_layers(), 1u);
         _state->numLevels = Containers::Array<UnsignedInt>{DirectInit, 1, _state->ktx2Transcoder->get_levels()};
 
         _state->compressionType = _state->ktx2Transcoder->get_format();
+
+        /* Get y-flip flag from KTXorientation key/value entry. If it's
+           missing, the default is Y-down. Y-up = flipped. */
         const basisu::uint8_vec* orientation = _state->ktx2Transcoder->find_key("KTXorientation");
-        /* The default without orientation key is Y-down. Y-up = flipped. */
         _state->isYFlipped = orientation && orientation->size() >= 2 && (*orientation)[1] == 'u';
+
         _state->isSrgb = _state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
         #endif
 
@@ -302,9 +321,71 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         /* Save some global file info we need later. We can't save fileInfo
            directly because that's specific to .basis files, and there's no
            equivalent in ktx2_transcoder. */
-        _state->numImages = fileInfo.m_total_images;
+
+        /* Remember the type for doTexture(). Depending on the type, we're
+           either dealing with multiple independent 2D images or each image is
+           an array layer, cubemap face or depth slice with the same
+           resolution. */
+
+        /* This is checked by basis_transcoder::start_transcoding() */
+        CORRADE_INTERNAL_ASSERT(fileInfo.m_total_images > 0);
+
+        /* Default, swapped for cBASISTexType2D */
+        _state->numImages = 1;
+        _state->numSlices = fileInfo.m_total_images;
+
+        switch(fileInfo.m_tex_type) {
+            case basist::basis_texture_type::cBASISTexType2D:
+                std::swap(_state->numImages, _state->numSlices);
+                _state->textureType = TextureType::Texture2D;
+                break;
+            case basist::basis_texture_type::cBASISTexTypeVideoFrames:
+                /* We don't do anything special with video frames, treat them
+                   like array layers */
+            case basist::basis_texture_type::cBASISTexType2DArray:
+                _state->textureType = TextureType::Texture2DArray;
+                break;
+            case basist::basis_texture_type::cBASISTexTypeCubemapArray:
+                _state->textureType = _state->numSlices > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
+                break;
+            case basist::basis_texture_type::cBASISTexTypeVolume:
+                _state->textureType = TextureType::Texture3D;
+                break;
+            default:
+                /* This is caught by basis_transcoder::get_file_info() */
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+
+        CORRADE_INTERNAL_ASSERT(fileInfo.m_image_mipmap_levels.size() == fileInfo.m_total_images);
+
         _state->numLevels = Containers::Array<UnsignedInt>{NoInit, _state->numImages};
-        Utility::copy(Containers::arrayView(fileInfo.m_image_mipmap_levels.begin(), fileInfo.m_image_mipmap_levels.size()), _state->numLevels);
+        UnsignedInt firstLevels = 0;
+        for(UnsignedInt i = 0; i != fileInfo.m_total_images; ++i) {
+            const UnsignedInt levels = fileInfo.m_image_mipmap_levels[i];
+            CORRADE_INTERNAL_ASSERT(levels > 0);
+
+            if(i == 0)
+                firstLevels = levels;
+
+            if(levels != firstLevels) {
+                Error() << "Trade::BasisImporter::openData(): mismatching level count for successive image slices";
+                return;
+            }
+
+            if(i < _state->numImages)
+                _state->numLevels[i] = levels;
+        }
+
+        /* Mip levels in basis are per 2D image, for 3D images they
+           consequently don't halve in the z-dimension. Turn it into a 2D array
+           texture so users don't get surprised by the mip z-size not changing,
+           and print a warning.
+           For non-Texture2D images, at this point firstLevels is the number
+           of levels for all slices, checked in the loop above. */
+        if(_state->textureType == TextureType::Texture3D && firstLevels > 1) {
+            Warning{} << "Trade::BasisImporter::openData(): found a 3D image with 2D mipmaps, importing as a 2D array texture";
+            _state->textureType = TextureType::Texture2DArray;
+        }
 
         _state->compressionType = fileInfo.m_tex_format;
         _state->isYFlipped = fileInfo.m_y_flipped;
@@ -319,32 +400,31 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     CORRADE_INTERNAL_ASSERT(!_state->ktx2Transcoder != !_state->basisTranscoder);
     /* Can't have a KTX2 transcoder without KTX2 support compiled into basisu */
     CORRADE_INTERNAL_ASSERT(BASISD_SUPPORT_KTX2 || !_state->ktx2Transcoder);
+    /* 1D images should be treated like 2D images with width or height 1 */
+    CORRADE_INTERNAL_ASSERT(_state->textureType != TextureType::Texture1D && _state->textureType != TextureType::Texture1DArray);
 
     /* All good, release the resource guard */
     resourceGuard.release();
 }
 
-UnsignedInt BasisImporter::doImage2DCount() const {
-    return _state->numImages;
-}
+template<UnsignedInt dimensions>
+Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const UnsignedInt id, const UnsignedInt level) {
+    static_assert(dimensions >= 2 && dimensions <= 3, "Only 2D and 3D images are supported");
+    constexpr const char* prefixes[2]{"Trade::BasisImporter::image2D():", "Trade::BasisImporter::image3D():"};
+    constexpr const char* prefix = prefixes[dimensions - 2];
 
-UnsignedInt BasisImporter::doImage2DLevelCount(const UnsignedInt id) {
-    return _state->numLevels[id];
-}
-
-Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
-    std::string targetFormatStr = configuration().value<std::string>("format");
+    const std::string targetFormatStr = configuration().value<std::string>("format");
     TargetFormat targetFormat;
     if(targetFormatStr.empty()) {
         if(!_state->noTranscodeFormatWarningPrinted)
-            Warning{} << "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.";
+            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.";
         targetFormat = TargetFormat::RGBA8;
         _state->noTranscodeFormatWarningPrinted = true;
     } else {
         targetFormat = configuration().value<TargetFormat>("format");
         if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
-            Error{} << "Trade::BasisImporter::image2D(): invalid transcoding target format"
-                << targetFormatStr << Debug::nospace << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
+            Error{} << prefix << "invalid transcoding target format" << targetFormatStr << Debug::nospace
+                << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
             return Containers::NullOpt;
         }
     }
@@ -357,11 +437,11 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
        formats in TargetFormat are transcodable from UASTC so we can provide a
        slightly more useful error message than "impossible!". */
     if(!basist::basis_is_format_supported(format, _state->compressionType)) {
-        Error{} << "Trade::BasisImporter::image2D(): Basis Universal was compiled without support for" << targetFormatStr;
+        Error{} << prefix << "Basis Universal was compiled without support for" << targetFormatStr;
         return Containers::NullOpt;
     }
 
-    UnsignedInt origWidth, origHeight, totalBlocks;
+    UnsignedInt origWidth, origHeight, totalBlocks, numFaces, numLayers;
     if(_state->ktx2Transcoder) {
         #if BASISD_SUPPORT_KTX2
         basist::ktx2_image_level_info levelInfo;
@@ -373,59 +453,114 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
            up for someome, we'd most probably need to harden doOpenData() to
            catch that, not turning this into a graceful error.
            Layer/face index doesn't affect the output we're interested in, so
-           0, 0 is enough here. */
+           0, 0 is enough here to apply to all slices. */
         CORRADE_INTERNAL_ASSERT_OUTPUT(_state->ktx2Transcoder->get_image_level_info(levelInfo, level, 0, 0));
 
         origWidth = levelInfo.m_orig_width;
         origHeight = levelInfo.m_orig_height;
         totalBlocks = levelInfo.m_total_blocks;
+        numFaces = _state->ktx2Transcoder->get_faces();
+        numLayers = Math::max(_state->ktx2Transcoder->get_layers(), 1u);
         #endif
     } else {
         /* Same as above, it checks for state we already verified before. If this
            blows up for someone, we can reconsider. */
         CORRADE_INTERNAL_ASSERT_OUTPUT(_state->basisTranscoder->get_image_level_desc(_state->in.data(), _state->in.size(), id, level, origWidth, origHeight, totalBlocks));
+        numFaces = (_state->textureType == TextureType::CubeMap || _state->textureType == TextureType::CubeMapArray) ? 6 : 1;
+        numLayers = _state->numSlices / numFaces;
     }
+
+    CORRADE_INTERNAL_ASSERT(numFaces == 1 || numFaces == 6);
+    CORRADE_INTERNAL_ASSERT(numLayers > 0);
+    CORRADE_INTERNAL_ASSERT(numFaces*numLayers == _state->numSlices);
 
     /* No flags used by transcode_image_level() by default */
     const std::uint32_t flags = 0;
     if(!_state->isYFlipped) {
         /** @todo replace with the flag once the PR is submitted */
-        Warning{} << "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation";
+        Warning{} << prefix << "the image was not encoded Y-flipped, imported data will have wrong orientation";
         //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
     }
 
-    const Vector2i size{Int(origWidth), Int(origHeight)};
+    const Vector3ui size{origWidth, origHeight, _state->numSlices};
     UnsignedInt rowStride, outputRowsInPixels, outputSizeInBlocksOrPixels;
     if(isUncompressed) {
         rowStride = size.x();
         outputRowsInPixels = size.y();
-        outputSizeInBlocksOrPixels = size.product();
+        outputSizeInBlocksOrPixels = size.x()*size.y();
     } else {
         rowStride = 0; /* left up to Basis to calculate */
         outputRowsInPixels = 0; /* not used for compressed data */
         outputSizeInBlocksOrPixels = totalBlocks;
     }
-    const UnsignedInt dataSize = basis_get_bytes_per_block_or_pixel(format)*outputSizeInBlocksOrPixels;
+
+    const UnsignedInt sliceSize = basis_get_bytes_per_block_or_pixel(format)*outputSizeInBlocksOrPixels;
+    const UnsignedInt dataSize = sliceSize*size.z();
     Containers::Array<char> dest{DefaultInit, dataSize};
 
-    if(_state->ktx2Transcoder) {
-        #if BASISD_SUPPORT_KTX2
-        if(!_state->ktx2Transcoder->transcode_image_level(level, 0, 0, dest.data(), outputSizeInBlocksOrPixels, format, flags, rowStride, outputRowsInPixels)) {
-            Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
-            return Containers::NullOpt;
-        }
-        #endif
-    } else {
-        if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
-            Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
-            return Containers::NullOpt;
+    /* There's no function for transcoding the entire level, so loop over all
+       layers and faces and transcode each one. This matches the image layout
+       imported by KtxImporter, ie. all faces +X through -Z for the first
+       layer, then all faces of the second layer, etc.  */
+    /** @todo Check if the Basis layout actually matches this one */
+    UnsignedInt currentId = id;
+    for(UnsignedInt l = 0; l != numLayers; ++l) {
+        for(UnsignedInt f = 0; f != numFaces; ++f) {
+            const UnsignedInt offset = (l*numFaces + f)*sliceSize;
+            if(_state->ktx2Transcoder) {
+                #if BASISD_SUPPORT_KTX2
+                if(!_state->ktx2Transcoder->transcode_image_level(level, l, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, outputRowsInPixels)) {
+                    Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
+                    return Containers::NullOpt;
+                }
+                #endif
+            } else {
+                if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), currentId, level, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
+                    Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
+                    return Containers::NullOpt;
+                }
+                ++currentId;
+            }
         }
     }
 
     if(isUncompressed)
-        return Trade::ImageData2D{pixelFormat(targetFormat, _state->isSrgb), size, std::move(dest)};
+        return Trade::ImageData<dimensions>{pixelFormat(targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest)};
     else
-        return Trade::ImageData2D{compressedPixelFormat(targetFormat, _state->isSrgb), size, std::move(dest)};
+        return Trade::ImageData<dimensions>{compressedPixelFormat(targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest)};
+}
+
+UnsignedInt BasisImporter::doImage2DCount() const {
+    return _state->textureType == TextureType::Texture2D ? _state->numImages : 0;
+}
+
+UnsignedInt BasisImporter::doImage2DLevelCount(const UnsignedInt id) {
+    return _state->numLevels[id];
+}
+
+Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
+    return doImage<2>(id, level);
+}
+
+UnsignedInt BasisImporter::doImage3DCount() const {
+    return _state->textureType != TextureType::Texture2D ? _state->numImages : 0;
+}
+
+UnsignedInt BasisImporter::doImage3DLevelCount(const UnsignedInt id) {
+    return _state->numLevels[id];
+}
+
+Containers::Optional<ImageData3D> BasisImporter::doImage3D(const UnsignedInt id, const UnsignedInt level) {
+    return doImage<3>(id, level);
+}
+
+UnsignedInt BasisImporter::doTextureCount() const {
+    return _state->numImages;
+}
+
+Containers::Optional<TextureData> BasisImporter::doTexture(UnsignedInt id) {
+    return TextureData{_state->textureType, SamplerFilter::Linear, SamplerFilter::Linear,
+        SamplerMipmap::Linear, SamplerWrapping::Repeat, id};
 }
 
 void BasisImporter::setTargetFormat(TargetFormat format) {

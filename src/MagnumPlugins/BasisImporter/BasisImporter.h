@@ -118,6 +118,53 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::BasisImporter)
 See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
 
+@section Trade-BasisImporter-behavior Behavior and limitations
+
+@subsection Trade-BasisImporter-behavior-types Image types
+
+You can import all image types supported by `basisu`: (layered) 2D images,
+(layered) cube maps, 3D images and videos. With the exception of 3D images,
+they can in turn all have multiple mip levels. The image type can be determined
+from @ref texture() and @ref TextureData::type().
+
+For layered 2D images and (layered) cube maps, the array layers and faces are
+exposed as an additional image dimension. @ref image3D() will return an
+@ref ImageData3D with n z-slices, or 6*n z-slices for cube maps.
+
+@subsection Trade-BasisImporter-behavior-multilevel Multilevel images
+
+Files with multiple mip levels are imported with the largest level first, with
+the size of each following level divided by 2, rounded down. Mip chains can be
+incomplete, ie. they don't have to extend all the way down to a level of size
+1x1.
+
+Because mip levels in `.basis` files are always 2-dimensional, they wouldn't
+halve correctly in the z-dimension for 3D images. If a 3D image with mip levels
+is detected, it gets imported as a layered 2D image instead, along with a
+warning being printed.
+
+@subsection Trade-BasisImporter-behavior-cube Cube maps
+
+Cube map faces are imported in the order +X, -X, +Y, -Y, +Z, -Z as seen from a
+left-handed coordinate system (+X is right, +Y is up, +Z is forward). Layered
+cube maps are stored as multiple sets of faces, ie. all faces +X through -Z for
+the first layer, then all faces of the second layer, etc.
+
+@m_class{m-block m-warning}
+
+@par Y-flipping
+    While all importers for uncompressed image data are performing a Y-flip on
+    import to have the origin at the bottom (as expected by OpenGL), it's a
+    non-trivial operation with compressed images. In case of Basis, you can
+    pass a `-y_flip` flag to the `basisu` tool to Y-flip the image
+    * *during encoding*, however right now there's no way do so on import. To
+    inform the user, the importer checks for the Y-flip flag in the file and if
+    it's not there, prints a warning about the data having wrong orientation.
+@par
+    To account for this on the application side for files that you don't have
+    control over, flip texture coordinates of the mesh or patch texture data
+    loading in the shader.
+
 @section Trade-BasisImporter-configuration Plugin-specific configuration
 
 Basis allows configuration of the format of loaded compressed data.
@@ -152,22 +199,8 @@ OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
 
 @snippet BasisImporter.cpp gl-extension-checks
 
-<b></b>
 
-@m_class{m-block m-warning}
 
-@par Y-flipping
-    While all importers for uncompressed image data are doing an Y-flip on
-    import to have origin at the bottom (as expected by OpenGL), it's a
-    non-trivial operation with compressed images. In case of Basis, you can
-    pass a `-y_flip` flag to the `basisu` tool to Y-flip the image
-    * *during encoding*, however right now there's no way do so on import. To
-    inform the user, the importer checks for the Y-flip flag in the file and if
-    it's not there, prints a warning about the data having wrong orientation.
-@par
-    To account for this on the application side for files that you don't have a
-    control of, flip texture coordinates of the mesh or patch texture data
-    loading in the shader.
 */
 class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
     public:
@@ -308,8 +341,6 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         void setTargetFormat(TargetFormat format);
 
     private:
-        struct State;
-
         MAGNUM_BASISIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_BASISIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_BASISIMPORTER_LOCAL void doClose() override;
@@ -319,7 +350,18 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
         MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
+        MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage3DCount() const override;
+        MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage3DLevelCount(UnsignedInt id) override;
+        MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
+
+        MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
+
+        struct State;
         Containers::Pointer<State> _state;
+
+        template<UnsignedInt dimensions>
+        Containers::Optional<ImageData<dimensions>> doImage(UnsignedInt id, UnsignedInt level);
 };
 
 }}
