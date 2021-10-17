@@ -16,7 +16,7 @@ sudo dnf install DevIL \
 ## for build and devel package
 magnum-devel should be installed and others:
 ```
-$ sudo dnf install git gcc-c++ cmake make rpmdevtools \
+sudo dnf install git gcc-c++ cmake make rpmdevtools \
                     DevIL-devel \
                     openal-soft-devel \
                     libjpeg-turbo-devel \
@@ -29,14 +29,17 @@ $ sudo dnf install git gcc-c++ cmake make rpmdevtools \
 
 ## on centos
 
-### for DevIL only install fc29 package
+### for assimp add EPEL repo
+```
+sudo dnf install --nogpgcheck https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+```
 
+### for DevIL only install fc29 package
 latest fc packages use newer glibc but centos does not
 ```
 sudo dnf install https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/29/Everything/x86_64/os/Packages/d/DevIL-1.7.8-29.fc29.x86_64.rpm
 ```
 ### for DevIL-devel install fc29 packages
-
 latest fc packages use newer glibc but centos does not
 
 ```
