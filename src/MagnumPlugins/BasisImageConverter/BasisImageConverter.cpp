@@ -49,12 +49,13 @@ BasisImageConverter::BasisImageConverter() = default;
 
 BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
 
-ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
+ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageConverterFeature::ConvertLevels2DToData; }
 
-Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& image) {
+Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
     /* Check input */
+    const PixelFormat format = imageLevels.front().format();
     bool isSrgb;
-    switch(image.format()) {
+    switch(format) {
         case PixelFormat::RGBA8Unorm:
         case PixelFormat::RGB8Unorm:
         case PixelFormat::RG8Unorm:
@@ -68,8 +69,17 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
             isSrgb = true;
             break;
         default:
-            Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << image.format();
+            Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << format;
             return {};
+    }
+
+    const Vector2i size = imageLevels.front().size();
+
+    const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2(size.max()) + 1);
+    if(imageLevels.size() > numMipmaps) {
+        Error{} << "Trade::BasisImageConverter::convertToData(): there can be only" << numMipmaps <<
+            "levels with base image size" << imageLevels.front().size() << "but got" << imageLevels.size();
+        return {};
     }
 
     basisu::basis_compressor_params params;
@@ -180,39 +190,58 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
     params.m_pSel_codebook = &sel_codebook;
 
-    /* Copy image data into the basis image. There is no way to construct a
-       basis image from existing data as it is based on a std::vector, moreover
-       we need to tightly pack it and flip Y. The `dst` is an Y-flipped view
-       already to make the following loops simpler. */
-    params.m_source_images.push_back({uint32_t(image.size().x()), uint32_t(image.size().y())});
-    auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({params.m_source_images.back().get_ptr(), params.m_source_images.back().get_total_pixels()}, {std::size_t(image.size().y()), std::size_t(image.size().x())})).flipped<0>();
+    /* The base mip is in m_source_images, mip 1 and higher go into
+       m_source_mipmap_images. If m_source_mipmap_images is not empty, mip
+       generation is disabled. */
+    params.m_source_images.resize(1);
+    params.m_source_mipmap_images.resize(1);
+    params.m_source_mipmap_images[0].resize(imageLevels.size() - 1);
 
-    /* basis image is always RGBA, fill in alpha if necessary */
-    if(image.format() == PixelFormat::RGBA8Unorm) {
-        auto src = image.pixels<Math::Vector4<UnsignedByte>>();
-        for(std::size_t y = 0; y != src.size()[0]; ++y)
-            for(std::size_t x = 0; x != src.size()[1]; ++x)
-                dst[y][x] = src[y][x];
+    for(UnsignedInt i = 0; i != imageLevels.size(); ++i) {
+        const Vector2i mipSize = Math::max(size >> i, 1);
+        const auto& image = imageLevels[i];
 
-    } else if(image.format() == PixelFormat::RGB8Unorm) {
-        auto src = image.pixels<Math::Vector3<UnsignedByte>>();
-        for(std::size_t y = 0; y != src.size()[0]; ++y)
-            for(std::size_t x = 0; x != src.size()[1]; ++x)
-                dst[y][x] = src[y][x]; /* Alpha implicitly 255 */
+        if(image.size() != mipSize) {
+            Error() << "Trade::BasisImageConverter::convertToData(): expected "
+                "size" << mipSize << "for level" << i << "but got" << image.size();
+            return {};
+        }
 
-    } else if(image.format() == PixelFormat::RG8Unorm) {
-        auto src = image.pixels<Math::Vector2<UnsignedByte>>();
-        for(std::size_t y = 0; y != src.size()[0]; ++y)
-            for(std::size_t x = 0; x != src.size()[1]; ++x)
-                dst[y][x] = Math::gather<'r', 'r', 'r', 'g'>(src[y][x]);
+        /* Copy image data into the basis image. There is no way to construct a
+           basis image from existing data as it is based on basisu::vector,
+           moreover we need to tightly pack it and flip Y. The `dst` is a Y-flipped
+           view already to make the following loops simpler. */
+        basisu::image& basisImage = i == 0 ? params.m_source_images[0] : params.m_source_mipmap_images[0][i - 1];
+        basisImage = {uint32_t(image.size().x()), uint32_t(image.size().y())};
+        auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(image.size().y()), std::size_t(image.size().x())})).flipped<0>();
 
-    } else if(image.format() == PixelFormat::R8Unorm) {
-        auto src = image.pixels<Math::Vector<1, UnsignedByte>>();
-        for(std::size_t y = 0; y != src.size()[0]; ++y)
-            for(std::size_t x = 0; x != src.size()[1]; ++x)
-                dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
+        /* basis image is always RGBA, fill in alpha if necessary */
+        if(format == PixelFormat::RGBA8Unorm) {
+            auto src = image.pixels<Math::Vector4<UnsignedByte>>();
+            for(std::size_t y = 0; y != src.size()[0]; ++y)
+                for(std::size_t x = 0; x != src.size()[1]; ++x)
+                    dst[y][x] = src[y][x];
 
-    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+        } else if(format == PixelFormat::RGB8Unorm) {
+            auto src = image.pixels<Math::Vector3<UnsignedByte>>();
+            for(std::size_t y = 0; y != src.size()[0]; ++y)
+                for(std::size_t x = 0; x != src.size()[1]; ++x)
+                    dst[y][x] = src[y][x]; /* Alpha implicitly 255 */
+
+        } else if(format == PixelFormat::RG8Unorm) {
+            auto src = image.pixels<Math::Vector2<UnsignedByte>>();
+            for(std::size_t y = 0; y != src.size()[0]; ++y)
+                for(std::size_t x = 0; x != src.size()[1]; ++x)
+                    dst[y][x] = Math::gather<'r', 'r', 'r', 'g'>(src[y][x]);
+
+        } else if(format == PixelFormat::R8Unorm) {
+            auto src = image.pixels<Math::Vector<1, UnsignedByte>>();
+            for(std::size_t y = 0; y != src.size()[0]; ++y)
+                for(std::size_t x = 0; x != src.size()[1]; ++x)
+                    dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
+
+        } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+    }
 
     basisu::basis_compressor basis;
     basis.init(params);
@@ -256,7 +285,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     const basisu::uint8_vec& out = params.m_create_ktx2_file ? basis.get_output_ktx2_file() : basis.get_output_basis_file();
 
     Containers::Array<char> fileData{NoInit, out.size()};
-    Utility::copy(Containers::arrayView(out.data(), out.size()), fileData);
+    Utility::copy(Containers::arrayCast<const char>(Containers::arrayView(out.data(), out.size())), fileData);
 
     return fileData;
 }

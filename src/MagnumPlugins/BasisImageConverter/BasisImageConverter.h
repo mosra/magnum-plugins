@@ -114,15 +114,14 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-BasisImageConverter-behavior Behavior and limitations
 
-@subsection Trade-BasisImageConverter-behavior-multiple-images Multiple images in one file
+@subsection Trade-BasisImageConverter-behavior-multilevel Multilevel images
 
-Due to limitations in the @ref AbstractImageConverter API, it's currently not
-possible to create a Basis file containing multiple images --- you'd need to
-use the upstream `basisu` tool for that instead.
+Images can be saved with multiple levels by using the list variants of
+@ref convertToFile() / @ref convertToData(). Largest level is expected to be
+first, with each following level having width and height divided by two,
+rounded down. Incomplete mip chains are supported.
 
-Supplying custom mip levels will be possible when the converter gets updated to
-[the upcoming version 1.16](https://github.com/BinomialLLC/basis_universal/commit/ee626cec19e8e2d206bfc127296dfd9519352dc6). Right now, there's only a
-possibility to generate the mip levels from the top-level image using the
+To generate mip levels from a single top-level image instead, you can use the
 @cb{.ini} mip_gen @ce @ref Trade-BasisImageConverter-configuration "configuration option".
 
 @subsection Trade-BasisImageConverter-behavior-loading Loading the plugin fails with undefined symbol: pthread_create
@@ -164,7 +163,7 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
 
     private:
         MAGNUM_BASISIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
-        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
+        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
 };
 
 }}
