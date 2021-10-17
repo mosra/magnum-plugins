@@ -35,6 +35,7 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Swizzle.h>
@@ -46,9 +47,19 @@
 
 namespace Magnum { namespace Trade {
 
-BasisImageConverter::BasisImageConverter() = default;
+using namespace Containers::Literals;
 
-BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
+BasisImageConverter::BasisImageConverter(Format format): _format{format} {
+    /* Passing an invalid Format enum is user error, we'll assert on that in
+       the convertToData() function */
+}
+
+BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {
+    if(plugin == "BasisKtxImageConverter")
+        _format = Format::Ktx;
+    else
+        _format = {}; /* Overridable by openFile() */
+}
 
 ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
@@ -74,6 +85,11 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     }
 
     basisu::basis_compressor_params params;
+
+    if(_format == Format::Ktx)
+        params.m_create_ktx2_file = true;
+    else
+        CORRADE_INTERNAL_ASSERT(_format == Format{} || _format == Format::Basis);
 
     /* Options deduced from input data. Config values that are not emptied out
        override these below. */
@@ -160,6 +176,24 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     PARAM_CONFIG_FIX_NAME(global_mod_bits, int, "global_modifier_bits");
     PARAM_CONFIG_FIX_NAME(hybrid_sel_cb_quality_thresh, float, "hybrid_sel_codebook_quality_threshold");
 
+    /* KTX2 options */
+    params.m_ktx2_uastc_supercompression =
+        configuration().value<bool>("ktx2_uastc_supercompression") ? basist::KTX2_SS_ZSTANDARD : basist::KTX2_SS_NONE;
+    PARAM_CONFIG(ktx2_zstd_supercompression_level, int);
+    params.m_ktx2_srgb_transfer_func = params.m_perceptual;
+
+    /* y_flip sets a flag in Basis files, but not in KTX2 files:
+       https://github.com/BinomialLLC/basis_universal/issues/258
+       Manually specify the orientation in the key/value data:
+       https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html#_ktxorientation */
+    constexpr char OrientationKey[] = "KTXorientation";
+    char orientationValue[] = "rd";
+    if(params.m_y_flip)
+        orientationValue[1] = 'u';
+    basist::ktx2_transcoder::key_value& keyValue = *params.m_ktx2_key_values.enlarge(1);
+    keyValue.m_key.append(reinterpret_cast<const uint8_t*>(OrientationKey), sizeof(OrientationKey));
+    keyValue.m_key.append(reinterpret_cast<const uint8_t*>(orientationValue), sizeof(orientationValue));
+
     /* Set various fields in the Basis file header */
     PARAM_CONFIG(userdata0, int);
     PARAM_CONFIG(userdata1, int);
@@ -238,6 +272,9 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
             /* process() will have printed additional error information to stderr */
             Error{} << "Trade::BasisImageConverter::convertToData(): assembling basis file data or transcoding failed";
             return {};
+        case basisu::basis_compressor::error_code::cECFailedCreateKTX2File:
+            Error{} << "Trade::BasisImageConverter::convertToData(): assembling KTX2 file failed";
+            return {};
 
         /* LCOV_EXCL_START */
         case basisu::basis_compressor::error_code::cECFailedFontendExtract:
@@ -250,12 +287,34 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
         /* LCOV_EXCL_STOP */
     }
 
-    const basisu::uint8_vec& out = basis.get_output_basis_file();
+    const basisu::uint8_vec& out = params.m_create_ktx2_file ? basis.get_output_ktx2_file() : basis.get_output_basis_file();
 
     Containers::Array<char> fileData{NoInit, out.size()};
     Utility::copy(Containers::arrayCast<const char>(Containers::arrayView(out.data(), out.size())), fileData);
 
     return fileData;
+}
+
+bool BasisImageConverter::doConvertToFile(const ImageView2D& image, const Containers::StringView filename) {
+    /** @todo once Directory is std::string-free, use splitExtension() */
+    const Containers::String normalized = Utility::String::lowercase(filename);
+
+    /* Save the previous format to restore it back after, detect the format
+       from extension if it's not supplied explicitly */
+    const Format previousFormat = _format;
+    if(_format == Format{}) {
+        if(normalized.hasSuffix(".ktx2"_s))
+            _format = Format::Ktx;
+        else
+            _format = Format::Basis;
+    }
+
+    /* Delegate to the base implementation which calls doConvertToData() */
+    const bool out = AbstractImageConverter::doConvertToFile(image, filename);
+
+    /* Restore the previous format and return the result */
+    _format = previousFormat;
+    return out;
 }
 
 }}

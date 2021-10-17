@@ -57,13 +57,17 @@ namespace Magnum { namespace Trade {
 @brief Basis Universal image converter plugin
 @m_since_{plugins,2019,10}
 
+@m_keywords{BasisKtxImageConverter}
+
 Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
-(`*.basis`) files from images with format
+compressed image files (`*.basis` or `*.ktx2`) from images with format
 @ref PixelFormat::R8Unorm, @ref PixelFormat::R8Srgb,
 @ref PixelFormat::RG8Unorm, @ref PixelFormat::RG8Srgb,
 @ref PixelFormat::RGB8Unorm, @ref PixelFormat::RGB8Srgb,
 @ref PixelFormat::RGBA8Unorm or @ref PixelFormat::RGBA8Srgb.
 Use @ref BasisImporter to import images in this format.
+
+This plugin provides `BasisKtxImageConverter`.
 
 @m_class{m-block m-success}
 
@@ -125,6 +129,14 @@ Supplying custom mip levels will be possible when the converter gets updated to
 possibility to generate the mip levels from the top-level image using the
 @cb{.ini} mip_gen @ce @ref Trade-BasisImageConverter-configuration "configuration option".
 
+@subsection Trade-BasisImageConverter-behavior-ktx Converting to KTX2
+
+To create Khronos Texture 2.0 (`*.ktx2`) files, either load the plugin as
+`BasisKtxImageConverter`, call @ref convertToFile() with the `.ktx2` extension
+or pass @ref Format::Ktx to the constructor.
+
+In all other cases, a Basis Universal (`*.basis`) file is created.
+
 @subsection Trade-BasisImageConverter-behavior-loading Loading the plugin fails with undefined symbol: pthread_create
 
 On Linux it may happen that loading the plugin will fail with
@@ -156,8 +168,25 @@ to edit the configuration values.
 */
 class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImageConverter {
     public:
-        /** @brief Default constructor */
-        explicit BasisImageConverter();
+        /**
+         * @brief Output file format
+         *
+         * @see @ref BasisImageConverter(Format)
+         */
+        enum class Format: Int {
+            /* 0 used for default value, Basis unless overridden by
+               convertToFile */
+
+            Basis = 1,    /**< Output Basis images */
+            Ktx,          /**< Output KTX2 images */
+        };
+
+        /**
+         * @brief Default constructor
+         *
+         * The converter outputs files in format defined by @ref Format.
+         */
+        explicit BasisImageConverter(Format format = Format{});
 
         /** @brief Plugin manager constructor */
         explicit BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
@@ -165,6 +194,9 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
     private:
         MAGNUM_BASISIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
+        MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const ImageView2D& image, Containers::StringView filename) override;
+
+        Format _format;
 };
 
 }}
