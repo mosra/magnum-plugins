@@ -53,20 +53,38 @@ ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageCon
 
 Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& image) {
     /* Check input */
-    if(image.format() != PixelFormat::RGB8Unorm &&
-       image.format() != PixelFormat::RGBA8Unorm &&
-       image.format() != PixelFormat::RG8Unorm &&
-       image.format() != PixelFormat::R8Unorm)
-    {
-        Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << image.format();
-        return {};
+    bool isSrgb;
+    switch(image.format()) {
+        case PixelFormat::RGBA8Unorm:
+        case PixelFormat::RGB8Unorm:
+        case PixelFormat::RG8Unorm:
+        case PixelFormat::R8Unorm:
+            isSrgb = false;
+            break;
+        case PixelFormat::RGBA8Srgb:
+        case PixelFormat::RGB8Srgb:
+        case PixelFormat::RG8Srgb:
+        case PixelFormat::R8Srgb:
+            isSrgb = true;
+            break;
+        default:
+            Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << image.format();
+            return {};
     }
+
+    basisu::basis_compressor_params params;
+
+    /* Options deduced from input data. Can be overridden by config values, if
+       present. */
+    params.m_perceptual = isSrgb;
+    params.m_mip_srgb = isSrgb;
 
     /* To retain sanity, keep this in the same order and grouping as in the
        conf file */
-    basisu::basis_compressor_params params;
-    #define PARAM_CONFIG(name, type) params.m_##name = configuration().value<type>(#name)
-    #define PARAM_CONFIG_FIX_NAME(name, type, fixed) params.m_##name = configuration().value<type>(fixed)
+    #define PARAM_CONFIG(name, type) \
+        if(configuration().hasValue(#name)) params.m_##name = configuration().value<type>(#name)
+    #define PARAM_CONFIG_FIX_NAME(name, type, fixed) \
+        if(configuration().hasValue(fixed)) params.m_##name = configuration().value<type>(fixed)
     /* Options */
     PARAM_CONFIG(quality_level, int);
     PARAM_CONFIG(perceptual, bool);
