@@ -27,6 +27,14 @@ sudo dnf install git gcc-c++ cmake make rpmdevtools \
                     OpenEXR-devel
 ```
 
+## on fedora
+
+### for faad2 and faad2-devel add rpmfusion repo
+
+```
+sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+```
+
 ## on centos
 
 ### for assimp add EPEL repo
