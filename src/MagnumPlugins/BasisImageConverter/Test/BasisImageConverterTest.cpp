@@ -53,6 +53,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void wrongFormat();
     void processError();
 
+    void configPerceptual();
+
     void r();
     void rg();
     void rgb();
@@ -65,6 +67,24 @@ struct BasisImageConverterTest: TestSuite::Tester {
 
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
+};
+
+enum TransferFunction: std::size_t {
+    Linear,
+    Srgb
+};
+
+constexpr PixelFormat TransferFunctionFormats[2][4]{
+    {PixelFormat::R8Unorm, PixelFormat::RG8Unorm, PixelFormat::RGB8Unorm, PixelFormat::RGBA8Unorm},
+    {PixelFormat::R8Srgb, PixelFormat::RG8Srgb, PixelFormat::RGB8Srgb, PixelFormat::RGBA8Srgb}
+};
+
+constexpr struct {
+    const char* name;
+    const TransferFunction transferFunction;
+} FormatTransferFunctionData[] {
+    {"Unorm", TransferFunction::Linear},
+    {"Srgb", TransferFunction::Srgb}
 };
 
 constexpr struct {
@@ -80,10 +100,13 @@ BasisImageConverterTest::BasisImageConverterTest() {
     addTests({&BasisImageConverterTest::wrongFormat,
               &BasisImageConverterTest::processError,
 
-              &BasisImageConverterTest::r,
-              &BasisImageConverterTest::rg,
-              &BasisImageConverterTest::rgb,
-              &BasisImageConverterTest::rgba});
+              &BasisImageConverterTest::configPerceptual});
+
+    addInstancedTests({&BasisImageConverterTest::r,
+                       &BasisImageConverterTest::rg,
+                       &BasisImageConverterTest::rgb,
+                       &BasisImageConverterTest::rgba},
+        Containers::arraySize(FormatTransferFunctionData));
 
     addInstancedTests({&BasisImageConverterTest::threads},
         Containers::arraySize(ThreadsData));
@@ -133,6 +156,43 @@ void BasisImageConverterTest::processError() {
         "Trade::BasisImageConverter::convertToData(): frontend processing failed\n");
 }
 
+void BasisImageConverterTest::configPerceptual() {
+    const char bytes[4]{};
+    ImageView2D originalImage{PixelFormat::RGBA8Unorm, Vector2i{1}, bytes};
+
+    Containers::Pointer<AbstractImageConverter> converter =
+        _converterManager.instantiate("BasisImageConverter");
+    /* Empty by default */
+    CORRADE_COMPARE(converter->configuration().value("perceptual"), "");
+
+    const auto compressedDataAutomatic = converter->convertToData(originalImage);
+    CORRADE_VERIFY(compressedDataAutomatic);
+
+    converter->configuration().setValue("perceptual", true);
+
+    const auto compressedDataOverridden = converter->convertToData(originalImage);
+    CORRADE_VERIFY(compressedDataOverridden);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+
+    /* Empty perceptual config means to use the image format to determine if
+       the output data should be sRGB */
+    CORRADE_VERIFY(importer->openData(compressedDataAutomatic));
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+
+    /* Perceptual true/false overrides the input format and forces sRGB on/off */
+    CORRADE_VERIFY(importer->openData(compressedDataOverridden));
+    image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+}
+
 template<typename SourceType, typename DestinationType = SourceType>
 Image2D copyImageWithSkip(const ImageView2D& originalImage, Vector3i skip, PixelFormat format) {
     const Vector2i size = originalImage.size();
@@ -152,6 +212,9 @@ void BasisImageConverterTest::r() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
+    auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
@@ -161,7 +224,7 @@ void BasisImageConverterTest::r() {
        image data properly. During copy, we only use R channel to retrieve an
        R8 image. */
     const Image2D imageWithSkip = copyImageWithSkip<Color3ub, Math::Vector<1, UnsignedByte>>(
-        *originalImage, {7, 8, 0}, PixelFormat::R8Unorm);
+        *originalImage, {7, 8, 0}, TransferFunctionFormats[data.transferFunction][0]);
 
     const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -174,14 +237,20 @@ void BasisImageConverterTest::r() {
     CORRADE_VERIFY(importer->openData(compressedData));
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), TransferFunctionFormats[data.transferFunction][3]);
 
+    /* CompareImage doesn't support Srgb formats, so we need to create a view
+       on the original image, but with a Unorm format */
+    const ImageView2D imageViewUnorm{imageWithSkip.storage(),
+        TransferFunctionFormats[TransferFunction::Linear][0], imageWithSkip.size(), imageWithSkip.data()};
     /* Basis can only load RGBA8 uncompressed data, which corresponds to RRR1
        from our R8 image data. We chose the red channel from the imported image
        to compare to our original data */
     CORRADE_COMPARE_WITH(
         (Containers::arrayCast<2, const UnsignedByte>(image->pixels().prefix(
             {std::size_t(image->size()[1]), std::size_t(image->size()[0]), 1}))),
-        imageWithSkip,
+        imageViewUnorm,
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{21.0f, 0.968f}));
 }
@@ -189,6 +258,9 @@ void BasisImageConverterTest::r() {
 void BasisImageConverterTest::rg() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
@@ -199,7 +271,7 @@ void BasisImageConverterTest::rg() {
        image data properly. During copy, we only use R and G channels to
        retrieve an RG8 image. */
     const Image2D imageWithSkip = copyImageWithSkip<Color3ub, Vector2ub>(
-        *originalImage, {7, 8, 0}, PixelFormat::RG8Unorm);
+        *originalImage, {7, 8, 0}, TransferFunctionFormats[data.transferFunction][1]);
 
     const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -212,13 +284,19 @@ void BasisImageConverterTest::rg() {
     CORRADE_VERIFY(importer->openData(compressedData));
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), TransferFunctionFormats[data.transferFunction][3]);
 
+    /* CompareImage doesn't support Srgb formats, so we need to create a view
+       on the original image, but with a Unorm format */
+    const ImageView2D imageViewUnorm{imageWithSkip.storage(),
+        TransferFunctionFormats[TransferFunction::Linear][1], imageWithSkip.size(), imageWithSkip.data()};
     /* Basis can only load RGBA8 uncompressed data, which corresponds to RRRG
        from our RG8 image data. We chose the B and A channels from the imported
        image to compare to our original data */
     CORRADE_COMPARE_WITH(
         (Containers::arrayCast<2, const Math::Vector2<UnsignedByte>>(image->pixels().suffix({0, 0, 2}))),
-        imageWithSkip,
+        imageViewUnorm,
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{22.0f, 1.039f}));
 }
@@ -226,6 +304,9 @@ void BasisImageConverterTest::rg() {
 void BasisImageConverterTest::rgb() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
@@ -235,7 +316,7 @@ void BasisImageConverterTest::rgb() {
     /* Use the original image and add a skip to ensure the converter reads the
        image data properly */
     const Image2D imageWithSkip = copyImageWithSkip<Color3ub>(
-        *originalImage, {7, 8, 0}, PixelFormat::RGB8Unorm);
+        *originalImage, {7, 8, 0}, TransferFunctionFormats[data.transferFunction][2]);
 
     const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -248,16 +329,21 @@ void BasisImageConverterTest::rgb() {
     CORRADE_VERIFY(importer->openData(compressedData));
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), TransferFunctionFormats[data.transferFunction][3]);
 
     CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 58.4f, 6.622f}));
+        (DebugTools::CompareImageToFile{_manager, 61.0f, 6.622f}));
 }
 
 void BasisImageConverterTest::rgba() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
@@ -267,7 +353,7 @@ void BasisImageConverterTest::rgba() {
     /* Use the original image and add a skip to ensure the converter reads the
        image data properly */
     const Image2D imageWithSkip = copyImageWithSkip<Color4ub>(
-        *originalImage, {7, 8, 0}, PixelFormat::RGBA8Unorm);
+        *originalImage, {7, 8, 0}, TransferFunctionFormats[data.transferFunction][3]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
     const auto compressedData = converter->convertToData(imageWithSkip);
@@ -281,13 +367,15 @@ void BasisImageConverterTest::rgba() {
     CORRADE_VERIFY(importer->openData(compressedData));
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), TransferFunctionFormats[data.transferFunction][3]);
 
     /* Basis can only load RGBA8 uncompressed data, which corresponds to RGB1
        from our RGB8 image data. */
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.039f}));
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.122f}));
 }
 
 void BasisImageConverterTest::threads() {
@@ -305,7 +393,7 @@ void BasisImageConverterTest::threads() {
     /* Use the original image and add a skip to ensure the converter reads the
        image data properly */
     const Image2D imageWithSkip = copyImageWithSkip<Color4ub>(
-        *originalImage, {7, 8, 0}, PixelFormat::RGBA8Unorm);
+        *originalImage, {7, 8, 0}, PixelFormat::RGBA8Srgb);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
     if(data.threads) converter->configuration().setValue("threads", data.threads);
