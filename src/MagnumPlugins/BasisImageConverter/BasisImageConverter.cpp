@@ -159,6 +159,13 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     PARAM_CONFIG_FIX_NAME(global_mod_bits, int, "global_modifier_bits");
     PARAM_CONFIG_FIX_NAME(hybrid_sel_cb_quality_thresh, float, "hybrid_sel_codebook_quality_threshold");
 
+    /* KTX2 options */
+    PARAM_CONFIG(create_ktx2_file, bool);
+    params.m_ktx2_uastc_supercompression =
+        configuration().value<bool>("ktx2_uastc_supercompression") ? basist::KTX2_SS_ZSTANDARD : basist::KTX2_SS_NONE;
+    PARAM_CONFIG(ktx2_zstd_supercompression_level, int);
+    params.m_ktx2_srgb_transfer_func = params.m_perceptual;
+
     /* Set various fields in the Basis file header */
     PARAM_CONFIG(userdata0, int);
     PARAM_CONFIG(userdata1, int);
@@ -231,6 +238,9 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
             /* process() will have printed additional error information to stderr */
             Error{} << "Trade::BasisImageConverter::convertToData(): assembling basis file data or transcoding failed";
             return {};
+        case basisu::basis_compressor::error_code::cECFailedCreateKTX2File:
+            Error{} << "Trade::BasisImageConverter::convertToData(): assembling KTX2 file failed";
+            return {};
 
         /* LCOV_EXCL_START */
         case basisu::basis_compressor::error_code::cECFailedFontendExtract:
@@ -243,7 +253,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
         /* LCOV_EXCL_STOP */
     }
 
-    const basisu::uint8_vec& out = basis.get_output_basis_file();
+    const basisu::uint8_vec& out = params.m_create_ktx2_file ? basis.get_output_ktx2_file() : basis.get_output_basis_file();
 
     Containers::Array<char> fileData{NoInit, out.size()};
     Utility::copy(Containers::arrayView(out.data(), out.size()), fileData);

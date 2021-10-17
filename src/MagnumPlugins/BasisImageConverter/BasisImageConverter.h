@@ -58,7 +58,7 @@ namespace Magnum { namespace Trade {
 @m_since_{plugins,2019,10}
 
 Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
-(`*.basis`) files from images with format
+compressed image files (`*.basis` or `*.ktx2`) from images with format
 @ref PixelFormat::R8Unorm, @ref PixelFormat::R8Srgb,
 @ref PixelFormat::RG8Unorm, @ref PixelFormat::RG8Srgb,
 @ref PixelFormat::RGB8Unorm, @ref PixelFormat::RGB8Srgb,
