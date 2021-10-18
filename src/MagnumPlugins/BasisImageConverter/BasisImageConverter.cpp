@@ -117,6 +117,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     PARAM_CONFIG(quality_level, int);
     PARAM_CONFIG(perceptual, bool);
     PARAM_CONFIG(debug, bool);
+    PARAM_CONFIG(validate, bool);
     PARAM_CONFIG(debug_images, bool);
     PARAM_CONFIG(compute_stats, bool);
     PARAM_CONFIG(compression_level, int);
@@ -151,6 +152,11 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
         }
     }
 
+    PARAM_CONFIG(renormalize, bool);
+    PARAM_CONFIG(resample_width, int);
+    PARAM_CONFIG(resample_height, int);
+    PARAM_CONFIG(resample_factor, float);
+
     UnsignedInt threadCount = configuration().value<Int>("threads");
     if(threadCount == 0) threadCount = std::thread::hardware_concurrency();
     const bool multithreading = threadCount > 1;
@@ -167,6 +173,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     PARAM_CONFIG(mip_filter, std::string);
     PARAM_CONFIG(mip_renormalize, bool);
     PARAM_CONFIG(mip_wrapping, bool);
+    PARAM_CONFIG(mip_fast, bool);
     PARAM_CONFIG(mip_smallest_dimension, int);
 
     /* Backend endpoint/selector RDO codec options */
@@ -182,6 +189,20 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     PARAM_CONFIG_FIX_NAME(global_pal_bits, int, "global_palette_bits");
     PARAM_CONFIG_FIX_NAME(global_mod_bits, int, "global_modifier_bits");
     PARAM_CONFIG_FIX_NAME(hybrid_sel_cb_quality_thresh, float, "hybrid_sel_codebook_quality_threshold");
+
+    /* UASTC options */
+    PARAM_CONFIG(uastc, bool);
+    params.m_pack_uastc_flags = configuration().value<Int>("pack_uastc_level");
+    PARAM_CONFIG(pack_uastc_flags, int);
+    PARAM_CONFIG(rdo_uastc, bool);
+    PARAM_CONFIG(rdo_uastc_quality_scalar, float);
+    PARAM_CONFIG(rdo_uastc_dict_size, int);
+    PARAM_CONFIG(rdo_uastc_max_smooth_block_error_scale, float);
+    PARAM_CONFIG(rdo_uastc_smooth_block_max_std_dev, float);
+    PARAM_CONFIG(rdo_uastc_max_allowed_rms_increase_ratio, float);
+    PARAM_CONFIG_FIX_NAME(rdo_uastc_skip_block_rms_thresh, float, "rdo_uastc_skip_block_rms_threshold");
+    PARAM_CONFIG(rdo_uastc_favor_simpler_modes_in_rdo_mode, bool);
+    params.m_rdo_uastc_multithreading = multithreading;
 
     /* KTX2 options */
     params.m_ktx2_uastc_supercompression =
@@ -314,6 +335,9 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
             /* process() will have printed additional error information to stderr */
             Error{} << "Trade::BasisImageConverter::convertToData(): type constraint validation failed";
             return {};
+        case basisu::basis_compressor::error_code::cECFailedEncodeUASTC:
+            Error{} << "Trade::BasisImageConverter::convertToData(): UASTC encoding failed";
+            return {};
         case basisu::basis_compressor::error_code::cECFailedFrontEnd:
             /* process() will have printed additional error information to stderr */
             Error{} << "Trade::BasisImageConverter::convertToData(): frontend processing failed";
@@ -324,6 +348,9 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
         case basisu::basis_compressor::error_code::cECFailedCreateBasisFile:
             /* process() will have printed additional error information to stderr */
             Error{} << "Trade::BasisImageConverter::convertToData(): assembling basis file data or transcoding failed";
+            return {};
+        case basisu::basis_compressor::error_code::cECFailedUASTCRDOPostProcess:
+            Error{} << "Trade::BasisImageConverter::convertToData(): UASTC RDO postprocessing failed";
             return {};
         case basisu::basis_compressor::error_code::cECFailedCreateKTX2File:
             Error{} << "Trade::BasisImageConverter::convertToData(): assembling KTX2 file failed";
