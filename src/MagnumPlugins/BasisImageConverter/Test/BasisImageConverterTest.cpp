@@ -52,6 +52,7 @@ struct BasisImageConverterTest: TestSuite::Tester {
     explicit BasisImageConverterTest();
 
     void wrongFormat();
+    void invalidSwizzle();
     void processError();
 
     void r();
@@ -87,6 +88,7 @@ constexpr struct {
 
 BasisImageConverterTest::BasisImageConverterTest() {
     addTests({&BasisImageConverterTest::wrongFormat,
+              &BasisImageConverterTest::invalidSwizzle,
               &BasisImageConverterTest::processError,
 
               &BasisImageConverterTest::r,
@@ -127,6 +129,25 @@ void BasisImageConverterTest::wrongFormat() {
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RG32F, {1, 1}, data}));
     CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::RG32F\n");
+}
+
+void BasisImageConverterTest::invalidSwizzle() {
+    Containers::Pointer<AbstractImageConverter> converter =
+        _converterManager.instantiate("BasisImageConverter");
+
+    const char data[8]{};
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(converter->configuration().setValue("swizzle", "gbgbg"));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
+
+    CORRADE_VERIFY(converter->configuration().setValue("swizzle", "xaaa"));
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
+
+    CORRADE_COMPARE(out.str(),
+        "Trade::BasisImageConverter::convertToData(): invalid swizzle length, expected 4 but got 5\n"
+        "Trade::BasisImageConverter::convertToData(): invalid characters in swizzle xaaa\n");
 }
 
 void BasisImageConverterTest::processError() {
