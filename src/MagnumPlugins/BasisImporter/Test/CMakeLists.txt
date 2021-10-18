@@ -30,8 +30,10 @@ find_package(Magnum REQUIRED DebugTools)
 find_package(Magnum COMPONENTS AnyImageImporter)
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(KTXIMPORTER_TEST_DIR ".")
     set(BASISIMPORTER_TEST_DIR ".")
 else()
+    set(KTXIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test)
     set(BASISIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
@@ -55,10 +57,27 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(BasisImporterTest BasisImporterTest.cpp
     LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
-        rgb.basis rgb-pow2.basis rgb-noflip.basis
-        rgba.basis rgba-pow2.basis rgba-2images-mips.basis
-        rgb-63x27.png rgba-63x27.png rgba-31x13.png rgba-15x6.png
-        rgba-27x63.png)
+        rgb.basis
+        rgb.ktx2
+        rgb-pow2.basis
+        rgb-pow2.ktx2
+        rgb-linear.basis
+        rgb-linear.ktx2
+        rgb-linear-pow2.basis
+        rgb-linear-pow2.ktx2
+        rgb-noflip.basis
+        rgb-noflip.ktx2
+        rgba.basis
+        rgba.ktx2
+        rgba-pow2.basis
+        rgba-pow2.ktx2
+        rgba-2images-mips.basis
+        rgb-63x27.png
+        rgba-63x27.png
+        rgba-31x13.png
+        rgba-15x6.png
+        rgba-27x63.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-rgba.ktx2)
 target_include_directories(BasisImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
     target_link_libraries(BasisImporterTest PRIVATE BasisImporter)
