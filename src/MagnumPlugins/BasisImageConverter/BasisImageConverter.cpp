@@ -235,8 +235,16 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
            moreover we need to tightly pack it and flip Y. The `dst` is a Y-flipped
            view already to make the following loops simpler. */
         basisu::image& basisImage = i == 0 ? params.m_source_images[0] : params.m_source_mipmap_images[0][i - 1];
-        basisImage = {uint32_t(image.size().x()), uint32_t(image.size().y())};
-        auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(image.size().y()), std::size_t(image.size().x())})).flipped<0>();
+        basisImage.resize(image.size().x(), image.size().y());
+        auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(image.size().y()), std::size_t(image.size().x())}));
+        /* Y-flip the view to make the following loops simpler. basisu doesn't
+           apply m_y_flip (or m_renormalize) to user-supplied mipmaps, so only
+           do this for the base image. */
+        /** @todo Probably a bug, file an issue/send a PR. There's also another
+            bug where it determines if alpha in any pixel > 0 *before* it
+            swizzles the mipmaps. */
+        if(!params.m_y_flip || i == 0)
+            dst = dst.flipped<0>();
 
         /* basis image is always RGBA, fill in alpha if necessary */
         const UnsignedInt channels = pixelSize(format);
