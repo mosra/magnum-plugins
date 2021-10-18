@@ -54,6 +54,7 @@ struct BasisImporterTest: TestSuite::Tester {
 
     void unconfigured();
     void invalidConfiguredFormat();
+    void unsupportedFormat();
     void transcodingFailure();
     void nonBasisKtx();
 
@@ -156,6 +157,7 @@ BasisImporterTest::BasisImporterTest() {
 
     addTests({&BasisImporterTest::unconfigured,
               &BasisImporterTest::invalidConfiguredFormat,
+              &BasisImporterTest::unsupportedFormat,
               &BasisImporterTest::transcodingFailure,
               &BasisImporterTest::nonBasisKtx});
 
@@ -295,6 +297,25 @@ void BasisImporterTest::invalidConfiguredFormat() {
     CORRADE_VERIFY(!importer->image2D(0));
 
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8\n");
+}
+
+void BasisImporterTest::unsupportedFormat() {
+    #if !defined(BASISD_SUPPORT_BC7) || BASISD_SUPPORT_BC7
+    /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
+       NOT the case. This assumes -DBASISD_SUPPORT_*=0 is supplied globally. */
+    CORRADE_SKIP("BC7 is compiled into Basis, can't test unsupported target format error.");
+    #endif
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+    CORRADE_VERIFY(importer->openFile(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    importer->configuration().setValue("format", "Bc7RGBA");
+    CORRADE_VERIFY(!importer->image2D(0));
+
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): unsupported transcoding target format Bc7RGBA for a ETC1S image\n");
 }
 
 void BasisImporterTest::transcodingFailure() {
