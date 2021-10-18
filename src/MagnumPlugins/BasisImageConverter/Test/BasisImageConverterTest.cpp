@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -58,6 +59,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void rgb();
     void rgba();
 
+    void ktx();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
 
@@ -74,6 +77,14 @@ constexpr struct {
     {"all threads", "0"}
 };
 
+constexpr struct {
+    const char* name;
+    const bool yFlip;
+} FlippedData[] {
+    {"y-flip", true},
+    {"no y-flip", false}
+};
+
 BasisImageConverterTest::BasisImageConverterTest() {
     addTests({&BasisImageConverterTest::wrongFormat,
               &BasisImageConverterTest::processError,
@@ -85,6 +96,9 @@ BasisImageConverterTest::BasisImageConverterTest() {
 
     addInstancedTests({&BasisImageConverterTest::rgba},
         Containers::arraySize(ThreadsData));
+
+    addInstancedTests({&BasisImageConverterTest::ktx},
+        Containers::arraySize(FlippedData));
 
     /* Pull in the AnyImageImporter dependency for image comparison, load
        StbImageImporter from the build tree, if defined. Otherwise it's static
@@ -294,6 +308,57 @@ void BasisImageConverterTest::rgba() {
     /* Basis can only load RGBA8 uncompressed data, which corresponds to RGB1
        from our RGB8 image data. */
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.302f}));
+}
+
+void BasisImageConverterTest::ktx() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    auto&& data = FlippedData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> pngImporter =
+        _manager.instantiate("PngImporter");
+    pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"));
+    const auto originalImage = pngImporter->image2D(0);
+    CORRADE_VERIFY(originalImage);
+
+    /* Use the original image and add a skip of {7, 8} to ensure the converter
+       reads the image data properly. */
+    const UnsignedInt dataSize = ((63 + 7)*4)*(27 + 7);
+    Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
+        PixelFormat::RGBA8Unorm, originalImage->size(),
+        Containers::Array<char>{ValueInit, dataSize}};
+    Utility::copy(originalImage->pixels<Color4ub>(),
+        imageWithSkip.pixels<Color4ub>());
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    converter->configuration().setValue("create_ktx2_file", true);
+    converter->configuration().setValue("y_flip", data.yFlip);
+    const auto compressedData = converter->convertToData(imageWithSkip);
+    CORRADE_VERIFY(compressedData);
+
+    char KTXorientation[] = "KTXorientation\0r?";
+    KTXorientation[sizeof(KTXorientation) - 1] = data.yFlip ? 'u' : 'd';
+    CORRADE_VERIFY(Containers::StringView{compressedData, compressedData.size()}.contains(KTXorientation));
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openData(compressedData));
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    /* Basis can only load RGBA8 uncompressed data, which corresponds to RGB1
+       from our RGB8 image data. */
+    auto pixels = image->pixels<Color4ub>();
+    if(!data.yFlip) pixels = pixels.flipped<0>();
+    CORRADE_COMPARE_WITH(pixels,
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 78.3f, 8.302f}));
