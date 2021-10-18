@@ -329,7 +329,7 @@ void BasisImageConverterTest::rgb() {
     CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 55.7f, 6.589f}));
+        (DebugTools::CompareImageToFile{_manager, 61.0f, 6.347f}));
 }
 
 void BasisImageConverterTest::rgba() {
@@ -368,7 +368,7 @@ void BasisImageConverterTest::rgba() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.302f}));
+        (DebugTools::CompareImageToFile{_manager, 97.25f, 7.914f}));
 }
 
 void BasisImageConverterTest::ktx() {
@@ -414,7 +414,7 @@ void BasisImageConverterTest::ktx() {
     CORRADE_COMPARE_WITH(pixels,
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.302f}));
+        (DebugTools::CompareImageToFile{_manager, 97.25f, 9.398f}));
 }
 
 void BasisImageConverterTest::customLevels() {
