@@ -245,7 +245,10 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
             /** BC4 R. Loaded as @ref CompressedPixelFormat::Bc4RUnorm. */
             Bc4R = 4,
 
-            /** BC5 RG. Loaded as @ref CompressedPixelFormat::Bc5RGUnorm. */
+            /**
+             * BC5 RG. Taken from the input red and alpha channel. Loaded as
+             * @ref CompressedPixelFormat::Bc5RGUnorm.
+             */
             Bc5RG = 5,
 
             /**
@@ -301,13 +304,12 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
                have enums for those */
 
             /**
-             * EAC unsigned red component. Loaded as
-             * @ref CompressedPixelFormat::EacR11Unorm.
+             * EAC R. Loaded as @ref CompressedPixelFormat::EacR11Unorm.
              */
             EacR = 20,
 
             /**
-             * EAC unsigned red and green component. Loaded as
+             * EAC RG. Taken from the input red and alpha channel. Loaded as
              * @ref CompressedPixelFormat::EacRG11Unorm.
              */
             EacRG = 21,

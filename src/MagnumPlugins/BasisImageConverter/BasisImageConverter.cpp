@@ -128,11 +128,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     PARAM_CONFIG(check_for_alpha, bool);
     PARAM_CONFIG(force_alpha, bool);
 
-    std::string swizzle = configuration().value("swizzle");
-    /* swizzle has precedence in the basisu commandline tool, do the same */
-    if(swizzle.empty() && configuration().value<bool>("separate_rg_to_color_alpha"))
-        swizzle = "rrrg";
-
+    const std::string swizzle = configuration().value("swizzle");
     if(!swizzle.empty()) {
         if(swizzle.size() != 4) {
             Error{} << "Trade::BasisImageConverter::convertToData(): invalid swizzle length, expected 4 but got" << swizzle.size();
@@ -277,15 +273,30 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
 
         } else if(channels == 2) {
             auto src = image.pixels<Math::Vector2<UnsignedByte>>();
-            for(std::size_t y = 0; y != src.size()[0]; ++y)
-                for(std::size_t x = 0; x != src.size()[1]; ++x)
-                    dst[y][x] = Math::gather<'r', 'r', 'r', 'g'>(src[y][x]);
+            /* If the user didn't specify a custom swizzle, assume they want
+               the two channels compressed in separate slices, R in RGB and G
+               in Alpha. This significantly improves quality. */
+            if(swizzle.empty())
+                for(std::size_t y = 0; y != src.size()[0]; ++y)
+                    for(std::size_t x = 0; x != src.size()[1]; ++x)
+                        dst[y][x] = Math::gather<'r', 'r', 'r', 'g'>(src[y][x]);
+            else
+                for(std::size_t y = 0; y != src.size()[0]; ++y)
+                    for(std::size_t x = 0; x != src.size()[1]; ++x)
+                        dst[y][x] = Vector3ub::pad(src[y][x]); /* Alpha implicitly 255 */
 
         } else if(channels == 1) {
             auto src = image.pixels<Math::Vector<1, UnsignedByte>>();
-            for(std::size_t y = 0; y != src.size()[0]; ++y)
-                for(std::size_t x = 0; x != src.size()[1]; ++x)
-                    dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
+            /* If the user didn't specify a custom swizzle, assume they want
+               a gray-scale image. Alpha is always implicitly 255. */
+            if(swizzle.empty())
+                for(std::size_t y = 0; y != src.size()[0]; ++y)
+                    for(std::size_t x = 0; x != src.size()[1]; ++x)
+                        dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
+            else
+                for(std::size_t y = 0; y != src.size()[0]; ++y)
+                    for(std::size_t x = 0; x != src.size()[1]; ++x)
+                        dst[y][x] = Vector3ub::pad(src[y][x]);
 
         } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
     }

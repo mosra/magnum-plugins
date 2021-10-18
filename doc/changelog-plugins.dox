@@ -166,6 +166,12 @@ namespace Magnum {
     -   Robust handling of invalid scene hierarchies such as cycles or multiple
         parent nodes
     -   Better warning messages in certain pathological cases
+-   Passing a RG input to @relativeref{Trade,BasisImageConverter} while also
+    having @cb{.ini} swizzle=rrrg @ce (or, previously,
+    @cb{.ini} separate_rg_to_color_alpha=true @ce) set led to the image having
+    the red channel repeated four times, losing the green channel. This is now
+    fixed to not perform an implicit RRRG swizzle if the @cb{.ini} swizzle @ce
+    option is set. See also [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112).
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
@@ -179,6 +185,10 @@ namespace Magnum {
     plugins don't compile against the previous 1.11 version of Basis anymore,
     you have to update the dependency to the `v1_15_update2` tag (see
     [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
+-   The @cb{.ini} separate_rg_to_color_alpha @ce option from
+    @relativeref{Trade,BasisImageConverter} is gone, use
+    @cb{.ini} swizzle=rrrg @ce instead. For RG inputs this is done implicitly
+    and you don't need to set this option. See also [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112).
 
 @subsection changelog-plugins-latest-documentation Documentation
 

@@ -31,6 +31,7 @@
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -54,6 +55,7 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void wrongFormat();
     void unknownOutputFormatData();
     void unknownOutputFormatFile();
+    void invalidSwizzle();
     void tooManyLevels();
     void levelWrongSize();
     void processError();
@@ -71,6 +73,7 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void threads();
     void ktx();
     void customLevels();
+    void swizzle();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -130,10 +133,24 @@ constexpr struct {
     {"no y-flip", false}
 };
 
+constexpr struct {
+    const char* name;
+    const PixelFormat format;
+    const Color4ub input;
+    const char* swizzle;
+    const Color4ub output;
+} SwizzleData[] {
+    {"R implicit", PixelFormat::R8Unorm, Color4ub{128, 0, 0}, "", Color4ub{128, 128, 128}},
+    {"R none", PixelFormat::R8Unorm, Color4ub{128, 0, 0}, "rgba", Color4ub{128, 0, 0}},
+    {"RG implicit", PixelFormat::RG8Unorm, Color4ub{64, 128, 0}, "", Color4ub{64, 64, 64, 128}},
+    {"RG none", PixelFormat::RG8Unorm, Color4ub{64, 128, 0}, "rgba", Color4ub{64, 128, 0}}
+};
+
 BasisImageConverterTest::BasisImageConverterTest() {
     addTests({&BasisImageConverterTest::wrongFormat,
               &BasisImageConverterTest::unknownOutputFormatData,
               &BasisImageConverterTest::unknownOutputFormatFile,
+              &BasisImageConverterTest::invalidSwizzle,
               &BasisImageConverterTest::tooManyLevels,
               &BasisImageConverterTest::levelWrongSize,
               &BasisImageConverterTest::processError,
@@ -157,6 +174,9 @@ BasisImageConverterTest::BasisImageConverterTest() {
         Containers::arraySize(FlippedData));
 
     addTests({&BasisImageConverterTest::customLevels});
+
+    addInstancedTests({&BasisImageConverterTest::swizzle},
+        Containers::arraySize(SwizzleData));
 
     /* Pull in the AnyImageImporter dependency for image comparison, load
        StbImageImporter from the build tree, if defined. Otherwise it's static
@@ -223,6 +243,25 @@ void BasisImageConverterTest::unknownOutputFormatFile() {
     Containers::Pointer<AbstractImporter> importer =
         _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openFile(filename));
+}
+
+void BasisImageConverterTest::invalidSwizzle() {
+    Containers::Pointer<AbstractImageConverter> converter =
+        _converterManager.instantiate("BasisImageConverter");
+
+    const char data[8]{};
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    converter->configuration().setValue("swizzle", "gbgbg");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
+
+    converter->configuration().setValue("swizzle", "xaaa");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
+
+    CORRADE_COMPARE(out.str(),
+        "Trade::BasisImageConverter::convertToData(): invalid swizzle length, expected 4 but got 5\n"
+        "Trade::BasisImageConverter::convertToData(): invalid characters in swizzle xaaa\n");
 }
 
 void BasisImageConverterTest::tooManyLevels() {
@@ -743,6 +782,36 @@ void BasisImageConverterTest::customLevels() {
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 85.25f, 23.59f}));
+}
+
+void BasisImageConverterTest::swizzle() {
+    auto&& data = SwizzleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    /* Default is empty */
+    CORRADE_COMPARE(converter->configuration().value("swizzle"), "");
+    converter->configuration().setValue("swizzle", data.swizzle);
+
+    const Color4ub pixel[1]{data.input};
+    const ImageView2D originalImage{data.format, {1, 1}, Containers::arrayCast<const char>(pixel)};
+
+    const auto compressedData = converter->convertToData(originalImage);
+    CORRADE_VERIFY(compressedData);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openData(compressedData));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    const auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
+    /* There are very minor compression artifacts */
+    CORRADE_COMPARE_WITH(Color4{image->pixels<Color4ub>()[0][0]}, Color4{data.output}, (TestSuite::Compare::Around<Vector4>{Vector4{2.0f}}));
 }
 
 }}}}
