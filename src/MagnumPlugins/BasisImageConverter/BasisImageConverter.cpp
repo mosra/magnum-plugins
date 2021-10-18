@@ -176,6 +176,19 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     PARAM_CONFIG(ktx2_zstd_supercompression_level, int);
     params.m_ktx2_srgb_transfer_func = params.m_perceptual;
 
+    /* y_flip sets a flag in Basis files, but not in KTX2 files. Specify the
+       orientation in the key/value data:
+       https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html#_ktxorientation */
+    constexpr char OrientationKey[] = "KTXorientation";
+    char orientationValue[] = "rd";
+    if(params.m_y_flip)
+        orientationValue[1] = 'u';
+    basist::ktx2_transcoder::key_value& keyValue = *params.m_ktx2_key_values.enlarge(1);
+    keyValue.m_key.resize(sizeof(OrientationKey));
+    std::memcpy(keyValue.m_key.data(), OrientationKey, sizeof(OrientationKey));
+    keyValue.m_value.resize(sizeof(orientationValue));
+    std::memcpy(keyValue.m_value.data(), orientationValue, sizeof(orientationValue));
+
     /* Set various fields in the Basis file header */
     PARAM_CONFIG(userdata0, int);
     PARAM_CONFIG(userdata1, int);
