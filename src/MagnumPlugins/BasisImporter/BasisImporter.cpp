@@ -278,7 +278,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         /* KTX2 files only ever contain one image */
         _state->numImages = 1;
         _state->numSlices = _state->ktx2Transcoder->get_faces()*Math::max(_state->ktx2Transcoder->get_layers(), 1u);
-        _state->numLevels = Containers::Array<UnsignedInt>{DirectInit, _state->ktx2Transcoder->get_levels()};
+        _state->numLevels = Containers::Array<UnsignedInt>{DirectInit, 1, _state->ktx2Transcoder->get_levels()};
 
         _state->compressionType = _state->ktx2Transcoder->get_format();
 
