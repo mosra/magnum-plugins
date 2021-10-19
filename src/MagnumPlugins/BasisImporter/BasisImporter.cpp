@@ -358,9 +358,6 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
             const UnsignedInt levels = fileInfo.m_image_mipmap_levels[i];
             CORRADE_INTERNAL_ASSERT(levels > 0);
 
-            /** @todo Error if levels > 1 for Texture3D, the mips don't halve
-                in the z dimension */
-
             if(i == 0)
                 firstLevels = levels;
 
@@ -371,6 +368,17 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
             if(i < _state->numImages)
                 _state->numLevels[i] = levels;
+        }
+
+        /* Mip levels in basis are per 2D image, for 3D images they
+           consequently don't halve in the z-dimension. Turn it into a 2D array
+           texture so users don't get surprised by the mip z-size not changing,
+           and print a warning.
+           For non-Texture2D images, at this point firstLevels is the number
+           of levels for all slices, checked in the loop above. */
+        if(_state->textureType == TextureType::Texture3D && firstLevels > 1) {
+            Warning{} << "Trade::BasisImporter::openData(): found a 3D image with 2D mipmaps, importing as a 2D array texture";
+            _state->textureType = TextureType::Texture2DArray;
         }
 
         _state->compressionType = fileInfo.m_tex_format;
