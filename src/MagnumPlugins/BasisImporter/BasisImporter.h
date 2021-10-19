@@ -62,7 +62,7 @@ namespace Magnum { namespace Trade {
 @m_keywords{BasisImporterRGBA8 KtxImporter}
 
 Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
-compressed images (`*.basis` or `.ktx2`) by parsing and transcoding files into
+compressed images (`*.basis` or `*.ktx2`) by parsing and transcoding files into
 an explicitly specified GPU format (see @ref Trade-BasisImporter-target-format).
 You can use @ref BasisImageConverter to transcode images into this format.
 
@@ -118,6 +118,38 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::BasisImporter)
 
 See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
+
+@section Trade-BasisImporter-behavior Behavior and limitations
+
+@subsection Trade-BasisImporter-behavior-types Image types
+
+You can import all image types supported by `basisu`: (layered) 2D images,
+(layered) cube maps, 3D images and videos. With the exception of 3D images,
+they can in turn all have multiple mip levels. The image type can be determined
+from @ref texture() and @ref TextureData::type().
+
+For layered 2D images and (layered) cube maps, the array layers and faces are
+exposed as an additional image dimension. @ref image3D will return an
+@ref ImageData3D with n z-slices, or 6*n z-slices for cube maps.
+
+@subsection Trade-BasisImporter-behavior-multilevel Multilevel images
+
+Files with multiple mip levels are imported with the largest level first, with
+the size of each following level divided by 2, rounded down. Mip chains can be
+incomplete, ie. they don't have to extend all the way down to a level of size
+1x1.
+
+Because mip levels in `.basis` files are always 2-dimensional, they wouldn't
+halve correctly in the z-dimension for 3D images. If a 3D image with mip levels
+is detected, it gets imported as a layered 2D image instead, along with a
+warning being printed.
+
+@subsection Trade-BasisImporter-behavior-cube Cube maps
+
+Cube map faces are imported in the order +X, -X, +Y, -Y, +Z, -Z as seen from a
+left-handed coordinate system (+X is right, +Y is up, +Z is forward). Layered
+cube maps are stored as multiple sets of faces, ie. all faces +X through -Z for
+the first layer, then all faces of the second layer, etc.
 
 @section Trade-BasisImporter-configuration Plugin-specific configuration
 
