@@ -100,14 +100,24 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
     const Containers::ArrayView<const char> data;
     const char* message;
 } InvalidHeaderData[] {
-    {"Invalid", "rgb.basis", "NotAValidFile", "invalid basis header"},
-    {"Invalid basis header", "rgb.basis", "sB\xff\xff", "invalid basis header"},
-    {"Invalid KTX2 identifier", "rgb.ktx2", "\xabKTX 30\xbb\r\n\x1a\n", "invalid basis header"},
-    {"Invalid KTX2 header", "rgb.ktx2", "\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff", "invalid KTX2 header"}
+    {"Invalid", "NotAValidFile", "invalid basis header"},
+    {"Invalid basis header", "sB\xff\xff", "invalid basis header"},
+    {"Invalid KTX2 identifier", "\xabKTX 30\xbb\r\n\x1a\n", "invalid basis header"},
+    {"Invalid KTX2 header", "\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff", "invalid KTX2 header"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* file;
+    const std::size_t offset;
+    const char value;
+    const char* message;
+} InvalidFileData[] {
+    {"Corrupt KTX2 supercompression data", "rgb.ktx2", 184, 0x00, "bad KTX2 file"},
+    {"Corrupt basis texture type", "rgb.basis", 23, 0x7f, "bad basis file"}
 };
 
 constexpr struct {
@@ -174,7 +184,8 @@ BasisImporterTest::BasisImporterTest() {
     addInstancedTests({&BasisImporterTest::invalidHeader},
                       Containers::arraySize(InvalidHeaderData));
 
-    addTests({&BasisImporterTest::invalidFile});
+    addInstancedTests({&BasisImporterTest::invalidFile},
+                      Containers::arraySize(InvalidFileData));
 
     addInstancedTests({&BasisImporterTest::fileTooShort},
                       Containers::arraySize(FileTooShortData));
@@ -254,23 +265,22 @@ void BasisImporterTest::invalidHeader() {
 }
 
 void BasisImporterTest::invalidFile() {
+    auto&& data = InvalidFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
 
-    /* There's currently no way to make start_transcoding() fail in the KTX2
-       transcoder */
     auto basisData = Utility::Directory::read(
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis"));
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file));
+
+    CORRADE_INTERNAL_ASSERT(data.offset < basisData.size());
+    basisData[data.offset] = data.value;
 
     std::ostringstream out;
     Error redirectError{&out};
 
-    /* This corrupts the texture type */
-    constexpr std::size_t Offset = 23;
-    CORRADE_INTERNAL_ASSERT(Offset < basisData.size());
-    basisData[Offset] = 0x7f;
     CORRADE_VERIFY(!importer->openData(basisData));
-
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): bad basis file\n");
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImporter::openData(): {}\n", data.message));
 }
 
 void BasisImporterTest::fileTooShort() {
