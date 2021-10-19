@@ -340,7 +340,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 _state->textureType = TextureType::Texture2DArray;
                 break;
             case basist::basis_texture_type::cBASISTexTypeCubemapArray:
-                _state->textureType = _state->numImages > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
+                _state->textureType = _state->numSlices > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
                 break;
             case basist::basis_texture_type::cBASISTexTypeVolume:
                 _state->textureType = TextureType::Texture3D;
