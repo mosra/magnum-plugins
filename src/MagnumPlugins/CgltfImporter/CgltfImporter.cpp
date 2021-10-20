@@ -901,7 +901,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
      *      postprocess them and can't just use the memory directly.
      */
     Containers::Array<char> data{dataSize};
-    for(const std::pair<const cgltf_accessor*, SamplerData>& view: samplerData) {
+    for(const std::pair<const cgltf_accessor* const, SamplerData>& view: samplerData) {
         Containers::StridedArrayView2D<const char> src = view.second.src;
         Containers::StridedArrayView2D<char> dst{data.suffix(view.second.outputOffset),
             src.size()};
