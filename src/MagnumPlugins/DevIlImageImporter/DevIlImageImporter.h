@@ -241,7 +241,7 @@ class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImport
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL void doClose() override;
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
-        MAGNUM_DEVILIMAGEIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_DEVILIMAGEIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_DEVILIMAGEIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;

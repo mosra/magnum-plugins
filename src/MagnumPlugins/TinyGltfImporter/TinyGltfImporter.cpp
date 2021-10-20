@@ -285,7 +285,7 @@ void TinyGltfImporter::doOpenFile(const std::string& filename) {
     AbstractImporter::doOpenFile(filename);
 }
 
-void TinyGltfImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     tinygltf::TinyGLTF loader;
     std::string err;
 
@@ -2474,4 +2474,4 @@ const void* TinyGltfImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(TinyGltfImporter, Magnum::Trade::TinyGltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

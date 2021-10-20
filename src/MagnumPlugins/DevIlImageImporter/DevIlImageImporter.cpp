@@ -65,7 +65,7 @@ void DevIlImageImporter::doClose() {
 /* So we can use the shorter if(!ilFoo()) */
 static_assert(!IL_FALSE, "IL_FALSE doesn't have a zero value");
 
-void DevIlImageImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void DevIlImageImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     UnsignedInt image;
     ilGenImages(1, &image);
     ilBindImage(image);
@@ -209,4 +209,4 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt id, 
 }}
 
 CORRADE_PLUGIN_REGISTER(DevIlImageImporter, Magnum::Trade::DevIlImageImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

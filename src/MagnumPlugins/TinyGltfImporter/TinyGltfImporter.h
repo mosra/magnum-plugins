@@ -475,7 +475,7 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL bool doIsOpened() const override;
 
-        MAGNUM_TINYGLTFIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL void doClose() override;
 
