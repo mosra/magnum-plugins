@@ -71,7 +71,7 @@ void DevIlImageImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     ilBindImage(image);
 
     /* The documentation doesn't state if the data needs to stay in scope.
-       Let's assume so to avoid a copy on the importer side. */
+       Let's assume it doesn't. */
     if(!ilLoadL(configuration().value<ILenum>("type", Utility::ConfigurationValueFlag::Hex), data.begin(), data.size())) {
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
