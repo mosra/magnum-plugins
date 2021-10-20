@@ -62,7 +62,8 @@ struct DdsImporterTest: TestSuite::Tester {
     void dxt10TooShort();
     void dxt10UnsupportedFormat();
 
-    void useTwice();
+    void openTwice();
+    void importTwice();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
@@ -175,7 +176,8 @@ DdsImporterTest::DdsImporterTest() {
               &DdsImporterTest::dxt10TooShort,
               &DdsImporterTest::dxt10UnsupportedFormat,
 
-              &DdsImporterTest::useTwice});
+              &DdsImporterTest::openTwice,
+              &DdsImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -470,7 +472,16 @@ void DdsImporterTest::dxt10UnsupportedFormat() {
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unsupported DXGI format 100\n");
 }
 
-void DdsImporterTest::useTwice() {
+void DdsImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void DdsImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
 

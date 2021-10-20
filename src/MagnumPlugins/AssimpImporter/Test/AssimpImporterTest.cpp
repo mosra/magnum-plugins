@@ -157,6 +157,9 @@ struct AssimpImporterTest: TestSuite::Tester {
     void fileCallbackImage();
     void fileCallbackImageNotFound();
 
+    void openTwice();
+    void importTwice();
+
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -286,7 +289,10 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::fileCallbackEmptyFile,
               &AssimpImporterTest::fileCallbackReset,
               &AssimpImporterTest::fileCallbackImage,
-              &AssimpImporterTest::fileCallbackImageNotFound});
+              &AssimpImporterTest::fileCallbackImageNotFound,
+
+              &AssimpImporterTest::openTwice,
+              &AssimpImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -3112,6 +3118,37 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(1));
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file diffuse_texture.png\n");
+}
+
+void AssimpImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void AssimpImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
+    CORRADE_COMPARE(importer->cameraCount(), 1);
+
+    /* Verify that everything is working the same way on second use. It's only
+       testing a single data type, but better than nothing at all. */
+    {
+        Containers::Optional<CameraData> camera = importer->camera(0);
+        CORRADE_VERIFY(camera);
+        CORRADE_COMPARE(camera->fov(), 49.13434_degf);
+        CORRADE_COMPARE(camera->near(), 0.123f);
+        CORRADE_COMPARE(camera->far(), 123.0f);
+    } {
+        Containers::Optional<CameraData> camera = importer->camera(0);
+        CORRADE_VERIFY(camera);
+        CORRADE_COMPARE(camera->fov(), 49.13434_degf);
+        CORRADE_COMPARE(camera->near(), 0.123f);
+        CORRADE_COMPARE(camera->far(), 123.0f);
+    }
 }
 
 }}}}
