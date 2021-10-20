@@ -286,7 +286,7 @@ bool KtxImporter::doIsOpened() const { return !!_f; }
 
 void KtxImporter::doClose() { _f = nullptr; }
 
-void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) {
     /* Check if the file is long enough for the header */
     if(data.size() < sizeof(Implementation::KtxHeader)) {
         Error{} << "Trade::KtxImporter::openData(): file too short, expected"
@@ -457,9 +457,13 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
     }
     f->pixelFormat.typeSize = header.typeSize;
 
-    /* Make an owned copy of the data */
-    f->in = Containers::Array<char>{NoInit, data.size()};
-    Utility::copy(data, f->in);
+    /* Take over the existing array or copy the data if we can't */
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        f->in = std::move(data);
+    } else {
+        f->in = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, f->in);
+    }
 
     /* The level index contains byte ranges for each mipmap, from largest to
        smallest. Each mipmap contains tightly packed images ordered by
@@ -494,9 +498,9 @@ void KtxImporter::doOpenData(const Containers::ArrayView<const char> data) {
         }
 
         const std::size_t levelEnd = level.byteOffset + level.byteLength;
-        if(data.size() < levelEnd) {
+        if(f->in.size() < levelEnd) {
             Error{} << "Trade::KtxImporter::openData(): file too short, expected"
-                << levelEnd << "bytes for level data but got only" << data.size();
+                << levelEnd << "bytes for level data but got only" << f->in.size();
             return;
         }
 
@@ -809,4 +813,4 @@ Containers::Optional<TextureData> KtxImporter::doTexture(UnsignedInt id) {
 }}
 
 CORRADE_PLUGIN_REGISTER(KtxImporter, Magnum::Trade::KtxImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

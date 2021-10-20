@@ -131,10 +131,15 @@ bool OpenExrImporter::doIsOpened() const { return !!_state; }
 
 void OpenExrImporter::doClose() { _state = nullptr; }
 
-void OpenExrImporter::doOpenData(const Containers::ArrayView<const char> data) {
-    /* Make an owned copy of the data */
-    Containers::Array<char> dataCopy{NoInit, data.size()};
-    Utility::copy(data, dataCopy);
+void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
+    /* Take over the existing array or copy the data if we can't */
+    Containers::Array<char> dataCopy;
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        dataCopy = std::move(data);
+    } else {
+        dataCopy = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, dataCopy);
+    }
 
     /* Set up the input stream using the MemoryIStream class above */
     Containers::Pointer<State> state{InPlaceInit, std::move(dataCopy)};
@@ -631,4 +636,4 @@ Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, const 
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenExrImporter, Magnum::Trade::OpenExrImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

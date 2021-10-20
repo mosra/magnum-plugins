@@ -117,7 +117,7 @@ class MAGNUM_ICOIMPORTER_EXPORT IcoImporter: public AbstractImporter {
         MAGNUM_ICOIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_ICOIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_ICOIMPORTER_LOCAL void doClose() override;
-        MAGNUM_ICOIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_ICOIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
         MAGNUM_ICOIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_ICOIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;

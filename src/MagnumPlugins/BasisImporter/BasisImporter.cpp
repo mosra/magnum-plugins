@@ -173,7 +173,7 @@ void BasisImporter::doClose() {
     _state->in = nullptr;
 }
 
-void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) {
     /* Because here we're copying the data and using the _in to check if file
        is opened, having them nullptr would mean openData() would fail without
        any error message. It's not possible to do this check on the importer
@@ -203,10 +203,15 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    /* All good, release the transcoder guard and keep a copy of the data */
+    /* All good, release the transcoder guard. Keep the original data, take
+       over the existing array or copy the data if we can't. */
     transcoderGuard.release();
-    _state->in = Containers::Array<char>{NoInit, data.size()};
-    Utility::copy(data, _state->in);
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        _state->in = std::move(data);
+    } else {
+        _state->in = Containers::Array<char>{data.size()};
+        Utility::copy(data, _state->in);
+    }
 }
 
 UnsignedInt BasisImporter::doImage2DCount() const {
@@ -294,4 +299,4 @@ BasisImporter::TargetFormat BasisImporter::targetFormat() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImporter, Magnum::Trade::BasisImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

@@ -109,6 +109,7 @@ struct KtxImporterTest: TestSuite::Tester {
     void swizzleUnsupported();
     void swizzleCompressed();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -396,6 +397,22 @@ const struct {
         nullptr, Containers::arrayCast<const char>(PatternRgba2DData)}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 Containers::Array<char> createKeyValueData(Containers::StringView key, Containers::ArrayView<const char> value, bool terminatingZero = false) {
     UnsignedInt size = key.size() + 1 + value.size() + UnsignedInt(terminatingZero);
     size = (size + 3)/4*4;
@@ -502,9 +519,12 @@ KtxImporterTest::KtxImporterTest() {
     addTests({&KtxImporterTest::swizzleMultipleBytes,
               &KtxImporterTest::swizzleIdentity,
               &KtxImporterTest::swizzleUnsupported,
-              &KtxImporterTest::swizzleCompressed,
+              &KtxImporterTest::swizzleCompressed});
 
-              &KtxImporterTest::openTwice,
+    addInstancedTests({&KtxImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&KtxImporterTest::openTwice,
               &KtxImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -1755,6 +1775,36 @@ void KtxImporterTest::swizzleCompressed() {
 
     CORRADE_VERIFY(!importer->openData(fileData));
     CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported channel mapping bgra\n");
+}
+
+void KtxImporterTest::openMemory() {
+    /* Same as imageRgba() except that it uses openData() & openMemory()
+       instead of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
+
+    const PixelStorage storage = image->storage();
+    CORRADE_COMPARE(storage.alignment(), 4);
+    CORRADE_COMPARE(storage.rowLength(), 0);
+    CORRADE_COMPARE(storage.imageHeight(), 0);
+    CORRADE_COMPARE(storage.skip(), Vector3i{});
+
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayCast<const char>(PatternRgba2DData), TestSuite::Compare::Container);
 }
 
 void KtxImporterTest::openTwice() {

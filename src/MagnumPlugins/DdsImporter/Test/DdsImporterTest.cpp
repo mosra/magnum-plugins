@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Resource.h>
@@ -62,6 +63,7 @@ struct DdsImporterTest: TestSuite::Tester {
     void dxt10TooShort();
     void dxt10UnsupportedFormat();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -151,6 +153,22 @@ constexpr struct {
     {"3D_R32G32B32_UINT.dds", PixelFormat::RGB32UI}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 DdsImporterTest::DdsImporterTest() {
     addTests({&DdsImporterTest::wrongSignature,
               &DdsImporterTest::unknownFormat,
@@ -174,9 +192,12 @@ DdsImporterTest::DdsImporterTest() {
 
     addTests({&DdsImporterTest::dxt10Data,
               &DdsImporterTest::dxt10TooShort,
-              &DdsImporterTest::dxt10UnsupportedFormat,
+              &DdsImporterTest::dxt10UnsupportedFormat});
 
-              &DdsImporterTest::openTwice,
+    addInstancedTests({&DdsImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&DdsImporterTest::openTwice,
               &DdsImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -470,6 +491,27 @@ void DdsImporterTest::dxt10UnsupportedFormat() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(!importer->openData(resource.getRaw("2D_AYUV.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unsupported DXGI format 100\n");
+}
+
+void DdsImporterTest::openMemory() {
+    /* same as dxt1() except that it uses openData() & openMemory() instead of
+       openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt1.dds"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBAUnorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
+    }), TestSuite::Compare::Container);
 }
 
 void DdsImporterTest::openTwice() {

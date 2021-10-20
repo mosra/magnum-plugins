@@ -76,7 +76,7 @@ void StbImageImporter::doClose() {
     _in = nullptr;
 }
 
-void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void StbImageImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     /* Because here we're copying the data and using the _in to check if file
        is opened, having them nullptr would mean openData() would fail without
        any error message. It's not possible to do this check on the importer
@@ -137,9 +137,14 @@ void StbImageImporter::doOpenData(const Containers::ArrayView<const char> data) 
         }
     }
 
+    /* Take over the existing array or copy the data if we can't */
     _in.emplace();
-    _in->data = Containers::Array<char>{data.size()};
-    Utility::copy(data, _in->data);
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        _in->data = std::move(data);
+    } else {
+        _in->data = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, _in->data);
+    }
 }
 
 const void* StbImageImporter::doImporterState() const {
@@ -233,4 +238,4 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
 }}
 
 CORRADE_PLUGIN_REGISTER(StbImageImporter, Magnum::Trade::StbImageImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

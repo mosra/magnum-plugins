@@ -305,7 +305,7 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         MAGNUM_BASISIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_BASISIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_BASISIMPORTER_LOCAL void doClose() override;
-        MAGNUM_BASISIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_BASISIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
         MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;

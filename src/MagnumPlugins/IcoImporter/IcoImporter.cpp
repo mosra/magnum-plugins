@@ -86,7 +86,7 @@ namespace {
     };
 }
 
-void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void IcoImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     if(data.size() < sizeof(IconDir)) {
         Error{} << "Trade::IcoImporter::openData(): file header too short, expected at least" << sizeof(IconDir) << "bytes but got" << data.size();
         return;
@@ -96,9 +96,15 @@ void IcoImporter::doOpenData(const Containers::ArrayView<const char> data) {
     Utility::Endianness::littleEndianInPlace(header.imageType, header.imageCount);
 
     Containers::Pointer<State> state{InPlaceInit};
-    state->data = Containers::Array<char>{NoInit, data.size()};
     state->levels = Containers::Array<Containers::ArrayView<const char>>{header.imageCount};
-    Utility::copy(data, state->data);
+
+    /* Take over the existing array or copy the data if we can't */
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        state->data = std::move(data);
+    } else {
+        state->data = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, state->data);
+    }
 
     for(UnsignedInt i = 0; i != header.imageCount; ++i) {
         std::size_t iconDirEntryOffset = sizeof(IconDir) + sizeof(IconDirEntry)*i;
@@ -156,4 +162,4 @@ Containers::Optional<ImageData2D> IcoImporter::doImage2D(UnsignedInt, UnsignedIn
 }}
 
 CORRADE_PLUGIN_REGISTER(IcoImporter, Magnum::Trade::IcoImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

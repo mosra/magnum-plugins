@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -60,6 +61,7 @@ struct BasisImporterTest: TestSuite::Tester {
     void rgb();
     void rgba();
 
+    void openMemory();
     void openSameTwice();
     void openDifferent();
     void importMultipleFormats();
@@ -101,6 +103,22 @@ constexpr struct {
      "EacRG", CompressedPixelFormat::EacRG11Unorm, {63, 27}}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 BasisImporterTest::BasisImporterTest() {
     addTests({&BasisImporterTest::empty,
               &BasisImporterTest::invalid,
@@ -117,6 +135,9 @@ BasisImporterTest::BasisImporterTest() {
     addInstancedTests({&BasisImporterTest::rgb,
                        &BasisImporterTest::rgba},
                        Containers::arraySize(FormatData));
+
+    addInstancedTests({&BasisImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
 
     addTests({&BasisImporterTest::openSameTwice,
               &BasisImporterTest::openDifferent,
@@ -455,6 +476,39 @@ void BasisImporterTest::rgba() {
     /** @todo remove this once CompressedImage etc. tests for data size on its
         own / we're able to decode the data ourselves */
     CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedFormat)*((image->size() + compressedBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedFormat).xy()).product());
+}
+
+void BasisImporterTest::openMemory() {
+    /* Same as rgbaUncompressed() except that it uses openData() & openMemory()
+       instead of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer);
+    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
+        "RGBA8");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        "rgba.basis"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.31f}));
 }
 
 void BasisImporterTest::openSameTwice() {

@@ -27,6 +27,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/PixelFormat.h>
@@ -46,6 +47,7 @@ struct JpegImporterTest: TestSuite::Tester {
     void gray();
     void rgb();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -53,14 +55,33 @@ struct JpegImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 JpegImporterTest::JpegImporterTest() {
     addTests({&JpegImporterTest::empty,
               &JpegImporterTest::invalid,
 
               &JpegImporterTest::gray,
-              &JpegImporterTest::rgb,
+              &JpegImporterTest::rgb});
 
-              &JpegImporterTest::openTwice,
+    addInstancedTests({&JpegImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&JpegImporterTest::openTwice,
               &JpegImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -143,6 +164,33 @@ void JpegImporterTest::rgb() {
         '\xe0', '\xad', '\xb6',
         '\xc9', '\xff', '\x76',
         '\xdf', '\xad', '\xb6', 0, 0, 0
+    }), TestSuite::Compare::Container);
+}
+
+void JpegImporterTest::openMemory() {
+    /* same as gray() except that it uses openData() & openMemory() instead of
+       openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
+
+    /* The image has four-byte aligned rows, clear the padding to deterministic
+       values */
+    CORRADE_COMPARE(image->data().size(), 8);
+    image->mutableData()[3] = image->mutableData()[7] = 0;
+
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xff', '\x88', '\x00', 0,
+        '\x88', '\x00', '\xff', 0
     }), TestSuite::Compare::Container);
 }
 

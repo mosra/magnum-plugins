@@ -407,7 +407,7 @@ class MAGNUM_CGLTFIMPORTER_EXPORT CgltfImporter: public AbstractImporter {
 
         MAGNUM_CGLTFIMPORTER_LOCAL bool doIsOpened() const override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_CGLTFIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
         MAGNUM_CGLTFIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_CGLTFIMPORTER_LOCAL void doClose() override;
 
