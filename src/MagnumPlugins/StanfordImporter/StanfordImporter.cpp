@@ -74,21 +74,6 @@ bool StanfordImporter::doIsOpened() const { return !!_state; }
 
 void StanfordImporter::doClose() { _state = nullptr; }
 
-void StanfordImporter::doOpenFile(const std::string& filename) {
-    if(!Utility::Directory::exists(filename)) {
-        Error{} << "Trade::StanfordImporter::openFile(): cannot open file" << filename;
-        return;
-    }
-
-    openDataInternal(Utility::Directory::read(filename));
-}
-
-void StanfordImporter::doOpenData(Containers::ArrayView<const char> data) {
-    Containers::Array<char> copy{NoInit, data.size()};
-    Utility::copy(data, copy);
-    openDataInternal(std::move(copy));
-}
-
 namespace {
 
 enum class PropertyType {
@@ -188,7 +173,7 @@ template<std::size_t size> bool checkVectorAttributeValidity(const Math::Vector<
 
 }
 
-void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
+void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     /* Because here we're copying the data and using the _in to check if file
        is opened, having them nullptr would mean openData() would fail without
        any error message. It's not possible to do this check on the importer
@@ -201,9 +186,18 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
         return;
     }
 
+    /* Take over the existing array or copy the data if we can't */
+    Containers::Array<char> dataCopy;
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        dataCopy = std::move(data);
+    } else {
+        dataCopy = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, dataCopy);
+    }
+
     /* Initialize the state */
     auto state = Containers::pointer<State>();
-    Containers::ArrayView<const char> in = data;
+    Containers::ArrayView<const char> in = dataCopy;
 
     /* Check file signature */
     {
@@ -651,7 +645,7 @@ void StanfordImporter::openDataInternal(Containers::Array<char>&& data) {
 
     /* All good, move the data to the state struct and save it. Remember header
        size so we can directly access the binary data in doMesh(). */
-    state->data = std::move(data);
+    state->data = std::move(dataCopy);
     state->headerSize = state->data.size() - in.size();
     _state = std::move(state);
 }
@@ -897,4 +891,4 @@ MeshAttribute StanfordImporter::doMeshAttributeForName(const std::string& name) 
 }}
 
 CORRADE_PLUGIN_REGISTER(StanfordImporter, Magnum::Trade::StanfordImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")
