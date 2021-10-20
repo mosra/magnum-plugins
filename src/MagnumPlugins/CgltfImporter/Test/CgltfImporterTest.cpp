@@ -764,6 +764,9 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::texture},
                       Containers::arraySize(SingleFileData));
 
+    addInstancedTests({&CgltfImporterTest::textureOutOfBounds},
+                      Containers::arraySize(TextureOutOfBoundsData));
+
     addInstancedTests({&CgltfImporterTest::textureInvalid},
                       Containers::arraySize(TextureInvalidData));
 
