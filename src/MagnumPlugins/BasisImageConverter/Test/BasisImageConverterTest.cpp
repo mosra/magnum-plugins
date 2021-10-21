@@ -59,6 +59,9 @@ struct BasisImageConverterTest: TestSuite::Tester {
 
     void processError();
 
+    void configPerceptual();
+    void configMipGen();
+
     void r();
     void rg();
     void rgb();
@@ -101,6 +104,9 @@ BasisImageConverterTest::BasisImageConverterTest() {
               &BasisImageConverterTest::levelWrongSize,
 
               &BasisImageConverterTest::processError,
+
+              &BasisImageConverterTest::configPerceptual,
+              &BasisImageConverterTest::configMipGen,
 
               &BasisImageConverterTest::r,
               &BasisImageConverterTest::rg,
@@ -209,6 +215,75 @@ void BasisImageConverterTest::processError() {
     CORRADE_VERIFY(!converter->convertToData(imageWithSkip));
     CORRADE_COMPARE(out.str(),
         "Trade::BasisImageConverter::convertToData(): frontend processing failed\n");
+}
+
+void BasisImageConverterTest::configPerceptual() {
+    const char bytes[4]{};
+    ImageView2D originalImage{PixelFormat::RGBA8Unorm, Vector2i{1}, bytes};
+
+    Containers::Pointer<AbstractImageConverter> converter =
+        _converterManager.instantiate("BasisImageConverter");
+    /* Empty by default */
+    CORRADE_COMPARE(converter->configuration().value("perceptual"), "");
+
+    const auto compressedDataAutomatic = converter->convertToData(originalImage);
+    CORRADE_VERIFY(compressedDataAutomatic);
+
+    CORRADE_VERIFY(converter->configuration().setValue("perceptual", true));
+
+    const auto compressedDataOverridden = converter->convertToData(originalImage);
+    CORRADE_VERIFY(compressedDataOverridden);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+
+    /* Empty perceptual config means to use the image format to determine if
+       the output data should be sRGB */
+    CORRADE_VERIFY(importer->openData(compressedDataAutomatic));
+    auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+
+    /* Perceptual true/false overrides the input format and forces sRGB on/off */
+    CORRADE_VERIFY(importer->openData(compressedDataOverridden));
+    image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+}
+
+void BasisImageConverterTest::configMipGen() {
+    const char bytes[16*16*4]{};
+    ImageView2D originalLevel0{PixelFormat::RGBA8Unorm, Vector2i{16}, bytes};
+    ImageView2D originalLevel1{PixelFormat::RGBA8Unorm, Vector2i{8}, bytes};
+
+    Containers::Pointer<AbstractImageConverter> converter =
+        _converterManager.instantiate("BasisImageConverter");
+    /* Empty by default */
+    CORRADE_COMPARE(converter->configuration().value<bool>("mip_gen"), false);
+    CORRADE_VERIFY(converter->configuration().setValue("mip_gen", ""));
+
+    const auto compressedDataGenerated = converter->convertToData({originalLevel0});
+    CORRADE_VERIFY(compressedDataGenerated);
+
+    const auto compressedDataProvided = converter->convertToData({originalLevel0, originalLevel1});
+    CORRADE_VERIFY(compressedDataProvided);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+
+    /* Empty mip_gen config means to use the level count to determine if mip
+       levels should be generated */
+    CORRADE_VERIFY(importer->openData(compressedDataGenerated));
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 5);
+
+    CORRADE_VERIFY(importer->openData(compressedDataProvided));
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
 }
 
 template<typename SourceType, typename DestinationType = SourceType>
@@ -442,6 +517,7 @@ void BasisImageConverterTest::customLevels() {
         *originalLevel2, {7, 8, 0}, PixelFormat::RGBA8Unorm);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+
     const auto compressedData = converter->convertToData({level0WithSkip, level1WithSkip, level2WithSkip});
     CORRADE_VERIFY(compressedData);
 
@@ -450,6 +526,13 @@ void BasisImageConverterTest::customLevels() {
 
     Containers::Pointer<AbstractImporter> importer =
         _manager.instantiate("BasisImporterRGBA8");
+    /* Off by default */
+    CORRADE_COMPARE(converter->configuration().value<bool>("mip_gen"), false);
+    /* Making sure that providing custom levels turns off automatic mip level
+       generation. We only provide an incomplete mip chain so we can tell if
+       basis generated any extra levels beyond that. */
+    CORRADE_VERIFY(converter->configuration().setValue("mip_gen", true));
+
     CORRADE_VERIFY(importer->openData(compressedData));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
