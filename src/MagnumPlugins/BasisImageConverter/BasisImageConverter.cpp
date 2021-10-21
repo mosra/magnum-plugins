@@ -205,8 +205,13 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     #undef PARAM_CONFIG
     #undef PARAM_CONFIG_FIX_NAME
 
-    /* If these are enabled, the library reads PNGs from a filesystem and then
-       writes basis files there also. DO NOT WANT. */
+    /* Don't spam stdout with debug info by default. Basis error output is
+       unaffected by this. Unfortunately, there's no way to redirect the output
+       to Debug. */
+    params.m_status_output = flags() >= ImageConverterFlag::Verbose;
+
+    /* If these are enabled, the library reads BMPs/JPGs/PNGs/TGAs from the
+       filesystem and then writes basis files there also. DO NOT WANT. */
     params.m_read_source_images = false;
     params.m_write_output_basis_files = false;
 
