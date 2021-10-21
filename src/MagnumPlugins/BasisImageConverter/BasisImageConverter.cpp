@@ -87,6 +87,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     /* Options deduced from input data. Can be overridden by config values, if
        present. */
     params.m_perceptual = isSrgb;
+    params.m_mip_gen = numMipmaps > 1;
     params.m_mip_srgb = isSrgb;
 
     /* To retain sanity, keep this in the same order and grouping as in the
