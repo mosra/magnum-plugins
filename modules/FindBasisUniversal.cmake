@@ -58,12 +58,32 @@ if(${_index} GREATER -1)
     list(REMOVE_DUPLICATES BasisUniversal_FIND_COMPONENTS)
 endif()
 
+# Figure out endianness for Basis Universal. test_big_endian() fails on
+# Emscripten, but WebAssembly is always little-endian. On CMake 3.8 and below,
+# test_big_endian() requires C support, which gets enabled from the
+# BasisImporter / BasisImageConverter CMakeLists as doing that in the find
+# module doesn't seem like a good thing to do.
+if(NOT CORRADE_TARGET_EMSCRIPTEN)
+    include(TestBigEndian)
+    test_big_endian(_BASIS_BIG_ENDIAN)
+endif()
+
 macro(_basis_setup_source_file source)
     # Compile any .c files as C++ since we can't guarantee that C is enabled
     # in the calling scope, either inside project() or with enable_language().
     # Otherwise, they won't get compiled at all, leading to undefined symbols.
+    # These don't require any fancy new C features that C++11 wouldn't have so
+    # this is enough, and by not enabling C we can save several seconds at
+    # CMake configure time.
     set_property(SOURCE ${source} PROPERTY LANGUAGE
         CXX)
+
+    # Tell Basis if we're on a big endian system. It currently doesn't figure
+    # this out by itself.
+    if(_BASIS_BIG_ENDIAN)
+        set_property(SOURCE ${source} APPEND PROPERTY COMPILE_DEFINITIONS
+            BASISD_IS_BIG_ENDIAN=1)
+    endif()
 
     # Basis shouldn't override the MSVC iterator debug level as it would make
     # it inconsistent with the rest of the code
