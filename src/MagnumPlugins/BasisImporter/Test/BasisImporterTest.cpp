@@ -1187,17 +1187,19 @@ void BasisImporterTest::openSameTwice() {
 
 void BasisImporterTest::openDifferent() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterEtc2RGBA");
-    CORRADE_VERIFY(importer->openFile(
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
-    CORRADE_VERIFY(importer->openFile(
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-2images-mips.basis")));
-    CORRADE_COMPARE(importer->image2DCount(), 2);
 
-    /* Shouldn't crash, leak or anything */
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(1);
+    CORRADE_VERIFY(importer->openFile(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-video.basis")));
+    CORRADE_VERIFY(importer->openFile(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-cubemap-array.ktx2")));
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+
+    /* Verify that everything is working properly with different files
+       and transcoders. Shouldn't crash, leak or anything. */
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
-    CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
+    CORRADE_COMPARE(image->size(), (Vector3i{27, 27, 12}));
 }
 
 void BasisImporterTest::importMultipleFormats() {
