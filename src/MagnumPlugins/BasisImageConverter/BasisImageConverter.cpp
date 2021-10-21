@@ -87,15 +87,15 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     /* Options deduced from input data. Can be overridden by config values, if
        present. */
     params.m_perceptual = isSrgb;
-    params.m_mip_gen = numMipmaps > 1;
+    params.m_mip_gen = imageLevels.size() == 1;
     params.m_mip_srgb = isSrgb;
 
     /* To retain sanity, keep this in the same order and grouping as in the
        conf file */
     #define PARAM_CONFIG(name, type) \
-        if(configuration().hasValue(#name)) params.m_##name = configuration().value<type>(#name)
+        if(!configuration().value(#name).empty()) params.m_##name = configuration().value<type>(#name)
     #define PARAM_CONFIG_FIX_NAME(name, type, fixed) \
-        if(configuration().hasValue(fixed)) params.m_##name = configuration().value<type>(fixed)
+        if(!configuration().value(fixed).empty()) params.m_##name = configuration().value<type>(fixed)
     /* Options */
     PARAM_CONFIG(quality_level, int);
     PARAM_CONFIG(perceptual, bool);
@@ -223,8 +223,10 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
        m_source_mipmap_images. If m_source_mipmap_images is not empty, mip
        generation is disabled. */
     params.m_source_images.resize(1);
-    params.m_source_mipmap_images.resize(1);
-    params.m_source_mipmap_images[0].resize(imageLevels.size() - 1);
+    if(imageLevels.size() > 1) {
+        params.m_source_mipmap_images.resize(1);
+        params.m_source_mipmap_images[0].resize(imageLevels.size() - 1);
+    }
 
     for(UnsignedInt i = 0; i != imageLevels.size(); ++i) {
         const Vector2i mipSize = Math::max(size >> i, 1);
