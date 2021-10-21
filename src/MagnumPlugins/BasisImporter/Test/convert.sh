@@ -39,6 +39,10 @@ basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2dar
 basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type video -output_file rgba-video.basis -force_alpha -y_flip
 basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type video -output_file rgba-video.ktx2  -force_alpha -y_flip -ktx2
 
+# Video with UASTC to make sure the I-frame detection works
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type video -output_file rgba-video-uastc.basis -uastc -force_alpha -y_flip
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type video -output_file rgba-video-uastc.ktx2  -uastc -force_alpha -y_flip -ktx2
+
 # 3D
 basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 3d -output_file rgba-3d.basis -force_alpha -y_flip
 basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 3d -output_file rgba-3d.ktx2  -force_alpha -y_flip -ktx2

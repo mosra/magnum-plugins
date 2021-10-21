@@ -82,6 +82,9 @@ struct BasisImporterTest: TestSuite::Tester {
     void cubeMap();
     void cubeMapArray();
 
+    void videoSeeking();
+    void videoVerbose();
+
     void openMemory();
     void openSameTwice();
     void openDifferent();
@@ -141,7 +144,8 @@ const struct {
     {"Cube map", "rgba-cubemap", TextureType::CubeMap},
     {"Cube map array", "rgba-cubemap-array", TextureType::CubeMapArray},
     {"3D", "rgba-3d", TextureType::Texture3D},
-    {"3D mipmaps", "rgba-3d-mips", TextureType::Texture2DArray}
+    {"3D mipmaps", "rgba-3d-mips", TextureType::Texture2DArray},
+    {"Video", "rgba-video", TextureType::Texture2D}
 };
 
 constexpr struct {
@@ -177,6 +181,16 @@ constexpr struct {
      "EacR", CompressedPixelFormat::EacR11Unorm, CompressedPixelFormat::EacR11Unorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
      "EacRG", CompressedPixelFormat::EacRG11Unorm, CompressedPixelFormat::EacRG11Unorm}
+};
+
+const struct {
+    const char* name;
+    const char* file;
+} VideoSeekingData[]{
+    {"Basis ETC1S", "rgba-video.basis"},
+    {"KTX2 ETC1S", "rgba-video.ktx2"},
+    {"Basis UASTC", "rgba-video-uastc.basis"},
+    {"KTX2 UASTC", "rgba-video-uastc.ktx2"}
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -238,6 +252,11 @@ BasisImporterTest::BasisImporterTest() {
                        &BasisImporterTest::cubeMap,
                        &BasisImporterTest::cubeMapArray},
                       Containers::arraySize(FileTypeData));
+
+    addInstancedTests({&BasisImporterTest::videoSeeking},
+                      Containers::arraySize(VideoSeekingData));
+
+    addTests({&BasisImporterTest::videoVerbose});
 
     addInstancedTests({&BasisImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -879,13 +898,17 @@ void BasisImporterTest::video() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-video"} + data.extension)));
 
-    CORRADE_COMPARE(importer->image3DCount(), 1);
-    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+    Containers::Optional<Trade::ImageData2D> frames[3];
 
-    CORRADE_COMPARE(image->size(), (Vector3i{63, 27, 3}));
+    CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(frames));
+
+    for(UnsignedInt i = 0; i != Containers::arraySize(frames); ++i) {
+        frames[i] = importer->image2D(i);
+        CORRADE_VERIFY(frames[i]);
+        CORRADE_VERIFY(!frames[i]->isCompressed());
+        CORRADE_COMPARE(frames[i]->format(), PixelFormat::RGBA8Srgb);
+        CORRADE_COMPARE(frames[i]->size(), (Vector2i{63, 27}));
+    }
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -893,13 +916,13 @@ void BasisImporterTest::video() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     /* There are moderately significant compression artifacts */
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0],
+    CORRADE_COMPARE_WITH(frames[0]->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         (DebugTools::CompareImageToFile{_manager, 96.25f, 8.198f}));
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1],
+    CORRADE_COMPARE_WITH(frames[1]->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice1.png"),
         (DebugTools::CompareImageToFile{_manager, 74.0f, 6.507f}));
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2],
+    CORRADE_COMPARE_WITH(frames[2]->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice2.png"),
         (DebugTools::CompareImageToFile{_manager, 76.0f, 8.311f}));
 }
@@ -1108,6 +1131,49 @@ void BasisImporterTest::cubeMapArray() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[11],
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x27-slice2.png"),
         (DebugTools::CompareImageToFile{_manager, 88.0f, 10.591f}));
+}
+
+void BasisImporterTest::videoSeeking() {
+    auto& data = VideoSeekingData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        data.file)));
+
+    CORRADE_COMPARE(importer->image2DCount(), 3);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->image2D(2));
+    CORRADE_VERIFY(importer->image2D(0));
+    CORRADE_VERIFY(!importer->image2D(2));
+    CORRADE_VERIFY(importer->image2D(1));
+    CORRADE_VERIFY(importer->image2D(2));
+    CORRADE_VERIFY(importer->image2D(0));
+
+    CORRADE_COMPARE(out.str(),
+        "Trade::BasisImporter::image2D(): video frames must be transcoded sequentially, expected frame 0 but got 2\n"
+        "Trade::BasisImporter::image2D(): video frames must be transcoded sequentially, expected frame 1 or 0 but got 2\n");
+}
+
+void BasisImporterTest::videoVerbose() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+
+    std::ostringstream out;
+    Debug redirectDebug{&out};
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        "rgba-video.basis")));
+    CORRADE_COMPARE(out.str(), "");
+
+    importer->close();
+    importer->setFlags(ImporterFlag::Verbose);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        "rgba-video.basis")));
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially\n");
 }
 
 void BasisImporterTest::openMemory() {

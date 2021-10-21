@@ -158,10 +158,12 @@ struct BasisImporter::State {
     Containers::Array<UnsignedInt> numLevels;
 
     basist::basis_tex_format compressionType;
+    bool isVideo;
     bool isYFlipped;
     bool isSrgb;
 
     bool noTranscodeFormatWarningPrinted = false;
+    UnsignedInt lastTranscodedImageId = ~0u;
 
     explicit State(): codebook(basist::g_global_selector_cb_size,
         basist::g_global_selector_cb) {}
@@ -281,15 +283,25 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
 
         /* Remember the type for doTexture(). ktx2_transcoder::init() already
            checked we're dealing with a valid 2D texture. */
+        _state->isVideo = false;
         if(_state->ktx2Transcoder->get_faces() != 1)
             _state->textureType = _state->ktx2Transcoder->get_layers() > 0 ? TextureType::CubeMapArray : TextureType::CubeMap;
-        else
+        else if(_state->ktx2Transcoder->is_video()) {
+            _state->textureType = TextureType::Texture2D;
+            _state->isVideo = true;
+        } else
             _state->textureType = _state->ktx2Transcoder->get_layers() > 0 ? TextureType::Texture2DArray : TextureType::Texture2D;
 
-        /* KTX2 files only ever contain one image */
-        _state->numImages = 1;
-        _state->numSlices = _state->ktx2Transcoder->get_faces()*Math::max(_state->ktx2Transcoder->get_layers(), 1u);
-        _state->numLevels = Containers::Array<UnsignedInt>{DirectInit, 1, _state->ktx2Transcoder->get_levels()};
+        /* KTX2 files only ever contain one image, but for videos we choose to
+           expose layers as multiple images, one for each frame */
+        if(_state->isVideo) {
+            _state->numImages = Math::max(_state->ktx2Transcoder->get_layers(), 1u);
+            _state->numSlices = 1;
+        } else {
+            _state->numImages = 1;
+            _state->numSlices = _state->ktx2Transcoder->get_faces()*Math::max(_state->ktx2Transcoder->get_layers(), 1u);
+        }
+        _state->numLevels = Containers::Array<UnsignedInt>{DirectInit, _state->numImages, _state->ktx2Transcoder->get_levels()};
 
         _state->compressionType = _state->ktx2Transcoder->get_format();
 
@@ -322,31 +334,32 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
            directly because that's specific to .basis files, and there's no
            equivalent in ktx2_transcoder. */
 
+        /* This is checked by basis_transcoder::start_transcoding() */
+        CORRADE_INTERNAL_ASSERT(fileInfo.m_total_images > 0);
+
         /* Remember the type for doTexture(). Depending on the type, we're
            either dealing with multiple independent 2D images or each image is
            an array layer, cubemap face or depth slice with the same
            resolution. */
-
-        /* This is checked by basis_transcoder::start_transcoding() */
-        CORRADE_INTERNAL_ASSERT(fileInfo.m_total_images > 0);
-
-        /* Default, swapped for cBASISTexType2D */
-        _state->numImages = 1;
-        _state->numSlices = fileInfo.m_total_images;
-
+        _state->isVideo = false;
         switch(fileInfo.m_tex_type) {
-            case basist::basis_texture_type::cBASISTexType2D:
-                std::swap(_state->numImages, _state->numSlices);
+            case basist::basis_texture_type::cBASISTexTypeVideoFrames:
+                /* Decoding all video frames at once is usually not what you
+                   want, so we treat videos as independent 2D images. We still
+                   have to check that the sizes match, and need to remember
+                   this is a video to disallow seeking (not supported by
+                   basisu). */
+                _state->isVideo = true;
                 _state->textureType = TextureType::Texture2D;
                 break;
-            case basist::basis_texture_type::cBASISTexTypeVideoFrames:
-                /* We don't do anything special with video frames, treat them
-                   like array layers */
+            case basist::basis_texture_type::cBASISTexType2D:
+                _state->textureType = TextureType::Texture2D;
+                break;
             case basist::basis_texture_type::cBASISTexType2DArray:
                 _state->textureType = TextureType::Texture2DArray;
                 break;
             case basist::basis_texture_type::cBASISTexTypeCubemapArray:
-                _state->textureType = _state->numSlices > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
+                _state->textureType = fileInfo.m_total_images > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
                 break;
             case basist::basis_texture_type::cBASISTexTypeVolume:
                 _state->textureType = TextureType::Texture3D;
@@ -356,33 +369,38 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                 CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
+        if(_state->textureType == TextureType::Texture2D) {
+            _state->numImages = fileInfo.m_total_images;
+            _state->numSlices = 1;
+        } else {
+            _state->numImages = 1;
+            _state->numSlices = fileInfo.m_total_images;
+        }
+
         CORRADE_INTERNAL_ASSERT(fileInfo.m_image_mipmap_levels.size() == fileInfo.m_total_images);
 
+        /* Get mip level count for each image, check that they're the same for
+           videos, cube maps and arrays */
+        const bool levelsMustMatch = _state->textureType != TextureType::Texture2D || _state->isVideo;
         _state->numLevels = Containers::Array<UnsignedInt>{NoInit, _state->numImages};
-        UnsignedInt firstLevels = 0;
         for(UnsignedInt i = 0; i != fileInfo.m_total_images; ++i) {
-            const UnsignedInt levels = fileInfo.m_image_mipmap_levels[i];
-            CORRADE_INTERNAL_ASSERT(levels > 0);
+            const UnsignedInt numLevels = fileInfo.m_image_mipmap_levels[i];
+            CORRADE_INTERNAL_ASSERT(numLevels > 0);
 
-            if(i == 0)
-                firstLevels = levels;
-
-            if(levels != firstLevels) {
-                Error() << "Trade::BasisImporter::openData(): mismatching level count for successive image slices";
+            if(levelsMustMatch && i > 0 && numLevels != _state->numLevels[0]) {
+                Error{} << "Trade::BasisImporter::openData(): mismatching level count for successive image slices";
                 return;
             }
 
             if(i < _state->numImages)
-                _state->numLevels[i] = levels;
+                _state->numLevels[i] = numLevels;
         }
 
-        /* Mip levels in basis are per 2D image, for 3D images they
-           consequently don't halve in the z-dimension. Turn it into a 2D array
-           texture so users don't get surprised by the mip z-size not changing,
-           and print a warning.
-           For non-Texture2D images, at this point firstLevels is the number
-           of levels for all slices, checked in the loop above. */
-        if(_state->textureType == TextureType::Texture3D && firstLevels > 1) {
+        /* Mip levels in basis are per 2D image, so for 3D images they don't
+           halve in the z-dimension. Turn it into a 2D array texture so users
+           don't get surprised by the mip z-size not changing, and print a
+           warning. */
+        if(_state->textureType == TextureType::Texture3D && _state->numLevels[0] > 1) {
             Warning{} << "Trade::BasisImporter::openData(): found a 3D image with 2D mipmaps, importing as a 2D array texture";
             _state->textureType = TextureType::Texture2DArray;
         }
@@ -400,11 +418,18 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     CORRADE_INTERNAL_ASSERT(!_state->ktx2Transcoder != !_state->basisTranscoder);
     /* Can't have a KTX2 transcoder without KTX2 support compiled into basisu */
     CORRADE_INTERNAL_ASSERT(BASISD_SUPPORT_KTX2 || !_state->ktx2Transcoder);
-    /* 1D images should be treated like 2D images with width or height 1 */
+    /* These file formats don't support 1D images */
     CORRADE_INTERNAL_ASSERT(_state->textureType != TextureType::Texture1D && _state->textureType != TextureType::Texture1DArray);
+    /* There's one image with faces/layers, or multiple images without any */
+    CORRADE_INTERNAL_ASSERT(_state->numImages == 1 || _state->numSlices == 1);
 
     /* All good, release the resource guard */
     resourceGuard.release();
+
+    if(flags() & ImporterFlag::Verbose) {
+        if(_state->isVideo)
+            Debug{} << "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially";
+    }
 }
 
 template<UnsignedInt dimensions>
@@ -441,7 +466,8 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
         return Containers::NullOpt;
     }
 
-    UnsignedInt origWidth, origHeight, totalBlocks, numFaces, numLayers;
+    UnsignedInt origWidth, origHeight, totalBlocks, numFaces;
+    bool isIFrame;
     if(_state->ktx2Transcoder) {
         #if BASISD_SUPPORT_KTX2
         basist::ktx2_image_level_info levelInfo;
@@ -452,27 +478,48 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
            cover an error path, so turning this into an assert. When this blows
            up for someome, we'd most probably need to harden doOpenData() to
            catch that, not turning this into a graceful error.
-           Layer/face index doesn't affect the output we're interested in, so
-           0, 0 is enough here to apply to all slices. */
-        CORRADE_INTERNAL_ASSERT_OUTPUT(_state->ktx2Transcoder->get_image_level_info(levelInfo, level, 0, 0));
+
+           For independent images and videos we use the correct layer. For
+           images as slices, they're all the same size, (checked in
+           doOpenData()) and isIFrame is not used, so any layer or face works. */
+        CORRADE_INTERNAL_ASSERT_OUTPUT(_state->ktx2Transcoder->get_image_level_info(levelInfo, level, id, 0));
 
         origWidth = levelInfo.m_orig_width;
         origHeight = levelInfo.m_orig_height;
         totalBlocks = levelInfo.m_total_blocks;
+        /* m_iframe_flag is always false for UASTC video:
+           https://github.com/BinomialLLC/basis_universal/issues/259
+           However, it's safe to assume the first frame is always an I-frame. */
+        isIFrame = levelInfo.m_iframe_flag || id == 0;
+
         numFaces = _state->ktx2Transcoder->get_faces();
-        numLayers = Math::max(_state->ktx2Transcoder->get_layers(), 1u);
         #endif
     } else {
-        /* Same as above, it checks for state we already verified before. If this
-           blows up for someone, we can reconsider. */
-        CORRADE_INTERNAL_ASSERT_OUTPUT(_state->basisTranscoder->get_image_level_desc(_state->in.data(), _state->in.size(), id, level, origWidth, origHeight, totalBlocks));
+        /* See comment right above */
+        basist::basisu_image_level_info levelInfo;
+        CORRADE_INTERNAL_ASSERT_OUTPUT(_state->basisTranscoder->get_image_level_info(_state->in.data(), _state->in.size(), levelInfo, id, level));
+
+        origWidth = levelInfo.m_orig_width;
+        origHeight = levelInfo.m_orig_height;
+        totalBlocks = levelInfo.m_total_blocks;
+        isIFrame = levelInfo.m_iframe_flag;
+
         numFaces = (_state->textureType == TextureType::CubeMap || _state->textureType == TextureType::CubeMapArray) ? 6 : 1;
-        numLayers = _state->numSlices / numFaces;
     }
 
-    CORRADE_INTERNAL_ASSERT(numFaces == 1 || numFaces == 6);
-    CORRADE_INTERNAL_ASSERT(numLayers > 0);
-    CORRADE_INTERNAL_ASSERT(numFaces*numLayers == _state->numSlices);
+    const UnsignedInt numLayers = _state->numSlices/numFaces;
+
+    /* basisu doesn't allow seeking to arbitrary video frames. If this isn't an
+       I-frame, only allow transcoding the frame following the last P-frame. */
+    if(_state->isVideo) {
+        const UnsignedInt expectedImageId = _state->lastTranscodedImageId + 1;
+        if(!isIFrame && id != expectedImageId) {
+            Error{} << prefix << "video frames must be transcoded sequentially, expected frame"
+                << expectedImageId << (expectedImageId == 0 ? "but got" : "or 0 but got") << id;
+            return Containers::NullOpt;
+        }
+        _state->lastTranscodedImageId = id;
+    }
 
     /* No flags used by transcode_image_level() by default */
     const std::uint32_t flags = 0;
@@ -501,25 +548,28 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
     /* There's no function for transcoding the entire level, so loop over all
        layers and faces and transcode each one. This matches the image layout
        imported by KtxImporter, ie. all faces +X through -Z for the first
-       layer, then all faces of the second layer, etc.  */
-    /** @todo Check if the Basis layout actually matches this one */
-    UnsignedInt currentId = id;
+       layer, then all faces of the second layer, etc.
+
+       If the user is requesting id > 0, there can't be any layers or faces,
+       this is already asserted in doOpenData(). This allows us to calculate
+       the layer (KTX2) or image id to transcode with a simple addition. */
     for(UnsignedInt l = 0; l != numLayers; ++l) {
         for(UnsignedInt f = 0; f != numFaces; ++f) {
             const UnsignedInt offset = (l*numFaces + f)*sliceSize;
             if(_state->ktx2Transcoder) {
                 #if BASISD_SUPPORT_KTX2
-                if(!_state->ktx2Transcoder->transcode_image_level(level, l, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, outputRowsInPixels)) {
+                const UnsignedInt currentLayer = id + l;
+                if(!_state->ktx2Transcoder->transcode_image_level(level, currentLayer, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, outputRowsInPixels)) {
                     Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
                     return Containers::NullOpt;
                 }
                 #endif
             } else {
+                const UnsignedInt currentId = id + (l*numFaces + f);
                 if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), currentId, level, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
                     Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
                     return Containers::NullOpt;
                 }
-                ++currentId;
             }
         }
     }

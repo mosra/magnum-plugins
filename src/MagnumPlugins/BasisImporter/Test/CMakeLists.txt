@@ -88,6 +88,8 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgba-cubemap-array.ktx2
         rgba-video.basis
         rgba-video.ktx2
+        rgba-video-uastc.basis
+        rgba-video-uastc.ktx2
         rgb-63x27.png
         rgba-63x27.png
         rgba-63x27-slice1.png
