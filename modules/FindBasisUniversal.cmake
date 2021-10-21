@@ -31,6 +31,7 @@
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
 #               2020, 2021 Vladimír Vondruš <mosra@centrum.cz>
 #   Copyright © 2019 Jonathan Hale <squareys@googlemail.com>
+#   Copyright © 2021 Pablo Escobar <mail@rvrs.in>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -57,12 +58,22 @@ if(${_index} GREATER -1)
     list(REMOVE_DUPLICATES BasisUniversal_FIND_COMPONENTS)
 endif()
 
+include(TestBigEndian)
+test_big_endian(BIG_ENDIAN)
+
 macro(_basis_setup_source_file source)
     # Compile any .c files as C++ since we can't guarantee that C is enabled
     # in the calling scope, either inside project() or with enable_language().
     # Otherwise, they won't get compiled at all, leading to undefined symbols.
     set_property(SOURCE ${source} PROPERTY LANGUAGE
         CXX)
+    
+    # Tell Basis if we're on a big endian system. It currently doesn't figure
+    # this out by itself.
+    if(BIG_ENDIAN)
+        set_property(SOURCE ${source} APPEND PROPERTY COMPILE_DEFINITIONS
+            BASISD_IS_BIG_ENDIAN=1)
+    endif()
 
     # Basis shouldn't override the MSVC iterator debug level as it would make
     # it inconsistent with the rest of the code
