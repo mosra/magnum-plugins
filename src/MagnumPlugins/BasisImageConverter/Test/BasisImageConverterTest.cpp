@@ -563,7 +563,7 @@ void BasisImageConverterTest::rgba() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.122f}));
+        (DebugTools::CompareImageToFile{_manager, 97.25f, 8.547f}));
 }
 
 void BasisImageConverterTest::convertToFile() {
@@ -605,11 +605,11 @@ void BasisImageConverterTest::convertToFile() {
     CORRADE_COMPARE_WITH(level0->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 74.25f, 8.095f}));
+        (DebugTools::CompareImageToFile{_manager, 97.25f, 7.882f}));
     CORRADE_COMPARE_WITH(level1->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 90.75f, 13.83f}));
+        (DebugTools::CompareImageToFile{_manager, 81.0f, 14.31f}));
 
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
@@ -656,7 +656,7 @@ void BasisImageConverterTest::threads() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.039f}));
+        (DebugTools::CompareImageToFile{_manager, 80.0f, 8.547f}));
 }
 
 void BasisImageConverterTest::ktx() {
@@ -705,7 +705,7 @@ void BasisImageConverterTest::ktx() {
     CORRADE_COMPARE_WITH(pixels,
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 104.0f, 9.301f}));
+        (DebugTools::CompareImageToFile{_manager, 97.25f, 9.398f}));
 }
 
 void BasisImageConverterTest::customLevels() {
@@ -773,15 +773,15 @@ void BasisImageConverterTest::customLevels() {
     CORRADE_COMPARE_WITH(level0->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 74.25f, 8.095f}));
+        (DebugTools::CompareImageToFile{_manager, 97.25f, 7.882f}));
     CORRADE_COMPARE_WITH(level1->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 90.75f, 13.83f}));
+        (DebugTools::CompareImageToFile{_manager, 81.0f, 14.33f}));
     CORRADE_COMPARE_WITH(level2->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 85.25f, 23.59f}));
+        (DebugTools::CompareImageToFile{_manager, 76.25f, 24.5f}));
 }
 
 void BasisImageConverterTest::swizzle() {
