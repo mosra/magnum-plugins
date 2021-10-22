@@ -110,18 +110,30 @@ constexpr struct {
     {"Invalid", "NotAValidFile", "invalid basis header"},
     {"Invalid basis header", "sB\xff\xff", "invalid basis header"},
     {"Invalid KTX2 identifier", "\xabKTX 30\xbb\r\n\x1a\n", "invalid basis header"},
-    {"Invalid KTX2 header", "\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff", "invalid KTX2 header"}
+    {"Invalid KTX2 header", "\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff", "invalid KTX2 header, or not Basis compressed"}
 };
 
 constexpr struct {
     const char* name;
     const char* file;
-    const std::size_t offset;
+    std::size_t offset;
     const char value;
     const char* message;
 } InvalidFileData[] {
+    /* Change ktx2_etc1s_global_data_header::m_endpoint_count */
     {"Corrupt KTX2 supercompression data", "rgb.ktx2", 184, 0x00, "bad KTX2 file"},
-    {"Corrupt basis texture type", "rgb.basis", 23, 0x7f, "bad basis file"}
+    /* Changing anything in basis_file_header after m_header_crc16 makes the
+       CRC16 check fail. Only the header checksum is currently checked, not the
+       data checksum, so patching slice metadata still works. */
+    {"Invalid header CRC16", "rgb.basis", 23, 0x7f, "bad basis file"},
+    /* Change basis_slice_desc::m_orig_width of slice 0 */
+    {"Mismatching array sizes", "rgba-array.basis", 82, 0x7f, "image slices have mismatching size, expected 127 by 27 but got 63 by 27"},
+    /* Change basis_slice_desc::m_orig_width of slice 0 */
+    {"Mismatching video sizes", "rgba-video.basis", 82, 0x7f, "image slices have mismatching size, expected 127 by 27 but got 63 by 27"},
+    /* We can't patch m_tex_type in the header because of the CRC check, so we
+       need dedicated files for the cube map checks */
+    {"Invalid face count", "invalid-cube-face-count.basis", ~std::size_t(0), 0, "cube map face count must be a multiple of 6 but got 3"},
+    {"Face not square", "invalid-cube-face-size.basis", ~std::size_t(0), 0, "cube map must be square but got 15 by 6"}
 };
 
 constexpr struct {
@@ -131,7 +143,7 @@ constexpr struct {
     const char* message;
 } FileTooShortData[] {
     {"Basis", "rgb.basis", 64, "invalid basis header"},
-    {"KTX2", "rgb.ktx2", 64, "invalid KTX2 header"}
+    {"KTX2", "rgb.ktx2", 64, "invalid KTX2 header, or not Basis compressed"}
 };
 
 const struct {
@@ -294,9 +306,12 @@ void BasisImporterTest::invalidFile() {
 
     auto basisData = Utility::Directory::read(
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file));
+    CORRADE_VERIFY(basisData);
 
-    CORRADE_INTERNAL_ASSERT(data.offset < basisData.size());
-    basisData[data.offset] = data.value;
+    if(data.offset != ~std::size_t(0)) {
+        CORRADE_VERIFY(data.offset < basisData.size());
+        basisData[data.offset] = data.value;
+    }
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -393,7 +408,7 @@ void BasisImporterTest::transcodingFailure() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    /* PVRTC1 requires power of 2 image dimensions, but rgb.basis is 27x63,
+    /* PVRTC1 requires power of 2 image dimensions, but rgb.basis is 63x27,
        hence basis will fail during transcoding */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(!image);
@@ -405,7 +420,7 @@ void BasisImporterTest::nonBasisKtx() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2")));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid KTX2 header\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed\n");
 }
 
 void BasisImporterTest::texture() {
@@ -637,7 +652,7 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
         "rgba-2images-mips.basis")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
-    CORRADE_COMPARE(importer->image2DLevelCount(1), 3);
+    CORRADE_COMPARE(importer->image2DLevelCount(1), 2);
 
     Containers::Optional<Trade::ImageData2D> image0 = importer->image2D(0);
     Containers::Optional<Trade::ImageData2D> image0l1 = importer->image2D(0, 1);
@@ -648,13 +663,11 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
 
     Containers::Optional<Trade::ImageData2D> image1 = importer->image2D(1);
     Containers::Optional<Trade::ImageData2D> image1l1 = importer->image2D(1, 1);
-    Containers::Optional<Trade::ImageData2D> image1l2 = importer->image2D(1, 2);
     CORRADE_VERIFY(image1);
     CORRADE_VERIFY(image1l1);
-    CORRADE_VERIFY(image1l2);
 
     for(auto* image: {&*image0, &*image0l1, &*image0l2,
-                      &*image1, &*image1l1, &*image1l2}) {
+                      &*image1, &*image1l1}) {
         CORRADE_ITERATION(image->size());
         CORRADE_VERIFY(!image->isCompressed());
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
@@ -663,9 +676,8 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
     CORRADE_COMPARE(image0->size(), (Vector2i{63, 27}));
     CORRADE_COMPARE(image0l1->size(), (Vector2i{31, 13}));
     CORRADE_COMPARE(image0l2->size(), (Vector2i{15, 6}));
-    CORRADE_COMPARE(image1->size(), (Vector2i{27, 63}));
-    CORRADE_COMPARE(image1l1->size(), (Vector2i{13, 31}));
-    CORRADE_COMPARE(image1l2->size(), (Vector2i{6, 15}));
+    CORRADE_COMPARE(image1->size(), (Vector2i{13, 31}));
+    CORRADE_COMPARE(image1l1->size(), (Vector2i{6, 15}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -676,7 +688,7 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
        one image alone as there's more to compress */
     CORRADE_COMPARE_WITH(image0->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
-        (DebugTools::CompareImageToFile{_manager, 92.25f, 8.043f}));
+        (DebugTools::CompareImageToFile{_manager, 96.0f, 8.11f}));
     CORRADE_COMPARE_WITH(image0l1->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
         (DebugTools::CompareImageToFile{_manager, 75.75f, 14.077f}));
@@ -684,17 +696,11 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
         (DebugTools::CompareImageToFile{_manager, 65.0f, 23.487f}));
     CORRADE_COMPARE_WITH(image1->pixels<Color4ub>(),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"),
-        (DebugTools::CompareImageToFile{_manager, 85.5f, 10.23f}));
-    /* Rotating the pixels so we don't need to store the ground truth twice.
-       Somehow it compresses differently for those, tho (I would expect the
-       compression to be invariant of the orientation). */
-    CORRADE_COMPARE_WITH((image1l1->pixels<Color4ub>().transposed<0, 1>()),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
-        (DebugTools::CompareImageToFile{_manager, 82.5f, 33.27f}));
-    CORRADE_COMPARE_WITH((image1l2->pixels<Color4ub>().transposed<0, 1>()),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
-        (DebugTools::CompareImageToFile{_manager, 82.75f, 40.406f}));
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-13x31.png"),
+        (DebugTools::CompareImageToFile{_manager, 55.5f, 12.305f}));
+    CORRADE_COMPARE_WITH(image1l1->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-6x15.png"),
+        (DebugTools::CompareImageToFile{_manager, 68.25f, 21.792f}));
 }
 
 void BasisImporterTest::rgb() {
