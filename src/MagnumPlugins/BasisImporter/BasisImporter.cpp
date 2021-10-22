@@ -475,13 +475,11 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
     const bool isUncompressed = basist::basis_transcoder_format_is_uncompressed(format);
 
     /* Some target formats may be unsupported, either because support wasn't
-       compiled in or UASTC doesn't support a certain format.
-       None of the formats in TargetFormat are currently affected by UASTC. */
+       compiled in or UASTC doesn't support a certain format. All of the
+       formats in TargetFormat are transcodable from UASTC so we can provide a
+       slightly more useful error message than "impossible!". */
     if(!basist::basis_is_format_supported(format, _state->compressionType)) {
-        /** @todo Mention that some formats may not be compiled in? Since it's
-            really the only way to trigger this error. */
-        Error{} << prefix << "unsupported transcoding target format" << targetFormatStr << "for a"
-            << (_state->compressionType == basist::basis_tex_format::cUASTC4x4 ? "UASTC" : "ETC1S") << "image";
+        Error{} << prefix << "Basis Universal was compiled without support for" << targetFormatStr;
         return Containers::NullOpt;
     }
 

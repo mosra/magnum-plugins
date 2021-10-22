@@ -398,7 +398,7 @@ void BasisImporterTest::unsupportedFormat() {
     importer->configuration().setValue("format", "Bc7RGBA");
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): unsupported transcoding target format Bc7RGBA for a ETC1S image\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): Basis Universal was compiled without support for Bc7RGBA\n");
 }
 
 void BasisImporterTest::transcodingFailure() {
