@@ -65,6 +65,7 @@ struct BasisImporterTest: TestSuite::Tester {
     void rgbUncompressedNoFlip();
     void rgbUncompressedLinear();
     void rgbaUncompressed();
+    void rgbaUncompressedUastc();
     void rgbaUncompressedMultipleImages();
 
     void rgb();
@@ -216,7 +217,8 @@ BasisImporterTest::BasisImporterTest() {
     addInstancedTests({&BasisImporterTest::rgbUncompressed,
                        &BasisImporterTest::rgbUncompressedNoFlip,
                        &BasisImporterTest::rgbUncompressedLinear,
-                       &BasisImporterTest::rgbaUncompressed},
+                       &BasisImporterTest::rgbaUncompressed,
+                       &BasisImporterTest::rgbaUncompressedUastc},
                       Containers::arraySize(FileTypeData));
 
     addTests({&BasisImporterTest::rgbaUncompressedMultipleImages});
@@ -596,6 +598,34 @@ void BasisImporterTest::rgbaUncompressed() {
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 94.0f, 8.039f}));
+}
+
+void BasisImporterTest::rgbaUncompressedUastc() {
+    auto&& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
+        "RGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-uastc"} + data.extension)));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        /* There are insignificant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 4.75f, 0.576f}));
 }
 
 void BasisImporterTest::rgbaUncompressedMultipleImages() {

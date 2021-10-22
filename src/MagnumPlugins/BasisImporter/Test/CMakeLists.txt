@@ -71,6 +71,8 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgba.ktx2
         rgba-pow2.basis
         rgba-pow2.ktx2
+        rgba-uastc.basis
+        rgba-uastc.ktx2
         rgba-2images-mips.basis
         rgba-3d.basis
         rgba-3d.ktx2
