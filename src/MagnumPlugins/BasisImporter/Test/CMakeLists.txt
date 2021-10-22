@@ -57,6 +57,8 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(BasisImporterTest BasisImporterTest.cpp
     LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
+        invalid-cube-face-count.basis
+        invalid-cube-face-size.basis
         rgb.basis
         rgb.ktx2
         rgb-pow2.basis
@@ -95,8 +97,9 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgba-63x27-slice1.png
         rgba-63x27-slice2.png
         rgba-31x13.png
+        rgba-13x31.png
         rgba-15x6.png
-        rgba-27x63.png
+        rgba-6x15.png
         rgba-27x27.png
         rgba-27x27-slice1.png
         rgba-27x27-slice2.png

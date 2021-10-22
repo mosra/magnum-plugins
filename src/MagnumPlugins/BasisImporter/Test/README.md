@@ -6,7 +6,6 @@ and `diffuse-alpha-texture.tga` from the [Magnum Shaders test files](https://git
 
 -   `rgb-63x27.png`
 -   `rgb-64x32.png`
--   `rgba-27x63.png`
 -   `rgba-63x27.png`
 -   `rgba-64x32.png`
 -   `rgba-27x27.png`
@@ -39,6 +38,13 @@ box filter, the same as Basis itself, to have the least difference.
 ```sh
 convert rgba-63x27.png -filter box -resize 31x13\! rgba-31x13.png
 convert rgba-63x27.png -filter box -resize 15x6\! rgba-15x6.png
+convert rgba-31x13.png -rotate 90 rgba-13x31.png
+convert rgba-15x6.png -rotate 90 rgba-6x15.png
+
 pngcrush -ow rgba-31x13.png
 pngcrush -ow rgba-15x6.png
+pngcrush -ow rgba-13x31.png
+# For whatever reason, this removes the alpha channel
+# 'libpng warning: Invalid number of transparent colors specified'
+#pngcrush -ow rgba-6x15.png
 ```

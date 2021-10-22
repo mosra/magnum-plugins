@@ -282,7 +282,9 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         /* Save some global file info we need later */
 
         /* Remember the type for doTexture(). ktx2_transcoder::init() already
-           checked we're dealing with a valid 2D texture. */
+           checked we're dealing with a valid 2D texture. -tex_type 3d results
+           in 2D array textures, and there's no get_depth() to begin with. Not
+           ideal because this skips the z-flip on what's meant to be 3D data. */
         _state->isVideo = false;
         if(_state->ktx2Transcoder->get_faces() != 1)
             _state->textureType = _state->ktx2Transcoder->get_layers() > 0 ? TextureType::CubeMapArray : TextureType::CubeMap;
@@ -339,8 +341,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
 
         /* Remember the type for doTexture(). Depending on the type, we're
            either dealing with multiple independent 2D images or each image is
-           an array layer, cubemap face or depth slice with the same
-           resolution. */
+           an array layer, cubemap face or depth slice. */
         _state->isVideo = false;
         switch(fileInfo.m_tex_type) {
             case basist::basis_texture_type::cBASISTexTypeVideoFrames:
@@ -379,21 +380,40 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
 
         CORRADE_INTERNAL_ASSERT(fileInfo.m_image_mipmap_levels.size() == fileInfo.m_total_images);
 
-        /* Get mip level count for each image, check that they're the same for
-           videos, cube maps and arrays */
-        const bool levelsMustMatch = _state->textureType != TextureType::Texture2D || _state->isVideo;
+        /* Get mip level counts and check that they, as well as resolution, are
+           equal for all non-independent images (layers, faces, video frames).
+           These checks, including the cube map checks below, are either not
+           necessary for the KTX2 file format or are already handled by
+           ktx2_transcoder. */
+        const bool imageSizeMustMatch = _state->textureType != TextureType::Texture2D || _state->isVideo;
+        UnsignedInt firstWidth = 0, firstHeight = 0;
         _state->numLevels = Containers::Array<UnsignedInt>{NoInit, _state->numImages};
         for(UnsignedInt i = 0; i != fileInfo.m_total_images; ++i) {
-            const UnsignedInt numLevels = fileInfo.m_image_mipmap_levels[i];
-            CORRADE_INTERNAL_ASSERT(numLevels > 0);
+            /* Header validation etc. is already done in get_file_info and
+               start_transcoding, so by looking at the code there's nothing else
+               that could fail and wasn't already caught before */
+            basist::basisu_image_info imageInfo;
+            CORRADE_INTERNAL_ASSERT_OUTPUT(_state->basisTranscoder->get_image_info(_state->in.data(), _state->in.size(), imageInfo, i));
+            if(i == 0) {
+                firstWidth = imageInfo.m_orig_width;
+                firstHeight = imageInfo.m_orig_height;
+            }
 
-            if(levelsMustMatch && i > 0 && numLevels != _state->numLevels[0]) {
-                Error{} << "Trade::BasisImporter::openData(): mismatching level count for successive image slices";
+            if(imageSizeMustMatch && (imageInfo.m_orig_width != firstWidth || imageInfo.m_orig_height != firstHeight)) {
+                Error{} << "Trade::BasisImporter::openData(): image slices have mismatching size, expected"
+                    << firstWidth << "by" << firstHeight << "but got"
+                    << imageInfo.m_orig_width << "by" << imageInfo.m_orig_height;
+                return;
+            }
+
+            if(imageSizeMustMatch && i > 0 && imageInfo.m_total_levels != _state->numLevels[0]) {
+                Error{} << "Trade::BasisImporter::openData(): image slices have mismatching level counts, expected"
+                    << _state->numLevels[0] << "but got" << imageInfo.m_total_levels;
                 return;
             }
 
             if(i < _state->numImages)
-                _state->numLevels[i] = numLevels;
+                _state->numLevels[i] = imageInfo.m_total_levels;
         }
 
         /* Mip levels in basis are per 2D image, so for 3D images they don't
@@ -403,6 +423,19 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         if(_state->textureType == TextureType::Texture3D && _state->numLevels[0] > 1) {
             Warning{} << "Trade::BasisImporter::openData(): found a 3D image with 2D mipmaps, importing as a 2D array texture";
             _state->textureType = TextureType::Texture2DArray;
+        }
+
+        if(_state->textureType == TextureType::CubeMap || _state->textureType == TextureType::CubeMapArray) {
+            if(_state->numSlices % 6 != 0) {
+                Error{} << "Trade::BasisImporter::openData(): cube map face count must be a multiple of 6 but got" << _state->numSlices;
+                return;
+            }
+
+            if(firstWidth != firstHeight) {
+                Error{} << "Trade::BasisImporter::openData(): cube map must be square but got"
+                    << firstWidth << "by" << firstHeight;
+                return;
+            }
         }
 
         _state->compressionType = fileInfo.m_tex_format;
