@@ -39,6 +39,7 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Swizzle.h>
 #include <Magnum/PixelFormat.h>
+
 #include <basisu_enc.h>
 #include <basisu_comp.h>
 #include <basisu_file_headers.h>
@@ -194,18 +195,17 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     PARAM_CONFIG(ktx2_zstd_supercompression_level, int);
     params.m_ktx2_srgb_transfer_func = params.m_perceptual;
 
-    /* y_flip sets a flag in Basis files, but not in KTX2 files. Specify the
-       orientation in the key/value data:
+    /* y_flip sets a flag in Basis files, but not in KTX2 files:
+       https://github.com/BinomialLLC/basis_universal/issues/258
+       Manually specify the orientation in the key/value data:
        https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html#_ktxorientation */
     constexpr char OrientationKey[] = "KTXorientation";
     char orientationValue[] = "rd";
     if(params.m_y_flip)
         orientationValue[1] = 'u';
     basist::ktx2_transcoder::key_value& keyValue = *params.m_ktx2_key_values.enlarge(1);
-    keyValue.m_key.resize(sizeof(OrientationKey));
-    std::memcpy(keyValue.m_key.data(), OrientationKey, sizeof(OrientationKey));
-    keyValue.m_value.resize(sizeof(orientationValue));
-    std::memcpy(keyValue.m_value.data(), orientationValue, sizeof(orientationValue));
+    keyValue.m_key.append(reinterpret_cast<const uint8_t*>(OrientationKey), sizeof(OrientationKey));
+    keyValue.m_key.append(reinterpret_cast<const uint8_t*>(orientationValue), sizeof(orientationValue));
 
     /* Set various fields in the Basis file header */
     PARAM_CONFIG(userdata0, int);
@@ -223,7 +223,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     params.m_read_source_images = false;
     params.m_write_output_basis_files = false;
 
-    basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
+    const basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
     params.m_pSel_codebook = &sel_codebook;
 
     /* The base mip is in m_source_images, mip 1 and higher go into
@@ -240,24 +240,21 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
         const auto& image = imageLevels[i];
 
         if(image.size() != mipSize) {
-            Error() << "Trade::BasisImageConverter::convertToData(): expected "
+            Error{} << "Trade::BasisImageConverter::convertToData(): expected "
                 "size" << mipSize << "for level" << i << "but got" << image.size();
             return {};
         }
 
         /* Copy image data into the basis image. There is no way to construct a
            basis image from existing data as it is based on basisu::vector,
-           moreover we need to tightly pack it and flip Y. The `dst` is a Y-flipped
-           view already to make the following loops simpler. */
+           moreover we need to tightly pack it and flip Y. */
         basisu::image& basisImage = i == 0 ? params.m_source_images[0] : params.m_source_mipmap_images[0][i - 1];
         basisImage.resize(image.size().x(), image.size().y());
         auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(image.size().y()), std::size_t(image.size().x())}));
         /* Y-flip the view to make the following loops simpler. basisu doesn't
-           apply m_y_flip (or m_renormalize) to user-supplied mipmaps, so only
-           do this for the base image. */
-        /** @todo Probably a bug, file an issue/send a PR. There's also another
-            bug where it determines if alpha in any pixel > 0 *before* it
-            swizzles the mipmaps. */
+           apply m_y_flip to user-supplied mipmaps, so only do this for the
+           base image:
+           https://github.com/BinomialLLC/basis_universal/issues/257 */
         if(!params.m_y_flip || i == 0)
             dst = dst.flipped<0>();
 
@@ -295,7 +292,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     basisu::basis_compressor basis;
     basis.init(params);
 
-    basisu::basis_compressor::error_code errorCode = basis.process();
+    const basisu::basis_compressor::error_code errorCode = basis.process();
     if(errorCode != basisu::basis_compressor::error_code::cECSuccess) switch(errorCode) {
         case basisu::basis_compressor::error_code::cECFailedReadingSourceImages:
             /* Emitted e.g. when source image is 0-size */
