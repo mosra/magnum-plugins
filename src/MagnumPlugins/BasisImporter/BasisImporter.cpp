@@ -135,6 +135,10 @@ struct BasisImporter::State {
     /* There is only this type of codebook */
     basist::etc1_global_selector_codebook codebook;
 
+    /* One transcoder for each supported file type, and of course they have
+       wildly different interfaces. ktx2_transcoder is only defined if
+       BASISD_SUPPORT_KTX2 != 0, so we need to ifdef around it everywhere
+       it's used. */
     Containers::Optional<basist::basisu_transcoder> basisTranscoder;
     #if BASISD_SUPPORT_KTX2
     Containers::Optional<basist::ktx2_transcoder> ktx2Transcoder;
@@ -225,9 +229,9 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         std::memcmp(data.begin(), KtxFileIdentifier, sizeof(KtxFileIdentifier)) == 0;
 
     /* Keep a copy of the data. We have to do this first because transcoders
-       may hold on to the pointer we pass into init(). While basis_transcoder
-       currently doesn't keep the pointer around, it might in the future and
-       ktx2_transcoder already does. */
+       may hold on to the pointer we pass into init()/start_transcoding().
+       While basis_transcoder currently doesn't keep the pointer around, it
+       might in the future and ktx2_transcoder already does. */
     _state->in = Containers::Array<char>{NoInit, data.size()};
     Utility::copy(data, _state->in);
 
@@ -239,14 +243,15 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     if(isKTX2) {
         if(!basist::basisu_transcoder_supports_ktx2()) {
-            Error() << "Trade::BasisImporter::openData(): opening a KTX2 file but Basis Universal was compiled without KTX2 support";
+            /** @todo Test */
+            Error{} << "Trade::BasisImporter::openData(): opening a KTX2 file but Basis Universal was compiled without KTX2 support";
             return;
         }
 
         #if BASISD_SUPPORT_KTX2
         _state->ktx2Transcoder.emplace(&_state->codebook);
 
-        /* Init handles all the validation checks, there's no extra function
+        /* init() handles all the validation checks, there's no extra function
            for that */
         if(!_state->ktx2Transcoder->init(_state->in.data(), _state->in.size())) {
             Error{} << "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed";
@@ -256,6 +261,8 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         /* Check for supercompression and print a useful error if basisu was
            compiled without Zstandard support. Not exposed in ktx2_transcoder,
            get it from the KTX2 header directly. */
+        /** @todo Can we test this? Maybe disable this on some CI, BC7 is
+            already disabled on Emscripten. */
         const basist::ktx2_header& header = *reinterpret_cast<const basist::ktx2_header*>(_state->in.data());
         if(header.m_supercompression_scheme == basist::KTX2_SS_ZSTANDARD && !basist::basisu_transcoder_supports_ktx2_zstd()) {
             Error() << "Trade::BasisImporter::openData(): file uses Zstandard supercompression but Basis Universal was compiled without Zstandard support";
@@ -271,7 +278,9 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         /* Save some global file info we need later */
 
         /* Remember the type for doTexture(). ktx2_transcoder::init() already
-           checked we're dealing with a valid 2D texture. */
+           checked we're dealing with a valid 2D texture. -tex_type 3d results
+           in 2D array textures, and there's no get_depth() to begin with. Not
+           ideal because this skips the z-flip on what's meant to be 3D data. */
         _state->isVideo = false;
         if(_state->ktx2Transcoder->get_faces() != 1)
             _state->textureType = _state->ktx2Transcoder->get_layers() > 0 ? TextureType::CubeMapArray : TextureType::CubeMap;
@@ -302,6 +311,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         _state->isSrgb = _state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
         #endif
     } else {
+        /* .basis file */
         _state->basisTranscoder.emplace(&_state->codebook);
 
         if(!_state->basisTranscoder->validate_header(_state->in.data(), _state->in.size())) {
@@ -483,10 +493,6 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
         return Containers::NullOpt;
     }
 
-    /** @todo Don't decode to PVRTC if width/height (not origWidth/origHeight?)
-        is not a power-of-two:
-        https://github.com/BinomialLLC/basis_universal/blob/77b7df8e5df3532a42ef3c76de0c14cc005d0f65/basisu_tool.cpp#L1458 */
-
     UnsignedInt origWidth, origHeight, totalBlocks, numFaces;
     bool isIFrame;
     if(_state->ktx2Transcoder) {
@@ -559,13 +565,14 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
     } else {
         rowStride = 0; /* left up to Basis to calculate */
         outputRowsInPixels = 0; /* not used for compressed data */
-        /** @todo Make sure this is correct for layer/cube/depth textures */
         outputSizeInBlocksOrPixels = totalBlocks;
     }
 
     const UnsignedInt sliceSize = basis_get_bytes_per_block_or_pixel(format)*outputSizeInBlocksOrPixels;
     const UnsignedInt dataSize = sliceSize*size.z();
     Containers::Array<char> dest{DefaultInit, dataSize};
+
+    /** @todo z-flip 3D textures? */
 
     /* There's no function for transcoding the entire level, so loop over all
        layers and faces and transcode each one. This matches the image layout
