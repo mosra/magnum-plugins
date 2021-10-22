@@ -100,6 +100,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     PARAM_CONFIG(quality_level, int);
     PARAM_CONFIG(perceptual, bool);
     PARAM_CONFIG(debug, bool);
+    PARAM_CONFIG(validate, bool);
     PARAM_CONFIG(debug_images, bool);
     PARAM_CONFIG(compute_stats, bool);
     PARAM_CONFIG(compression_level, int);
@@ -134,6 +135,11 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
         }
     }
 
+    PARAM_CONFIG(renormalize, bool);
+    PARAM_CONFIG(resample_width, int);
+    PARAM_CONFIG(resample_height, int);
+    PARAM_CONFIG(resample_factor, float);
+
     UnsignedInt threadCount = configuration().value<Int>("threads");
     if(threadCount == 0) threadCount = std::thread::hardware_concurrency();
     const bool multithreading = threadCount > 1;
@@ -150,6 +156,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     PARAM_CONFIG(mip_filter, std::string);
     PARAM_CONFIG(mip_renormalize, bool);
     PARAM_CONFIG(mip_wrapping, bool);
+    PARAM_CONFIG(mip_fast, bool);
     PARAM_CONFIG(mip_smallest_dimension, int);
 
     /* Backend endpoint/selector RDO codec options */
