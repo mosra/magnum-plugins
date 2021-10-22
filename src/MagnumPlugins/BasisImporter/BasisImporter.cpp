@@ -265,13 +265,13 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
             already disabled on Emscripten. */
         const basist::ktx2_header& header = *reinterpret_cast<const basist::ktx2_header*>(_state->in.data());
         if(header.m_supercompression_scheme == basist::KTX2_SS_ZSTANDARD && !basist::basisu_transcoder_supports_ktx2_zstd()) {
-            Error() << "Trade::BasisImporter::openData(): file uses Zstandard supercompression but Basis Universal was compiled without Zstandard support";
+            Error{} << "Trade::BasisImporter::openData(): file uses Zstandard supercompression but Basis Universal was compiled without Zstandard support";
             return;
         }
 
         /* Start transcoding */
         if(!_state->ktx2Transcoder->start_transcoding()) {
-            Error() << "Trade::BasisImporter::openData(): bad KTX2 file";
+            Error{} << "Trade::BasisImporter::openData(): bad KTX2 file";
             return;
         }
 
@@ -310,12 +310,13 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
         _state->isSrgb = _state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
         #endif
+
     } else {
         /* .basis file */
         _state->basisTranscoder.emplace(&_state->codebook);
 
         if(!_state->basisTranscoder->validate_header(_state->in.data(), _state->in.size())) {
-            Error() << "Trade::BasisImporter::openData(): invalid basis header";
+            Error{} << "Trade::BasisImporter::openData(): invalid basis header";
             return;
         }
 
@@ -323,7 +324,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
         basist::basisu_file_info fileInfo;
         if(!_state->basisTranscoder->get_file_info(_state->in.data(), _state->in.size(), fileInfo) ||
            !_state->basisTranscoder->start_transcoding(_state->in.data(), _state->in.size())) {
-            Error() << "Trade::BasisImporter::openData(): bad basis file";
+            Error{} << "Trade::BasisImporter::openData(): bad basis file";
             return;
         }
 
@@ -475,7 +476,7 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
     } else {
         targetFormat = configuration().value<TargetFormat>("format");
         if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
-            Error() << prefix << "invalid transcoding target format" << targetFormatStr << Debug::nospace
+            Error{} << prefix << "invalid transcoding target format" << targetFormatStr << Debug::nospace
                 << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
             return Containers::NullOpt;
         }
@@ -552,7 +553,7 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
     const std::uint32_t flags = 0;
     if(!_state->isYFlipped) {
         /** @todo replace with the flag once the PR is submitted */
-        Warning{} << "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation";
+        Warning{} << prefix << "the image was not encoded Y-flipped, imported data will have wrong orientation";
         //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
     }
 

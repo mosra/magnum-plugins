@@ -291,10 +291,11 @@ void BasisImporterTest::invalidHeader() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openData(data.data));
 
+    CORRADE_VERIFY(!importer->openData(data.data));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImporter::openData(): {}\n", data.message));
 }
 
@@ -527,7 +528,6 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
@@ -562,7 +562,6 @@ void BasisImporterTest::rgbUncompressedLinear() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
@@ -591,7 +590,6 @@ void BasisImporterTest::rgbaUncompressed() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
@@ -645,7 +643,6 @@ void BasisImporterTest::rgbaUncompressedUastc() {
 
 void BasisImporterTest::rgbaUncompressedMultipleImages() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
@@ -717,7 +714,6 @@ void BasisImporterTest::rgb() {
     setTestCaseDescription(formatData.suffix);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
 
@@ -753,7 +749,6 @@ void BasisImporterTest::rgba() {
     setTestCaseDescription(formatData.suffix);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
 
@@ -791,7 +786,6 @@ void BasisImporterTest::linear() {
     setTestCaseDescription(formatData.suffix);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
 
