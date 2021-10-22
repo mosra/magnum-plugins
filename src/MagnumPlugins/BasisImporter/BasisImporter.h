@@ -134,9 +134,9 @@ exposed as an additional image dimension. @ref image3D will return an
 
 Video files will be imported as multiple 2D images with the same size and level
 count. Due to the way video is encoded by Basis Universal, seeking to arbitrary
-frames is not allowed in ETC1S-compressed videos. If you call @ref image2D with
-non-sequential frame indices and that frame is not an I-frame, it will print an
-error and fail. Restarting from frame 0 is always allowed.
+frames is not allowed. If you call @ref image2D with non-sequential frame
+indices and that frame is not an I-frame, it will print an error and fail.
+Restarting from frame 0 is always allowed.
 
 @subsection Trade-BasisImporter-behavior-multilevel Multilevel images
 

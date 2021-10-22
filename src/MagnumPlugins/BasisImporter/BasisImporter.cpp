@@ -421,7 +421,7 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
     if(flags() & ImporterFlag::Verbose) {
         if(_state->isVideo)
-            Debug{} << "Trade::BasisImporter::openData(): file contains video frames, images must be loaded sequentially";
+            Debug{} << "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially";
     }
 }
 
@@ -477,20 +477,24 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
            cover an error path, so turning this into an assert. When this blows
            up for someome, we'd most probably need to harden doOpenData() to
            catch that, not turning this into a graceful error.
-           Layer/face index doesn't affect the output we're interested in, so
-           0, 0 is enough here to apply to all slices. */
-        CORRADE_INTERNAL_ASSERT_OUTPUT(_state->ktx2Transcoder->get_image_level_info(levelInfo, level, 0, 0));
+
+           For independent images and videos we use the correct layer. For
+           images as slices, they're all the same size, (checked in
+           doOpenData()) and isIFrame is not used, so any layer or face works. */
+        CORRADE_INTERNAL_ASSERT_OUTPUT(_state->ktx2Transcoder->get_image_level_info(levelInfo, level, id, 0));
 
         origWidth = levelInfo.m_orig_width;
         origHeight = levelInfo.m_orig_height;
         totalBlocks = levelInfo.m_total_blocks;
-        isIFrame = levelInfo.m_iframe_flag;
+        /* m_iframe_flag is always false for UASTC video:
+           https://github.com/BinomialLLC/basis_universal/issues/259
+           However, it's safe to assume the first frame is always an I-frame. */
+        isIFrame = levelInfo.m_iframe_flag || id == 0;
 
         numFaces = _state->ktx2Transcoder->get_faces();
         #endif
     } else {
-        /* Same as above, it checks for state we already verified before. If this
-           blows up for someone, we can reconsider. */
+        /* See comment right above */
         basist::basisu_image_level_info levelInfo;
         CORRADE_INTERNAL_ASSERT_OUTPUT(_state->basisTranscoder->get_image_level_info(_state->in.data(), _state->in.size(), levelInfo, id, level));
 
@@ -504,9 +508,8 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
 
     const UnsignedInt numLayers = _state->numSlices/numFaces;
 
-    /* basisu doesn't allow seeking to arbitrary video frames for ETC1S. If
-       this isn't an I-frame, only allow transcoding the frame following the
-       last P-frame. Frame 0 is always an I-frame. */
+    /* basisu doesn't allow seeking to arbitrary video frames. If this isn't an
+       I-frame, only allow transcoding the frame following the last P-frame. */
     if(_state->isVideo) {
         const UnsignedInt expectedImageId = _state->lastTranscodedImageId + 1;
         if(!isIFrame && id != expectedImageId) {
@@ -514,8 +517,9 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
                 << expectedImageId << (expectedImageId == 0 ? "but got" : "or 0 but got") << id;
             return Containers::NullOpt;
         }
-        _state->lastTranscodedImageId = expectedImageId;
+        _state->lastTranscodedImageId = id;
     }
+
     /* No flags used by transcode_image_level() by default */
     const std::uint32_t flags = 0;
     if(!_state->isYFlipped) {

@@ -80,8 +80,8 @@ struct BasisImporterTest: TestSuite::Tester {
     void cubeMap();
     void cubeMapArray();
 
-    void videoVerbose();
     void videoSeeking();
+    void videoVerbose();
 
     void ktxImporterAlias();
 
@@ -182,6 +182,16 @@ constexpr struct {
      "EacRG", CompressedPixelFormat::EacRG11Unorm, CompressedPixelFormat::EacRG11Unorm}
 };
 
+const struct {
+    const char* name;
+    const char* file;
+} VideoSeekingData[]{
+    {"Basis ETC1S", "rgba-video.basis"},
+    {"KTX2 ETC1S", "rgba-video.ktx2"},
+    {"Basis UASTC", "rgba-video-uastc.basis"},
+    {"KTX2 UASTC", "rgba-video-uastc.ktx2"}
+};
+
 BasisImporterTest::BasisImporterTest() {
     addTests({&BasisImporterTest::empty});
 
@@ -225,8 +235,10 @@ BasisImporterTest::BasisImporterTest() {
                        &BasisImporterTest::cubeMapArray},
                       Containers::arraySize(FileTypeData));
 
+addInstancedTests({&BasisImporterTest::videoSeeking},
+                      Containers::arraySize(VideoSeekingData));
+
     addTests({&BasisImporterTest::videoVerbose,
-              &BasisImporterTest::videoSeeking,
 
               &BasisImporterTest::ktxImporterAlias,
 
@@ -1104,28 +1116,13 @@ void BasisImporterTest::cubeMapArray() {
         (DebugTools::CompareImageToFile{_manager, 88.0f, 10.591f}));
 }
 
-void BasisImporterTest::videoVerbose() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-
-    std::ostringstream out;
-    Debug redirectDebug{&out};
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgba-video.basis")));
-    CORRADE_COMPARE(out.str(), "");
-
-    importer->close();
-    importer->setFlags(ImporterFlag::Verbose);
-
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgba-video.basis")));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): file contains video frames, images must be loaded sequentially\n");
-}
-
 void BasisImporterTest::videoSeeking() {
+    auto& data = VideoSeekingData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgba-video.basis")));
+        data.file)));
 
     CORRADE_COMPARE(importer->image2DCount(), 3);
 
@@ -1142,6 +1139,24 @@ void BasisImporterTest::videoSeeking() {
     CORRADE_COMPARE(out.str(),
         "Trade::BasisImporter::image2D(): video frames must be transcoded sequentially, expected frame 0 but got 2\n"
         "Trade::BasisImporter::image2D(): video frames must be transcoded sequentially, expected frame 1 or 0 but got 2\n");
+}
+
+void BasisImporterTest::videoVerbose() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+
+    std::ostringstream out;
+    Debug redirectDebug{&out};
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        "rgba-video.basis")));
+    CORRADE_COMPARE(out.str(), "");
+
+    importer->close();
+    importer->setFlags(ImporterFlag::Verbose);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        "rgba-video.basis")));
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially\n");
 }
 
 void BasisImporterTest::ktxImporterAlias() {
