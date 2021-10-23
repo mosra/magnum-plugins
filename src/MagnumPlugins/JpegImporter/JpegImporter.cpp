@@ -116,7 +116,8 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt, UnsignedI
 
     /* Open file */
     jpeg_create_decompress(&file);
-    jpeg_mem_src(&file, reinterpret_cast<const unsigned char*>(_in.begin()), _in.size());
+    /* Older libjpegs want a mutable pointer, can't const here */
+    jpeg_mem_src(&file, reinterpret_cast<unsigned char*>(_in.begin()), _in.size());
 
     /* Read file header, start decompression. On macOS (Travis, with Xcode 7.3)
        the compilation fails because "no known conversion from 'bool' to

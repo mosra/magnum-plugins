@@ -88,8 +88,9 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
         "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, Containers::NullOpt);
 
-    /* Verify file signature */
-    if(png_sig_cmp(reinterpret_cast<const unsigned char*>(_in.data()), 0, Math::min(std::size_t(8), _in.size())) != 0) {
+    /* Verify file signature. Older libpngs want a mutable pointer, can't
+       const. */
+    if(png_sig_cmp(reinterpret_cast<unsigned char*>(_in.data()), 0, Math::min(std::size_t(8), _in.size())) != 0) {
         Error() << "Trade::PngImporter::image2D(): wrong file signature";
         return Containers::NullOpt;
     }
