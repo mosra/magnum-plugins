@@ -215,8 +215,23 @@ OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
 
 @snippet BasisImporter.cpp gl-extension-checks
 
+@subsection Trade-BasisImporter-compile-size Reducing compile size
 
+To reduce the binary size of the transcoder, Basis Universal supports a set of
+preprocessor defines to turn off unneeded features. The Basis Universal Wiki
+lists macros to disable specific [target formats](https://github.com/BinomialLLC/basis_universal/wiki/How-to-Use-and-Configure-the-Transcoder#shrinking-the-transcoders-compiled-size)
+as well as [KTX2 support](https://github.com/BinomialLLC/basis_universal/wiki/How-to-Use-and-Configure-the-Transcoder#disabling-ktx2-or-zstandard-usage).
+If you're building it from source with `BASIS_UNIVERSAL_DIR` set, add the
+desired defines before adding `magnum-plugins` as a subfolder:
 
+@code{.cmake}
+add_definitions(
+    -DBASISD_SUPPORT_BC7=0
+    -DBASISD_SUPPORT_KTX2=0)
+
+# ...
+add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
+@endcode
 */
 class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
     public:
