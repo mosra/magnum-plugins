@@ -145,6 +145,11 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                         "Set BASIS_UNIVERSAL_DIR to the root of a directory containing basis_universal source.")
                 endif()
 
+                # @todo Disable file loading at compile time and get rid of the
+                # BMP/JPG/PNG libraries, we don't use those at all. Hopefully
+                # this becomes a preprocessor define upstream at some point.
+                # Alternatively, look into creating stubs for the library
+                # functions used by basis_universal.
                 set(BasisUniversalEncoder_SOURCES
                     ${BasisUniversalEncoder_DIR}/apg_bmp.c
                     ${BasisUniversalEncoder_DIR}/basisu_astc_decomp.cpp
