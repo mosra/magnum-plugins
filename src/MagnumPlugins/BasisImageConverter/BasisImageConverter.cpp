@@ -35,6 +35,7 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Swizzle.h>
@@ -46,17 +47,27 @@
 
 namespace Magnum { namespace Trade {
 
-BasisImageConverter::BasisImageConverter() = default;
+using namespace Containers::Literals;
 
-BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
+BasisImageConverter::BasisImageConverter(Format format): _format{format} {
+    /* Passing an invalid Format enum is user error, we'll assert on that in
+       the convertToData() function */
+}
+
+BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {
+    if(plugin == "BasisKtxImageConverter")
+        _format = Format::Ktx;
+    else
+        _format = {}; /* Overridable by openFile() */
+}
 
 ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageConverterFeature::ConvertLevels2DToData; }
 
 Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
     /* Check input */
-    const PixelFormat format = imageLevels.front().format();
+    const PixelFormat imageFormat = imageLevels.front().format();
     bool isSrgb;
-    switch(format) {
+    switch(imageFormat) {
         case PixelFormat::RGBA8Unorm:
         case PixelFormat::RGB8Unorm:
         case PixelFormat::RG8Unorm:
@@ -70,7 +81,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
             isSrgb = true;
             break;
         default:
-            Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << format;
+            Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << imageFormat;
             return {};
     }
 
@@ -85,8 +96,13 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
 
     basisu::basis_compressor_params params;
 
-    /* Options deduced from input data. Can be overridden by config values, if
-       present. */
+    if(_format == Format::Ktx)
+        params.m_create_ktx2_file = true;
+    else
+        CORRADE_INTERNAL_ASSERT(_format == Format{} || _format == Format::Basis);
+
+    /* Options deduced from input data. Config values that are not emptied out
+       override these below. */
     params.m_perceptual = isSrgb;
     params.m_mip_gen = imageLevels.size() == 1;
     params.m_mip_srgb = isSrgb;
@@ -189,7 +205,6 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     params.m_rdo_uastc_multithreading = multithreading;
 
     /* KTX2 options */
-    PARAM_CONFIG(create_ktx2_file, bool);
     params.m_ktx2_uastc_supercompression =
         configuration().value<bool>("ktx2_uastc_supercompression") ? basist::KTX2_SS_ZSTANDARD : basist::KTX2_SS_NONE;
     PARAM_CONFIG(ktx2_zstd_supercompression_level, int);
@@ -264,7 +279,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
             dst = dst.flipped<0>();
 
         /* basis image is always RGBA, fill in alpha if necessary */
-        const UnsignedInt channels = pixelSize(format);
+        const UnsignedInt channels = pixelSize(imageFormat);
         if(channels == 4) {
             auto src = image.pixels<Math::Vector4<UnsignedByte>>();
             for(std::size_t y = 0; y != src.size()[0]; ++y)
@@ -345,6 +360,28 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     Utility::copy(Containers::arrayCast<const char>(Containers::arrayView(out.data(), out.size())), fileData);
 
     return fileData;
+}
+
+bool BasisImageConverter::doConvertToFile(const ImageView2D& image, const Containers::StringView filename) {
+    /** @todo once Directory is std::string-free, use splitExtension() */
+    const Containers::String normalized = Utility::String::lowercase(filename);
+
+    /* Save the previous format to restore it back after, detect the format
+       from extension if it's not supplied explicitly */
+    const Format previousFormat = _format;
+    if(_format == Format{}) {
+        if(normalized.hasSuffix(".ktx2"_s))
+            _format = Format::Ktx;
+        else
+            _format = Format::Basis;
+    }
+
+    /* Delegate to the base implementation which calls doConvertToData() */
+    const bool out = AbstractImageConverter::doConvertToFile(image, filename);
+
+    /* Restore the previous format and return the result */
+    _format = previousFormat;
+    return out;
 }
 
 }}

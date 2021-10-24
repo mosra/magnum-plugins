@@ -52,6 +52,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     explicit BasisImageConverterTest();
 
     void wrongFormat();
+    void unknownOutputFormatData();
+    void unknownOutputFormatFile();
     void invalidSwizzle();
     void tooManyLevels();
     void levelWrongSize();
@@ -65,6 +67,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void rgb();
     void rgba();
 
+    void convertToFile();
+
     void threads();
     void ktx();
     void customLevels();
@@ -75,6 +79,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
+
+using namespace Containers::Literals;
 
 enum TransferFunction: std::size_t {
     Linear,
@@ -92,6 +98,20 @@ constexpr struct {
 } FormatTransferFunctionData[] {
     {"Unorm", TransferFunction::Linear},
     {"Srgb", TransferFunction::Srgb}
+};
+
+constexpr Containers::StringView BasisPrefix = "sB"_s;
+constexpr Containers::StringView KtxPrefix = "\xabKTX"_s;
+
+constexpr struct {
+    const char* name;
+    const char* pluginName;
+    const char* filename;
+    const Containers::StringView prefix;
+} ConvertToFileData[] {
+    {"Basis", "BasisImageConverter", "image.basis", BasisPrefix},
+    {"KTX2", "BasisImageConverter", "image.ktx2", KtxPrefix},
+    {"KTX2 with explicit plugin name", "BasisKtxImageConverter", "image.foo", KtxPrefix}
 };
 
 constexpr struct {
@@ -112,6 +132,8 @@ constexpr struct {
 
 BasisImageConverterTest::BasisImageConverterTest() {
     addTests({&BasisImageConverterTest::wrongFormat,
+              &BasisImageConverterTest::unknownOutputFormatData,
+              &BasisImageConverterTest::unknownOutputFormatFile,
               &BasisImageConverterTest::invalidSwizzle,
               &BasisImageConverterTest::tooManyLevels,
               &BasisImageConverterTest::levelWrongSize,
@@ -125,6 +147,9 @@ BasisImageConverterTest::BasisImageConverterTest() {
                        &BasisImageConverterTest::rgb,
                        &BasisImageConverterTest::rgba},
         Containers::arraySize(FormatTransferFunctionData));
+
+    addInstancedTests({&BasisImageConverterTest::convertToFile},
+        Containers::arraySize(ConvertToFileData));
 
     addInstancedTests({&BasisImageConverterTest::threads},
         Containers::arraySize(ThreadsData));
@@ -150,17 +175,54 @@ BasisImageConverterTest::BasisImageConverterTest() {
     #ifdef BASISIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+
+    /* Create the output directory if it doesn't exist yet */
+    CORRADE_INTERNAL_ASSERT_OUTPUT(Utility::Directory::mkpath(BASISIMAGECONVERTER_TEST_OUTPUT_DIR));
 }
 
 void BasisImageConverterTest::wrongFormat() {
-    Containers::Pointer<AbstractImageConverter> converter =
-        _converterManager.instantiate("BasisImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
 
     const char data[8]{};
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RG32F, {1, 1}, data}));
     CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::RG32F\n");
+}
+
+void BasisImageConverterTest::unknownOutputFormatData() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+
+    /* The converter defaults to .basis output, conversion should succeed */
+
+    const char data[4]{};
+    const auto converted = converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, data});
+    CORRADE_VERIFY(converted);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openData(converted));
+}
+
+void BasisImageConverterTest::unknownOutputFormatFile() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+
+    /* The converter defaults to .basis output, conversion should succeed */
+
+    const char data[4]{};
+    const ImageView2D image{PixelFormat::RGB8Unorm, {1, 1}, data};
+    const std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, "file.foo");
+    CORRADE_VERIFY(converter->convertToFile(image, filename));
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer =
+        _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(filename));
 }
 
 void BasisImageConverterTest::invalidSwizzle() {
@@ -488,6 +550,47 @@ void BasisImageConverterTest::rgba() {
         (DebugTools::CompareImageToFile{_manager, 97.25f, 8.547f}));
 }
 
+void BasisImageConverterTest::convertToFile() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    auto&& data = ConvertToFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    const auto originalImage = pngImporter->image2D(0);
+    CORRADE_VERIFY(originalImage);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
+    std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
+    CORRADE_VERIFY(converter->convertToFile(*originalImage, filename));
+
+    /* Verify it's actually the right format */
+    /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
+    CORRADE_VERIFY(Containers::StringView{Containers::ArrayView<const char>(Utility::Directory::read(filename))}.hasPrefix(data.prefix));
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(filename));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE_WITH(originalImage->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 97.25f, 7.914f}));
+
+    /* The format should get reset again after so convertToData() isn't left
+       with some random format after */
+    if(data.pluginName == "BasisImageConverter"_s) {
+        const auto compressedData = converter->convertToData(*originalImage);
+        CORRADE_VERIFY(compressedData);
+        CORRADE_VERIFY(Containers::StringView{Containers::arrayView(compressedData)}.hasPrefix(BasisPrefix));
+    }
+}
+
 void BasisImageConverterTest::threads() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
@@ -544,15 +647,18 @@ void BasisImageConverterTest::ktx() {
     const Image2D imageWithSkip = copyImageWithSkip<Color4ub>(
         *originalImage, {7, 8, 0}, PixelFormat::RGBA8Unorm);
 
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisKtxImageConverter");
     converter->configuration().setValue("create_ktx2_file", true);
     converter->configuration().setValue("y_flip", data.yFlip);
     const auto compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
+    const Containers::StringView compressedView{Containers::arrayView(compressedData)};
+
+    CORRADE_VERIFY(compressedView.hasPrefix(KtxPrefix));
 
     char KTXorientation[] = "KTXorientation\0r?";
     KTXorientation[sizeof(KTXorientation) - 1] = data.yFlip ? 'u' : 'd';
-    CORRADE_VERIFY(Containers::StringView{compressedData, compressedData.size()}.contains(KTXorientation));
+    CORRADE_VERIFY(compressedView.contains(KTXorientation));
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
