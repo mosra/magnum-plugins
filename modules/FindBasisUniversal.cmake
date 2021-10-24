@@ -52,6 +52,15 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# Several places in this find module assume that the C language is enabled:
+#   - test_big_endian() assumes C is enabled, configuration fails without.
+#     CMake says to call enable_language() in the highest directory using the
+#     language, so we can't do that here.
+#   - both the transcoder and encoder link to .c files that would just not be
+#     compiled without the language enabled, or the source file language being
+#     changed to CXX
+# Currently both BasisImporter and BasisImageConverter call enable_language(C).
+
 list(FIND BasisUniversal_FIND_COMPONENTS "Encoder" _index)
 if(${_index} GREATER -1)
     list(APPEND BasisUniversal_FIND_COMPONENTS "Transcoder")
@@ -62,12 +71,6 @@ include(TestBigEndian)
 test_big_endian(BIG_ENDIAN)
 
 macro(_basis_setup_source_file source)
-    # Compile any .c files as C++ since we can't guarantee that C is enabled
-    # in the calling scope, either inside project() or with enable_language().
-    # Otherwise, they won't get compiled at all, leading to undefined symbols.
-    set_property(SOURCE ${source} PROPERTY LANGUAGE
-        CXX)
-    
     # Tell Basis if we're on a big endian system. It currently doesn't figure
     # this out by itself.
     if(BIG_ENDIAN)

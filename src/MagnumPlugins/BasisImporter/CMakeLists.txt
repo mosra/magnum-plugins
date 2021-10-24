@@ -24,6 +24,9 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# Required by FindBasisUniversal.cmake, check the comment there for more info
+enable_language(C)
+
 # To help Homebrew and Vcpkg packages, Basis Universal sources can be cloned to
 # src/external and we will use those without any extra effort from the outside.
 # Note that, because I hate underscores, the name has to contain a dash, *not*
