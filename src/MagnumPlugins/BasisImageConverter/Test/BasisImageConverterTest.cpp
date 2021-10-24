@@ -233,10 +233,10 @@ void BasisImageConverterTest::invalidSwizzle() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(converter->configuration().setValue("swizzle", "gbgbg"));
+    converter->configuration().setValue("swizzle", "gbgbg");
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
 
-    CORRADE_VERIFY(converter->configuration().setValue("swizzle", "xaaa"));
+    converter->configuration().setValue("swizzle", "xaaa");
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
 
     CORRADE_COMPARE(out.str(),
@@ -304,7 +304,7 @@ void BasisImageConverterTest::configPerceptual() {
     const auto compressedDataAutomatic = converter->convertToData(originalImage);
     CORRADE_VERIFY(compressedDataAutomatic);
 
-    CORRADE_VERIFY(converter->configuration().setValue("perceptual", true));
+    converter->configuration().setValue("perceptual", true);
 
     const auto compressedDataOverridden = converter->convertToData(originalImage);
     CORRADE_VERIFY(compressedDataOverridden);
@@ -338,7 +338,7 @@ void BasisImageConverterTest::configMipGen() {
         _converterManager.instantiate("BasisImageConverter");
     /* Empty by default */
     CORRADE_COMPARE(converter->configuration().value<bool>("mip_gen"), false);
-    CORRADE_VERIFY(converter->configuration().setValue("mip_gen", ""));
+    converter->configuration().setValue("mip_gen", "");
 
     const auto compressedDataGenerated = converter->convertToData({originalLevel0});
     CORRADE_VERIFY(compressedDataGenerated);
