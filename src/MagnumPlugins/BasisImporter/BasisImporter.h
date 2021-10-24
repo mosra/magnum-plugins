@@ -61,7 +61,7 @@ namespace Magnum { namespace Trade {
 @m_keywords{BasisImporterEtc2RGBA BasisImporterBc1RGB BasisImporterBc3RGBA}
 @m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc7RGBA}
 @m_keywords{BasisImporterPvrtc1RGB4bpp BasisImporterPvrtc1RGBA4bpp}
-@m_keywords{BasisImporterAstc4x4RGBA BasisImporterRGBA8 KtxImporter}
+@m_keywords{BasisImporterAstc4x4RGBA BasisImporterRGBA8}
 
 Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
 compressed images (`*.basis` or `*.ktx2`) by parsing and transcoding files into
@@ -72,8 +72,7 @@ This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,
 `BasisImporterEtc1RGB`, `BasisImporterEtc2RGBA`, `BasisImporterBc1RGB`,
 `BasisImporterBc3RGBA`, `BasisImporterBc4R`, `BasisImporterBc5RG`,
 `BasisImporterBc7RGBA`, `BasisImporterPvrtc1RGB4bpp`,
-`BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`, `BasisImporterRGBA8`,
-`KtxImporter`.
+`BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`, `BasisImporterRGBA8`.
 
 @m_class{m-block m-success}
 

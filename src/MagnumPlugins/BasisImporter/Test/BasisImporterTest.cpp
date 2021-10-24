@@ -84,8 +84,6 @@ struct BasisImporterTest: TestSuite::Tester {
     void videoSeeking();
     void videoVerbose();
 
-    void ktxImporterAlias();
-
     void openSameTwice();
     void openDifferent();
     void importMultipleFormats();
@@ -253,8 +251,6 @@ addInstancedTests({&BasisImporterTest::videoSeeking},
                       Containers::arraySize(VideoSeekingData));
 
     addTests({&BasisImporterTest::videoVerbose,
-
-              &BasisImporterTest::ktxImporterAlias,
 
               &BasisImporterTest::openSameTwice,
               &BasisImporterTest::openDifferent,
@@ -1152,33 +1148,6 @@ void BasisImporterTest::videoVerbose() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         "rgba-video.basis")));
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially\n");
-}
-
-void BasisImporterTest::ktxImporterAlias() {
-    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test forwarding");
-
-    Containers::Pointer<AbstractImporter> anyImageImporter = _manager.instantiate("AnyImageImporter");
-    CORRADE_VERIFY(anyImageImporter);
-    anyImageImporter->configuration().setValue("format", "RGBA8");
-
-    CORRADE_VERIFY(anyImageImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgba.ktx2")));
-    CORRADE_COMPARE(anyImageImporter->image2DCount(), 1);
-
-    Containers::Optional<Trade::ImageData2D> image = anyImageImporter->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.039f}));
 }
 
 void BasisImporterTest::openSameTwice() {
