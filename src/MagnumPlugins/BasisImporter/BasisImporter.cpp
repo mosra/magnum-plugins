@@ -28,7 +28,6 @@
 
 #include <cstring>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/ConfigurationValue.h>
@@ -233,18 +232,13 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
        the pointer we pass into init()/start_transcoding(). While
        basis_transcoder currently doesn't keep the pointer around, it might in
        the future and ktx2_transcoder already does. */
+    Containers::Pointer<State> state{InPlaceInit};
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        _state->in = std::move(data);
+        state->in = std::move(data);
     } else {
-        _state->in = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, _state->in);
+        state->in = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, state->in);
     }
-
-    Containers::ScopeGuard resourceGuard{_state.get(), [](BasisImporter::State* state) {
-        state->basisTranscoder = Containers::NullOpt;
-        state->ktx2Transcoder = Containers::NullOpt;
-        state->in = nullptr;
-    }};
 
     if(isKTX2) {
         #if !BASISD_SUPPORT_KTX2
@@ -253,11 +247,11 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         Error{} << "Trade::BasisImporter::openData(): opening a KTX2 file but Basis Universal was compiled without KTX2 support";
         return;
         #else
-        _state->ktx2Transcoder.emplace(&_state->codebook);
+        state->ktx2Transcoder.emplace(&state->codebook);
 
         /* init() handles all the validation checks, there's no extra function
            for that */
-        if(!_state->ktx2Transcoder->init(_state->in.data(), _state->in.size())) {
+        if(!state->ktx2Transcoder->init(state->in.data(), state->in.size())) {
             Error{} << "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed";
             return;
         }
@@ -267,14 +261,14 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
            get it from the KTX2 header directly. */
         /** @todo Can we test this? Maybe disable this on some CI, BC7 is
             already disabled on Emscripten. */
-        const basist::ktx2_header& header = *reinterpret_cast<const basist::ktx2_header*>(_state->in.data());
+        const basist::ktx2_header& header = *reinterpret_cast<const basist::ktx2_header*>(state->in.data());
         if(header.m_supercompression_scheme == basist::KTX2_SS_ZSTANDARD && !BASISD_SUPPORT_KTX2_ZSTD) {
             Error{} << "Trade::BasisImporter::openData(): file uses Zstandard supercompression but Basis Universal was compiled without Zstandard support";
             return;
         }
 
         /* Start transcoding */
-        if(!_state->ktx2Transcoder->start_transcoding()) {
+        if(!state->ktx2Transcoder->start_transcoding()) {
             Error{} << "Trade::BasisImporter::openData(): bad KTX2 file";
             return;
         }
@@ -284,49 +278,49 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         /* Remember the type for doTexture(). ktx2_transcoder::init() already
            checked we're dealing with a valid 2D texture. basisu -tex_type 3d
            results in 2D array textures, and there's no get_depth() at all. */
-        _state->isVideo = false;
-        if(_state->ktx2Transcoder->get_faces() != 1)
-            _state->textureType = _state->ktx2Transcoder->get_layers() > 0 ? TextureType::CubeMapArray : TextureType::CubeMap;
-        else if(_state->ktx2Transcoder->is_video()) {
-            _state->textureType = TextureType::Texture2D;
-            _state->isVideo = true;
+        state->isVideo = false;
+        if(state->ktx2Transcoder->get_faces() != 1)
+            state->textureType = state->ktx2Transcoder->get_layers() > 0 ? TextureType::CubeMapArray : TextureType::CubeMap;
+        else if(state->ktx2Transcoder->is_video()) {
+            state->textureType = TextureType::Texture2D;
+            state->isVideo = true;
         } else
-            _state->textureType = _state->ktx2Transcoder->get_layers() > 0 ? TextureType::Texture2DArray : TextureType::Texture2D;
+            state->textureType = state->ktx2Transcoder->get_layers() > 0 ? TextureType::Texture2DArray : TextureType::Texture2D;
 
         /* KTX2 files only ever contain one image, but for videos we choose to
            expose layers as multiple images, one for each frame */
-        if(_state->isVideo) {
-            _state->numImages = Math::max(_state->ktx2Transcoder->get_layers(), 1u);
-            _state->numSlices = 1;
+        if(state->isVideo) {
+            state->numImages = Math::max(state->ktx2Transcoder->get_layers(), 1u);
+            state->numSlices = 1;
         } else {
-            _state->numImages = 1;
-            _state->numSlices = _state->ktx2Transcoder->get_faces()*Math::max(_state->ktx2Transcoder->get_layers(), 1u);
+            state->numImages = 1;
+            state->numSlices = state->ktx2Transcoder->get_faces()*Math::max(state->ktx2Transcoder->get_layers(), 1u);
         }
-        _state->numLevels = Containers::Array<UnsignedInt>{DirectInit, _state->numImages, _state->ktx2Transcoder->get_levels()};
+        state->numLevels = Containers::Array<UnsignedInt>{DirectInit, state->numImages, state->ktx2Transcoder->get_levels()};
 
-        _state->compressionType = _state->ktx2Transcoder->get_format();
+        state->compressionType = state->ktx2Transcoder->get_format();
 
         /* Get y-flip flag from KTXorientation key/value entry. If it's
            missing, the default is Y-down. Y-up = flipped. */
-        const basisu::uint8_vec* orientation = _state->ktx2Transcoder->find_key("KTXorientation");
-        _state->isYFlipped = orientation && orientation->size() >= 2 && (*orientation)[1] == 'u';
+        const basisu::uint8_vec* orientation = state->ktx2Transcoder->find_key("KTXorientation");
+        state->isYFlipped = orientation && orientation->size() >= 2 && (*orientation)[1] == 'u';
 
-        _state->isSrgb = _state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
+        state->isSrgb = state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
         #endif
 
     } else {
         /* .basis file */
-        _state->basisTranscoder.emplace(&_state->codebook);
+        state->basisTranscoder.emplace(&state->codebook);
 
-        if(!_state->basisTranscoder->validate_header(_state->in.data(), _state->in.size())) {
+        if(!state->basisTranscoder->validate_header(state->in.data(), state->in.size())) {
             Error{} << "Trade::BasisImporter::openData(): invalid basis header";
             return;
         }
 
         /* Start transcoding */
         basist::basisu_file_info fileInfo;
-        if(!_state->basisTranscoder->get_file_info(_state->in.data(), _state->in.size(), fileInfo) ||
-           !_state->basisTranscoder->start_transcoding(_state->in.data(), _state->in.size())) {
+        if(!state->basisTranscoder->get_file_info(state->in.data(), state->in.size(), fileInfo) ||
+           !state->basisTranscoder->start_transcoding(state->in.data(), state->in.size())) {
             Error{} << "Trade::BasisImporter::openData(): bad basis file";
             return;
         }
@@ -341,7 +335,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         /* Remember the type for doTexture(). Depending on the type, we're
            either dealing with multiple independent 2D images or each image is
            an array layer, cubemap face or depth slice. */
-        _state->isVideo = false;
+        state->isVideo = false;
         switch(fileInfo.m_tex_type) {
             case basist::basis_texture_type::cBASISTexTypeVideoFrames:
                 /* Decoding all video frames at once is usually not what you
@@ -349,17 +343,17 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                    have to check that the sizes match, and need to remember
                    this is a video to disallow seeking (not supported by
                    basisu). */
-                _state->isVideo = true;
-                _state->textureType = TextureType::Texture2D;
+                state->isVideo = true;
+                state->textureType = TextureType::Texture2D;
                 break;
             case basist::basis_texture_type::cBASISTexType2D:
-                _state->textureType = TextureType::Texture2D;
+                state->textureType = TextureType::Texture2D;
                 break;
             case basist::basis_texture_type::cBASISTexType2DArray:
-                _state->textureType = TextureType::Texture2DArray;
+                state->textureType = TextureType::Texture2DArray;
                 break;
             case basist::basis_texture_type::cBASISTexTypeCubemapArray:
-                _state->textureType = fileInfo.m_total_images > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
+                state->textureType = fileInfo.m_total_images > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
                 break;
             case basist::basis_texture_type::cBASISTexTypeVolume:
                 /* Import 3D textures as 2D arrays because:
@@ -369,19 +363,19 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                      they wouldn't halve in the z-dimension as users would very
                      likely expect */
                 Warning{} << "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture";
-                _state->textureType = TextureType::Texture2DArray;
+                state->textureType = TextureType::Texture2DArray;
                 break;
             default:
                 /* This is caught by basis_transcoder::get_file_info() */
                 CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
-        if(_state->textureType == TextureType::Texture2D) {
-            _state->numImages = fileInfo.m_total_images;
-            _state->numSlices = 1;
+        if(state->textureType == TextureType::Texture2D) {
+            state->numImages = fileInfo.m_total_images;
+            state->numSlices = 1;
         } else {
-            _state->numImages = 1;
-            _state->numSlices = fileInfo.m_total_images;
+            state->numImages = 1;
+            state->numSlices = fileInfo.m_total_images;
         }
 
         CORRADE_INTERNAL_ASSERT(fileInfo.m_image_mipmap_levels.size() == fileInfo.m_total_images);
@@ -391,15 +385,15 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
            These checks, including the cube map checks below, are either not
            necessary for the KTX2 file format or are already handled by
            ktx2_transcoder. */
-        const bool imageSizeMustMatch = _state->textureType != TextureType::Texture2D || _state->isVideo;
+        const bool imageSizeMustMatch = state->textureType != TextureType::Texture2D || state->isVideo;
         UnsignedInt firstWidth = 0, firstHeight = 0;
-        _state->numLevels = Containers::Array<UnsignedInt>{NoInit, _state->numImages};
+        state->numLevels = Containers::Array<UnsignedInt>{NoInit, state->numImages};
         for(UnsignedInt i = 0; i != fileInfo.m_total_images; ++i) {
             /* Header validation etc. is already done in get_file_info and
                start_transcoding, so by looking at the code there's nothing else
                that could fail and wasn't already caught before */
             basist::basisu_image_info imageInfo;
-            CORRADE_INTERNAL_ASSERT_OUTPUT(_state->basisTranscoder->get_image_info(_state->in.data(), _state->in.size(), imageInfo, i));
+            CORRADE_INTERNAL_ASSERT_OUTPUT(state->basisTranscoder->get_image_info(state->in.data(), state->in.size(), imageInfo, i));
             if(i == 0) {
                 firstWidth = imageInfo.m_orig_width;
                 firstHeight = imageInfo.m_orig_height;
@@ -412,20 +406,19 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                 return;
             }
 
-            if(imageSizeMustMatch && i > 0 && imageInfo.m_total_levels != _state->numLevels[0]) {
+            if(imageSizeMustMatch && i > 0 && imageInfo.m_total_levels != state->numLevels[0]) {
                 Error{} << "Trade::BasisImporter::openData(): image slices have mismatching level counts, expected"
-                    << _state->numLevels[0] << "but got" << imageInfo.m_total_levels;
+                    << state->numLevels[0] << "but got" << imageInfo.m_total_levels;
                 return;
             }
 
-            if(i < _state->numImages)
-                _state->numLevels[i] = imageInfo.m_total_levels;
+            if(i < state->numImages)
+                state->numLevels[i] = imageInfo.m_total_levels;
         }
 
-
-        if(_state->textureType == TextureType::CubeMap || _state->textureType == TextureType::CubeMapArray) {
-            if(_state->numSlices % 6 != 0) {
-                Error{} << "Trade::BasisImporter::openData(): cube map face count must be a multiple of 6 but got" << _state->numSlices;
+        if(state->textureType == TextureType::CubeMap || state->textureType == TextureType::CubeMapArray) {
+            if(state->numSlices % 6 != 0) {
+                Error{} << "Trade::BasisImporter::openData(): cube map face count must be a multiple of 6 but got" << state->numSlices;
                 return;
             }
 
@@ -436,34 +429,33 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
             }
         }
 
-        _state->compressionType = fileInfo.m_tex_format;
-        _state->isYFlipped = fileInfo.m_y_flipped;
+        state->compressionType = fileInfo.m_tex_format;
+        state->isYFlipped = fileInfo.m_y_flipped;
 
         /* For some reason cBASISHeaderFlagSRGB is not exposed in basisu_file_info,
            get it from the basis header directly */
-        const basist::basis_file_header& header = *reinterpret_cast<const basist::basis_file_header*>(_state->in.data());
-        _state->isSrgb = header.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
+        const basist::basis_file_header& header = *reinterpret_cast<const basist::basis_file_header*>(state->in.data());
+        state->isSrgb = header.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
     }
 
     /* There has to be exactly one transcoder */
-    CORRADE_INTERNAL_ASSERT(!_state->ktx2Transcoder != !_state->basisTranscoder);
+    CORRADE_INTERNAL_ASSERT(!state->ktx2Transcoder != !state->basisTranscoder);
     /* Can't have a KTX2 transcoder without KTX2 support compiled into basisu */
-    CORRADE_INTERNAL_ASSERT(BASISD_SUPPORT_KTX2 || !_state->ktx2Transcoder);
+    CORRADE_INTERNAL_ASSERT(BASISD_SUPPORT_KTX2 || !state->ktx2Transcoder);
     /* These file formats don't support 1D images and we import 3D images as
        2D array images */
-    CORRADE_INTERNAL_ASSERT(_state->textureType != TextureType::Texture1D &&
-                            _state->textureType != TextureType::Texture1DArray &&
-                            _state->textureType != TextureType::Texture3D);
+    CORRADE_INTERNAL_ASSERT(state->textureType != TextureType::Texture1D &&
+                            state->textureType != TextureType::Texture1DArray &&
+                            state->textureType != TextureType::Texture3D);
     /* There's one image with faces/layers, or multiple images without any */
-    CORRADE_INTERNAL_ASSERT(_state->numImages == 1 || _state->numSlices == 1);
-
-    /* All good, release the resource guard */
-    resourceGuard.release();
+    CORRADE_INTERNAL_ASSERT(state->numImages == 1 || state->numSlices == 1);
 
     if(flags() & ImporterFlag::Verbose) {
-        if(_state->isVideo)
+        if(state->isVideo)
             Debug{} << "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially";
     }
+
+    _state = std::move(state);
 }
 
 template<UnsignedInt dimensions>
