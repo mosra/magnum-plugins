@@ -124,13 +124,18 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @subsection Trade-BasisImporter-behavior-types Image types
 
 You can import all image types supported by `basisu`: (layered) 2D images,
-(layered) cube maps, 3D images and videos. With the exception of 3D images,
-they can in turn all have multiple mip levels. The image type can be determined
-from @ref texture() and @ref TextureData::type().
+(layered) cube maps, 3D images and videos. They can in turn all have multiple
+mip levels. The image type can be determined from @ref texture() and
+@ref TextureData::type().
 
 For layered 2D images and (layered) cube maps, the array layers and faces are
 exposed as an additional image dimension. @ref image3D will return an
 @ref ImageData3D with n z-slices, or 6*n z-slices for cube maps.
+
+All 3D images will be imported as 2D array textures with as many layers as
+depth slices. This unifies the behaviour with Basis compressed KTX2 files that
+don't support 3D images in the first place, and avoids confusing behaviour with
+mip levels which are always 2-dimensional in Basis compressed images.
 
 Video files will be imported as multiple 2D images with the same size and level
 count. Due to the way video is encoded by Basis Universal, seeking to arbitrary

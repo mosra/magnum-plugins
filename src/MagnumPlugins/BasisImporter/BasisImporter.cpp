@@ -358,7 +358,14 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 _state->textureType = fileInfo.m_total_images > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
                 break;
             case basist::basis_texture_type::cBASISTexTypeVolume:
-                _state->textureType = TextureType::Texture3D;
+                /* Import 3D textures as 2D arrays because:
+                   - 3D textures are not supported in KTX2 so this unifies the
+                     formats
+                   - mip levels are always 2D images for each slice, meaning
+                     they wouldn't halve in the z-dimension as users would very
+                     likely expect */
+                Warning{} << "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture";
+                _state->textureType = TextureType::Texture2DArray;
                 break;
             default:
                 /* This is caught by basis_transcoder::get_file_info() */
@@ -411,14 +418,6 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
                 _state->numLevels[i] = imageInfo.m_total_levels;
         }
 
-        /* Mip levels in basis are per 2D image, so for 3D images they don't
-           halve in the z-dimension. Turn it into a 2D array texture so users
-           don't get surprised by the mip z-size not changing, and print a
-           warning. */
-        if(_state->textureType == TextureType::Texture3D && _state->numLevels[0] > 1) {
-            Warning{} << "Trade::BasisImporter::openData(): found a 3D image with 2D mipmaps, importing as a 2D array texture";
-            _state->textureType = TextureType::Texture2DArray;
-        }
 
         if(_state->textureType == TextureType::CubeMap || _state->textureType == TextureType::CubeMapArray) {
             if(_state->numSlices % 6 != 0) {
@@ -446,8 +445,11 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
     CORRADE_INTERNAL_ASSERT(!_state->ktx2Transcoder != !_state->basisTranscoder);
     /* Can't have a KTX2 transcoder without KTX2 support compiled into basisu */
     CORRADE_INTERNAL_ASSERT(BASISD_SUPPORT_KTX2 || !_state->ktx2Transcoder);
-    /* These file formats don't support 1D images */
-    CORRADE_INTERNAL_ASSERT(_state->textureType != TextureType::Texture1D && _state->textureType != TextureType::Texture1DArray);
+    /* These file formats don't support 1D images and we import 3D images as
+       2D array images */
+    CORRADE_INTERNAL_ASSERT(_state->textureType != TextureType::Texture1D &&
+                            _state->textureType != TextureType::Texture1DArray &&
+                            _state->textureType != TextureType::Texture3D);
     /* There's one image with faces/layers, or multiple images without any */
     CORRADE_INTERNAL_ASSERT(_state->numImages == 1 || _state->numSlices == 1);
 
@@ -572,8 +574,6 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
     const UnsignedInt sliceSize = basis_get_bytes_per_block_or_pixel(format)*outputSizeInBlocksOrPixels;
     const UnsignedInt dataSize = sliceSize*size.z();
     Containers::Array<char> dest{DefaultInit, dataSize};
-
-    /** @todo z-flip 3D textures? */
 
     /* There's no function for transcoding the entire level, so loop over all
        layers and faces and transcode each one. This matches the image layout
