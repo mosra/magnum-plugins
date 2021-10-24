@@ -599,21 +599,25 @@ void BasisImageConverterTest::customLevels() {
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
 
+    /* Off by default */
+    CORRADE_COMPARE(converter->configuration().value<bool>("mip_gen"), false);
+    /* Making sure that providing custom levels turns off automatic mip level
+       generation. We only provide an incomplete mip chain so we can tell if
+       basis generated any extra levels beyond that. */
+    converter->configuration().setValue("mip_gen", true);
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
     const auto compressedData = converter->convertToData({level0WithSkip, level1WithSkip, level2WithSkip});
     CORRADE_VERIFY(compressedData);
+    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): found user-supplied mip levels, ignoring mip_gen config value\n");
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer =
         _manager.instantiate("BasisImporterRGBA8");
-    /* Off by default */
-    CORRADE_COMPARE(converter->configuration().value<bool>("mip_gen"), false);
-    /* Making sure that providing custom levels turns off automatic mip level
-       generation. We only provide an incomplete mip chain so we can tell if
-       basis generated any extra levels beyond that. */
-    CORRADE_VERIFY(converter->configuration().setValue("mip_gen", true));
-
     CORRADE_VERIFY(importer->openData(compressedData));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 3);

@@ -231,6 +231,11 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
        generation is disabled. */
     params.m_source_images.resize(1);
     if(imageLevels.size() > 1) {
+        if(params.m_mip_gen) {
+            Warning{} << "Trade::BasisImageConverter::convertToData(): found user-supplied mip levels, ignoring mip_gen config value";
+            params.m_mip_gen = false;
+        }
+
         params.m_source_mipmap_images.resize(1);
         params.m_source_mipmap_images[0].resize(imageLevels.size() - 1);
     }
