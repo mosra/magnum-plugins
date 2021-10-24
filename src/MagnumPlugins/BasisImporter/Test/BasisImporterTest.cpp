@@ -182,7 +182,7 @@ constexpr struct {
     {"rgb", "rgba", "rgb-linear", {63, 27},
      "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, CompressedPixelFormat::Bc5RGUnorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Bc7RGB", CompressedPixelFormat::Bc7RGBASrgb, CompressedPixelFormat::Bc7RGBAUnorm},
+     "Bc7RGBA", CompressedPixelFormat::Bc7RGBASrgb, CompressedPixelFormat::Bc7RGBAUnorm},
     {"rgb-pow2", "rgba-pow2", "rgb-linear-pow2", {64, 32},
      "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppSrgb, CompressedPixelFormat::PvrtcRGB4bppUnorm},
     {"rgb-pow2", "rgba-pow2", "rgb-linear-pow2", {64, 32},

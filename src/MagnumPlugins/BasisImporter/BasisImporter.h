@@ -57,9 +57,11 @@ namespace Magnum { namespace Trade {
 @brief Basis Universal importer plugin
 @m_since_{plugins,2019,10}
 
-@m_keywords{BasisImporterEacR BasisImporterEacRG BasisImporterEtc1RGB} @m_keywords{BasisImporterEtc2RGBA BasisImporterBc1RGB BasisImporterBc3RGBA} @m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc7RGB} @m_keywords{BasisImporterBc7RGBA BasisImporterPvrtc1RGB4bpp}
-@m_keywords{BasisImporterPvrtc1RGBA4bpp BasisImporterAstc4x4RGBA}
-@m_keywords{BasisImporterRGBA8 KtxImporter}
+@m_keywords{BasisImporterEacR BasisImporterEacRG BasisImporterEtc1RGB}
+@m_keywords{BasisImporterEtc2RGBA BasisImporterBc1RGB BasisImporterBc3RGBA}
+@m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc7RGBA}
+@m_keywords{BasisImporterPvrtc1RGB4bpp BasisImporterPvrtc1RGBA4bpp}
+@m_keywords{BasisImporterAstc4x4RGBA BasisImporterRGBA8 KtxImporter}
 
 Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
 compressed images (`*.basis` or `*.ktx2`) by parsing and transcoding files into
@@ -69,7 +71,7 @@ You can use @ref BasisImageConverter to transcode images into this format.
 This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,
 `BasisImporterEtc1RGB`, `BasisImporterEtc2RGBA`, `BasisImporterBc1RGB`,
 `BasisImporterBc3RGBA`, `BasisImporterBc4R`, `BasisImporterBc5RG`,
-`BasisImporterBc7RGB`, `BasisImporterBc7RGBA`, `BasisImporterPvrtc1RGB4bpp`,
+`BasisImporterBc7RGBA`, `BasisImporterPvrtc1RGB4bpp`,
 `BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`, `BasisImporterRGBA8`,
 `KtxImporter`.
 
@@ -259,20 +261,17 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
             /** BC5 RG. Loaded as @ref CompressedPixelFormat::Bc5RGUnorm. */
             Bc5RG = 5,
 
-            /**
-             * BC7 RGB (mode 6). Loaded as
-             * @ref CompressedPixelFormat::Bc7RGBAUnorm/
-             * @ref CompressedPixelFormat::Bc7RGBASrgb, but with alpha values
-             * set to opaque.
-             */
-            Bc7RGB = 6,
+            /* Bc7RGB (=6) used to be the mode 6 transcoder which went away
+               when UASTC was added. The old mode 5 transcoder (=7) is called
+               BC7_ALT in the transcoder and is only kept around for backward
+               compatibility but treated exactly the same as BC7_RGBA (=6). */
 
             /**
-             * BC7 RGBA (mode 5). Loaded as
+             * BC7 RGBA. If no alpha is present, it's set to opaque. Loaded as
              * @ref CompressedPixelFormat::Bc7RGBAUnorm/
              * @ref CompressedPixelFormat::Bc7RGBASrgb.
              */
-            Bc7RGBA = 7,
+            Bc7RGBA = 6,
 
             /**
              * PVRTC1 RGB 4 bpp. Loaded as
