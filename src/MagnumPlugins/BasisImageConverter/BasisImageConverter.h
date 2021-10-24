@@ -175,8 +175,11 @@ target_link_libraries(your-application PRIVATE Threads::Threads)
 @section Trade-BasisImageConverter-configuration Plugin-specific configuration
 
 Basis compression can be configured to produce better quality or reduce
-encoding time. Configuration options are equivalent to options of the `basisu`
-tool. The full form of the configuration is shown below:
+encoding time. Configuration options are equivalent to parameters of the C++
+encoder API in `basis_compressor`. The `basisu` tool options mostly match the
+encoder API parameters and its [help text](https://github.com/BinomialLLC/basis_universal/blob/v1_15_update2/basisu_tool.cpp#L76)
+provides useful descriptions of most of the parameters, their ranges and the
+impact on quality/speed. The full form of the configuration is shown below:
 
 @snippet MagnumPlugins/BasisImageConverter/BasisImageConverter.conf configuration_
 
