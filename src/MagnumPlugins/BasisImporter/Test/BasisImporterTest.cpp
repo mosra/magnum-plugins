@@ -531,8 +531,6 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgb-noflip"} + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -565,8 +563,6 @@ void BasisImporterTest::rgbUncompressedLinear() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgb-linear"} + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -593,8 +589,6 @@ void BasisImporterTest::rgbaUncompressed() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba"} + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -621,8 +615,6 @@ void BasisImporterTest::rgbaUncompressedUastc() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-uastc"} + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -646,8 +638,6 @@ void BasisImporterTest::rgbaUncompressedUastc() {
 
 void BasisImporterTest::rgbaUncompressedMultipleImages() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         "rgba-2images-mips.basis")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
@@ -815,8 +805,6 @@ void BasisImporterTest::array2D() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-array"} + data.extension)));
 
@@ -850,8 +838,6 @@ void BasisImporterTest::array2DMipmaps() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-array-mips"} + data.extension)));
 
@@ -901,8 +887,6 @@ void BasisImporterTest::video() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-video"} + data.extension)));
 
@@ -940,8 +924,6 @@ void BasisImporterTest::image3D() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-3d"} + data.extension)));
 
@@ -981,9 +963,6 @@ void BasisImporterTest::image3DMipmaps() {
        type is tested in texture(). */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
-
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-3d-mips"} + data.extension)));
 
@@ -1033,8 +1012,6 @@ void BasisImporterTest::cubeMap() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-cubemap"} + data.extension)));
 
@@ -1077,8 +1054,6 @@ void BasisImporterTest::cubeMapArray() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-cubemap-array"} + data.extension)));
 
@@ -1185,7 +1160,7 @@ void BasisImporterTest::ktxImporterAlias() {
 
     Containers::Pointer<AbstractImporter> anyImageImporter = _manager.instantiate("AnyImageImporter");
     CORRADE_VERIFY(anyImageImporter);
-    CORRADE_VERIFY(anyImageImporter->configuration().setValue("format", "RGBA8"));
+    anyImageImporter->configuration().setValue("format", "RGBA8");
 
     CORRADE_VERIFY(anyImageImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         "rgba.ktx2")));

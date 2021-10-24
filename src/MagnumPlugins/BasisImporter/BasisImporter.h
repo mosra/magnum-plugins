@@ -133,7 +133,7 @@ mip levels. The image type can be determined from @ref texture() and
 @ref TextureData::type().
 
 For layered 2D images and (layered) cube maps, the array layers and faces are
-exposed as an additional image dimension. @ref image3D will return an
+exposed as an additional image dimension. @ref image3D() will return an
 @ref ImageData3D with n z-slices, or 6*n z-slices for cube maps.
 
 All 3D images will be imported as 2D array textures with as many layers as
@@ -143,7 +143,7 @@ mip levels which are always 2-dimensional in Basis compressed images.
 
 Video files will be imported as multiple 2D images with the same size and level
 count. Due to the way video is encoded by Basis Universal, seeking to arbitrary
-frames is not allowed. If you call @ref image2D with non-sequential frame
+frames is not allowed. If you call @ref image2D() with non-sequential frame
 indices and that frame is not an I-frame, it will print an error and fail.
 Restarting from frame 0 is always allowed.
 
@@ -165,6 +165,21 @@ Cube map faces are imported in the order +X, -X, +Y, -Y, +Z, -Z as seen from a
 left-handed coordinate system (+X is right, +Y is up, +Z is forward). Layered
 cube maps are stored as multiple sets of faces, ie. all faces +X through -Z for
 the first layer, then all faces of the second layer, etc.
+
+@m_class{m-block m-warning}
+
+@par Y-flipping
+    While all importers for uncompressed image data are performing a Y-flip on
+    import to have the origin at the bottom (as expected by OpenGL), it's a
+    non-trivial operation with compressed images. In case of Basis, you can
+    pass a `-y_flip` flag to the `basisu` tool to Y-flip the image
+    * *during encoding*, however right now there's no way do so on import. To
+    inform the user, the importer checks for the Y-flip flag in the file and if
+    it's not there, prints a warning about the data having wrong orientation.
+@par
+    To account for this on the application side for files that you don't have
+    control over, flip texture coordinates of the mesh or patch texture data
+    loading in the shader.
 
 @section Trade-BasisImporter-configuration Plugin-specific configuration
 
@@ -191,31 +206,17 @@ you may also use @ref setTargetFormat().
 
 @snippet BasisImporter.cpp target-format-config
 
-There's many options and you should be generally striving for highest-quality
-format available on given platform. Detailed description of the choices is
-in [Basis Universal README](https://github.com/BinomialLLC/basis_universal#how-to-use-the-system).
+There are many options and you should generally be striving for the
+highest-quality format available on a given platform. A detailed description of
+the choices can be found in the [Basis Universal Wiki](https://github.com/BinomialLLC/basis_universal/wiki/How-to-Deploy-ETC1S-Texture-Content-Using-Basis-Universal).
 As an example, the following code is a decision making used by
 @ref magnum-player "magnum-player" based on availability of corresponding
 OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
 
 @snippet BasisImporter.cpp gl-extension-checks
 
-<b></b>
 
-@m_class{m-block m-warning}
 
-@par Y-flipping
-    While all importers for uncompressed image data are doing an Y-flip on
-    import to have origin at the bottom (as expected by OpenGL), it's a
-    non-trivial operation with compressed images. In case of Basis, you can
-    pass a `-y_flip` flag to the `basisu` tool to Y-flip the image
-    * *during encoding*, however right now there's no way do so on import. To
-    inform the user, the importer checks for the Y-flip flag in the file and if
-    it's not there, prints a warning about the data having wrong orientation.
-@par
-    To account for this on the application side for files that you don't have a
-    control of, flip texture coordinates of the mesh or patch texture data
-    loading in the shader.
 */
 class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
     public:
