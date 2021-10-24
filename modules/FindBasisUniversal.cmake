@@ -67,10 +67,21 @@ if(${_index} GREATER -1)
     list(REMOVE_DUPLICATES BasisUniversal_FIND_COMPONENTS)
 endif()
 
-include(TestBigEndian)
-test_big_endian(BIG_ENDIAN)
+# This fails under Emscripten. WebAssembly is always little-endian.
+if(NOT CORRADE_TARGET_EMSCRIPTEN)
+    include(TestBigEndian)
+    test_big_endian(BIG_ENDIAN)
+endif()
 
 macro(_basis_setup_source_file source)
+    # Compile any .c files as C++. Originally I thought enable_language(C)
+    # being required (see above) means we don't need to do this, but things get
+    # complicated with CXX_STANDARD. Some compilers don't like -std=c++11 on C
+    # files. Even if we manage to remove that flag, some of the files require
+    # C99 features and it's just not worth the trouble.
+    set_property(SOURCE ${source} PROPERTY LANGUAGE
+        CXX)
+
     # Tell Basis if we're on a big endian system. It currently doesn't figure
     # this out by itself.
     if(BIG_ENDIAN)
