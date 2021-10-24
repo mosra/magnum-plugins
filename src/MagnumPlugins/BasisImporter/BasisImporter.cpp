@@ -68,8 +68,6 @@ CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type, bo
             return CompressedPixelFormat::Bc4RUnorm;
         case BasisImporter::TargetFormat::Bc5RG:
             return CompressedPixelFormat::Bc5RGUnorm;
-        case BasisImporter::TargetFormat::Bc7RGB:
-            return isSrgb ? CompressedPixelFormat::Bc7RGBASrgb : CompressedPixelFormat::Bc7RGBAUnorm;
         case BasisImporter::TargetFormat::Bc7RGBA:
             return isSrgb ? CompressedPixelFormat::Bc7RGBASrgb : CompressedPixelFormat::Bc7RGBAUnorm;
         case BasisImporter::TargetFormat::PvrtcRGB4bpp:
@@ -90,7 +88,7 @@ CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type, bo
 
 constexpr const char* FormatNames[]{
     "Etc1RGB", "Etc2RGBA",
-    "Bc1RGB", "Bc3RGBA", "Bc4R", "Bc5RG", "Bc7RGB", "Bc7RGBA",
+    "Bc1RGB", "Bc3RGBA", "Bc4R", "Bc5RG", "Bc7RGBA", nullptr, /* BC7_ALT */
     "PvrtcRGB4bpp", "PvrtcRGBA4bpp",
     "Astc4x4RGBA",
     nullptr, nullptr, /* ATC formats */
@@ -475,7 +473,7 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
         targetFormat = configuration().value<TargetFormat>("format");
         if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
             Error{} << prefix << "invalid transcoding target format" << targetFormatStr << Debug::nospace
-                << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
+                << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
             return Containers::NullOpt;
         }
     }

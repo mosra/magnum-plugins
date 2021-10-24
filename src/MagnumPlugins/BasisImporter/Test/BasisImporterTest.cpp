@@ -182,7 +182,7 @@ constexpr struct {
     {"rgb", "rgba", "rgb-linear", {63, 27},
      "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, CompressedPixelFormat::Bc5RGUnorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Bc7RGB", CompressedPixelFormat::Bc7RGBASrgb, CompressedPixelFormat::Bc7RGBAUnorm},
+     "Bc7RGBA", CompressedPixelFormat::Bc7RGBASrgb, CompressedPixelFormat::Bc7RGBAUnorm},
     {"rgb-pow2", "rgba-pow2", "rgb-linear-pow2", {64, 32},
      "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppSrgb, CompressedPixelFormat::PvrtcRGB4bppUnorm},
     {"rgb-pow2", "rgba-pow2", "rgb-linear-pow2", {64, 32},
@@ -397,7 +397,7 @@ void BasisImporterTest::invalidConfiguredFormat() {
     importer->configuration().setValue("format", "Banana");
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8\n");
 }
 
 void BasisImporterTest::unsupportedFormat() {
