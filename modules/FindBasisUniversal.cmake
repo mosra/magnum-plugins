@@ -71,7 +71,7 @@ endif()
 # Emscripten, but WebAssembly is always little-endian. On CMake 3.8 and below,
 # test_big_endian() requires C support which breaks compilation in funny ways
 # (see comment below) so we skip that.
-if(NOT CORRADE_TARGET_EMSCRIPTEN AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.9)
+if(NOT CORRADE_TARGET_EMSCRIPTEN AND NOT CMAKE_VERSION VERSION_LESS 3.9)
     include(TestBigEndian)
     test_big_endian(BIG_ENDIAN)
 endif()
