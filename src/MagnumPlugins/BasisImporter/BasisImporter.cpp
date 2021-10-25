@@ -209,7 +209,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
         _state->in = std::move(data);
     } else {
-        _state->in = Containers::Array<char>{data.size()};
+        _state->in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, _state->in);
     }
 }

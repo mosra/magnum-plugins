@@ -527,7 +527,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
         _d->fileData = std::move(data);
     } else {
-        _d->fileData = Containers::Array<char>{data.size()};
+        _d->fileData = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, _d->fileData);
     }
 
