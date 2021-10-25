@@ -24,8 +24,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Required by FindBasisUniversal.cmake, check the comment there for more info
-enable_language(C)
+# C is needed on < 3.9 by TestBigEndian, which is used by FindBasisUniversal
+if(CMAKE_VERSION VERSION_LESS 3.9)
+    enable_language(C)
+endif()
 
 # To help Homebrew and Vcpkg packages, Basis Universal sources can be cloned to
 # src/external and we will use those without any extra effort from the outside.
