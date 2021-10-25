@@ -95,14 +95,14 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgb-63x27.png
         rgba-63x27.png
         rgba-63x27-slice1.png
-        rgba-63x27-slice1.png
+        rgba-63x27-slice2.png
         rgba-31x13.png
         rgba-13x31.png
         rgba-15x6.png
         rgba-6x15.png
         rgba-27x27.png
         rgba-27x27-slice1.png
-        rgba-27x27-slice1.png
+        rgba-27x27-slice2.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-rgba.ktx2)
 target_include_directories(BasisImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
