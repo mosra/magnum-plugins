@@ -82,9 +82,9 @@ install:
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2016.zip && 7z x freetype-2.10.4-windows-2016.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 # Basis Universal
-- set BASIS_VERSION=v1_15_update2
-- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/%BASIS_VERSION%.zip
-- 7z x %BASIS_VERSION%.zip && ren basis_universal-%BASIS_VERSION% basis_universal
+- set BASIS_VERSION=1_15_update2
+- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/v%BASIS_VERSION%.zip
+- 7z x v%BASIS_VERSION%.zip && ren basis_universal-%BASIS_VERSION% basis_universal
 
 # SPIRV-Tools, for MSVC 2019, 2017 and clang-cl only
 # This line REQUIRES the COMPILER variable to be set on rt builds, otherwise it
