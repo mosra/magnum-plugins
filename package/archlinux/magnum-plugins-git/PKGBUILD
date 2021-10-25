@@ -14,7 +14,7 @@ conflicts=('magnum-plugins')
 source=("git+git://github.com/mosra/magnum-plugins.git"
         "https://github.com/BinomialLLC/basis_universal/archive/v${_basis_pkgver}.tar.gz")
 sha1sums=('SKIP'
-          '3caff917d63ed0255fc56bcdf80d305bb47ac9315a4a45409a1264a0e5e0e572')
+          'b9615d48ebfc62a53f333ebf8a582558a058b0e9')
 
 pkgver() {
     cd "$srcdir/${pkgname%-git}"
