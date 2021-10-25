@@ -120,10 +120,11 @@ multiple mip levels. The image type can be determined from @ref texture() and
 
 For layered images and (layered) cube maps, the array layers and faces are
 exposed as an additional image dimension. 1D array textures import
-@ref ImageData2D with n y-slices, (layered) 2D textures and cube maps import
-@ref ImageData3D with 6*n z-slices. 3D array textures behave differently:
-because there is no `ImageData4D`, each layer is imported as a separate
-@ref ImageData3D, with @ref image3DCount() determining the number of layers.
+@ref ImageData2D with n y-slices, 2D array textures import @ref ImageData3D
+with n z-slices and (layered) cube maps import @ref ImageData3D with 6*n
+z-slices. 3D array textures behave differently: because there is no
+`ImageData4D`, each layer is imported as a separate @ref ImageData3D, with
+@ref image3DCount() determining the number of layers.
 
 @subsection Trade-KtxImporter-behavior-multilevel Multilevel images
 
