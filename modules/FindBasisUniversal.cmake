@@ -67,18 +67,25 @@ if(${_index} GREATER -1)
     list(REMOVE_DUPLICATES BasisUniversal_FIND_COMPONENTS)
 endif()
 
-# This fails under Emscripten. WebAssembly is always little-endian.
-if(NOT CORRADE_TARGET_EMSCRIPTEN)
+# Figure out endianness for Basis Universal. test_big_endian() fails on
+# Emscripten, but WebAssembly is always little-endian. On CMake 3.8 and below,
+# test_big_endian() requires C support which breaks compilation in funny ways
+# (see comment below) so we skip that.
+if(NOT CORRADE_TARGET_EMSCRIPTEN AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.9)
     include(TestBigEndian)
     test_big_endian(BIG_ENDIAN)
 endif()
 
 macro(_basis_setup_source_file source)
-    # Compile any .c files as C++. Originally I thought enable_language(C)
-    # being required (see above) means we don't need to do this, but things get
-    # complicated with CXX_STANDARD. Some compilers don't like -std=c++11 on C
-    # files. Even if we manage to remove that flag, some of the files require
-    # C99 features and it's just not worth the trouble.
+    # Compile any .c files as C++. Otherwise the files are just ignored because
+    # the C language is not enabled by project() or enable_language(). Calling
+    # enable_language in a find module is not a good idea, and even if we do
+    # this higher up in one of the Basis* plugins, some compilers will require
+    # the C99 standard being enabled and/or complain about -std=c++11 (done by
+    # CORRADE_CXX_STANDARD) being set on a C compiler. Doing both (enabling C
+    # and setting LANGUAGE CXX) still results in static libraries compiling
+    # with C and producing above-mentioned errors, possibly to do with
+    # LINKER_LANGUAGE. What a horrible mess.
     set_property(SOURCE ${source} PROPERTY LANGUAGE
         CXX)
 
