@@ -105,10 +105,11 @@ constexpr struct {
     const Containers::ArrayView<const char> data;
     const char* message;
 } InvalidHeaderData[] {
-    {"Invalid", "NotAValidFile", "invalid basis header"},
-    {"Invalid basis header", "sB\xff\xff", "invalid basis header"},
-    {"Invalid KTX2 identifier", "\xabKTX 30\xbb\r\n\x1a\n", "invalid basis header"},
-    {"Invalid KTX2 header", "\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff", "invalid KTX2 header, or not Basis compressed"}
+    /* GCC 4.8 needs the explicit cast :( */
+    {"Invalid", Containers::arrayView("NotAValidFile"), "invalid basis header"},
+    {"Invalid basis header", Containers::arrayView("sB\xff\xff"), "invalid basis header"},
+    {"Invalid KTX2 identifier", Containers::arrayView("\xabKTX 30\xbb\r\n\x1a\n"), "invalid basis header"},
+    {"Invalid KTX2 header", Containers::arrayView("\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff"), "invalid KTX2 header, or not Basis compressed"}
 };
 
 constexpr struct {
