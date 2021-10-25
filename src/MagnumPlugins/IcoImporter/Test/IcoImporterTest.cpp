@@ -30,6 +30,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/FormatStl.h>
@@ -52,6 +53,7 @@ struct IcoImporterTest: TestSuite::Tester {
     void bmp();
     void png();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -72,6 +74,22 @@ const struct {
         "image too short, expected at least 974 bytes but got 973"}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 IcoImporterTest::IcoImporterTest() {
     addInstancedTests({&IcoImporterTest::tooShort},
         Containers::arraySize(TooShortData));
@@ -80,9 +98,12 @@ IcoImporterTest::IcoImporterTest() {
               &IcoImporterTest::pngLoadFailed,
 
               &IcoImporterTest::bmp,
-              &IcoImporterTest::png,
+              &IcoImporterTest::png});
 
-              &IcoImporterTest::openTwice,
+    addInstancedTests({&IcoImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&IcoImporterTest::openTwice,
               &IcoImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -203,6 +224,25 @@ void IcoImporterTest::png() {
         CORRADE_COMPARE(image->size(), (Vector2i{32, 64}));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb);
     }
+}
+
+void IcoImporterTest::openMemory() {
+    /* same as (a subset of) png() except that it uses openData() &
+       openMemory() instead of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE(image->size(), (Vector2i{16, 8}));
+    CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb);
 }
 
 void IcoImporterTest::openTwice() {

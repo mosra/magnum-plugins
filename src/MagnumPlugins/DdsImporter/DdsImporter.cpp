@@ -489,12 +489,16 @@ bool DdsImporter::doIsOpened() const { return !!_f; }
 
 void DdsImporter::doClose() { _f = nullptr; }
 
-void DdsImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     Containers::Pointer<File> f{new File};
 
-    /* clear previous data */
-    f->in = Containers::Array<char>{NoInit, data.size()};
-    Utility::copy(data, f->in);
+    /* Take over the existing array or copy the data if we can't */
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        f->in = std::move(data);
+    } else {
+        f->in = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, f->in);
+    }
 
     constexpr size_t MagicNumberSize = 4;
     /* read magic number to verify this is a dds file. */
@@ -690,4 +694,4 @@ Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt, const Unsi
 }}
 
 CORRADE_PLUGIN_REGISTER(DdsImporter, Magnum::Trade::DdsImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

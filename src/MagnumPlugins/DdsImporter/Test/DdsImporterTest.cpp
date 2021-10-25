@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Resource.h>
@@ -62,7 +63,9 @@ struct DdsImporterTest: TestSuite::Tester {
     void dxt10TooShort();
     void dxt10UnsupportedFormat();
 
-    void useTwice();
+    void openMemory();
+    void openTwice();
+    void importTwice();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
@@ -150,6 +153,22 @@ constexpr struct {
     {"3D_R32G32B32_UINT.dds", PixelFormat::RGB32UI}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 DdsImporterTest::DdsImporterTest() {
     addTests({&DdsImporterTest::wrongSignature,
               &DdsImporterTest::unknownFormat,
@@ -173,9 +192,13 @@ DdsImporterTest::DdsImporterTest() {
 
     addTests({&DdsImporterTest::dxt10Data,
               &DdsImporterTest::dxt10TooShort,
-              &DdsImporterTest::dxt10UnsupportedFormat,
+              &DdsImporterTest::dxt10UnsupportedFormat});
 
-              &DdsImporterTest::useTwice});
+    addInstancedTests({&DdsImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&DdsImporterTest::openTwice,
+              &DdsImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -188,10 +211,8 @@ void DdsImporterTest::unknownCompression() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openData(resource.getRaw("unknown_compression.dds")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "unknown_compression.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown compression DXT4\n");
 }
 
@@ -199,10 +220,8 @@ void DdsImporterTest::wrongSignature() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openData(resource.getRaw("wrong_signature.dds")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "wrong_signature.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): wrong file signature\n");
 }
 
@@ -210,10 +229,8 @@ void DdsImporterTest::unknownFormat() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openData(resource.getRaw("unknown_format.dds")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "unknown_format.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown format\n");
 }
 
@@ -221,11 +238,9 @@ void DdsImporterTest::insufficientData() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    auto data = resource.getRaw("rgb_uncompressed.dds");
-    CORRADE_VERIFY(!importer->openData(data.prefix(data.size()-1)));
+    Containers::Array<char> data = Utility::Directory::read(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed.dds"));
+    CORRADE_VERIFY(!importer->openData(data.except(1)));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): not enough image data\n");
 }
 
@@ -233,11 +248,9 @@ void DdsImporterTest::rgb() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
     CORRADE_COMPARE(importer->image3DCount(), 0);
@@ -268,11 +281,9 @@ void DdsImporterTest::rgbWithMips() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_mips.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed_mips.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
     CORRADE_COMPARE(importer->image3DCount(), 0);
@@ -322,11 +333,9 @@ void DdsImporterTest::rgbVolume() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openData(resource.getRaw("rgb_uncompressed_volume.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed_volume.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 0);
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -371,10 +380,8 @@ void DdsImporterTest::rgbVolume() {
 }
 
 void DdsImporterTest::dxt1() {
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt1.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt1.dds")));
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -387,10 +394,8 @@ void DdsImporterTest::dxt1() {
 }
 
 void DdsImporterTest::dxt3() {
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt3.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt3.dds")));
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -404,10 +409,8 @@ void DdsImporterTest::dxt3() {
 }
 
 void DdsImporterTest::dxt5() {
-    Utility::Resource resource{"DdsTestFiles"};
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt5.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -471,13 +474,11 @@ void DdsImporterTest::dxt10Data() {
 }
 
 void DdsImporterTest::dxt10TooShort() {
-    Utility::Resource resource{"DdsTestFiles"};
-
     std::ostringstream out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openData(resource.getRaw("too_short_dxt10.dds")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "too_short_dxt10.dds")));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header\n");
 }
 
@@ -492,11 +493,39 @@ void DdsImporterTest::dxt10UnsupportedFormat() {
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unsupported DXGI format 100\n");
 }
 
-void DdsImporterTest::useTwice() {
-    Utility::Resource resource{"DdsTestFiles"};
+void DdsImporterTest::openMemory() {
+    /* same as dxt1() except that it uses openData() & openMemory() instead of
+       openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openData(resource.getRaw("rgba_dxt5.dds")));
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt1.dds"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBAUnorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
+    }), TestSuite::Compare::Container);
+}
+
+void DdsImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void DdsImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
 
     /* Verify that the file is rewinded for second use */
     {

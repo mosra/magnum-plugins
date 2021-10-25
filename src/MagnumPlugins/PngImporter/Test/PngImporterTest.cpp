@@ -28,6 +28,7 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/FormatStl.h>
@@ -54,6 +55,7 @@ struct PngImporterTest: TestSuite::Tester {
     void rgbPalette1bit();
     void rgba();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -123,6 +125,22 @@ constexpr struct {
     {"tRNS alpha mask", "rgba-trns.png"},
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 PngImporterTest::PngImporterTest() {
     addTests({&PngImporterTest::empty});
 
@@ -145,6 +163,9 @@ PngImporterTest::PngImporterTest() {
 
     addInstancedTests({&PngImporterTest::rgba},
         Containers::arraySize(RgbaData));
+
+    addInstancedTests({&PngImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
 
     addTests({&PngImporterTest::openTwice,
               &PngImporterTest::importTwice});
@@ -332,6 +353,29 @@ void PngImporterTest::rgba() {
         '\xca', '\xfe', '\x77', '\xff',
         '\x00', '\x00', '\x00', '\x00',
         '\xde', '\xad', '\xb5', '\xff'
+    }), TestSuite::Compare::Container);
+}
+
+void PngImporterTest::openMemory() {
+    /* Same as gray16() except that it uses openData() & openMemory() instead
+       of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray16.png"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
+
+    CORRADE_COMPARE_AS(image->pixels<UnsignedShort>().asContiguous(), Containers::arrayView<UnsignedShort>({
+        1, 2,
+        3, 4,
+        5, 6
     }), TestSuite::Compare::Container);
 }
 

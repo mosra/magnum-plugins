@@ -30,6 +30,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
@@ -47,7 +48,6 @@ struct StanfordImporterTest: TestSuite::Tester {
     explicit StanfordImporterTest();
 
     void invalid();
-    void fileNotFound();
     void fileEmpty();
     void fileTooShort();
 
@@ -64,6 +64,7 @@ struct StanfordImporterTest: TestSuite::Tester {
     void triangleFastPath();
     void triangleFastPathPerFaceToPerVertex();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -248,12 +249,27 @@ constexpr struct {
     {"disabled", false}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 StanfordImporterTest::StanfordImporterTest() {
     addInstancedTests({&StanfordImporterTest::invalid},
         Containers::arraySize(InvalidData));
 
-    addTests({&StanfordImporterTest::fileNotFound,
-              &StanfordImporterTest::fileEmpty});
+    addTests({&StanfordImporterTest::fileEmpty});
 
     addInstancedTests({&StanfordImporterTest::fileTooShort},
         Containers::arraySize(ShortFileData));
@@ -278,6 +294,9 @@ StanfordImporterTest::StanfordImporterTest() {
     addInstancedTests({&StanfordImporterTest::triangleFastPath,
                        &StanfordImporterTest::triangleFastPathPerFaceToPerVertex},
         Containers::arraySize(FastTrianglePathData));
+
+    addInstancedTests({&StanfordImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
 
     addTests({&StanfordImporterTest::openTwice,
               &StanfordImporterTest::importTwice});
@@ -305,15 +324,6 @@ void StanfordImporterTest::invalid() {
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::{}(): {}\n",
         data.duringOpen ? "openData" : "mesh",
         data.message));
-}
-
-void StanfordImporterTest::fileNotFound() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile("nonexistent.ply"));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::openFile(): cannot open file nonexistent.ply\n"));
 }
 
 void StanfordImporterTest::fileEmpty() {
@@ -1003,6 +1013,25 @@ void StanfordImporterTest::triangleFastPathPerFaceToPerVertex() {
             0xabaa, 0xabaa, 0xabaa, 0xabaa,
             0xbbab, 0xbbab, 0xbbab
         }), TestSuite::Compare::Container);
+}
+
+void StanfordImporterTest::openMemory() {
+    /* Same as (a subset of) parse() except that it uses openData() &
+       openMemory() instead of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    auto mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView(Positions),
+        TestSuite::Compare::Container);
 }
 
 void StanfordImporterTest::openTwice() {

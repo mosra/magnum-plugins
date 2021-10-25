@@ -174,6 +174,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void versionSupported();
     void versionUnsupported();
 
+    void openTwice();
+    void importTwice();
+
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -688,6 +691,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addInstancedTests({&TinyGltfImporterTest::versionUnsupported},
                       Containers::arraySize(UnsupportedVersionData));
+
+    addTests({&TinyGltfImporterTest::openTwice,
+              &TinyGltfImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -4166,6 +4172,41 @@ void TinyGltfImporterTest::versionUnsupported() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void TinyGltfImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_COMPARE(importer->cameraCount(), 4);
+
+    /* Verify that everything is working the same way on second use. It's only
+       testing a single data type, but better than nothing at all. */
+    {
+        auto cam = importer->camera(0);
+        CORRADE_VERIFY(cam);
+        CORRADE_COMPARE(cam->type(), CameraType::Orthographic3D);
+        CORRADE_COMPARE(cam->size(), (Vector2{4.0f, 3.0f}));
+        CORRADE_COMPARE(cam->aspectRatio(), 1.333333f);
+        CORRADE_COMPARE(cam->near(), 0.01f);
+        CORRADE_COMPARE(cam->far(), 100.0f);
+    } {
+        auto cam = importer->camera(0);
+        CORRADE_VERIFY(cam);
+        CORRADE_COMPARE(cam->type(), CameraType::Orthographic3D);
+        CORRADE_COMPARE(cam->size(), (Vector2{4.0f, 3.0f}));
+        CORRADE_COMPARE(cam->aspectRatio(), 1.333333f);
+        CORRADE_COMPARE(cam->near(), 0.01f);
+        CORRADE_COMPARE(cam->far(), 100.0f);
+    }
 }
 
 }}}}

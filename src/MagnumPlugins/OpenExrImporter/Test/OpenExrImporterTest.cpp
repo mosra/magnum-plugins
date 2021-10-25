@@ -29,6 +29,7 @@
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -74,6 +75,7 @@ struct OpenExrImporterTest: TestSuite::Tester {
     void levelsCubeMap();
     void levelsCubeMapIncomplete();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -145,6 +147,22 @@ const struct {
         "Trade::OpenExrImporter::openData(): last 3 levels are missing in the file, capping at 2 levels\n"},
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 OpenExrImporterTest::OpenExrImporterTest() {
     addTests({&OpenExrImporterTest::emptyFile,
               &OpenExrImporterTest::shortFile,
@@ -184,6 +202,9 @@ OpenExrImporterTest::OpenExrImporterTest() {
 
     addInstancedTests({&OpenExrImporterTest::levelsCubeMapIncomplete},
         Containers::arraySize(IncompletelCubeMapData));
+
+    addInstancedTests({&OpenExrImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
 
     addTests({&OpenExrImporterTest::openTwice,
               &OpenExrImporterTest::importTwice});
@@ -807,6 +828,30 @@ void OpenExrImporterTest::levelsCubeMapIncomplete() {
             80.5_h, 82.5_h, 88.5_h, 90.5_h
         }), TestSuite::Compare::Container);
     }
+}
+
+void OpenExrImporterTest::openMemory() {
+    /* Same as rgba32f() except that it uses openData() & openMemory() instead
+       of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i(1, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
+
+    /* Data should be tightly packed here */
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView<Float>({
+        0.0f, 1.0f, 2.0f, 3.0f,
+        4.0f, 5.0f, 6.0f, 7.0f,
+        8.0f, 9.0f, 10.0f, 11.0f
+    }), TestSuite::Compare::Container);
 }
 
 void OpenExrImporterTest::openTwice() {

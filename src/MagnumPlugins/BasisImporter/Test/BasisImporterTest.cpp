@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -84,6 +85,7 @@ struct BasisImporterTest: TestSuite::Tester {
     void videoSeeking();
     void videoVerbose();
 
+    void openMemory();
     void openSameTwice();
     void openDifferent();
     void importMultipleFormats();
@@ -204,6 +206,22 @@ const struct {
     {"KTX2 UASTC", "rgba-video-uastc.ktx2"}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 BasisImporterTest::BasisImporterTest() {
     addTests({&BasisImporterTest::empty});
 
@@ -251,9 +269,12 @@ BasisImporterTest::BasisImporterTest() {
 addInstancedTests({&BasisImporterTest::videoSeeking},
                       Containers::arraySize(VideoSeekingData));
 
-    addTests({&BasisImporterTest::videoVerbose,
+    addTests({&BasisImporterTest::videoVerbose});
 
-              &BasisImporterTest::openSameTwice,
+    addInstancedTests({&BasisImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&BasisImporterTest::openSameTwice,
               &BasisImporterTest::openDifferent,
               &BasisImporterTest::importMultipleFormats});
 
@@ -1149,6 +1170,39 @@ void BasisImporterTest::videoVerbose() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         "rgba-video.basis")));
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially\n");
+}
+
+void BasisImporterTest::openMemory() {
+    /* Same as rgbaUncompressed() except that it uses openData() & openMemory()
+       instead of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer);
+    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
+        "RGBA8");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        "rgba.basis"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.31f}));
 }
 
 void BasisImporterTest::openSameTwice() {

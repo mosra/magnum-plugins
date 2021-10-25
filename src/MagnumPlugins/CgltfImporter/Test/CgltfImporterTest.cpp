@@ -32,6 +32,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -187,6 +188,10 @@ struct CgltfImporterTest: TestSuite::Tester {
 
     void versionSupported();
     void versionUnsupported();
+
+    void openMemory();
+    void openTwice();
+    void importTwice();
 
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -608,6 +613,22 @@ constexpr struct {
     {"unknown minor version", "version-unsupported-min.gltf", "unsupported minVersion 2.1, expected 2.0"}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::open},
                       Containers::arraySize(SingleFileData));
@@ -764,6 +785,9 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::texture},
                       Containers::arraySize(SingleFileData));
 
+    addInstancedTests({&CgltfImporterTest::textureOutOfBounds},
+                      Containers::arraySize(TextureOutOfBoundsData));
+
     addInstancedTests({&CgltfImporterTest::textureInvalid},
                       Containers::arraySize(TextureInvalidData));
 
@@ -811,6 +835,12 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addInstancedTests({&CgltfImporterTest::versionUnsupported},
                       Containers::arraySize(UnsupportedVersionData));
+
+    addInstancedTests({&CgltfImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&CgltfImporterTest::openTwice,
+              &CgltfImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. Reset
@@ -4596,6 +4626,62 @@ void CgltfImporterTest::versionUnsupported() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
+}
+
+void CgltfImporterTest::openMemory() {
+    /* Same as (a subset of) camera() except that it uses openData() &
+       openMemory() instead of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+    CORRADE_COMPARE(importer->cameraCount(), 4);
+
+    auto cam = importer->camera(0);
+    CORRADE_VERIFY(cam);
+    CORRADE_COMPARE(cam->type(), CameraType::Orthographic3D);
+    CORRADE_COMPARE(cam->size(), (Vector2{4.0f, 3.0f}));
+    CORRADE_COMPARE(cam->aspectRatio(), 1.333333f);
+    CORRADE_COMPARE(cam->near(), 0.01f);
+    CORRADE_COMPARE(cam->far(), 100.0f);
+}
+
+void CgltfImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void CgltfImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_COMPARE(importer->cameraCount(), 4);
+
+    /* Verify that everything is working the same way on second use. It's only
+       testing a single data type, but better than nothing at all. */
+    {
+        auto cam = importer->camera(0);
+        CORRADE_VERIFY(cam);
+        CORRADE_COMPARE(cam->type(), CameraType::Orthographic3D);
+        CORRADE_COMPARE(cam->size(), (Vector2{4.0f, 3.0f}));
+        CORRADE_COMPARE(cam->aspectRatio(), 1.333333f);
+        CORRADE_COMPARE(cam->near(), 0.01f);
+        CORRADE_COMPARE(cam->far(), 100.0f);
+    } {
+        auto cam = importer->camera(0);
+        CORRADE_VERIFY(cam);
+        CORRADE_COMPARE(cam->type(), CameraType::Orthographic3D);
+        CORRADE_COMPARE(cam->size(), (Vector2{4.0f, 3.0f}));
+        CORRADE_COMPARE(cam->aspectRatio(), 1.333333f);
+        CORRADE_COMPARE(cam->near(), 0.01f);
+        CORRADE_COMPARE(cam->far(), 100.0f);
+    }
 }
 
 }}}}

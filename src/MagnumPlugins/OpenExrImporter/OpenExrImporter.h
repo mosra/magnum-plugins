@@ -228,7 +228,7 @@ class MAGNUM_OPENEXRIMPORTER_EXPORT OpenExrImporter: public AbstractImporter {
         MAGNUM_OPENEXRIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_OPENEXRIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_OPENEXRIMPORTER_LOCAL void doClose() override;
-        MAGNUM_OPENEXRIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_OPENEXRIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
         MAGNUM_OPENEXRIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_OPENEXRIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;

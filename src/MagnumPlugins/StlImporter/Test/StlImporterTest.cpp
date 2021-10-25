@@ -28,6 +28,7 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -44,12 +45,12 @@ struct StlImporterTest: TestSuite::Tester {
     explicit StlImporterTest();
 
     void invalid();
-    void fileNotFound();
     void ascii();
     void almostAsciiButNotActually();
     void emptyBinary();
     void binary();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -115,17 +116,35 @@ const struct {
         false, 1, 2, MeshPrimitive::Faces, 2, 1, false, false}
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
+};
+
 StlImporterTest::StlImporterTest() {
     addInstancedTests({&StlImporterTest::invalid},
         Containers::arraySize(InvalidData));
 
-    addTests({&StlImporterTest::fileNotFound,
-              &StlImporterTest::ascii,
+    addTests({&StlImporterTest::ascii,
               &StlImporterTest::almostAsciiButNotActually,
               &StlImporterTest::emptyBinary});
 
     addInstancedTests({&StlImporterTest::binary},
         Containers::arraySize(BinaryData));
+
+    addInstancedTests({&StlImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
 
     addTests({&StlImporterTest::openTwice,
               &StlImporterTest::importTwice});
@@ -148,15 +167,6 @@ void StlImporterTest::invalid() {
     CORRADE_VERIFY(!importer->openData(data.data));
     CORRADE_COMPARE(out.str(),
         Utility::formatString("Trade::StlImporter::openData(): {}\n", data.message));
-}
-
-void StlImporterTest::fileNotFound() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile("nonexistent.stl"));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StlImporter::openFile(): cannot open file nonexistent.stl\n"));
 }
 
 void StlImporterTest::ascii() {
@@ -271,6 +281,32 @@ void StlImporterTest::binary() {
                 {0.4f, 0.5f, 0.6f}
             }), TestSuite::Compare::Container);
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+}
+
+void StlImporterTest::openMemory() {
+    /* Same as (a subset of) binary() except that it uses openData() &
+       openMemory() instead of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {1.0f, 2.0f, 3.0f},
+            {4.0f, 5.0f, 6.0f},
+            {7.0f, 8.0f, 9.0f},
+
+            {1.1f, 2.1f, 3.1f},
+            {4.1f, 5.1f, 6.1f},
+            {7.1f, 8.1f, 9.1f}
+        }), TestSuite::Compare::Container);
 }
 
 void StlImporterTest::openTwice() {

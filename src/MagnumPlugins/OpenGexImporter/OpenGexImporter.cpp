@@ -127,7 +127,7 @@ void gatherNodes(OpenDdl::Structure node, std::vector<OpenDdl::Structure>& nodes
 
 }
 
-void OpenGexImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void OpenGexImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     Containers::Pointer<Document> d{InPlaceInit};
 
     /* Parse the document */
@@ -873,4 +873,4 @@ const void* OpenGexImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenGexImporter, Magnum::Trade::OpenGexImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

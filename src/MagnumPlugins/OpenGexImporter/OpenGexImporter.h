@@ -236,7 +236,7 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
         MAGNUM_OPENGEXIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL bool doIsOpened() const override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
         MAGNUM_OPENGEXIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
         MAGNUM_OPENGEXIMPORTER_LOCAL void doClose() override;
 

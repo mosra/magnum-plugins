@@ -517,14 +517,19 @@ void CgltfImporter::doOpenFile(const std::string& filename) {
     AbstractImporter::doOpenFile(filename);
 }
 
-void CgltfImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     if(!_d) _d.reset(new Document);
 
-    /* Copy file content. We need to keep the data around for .glb binary blobs
-       and extension data which cgltf stores as pointers into the original
-       memory passed to cgltf_parse. */
-    _d->fileData = Containers::Array<char>{data.size()};
-    Utility::copy(data, _d->fileData);
+    /* Copy file content. Take over the existing array or copy the data if we
+       can't. We need to keep the data around for .glb binary blobs and
+       extension data which cgltf stores as pointers into the original memory
+       passed to cgltf_parse. */
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        _d->fileData = std::move(data);
+    } else {
+        _d->fileData = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, _d->fileData);
+    }
 
     /* Auto-detect glb/gltf */
     _d->options.type = cgltf_file_type::cgltf_file_type_invalid;
@@ -901,7 +906,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
      *      postprocess them and can't just use the memory directly.
      */
     Containers::Array<char> data{dataSize};
-    for(const std::pair<const cgltf_accessor*, SamplerData>& view: samplerData) {
+    for(const std::pair<const cgltf_accessor* const, SamplerData>& view: samplerData) {
         Containers::StridedArrayView2D<const char> src = view.second.src;
         Containers::StridedArrayView2D<char> dst{data.suffix(view.second.outputOffset),
             src.size()};
@@ -2648,4 +2653,4 @@ Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id,
 }}
 
 CORRADE_PLUGIN_REGISTER(CgltfImporter, Magnum::Trade::CgltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

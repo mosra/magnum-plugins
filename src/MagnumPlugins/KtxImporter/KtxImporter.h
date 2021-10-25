@@ -168,7 +168,7 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
         MAGNUM_KTXIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_KTXIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_KTXIMPORTER_LOCAL void doClose() override;
-        MAGNUM_KTXIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_KTXIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doImage1DCount() const override;
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doImage1DLevelCount(UnsignedInt id) override;

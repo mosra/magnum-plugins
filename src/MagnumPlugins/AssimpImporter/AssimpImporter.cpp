@@ -386,7 +386,7 @@ Containers::StringView materialPropertyString(const aiMaterialProperty& property
 
 }
 
-void AssimpImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     /* If we already have the file, we got delegated from doOpenFile() or
        doOpenState(). If we got called from doOpenState(), we don't even have
        the _importer. No need to create it. */
@@ -593,7 +593,7 @@ void AssimpImporter::doOpenState(const void* state, const std::string& filePath)
     _f->scene = static_cast<const aiScene*>(state);
     _f->filePath = filePath;
 
-    doOpenData({});
+    doOpenData({}, {});
 }
 
 void AssimpImporter::doOpenFile(const std::string& filename) {
@@ -608,7 +608,7 @@ void AssimpImporter::doOpenFile(const std::string& filename) {
         return;
     }
 
-    doOpenData({});
+    doOpenData({}, {});
 }
 
 void AssimpImporter::doClose() {
@@ -1786,4 +1786,4 @@ const void* AssimpImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(AssimpImporter, Magnum::Trade::AssimpImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

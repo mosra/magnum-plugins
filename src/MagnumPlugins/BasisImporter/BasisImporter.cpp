@@ -206,7 +206,7 @@ void BasisImporter::doClose() {
     _state->in = nullptr;
 }
 
-void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) {
     /* Because here we're copying the data and using the _in to check if file
        is opened, having them nullptr would mean openData() would fail without
        any error message. It's not possible to do this check on the importer
@@ -226,13 +226,18 @@ void BasisImporter::doOpenData(const Containers::ArrayView<const char> data) {
     const bool isKTX2 = data.size() >= sizeof(KtxFileIdentifier) &&
         std::memcmp(data.begin(), KtxFileIdentifier, sizeof(KtxFileIdentifier)) == 0;
 
-    /* Keep a copy of the data. We have to do this first because transcoders
-       may hold on to the pointer we pass into init()/start_transcoding().
-       While basis_transcoder currently doesn't keep the pointer around, it
-       might in the future and ktx2_transcoder already does. */
+    /* Keep the original data, take over the existing array or copy the data if
+       we can't. We have to do this first because transcoders may hold on to
+       the pointer we pass into init()/start_transcoding(). While
+       basis_transcoder currently doesn't keep the pointer around, it might in
+       the future and ktx2_transcoder already does. */
     Containers::Pointer<State> state{InPlaceInit};
-    state->in = Containers::Array<char>{NoInit, data.size()};
-    Utility::copy(data, state->in);
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        state->in = std::move(data);
+    } else {
+        state->in = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, state->in);
+    }
 
     if(isKTX2) {
         #if !BASISD_SUPPORT_KTX2
@@ -644,4 +649,4 @@ BasisImporter::TargetFormat BasisImporter::targetFormat() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImporter, Magnum::Trade::BasisImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

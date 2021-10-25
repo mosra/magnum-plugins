@@ -51,28 +51,13 @@ bool StlImporter::doIsOpened() const { return !!_in; }
 
 void StlImporter::doClose() { _in = Containers::NullOpt; }
 
-void StlImporter::doOpenFile(const std::string& filename) {
-    if(!Utility::Directory::exists(filename)) {
-        Error{} << "Trade::StlImporter::openFile(): cannot open file" << filename;
-        return;
-    }
-
-    openDataInternal(Utility::Directory::read(filename));
-}
-
-void StlImporter::doOpenData(Containers::ArrayView<const char> data) {
-    Containers::Array<char> copy{NoInit, data.size()};
-    Utility::copy(data, copy);
-    openDataInternal(std::move(copy));
-}
-
 namespace {
     /* In the input file, the triangle is represented by 12 floats (3D normal
        followed by three 3D vertices) and 2 extra bytes. */
     constexpr std::ptrdiff_t InputTriangleStride = 12*4 + 2;
 }
 
-void StlImporter::openDataInternal(Containers::Array<char>&& data) {
+void StlImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     /* At this point we can't even check if it's an ASCII or binary file, bail
        out */
     if(data.size() < 5) {
@@ -97,7 +82,13 @@ void StlImporter::openDataInternal(Containers::Array<char>&& data) {
         return;
     }
 
-    _in = std::move(data);
+    /* Take over the existing array or copy the data if we can't */
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        _in = std::move(data);
+    } else {
+        _in = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, *_in);
+    }
 }
 
 UnsignedInt StlImporter::doMeshCount() const { return 1; }
@@ -196,4 +187,4 @@ Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt leve
 }}
 
 CORRADE_PLUGIN_REGISTER(StlImporter, Magnum::Trade::StlImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

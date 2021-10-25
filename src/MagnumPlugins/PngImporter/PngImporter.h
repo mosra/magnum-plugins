@@ -138,12 +138,12 @@ class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
         MAGNUM_PNGIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
         MAGNUM_PNGIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_PNGIMPORTER_LOCAL void doClose() override;
-        MAGNUM_PNGIMPORTER_LOCAL void doOpenData(Containers::ArrayView<const char> data) override;
+        MAGNUM_PNGIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
         MAGNUM_PNGIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_PNGIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
-        Containers::Array<unsigned char> _in;
+        Containers::Array<char> _in;
 };
 
 }}

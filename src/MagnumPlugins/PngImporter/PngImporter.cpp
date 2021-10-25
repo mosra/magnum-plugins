@@ -60,7 +60,7 @@ bool PngImporter::doIsOpened() const { return _in; }
 
 void PngImporter::doClose() { _in = nullptr; }
 
-void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
+void PngImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) {
     /* Because here we're copying the data and using the _in to check if file
        is opened, having them nullptr would mean openData() would fail without
        any error message. It's not possible to do this check on the importer
@@ -73,8 +73,13 @@ void PngImporter::doOpenData(const Containers::ArrayView<const char> data) {
         return;
     }
 
-    _in = Containers::Array<unsigned char>{NoInit, data.size()};
-    Utility::copy(Containers::arrayCast<const unsigned char>(data), _in);
+    /* Take over the existing array or copy the data if we can't */
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        _in = std::move(data);
+    } else {
+        _in = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, _in);
+    }
 }
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
@@ -83,8 +88,9 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
         "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, Containers::NullOpt);
 
-    /* Verify file signature */
-    if(png_sig_cmp(_in, 0, Math::min(std::size_t(8), _in.size())) != 0) {
+    /* Verify file signature. Older libpngs want a mutable pointer, can't
+       const. */
+    if(png_sig_cmp(reinterpret_cast<unsigned char*>(_in.data()), 0, Math::min(std::size_t(8), _in.size())) != 0) {
         Error() << "Trade::PngImporter::image2D(): wrong file signature";
         return Containers::NullOpt;
     }
@@ -121,11 +127,11 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         Error{} << "Trade::PngImporter::image2D(): signature too short";
         return Containers::NullOpt;
     }
-    Containers::ArrayView<unsigned char> input = _in.suffix(8);
+    Containers::ArrayView<char> input = _in.suffix(8);
 
     /* Set functions for reading */
     png_set_read_fn(file, &input, [](const png_structp file, const png_bytep data, const png_size_t length) {
-        auto&& input = *reinterpret_cast<Containers::ArrayView<unsigned char>*>(png_get_io_ptr(file));
+        auto&& input = *reinterpret_cast<Containers::ArrayView<char>*>(png_get_io_ptr(file));
         if(input.size() < length) png_error(file, "file too short");
         std::copy_n(input.begin(), length, data);
         input = input.suffix(length);
@@ -255,4 +261,4 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
 }}
 
 CORRADE_PLUGIN_REGISTER(PngImporter, Magnum::Trade::PngImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")

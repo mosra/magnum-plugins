@@ -28,6 +28,7 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -71,6 +72,7 @@ struct StbImageImporterTest: TestSuite::Tester {
 
     void animatedGif();
 
+    void openMemory();
     void openTwice();
     void importTwice();
 
@@ -88,6 +90,22 @@ const struct {
 } RgbaPngTestData[]{
     {"RGBA", "rgba.png"},
     {"CgBI BGRA", "rgba-iphone.png"}
+};
+
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+} OpenMemoryData[]{
+    {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{NoInit, data.size()};
+        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        return importer.openData(copy);
+    }},
+    {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }},
 };
 
 StbImageImporterTest::StbImageImporterTest() {
@@ -113,9 +131,12 @@ StbImageImporterTest::StbImageImporterTest() {
 
     addInstancedTests({&StbImageImporterTest::rgbaPng}, Containers::arraySize(RgbaPngTestData));
 
-    addTests({&StbImageImporterTest::animatedGif,
+    addTests({&StbImageImporterTest::animatedGif});
 
-              &StbImageImporterTest::openTwice,
+    addInstancedTests({&StbImageImporterTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&StbImageImporterTest::openTwice,
               &StbImageImporterTest::importTwice});
 
     #ifndef CORRADE_TARGET_EMSCRIPTEN
@@ -477,6 +498,28 @@ void StbImageImporterTest::animatedGif() {
         CORRADE_COMPARE(image0->pixels<Color4ub>()[88][30], 0x87ceeb_rgb);
         CORRADE_COMPARE(image1->pixels<Color4ub>()[88][30], 0x0000ff_rgb);
     }
+}
+
+void StbImageImporterTest::openMemory() {
+    /* Same as grayPng() except that it uses openData() & openMemory() instead
+       of openFile() to test data copying on import */
+
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png"));
+    CORRADE_VERIFY(data.open(*importer, memory));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->storage().alignment(), 1);
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xff', '\x88', '\x00',
+        '\x88', '\x00', '\xff'
+    }), TestSuite::Compare::Container);
 }
 
 void StbImageImporterTest::openTwice() {

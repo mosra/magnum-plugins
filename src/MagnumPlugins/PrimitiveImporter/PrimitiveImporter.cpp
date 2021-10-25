@@ -62,7 +62,7 @@ bool PrimitiveImporter::doIsOpened() const { return _opened; }
 
 void PrimitiveImporter::doClose() { _opened = false; }
 
-void PrimitiveImporter::doOpenData(Containers::ArrayView<const char>) {
+void PrimitiveImporter::doOpenData(Containers::Array<char>&&, DataFlags) {
     _opened = true;
 }
 
@@ -574,4 +574,4 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 }}
 
 CORRADE_PLUGIN_REGISTER(PrimitiveImporter, Magnum::Trade::PrimitiveImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")
