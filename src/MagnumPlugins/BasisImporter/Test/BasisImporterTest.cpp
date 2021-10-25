@@ -1202,7 +1202,7 @@ void BasisImporterTest::openMemory() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.31f}));
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.039f}));
 }
 
 void BasisImporterTest::openSameTwice() {
