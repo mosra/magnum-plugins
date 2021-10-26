@@ -13,18 +13,10 @@ from the [Magnum Shaders test files](https://github.com/mosra/magnum/tree/master
 using the official basis universal
 [conversion tool](https://github.com/BinomialLLC/basis_universal/#command-line-compression-tool).
 
-To convert, run the following commands:
+To convert, run the `convert.sh` script.
 
-```sh
-basisu rgb-63x27.png -output_file rgb.basis -y_flip
-basisu rgb-63x27.png -output_file rgb-noflip.basis
-basisu rgba-63x27.png -output_file rgba.basis -force_alpha -y_flip
-basisu rgba-63x27.png rgba-27x63.png -output_file rgba-2images-mips.basis -y_flip -mipmap -mip_smallest 16 -mip_filter box
-
-# Required for PVRTC1 target, which requires pow2 dimensions
-basisu rgb-64x32.png -output_file rgb-pow2.basis -y_flip
-basisu rgba-64x32.png -output_file rgba-pow2.basis -force_alpha -y_flip
-```
+Creating mipmaps
+================
 
 For mipmap testing, the PNG image is resized to two more levels. Using the
 box filter, the same as Basis itself, to have the least difference.

@@ -55,11 +55,14 @@ struct BasisImporterTest: TestSuite::Tester {
 
     void rgbUncompressed();
     void rgbUncompressedNoFlip();
+    void rgbUncompressedLinear();
     void rgbaUncompressed();
     void rgbaUncompressedMultipleImages();
 
     void rgb();
     void rgba();
+
+    void linear();
 
     void openMemory();
     void openSameTwice();
@@ -73,34 +76,36 @@ struct BasisImporterTest: TestSuite::Tester {
 constexpr struct {
     const char* file;
     const char* fileAlpha;
+    const char* fileLinear;
+    const Vector2i expectedSize;
     const char* suffix;
     const CompressedPixelFormat expectedFormat;
-    const Vector2i expectedSize;
+    const CompressedPixelFormat expectedLinearFormat;
 } FormatData[] {
-    {"rgb.basis", "rgba.basis",
-     "Etc1RGB", CompressedPixelFormat::Etc2RGB8Unorm, {63, 27}},
-    {"rgb.basis", "rgba.basis",
-     "Etc2RGBA", CompressedPixelFormat::Etc2RGBA8Unorm, {63, 27}},
-    {"rgb.basis", "rgba.basis",
-     "Bc1RGB", CompressedPixelFormat::Bc1RGBUnorm, {63, 27}},
-    {"rgb.basis", "rgba.basis",
-     "Bc3RGBA", CompressedPixelFormat::Bc3RGBAUnorm, {63, 27}},
-    {"rgb.basis", "rgba.basis",
-     "Bc4R", CompressedPixelFormat::Bc4RUnorm, {63, 27}},
-    {"rgb.basis", "rgba.basis",
-     "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, {63, 27}},
-    {"rgb.basis", "rgba.basis",
-     "Bc7RGB", CompressedPixelFormat::Bc7RGBAUnorm, {63, 27}},
-    {"rgb-pow2.basis", "rgba-pow2.basis",
-     "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppUnorm, {64, 32}},
-    {"rgb-pow2.basis", "rgba-pow2.basis",
-     "PvrtcRGBA4bpp", CompressedPixelFormat::PvrtcRGBA4bppUnorm, {64, 32}},
-    {"rgb.basis", "rgba.basis",
-     "Astc4x4RGBA", CompressedPixelFormat::Astc4x4RGBAUnorm, {63, 27}},
-    {"rgb.basis", "rgba.basis",
-     "EacR", CompressedPixelFormat::EacR11Unorm, {63, 27}},
-    {"rgb.basis", "rgba.basis",
-     "EacRG", CompressedPixelFormat::EacRG11Unorm, {63, 27}}
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, CompressedPixelFormat::Etc2RGB8Unorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "Etc2RGBA", CompressedPixelFormat::Etc2RGBA8Srgb, CompressedPixelFormat::Etc2RGBA8Unorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, CompressedPixelFormat::Bc1RGBUnorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "Bc3RGBA", CompressedPixelFormat::Bc3RGBASrgb, CompressedPixelFormat::Bc3RGBAUnorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "Bc4R", CompressedPixelFormat::Bc4RUnorm, CompressedPixelFormat::Bc4RUnorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, CompressedPixelFormat::Bc5RGUnorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "Bc7RGB", CompressedPixelFormat::Bc7RGBASrgb, CompressedPixelFormat::Bc7RGBAUnorm},
+    {"rgb-pow2.basis", "rgba-pow2.basis", "rgb-linear-pow2.basis", {64, 32},
+     "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppSrgb, CompressedPixelFormat::PvrtcRGB4bppUnorm},
+    {"rgb-pow2.basis", "rgba-pow2.basis", "rgb-linear-pow2.basis", {64, 32},
+     "PvrtcRGBA4bpp", CompressedPixelFormat::PvrtcRGBA4bppSrgb, CompressedPixelFormat::PvrtcRGBA4bppUnorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "Astc4x4RGBA", CompressedPixelFormat::Astc4x4RGBASrgb, CompressedPixelFormat::Astc4x4RGBAUnorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "EacR", CompressedPixelFormat::EacR11Unorm, CompressedPixelFormat::EacR11Unorm},
+    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+     "EacRG", CompressedPixelFormat::EacRG11Unorm, CompressedPixelFormat::EacRG11Unorm}
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -129,12 +134,14 @@ BasisImporterTest::BasisImporterTest() {
 
               &BasisImporterTest::rgbUncompressed,
               &BasisImporterTest::rgbUncompressedNoFlip,
+              &BasisImporterTest::rgbUncompressedLinear,
               &BasisImporterTest::rgbaUncompressed,
               &BasisImporterTest::rgbaUncompressedMultipleImages});
 
     addInstancedTests({&BasisImporterTest::rgb,
-                       &BasisImporterTest::rgba},
-                       Containers::arraySize(FormatData));
+                       &BasisImporterTest::rgba,
+                       &BasisImporterTest::linear},
+                      Containers::arraySize(FormatData));
 
     addInstancedTests({&BasisImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -194,7 +201,7 @@ void BasisImporterTest::unconfigured() {
     }
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.\n");
@@ -207,7 +214,7 @@ void BasisImporterTest::unconfigured() {
     CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 55.67f, 6.589f}));
+        (DebugTools::CompareImageToFile{_manager, 58.334f, 6.622f}));
 }
 
 void BasisImporterTest::invalidConfiguredFormat() {
@@ -275,7 +282,7 @@ void BasisImporterTest::rgbUncompressed() {
     /* There should be no Y-flip warning as the image is pre-flipped */
     CORRADE_COMPARE(out.str(), "");
     CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
@@ -286,7 +293,7 @@ void BasisImporterTest::rgbUncompressed() {
     CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 55.67f, 6.589f}));
+        (DebugTools::CompareImageToFile{_manager, 58.334f, 6.622f}));
 }
 
 void BasisImporterTest::rgbUncompressedNoFlip() {
@@ -304,7 +311,7 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation\n");
     CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
@@ -315,13 +322,13 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
     CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>().flipped<0>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 49.67f, 8.326f}));
+        (DebugTools::CompareImageToFile{_manager, 51.334f, 8.643f}));
 }
 
-void BasisImporterTest::rgbaUncompressed() {
+void BasisImporterTest::rgbUncompressedLinear() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgba.basis")));
+        "rgb-linear.basis")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -335,10 +342,33 @@ void BasisImporterTest::rgbaUncompressed() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
+    CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 61.0f, 6.321f}));
+}
+
+void BasisImporterTest::rgbaUncompressed() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        "rgba.basis")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.31f}));
+        (DebugTools::CompareImageToFile{_manager, 94.3f, 8.039f}));
 }
 
 void BasisImporterTest::rgbaUncompressedMultipleImages() {
@@ -367,7 +397,7 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
                       &*image1, &*image1l1, &*image1l2}) {
         CORRADE_ITERATION(image->size());
         CORRADE_VERIFY(!image->isCompressed());
-        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     }
 
     CORRADE_COMPARE(image0->size(), (Vector2i{63, 27}));
@@ -386,16 +416,16 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
        one image alone as there's more to compress */
     CORRADE_COMPARE_WITH(image0->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
-        (DebugTools::CompareImageToFile{_manager, 88.25f, 8.357f}));
+        (DebugTools::CompareImageToFile{_manager, 92.25f, 8.043f}));
     CORRADE_COMPARE_WITH(image0l1->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
-        (DebugTools::CompareImageToFile{_manager, 75.25f, 14.85f}));
+        (DebugTools::CompareImageToFile{_manager, 75.75f, 14.077f}));
     CORRADE_COMPARE_WITH(image0l2->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
-        (DebugTools::CompareImageToFile{_manager, 64.5f, 23.85f}));
+        (DebugTools::CompareImageToFile{_manager, 65.0f, 23.487f}));
     CORRADE_COMPARE_WITH(image1->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-27x63.png"),
-        (DebugTools::CompareImageToFile{_manager, 87.8f, 9.984f}));
+        (DebugTools::CompareImageToFile{_manager, 85.5f, 10.23f}));
     /* Rotating the pixels so we don't need to store the ground truth twice.
        Somehow it compresses differently for those, tho (I would expect the
        compression to be invariant of the orientation). */
@@ -404,7 +434,7 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
         (DebugTools::CompareImageToFile{_manager, 82.5f, 33.27f}));
     CORRADE_COMPARE_WITH((image1l2->pixels<Color4ub>().transposed<0, 1>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
-        (DebugTools::CompareImageToFile{_manager, 85.25f, 40.15f}));
+        (DebugTools::CompareImageToFile{_manager, 82.75f, 40.406f}));
 }
 
 void BasisImporterTest::rgb() {
@@ -413,7 +443,7 @@ void BasisImporterTest::rgb() {
     #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
     /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
        the case. This assumes -DBASISD_SUPPORT_*=0 is supplied globally. */
-    if(formatData.expectedFormat == CompressedPixelFormat::Bc7RGBAUnorm)
+    if(formatData.expectedFormat == CompressedPixelFormat::Bc7RGBASrgb)
         CORRADE_SKIP("This format is not compiled into Basis.");
     #endif
 
@@ -443,7 +473,7 @@ void BasisImporterTest::rgba() {
     #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
     /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
        the case. This assumes -DBASISD_SUPPORT_*=0 is supplied globally. */
-    if(formatData.expectedFormat == CompressedPixelFormat::Bc7RGBAUnorm)
+    if(formatData.expectedFormat == CompressedPixelFormat::Bc7RGBASrgb)
         CORRADE_SKIP("This format is not compiled into Basis.");
     #endif
 
@@ -453,6 +483,7 @@ void BasisImporterTest::rgba() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
+
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         formatData.fileAlpha)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -465,6 +496,38 @@ void BasisImporterTest::rgba() {
     /** @todo remove this once CompressedImage etc. tests for data size on its
         own / we're able to decode the data ourselves */
     CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedFormat)*((image->size() + compressedBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedFormat).xy()).product());
+}
+
+void BasisImporterTest::linear() {
+    auto& formatData = FormatData[testCaseInstanceId()];
+
+    /* Test linear formats, sRGB was tested in rgb() */
+
+    #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
+    /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
+       the case. This assumes -DBASISD_SUPPORT_*=0 is supplied globally. */
+    if(formatData.expectedLinearFormat == CompressedPixelFormat::Bc7RGBAUnorm)
+        CORRADE_SKIP("This format is not compiled into Basis.");
+    #endif
+
+    const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
+    setTestCaseDescription(formatData.suffix);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
+    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
+        formatData.suffix);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        formatData.fileLinear)));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->compressedFormat(), formatData.expectedLinearFormat);
+    CORRADE_COMPARE(image->size(), formatData.expectedSize);
+    /** @todo remove this once CompressedImage etc. tests for data size on its
+        own / we're able to decode the data ourselves */
+    CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedLinearFormat)*((image->size() + compressedBlockSize(formatData.expectedLinearFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedLinearFormat).xy()).product());
 }
 
 void BasisImporterTest::openMemory() {
@@ -486,7 +549,7 @@ void BasisImporterTest::openMemory() {
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
@@ -497,7 +560,7 @@ void BasisImporterTest::openMemory() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.31f}));
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.039f}));
 }
 
 void BasisImporterTest::openSameTwice() {
@@ -510,7 +573,7 @@ void BasisImporterTest::openSameTwice() {
     /* Shouldn't crash, leak or anything */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Unorm);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 }
 
@@ -525,7 +588,7 @@ void BasisImporterTest::openDifferent() {
     /* Shouldn't crash, leak or anything */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(1);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Unorm);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{27, 63}));
 }
 
@@ -539,14 +602,14 @@ void BasisImporterTest::importMultipleFormats() {
 
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
-        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Unorm);
+        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
     } {
         importer->configuration().setValue("format", "Bc1RGB");
 
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
-        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBUnorm);
+        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBSrgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
     }
 }

@@ -183,27 +183,29 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
             /* ID kept the same as in Basis itself to make the mapping easy */
 
             /**
-             * ETC1 RGB. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm
-             * (which ETC1 is a subset of). If the image contains an alpha
-             * channel, it will be dropped since ETC1 alone doesn't support
-             * alpha.
+             * ETC1 RGB. Loaded as @ref CompressedPixelFormat::Etc2RGB8Unorm/
+             * @ref CompressedPixelFormat::Etc2RGB8Srgb (which ETC1 is a
+             * subset of). If the image contains an alpha channel, it will be
+             * dropped since ETC1 alone doesn't support alpha.
              */
             Etc1RGB = 0,
 
             /**
-             * ETC2 RGBA. Loaded as @ref CompressedPixelFormat::Etc2RGBA8Unorm.
+             * ETC2 RGBA. Loaded as @ref CompressedPixelFormat::Etc2RGBA8Unorm/
+             * @ref CompressedPixelFormat::Etc2RGBA8Srgb.
              */
             Etc2RGBA = 1,
 
             /**
-             * BC1 RGB. Loaded as @ref CompressedPixelFormat::Bc1RGBUnorm.
-             * Punchthrough alpha mode of @ref CompressedPixelFormat::Bc1RGBAUnorm
-             * is not supported.
+             * BC1 RGB. Loaded as @ref CompressedPixelFormat::Bc1RGBUnorm/
+             * @ref CompressedPixelFormat::Bc1RGBSrgb. Punchthrough alpha mode
+             * of BC1 RGBA is not supported.
              */
             Bc1RGB = 2,
 
             /**
-             * BC2 RGBA. Loaded as @ref CompressedPixelFormat::Bc3RGBAUnorm.
+             * BC3 RGBA. Loaded as @ref CompressedPixelFormat::Bc3RGBAUnorm/
+             * @ref CompressedPixelFormat::Bc3RGBASrgb.
              */
             Bc3RGBA = 3,
 
@@ -215,32 +217,37 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
 
             /**
              * BC7 RGB (mode 6). Loaded as
-             * @ref CompressedPixelFormat::Bc7RGBAUnorm, but with alpha values
+             * @ref CompressedPixelFormat::Bc7RGBAUnorm/
+             * @ref CompressedPixelFormat::Bc7RGBASrgb, but with alpha values
              * set to opaque.
              */
             Bc7RGB = 6,
 
             /**
              * BC7 RGBA (mode 5). Loaded as
-             * @ref CompressedPixelFormat::Bc7RGBAUnorm.
+             * @ref CompressedPixelFormat::Bc7RGBAUnorm/
+             * @ref CompressedPixelFormat::Bc7RGBASrgb.
              */
             Bc7RGBA = 7,
 
             /**
              * PVRTC1 RGB 4 bpp. Loaded as
-             * @ref CompressedPixelFormat::PvrtcRGB4bppUnorm.
+             * @ref CompressedPixelFormat::PvrtcRGB4bppUnorm/
+             * @ref CompressedPixelFormat::PvrtcRGB4bppSrgb.
              */
             PvrtcRGB4bpp = 8,
 
             /**
              * PVRTC1 RGBA 4 bpp. Loaded as
-             * @ref CompressedPixelFormat::PvrtcRGBA4bppUnorm.
+             * @ref CompressedPixelFormat::PvrtcRGBA4bppUnorm/
+             * @ref CompressedPixelFormat::PvrtcRGBA4bppSrgb.
              */
             PvrtcRGBA4bpp = 9,
 
             /**
              * ASTC 4x4 RGBA. Loaded as
-             * @ref CompressedPixelFormat::Astc4x4RGBAUnorm.
+             * @ref CompressedPixelFormat::Astc4x4RGBAUnorm/
+             * @ref CompressedPixelFormat::Astc4x4RGBASrgb.
              */
             Astc4x4RGBA = 10,
 
@@ -248,8 +255,9 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
 
             /**
              * Uncompressed 32-bit RGBA. Loaded as
-             * @ref PixelFormat::RGBA8Unorm. If no concrete format is
-             * specified, the importer will fall back to this.
+             * @ref PixelFormat::RGBA8Unorm/@ref PixelFormat::RGBA8Srgb. If no
+             * concrete format is specified, the importer will fall back to
+             * this.
              */
             RGBA8 = 13,
 
