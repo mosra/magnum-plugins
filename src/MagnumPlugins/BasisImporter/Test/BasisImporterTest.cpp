@@ -156,7 +156,7 @@ const struct {
     {"Cube map", "rgba-cubemap", TextureType::CubeMap},
     {"Cube map array", "rgba-cubemap-array", TextureType::CubeMapArray},
     {"3D", "rgba-3d", TextureType::Texture3D},
-    {"3D mipmaps", "rgba-3d-mips", TextureType::Texture2DArray},
+    {"3D mipmaps", "rgba-3d-mips", TextureType::Texture3D},
     {"Video", "rgba-video", TextureType::Texture2D}
 };
 
@@ -450,8 +450,21 @@ void BasisImporterTest::texture() {
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
 
+        const bool isKtx2 = std::string{fileType.name} == "KTX2";
+        const bool is3D = data.type == TextureType::Texture3D;
+        /* basisu saves volume textures as KTX2 2D arrays, and we import 3D
+           basis files as 2D arrays, too */
+        const TextureType realType = is3D ? TextureType::Texture2DArray : data.type;
+
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+
         CORRADE_VERIFY(importer->openFile(
             Utility::Directory::join(BASISIMPORTER_TEST_DIR, std::string{data.fileBase} + fileType.extension)));
+        if(!isKtx2 && is3D)
+            CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n");
+        else
+            CORRADE_COMPARE(out.str(), "");
 
         const Vector3ui counts{
             importer->image1DCount(),
@@ -464,10 +477,6 @@ void BasisImporterTest::texture() {
         CORRADE_COMPARE(counts.max(), total);
         CORRADE_COMPARE(importer->textureCount(), total);
 
-        const bool isKtx2 = std::string{fileType.name} == "KTX2";
-        const bool is3D = data.type == TextureType::Texture3D;
-        const TextureType realType = (isKtx2 && is3D) ? TextureType::Texture2DArray : data.type;
-
         for(UnsignedInt i = 0; i != total; ++i) {
             CORRADE_ITERATION(i);
 
@@ -479,11 +488,6 @@ void BasisImporterTest::texture() {
             CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat});
             CORRADE_COMPARE(texture->image(), i);
             CORRADE_COMPARE(texture->importerState(), nullptr);
-            {
-                CORRADE_EXPECT_FAIL_IF(isKtx2 && is3D,
-                    "basisu saves volume textures as KTX2 2D arrays and the transcoder can't read 3D textures.");
-                CORRADE_COMPARE(texture->type(), data.type);
-            }
             CORRADE_COMPARE(texture->type(), realType);
         }
 
@@ -493,12 +497,11 @@ void BasisImporterTest::texture() {
                 dimensions = 2;
                 break;
             case TextureType::Texture2DArray:
-            case TextureType::Texture3D:
             case TextureType::CubeMap:
             case TextureType::CubeMapArray:
                 dimensions = 3;
                 break;
-            /* No 1D (array) allowed */
+            /* No 1D/3D (array) allowed */
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE();
         }
         CORRADE_COMPARE(counts[dimensions - 1], total);
@@ -978,21 +981,8 @@ void BasisImporterTest::image3DMipmaps() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
 
-    std::ostringstream out;
-    Warning redirectWarning{&out};
-
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         std::string{"rgba-3d-mips"} + data.extension)));
-
-    const bool isKtx2 = std::string{data.name} == "KTX2";
-
-    {
-        CORRADE_EXPECT_FAIL_IF(isKtx2, "basisu saves volume textures as KTX2 2D arrays and the transcoder can't read 3D textures.");
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): found a 3D image with 2D mipmaps, importing as a 2D array texture\n");
-    }
-
-    if(isKtx2)
-            CORRADE_COMPARE(out.str(), "");
 
     Containers::Optional<Trade::ImageData3D> levels[3];
 
