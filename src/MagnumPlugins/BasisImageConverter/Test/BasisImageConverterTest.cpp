@@ -152,9 +152,8 @@ void BasisImageConverterTest::r() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
-    Containers::Pointer<AbstractImporter> pngImporter =
-        _manager.instantiate("PngImporter");
-    pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"));
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -191,9 +190,8 @@ void BasisImageConverterTest::rg() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
-    Containers::Pointer<AbstractImporter> pngImporter =
-        _manager.instantiate("PngImporter");
-    pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"));
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -229,9 +227,8 @@ void BasisImageConverterTest::rgb() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
-    Containers::Pointer<AbstractImporter> pngImporter =
-        _manager.instantiate("PngImporter");
-    pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"));
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -300,9 +297,8 @@ void BasisImageConverterTest::threads() {
     auto&& data = ThreadsData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> pngImporter =
-        _manager.instantiate("PngImporter");
-    pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"));
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
