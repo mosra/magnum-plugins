@@ -696,10 +696,14 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
-       already loaded. It also pulls in the AnyImageImporter dependency. Reset
-       the plugin dir after so it doesn't load anything else from the filesystem. */
+       already loaded. It also pulls in the AnyImageImporter dependency. */
     #ifdef TINYGLTFIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(TINYGLTFIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    /* Reset the plugin dir after so it doesn't load anything else from the
+       filesystem. Do this also in case of static plugins (no _FILENAME
+       defined) so it doesn't attempt to load dynamic system-wide plugins. */
+    #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
     _manager.setPluginDirectory({});
     #endif
     #ifdef BASISIMPORTER_PLUGIN_FILENAME

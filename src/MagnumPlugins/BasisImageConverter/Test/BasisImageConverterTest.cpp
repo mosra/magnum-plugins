@@ -179,12 +179,17 @@ BasisImageConverterTest::BasisImageConverterTest() {
     addInstancedTests({&BasisImageConverterTest::swizzle},
         Containers::arraySize(SwizzleData));
 
-    /* Pull in the AnyImageImporter dependency for image comparison, load
-       StbImageImporter from the build tree, if defined. Otherwise it's static
-       and already loaded. */
+    /* Pull in the AnyImageImporter dependency for image comparison */
     _manager.load("AnyImageImporter");
-    #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
+    /* Reset the plugin dir after so it doesn't load anything else from the
+       filesystem. Do this also in case of static plugins (no _FILENAME
+       defined) so it doesn't attempt to load dynamic system-wide plugins. */
+    #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
     _manager.setPluginDirectory({});
+    #endif
+    /* Load StbImageImporter from the build tree, if defined. Otherwise it's
+       static and already loaded. */
+    #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* Load the plugin directly from the build tree. Otherwise it's static and
