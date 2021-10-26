@@ -143,9 +143,9 @@ you may also use @ref setTargetFormat().
 
 @snippet BasisImporter.cpp target-format-config
 
-There's many options and you should be generally striving for highest-quality
-format available on given platform. Detailed description of the choices is
-in [Basis Universal README](https://github.com/BinomialLLC/basis_universal#how-to-use-the-system).
+There are many options and you should generally be striving for the
+highest-quality format available on a given platform. A detailed description of
+the choices can be found in the [Basis Universal Wiki](https://github.com/BinomialLLC/basis_universal/wiki/How-to-Deploy-ETC1S-Texture-Content-Using-Basis-Universal).
 As an example, the following code is a decision making used by
 @ref magnum-player "magnum-player" based on availability of corresponding
 OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:

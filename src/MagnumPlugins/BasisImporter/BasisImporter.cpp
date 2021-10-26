@@ -26,17 +26,18 @@
 
 #include "BasisImporter.h"
 
-#include <basisu_transcoder.h>
-
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/ConfigurationValue.h>
 #include <Corrade/Utility/Debug.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
+
+#include <basisu_transcoder.h>
 
 namespace Magnum { namespace Trade { namespace {
 
@@ -233,11 +234,12 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
     } else {
         targetFormat = configuration().value<TargetFormat>("format");
         if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
-            Error() << "Trade::BasisImporter::image2D(): invalid transcoding target format"
-                << targetFormatStr.data() << Debug::nospace << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
+            Error{} << "Trade::BasisImporter::image2D(): invalid transcoding target format"
+                << targetFormatStr << Debug::nospace << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
             return Containers::NullOpt;
         }
     }
+
     const auto format = basist::transcoder_texture_format(Int(targetFormat));
 
     basist::basisu_image_info info;
@@ -263,7 +265,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
         //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
     }
 
-    Vector2i size{Int(origWidth), Int(origHeight)};
+    const Vector2i size{Int(origWidth), Int(origHeight)};
     UnsignedInt dataSize, rowStride, outputSizeInBlocksOrPixels, outputRowsInPixels;
     if(targetFormat == BasisImporter::TargetFormat::RGBA8) {
         rowStride = size.x();
@@ -277,7 +279,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
         dataSize = basis_get_bytes_per_block(format)*totalBlocks;
     }
     Containers::Array<char> dest{DefaultInit, dataSize};
-    if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, basist::transcoder_texture_format(format), flags, rowStride, nullptr, outputRowsInPixels)) {
+    if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
         return Containers::NullOpt;
     }

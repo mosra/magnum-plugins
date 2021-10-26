@@ -39,6 +39,7 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Swizzle.h>
 #include <Magnum/PixelFormat.h>
+
 #include <basisu_enc.h>
 #include <basisu_comp.h>
 #include <basisu_file_headers.h>
@@ -126,7 +127,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     params.m_read_source_images = false;
     params.m_write_output_basis_files = false;
 
-    basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
+    const basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
     params.m_pSel_codebook = &sel_codebook;
 
     /* Copy image data into the basis image. There is no way to construct a
@@ -166,7 +167,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(const ImageView2D& 
     basisu::basis_compressor basis;
     basis.init(params);
 
-    basisu::basis_compressor::error_code errorCode = basis.process();
+    const basisu::basis_compressor::error_code errorCode = basis.process();
     if(errorCode != basisu::basis_compressor::error_code::cECSuccess) switch(errorCode) {
         case basisu::basis_compressor::error_code::cECFailedReadingSourceImages:
             /* Emitted e.g. when source image is 0-size */

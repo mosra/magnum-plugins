@@ -291,9 +291,6 @@ void BasisImporterTest::rgbUncompressed() {
 
 void BasisImporterTest::rgbUncompressedNoFlip() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer);
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         "rgb-noflip.basis")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -323,9 +320,6 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
 
 void BasisImporterTest::rgbaUncompressed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer);
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         "rgba.basis")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -349,9 +343,6 @@ void BasisImporterTest::rgbaUncompressed() {
 
 void BasisImporterTest::rgbaUncompressedMultipleImages() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer);
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
         "rgba-2images-mips.basis")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
@@ -421,7 +412,7 @@ void BasisImporterTest::rgb() {
 
     #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
     /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
-       the case. This assumes -DBASISD_SUPPORT_*=0 issupplied globally. */
+       the case. This assumes -DBASISD_SUPPORT_*=0 is supplied globally. */
     if(formatData.expectedFormat == CompressedPixelFormat::Bc7RGBAUnorm)
         CORRADE_SKIP("This format is not compiled into Basis.");
     #endif
@@ -430,7 +421,6 @@ void BasisImporterTest::rgb() {
     setTestCaseDescription(formatData.suffix);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
@@ -452,7 +442,7 @@ void BasisImporterTest::rgba() {
 
     #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
     /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
-       the case. This assumes -DBASISD_SUPPORT_*=0 issupplied globally. */
+       the case. This assumes -DBASISD_SUPPORT_*=0 is supplied globally. */
     if(formatData.expectedFormat == CompressedPixelFormat::Bc7RGBAUnorm)
         CORRADE_SKIP("This format is not compiled into Basis.");
     #endif
@@ -461,7 +451,6 @@ void BasisImporterTest::rgba() {
     setTestCaseDescription(formatData.suffix);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-    CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,

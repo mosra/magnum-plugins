@@ -80,7 +80,6 @@ BasisImageConverterTest::BasisImageConverterTest() {
 
               &BasisImageConverterTest::r,
               &BasisImageConverterTest::rg,
-
               &BasisImageConverterTest::rgb});
 
     addInstancedTests({&BasisImageConverterTest::rgba},
@@ -121,12 +120,12 @@ void BasisImageConverterTest::processError() {
     converter->configuration().setValue("max_endpoint_clusters",
         16128 /* basisu_frontend::cMaxEndpointClusters */ + 1);
 
-    Image2D imageWithSkip{PixelFormat::RGBA8Unorm, Vector2i{16},
-        Containers::Array<char>{ValueInit, 16*16*4}};
+    const char bytes[4]{};
+    ImageView2D image{PixelFormat::RGBA8Unorm, Vector2i{1}, bytes};
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(imageWithSkip));
+    CORRADE_VERIFY(!converter->convertToData(image));
     CORRADE_COMPARE(out.str(),
         "Trade::BasisImageConverter::convertToData(): frontend processing failed\n");
 }
