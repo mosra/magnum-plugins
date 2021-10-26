@@ -62,8 +62,8 @@ namespace Magnum { namespace Trade {
 @m_keywords{BasisImporterRGBA8}
 
 Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
-(`*.basis`) compressed images by parsing and transcoding files into an
-explicitly specified GPU format (see @ref Trade-BasisImporter-target-format).
+compressed images (`*.basis` or `*.ktx2`) by parsing and transcoding files into
+an explicitly specified GPU format (see @ref Trade-BasisImporter-target-format).
 You can use @ref BasisImageConverter to transcode images into this format.
 
 This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,

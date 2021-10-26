@@ -26,6 +26,7 @@
 
 #include "BasisImporter.h"
 
+#include <cstring>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -132,9 +133,24 @@ namespace Magnum { namespace Trade {
 struct BasisImporter::State {
     /* There is only this type of codebook */
     basist::etc1_global_selector_codebook codebook;
-    Containers::Optional<basist::basisu_transcoder> transcoder;
+
+    /* One transcoder for each supported file type, and of course they have
+       wildly different interfaces. ktx2_transcoder is only defined if
+       BASISD_SUPPORT_KTX2 != 0, so we need to ifdef around it everywhere
+       it's used. */
+    Containers::Optional<basist::basisu_transcoder> basisTranscoder;
+    #if BASISD_SUPPORT_KTX2
+    Containers::Optional<basist::ktx2_transcoder> ktx2Transcoder;
+    #else
+    Containers::Optional<void*> ktx2Transcoder;
+    #endif
+
     Containers::Array<char> in;
-    basist::basisu_file_info fileInfo;
+
+    UnsignedInt numImages;
+    Containers::Array<UnsignedInt> numLevels;
+    basist::basis_tex_format compressionType;
+    bool isYFlipped;
     bool isSrgb;
 
     bool noTranscodeFormatWarningPrinted = false;
@@ -170,14 +186,15 @@ BasisImporter::~BasisImporter() = default;
 ImporterFeatures BasisImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool BasisImporter::doIsOpened() const {
-    /* Both the transcoder and then input data have to be present or both
+    /* Both a transcoder and the input data have to be present or both
        have to be empty */
-    CORRADE_INTERNAL_ASSERT(!_state->transcoder == !_state->in);
+    CORRADE_INTERNAL_ASSERT(!(_state->basisTranscoder || _state->ktx2Transcoder) == !_state->in);
     return _state->in;
 }
 
 void BasisImporter::doClose() {
-    _state->transcoder = Containers::NullOpt;
+    _state->basisTranscoder = Containers::NullOpt;
+    _state->ktx2Transcoder = Containers::NullOpt;
     _state->in = nullptr;
 }
 
@@ -194,45 +211,125 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         return;
     }
 
-    _state->transcoder.emplace(&_state->codebook);
-    Containers::ScopeGuard transcoderGuard{&_state->transcoder, [](Containers::Optional<basist::basisu_transcoder>* o) {
-        *o = Containers::NullOpt;
-    }};
-    if(!_state->transcoder->validate_header(data.data(), data.size())) {
-        Error() << "Trade::BasisImporter::openData(): invalid header";
-        return;
-    }
+    /* Check if this is a KTX2 file. There's basist::g_ktx2_file_identifier but
+       that's hidden behind BASISD_SUPPORT_KTX2 so define it ourselves, taken
+       from KtxImporter/KtxHeader.h */
+    constexpr char KtxFileIdentifier[12]{'\xab', 'K', 'T', 'X', ' ', '2', '0', '\xbb', '\r', '\n', '\x1a', '\n'};
+    const bool isKTX2 = data.size() >= sizeof(KtxFileIdentifier) &&
+        std::memcmp(data.begin(), KtxFileIdentifier, sizeof(KtxFileIdentifier)) == 0;
 
-    /* Save the global file info to avoid calling that again each time we check
-       for image count and whatnot; start transcoding */
-    if(!_state->transcoder->get_file_info(data.data(), data.size(), _state->fileInfo) ||
-       !_state->transcoder->start_transcoding(data.data(), data.size())) {
-        Error() << "Trade::BasisImporter::openData(): bad basis file";
-        return;
-    }
-
-    /* For some reason cBASISHeaderFlagSRGB is not exposed in basisu_file_info,
-       get it from the header directly */
-    const basist::basis_file_header& header = *reinterpret_cast<const basist::basis_file_header*>(data.data());
-    _state->isSrgb = header.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
-
-    /* All good, release the transcoder guard. Keep the original data, take
-       over the existing array or copy the data if we can't. */
-    transcoderGuard.release();
+    /* Keep the original data, take over the existing array or copy the data if
+       we can't. We have to do this first because transcoders may hold on to
+       the pointer we pass into init()/start_transcoding(). While
+       basis_transcoder currently doesn't keep the pointer around, it might in
+       the future and ktx2_transcoder already does. */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
         _state->in = std::move(data);
     } else {
         _state->in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, _state->in);
     }
+
+    Containers::ScopeGuard resourceGuard{_state.get(), [](BasisImporter::State* state) {
+        state->basisTranscoder = Containers::NullOpt;
+        state->ktx2Transcoder = Containers::NullOpt;
+        state->in = nullptr;
+    }};
+
+    if(isKTX2) {
+        #if !BASISD_SUPPORT_KTX2
+        /** @todo Can we test this? Maybe disable this on some CI, BC7 is
+            already disabled on Emscripten. */
+        Error{} << "Trade::BasisImporter::openData(): opening a KTX2 file but Basis Universal was compiled without KTX2 support";
+        return;
+        #else
+        _state->ktx2Transcoder.emplace(&_state->codebook);
+
+        /* init() handles all the validation checks, there's no extra function
+           for that */
+        if(!_state->ktx2Transcoder->init(_state->in.data(), _state->in.size())) {
+            Error{} << "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed";
+            return;
+        }
+
+        /* Check for supercompression and print a useful error if basisu was
+           compiled without Zstandard support. Not exposed in ktx2_transcoder,
+           get it from the KTX2 header directly. */
+        /** @todo Can we test this? Maybe disable this on some CI, BC7 is
+            already disabled on Emscripten. */
+        const basist::ktx2_header& header = *reinterpret_cast<const basist::ktx2_header*>(_state->in.data());
+        if(header.m_supercompression_scheme == basist::KTX2_SS_ZSTANDARD && !BASISD_SUPPORT_KTX2_ZSTD) {
+            Error{} << "Trade::BasisImporter::openData(): file uses Zstandard supercompression but Basis Universal was compiled without Zstandard support";
+            return;
+        }
+
+        /* Start transcoding */
+        if(!_state->ktx2Transcoder->start_transcoding()) {
+            Error{} << "Trade::BasisImporter::openData(): bad KTX2 file";
+            return;
+        }
+
+        /* Save some global file info we need later */
+
+        /* KTX2 files only ever contain one image */
+        _state->numImages = 1;
+        _state->numLevels = Containers::Array<UnsignedInt>{DirectInit, 1, _state->ktx2Transcoder->get_levels()};
+
+        _state->compressionType = _state->ktx2Transcoder->get_format();
+        const basisu::uint8_vec* orientation = _state->ktx2Transcoder->find_key("KTXorientation");
+        /* The default without orientation key is Y-down. Y-up = flipped. */
+        _state->isYFlipped = orientation && orientation->size() >= 2 && (*orientation)[1] == 'u';
+        _state->isSrgb = _state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
+        #endif
+
+    } else {
+        /* .basis file */
+        _state->basisTranscoder.emplace(&_state->codebook);
+
+        if(!_state->basisTranscoder->validate_header(_state->in.data(), _state->in.size())) {
+            Error{} << "Trade::BasisImporter::openData(): invalid basis header";
+            return;
+        }
+
+        /* Start transcoding */
+        basist::basisu_file_info fileInfo;
+        if(!_state->basisTranscoder->get_file_info(_state->in.data(), _state->in.size(), fileInfo) ||
+           !_state->basisTranscoder->start_transcoding(_state->in.data(), _state->in.size())) {
+            Error{} << "Trade::BasisImporter::openData(): bad basis file";
+            return;
+        }
+
+        /* Save some global file info we need later. We can't save fileInfo
+           directly because that's specific to .basis files, and there's no
+           equivalent in ktx2_transcoder. */
+        _state->numImages = fileInfo.m_total_images;
+        _state->numLevels = Containers::Array<UnsignedInt>{NoInit, _state->numImages};
+        Utility::copy(Containers::arrayView(fileInfo.m_image_mipmap_levels.begin(), fileInfo.m_image_mipmap_levels.size()), _state->numLevels);
+
+        _state->compressionType = fileInfo.m_tex_format;
+        _state->isYFlipped = fileInfo.m_y_flipped;
+
+        /* For some reason cBASISHeaderFlagSRGB is not exposed in basisu_file_info,
+           get it from the basis header directly */
+        const basist::basis_file_header& header = *reinterpret_cast<const basist::basis_file_header*>(_state->in.data());
+        _state->isSrgb = header.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
+    }
+
+    /* There has to be exactly one transcoder */
+    CORRADE_INTERNAL_ASSERT(!_state->ktx2Transcoder != !_state->basisTranscoder);
+    /* Can't have a KTX2 transcoder without KTX2 support compiled into basisu */
+    CORRADE_INTERNAL_ASSERT(BASISD_SUPPORT_KTX2 || !_state->ktx2Transcoder);
+
+    /* All good, release the resource guard */
+    resourceGuard.release();
 }
 
 UnsignedInt BasisImporter::doImage2DCount() const {
-    return _state->fileInfo.m_total_images;
+    return _state->numImages;
 }
 
 UnsignedInt BasisImporter::doImage2DLevelCount(const UnsignedInt id) {
-    return _state->fileInfo.m_image_mipmap_levels[id];
+    return _state->numLevels[id];
 }
 
 Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
@@ -255,24 +352,43 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
     const auto format = basist::transcoder_texture_format(Int(targetFormat));
     const bool isUncompressed = basist::basis_transcoder_format_is_uncompressed(format);
 
-    basist::basisu_image_info info;
-    /* Header validation etc. is already done in doOpenData() and id is
-       bounds-checked against doImage2DCount() by AbstractImporter, so by
-       looking at the code there's nothing else that could fail and wasn't
-       already caught before. That means we also can't craft any file to cover
-       an error path, so turning this into an assert. When this blows up for
-       someome, we'd most probably need to harden doOpenData() to catch that,
-       not turning this into a graceful error. */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_info(_state->in.data(), _state->in.size(), info, id));
+    /* Some target formats may be unsupported, either because support wasn't
+       compiled in or UASTC doesn't support a certain format. All of the
+       formats in TargetFormat are transcodable from UASTC so we can provide a
+       slightly more useful error message than "impossible!". */
+    if(!basist::basis_is_format_supported(format, _state->compressionType)) {
+        Error{} << "Trade::BasisImporter::image2D(): Basis Universal was compiled without support for" << targetFormatStr;
+        return Containers::NullOpt;
+    }
 
     UnsignedInt origWidth, origHeight, totalBlocks;
-    /* Same as above, it checks for state we already verified before. If this
-       blows up for someone, we can reconsider. */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_state->transcoder->get_image_level_desc(_state->in.data(), _state->in.size(), id, level, origWidth, origHeight, totalBlocks));
+    if(_state->ktx2Transcoder) {
+        #if BASISD_SUPPORT_KTX2
+        basist::ktx2_image_level_info levelInfo;
+        /* Header validation etc. is already done in doOpenData() and id is
+           bounds-checked against doImage2DCount() by AbstractImporter, so by
+           looking at the code there's nothing else that could fail and wasn't
+           already caught before. That means we also can't craft any file to
+           cover an error path, so turning this into an assert. When this blows
+           up for someome, we'd most probably need to harden doOpenData() to
+           catch that, not turning this into a graceful error.
+           Layer/face index doesn't affect the output we're interested in, so
+           0, 0 is enough here. */
+        CORRADE_INTERNAL_ASSERT_OUTPUT(_state->ktx2Transcoder->get_image_level_info(levelInfo, level, 0, 0));
+
+        origWidth = levelInfo.m_orig_width;
+        origHeight = levelInfo.m_orig_height;
+        totalBlocks = levelInfo.m_total_blocks;
+        #endif
+    } else {
+        /* Same as above, it checks for state we already verified before. If this
+           blows up for someone, we can reconsider. */
+        CORRADE_INTERNAL_ASSERT_OUTPUT(_state->basisTranscoder->get_image_level_desc(_state->in.data(), _state->in.size(), id, level, origWidth, origHeight, totalBlocks));
+    }
 
     /* No flags used by transcode_image_level() by default */
     const std::uint32_t flags = 0;
-    if(!_state->fileInfo.m_y_flipped) {
+    if(!_state->isYFlipped) {
         /** @todo replace with the flag once the PR is submitted */
         Warning{} << "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation";
         //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
@@ -291,9 +407,19 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
     }
     const UnsignedInt dataSize = basis_get_bytes_per_block_or_pixel(format)*outputSizeInBlocksOrPixels;
     Containers::Array<char> dest{DefaultInit, dataSize};
-    if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
-        Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
-        return Containers::NullOpt;
+
+    if(_state->ktx2Transcoder) {
+        #if BASISD_SUPPORT_KTX2
+        if(!_state->ktx2Transcoder->transcode_image_level(level, 0, 0, dest.data(), outputSizeInBlocksOrPixels, format, flags, rowStride, outputRowsInPixels)) {
+            Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
+            return Containers::NullOpt;
+        }
+        #endif
+    } else {
+        if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
+            Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
+            return Containers::NullOpt;
+        }
     }
 
     if(isUncompressed)

@@ -1,8 +1,8 @@
-Creating input Basis files
-==========================
+Creating input files
+====================
 
-The images were converted from central cutouts from `ambient-texture.tga` and `diffuse-alpha-texture.tga`
-from the [Magnum Shaders test files](https://github.com/mosra/magnum/tree/master/src/Magnum/Shaders/Test/TestFiles).
+The images were converted from central cutouts from `ambient-texture.tga`
+and `diffuse-alpha-texture.tga` from the [Magnum Shaders test files](https://github.com/mosra/magnum/tree/master/src/Magnum/Shaders/Test/TestFiles).
 
 -   `rgb-63x27.png`
 -   `rgb-64x32.png`
@@ -12,8 +12,9 @@ from the [Magnum Shaders test files](https://github.com/mosra/magnum/tree/master
 
 using the official basis universal
 [conversion tool](https://github.com/BinomialLLC/basis_universal/#command-line-compression-tool).
+For conversion to `*.ktx2` at least version 1.15 is required.
 
-To convert, run the `convert.sh` script.
+To convert to all the required `*.basis`/`*.ktx2` files, run the `convert.sh` script.
 
 Creating mipmaps
 ================

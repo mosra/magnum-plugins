@@ -32,6 +32,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -47,16 +48,22 @@ struct BasisImporterTest: TestSuite::Tester {
     explicit BasisImporterTest();
 
     void empty();
-    void invalid();
+
+    void invalidHeader();
+    void invalidFile();
+    void fileTooShort();
+
     void unconfigured();
     void invalidConfiguredFormat();
-    void fileTooShort();
+    void unsupportedFormat();
     void transcodingFailure();
+    void nonBasisKtx();
 
     void rgbUncompressed();
     void rgbUncompressedNoFlip();
     void rgbUncompressedLinear();
     void rgbaUncompressed();
+    void rgbaUncompressedUastc();
     void rgbaUncompressedMultipleImages();
 
     void rgb();
@@ -74,37 +81,77 @@ struct BasisImporterTest: TestSuite::Tester {
 };
 
 constexpr struct {
+    const char* name;
+    const char* extension;
+} FileTypeData[] {
+    {"Basis", ".basis"},
+    {"KTX2", ".ktx2"}
+};
+
+constexpr struct {
+    const char* name;
+    const Containers::ArrayView<const char> data;
+    const char* message;
+} InvalidHeaderData[] {
+    {"Invalid", "NotAValidFile", "invalid basis header"},
+    {"Invalid basis header", "sB\xff\xff", "invalid basis header"},
+    {"Invalid KTX2 identifier", "\xabKTX 30\xbb\r\n\x1a\n", "invalid basis header"},
+    {"Invalid KTX2 header", "\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff", "invalid KTX2 header, or not Basis compressed"}
+};
+
+constexpr struct {
+    const char* name;
     const char* file;
-    const char* fileAlpha;
-    const char* fileLinear;
+    std::size_t offset;
+    const char value;
+    const char* message;
+} InvalidFileData[] {
+    {"Corrupt KTX2 supercompression data", "rgb.ktx2", 184, 0x00, "bad KTX2 file"},
+    {"Corrupt basis texture type", "rgb.basis", 23, 0x7f, "bad basis file"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* file;
+    const std::size_t size;
+    const char* message;
+} FileTooShortData[] {
+    {"Basis", "rgb.basis", 64, "invalid basis header"},
+    {"KTX2", "rgb.ktx2", 64, "invalid KTX2 header, or not Basis compressed"}
+};
+
+constexpr struct {
+    const char* fileBase;
+    const char* fileBaseAlpha;
+    const char* fileBaseLinear;
     const Vector2i expectedSize;
     const char* suffix;
     const CompressedPixelFormat expectedFormat;
     const CompressedPixelFormat expectedLinearFormat;
 } FormatData[] {
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, CompressedPixelFormat::Etc2RGB8Unorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "Etc2RGBA", CompressedPixelFormat::Etc2RGBA8Srgb, CompressedPixelFormat::Etc2RGBA8Unorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, CompressedPixelFormat::Bc1RGBUnorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "Bc3RGBA", CompressedPixelFormat::Bc3RGBASrgb, CompressedPixelFormat::Bc3RGBAUnorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "Bc4R", CompressedPixelFormat::Bc4RUnorm, CompressedPixelFormat::Bc4RUnorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, CompressedPixelFormat::Bc5RGUnorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "Bc7RGB", CompressedPixelFormat::Bc7RGBASrgb, CompressedPixelFormat::Bc7RGBAUnorm},
-    {"rgb-pow2.basis", "rgba-pow2.basis", "rgb-linear-pow2.basis", {64, 32},
+    {"rgb-pow2", "rgba-pow2", "rgb-linear-pow2", {64, 32},
      "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppSrgb, CompressedPixelFormat::PvrtcRGB4bppUnorm},
-    {"rgb-pow2.basis", "rgba-pow2.basis", "rgb-linear-pow2.basis", {64, 32},
+    {"rgb-pow2", "rgba-pow2", "rgb-linear-pow2", {64, 32},
      "PvrtcRGBA4bpp", CompressedPixelFormat::PvrtcRGBA4bppSrgb, CompressedPixelFormat::PvrtcRGBA4bppUnorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "Astc4x4RGBA", CompressedPixelFormat::Astc4x4RGBASrgb, CompressedPixelFormat::Astc4x4RGBAUnorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "EacR", CompressedPixelFormat::EacR11Unorm, CompressedPixelFormat::EacR11Unorm},
-    {"rgb.basis", "rgba.basis", "rgb-linear.basis", {63, 27},
+    {"rgb", "rgba", "rgb-linear", {63, 27},
      "EacRG", CompressedPixelFormat::EacRG11Unorm, CompressedPixelFormat::EacRG11Unorm}
 };
 
@@ -125,18 +172,31 @@ const struct {
 };
 
 BasisImporterTest::BasisImporterTest() {
-    addTests({&BasisImporterTest::empty,
-              &BasisImporterTest::invalid,
-              &BasisImporterTest::unconfigured,
-              &BasisImporterTest::invalidConfiguredFormat,
-              &BasisImporterTest::fileTooShort,
-              &BasisImporterTest::transcodingFailure,
+    addTests({&BasisImporterTest::empty});
 
-              &BasisImporterTest::rgbUncompressed,
-              &BasisImporterTest::rgbUncompressedNoFlip,
-              &BasisImporterTest::rgbUncompressedLinear,
-              &BasisImporterTest::rgbaUncompressed,
-              &BasisImporterTest::rgbaUncompressedMultipleImages});
+    addInstancedTests({&BasisImporterTest::invalidHeader},
+                      Containers::arraySize(InvalidHeaderData));
+
+    addInstancedTests({&BasisImporterTest::invalidFile},
+                      Containers::arraySize(InvalidFileData));
+
+    addInstancedTests({&BasisImporterTest::fileTooShort},
+                      Containers::arraySize(FileTooShortData));
+
+    addTests({&BasisImporterTest::unconfigured,
+              &BasisImporterTest::invalidConfiguredFormat,
+              &BasisImporterTest::unsupportedFormat,
+              &BasisImporterTest::transcodingFailure,
+              &BasisImporterTest::nonBasisKtx});
+
+    addInstancedTests({&BasisImporterTest::rgbUncompressed,
+                       &BasisImporterTest::rgbUncompressedNoFlip,
+                       &BasisImporterTest::rgbUncompressedLinear,
+                       &BasisImporterTest::rgbaUncompressed,
+                       &BasisImporterTest::rgbaUncompressedUastc},
+                      Containers::arraySize(FileTypeData));
+
+    addTests({&BasisImporterTest::rgbaUncompressedMultipleImages});
 
     addInstancedTests({&BasisImporterTest::rgb,
                        &BasisImporterTest::rgba,
@@ -176,13 +236,53 @@ void BasisImporterTest::empty() {
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): the file is empty\n");
 }
 
-void BasisImporterTest::invalid() {
+void BasisImporterTest::invalidHeader() {
+    auto&& data = InvalidHeaderData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openData("NotABasisFile"));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid header\n");
+    CORRADE_VERIFY(!importer->openData(data.data));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImporter::openData(): {}\n", data.message));
+}
+
+void BasisImporterTest::invalidFile() {
+    auto&& data = InvalidFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+
+    auto basisData = Utility::Directory::read(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file));
+
+    CORRADE_INTERNAL_ASSERT(data.offset < basisData.size());
+    basisData[data.offset] = data.value;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openData(basisData));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImporter::openData(): {}\n", data.message));
+}
+
+void BasisImporterTest::fileTooShort() {
+    auto&& data = FileTooShortData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+    auto basisData = Utility::Directory::read(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    /* Shorten the data */
+    CORRADE_INTERNAL_ASSERT(data.size < basisData.size());
+    CORRADE_VERIFY(!importer->openData(basisData.prefix(data.size)));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImporter::openData(): {}\n", data.message));
 }
 
 void BasisImporterTest::unconfigured() {
@@ -230,23 +330,23 @@ void BasisImporterTest::invalidConfiguredFormat() {
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8\n");
 }
 
-void BasisImporterTest::fileTooShort() {
+void BasisImporterTest::unsupportedFormat() {
+    #if !defined(BASISD_SUPPORT_BC7) || BASISD_SUPPORT_BC7
+    /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
+       NOT the case. This assumes -DBASISD_SUPPORT_*=0 is supplied globally. */
+    CORRADE_SKIP("BC7 is compiled into Basis, can't test unsupported target format error.");
+    #endif
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
-    auto basisData = Utility::Directory::read(
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis"));
+    CORRADE_VERIFY(importer->openFile(
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
 
     std::ostringstream out;
     Error redirectError{&out};
+    importer->configuration().setValue("format", "Bc7RGBA");
+    CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_VERIFY(!importer->openData(basisData.prefix(64)));
-
-    /* Corrupt the header */
-    basisData[100] = 100;
-    CORRADE_VERIFY(!importer->openData(basisData));
-
-    CORRADE_COMPARE(out.str(),
-        "Trade::BasisImporter::openData(): invalid header\n"
-        "Trade::BasisImporter::openData(): bad basis file\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): Basis Universal was compiled without support for Bc7RGBA\n");
 }
 
 void BasisImporterTest::transcodingFailure() {
@@ -263,13 +363,24 @@ void BasisImporterTest::transcodingFailure() {
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): transcoding failed\n");
 }
 
+void BasisImporterTest::nonBasisKtx() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2")));
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed\n");
+}
+
 void BasisImporterTest::rgbUncompressed() {
+    auto&& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgb.basis")));
+        std::string{"rgb"} + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image;
@@ -297,9 +408,12 @@ void BasisImporterTest::rgbUncompressed() {
 }
 
 void BasisImporterTest::rgbUncompressedNoFlip() {
+    auto&& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgb-noflip.basis")));
+        std::string{"rgb-noflip"} + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image;
@@ -326,9 +440,12 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
 }
 
 void BasisImporterTest::rgbUncompressedLinear() {
+    auto&& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgb-linear.basis")));
+        std::string{"rgb-linear"} + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -349,9 +466,12 @@ void BasisImporterTest::rgbUncompressedLinear() {
 }
 
 void BasisImporterTest::rgbaUncompressed() {
+    auto&& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        "rgba.basis")));
+        std::string{"rgba"} + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -369,6 +489,32 @@ void BasisImporterTest::rgbaUncompressed() {
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 94.3f, 8.039f}));
+}
+
+void BasisImporterTest::rgbaUncompressedUastc() {
+    auto&& data = FileTypeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+        std::string{"rgba-uastc"} + data.extension)));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        /* There are insignificant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 4.75f, 0.576f}));
 }
 
 void BasisImporterTest::rgbaUncompressedMultipleImages() {
@@ -453,18 +599,23 @@ void BasisImporterTest::rgb() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        formatData.file)));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(image->isCompressed());
-    CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
-    CORRADE_COMPARE(image->size(), formatData.expectedSize);
-    /** @todo remove this once CompressedImage etc. tests for data size on its
-        own / we're able to decode the data ourselves */
-    CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedFormat)*((image->size() + compressedBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedFormat).xy()).product());
+    for(const auto& fileType: FileTypeData) {
+        CORRADE_ITERATION(fileType.name);
+
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+            std::string{formatData.fileBase} + fileType.extension)));
+        CORRADE_COMPARE(importer->image2DCount(), 1);
+
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
+        CORRADE_COMPARE(image->size(), formatData.expectedSize);
+        /** @todo remove this once CompressedImage etc. tests for data size on its
+            own / we're able to decode the data ourselves */
+        CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedFormat)*((image->size() + compressedBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedFormat).xy()).product());
+    }
 }
 
 void BasisImporterTest::rgba() {
@@ -484,18 +635,22 @@ void BasisImporterTest::rgba() {
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        formatData.fileAlpha)));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
+    for(const auto& fileType: FileTypeData) {
+        CORRADE_ITERATION(fileType.name);
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(image->isCompressed());
-    CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
-    CORRADE_COMPARE(image->size(), formatData.expectedSize);
-    /** @todo remove this once CompressedImage etc. tests for data size on its
-        own / we're able to decode the data ourselves */
-    CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedFormat)*((image->size() + compressedBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedFormat).xy()).product());
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+            std::string{formatData.fileBaseAlpha} + fileType.extension)));
+        CORRADE_COMPARE(importer->image2DCount(), 1);
+
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
+        CORRADE_COMPARE(image->size(), formatData.expectedSize);
+        /** @todo remove this once CompressedImage etc. tests for data size on its
+            own / we're able to decode the data ourselves */
+        CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedFormat)*((image->size() + compressedBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedFormat).xy()).product());
+    }
 }
 
 void BasisImporterTest::linear() {
@@ -516,18 +671,23 @@ void BasisImporterTest::linear() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         formatData.suffix);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
-        formatData.fileLinear)));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(image->isCompressed());
-    CORRADE_COMPARE(image->compressedFormat(), formatData.expectedLinearFormat);
-    CORRADE_COMPARE(image->size(), formatData.expectedSize);
-    /** @todo remove this once CompressedImage etc. tests for data size on its
-        own / we're able to decode the data ourselves */
-    CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedLinearFormat)*((image->size() + compressedBlockSize(formatData.expectedLinearFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedLinearFormat).xy()).product());
+    for(const auto& fileType: FileTypeData) {
+        CORRADE_ITERATION(fileType.name);
+
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR,
+            std::string{formatData.fileBaseLinear} + fileType.extension)));
+        CORRADE_COMPARE(importer->image2DCount(), 1);
+
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->compressedFormat(), formatData.expectedLinearFormat);
+        CORRADE_COMPARE(image->size(), formatData.expectedSize);
+        /** @todo remove this once CompressedImage etc. tests for data size on its
+            own / we're able to decode the data ourselves */
+        CORRADE_COMPARE(image->data().size(), compressedBlockDataSize(formatData.expectedLinearFormat)*((image->size() + compressedBlockSize(formatData.expectedLinearFormat).xy() - Vector2i{1})/compressedBlockSize(formatData.expectedLinearFormat).xy()).product());
+    }
 }
 
 void BasisImporterTest::openMemory() {
