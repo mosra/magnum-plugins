@@ -148,9 +148,8 @@ commands:
     steps:
     - run:
         name: Install Basis Universal
-        # Version before UASTC is a thing, as our tests crash with the new one
         command: |
-          export BASIS_VERSION=8565af680d1bd2ad56ab227ca7d96c56dfbe93ed
+          export BASIS_VERSION=v1_15_update2
           mkdir -p $HOME/basis_universal && cd $HOME/basis_universal
           wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.tar.gz
           tar --strip-components 1 -xzf $BASIS_VERSION.tar.gz

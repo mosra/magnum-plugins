@@ -170,7 +170,7 @@ void BasisImageConverterTest::r() {
             {std::size_t(image->size()[1]), std::size_t(image->size()[0]), 1}))),
         imageWithSkip,
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{21.0f, 0.822f}));
+        (DebugTools::CompareImage{21.0f, 0.968f}));
 }
 
 void BasisImageConverterTest::rg() {
@@ -213,7 +213,7 @@ void BasisImageConverterTest::rg() {
         (Containers::arrayCast<2, const Math::Vector2<UnsignedByte>>(image->pixels().suffix({0, 0, 2}))),
         imageWithSkip,
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{22.0f, 0.775f}));
+        (DebugTools::CompareImage{22.0f, 1.039f}));
 }
 
 void BasisImageConverterTest::rgb() {
@@ -251,7 +251,7 @@ void BasisImageConverterTest::rgb() {
     CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 55.7f, 6.589f}));
+        (DebugTools::CompareImageToFile{_manager, 58.4f, 6.622f}));
 }
 
 void BasisImageConverterTest::rgba() {
@@ -295,7 +295,7 @@ void BasisImageConverterTest::rgba() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 78.3f, 8.302f}));
+        (DebugTools::CompareImageToFile{_manager, 94.0f, 8.039f}));
 }
 
 }}}}

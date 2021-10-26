@@ -23,11 +23,16 @@ class MagnumPlugins < Formula
   depends_on "spirv-tools" => :recommended
 
   def install
-    # Bundle Basis Universal, a commit that's before the UASTC support (which
-    # is not implemented yet). The repo has massive useless files in its
-    # history, so we're downloading just a snapshot instead of a git clone.
-    # Also, WHY THE FUCK curl needs -L and -o?! why can't it just work?!
-    system "curl", "-L", "https://github.com/BinomialLLC/basis_universal/archive/2f43afcc97d0a5dafdb73b4e24e123cf9687a418.tar.gz", "-o", "src/external/basis-universal.tar.gz"
+    # Bundle Basis Universal, v1_15_update2 for HEAD builds, a commit that's
+    # before the UASTC support (which was not implemented yet) on 2020.06.
+    # The repo has massive useless files in its history, so we're downloading
+    # just a snapshot instead of a git clone. Also, WHY THE FUCK curl needs -L
+    # and -o?! why can't it just work?!
+    if build.head?
+      system "curl", "-L", "https://github.com/BinomialLLC/basis_universal/archive/v1_15_update2.tar.gz", "-o", "src/external/basis-universal.tar.gz"
+    else
+      system "curl", "-L", "https://github.com/BinomialLLC/basis_universal/archive/2f43afcc97d0a5dafdb73b4e24e123cf9687a418.tar.gz", "-o", "src/external/basis-universal.tar.gz"
+    end
     cd "src/external" do
       system "mkdir", "basis-universal"
       system "tar", "xzvf", "basis-universal.tar.gz", "-C", "basis-universal", "--strip-components=1"

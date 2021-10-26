@@ -266,18 +266,17 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
     }
 
     const Vector2i size{Int(origWidth), Int(origHeight)};
-    UnsignedInt dataSize, rowStride, outputSizeInBlocksOrPixels, outputRowsInPixels;
+    UnsignedInt rowStride, outputRowsInPixels, outputSizeInBlocksOrPixels;
     if(targetFormat == BasisImporter::TargetFormat::RGBA8) {
         rowStride = size.x();
         outputRowsInPixels = size.y();
         outputSizeInBlocksOrPixels = size.product();
-        dataSize = 4*outputSizeInBlocksOrPixels;
     } else {
         rowStride = 0; /* left up to Basis to calculate */
         outputRowsInPixels = 0; /* not used for compressed data */
         outputSizeInBlocksOrPixels = totalBlocks;
-        dataSize = basis_get_bytes_per_block(format)*totalBlocks;
     }
+    const UnsignedInt dataSize = basis_get_bytes_per_block_or_pixel(format)*outputSizeInBlocksOrPixels;
     Containers::Array<char> dest{DefaultInit, dataSize};
     if(!_state->transcoder->transcode_image_level(_state->in.data(), _state->in.size(), id, level, dest.data(), outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
         Error{} << "Trade::BasisImporter::image2D(): transcoding failed";

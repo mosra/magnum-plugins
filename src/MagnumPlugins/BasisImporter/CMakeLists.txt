@@ -59,6 +59,14 @@ target_include_directories(BasisImporter
 target_link_libraries(BasisImporter
     PUBLIC Magnum::Trade
     PRIVATE BasisUniversal::Transcoder)
+# If we have bundled Basis sources and the bundled Basis sources bundle zstd
+# (which has ZSTD_MULTITHREAD unconditionally defined for all platforms, SIGH),
+# link the plugin to pthread. Can't do it directly in the Find module directly
+# for BasisUniversal::Transcoder for reasons described there.
+if(BasisUniversalZstd_DIR AND NOT CORRADE_TARGET_EMSCRIPTEN)
+    find_package(Threads REQUIRED)
+    target_link_libraries(BasisImporter PRIVATE Threads::Threads)
+endif()
 # Modify output location only if all are set, otherwise it makes no sense
 if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND CMAKE_LIBRARY_OUTPUT_DIRECTORY AND CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
     set_target_properties(BasisImporter PROPERTIES

@@ -226,8 +226,8 @@ thus the Magnum Plugins package doesn't have it enabled by default. In order to
 enable them, do the following:
 
 -   For @ref Trade::BasisImporter "BasisImporter" or
-    @ref Trade::BasisImageConverter "BasisImageConverter", [download commit
-    `2f43afcc` of the Basis Universal repo](https://github.com/BinomialLLC/basis_universal/archive/2f43afcc97d0a5dafdb73b4e24e123cf9687a418.tar.gz),
+    @ref Trade::BasisImageConverter "BasisImageConverter", [download the
+    `v1_15_update2` tag of the Basis Universal repo](https://github.com/BinomialLLC/basis_universal/archive/v1_15_update2.tar.gz),
     extract it into `src/external/basis-universal` (note the dash instead of an
     underscore) and set `WITH_BASISIMPORTER` / `WITH_BASISIMAGECONVERTER` to
     `ON` in `package/debian/rules`

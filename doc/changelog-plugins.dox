@@ -78,6 +78,12 @@ namespace Magnum {
     and [mosra/magnum-plugins#100](https://github.com/mosra/magnum-plugins/pull/100))
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports light range and
     spotlight cone angle properties
+-   @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter}
+    plugins were updated to Basis 1.15 with UASTC and KTX2 support, in addition
+    it's now also possible to supply custom mip levels, sRGB formats get
+    properly recognized both on import and during conversion, and array and
+    cubemap are supported as well (see
+    [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
@@ -166,6 +172,13 @@ namespace Magnum {
 -   Variables `ASSIMP_LIBRARY_{DEBUG,RELEASE}` and `ASSIMP_INCLUDE_DIR` that
     could be used to force Assimp location in `FindAssimp.cmake` are deprecated
     in favor of `Assimp_LIBRARY_{DEBUG,RELEASE}` and `Assimp_INCLUDE_DIR`
+
+@subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
+
+-   @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter}
+    plugins don't compile against the previous 1.11 version of Basis anymore,
+    you have to update the dependency to the `v1_15_update2` tag (see
+    [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
 
 @subsection changelog-plugins-latest-documentation Documentation
 

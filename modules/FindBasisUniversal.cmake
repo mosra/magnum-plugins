@@ -58,6 +58,12 @@ if(${_index} GREATER -1)
 endif()
 
 macro(_basis_setup_source_file source)
+    # Compile any .c files as C++ since we can't guarantee that C is enabled
+    # in the calling scope, either inside project() or with enable_language().
+    # Otherwise, they won't get compiled at all, leading to undefined symbols.
+    set_property(SOURCE ${source} PROPERTY LANGUAGE
+        CXX)
+
     # Basis shouldn't override the MSVC iterator debug level as it would make
     # it inconsistent with the rest of the code
     if(CORRADE_TARGET_WINDOWS)
@@ -125,20 +131,30 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                         "Set BASIS_UNIVERSAL_DIR to the root of a directory containing basis_universal source.")
                 endif()
 
+                # @todo Disable file loading at compile time and get rid of the
+                # BMP/JPG/PNG libraries, we don't use those at all. Hopefully
+                # this becomes a preprocessor define upstream at some point.
+                # Alternatively, look into creating stubs for the library
+                # functions used by basis_universal.
                 set(BasisUniversalEncoder_SOURCES
+                    ${BasisUniversalEncoder_DIR}/apg_bmp.c
                     ${BasisUniversalEncoder_DIR}/basisu_astc_decomp.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_backend.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_basis_file.cpp
+                    ${BasisUniversalEncoder_DIR}/basisu_bc7enc.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_comp.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_enc.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_etc.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_frontend.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_global_selector_palette_helpers.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_gpu_texture.cpp
+                    ${BasisUniversalEncoder_DIR}/basisu_kernels_sse.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_pvrtc1_4.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_resampler.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_resample_filters.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_ssim.cpp
+                    ${BasisUniversalEncoder_DIR}/basisu_uastc_enc.cpp
+                    ${BasisUniversalEncoder_DIR}/jpgd.cpp
                     ${BasisUniversalEncoder_DIR}/lodepng.cpp)
 
                 foreach(_file ${BasisUniversalEncoder_SOURCES})
@@ -230,6 +246,27 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 set(BasisUniversalTranscoder_SOURCES
                     ${BasisUniversalTranscoder_DIR}/basisu_transcoder.cpp)
 
+                set(BasisUniversalTranscoder_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
+
+                # Not linking to zstddeclib.c because together with Encoder
+                # linking to zstd.c this would lead to duplicate symbol
+                # errors.
+                # @todo Unused functions *should* be removed by LTO but is
+                # there a better way?
+                find_path(BasisUniversalZstd_DIR NAMES zstd.c
+                    HINTS "${BASIS_UNIVERSAL_DIR}/zstd" "${BASIS_UNIVERSAL_DIR}"
+                    NO_CMAKE_FIND_ROOT_PATH)
+                if(BasisUniversalZstd_DIR)
+                    list(APPEND BasisUniversalTranscoder_SOURCES
+                        ${BasisUniversalZstd_DIR}/zstd.c)
+                else()
+                    # If zstd wasn't found, disable Zstandard supercompression
+                    # support at compile time. The zstd.h include is hidden
+                    # behind this definition as well.
+                    list(APPEND BasisUniversalTranscoder_DEFINITIONS
+                        "BASISD_SUPPORT_KTX2_ZSTD=0")
+                endif()
+
                 foreach(_file ${BasisUniversalTranscoder_SOURCES})
                     _basis_setup_source_file(${_file})
                 endforeach()
@@ -246,9 +283,19 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
                     INTERFACE_INCLUDE_DIRECTORIES ${BasisUniversalTranscoder_INCLUDE_DIR})
                 set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
-                    INTERFACE_COMPILE_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
+                    INTERFACE_COMPILE_DEFINITIONS ${BasisUniversalTranscoder_DEFINITIONS})
                 set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
                     INTERFACE_SOURCES "${BasisUniversalTranscoder_SOURCES}")
+                # The bundled zstd.c has ZSTD_MULTITHREAD unconditionally
+                # defined for all platforms except Emscripten, which forces us
+                # to link to pthread. The transcoder doesn't use any of the
+                # multithreaded interfaces so for it alone it shouldn't lead to
+                # the same issues described for the encoder above, however
+                # because the encoder transitively links to the encoder, we
+                # can't link to pthread here to avoid the crashes there. It's
+                # instead done in the BasisImporter CMakeLists depending on the
+                # (cached) variable set here. It's extremely brittle that way
+                # but so is Basis itself, so what.
             endif()
         else()
             set(BasisUniversal_Transcoder_FOUND TRUE)
