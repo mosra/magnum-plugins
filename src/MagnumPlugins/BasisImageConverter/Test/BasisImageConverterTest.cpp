@@ -403,11 +403,11 @@ Image2D copyImageWithSkip(const ImageView2D& originalImage, Vector3i skip, Pixel
 }
 
 void BasisImageConverterTest::r() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
     auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
@@ -450,11 +450,11 @@ void BasisImageConverterTest::r() {
 }
 
 void BasisImageConverterTest::rg() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
     auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
@@ -496,11 +496,11 @@ void BasisImageConverterTest::rg() {
 }
 
 void BasisImageConverterTest::rgb() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
     auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
@@ -533,11 +533,11 @@ void BasisImageConverterTest::rgb() {
 }
 
 void BasisImageConverterTest::rgba() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
     auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
@@ -573,11 +573,11 @@ void BasisImageConverterTest::rgba() {
 }
 
 void BasisImageConverterTest::convertToFile() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
     auto&& data = ConvertToFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
@@ -627,11 +627,11 @@ void BasisImageConverterTest::convertToFile() {
 }
 
 void BasisImageConverterTest::threads() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
     auto&& data = ThreadsData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
@@ -666,11 +666,11 @@ void BasisImageConverterTest::threads() {
 }
 
 void BasisImageConverterTest::ktx() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
     auto&& data = FlippedData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
