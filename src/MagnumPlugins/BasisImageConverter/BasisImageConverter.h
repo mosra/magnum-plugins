@@ -131,6 +131,22 @@ rounded down. Incomplete mip chains are supported.
 To generate mip levels from a single top-level image instead, you can use the
 @cb{.ini} mip_gen @ce @ref Trade-BasisImageConverter-configuration "configuration option".
 
+@subsection Trade-BasisImageConverter-behavior-swizzling Implicit swizzling
+
+If no user-specified channel mapping is supplied through the
+@cb{.ini} swizzle @ce @ref Trade-BasisImageConverter-configuration "configuration option",
+the converter swizzles 1- and 2-channel formats before compression as follows:
+
+-   1-channel formats (@ref PixelFormat::R8Unorm / @ref PixelFormat::R8Srgb)
+    are remapped as RRR, producing an opaque gray-scale image
+-   2-channel formats (@ref PixelFormat::RG8Unorm / @ref PixelFormat::RG8Srgb)
+    are remapped as RRRG, ie. G becomes the alpha channel. This significantly
+    improves compressed image quality because RGB and alpha get separate slices
+    instead of the two channels being compressed into a single slice.
+
+To disable this behaviour and keep the original channels, set
+@cb{.ini} swizzle @ce to "rgba".
+
 @subsection Trade-BasisImageConverter-behavior-ktx Converting to KTX2
 
 To create Khronos Texture 2.0 (`*.ktx2`) files, either load the plugin as
