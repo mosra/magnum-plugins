@@ -363,7 +363,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     return fileData;
 }
 
-bool BasisImageConverter::doConvertToFile(const ImageView2D& image, const Containers::StringView filename) {
+bool BasisImageConverter::doConvertToFile(const Containers::ArrayView<const ImageView2D> imageLevels, const Containers::StringView filename) {
     /** @todo once Directory is std::string-free, use splitExtension() */
     const Containers::String normalized = Utility::String::lowercase(filename);
 
@@ -378,7 +378,7 @@ bool BasisImageConverter::doConvertToFile(const ImageView2D& image, const Contai
     }
 
     /* Delegate to the base implementation which calls doConvertToData() */
-    const bool out = AbstractImageConverter::doConvertToFile(image, filename);
+    const bool out = AbstractImageConverter::doConvertToFile(imageLevels, filename);
 
     /* Restore the previous format and return the result */
     _format = previousFormat;

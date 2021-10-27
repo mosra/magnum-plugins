@@ -500,10 +500,6 @@ void BasisImageConverterTest::rgb() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), TransferFunctionFormats[data.transferFunction][3]);
 
-    /* CompareImage doesn't support Srgb formats, so we need to create a view
-       on the original image, but with a Unorm format */
-    const ImageView2D imageViewUnorm{imageWithSkip.storage(),
-        TransferFunctionFormats[TransferFunction::Linear][2], imageWithSkip.size(), imageWithSkip.data()};
     CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
@@ -559,12 +555,17 @@ void BasisImageConverterTest::convertToFile() {
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
-    const auto originalImage = pngImporter->image2D(0);
-    CORRADE_VERIFY(originalImage);
+    const auto originalLevel0 = pngImporter->image2D(0);
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png")));
+    const auto originalLevel1 = pngImporter->image2D(0);
+    CORRADE_VERIFY(originalLevel0);
+    CORRADE_VERIFY(originalLevel1);
+
+    const ImageView2D originalLevels[2]{*originalLevel0, *originalLevel1};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
     std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
-    CORRADE_VERIFY(converter->convertToFile(*originalImage, filename));
+    CORRADE_VERIFY(converter->convertToFile(originalLevels, filename));
 
     /* Verify it's actually the right format */
     /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
@@ -575,17 +576,25 @@ void BasisImageConverterTest::convertToFile() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openFile(filename));
-    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
-    CORRADE_VERIFY(converted);
-    CORRADE_COMPARE_WITH(originalImage->pixels<Color4ub>(),
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+    Containers::Optional<Trade::ImageData2D> level0 = importer->image2D(0, 0);
+    Containers::Optional<Trade::ImageData2D> level1 = importer->image2D(0, 1);
+    CORRADE_VERIFY(level0);
+    CORRADE_VERIFY(level1);
+    CORRADE_COMPARE_WITH(level0->pixels<Color4ub>(),
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 97.25f, 7.914f}));
+    CORRADE_COMPARE_WITH(level1->pixels<Color4ub>(),
+        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        /* There are moderately significant compression artifacts */
+        (DebugTools::CompareImageToFile{_manager, 81.0f, 14.302f}));
 
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
     if(data.pluginName == "BasisImageConverter"_s) {
-        const auto compressedData = converter->convertToData(*originalImage);
+        const auto compressedData = converter->convertToData(originalLevels);
         CORRADE_VERIFY(compressedData);
         CORRADE_VERIFY(Containers::StringView{Containers::arrayView(compressedData)}.hasPrefix(BasisPrefix));
     }
