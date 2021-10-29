@@ -29,11 +29,16 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/Reference.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringView.h>
+#include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Debug.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/PixelFormat.h>
@@ -251,6 +256,32 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
     return {};
 }
 
+/* Used to propagate configuration to BasisImporter. Assumes that this plugin
+   itself doesn't have any configuration options and so propagates all groups
+   and values that were set, emitting a warning if the target doesn't have such
+   option in its default configuration. Copied from propagateConfiguration() in
+   magnum/src/MagnumPlugins/Implementation/propagateConfiguration.h */
+
+void propagateConfiguration(const char* warningPrefix, const Containers::String& groupPrefix, const Containers::StringView plugin, const Utility::ConfigurationGroup& src, Utility::ConfigurationGroup& dst) {
+    using namespace Containers::Literals;
+
+    /* Propagate values */
+    for(Containers::Pair<Containers::StringView, Containers::StringView> value: src.values()) {
+        if(!dst.hasValue(value.first())) {
+            Warning{} << warningPrefix << "option" << "/"_s.joinWithoutEmptyParts({groupPrefix, value.first()}) << "not recognized by" << plugin;
+        }
+
+        dst.setValue(value.first(), value.second());
+    }
+
+    /* Recursively propagate groups */
+    for(Containers::Pair<Containers::StringView, Containers::Reference<const Utility::ConfigurationGroup>> group: src.groups()) {
+        Utility::ConfigurationGroup* dstGroup = dst.group(group.first());
+        if(!dstGroup) dstGroup = dst.addGroup(group.first());
+        propagateConfiguration(warningPrefix, "/"_s.joinWithoutEmptyParts({groupPrefix, group.first()}), plugin, group.second(), *dstGroup);
+    }
+}
+
 }
 
 struct KtxImporter::File {
@@ -282,9 +313,19 @@ KtxImporter::~KtxImporter() = default;
 
 ImporterFeatures KtxImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool KtxImporter::doIsOpened() const { return !!_f; }
+bool KtxImporter::doIsOpened() const {
+    /* Only one of these can be populated at a time */
+    CORRADE_INTERNAL_ASSERT(!_f || !_basisImporter);
+    return _f || (_basisImporter && _basisImporter->isOpened());
+}
 
-void KtxImporter::doClose() { _f = nullptr; }
+void KtxImporter::doClose() {
+    _f = nullptr;
+    if(_basisImporter) {
+        _basisImporter->close();
+        _basisImporter = nullptr;
+    }
+}
 
 void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) {
     /* Check if the file is long enough for the header */
@@ -303,6 +344,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         header.imageSize[0], header.imageSize[1], header.imageSize[2],
         header.layerCount, header.faceCount, header.levelCount,
         header.supercompressionScheme,
+        header.dfdByteOffset, header.dfdByteLength,
         header.kvdByteOffset, header.kvdByteLength);
 
     using namespace Containers::Literals;
@@ -316,45 +358,23 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         if(identifier.hasPrefix(expected.prefix(Implementation::KtxFileVersionOffset))) {
             const Containers::StringView version = identifier.suffix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
             if(version != "20"_s) {
-                Error() << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" << version;
+                Error{} << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" << version;
                 return;
             }
         }
 
-        Error() << "Trade::KtxImporter::openData(): wrong file signature";
+        Error{} << "Trade::KtxImporter::openData(): wrong file signature";
         return;
     }
 
     /* Read header data and perform some sanity checks, including byte ranges */
 
-    /** @todo Support Basis compression */
-    if(header.vkFormat == Implementation::VK_FORMAT_UNDEFINED) {
-        Error{} << "Trade::KtxImporter::openData(): custom formats are not supported";
-        return;
-    }
-
-    /** @todo Support supercompression */
-    if(header.supercompressionScheme != Implementation::SuperCompressionScheme::None) {
-        Error{} << "Trade::KtxImporter::openData(): supercompression is currently not supported";
-        return;
-    }
-
-    /* typeSize is the size of the format's underlying type, not the texel
-       size, e.g. 2 for RG16F. For any sane format it should be a
-       power-of-two between 1 and 8. */
-    if(header.typeSize < 1 || header.typeSize > 8 ||
-        (header.typeSize & (header.typeSize - 1)))
-    {
-        Error{} << "Trade::KtxImporter::openData(): unsupported type size" << header.typeSize;
-        return;
-    }
+    Containers::Pointer<File> f{InPlaceInit};
 
     if(header.imageSize.x() == 0) {
         Error{} << "Trade::KtxImporter::openData(): invalid image size, width is 0";
         return;
     }
-
-    Containers::Pointer<File> f{InPlaceInit};
 
     /* Number of array layers, imported as extra image dimensions (except
        for 3D images, there it's one Image3D per layer).
@@ -432,6 +452,92 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     if(data.size() < kvdEnd) {
         Error{} << "Trade::KtxImporter::openData(): file too short, expected" <<
             kvdEnd << "bytes for key/value data but got only" << data.size();
+        return;
+    }
+
+    /* Detect Basis-compressed files and forward to BasisImporter. Any other
+       custom format is not supported. */
+    if(header.vkFormat == Implementation::VK_FORMAT_UNDEFINED) {
+        /* BasisLZ (Basis ETC1 + LZ compression) is indicated by the
+           supercompression scheme. Basis UASTC on the other hand is indicated
+           by the DFD color model. */
+        if(header.supercompressionScheme != Implementation::SuperCompressionScheme::BasisLZ) {
+            /* This is the only place we need to read the DFD so all checks
+                can reside here */
+            const std::size_t dfdEnd = header.dfdByteOffset + header.dfdByteLength;
+            if(data.size() < dfdEnd) {
+                Error{} << "Trade::KtxImporter::openData(): file too short, expected" <<
+                    dfdEnd << "bytes for data format descriptor but got only" << data.size();
+                return;
+            }
+
+            if(header.dfdByteLength < sizeof(UnsignedInt) + sizeof(Implementation::KdfBasicBlockHeader)) {
+                Error{} << "Trade::KtxImporter::openData(): data format descriptor too short, "
+                    "expected at least" << sizeof(UnsignedInt) + sizeof(Implementation::KdfBasicBlockHeader) <<
+                    "bytes but got" << header.dfdByteLength;
+                return;
+            }
+
+            const auto& dfd = *reinterpret_cast<const Implementation::KdfBasicBlockHeader*>(
+                data.suffix(header.dfdByteOffset + sizeof(UnsignedInt)).data());
+
+            /* colorModel is a byte, no need to endian-swap */
+            if(dfd.colorModel != Implementation::KdfBasicBlockHeader::ColorModel::BasisUastc) {
+                Error{} << "Trade::KtxImporter::openData(): custom formats are not supported";
+                return;
+            }
+        }
+
+        /* Try to load the BasisImporter plugin */
+        const std::string plugin = "BasisImporter";
+        if(!(manager()->load(plugin) & PluginManager::LoadState::Loaded)) {
+            Error{} << "Trade::KtxImporter::openData(): image is compressed with Basis Universal, can't forward to BasisImporter because it's not loaded";
+            return;
+        }
+
+        const PluginManager::PluginMetadata* const metadata = manager()->metadata(plugin);
+        CORRADE_INTERNAL_ASSERT(metadata);
+
+        if(flags() & ImporterFlag::Verbose)
+            Debug{} << "Trade::KtxImporter::openData(): image is compressed with Basis Universal, forwarding to" << metadata->name();
+
+        /* Instantiate the plugin, propagate flags */
+        Containers::Pointer<AbstractImporter> basisImporter = static_cast<PluginManager::Manager<AbstractImporter>*>(manager())->instantiate(plugin);
+        basisImporter->setFlags(flags());
+
+        /* Propagate configuration */
+        propagateConfiguration("Trade::KtxImporter::openData():", {}, metadata->name(), configuration(), basisImporter->configuration());
+
+        /* Try to open the data with BasisImporter (error output should be
+           printed by the plugin itself). All other functions transparently
+           forward to that importer instance if it's populated. */
+        bool opened = false;
+        if(dataFlags >= DataFlag::ExternallyOwned)
+            opened = basisImporter->openMemory(data);
+        else
+            /** @todo This causes an extra copy for DataFlag::Owned */
+            opened = basisImporter->openData(data);
+
+        if(!opened) return;
+
+        /* Success, save the instance */
+        _basisImporter = std::move(basisImporter);
+        return;
+    }
+
+    /** @todo Support supercompression */
+    if(header.supercompressionScheme != Implementation::SuperCompressionScheme::None) {
+        Error{} << "Trade::KtxImporter::openData(): supercompression is currently not supported";
+        return;
+    }
+
+    /* typeSize is the size of the format's underlying type, not the texel
+       size, e.g. 2 for RG16F. For any sane format it should be a
+       power-of-two between 1 and 8. */
+    if(header.typeSize < 1 || header.typeSize > 8 ||
+        (header.typeSize & (header.typeSize - 1)))
+    {
+        Error{} << "Trade::KtxImporter::openData(): unsupported type size" << header.typeSize;
         return;
     }
 
@@ -653,7 +759,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
     /** @todo KTX spec seems to really insist on rd for cube maps but the
         wording is odd, I can't tell if they're saying it's mandatory or not:
-        https://github.khronos.org/KTX-Specification/#cubemapOrientation
+        https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html#cubemapOrientation
         The toktx tool from Khronos Texture Tools also forces rd for cube maps,
         so we might want to do that in the converter as well. */
 
@@ -779,35 +885,88 @@ ImageData<dimensions> KtxImporter::doImage(UnsignedInt id, UnsignedInt level) {
     return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, size, std::move(data)};
 }
 
-UnsignedInt KtxImporter::doImage1DCount() const { return (_f->numDataDimensions == 1) ? _f->imageData.size() : 0; }
+UnsignedInt KtxImporter::doImage1DCount() const {
+    if(_basisImporter)
+        return _basisImporter->image1DCount();
+    else if(_f->numDataDimensions == 1)
+        return _f->imageData.size();
+    else
+        return 0;
+}
 
-UnsignedInt KtxImporter::doImage1DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
+UnsignedInt KtxImporter::doImage1DLevelCount(UnsignedInt id)  {
+    if(_basisImporter)
+        return _basisImporter->image1DLevelCount(id);
+    else
+        return _f->imageData[id].size();
+}
 
 Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, UnsignedInt level) {
-    return doImage<1>(id, level);
+    if(_basisImporter)
+        return _basisImporter->image1D(id, level);
+    else
+        return doImage<1>(id, level);
 }
 
-UnsignedInt KtxImporter::doImage2DCount() const { return (_f->numDataDimensions == 2) ? _f->imageData.size() : 0; }
+UnsignedInt KtxImporter::doImage2DCount() const {
+    if(_basisImporter)
+        return _basisImporter->image2DCount();
+    else if(_f->numDataDimensions == 2)
+        return _f->imageData.size();
+    else
+        return 0;
+}
 
-UnsignedInt KtxImporter::doImage2DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
+UnsignedInt KtxImporter::doImage2DLevelCount(UnsignedInt id) {
+    if(_basisImporter)
+        return _basisImporter->image2DLevelCount(id);
+    else
+        return _f->imageData[id].size();
+}
 
 Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, UnsignedInt level) {
-    return doImage<2>(id, level);
+    if(_basisImporter)
+        return _basisImporter->image2D(id, level);
+    else
+        return doImage<2>(id, level);
 }
 
-UnsignedInt KtxImporter::doImage3DCount() const { return (_f->numDataDimensions == 3) ? _f->imageData.size() : 0; }
+UnsignedInt KtxImporter::doImage3DCount() const {
+    if(_basisImporter)
+        return _basisImporter->image3DCount();
+    else if(_f->numDataDimensions == 3)
+        return _f->imageData.size();
+    else
+        return 0;
+}
 
-UnsignedInt KtxImporter::doImage3DLevelCount(UnsignedInt id) { return _f->imageData[id].size(); }
+UnsignedInt KtxImporter::doImage3DLevelCount(UnsignedInt id) {
+    if(_basisImporter)
+        return _basisImporter->image3DLevelCount(id);
+    else
+        return _f->imageData[id].size();
+}
 
 Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const UnsignedInt level) {
-    return doImage<3>(id, level);
+    if(_basisImporter)
+        return _basisImporter->image3D(id, level);
+    else
+        return doImage<3>(id, level);
 }
 
-UnsignedInt KtxImporter::doTextureCount() const { return _f->imageData.size(); }
+UnsignedInt KtxImporter::doTextureCount() const {
+    if(_basisImporter)
+        return _basisImporter->textureCount();
+    else
+        return _f->imageData.size();
+}
 
 Containers::Optional<TextureData> KtxImporter::doTexture(UnsignedInt id) {
-    return TextureData{_f->type, SamplerFilter::Linear, SamplerFilter::Linear,
-        SamplerMipmap::Linear, SamplerWrapping::Repeat, id};
+    if(_basisImporter)
+        return _basisImporter->texture(id);
+    else
+        return TextureData{_f->type, SamplerFilter::Linear, SamplerFilter::Linear,
+            SamplerMipmap::Linear, SamplerWrapping::Repeat, id};
 }
 
 }}

@@ -35,6 +35,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Endianness.h>
@@ -94,6 +95,9 @@ struct KtxImporterTest: TestSuite::Tester {
     void image3DLayers();
     void image3DCompressed();
     void image3DCompressedMipmaps();
+
+    void forwardBasis();
+    void forwardBasisInvalid();
 
     void keyValueDataEmpty();
     void keyValueDataInvalid();
@@ -300,6 +304,45 @@ const struct {
     {"ASTC", "2d-compressed-astc.ktx2", CompressedPixelFormat::Astc12x10RGBASrgb, {9, 10}}
 };
 
+const struct {
+    const char* name;
+    const ImporterFlags flags;
+    const char* file;
+    const TextureType type;
+    const UnsignedInt images;
+    const Vector3i size;
+    const char* verboseMessage;
+} ForwardBasisData[]{
+    {"2D", ImporterFlags{}, "rgba.ktx2", TextureType::Texture2D, 1, {63, 27, 0},
+        ""},
+    {"2D verbose", ImporterFlag::Verbose, "rgba.ktx2", TextureType::Texture2D, 1, {63, 27, 0},
+        "Trade::KtxImporter::openData(): image is compressed with Basis Universal, forwarding to BasisImporter\n"},
+    {"2D array", ImporterFlags{}, "rgba-array.ktx2", TextureType::Texture2DArray, 1, {63, 27, 3},
+        ""},
+    {"video", ImporterFlags{}, "rgba-video.ktx2", TextureType::Texture2D, 3, {63, 27, 0},
+        ""},
+    {"video verbose", ImporterFlag::Verbose, "rgba-video.ktx2", TextureType::Texture2D, 3, {63, 27, 0},
+        "Trade::KtxImporter::openData(): image is compressed with Basis Universal, forwarding to BasisImporter\n"
+        "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially\n"}
+};
+
+const struct {
+    const char* name;
+    const char* file;
+    const bool requiresBasisImporter;
+    const std::size_t offset;
+    const char value;
+    const char* message;
+} ForwardBasisInvalidData[]{
+    /* Change ktx2_etc1s_global_data_header::m_endpoint_count */
+    {"fails in BasisImporter", "rgba.ktx2", true, 200, 0,
+        "Trade::BasisImporter::openData(): bad KTX2 file\n"},
+    {"file too short for DFD", "rgba-uastc.ktx2", false, offsetof(Implementation::KtxHeader, dfdByteOffset) + 2, 1,
+        "Trade::KtxImporter::openData(): file too short, expected 65684 bytes for data format descriptor but got only 789\n"},
+    {"DFD too short", "rgba-uastc.ktx2", false, offsetof(Implementation::KtxHeader, dfdByteLength), sizeof(UnsignedInt) + sizeof(Implementation::KdfBasicBlockHeader) - 1,
+        "Trade::KtxImporter::openData(): data format descriptor too short, expected at least 28 bytes but got 27\n"}
+};
+
 using namespace Containers::Literals;
 
 const struct {
@@ -495,9 +538,15 @@ KtxImporterTest::KtxImporterTest() {
               &KtxImporterTest::image3DMipmaps,
               &KtxImporterTest::image3DLayers,
               &KtxImporterTest::image3DCompressed,
-              &KtxImporterTest::image3DCompressedMipmaps,
+        &KtxImporterTest::image3DCompressedMipmaps});
 
-              &KtxImporterTest::keyValueDataEmpty});
+    addInstancedTests({&KtxImporterTest::forwardBasis},
+        Containers::arraySize(ForwardBasisData));
+
+    addInstancedTests({&KtxImporterTest::forwardBasisInvalid},
+        Containers::arraySize(ForwardBasisInvalidData));
+
+    addTests({&KtxImporterTest::keyValueDataEmpty});
 
     addInstancedTests({&KtxImporterTest::keyValueDataInvalid},
         Containers::arraySize(InvalidKeyValueData));
@@ -531,6 +580,9 @@ KtxImporterTest::KtxImporterTest() {
        already loaded. */
     #ifdef KTXIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(KTXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef BASISIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 
@@ -1517,6 +1569,123 @@ void KtxImporterTest::image3DCompressedMipmaps() {
 
         mipSize = Math::max(mipSize >> 1, 1);
     }
+}
+
+void KtxImporterTest::forwardBasis() {
+    auto&& data = ForwardBasisData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound) {
+        std::ostringstream outError;
+        Error redirectError{&outError};
+        CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file)));
+        CORRADE_COMPARE(outError.str(), "Trade::KtxImporter::openData(): image is compressed with Basis Universal, can't forward to BasisImporter because it's not loaded\n");
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+    }
+
+    /* Making sure that importer flags and config options are propagated,
+       including a warning for unknown options */
+    importer->setFlags(data.flags);
+    importer->configuration().setValue("format", "Etc2RGBA");
+    importer->configuration().setValue("noSuchOption", "isHere");
+
+    std::ostringstream outDebug;
+    Debug redirectDebug{&outDebug};
+    std::ostringstream outWarning;
+    Warning redirectWarning{&outWarning};
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(outDebug.str(), data.verboseMessage);
+    CORRADE_COMPARE(outWarning.str(), "Trade::KtxImporter::openData(): option noSuchOption not recognized by BasisImporter\n");
+
+    const UnsignedInt dimensions = data.size[2] == 0 ? (data.size[1] == 0 ? 1 : 2) : 3;
+    /* All of these should forward to the correct instance and not crash */
+    CORRADE_COMPARE(importer->image1DCount(), dimensions == 1 ? data.images : 0);
+    CORRADE_COMPARE(importer->image2DCount(), dimensions == 2 ? data.images : 0);
+    CORRADE_COMPARE(importer->image3DCount(), dimensions == 3 ? data.images : 0);
+    CORRADE_COMPARE(importer->textureCount(), data.images);
+
+    for(UnsignedInt i = 0; i != data.images; ++i) {
+        const auto texture = importer->texture(i);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->type(), data.type);
+
+        if(dimensions == 1) {
+            CORRADE_COMPARE(importer->image1DLevelCount(i), 1);
+            const auto image = importer->image1D(i);
+            CORRADE_VERIFY(image);
+            CORRADE_VERIFY(image->isCompressed());
+            CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
+            CORRADE_COMPARE(Vector3i::pad(image->size()), data.size);
+        } else if(dimensions == 2) {
+            CORRADE_COMPARE(importer->image2DLevelCount(i), 1);
+            const auto image = importer->image2D(i);
+            CORRADE_VERIFY(image);
+            CORRADE_VERIFY(image->isCompressed());
+            CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
+            CORRADE_COMPARE(Vector3i::pad(image->size()), data.size);
+        } else if(dimensions == 3) {
+            CORRADE_COMPARE(importer->image3DLevelCount(i), 1);
+            const auto image = importer->image3D(i);
+            CORRADE_VERIFY(image);
+            CORRADE_VERIFY(image->isCompressed());
+            CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
+            CORRADE_COMPARE(Vector3i::pad(image->size()), data.size);
+        } else
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+    }
+
+    /* Loading a normal KTX afterwards should work */
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    const auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
+}
+
+void KtxImporterTest::forwardBasisInvalid() {
+    auto&& data = ForwardBasisInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(data.requiresBasisImporter &&
+       _manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+
+    auto fileData = Utility::Directory::read(Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file));
+    CORRADE_VERIFY(fileData);
+    CORRADE_VERIFY(fileData.size() >= data.offset);
+    fileData[data.offset] = data.value;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openData(fileData));
+    CORRADE_COMPARE(out.str(), data.message);
+
+    /* Loading a normal KTX afterwards should work */
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+
+    const auto image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+    CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
 }
 
 void KtxImporterTest::keyValueDataEmpty() {
