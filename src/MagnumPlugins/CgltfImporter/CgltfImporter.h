@@ -192,7 +192,7 @@ Import of morph data is not supported at the moment.
 
 @subsection Trade-CgltfImporter-behavior-lights Light import
 
--   The importer supports the [KHR_lights_punctual](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md)
+-   The importer supports the [KHR_lights_punctual](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md)
     extension
 
 @subsection Trade-CgltfImporter-behavior-meshes Mesh import
@@ -207,16 +207,19 @@ Import of morph data is not supported at the moment.
     @ref VertexFormat::Vector3usNormalized or
     @ref VertexFormat::Vector3sNormalized (which includes the additional types
     specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md))
--   Normals, if any, are imported as @ref VertexFormat::Vector3,
+-   Normals are imported as @ref VertexFormat::Vector3,
     @ref VertexFormat::Vector3bNormalized or
     @ref VertexFormat::Vector3sNormalized
--   Texture coordinates are imported as @ref VertexFormat::Vector3,
-    @ref VertexFormat::Vector3ub, @ref VertexFormat::Vector3b,
-    @ref VertexFormat::Vector3us, @ref VertexFormat::Vector3s,
-    @ref VertexFormat::Vector3ubNormalized,
-    @ref VertexFormat::Vector3bNormalized,
-    @ref VertexFormat::Vector3usNormalized or
-    @ref VertexFormat::Vector3sNormalized (which includes the additional types
+-   Tangents are imported as @ref VertexFormat::Vector4,
+    @ref VertexFormat::Vector4bNormalized or
+    @ref VertexFormat::Vector4sNormalized
+-   Texture coordinates are imported as @ref VertexFormat::Vector2,
+    @ref VertexFormat::Vector2ub, @ref VertexFormat::Vector2b,
+    @ref VertexFormat::Vector2us, @ref VertexFormat::Vector2s,
+    @ref VertexFormat::Vector2ubNormalized,
+    @ref VertexFormat::Vector2bNormalized,
+    @ref VertexFormat::Vector2usNormalized or
+    @ref VertexFormat::Vector2sNormalized (which includes the additional types
     specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)). The
     data are by default Y-flipped on import unless
     @cb{.conf} textureCoordinateYFlipInMaterial @ce is either explicitly
@@ -280,7 +283,7 @@ fail.
 
 -   If present, builtin [metallic/roughness](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material) material is imported,
     setting @ref MaterialType::PbrMetallicRoughness on the @ref MaterialData.
--   If the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness/README.md)
+-   If the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Archived/KHR_materials_pbrSpecularGlossiness/README.md)
     extension is present, its properties are imported with
     @ref MaterialType::PbrSpecularGlossiness present in material types.
 -   Additional normal, occlusion and emissive maps are imported, together with
@@ -289,7 +292,7 @@ fail.
     extension is present, @ref MaterialType::Flat is set in material types,
     replacing @ref MaterialType::PbrMetallicRoughness or
     @ref MaterialType::PbrSpecularGlossiness.
--   If the [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md)
+-   If the [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md)
     extension is present, @ref MaterialType::PbrClearCoat is set in material
     types, and a new layer with clearcoat properties is added
 -   Custom texture coordinate sets as well as [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md)

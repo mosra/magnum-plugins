@@ -213,16 +213,19 @@ Import of morph data is not supported at the moment.
     @ref VertexFormat::Vector3usNormalized or
     @ref VertexFormat::Vector3sNormalized (which includes the additional types
     specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md))
--   Normals, if any, are imported as @ref VertexFormat::Vector3,
+-   Normals are imported as @ref VertexFormat::Vector3,
     @ref VertexFormat::Vector3bNormalized or
     @ref VertexFormat::Vector3sNormalized
--   Texture coordinates are imported as @ref VertexFormat::Vector3,
-    @ref VertexFormat::Vector3ub, @ref VertexFormat::Vector3b,
-    @ref VertexFormat::Vector3us, @ref VertexFormat::Vector3s,
-    @ref VertexFormat::Vector3ubNormalized,
-    @ref VertexFormat::Vector3bNormalized,
-    @ref VertexFormat::Vector3usNormalized or
-    @ref VertexFormat::Vector3sNormalized (which includes the additional types
+-   Tangents are imported as @ref VertexFormat::Vector4,
+    @ref VertexFormat::Vector4bNormalized or
+    @ref VertexFormat::Vector4sNormalized
+-   Texture coordinates are imported as @ref VertexFormat::Vector2,
+    @ref VertexFormat::Vector2ub, @ref VertexFormat::Vector2b,
+    @ref VertexFormat::Vector2us, @ref VertexFormat::Vector2s,
+    @ref VertexFormat::Vector2ubNormalized,
+    @ref VertexFormat::Vector2bNormalized,
+    @ref VertexFormat::Vector2usNormalized or
+    @ref VertexFormat::Vector2sNormalized (which includes the additional types
     specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)). The
     data are by default Y-flipped on import unless
     @cb{.conf} textureCoordinateYFlipInMaterial @ce is either explicitly
@@ -290,7 +293,7 @@ fail.
     Unfortunately TinyGLTF doesn't provide a way to detect if
     metallic/roughness properties are actually present, so this type is set
     always.
--   If the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness/README.md)
+-   If the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Archived/KHR_materials_pbrSpecularGlossiness/README.md)
     extension is present, its properties are imported with
     @ref MaterialType::PbrSpecularGlossiness present in material types.
 -   Additional normal, occlusion and emissive maps are imported, together with
