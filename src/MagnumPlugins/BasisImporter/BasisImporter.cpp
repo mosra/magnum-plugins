@@ -140,8 +140,6 @@ struct BasisImporter::State {
     Containers::Optional<basist::basisu_transcoder> basisTranscoder;
     #if BASISD_SUPPORT_KTX2
     Containers::Optional<basist::ktx2_transcoder> ktx2Transcoder;
-    #else
-    Containers::Optional<void*> ktx2Transcoder;
     #endif
 
     Containers::Array<char> in;
@@ -196,13 +194,19 @@ ImporterFeatures BasisImporter::doFeatures() const { return ImporterFeature::Ope
 bool BasisImporter::doIsOpened() const {
     /* Both a transcoder and the input data have to be present or both
        have to be empty */
+    #if BASISD_SUPPORT_KTX2
     CORRADE_INTERNAL_ASSERT(!(_state->basisTranscoder || _state->ktx2Transcoder) == !_state->in);
+    #else
+    CORRADE_INTERNAL_ASSERT(!_state->basisTranscoder == !_state->in);
+    #endif
     return _state->in;
 }
 
 void BasisImporter::doClose() {
     _state->basisTranscoder = Containers::NullOpt;
+    #if BASISD_SUPPORT_KTX2
     _state->ktx2Transcoder = Containers::NullOpt;
+    #endif
     _state->in = nullptr;
 }
 
@@ -225,6 +229,14 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     constexpr char KtxFileIdentifier[12]{'\xab', 'K', 'T', 'X', ' ', '2', '0', '\xbb', '\r', '\n', '\x1a', '\n'};
     const bool isKTX2 = data.size() >= sizeof(KtxFileIdentifier) &&
         std::memcmp(data.begin(), KtxFileIdentifier, sizeof(KtxFileIdentifier)) == 0;
+    #if !BASISD_SUPPORT_KTX2
+    /** @todo Can we test this? Maybe disable this on some CI, BC7 is already
+        disabled on Emscripten. */
+    if(isKTX2) {
+        Error{} << "Trade::BasisImporter::openData(): opening a KTX2 file but Basis Universal was compiled without KTX2 support";
+        return;
+    }
+    #endif
 
     /* Keep the original data, take over the existing array or copy the data if
        we can't. We have to do this first because transcoders may hold on to
@@ -239,13 +251,8 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         Utility::copy(data, state->in);
     }
 
+    #if BASISD_SUPPORT_KTX2
     if(isKTX2) {
-        #if !BASISD_SUPPORT_KTX2
-        /** @todo Can we test this? Maybe disable this on some CI, BC7 is
-            already disabled on Emscripten. */
-        Error{} << "Trade::BasisImporter::openData(): opening a KTX2 file but Basis Universal was compiled without KTX2 support";
-        return;
-        #else
         state->ktx2Transcoder.emplace(&state->codebook);
 
         /* init() handles all the validation checks, there's no extra function
@@ -305,9 +312,9 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         state->isYFlipped = orientation && orientation->size() >= 2 && (*orientation)[1] == 'u';
 
         state->isSrgb = state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
-        #endif
-
-    } else {
+    } else
+    #endif
+    {
         /* .basis file */
         state->basisTranscoder.emplace(&state->codebook);
 
@@ -437,10 +444,10 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         state->isSrgb = header.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
     }
 
+    #if BASISD_SUPPORT_KTX2
     /* There has to be exactly one transcoder */
     CORRADE_INTERNAL_ASSERT(!state->ktx2Transcoder != !state->basisTranscoder);
-    /* Can't have a KTX2 transcoder without KTX2 support compiled into basisu */
-    CORRADE_INTERNAL_ASSERT(BASISD_SUPPORT_KTX2 || !state->ktx2Transcoder);
+    #endif
     /* These file formats don't support 1D images and we import 3D images as
        2D array images */
     CORRADE_INTERNAL_ASSERT(state->textureType != TextureType::Texture1D &&
@@ -493,8 +500,8 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
 
     UnsignedInt origWidth, origHeight, totalBlocks, numFaces;
     bool isIFrame;
+    #if BASISD_SUPPORT_KTX2
     if(_state->ktx2Transcoder) {
-        #if BASISD_SUPPORT_KTX2
         basist::ktx2_image_level_info levelInfo;
         /* Header validation etc. is already done in doOpenData() and id is
            bounds-checked against doImage2DCount() by AbstractImporter, so by
@@ -518,8 +525,9 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
         isIFrame = levelInfo.m_iframe_flag || id == 0;
 
         numFaces = _state->ktx2Transcoder->get_faces();
-        #endif
-    } else {
+    } else
+    #endif
+    {
         /* See comment right above */
         basist::basisu_image_level_info levelInfo;
         CORRADE_INTERNAL_ASSERT_OUTPUT(_state->basisTranscoder->get_image_level_info(_state->in.data(), _state->in.size(), levelInfo, id, level));
@@ -581,15 +589,16 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
     for(UnsignedInt l = 0; l != numLayers; ++l) {
         for(UnsignedInt f = 0; f != numFaces; ++f) {
             const UnsignedInt offset = (l*numFaces + f)*sliceSize;
+            #if BASISD_SUPPORT_KTX2
             if(_state->ktx2Transcoder) {
-                #if BASISD_SUPPORT_KTX2
                 const UnsignedInt currentLayer = id + l;
                 if(!_state->ktx2Transcoder->transcode_image_level(level, currentLayer, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, outputRowsInPixels)) {
                     Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
                     return Containers::NullOpt;
                 }
-                #endif
-            } else {
+            } else
+            #endif
+            {
                 const UnsignedInt currentId = id + (l*numFaces + f);
                 if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), currentId, level, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
                     Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
