@@ -214,9 +214,10 @@ usage documentation.
     you want to find and link to the @ref Trade::AssimpImporter "AssimpImporter"
     plugin.
 -   [FindBasisUniversal.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindBasisUniversal.cmake)
-    --- CMake module for finding basis universal sources. Copy this to your module directory if
-    you want to find and link to the @ref Trade::BasisImporter "BasisImporter"
-    or @ref Trade::BasisImageConverter "BasisImageConverter" plugins.
+    --- CMake module for finding Basis Universal sources. Needed only for
+    compiling the @relativeref{Trade,BasisImporter} and
+    @relativeref{Trade,BasisImageConverter} plugins themselves, you don't need
+    to bundle this file if you link to these.
 -   [FindDevIL.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindDevIL.cmake)
     --- CMake module for finding DevIL. This is a forked version of the upstream
     module that doesn't attempt to find the often not distributed ILUT library.
