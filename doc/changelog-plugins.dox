@@ -110,6 +110,9 @@ namespace Magnum {
 -   @ref Audio::DrFlacImporter "DrFlacAudioImporter" no longer advertises
     support for 32-bit-per-channel FLAC files, as there's no known way to
     produce them and thus the case is impossible to test for.
+-   @relativeref{Trade,BasisImageConverter} no longer produces excessive log on
+    output by default, only if @ref Trade::ImporterFlag::Verbose is set (see
+    [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
@@ -189,6 +192,9 @@ namespace Magnum {
     @relativeref{Trade,BasisImageConverter} is gone, use
     @cb{.ini} swizzle=rrrg @ce instead. For RG inputs this is done implicitly
     and you don't need to set this option. See also [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112).
+-   The `Bc7RGB` target format for @relativeref{Trade,BasisImporter}
+    is removed, use `Bc7RGBA` instead (see
+    [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
 
 @subsection changelog-plugins-latest-documentation Documentation
 

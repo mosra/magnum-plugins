@@ -81,9 +81,11 @@ namespace Magnum {
     Gentoo ebuild
 -   **Pablo Escobar** ([\@pezcode](https://github.com/pezcode)) ---
     @relativeref{Trade,KtxImporter}, @relativeref{Trade,KtxImageConverter},
-    @relativeref{Trade,CgltfImporter}, animation and skinning support in
-    @ref Trade::AssimpImporter "AssimpImporter", improved
-    @relativeref{Trade,TinyGltfImporter} robustness, documentation updates
+    @relativeref{Trade,CgltfImporter}, upgrades to
+    @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter},
+    animation and skinning support in @ref Trade::AssimpImporter "AssimpImporter",
+    improved @relativeref{Trade,TinyGltfImporter} robustness, documentation
+    updates
 -   **[\@playgroo](https://github.com/playgroo)** --- Debian package updates
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports
