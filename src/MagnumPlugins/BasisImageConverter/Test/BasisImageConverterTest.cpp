@@ -817,7 +817,10 @@ void BasisImageConverterTest::swizzle() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
     /* There are very minor compression artifacts */
-    CORRADE_COMPARE_WITH(Color4{image->pixels<Color4ub>()[0][0]}, Color4{data.output}, (TestSuite::Compare::Around<Vector4>{Vector4{2.0f}}));
+    CORRADE_COMPARE_WITH(
+        Vector4i{image->pixels<Vector4ub>()[0][0]},
+        Vector4i{data.output},
+        TestSuite::Compare::around(Vector4i{2}));
 }
 
 }}}}

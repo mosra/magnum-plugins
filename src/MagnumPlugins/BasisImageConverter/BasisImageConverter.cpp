@@ -66,9 +66,9 @@ ImageConverterFeatures BasisImageConverter::doFeatures() const { return ImageCon
 
 Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
     /* Check input */
-    const PixelFormat imageFormat = imageLevels.front().format();
+    const PixelFormat pixelFormat = imageLevels.front().format();
     bool isSrgb;
-    switch(imageFormat) {
+    switch(pixelFormat) {
         case PixelFormat::RGBA8Unorm:
         case PixelFormat::RGB8Unorm:
         case PixelFormat::RG8Unorm:
@@ -82,7 +82,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
             isSrgb = true;
             break;
         default:
-            Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << imageFormat;
+            Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << pixelFormat;
             return {};
     }
 
@@ -280,7 +280,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
             dst = dst.flipped<0>();
 
         /* basis image is always RGBA, fill in alpha if necessary */
-        const UnsignedInt channels = pixelSize(imageFormat);
+        const UnsignedInt channels = pixelSize(pixelFormat);
         if(channels == 4) {
             auto src = image.pixels<Math::Vector4<UnsignedByte>>();
             for(std::size_t y = 0; y != src.size()[0]; ++y)
