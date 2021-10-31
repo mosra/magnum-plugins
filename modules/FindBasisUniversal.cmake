@@ -144,6 +144,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 find_path(BasisUniversalEncoder_DIR NAMES basisu_frontend.cpp
                     HINTS "${BASIS_UNIVERSAL_DIR}" "${BASIS_UNIVERSAL_DIR}/encoder"
                     NO_CMAKE_FIND_ROOT_PATH)
+                mark_as_advanced(BasisUniversalEncoder_DIR)
                 if(BasisUniversalEncoder_DIR)
                     set(BasisUniversal_Encoder_FOUND TRUE)
                 else()
@@ -257,6 +258,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 find_path(BasisUniversalTranscoder_DIR NAMES basisu_transcoder.cpp
                     HINTS "${BASIS_UNIVERSAL_DIR}/transcoder" "${BASIS_UNIVERSAL_DIR}"
                     NO_CMAKE_FIND_ROOT_PATH)
+                mark_as_advanced(BasisUniversalTranscoder_DIR)
                 if(BasisUniversalTranscoder_DIR)
                     set(BasisUniversal_Transcoder_FOUND TRUE)
                 else()
@@ -277,6 +279,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 find_path(BasisUniversalZstd_DIR NAMES zstd.c
                     HINTS "${BASIS_UNIVERSAL_DIR}/zstd" "${BASIS_UNIVERSAL_DIR}"
                     NO_CMAKE_FIND_ROOT_PATH)
+                #mark_as_advanced(BasisUniversalZstd_DIR)
                 if(BasisUniversalZstd_DIR)
                     list(APPEND BasisUniversalTranscoder_SOURCES
                         ${BasisUniversalZstd_DIR}/zstd.c)
