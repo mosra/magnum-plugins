@@ -58,8 +58,7 @@
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
-
-#include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
+#include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
 #define TINYGLTF_IMPLEMENTATION
 /* Opt out of tinygltf stb_image dependency */

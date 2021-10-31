@@ -58,8 +58,7 @@
 #include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/TextureData.h>
-
-#include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
+#include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
 /* Cgltf doesn't load .glb on big-endian correctly:
    https://github.com/jkuhlmann/cgltf/issues/150

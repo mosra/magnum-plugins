@@ -45,11 +45,11 @@
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
+#include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
 #include "Magnum/OpenDdl/Document.h"
 #include "Magnum/OpenDdl/Property.h"
 #include "Magnum/OpenDdl/Structure.h"
-#include "MagnumPlugins/AnyImageImporter/AnyImageImporter.h"
 
 #include "openGexSpec.hpp"
 
