@@ -40,7 +40,9 @@ namespace Magnum {
     GLSL shader validation and GLSL->SPIR-V compilation
 -   New @relativeref{Trade,KtxImporter} and @relativeref{Trade,KtxImageConverter}
     plugins for reading and writing 1D/2D/3D KTX2 files in arbitrary pixel
-    formats (see [mosra/magnum-plugins#103](https://github.com/mosra/magnum-plugins/pull/103))
+    formats (see [mosra/magnum-plugins#103](https://github.com/mosra/magnum-plugins/pull/103); Basis-encoded KTX2 files are passed through to
+    @relativeref{Trade,BasisImporter} (see [mosra/magnum-plugins#110](https://github.com/mosra/magnum-plugins/issues/110),
+    [mosra/magnum-plugins#113](https://github.com/mosra/magnum-plugins/pull/113))
 -   New @ref Trade::OpenExrImporter "OpenExrImporter" and
     @ref Trade::OpenExrImageConverter "OpenExrImageConverter" plugins for
     reading and writing OpenEXR files including cube maps and custom channel
@@ -198,7 +200,8 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-documentation Documentation
 
--   Various fixes and updates (see [mosra/magnum-plugins#98](https://github.com/mosra/magnum-plugins/pull/98))
+-   Various fixes and updates (see [mosra/magnum-plugins#98](https://github.com/mosra/magnum-plugins/pull/98),
+    [mosra/magnum-plugins#114](https://github.com/mosra/magnum-plugins/pull/114))
 
 @section changelog-plugins-2020-06 2020.06
 
