@@ -333,22 +333,6 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         return;
     }
 
-    /** @todo Support supercompression */
-    if(header.supercompressionScheme != Implementation::SuperCompressionScheme::None) {
-        Error{} << "Trade::KtxImporter::openData(): supercompression is currently not supported";
-        return;
-    }
-
-    /* typeSize is the size of the format's underlying type, not the texel
-       size, e.g. 2 for RG16F. For any sane format it should be a
-       power-of-two between 1 and 8. */
-    if(header.typeSize < 1 || header.typeSize > 8 ||
-        (header.typeSize & (header.typeSize - 1)))
-    {
-        Error{} << "Trade::KtxImporter::openData(): unsupported type size" << header.typeSize;
-        return;
-    }
-
     if(header.imageSize.x() == 0) {
         Error{} << "Trade::KtxImporter::openData(): invalid image size, width is 0";
         return;
@@ -432,6 +416,22 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     if(data.size() < kvdEnd) {
         Error{} << "Trade::KtxImporter::openData(): file too short, expected" <<
             kvdEnd << "bytes for key/value data but got only" << data.size();
+        return;
+    }
+
+    /** @todo Support supercompression */
+    if(header.supercompressionScheme != Implementation::SuperCompressionScheme::None) {
+        Error{} << "Trade::KtxImporter::openData(): supercompression is currently not supported";
+        return;
+    }
+
+    /* typeSize is the size of the format's underlying type, not the texel
+       size, e.g. 2 for RG16F. For any sane format it should be a
+       power-of-two between 1 and 8. */
+    if(header.typeSize < 1 || header.typeSize > 8 ||
+        (header.typeSize & (header.typeSize - 1)))
+    {
+        Error{} << "Trade::KtxImporter::openData(): unsupported type size" << header.typeSize;
         return;
     }
 
