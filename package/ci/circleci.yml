@@ -239,6 +239,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
+        # TODO fetch zstd for Basis Universal when we drop 16.04 support
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
@@ -264,6 +265,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
+        # TODO fetch zstd for Basis Universal when we drop 16.04 support
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
@@ -289,6 +291,7 @@ jobs:
       CONFIGURATION: Release
     steps:
     - install-base-linux:
+        # TODO fetch zstd for Basis Universal when we drop 16.04 support
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-gcc-4_8
     - install-cmake-3_4
@@ -315,6 +318,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
+        # TODO fetch zstd for Basis Universal when we drop 16.04 support
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     - install-clang-3_8
     - install-cmake-3_4
@@ -345,6 +349,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
+        # TODO fetch zstd for Basis Universal when we drop 16.04 support
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
     - install-clang-3_8
     - install-cmake-3_4
@@ -366,7 +371,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget zstd
     - install-basis
     - install-meshoptimizer
     - build:
@@ -384,7 +389,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget zstd
     - install-basis
     - install-meshoptimizer
     - build:

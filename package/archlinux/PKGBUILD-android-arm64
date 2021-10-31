@@ -7,6 +7,9 @@ arch=('any')
 url="https://magnum.graphics"
 license=('MIT')
 depends=('android-arm64-magnum')
+# The NDK doesn't have zstd on its own, so we fall back to using the one
+# bundled with Basis Universal. TODO redo when the bundled dependency is
+# dropped
 makedepends=('cmake>=3.20' 'ninja' 'android-ndk' 'corrade' 'basis-universal-src')
 options=('!strip' '!buildflags')
 

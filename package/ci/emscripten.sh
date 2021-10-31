@@ -72,6 +72,9 @@ mv $HOME/deps/lib/{libfaad.a,faad.bc}
 mv $HOME/deps/lib/{libfaad_drm.a,faad_drm.bc}
 cd ..
 
+# TODO: fetch & compile real zstd instead of using the bundled one, it could
+# lead to smaller binary sizes and eventually to better perf as well
+
 # Crosscompile. BUILD_GL_TESTS is enabled just to be sure, it should not be
 # needed by any plugin.
 # WITH_BASISIMAGECONVERTER is disabled as it requires pthreads.

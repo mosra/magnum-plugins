@@ -271,24 +271,31 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
 
                 set(BasisUniversalTranscoder_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
 
-                # Not linking to zstddeclib.c because together with Encoder
-                # linking to zstd.c this would lead to duplicate symbol
-                # errors.
-                # @todo Unused functions *should* be removed by LTO but is
-                # there a better way?
-                find_path(BasisUniversalZstd_DIR NAMES zstd.c
-                    HINTS "${BASIS_UNIVERSAL_DIR}/zstd" "${BASIS_UNIVERSAL_DIR}"
-                    NO_CMAKE_FIND_ROOT_PATH)
-                #mark_as_advanced(BasisUniversalZstd_DIR)
-                if(BasisUniversalZstd_DIR)
-                    list(APPEND BasisUniversalTranscoder_SOURCES
-                        ${BasisUniversalZstd_DIR}/zstd.c)
-                else()
-                    # If zstd wasn't found, disable Zstandard supercompression
-                    # support at compile time. The zstd.h include is hidden
-                    # behind this definition as well.
-                    list(APPEND BasisUniversalTranscoder_DEFINITIONS
-                        "BASISD_SUPPORT_KTX2_ZSTD=0")
+                # Try to find an external Zstandard library because that's the
+                # sanest and most flexible option. Otherwise, it's a nightmare.
+                #
+                # If not found, Basis bundles its own, but unfortunately as one
+                # huge file containing a decoder+encoder and another file
+                # containing just the decoder. However, because the Encoder
+                # links to Transcoder, we can't link the Transcoder to
+                # zstddeclib.c because together with Encoder linking to zstd.c
+                # this would lead to duplicate symbol errors.
+                find_package(Zstd QUIET)
+                if(NOT Zstd_FOUND)
+                    find_path(BasisUniversalZstd_DIR NAMES zstd.c
+                        HINTS "${BASIS_UNIVERSAL_DIR}/zstd" "${BASIS_UNIVERSAL_DIR}"
+                        NO_CMAKE_FIND_ROOT_PATH)
+                    mark_as_advanced(BasisUniversalZstd_DIR)
+                    if(BasisUniversalZstd_DIR)
+                        list(APPEND BasisUniversalTranscoder_SOURCES
+                            ${BasisUniversalZstd_DIR}/zstd.c)
+                    else()
+                        # If zstd wasn't found, disable Zstandard
+                        # supercompression support at compile time. The zstd.h
+                        # include is hidden behind this definition as well.
+                        list(APPEND BasisUniversalTranscoder_DEFINITIONS
+                            "BASISD_SUPPORT_KTX2_ZSTD=0")
+                    endif()
                 endif()
 
                 foreach(_file ${BasisUniversalTranscoder_SOURCES})
@@ -310,16 +317,22 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     INTERFACE_COMPILE_DEFINITIONS ${BasisUniversalTranscoder_DEFINITIONS})
                 set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
                     INTERFACE_SOURCES "${BasisUniversalTranscoder_SOURCES}")
-                # The bundled zstd.c has ZSTD_MULTITHREAD unconditionally
-                # defined for all platforms except Emscripten, which forces us
-                # to link to pthread. The transcoder doesn't use any of the
-                # multithreaded interfaces so for it alone it shouldn't lead to
-                # the same issues described for the encoder above, however
-                # because the encoder transitively links to the encoder, we
-                # can't link to pthread here to avoid the crashes there. It's
-                # instead done in the BasisImporter CMakeLists depending on the
-                # (cached) variable set here. It's extremely brittle that way
-                # but so is Basis itself, so what.
+                if(Zstd_FOUND)
+                    set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES Zstd::Zstd)
+                elseif(BasisUniversalZstd_DIR)
+                    # The bundled zstd.c has ZSTD_MULTITHREAD unconditionally
+                    # defined for all platforms except Emscripten, which forces
+                    # us to link to pthread. The transcoder doesn't use any of
+                    # the multithreaded interfaces so for it alone it shouldn't
+                    # lead to the same issues described for the encoder above,
+                    # however because the encoder transitively links to the
+                    # encoder, we can't link to pthread here to avoid the
+                    # crashes there. It's instead done in the BasisImporter
+                    # CMakeLists depending on the (cached) variable set here.
+                    # It's extremely brittle that way but so is Basis itself,
+                    # so what.
+                endif()
             endif()
         else()
             set(BasisUniversal_Transcoder_FOUND TRUE)

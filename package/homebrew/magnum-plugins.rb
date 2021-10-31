@@ -21,6 +21,9 @@ class MagnumPlugins < Formula
   depends_on "jpeg" => :recommended
   depends_on "openexr" => :recommended
   depends_on "spirv-tools" => :recommended
+  # For Basis Universal. If found, Basis will use it, if not, it'll use a
+  # bundled copy.
+  depends_on "zstd" => :recommended
 
   def install
     # Bundle Basis Universal, v1_15_update2 for HEAD builds, a commit that's

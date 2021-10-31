@@ -244,6 +244,10 @@ usage documentation.
     --- CMake module for finding HarfBuzz. Copy this to your module directory
     if you want to find and link to the @ref Text::HarfBuzzFont "HarfBuzzFont"
     plugin.
+-   [FindZstd.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindZstd.cmake)
+    --- CMake module for finding Zstd. Needed only for compiling the
+    @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter}
+    plugins, you don't need to bundle this file if you link to these.
 
 See also @ref cmake-modules "relevant section for the main Magnum project".
 */
