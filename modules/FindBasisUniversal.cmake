@@ -158,19 +158,20 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     INTERFACE_INCLUDE_DIRECTORIES ${BasisUniversalEncoder_INCLUDE_DIR})
                 set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                     INTERFACE_SOURCES "${BasisUniversalEncoder_SOURCES}")
-                # Explicitly *not* linking this to Threads::Threads because when
-                # done like that, std::thread creation will die on a null function
-                # pointer call (inside __gthread_create, which weakly links to
-                # pthread) in the BasisImageConverter UNLESS the final application
-                # is linked to pthread as well. As far as I tried (four hours
-                # lost), there's no way to check if the weak pthread_create pointer
-                # is null -- tried so far:
+                # Explicitly *not* linking this to Threads::Threads because
+                # when done like that, std::thread creation will die on a null
+                # function pointer call (inside __gthread_create, which weakly
+                # links to pthread) in the BasisImageConverter UNLESS the final
+                # application is linked to pthread as well. As far as I tried
+                # (four hours lost), there's no way to check if the weak
+                # pthread_create pointer is null -- tried so far:
                 #  - dlsym(self, "pthread_create") returns non-null
                 #  - dlopen("libpthread.so") returns non-null
-                #  - defining a weakref pthread_create the same way as glibc does
-                #    https://github.com/gcc-mirror/gcc/blob/3e7b85061947bdc7c7465743ba90734566860821/libgcc/gthr-posix.h#L106
+                #  - defining a weakref pthread_create the same way as glibc
+                #    does https://github.com/gcc-mirror/gcc/blob/3e7b85061947bdc7c7465743ba90734566860821/libgcc/gthr-posix.h#L106
                 #    returns non-null
-                # The rest is documented in the BasisImageConverter plugin itself.
+                # The rest is documented in the BasisImageConverter plugin
+                # itself.
                 set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES BasisUniversal::Transcoder)
                 set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
@@ -190,8 +191,9 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 find_library(BasisUniversalTranscoder_LIBRARY_DEBUG basisu_transcoder HINTS "debug")
             endif()
             if(NOT BASIS_UNIVERSAL_DIR AND (BasisUniversalTranscoder_LIBRARY_DEBUG OR BasisUniversalTranscoder_LIBRARY_RELEASE))
-                # Encoder includes expect the basis includes to be prefixed with transcoder/ as in the
-                # original basis_universal repository.
+                # Encoder includes expect the basis includes to be prefixed
+                # with transcoder/ as in the original basis_universal
+                # repository.
                 find_path(BasisUniversalTranscoder_INCLUDE_DIR transcoder/basisu_transcoder.h PATH_SUFFIXES "basisu")
 
                 add_library(BasisUniversal::Transcoder UNKNOWN IMPORTED)
@@ -212,7 +214,8 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     set(BasisUniversal_Transcoder_FOUND TRUE)
                 endif()
 
-            # Fall back to finding sources and compile them with the target they are linked to
+            # Fall back to finding sources and compile them with the target
+            # they are linked to
             else()
                 find_path(BasisUniversalTranscoder_DIR NAMES basisu_transcoder.cpp
                     HINTS "${BASIS_UNIVERSAL_DIR}/transcoder" "${BASIS_UNIVERSAL_DIR}"
