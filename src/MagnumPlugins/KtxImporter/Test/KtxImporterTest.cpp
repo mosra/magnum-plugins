@@ -362,9 +362,11 @@ const struct {
         CompressedPixelFormat::Etc2RGBA8Srgb, ""},
     {"set in BasisImporter", nullptr, "Bc3RGBA",
         CompressedPixelFormat::Bc3RGBASrgb, ""},
-    {"set in both", "Etc2RGBA", "Bc3RGBA",
+    {"set in both to different", "Etc2RGBA", "Bc3RGBA",
         CompressedPixelFormat::Etc2RGBA8Srgb,
-        "Trade::KtxImporter::openData(): overwriting BasisImporter format from Bc3RGBA to Etc2RGBA\n"}
+        "Trade::KtxImporter::openData(): overwriting BasisImporter format from Bc3RGBA to Etc2RGBA\n"},
+    {"set in both to the same", "Bc3RGBA", "Bc3RGBA",
+        CompressedPixelFormat::Bc3RGBASrgb, ""}
 };
 
 using namespace Containers::Literals;

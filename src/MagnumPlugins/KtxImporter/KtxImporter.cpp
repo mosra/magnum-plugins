@@ -482,7 +482,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         const auto format = configuration().group("basis")->value<Containers::StringView>("format");
         if(!format.isEmpty()) {
             const auto originalFormat = basisImporter->configuration().value<Containers::StringView>("format");
-            if(!originalFormat.isEmpty())
+            if(!originalFormat.isEmpty() && format != originalFormat)
                 Warning{} << "Trade::KtxImporter::openData(): overwriting BasisImporter format from" << originalFormat << "to" << format;
             basisImporter->configuration().setValue("format", format);
         }
