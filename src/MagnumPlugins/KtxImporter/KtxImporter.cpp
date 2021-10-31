@@ -316,12 +316,12 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         if(identifier.hasPrefix(expected.prefix(Implementation::KtxFileVersionOffset))) {
             const Containers::StringView version = identifier.suffix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
             if(version != "20"_s) {
-                Error() << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" << version;
+                Error{} << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" << version;
                 return;
             }
         }
 
-        Error() << "Trade::KtxImporter::openData(): wrong file signature";
+        Error{} << "Trade::KtxImporter::openData(): wrong file signature";
         return;
     }
 
@@ -653,7 +653,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
     /** @todo KTX spec seems to really insist on rd for cube maps but the
         wording is odd, I can't tell if they're saying it's mandatory or not:
-        https://github.khronos.org/KTX-Specification/#cubemapOrientation
+        https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html#cubemapOrientation
         The toktx tool from Khronos Texture Tools also forces rd for cube maps,
         so we might want to do that in the converter as well. */
 
