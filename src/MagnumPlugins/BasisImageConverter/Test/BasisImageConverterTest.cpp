@@ -130,6 +130,21 @@ void BasisImageConverterTest::processError() {
         "Trade::BasisImageConverter::convertToData(): frontend processing failed\n");
 }
 
+template<typename SourceType, typename DestinationType = SourceType>
+Image2D copyImageWithSkip(const ImageView2D& originalImage, Vector3i skip, PixelFormat format) {
+    const Vector2i size = originalImage.size();
+    /* Width includes row alignment to 4 bytes */
+    const UnsignedInt formatSize = pixelSize(format);
+    const UnsignedInt widthWithSkip = ((size.x() + skip.x())*DestinationType::Size + 3)/formatSize*formatSize;
+    const UnsignedInt dataSize = widthWithSkip*(size.y() + skip.y());
+    Image2D imageWithSkip{PixelStorage{}.setSkip(skip), format,
+        size, Containers::Array<char>{ValueInit, dataSize}};
+    Utility::copy(Containers::arrayCast<const DestinationType>(
+        originalImage.pixels<SourceType>()),
+        imageWithSkip.pixels<DestinationType>());
+    return imageWithSkip;
+}
+
 void BasisImageConverterTest::r() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
@@ -140,15 +155,11 @@ void BasisImageConverterTest::r() {
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
-    /* Use the original image and add a skip of {7, 8} to ensure the converter
-       reads the image data properly. Data size is computed with row alignment
-       to 4 bytes. During copy, we only use R channel to retrieve a R8 image */
-    const UnsignedInt dataSize = (63 + 7 + 2)*(27 + 8);
-    Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
-        PixelFormat::R8Unorm, originalImage->size(), Containers::Array<char>{ValueInit, dataSize}};
-    Utility::copy(Containers::arrayCast<const UnsignedByte>(
-        originalImage->pixels<Color3ub>()),
-        imageWithSkip.pixels<UnsignedByte>());
+    /* Use the original image and add a skip to ensure the converter reads the
+       image data properly. During copy, we only use R channel to retrieve an
+       R8 image. */
+    const Image2D imageWithSkip = copyImageWithSkip<Color3ub, Math::Vector<1, UnsignedByte>>(
+        *originalImage, {7, 8, 0}, PixelFormat::R8Unorm);
 
     const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -183,16 +194,11 @@ void BasisImageConverterTest::rg() {
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
-    /* Use the original image and add a skip of {7, 8} to ensure the converter
-       reads the image data properly. Data size is computed with row alignment
-       to 4 bytes. During copy, we only use R and G channels to retrieve a RG8
-       image. */
-    const UnsignedInt dataSize = ((63 + 8)*2 + 2)*(27 + 7);
-    Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
-        PixelFormat::RG8Unorm, originalImage->size(), Containers::Array<char>{ValueInit, dataSize}};
-    Utility::copy(Containers::arrayCast<const Vector2ub>(
-        originalImage->pixels<Color3ub>()),
-        imageWithSkip.pixels<Vector2ub>());
+    /* Use the original image and add a skip to ensure the converter reads the
+       image data properly. During copy, we only use R and G channels to
+       retrieve an RG8 image. */
+    const Image2D imageWithSkip = copyImageWithSkip<Color3ub, Vector2ub>(
+        *originalImage, {7, 8, 0}, PixelFormat::RG8Unorm);
 
     const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -226,15 +232,10 @@ void BasisImageConverterTest::rgb() {
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
-    /* Use the original image and add a skip of {7, 8} to ensure the converter
-       reads the image data properly. Data size is computed with row alignment
-       to 4 bytes. */
-    const UnsignedInt dataSize = ((63 + 7)*3 + 3)*(27 + 8);
-    Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
-        PixelFormat::RGB8Unorm, originalImage->size(),
-        Containers::Array<char>{ValueInit, dataSize}};
-    Utility::copy(originalImage->pixels<Color3ub>(),
-        imageWithSkip.pixels<Color3ub>());
+    /* Use the original image and add a skip to ensure the converter reads the
+       image data properly */
+    const Image2D imageWithSkip = copyImageWithSkip<Color3ub>(
+        *originalImage, {7, 8, 0}, PixelFormat::RGB8Unorm);
 
     const auto compressedData = _converterManager.instantiate("BasisImageConverter")->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -267,14 +268,10 @@ void BasisImageConverterTest::rgba() {
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
-    /* Use the original image and add a skip of {7, 8} to ensure the converter
-       reads the image data properly. */
-    const UnsignedInt dataSize = ((63 + 7)*4)*(27 + 7);
-    Image2D imageWithSkip{PixelStorage{}.setSkip({7, 8, 0}),
-        PixelFormat::RGBA8Unorm, originalImage->size(),
-        Containers::Array<char>{ValueInit, dataSize}};
-    Utility::copy(originalImage->pixels<Color4ub>(),
-        imageWithSkip.pixels<Color4ub>());
+    /* Use the original image and add a skip to ensure the converter reads the
+       image data properly */
+    const Image2D imageWithSkip = copyImageWithSkip<Color4ub>(
+        *originalImage, {7, 8, 0}, PixelFormat::RGBA8Unorm);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
     if(data.threads) converter->configuration().setValue("threads", data.threads);
