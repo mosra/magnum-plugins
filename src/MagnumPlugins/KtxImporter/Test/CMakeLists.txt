@@ -25,8 +25,10 @@
 #
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(BASISIMPORTER_TEST_DIR ".")
     set(KTXIMPORTER_TEST_DIR ".")
 else()
+    set(BASISIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test)
     set(KTXIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
@@ -36,6 +38,9 @@ endif()
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT MAGNUM_KTXIMPORTER_BUILD_STATIC)
     set(KTXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:KtxImporter>)
+    if(WITH_BASISIMPORTER)
+        set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -109,15 +114,25 @@ corrade_add_test(KtxImporterTest KtxImporterTest.cpp
         swizzle-bgra.ktx2
         swizzle-identity.ktx2
         swizzle-unsupported.ktx2
-        version1.ktx)
+        version1.ktx
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-array.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-uastc.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-video.ktx2)
 target_include_directories(KtxImporterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
     ${PROJECT_SOURCE_DIR}/src)
 if(MAGNUM_KTXIMPORTER_BUILD_STATIC)
     target_link_libraries(KtxImporterTest PRIVATE KtxImporter)
+    if(WITH_BASISIMPORTER)
+        target_link_libraries(KtxImporterTest PRIVATE BasisImporter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(KtxImporterTest KtxImporter)
+    if(WITH_BASISIMPORTER)
+        add_dependencies(KtxImporterTest BasisImporter)
+    endif()
 endif()
 set_target_properties(KtxImporterTest PROPERTIES FOLDER "MagnumPlugins/KtxImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_KTXIMPORTER_BUILD_STATIC)

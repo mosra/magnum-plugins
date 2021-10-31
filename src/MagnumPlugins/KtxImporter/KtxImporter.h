@@ -144,11 +144,6 @@ Incomplete cube maps (determined by the `KTXcubemapIncomplete` metadata entry)
 are imported as a 2D array image, but information about which faces it contains
 can't be imported.
 
-@subsection Trade-KtxImporter-behavior-supercompression Supercompression
-
-Importing files with [supercompression](https://github.khronos.org/KTX-Specification/#supercompressionSchemes)
-is not supported.
-
 @subsection Trade-KtxImporter-behavior-swizzle Swizzle support
 
 Explicit swizzling via the KTXswizzle header entry supports BGR and BGRA. Any
@@ -157,6 +152,39 @@ other non-identity channel remapping is unsupported and results in an error.
 For reasons similar to the restriction on axis-flips, compressed formats don't
 support any swizzling, and the import fails if an image with a compressed
 format contains a swizzle that isn't RGBA.
+
+@subsection Trade-KtxImporter-behavior-basis Basis Universal compression
+
+When the importer detects a Basis Universal compressed file, it will forward
+the file to the @ref BasisImporter plugin, if available. Flags set via
+@ref setFlags() and options in the @cb{.ini} [basis] @ce section of the
+@ref Trade-KtxImporter-configuration "plugin configuration" are propagated to
+@ref BasisImporter.
+
+Calls to the @ref image1DCount() / @ref image2DCount() / @ref image3DCount(),
+@ref image1DLevelCount() / @ref image2DLevelCount() / @ref image3DLevelCount(),
+@ref image1D() / @ref image2D() / @ref image3D() and @ref textureCount() /
+@ref texture() functions are then proxied to @ref BasisImporter. The
+@ref close() function closes and discards the internally instantiated plugin;
+@ref isOpened() works as usual.
+
+@subsection Trade-KtxImporter-behavior-supercompression Supercompression
+
+Importing files with [supercompression](https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html#supercompressionSchemes)
+is not supported. When @ref Trade-KtxImporter-behavior-basis "forwarding Basis
+Universal compressed files", some supercompression schemes like BasisLZ and
+Zstandard can be handled by @ref BasisImporter.
+
+@section Trade-KtxImporter-configuration Plugin-specific configuration
+
+For some formats, it's possible to tune various options through
+@ref configuration(). See below for all options and their default values;
+a subset of the option is the same as in @link BasisImporter @endlink:
+
+@snippet MagnumPlugins/KtxImporter/KtxImporter.conf configuration_
+
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
     public:
@@ -189,6 +217,7 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
     private:
         struct File;
         Containers::Pointer<File> _f;
+        Containers::Pointer<AbstractImporter> _basisImporter;
 
         template<UnsignedInt dimensions>
         ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
