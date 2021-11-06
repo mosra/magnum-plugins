@@ -49,6 +49,11 @@ find_package(Magnum REQUIRED)
 
 include(CMakeDependentOption)
 
+set(_PREV_CMAKE_PIC ${CMAKE_POSITION_INDEPENDENT_CODE})
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+add_subdirectory(glsl-optimizer)
+set(CMAKE_POSITION_INDEPENDENT_CODE ${_PREV_CMAKE_PIC})
+
 # Plugins to build
 option(WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
 option(WITH_BASISIMAGECONVERTER "Build BasisImageConverter plugin" OFF)
@@ -62,6 +67,7 @@ option(WITH_DRWAVAUDIOIMPORTER "Build DrWavAudioImporter plugin" OFF)
 option(WITH_FAAD2AUDIOIMPORTER "Build Faad2AudioImporter plugin" OFF)
 cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)
 option(WITH_GLSLANGSHADERCONVERTER "Build GlslangShaderConverter plugin" OFF)
+option(WITH_GLSLOPTIMIZERSHADERCONVERTER "Build GlslOptimizerShaderConverter plugin" OFF)
 option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
 option(WITH_ICOIMPORTER "Build IcoImporter plugin" OFF)
 option(WITH_JPEGIMAGECONVERTER "Build JpegImageConverter plugin" OFF)
