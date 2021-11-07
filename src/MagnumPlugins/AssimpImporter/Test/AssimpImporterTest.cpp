@@ -1503,9 +1503,12 @@ void AssimpImporterTest::light() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
+    CORRADE_COMPARE(importer->lightForName(""), -1);
 
     /* Spot light */
     {
+        CORRADE_COMPARE(importer->lightName(0), "Spot");
+        CORRADE_COMPARE(importer->lightForName("Spot"), 0);
         auto light = importer->light(0);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Spot);
@@ -1520,6 +1523,8 @@ void AssimpImporterTest::light() {
 
     /* Point light */
     } {
+        CORRADE_COMPARE(importer->lightName(1), "Point");
+        CORRADE_COMPARE(importer->lightForName("Point"), 1);
         auto light = importer->light(1);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Point);
@@ -1530,6 +1535,8 @@ void AssimpImporterTest::light() {
 
     /* Directional light */
     } {
+        CORRADE_COMPARE(importer->lightName(2), "Sun");
+        CORRADE_COMPARE(importer->lightForName("Sun"), 2);
         auto light = importer->light(2);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Directional);
@@ -1540,6 +1547,8 @@ void AssimpImporterTest::light() {
 
     /* Ambient light -- imported as Point with no attenuation */
     } {
+        CORRADE_COMPARE(importer->lightName(3), "Ambient");
+        CORRADE_COMPARE(importer->lightForName("Ambient"), 3);
         auto light = importer->light(3);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Point);

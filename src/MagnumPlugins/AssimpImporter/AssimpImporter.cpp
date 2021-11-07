@@ -112,6 +112,7 @@ struct AssimpImporter::File {
 
     Containers::Optional<std::unordered_map<std::string, Int>>
         animationsForName,
+        lightsForName,
         meshesForName,
         skinsForName;
 
@@ -729,6 +730,22 @@ Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt i
 
 UnsignedInt AssimpImporter::doLightCount() const {
     return _f->scene->mNumLights;
+}
+
+Int AssimpImporter::doLightForName(const std::string& name) {
+    if(!_f->lightsForName) {
+        _f->lightsForName.emplace();
+        _f->lightsForName->reserve(_f->scene->mNumLights);
+        for(std::size_t i = 0; i != _f->scene->mNumLights; ++i)
+            _f->lightsForName->emplace(std::string(_f->scene->mLights[i]->mName.C_Str()), i);
+    }
+
+    const auto found = _f->lightsForName->find(name);
+    return found == _f->lightsForName->end() ? -1 : found->second;
+}
+
+std::string AssimpImporter::doLightName(const UnsignedInt id) {
+    return _f->scene->mLights[id]->mName.C_Str();
 }
 
 Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {

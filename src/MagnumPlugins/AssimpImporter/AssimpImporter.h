@@ -455,6 +455,8 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doLightCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doLightForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doLightName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
