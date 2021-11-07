@@ -382,7 +382,7 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
-    Int idOffset;
+    Int id;
     const char* message;
 } SceneInvalidObjectData[]{
     {"camera out of bounds", "scene-invalid-camera-oob.gltf", 0, "camera index 1 out of bounds for 1 cameras"},
@@ -1750,15 +1750,9 @@ void TinyGltfImporterTest::sceneInvalidObject() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
-    /* For testing bounds checks for multi-primitive meshes we need to import
-       Nth mesh of the same name */
-    Int id = importer->object3DForName(data.name);
-    CORRADE_VERIFY(id != -1);
-    CORRADE_COMPARE(importer->object3DName(id + data.idOffset), data.name);
-
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(id + data.idOffset));
+    CORRADE_VERIFY(!importer->object3D(data.id));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::object3D(): {}\n", data.message));
 }
 
@@ -1781,7 +1775,7 @@ void TinyGltfImporterTest::sceneInvalidScene() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->scene("node out of bounds"));
+    CORRADE_VERIFY(!importer->scene(0));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): node index 7 out of bounds for 7 nodes\n");
 }
 

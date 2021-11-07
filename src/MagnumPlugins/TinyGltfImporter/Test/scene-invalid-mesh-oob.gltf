@@ -13,7 +13,6 @@
     ],
     "nodes": [
         {
-            "name": "mesh out of bounds",
             "mesh": 1
         }
     ]

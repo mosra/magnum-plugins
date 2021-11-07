@@ -4,7 +4,6 @@
     },
     "nodes": [
         {
-            "name": "child out of bounds",
             "children": [7]
         },
         {}, {}, {}, {}, {}, {}

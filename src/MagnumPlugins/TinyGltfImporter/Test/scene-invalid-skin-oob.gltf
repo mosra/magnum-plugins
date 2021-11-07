@@ -13,7 +13,6 @@
     ],
     "nodes": [
         {
-            "name": "skin out of bounds",
             "mesh": 0,
             "skin": 3
         },

@@ -16,7 +16,6 @@
     },
     "nodes": [
         {
-            "name": "light out of bounds",
             "extensions": {
                 "KHR_lights_punctual": {
                     "light": 2

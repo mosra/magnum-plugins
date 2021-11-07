@@ -20,7 +20,6 @@
     ],
     "nodes": [
         {
-            "name": "material in a multi-primitive mesh out of bounds",
             "mesh": 0
         }
     ]

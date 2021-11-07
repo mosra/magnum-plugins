@@ -4,7 +4,6 @@
     },
     "scenes": [
         {
-            "name": "scene node has parent",
             "nodes": [0, 1]
         }
     ],

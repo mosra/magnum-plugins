@@ -7,7 +7,6 @@
     ],
     "scenes": [
         {
-            "name": "node out of bounds",
             "nodes": [7]
         }
     ]
