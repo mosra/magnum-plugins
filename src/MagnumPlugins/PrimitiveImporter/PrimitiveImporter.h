@@ -101,11 +101,25 @@ information.
 
 Upon calling @ref openData() with arbitrary data (or @ref openFile() with an
 arbitrary *existing* file), the importer will expose all primitives through
-@ref mesh() and additionally list one scene with all primitives as direct 2D or
-3D child objects for easy import to existing scenes. Both objects and meshes
-can be accessed through name of the respective function in the @ref Primitives
-namespace (so e.g. loading a `uvSphereSolid` mesh will give you
-@ref Primitives::uvSphereSolid()).
+@ref mesh(). The returned @ref MeshData instances come directly from the
+functions in the @ref Primitives namespace, see their documentation for more
+information about present attributes and their types.
+
+The importer additionally lists two scenes, first with all 2D primitives and
+second with all 3D primitives for easy import to existing scenes. The 3D scene
+is the @ref defaultScene(). For simplicity, both scenes have
+@ref SceneMappingType::UnsignedInt with the 2D and 3D object IDs interleaved
+and @ref SceneData::mappingBound() returning the same value as
+@ref objectCount() for both scenes. The scenes have a @ref SceneField::Parent
+(of type @ref SceneFieldType::Int) that's @cpp -1 @ce for all objects and a
+@ref SceneField::Translation (of either @ref SceneFieldType::Vector2 or
+@ref SceneFieldType::Vector3) and a @ref SceneField::Mesh (of type
+@ref SceneFieldType::UnsignedInt). The three fields share the same object
+mapping, which is monotonically increasing but sparse.
+
+Both objects and meshes can be accessed through name of the respective function
+in the @ref Primitives namespace (so e.g. loading a `uvSphereSolid` mesh will
+give you @ref Primitives::uvSphereSolid()).
 
 @section Trade-PrimitiveImporter-configuration Plugin-specific config
 
@@ -141,15 +155,9 @@ class MAGNUM_PRIMITIVEIMPORTER_EXPORT PrimitiveImporter: public AbstractImporter
         MAGNUM_PRIMITIVEIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_PRIMITIVEIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL UnsignedInt doObject2DCount() const override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL Int doObject2DForName(const std::string& name) override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL std::string doObject2DName(UnsignedInt id) override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL Containers::Pointer<ObjectData2D> doObject2D(UnsignedInt id) override;
-
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_PRIMITIVEIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
+        MAGNUM_PRIMITIVEIMPORTER_LOCAL Long doObjectForName(const std::string& name) override;
+        MAGNUM_PRIMITIVEIMPORTER_LOCAL std::string doObjectName(UnsignedLong id) override;
 
         MAGNUM_PRIMITIVEIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
         MAGNUM_PRIMITIVEIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;

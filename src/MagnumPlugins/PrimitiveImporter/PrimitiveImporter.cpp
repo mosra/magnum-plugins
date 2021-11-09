@@ -26,7 +26,6 @@
 #include "PrimitiveImporter.h"
 
 #include <cstring>
-#include <numeric>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -46,8 +45,6 @@
 #include <Magnum/Primitives/Square.h>
 #include <Magnum/Primitives/UVSphere.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData2D.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/SceneData.h>
 
 namespace Magnum { namespace Trade {
@@ -69,156 +66,179 @@ void PrimitiveImporter::doOpenData(Containers::Array<char>&&, DataFlags) {
 namespace {
 
 constexpr const char* Names[]{
-    "axis2D",
-    "axis3D",
+    /*  0 */ "axis2D",
+    /*  1 */ "axis3D",
 
-    "capsule2DWireframe",
-    "capsule3DSolid",
-    "capsule3DWireframe",
+    /*  2 */ "capsule2DWireframe",
+    /*  3 */ "capsule3DSolid",
+    /*  4 */ "capsule3DWireframe",
 
-    "circle2DSolid",
-    "circle2DWireframe",
-    "circle3DSolid",
-    "circle3DWireframe",
+    /*  5 */ "circle2DSolid",
+    /*  6 */ "circle2DWireframe",
+    /*  7 */ "circle3DSolid",
+    /*  8 */ "circle3DWireframe",
 
-    "coneSolid",
-    "coneWireframe",
+    /*  9 */ "coneSolid",
+    /* 10 */ "coneWireframe",
 
-    "crosshair2D",
-    "crosshair3D",
+    /* 11 */ "crosshair2D",
+    /* 12 */ "crosshair3D",
 
-    "cubeSolid",
-    "cubeSolidStrip",
-    "cubeWireframe",
+    /* 13 */ "cubeSolid",
+    /* 14 */ "cubeSolidStrip",
+    /* 15 */ "cubeWireframe",
 
-    "cylinderSolid",
-    "cylinderWireframe",
+    /* 16 */ "cylinderSolid",
+    /* 17 */ "cylinderWireframe",
 
-    "gradient2D",
-    "gradient2DHorizontal",
-    "gradient2DVertical",
-    "gradient3D",
-    "gradient3DHorizontal",
-    "gradient3DVertical",
+    /* 18 */ "gradient2D",
+    /* 19 */ "gradient2DHorizontal",
+    /* 20 */ "gradient2DVertical",
+    /* 21 */ "gradient3D",
+    /* 22 */ "gradient3DHorizontal",
+    /* 23 */ "gradient3DVertical",
 
-    "grid3DSolid",
-    "grid3DWireframe",
+    /* 24 */ "grid3DSolid",
+    /* 25 */ "grid3DWireframe",
 
-    "icosphereSolid",
-    "icosphereWireframe",
+    /* 26 */ "icosphereSolid",
+    /* 27 */ "icosphereWireframe",
 
-    "line2D",
-    "line3D",
+    /* 28 */ "line2D",
+    /* 29 */ "line3D",
 
-    "planeSolid",
-    "planeWireframe",
+    /* 30 */ "planeSolid",
+    /* 31 */ "planeWireframe",
 
-    "squareSolid",
-    "squareWireframe",
+    /* 32 */ "squareSolid",
+    /* 33 */ "squareWireframe",
 
-    "uvSphereSolid",
-    "uvSphereWireframe"
+    /* 34 */ "uvSphereSolid",
+    /* 35 */ "uvSphereWireframe"
 };
 
-constexpr const char* Names2D[]{
-    "axis2D",
-    "capsule2DWireframe",
-    "circle2DSolid",
-    "circle2DWireframe",
-    "crosshair2D",
-    "gradient2D",
-    "gradient2DHorizontal",
-    "gradient2DVertical",
-    "line2D",
-    "squareSolid",
-    "squareWireframe"
+constexpr Vector2 translation2DForIndex(UnsignedInt id) {
+    /** @todo use constexpr vector multiplication here once C++14 is used */
+    return {3.0f*(-1.5f + Float(id % 4)), 3.0f*(-1.0f + Float(id / 4))};
+}
+
+constexpr struct {
+    Int parent[1]; /* same for all */
+    struct {
+        Vector2 translation;
+        UnsignedInt meshAndObject;
+    } fields[11];
+} Scene2D[]{{{-1}, {
+    {translation2DForIndex(0),   0}, /* axis2D */
+    {translation2DForIndex(1),   2}, /* capsule2DWireframe */
+    {translation2DForIndex(2),   5}, /* circle2DSolid */
+    {translation2DForIndex(3),   6}, /* circle2DWireframe */
+    {translation2DForIndex(4),  11}, /* crosshair2D */
+    {translation2DForIndex(5),  18}, /* gradient2D */
+    {translation2DForIndex(6),  19}, /* gradient2DHorizontal */
+    {translation2DForIndex(7),  20}, /* gradient2DVertical */
+    {translation2DForIndex(8),  28}, /* line2D */
+    {translation2DForIndex(9),  32}, /* squareSolid */
+    {translation2DForIndex(10), 33}, /* squareWireframe */
+}}};
+
+constexpr Vector3 translation3DForIndex(UnsignedInt id) {
+    /** @todo use constexpr vector multiplication here once C++14 is used */
+    return {3.0f*(-1.5f + Float(id % 5)), 3.0f*(-1.0f + Float(id / 5)), 0.0f};
+}
+
+constexpr struct {
+    Int parent[1]; /* same for all */
+    struct {
+        Vector3 translation;
+        UnsignedInt meshAndObject;
+    } fields[25];
+} Scene3D[]{{{-1}, {
+    {translation3DForIndex(0),   1}, /* axis3D */
+    {translation3DForIndex(1),   3}, /* capsule3DSolid */
+    {translation3DForIndex(2),   4}, /* capsule3DWireframe */
+    {translation3DForIndex(3),   7}, /* circle3DSolid */
+    {translation3DForIndex(4),   8}, /* circle3DWireframe */
+    {translation3DForIndex(5),   9}, /* coneSolid */
+    {translation3DForIndex(6),  10}, /* coneWireframe */
+    {translation3DForIndex(7),  12}, /* crosshair3D */
+    {translation3DForIndex(8),  13}, /* cubeSolid */
+    {translation3DForIndex(9),  14}, /* cubeSolidStrip */
+    {translation3DForIndex(10), 15}, /* cubeWireframe */
+    {translation3DForIndex(11), 16}, /* cylinderSolid */
+    {translation3DForIndex(12), 17}, /* cylinderWireframe */
+    {translation3DForIndex(13), 21}, /* gradient3D */
+    {translation3DForIndex(14), 22}, /* gradient3DHorizontal */
+    {translation3DForIndex(15), 23}, /* gradient3DVertical */
+    {translation3DForIndex(16), 24}, /* grid3DSolid */
+    {translation3DForIndex(17), 25}, /* grid3DWireframe */
+    {translation3DForIndex(18), 26}, /* icosphereSolid */
+    {translation3DForIndex(19), 27}, /* icosphereWireframe */
+    {translation3DForIndex(20), 29}, /* line3D */
+    {translation3DForIndex(21), 30}, /* planeSolid */
+    {translation3DForIndex(22), 31}, /* planeWireframe */
+    {translation3DForIndex(23), 34}, /* uvSphereSolid */
+    {translation3DForIndex(24), 35}, /* uvSphereWireframe */
+}}};
+
+/* StridedArrayView slice() and broadcast() is not constexpr so I have to
+   supply the strides by hand */
+constexpr SceneFieldData SceneFields2D[]{
+    SceneFieldData{SceneField::Parent,
+        Containers::stridedArrayView(Scene2D, &Scene2D->fields[0].meshAndObject, Containers::arraySize(Scene2D->fields), sizeof(Scene2D->fields[0])),
+        Containers::stridedArrayView(Containers::arrayView(Scene2D->parent), Containers::arraySize(Scene2D->fields), 0)},
+    SceneFieldData{SceneField::Mesh,
+        Containers::stridedArrayView(Scene2D, &Scene2D->fields[0].meshAndObject, Containers::arraySize(Scene2D->fields), sizeof(Scene2D->fields[0])), Containers::stridedArrayView(Scene2D, &Scene2D->fields[0].meshAndObject, Containers::arraySize(Scene2D->fields), sizeof(Scene2D->fields[0]))},
+    SceneFieldData{SceneField::Translation,
+        Containers::stridedArrayView(Scene2D, &Scene2D->fields[0].meshAndObject, Containers::arraySize(Scene2D->fields), sizeof(Scene2D->fields[0])), Containers::stridedArrayView(Scene2D, &Scene2D->fields[0].translation, Containers::arraySize(Scene2D->fields), sizeof(Scene2D->fields[0]))},
 };
 
-constexpr const char* Names3D[]{
-    "axis3D",
-    "capsule3DSolid",
-    "capsule3DWireframe",
-    "circle3DSolid",
-    "circle3DWireframe",
-    "coneSolid",
-    "coneWireframe",
-    "crosshair3D",
-    "cubeSolid",
-    "cubeSolidStrip",
-    "cubeWireframe",
-    "cylinderSolid",
-    "cylinderWireframe",
-    "gradient3D",
-    "gradient3DHorizontal",
-    "gradient3DVertical",
-    "grid3DSolid",
-    "grid3DWireframe",
-    "icosphereSolid",
-    "icosphereWireframe",
-    "line3D",
-    "planeSolid",
-    "planeWireframe",
-    "uvSphereSolid",
-    "uvSphereWireframe"
+/* StridedArrayView slice() and broadcast() is not constexpr so I have to
+   supply the strides by hand */
+constexpr SceneFieldData SceneFields3D[]{
+    SceneFieldData{SceneField::Parent,
+        Containers::stridedArrayView(Scene3D, &Scene3D->fields[0].meshAndObject, Containers::arraySize(Scene3D->fields), sizeof(Scene3D->fields[0])),
+        Containers::stridedArrayView(Containers::arrayView(Scene3D->parent), Containers::arraySize(Scene3D->fields), 0)},
+    SceneFieldData{SceneField::Mesh,
+        Containers::stridedArrayView(Scene3D, &Scene3D->fields[0].meshAndObject, Containers::arraySize(Scene3D->fields), sizeof(Scene3D->fields[0])),
+        Containers::stridedArrayView(Scene3D, &Scene3D->fields[0].meshAndObject, Containers::arraySize(Scene3D->fields), sizeof(Scene3D->fields[0]))},
+    SceneFieldData{SceneField::Translation,
+        Containers::stridedArrayView(Scene3D, &Scene3D->fields[0].meshAndObject, Containers::arraySize(Scene3D->fields), sizeof(Scene3D->fields[0])),
+        Containers::stridedArrayView(Scene3D, &Scene3D->fields[0].translation, Containers::arraySize(Scene3D->fields), sizeof(Scene3D->fields[0]))},
 };
 
 }
 
-Int PrimitiveImporter::doDefaultScene() const { return 0; }
+Int PrimitiveImporter::doDefaultScene() const { return 1; }
 
-UnsignedInt PrimitiveImporter::doSceneCount() const { return 1; }
+UnsignedInt PrimitiveImporter::doSceneCount() const { return 2; }
 
-Containers::Optional<SceneData> PrimitiveImporter::doScene(UnsignedInt) {
-    std::vector<UnsignedInt> children2D(Containers::arraySize(Names2D));
-    std::iota(children2D.begin(), children2D.end(), 0);
-    std::vector<UnsignedInt> children3D(Containers::arraySize(Names3D));
-    std::iota(children3D.begin(), children3D.end(), 0);
+Containers::Optional<SceneData> PrimitiveImporter::doScene(const UnsignedInt id) {
+    if(id == 0) return SceneData{SceneMappingType::UnsignedInt,
+        Containers::arraySize(Names),
+        {}, Scene2D, sceneFieldDataNonOwningArray(SceneFields2D)};
 
-    return SceneData{std::move(children2D), std::move(children3D)};
+    if(id == 1) return SceneData{SceneMappingType::UnsignedInt,
+        Containers::arraySize(Names),
+        {}, Scene3D, sceneFieldDataNonOwningArray(SceneFields3D)};
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
-UnsignedInt PrimitiveImporter::doObject2DCount() const {
-    return Containers::arraySize(Names2D);
+UnsignedLong PrimitiveImporter::doObjectCount() const {
+    return Containers::arraySize(Names);
 }
 
-Int PrimitiveImporter::doObject2DForName(const std::string& name) {
-    for(std::size_t i = 0; i != Containers::arraySize(Names2D); ++i)
-        if(name == Names2D[i]) return i;
+Long PrimitiveImporter::doObjectForName(const std::string& name) {
+    /** @todo it's sorted, a reusable binary search utility would be handy
+        (not that hard-to-use-correctly STL lower_bound crap) */
+    for(std::size_t i = 0; i != Containers::arraySize(Names); ++i)
+        if(name == Names[i]) return i;
     return -1;
 }
 
-std::string PrimitiveImporter::doObject2DName(const UnsignedInt id) {
-    return Names2D[id];
-}
-
-Containers::Pointer<ObjectData2D> PrimitiveImporter::doObject2D(const UnsignedInt id) {
-    static_assert(Containers::arraySize(Names2D) <= 12, "can't pack into 3x4 cells");
-    return Containers::pointer(new MeshObjectData2D{{},
-        Matrix3::translation(3.0f*Vector2{-1.5f + Float(id % 4), -1.0f + Float(id / 4)}),
-        UnsignedInt(doMeshForName(Names2D[id])), -1, -1
-    });
-}
-
-UnsignedInt PrimitiveImporter::doObject3DCount() const {
-    return Containers::arraySize(Names3D);
-}
-
-Int PrimitiveImporter::doObject3DForName(const std::string& name) {
-    for(std::size_t i = 0; i != Containers::arraySize(Names3D); ++i)
-        if(name == Names3D[i]) return i;
-    return -1;
-}
-
-std::string PrimitiveImporter::doObject3DName(const UnsignedInt id) {
-    return Names3D[id];
-}
-
-Containers::Pointer<ObjectData3D> PrimitiveImporter::doObject3D(const UnsignedInt id) {
-    static_assert(Containers::arraySize(Names3D) <= 25, "can't pack into 5x5 cells");
-    return Containers::pointer(new MeshObjectData3D{{},
-        Matrix4::translation(3.0f*Vector3{-2.0f + Float(id % 5), -2.0f + Float(id / 5), 0.0f}),
-        UnsignedInt(doMeshForName(Names3D[id])), -1, -1
-    });
+std::string PrimitiveImporter::doObjectName(const UnsignedLong id) {
+    return Names[id];
 }
 
 UnsignedInt PrimitiveImporter::doMeshCount() const {
@@ -226,6 +246,8 @@ UnsignedInt PrimitiveImporter::doMeshCount() const {
 }
 
 Int PrimitiveImporter::doMeshForName(const std::string& name) {
+    /** @todo it's sorted, a reusable binary search utility would be handy
+        (not that hard-to-use-correctly STL lower_bound crap) */
     for(std::size_t i = 0; i != Containers::arraySize(Names); ++i)
         if(name == Names[i]) return i;
     return -1;

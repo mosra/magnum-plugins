@@ -44,7 +44,8 @@ struct PrimitiveImporterTest: TestSuite::Tester {
     void test();
     void mesh();
 
-    void scene();
+    void scene2D();
+    void scene3D();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
@@ -112,7 +113,8 @@ PrimitiveImporterTest::PrimitiveImporterTest() {
     addInstancedTests({&PrimitiveImporterTest::mesh},
         Containers::arraySize(Data));
 
-    addTests({&PrimitiveImporterTest::scene});
+    addTests({&PrimitiveImporterTest::scene2D,
+              &PrimitiveImporterTest::scene3D});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -158,7 +160,7 @@ void PrimitiveImporterTest::mesh() {
     } else CORRADE_VERIFY(!mesh->isIndexed());
 }
 
-void PrimitiveImporterTest::scene() {
+void PrimitiveImporterTest::scene2D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PrimitiveImporter");
 
     /* Due to checks in AbstractImporter, the importer has to manage opened
@@ -166,50 +168,84 @@ void PrimitiveImporterTest::scene() {
     CORRADE_VERIFY(!importer->isOpened());
     CORRADE_VERIFY(importer->openData(nullptr));
 
-    /* Both 2D and 3D scenes should contain everything */
-    CORRADE_COMPARE(importer->object2DCount() + importer->object3DCount(),
-        Containers::arraySize(Data));
+    /* The 2D and 3D objects are interleaved (sorted by name) so both 2D and 3D
+       object count is the total object count */
+    CORRADE_COMPARE(importer->object2DCount(), Containers::arraySize(Data));
 
-    /* Scene import */
-    CORRADE_COMPARE(importer->defaultScene(), 0);
-    CORRADE_COMPARE(importer->sceneCount(), 1);
+    /* The default scene is a 3D one to avoid confusing existing code that
+       expects just 3D scenes. */
+    CORRADE_COMPARE(importer->sceneCount(), 2);
+    CORRADE_COMPARE(importer->defaultScene(), 1);
+
     Containers::Optional<Trade::SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children2D().size(), importer->object2DCount());
-    CORRADE_COMPARE(scene->children3D().size(), importer->object3DCount());
-    /* The IDs are just monotonic */
-    CORRADE_COMPARE(scene->children2D()[5], 5);
-    CORRADE_COMPARE(scene->children3D()[7], 7);
+    CORRADE_COMPARE(scene->children2D().size(), 11);
+    /* The objects are interleaved (sorted by name) so this is not monotonic */
+    CORRADE_COMPARE(scene->children2D()[5], 18);
 
     /* Name mapping should work both ways */
     Int gradient2DHorizontal = importer->object2DForName("gradient2DHorizontal");
     CORRADE_COMPARE_AS(gradient2DHorizontal, 0, TestSuite::Compare::GreaterOrEqual);
     CORRADE_COMPARE(importer->object2DName(gradient2DHorizontal), "gradient2DHorizontal");
-    CORRADE_COMPARE(importer->object2DForName("gradient3DHorizontal"), -1);
-
-    Int gradient3DHorizontal = importer->object3DForName("gradient3DHorizontal");
-    CORRADE_COMPARE_AS(gradient3DHorizontal, 0, TestSuite::Compare::GreaterOrEqual);
-    CORRADE_COMPARE(importer->object3DName(gradient3DHorizontal), "gradient3DHorizontal");
-    CORRADE_COMPARE(importer->object3DForName("gradient2DHorizontal"), -1);
+    {
+        CORRADE_EXPECT_FAIL("Object names are shared for 2D and 3D in the new interface, so this always returns a valid ID.");
+        CORRADE_COMPARE(importer->object2DForName("gradient3DHorizontal"), -1);
+    }
 
     /* 2D object import */
     Containers::Pointer<Trade::ObjectData2D> object2D = importer->object2D("squareSolid");
     CORRADE_VERIFY(object2D);
+    CORRADE_COMPARE(object2D->flags(), Trade::ObjectFlag2D::HasTranslationRotationScaling);
+    CORRADE_COMPARE(object2D->translation(), (Vector2{-1.5f, 3.0f}));
     CORRADE_COMPARE(object2D->instanceType(), Trade::ObjectInstanceType2D::Mesh);
     Int object2DInstance = object2D->instance();
     CORRADE_COMPARE_AS(object2DInstance, 0, TestSuite::Compare::GreaterOrEqual);
     CORRADE_COMPARE_AS(object2DInstance, importer->meshCount(), TestSuite::Compare::Less);
     CORRADE_COMPARE(importer->meshName(object2DInstance), "squareSolid");
+}
+
+void PrimitiveImporterTest::scene3D() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PrimitiveImporter");
+
+    /* Due to checks in AbstractImporter, the importer has to manage opened
+       state but other than that it doesn't matter what's opened */
+    CORRADE_VERIFY(!importer->isOpened());
+    CORRADE_VERIFY(importer->openData(nullptr));
+
+    /* The 2D and 3D objects are interleaved (sorted by name) so both 2D and 3D
+       object count is the total object count */
+    CORRADE_COMPARE(importer->object3DCount(), Containers::arraySize(Data));
+
+    /* The default scene is a 3D one to avoid confusing existing code that
+       expects just 3D scenes. */
+    CORRADE_COMPARE(importer->sceneCount(), 2);
+    CORRADE_COMPARE(importer->defaultScene(), 1);
+
+    Containers::Optional<Trade::SceneData> scene = importer->scene(1);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->children3D().size(), 25);
+    /* The 2D amd 3D objects are interleaved (sorted by name) so this is not monotonic */
+    CORRADE_COMPARE(scene->children3D()[7], 12);
+
+    /* Name mapping should work both ways */
+    Int gradient3DHorizontal = importer->object3DForName("gradient3DHorizontal");
+    CORRADE_COMPARE_AS(gradient3DHorizontal, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE(importer->object3DName(gradient3DHorizontal), "gradient3DHorizontal");
+    {
+        CORRADE_EXPECT_FAIL("Object names are shared for 2D and 3D in the new interface, so this always returns a valid ID.");
+        CORRADE_COMPARE(importer->object3DForName("gradient2DHorizontal"), -1);
+    }
 
     /* 3D dbject import */
     Containers::Pointer<Trade::ObjectData3D> object3D = importer->object3D("planeWireframe");
     CORRADE_VERIFY(object3D);
+    CORRADE_COMPARE(object3D->flags(), Trade::ObjectFlag3D::HasTranslationRotationScaling);
+    CORRADE_COMPARE(object3D->translation(), (Vector3{1.5f, 9.0f, 0.0f}));
     CORRADE_COMPARE(object3D->instanceType(), Trade::ObjectInstanceType3D::Mesh);
     Int object3DInstance = object3D->instance();
     CORRADE_COMPARE_AS(object3DInstance, 0, TestSuite::Compare::GreaterOrEqual);
     CORRADE_COMPARE_AS(object3DInstance, importer->meshCount(), TestSuite::Compare::Less);
     CORRADE_COMPARE(importer->meshName(object3DInstance), "planeWireframe");
-
 }
 
 }}}}
