@@ -156,21 +156,21 @@ corrade_add_test(TinyGltfImporterTest
         required-extensions-unsupported.gltf
         scene.gltf
         scene.glb
-        scene-cycle.gltf
-        scene-cycle-deep.gltf
         scene-default-none.gltf
         scene-default-oob.gltf
-        scene-invalid-camera-oob.gltf
-        scene-invalid-child-not-root.gltf
-        scene-invalid-child-oob.gltf
-        scene-invalid-light-oob.gltf
-        scene-invalid-material-oob-multi-primitive.gltf
-        scene-invalid-material-oob.gltf
-        scene-invalid-mesh-oob.gltf
-        scene-invalid-multiple-parents.gltf
-        scene-invalid-node-oob.gltf
-        scene-invalid-skin-oob-multi-primitive.gltf
-        scene-invalid-skin-oob.gltf
+        scene-invalid-hierarchy-child-not-root.gltf
+        scene-invalid-hierarchy-cycle.gltf
+        scene-invalid-hierarchy-cycle-deep.gltf
+        scene-invalid-hierarchy-multiple-parents.gltf
+        scene-oob-camera.gltf
+        scene-oob-child.gltf
+        scene-oob-light.gltf
+        scene-oob-material.gltf
+        scene-oob-material-multi-primitive.gltf
+        scene-oob-mesh.gltf
+        scene-oob-node.gltf
+        scene-oob-skin.gltf
+        scene-oob-skin-multi-primitive.gltf
         skin-embedded.glb
         skin-embedded.gltf
         skin-invalid.gltf
