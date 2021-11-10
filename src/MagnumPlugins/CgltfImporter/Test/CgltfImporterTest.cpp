@@ -466,12 +466,12 @@ constexpr struct {
 } SceneOutOfBoundsData[]{
     {"camera out of bounds", "scene-invalid-camera-oob.gltf"},
     {"child out of bounds", "scene-invalid-child-oob.gltf"},
+    {"light out of bounds", "scene-invalid-light-oob.gltf"},
     {"material out of bounds", "scene-invalid-material-oob.gltf"},
     {"material in a multi-primitive mesh out of bounds", "scene-invalid-material-oob-multi-primitive.gltf"},
+    {"node out of bounds", "scene-invalid-node-oob.gltf"},
     {"skin out of bounds", "scene-invalid-skin-oob.gltf"},
-    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-skin-oob-multi-primitive.gltf"},
-    {"light out of bounds", "scene-invalid-light-oob.gltf"},
-    {"node out of bounds", "scene-invalid-node-oob.gltf"}
+    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-skin-oob-multi-primitive.gltf"}
 };
 
 constexpr struct {

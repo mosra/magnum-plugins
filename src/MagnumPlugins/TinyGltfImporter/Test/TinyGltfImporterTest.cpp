@@ -387,13 +387,13 @@ constexpr struct {
 } SceneInvalidObjectData[]{
     {"camera out of bounds", "scene-invalid-camera-oob.gltf", 0, "camera index 1 out of bounds for 1 cameras"},
     {"child out of bounds", "scene-invalid-child-oob.gltf", 0, "child index 7 out of bounds for 7 nodes"},
+    {"light out of bounds", "scene-invalid-light-oob.gltf", 0, "light index 2 out of bounds for 2 lights"},
     {"material out of bounds", "scene-invalid-material-oob.gltf", 0, "material index 4 out of bounds for 4 materials"},
     {"material in a multi-primitive mesh out of bounds", "scene-invalid-material-oob-multi-primitive.gltf", 1, "material index 5 out of bounds for 4 materials"},
     {"skin out of bounds", "scene-invalid-skin-oob.gltf", 0, "skin index 3 out of bounds for 3 skins"},
     /* The skin should be checked for both duplicates of the primitive */
     {"skin for a multi-primitive mesh out of bounds", "scene-invalid-skin-oob-multi-primitive.gltf", 0, "skin index 3 out of bounds for 3 skins"},
-    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-skin-oob-multi-primitive.gltf", 1, "skin index 3 out of bounds for 3 skins"},
-    {"light out of bounds", "scene-invalid-light-oob.gltf", 0, "light index 2 out of bounds for 2 lights"}
+    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-skin-oob-multi-primitive.gltf", 1, "skin index 3 out of bounds for 3 skins"}
 };
 
 constexpr struct {
