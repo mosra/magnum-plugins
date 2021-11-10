@@ -112,11 +112,12 @@ struct CgltfImporterTest: TestSuite::Tester {
     void lightMissingSpot();
 
     void scene();
-    void sceneEmpty();
-    void sceneNoDefault();
     void sceneOutOfBounds();
     void sceneInvalid();
     void sceneCycle();
+    void sceneDefaultNoScenes();
+    void sceneDefaultNoDefault();
+    void sceneDefaultOutOfBounds();
 
     void objectTransformation();
     void objectTransformationQuaternionNormalizationEnabled();
@@ -471,7 +472,6 @@ constexpr struct {
     {"skin out of bounds", "scene-invalid-skin-oob.gltf"},
     {"skin for a multi-primitive mesh out of bounds", "scene-invalid-skin-oob-multi-primitive.gltf"},
     {"light out of bounds", "scene-invalid-light-oob.gltf"},
-    {"default scene out of bounds", "scene-invalid-default-oob.gltf"},
     {"node out of bounds", "scene-invalid-node-oob.gltf"}
 };
 
@@ -703,10 +703,8 @@ CgltfImporterTest::CgltfImporterTest() {
               &CgltfImporterTest::lightMissingType,
               &CgltfImporterTest::lightMissingSpot});
 
-    addInstancedTests({&CgltfImporterTest::scene,
-                       &CgltfImporterTest::sceneEmpty,
-                       &CgltfImporterTest::sceneNoDefault},
-                      Containers::arraySize(SingleFileData));
+    addInstancedTests({&CgltfImporterTest::scene},
+        Containers::arraySize(SingleFileData));
 
     addInstancedTests({&CgltfImporterTest::sceneOutOfBounds},
         Containers::arraySize(SceneOutOfBoundsData));
@@ -716,6 +714,10 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addInstancedTests({&CgltfImporterTest::sceneCycle},
         Containers::arraySize(SceneCycleData));
+
+    addTests({&CgltfImporterTest::sceneDefaultNoScenes,
+              &CgltfImporterTest::sceneDefaultNoDefault,
+              &CgltfImporterTest::sceneDefaultOutOfBounds});
 
     addInstancedTests({&CgltfImporterTest::objectTransformation},
                       Containers::arraySize(SingleFileData));
@@ -2111,36 +2113,6 @@ void CgltfImporterTest::scene() {
     }
 }
 
-void CgltfImporterTest::sceneEmpty() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "empty" + std::string{data.suffix})));
-
-    /* There is no scene, can't have any default */
-    CORRADE_COMPARE(importer->defaultScene(), -1);
-    CORRADE_COMPARE(importer->sceneCount(), 0);
-}
-
-void CgltfImporterTest::sceneNoDefault() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "scene-nodefault" + std::string{data.suffix})));
-
-    /* There is at least one scene, it's made default */
-    CORRADE_COMPARE(importer->defaultScene(), 0);
-    CORRADE_COMPARE(importer->sceneCount(), 1);
-
-    auto scene = importer->scene(0);
-    CORRADE_VERIFY(scene);
-    CORRADE_VERIFY(scene->children3D().empty());
-}
-
 void CgltfImporterTest::sceneOutOfBounds() {
     auto&& data = SceneOutOfBoundsData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -2178,6 +2150,37 @@ void CgltfImporterTest::sceneCycle() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): node tree contains cycle starting at node 0\n");
+}
+
+void CgltfImporterTest::sceneDefaultNoScenes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "empty.gltf")));
+
+    /* There is no scene, can't have any default */
+    CORRADE_COMPARE(importer->defaultScene(), -1);
+    CORRADE_COMPARE(importer->sceneCount(), 0);
+}
+
+void CgltfImporterTest::sceneDefaultNoDefault() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "scene-default-none.gltf")));
+
+    /* There is at least one scene, it's made default */
+    CORRADE_COMPARE(importer->defaultScene(), 0);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+}
+
+void CgltfImporterTest::sceneDefaultOutOfBounds() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "scene-default-invalid-oob.gltf")));
+    /* Unfortunately the error is the same here as well as for all cases in
+       sceneOutOfBounds() */
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
 
 void CgltfImporterTest::objectTransformation() {

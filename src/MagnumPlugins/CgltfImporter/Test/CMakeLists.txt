@@ -178,12 +178,11 @@ corrade_add_test(CgltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-cycle.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-cycle-deep.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-nodefault.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-nodefault.glb
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-default-none.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-default-invalid-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-invalid-camera-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-invalid-child-not-root.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-invalid-child-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-invalid-default-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-invalid-light-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-invalid-material-oob-multi-primitive.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-invalid-material-oob.gltf

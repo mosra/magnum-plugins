@@ -158,12 +158,11 @@ corrade_add_test(TinyGltfImporterTest
         scene.glb
         scene-cycle.gltf
         scene-cycle-deep.gltf
-        scene-nodefault.gltf
-        scene-nodefault.glb
+        scene-default-none.gltf
+        scene-default-oob.gltf
         scene-invalid-camera-oob.gltf
         scene-invalid-child-not-root.gltf
         scene-invalid-child-oob.gltf
-        scene-invalid-default-oob.gltf
         scene-invalid-light-oob.gltf
         scene-invalid-material-oob-multi-primitive.gltf
         scene-invalid-material-oob.gltf

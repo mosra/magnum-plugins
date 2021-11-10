@@ -102,13 +102,13 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void lightMissingSpot();
 
     void scene();
-    void sceneEmpty();
-    void sceneNoDefault();
     void sceneInvalidObject();
     void sceneInvalidMesh();
     void sceneInvalidScene();
-    void sceneInvalidDefaultScene();
     void sceneInvalidHierarchy();
+    void sceneDefaultNoScenes();
+    void sceneDefaultNoDefault();
+    void sceneDefaultOutOfBounds();
 
     void objectTransformation();
     void objectTransformationQuaternionNormalizationEnabled();
@@ -580,9 +580,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::lightMissingType,
               &TinyGltfImporterTest::lightMissingSpot});
 
-    addInstancedTests({&TinyGltfImporterTest::scene,
-                       &TinyGltfImporterTest::sceneEmpty,
-                       &TinyGltfImporterTest::sceneNoDefault},
+    addInstancedTests({&TinyGltfImporterTest::scene},
                       Containers::arraySize(SingleFileData));
 
     addTests({&TinyGltfImporterTest::sceneInvalidMesh});
@@ -590,11 +588,14 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::sceneInvalidObject},
         Containers::arraySize(SceneInvalidObjectData));
 
-    addTests({&TinyGltfImporterTest::sceneInvalidScene,
-              &TinyGltfImporterTest::sceneInvalidDefaultScene});
+    addTests({&TinyGltfImporterTest::sceneInvalidScene});
 
     addInstancedTests({&TinyGltfImporterTest::sceneInvalidHierarchy},
         Containers::arraySize(SceneInvalidHierarchyData));
+
+    addTests({&TinyGltfImporterTest::sceneDefaultNoScenes,
+              &TinyGltfImporterTest::sceneDefaultNoDefault,
+              &TinyGltfImporterTest::sceneDefaultOutOfBounds});
 
     addInstancedTests({&TinyGltfImporterTest::objectTransformation},
                       Containers::arraySize(SingleFileData));
@@ -1713,36 +1714,6 @@ void TinyGltfImporterTest::scene() {
     }
 }
 
-void TinyGltfImporterTest::sceneEmpty() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "empty" + std::string{data.suffix})));
-
-    /* There is no scene, can't have any default */
-    CORRADE_COMPARE(importer->defaultScene(), -1);
-    CORRADE_COMPARE(importer->sceneCount(), 0);
-}
-
-void TinyGltfImporterTest::sceneNoDefault() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "scene-nodefault" + std::string{data.suffix})));
-
-    /* There is at least one scene, it's made default */
-    CORRADE_COMPARE(importer->defaultScene(), 0);
-    CORRADE_COMPARE(importer->sceneCount(), 1);
-
-    auto scene = importer->scene(0);
-    CORRADE_VERIFY(scene);
-    CORRADE_VERIFY(scene->children3D().empty());
-}
-
 void TinyGltfImporterTest::sceneInvalidObject() {
     auto&& data = SceneInvalidObjectData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -1779,16 +1750,6 @@ void TinyGltfImporterTest::sceneInvalidScene() {
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): node index 7 out of bounds for 7 nodes\n");
 }
 
-void TinyGltfImporterTest::sceneInvalidDefaultScene() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "scene-invalid-default-oob.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of bounds for 0 scenes\n");
-}
-
 void TinyGltfImporterTest::sceneInvalidHierarchy() {
     auto&& data = SceneInvalidHierarchyData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -1799,6 +1760,36 @@ void TinyGltfImporterTest::sceneInvalidHierarchy() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::openData(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::sceneDefaultNoScenes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "empty.gltf")));
+
+    /* There is no scene, can't have any default */
+    CORRADE_COMPARE(importer->defaultScene(), -1);
+    CORRADE_COMPARE(importer->sceneCount(), 0);
+}
+
+void TinyGltfImporterTest::sceneDefaultNoDefault() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "scene-default-none.gltf")));
+
+    /* There is at least one scene, it's made default */
+    CORRADE_COMPARE(importer->defaultScene(), 0);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+}
+
+void TinyGltfImporterTest::sceneDefaultOutOfBounds() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "scene-default-invalid-oob.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of bounds for 0 scenes\n");
 }
 
 void TinyGltfImporterTest::objectTransformation() {
