@@ -113,8 +113,7 @@ struct CgltfImporterTest: TestSuite::Tester {
 
     void scene();
     void sceneOutOfBounds();
-    void sceneInvalid();
-    void sceneCycle();
+    void sceneInvalidHierarchy();
     void sceneDefaultNoScenes();
     void sceneDefaultNoDefault();
     void sceneDefaultOutOfBounds();
@@ -478,17 +477,18 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
-} SceneInvalidData[]{
-    {"scene node has parent", "scene-invalid-child-not-root.gltf"},
-    {"node has multiple parents", "scene-invalid-multiple-parents.gltf"}
-};
-
-constexpr struct {
-    const char* name;
-    const char* file;
-} SceneCycleData[]{
-    {"child is self", "scene-cycle.gltf"},
-    {"great-grandchild is self", "scene-cycle-deep.gltf"}
+    const char* message;
+} SceneInvalidHierarchyData[]{
+    {"scene node has parent", "scene-invalid-child-not-root.gltf",
+        "error opening file: invalid glTF, usually caused by invalid indices or missing required attributes"},
+    {"node has multiple parents", "scene-invalid-multiple-parents.gltf",
+        "error opening file: invalid glTF, usually caused by invalid indices or missing required attributes"},
+    /* For some reason node relationships are checked in cgltf_parse(), but
+       cycles not, so the message is different. */
+    {"child is self", "scene-cycle.gltf",
+        "node tree contains cycle starting at node 0"},
+    {"great-grandchild is self", "scene-cycle-deep.gltf",
+        "node tree contains cycle starting at node 0"}
 };
 
 constexpr struct {
@@ -709,11 +709,8 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::sceneOutOfBounds},
         Containers::arraySize(SceneOutOfBoundsData));
 
-    addInstancedTests({&CgltfImporterTest::sceneInvalid},
-        Containers::arraySize(SceneInvalidData));
-
-    addInstancedTests({&CgltfImporterTest::sceneCycle},
-        Containers::arraySize(SceneCycleData));
+    addInstancedTests({&CgltfImporterTest::sceneInvalidHierarchy},
+        Containers::arraySize(SceneInvalidHierarchyData));
 
     addTests({&CgltfImporterTest::sceneDefaultNoScenes,
               &CgltfImporterTest::sceneDefaultNoDefault,
@@ -2125,23 +2122,8 @@ void CgltfImporterTest::sceneOutOfBounds() {
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
 
-void CgltfImporterTest::sceneInvalid() {
-    auto&& data = SceneInvalidData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    /* For some reason node relationships are checked in cgltf_parse and not in
-       cgltf_validate. Cycles are checked in cgltf_validate again. */
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
-}
-
-void CgltfImporterTest::sceneCycle() {
-    auto&& data = SceneCycleData[testCaseInstanceId()];
+void CgltfImporterTest::sceneInvalidHierarchy() {
+    auto&& data = SceneInvalidHierarchyData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
@@ -2149,7 +2131,7 @@ void CgltfImporterTest::sceneCycle() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): node tree contains cycle starting at node 0\n");
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
 }
 
 void CgltfImporterTest::sceneDefaultNoScenes() {
