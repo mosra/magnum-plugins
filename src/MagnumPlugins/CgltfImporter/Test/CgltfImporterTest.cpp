@@ -870,11 +870,9 @@ void CgltfImporterTest::open() {
         "empty" + std::string{data.suffix});
     CORRADE_VERIFY(importer->openFile(filename));
     CORRADE_VERIFY(importer->isOpened());
-    CORRADE_VERIFY(!importer->importerState());
 
     CORRADE_VERIFY(importer->openData(Utility::Directory::read(filename)));
     CORRADE_VERIFY(importer->isOpened());
-    CORRADE_VERIFY(!importer->importerState());
 
     importer->close();
     CORRADE_VERIFY(!importer->isOpened());
@@ -1150,8 +1148,6 @@ void CgltfImporterTest::animation() {
 
         auto animation = importer->animation(1);
         CORRADE_VERIFY(animation);
-        CORRADE_VERIFY(!animation->importerState());
-
         CORRADE_COMPARE(animation->data().size(), 0);
         CORRADE_COMPARE(animation->trackCount(), 3);
 
@@ -1180,7 +1176,6 @@ void CgltfImporterTest::animation() {
 
         auto animation = importer->animation(2);
         CORRADE_VERIFY(animation);
-        CORRADE_VERIFY(!animation->importerState());
         /* Two rotation keys, four translation and scaling keys with common
            time track */
         CORRADE_COMPARE(animation->data().size(),
@@ -1404,7 +1399,6 @@ void CgltfImporterTest::animationSpline() {
 
     auto animation = importer->animation(3);
     CORRADE_VERIFY(animation);
-    CORRADE_VERIFY(!animation->importerState());
     /* Four spline T/R/S keys with one common time track */
     CORRADE_COMPARE(animation->data().size(),
         4*(sizeof(Float) + 3*sizeof(Quaternion) + 2*3*sizeof(Vector3)));
@@ -1492,7 +1486,6 @@ void CgltfImporterTest::animationSplineSharedWithSameTimeTrack() {
 
     auto animation = importer->animation(0);
     CORRADE_VERIFY(animation);
-    CORRADE_VERIFY(!animation->importerState());
     /* Four spline T keys with one common time track, used as S as well */
     CORRADE_COMPARE(animation->data().size(),
         4*(sizeof(Float) + 3*sizeof(Vector3)));
@@ -1743,7 +1736,6 @@ void CgltfImporterTest::animationMerge() {
 
     auto animation = importer->animation(0);
     CORRADE_VERIFY(animation);
-    CORRADE_VERIFY(!animation->importerState()); /* No particular clip */
     /*
         -   Nothing from the first animation
         -   Empty T/R/S tracks from the second animation
@@ -2040,12 +2032,10 @@ void CgltfImporterTest::scene() {
 
     auto emptyScene = importer->scene(0);
     CORRADE_VERIFY(emptyScene);
-    CORRADE_VERIFY(!emptyScene->importerState());
     CORRADE_COMPARE(emptyScene->children3D(), std::vector<UnsignedInt>{});
 
     auto scene = importer->scene(1);
     CORRADE_VERIFY(scene);
-    CORRADE_VERIFY(!scene->importerState());
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4}));
 
     CORRADE_COMPARE(importer->object3DCount(), 7);
@@ -2056,21 +2046,18 @@ void CgltfImporterTest::scene() {
     {
         auto object = importer->object3D("Camera");
         CORRADE_VERIFY(object);
-        CORRADE_VERIFY(!object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
         CORRADE_COMPARE(object->instance(), 2);
         CORRADE_VERIFY(object->children().empty());
     } {
         auto object = importer->object3D("Empty with one child");
         CORRADE_VERIFY(object);
-        CORRADE_VERIFY(!object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->instance(), -1);
         CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{0}));
     } {
         auto object = importer->object3D("Mesh w/o material");
         CORRADE_VERIFY(object);
-        CORRADE_VERIFY(!object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 1);
         CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), -1);
@@ -2079,7 +2066,6 @@ void CgltfImporterTest::scene() {
     } {
         auto object = importer->object3D("Mesh and a material");
         CORRADE_VERIFY(object);
-        CORRADE_VERIFY(!object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 0);
         CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), 1);
@@ -2088,7 +2074,6 @@ void CgltfImporterTest::scene() {
     } {
         auto object = importer->object3D("Mesh and a skin");
         CORRADE_VERIFY(object);
-        CORRADE_VERIFY(!object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 1);
         CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), -1);
@@ -2097,14 +2082,12 @@ void CgltfImporterTest::scene() {
     } {
         auto object = importer->object3D("Light");
         CORRADE_VERIFY(object);
-        CORRADE_VERIFY(!object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
         CORRADE_COMPARE(object->instance(), 1);
         CORRADE_VERIFY(object->children().empty());
     } {
         auto object = importer->object3D("Empty with two children");
         CORRADE_VERIFY(object);
-        CORRADE_VERIFY(!object->importerState());
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{3, 1}));
     }
@@ -2345,7 +2328,6 @@ void CgltfImporterTest::skin() {
 
         auto skin = importer->skin3D(0);
         CORRADE_VERIFY(skin);
-        CORRADE_VERIFY(!skin->importerState());
         CORRADE_COMPARE_AS(skin->joints(),
             Containers::arrayView<UnsignedInt>({1, 2}),
             TestSuite::Compare::Container);
@@ -2358,7 +2340,6 @@ void CgltfImporterTest::skin() {
 
         auto skin = importer->skin3D(1);
         CORRADE_VERIFY(skin);
-        CORRADE_VERIFY(!skin->importerState());
         CORRADE_COMPARE_AS(skin->joints(),
             Containers::arrayView<UnsignedInt>({0, 2, 1}),
             TestSuite::Compare::Container);
@@ -2460,7 +2441,6 @@ void CgltfImporterTest::mesh() {
 
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(!mesh->importerState());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
     CORRADE_VERIFY(!mesh->isIndexed());
@@ -2493,7 +2473,6 @@ void CgltfImporterTest::meshAttributeless() {
 
     auto mesh = importer->mesh("Attribute-less mesh");
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(!mesh->importerState());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
     CORRADE_VERIFY(!mesh->isIndexed());
     CORRADE_COMPARE(mesh->vertexCount(), 0);
@@ -2511,7 +2490,6 @@ void CgltfImporterTest::meshIndexed() {
 
     auto mesh = importer->mesh(1);
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(!mesh->importerState());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
     CORRADE_VERIFY(mesh->isIndexed());
@@ -2563,7 +2541,6 @@ void CgltfImporterTest::meshIndexedAttributeless() {
 
     auto mesh = importer->mesh("Attribute-less indexed mesh");
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(!mesh->importerState());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
     CORRADE_VERIFY(mesh->isIndexed());
     CORRADE_COMPARE_AS(mesh->indicesAsArray(),
@@ -3322,7 +3299,6 @@ void CgltfImporterTest::materialPbrMetallicRoughness() {
         auto material = importer->material(name);
         CORRADE_ITERATION(name);
         CORRADE_VERIFY(material);
-        CORRADE_VERIFY(!material->importerState());
         CORRADE_COMPARE(material->types(), MaterialType::PbrMetallicRoughness);
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 0);
@@ -3446,7 +3422,6 @@ void CgltfImporterTest::materialPbrSpecularGlossiness() {
         auto material = importer->material(name);
         CORRADE_ITERATION(name);
         CORRADE_VERIFY(material);
-        CORRADE_VERIFY(!material->importerState());
         CORRADE_COMPARE(material->types(), MaterialType::PbrSpecularGlossiness);
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 0);
@@ -3680,7 +3655,6 @@ void CgltfImporterTest::materialUnlit() {
 
     auto material = importer->material(0);
     CORRADE_VERIFY(material);
-    CORRADE_VERIFY(!material->importerState());
     /* Metallic/roughness is removed from types */
     CORRADE_COMPARE(material->types(), MaterialType::Flat);
     CORRADE_COMPARE(material->layerCount(), 1);
@@ -3833,7 +3807,6 @@ void CgltfImporterTest::materialPhongFallback() {
         auto material = importer->material(name);
         CORRADE_ITERATION(name);
         CORRADE_VERIFY(material);
-        CORRADE_VERIFY(!material->importerState());
         CORRADE_COMPARE(material->types(), MaterialType::Phong);
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 0);
@@ -4031,7 +4004,6 @@ void CgltfImporterTest::texture() {
 
     auto texture = importer->texture(1);
     CORRADE_VERIFY(texture);
-    CORRADE_VERIFY(!texture->importerState());
     CORRADE_COMPARE(texture->image(), 0);
     CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
 
@@ -4212,7 +4184,6 @@ void CgltfImporterTest::imageEmbedded() {
 
     auto image = importer->image2D(1);
     CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->importerState());
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
@@ -4235,7 +4206,6 @@ void CgltfImporterTest::imageExternal() {
 
     auto image = importer->image2D(1);
     CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->importerState());
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
@@ -4305,7 +4275,6 @@ void CgltfImporterTest::imageBasis() {
 
     auto image = importer->image2D(1);
     CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->importerState());
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc4x4RGBAUnorm);
@@ -4337,7 +4306,6 @@ void CgltfImporterTest::imageMipLevels() {
     Containers::Optional<ImageData2D> image11 = importer->image2D(1, 1);
 
     CORRADE_VERIFY(image0);
-    CORRADE_VERIFY(!image0->importerState());
     CORRADE_VERIFY(!image0->isCompressed());
     CORRADE_COMPARE(image0->size(), (Vector2i{5, 3}));
     CORRADE_COMPARE(image0->format(), PixelFormat::RGBA8Unorm);
@@ -4351,7 +4319,6 @@ void CgltfImporterTest::imageMipLevels() {
         }), TestSuite::Compare::Container);
 
     CORRADE_VERIFY(image10);
-    CORRADE_VERIFY(!image10->importerState());
     CORRADE_VERIFY(!image10->isCompressed());
     CORRADE_COMPARE(image10->size(), (Vector2i{5, 3}));
     CORRADE_COMPARE(image10->format(), PixelFormat::RGBA8Unorm);
@@ -4367,7 +4334,6 @@ void CgltfImporterTest::imageMipLevels() {
         }), TestSuite::Compare::Container);
 
     CORRADE_VERIFY(image11);
-    CORRADE_VERIFY(!image11->importerState());
     CORRADE_VERIFY(!image11->isCompressed());
     CORRADE_COMPARE(image11->size(), (Vector2i{2, 1}));
     CORRADE_COMPARE(image11->format(), PixelFormat::RGBA8Unorm);
