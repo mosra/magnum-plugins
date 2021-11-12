@@ -227,6 +227,8 @@ commands:
           mkdir -p $HOME/basis_universal && cd $HOME/basis_universal
           wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.tar.gz
           tar --strip-components 1 -xzf $BASIS_VERSION.tar.gz
+          # We want to use the external Zstd instead of this
+          rm -r zstd
 
   install-openexr:
     parameters:

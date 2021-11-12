@@ -62,19 +62,13 @@ endif()
 target_include_directories(BasisImporter
     PUBLIC
     ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
+    ${PROJECT_BINARY_DIR}/src
+    # Turns #include "../zstd/zstd.h" into an actual external zstd.h include.
+    # See the README in that directory for details.
+    ${PROJECT_SOURCE_DIR}/src/external/basis-zstd-include-uncrapifier/put-this-on-include-path)
 target_link_libraries(BasisImporter
     PUBLIC Magnum::Trade
     PRIVATE BasisUniversal::Transcoder)
-# If we have bundled Basis sources and the bundled Basis sources bundle zstd
-# (which has ZSTD_MULTITHREAD unconditionally defined for all platforms, SIGH),
-# link the plugin to pthread. Can't do it directly in the Find module directly
-# for BasisUniversal::Transcoder for reasons described there.
-if(BasisUniversalZstd_DIR AND NOT CORRADE_TARGET_EMSCRIPTEN)
-    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-    find_package(Threads REQUIRED)
-    target_link_libraries(BasisImporter PRIVATE Threads::Threads)
-endif()
 
 install(FILES BasisImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/BasisImporter)

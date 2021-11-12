@@ -6,10 +6,7 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (Emscripten WebGL 2,
 arch=('any')
 url="https://magnum.graphics"
 license=('MIT')
-depends=('emscripten-magnum=dev.wasm.webgl2' 'emscripten-faad2')
-# Emscripten doesn't have zstd on its own, so we fall back to using the one
-# bundled with Basis Universal. TODO redo when the bundled dependency is
-# dropped
+depends=('emscripten-magnum=dev.wasm.webgl2' 'emscripten-faad2' 'emscripten-zstd')
 makedepends=('cmake' 'emscripten' 'corrade' 'ninja' 'basis-universal-src')
 options=(!strip !buildflags)
 

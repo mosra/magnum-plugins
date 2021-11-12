@@ -339,12 +339,30 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             if(basisu_FOUND AND NOT BASIS_UNIVERSAL_DIR)
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES basisu_encoder)
+            else()
+                # Our own build may depend on Zstd, as we replace the bundled
+                # files with an external library. Include it if present,
+                # otherwise assume it's compiled without.
+                find_package(Zstd)
+                if(Zstd_FOUND)
+                    set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES Zstd::Zstd)
+                endif()
             endif()
         elseif(_component STREQUAL BasisImporter)
             find_package(basisu CONFIG QUIET)
             if(basisu_FOUND AND NOT BASIS_UNIVERSAL_DIR)
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES basisu_transcoder)
+            else()
+                # Our own build may depend on Zstd, as we replace the bundled
+                # files with an external library. Include it if present,
+                # otherwise assume it's compiled without.
+                find_package(Zstd)
+                if(Zstd_FOUND)
+                    set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES Zstd::Zstd)
+                endif()
             endif()
 
         # BcDecImageConverter has no dependencies

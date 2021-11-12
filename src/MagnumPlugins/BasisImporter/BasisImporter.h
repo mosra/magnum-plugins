@@ -101,11 +101,28 @@ against the [`v1_15_update2` tag](https://github.com/BinomialLLC/basis_universal
 but could possibly compile against newer versions as well.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
-[magnum-plugins](https://github.com/mosra/magnum-plugins) and
+[magnum-plugins](https://github.com/mosra/magnum-plugins),
+[zstd](https://github.com/facebook/zstd) and
 [basis-universal](https://github.com/BinomialLLC/basis_universal) repositories
-and do the following:
+and do the following. Basis uses Zstd for KTX2 images, instead of bundling you
+can depend on an externally-installed zstd package, in which case omit the
+first part of the setup below. If Zstd isn't bundled and isn't found
+externally, Basis will be compiled without Zstd support. See
+@ref Trade-BasisImporter-binary-size below for additional options to control
+what gets built.
 
 @code{.cmake}
+set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+# Create a static library so the plugin is self-contained
+set(ZSTD_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(ZSTD_BUILD_STATIC ON CACHE BOOL "" FORCE)
+# Basis doesn't use any multithreading in zstd, this prevents a need to link to
+# pthread on Linux
+set(ZSTD_MULTITHREAD_SUPPORT OFF CACHE BOOL "" FORCE)
+# Don't build Zstd tests if enable_testing() was called in parent project
+set(ZSTD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+add_subdirectory(zstd/build/cmake EXCLUDE_FROM_ALL)
+
 set(BASIS_UNIVERSAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/basis-universal)
 set(MAGNUM_WITH_BASISIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)

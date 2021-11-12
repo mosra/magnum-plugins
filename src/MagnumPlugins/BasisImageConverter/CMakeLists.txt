@@ -60,7 +60,10 @@ if(MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
 endif()
 target_include_directories(BasisImageConverter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src)
+    ${PROJECT_BINARY_DIR}/src
+    # Turns #include "../zstd/zstd.h" into an actual external zstd.h include.
+    # See the README in that directory for details.
+    ${PROJECT_SOURCE_DIR}/src/external/basis-zstd-include-uncrapifier/put-this-on-include-path)
 target_link_libraries(BasisImageConverter
     PUBLIC Magnum::Trade
     PRIVATE BasisUniversal::Encoder)

@@ -76,7 +76,10 @@ mv $HOME/deps/lib/{libfaad.a,faad.bc}
 mv $HOME/deps/lib/{libfaad_drm.a,faad_drm.bc}
 cd ..
 
-# Crosscompile zstd
+# Crosscompile zstd. Version 1.5.1+ doesn't compile with this Emscripten
+# version, saying that
+#   huf_decompress_amd64.S: Input file has an unknown suffix, don't know what to do with it!
+# Newer Emscriptens work fine, 1.5.0 doesn't have this file yet so it works.
 export ZSTD_VERSION=1.5.0
 wget --no-check-certificate https://github.com/facebook/zstd/archive/refs/tags/v$ZSTD_VERSION.tar.gz
 tar -xzf v$ZSTD_VERSION.tar.gz

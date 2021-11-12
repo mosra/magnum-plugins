@@ -274,30 +274,25 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 set(BasisUniversalTranscoder_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
 
                 # Try to find an external Zstandard library because that's the
-                # sanest and most flexible option. Otherwise, it's a nightmare.
+                # sanest and most flexible option.
                 #
-                # If not found, Basis bundles its own, but unfortunately as one
-                # huge file containing a decoder+encoder and another file
-                # containing just the decoder. However, because the Encoder
-                # links to Transcoder, we can't link the Transcoder to
-                # zstddeclib.c because together with Encoder linking to zstd.c
-                # this would lead to duplicate symbol errors.
-                find_package(Zstd QUIET)
+                # Yes, Basis bundles its own, but unfortunately as one huge
+                # file containing a decoder+encoder and another file containing
+                # just the decoder. Which is a problem, because the Encoder
+                # depends on Transcoder and using zstddeclib.c together with
+                # zstd.c would lead to duplicate symbol errors. Not to mention
+                # the "one huge file" makes it harder for the linker to perform
+                # DCE, leading to potential binary bloat. And, a third problem,
+                # pthreads being implicitly enabled in the amalgamated build,
+                # requiring users to link to it, even though Basis doesn't use
+                # any threaded compression in the end.
+                find_package(Zstd)
                 if(NOT Zstd_FOUND)
-                    find_path(BasisUniversalZstd_DIR NAMES zstd.c
-                        HINTS "${BASIS_UNIVERSAL_DIR}/zstd" "${BASIS_UNIVERSAL_DIR}"
-                        NO_CMAKE_FIND_ROOT_PATH)
-                    mark_as_advanced(BasisUniversalZstd_DIR)
-                    if(BasisUniversalZstd_DIR)
-                        list(APPEND BasisUniversalTranscoder_SOURCES
-                            ${BasisUniversalZstd_DIR}/zstd.c)
-                    else()
-                        # If zstd wasn't found, disable Zstandard
-                        # supercompression support at compile time. The zstd.h
-                        # include is hidden behind this definition as well.
-                        list(APPEND BasisUniversalTranscoder_DEFINITIONS
-                            "BASISD_SUPPORT_KTX2_ZSTD=0")
-                    endif()
+                    # If zstd wasn't found, disable Zstandard supercompression
+                    # support at compile time. The zstd.h include is hidden
+                    # behind this definition as well.
+                    list(APPEND BasisUniversalTranscoder_DEFINITIONS
+                        "BASISD_SUPPORT_KTX2_ZSTD=0")
                 endif()
 
                 foreach(_file ${BasisUniversalTranscoder_SOURCES})
@@ -322,18 +317,6 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 if(Zstd_FOUND)
                     set_property(TARGET BasisUniversal::Transcoder APPEND PROPERTY
                         INTERFACE_LINK_LIBRARIES Zstd::Zstd)
-                elseif(BasisUniversalZstd_DIR)
-                    # The bundled zstd.c has ZSTD_MULTITHREAD unconditionally
-                    # defined for all platforms except Emscripten, which forces
-                    # us to link to pthread. The transcoder doesn't use any of
-                    # the multithreaded interfaces so for it alone it shouldn't
-                    # lead to the same issues described for the encoder above,
-                    # however because the encoder transitively links to the
-                    # encoder, we can't link to pthread here to avoid the
-                    # crashes there. It's instead done in the BasisImporter
-                    # CMakeLists depending on the (cached) variable set here.
-                    # It's extremely brittle that way but so is Basis itself,
-                    # so what.
                 endif()
             endif()
         else()

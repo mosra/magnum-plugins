@@ -129,10 +129,10 @@ makepkg -fp PKGBUILD # or any other PKGBUILD file
 @endcode
 
 @note The PKGBUILDs reference a few external dependencies such as
-    `basis-universal-src` or (in case of Emscripten) `emscripten-faad2`, which
-    are not in AUR. You can find PKGBUILDs for these at
-    https://github.com/mosra/archlinux. You can also edit the package, disable
-    building of affected features and remove the dependency.
+    `basis-universal-src` or (in case of Emscripten) `emscripten-zstd` and
+    `emscripten-faad2`, which are not in AUR. You can find PKGBUILDs for these
+    at https://github.com/mosra/archlinux. You can also edit the package,
+    disable building of affected features and remove the dependency.
 
 In most cases the development PKGBUILDs also contain a @cb{.sh} check() @ce
 function which will run all unit tests before packaging. That might sometimes

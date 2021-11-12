@@ -65,7 +65,7 @@ set -o pipefail && cmake --build . --config Release --target install -j$XCODE_JO
 cd ../..
 
 # Crosscompile zstd
-export ZSTD_VERSION=1.5.0
+export ZSTD_VERSION=1.5.5
 wget --no-check-certificate https://github.com/facebook/zstd/archive/refs/tags/v$ZSTD_VERSION.tar.gz
 tar -xzf v$ZSTD_VERSION.tar.gz
 cd zstd-$ZSTD_VERSION

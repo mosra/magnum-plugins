@@ -332,6 +332,11 @@ namespace Magnum {
     plugins don't compile against the previous 1.11 version of Basis anymore,
     you have to update the dependency to the `v1_15_update2` tag (see
     [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
+-   @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter}
+    plugins now rely on externally supplied zstd installation instead of using
+    the amalgamated file in Basis sources, which is outdated, lacks security
+    fixes and many optimizations. If no zstd is found, the Basis library is
+    compiled without zstd support. See [mosra/magnum-plugins#115](https://github.com/mosra/magnum-plugins/pull/115).
 -   The @cb{.ini} separate_rg_to_color_alpha @ce option from
     @relativeref{Trade,BasisImageConverter} is gone, use
     @cb{.ini} swizzle=rrrg @ce instead. For RG inputs this is done implicitly
