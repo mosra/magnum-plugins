@@ -46,7 +46,7 @@ cmake .. ^
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
 
-rem build meshoptimizer
+rem Build meshoptimizer
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v0.14.zip appveyor DownloadFile https://github.com/zeux/meshoptimizer/archive/v0.14.zip || exit /b
 7z x v0.14.zip || exit /b
 ren meshoptimizer-0.14 meshoptimizer || exit /b
