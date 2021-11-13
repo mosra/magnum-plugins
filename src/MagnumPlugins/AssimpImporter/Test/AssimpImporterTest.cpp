@@ -108,6 +108,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void skinMerge();
 
     void camera();
+    void cameraOrthographic();
     void light();
     void lightUnsupported();
     void materialColor();
@@ -240,6 +241,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::skinMerge,
 
               &AssimpImporterTest::camera,
+              &AssimpImporterTest::cameraOrthographic,
 
               &AssimpImporterTest::light,
               &AssimpImporterTest::lightUnsupported,
@@ -1534,6 +1536,7 @@ void AssimpImporterTest::camera() {
 
     Containers::Optional<CameraData> camera1 = importer->camera(0);
     CORRADE_VERIFY(camera1);
+    CORRADE_COMPARE(camera1->type(), CameraType::Perspective3D);
     CORRADE_COMPARE(camera1->fov(), 49.13434_degf);
     CORRADE_COMPARE(camera1->aspectRatio(), 1.77777f);
     CORRADE_COMPARE(camera1->near(), 0.123f);
@@ -1541,6 +1544,7 @@ void AssimpImporterTest::camera() {
 
     Containers::Optional<CameraData> camera2 = importer->camera(1);
     CORRADE_VERIFY(camera2);
+    CORRADE_COMPARE(camera2->type(), CameraType::Perspective3D);
     CORRADE_COMPARE(camera2->fov(), 12.347_degf);
     /* No aspect ratio, defaults to 1 */
     CORRADE_COMPARE(camera2->aspectRatio(), 1.0f);
@@ -1556,6 +1560,36 @@ void AssimpImporterTest::camera() {
     Containers::Pointer<ObjectData3D> cameraObject2 = importer->object3D(1);
     CORRADE_COMPARE(cameraObject2->instanceType(), ObjectInstanceType3D::Camera);
     CORRADE_COMPARE(cameraObject2->instance(), 1);
+}
+
+void AssimpImporterTest::cameraOrthographic() {
+    if(_assimpVersion < 410)
+        CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Assimp 5.1.0 refuses to load glTF files without a default scene so we
+       can't reuse TinyGltfImporter's test file */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera-orthographic.gltf")));
+    CORRADE_COMPARE(importer->cameraCount(), 1);
+
+    Containers::Optional<CameraData> camera = importer->camera(0);
+    CORRADE_VERIFY(camera);
+    {
+        #if !ASSIMP_HAS_ORTHOGRAPHIC_CAMERA
+        CORRADE_EXPECT_FAIL("Current version of assimp imports orthograpic cameras as perspective cameras");
+        #endif
+        CORRADE_COMPARE(camera->type(), CameraType::Orthographic3D);
+        CORRADE_COMPARE(camera->size(), (Vector2{4.0f, 3.0f}));
+    }
+
+    #if !ASSIMP_HAS_ORTHOGRAPHIC_CAMERA
+    CORRADE_COMPARE(camera->type(), CameraType::Perspective3D);
+    /* FOV and aspect ratio arbitrarily differ between importers. No use
+       testing specific values as they'll break with the next version anyway.  */
+    #endif
+
+    CORRADE_COMPARE(camera->near(), 0.01f);
+    CORRADE_COMPARE(camera->far(), 100.0f);
 }
 
 void AssimpImporterTest::light() {

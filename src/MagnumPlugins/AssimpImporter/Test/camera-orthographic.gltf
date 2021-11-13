@@ -1,0 +1,29 @@
+{
+    "asset" : {
+        "version" : "2.0"
+    },
+    "note": "A subset of camera.gltf from TinyGltfImporter tests, but with nodes referencing cameras so assimp imports them",
+    "cameras" : [
+        {
+            "name" : "Orthographic 4:3",
+            "orthographic" : {
+                "xmag" : 2.0,
+                "ymag" : 1.5,
+                "zfar" : 100.0,
+                "znear" : 0.01
+            },
+            "type" : "orthographic"
+        }
+    ],
+    "scene": 0,
+    "scenes": [
+        {
+            "nodes": [0]
+        }
+    ],
+    "nodes": [
+        {
+            "camera": 0
+        }
+    ]
+}

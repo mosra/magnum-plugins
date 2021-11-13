@@ -48,6 +48,13 @@ int main() {
     scene.mName = "";
     #endif
 
+    /* Support for orthographic camera width.
+       https://github.com/assimp/assimp/commit/ae50c4ebdf23c7f6f61300dede5bf32e0d306eb2 */
+    #if CHECK_VERSION >= 20200225
+    aiCamera camera;
+    camera.mOrthographicWidth = 1.0f;
+    #endif
+
     /* Support for patch version information.
        https://github.com/assimp/assimp/commit/5cfb0fd633372bbbec87f08015139d71d330d4a6 */
     #if CHECK_VERSION >= 20191122

@@ -680,9 +680,21 @@ std::string AssimpImporter::doCameraName(const UnsignedInt id) {
 
 Containers::Optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
     const aiCamera* cam = _f->scene->mCameras[id];
-    /** @todo up vector is not used */
     const Float aspect = cam->mAspect > 0.0f ? cam->mAspect : 1.0f;
-    return CameraData{CameraType::Perspective3D, Rad(cam->mHorizontalFOV), aspect, cam->mClipPlaneNear, cam->mClipPlaneFar, cam};
+    /** @todo up vector is not used */
+
+    #if ASSIMP_HAS_ORTHOGRAPHIC_CAMERA
+    if(cam->mOrthographicWidth > 0.0f)
+        return CameraData{CameraType::Orthographic3D,
+            Vector2{cam->mOrthographicWidth, cam->mOrthographicWidth/aspect}*2.0f,
+            cam->mClipPlaneNear, cam->mClipPlaneFar,
+            cam};
+    #endif
+
+    return CameraData{CameraType::Perspective3D,
+        Rad(cam->mHorizontalFOV), aspect,
+        cam->mClipPlaneNear, cam->mClipPlaneFar,
+        cam};
 }
 
 UnsignedInt AssimpImporter::doObject3DCount() const {

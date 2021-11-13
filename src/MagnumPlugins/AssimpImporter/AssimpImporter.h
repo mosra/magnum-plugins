@@ -287,6 +287,8 @@ verbosity levels in each instance.
 @subsection Trade-AssimpImporter-behavior-cameras Camera import
 
 -   Up vector property is not imported
+-   Orthographic camera support requires Assimp 5.1.0. Earlier versions import
+    them as perspective cameras with arbitrary field of view and aspect ratio.
 
 @subsection Trade-AssimpImporter-behavior-meshes Mesh import
 
