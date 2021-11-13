@@ -623,6 +623,23 @@ Int AssimpImporter::doDefaultScene() const { return _f->scene->mRootNode ? 0 : -
 
 UnsignedInt AssimpImporter::doSceneCount() const { return _f->scene->mRootNode ? 1 : 0; }
 
+Int AssimpImporter::doSceneForName(const std::string& name) {
+    static_cast<void>(name);
+    #if ASSIMP_HAS_SCENE_NAME
+    if(_f->scene->mRootNode && name == _f->scene->mName.C_Str())
+        return 0;
+    #endif
+    return -1;
+}
+
+std::string AssimpImporter::doSceneName(UnsignedInt) {
+    #if ASSIMP_HAS_SCENE_NAME
+    return _f->scene->mName.C_Str();
+    #else
+    return {};
+    #endif
+}
+
 Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
     const aiNode* root = _f->scene->mRootNode;
 

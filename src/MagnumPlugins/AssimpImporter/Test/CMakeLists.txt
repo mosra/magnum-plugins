@@ -86,6 +86,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         points.obj
         scene.dae
         scene+mesh.dae
+        scene-name.gltf
         skin.dae # Converted from skin.blend
         skin.fbx
         skin.gltf
