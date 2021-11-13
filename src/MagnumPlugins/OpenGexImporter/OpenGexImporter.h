@@ -244,13 +244,13 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
-        MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
-
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
         MAGNUM_OPENGEXIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
+
+        MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doLightCount() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;

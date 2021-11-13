@@ -253,35 +253,6 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
     return SceneData{{}, children};
 }
 
-UnsignedInt OpenGexImporter::doCameraCount() const {
-    return _d->cameras.size();
-}
-
-Containers::Optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
-    const OpenDdl::Structure& camera = _d->cameras[id];
-
-    Rad fov = 35.0_degf;
-    Float near = 0.01f;
-    Float far = 100.0f;
-    for(const OpenDdl::Structure param: camera.childrenOf(OpenGex::Param)) {
-        const OpenDdl::Structure data = param.firstChild();
-
-        const auto attrib = param.propertyOf(OpenGex::attrib);
-        if(attrib.as<std::string>() == "fov")
-            fov = data.as<Float>()*_d->angleMultiplier;
-        else if(attrib.as<std::string>() == "near")
-            near = data.as<Float>()*_d->distanceMultiplier;
-        else if(attrib.as<std::string>() == "far")
-            far = data.as<Float>()*_d->distanceMultiplier;
-        else {
-            Error() << "Trade::OpenGexImporter::camera(): invalid parameter";
-            return Containers::NullOpt;
-        }
-    }
-
-    return CameraData{CameraType::Perspective3D, fov, 1.0f, near, far, &camera};
-}
-
 UnsignedInt OpenGexImporter::doObject3DCount() const {
     return _d->nodes.size();
 }
@@ -477,6 +448,35 @@ Containers::Pointer<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt 
     /* Bone or empty object otherwise */
     /** @todo support for bone nodes */
     return Containers::pointer(new ObjectData3D{children, transformation, &node});
+}
+
+UnsignedInt OpenGexImporter::doCameraCount() const {
+    return _d->cameras.size();
+}
+
+Containers::Optional<CameraData> OpenGexImporter::doCamera(UnsignedInt id) {
+    const OpenDdl::Structure& camera = _d->cameras[id];
+
+    Rad fov = 35.0_degf;
+    Float near = 0.01f;
+    Float far = 100.0f;
+    for(const OpenDdl::Structure param: camera.childrenOf(OpenGex::Param)) {
+        const OpenDdl::Structure data = param.firstChild();
+
+        const auto attrib = param.propertyOf(OpenGex::attrib);
+        if(attrib.as<std::string>() == "fov")
+            fov = data.as<Float>()*_d->angleMultiplier;
+        else if(attrib.as<std::string>() == "near")
+            near = data.as<Float>()*_d->distanceMultiplier;
+        else if(attrib.as<std::string>() == "far")
+            far = data.as<Float>()*_d->distanceMultiplier;
+        else {
+            Error() << "Trade::OpenGexImporter::camera(): invalid parameter";
+            return Containers::NullOpt;
+        }
+    }
+
+    return CameraData{CameraType::Perspective3D, fov, 1.0f, near, far, &camera};
 }
 
 namespace {
