@@ -286,7 +286,7 @@ verbosity levels in each instance.
 
 @subsection Trade-AssimpImporter-behavior-cameras Camera import
 
--   Aspect and up vector properties are not imported
+-   Up vector property is not imported
 
 @subsection Trade-AssimpImporter-behavior-meshes Mesh import
 
@@ -445,6 +445,8 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doCameraForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doCameraName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;

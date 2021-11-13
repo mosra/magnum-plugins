@@ -1484,18 +1484,38 @@ void AssimpImporterTest::camera() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
 
-    CORRADE_COMPARE(importer->cameraCount(), 1);
-    Containers::Optional<CameraData> camera = importer->camera(0);
-    CORRADE_VERIFY(camera);
-    CORRADE_COMPARE(camera->fov(), 49.13434_degf);
-    CORRADE_COMPARE(camera->near(), 0.123f);
-    CORRADE_COMPARE(camera->far(), 123.0f);
+    CORRADE_COMPARE(importer->cameraCount(), 2);
 
-    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_COMPARE(importer->cameraName(0), "Camera");
+    CORRADE_COMPARE(importer->cameraForName("Camera"), 0);
+    CORRADE_COMPARE(importer->cameraName(1), "Camera-no-aspect");
+    CORRADE_COMPARE(importer->cameraForName("Camera-no-aspect"), 1);
+    CORRADE_COMPARE(importer->cameraForName(""), -1);
 
-    Containers::Pointer<ObjectData3D> cameraObject = importer->object3D(0);
-    CORRADE_COMPARE(cameraObject->instanceType(), ObjectInstanceType3D::Camera);
-    CORRADE_COMPARE(cameraObject->instance(), 0);
+    Containers::Optional<CameraData> camera1 = importer->camera(0);
+    CORRADE_VERIFY(camera1);
+    CORRADE_COMPARE(camera1->fov(), 49.13434_degf);
+    CORRADE_COMPARE(camera1->aspectRatio(), 1.77777f);
+    CORRADE_COMPARE(camera1->near(), 0.123f);
+    CORRADE_COMPARE(camera1->far(), 123.0f);
+
+    Containers::Optional<CameraData> camera2 = importer->camera(1);
+    CORRADE_VERIFY(camera2);
+    CORRADE_COMPARE(camera2->fov(), 12.347_degf);
+    /* No aspect ratio, defaults to 1 */
+    CORRADE_COMPARE(camera2->aspectRatio(), 1.0f);
+    CORRADE_COMPARE(camera2->near(), 0.1f);
+    CORRADE_COMPARE(camera2->far(), 2.0f);
+
+    CORRADE_COMPARE(importer->object3DCount(), 2);
+
+    Containers::Pointer<ObjectData3D> cameraObject1 = importer->object3D(0);
+    CORRADE_COMPARE(cameraObject1->instanceType(), ObjectInstanceType3D::Camera);
+    CORRADE_COMPARE(cameraObject1->instance(), 0);
+
+    Containers::Pointer<ObjectData3D> cameraObject2 = importer->object3D(1);
+    CORRADE_COMPARE(cameraObject2->instanceType(), ObjectInstanceType3D::Camera);
+    CORRADE_COMPARE(cameraObject2->instance(), 1);
 }
 
 void AssimpImporterTest::light() {
@@ -3144,7 +3164,7 @@ void AssimpImporterTest::openTwice() {
 void AssimpImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
-    CORRADE_COMPARE(importer->cameraCount(), 1);
+    CORRADE_COMPARE(importer->cameraCount(), 2);
 
     /* Verify that everything is working the same way on second use. It's only
        testing a single data type, but better than nothing at all. */
@@ -3152,12 +3172,14 @@ void AssimpImporterTest::importTwice() {
         Containers::Optional<CameraData> camera = importer->camera(0);
         CORRADE_VERIFY(camera);
         CORRADE_COMPARE(camera->fov(), 49.13434_degf);
+        CORRADE_COMPARE(camera->aspectRatio(), 1.77777f);
         CORRADE_COMPARE(camera->near(), 0.123f);
         CORRADE_COMPARE(camera->far(), 123.0f);
     } {
         Containers::Optional<CameraData> camera = importer->camera(0);
         CORRADE_VERIFY(camera);
         CORRADE_COMPARE(camera->fov(), 49.13434_degf);
+        CORRADE_COMPARE(camera->aspectRatio(), 1.77777f);
         CORRADE_COMPARE(camera->near(), 0.123f);
         CORRADE_COMPARE(camera->far(), 123.0f);
     }

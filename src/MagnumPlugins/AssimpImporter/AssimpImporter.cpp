@@ -112,6 +112,7 @@ struct AssimpImporter::File {
 
     Containers::Optional<std::unordered_map<std::string, Int>>
         animationsForName,
+        camerasForName,
         lightsForName,
         meshesForName,
         skinsForName;
@@ -644,10 +645,28 @@ UnsignedInt AssimpImporter::doCameraCount() const {
     return _f->scene->mNumCameras;
 }
 
+Int AssimpImporter::doCameraForName(const std::string& name) {
+    if(!_f->camerasForName) {
+        _f->camerasForName.emplace();
+        _f->camerasForName->reserve(_f->scene->mNumCameras);
+        for(std::size_t i = 0; i != _f->scene->mNumCameras; ++i)
+            _f->camerasForName->emplace(std::string(_f->scene->mCameras[i]->mName.C_Str()), i);
+    }
+
+    const auto found = _f->camerasForName->find(name);
+    return found == _f->camerasForName->end() ? -1 : found->second;
+}
+
+std::string AssimpImporter::doCameraName(const UnsignedInt id) {
+    return _f->scene->mCameras[id]->mName.C_Str();
+}
+
 Containers::Optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
     const aiCamera* cam = _f->scene->mCameras[id];
-    /** @todo aspect and up vector are not used... */
-    return CameraData{CameraType::Perspective3D, Rad(cam->mHorizontalFOV), 1.0f, cam->mClipPlaneNear, cam->mClipPlaneFar, cam};
+    /** @todo up vector is not used */
+    /** @todo assimp 5.1RC1 has mOrthographicWidth, import as Orthographic3D */
+    const Float aspect = cam->mAspect > 0.0f ? cam->mAspect : 1.0f;
+    return CameraData{CameraType::Perspective3D, Rad(cam->mHorizontalFOV), aspect, cam->mClipPlaneNear, cam->mClipPlaneFar, cam};
 }
 
 UnsignedInt AssimpImporter::doObject3DCount() const {
