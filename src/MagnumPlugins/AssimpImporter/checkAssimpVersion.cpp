@@ -48,6 +48,12 @@ int main() {
     scene.mName = "";
     #endif
 
+    /* Support for patch version information.
+       https://github.com/assimp/assimp/commit/5cfb0fd633372bbbec87f08015139d71d330d4a6 */
+    #if CHECK_VERSION >= 20191122
+    ret = static_cast<int>(aiGetVersionPatch());
+    #endif
+
     /* Assimp 5. Of all the things that could break, this version reports itself as
        4.1. Since some of the insane awful bugs got fixed in version 5, the test has
        to check against the version in order to adjust expectations. The only way I

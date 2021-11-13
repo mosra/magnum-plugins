@@ -162,6 +162,8 @@ struct AssimpImporterTest: TestSuite::Tester {
 
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
+
+    unsigned int _assimpVersion;
 };
 
 constexpr struct {
@@ -313,7 +315,20 @@ AssimpImporterTest::AssimpImporterTest() {
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+
+    _assimpVersion = aiGetVersionMajor()*100 + aiGetVersionMinor()*10
+        #if ASSIMP_HAS_VERSION_PATCH
+        + aiGetVersionPatch()
+        #endif
+        ;
+
+    /* Assimp 5.0.0 reports itself as 4.1.0 */
+    #if ASSIMP_IS_VERSION_5
+    _assimpVersion =  Math::max(_assimpVersion, 500u);
+    #endif
 }
+
+using namespace Containers::Literals;
 
 void AssimpImporterTest::openFile() {
     auto&& data = VerboseData[testCaseInstanceId()];
@@ -381,27 +396,26 @@ void AssimpImporterTest::openDataFailed() {
 
 /* This does not indicate general assimp animation support, only used to skip
    tests on certain versions and test files. */
-bool supportsAnimation(const Containers::StringView fileName) {
+bool supportsAnimation(const Containers::StringView fileName, unsigned int assimpVersion) {
     /* 5.0.0 supports all of Collada, FBX, glTF */
-    #if ASSIMP_IS_VERSION_5
-    static_cast<void>(fileName);
-    return true;
-    #else
-    if(fileName.hasSuffix(".gltf")) return false;
-
-    const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    CORRADE_INTERNAL_ASSERT(fileName.hasSuffix(".dae") || fileName.hasSuffix(".fbx"));
-    /* That's as far back as I checked, both Collada and FBX animations
-       supported */
-    return version >= 302;
-    #endif
+    if(assimpVersion >= 500) {
+        static_cast<void>(fileName);
+        return true;
+    } else if(fileName.hasSuffix(".gltf"_s)) {
+        return false;
+    } else {
+        CORRADE_INTERNAL_ASSERT(fileName.hasSuffix(".dae"_s) || fileName.hasSuffix(".fbx"_s));
+        /* That's as far back as I checked, both Collada and FBX animations
+           supported */
+        return assimpVersion >= 320;
+    }
 }
 
 void AssimpImporterTest::animation() {
     auto&& data = ExportedFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    if(!supportsAnimation(data.suffix))
+    if(!supportsAnimation(data.suffix, _assimpVersion))
         CORRADE_SKIP("Animation for this file type is not supported with the current version of Assimp");
 
     /* Animation created and exported with Blender. Most animation tracks got
@@ -560,7 +574,7 @@ const Containers::StaticArray<3, AnimationTarget> AnimationGltfLinearTargets{
 };
 
 void AssimpImporterTest::animationGltf() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     /* Using the same files as TinyGltfImporterTest, but modified to include a
@@ -684,7 +698,7 @@ void AssimpImporterTest::animationGltf() {
 }
 
 void AssimpImporterTest::animationGltfNoScene() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     /* This reuses the TinyGltfImporter test files, not the corrected ones used by other tests. */
@@ -697,11 +711,12 @@ void AssimpImporterTest::animationGltfNoScene() {
 }
 
 void AssimpImporterTest::animationGltfBrokenSplineWarning() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
-    if(!ASSIMP_HAS_BROKEN_GLTF_SPLINES)
-        CORRADE_SKIP("Current version of assimp correctly imports glTF spline-interpolated animations.");
+    #if !ASSIMP_HAS_BROKEN_GLTF_SPLINES
+    CORRADE_SKIP("Current version of assimp correctly imports glTF spline-interpolated animations.");
+    #endif
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
@@ -717,7 +732,7 @@ void AssimpImporterTest::animationGltfBrokenSplineWarning() {
 }
 
 void AssimpImporterTest::animationGltfSpline() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -830,15 +845,10 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
-    /* This was fixed right after 5.0.0, but 5.0.1 only selected compilation
-       fixes and didn't bump the minor version. Boldly assuming the next
-       minor version will have fixes from 2019. */
-    const unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    const bool hasInvalidTicksPerSecond = version <= 500;
-    if(!hasInvalidTicksPerSecond)
+    if(_assimpVersion > 500)
         CORRADE_SKIP("Current version of assimp correctly sets glTF ticks per second.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -863,7 +873,7 @@ void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     /* Correct removal is already implicitly tested in animationGltf(),
@@ -923,7 +933,7 @@ void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -979,7 +989,7 @@ void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
 }
 
 void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -1031,7 +1041,7 @@ void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
 }
 
 void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -1104,7 +1114,7 @@ void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
 }
 
 void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -1142,7 +1152,7 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
 }
 
 void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -1169,7 +1179,7 @@ void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
 }
 
 void AssimpImporterTest::animationMergeEmpty() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -1183,7 +1193,7 @@ void AssimpImporterTest::animationMergeEmpty() {
 }
 
 void AssimpImporterTest::animationMerge() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -1285,8 +1295,8 @@ void AssimpImporterTest::animationMerge() {
 }
 
 /* The checks are identical to animation support so re-use that. */
-bool supportsSkinning(const Containers::StringView fileName) {
-    return supportsAnimation(fileName);
+bool supportsSkinning(const Containers::StringView fileName, unsigned int assimpVersion) {
+    return supportsAnimation(fileName, assimpVersion);
 }
 
 void calculateTransforms(Containers::ArrayView<Matrix4> transforms, Containers::ArrayView<ObjectData3D> objects, UnsignedInt objectId, const Matrix4& parentTransform = {}) {
@@ -1300,7 +1310,7 @@ void AssimpImporterTest::skin() {
     auto&& data = ExportedFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    if(!supportsSkinning(data.suffix))
+    if(!supportsSkinning(data.suffix, _assimpVersion))
         CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
 
     /* Skinned mesh imported into Blender and then exported */
@@ -1395,7 +1405,7 @@ void AssimpImporterTest::skin() {
 }
 
 void AssimpImporterTest::skinNoMeshes() {
-    if(!supportsSkinning(".gltf"))
+    if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
     /* Reusing the TinyGltfImporter test file without meshes */
@@ -1424,7 +1434,7 @@ void AssimpImporterTest::skinMergeEmpty() {
 }
 
 void AssimpImporterTest::skinMerge() {
-    if(!supportsAnimation(".gltf"))
+    if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("GLTF skinning is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -1597,9 +1607,8 @@ void AssimpImporterTest::materialColor() {
     CORRADE_COMPARE(phong.specularColor(), (Color4{0.15f, 0.1f, 0.05f, 0.5f}));
     CORRADE_COMPARE(phong.shininess(), 50.0f);
 
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /* Ancient assimp version add "-material" suffix */
-    if(version < 302) {
+    if(_assimpVersion < 320) {
         CORRADE_COMPARE(importer->materialForName("Material-material"), 0);
         CORRADE_COMPARE(importer->materialName(0), "Material-material");
     } else {
@@ -1662,8 +1671,7 @@ void AssimpImporterTest::materialColorTexture() {
 
     /* Newer versions import also useless zero texcoords. Not sure if it's
        since 4.0 or 5.0, but definitely 3.2 returns 7. */
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    if(version < 400)
+    if(_assimpVersion < 400)
         CORRADE_COMPARE(material->attributeCount(), 7);
     else
         CORRADE_COMPARE(material->attributeCount(), 10);
@@ -1697,11 +1705,8 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
 
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     {
-        /* aiGetVersion*() returns 401 for assimp 5, FFS, so we have to check
-           differently. See CMakeLists.txt for details. */
-        CORRADE_EXPECT_FAIL_IF(version < 401 || ASSIMP_IS_VERSION_5,
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 410 || _assimpVersion >= 500,
             "Assimp < 4.1 and >= 5.0 behaves properly regarding STL material ambient");
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): white ambient detected, forcing back to black\n");
     }
@@ -1709,13 +1714,13 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     const auto& phong = material->as<PhongMaterialData>();
     CORRADE_VERIFY(!phong.hasAttribute(MaterialAttribute::AmbientTexture));
     /* WHY SO COMPLICATED, COME ON */
-    if(version < 401 || ASSIMP_IS_VERSION_5)
+    if(_assimpVersion < 410 || _assimpVersion >= 500)
         CORRADE_COMPARE(phong.ambientColor(), Color3{0.05f});
     else
         CORRADE_COMPARE(phong.ambientColor(), 0x000000_srgbf);
 
     /* ASS IMP WHAT?! WHY 3.2 is different from 3.0 and 4.0?! */
-    if(version == 302) {
+    if(_assimpVersion == 320) {
         CORRADE_COMPARE(phong.specularColor(), Color3{0.6f});
         CORRADE_COMPARE(phong.diffuseColor(), Color3{0.6f});
     } else {
@@ -1931,9 +1936,8 @@ void AssimpImporterTest::mesh() {
             {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}
         }), TestSuite::Compare::Container);
 
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     {
-        CORRADE_EXPECT_FAIL_IF(version < 302,
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 320,
             "Assimp < 3.2 loads incorrect alpha value for the last color.");
         CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Color),
         Containers::arrayView<Vector4>({
@@ -2052,7 +2056,7 @@ void AssimpImporterTest::meshSkinningAttributes() {
     auto&& data = ExportedFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    if(!supportsSkinning(data.suffix))
+    if(!supportsSkinning(data.suffix, _assimpVersion))
         CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -2127,7 +2131,7 @@ void AssimpImporterTest::meshSkinningAttributesMultiple() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
-    if(!supportsSkinning(".gltf"))
+    if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
     /* Assimp glTF 2 importer only reads the last(!) set of joint weights */
@@ -2224,7 +2228,7 @@ void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
-    if(!supportsSkinning(".gltf"))
+    if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -2312,7 +2316,7 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
 
 void AssimpImporterTest::meshMultiplePrimitives() {
     /* Possibly broken in other versions too (4.1 and 5 works, 3.2 doesn't) */
-    if(aiGetVersionMajor()*100 + aiGetVersionMinor() <= 302)
+    if(_assimpVersion <= 320)
         CORRADE_SKIP("Assimp 3.2 doesn't recognize primitives used in the test COLLADA file.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -2455,8 +2459,7 @@ void AssimpImporterTest::emptyCollada() {
 }
 
 void AssimpImporterTest::emptyGltf() {
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    if(version < 401)
+    if(_assimpVersion < 410)
         CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -2540,9 +2543,8 @@ void AssimpImporterTest::sceneCollapsedNode() {
 
     /* Name of the scene is used for the root object */
     {
-        const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
         /** @todo Possibly works with other versions (definitely not 3.0) */
-        CORRADE_EXPECT_FAIL_IF(version <= 302,
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion <= 320,
             "Assimp 3.2 and below doesn't use name of the root node for collapsed nodes.");
         CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
         CORRADE_COMPARE(importer->object3DName(0), "Scene");
@@ -2664,8 +2666,7 @@ void AssimpImporterTest::imageEmbedded() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
-    if(version <= 302)
+    if(_assimpVersion <= 320)
         CORRADE_SKIP("Assimp < 3.2 can't load embedded textures in blend files, Assimp 3.2 can't detect blend file format when opening a memory location.");
 
     /* Open as data, so we verify opening embedded images from data does not
@@ -2681,9 +2682,8 @@ void AssimpImporterTest::imageEmbedded() {
 }
 
 void AssimpImporterTest::imageExternal() {
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
+    if(_assimpVersion < 320)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -2701,9 +2701,8 @@ void AssimpImporterTest::imageExternal() {
 }
 
 void AssimpImporterTest::imageExternalNotFound() {
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly fails on more versions (definitely w/ 3.0 and 3.2) */
-    if(version <= 302)
+    if(_assimpVersion <= 320)
         CORRADE_SKIP("Assimp <= 3.2 would SEGFAULT on this test.");
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -2724,9 +2723,8 @@ void AssimpImporterTest::imageExternalNotFound() {
 }
 
 void AssimpImporterTest::imageExternalNoPathNoCallback() {
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
+    if(_assimpVersion < 320)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -2815,9 +2813,8 @@ void AssimpImporterTest::imageMipLevels() {
 }
 
 void AssimpImporterTest::texture() {
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
+    if(_assimpVersion < 320)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -2916,9 +2913,8 @@ void AssimpImporterTest::openState() {
 }
 
 void AssimpImporterTest::openStateTexture() {
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
+    if(_assimpVersion < 320)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -3077,9 +3073,8 @@ void AssimpImporterTest::fileCallbackReset() {
 }
 
 void AssimpImporterTest::fileCallbackImage() {
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
+    if(_assimpVersion < 320)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -3107,9 +3102,8 @@ void AssimpImporterTest::fileCallbackImage() {
 }
 
 void AssimpImporterTest::fileCallbackImageNotFound() {
-    const UnsignedInt version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(version < 302)
+    if(_assimpVersion < 320)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
