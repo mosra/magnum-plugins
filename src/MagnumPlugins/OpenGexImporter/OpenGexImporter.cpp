@@ -40,9 +40,9 @@
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
+#include <Magnum/Trade/MaterialData.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
-#include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
