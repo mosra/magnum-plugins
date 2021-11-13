@@ -25,7 +25,6 @@
 
 #include "PrimitiveImporter.h"
 
-#include <cstring>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -49,6 +48,8 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 PrimitiveImporter::PrimitiveImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
 
 PrimitiveImporter::~PrimitiveImporter() = default;
@@ -65,56 +66,56 @@ void PrimitiveImporter::doOpenData(Containers::Array<char>&&, DataFlags) {
 
 namespace {
 
-constexpr const char* Names[]{
-    /*  0 */ "axis2D",
-    /*  1 */ "axis3D",
+constexpr Containers::StringView Names[]{
+    /*  0 */ "axis2D"_s,
+    /*  1 */ "axis3D"_s,
 
-    /*  2 */ "capsule2DWireframe",
-    /*  3 */ "capsule3DSolid",
-    /*  4 */ "capsule3DWireframe",
+    /*  2 */ "capsule2DWireframe"_s,
+    /*  3 */ "capsule3DSolid"_s,
+    /*  4 */ "capsule3DWireframe"_s,
 
-    /*  5 */ "circle2DSolid",
-    /*  6 */ "circle2DWireframe",
-    /*  7 */ "circle3DSolid",
-    /*  8 */ "circle3DWireframe",
+    /*  5 */ "circle2DSolid"_s,
+    /*  6 */ "circle2DWireframe"_s,
+    /*  7 */ "circle3DSolid"_s,
+    /*  8 */ "circle3DWireframe"_s,
 
-    /*  9 */ "coneSolid",
-    /* 10 */ "coneWireframe",
+    /*  9 */ "coneSolid"_s,
+    /* 10 */ "coneWireframe"_s,
 
-    /* 11 */ "crosshair2D",
-    /* 12 */ "crosshair3D",
+    /* 11 */ "crosshair2D"_s,
+    /* 12 */ "crosshair3D"_s,
 
-    /* 13 */ "cubeSolid",
-    /* 14 */ "cubeSolidStrip",
-    /* 15 */ "cubeWireframe",
+    /* 13 */ "cubeSolid"_s,
+    /* 14 */ "cubeSolidStrip"_s,
+    /* 15 */ "cubeWireframe"_s,
 
-    /* 16 */ "cylinderSolid",
-    /* 17 */ "cylinderWireframe",
+    /* 16 */ "cylinderSolid"_s,
+    /* 17 */ "cylinderWireframe"_s,
 
-    /* 18 */ "gradient2D",
-    /* 19 */ "gradient2DHorizontal",
-    /* 20 */ "gradient2DVertical",
-    /* 21 */ "gradient3D",
-    /* 22 */ "gradient3DHorizontal",
-    /* 23 */ "gradient3DVertical",
+    /* 18 */ "gradient2D"_s,
+    /* 19 */ "gradient2DHorizontal"_s,
+    /* 20 */ "gradient2DVertical"_s,
+    /* 21 */ "gradient3D"_s,
+    /* 22 */ "gradient3DHorizontal"_s,
+    /* 23 */ "gradient3DVertical"_s,
 
-    /* 24 */ "grid3DSolid",
-    /* 25 */ "grid3DWireframe",
+    /* 24 */ "grid3DSolid"_s,
+    /* 25 */ "grid3DWireframe"_s,
 
-    /* 26 */ "icosphereSolid",
-    /* 27 */ "icosphereWireframe",
+    /* 26 */ "icosphereSolid"_s,
+    /* 27 */ "icosphereWireframe"_s,
 
-    /* 28 */ "line2D",
-    /* 29 */ "line3D",
+    /* 28 */ "line2D"_s,
+    /* 29 */ "line3D"_s,
 
-    /* 30 */ "planeSolid",
-    /* 31 */ "planeWireframe",
+    /* 30 */ "planeSolid"_s,
+    /* 31 */ "planeWireframe"_s,
 
-    /* 32 */ "squareSolid",
-    /* 33 */ "squareWireframe",
+    /* 32 */ "squareSolid"_s,
+    /* 33 */ "squareWireframe"_s,
 
-    /* 34 */ "uvSphereSolid",
-    /* 35 */ "uvSphereWireframe"
+    /* 34 */ "uvSphereSolid"_s,
+    /* 35 */ "uvSphereWireframe"_s
 };
 
 constexpr Vector2 translation2DForIndex(UnsignedInt id) {
@@ -258,13 +259,13 @@ std::string PrimitiveImporter::doMeshName(const UnsignedInt id) {
 }
 
 Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, UnsignedInt) {
-    if(std::strcmp(Names[id], "axis2D") == 0)
+    if(Names[id] == "axis2D"_s)
         return Primitives::axis2D();
 
-    if(std::strcmp(Names[id], "axis3D") == 0)
+    if(Names[id] == "axis3D"_s)
         return Primitives::axis3D();
 
-    if(std::strcmp(Names[id], "capsule2DWireframe") == 0) {
+    if(Names[id] == "capsule2DWireframe"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("capsule2DWireframe"));
 
@@ -274,7 +275,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Float>("halfLength"));
     }
 
-    if(std::strcmp(Names[id], "capsule3DSolid") == 0) {
+    if(Names[id] == "capsule3DSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("capsule3DSolid"));
 
@@ -292,7 +293,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags);
     }
 
-    if(std::strcmp(Names[id], "capsule3DWireframe") == 0) {
+    if(Names[id] == "capsule3DWireframe"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("capsule3DWireframe"));
 
@@ -303,7 +304,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Float>("halfLength"));
     }
 
-    if(std::strcmp(Names[id], "circle2DSolid") == 0) {
+    if(Names[id] == "circle2DSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle2DSolid"));
 
@@ -316,7 +317,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags);
     }
 
-    if(std::strcmp(Names[id], "circle2DWireframe") == 0) {
+    if(Names[id] == "circle2DWireframe"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle2DWireframe"));
 
@@ -324,7 +325,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<UnsignedInt>("segments"));
     }
 
-    if(std::strcmp(Names[id], "circle3DSolid") == 0) {
+    if(Names[id] == "circle3DSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle3DSolid"));
 
@@ -339,7 +340,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags);
     }
 
-    if(std::strcmp(Names[id], "circle3DWireframe") == 0) {
+    if(Names[id] == "circle3DWireframe"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle3DWireframe"));
 
@@ -347,7 +348,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<UnsignedInt>("segments"));
     }
 
-    if(std::strcmp(Names[id], "coneSolid") == 0) {
+    if(Names[id] == "coneSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("coneSolid"));
 
@@ -366,7 +367,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags);
     }
 
-    if(std::strcmp(Names[id], "coneWireframe") == 0) {
+    if(Names[id] == "coneWireframe"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("coneWireframe"));
 
@@ -375,22 +376,22 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Float>("halfLength"));
     }
 
-    if(std::strcmp(Names[id], "crosshair2D") == 0)
+    if(Names[id] == "crosshair2D"_s)
         return Primitives::crosshair2D();
 
-    if(std::strcmp(Names[id], "crosshair3D") == 0)
+    if(Names[id] == "crosshair3D"_s)
         return Primitives::crosshair3D();
 
-    if(std::strcmp(Names[id], "cubeSolid") == 0)
+    if(Names[id] == "cubeSolid"_s)
         return Primitives::cubeSolid();
 
-    if(std::strcmp(Names[id], "cubeSolidStrip") == 0)
+    if(Names[id] == "cubeSolidStrip"_s)
         return Primitives::cubeSolidStrip();
 
-    if(std::strcmp(Names[id], "cubeWireframe") == 0)
+    if(Names[id] == "cubeWireframe"_s)
         return Primitives::cubeWireframe();
 
-    if(std::strcmp(Names[id], "cylinderSolid") == 0) {
+    if(Names[id] == "cylinderSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("cylinderSolid"));
 
@@ -409,7 +410,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags);
     }
 
-    if(std::strcmp(Names[id], "cylinderWireframe") == 0) {
+    if(Names[id] == "cylinderWireframe"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("cylinderWireframe"));
 
@@ -419,7 +420,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Float>("halfLength"));
     }
 
-    if(std::strcmp(Names[id], "gradient2D") == 0) {
+    if(Names[id] == "gradient2D"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient2D"));
 
@@ -430,7 +431,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Color4>("colorB"));
     }
 
-    if(std::strcmp(Names[id], "gradient2DHorizontal") == 0) {
+    if(Names[id] == "gradient2DHorizontal"_s) {
         Utility::ConfigurationGroup* conf;
         /* The same config shared for all 2D gradients */
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient2D"));
@@ -440,7 +441,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Color4>("colorB"));
     }
 
-    if(std::strcmp(Names[id], "gradient2DVertical") == 0) {
+    if(Names[id] == "gradient2DVertical"_s) {
         Utility::ConfigurationGroup* conf;
         /* The same config shared for all 2D gradients */
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient2D"));
@@ -450,7 +451,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Color4>("colorB"));
     }
 
-    if(std::strcmp(Names[id], "gradient3D") == 0) {
+    if(Names[id] == "gradient3D"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient3D"));
 
@@ -461,7 +462,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Color4>("colorB"));
     }
 
-    if(std::strcmp(Names[id], "gradient3DHorizontal") == 0) {
+    if(Names[id] == "gradient3DHorizontal"_s) {
         Utility::ConfigurationGroup* conf;
         /* The same config shared for all 3D gradients */
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient3D"));
@@ -471,7 +472,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Color4>("colorB"));
     }
 
-    if(std::strcmp(Names[id], "gradient3DVertical") == 0) {
+    if(Names[id] == "gradient3DVertical"_s) {
         Utility::ConfigurationGroup* conf;
         /* The same config shared for all 3D gradients */
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("gradient3D"));
@@ -481,7 +482,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Color4>("colorB"));
     }
 
-    if(std::strcmp(Names[id], "grid3DSolid") == 0) {
+    if(Names[id] == "grid3DSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("grid3DSolid"));
 
@@ -498,7 +499,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags);
     }
 
-    if(std::strcmp(Names[id], "grid3DWireframe") == 0) {
+    if(Names[id] == "grid3DWireframe"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("grid3DWireframe"));
 
@@ -506,7 +507,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Vector2i>("subdivisions"));
     }
 
-    if(std::strcmp(Names[id], "icosphereSolid") == 0) {
+    if(Names[id] == "icosphereSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("icosphereSolid"));
 
@@ -514,10 +515,10 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<UnsignedInt>("subdivisions"));
     }
 
-    if(std::strcmp(Names[id], "icosphereWireframe") == 0)
+    if(Names[id] == "icosphereWireframe"_s)
         return Primitives::icosphereWireframe();
 
-    if(std::strcmp(Names[id], "line2D") == 0) {
+    if(Names[id] == "line2D"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("line2D"));
 
@@ -526,7 +527,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Vector2>("b"));
     }
 
-    if(std::strcmp(Names[id], "line3D") == 0) {
+    if(Names[id] == "line3D"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("line3D"));
 
@@ -535,7 +536,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             conf->value<Vector3>("b"));
     }
 
-    if(std::strcmp(Names[id], "planeSolid") == 0) {
+    if(Names[id] == "planeSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("planeSolid"));
 
@@ -548,10 +549,10 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         return Primitives::planeSolid(flags);
     }
 
-    if(std::strcmp(Names[id], "planeWireframe") == 0)
+    if(Names[id] == "planeWireframe"_s)
         return Primitives::planeWireframe();
 
-    if(std::strcmp(Names[id], "squareSolid") == 0) {
+    if(Names[id] == "squareSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("squareSolid"));
 
@@ -562,10 +563,10 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         return Primitives::squareSolid(flags);
     }
 
-    if(std::strcmp(Names[id], "squareWireframe") == 0)
+    if(Names[id] == "squareWireframe"_s)
         return Primitives::squareWireframe();
 
-    if(std::strcmp(Names[id], "uvSphereSolid") == 0) {
+    if(Names[id] == "uvSphereSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("uvSphereSolid"));
 
@@ -581,7 +582,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags);
     }
 
-    if(std::strcmp(Names[id], "uvSphereWireframe") == 0) {
+    if(Names[id] == "uvSphereWireframe"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("uvSphereWireframe"));
 
