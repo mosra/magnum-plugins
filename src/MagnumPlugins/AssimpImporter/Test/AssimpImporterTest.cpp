@@ -131,6 +131,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void emptyCollada();
     void emptyGltf();
     void scene();
+    void sceneName();
     void sceneCollapsedNode();
     void upDirectionPatching();
     void upDirectionPatchingPreTransformVertices();
@@ -265,6 +266,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::emptyCollada,
               &AssimpImporterTest::emptyGltf,
               &AssimpImporterTest::scene,
+              &AssimpImporterTest::sceneName,
               &AssimpImporterTest::sceneCollapsedNode});
 
     addInstancedTests({&AssimpImporterTest::upDirectionPatching,
@@ -2506,6 +2508,9 @@ void AssimpImporterTest::scene() {
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->children3D(), {0});
 
+    /* Currently only glTF supports scene names */
+    CORRADE_COMPARE(importer->sceneName(0), "");
+
     Containers::Pointer<ObjectData3D> parent = importer->object3D(0);
     CORRADE_COMPARE(parent->children(), {1});
     CORRADE_COMPARE(parent->instanceType(), ObjectInstanceType3D::Empty);
@@ -2524,6 +2529,20 @@ void AssimpImporterTest::scene() {
     CORRADE_COMPARE(importer->object3DName(1), "Child");
 
     CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
+}
+
+void AssimpImporterTest::sceneName() {
+    #if !ASSIMP_HAS_SCENE_NAME
+    CORRADE_SKIP("Current version of assimp doesn't expose scene names.");
+    #endif
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene-name.gltf")));
+
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->sceneName(0), "This is the scene");
+    CORRADE_COMPARE(importer->sceneForName("This is the scene"), 0);
+    CORRADE_COMPARE(importer->sceneForName("Other scene"), -1);
 }
 
 void AssimpImporterTest::sceneCollapsedNode() {

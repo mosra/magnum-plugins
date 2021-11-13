@@ -442,6 +442,8 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
 
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doDefaultScene() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doSceneForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doSceneName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
