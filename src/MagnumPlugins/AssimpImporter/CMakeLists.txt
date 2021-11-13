@@ -59,6 +59,20 @@ else()
     set(_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE LINK_LIBRARIES Assimp::Assimp)
 endif()
 
+# Newer versions of Assimp add C compile features that end up being propagated
+# to installed CMake targets:
+# https://github.com/assimp/assimp/commit/799384f2b85b8d3ee9c5b9e18bbe532b4dc7c63c
+# This can fail in try_compile because it uses the file extension to determine
+# the language and then doesn't look for a C compiler for the required feature.
+# CMAKE_PROJECT_[PROJECT]_INCLUDE allows us to include a script after any
+# project() calls in try_compile, which then injects a call to
+# enable_language(C). CMAKE_TRY_COMPILE is the name of the project in the
+# temporary CMakeList.txt created by try_compile:
+# https://github.com/Kitware/CMake/blob/v3.4.0/Source/cmCoreTryCompile.cxx#L313
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/checkAssimpVersionLanguageOverride.cmake "enable_language(C)")
+# For some reason, this also needs C to be enabled in this scope
+enable_language(C)
+
 # Go through all versions of interest and pick the highest one that compiles
 foreach(_version 20201123 20190915 20151031)
     try_compile(_works ${CMAKE_CURRENT_BINARY_DIR}
@@ -71,6 +85,8 @@ foreach(_version 20201123 20190915 20151031)
             # CORRADE_CXX_STANDARD property doesn't get passed through. So I
             # have to use an internal variable for that instead.
             ${CORRADE_CXX11_STANDARD_FLAG}
+        CMAKE_FLAGS
+            -DCMAKE_PROJECT_CMAKE_TRY_COMPILE_INCLUDE=${CMAKE_CURRENT_BINARY_DIR}/checkAssimpVersionLanguageOverride.cmake
         OUTPUT_VARIABLE _version_output)
     if(_works)
         set(ASSIMP_VERSION ${_version})
