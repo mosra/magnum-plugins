@@ -19,15 +19,3 @@ Node {
 Node {
     Translation (kind = "z") { float { 1.0 } }
 }
-
-Node {
-    Translation (kind = "XYZ") { float[3] {} }
-}
-
-Node {
-    Translation (kind = "y") { float[3] {{ 7.5, -1.5, 1.0 }} }
-}
-
-Node {
-    Translation (object = true) { float[3] {} }
-}

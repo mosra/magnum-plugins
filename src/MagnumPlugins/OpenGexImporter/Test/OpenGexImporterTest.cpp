@@ -32,6 +32,7 @@
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
@@ -83,6 +84,8 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void objectTransformationConcatentation();
     void objectTransformationMetrics();
 
+    void objectInvalid();
+
     void light();
     void lightInvalid();
 
@@ -121,6 +124,26 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
+const struct {
+    const char* name;
+    const char* message;
+} ObjectInvalidData[] {
+    {"camera", "null camera reference"},
+    {"geometry", "null geometry reference"},
+    {"light", "null light reference"},
+    {"rotation array size", "invalid rotation"},
+    {"rotation kind", "invalid rotation"},
+    {"rotation object only", "unsupported object-only transformation"},
+    {"scaling array size", "invalid scaling"},
+    {"scaling kind", "invalid scaling"},
+    {"scaling object only", "unsupported object-only transformation"},
+    {"transformation array size", "invalid transformation"},
+    {"transformation object only", "unsupported object-only transformation"},
+    {"translation array size", "invalid translation"},
+    {"translation kind", "invalid translation"},
+    {"translation object only", "unsupported object-only transformation"},
+};
+
 OpenGexImporterTest::OpenGexImporterTest() {
     addTests({&OpenGexImporterTest::open,
               &OpenGexImporterTest::openParseError,
@@ -140,9 +163,12 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::objectRotation,
               &OpenGexImporterTest::objectScaling,
               &OpenGexImporterTest::objectTransformationConcatentation,
-              &OpenGexImporterTest::objectTransformationMetrics,
+              &OpenGexImporterTest::objectTransformationMetrics});
 
-              &OpenGexImporterTest::light,
+    addInstancedTests({&OpenGexImporterTest::objectInvalid},
+        Containers::arraySize(ObjectInvalidData));
+
+    addTests({&OpenGexImporterTest::light,
               &OpenGexImporterTest::lightInvalid,
 
               &OpenGexImporterTest::mesh,
@@ -338,7 +364,7 @@ void OpenGexImporterTest::object() {
 void OpenGexImporterTest::objectCamera() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-camera.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 2);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     {
         Containers::Pointer<ObjectData3D> object = importer->object3D(0);
@@ -346,17 +372,12 @@ void OpenGexImporterTest::objectCamera() {
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
         CORRADE_COMPARE(object->instance(), 1);
     }
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(1));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::object3D(): null camera reference\n");
 }
 
 void OpenGexImporterTest::objectLight() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-light.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 2);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     {
         Containers::Pointer<ObjectData3D> object = importer->object3D(0);
@@ -364,17 +385,12 @@ void OpenGexImporterTest::objectLight() {
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
         CORRADE_COMPARE(object->instance(), 1);
     }
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(1));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::object3D(): null light reference\n");
 }
 
 void OpenGexImporterTest::objectMesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-geometry.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 4);
+    CORRADE_COMPARE(importer->object3DCount(), 3);
 
     {
         Containers::Pointer<ObjectData3D> object = importer->object3D(0);
@@ -399,17 +415,12 @@ void OpenGexImporterTest::objectMesh() {
         auto&& meshObject = static_cast<MeshObjectData3D&>(*object);
         CORRADE_COMPARE(meshObject.material(), -1);
     }
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(3));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::object3D(): null geometry reference\n");
 }
 
 void OpenGexImporterTest::objectTransformation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 3);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     {
         Containers::Pointer<ObjectData3D> object = importer->object3D(0);
@@ -421,20 +432,12 @@ void OpenGexImporterTest::objectTransformation() {
             {7.5f, -1.5f, 1.0f, 1.0f}
         }));
     }
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(1));
-    CORRADE_VERIFY(!importer->object3D(2));
-    CORRADE_COMPARE(out.str(),
-        "Trade::OpenGexImporter::object3D(): invalid transformation\n"
-        "Trade::OpenGexImporter::object3D(): unsupported object-only transformation\n");
 }
 
 void OpenGexImporterTest::objectTranslation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-translation.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 8);
+    CORRADE_COMPARE(importer->object3DCount(), 5);
 
     /* XYZ */
     {
@@ -466,23 +469,12 @@ void OpenGexImporterTest::objectTranslation() {
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::zAxis(1.0f)));
     }
-
-    /* Invalid kind, invalid array size, object-only transformation */
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(5));
-    CORRADE_VERIFY(!importer->object3D(6));
-    CORRADE_VERIFY(!importer->object3D(7));
-    CORRADE_COMPARE(out.str(),
-        "Trade::OpenGexImporter::object3D(): invalid translation\n"
-        "Trade::OpenGexImporter::object3D(): invalid translation\n"
-        "Trade::OpenGexImporter::object3D(): unsupported object-only transformation\n");
 }
 
 void OpenGexImporterTest::objectRotation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-rotation.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 9);
+    CORRADE_COMPARE(importer->object3DCount(), 6);
 
     /* Axis + angle */
     {
@@ -520,23 +512,12 @@ void OpenGexImporterTest::objectRotation() {
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(90.0_degf));
     }
-
-    /* Invalid kind, invalid array size, object-only transformation */
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(6));
-    CORRADE_VERIFY(!importer->object3D(7));
-    CORRADE_VERIFY(!importer->object3D(8));
-    CORRADE_COMPARE(out.str(),
-        "Trade::OpenGexImporter::object3D(): invalid rotation\n"
-        "Trade::OpenGexImporter::object3D(): invalid rotation\n"
-        "Trade::OpenGexImporter::object3D(): unsupported object-only transformation\n");
 }
 
 void OpenGexImporterTest::objectScaling() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-scaling.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 8);
+    CORRADE_COMPARE(importer->object3DCount(), 5);
 
     /* XYZ */
     {
@@ -568,17 +549,6 @@ void OpenGexImporterTest::objectScaling() {
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::zScale(2.0f)));
     }
-
-    /* Invalid kind, invalid array size, object-only transformation */
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(5));
-    CORRADE_VERIFY(!importer->object3D(6));
-    CORRADE_VERIFY(!importer->object3D(7));
-    CORRADE_COMPARE(out.str(),
-        "Trade::OpenGexImporter::object3D(): invalid scaling\n"
-        "Trade::OpenGexImporter::object3D(): invalid scaling\n"
-        "Trade::OpenGexImporter::object3D(): unsupported object-only transformation\n");
 }
 
 void OpenGexImporterTest::objectTransformationConcatentation() {
@@ -633,6 +603,21 @@ void OpenGexImporterTest::objectTransformationMetrics() {
         CORRADE_VERIFY(matrix);
         CORRADE_COMPARE(matrix->transformation(), Matrix4::scaling({1.0f, 5.5f, -2.0f}));
     }
+}
+
+void OpenGexImporterTest::objectInvalid() {
+    auto&& data = ObjectInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, Utility::formatString("object-invalid-{}.ogex", Utility::String::replaceAll(data.name, " ", "-")))));
+    CORRADE_COMPARE(importer->object3DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->object3D(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString(
+        "Trade::OpenGexImporter::object3D(): {}\n", data.message));
 }
 
 void OpenGexImporterTest::light() {

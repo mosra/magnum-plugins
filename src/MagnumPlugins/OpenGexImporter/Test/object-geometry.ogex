@@ -13,10 +13,6 @@ GeometryNode {
     ObjectRef { ref { %myMesh } }
 }
 
-GeometryNode {
-    ObjectRef { ref { null } }
-}
-
 GeometryObject %myMesh {
     Mesh {
         VertexArray (attrib = "position") { float {} }

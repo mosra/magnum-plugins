@@ -1,0 +1,3 @@
+CameraNode {
+    ObjectRef { ref { null } }
+}

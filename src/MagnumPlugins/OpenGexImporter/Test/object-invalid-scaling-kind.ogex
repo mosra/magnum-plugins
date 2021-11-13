@@ -1,0 +1,3 @@
+Node {
+    Scale (kind = "XYZ") { float[3] {} }
+}

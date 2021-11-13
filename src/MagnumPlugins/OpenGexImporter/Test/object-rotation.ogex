@@ -23,15 +23,3 @@ Node {
 Node {
     Rotation (kind = "z") { float { 1.570796327 } }
 }
-
-Node {
-    Rotation (kind = "Quaternion") { float[4] {} }
-}
-
-Node {
-    Rotation (kind = "z") { float[4] {{ 1.570796327, 0.0, 0.0, 1.0 }} }
-}
-
-Node {
-    Rotation (object = true) { float[4] {} }
-}

@@ -68,6 +68,20 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         mips.dds
         object-camera.ogex
         object-geometry.ogex
+        object-invalid-camera.ogex
+        object-invalid-geometry.ogex
+        object-invalid-light.ogex
+        object-invalid-rotation-array-size.ogex
+        object-invalid-rotation-kind.ogex
+        object-invalid-rotation-object-only.ogex
+        object-invalid-scaling-array-size.ogex
+        object-invalid-scaling-kind.ogex
+        object-invalid-scaling-object-only.ogex
+        object-invalid-transformation-array-size.ogex
+        object-invalid-transformation-object-only.ogex
+        object-invalid-translation-array-size.ogex
+        object-invalid-translation-kind.ogex
+        object-invalid-translation-object-only.ogex
         object-light.ogex
         object.ogex
         object-rotation.ogex
