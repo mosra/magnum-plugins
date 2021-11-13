@@ -23,15 +23,15 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Magnum/Math/Matrix3.h>
+#include <Magnum/Math/Matrix4.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData2D.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/SceneData.h>
 
 #include "configure.h"
@@ -168,40 +168,42 @@ void PrimitiveImporterTest::scene2D() {
     CORRADE_VERIFY(!importer->isOpened());
     CORRADE_VERIFY(importer->openData(nullptr));
 
-    /* The 2D and 3D objects are interleaved (sorted by name) so both 2D and 3D
-       object count is the total object count */
-    CORRADE_COMPARE(importer->object2DCount(), Containers::arraySize(Data));
+    CORRADE_COMPARE(importer->objectCount(), Containers::arraySize(Data));
 
     /* The default scene is a 3D one to avoid confusing existing code that
        expects just 3D scenes. */
     CORRADE_COMPARE(importer->sceneCount(), 2);
     CORRADE_COMPARE(importer->defaultScene(), 1);
 
+    /* Name mapping should work both ways */
+    Int squareSolid = importer->objectForName("squareSolid");
+    CORRADE_COMPARE_AS(squareSolid, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE(importer->objectName(squareSolid), "squareSolid");
+
     Containers::Optional<Trade::SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children2D().size(), 11);
-    /* The objects are interleaved (sorted by name) so this is not monotonic */
-    CORRADE_COMPARE(scene->children2D()[5], 18);
+    CORRADE_VERIFY(scene->is2D());
+    /* The 2D and 3D objects are interleaved (sorted by name) so both 2D and 3D
+       object count is the total object count */
+    CORRADE_COMPARE(importer->objectCount(), Containers::arraySize(Data));
+    CORRADE_COMPARE(scene->fieldCount(), 3);
 
-    /* Name mapping should work both ways */
-    Int gradient2DHorizontal = importer->object2DForName("gradient2DHorizontal");
-    CORRADE_COMPARE_AS(gradient2DHorizontal, 0, TestSuite::Compare::GreaterOrEqual);
-    CORRADE_COMPARE(importer->object2DName(gradient2DHorizontal), "gradient2DHorizontal");
-    {
-        CORRADE_EXPECT_FAIL("Object names are shared for 2D and 3D in the new interface, so this always returns a valid ID.");
-        CORRADE_COMPARE(importer->object2DForName("gradient3DHorizontal"), -1);
-    }
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE(scene->fieldSize(SceneField::Parent), 11);
+    CORRADE_COMPARE(scene->parentFor(squareSolid), -1);
 
-    /* 2D object import */
-    Containers::Pointer<Trade::ObjectData2D> object2D = importer->object2D("squareSolid");
-    CORRADE_VERIFY(object2D);
-    CORRADE_COMPARE(object2D->flags(), Trade::ObjectFlag2D::HasTranslationRotationScaling);
-    CORRADE_COMPARE(object2D->translation(), (Vector2{-1.5f, 3.0f}));
-    CORRADE_COMPARE(object2D->instanceType(), Trade::ObjectInstanceType2D::Mesh);
-    Int object2DInstance = object2D->instance();
-    CORRADE_COMPARE_AS(object2DInstance, 0, TestSuite::Compare::GreaterOrEqual);
-    CORRADE_COMPARE_AS(object2DInstance, importer->meshCount(), TestSuite::Compare::Less);
-    CORRADE_COMPARE(importer->meshName(object2DInstance), "squareSolid");
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_COMPARE(scene->fieldSize(SceneField::Translation), 11);
+    CORRADE_COMPARE(scene->transformation2DFor(squareSolid), Matrix3::translation({-1.5f, 3.0f}));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_COMPARE(scene->fieldSize(SceneField::Mesh), 11);
+    Containers::Array<Containers::Pair<UnsignedInt, Int>> meshesMaterials = scene->meshesMaterialsFor(squareSolid);
+    CORRADE_COMPARE(meshesMaterials.size(), 1);
+    CORRADE_COMPARE_AS(meshesMaterials.front().first(), 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(meshesMaterials.front().first(), importer->meshCount(), TestSuite::Compare::Less);
+    CORRADE_COMPARE(meshesMaterials.front().second(), -1);
+    CORRADE_COMPARE(importer->meshName(meshesMaterials.front().first()), "squareSolid");
 }
 
 void PrimitiveImporterTest::scene3D() {
@@ -212,40 +214,42 @@ void PrimitiveImporterTest::scene3D() {
     CORRADE_VERIFY(!importer->isOpened());
     CORRADE_VERIFY(importer->openData(nullptr));
 
-    /* The 2D and 3D objects are interleaved (sorted by name) so both 2D and 3D
-       object count is the total object count */
-    CORRADE_COMPARE(importer->object3DCount(), Containers::arraySize(Data));
+    CORRADE_COMPARE(importer->objectCount(), Containers::arraySize(Data));
 
     /* The default scene is a 3D one to avoid confusing existing code that
        expects just 3D scenes. */
     CORRADE_COMPARE(importer->sceneCount(), 2);
     CORRADE_COMPARE(importer->defaultScene(), 1);
 
+    /* Name mapping should work both ways */
+    Int planeWireframe = importer->objectForName("planeWireframe");
+    CORRADE_COMPARE_AS(planeWireframe, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE(importer->objectName(planeWireframe), "planeWireframe");
+
     Containers::Optional<Trade::SceneData> scene = importer->scene(1);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D().size(), 25);
-    /* The 2D amd 3D objects are interleaved (sorted by name) so this is not monotonic */
-    CORRADE_COMPARE(scene->children3D()[7], 12);
+    CORRADE_VERIFY(scene->is3D());
+    /* The 2D and 3D objects are interleaved (sorted by name) so both 2D and 3D
+       object count is the total object count */
+    CORRADE_COMPARE(importer->objectCount(), Containers::arraySize(Data));
+    CORRADE_COMPARE(scene->fieldCount(), 3);
 
-    /* Name mapping should work both ways */
-    Int gradient3DHorizontal = importer->object3DForName("gradient3DHorizontal");
-    CORRADE_COMPARE_AS(gradient3DHorizontal, 0, TestSuite::Compare::GreaterOrEqual);
-    CORRADE_COMPARE(importer->object3DName(gradient3DHorizontal), "gradient3DHorizontal");
-    {
-        CORRADE_EXPECT_FAIL("Object names are shared for 2D and 3D in the new interface, so this always returns a valid ID.");
-        CORRADE_COMPARE(importer->object3DForName("gradient2DHorizontal"), -1);
-    }
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE(scene->fieldSize(SceneField::Parent), 25);
+    CORRADE_COMPARE(scene->parentFor(planeWireframe), -1);
 
-    /* 3D dbject import */
-    Containers::Pointer<Trade::ObjectData3D> object3D = importer->object3D("planeWireframe");
-    CORRADE_VERIFY(object3D);
-    CORRADE_COMPARE(object3D->flags(), Trade::ObjectFlag3D::HasTranslationRotationScaling);
-    CORRADE_COMPARE(object3D->translation(), (Vector3{1.5f, 9.0f, 0.0f}));
-    CORRADE_COMPARE(object3D->instanceType(), Trade::ObjectInstanceType3D::Mesh);
-    Int object3DInstance = object3D->instance();
-    CORRADE_COMPARE_AS(object3DInstance, 0, TestSuite::Compare::GreaterOrEqual);
-    CORRADE_COMPARE_AS(object3DInstance, importer->meshCount(), TestSuite::Compare::Less);
-    CORRADE_COMPARE(importer->meshName(object3DInstance), "planeWireframe");
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_COMPARE(scene->fieldSize(SceneField::Translation), 25);
+    CORRADE_COMPARE(scene->transformation3DFor(planeWireframe), Matrix4::translation({1.5f, 9.0f, 0.0f}));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_COMPARE(scene->fieldSize(SceneField::Mesh), 25);
+    Containers::Array<Containers::Pair<UnsignedInt, Int>> meshesMaterials = scene->meshesMaterialsFor(planeWireframe);
+    CORRADE_COMPARE(meshesMaterials.size(), 1);
+    CORRADE_COMPARE_AS(meshesMaterials.front().first(), 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(meshesMaterials.front().first(), importer->meshCount(), TestSuite::Compare::Less);
+    CORRADE_COMPARE(meshesMaterials.front().second(), -1);
+    CORRADE_COMPARE(importer->meshName(meshesMaterials.front().first()), "planeWireframe");
 }
 
 }}}}
