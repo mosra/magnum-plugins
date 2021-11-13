@@ -64,10 +64,6 @@ cmake .. \
 ninja install
 cd ../..
 
-# The NDK doesn't have zstd on its own, so we fall back to using the one
-# bundled with Basis Universal. TODO redo when the bundled dependency is
-# dropped
-
 # Crosscompile. BUILD_GL_TESTS is enabled just to be sure, it should not be
 # needed by any plugin.
 mkdir build-android-arm && cd build-android-arm

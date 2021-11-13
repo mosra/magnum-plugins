@@ -60,6 +60,25 @@ cmake .. ^
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
 
+rem Build zstd
+IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v1.5.0.zip appveyor DownloadFile https://github.com/facebook/zstd/archive/refs/tags/v1.5.0.zip || exit /b
+7z x v1.5.0.zip || exit /b
+ren zstd-1.5.0 zstd || exit /b
+cd zstd || exit /b
+rem There's already a directory named `build`
+mkdir build_ && cd build_ || exit /b
+cmake ../build/cmake ^
+    -DCMAKE_CXX_FLAGS="--coverage" ^
+    -DCMAKE_BUILD_TYPE=Debug ^
+    -DZSTD_BUILD_PROGRAMS=OFF ^
+    -DZSTD_BUILD_SHARED=OFF ^
+    -DZSTD_BUILD_STATIC=ON ^
+    -DZSTD_MULTITHREAD_SUPPORT=OFF ^
+    -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
+    -G Ninja || exit /b
+cmake --build . --target install || exit /b
+cd .. && cd .. || exit /b
+
 rem Build Corrade
 git clone --depth 1 git://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b

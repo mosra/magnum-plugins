@@ -72,8 +72,24 @@ mv $HOME/deps/lib/{libfaad.a,faad.bc}
 mv $HOME/deps/lib/{libfaad_drm.a,faad_drm.bc}
 cd ..
 
-# TODO: fetch & compile real zstd instead of using the bundled one, it could
-# lead to smaller binary sizes and eventually to better perf as well
+# Crosscompile zstd
+export ZSTD_VERSION=1.5.0
+wget --no-check-certificate https://github.com/facebook/zstd/archive/refs/tags/v$ZSTD_VERSION.tar.gz
+tar -xzf v$ZSTD_VERSION.tar.gz
+cd zstd-$ZSTD_VERSION
+# There's already a directory named `build`
+mkdir build_ && cd build_
+cmake ../build/cmake \
+    -DCMAKE_TOOLCHAIN_FILE="../../toolchains/generic/Emscripten-wasm.cmake" \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DZSTD_BUILD_PROGRAMS=OFF \
+    -DZSTD_BUILD_SHARED=OFF \
+    -DZSTD_BUILD_STATIC=ON \
+    -DZSTD_MULTITHREAD_SUPPORT=OFF \
+    -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+    -G Ninja
+ninja install
+cd ../..
 
 # Crosscompile. BUILD_GL_TESTS is enabled just to be sure, it should not be
 # needed by any plugin.
