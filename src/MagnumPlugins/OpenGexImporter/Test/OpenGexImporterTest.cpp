@@ -126,22 +126,23 @@ struct OpenGexImporterTest: public TestSuite::Tester {
 
 const struct {
     const char* name;
+    Int id;
     const char* message;
 } ObjectInvalidData[] {
-    {"camera", "null camera reference"},
-    {"geometry", "null geometry reference"},
-    {"light", "null light reference"},
-    {"rotation array size", "invalid rotation"},
-    {"rotation kind", "invalid rotation"},
-    {"rotation object only", "unsupported object-only transformation"},
-    {"scaling array size", "invalid scaling"},
-    {"scaling kind", "invalid scaling"},
-    {"scaling object only", "unsupported object-only transformation"},
-    {"transformation array size", "invalid transformation"},
-    {"transformation object only", "unsupported object-only transformation"},
-    {"translation array size", "invalid translation"},
-    {"translation kind", "invalid translation"},
-    {"translation object only", "unsupported object-only transformation"},
+    {"camera", 1, "null camera reference in node 1"},
+    {"geometry", 1, "null geometry reference in node 1"},
+    {"light", 2, "null light reference in node 2"},
+    {"rotation array size", 2, "invalid rotation in node 2"},
+    {"rotation kind", 1, "invalid rotation in node 1"},
+    {"rotation object only", 3, "unsupported object-only transformation in node 3"},
+    {"scaling array size", 2, "invalid scaling in node 2"},
+    {"scaling kind", 3, "invalid scaling in node 3"},
+    {"scaling object only", 1, "unsupported object-only transformation in node 1"},
+    {"transformation array size", 2, "invalid transformation in node 2"},
+    {"transformation object only", 1, "unsupported object-only transformation in node 1"},
+    {"translation array size", 3, "invalid translation in node 3"},
+    {"translation kind", 2, "invalid translation in node 2"},
+    {"translation object only", 1, "unsupported object-only transformation in node 1"},
 };
 
 OpenGexImporterTest::OpenGexImporterTest() {
@@ -612,13 +613,16 @@ void OpenGexImporterTest::objectInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, Utility::formatString("object-invalid-{}.ogex", Utility::String::replaceAll(data.name, " ", "-")))));
-    CORRADE_COMPARE(importer->object3DCount(), 1);
 
+    /* It now errors during the initial scene caching, which is done at
+       the first call to any legacy API */
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(0));
+    CORRADE_COMPARE(importer->object3DCount(), data.id + 1);
+    CORRADE_VERIFY(!importer->object3D(data.id));
     CORRADE_COMPARE(out.str(), Utility::formatString(
-        "Trade::OpenGexImporter::object3D(): {}\n", data.message));
+        "Trade::OpenGexImporter::scene(): {}\n"
+        "Trade::AbstractImporter::object3D(): object {} not found in any 3D scene hierarchy\n", data.message, data.id));
 }
 
 void OpenGexImporterTest::light() {

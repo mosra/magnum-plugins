@@ -29,20 +29,20 @@
 #include <algorithm>
 #include <limits>
 #include <unordered_map>
+#include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Magnum/Mesh.h>
-#include <Magnum/Math/Matrix3.h>
+#include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/MaterialData.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
@@ -241,32 +241,6 @@ Int OpenGexImporter::doDefaultScene() const { return 0; }
 
 UnsignedInt OpenGexImporter::doSceneCount() const { return 1; }
 
-Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
-    /* Just gather all nodes that have no parent */
-    Int i = 0;
-    std::vector<UnsignedInt> children;
-    for(const OpenDdl::Structure node: _d->nodes) {
-        if(!node.parent()) children.push_back(i);
-        ++i;
-    }
-
-    return SceneData{{}, children};
-}
-
-UnsignedInt OpenGexImporter::doObject3DCount() const {
-    return _d->nodes.size();
-}
-
-Int OpenGexImporter::doObject3DForName(const std::string& name) {
-    const auto found = _d->nodesForName.find(name);
-    return found == _d->nodesForName.end() ? -1 : found->second;
-}
-
-std::string OpenGexImporter::doObject3DName(const UnsignedInt id) {
-    const auto name = _d->nodes[id].findFirstChildOf(OpenGex::Name);
-    return name ? name->firstChild().as<std::string>() : "";
-}
-
 namespace {
     inline Matrix4 fixMatrixZUp(const Matrix4& m) {
         /* Rotate back to Z up, apply transformation and then rotate to final Y
@@ -291,163 +265,298 @@ namespace {
     }
 }
 
-Containers::Pointer<ObjectData3D> OpenGexImporter::doObject3D(const UnsignedInt id) {
-    const OpenDdl::Structure& node = _d->nodes[id];
-
-    /* Compute total transformation */
-    Matrix4 transformation;
-    for(const OpenDdl::Structure t: node.childrenOf(OpenGex::Transform, OpenGex::Translation, OpenGex::Rotation, OpenGex::Scale)) {
-        /** @todo support object transformations */
-        if(const auto object = t.findPropertyOf(OpenGex::object)) if(object->as<bool>()) {
-            Error() << "Trade::OpenGexImporter::object3D(): unsupported object-only transformation";
-            return nullptr;
+Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
+    /* Count how many objects have meshes, lights and camera assignments.
+       Materials have to use the same object mapping as meshes, so only check
+       if there's any material assignment at all -- if not, then we won't need
+       to store that field. */
+    UnsignedInt meshCount = 0;
+    bool hasMeshMaterials = false;
+    UnsignedInt lightCount = 0;
+    UnsignedInt cameraCount = 0;
+    for(const OpenDdl::Structure& node: _d->nodes) {
+        if(node.identifier() == OpenGex::GeometryNode) {
+            ++meshCount;
+            if(node.findFirstChildOf(OpenGex::MaterialRef))
+                hasMeshMaterials = true;
+        } else if(node.identifier() == OpenGex::CameraNode) {
+            ++cameraCount;
+        } else if(node.identifier() == OpenGex::LightNode) {
+            ++lightCount;
         }
-
-        Matrix4 matrix;
-
-        /* 4x4 matrix */
-        if(t.identifier() == OpenGex::Transform) {
-            const OpenDdl::Structure data = t.firstChild();
-            if(data.subArraySize() != 16) {
-                Error() << "Trade::OpenGexImporter::object3D(): invalid transformation";
-                return nullptr;
-            }
-
-            const Matrix4 m = fixMatrixTranslation(Matrix4::from(data.asArray<Float>()), _d->distanceMultiplier);
-            matrix = _d->yUp ? m : fixMatrixZUp(m);
-
-        /* Translation */
-        } else if(t.identifier() == OpenGex::Translation) {
-            const OpenDdl::Structure data = t.firstChild();
-
-            /* "xyz" is the default if no kind property is specified */
-            Vector3 v;
-            const auto kind = t.findPropertyOf(OpenGex::kind);
-            if((!kind || kind->as<std::string>() == "xyz") && data.subArraySize() == 3)
-                v = Vector3::from(data.asArray<Float>())*_d->distanceMultiplier;
-            else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0)
-                v = Vector3::xAxis(data.as<Float>()*_d->distanceMultiplier);
-            else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0)
-                v = Vector3::yAxis(data.as<Float>()*_d->distanceMultiplier);
-            else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0)
-                v = Vector3::zAxis(data.as<Float>()*_d->distanceMultiplier);
-            else {
-                Error() << "Trade::OpenGexImporter::object3D(): invalid translation";
-                return nullptr;
-            }
-
-            matrix = Matrix4::translation((_d->yUp ? v : fixVectorZUp(v)));
-
-        /* Rotation */
-        } else if(t.identifier() == OpenGex::Rotation) {
-            const OpenDdl::Structure data = t.firstChild();
-
-            /* "axis" is the default if no kind property is specified */
-            Matrix4 m;
-            const auto kind = t.findPropertyOf(OpenGex::kind);
-            if((!kind || kind->as<std::string>() == "axis") && data.subArraySize() == 4) {
-                const auto angle = data.asArray<Float>()[0]*_d->angleMultiplier;
-                const auto axis = Vector3::from(data.asArray<Float>() + 1).normalized();
-                m = Matrix4::rotation(angle, axis);
-            } else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0) {
-                const auto angle = data.as<Float>()*_d->angleMultiplier;
-                m = Matrix4::rotationX(angle);
-            } else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0) {
-                const auto angle = data.as<Float>()*_d->angleMultiplier;
-                m = Matrix4::rotationY(angle);
-            } else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0) {
-                const auto angle = data.as<Float>()*_d->angleMultiplier;
-                m = Matrix4::rotationZ(angle);
-            } else if(kind && kind->as<std::string>() == "quaternion" && data.subArraySize() == 4) {
-                const auto vector = Vector3::from(data.asArray<Float>());
-                const auto scalar = data.asArray<Float>()[3];
-                m = Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
-            } else {
-                Error() << "Trade::OpenGexImporter::object3D(): invalid rotation";
-                return nullptr;
-            }
-
-            matrix = _d->yUp ? m : fixMatrixZUp(m);
-
-        /* Scaling */
-        } else if(t.identifier() == OpenGex::Scale) {
-            const OpenDdl::Structure data = t.firstChild();
-
-            /* "xyz" is the default if no kind property is specified */
-            Vector3 v;
-            const auto kind = t.findPropertyOf(OpenGex::kind);
-            if((!kind || kind->as<std::string>() == "xyz") && data.subArraySize() == 3)
-                v = Vector3::from(data.asArray<Float>());
-            else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0)
-                v = Vector3::xScale(data.as<Float>());
-            else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0)
-                v = Vector3::yScale(data.as<Float>());
-            else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0)
-                v = Vector3::zScale(data.as<Float>());
-            else {
-                Error() << "Trade::OpenGexImporter::object3D(): invalid scaling";
-                return nullptr;
-            }
-
-            matrix = Matrix4::scaling(_d->yUp ? v : fixScalingZUp(v));
-
-        } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-
-        transformation = transformation*matrix;
     }
 
-    /* Child node IDs */
-    std::vector<UnsignedInt> children;
-    for(const OpenDdl::Structure childNode: node.childrenOf(OpenGex::Node, OpenGex::BoneNode, OpenGex::GeometryNode, OpenGex::CameraNode, OpenGex::LightNode))
-        children.push_back(structureId(_d->nodes, childNode));
+    /* Allocate the output array.
 
-    /* Mesh object */
-    if(node.identifier() == OpenGex::GeometryNode) {
-        /* Mesh ID */
-        const auto mesh = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
-        if(!mesh) {
-            Error() << "Trade::OpenGexImporter::object3D(): null geometry reference";
-            return nullptr;
+       For simplicity assume that all nodes have some transformation. The
+       format is SO AMAZINGLY FLEXIBLE that there's a *stack* of these in
+       arbitrary order and repetition count for every node. Together with the
+       fact that children are specified recursively, it would mean that in
+       order to discover how many nodes contain a transformation we'd have to
+       go through the *whole* tree first in order to discover which nodes have
+       transformations and which not.
+
+       Since this format has practically zero users at this point, I don't see
+       any point in wasting time implementing and testing such optimization. In
+       case anybody wants to take old OpenGEX files and convert them to
+       reasonably compact glTFs, the SceneTools library will have utilities to
+       discard identity transforms, join objects and such.
+
+       TRS transformations are not supported at the moment because this damn
+       stack is not representable in a sane ECS-friendly way. <3 you,
+       OpenGEX. */
+    /** @todo if (and only if) OpenGEX gets relevance again, we could import
+        TRS if there was exactly one occurence of each and they were in the
+        right order -- because I suppose any sane DCC tool would export them
+        this way, ignoring 96.7% of the flexibility this damn format allows */
+    Containers::ArrayView<UnsignedInt> parentImporterStateTransformationObjects;
+    Containers::ArrayView<Int> parents;
+    Containers::ArrayView<const void*> importerState;
+    Containers::ArrayView<Matrix4> transformations;
+    Containers::ArrayView<UnsignedInt> meshMaterialObjects;
+    Containers::ArrayView<UnsignedInt> meshes;
+    Containers::ArrayView<Int> meshMaterials;
+    Containers::ArrayView<UnsignedInt> lightObjects;
+    Containers::ArrayView<UnsignedInt> lights;
+    Containers::ArrayView<UnsignedInt> cameraObjects;
+    Containers::ArrayView<UnsignedInt> cameras;
+    Containers::Array<char> data = Containers::ArrayTuple{
+        {NoInit, _d->nodes.size(), parentImporterStateTransformationObjects},
+        {NoInit, _d->nodes.size(), importerState},
+        {NoInit, _d->nodes.size(), parents},
+        {NoInit, _d->nodes.size(), transformations},
+        {NoInit, meshCount, meshMaterialObjects},
+        {NoInit, meshCount, meshes},
+        {NoInit, hasMeshMaterials ? meshCount : 0, meshMaterials},
+        {NoInit, lightCount, lightObjects},
+        {NoInit, lightCount, lights},
+        {NoInit, cameraCount, cameraObjects},
+        {NoInit, cameraCount, cameras},
+    };
+
+    /* Populate the data */
+    std::size_t meshMaterialOffset = 0;
+    std::size_t lightOffset = 0;
+    std::size_t cameraOffset = 0;
+    for(std::size_t i = 0; i != _d->nodes.size(); ++i) {
+        const OpenDdl::Structure& node = _d->nodes[i];
+
+        /* (Implicit) object mapping for the parent, importer state and
+           transformation field */
+        /** @todo drop this once SceneData supports implicit mapping without
+            having to provide the data */
+        parentImporterStateTransformationObjects[i] = i;
+
+        /* Populate importer state */
+        importerState[i] = &node;
+
+        /* Parent index. This is the only semi-advantage I could find about the
+           OpenGEX representation (well, or rather about the parser I
+           implemented... heh), having a possibility to know the parent instead
+           of having to figure it out of children references. */
+        parents[i] = node.parent() ? structureId(_d->nodes, *node.parent()) : -1;
+
+        /* Compute the transformation. What an overengineered POS, heh. */
+        transformations[i] = Matrix4{};
+        for(const OpenDdl::Structure t: node.childrenOf(OpenGex::Transform, OpenGex::Translation, OpenGex::Rotation, OpenGex::Scale)) {
+            /** @todo support object transformations */
+            if(const auto object = t.findPropertyOf(OpenGex::object)) if(object->as<bool>()) {
+                Error{} << "Trade::OpenGexImporter::scene(): unsupported object-only transformation in node" << i;
+                return {};
+            }
+
+            Matrix4 matrix;
+
+            /* 4x4 matrix */
+            if(t.identifier() == OpenGex::Transform) {
+                const OpenDdl::Structure data = t.firstChild();
+                if(data.subArraySize() != 16) {
+                    Error{} << "Trade::OpenGexImporter::scene(): invalid transformation in node" << i;
+                    return {};
+                }
+
+                const Matrix4 m = fixMatrixTranslation(Matrix4::from(data.asArray<Float>()), _d->distanceMultiplier);
+                matrix = _d->yUp ? m : fixMatrixZUp(m);
+
+            /* Translation */
+            } else if(t.identifier() == OpenGex::Translation) {
+                const OpenDdl::Structure data = t.firstChild();
+
+                /* "xyz" is the default if no kind property is specified */
+                Vector3 v;
+                const auto kind = t.findPropertyOf(OpenGex::kind);
+                if((!kind || kind->as<std::string>() == "xyz") && data.subArraySize() == 3)
+                    v = Vector3::from(data.asArray<Float>())*_d->distanceMultiplier;
+                else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0)
+                    v = Vector3::xAxis(data.as<Float>()*_d->distanceMultiplier);
+                else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0)
+                    v = Vector3::yAxis(data.as<Float>()*_d->distanceMultiplier);
+                else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0)
+                    v = Vector3::zAxis(data.as<Float>()*_d->distanceMultiplier);
+                else {
+                    Error{} << "Trade::OpenGexImporter::scene(): invalid translation in node" << i;
+                    return {};
+                }
+
+                matrix = Matrix4::translation((_d->yUp ? v : fixVectorZUp(v)));
+
+            /* Rotation */
+            } else if(t.identifier() == OpenGex::Rotation) {
+                const OpenDdl::Structure data = t.firstChild();
+
+                /* "axis" is the default if no kind property is specified */
+                Matrix4 m;
+                const auto kind = t.findPropertyOf(OpenGex::kind);
+                if((!kind || kind->as<std::string>() == "axis") && data.subArraySize() == 4) {
+                    const auto angle = data.asArray<Float>()[0]*_d->angleMultiplier;
+                    const auto axis = Vector3::from(data.asArray<Float>() + 1).normalized();
+                    m = Matrix4::rotation(angle, axis);
+                } else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0) {
+                    const auto angle = data.as<Float>()*_d->angleMultiplier;
+                    m = Matrix4::rotationX(angle);
+                } else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0) {
+                    const auto angle = data.as<Float>()*_d->angleMultiplier;
+                    m = Matrix4::rotationY(angle);
+                } else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0) {
+                    const auto angle = data.as<Float>()*_d->angleMultiplier;
+                    m = Matrix4::rotationZ(angle);
+                } else if(kind && kind->as<std::string>() == "quaternion" && data.subArraySize() == 4) {
+                    const auto vector = Vector3::from(data.asArray<Float>());
+                    const auto scalar = data.asArray<Float>()[3];
+                    m = Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
+                } else {
+                    Error{} << "Trade::OpenGexImporter::scene(): invalid rotation in node" << i;
+                    return {};
+                }
+
+                matrix = _d->yUp ? m : fixMatrixZUp(m);
+
+            /* Scaling */
+            } else if(t.identifier() == OpenGex::Scale) {
+                const OpenDdl::Structure data = t.firstChild();
+
+                /* "xyz" is the default if no kind property is specified */
+                Vector3 v;
+                const auto kind = t.findPropertyOf(OpenGex::kind);
+                if((!kind || kind->as<std::string>() == "xyz") && data.subArraySize() == 3)
+                    v = Vector3::from(data.asArray<Float>());
+                else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0)
+                    v = Vector3::xScale(data.as<Float>());
+                else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0)
+                    v = Vector3::yScale(data.as<Float>());
+                else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0)
+                    v = Vector3::zScale(data.as<Float>());
+                else {
+                    Error{} << "Trade::OpenGexImporter::scene(): invalid scaling in node" << i;
+                    return {};
+                }
+
+                matrix = Matrix4::scaling(_d->yUp ? v : fixScalingZUp(v));
+
+            } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+            transformations[i] = transformations[i]*matrix;
         }
-        const UnsignedInt meshId = structureId(_d->meshes, *mesh);
 
-        /* Material ID, if present */
-        /** @todo support more materials per mesh */
-        Int materialId = -1;
-        if(const auto materialRef = node.findFirstChildOf(OpenGex::MaterialRef))
-            if(const auto material = materialRef->firstChildOf(OpenDdl::Type::Reference).asReference())
-                materialId = structureId(_d->materials, *material);
+        /* Mesh object */
+        if(node.identifier() == OpenGex::GeometryNode) {
+            const auto mesh = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
+            if(!mesh) {
+                Error{} << "Trade::OpenGexImporter::scene(): null geometry reference in node" << i;
+                return {};
+            }
 
-        return Containers::pointer(new MeshObjectData3D{children, transformation, meshId, materialId, -1, &node});
+            meshMaterialObjects[meshMaterialOffset] = i;
+            meshes[meshMaterialOffset] = structureId(_d->meshes, *mesh);
 
-    /* Camera object */
-    } else if(node.identifier() == OpenGex::CameraNode) {
-        /* Camera ID */
-        const auto camera = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
-        if(!camera) {
-            Error() << "Trade::OpenGexImporter::object3D(): null camera reference";
-            return nullptr;
+            /* Material ID, if present */
+            /** @todo support more materials per mesh */
+            if(hasMeshMaterials) {
+                meshMaterials[meshMaterialOffset] = -1;
+                if(const auto materialRef = node.findFirstChildOf(OpenGex::MaterialRef))
+                    if(const auto material = materialRef->firstChildOf(OpenDdl::Type::Reference).asReference())
+                        meshMaterials[meshMaterialOffset] = structureId(_d->materials, *material);
+            }
+
+            ++meshMaterialOffset;
+
+        /* Camera object */
+        } else if(node.identifier() == OpenGex::CameraNode) {
+            const auto camera = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
+            if(!camera) {
+                Error{} << "Trade::OpenGexImporter::scene(): null camera reference in node" << i;
+                return {};
+            }
+
+            cameraObjects[cameraOffset] = i;
+            cameras[cameraOffset] = structureId(_d->cameras, *camera);
+            ++cameraOffset;
+
+        /* Light object */
+        } else if(node.identifier() == OpenGex::LightNode) {
+            const auto light = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
+            if(!light) {
+                Error() << "Trade::OpenGexImporter::scene(): null light reference in node" << i;
+                return {};
+            }
+
+            lightObjects[lightOffset] = i;
+            lights[lightOffset] = structureId(_d->lights, *light);
+            ++lightOffset;
         }
-        const UnsignedInt cameraId = structureId(_d->cameras, *camera);
 
-        return Containers::pointer(new ObjectData3D{children, transformation, ObjectInstanceType3D::Camera, cameraId, &node});
-
-    /* Light object */
-    } else if(node.identifier() == OpenGex::LightNode) {
-        /* Light ID */
-        const auto light = node.firstChildOf(OpenGex::ObjectRef).firstChildOf(OpenDdl::Type::Reference).asReference();
-        if(!light) {
-            Error() << "Trade::OpenGexImporter::object3D(): null light reference";
-            return nullptr;
-        }
-        const UnsignedInt lightId = structureId(_d->lights, *light);
-
-        return Containers::pointer(new ObjectData3D{children, transformation, ObjectInstanceType3D::Light, lightId, &node});
+        /** @todo support for bone nodes */
     }
 
-    /* Bone or empty object otherwise */
-    /** @todo support for bone nodes */
-    return Containers::pointer(new ObjectData3D{children, transformation, &node});
+    CORRADE_INTERNAL_ASSERT(
+        meshMaterialOffset == meshMaterialObjects.size() &&
+        lightOffset == lightObjects.size() &&
+        cameraOffset == cameraObjects.size());
+
+    /* Put everything together. For simplicity the imported data could always
+       have all fields present, with some being empty, but this gives less
+       noise for asset introspection purposes. */
+    Containers::Array<SceneFieldData> fields;
+    arrayAppend(fields, {
+        /** @todo once there's a flag to annotate implicit fields, omit the
+            parent field if it's all -1s; or alternatively we could also have a
+            stride of 0 for this case */
+        SceneFieldData{SceneField::Parent, parentImporterStateTransformationObjects, parents},
+        SceneFieldData{SceneField::ImporterState, parentImporterStateTransformationObjects, importerState},
+        SceneFieldData{SceneField::Transformation, parentImporterStateTransformationObjects, transformations}
+    });
+
+    if(meshCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Mesh, meshMaterialObjects, meshes
+    });
+    if(hasMeshMaterials) arrayAppend(fields, SceneFieldData{
+        SceneField::MeshMaterial, meshMaterialObjects, meshMaterials
+    });
+    if(lightCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Light, lightObjects, lights
+    });
+    if(cameraCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Camera, cameraObjects, cameras
+    });
+
+    /* Convert back to the default deleter to avoid dangling deleter function
+       pointer issues when unloading the plugin */
+    arrayShrink(fields, DefaultInit);
+    return SceneData{SceneMappingType::UnsignedInt, _d->nodes.size(), std::move(data), std::move(fields)};
+}
+
+UnsignedLong OpenGexImporter::doObjectCount() const {
+    return _d->nodes.size();
+}
+
+Long OpenGexImporter::doObjectForName(const std::string& name) {
+    const auto found = _d->nodesForName.find(name);
+    return found == _d->nodesForName.end() ? -1 : found->second;
+}
+
+std::string OpenGexImporter::doObjectName(const UnsignedLong id) {
+    const auto name = _d->nodes[id].findFirstChildOf(OpenGex::Name);
+    return name ? name->firstChild().as<std::string>() : "";
 }
 
 UnsignedInt OpenGexImporter::doCameraCount() const {

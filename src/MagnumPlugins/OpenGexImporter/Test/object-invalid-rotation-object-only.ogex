@@ -1,3 +1,7 @@
+Node {}
+Node {}
+Node {}
+
 Node {
     Rotation (object = true) { float[4] {} }
 }

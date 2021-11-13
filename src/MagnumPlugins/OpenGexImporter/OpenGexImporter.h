@@ -117,14 +117,44 @@ read.
 -   On OpenGL ES, usage of double type and on WebGL additionally also usage of
     64bit integer types results in parsing error.
 
-@subsection Trade-OpenGexImporter-behavior-scenes Scene hierarchy import
+@subsection Trade-OpenGexImporter-behavior-scenes Scene import
 
+-   OpenGEX supports only a single scene and has no way to assign a scene name.
+-   Imported scenes always have @ref SceneMappingType::UnsignedInt, with
+    @ref SceneData::mappingBound() equal to @ref objectCount(). The scene is
+    always 3D.
+-   All reported objects have a @ref SceneField::Parent (of type
+    @ref SceneFieldType::Int), @ref SceneField::ImporterState (of type
+    @ref SceneFieldType::Pointer, see @ref Trade-OpenGexImporter-state below)
+    and @ref SceneField::Transformation (of type @ref SceneFieldType::Matrix4x4).
+    These three fields share the same object mapping, which is trivial.
+-   OpenGEX supports separate TRS components for representing a node
+    transformation, however it allows them to be in any order and repeat count.
+    Which is, to be mild, an extremely annoying and mostly useless
+    overcomplication. For this reason the transformations are always
+    concatenated to a single matrix, without exposing any particular
+    components.
 -   Object-only transformations are not supported.
--   Additional material references after the first one for given geometry node
-    are ignored.
+-   If the scene references meshes, a @ref SceneField::Mesh (of type
+    @ref SceneFieldType::UnsignedInt) is present. If any of the referenced
+    meshes have assigned materials, @ref SceneField::MeshMaterial (of type
+    @ref SceneFieldType::Int) is present as well. Additional material
+    references after the first one for given geometry node are ignored, thus a
+    single node can only reference either a single mesh at most. See
+    @ref Trade-OpenGexImporter-behavior-meshes and
+    @ref Trade-OpenGexImporter-behavior-materials for further details.
+-   If the scene references cameras, a @ref SceneField::Camera (of type
+    @ref SceneFieldType::UnsignedInt) is present. See
+    @ref Trade-OpenGexImporter-behavior-cameras for further details.
+-   If the scene references lights, a @ref SceneField::Light (of type
+    @ref SceneFieldType::UnsignedInt) is present. See
+    @ref Trade-OpenGexImporter-behavior-lights for further details.
+-   An OpenGEX node can reference only either a single mesh, or a single
+    camera, or a single light at most, the file format doesn't allow nodes with
+    e.g. multiple cameras or a camera and a light.
 -   Geometry node visibility, shadow and motion blur properties are ignored.
 
-@subsection Trade-OpenGexImporter-behavior-camera Camera import
+@subsection Trade-OpenGexImporter-behavior-cameras Camera import
 
 -   Camera type is always @ref CameraType::Perspective3D
 -   Default FoV for cameras that don't have it specified is @cpp 35.0_degf @ce
@@ -244,10 +274,9 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
-        MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL Long doObjectForName(const std::string& name) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL std::string doObjectName(UnsignedLong id) override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;

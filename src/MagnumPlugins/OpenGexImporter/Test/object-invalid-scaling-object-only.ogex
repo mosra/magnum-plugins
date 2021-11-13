@@ -1,3 +1,5 @@
+Node {}
+
 Node {
     Scale (object = true) { float[3] {} }
 }
