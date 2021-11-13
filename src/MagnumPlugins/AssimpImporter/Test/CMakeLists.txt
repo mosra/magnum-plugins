@@ -62,6 +62,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         animation-patching.bin
         animation-patching.gltf
         camera.dae
+        camera-orthographic.gltf
         diffuse_texture.png
         embedded-texture.blend
         exported-animation.dae # Converted from exported-animation.blend
