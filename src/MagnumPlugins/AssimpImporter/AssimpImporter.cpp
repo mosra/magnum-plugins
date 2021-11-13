@@ -763,7 +763,7 @@ Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
         lightType = LightData::Type::Spot;
         color = Color3{l->mColorDiffuse};
     } else if(l->mType == aiLightSource_AMBIENT) {
-        lightType = LightData::Type::Point;
+        lightType = LightData::Type::Ambient;
         color = Color3{l->mColorAmbient};
     } else {
         /** @todo area lights */

@@ -1545,13 +1545,13 @@ void AssimpImporterTest::light() {
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.15f, 0.45f})*10.0f);
         CORRADE_COMPARE(light->intensity(), 1.0f);
 
-    /* Ambient light -- imported as Point with no attenuation */
+    /* Ambient light */
     } {
         CORRADE_COMPARE(importer->lightName(3), "Ambient");
         CORRADE_COMPARE(importer->lightForName("Ambient"), 3);
         auto light = importer->light(3);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->type(), LightData::Type::Ambient);
         CORRADE_COMPARE(light->color(), (Color3{0.01f, 0.02f, 0.05f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));

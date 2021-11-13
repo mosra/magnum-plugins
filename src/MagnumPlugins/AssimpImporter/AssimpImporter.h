@@ -278,8 +278,6 @@ verbosity levels in each instance.
 
 -   @ref LightData::intensity() is always @cpp 1.0f @ce, instead Assimp
     premultiplies @ref LightData::color() with the intensity
--   Ambient lights are imported as @ref LightData::Type::Point with attenuation
-    set to @cpp {1.0f, 0.0f, 0.0f} @ce
 -   The following properties are ignored:
     -   Specular color
     -   Custom light orientation vectors --- the orientation is always only
