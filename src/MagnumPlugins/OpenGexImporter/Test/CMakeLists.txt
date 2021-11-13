@@ -66,30 +66,30 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         mesh-metrics.ogex
         mesh.ogex
         mips.dds
-        object-camera.ogex
-        object-geometry.ogex
-        object-invalid-camera.ogex
-        object-invalid-geometry.ogex
-        object-invalid-light.ogex
-        object-invalid-rotation-array-size.ogex
-        object-invalid-rotation-kind.ogex
-        object-invalid-rotation-object-only.ogex
-        object-invalid-scaling-array-size.ogex
-        object-invalid-scaling-kind.ogex
-        object-invalid-scaling-object-only.ogex
-        object-invalid-transformation-array-size.ogex
-        object-invalid-transformation-object-only.ogex
-        object-invalid-translation-array-size.ogex
-        object-invalid-translation-kind.ogex
-        object-invalid-translation-object-only.ogex
-        object-light.ogex
-        object.ogex
-        object-rotation.ogex
-        object-scaling.ogex
-        object-transformation-concatenation.ogex
-        object-transformation-metrics.ogex
-        object-transformation.ogex
-        object-translation.ogex
+        scene-camera.ogex
+        scene-geometry.ogex
+        scene-invalid-camera.ogex
+        scene-invalid-geometry.ogex
+        scene-invalid-light.ogex
+        scene-invalid-rotation-array-size.ogex
+        scene-invalid-rotation-kind.ogex
+        scene-invalid-rotation-object-only.ogex
+        scene-invalid-scaling-array-size.ogex
+        scene-invalid-scaling-kind.ogex
+        scene-invalid-scaling-object-only.ogex
+        scene-invalid-transformation-array-size.ogex
+        scene-invalid-transformation-object-only.ogex
+        scene-invalid-translation-array-size.ogex
+        scene-invalid-translation-kind.ogex
+        scene-invalid-translation-object-only.ogex
+        scene-light.ogex
+        scene.ogex
+        scene-rotation.ogex
+        scene-scaling.ogex
+        scene-transformation-concatenation.ogex
+        scene-transformation-metrics.ogex
+        scene-transformation.ogex
+        scene-translation.ogex
         texture-invalid.ogex
         texture.ogex
         texture-mips.ogex

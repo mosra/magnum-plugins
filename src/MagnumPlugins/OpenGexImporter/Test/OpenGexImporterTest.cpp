@@ -38,12 +38,10 @@
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Quaternion.h>
-#include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Matrix4.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
-#include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
@@ -73,18 +71,18 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void cameraMetrics();
     void cameraInvalid();
 
-    void object();
-    void objectCamera();
-    void objectLight();
-    void objectMesh();
-    void objectTransformation();
-    void objectTranslation();
-    void objectRotation();
-    void objectScaling();
-    void objectTransformationConcatentation();
-    void objectTransformationMetrics();
+    void scene();
+    void sceneCamera();
+    void sceneLight();
+    void sceneMesh();
+    void sceneTransformation();
+    void sceneTranslation();
+    void sceneRotation();
+    void sceneScaling();
+    void sceneTransformationConcatentation();
+    void sceneTransformationMetrics();
 
-    void objectInvalid();
+    void sceneInvalid();
 
     void light();
     void lightInvalid();
@@ -126,23 +124,22 @@ struct OpenGexImporterTest: public TestSuite::Tester {
 
 const struct {
     const char* name;
-    Int id;
     const char* message;
-} ObjectInvalidData[] {
-    {"camera", 1, "null camera reference in node 1"},
-    {"geometry", 1, "null geometry reference in node 1"},
-    {"light", 2, "null light reference in node 2"},
-    {"rotation array size", 2, "invalid rotation in node 2"},
-    {"rotation kind", 1, "invalid rotation in node 1"},
-    {"rotation object only", 3, "unsupported object-only transformation in node 3"},
-    {"scaling array size", 2, "invalid scaling in node 2"},
-    {"scaling kind", 3, "invalid scaling in node 3"},
-    {"scaling object only", 1, "unsupported object-only transformation in node 1"},
-    {"transformation array size", 2, "invalid transformation in node 2"},
-    {"transformation object only", 1, "unsupported object-only transformation in node 1"},
-    {"translation array size", 3, "invalid translation in node 3"},
-    {"translation kind", 2, "invalid translation in node 2"},
-    {"translation object only", 1, "unsupported object-only transformation in node 1"},
+} SceneInvalidData[] {
+    {"camera", "null camera reference in node 1"},
+    {"geometry", "null geometry reference in node 1"},
+    {"light", "null light reference in node 2"},
+    {"rotation array size", "invalid rotation in node 2"},
+    {"rotation kind", "invalid rotation in node 1"},
+    {"rotation object only", "unsupported object-only transformation in node 3"},
+    {"scaling array size", "invalid scaling in node 2"},
+    {"scaling kind", "invalid scaling in node 3"},
+    {"scaling object only", "unsupported object-only transformation in node 1"},
+    {"transformation array size", "invalid transformation in node 2"},
+    {"transformation object only", "unsupported object-only transformation in node 1"},
+    {"translation array size", "invalid translation in node 3"},
+    {"translation kind", "invalid translation in node 2"},
+    {"translation object only", "unsupported object-only transformation in node 1"},
 };
 
 OpenGexImporterTest::OpenGexImporterTest() {
@@ -155,19 +152,19 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::cameraMetrics,
               &OpenGexImporterTest::cameraInvalid,
 
-              &OpenGexImporterTest::object,
-              &OpenGexImporterTest::objectCamera,
-              &OpenGexImporterTest::objectLight,
-              &OpenGexImporterTest::objectMesh,
-              &OpenGexImporterTest::objectTransformation,
-              &OpenGexImporterTest::objectTranslation,
-              &OpenGexImporterTest::objectRotation,
-              &OpenGexImporterTest::objectScaling,
-              &OpenGexImporterTest::objectTransformationConcatentation,
-              &OpenGexImporterTest::objectTransformationMetrics});
+              &OpenGexImporterTest::scene,
+              &OpenGexImporterTest::sceneCamera,
+              &OpenGexImporterTest::sceneLight,
+              &OpenGexImporterTest::sceneMesh,
+              &OpenGexImporterTest::sceneTransformation,
+              &OpenGexImporterTest::sceneTranslation,
+              &OpenGexImporterTest::sceneRotation,
+              &OpenGexImporterTest::sceneScaling,
+              &OpenGexImporterTest::sceneTransformationConcatentation,
+              &OpenGexImporterTest::sceneTransformationMetrics});
 
-    addInstancedTests({&OpenGexImporterTest::objectInvalid},
-        Containers::arraySize(ObjectInvalidData));
+    addInstancedTests({&OpenGexImporterTest::sceneInvalid},
+        Containers::arraySize(SceneInvalidData));
 
     addTests({&OpenGexImporterTest::light,
               &OpenGexImporterTest::lightInvalid,
@@ -322,307 +319,350 @@ void OpenGexImporterTest::cameraInvalid() {
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::camera(): invalid parameter\n");
 }
 
-void OpenGexImporterTest::object() {
+void OpenGexImporterTest::scene() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene.ogex")));
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
 
-    CORRADE_COMPARE(importer->object3DCount(), 5);
-    CORRADE_COMPARE(importer->object3DName(2), "MyGeometryNode");
-    CORRADE_COMPARE(importer->object3DForName("MyGeometryNode"), 2);
-    CORRADE_COMPARE(importer->object3DForName("Nonexistent"), -1);
+    CORRADE_COMPARE(importer->objectCount(), 5);
+    CORRADE_COMPARE(importer->objectName(2), "MyGeometryNode");
+    CORRADE_COMPARE(importer->objectForName("MyGeometryNode"), 2);
+    CORRADE_COMPARE(importer->objectForName("Nonexistent"), -1);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 3}));
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 5);
+    CORRADE_COMPARE(scene->fieldCount(), 6);
 
-    Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-    CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{1, 2}));
+    /* Parents. Object mapping is implicit, not in the order of discovery. */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
+        0, 1, 2, 3, 4
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1, 0, 0, -1, 3
+    }), TestSuite::Compare::Container);
 
-    Containers::Pointer<ObjectData3D> cameraObject = importer->object3D(1);
-    CORRADE_VERIFY(cameraObject);
-    CORRADE_COMPARE(cameraObject->instanceType(), ObjectInstanceType3D::Camera);
-
-    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(2);
-    CORRADE_VERIFY(meshObject);
-
-    CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_VERIFY(meshObject->children().empty());
-
-    Containers::Pointer<ObjectData3D> boneObject = importer->object3D(3);
-    CORRADE_VERIFY(boneObject);
-    CORRADE_COMPARE(boneObject->instanceType(), ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(boneObject->children(), (std::vector<UnsignedInt>{4}));
-
-    Containers::Pointer<ObjectData3D> lightObject = importer->object3D(4);
-    CORRADE_VERIFY(lightObject);
-    CORRADE_COMPARE(lightObject->instanceType(), ObjectInstanceType3D::Light);
-    CORRADE_VERIFY(lightObject->children().empty());
-}
-
-void OpenGexImporterTest::objectCamera() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-camera.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 1);
-
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
-        CORRADE_COMPARE(object->instance(), 1);
+    /* Importer state shares the same object mapping and it's all non-null
+       pointers. The scene itself has no importer state. */
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_COMPARE_AS(
+        scene->mapping<UnsignedInt>(SceneField::ImporterState),
+        scene->mapping<UnsignedInt>(SceneField::Parent), TestSuite::Compare::Container);
+    for(const void* a: scene->field<const void*>(SceneField::ImporterState)) {
+        CORRADE_VERIFY(a);
     }
+
+    /* Transformations share the same object mapping as well but are tested in
+       sceneTransformation() and others, so it's all identities here. */
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+    CORRADE_COMPARE_AS(
+        scene->mapping<UnsignedInt>(SceneField::Transformation),
+        scene->mapping<UnsignedInt>(SceneField::Parent), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView({
+        Matrix4{},
+        Matrix4{},
+        Matrix4{},
+        Matrix4{},
+        Matrix4{},
+    }), TestSuite::Compare::Container);
+
+    /* Object 1 has a camera */
+    CORRADE_VERIFY(scene->hasField(SceneField::Camera));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+        1
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+
+    /* Object 2 has a mesh, but no material */
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        2
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(!scene->hasField(SceneField::MeshMaterial));
+
+    /* Object 4 has a light */
+    CORRADE_VERIFY(scene->hasField(SceneField::Light));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+        4
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectLight() {
+void OpenGexImporterTest::sceneCamera() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-light.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-camera.ogex")));
 
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(object->instance(), 1);
-    }
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 1);
+    CORRADE_COMPARE(scene->fieldCount(), 4);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Camera));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+        1
+    }), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectMesh() {
+void OpenGexImporterTest::sceneLight() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-geometry.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 3);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-light.ogex")));
 
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 1);
+    CORRADE_COMPARE(scene->fieldCount(), 4);
 
-        auto&& meshObject = static_cast<MeshObjectData3D&>(*object);
-        CORRADE_COMPARE(meshObject.instance(), 1);
-        CORRADE_COMPARE(meshObject.material(), 2);
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
 
-        auto&& meshObject = static_cast<MeshObjectData3D&>(*object);
-        CORRADE_COMPARE(meshObject.material(), -1);
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-
-        auto&& meshObject = static_cast<MeshObjectData3D&>(*object);
-        CORRADE_COMPARE(meshObject.material(), -1);
-    }
+    CORRADE_VERIFY(scene->hasField(SceneField::Light));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+        1
+    }), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectTransformation() {
+void OpenGexImporterTest::sceneMesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-geometry.ogex")));
 
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), (Matrix4{
-            {3.0f,  0.0f, 0.0f, 0.0f},
-            {0.0f, -2.0f, 0.0f, 0.0f},
-            {0.0f,  0.0f, 0.5f, 0.0f},
-            {7.5f, -1.5f, 1.0f, 1.0f}
-        }));
-    }
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 3);
+    CORRADE_COMPARE(scene->fieldCount(), 5);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+
+    /* Only the first object has a material, the second one has explicit null
+       material reference, the third has no material reference at all.
+       A case with no material references is tested in scene(). */
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0, 1, 2
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        1, 0, 0
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+        2, -1, -1
+    }), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectTranslation() {
+void OpenGexImporterTest::sceneTransformation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-translation.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 5);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation.ogex")));
 
-    /* XYZ */
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::translation({7.5f, -1.5f, 1.0f}));
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 1);
+    CORRADE_COMPARE(scene->fieldCount(), 3);
 
-    /* Default, which is also XYZ */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::translation({7.5f, -1.5f, 1.0f}));
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
 
-    /* X */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::xAxis(7.5f)));
-
-    /* Y */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(3);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::yAxis(-1.5f)));
-
-    /* Z */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(4);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::translation(Vector3::zAxis(1.0f)));
-    }
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView<Matrix4>({{
+        {3.0f,  0.0f, 0.0f, 0.0f},
+        {0.0f, -2.0f, 0.0f, 0.0f},
+        {0.0f,  0.0f, 0.5f, 0.0f},
+        {7.5f, -1.5f, 1.0f, 1.0f}
+    }}), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectRotation() {
+void OpenGexImporterTest::sceneTranslation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-rotation.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 6);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-translation.ogex")));
 
-    /* Axis + angle */
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(90.0_degf, Vector3::zAxis()));
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 5);
+    CORRADE_COMPARE(scene->fieldCount(), 3);
 
-    /* Default, which is also axis + angle */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotation(-90.0_degf, Vector3::zAxis(-1.0f)));
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
 
-    /* Quaternion */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::from(Quaternion::rotation(90.0_degf, Vector3::zAxis()).toMatrix(), {}));
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView<Matrix4>({
+        /* XYZ */
+        Matrix4::translation({7.5f, -1.5f, 1.0f}),
 
-    /* X */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(3);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationX(90.0_degf));
+        /* Default, which is also XYZ */
+        Matrix4::translation({7.5f, -1.5f, 1.0f}),
 
-    /* Y */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(4);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationY(90.0_degf));
+        /* X */
+        Matrix4::translation(Vector3::xAxis(7.5f)),
 
-    /* Z */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(5);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(90.0_degf));
-    }
+        /* Y */
+        Matrix4::translation(Vector3::yAxis(-1.5f)),
+
+        /* Z */
+        Matrix4::translation(Vector3::zAxis(1.0f))
+    }), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectScaling() {
+void OpenGexImporterTest::sceneRotation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-scaling.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 5);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-rotation.ogex")));
 
-    /* XYZ */
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::scaling({7.5f, -1.5f, 2.0f}));
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 6);
+    CORRADE_COMPARE(scene->fieldCount(), 3);
 
-    /* Default, which is also XYZ */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::scaling({7.5f, -1.5f, 2.0f}));
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
 
-    /* X */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::xScale(7.5f)));
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView<Matrix4>({
+        /* Axis + angle */
+        Matrix4::rotation(90.0_degf, Vector3::zAxis()),
 
-    /* Y */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(3);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::yScale(-1.5f)));
+        /* Default, which is also axis + angle */
+        Matrix4::rotation(-90.0_degf, Vector3::zAxis(-1.0f)),
 
-    /* Z */
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(4);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::scaling(Vector3::zScale(2.0f)));
-    }
+        /* Quaternion */
+        Matrix4::from(Quaternion::rotation(90.0_degf, Vector3::zAxis()).toMatrix(), {}),
+
+        /* X */
+        Matrix4::rotationX(90.0_degf),
+
+        /* Y */
+        Matrix4::rotationY(90.0_degf),
+
+        /* Z */
+        Matrix4::rotationZ(90.0_degf)
+    }), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectTransformationConcatentation() {
+void OpenGexImporterTest::sceneScaling() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation-concatenation.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-scaling.ogex")));
 
-    Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-    CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->transformation(),
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 5);
+    CORRADE_COMPARE(scene->fieldCount(), 3);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView<Matrix4>({
+        /* XYZ */
+        Matrix4::scaling({7.5f, -1.5f, 2.0f}),
+
+        /* Default, which is also XYZ */
+        Matrix4::scaling({7.5f, -1.5f, 2.0f}),
+
+        /* X */
+        Matrix4::scaling(Vector3::xScale(7.5f)),
+
+        /* Y */
+        Matrix4::scaling(Vector3::yScale(-1.5f)),
+
+        /* Z */
+        Matrix4::scaling(Vector3::zScale(2.0f))
+    }), TestSuite::Compare::Container);
+}
+
+void OpenGexImporterTest::sceneTransformationConcatentation() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation-concatenation.ogex")));
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 1);
+    CORRADE_COMPARE(scene->fieldCount(), 3);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView<Matrix4>({
         Matrix4::translation({7.5f, -1.5f, 1.0f})*
         Matrix4::scaling({1.0f, 2.0f, -1.0f})*
-        Matrix4::rotationX(-90.0_degf));
+        Matrix4::rotationX(-90.0_degf)
+    }), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectTransformationMetrics() {
+void OpenGexImporterTest::sceneTransformationMetrics() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object-transformation-metrics.ogex")));
-    CORRADE_COMPARE(importer->object3DCount(), 7);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation-metrics.ogex")));
 
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(),
-            Matrix4::translation({100.0f, 550.0f, 200.0f})*
-            Matrix4::scaling({1.0f, 5.5f, -2.0f})
-        );
-    }
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 7);
+    CORRADE_COMPARE(scene->fieldCount(), 3);
 
-    /* Each pair describes the same transformation using given operation and
-       transformation matrix */
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::translation({100.0f, 550.0f, 200.0f}));
-        Containers::Pointer<ObjectData3D> matrix = importer->object3D(2);
-        CORRADE_VERIFY(matrix);
-        CORRADE_COMPARE(matrix->transformation(), Matrix4::translation({100.0f, 550.0f, 200.0f}));
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(3);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationZ(-90.0_degf));
-        Containers::Pointer<ObjectData3D> matrix = importer->object3D(4);
-        CORRADE_VERIFY(matrix);
-        CORRADE_COMPARE(matrix->transformation(), Matrix4::rotationZ(-90.0_degf));
-    } {
-        /* This won't be multiplied by 100, as the original mesh data are adjusted already */
-        Containers::Pointer<ObjectData3D> object = importer->object3D(5);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->transformation(), Matrix4::scaling({1.0f, 5.5f, -2.0f}));
-        Containers::Pointer<ObjectData3D> matrix = importer->object3D(6);
-        CORRADE_VERIFY(matrix);
-        CORRADE_COMPARE(matrix->transformation(), Matrix4::scaling({1.0f, 5.5f, -2.0f}));
-    }
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView<Matrix4>({
+        Matrix4::translation({100.0f, 550.0f, 200.0f})*
+            Matrix4::scaling({1.0f, 5.5f, -2.0f}),
+
+        /* Each pair describes the same transformation using given operation
+           and transformation matrix */
+        Matrix4::translation({100.0f, 550.0f, 200.0f}),
+        Matrix4::translation({100.0f, 550.0f, 200.0f}),
+
+        Matrix4::rotationZ(-90.0_degf),
+        Matrix4::rotationZ(-90.0_degf),
+
+        /* This won't be multiplied by 100, as the original mesh data are
+           adjusted already */
+        Matrix4::scaling({1.0f, 5.5f, -2.0f}),
+        Matrix4::scaling({1.0f, 5.5f, -2.0f})
+    }), TestSuite::Compare::Container);
 }
 
-void OpenGexImporterTest::objectInvalid() {
-    auto&& data = ObjectInvalidData[testCaseInstanceId()];
+void OpenGexImporterTest::sceneInvalid() {
+    auto&& data = SceneInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, Utility::formatString("object-invalid-{}.ogex", Utility::String::replaceAll(data.name, " ", "-")))));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, Utility::formatString("scene-invalid-{}.ogex", Utility::String::replaceAll(data.name, " ", "-")))));
 
-    /* It now errors during the initial scene caching, which is done at
-       the first call to any legacy API */
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_COMPARE(importer->object3DCount(), data.id + 1);
-    CORRADE_VERIFY(!importer->object3D(data.id));
+    CORRADE_VERIFY(!importer->scene(0));
     CORRADE_COMPARE(out.str(), Utility::formatString(
-        "Trade::OpenGexImporter::scene(): {}\n"
-        "Trade::AbstractImporter::object3D(): object {} not found in any 3D scene hierarchy\n", data.message, data.id));
+        "Trade::OpenGexImporter::scene(): {}\n", data.message));
 }
 
 void OpenGexImporterTest::light() {
@@ -1095,11 +1135,13 @@ void OpenGexImporterTest::extension() {
 
     /* Camera name */
     {
-        CORRADE_COMPARE(importer->object3DCount(), 2);
-        Containers::Pointer<ObjectData3D> cameraObject = importer->object3D(1);
-        CORRADE_VERIFY(cameraObject);
-        CORRADE_VERIFY(cameraObject->importerState());
-        Containers::Optional<OpenDdl::Structure> cameraName = static_cast<const OpenDdl::Structure*>(cameraObject->importerState())->findFirstChildOf(OpenGex::Extension);
+        Containers::Optional<SceneData> scene = importer->scene(0);
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(scene->mappingBound(), 2);
+
+        Containers::Optional<const void*> importerState = scene->importerStateFor(1);
+        CORRADE_VERIFY(importerState);
+        Containers::Optional<OpenDdl::Structure> cameraName = static_cast<const OpenDdl::Structure*>(*importerState)->findFirstChildOf(OpenGex::Extension);
         CORRADE_VERIFY(cameraName);
         CORRADE_VERIFY(cameraName->findPropertyOf(OpenGex::applic));
         CORRADE_COMPARE(cameraName->propertyOf(OpenGex::applic).as<std::string>(), "Magnum");
