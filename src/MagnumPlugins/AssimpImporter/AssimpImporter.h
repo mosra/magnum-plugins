@@ -460,15 +460,15 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL std::string doSceneName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
-        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doCameraForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doCameraName(UnsignedInt id) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
-
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
+
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doCameraForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doCameraName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doLightCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doLightForName(const std::string& name) override;
