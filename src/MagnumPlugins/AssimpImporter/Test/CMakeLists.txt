@@ -85,6 +85,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         mips.dds
         multiple-textures.mtl r.png g.png b.png y.png
         points.obj
+        polygon.obj
         scene.dae
         scene+mesh.dae
         scene-name.gltf
