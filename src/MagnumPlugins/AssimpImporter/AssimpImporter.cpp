@@ -820,13 +820,20 @@ std::string AssimpImporter::doMeshName(const UnsignedInt id) {
 Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, UnsignedInt) {
     const aiMesh* mesh = _f->scene->mMeshes[id];
 
-    /* Primitive */
+    /* Primitive. mPrimitiveTypes is a mask but aiProcess_SortByPType (enabled
+       by default) should make sure only one type is set. However, since 5.1.0
+       triangles can also have aiPrimitiveType_NGONEncodingFlag set which
+       indicates that consecutive triangles form an ngon. That flag is always
+       set for triangulated meshes. Masking all known types to future-proof
+       this against more random flags getting added. */
     MeshPrimitive primitive;
-    if(mesh->mPrimitiveTypes == aiPrimitiveType_POINT) {
+    const aiPrimitiveType primitiveType = aiPrimitiveType(mesh->mPrimitiveTypes &
+        (aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_TRIANGLE));
+    if(primitiveType == aiPrimitiveType_POINT) {
         primitive = MeshPrimitive::Points;
-    } else if(mesh->mPrimitiveTypes == aiPrimitiveType_LINE) {
+    } else if(primitiveType == aiPrimitiveType_LINE) {
         primitive = MeshPrimitive::Lines;
-    } else if(mesh->mPrimitiveTypes == aiPrimitiveType_TRIANGLE) {
+    } else if(primitiveType == aiPrimitiveType_TRIANGLE) {
         primitive = MeshPrimitive::Triangles;
     } else {
         Error() << "Trade::AssimpImporter::mesh(): unsupported aiPrimitiveType" << mesh->mPrimitiveTypes;

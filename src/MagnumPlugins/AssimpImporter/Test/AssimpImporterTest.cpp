@@ -119,6 +119,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void mesh();
     void pointMesh();
     void lineMesh();
+    void polygonMesh();
     void meshCustomAttributes();
     void meshSkinningAttributes();
     void meshSkinningAttributesMultiple();
@@ -252,6 +253,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
               &AssimpImporterTest::lineMesh,
+              &AssimpImporterTest::polygonMesh,
               &AssimpImporterTest::meshCustomAttributes});
 
     addInstancedTests({&AssimpImporterTest::meshSkinningAttributes},
@@ -2000,6 +2002,36 @@ void AssimpImporterTest::lineMesh() {
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
         Containers::arrayView<Vector3>({
             {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+
+    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
+    CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
+    CORRADE_COMPARE(meshObject->instance(), 0);
+}
+
+void AssimpImporterTest::polygonMesh() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "polygon.obj")));
+
+    /* Just testing that triangulation doesn't break anything */
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->object3DCount(), 1);
+
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        Containers::arrayView<UnsignedInt>({0, 1, 2, 0, 2, 3}),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {-1.0f,  1.0f, 0.0f}, { 1.0f,  1.0f, 0.0f},
+            { 1.0f, -1.0f, 0.0f}, {-1.0f, -1.0f, 0.0f}
         }), TestSuite::Compare::Container);
 
     Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
