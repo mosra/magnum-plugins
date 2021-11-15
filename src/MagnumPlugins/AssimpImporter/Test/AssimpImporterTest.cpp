@@ -2977,8 +2977,8 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(mesh4->primitive(), MeshPrimitive::Triangles);
     }
 
-    /* Five objects, but two refer a three-primitive mesh and one refers a
-       two-primitive one */
+    /* Four objects, but two refer a three-primitive mesh and one refers a
+       two-primitive one (and one is meshless) */
     CORRADE_COMPARE(importer->object3DCount(), 9);
     {
         CORRADE_COMPARE(importer->object3DName(0), "Using_the_second_mesh__should_have_4_children");
