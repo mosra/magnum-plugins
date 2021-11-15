@@ -29,6 +29,7 @@
 #include <algorithm> /* std::stable_sort() */
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
@@ -45,6 +46,7 @@
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/CubicHermite.h>
+#include <Magnum/Math/FunctionsBatch.h>
 #include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
@@ -54,7 +56,6 @@
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/MaterialData.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/TextureData.h>
@@ -1314,31 +1315,295 @@ std::string CgltfImporter::doSceneName(const UnsignedInt id) {
 Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
     const cgltf_scene& scene = _d->data->scenes[id];
 
-    /* The scene contains always the top-level nodes, all multi-primitive mesh
-       nodes are children of them */
-    std::vector<UnsignedInt> children;
-    children.reserve(scene.nodes_count);
+    /* Cgltf checks all node / mesh / light ... references during initial file
+       parsing (and unfortunately produces a rather unhelpful generic message)
+       so this code doesn't have to do any range checks anymore. */
+
+    /* Gather all top-level nodes belonging to a scene and recursively populate
+       the children ranges. Optimistically assume the glTF has just a single
+       scene and reserve for that. */
+    Containers::Array<UnsignedInt> objects;
+    arrayReserve(objects, _d->data->nodes_count);
     for(UnsignedInt i = 0; i != scene.nodes_count; ++i) {
-        const cgltf_node* node = scene.nodes[i];
-        const UnsignedInt nodeId = node - _d->data->nodes;
-        children.push_back(_d->nodeSizeOffsets[nodeId]);
+        arrayAppend(objects, scene.nodes[i] - _d->data->nodes);
     }
 
-    return SceneData{{}, std::move(children)};
+    Containers::Array<Range1Dui> children;
+    arrayReserve(children, _d->data->nodes_count + 1);
+    arrayAppend(children, InPlaceInit, 0u, UnsignedInt(objects.size()));
+    for(std::size_t i = 0; i != children.size(); ++i) {
+        const Range1Dui& nodeRangeToProcess = children[i];
+        for(std::size_t j = nodeRangeToProcess.min(); j != nodeRangeToProcess.max(); ++j) {
+            arrayAppend(children, InPlaceInit, UnsignedInt(objects.size()), UnsignedInt(objects.size() + _d->data->nodes[objects[j]].children_count));
+            const cgltf_node& node = _d->data->nodes[objects[j]];
+            for(std::size_t k = 0; k != node.children_count; ++k)
+                arrayAppend(objects, UnsignedInt(node.children[k] - _d->data->nodes));
+        }
+    }
+
+    /** @todo once there's SceneData::mappingRange(), calculate also min here */
+    const UnsignedInt maxObjectIndex = Math::max(objects);
+
+    /* Count how many objects have matrices, how many have separate TRS
+       properties and which of the set are present. Then also gather mesh,
+       light, camera and skin assignment count. Materials have to use the same
+       object mapping as meshes, so only check if there's any material
+       assignment at all -- if not, then we won't need to store that field. */
+    UnsignedInt transformationCount = 0;
+    UnsignedInt trsCount = 0;
+    bool hasTranslations = false;
+    bool hasRotations = false;
+    bool hasScalings = false;
+    UnsignedInt meshCount = 0;
+    bool hasMeshMaterials = false;
+    UnsignedInt lightCount = 0;
+    UnsignedInt cameraCount = 0;
+    UnsignedInt skinCount = 0;
+    for(const UnsignedInt i: objects) {
+        const cgltf_node& node = _d->data->nodes[i];
+
+        /* Everything that has a TRS should have a transformation matrix as
+           well. OTOH there can be a transformation matrix but no TRS, and
+           there can also be objects without any transformation. */
+        if(node.has_translation ||
+           node.has_rotation ||
+           node.has_scale) {
+            ++trsCount;
+            ++transformationCount;
+        } else if(node.has_matrix) ++transformationCount;
+
+        if(node.has_translation) hasTranslations = true;
+        if(node.has_rotation) hasRotations = true;
+        if(node.has_scale) hasScalings = true;
+        if(node.mesh) {
+            meshCount += node.mesh->primitives_count;
+            for(std::size_t j = 0; j != node.mesh->primitives_count; ++j) {
+                if(node.mesh->primitives[j].material) {
+                    hasMeshMaterials = true;
+                    break;
+                }
+            }
+        }
+        if(node.camera) ++cameraCount;
+        if(node.skin) ++skinCount;
+        if(node.light) ++lightCount;
+    }
+
+    /* If all objects that have transformations have TRS as well, no need to
+       store the combined transform field */
+    if(trsCount == transformationCount) transformationCount = 0;
+
+    /* Allocate the output array */
+    Containers::ArrayView<UnsignedInt> parentObjects;
+    Containers::ArrayView<Int> parents;
+    Containers::ArrayView<UnsignedInt> transformationObjects;
+    Containers::ArrayView<Matrix4> transformations;
+    Containers::ArrayView<UnsignedInt> trsObjects;
+    Containers::ArrayView<Vector3> translations;
+    Containers::ArrayView<Quaternion> rotations;
+    Containers::ArrayView<Vector3> scalings;
+    Containers::ArrayView<UnsignedInt> meshMaterialObjects;
+    Containers::ArrayView<UnsignedInt> meshes;
+    Containers::ArrayView<Int> meshMaterials;
+    Containers::ArrayView<UnsignedInt> lightObjects;
+    Containers::ArrayView<UnsignedInt> lights;
+    Containers::ArrayView<UnsignedInt> cameraObjects;
+    Containers::ArrayView<UnsignedInt> cameras;
+    Containers::ArrayView<UnsignedInt> skinObjects;
+    Containers::ArrayView<UnsignedInt> skins;
+    Containers::Array<char> data = Containers::ArrayTuple{
+        {NoInit, objects.size(), parentObjects},
+        {NoInit, objects.size(), parents},
+        {NoInit, transformationCount, transformationObjects},
+        {NoInit, transformationCount, transformations},
+        {NoInit, trsCount, trsObjects},
+        {NoInit, hasTranslations ? trsCount : 0, translations},
+        {NoInit, hasRotations ? trsCount : 0, rotations},
+        {NoInit, hasScalings ? trsCount : 0, scalings},
+        {NoInit, meshCount, meshMaterialObjects},
+        {NoInit, meshCount, meshes},
+        {NoInit, hasMeshMaterials ? meshCount : 0, meshMaterials},
+        {NoInit, lightCount, lightObjects},
+        {NoInit, lightCount, lights},
+        {NoInit, cameraCount, cameraObjects},
+        {NoInit, cameraCount, cameras},
+        {NoInit, skinCount, skinObjects},
+        {NoInit, skinCount, skins}
+    };
+
+    /* Populate object mapping for parents and importer state, synthesize
+       parent info from the child ranges */
+    Utility::copy(objects, parentObjects);
+    for(std::size_t i = 0; i != children.size(); ++i) {
+        Int parent = Int(i) - 1;
+        for(std::size_t j = children[i].min(); j != children[i].max(); ++j)
+            parents[j] = parent == -1 ? -1 : objects[parent];
+    }
+
+    /* Populate the rest */
+    std::size_t transformationOffset = 0;
+    std::size_t trsOffset = 0;
+    std::size_t meshMaterialOffset = 0;
+    std::size_t lightOffset = 0;
+    std::size_t cameraOffset = 0;
+    std::size_t skinOffset = 0;
+    for(std::size_t i = 0; i != objects.size(); ++i) {
+        const cgltf_node& node = _d->data->nodes[objects[i]];
+
+        /* Parse TRS */
+        Vector3 translation;
+        if(node.has_translation) translation = Vector3::from(node.translation);
+
+        Quaternion rotation;
+        if(node.has_rotation) {
+            rotation = Quaternion{Vector3::from(node.rotation), node.rotation[3]};
+            if(!rotation.isNormalized() && configuration().value<bool>("normalizeQuaternions")) {
+                rotation = rotation.normalized();
+                Warning{} << "Trade::CgltfImporter::scene(): rotation quaternion of node" << objects[i] << "was renormalized";
+            }
+        }
+
+        Vector3 scaling{1.0f};
+        if(node.has_scale) scaling = Vector3::from(node.scale);
+
+        /* Parse transformation, or combine it from TRS if not present */
+        Matrix4 transformation;
+        if(node.has_matrix) transformation = Matrix4::from(node.matrix);
+        else transformation =
+            Matrix4::translation(translation)*
+            Matrix4{rotation.toMatrix()}*
+            Matrix4::scaling(scaling);
+
+        /* Populate the combined transformation and object mapping only if
+           there's actually some transformation for this object and we want to
+           store it -- if all objects have TRS anyway, the matrix is redundant */
+        if((node.has_matrix ||
+            node.has_translation ||
+            node.has_rotation ||
+            node.has_scale) && transformationCount)
+        {
+            transformations[transformationOffset] = transformation;
+            transformationObjects[transformationOffset] = objects[i];
+            ++transformationOffset;
+        }
+
+        /* Store the TRS information and object mapping only if there was
+           something */
+        if(node.has_translation ||
+           node.has_rotation ||
+           node.has_scale)
+        {
+            if(hasTranslations) translations[trsOffset] = translation;
+            if(hasRotations) rotations[trsOffset] = rotation;
+            if(hasScalings) scalings[trsOffset] = scaling;
+            trsObjects[trsOffset] = objects[i];
+            ++trsOffset;
+        }
+
+        /* Populate mesh references */
+        if(node.mesh) {
+            for(std::size_t j = 0; j != node.mesh->primitives_count; ++j) {
+                meshMaterialObjects[meshMaterialOffset] = objects[i];
+                meshes[meshMaterialOffset] = _d->meshSizeOffsets[node.mesh - _d->data->meshes] + j;
+                if(hasMeshMaterials) {
+                    const cgltf_material* material = node.mesh->primitives[j].material;
+                    meshMaterials[meshMaterialOffset] = material ? material - _d->data->materials : -1;
+                }
+                ++meshMaterialOffset;
+            }
+        }
+
+        /* Populate light references */
+        if(node.light) {
+            lightObjects[lightOffset] = objects[i];
+            lights[lightOffset] = node.light - _d->data->lights;
+            ++lightOffset;
+        }
+
+        /* Populate camera references */
+        if(node.camera) {
+            cameraObjects[cameraOffset] = objects[i];
+            cameras[cameraOffset] = node.camera - _d->data->cameras;
+            ++cameraOffset;
+        }
+
+        /* Populate skin references */
+        if(node.skin) {
+            skinObjects[skinOffset] = objects[i];
+            skins[skinOffset] = node.skin - _d->data->skins;
+            ++skinOffset;
+        }
+    }
+
+    CORRADE_INTERNAL_ASSERT(
+        transformationOffset == transformations.size() &&
+        trsOffset == trsObjects.size() &&
+        meshMaterialOffset == meshMaterialObjects.size() &&
+        lightOffset == lightObjects.size() &&
+        cameraOffset == cameraObjects.size() &&
+        skinOffset == skinObjects.size());
+
+    /* Put everything together. For simplicity the imported data could always
+       have all fields present, with some being empty, but this gives less
+       noise for asset introspection purposes. */
+    Containers::Array<SceneFieldData> fields;
+    arrayAppend(fields, {
+        /** @todo once there's a flag to annotate implicit fields, omit the
+            parent field if it's all -1s; or alternatively we could also have a
+            stride of 0 for this case */
+        SceneFieldData{SceneField::Parent, parentObjects, parents}
+    });
+
+    /* Transformations. If there's no such field, add an empty transformation
+       to indicate it's a 3D scene. */
+    if(transformationCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Transformation, transformationObjects, transformations
+    });
+    if(hasTranslations) arrayAppend(fields, SceneFieldData{
+        SceneField::Translation, trsObjects, translations
+    });
+    if(hasRotations) arrayAppend(fields, SceneFieldData{
+        SceneField::Rotation, trsObjects, rotations
+    });
+    if(hasScalings) arrayAppend(fields, SceneFieldData{
+        SceneField::Scaling, trsObjects, scalings
+    });
+    if(!transformationCount && !trsCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Transformation, SceneMappingType::UnsignedInt, nullptr, SceneFieldType::Matrix4x4, nullptr
+    });
+
+    if(meshCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Mesh, meshMaterialObjects, meshes
+    });
+    if(hasMeshMaterials) arrayAppend(fields, SceneFieldData{
+        SceneField::MeshMaterial, meshMaterialObjects, meshMaterials
+    });
+    if(lightCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Light, lightObjects, lights
+    });
+    if(cameraCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Camera, cameraObjects, cameras
+    });
+    if(skinCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Skin, skinObjects, skins
+    });
+
+    /* Convert back to the default deleter to avoid dangling deleter function
+       pointer issues when unloading the plugin */
+    arrayShrink(fields, DefaultInit);
+    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndex + 1, std::move(data), std::move(fields)};
 }
 
-UnsignedInt CgltfImporter::doObject3DCount() const {
-    return _d->nodeMap.size();
+UnsignedLong CgltfImporter::doObjectCount() const {
+    return _d->data->nodes_count;
 }
 
-Int CgltfImporter::doObject3DForName(const std::string& name) {
+Long CgltfImporter::doObjectForName(const std::string& name) {
     if(!_d->nodesForName) {
         _d->nodesForName.emplace();
         _d->nodesForName->reserve(_d->data->nodes_count);
         for(std::size_t i = 0; i != _d->data->nodes_count; ++i) {
-            /* A mesh node can be duplicated for as many primitives as the mesh
-               has, point to the first node in the duplicate sequence */
-            _d->nodesForName->emplace(_d->decodeString(_d->data->nodes[i].name), _d->nodeSizeOffsets[i]);
+            _d->nodesForName->emplace(_d->decodeString(_d->data->nodes[i].name), i);
         }
     }
 
@@ -1346,107 +1611,8 @@ Int CgltfImporter::doObject3DForName(const std::string& name) {
     return found == _d->nodesForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doObject3DName(UnsignedInt id) {
-    /* This returns the same name for all multi-primitive mesh node duplicates */
-    return _d->decodeString(_d->data->nodes[_d->nodeMap[id].first()].name);
-}
-
-Containers::Pointer<ObjectData3D> CgltfImporter::doObject3D(UnsignedInt id) {
-    const std::size_t originalNodeId = _d->nodeMap[id].first();
-    const std::size_t nodePrimitiveId = _d->nodeMap[id].second();
-
-    const cgltf_node& node = _d->data->nodes[originalNodeId];
-
-    /* This is an extra node added for multi-primitive meshes -- return it with
-       no children, identity transformation and just a link to the particular
-       mesh & material combo */
-    if(nodePrimitiveId) {
-        /* This had to be already checked during file import as we remap for
-           multi-primitive meshes */
-        CORRADE_INTERNAL_ASSERT(node.mesh);
-
-        const UnsignedInt originalMeshId = node.mesh - _d->data->meshes;
-        const UnsignedInt meshId = _d->meshSizeOffsets[originalMeshId] + nodePrimitiveId;
-        const cgltf_material* material = node.mesh->primitives[nodePrimitiveId].material;
-        const Int materialId = material ? material - _d->data->materials : -1;
-        const Int skinId = node.skin ? node.skin - _d->data->skins : -1;
-        return Containers::pointer(new MeshObjectData3D{{}, {}, {}, Vector3{1.0f}, meshId, materialId, skinId});
-    }
-
-    /* Node children: first add extra nodes caused by multi-primitive meshes,
-       after that the usual children. */
-    std::vector<UnsignedInt> children;
-    const std::size_t extraChildrenCount = _d->nodeSizeOffsets[originalNodeId + 1] - _d->nodeSizeOffsets[originalNodeId] - 1;
-    children.reserve(extraChildrenCount + node.children_count);
-    for(std::size_t i = 0; i != extraChildrenCount; ++i) {
-        /** @todo the test should fail with children.push_back(originalNodeId + i + 1); */
-        children.push_back(_d->nodeSizeOffsets[originalNodeId] + i + 1);
-    }
-    for(std::size_t i = 0; i != node.children_count; ++i) {
-        const UnsignedInt childId = node.children[i] - _d->data->nodes;
-        children.push_back(_d->nodeSizeOffsets[childId]);
-    }
-
-    /* According to the spec, order is T-R-S: first scale, then rotate, then
-       translate (or translate*rotate*scale multiplication of matrices). Makes
-       most sense, since non-uniform scaling of rotated object is unwanted in
-       99% cases, similarly with rotating or scaling a translated object. Also
-       independently verified by exporting a model with translation, rotation
-       *and* scaling of hierarchic objects. */
-    ObjectFlags3D flags;
-    Matrix4 transformation{NoInit};
-    Vector3 translation{NoInit};
-    Quaternion rotation{NoInit};
-    Vector3 scaling{NoInit};
-    if(node.has_matrix) {
-        transformation = Matrix4::from(node.matrix);
-    } else {
-        /* Having TRS is a better property than not having it, so we set this
-           flag even when there is no transformation at all. */
-        flags |= ObjectFlag3D::HasTranslationRotationScaling;
-        translation = Vector3::from(node.translation);
-        rotation = Quaternion{Vector3::from(node.rotation), node.rotation[3]};
-        if(!rotation.isNormalized() && configuration().value<bool>("normalizeQuaternions")) {
-            rotation = rotation.normalized();
-            Warning{} << "Trade::CgltfImporter::object3D(): rotation quaternion was renormalized";
-        }
-        scaling = Vector3::from(node.scale);
-    }
-
-    /* Node is a mesh */
-    if(node.mesh) {
-        /* Multi-primitive nodes are handled above */
-        CORRADE_INTERNAL_ASSERT(_d->nodeMap[id].second() == 0);
-        CORRADE_INTERNAL_ASSERT(node.mesh->primitives_count > 0);
-
-        const UnsignedInt originalMeshId = node.mesh - _d->data->meshes;
-        const UnsignedInt meshId = _d->meshSizeOffsets[originalMeshId];
-        const cgltf_material* material = node.mesh->primitives[0].material;
-        const Int materialId = material ? material - _d->data->materials : -1;
-        const Int skinId = node.skin ? node.skin - _d->data->skins : -1;
-        return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?
-            new MeshObjectData3D{std::move(children), translation, rotation, scaling, meshId, materialId, skinId} :
-            new MeshObjectData3D{std::move(children), transformation, meshId, materialId, skinId});
-    }
-
-    /* Unknown nodes are treated as Empty */
-    ObjectInstanceType3D instanceType = ObjectInstanceType3D::Empty;
-    UnsignedInt instanceId = ~UnsignedInt{}; /* -1 */
-
-    /* Node is a camera */
-    if(node.camera) {
-        instanceType = ObjectInstanceType3D::Camera;
-        instanceId = node.camera - _d->data->cameras;
-
-    /* Node is a light */
-    } else if(node.light) {
-        instanceType = ObjectInstanceType3D::Light;
-        instanceId = node.light - _d->data->lights;
-    }
-
-    return Containers::pointer(flags & ObjectFlag3D::HasTranslationRotationScaling ?
-        new ObjectData3D{std::move(children), translation, rotation, scaling, instanceType, instanceId} :
-        new ObjectData3D{std::move(children), transformation, instanceType, instanceId});
+std::string CgltfImporter::doObjectName(UnsignedLong id) {
+    return _d->decodeString(_d->data->nodes[id].name);
 }
 
 UnsignedInt CgltfImporter::doSkin3DCount() const {

@@ -90,79 +90,15 @@
             "mesh": 3
         }
     ],
-    "animations": [
-        {
-            "name": "Animation affecting multi-primitive nodes",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 3,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 1,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 2,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 4,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "LINEAR",
-                    "output": 2
-                }
-            ]
-        }
-    ],
     "accessors": [
         {
             "bufferView": 0,
             "componentType": 5126,
             "count": 0,
             "type": "VEC3"
-        },
-        {
-            "bufferView": 1,
-            "componentType": 5126,
-            "count": 0,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 2,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
         }
     ],
     "bufferViews": [
-        {
-            "buffer": 0,
-            "byteLength": 0,
-            "byteOffset": 0
-        },
-        {
-            "buffer": 0,
-            "byteLength": 0,
-            "byteOffset": 0
-        },
         {
             "buffer": 0,
             "byteLength": 0,

@@ -142,7 +142,61 @@ correctly.
 
 Import of morph data is not supported at the moment.
 
-@subsection Trade-TinyGltfImporter-behavior-animation Animation and skin import
+@subsection Trade-TinyGltfImporter-behavior-objects Scene import
+
+-   If no @cb{.json} "scene" @ce property is present and the file contains at
+    least one scene, @ref defaultScene() returns @cpp 0 @ce instead of
+    @cpp -1 @ce. According to the [glTF 2.0 specification](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#scenes)
+    the importer is free to not render anything, but the suggested behavior
+    would break even some official sample models.
+-   Imported scenes always have @ref SceneMappingType::UnsignedInt and are
+    always 3D. The @ref objectCount() returns count of all nodes in the file,
+    while @ref SceneData::mappingBound() returns an *upper bound* on node IDs
+    contained in a particular scene.
+-   Nodes that are not referenced by any scene are ignored.
+-   All objects contained in a scene have a @ref SceneField::Parent (of type
+    @ref SceneFieldType::Int) and a @ref SceneField::ImporterState (of type
+    @ref SceneFieldType::Pointer, see @ref Trade-TinyGltfImporter-state below).
+    These two fields share the same object mapping, size of which gives count
+    of nodes contained in the scene. The mapping is unordered and may be
+    sparse if the file contains multiple scenes or nodes not referenced by any
+    scene.
+-   All nodes that contain transformation matrices or TRS components have a
+    @ref SceneField::Transformation (of type @ref SceneFieldType::Matrix4x4).
+-   If any node contains a translation, a @ref SceneField::Translation (of type
+    @ref SceneFieldType::Vector3) is present; if any node contains a rotation,
+    a @ref SceneField::Rotation (of type @ref SceneFieldType::Quaternion) is
+    present; if any node contains a scaling, a @ref SceneField::Scaling (of
+    type @ref SceneFieldType::Vector3) is present. However, if a node has
+    both a transformation matrix and some TRS components, TinyGLTF parses only
+    the matrix, ignoring the rest.
+-   If the scene references meshes, a @ref SceneField::Mesh (of type
+    @ref SceneFieldType::UnsignedInt) is present. If any of the referenced
+    meshes have assigned materials, @ref SceneField::MeshMaterial (of type
+    @ref SceneFieldType::Int) is present as well. While a single node can only
+    reference a single mesh at most, in case it references a multi-primitive
+    mesh, it's represented as several @ref SceneField::Mesh (and
+    @ref SceneField::MeshMaterial) assignments. See
+    @ref Trade-TinyGltfImporter-behavior-meshes and
+    @ref Trade-TinyGltfImporter-behavior-materials for further details.
+-   If the scene references skins, a @ref SceneField::Skin (of type
+    @ref SceneFieldType::UnsignedInt) is present. A single node can only
+    reference one skin at most. See
+    @ref Trade-TinyGltfImporter-behavior-animations for further details.
+-   If the scene references cameras, a @ref SceneField::Camera (of type
+    @ref SceneFieldType::UnsignedInt) is present. A single node can only
+    reference one camera at most. See
+    @ref Trade-TinyGltfImporter-behavior-cameras for further details.
+-   If the scene references lights, a @ref SceneField::Light (of type
+    @ref SceneFieldType::UnsignedInt) is present. A single node can only
+    reference one light at most. See
+    @ref Trade-TinyGltfImporter-behavior-lights for further details.
+-   If node rotation quaternion is not normalized, the importer prints a
+    warning and normalizes it. Can be disabled per-object with the
+    @cb{.ini} normalizeQuaternions @ce
+    @ref Trade-TinyGltfImporter-configuration "configuration option".
+
+@subsection Trade-TinyGltfImporter-behavior-animations Animation and skin import
 
 -   Linear quaternion rotation tracks are postprocessed in order to make it
     possible to use the faster
@@ -175,22 +229,7 @@ Import of morph data is not supported at the moment.
     however, it can happen that multiple conflicting tracks affecting the same
     node are merged in the same clip, causing the animation to misbehave.
 
-@subsection Trade-TinyGltfImporter-behavior-objects Scene and object import
-
--   If no @cb{.json} "scene" @ce property is present and the file contains at
-    least one scene, @ref defaultScene() returns @cpp 0 @ce instead of
-    @cpp -1 @ce. According to the [glTF 2.0 specification](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#scenes)
-    the importer is free to not render anything, but the suggested behavior
-    would break even some official sample models.
--   In case object transformation is set via separate
-    translation/rotation/scaling properties in the source file,
-    @ref ObjectData3D is created with @ref ObjectFlag3D::HasTranslationRotationScaling and these separate properties accessible
--   If object rotation quaternion is not normalized, the importer prints a
-    warning and normalizes it. Can be disabled per-object with the
-    @cb{.ini} normalizeQuaternions @ce
-    @ref Trade-TinyGltfImporter-configuration "configuration option".
-
-@subsection Trade-TinyGltfImporter-behavior-camera Camera import
+@subsection Trade-TinyGltfImporter-behavior-cameras Camera import
 
 -   Cameras in glTF are specified with vertical FoV and vertical:horizontal
     aspect ratio, these values are recalculated for horizontal FoV and
@@ -253,29 +292,9 @@ Import of morph data is not supported at the moment.
     name, use the @cb{.ini} objectIdAttribute @ce
     @ref Trade-TinyGltfImporter-configuration "configuration option" to change
     the identifier that's being looked for.
--   Multi-primitive meshes are loaded as follows, consistently with the
-    behavior of @link AssimpImporter @endlink:
-    -   The @ref meshCount() query returns a number of all *primitives*, not
-        meshes
-    -   Each multi-primitive mesh is split into a sequence of @ref MeshData
-        instances following each other
-    -   @ref meshForName() points to the first mesh in given sequence and
-        @ref meshName() returns the same name for all meshes in given
-        sequence
-    -   The @ref object3DCount() query returns a number of all nodes extended
-        with number of extra nodes for each additional mesh primitive
-    -   Each node referencing a multi-primitive mesh is split into a sequence
-        of @ref MeshObjectData3D instances following each other; the extra
-        nodes being a direct and immediate children of the first one with an
-        identity transformation
-    -   @ref object3DForName() points to the first object containing the first
-        primitive, @ref object3DName() returns the same name for all objects in
-        given sequence
-    -   @ref AnimationData instances returned by @ref animation() have their
-        @ref AnimationData::trackTarget() values patched to account for the
-        extra nodes, always pointing to the first object in the sequence and
-        thus indirectly affecting transformations of the extra nodes
-        represented as its children
+-   Multi-primitive meshes are split into individual meshes, nodes that
+    reference a multi-primitive mesh have multiple @ref SceneField::Mesh
+    (and @ref SceneField::MeshMaterial) entries in the imported @ref SceneData.
 -   Attribute-less meshes either with or without an index buffer are supported,
     however since glTF has no way of specifying vertex count for those,
     returned @ref Trade::MeshData::vertexCount() is set to @cpp 0 @ce
@@ -504,10 +523,9 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doSceneName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
 
-        MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Long doObjectForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doObjectName(UnsignedLong id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doSkin3DForName(const std::string& name) override;

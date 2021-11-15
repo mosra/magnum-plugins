@@ -15,12 +15,18 @@
         }
     },
     "nodes": [
+        {}, {}, {},
         {
             "extensions": {
                 "KHR_lights_punctual": {
                     "light": 2
                 }
             }
+        }
+    ],
+    "scenes": [
+        {
+            "nodes": [3]
         }
     ]
 }
