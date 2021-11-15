@@ -61,6 +61,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         animation-patching-fixed.bin
         animation-patching-fixed.gltf
         camera.dae
+        camera-light-referenced-by-two-nodes.dae
         camera-orthographic.gltf
         diffuse_texture.png
         embedded-texture.blend

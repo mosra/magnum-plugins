@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <library_cameras>
+    <camera id="Camera-camera" name="Camera">
+      <optics>
+        <technique_common>
+          <perspective>
+            <xfov sid="xfov">49.13434</xfov>
+            <aspect_ratio>1.777778</aspect_ratio>
+            <znear sid="znear">0.123</znear>
+            <zfar sid="zfar">123</zfar>
+          </perspective>
+        </technique_common>
+      </optics>
+    </camera>
+  </library_cameras>
+  <library_lights>
+    <light id="Sun-light" name="Sun">
+      <technique_common>
+        <directional>
+          <color sid="color">1.00 0.15 0.45</color>
+          <intensity>10.0</intensity>
+        </directional>
+      </technique_common>
+    </light>
+  </library_lights>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Camera" name="Camera" type="NODE">
+        <instance_camera url="#Camera-camera"/>
+      </node>
+      <node id="Sun" name="Sun" type="NODE">
+        <instance_light url="#Sun-light"/>
+      </node>
+      <!-- Single camera / light referenced by two nodes. According to Assimp
+           docs, this should result in the two nodes having the same name (so,
+           Sun and Camera) in order to reference the same camera. But in
+           reality, the camera / light just gets duplicated (at least in case
+           of COLLADA) so I have no way to test the behavior mentioned in the
+           docs. -->
+      <node id="CameraAgain" name="Stereo view!!" type="NODE">
+        <instance_camera url="#Camera-camera"/>
+      </node>
+      <node id="SunAgain" name="And we have two suns!" type="NODE">
+        <instance_light url="#Sun-light"/>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

@@ -113,6 +113,8 @@ struct AssimpImporterTest: TestSuite::Tester {
     void cameraOrthographic();
     void light();
     void lightUnsupported();
+    void cameraLightReferencedByTwoNodes();
+
     void materialColor();
     void materialTexture();
     void materialColorTexture();
@@ -249,9 +251,9 @@ AssimpImporterTest::AssimpImporterTest() {
 
               &AssimpImporterTest::camera,
               &AssimpImporterTest::cameraOrthographic,
-
               &AssimpImporterTest::light,
               &AssimpImporterTest::lightUnsupported,
+              &AssimpImporterTest::cameraLightReferencedByTwoNodes,
 
               &AssimpImporterTest::materialColor,
               &AssimpImporterTest::materialTexture,
@@ -1747,6 +1749,68 @@ void AssimpImporterTest::lightUnsupported() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(0));
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): light type 0 is not supported\n");
+}
+
+void AssimpImporterTest::cameraLightReferencedByTwoNodes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    /* Single camera / light referenced by two nodes. According to Assimp docs,
+       this should result in the two nodes having the same name in order to
+       reference the same camera. But in reality, the camera / light just gets
+       duplicated (at least in case of COLLADA) so I have no way to test the
+       behavior mentioned in the docs. */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera-light-referenced-by-two-nodes.dae")));
+
+    {
+        CORRADE_EXPECT_FAIL("Assimp duplicates cameras / lights referenced by multiple nodes.");
+        CORRADE_COMPARE(importer->cameraCount(), 1);
+        CORRADE_COMPARE(importer->lightCount(), 1);
+    } {
+        CORRADE_COMPARE(importer->cameraCount(), 2);
+        CORRADE_COMPARE(importer->lightCount(), 2);
+    }
+
+    /* The two duplicates should be exactly the same */
+    for(UnsignedInt id: {0, 1}) {
+        CORRADE_ITERATION(id);
+
+        Containers::Optional<LightData> light = importer->light(id);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        /* This one has intensity of 10, which gets premultiplied to the
+           color */
+        CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.15f, 0.45f})*10.0f);
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+
+        Containers::Optional<CameraData> camera = importer->camera(id);
+        CORRADE_VERIFY(camera);
+        CORRADE_COMPARE(camera->fov(), 49.13434_degf);
+        CORRADE_COMPARE(camera->near(), 0.123f);
+        CORRADE_COMPARE(camera->far(), 123.0f);
+    }
+
+    CORRADE_COMPARE(importer->object3DCount(), 4);
+    {
+        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
+        CORRADE_COMPARE(object->instance(), 0);
+    } {
+        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
+        CORRADE_COMPARE(object->instance(), 0);
+    } {
+        Containers::Pointer<ObjectData3D> object = importer->object3D(2);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
+        CORRADE_COMPARE(object->instance(), 1);
+    } {
+        Containers::Pointer<ObjectData3D> object = importer->object3D(3);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
+        CORRADE_COMPARE(object->instance(), 1);
+    }
 }
 
 void AssimpImporterTest::materialColor() {

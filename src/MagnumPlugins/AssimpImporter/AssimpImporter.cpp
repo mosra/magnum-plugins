@@ -521,13 +521,20 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
             _f->nodeMap.emplace_back(_f->objectMap.size());
         }
 
+        /* Find nodes that reference cameras and lights.
+
+           This assumes every camera and light is only referenced by a single
+           node. While aiNode docs say that "Cameras and lights reference a
+           specific node by name - if there are multiple nodes with this name,
+           they are assigned to each of them." but in reality (for COLLADA, at
+           least), the camera or light gets duplicated for every node that
+           references it). See the cameraLightReferencedByTwoNodes() test. */
         for(std::size_t i = 0; i < _f->scene->mNumCameras; ++i) {
             const aiNode* cameraNode = _f->scene->mRootNode->FindNode(_f->scene->mCameras[i]->mName);
             if(cameraNode) {
                 _f->nodeInstances[cameraNode] = {ObjectInstanceType3D::Camera, i};
             }
         }
-
         for(std::size_t i = 0; i < _f->scene->mNumLights; ++i) {
             const aiNode* lightNode = _f->scene->mRootNode->FindNode(_f->scene->mLights[i]->mName);
             if(lightNode) {
