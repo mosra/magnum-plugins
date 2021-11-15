@@ -962,6 +962,8 @@ void TinyGltfImporterTest::animation() {
         CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
         CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
     }
+
+    /* Fourth animation tested in animationSpline() */
 }
 
 void TinyGltfImporterTest::animationInvalid() {
