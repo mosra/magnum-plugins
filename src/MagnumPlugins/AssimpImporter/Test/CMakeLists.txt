@@ -58,12 +58,13 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         animation.gltf # Same as in TinyGltfImporterTest, but added a scene
         animation.bin
         animation-no-scene.gltf
-        animation-patching.bin
-        animation-patching.gltf
+        animation-patching-fixed.bin
+        animation-patching-fixed.gltf
         camera.dae
         diffuse_texture.png
         embedded-texture.blend
         empty.dae
+        empty.gltf
         exported-animation.dae # Converted from exported-animation.blend
         exported-animation.fbx
         exported-animation.gltf
@@ -96,6 +97,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         skin-multiple-sets.dae
         skin-multiple-sets.bin
         skin-multiple-sets.gltf
+        skin-no-mesh.bin
+        skin-no-mesh.gltf
         skin-shared.gltf
         skin-shared.bin
         texture-ambient.obj

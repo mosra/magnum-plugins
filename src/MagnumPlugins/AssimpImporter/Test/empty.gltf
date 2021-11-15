@@ -1,0 +1,8 @@
+{
+    "asset": {
+        "note": "minimal glTF that all versions of assimp load without errors",
+        "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [{}]
+}

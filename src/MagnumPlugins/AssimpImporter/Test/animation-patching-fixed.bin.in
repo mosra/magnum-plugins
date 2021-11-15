@@ -1,6 +1,6 @@
-type = "<9f 36f 12f"
+type = "<9f 36f 3f 12f"
 input = [
-    # time shared by everything
+    # time
     0, 1, 2, 3, 4, 5, 6, 7, 8,
 
     # quaternion shortest-path optimization, rotation around Z
@@ -13,6 +13,9 @@ input = [
     0, 0, -0.92388, -0.382683,  # 135°
     0, 0, -1, 0,                # 180°
     0, 0, 0.92388, -0.382683,   # 225°
+
+    # time
+    9, 10, 11,
 
     # quaternion normalization
     0, 0, 0.382683, 0.92388,        # 45°
