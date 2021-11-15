@@ -55,16 +55,16 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
-        empty.dae
         animation.gltf # Same as in TinyGltfImporterTest, but added a scene
         animation.bin
         animation-no-scene.gltf
         animation-patching.bin
         animation-patching.gltf
         camera.dae
-        camera-orthographic.gltf
         diffuse_texture.png
         embedded-texture.blend
+        empty.dae
+        empty.gltf
         exported-animation.dae # Converted from exported-animation.blend
         exported-animation.fbx
         exported-animation.gltf

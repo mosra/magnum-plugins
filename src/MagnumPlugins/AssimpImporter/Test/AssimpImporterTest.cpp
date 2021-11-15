@@ -64,6 +64,7 @@
 
 #include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
 #include <assimp/Importer.hpp>
+#include <assimp/importerdesc.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/version.h>
@@ -390,6 +391,12 @@ void AssimpImporterTest::openData() {
 }
 
 void AssimpImporterTest::openDataFailed() {
+    /* With Assimp 5.1.0 this fires an assert in <vector> because Assimp tries
+       to load *anything* with X3DImporter and it doesn't perform any checks:
+       https://github.com/assimp/assimp/issues/4177 */
+    if(_assimpVersion >= 510 && aiGetImporterDesc("x3d"))
+        CORRADE_SKIP("Current version of assimp would assert on this test.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     std::ostringstream out;
@@ -405,7 +412,6 @@ void AssimpImporterTest::openDataFailed() {
 bool supportsAnimation(const Containers::StringView fileName, unsigned int assimpVersion) {
     /* 5.0.0 supports all of Collada, FBX, glTF */
     if(assimpVersion >= 500) {
-        static_cast<void>(fileName);
         return true;
     } else if(fileName.hasSuffix(".gltf"_s)) {
         return false;
@@ -706,6 +712,8 @@ void AssimpImporterTest::animationGltf() {
 void AssimpImporterTest::animationGltfNoScene() {
     if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
+    if(_assimpVersion >= 510)
+        CORRADE_SKIP("Current version of assimp wouldn't load this file.");
 
     /* This reuses the TinyGltfImporter test files, not the corrected ones used by other tests. */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -788,10 +796,10 @@ void AssimpImporterTest::animationGltfSpline() {
         #endif
 
         constexpr Quaternion rotationValues[]{
-            {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
-            {{-0.711568f, 0.391362f, 0.355784f}, 0.462519f},
-            {{0.598059f, 0.182018f, 0.0260025f}, 0.780076f},
-            {{0.711568f, -0.355784f, -0.462519f}, -0.391362f}
+            {{ 0.780076f,  0.0260025f, 0.598059f},  0.182018f},
+            {{ 0.711568f, -0.391362f, -0.355784f}, -0.462519f},
+            {{-0.598059f, -0.182018f, -0.026003f}, -0.780076f},
+            {{-0.711568f,  0.355784f,  0.462519f},  0.391362f}
         };
         CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
     }
@@ -1001,6 +1009,10 @@ void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
+    /* Can't reuse the TinyGltfImporter test file because it has differently
+       sized accessors. Assimp < 5.1.0 used to allow this but newer versions
+       don't. This file is taken from CgltfImporter but with a default scene
+       added, otherwise Assimp 5.1.0 won't load it. */
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation-patching.gltf")));
 
@@ -1191,7 +1203,7 @@ void AssimpImporterTest::animationMergeEmpty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "empty.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 0);
@@ -1300,7 +1312,7 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(scaling2.interpolation(), Animation::Interpolation::Linear);
 }
 
-/* The checks are identical to animation support so re-use that. */
+/* The checks are identical to animation support so re-use that */
 bool supportsSkinning(const Containers::StringView fileName, unsigned int assimpVersion) {
     return supportsAnimation(fileName, assimpVersion);
 }
@@ -1310,6 +1322,20 @@ void calculateTransforms(Containers::ArrayView<Matrix4> transforms, Containers::
     transforms[objectId] = transform;
     for(UnsignedInt childId: objects[objectId].children())
         calculateTransforms(transforms, objects, childId, transform);
+}
+
+/* Since 5.1.0 the Collada importer uses the mesh ID as the name. Imitate the
+   Blender(?) exporter that generated the IDs from the name. A bit hacky but
+   still better than special-casing every test that loads meshes by name. */
+std::string fixMeshName(const Containers::StringView meshName, const Containers::StringView fileName, unsigned int assimpVersion) {
+    std::string fixed = meshName;
+    if(assimpVersion >= 510 && fileName.hasSuffix(".dae"_s)) {
+        for(char& c: fixed)
+            if(c != '-' && !std::isalnum(unsigned char(c))) c = '_';
+        fixed += "-mesh";
+    }
+
+    return fixed;
 }
 
 void AssimpImporterTest::skin() {
@@ -1349,8 +1375,10 @@ void AssimpImporterTest::skin() {
         calculateTransforms(globalTransforms, objects, i);
     }
 
-    constexpr const char* meshNames[]{"Mesh_1", "Mesh_2"};
-    constexpr const char* jointNames[][2]{
+    constexpr Containers::StringView objectNames[]{
+        "Mesh_1"_s, "Mesh_2"_s, "Plane"_s
+    };
+    const std::string jointNames[][2]{
         {"Node_1", "Node_2"},
         {"Node_3", "Node_4"}
     };
@@ -1359,12 +1387,13 @@ void AssimpImporterTest::skin() {
        the comment for ExportedFileData. */
     const Matrix4 correction{data.correction.toMatrix()};
 
-    for(UnsignedInt i = 0; i != Containers::arraySize(meshNames); ++i) {
+    for(UnsignedInt i = 0; i != Containers::arraySize(objectNames) - 1; ++i) {
         /* Skin names are taken from mesh names, skin order is arbitrary */
-        const Int index = importer->skin3DForName(meshNames[i]);
+        const std::string meshName = fixMeshName(objectNames[i], data.suffix, _assimpVersion);
+        const Int index = importer->skin3DForName(meshName);
         CORRADE_VERIFY(index != -1);
-        CORRADE_COMPARE(importer->skin3DName(index), meshNames[i]);
-        CORRADE_VERIFY(importer->meshForName(meshNames[i]) != -1);
+        CORRADE_COMPARE(importer->skin3DName(index), meshName);
+        CORRADE_VERIFY(importer->meshForName(meshName) != -1);
 
         auto skin = importer->skin3D(index);
         CORRADE_VERIFY(skin);
@@ -1373,7 +1402,7 @@ void AssimpImporterTest::skin() {
         /* Don't check joint order, only presence */
         auto joints = skin->joints();
         CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames[i]));
-        for(const char* name: jointNames[i]) {
+        for(const std::string& name: jointNames[i]) {
             auto found = std::find_if(joints.begin(), joints.end(), [&](UnsignedInt joint) {
                     /* Blender's Collada exporter adds an Armature_ prefix to
                        object names */
@@ -1388,7 +1417,7 @@ void AssimpImporterTest::skin() {
            transform. */
         auto bindMatrices = skin->inverseBindMatrices();
         CORRADE_COMPARE(bindMatrices.size(), joints.size());
-        auto meshObject = importer->object3D(meshNames[i]);
+        auto meshObject = importer->object3D(objectNames[i]);
         CORRADE_VERIFY(meshObject);
         CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), index);
@@ -1401,9 +1430,10 @@ void AssimpImporterTest::skin() {
 
     {
         /* Unskinned meshes and mesh nodes shouldn't have a skin */
-        CORRADE_VERIFY(importer->meshForName("Plane") != -1);
-        CORRADE_COMPARE(importer->skin3DForName("Plane"), -1);
-        auto meshObject = importer->object3D("Plane");
+        const std::string meshName = fixMeshName(objectNames[2], data.suffix, _assimpVersion);
+        CORRADE_VERIFY(importer->meshForName(meshName) != -1);
+        CORRADE_COMPARE(importer->skin3DForName(meshName), -1);
+        auto meshObject = importer->object3D(objectNames[2]);
         CORRADE_VERIFY(meshObject);
         CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), -1);
@@ -1541,12 +1571,14 @@ void AssimpImporterTest::cameraOrthographic() {
         CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    /* Assimp 5.1.0 refuses to load glTF files without a default scene so we can't
-       reuse TinyGltfImporter's test file */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera-orthographic.gltf")));
-    CORRADE_COMPARE(importer->cameraCount(), 1);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_COMPARE(importer->cameraCount(), 4);
 
-    Containers::Optional<CameraData> camera = importer->camera(0);
+    /* For some reason glTF camera names are set to the names of the nodes that
+       hold them. This file has no node names, so it becomes nodes[0].
+       Versions before 5.1.0, of course, named them differently... */
+    const char* name = _assimpVersion >= 510 ? "nodes[0]" : "nodes_0";
+    Containers::Optional<CameraData> camera = importer->camera(name);
     CORRADE_VERIFY(camera);
     {
         #if !ASSIMP_HAS_ORTHOGRAPHIC_CAMERA
@@ -1573,6 +1605,13 @@ void AssimpImporterTest::light() {
     CORRADE_COMPARE(importer->lightCount(), 4);
     CORRADE_COMPARE(importer->lightForName(""), -1);
 
+    /* Collada light import is broken in Assimp 5.1.0:
+       https://github.com/assimp/assimp/issues/4179
+       This was fixed a few days later in 5.1.1 but (as is customary with that
+       library) they didn't update the version so both report as 5.1.0.
+       To keep our sanity, we assume 5.1.0 means 5.1.1 and ignore this was
+       ever broken. */
+
     /* Spot light */
     {
         CORRADE_COMPARE(importer->lightName(0), "Spot");
@@ -1582,11 +1621,11 @@ void AssimpImporterTest::light() {
         CORRADE_COMPARE(light->type(), LightData::Type::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.12f, 0.24f, 0.36f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
-        CORRADE_COMPARE(light->attenuation(), (Vector3{0.1f, 0.3f, 0.5f}));
         CORRADE_COMPARE(light->range(), Constants::inf());
+        CORRADE_COMPARE(light->attenuation(), (Vector3{0.1f, 0.3f, 0.5f}));
         CORRADE_COMPARE(light->innerConeAngle(), 45.0_degf);
-        /* Not sure how it got calculated from 0.15 falloff exponent, but let's
-           just trust Assimp for once */
+        /* Not sure how it got calculated from 0.15 falloff exponent, but
+           let's just trust Assimp for once */
         CORRADE_COMPARE(light->outerConeAngle(), 135.0_degf);
 
     /* Point light */
@@ -1598,8 +1637,8 @@ void AssimpImporterTest::light() {
         CORRADE_COMPARE(light->type(), LightData::Type::Point);
         CORRADE_COMPARE(light->color(), (Color3{0.5f, 0.25f, 0.05f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
-        CORRADE_COMPARE(light->attenuation(), (Vector3{0.1f, 0.7f, 0.9f}));
         CORRADE_COMPARE(light->range(), Constants::inf());
+        CORRADE_COMPARE(light->attenuation(), (Vector3{0.1f, 0.7f, 0.9f}));
 
     /* Directional light */
     } {
@@ -1954,8 +1993,9 @@ void AssimpImporterTest::mesh() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->object3DCount(), 1);
 
-    CORRADE_COMPARE(importer->meshName(0), "Cube");
-    CORRADE_COMPARE(importer->meshForName("Cube"), 0);
+    const std::string name = fixMeshName("Cube", ".dae", _assimpVersion);
+    CORRADE_COMPARE(importer->meshName(0), name);
+    CORRADE_COMPARE(importer->meshForName(name), 0);
     CORRADE_COMPARE(importer->meshForName("nonexistent"), -1);
 
     Containers::Optional<MeshData> mesh = importer->mesh(0);
@@ -2154,7 +2194,12 @@ void AssimpImporterTest::meshSkinningAttributes() {
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
-    for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
+    const std::string meshNames[]{
+        fixMeshName("Mesh_1"_s, data.suffix, _assimpVersion),
+        fixMeshName("Mesh_2"_s, data.suffix, _assimpVersion)
+    };
+
+    for(const std::string& meshName: meshNames) {
         Containers::Optional<MeshData> mesh;
         std::ostringstream out;
         {
@@ -2180,7 +2225,7 @@ void AssimpImporterTest::meshSkinningAttributes() {
     }
 
     /* No skin joint node using this mesh */
-    auto mesh = importer->mesh("Plane");
+    auto mesh = importer->mesh(fixMeshName("Plane"_s, data.suffix, _assimpVersion));
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(!mesh->hasAttribute(jointsAttribute));
 }
@@ -2197,7 +2242,7 @@ void AssimpImporterTest::meshSkinningAttributesMultiple() {
 
     constexpr UnsignedInt AttributeCount = 3;
 
-    auto mesh = importer->mesh("Mesh_1");
+    auto mesh = importer->mesh(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
     CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
@@ -2222,10 +2267,18 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
-    /* Assimp glTF 2 importer only reads the last(!) set of joint weights */
+    /* Assimp glTF 2 importer only reads the last(!) set of joint weights. On
+       5.1.0 it outright fails to import because of broken extra validation:
+       https://github.com/assimp/assimp/issues/4178 */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 0);
+
+    if(_assimpVersion >= 510) {
+        CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
+        CORRADE_SKIP("Current version of assimp fails to import files with multiple sets of skinning attributes");
+    }
+
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
@@ -2291,7 +2344,7 @@ void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
     /* 6 weights = 2 sets of 4, last two weights zero */
     constexpr UnsignedInt AttributeCount = 2;
 
-    auto mesh = importer->mesh("Mesh_1");
+    auto mesh = importer->mesh(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
     CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
@@ -2365,7 +2418,7 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
     }
 
     {
-        const Int id = importer->meshForName("Mesh_1");
+        const Int id = importer->meshForName(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
         CORRADE_VERIFY(id != -1);
         auto mesh = importer->mesh(id);
         CORRADE_VERIFY(mesh);
@@ -2382,7 +2435,7 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
             Containers::arrayView(MeshSkinningAttributesWeightData),
             TestSuite::Compare::Container);
     } {
-        const Int id = importer->meshForName("Mesh_2");
+        const Int id = importer->meshForName(fixMeshName("Mesh_2"_s, ".dae"_s, _assimpVersion));
         CORRADE_VERIFY(id != -1);
         auto mesh = importer->mesh(id);
         CORRADE_VERIFY(mesh);
@@ -2412,12 +2465,13 @@ void AssimpImporterTest::meshMultiplePrimitives() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "mesh-multiple-primitives.dae")));
 
-    /* Four meshes, but one has three primitives and one two. */
+    /* Two meshes, but one has two primitives and one three. */
     CORRADE_COMPARE(importer->meshCount(), 5);
     {
-        CORRADE_COMPARE(importer->meshName(0), "Multi-primitive triangle fan, line strip");
-        CORRADE_COMPARE(importer->meshName(1), "Multi-primitive triangle fan, line strip");
-        CORRADE_COMPARE(importer->meshForName("Multi-primitive triangle fan, line strip"), 0);
+        const std::string name = fixMeshName("Multi-primitive triangle fan, line strip", ".dae", _assimpVersion);
+        CORRADE_COMPARE(importer->meshName(0), name);
+        CORRADE_COMPARE(importer->meshName(1), name);
+        CORRADE_COMPARE(importer->meshForName(name), 0);
 
         auto mesh0 = importer->mesh(0);
         CORRADE_VERIFY(mesh0);
@@ -2426,10 +2480,11 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_VERIFY(mesh1);
         CORRADE_COMPARE(mesh1->primitive(), MeshPrimitive::Lines);
     } {
-        CORRADE_COMPARE(importer->meshName(2), "Multi-primitive lines, triangles, triangle strip");
-        CORRADE_COMPARE(importer->meshName(3), "Multi-primitive lines, triangles, triangle strip");
-        CORRADE_COMPARE(importer->meshName(4), "Multi-primitive lines, triangles, triangle strip");
-        CORRADE_COMPARE(importer->meshForName("Multi-primitive lines, triangles, triangle strip"), 2);
+        const std::string name = fixMeshName("Multi-primitive lines, triangles, triangle strip", ".dae", _assimpVersion);
+        CORRADE_COMPARE(importer->meshName(2), name);
+        CORRADE_COMPARE(importer->meshName(3), name);
+        CORRADE_COMPARE(importer->meshName(4), name);
+        CORRADE_COMPARE(importer->meshForName(name), 2);
 
         auto mesh2 = importer->mesh(2);
         CORRADE_VERIFY(mesh2);
@@ -2552,10 +2607,15 @@ void AssimpImporterTest::emptyGltf() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "empty.gltf")));
-    CORRADE_COMPARE(importer->defaultScene(), -1);
-    CORRADE_COMPARE(importer->sceneCount(), 0);
-    CORRADE_COMPARE(importer->object3DCount(), 0);
+    /* We can't reuse TinyGltfImporter's empty.gltf since Assimp 5.1 complains
+       about a missing scene property (which is not required by the glTF spec) */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
+    {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510, "Assimp versions before 5.1.0 ignore empty glTF scenes.");
+        CORRADE_COMPARE(importer->defaultScene(), 0);
+        CORRADE_COMPARE(importer->sceneCount(), 1);
+        CORRADE_COMPARE(importer->object3DCount(), 1);
+    }
 
     /* No crazy meshes created for an empty glTF file, unlike with COLLADA
        files that have no meshes */
