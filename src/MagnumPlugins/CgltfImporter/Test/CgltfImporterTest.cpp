@@ -4494,25 +4494,46 @@ void CgltfImporterTest::escapedStrings() {
        written without JSON escaping" */
     CORRADE_COMPARE(importer->object3DName(5), "");
 
+    /* Test inverse mapping as well -- it should decode the name before
+       comparison. */
+    CORRADE_COMPARE(importer->object3DForName("Everything: říční člun \t\t\n حليب اللوز"), 4);
+
     /* All user-facing strings are unescaped. URIs are tested in encodedUris(). */
     CORRADE_COMPARE(importer->animationCount(), 1);
     CORRADE_COMPARE(importer->animationName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->animationForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
+
     CORRADE_COMPARE(importer->cameraCount(), 1);
     CORRADE_COMPARE(importer->cameraName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->cameraForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
+
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->image2DForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
+
     CORRADE_COMPARE(importer->lightCount(), 1);
     CORRADE_COMPARE(importer->lightName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->lightForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
+
     CORRADE_COMPARE(importer->materialCount(), 1);
     CORRADE_COMPARE(importer->materialName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->materialForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
+
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->meshForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
+
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->sceneName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->sceneForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
+
     CORRADE_COMPARE(importer->skin3DCount(), 1);
     CORRADE_COMPARE(importer->skin3DName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->skin3DForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
+
     CORRADE_COMPARE(importer->textureCount(), 1);
     CORRADE_COMPARE(importer->textureName(0), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->textureForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
 }
 
 void CgltfImporterTest::encodedUris() {
