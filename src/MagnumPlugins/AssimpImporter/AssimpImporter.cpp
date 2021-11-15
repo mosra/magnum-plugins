@@ -31,6 +31,7 @@
 
 #include <cctype>
 #include <unordered_map>
+#include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/BigEnumSet.h>
@@ -45,6 +46,7 @@
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Matrix3.h>
+#include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Math/Vector.h>
 #include <Magnum/PixelFormat.h>
@@ -56,7 +58,6 @@
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/MaterialData.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/TextureData.h>
@@ -98,7 +99,11 @@ struct AssimpImporter::File {
     bool importerIsGltf = false;
     bool importerIsFbx = false;
     const aiScene* scene = nullptr;
+    /* Index -> pointer, pointer -> index conversion for nodes as they're
+       represented in a tree. Needed by objectCount() (which is const) so can't
+       be delayed to scenne() parsing. */
     std::vector<aiNode*> nodes;
+    std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
        imageIndex points to the (deduplicated) images array */
     std::vector<std::tuple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
@@ -106,8 +111,6 @@ struct AssimpImporter::File {
        (unique) location of an image */
     std::vector<std::pair<const aiMaterial*, UnsignedInt>> images;
 
-    std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
-    std::unordered_map<const aiNode*, std::pair<Trade::ObjectInstanceType3D, UnsignedInt>> nodeInstances;
     std::unordered_map<std::string, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
 
@@ -132,25 +135,6 @@ struct AssimpImporter::File {
     /* For each mesh, map from mesh-relative bones to merged bone list */
     std::vector<std::vector<UnsignedInt>> boneMap;
     std::vector<const aiBone*> mergedBones;
-
-    /* Mapping for multi-mesh nodes:
-       (in the following, "node" is an aiNode,
-        "object" is Magnum::Trade::ObjectData3D)
-
-        -   objectMap.size() is the count of objects reported to the user
-        -   nodeMap.size() is the count of original nodes in the file + 1
-        -   objectMap[id] is a pair of (original node ID, mesh ID)
-        -   nodeMap[j] points to the first item in objectMap for
-            node ID `j` -- which also translates the original ID to reported ID
-        -   nodeMap[j + 1] - nodeMap[j] is count of objects for
-            original object ID `j` (or number of primitives in given object)
-
-      Hierarchy-wise, the subsequent nodes are direct children of
-      the first, have no transformation or other children and point to the
-      subsequent meshes.
-    */
-    std::vector<std::pair<std::size_t, std::size_t>> objectMap;
-    std::vector<std::size_t> nodeMap;
 
     UnsignedInt imageImporterId = ~UnsignedInt{};
     Containers::Optional<AnyImageImporter> imageImporter;
@@ -422,9 +406,8 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         }
     }
 
-    /* Fill hashmaps for index lookup for materials/textures/meshes/nodes */
+    /* Fill hashmaps for index lookup for materials & textures */
     _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
-
     aiString matName;
     UnsignedInt textureIndex = 0;
     std::unordered_map<std::string, UnsignedInt> uniqueImages;
@@ -499,47 +482,12 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
             _f->rootTransformation = Matrix4{};
         }
 
-        /* Insert may invalidate iterators, so we use indices here. */
-        /* Treat nodes with multiple meshes as separate objects. */
-        _f->nodeMap.emplace_back(0);
+        /* Unpack the node tree into a linear array we can index into. Insert
+           into a vector may invalidate iterators, so we use indices here. */
         for(std::size_t i = 0; i < _f->nodes.size(); ++i) {
             aiNode* node = _f->nodes[i];
             _f->nodeIndices[node] = UnsignedInt(i);
-
             _f->nodes.insert(_f->nodes.end(), node->mChildren, node->mChildren + node->mNumChildren);
-
-            _f->objectMap.emplace_back(i, 0);
-            if(node->mNumMeshes > 0) {
-                /* Attach the first mesh directly to the node */
-                _f->nodeInstances[node] = {ObjectInstanceType3D::Mesh, node->mMeshes[0]};
-
-                for(std::size_t j = 1; j < node->mNumMeshes; ++j) {
-                    _f->objectMap.emplace_back(i, j);
-                }
-            }
-
-            _f->nodeMap.emplace_back(_f->objectMap.size());
-        }
-
-        /* Find nodes that reference cameras and lights.
-
-           This assumes every camera and light is only referenced by a single
-           node. While aiNode docs say that "Cameras and lights reference a
-           specific node by name - if there are multiple nodes with this name,
-           they are assigned to each of them." but in reality (for COLLADA, at
-           least), the camera or light gets duplicated for every node that
-           references it). See the cameraLightReferencedByTwoNodes() test. */
-        for(std::size_t i = 0; i < _f->scene->mNumCameras; ++i) {
-            const aiNode* cameraNode = _f->scene->mRootNode->FindNode(_f->scene->mCameras[i]->mName);
-            if(cameraNode) {
-                _f->nodeInstances[cameraNode] = {ObjectInstanceType3D::Camera, i};
-            }
-        }
-        for(std::size_t i = 0; i < _f->scene->mNumLights; ++i) {
-            const aiNode* lightNode = _f->scene->mRootNode->FindNode(_f->scene->mLights[i]->mName);
-            if(lightNode) {
-                _f->nodeInstances[lightNode] = {ObjectInstanceType3D::Light, i};
-            }
         }
     }
 
@@ -654,98 +602,203 @@ std::string AssimpImporter::doSceneName(UnsignedInt) {
 }
 
 Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
-    const aiNode* root = _f->scene->mRootNode;
+    /* Count how many meshes and skins we're referencing. Materials have to use
+       the same object mapping as meshes and Assimp has no way to not assign a
+       material which means there will either be both the mesh and material
+       field or neither of the two. */
+    UnsignedInt meshCount = 0;
+    UnsignedInt skinCount = 0;
+    for(const aiNode* const node: _f->nodes) {
+        meshCount += node->mNumMeshes;
+        for(std::size_t i = 0; i != node->mNumMeshes; ++i)
+            if(_f->scene->mMeshes[node->mMeshes[i]]->HasBones())
+                ++skinCount;
+    }
 
-    std::vector<UnsignedInt> children;
-    /* In consistency with the distinction in doOpenData(), if the root node
-       has children, add them directly (and treat the root node as the scene) */
-    if(root->mNumChildren) {
-        children.reserve(root->mNumChildren);
-        for(std::size_t i = 0; i < root->mNumChildren; ++i)
-            children.push_back(_f->nodeMap[_f->nodeIndices[root->mChildren[i]]]);
+    /* Count how many objects have cameras and lights. This is stupid because
+       Assimp matches node attachments with nodes using a string name, so we
+       have to do a stupidly expensive search for every possible camera to see
+       if it's referenced by any node.
 
-    /* Otherwise there's just the root node, which is at index 0 */
-    } else children.push_back(0);
+       This also assumes every camera and light is only referenced by a single
+       node. While aiNode docs say that "Cameras and lights reference a
+       specific node by name - if there are multiple nodes with this name, they
+       are assigned to each of them." but in reality (for COLLADA, at least),
+       the camera or light gets duplicated for every node that references it).
 
-    return SceneData{{}, std::move(children), root};
-}
+       See the cameraLightReferencedByTwoNodes() test, In case this would
+       behave differently for some format, with a single camera / light
+       actually being referenced by more than one node), the assert for
+       lightOffset / cameraOffset at the end will catch this. */
+    UnsignedInt cameraCount = 0;
+    UnsignedInt lightCount = 0;
+    for(std::size_t i = 0; i < _f->scene->mNumCameras; ++i) {
+        if(_f->scene->mRootNode->FindNode(_f->scene->mCameras[i]->mName))
+            ++cameraCount;
+    }
+    for(std::size_t i = 0; i < _f->scene->mNumLights; ++i) {
+        if(_f->scene->mRootNode->FindNode(_f->scene->mLights[i]->mName))
+            ++lightCount;
+    }
 
-UnsignedInt AssimpImporter::doObject3DCount() const {
-    return _f->objectMap.size();
-}
+    /* Allocate the output array.
 
-Int AssimpImporter::doObject3DForName(const std::string& name) {
-    const aiNode* found = _f->scene->mRootNode->FindNode(aiString(name));
-    return found ? _f->nodeMap[_f->nodeIndices[found]] : -1;
-}
+       The aiNode always has a matrix transformation and instead of checking if
+       it's an identity this just assumes that all nodes have a transformation.
+       There don't seem to be any TRS attributes, so it's just the matrix. */
+    Containers::ArrayView<UnsignedInt> parentImporterStateTransformationObjects;
+    Containers::ArrayView<Int> parents;
+    Containers::ArrayView<const void*> importerState;
+    Containers::ArrayView<Matrix4> transformations;
+    Containers::ArrayView<UnsignedInt> meshMaterialObjects;
+    Containers::ArrayView<UnsignedInt> meshes;
+    Containers::ArrayView<Int> meshMaterials;
+    Containers::ArrayView<UnsignedInt> cameraObjects;
+    Containers::ArrayView<UnsignedInt> cameras;
+    Containers::ArrayView<UnsignedInt> lightObjects;
+    Containers::ArrayView<UnsignedInt> lights;
+    Containers::ArrayView<UnsignedInt> skinObjects;
+    Containers::ArrayView<UnsignedInt> skins;
+    Containers::Array<char> data = Containers::ArrayTuple{
+        {NoInit, _f->nodes.size(), parentImporterStateTransformationObjects},
+        {NoInit, _f->nodes.size(), importerState},
+        {NoInit, _f->nodes.size(), parents},
+        {NoInit, _f->nodes.size(), transformations},
+        {NoInit, meshCount, meshMaterialObjects},
+        {NoInit, meshCount, meshes},
+        {NoInit, meshCount, meshMaterials},
+        {NoInit, cameraCount, cameraObjects},
+        {NoInit, cameraCount, cameras},
+        {NoInit, lightCount, lightObjects},
+        {NoInit, lightCount, lights},
+        {NoInit, skinCount, skinObjects},
+        {NoInit, skinCount, skins}
+    };
 
-std::string AssimpImporter::doObject3DName(const UnsignedInt id) {
-    return _f->nodes[_f->objectMap[id].first]->mName.C_Str();
-}
+    /* Populate the data */
+    std::size_t meshMaterialOffset = 0;
+    std::size_t cameraOffset = 0;
+    std::size_t lightOffset = 0;
+    std::size_t skinOffset = 0;
+    for(std::size_t i = 0; i != _f->nodes.size(); ++i) {
+        const aiNode& node = *_f->nodes[i];
 
-Containers::Pointer<ObjectData3D> AssimpImporter::doObject3D(const UnsignedInt id) {
-    const auto& spec = _f->objectMap[id];
-    const UnsignedInt nodeId = spec.first;
-    const aiNode* node = _f->nodes[spec.first];
+        /* (Implicit) object mapping for the parent, importer state and
+           transformation field */
+        /** @todo drop this once SceneData supports implicit mapping without
+            having to provide the data */
+        parentImporterStateTransformationObjects[i] = i;
 
-    /* Is this the first mesh of the aiNode? */
-    if(spec.second == 0) {
-        /* Object children: first add extra objects caused by multi-mesh nodes,
-           after that the usual children. */
-        std::vector<UnsignedInt> children;
-        const std::size_t extraChildrenCount = _f->nodeMap[nodeId + 1] - _f->nodeMap[nodeId] - 1;
-        children.reserve(extraChildrenCount + node->mNumChildren);
+        /* Populate importer state */
+        importerState[i] = &node;
 
-        for(std::size_t i = 0; i != extraChildrenCount; ++i)
-            children.push_back(_f->nodeMap[nodeId] + i + 1);
+        /* Parent index. Having a parent reference is great because I don't
+           have to figure it out of children references.
 
-        for(auto child: Containers::arrayView(node->mChildren, node->mNumChildren))
-            children.push_back(_f->nodeMap[_f->nodeIndices[child]]);
-
-        /* aiMatrix4x4 is always row-major, transpose. Pre-multiply top-level
-           nodes (which are direct children of assimp root node) with root node
-           transformation, so things like Y-up/Z-up adaptation are preserved.
-           If Assimp gives us only the root node with no children, that one is
-           not premultiplied (because that would duplicate its own
-           transformation). */
-        Matrix4 transformation = Matrix4::from(reinterpret_cast<const float*>(&node->mTransformation)).transposed();
-        if(node->mParent == _f->scene->mRootNode)
-            transformation = _f->rootTransformation*transformation;
-
-        auto instance = _f->nodeInstances.find(node);
-        if(instance != _f->nodeInstances.end()) {
-            const ObjectInstanceType3D type = (*instance).second.first;
-            const Int index = (*instance).second.second;
-            if(type == ObjectInstanceType3D::Mesh) {
-                const aiMesh* mesh = _f->scene->mMeshes[index];
-                Int skin = _f->meshSkins[index];
-                if(_f->mergeSkins && skin != -1)
-                    skin = 0;
-                return Containers::pointer(new MeshObjectData3D(children, transformation, index,
-                    mesh->mMaterialIndex, skin, node));
-            }
-
-            return Containers::pointer(new ObjectData3D(children, transformation, type, index, node));
+           In consistency with the distinction in doOpenData(), if the root
+           node has children, these are treated as root nodes and the root
+           node is ignored; OTOH if there's just the root node alone, then that
+           one is treated as a root node. */
+        if(!node.mParent || node.mParent == _f->scene->mRootNode) {
+            parents[i] = -1;
+        } else {
+            parents[i] = _f->nodeIndices.at(node.mParent);
         }
 
-        return Containers::pointer(new ObjectData3D(children, transformation, node));
-    } else {
-        /* Additional mesh for the referenced node. This is represented as a
-           child of the referenced node with identity transformation */
+        /* Transformation. aiMatrix4x4 is always row-major, transpose. */
+        transformations[i] = Matrix4::from(reinterpret_cast<const float*>(&node.mTransformation)).transposed();
+        /* Pre-multiply top-level nodes (which are direct children of assimp
+           root node) with root node transformation, so things like Y-up/Z-up
+           adaptation are preserved. If Assimp gives us only the root node with
+           no children, that one is not premultiplied (because that would
+           duplicate its own transformation). */
+        if(node.mParent == _f->scene->mRootNode)
+            transformations[i] = _f->rootTransformation*transformations[i];
 
-        const Int index = node->mMeshes[spec.second];
-        const aiMesh* mesh = _f->scene->mMeshes[index];
-        Int skin = _f->meshSkins[index];
-        if(_f->mergeSkins && skin != -1)
-            skin = 0;
-        Vector3 translation{};
-        Quaternion rotation{};
-        Vector3 scaling{1.0};
-        return Containers::pointer(new MeshObjectData3D(
-            {},
-            translation, rotation, scaling, index, mesh->mMaterialIndex, skin, node)
-        );
+        /* Mesh / material references */
+        for(std::size_t j = 0; j != node.mNumMeshes; ++j) {
+            const UnsignedInt mesh = node.mMeshes[j];
+            meshMaterialObjects[meshMaterialOffset] = i;
+            meshes[meshMaterialOffset] = mesh;
+            meshMaterials[meshMaterialOffset] = _f->scene->mMeshes[mesh]->mMaterialIndex;
+            ++meshMaterialOffset;
+
+            Int skin = _f->meshSkins[mesh];
+            if(skin != -1) {
+                if(_f->mergeSkins) skin = 0;
+                skinObjects[skinOffset] = i;
+                skins[skinOffset] = skin;
+                ++skinOffset;
+            }
+        }
+
+        /* This insane stupid lookup for cameras and lights again */
+        for(std::size_t j = 0; j != _f->scene->mNumCameras; ++j) {
+            if(_f->scene->mCameras[j]->mName == node.mName) {
+                cameraObjects[cameraOffset] = i;
+                cameras[cameraOffset] = j;
+                ++cameraOffset;
+            }
+        }
+        for(std::size_t j = 0; j != _f->scene->mNumLights; ++j) {
+            if(_f->scene->mLights[j]->mName == node.mName) {
+                lightObjects[lightOffset] = i;
+                lights[lightOffset] = j;
+                ++lightOffset;
+            }
+        }
     }
+
+    CORRADE_INTERNAL_ASSERT(
+        meshMaterialOffset == meshMaterialObjects.size() &&
+        lightOffset == lightObjects.size() &&
+        cameraOffset == cameraObjects.size() &&
+        skinOffset == skinObjects.size());
+
+    /* Put everything together. For simplicity the imported data could always
+       have all fields present, with some being empty, but this gives less
+       noise for asset introspection purposes. */
+    Containers::Array<SceneFieldData> fields;
+    arrayAppend(fields, {
+        /** @todo once there's a flag to annotate implicit fields, omit the
+            parent field if it's all -1s; or alternatively we could also have a
+            stride of 0 for this case */
+        SceneFieldData{SceneField::Parent, parentImporterStateTransformationObjects, parents},
+        SceneFieldData{SceneField::ImporterState, parentImporterStateTransformationObjects, importerState},
+        SceneFieldData{SceneField::Transformation, parentImporterStateTransformationObjects, transformations}
+    });
+
+    if(meshCount) arrayAppend(fields, {
+        SceneFieldData{SceneField::Mesh, meshMaterialObjects, meshes},
+        SceneFieldData{SceneField::MeshMaterial, meshMaterialObjects, meshMaterials},
+    });
+    if(lightCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Light, lightObjects, lights
+    });
+    if(cameraCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Camera, cameraObjects, cameras
+    });
+    if(skinCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Skin, skinObjects, skins
+    });
+
+    /* Convert back to the default deleter to avoid dangling deleter function
+       pointer issues when unloading the plugin */
+    arrayShrink(fields, DefaultInit);
+    return SceneData{SceneMappingType::UnsignedInt, _f->nodes.size(), std::move(data), std::move(fields), _f->scene->mRootNode};
+}
+
+UnsignedLong AssimpImporter::doObjectCount() const {
+    return _f->nodes.size();
+}
+
+Long AssimpImporter::doObjectForName(const std::string& name) {
+    const aiNode* found = _f->scene->mRootNode->FindNode(aiString(name));
+    return found ? Long(_f->nodeIndices.at(found)) : -1;
+}
+
+std::string AssimpImporter::doObjectName(const UnsignedLong id) {
+    return _f->nodes[id]->mName.C_Str();
 }
 
 UnsignedInt AssimpImporter::doCameraCount() const {
@@ -1901,8 +1954,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
         const aiAnimation* animation = _f->scene->mAnimations[a];
         for(std::size_t c = 0; c != animation->mNumChannels; ++c) {
             const aiNodeAnim* channel = animation->mChannels[c];
-            const Int target = doObject3DForName(channel->mNodeName.C_Str());
-            CORRADE_INTERNAL_ASSERT(target != -1);
+            const aiNode* node = CORRADE_INTERNAL_ASSERT_EXPRESSION(_f->scene->mRootNode->FindNode(channel->mNodeName));
+            const Int target = _f->nodeIndices.at(node);
 
             /* Assimp only supports linear interpolation. For glTF splines
                it simply uses the spline control points. */
@@ -2092,9 +2145,8 @@ Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) 
     Containers::Array<Matrix4> inverseBindMatrices{ValueInit, bones.size()};
     for(std::size_t i = 0; i != bones.size(); ++i) {
         const aiBone* bone = bones[i];
-        const Int node = doObject3DForName(bone->mName.C_Str());
-        CORRADE_INTERNAL_ASSERT(node != -1);
-        joints[i] = node;
+        const aiNode* node = CORRADE_INTERNAL_ASSERT_EXPRESSION(_f->scene->mRootNode->FindNode(bone->mName));
+        joints[i] = _f->nodeIndices.at(node);
         inverseBindMatrices[i] = Matrix4::from(
             reinterpret_cast<const float*>(&bone->mOffsetMatrix)).transposed();
     }

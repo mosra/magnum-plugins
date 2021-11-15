@@ -2982,16 +2982,19 @@ void AssimpImporterTest::meshMultiplePrimitives() {
     CORRADE_COMPARE(importer->object3DCount(), 9);
     {
         CORRADE_COMPARE(importer->object3DName(0), "Using_the_second_mesh__should_have_4_children");
-        CORRADE_COMPARE(importer->object3DName(1), "Using_the_second_mesh__should_have_4_children");
-        CORRADE_COMPARE(importer->object3DName(2), "Using_the_second_mesh__should_have_4_children");
+        /* Originally the duplicate object IDs followed the original ID but
+           that's not really doable in the compatibility wrapper anymore. Names
+           can still be preserved, tho. */
+        CORRADE_COMPARE(importer->object3DName(4), "Using_the_second_mesh__should_have_4_children");
+        CORRADE_COMPARE(importer->object3DName(5), "Using_the_second_mesh__should_have_4_children");
         CORRADE_COMPARE(importer->object3DForName("Using_the_second_mesh__should_have_4_children"), 0);
         auto object = importer->object3D(0);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 2);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{1, 2, 7}));
+        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{3, 4, 5}));
 
-        auto child1 = importer->object3D(1);
+        auto child1 = importer->object3D(4);
         CORRADE_VERIFY(child1);
         CORRADE_COMPARE(child1->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(child1->instance(), 3);
@@ -3001,7 +3004,7 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(child1->rotation(), Quaternion{});
         CORRADE_COMPARE(child1->scaling(), Vector3{1.0f});
 
-        auto child2 = importer->object3D(2);
+        auto child2 = importer->object3D(5);
         CORRADE_VERIFY(child2);
         CORRADE_COMPARE(child2->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(child2->instance(), 4);
@@ -3011,25 +3014,28 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(child2->rotation(), Quaternion{});
         CORRADE_COMPARE(child2->scaling(), Vector3{1.0f});
     } {
-        CORRADE_COMPARE(importer->object3DName(3), "Just_a_non-mesh_node");
-        CORRADE_COMPARE(importer->object3DForName("Just_a_non-mesh_node"), 3);
-        auto object = importer->object3D(3);
+        CORRADE_COMPARE(importer->object3DName(1), "Just_a_non-mesh_node");
+        CORRADE_COMPARE(importer->object3DForName("Just_a_non-mesh_node"), 1);
+        auto object = importer->object3D(1);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->instance(), -1);
         CORRADE_COMPARE(object->children(), {});
     } {
-        CORRADE_COMPARE(importer->object3DName(4), "Using_the_second_mesh_again__again_2_children");
-        CORRADE_COMPARE(importer->object3DName(5), "Using_the_second_mesh_again__again_2_children");
+        CORRADE_COMPARE(importer->object3DName(2), "Using_the_second_mesh_again__again_2_children");
+        /* Originally the duplicate object IDs followed the original ID but
+           that's not really doable in the compatibility wrapper anymore. Names
+           can still be preserved, tho. */
         CORRADE_COMPARE(importer->object3DName(6), "Using_the_second_mesh_again__again_2_children");
-        CORRADE_COMPARE(importer->object3DForName("Using_the_second_mesh_again__again_2_children"), 4);
-        auto object = importer->object3D(4);
+        CORRADE_COMPARE(importer->object3DName(7), "Using_the_second_mesh_again__again_2_children");
+        CORRADE_COMPARE(importer->object3DForName("Using_the_second_mesh_again__again_2_children"), 2);
+        auto object = importer->object3D(2);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 2);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{5, 6}));
+        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{6, 7}));
 
-        auto child5 = importer->object3D(5);
+        auto child5 = importer->object3D(6);
         CORRADE_VERIFY(child5);
         CORRADE_COMPARE(child5->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(child5->instance(), 3);
@@ -3039,7 +3045,7 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(child5->rotation(), Quaternion{});
         CORRADE_COMPARE(child5->scaling(), Vector3{1.0f});
 
-        auto child6 = importer->object3D(6);
+        auto child6 = importer->object3D(7);
         CORRADE_VERIFY(child6);
         CORRADE_COMPARE(child6->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(child6->instance(), 4);
@@ -3049,10 +3055,13 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(child6->rotation(), Quaternion{});
         CORRADE_COMPARE(child6->scaling(), Vector3{1.0f});
     } {
-        CORRADE_COMPARE(importer->object3DName(7), "Using_the_fourth_mesh__1_child");
+        CORRADE_COMPARE(importer->object3DName(3), "Using_the_fourth_mesh__1_child");
+        /* Originally the duplicate object IDs followed the original ID but
+           that's not really doable in the compatibility wrapper anymore. Names
+           can still be preserved, tho. */
         CORRADE_COMPARE(importer->object3DName(8), "Using_the_fourth_mesh__1_child");
-        CORRADE_COMPARE(importer->object3DForName("Using_the_fourth_mesh__1_child"), 7);
-        auto object = importer->object3D(7);
+        CORRADE_COMPARE(importer->object3DForName("Using_the_fourth_mesh__1_child"), 3);
+        auto object = importer->object3D(3);
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 0);
@@ -3067,14 +3076,6 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(child8->translation(), Vector3{});
         CORRADE_COMPARE(child8->rotation(), Quaternion{});
         CORRADE_COMPARE(child8->scaling(), Vector3{1.0f});
-    }
-
-    /* Verify the scene children get correctly reassigned also */
-    CORRADE_COMPARE(importer->sceneCount(), 1);
-    {
-        auto scene = importer->scene(0);
-        CORRADE_VERIFY(scene);
-        CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 3, 4}));
     }
 }
 

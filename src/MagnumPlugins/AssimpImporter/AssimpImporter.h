@@ -203,7 +203,57 @@ in Assimp when the flag is enabled. However please note that since Assimp
 handles logging through a global singleton, it's not possible to have different
 verbosity levels in each instance.
 
-@subsection Trade-AssimpImporter-behavior-animation Animation and skin import
+@subsection Trade-AssimpImporter-behavior-scene Scene import
+
+-   Assimp supports only a single scene. For some file formats (such as
+    COLLADA) Assimp fails to load the file if it doesn't contain any scene. For
+    some (such as glTF) it will succeed and @ref sceneCount() will return zero.
+-   Assimp's scene representation is limited to a single root node. To undo
+    undesirable complexity, if the root Assimp node has children, it's ignored
+    and only its children are exposed. On the other hand, for example in
+    presence of @ref Trade-AssimpImporter-configuration "postprocessing flags"
+    such as @cb{.ini} PreTransformVertices @ce, there's sometimes just a single
+    root node. In that case the single node is imported as a single object
+    instead of being ignored.
+-   Imported scenes always have @ref SceneMappingType::UnsignedInt, with
+    @ref SceneData::mappingBound() equal to @ref objectCount(). The scene is
+    always 3D.
+-   All reported objects have a @ref SceneField::Parent (of type
+    @ref SceneFieldType::Int), @ref SceneField::ImporterState (of type
+    @ref SceneFieldType::Pointer, see @ref Trade-AssimpImporter-state below)
+    and @ref SceneField::Transformation (of type @ref SceneFieldType::Matrix4x4).
+    These three fields share the same object mapping, which is trivial.
+-   Assimp doesn't have a builtin way to represent separate TRS components of
+    a transformation, they can only be decomposed from the full matrix
+    post-import. For this reason, only the @ref SceneField::Transformation is
+    present in the output.
+-   If the scene references meshes, a @ref SceneField::Mesh (of type
+    @ref SceneFieldType::UnsignedInt) and a @ref SceneField::MeshMaterial (of
+    type @ref SceneFieldType::Int) is present. Assimp has no concept of an
+    unassigned material, so the material ID is never @cpp -1 @ce. Nodes
+    containing multiple meshes or referencing a multi-primitive mesh have
+    several @ref SceneField::Mesh (and @ref SceneField::MeshMaterial)
+    asignments. See @ref Trade-AssimpImporter-behavior-meshes and
+    @ref Trade-AssimpImporter-behavior-materials for further details.
+-   If any mesh referenced by a scene is skinned, a @ref SceneField::Skin (of
+    type @ref SceneFieldType::UnsignedInt) is present. See
+    @ref Trade-AssimpImporter-behavior-animations for further details.
+-   If the scene references cameras, a @ref SceneField::Camera (of type
+    @ref SceneFieldType::UnsignedInt) is present. Contrary to Assimp's
+    documentation, for certain formats (such as COLLADA), if one camera is
+    referenced by multiple nodes, it'll get duplicated instead of the nodes
+    sharing the same camera reference. A single node can also only reference
+    one camera at most. See @ref Trade-AssimpImporter-behavior-cameras for
+    further details.
+-   If the scene references lights, a @ref SceneField::Light (of type
+    @ref SceneFieldType::UnsignedInt) is present. Contrary to Assimp's
+    documentation, for certain formats (such as COLLADA), if one light is
+    referenced by multiple nodes, it'll get duplicated instead of the nodes
+    sharing the same light reference. A single node can also only reference one
+    light at most. See @ref Trade-AssimpImporter-behavior-lights for further
+    details.
+
+@subsection Trade-AssimpImporter-behavior-animations Animation and skin import
 
 -   Assimp sometimes adds dummy animation tracks with a single key-value pair
     and the default node transformation. If found, the importer removes these
@@ -263,6 +313,8 @@ verbosity levels in each instance.
 
 @subsection Trade-AssimpImporter-behavior-materials Material import
 
+-   Assimp has no concept of an unassigned material and thus it may create
+    dummy materials and assign them to meshes that have no material specified
 -   Only materials with shading mode `aiShadingMode_Phong` are supported
 -   Two-sided property and alpha mode is not imported
 -   Unrecognized Assimp material attributes are imported with their raw names
@@ -295,12 +347,16 @@ verbosity levels in each instance.
     -   Custom light orientation vectors --- the orientation is always only
         inherited from the node containing the light
 -   Area lights are not supported
+-   For certain file formats (such as COLLADA), if a light isn't referenced by
+    any node, it gets ignored during import
 
 @subsection Trade-AssimpImporter-behavior-cameras Camera import
 
 -   Up vector property is not imported
 -   Orthographic camera support requires Assimp 5.1.0. Earlier versions import
     them as perspective cameras with arbitrary field of view and aspect ratio.
+-   For certain file formats (such as COLLADA), if a camera isn't referenced by
+    any node, it gets ignored during import
 
 @subsection Trade-AssimpImporter-behavior-meshes Mesh import
 
@@ -333,20 +389,11 @@ verbosity levels in each instance.
     weights, only the last set will be imported. A warning is printed when this
     is detected, but it may misfire for other meshes with non-normalized
     weights.
--   Multi-mesh nodes and multi-primitive meshes are loaded as follows,
-    consistently with the behavior of @link TinyGltfImporter @endlink:
-    -   Multi-primitive meshes are split by Assimp into individual meshes
-    -   The @ref meshCount() query returns a number of all *primitives*, not
-        meshes
-    -   The @ref object3DCount() query returns a number of all nodes extended
-        with number of extra objects for each additional mesh
-    -   Each node referencing a multiple meshes is split into a sequence
-        of @ref MeshObjectData3D instances following each other; the extra
-        nodes being a direct and immediate children of the first one with an
-        identity transformation
-    -   @ref object3DForName() points to the first object containing the first
-        mesh, @ref object3DName() returns the same name for all objects in
-        given sequence
+-   Multi-primitive meshes are split by Assimp into individual meshes, nodes
+    that reference a multi-primitive mesh have multiple @ref SceneField::Mesh
+    (and @ref SceneField::MeshMaterial) entries in the imported @ref SceneData.
+-   For certain file formats (such as COLLADA), if a mesh isn't referenced by
+    any node, it gets ignored during import
 
 The mesh is always indexed; positions are always present, normals, colors and
 texture coordinates are optional.
@@ -357,18 +404,6 @@ texture coordinates are optional.
     with @ref SamplerWrapping::ClampToEdge
 -   Assimp does not appear to load any filtering information
 -   Raw embedded image data is not supported
-
-@subsection Trade-AssimpImporter-behavior-scene Scene import
-
--   For some file formats (such as COLLADA), Assimp fails to load the file if
-    it doesn't contain any scene. For some (such as glTF) it will succeed and
-    @ref sceneCount() / @ref object3DCount() will return zero.
--   If the root node imported by Assimp has children, it's ignored and only its
-    children are exposed through @ref object3D(). On the other hand, for
-    example in presence of @ref Trade-AssimpImporter-configuration "postprocessing flags"
-    such as `PreTransformVertices`, there's sometimes just a single root node.
-    In that case the single node is imported as a single @ref object3D()
-    instead of being ignored.
 
 @section Trade-AssimpImporter-configuration Plugin-specific configuration
 
@@ -395,22 +430,26 @@ to edit the configuration values.
 The Assimp structures used to import data from a file can be accessed through
 importer state methods:
 
--   Calling @ref importerState() returns pointer to the imported `aiScene`
--   Calling `*::importerState()` on data class instances returned from this
-    importer return pointers to matching assimp structures:
-    -   @ref AbstractMaterialData::importerState() returns `aiMaterial`
+-   Calling @ref importerState() returns a pointer to the imported `aiScene`
+-   Importer state on data class instances returned from this importer return
+    pointers to matching Assimp structures:
+    -   @ref AnimationData::importerState() returns `aiAnimation`, or
+        @cpp nullptr @ce if the @cb{.ini} mergeAnimationClips @ce option is
+        enabled
     -   @ref CameraData::importerState() returns `aiCamera`
-    -   @ref TextureData::importerState() returns `std::pair<const aiMaterial*, aiTextureType>`,
-        in which the first texture of given type in given material is referred to.
-    -   @ref MeshData::importerState() returns `aiMesh`
-    -   @ref ObjectData3D::importerState() returns `aiNode`
     -   @ref LightData::importerState() returns `aiLight`
-    -   @ref ImageData2D::importerState() may return `aiTexture`, if texture was embedded
-        into the loaded file.
-    -   @ref AnimationData::importerState() returns `aiAnimation`, or `nullptr` if the
-        @cb{.ini} mergeAnimationClips @ce option is enabled
+    -   @ref MaterialData::importerState() returns `aiMaterial`
+    -   @ref MeshData::importerState() returns `aiMesh`
+    -   @ref ImageData2D::importerState() may return `aiTexture`, if texture
+        was embedded into the loaded file.
+    -   @ref SceneData::importerState() returns the root `aiNode` and all
+        objects have a @ref SceneField::ImporterState with their own `aiNode`
     -   @ref SkinData::importerState() returns `aiMesh`, or `nullptr` if the
         @cb{.ini} mergeSkins @ce option is enabled
+    -   @ref TextureData::importerState() returns
+        @cpp std::pair<const aiMaterial*, aiTextureType> @ce,
+        in which the first texture of given type in given material is referred
+        to.
 -   @ref openState() expects a pointer to an Assimp scene (i.e., `const aiScene*`)
     and optionally a path (in order to be able to load textures, if needed)
 
@@ -460,10 +499,9 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL std::string doSceneName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
-        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doObject3DCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Long doObjectForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doObjectName(UnsignedLong id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doCameraForName(const std::string& name) override;
