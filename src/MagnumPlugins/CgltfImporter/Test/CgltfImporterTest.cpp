@@ -1130,23 +1130,20 @@ void CgltfImporterTest::animation() {
         "animation" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->animationCount(), 4);
+    CORRADE_COMPARE(importer->animationName(2), "TRS animation");
+    CORRADE_COMPARE(importer->animationForName("TRS animation"), 2);
+    CORRADE_COMPARE(importer->animationForName("Nonexistent"), -1);
 
     /* Empty animation */
     {
-        CORRADE_COMPARE(importer->animationName(0), "empty");
-        CORRADE_COMPARE(importer->animationForName("empty"), 0);
-
-        auto animation = importer->animation(0);
+        auto animation = importer->animation("empty");
         CORRADE_VERIFY(animation);
         CORRADE_VERIFY(animation->data().empty());
         CORRADE_COMPARE(animation->trackCount(), 0);
 
     /* Empty translation/rotation/scaling animation */
     } {
-        CORRADE_COMPARE(importer->animationName(1), "empty TRS animation");
-        CORRADE_COMPARE(importer->animationForName("empty TRS animation"), 1);
-
-        auto animation = importer->animation(1);
+        auto animation = importer->animation("empty TRS animation");
         CORRADE_VERIFY(animation);
         CORRADE_COMPARE(animation->data().size(), 0);
         CORRADE_COMPARE(animation->trackCount(), 3);
@@ -1171,10 +1168,7 @@ void CgltfImporterTest::animation() {
 
     /* Translation/rotation/scaling animation */
     } {
-        CORRADE_COMPARE(importer->animationName(2), "TRS animation");
-        CORRADE_COMPARE(importer->animationForName("TRS animation"), 2);
-
-        auto animation = importer->animation(2);
+        auto animation = importer->animation("TRS animation");
         CORRADE_VERIFY(animation);
         /* Two rotation keys, four translation and scaling keys with common
            time track */
@@ -1396,10 +1390,8 @@ void CgltfImporterTest::animationSpline() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation" + std::string{data.suffix})));
-    CORRADE_COMPARE(importer->animationCount(), 4);
-    CORRADE_COMPARE(importer->animationName(3), "TRS animation, splines");
 
-    auto animation = importer->animation(3);
+    auto animation = importer->animation("TRS animation, splines");
     CORRADE_VERIFY(animation);
     /* Four spline T/R/S keys with one common time track */
     CORRADE_COMPARE(animation->data().size(),
@@ -1483,10 +1475,8 @@ void CgltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-splines-sharing.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(0), "TRS animation, splines, sharing data with the same time track");
 
-    auto animation = importer->animation(0);
+    auto animation = importer->animation("TRS animation, splines, sharing data with the same time track");
     CORRADE_VERIFY(animation);
     /* Four spline T keys with one common time track, used as S as well */
     CORRADE_COMPARE(animation->data().size(),
@@ -1531,12 +1521,10 @@ void CgltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "animation-splines-sharing.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(1), "TRS animation, splines, sharing data with different time track");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(1));
+    CORRADE_VERIFY(!importer->animation("TRS animation, splines, sharing data with different time track"));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry\n");
 }
 
@@ -1550,10 +1538,7 @@ void CgltfImporterTest::animationShortestPathOptimizationEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-patching-fixed.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
-
-    auto animation = importer->animation(0);
+    auto animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1599,10 +1584,7 @@ void CgltfImporterTest::animationShortestPathOptimizationDisabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-patching-fixed.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
-
-    auto animation = importer->animation(0);
+    auto animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1668,14 +1650,12 @@ void CgltfImporterTest::animationQuaternionNormalizationEnabled() {
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-patching-fixed.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
 
     Containers::Optional<AnimationData> animation;
     std::ostringstream out;
     {
         Warning warningRedirection{&out};
-        animation = importer->animation(1);
+        animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
@@ -1697,10 +1677,8 @@ void CgltfImporterTest::animationQuaternionNormalizationDisabled() {
     CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-patching-fixed.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
 
-    auto animation = importer->animation(1);
+    auto animation = importer->animation("Quaternion normalization patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1845,12 +1823,12 @@ void CgltfImporterTest::camera() {
         "camera" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->cameraCount(), 4);
+    CORRADE_COMPARE(importer->cameraName(2), "Perspective 4:3 75° hFoV");
+    CORRADE_COMPARE(importer->cameraForName("Perspective 4:3 75° hFoV"), 2);
+    CORRADE_COMPARE(importer->cameraForName("Nonexistent"), -1);
 
     {
-        CORRADE_COMPARE(importer->cameraName(0), "Orthographic 4:3");
-        CORRADE_COMPARE(importer->cameraForName("Orthographic 4:3"), 0);
-
-        auto cam = importer->camera(0);
+        auto cam = importer->camera("Orthographic 4:3");
         CORRADE_VERIFY(cam);
         CORRADE_COMPARE(cam->type(), CameraType::Orthographic3D);
         CORRADE_COMPARE(cam->size(), (Vector2{4.0f, 3.0f}));
@@ -1858,9 +1836,7 @@ void CgltfImporterTest::camera() {
         CORRADE_COMPARE(cam->near(), 0.01f);
         CORRADE_COMPARE(cam->far(), 100.0f);
     } {
-        CORRADE_COMPARE(importer->cameraName(1), "Perspective 1:1 75° hFoV");
-
-        auto cam = importer->camera(1);
+        auto cam = importer->camera("Perspective 1:1 75° hFoV");
         CORRADE_VERIFY(cam);
         CORRADE_COMPARE(cam->type(), CameraType::Perspective3D);
         CORRADE_COMPARE(cam->fov(), 75.0_degf);
@@ -1868,10 +1844,7 @@ void CgltfImporterTest::camera() {
         CORRADE_COMPARE(cam->near(), 0.1f);
         CORRADE_COMPARE(cam->far(), 150.0f);
     } {
-        CORRADE_COMPARE(importer->cameraName(2), "Perspective 4:3 75° hFoV");
-        CORRADE_COMPARE(importer->cameraForName("Perspective 4:3 75° hFoV"), 2);
-
-        auto cam = importer->camera(2);
+        auto cam = importer->camera("Perspective 4:3 75° hFoV");
         CORRADE_VERIFY(cam);
         CORRADE_COMPARE(cam->type(), CameraType::Perspective3D);
         CORRADE_COMPARE(cam->fov(), 75.0_degf);
@@ -1879,10 +1852,7 @@ void CgltfImporterTest::camera() {
         CORRADE_COMPARE(cam->near(), 0.1f);
         CORRADE_COMPARE(cam->far(), 150.0f);
     } {
-        CORRADE_COMPARE(importer->cameraName(3), "Perspective 16:9 75° hFoV infinite");
-        CORRADE_COMPARE(importer->cameraForName("Perspective 16:9 75° hFoV infinite"), 3);
-
-        auto cam = importer->camera(3);
+        auto cam = importer->camera("Perspective 16:9 75° hFoV infinite");
         CORRADE_VERIFY(cam);
         CORRADE_COMPARE(cam->type(), CameraType::Perspective3D);
         CORRADE_COMPARE(cam->fov(), 75.0_degf);
@@ -1915,9 +1885,9 @@ void CgltfImporterTest::light() {
         "light" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
-
-    CORRADE_COMPARE(importer->lightForName("Spot"), 1);
     CORRADE_COMPARE(importer->lightName(1), "Spot");
+    CORRADE_COMPARE(importer->lightForName("Spot"), 1);
+    CORRADE_COMPARE(importer->lightForName("Nonexistent"), -1);
 
     {
         auto light = importer->light("Point with everything implicit");
@@ -2031,6 +2001,7 @@ void CgltfImporterTest::scene() {
     CORRADE_COMPARE(importer->sceneCount(), 2);
     CORRADE_COMPARE(importer->sceneName(1), "Scene");
     CORRADE_COMPARE(importer->sceneForName("Scene"), 1);
+    CORRADE_COMPARE(importer->sceneForName("Nonexistent"), -1);
 
     auto emptyScene = importer->scene(0);
     CORRADE_VERIFY(emptyScene);
@@ -2041,9 +2012,9 @@ void CgltfImporterTest::scene() {
     CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4}));
 
     CORRADE_COMPARE(importer->object3DCount(), 7);
-
     CORRADE_COMPARE(importer->object3DName(4), "Light");
     CORRADE_COMPARE(importer->object3DForName("Light"), 4);
+    CORRADE_COMPARE(importer->object3DForName("Nonexistent"), -1);
 
     {
         auto object = importer->object3D("Camera");
@@ -2161,8 +2132,7 @@ void CgltfImporterTest::objectTransformation() {
     CORRADE_COMPARE(importer->object3DCount(), 8);
 
     {
-        CORRADE_COMPARE(importer->object3DName(0), "Matrix");
-        auto object = importer->object3D(0);
+        auto object = importer->object3D("Matrix");
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->instance(), -1);
@@ -2178,8 +2148,7 @@ void CgltfImporterTest::objectTransformation() {
             {1.5f, -2.5f, 0.3f, 1.0f}
         }));
     } {
-        CORRADE_COMPARE(importer->object3DName(1), "TRS");
-        auto object = importer->object3D(1);
+        auto object = importer->object3D("TRS");
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->instance(), -1);
@@ -2195,8 +2164,7 @@ void CgltfImporterTest::objectTransformation() {
             {1.5f, -2.5f, 0.3f, 1.0f}
         }));
     } {
-        CORRADE_COMPARE(importer->object3DName(2), "Mesh matrix");
-        auto object = importer->object3D(2);
+        auto object = importer->object3D("Mesh matrix");
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 0);
@@ -2212,8 +2180,7 @@ void CgltfImporterTest::objectTransformation() {
             {1.5f, -2.5f, 0.3f, 1.0f}
         }));
     } {
-        CORRADE_COMPARE(importer->object3DName(3), "Mesh TRS");
-        auto object = importer->object3D(3);
+        auto object = importer->object3D("Mesh TRS");
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
         CORRADE_COMPARE(object->instance(), 0);
@@ -2229,8 +2196,7 @@ void CgltfImporterTest::objectTransformation() {
             {1.5f, -2.5f, 0.3f, 1.0f}
         }));
     } {
-        CORRADE_COMPARE(importer->object3DName(4), "Translation");
-        auto object = importer->object3D(4);
+        auto object = importer->object3D("Translation");
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->instance(), -1);
@@ -2240,8 +2206,7 @@ void CgltfImporterTest::objectTransformation() {
         CORRADE_COMPARE(object->scaling(), Vector3{1.0f});
         CORRADE_COMPARE(object->transformation(), Matrix4::translation({1.5f, -2.5f, 0.3f}));
     } {
-        CORRADE_COMPARE(importer->object3DName(5), "Rotation");
-        auto object = importer->object3D(5);
+        auto object = importer->object3D("Rotation");
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->instance(), -1);
@@ -2250,8 +2215,7 @@ void CgltfImporterTest::objectTransformation() {
         CORRADE_COMPARE(object->scaling(), Vector3{1.0f});
         CORRADE_COMPARE(object->transformation(), Matrix4::rotationY(45.0_degf));
     } {
-        CORRADE_COMPARE(importer->object3DName(6), "Scaling");
-        auto object = importer->object3D(6);
+        auto object = importer->object3D("Scaling");
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->instance(), -1);
@@ -2261,8 +2225,7 @@ void CgltfImporterTest::objectTransformation() {
         CORRADE_COMPARE(object->scaling(), (Vector3{0.9f, 0.5f, 2.3f}));
         CORRADE_COMPARE(object->transformation(), Matrix4::scaling({0.9f, 0.5f, 2.3f}));
     } {
-        CORRADE_COMPARE(importer->object3DName(7), "Implicit transformation");
-        auto object = importer->object3D(7);
+        auto object = importer->object3D("Implicit transformation");
         CORRADE_VERIFY(object);
         CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
         CORRADE_COMPARE(object->instance(), -1);
@@ -2281,14 +2244,11 @@ void CgltfImporterTest::objectTransformationQuaternionNormalizationEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object-transformation-patching.gltf")));
 
-    CORRADE_COMPARE(importer->object3DCount(), 1);
-    CORRADE_COMPARE(importer->object3DName(0), "Non-normalized rotation");
-
     Containers::Pointer<ObjectData3D> object;
     std::ostringstream out;
     {
         Warning warningRedirection{&out};
-        object = importer->object3D(0);
+        object = importer->object3D("Non-normalized rotation");
     }
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::object3D(): rotation quaternion was renormalized\n");
@@ -2303,10 +2263,7 @@ void CgltfImporterTest::objectTransformationQuaternionNormalizationDisabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "object-transformation-patching.gltf")));
 
-    CORRADE_COMPARE(importer->object3DCount(), 1);
-    CORRADE_COMPARE(importer->object3DName(0), "Non-normalized rotation");
-
-    auto object = importer->object3D(0);
+    auto object = importer->object3D("Non-normalized rotation");
     CORRADE_VERIFY(object);
     CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
     CORRADE_COMPARE(object->rotation(), Quaternion::rotation(45.0_degf, Vector3::yAxis())*2.0f);
@@ -2326,9 +2283,7 @@ void CgltfImporterTest::skin() {
     CORRADE_COMPARE(importer->skin3DForName("nonexistent"), -1);
 
     {
-        CORRADE_COMPARE(importer->skin3DName(0), "implicit inverse bind matrices");
-
-        auto skin = importer->skin3D(0);
+        auto skin = importer->skin3D("implicit inverse bind matrices");
         CORRADE_VERIFY(skin);
         CORRADE_COMPARE_AS(skin->joints(),
             Containers::arrayView<UnsignedInt>({1, 2}),
@@ -2336,11 +2291,8 @@ void CgltfImporterTest::skin() {
         CORRADE_COMPARE_AS(skin->inverseBindMatrices(),
             Containers::arrayView({Matrix4{}, Matrix4{}}),
             TestSuite::Compare::Container);
-
     } {
-        CORRADE_COMPARE(importer->skin3DName(1), "explicit inverse bind matrices");
-
-        auto skin = importer->skin3D(1);
+        auto skin = importer->skin3D("explicit inverse bind matrices");
         CORRADE_VERIFY(skin);
         CORRADE_COMPARE_AS(skin->joints(),
             Containers::arrayView<UnsignedInt>({0, 2, 1}),
@@ -2440,6 +2392,7 @@ void CgltfImporterTest::mesh() {
     CORRADE_COMPARE(importer->meshCount(), 4);
     CORRADE_COMPARE(importer->meshName(0), "Non-indexed mesh");
     CORRADE_COMPARE(importer->meshForName("Non-indexed mesh"), 0);
+    CORRADE_COMPARE(importer->meshForName("Nonexistent"), -1);
 
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -2486,11 +2439,7 @@ void CgltfImporterTest::meshIndexed() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "mesh.gltf")));
 
-    CORRADE_COMPARE(importer->meshCount(), 4);
-    CORRADE_COMPARE(importer->meshName(1), "Indexed mesh");
-    CORRADE_COMPARE(importer->meshForName("Indexed mesh"), 1);
-
-    auto mesh = importer->mesh(1);
+    auto mesh = importer->mesh("Indexed mesh");
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
@@ -2672,6 +2621,7 @@ void CgltfImporterTest::meshCustomAttributes() {
     const MeshAttribute tbnAttribute = importer->meshAttributeForName("_TBN");
     CORRADE_COMPARE(tbnAttribute, meshAttributeCustom(0));
     CORRADE_COMPARE(importer->meshAttributeName(tbnAttribute), "_TBN");
+    CORRADE_COMPARE(importer->meshAttributeForName("Nonexistent"), MeshAttribute{});
 
     const MeshAttribute uvRotation = importer->meshAttributeForName("_UV_ROTATION");
     CORRADE_COMPARE(uvRotation, meshAttributeCustom(1));
@@ -2960,12 +2910,8 @@ void CgltfImporterTest::meshMultiplePrimitives() {
     }
 
     /* Animations -- the instance ID should point to the right expanded nodes */
-    CORRADE_COMPARE(importer->animationCount(), 1);
     {
-        CORRADE_COMPARE(importer->animationName(0), "Animation affecting multi-primitive nodes");
-        CORRADE_COMPARE(importer->animationForName("Animation affecting multi-primitive nodes"), 0);
-
-        auto animation = importer->animation(0);
+        auto animation = importer->animation("Animation affecting multi-primitive nodes");
         CORRADE_VERIFY(animation);
         CORRADE_COMPARE(animation->trackCount(), 4);
         CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Translation3D);
@@ -3293,8 +3239,9 @@ void CgltfImporterTest::materialPbrMetallicRoughness() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "material-metallicroughness.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
-    CORRADE_COMPARE(importer->materialForName("textures"), 2);
     CORRADE_COMPARE(importer->materialName(2), "textures");
+    CORRADE_COMPARE(importer->materialForName("textures"), 2);
+    CORRADE_COMPARE(importer->materialForName("Nonexistent"), -1);
 
     {
         const char* name = "defaults";
@@ -4001,8 +3948,9 @@ void CgltfImporterTest::texture() {
     CORRADE_COMPARE(pbr.baseColorTexture(), 0);
 
     CORRADE_COMPARE(importer->textureCount(), 2);
-    CORRADE_COMPARE(importer->textureForName("Texture"), 1);
     CORRADE_COMPARE(importer->textureName(1), "Texture");
+    CORRADE_COMPARE(importer->textureForName("Texture"), 1);
+    CORRADE_COMPARE(importer->textureForName("Nonexistent"), -1);
 
     auto texture = importer->texture(1);
     CORRADE_VERIFY(texture);
@@ -4181,8 +4129,9 @@ void CgltfImporterTest::imageEmbedded() {
         "image" + std::string{data.suffix}))));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
-    CORRADE_COMPARE(importer->image2DForName("Image"), 1);
     CORRADE_COMPARE(importer->image2DName(1), "Image");
+    CORRADE_COMPARE(importer->image2DForName("Image"), 1);
+    CORRADE_COMPARE(importer->image2DForName("Nonexistent"), -1);
 
     auto image = importer->image2D(1);
     CORRADE_VERIFY(image);
@@ -4203,8 +4152,9 @@ void CgltfImporterTest::imageExternal() {
         "image" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
-    CORRADE_COMPARE(importer->image2DForName("Image"), 1);
     CORRADE_COMPARE(importer->image2DName(1), "Image");
+    CORRADE_COMPARE(importer->image2DForName("Image"), 1);
+    CORRADE_COMPARE(importer->image2DForName("Nonexistent"), -1);
 
     auto image = importer->image2D(1);
     CORRADE_VERIFY(image);

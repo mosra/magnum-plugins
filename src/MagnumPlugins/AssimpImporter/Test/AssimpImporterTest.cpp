@@ -613,26 +613,23 @@ void AssimpImporterTest::animationGltf() {
         "animation.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 3);
+    CORRADE_COMPARE(importer->animationName(0), "empty");
+    CORRADE_COMPARE(importer->animationForName("empty"), 0);
+    CORRADE_COMPARE(importer->animationForName("nonexistent"), -1);
 
     /* Empty animation */
     {
-        CORRADE_COMPARE(importer->animationName(0), "empty");
-        CORRADE_COMPARE(importer->animationForName("empty"), 0);
-
-        auto animation = importer->animation(0);
+        auto animation = importer->animation("empty");
         CORRADE_VERIFY(animation);
         CORRADE_VERIFY(animation->data().empty());
         CORRADE_COMPARE(animation->trackCount(), 0);
 
     /* Translation/rotation/scaling animation */
     } {
-        CORRADE_COMPARE(importer->animationName(1), "TRS animation");
-        CORRADE_COMPARE(importer->animationForName("TRS animation"), 1);
-
         std::ostringstream out;
         Debug redirectDebug{&out};
 
-        auto animation = importer->animation(1);
+        auto animation = importer->animation("TRS animation");
         CORRADE_VERIFY(animation);
         CORRADE_VERIFY(animation->importerState());
         /* Two rotation keys, four translation and scaling keys. */
@@ -1054,10 +1051,7 @@ void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation-patching-fixed.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
-
-    auto animation = importer->animation(0);
+    auto animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1106,10 +1100,7 @@ void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation-patching-fixed.gltf")));
 
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(0), "Quaternion shortest-path patching");
-
-    auto animation = importer->animation(0);
+    auto animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1178,14 +1169,12 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation-patching-fixed.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
 
     Containers::Optional<AnimationData> animation;
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
-        animation = importer->animation(1);
+        animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
     CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
@@ -1216,10 +1205,8 @@ void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
     CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
         "animation-patching-fixed.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 2);
-    CORRADE_COMPARE(importer->animationName(1), "Quaternion normalization patching");
 
-    auto animation = importer->animation(1);
+    auto animation = importer->animation("Quaternion normalization patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1570,12 +1557,9 @@ void AssimpImporterTest::camera() {
     /* The first camera is a dummy one to test non-trivial camera assignment in
        the scene */
     CORRADE_COMPARE(importer->cameraCount(), 3);
-
-    CORRADE_COMPARE(importer->cameraName(1), "Camera");
-    CORRADE_COMPARE(importer->cameraForName("Camera"), 1);
     CORRADE_COMPARE(importer->cameraName(2), "Camera-no-aspect");
     CORRADE_COMPARE(importer->cameraForName("Camera-no-aspect"), 2);
-    CORRADE_COMPARE(importer->cameraForName(""), -1);
+    CORRADE_COMPARE(importer->cameraForName("nonexistent"), -1);
 
     Containers::Optional<CameraData> camera1 = importer->camera(1);
     CORRADE_VERIFY(camera1);
@@ -1639,7 +1623,9 @@ void AssimpImporterTest::light() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
-    CORRADE_COMPARE(importer->lightForName(""), -1);
+    CORRADE_COMPARE(importer->lightName(1), "Spot");
+    CORRADE_COMPARE(importer->lightForName("Spot"), 1);
+    CORRADE_COMPARE(importer->lightForName("nonexistent"), -1);
 
     /* Collada light import is broken in Assimp 5.1.0:
        https://github.com/assimp/assimp/issues/4179
@@ -1653,10 +1639,7 @@ void AssimpImporterTest::light() {
 
     /* Spot light */
     {
-        CORRADE_COMPARE(importer->lightName(1), "Spot");
-        CORRADE_COMPARE(importer->lightForName("Spot"), 1);
-
-        auto light = importer->light(1);
+        auto light = importer->light("Spot");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.12f, 0.24f, 0.36f}));
@@ -1670,10 +1653,7 @@ void AssimpImporterTest::light() {
 
     /* Point light */
     } {
-        CORRADE_COMPARE(importer->lightName(3), "Point");
-        CORRADE_COMPARE(importer->lightForName("Point"), 3);
-
-        auto light = importer->light(3);
+        auto light = importer->light("Point");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Point);
         CORRADE_COMPARE(light->color(), (Color3{0.5f, 0.25f, 0.05f}));
@@ -1683,10 +1663,7 @@ void AssimpImporterTest::light() {
 
     /* Directional light */
     } {
-        CORRADE_COMPARE(importer->lightName(2), "Sun");
-        CORRADE_COMPARE(importer->lightForName("Sun"), 2);
-
-        auto light = importer->light(2);
+        auto light = importer->light("Sun");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Directional);
         /* This one has intensity of 10, which gets premultiplied to the
@@ -1696,10 +1673,7 @@ void AssimpImporterTest::light() {
 
     /* Ambient light */
     } {
-        CORRADE_COMPARE(importer->lightName(0), "Ambient");
-        CORRADE_COMPARE(importer->lightForName("Ambient"), 0);
-
-        auto light = importer->light(0);
+        auto light = importer->light("Ambient");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Ambient);
         CORRADE_COMPARE(light->color(), (Color3{0.01f, 0.02f, 0.05f}));
@@ -1842,13 +1816,13 @@ void AssimpImporterTest::materialColor() {
 
     /* Ancient assimp version add "-material" suffix */
     if(_assimpVersion < 302) {
-        CORRADE_COMPARE(importer->materialForName("Material-material"), 1);
         CORRADE_COMPARE(importer->materialName(1), "Material-material");
+        CORRADE_COMPARE(importer->materialForName("Material-material"), 1);
     } else {
-        CORRADE_COMPARE(importer->materialForName("Material"), 1);
         CORRADE_COMPARE(importer->materialName(1), "Material");
+        CORRADE_COMPARE(importer->materialForName("Material"), 1);
     }
-    CORRADE_COMPARE(importer->materialForName("Ghost"), -1);
+    CORRADE_COMPARE(importer->materialForName("Nonexistent"), -1);
 
     /* Check material assignment in the scene. The first two objects are dummy
        nodes to test non-trivial assignment. */
@@ -2648,6 +2622,7 @@ void AssimpImporterTest::meshCustomAttributes() {
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
     CORRADE_COMPARE(importer->meshAttributeName(jointsAttribute), "JOINTS");
+    CORRADE_COMPARE(importer->meshAttributeForName("Nonexistent"), MeshAttribute{});
 
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
     CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
@@ -3154,12 +3129,9 @@ void AssimpImporterTest::scene() {
         {0.378522f, 0.0180283f, 0.925417f, 0.0f},
         {1.0f, 2.0f, 3.0f, 1.0f}}));
 
-    CORRADE_COMPARE(importer->object3DForName("Parent"), 0);
-    CORRADE_COMPARE(importer->object3DForName("Child"), 1);
-    CORRADE_COMPARE(importer->object3DName(0), "Parent");
     CORRADE_COMPARE(importer->object3DName(1), "Child");
-
-    CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
+    CORRADE_COMPARE(importer->object3DForName("Child"), 1);
+    CORRADE_COMPARE(importer->object3DForName("Nonexistent"), -1);
 
     /* Camera assignment tested separately in camera(), light assignment in
        light(), mesh in mesh(), material in materialColor() and skin in
@@ -3577,10 +3549,9 @@ void AssimpImporterTest::openState() {
         {0.378522f, 0.0180283f, 0.925417f, 0.0f},
         {1.0f, 2.0f, 3.0f, 1.0f}}));
 
-    CORRADE_COMPARE(importer->object3DForName("Parent"), 0);
-    CORRADE_COMPARE(importer->object3DForName("Child"), 1);
-    CORRADE_COMPARE(importer->object3DName(0), "Parent");
     CORRADE_COMPARE(importer->object3DName(1), "Child");
+    CORRADE_COMPARE(importer->object3DForName("Child"), 1);
+    CORRADE_COMPARE(importer->object3DForName("Nonexistent"), -1);
 
     /* Verify that closing works as well, without double frees or null pointer
        accesses */

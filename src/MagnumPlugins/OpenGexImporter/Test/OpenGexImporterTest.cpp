@@ -326,7 +326,11 @@ void OpenGexImporterTest::object() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "object.ogex")));
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
+
     CORRADE_COMPARE(importer->object3DCount(), 5);
+    CORRADE_COMPARE(importer->object3DName(2), "MyGeometryNode");
+    CORRADE_COMPARE(importer->object3DForName("MyGeometryNode"), 2);
+    CORRADE_COMPARE(importer->object3DForName("Nonexistent"), -1);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -334,8 +338,6 @@ void OpenGexImporterTest::object() {
 
     Containers::Pointer<ObjectData3D> object = importer->object3D(0);
     CORRADE_VERIFY(object);
-    CORRADE_COMPARE(importer->object3DName(0), "MyNode");
-    CORRADE_COMPARE(importer->object3DForName("MyNode"), 0);
     CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
     CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{1, 2}));
 
@@ -345,8 +347,7 @@ void OpenGexImporterTest::object() {
 
     Containers::Pointer<ObjectData3D> meshObject = importer->object3D(2);
     CORRADE_VERIFY(meshObject);
-    CORRADE_COMPARE(importer->object3DName(2), "MyGeometryNode");
-    CORRADE_COMPARE(importer->object3DForName("MyGeometryNode"), 2);
+
     CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
     CORRADE_VERIFY(meshObject->children().empty());
 
@@ -839,6 +840,7 @@ void OpenGexImporterTest::materialDefaults() {
     CORRADE_COMPARE(material->layerCount(), 1);
     CORRADE_COMPARE(material->attributeCount(), 0);
     CORRADE_COMPARE(importer->materialName(0), "");
+    CORRADE_COMPARE(importer->materialForName(""), -1);
 
     /* Not checking any attributes as the defaults are handled by
        PhongMaterialData itself anyway */
@@ -857,6 +859,7 @@ void OpenGexImporterTest::materialColors() {
     CORRADE_COMPARE(material->attributeCount(), 3);
     CORRADE_COMPARE(importer->materialName(1), "colors");
     CORRADE_COMPARE(importer->materialForName("colors"), 1);
+    CORRADE_COMPARE(importer->materialForName("Nonexistent"), -1);
 
     auto&& phong = material->as<PhongMaterialData>();
     CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.0f, 0.8f, 0.5f, 1.0f}));
@@ -872,22 +875,20 @@ void OpenGexImporterTest::materialTextured() {
     CORRADE_COMPARE(importer->textureCount(), 4);
 
     {
-        Containers::Optional<MaterialData> material = importer->material(2);
+        Containers::Optional<MaterialData> material = importer->material("diffuse_texture");
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 2);
-        CORRADE_COMPARE(importer->materialName(2), "diffuse_texture");
 
         auto&& phong = material->as<PhongMaterialData>();
         CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.0f, 0.8f, 0.5f, 1.1f}));
         CORRADE_COMPARE(phong.diffuseTexture(), 1);
     } {
-        Containers::Optional<MaterialData> material = importer->material(3);
+        Containers::Optional<MaterialData> material = importer->material("both_textures");
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 3);
-        CORRADE_COMPARE(importer->materialName(3), "both_textures");
 
         auto&& phong = material->as<PhongMaterialData>();
         CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
