@@ -3544,6 +3544,8 @@ void AssimpImporterTest::texture() {
 }
 
 void AssimpImporterTest::openState() {
+    /* Same as scene(), except that it uses openState() instead of openFile() */
+
     Assimp::Importer _importer;
     /* Explicitly *not* setting AI_CONFIG_IMPORT_NO_SKELETON_MESHES here to
        verify that we survive all the shit it summons from within the bug
