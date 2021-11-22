@@ -28,7 +28,9 @@
 #include <assimp/MathFunctions.h>
 #endif
 
+#include <assimp/matrix4x4.h>
 #include <assimp/scene.h>
+#include <assimp/quaternion.h>
 #include <assimp/version.h>
 
 #ifndef CHECK_VERSION
@@ -38,6 +40,15 @@
 
 int main() {
     int ret = 0;
+
+    /* Version that breaks aiAnimation::mTicksPerSecond for FBX:
+       https://github.com/assimp/assimp/commit/b3e1ee3ca0d825d384044867fc30cd0bc8417be6
+       Check for aiQuaternion::operation *= added in
+       https://github.com/assimp/assimp/commit/89d4d6b68f720aaf545dba9d6a701426b948df15 */
+    #if CHECK_VERSION >= 20210102
+    aiQuaternion quat;
+    quat *= aiMatrix4x4();
+    #endif
 
     /* First version that correctly parses glTF2 spline-interpolated animation data:
        https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4.

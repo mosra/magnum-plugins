@@ -90,7 +90,9 @@ struct AssimpImporterTest: TestSuite::Tester {
     void animationGltfNoScene();
     void animationGltfBrokenSplineWarning();
     void animationGltfSpline();
+
     void animationGltfTicksPerSecondPatching();
+    void animationFbxTicksPerSecondPatching();
 
     void animationDummyTracksRemovalEnabled();
     void animationDummyTracksRemovalDisabled();
@@ -221,6 +223,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::animationGltfSpline});
 
     addInstancedTests({&AssimpImporterTest::animationGltfTicksPerSecondPatching,
+                       &AssimpImporterTest::animationFbxTicksPerSecondPatching,
                        &AssimpImporterTest::animationDummyTracksRemovalEnabled,
                        &AssimpImporterTest::animationDummyTracksRemovalDisabled},
         Containers::arraySize(VerboseData));
@@ -330,7 +333,7 @@ AssimpImporterTest::AssimpImporterTest() {
         ;
 
     /* Assimp 5.0.0 reports itself as 4.1.0 */
-    #if ASSIMP_IS_VERSION_5
+    #if ASSIMP_IS_VERSION_5_OR_GREATER
     _assimpVersion =  Math::max(_assimpVersion, 500u);
     #endif
 }
@@ -518,7 +521,7 @@ void AssimpImporterTest::animation() {
     constexpr UnsignedInt KeyCount = 4;
     constexpr Float keys[KeyCount]{0.0f, 2.5f, 5.0f, 7.5f};
 
-    CORRADE_VERIFY(player.duration().contains({ keys[0], keys[Containers::arraySize(keys) - 1] }));
+    CORRADE_VERIFY(player.duration().contains({keys[0], keys[Containers::arraySize(keys) - 1]}));
     player.play(0.0f);
 
     /* Some Blender exporters (e.g. FBX) and our manual Collada correction
@@ -552,6 +555,8 @@ void AssimpImporterTest::animation() {
     };
 
     for(UnsignedInt i = 0; i < Containers::arraySize(keys); i++) {
+        CORRADE_ITERATION(i);
+
         player.advance(keys[i]);
         for(Node& n: nodes)
             correctNode(n);
@@ -879,6 +884,32 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
     if(data.flags >= ImporterFlag::Verbose) {
         CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
             " ticks per second is incorrect for glTF, patching to 1000\n"));
+    } else
+        CORRADE_VERIFY(out.str().empty());
+}
+
+void AssimpImporterTest::animationFbxTicksPerSecondPatching() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    #if !ASSIMP_HAS_BROKEN_FBX_TICKS_PER_SECOND
+        CORRADE_SKIP("Current version of assimp correctly sets FBX ticks per second.");
+    #endif
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->setFlags(data.flags);
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
+        "exported-animation.fbx")));
+
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->animation(0));
+    }
+
+    if(data.flags >= ImporterFlag::Verbose) {
+        CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
+            " ticks per second is incorrect for FBX, patching to 1000\n"));
     } else
         CORRADE_VERIFY(out.str().empty());
 }
@@ -3191,11 +3222,10 @@ void AssimpImporterTest::fileCallbackNotFound() {
     /* Assimp 5.0 changed the error string. aiGetVersion*() returns 401 for
        assimp 5, FFS, so we have to check differently. See CMakeLists.txt for
        details. */
-    #if ASSIMP_IS_VERSION_5
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
-    #else
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
-    #endif
+    if(_assimpVersion >= 500)
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
 }
 
 void AssimpImporterTest::fileCallbackEmptyFile() {
