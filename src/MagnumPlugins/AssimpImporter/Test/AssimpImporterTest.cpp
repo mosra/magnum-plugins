@@ -1346,7 +1346,7 @@ bool supportsSkinning(const Containers::StringView fileName, unsigned int assimp
 }
 
 void calculateTransforms(Containers::ArrayView<Matrix4> transforms, Containers::ArrayView<ObjectData3D> objects, UnsignedInt objectId, const Matrix4& parentTransform = {}) {
-    const Matrix4 transform = objects[objectId].transformation() * parentTransform;
+    const Matrix4 transform = parentTransform * objects[objectId].transformation();
     transforms[objectId] = transform;
     for(UnsignedInt childId: objects[objectId].children())
         calculateTransforms(transforms, objects, childId, transform);
@@ -1399,6 +1399,10 @@ void AssimpImporterTest::skin() {
     auto scene = importer->scene(sceneId);
     CORRADE_VERIFY(scene);
 
+    /* Some Blender exporters don't transform skin matrices correctly. Also see
+       the comment for ExportedFileData. */
+    const Matrix4 correction{data.correction.toMatrix()};
+
     for(UnsignedInt i: scene->children3D()) {
         calculateTransforms(globalTransforms, objects, i);
     }
@@ -1411,19 +1415,15 @@ void AssimpImporterTest::skin() {
         {"Node_3", "Node_4"}
     };
 
-    /* Some Blender exporters don't transform skin matrices correctly. Also see
-       the comment for ExportedFileData. */
-    const Matrix4 correction{data.correction.toMatrix()};
-
     for(UnsignedInt i = 0; i != Containers::arraySize(objectNames) - 1; ++i) {
         /* Skin names are taken from mesh names, skin order is arbitrary */
         const std::string meshName = fixMeshName(objectNames[i], data.suffix, _assimpVersion);
-        const Int index = importer->skin3DForName(meshName);
-        CORRADE_VERIFY(index != -1);
-        CORRADE_COMPARE(importer->skin3DName(index), meshName);
+        const Int skinIndex = importer->skin3DForName(meshName);
+        CORRADE_VERIFY(skinIndex != -1);
+        CORRADE_COMPARE(importer->skin3DName(skinIndex), meshName);
         CORRADE_VERIFY(importer->meshForName(meshName) != -1);
 
-        auto skin = importer->skin3D(index);
+        auto skin = importer->skin3D(skinIndex);
         CORRADE_VERIFY(skin);
         CORRADE_VERIFY(skin->importerState());
 
@@ -1448,10 +1448,10 @@ void AssimpImporterTest::skin() {
         auto meshObject = importer->object3D(objectNames[i]);
         CORRADE_VERIFY(meshObject);
         CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), index);
+        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), skinIndex);
         const Matrix4 meshTransform = meshObject->transformation();
         for(UnsignedInt j = 0; j != joints.size(); ++j) {
-            const Matrix4 invertedTransform = correction * meshTransform * globalTransforms[joints[j]].inverted();
+            const Matrix4 invertedTransform = globalTransforms[joints[j]].inverted() * meshTransform * correction;
             CORRADE_COMPARE(bindMatrices[j], invertedTransform);
         }
     }
