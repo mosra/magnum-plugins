@@ -121,6 +121,9 @@ struct AssimpImporterTest: TestSuite::Tester {
     void materialMultipleTextures();
     void materialTextureCoordinateSets();
     void materialTextureLayers();
+    void materialRawUnrecognized();
+    void materialRaw();
+    void materialRawTextureLayers();
 
     void mesh();
     void pointMesh();
@@ -258,6 +261,9 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::materialMultipleTextures,
               &AssimpImporterTest::materialTextureCoordinateSets,
               &AssimpImporterTest::materialTextureLayers,
+              &AssimpImporterTest::materialRawUnrecognized,
+              &AssimpImporterTest::materialRaw,
+              &AssimpImporterTest::materialRawTextureLayers,
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
@@ -1711,6 +1717,8 @@ void AssimpImporterTest::lightUnsupported() {
 
 void AssimpImporterTest::materialColor() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Unrecognized materials are tested separately in materialRaw() */
+    importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
@@ -1744,6 +1752,7 @@ void AssimpImporterTest::materialColor() {
 
 void AssimpImporterTest::materialTexture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
@@ -1780,6 +1789,7 @@ void AssimpImporterTest::materialTexture() {
 
 void AssimpImporterTest::materialColorTexture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color-texture.obj")));
 
     {
@@ -2072,6 +2082,293 @@ void AssimpImporterTest::materialTextureLayers() {
         CORRADE_COMPARE(material->attribute<UnsignedInt>(2, MaterialAttribute::DiffuseTextureCoordinates), 0);
     }
 }
+
+Containers::StringView extractMaterialKey(const char* data, int, int) {
+    return data;
+}
+
+void AssimpImporterTest::materialRawUnrecognized() {
+    if(_assimpVersion < 500)
+            CORRADE_SKIP("This version of Assimp doesn't import AI_MATKEY_COLOR_TRANSPARENT from FBX files.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Disabled by default */
+    CORRADE_VERIFY(!importer->configuration().value<bool>("ignoreUnrecognizedMaterialData"));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.fbx")));
+
+    CORRADE_COMPARE(importer->materialCount(), 2);
+
+    Containers::Optional<MaterialData> material = importer->material("Standard_Types");
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->types(), MaterialType::Phong);
+    CORRADE_COMPARE(material->layerCount(), 1);
+    CORRADE_COMPARE(material->attributeCount(), 4);
+
+    /* Recognized attributes */
+    {
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::AmbientColor));
+        CORRADE_COMPARE(material->attributeId(MaterialAttribute::AmbientColor), 2);
+        CORRADE_COMPARE(material->attribute<Vector4>(2), (Color4{0.1f, 0.05f, 0.1f, 1.0f}));
+    } {
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::DiffuseColor));
+        CORRADE_COMPARE(material->attributeId(MaterialAttribute::DiffuseColor), 3);
+        CORRADE_COMPARE(material->attribute<Vector4>(3), (Color4{0.4f, 0.2f, 0.1f, 1.0f}));
+
+    /* Unrecognized attributes */
+    } {
+        CORRADE_COMPARE(material->attributeName(0), extractMaterialKey(AI_MATKEY_COLOR_TRANSPARENT));
+        CORRADE_COMPARE(material->attributeType(0), MaterialAttributeType::Vector3);
+        CORRADE_COMPARE(material->attribute<Vector3>(0), (Vector3{0.3f, 0.2f, 0.1f}));
+    } {
+        CORRADE_COMPARE(material->attributeName(1), extractMaterialKey(AI_MATKEY_OPACITY));
+        CORRADE_COMPARE(material->attributeType(1), MaterialAttributeType::Float);
+        CORRADE_COMPARE(material->attribute<Float>(1), 0.4f);
+    }
+}
+
+void AssimpImporterTest::materialRaw() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    /* Disabled by default */
+    CORRADE_VERIFY(!importer->configuration().value<bool>("forceRawMaterialData"));
+    importer->configuration().setValue("forceRawMaterialData", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 2);
+
+    Containers::Optional<MaterialData> material = importer->material("Custom_Types");
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->types(), MaterialType{});
+    CORRADE_COMPARE(material->layerCount(), 1);
+    {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
+            "This version of Assimp doesn't import raw FBX material properties.");
+        CORRADE_COMPARE(material->attributeCount(), 5);
+    }
+
+    /* Not all types and sizes are tested:
+       - no importers currently output int2/3/4/5+ or float2/5+
+       - to get double properties, we'd need to compile assimp with
+         ASSIMP_DOUBLE_PRECISION, which breaks the plugin  */
+
+    /* Attributes that would normally be recognized */
+    CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::AmbientColor));
+    CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::DiffuseColor));
+
+    /* Raw Assimp attributes */
+    {
+        CORRADE_COMPARE(material->attributeName(0), extractMaterialKey(AI_MATKEY_COLOR_AMBIENT));
+        CORRADE_COMPARE(material->attributeType(0), MaterialAttributeType::Vector3);
+        CORRADE_COMPARE(material->attribute<Vector3>(0), (Color3{0.1f, 0.05f, 0.1f}));
+    } {
+        CORRADE_COMPARE(material->attributeName(1), extractMaterialKey(AI_MATKEY_COLOR_DIFFUSE));
+        CORRADE_COMPARE(material->attributeType(1), MaterialAttributeType::Vector3);
+        CORRADE_COMPARE(material->attribute<Vector3>(1), (Color3{0.4f, 0.2f, 0.1f}));
+    } {
+        CORRADE_COMPARE(material->attributeName(2), extractMaterialKey(AI_MATKEY_OPACITY));
+        CORRADE_COMPARE(material->attributeType(2), MaterialAttributeType::Float);
+        CORRADE_COMPARE(material->attribute<Float>(2), 0.25f);
+    }
+
+    if(_assimpVersion < 500)
+        CORRADE_WARN("This version of Assimp doesn't import raw FBX material properties.");
+    else {
+        /* Raw attributes taken directly from the FBX file, prefixed with "$raw.".
+           Seems to be the only importer that supports that. */
+        {
+            CORRADE_COMPARE(material->attributeName(3), "$raw.SomeColor"_s);
+            CORRADE_COMPARE(material->attributeType(3), MaterialAttributeType::Vector3);
+            CORRADE_COMPARE(material->attribute<Vector3>(3), (Vector3{0.1f, 0.2f, 0.3f}));
+        } {
+            CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
+                "This version of Assimp doesn't import raw FBX material properties.");
+            CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
+            CORRADE_COMPARE(material->attributeType(4), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(4), "Ministry of Finance (Turkmenistan)");
+        }
+    }
+
+    if(_assimpVersion < 410)
+        CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
+
+    /* glTF covers a few types/sizes not covered by FBX */
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.gltf")));
+    {
+        /* There's an extra material with only default values */
+        CORRADE_EXPECT_FAIL("glTF files are imported with a dummy material.");
+        CORRADE_COMPARE(importer->materialCount(), 1);
+    }
+
+    material = importer->material("raw");
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->types(), MaterialType{});
+    {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
+            "glTF files with non-0 texture coordinate set add an extra diffuse-only material layer.");
+        CORRADE_COMPARE(material->layerCount(), 1);
+    }
+
+    /* Attributes that would normally be recognized */
+    CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::DiffuseColor));
+
+    /* Raw attributes. Only checking interesting attributes, because this would
+       be a nightmare to maintain across multiple Assimp versions. */
+    {
+        const Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_DIFFUSE);
+        CORRADE_VERIFY(material->hasAttribute(name));
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Vector4);
+        CORRADE_COMPARE(material->attribute<Vector4>(name), (Color4{0.8f, 0.2f, 0.4f, 0.3f}));
+    } {
+        /* For some reason Assimp adds an alpha channel to the emissive color */
+        const Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_EMISSIVE);
+        CORRADE_VERIFY(material->hasAttribute(name));
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Vector4);
+        CORRADE_COMPARE(material->attribute<Vector4>(name), (Color4{0.1f, 0.2f, 0.3f}));
+    } {
+        /* The glTF importer writes bool properties as buffers with size 1,
+           when all the other importers write them as ints */
+        const Containers::StringView name = extractMaterialKey(AI_MATKEY_TWOSIDED);
+        CORRADE_VERIFY(material->hasAttribute(name));
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
+        const auto value = material->attribute<Containers::StringView>(name);
+        CORRADE_COMPARE(value.size(), 1);
+        CORRADE_VERIFY(value.front() != 0);
+    } {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
+            "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVWSRC.");
+
+        constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".NORMALS"_s;
+        const bool hasAttribute = material->hasAttribute(name);
+        CORRADE_VERIFY(hasAttribute);
+        /* Still have to skip the checks to not trigger asserts for missing
+           attribute names in attributeType() and attribute() */
+        if(hasAttribute) {
+            CORRADE_VERIFY(material->hasAttribute(name));
+            CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Int);
+            CORRADE_COMPARE(material->attribute<Int>(name), 1);
+        }
+    } {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
+            "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVTRANSFORM.");
+
+        constexpr Containers::StringView name = _AI_MATKEY_UVTRANSFORM_BASE ".NORMALS"_s;
+        const bool hasAttribute = material->hasAttribute(name);
+        CORRADE_VERIFY(hasAttribute);
+        if(hasAttribute) {
+            /* Opaque buffer converted to String */
+            CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
+            const auto value = material->attribute<Containers::StringView>(name);
+            /* +1 is null byte */
+            CORRADE_COMPARE(value.size(), sizeof(aiUVTransform));
+            const aiUVTransform& transform = *reinterpret_cast<const aiUVTransform*>(value.data());
+            const Vector2 scaling{transform.mScaling.x, transform.mScaling.y};
+            CORRADE_COMPARE(scaling, (Vector2{0.25f, 0.75f}));
+        }
+    }
+}
+
+void AssimpImporterTest::materialRawTextureLayers() {
+    if(_assimpVersion < 500)
+        CORRADE_SKIP("This version of assimp doesn't imported layered FBX materials.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("forceRawMaterialData", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-layers.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    const auto material = importer->material(0);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->layerCount(), 3);
+
+    /* Layer 0. Material attributes + diffuse texture + ambient texture. */
+    {
+        {
+            CORRADE_VERIFY(!material->hasAttribute(0, MaterialAttribute::AmbientColor));
+            const Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_AMBIENT);
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Vector3);
+            CORRADE_COMPARE(material->attribute<Vector3>(0, name), (Color3{0.1f, 0.2f, 0.3f}));
+        } {
+            CORRADE_VERIFY(!material->hasAttribute(0, MaterialAttribute::DiffuseColor));
+            const Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_DIFFUSE);
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Vector3);
+            CORRADE_COMPARE(material->attribute<Vector3>(0, name), (Color3{0.7f, 0.6f, 0.5f}));
+        }{
+            /* Texture indices are calculated from the attribute order inside
+               AssimpImporter, but they're not material properties. Just check
+               the name property. */
+            CORRADE_VERIFY(!material->hasAttribute(0, MaterialAttribute::AmbientTexture));
+            constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".AMBIENT"_s;
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(0, name), "ambient.png"_s);
+        } {
+            CORRADE_VERIFY(!material->hasAttribute(0, MaterialAttribute::AmbientTextureCoordinates));
+            constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".AMBIENT"_s;
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Int);
+            CORRADE_COMPARE(material->attribute<Int>(0, name), 0);
+        } {
+            CORRADE_VERIFY(!material->hasAttribute(0, MaterialAttribute::DiffuseTexture));
+            constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".DIFFUSE"_s;
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(0, name), "one.jpg"_s);
+        } {
+            CORRADE_VERIFY(!material->hasAttribute(0, MaterialAttribute::DiffuseTextureCoordinates));
+            constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".DIFFUSE"_s;
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Int);
+            CORRADE_COMPARE(material->attribute<Int>(0, name), 0);
+        }
+
+    /* Layer 1. Diffuse texture. */
+    } {
+        /* We check that there are no non-texture attributes in this layer at
+           the end of the test */
+        {
+            CORRADE_VERIFY(!material->hasAttribute(1, MaterialAttribute::DiffuseTexture));
+            constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".DIFFUSE"_s;
+            CORRADE_VERIFY(material->hasAttribute(1, name));
+            CORRADE_COMPARE(material->attributeType(1, name), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(1, name), "two.jpg"_s);
+        } {
+            CORRADE_VERIFY(!material->hasAttribute(1, MaterialAttribute::DiffuseTextureCoordinates));
+            constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".DIFFUSE"_s;
+            CORRADE_VERIFY(material->hasAttribute(1, name));
+            CORRADE_COMPARE(material->attributeType(1, name), MaterialAttributeType::Int);
+            CORRADE_COMPARE(material->attribute<Int>(1, name), 0);
+        }
+
+    /* Layer 2. Diffuse texture. */
+    } {
+        /* We check that there are no non-texture attributes in this layer at
+           the end of the test */
+        {
+            CORRADE_VERIFY(!material->hasAttribute(2, MaterialAttribute::DiffuseTexture));
+            constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".DIFFUSE"_s;
+            CORRADE_VERIFY(material->hasAttribute(2, name));
+            CORRADE_COMPARE(material->attributeType(2, name), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(2, name), "three.jpg"_s);
+        } {
+            CORRADE_VERIFY(!material->hasAttribute(2, MaterialAttribute::DiffuseTextureCoordinates));
+            constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".DIFFUSE"_s;
+            CORRADE_VERIFY(material->hasAttribute(2, name));
+            CORRADE_COMPARE(material->attributeType(2, name), MaterialAttributeType::Int);
+            CORRADE_COMPARE(material->attribute<Int>(2, name), 0);
+        }
+    }
+
+    /* Test that layers > 0 only contains texture attributes. Those all start
+       with "$tex.":
+       https://github.com/assimp/assimp/blob/889e55969647b9bd9e832d6208b41973156ce46b/include/assimp/material.h#L1051
+       Non-texture attributes always have mIndex set to 0 so shouldn't be here. */
+    for(UnsignedInt l = 1; l != material->layerCount(); ++l)
+        for(UnsignedInt i = 0; i != material->attributeCount(l); ++i)
+            CORRADE_VERIFY(material->attributeName(l, i).hasPrefix("$tex."_s));
+}
+
 void AssimpImporterTest::mesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
