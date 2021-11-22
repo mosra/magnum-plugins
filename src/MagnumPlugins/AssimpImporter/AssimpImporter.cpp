@@ -94,8 +94,8 @@ using namespace Containers::Literals;
 
 struct AssimpImporter::File {
     Containers::Optional<std::string> filePath;
-    const char* importerName = nullptr;
     bool importerIsGltf = false;
+    bool importerIsFbx = false;
     const aiScene* scene = nullptr;
     std::vector<aiNode*> nodes;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
@@ -408,15 +408,15 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     /* Get name of importer. Useful for workarounds based on importer/file
        type. If the _importer isn't populated, we got called from doOpenState()
        and we can't really do much here. */
-    _f->importerName = "unknown";
     if(_importer) {
         const int importerIndex = _importer->GetPropertyInteger("importerIndex", -1);
         if(importerIndex != -1) {
             const aiImporterDesc* info = _importer->GetImporterInfo(importerIndex);
-            if(info) _f->importerName = info->mName;
+            if(info) {
+                _f->importerIsGltf = info->mName == "glTF2 Importer"_s;
+                _f->importerIsFbx  = info->mName == "Autodesk FBX Importer"_s;
+            }
         }
-
-        _f->importerIsGltf = _f->importerName == "glTF2 Importer"_s;
     }
 
     /* Fill hashmaps for index lookup for materials/textures/meshes/nodes */
@@ -1673,14 +1673,21 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* For glTF files mTicksPerSecond is completely useless before
                https://github.com/assimp/assimp/commit/09d80ff478d825a80bce6fb787e8b19df9f321a8
-               but can be assumed to always be 1000. */
-            constexpr Double GltfTicksPerSecond = 1000.0;
-            if(_f->importerIsGltf && !Math::equal(ticksPerSecond, GltfTicksPerSecond)) {
+               but can be assumed to always be 1000.
+
+               FBX files since https://github.com/assimp/assimp/commit/b3e1ee3ca0d825d384044867fc30cd0bc8417be6
+               report incorrect mTicksPerSecond but it should be 1000:
+               https://github.com/assimp/assimp/issues/4197 */
+            constexpr Double CorrectTicksPerSecond = 1000.0;
+            if((_f->importerIsGltf || (_f->importerIsFbx && ASSIMP_HAS_BROKEN_FBX_TICKS_PER_SECOND)) &&
+                !Math::equal(ticksPerSecond, CorrectTicksPerSecond))
+            {
                 if(verbose) Debug{}
                     << "Trade::AssimpImporter::animation():" << Float(ticksPerSecond)
-                    << "ticks per second is incorrect for glTF, patching to"
-                    << Float(GltfTicksPerSecond);
-                ticksPerSecond = GltfTicksPerSecond;
+                    << "ticks per second is incorrect for"
+                    << (_f->importerIsGltf ? "glTF," : "FBX,") << "patching to"
+                    << Float(CorrectTicksPerSecond);
+                ticksPerSecond = CorrectTicksPerSecond;
             }
 
             const TargetTypes targetTypes = channelTargetTypes[currentChannel++];
