@@ -29,6 +29,7 @@
 
 #include "AssimpImporter.h"
 
+#include <cctype>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/ArrayViewStl.h>
@@ -172,6 +173,8 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     conf.setValue("mergeSkins", false);
 
     conf.setValue("ImportColladaIgnoreUpDirection", false);
+    conf.setValue("ignoreUnrecognizedMaterialData", false);
+    conf.setValue("forceRawMaterialData", false);
 
     Utility::ConfigurationGroup& postprocess = *conf.addGroup("postprocess");
     postprocess.setValue("JoinIdenticalVertices", true);
@@ -1145,6 +1148,53 @@ MaterialAttributeData materialColor(MaterialAttribute attribute, const aiMateria
     else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
+Containers::String customMaterialKey(Containers::StringView key, const aiTextureType semantic) {
+    using namespace Containers::Literals;
+
+    /* Create a non-owning key String, add texture type to it if
+        present */
+    auto keyString = Containers::String::nullTerminatedView(key);
+    if(semantic != aiTextureType_NONE) {
+        Containers::StringView keyExtra;
+        switch(semantic) {
+            #define _c(type) case aiTextureType_ ## type:       \
+                keyExtra = #type ## _s;                         \
+                break;
+            _c(AMBIENT)
+            _c(DIFFUSE)
+            _c(SPECULAR)
+            _c(EMISSIVE)
+            _c(OPACITY)
+            _c(NORMALS)
+            _c(HEIGHT)
+            _c(DISPLACEMENT)
+            _c(LIGHTMAP)
+            _c(REFLECTION)
+            _c(UNKNOWN)
+            _c(BASE_COLOR)
+            _c(SHININESS)
+            _c(NORMAL_CAMERA)
+            _c(EMISSION_COLOR)
+            _c(METALNESS)
+            _c(DIFFUSE_ROUGHNESS)
+            _c(AMBIENT_OCCLUSION)
+            #undef _c
+
+            case aiTextureType_NONE:
+            case _aiTextureType_Force32Bit:
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+        }
+
+        CORRADE_INTERNAL_ASSERT(!keyExtra.isEmpty());
+
+        /** @todo use format() and drop data() + FormatStl include
+            when format() is converted to StringViews */
+        keyString = Utility::formatString("{}.{}", key.data(), keyExtra.data());
+    }
+
+    return keyString;
+}
+
 #ifndef _CORRADE_HELPER_DEFER
 template<std::size_t size> constexpr Containers::StringView extractMaterialKey(const char(&data)[size], int, int) {
     return Containers::Literals::operator"" _s(data, size - 1);
@@ -1154,6 +1204,9 @@ template<std::size_t size> constexpr Containers::StringView extractMaterialKey(c
 }
 
 Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt id) {
+    const bool forceRaw = configuration().value<bool>("forceRawMaterialData");
+    const bool unrecognizedAsRaw = forceRaw || !configuration().value<bool>("ignoreUnrecognizedMaterialData");
+
     const aiMaterial* mat = _f->scene->mMaterials[id];
 
     /* Calculate how many layers there are in the material */
@@ -1167,7 +1220,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
     arrayReserve(attributes, mat->mNumProperties);
     Containers::Array<UnsignedInt> layers{maxLayer + 1};
 
-    /* Go through each layer add then for each add all its properties so they
+    /* Go through each layer and then for each add all its properties so they
        are consecutive in the array */
     for(UnsignedInt layer = 0; layer <= maxLayer; ++layer) {
         /* Save offset of this layer */
@@ -1196,35 +1249,38 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
 
             const Containers::StringView key{property.mKey.C_Str(), property.mKey.length, Containers::StringViewFlag::NullTerminated};
 
+            /* AI_MATKEY_* are in form "bla",0,0, so extract the first part
+               and turn it into a StringView for string comparison. The
+               _s literal is there to avoid useless strlen() calls in every
+               branch. _CORRADE_HELPER_DEFER is not implementable on MSVC
+               (see docs in Utility/Macros.h), so there it's a constexpr
+               function instead. */
+            #ifdef _CORRADE_HELPER_DEFER
+            #define _str2(name, i, j) name ## _s
+            #define _str(name) _CORRADE_HELPER_DEFER(_str2, name)
+            #else
+            #define _str extractMaterialKey
+            #endif
+
+            /* Material name is available through materialName() /
+               materialForName() already, ignore it */
+            if(key == _str(AI_MATKEY_NAME) && property.mType == aiPTI_String)
+                continue;
+
             /* Recognize known attributes if they have expected types and
-               sizes */
+               sizes. If they don't, they'll be treated as custom attribs in
+               the code below. It's also possible to skip this by enabling the
+               forceRawMaterialData configuration option. */
             MaterialAttributeData data;
             MaterialAttribute attribute{};
             MaterialAttributeType type{};
-            {
-                /* AI_MATKEY_* are in form "bla",0,0, so extract the first part
-                   and turn it into a StringView for string comparison. The
-                   _s literal is there to avoid useless strlen() calls in every
-                   branch. _CORRADE_HELPER_DEFER is not implementable on MSVC
-                   (see docs in Utility/Macros.h), so there it's a constexpr
-                   function instead. */
-                #ifdef _CORRADE_HELPER_DEFER
-                #define _str2(name, i, j) name ## _s
-                #define _str(name) _CORRADE_HELPER_DEFER(_str2, name)
-                #else
-                #define _str extractMaterialKey
-                #endif
+            if(!forceRaw) {
                 /* Properties not tied to a particular texture */
                 if(property.mSemantic == aiTextureType_NONE) {
-                    /* Material name is available through materialName() /
-                       materialForName() already, ignore it */
-                    if(key == _str(AI_MATKEY_NAME) && property.mType == aiPTI_String) {
-                        continue;
-
                     /* Colors. Some formats have them three-components (OBJ),
                        some four-component (glTF). Documentation states it's
                        always three-component. FFS. */
-                    } else if(key == _str(AI_MATKEY_COLOR_AMBIENT) && property.mType == aiPTI_Float && (property.mDataLength == 4*4 || property.mDataLength == 4*3)) {
+                    if(key == _str(AI_MATKEY_COLOR_AMBIENT) && property.mType == aiPTI_Float && (property.mDataLength == 4*4 || property.mDataLength == 4*3)) {
                         data = materialColor(MaterialAttribute::AmbientColor, property);
 
                         /* Assimp 4.1 forces ambient color to white for STL
@@ -1303,9 +1359,10 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         }
                     }
                 }
-                #undef _str
-                #undef _str2
             }
+
+            #undef _str
+            #undef _str2
 
             /* If the attribute data is already constructed (parsed from a
                string value etc), put it directly in */
@@ -1319,12 +1376,88 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{} && type != MaterialAttributeType::String);
                 arrayAppend(attributes, InPlaceInit, attribute, type, property.mData);
 
-            /* Otherwise ignore for now. At a later point remaining attributes
-               will be imported as custom, but that needs a lot of testing
-               which I don't have time for right now. */
+            /* Otherwise figure out its type, do some additional checking and
+               put it there as a custom attribute */
+            } else if(unrecognizedAsRaw) {
+                /* Attribute names starting with uppercase letters are reserved
+                   for Magnum. All assimp material keys either start with '$'
+                   or '?'. The only format importing raw material names is FBX
+                   and that prefixes them with "$raw.". A quick search through
+                   the 5.0.1 code confirms that no importer sets attributes
+                   starting uppercase, so an assert should be fine here.
+                   Revisit if this breaks for someone. */
+                /** @todo $ conflicts with Magnum's material layer names */
+                CORRADE_ASSERT(!key.isEmpty() && !std::isupper(key.front()),
+                    "Trade::AssimpImporter::material(): uppercase attribute names are reserved", Containers::NullOpt);
+
+                MaterialAttributeType type;
+                if(property.mType == aiPTI_Integer) {
+                    if(property.mDataLength == 1)
+                        type = MaterialAttributeType::Bool;
+                    else if(property.mDataLength/4 == 1)
+                        type = MaterialAttributeType::Int;
+                    else if(property.mDataLength/4 == 2)
+                        type = MaterialAttributeType::Vector2i;
+                    else if(property.mDataLength/4 == 3)
+                        type = MaterialAttributeType::Vector3i;
+                    else if(property.mDataLength/4 == 4)
+                        type = MaterialAttributeType::Vector4i;
+                    else {
+                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is integer array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
+                        type = MaterialAttributeType::String;
+                    }
+                } else if(property.mType == aiPTI_Float) {
+                    if(property.mDataLength/4 == 1)
+                        type = MaterialAttributeType::Float;
+                    else if(property.mDataLength/4 == 2)
+                        type = MaterialAttributeType::Vector2;
+                    else if(property.mDataLength/4 == 3)
+                        type = MaterialAttributeType::Vector3;
+                    else if(property.mDataLength/4 == 4)
+                        type = MaterialAttributeType::Vector4;
+                    else {
+                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
+                        type = MaterialAttributeType::String;
+                    }
+                } else if(property.mType == aiPTI_Double) {
+                    Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
+                    type = MaterialAttributeType::String;
+                } else if(property.mType == aiPTI_String || property.mType == aiPTI_Buffer) {
+                    type = MaterialAttributeType::String;
+                } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+
+                Containers::StringView value;
+                std::size_t valueSize;
+                const void* valuePointer;
+                if(type == MaterialAttributeType::String) {
+                    value = {property.mData, property.mDataLength};
+                    /* +2 is null byte + size */
+                    valueSize = property.mDataLength + 2;
+                    valuePointer = &value;
+                } else {
+                    valueSize = materialAttributeTypeSize(type);
+                    valuePointer = property.mData;
+                }
+
+                const Containers::String keyString = customMaterialKey(key, aiTextureType(property.mSemantic));
+
+                /* +1 is null byte for the key */
+                if(valueSize + keyString.size() + 1 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
+                    Error{} << "Trade::AssimpImporter::material(): property" << keyString << "is too large with" << valueSize << "bytes, skipping";
+                    continue;
+                }
+
+                Debug{} << "raw material" << key << "of type" << type << "imported as" << keyString;
+
+                arrayAppend(attributes, Containers::InPlaceInit, keyString, type, valuePointer);
             }
         }
     }
+
+    /** @todo Import flat materials (AI_MATKEY_SHADING_MODEL +
+        aiShadingMode_NoShading). In 5.1.0 this is also exposed for glTF (used
+        to be AI_MATKEY_GLTF_UNLIT). */
+    const MaterialType materialType = forceRaw ? MaterialType{} : MaterialType::Phong;
 
     /* Save offset for the last layer */
     layers.back() = attributes.size();
@@ -1333,7 +1466,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
        deleter */
     arrayShrink(attributes, DefaultInit);
     /** @todo detect PBR properties and add relevant types accordingly */
-    return MaterialData{MaterialType::Phong, std::move(attributes), std::move(layers), mat};
+    return MaterialData{materialType, std::move(attributes), std::move(layers), mat};
 }
 
 UnsignedInt AssimpImporter::doTextureCount() const { return _f->textures.size(); }

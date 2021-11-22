@@ -1715,6 +1715,7 @@ void AssimpImporterTest::lightUnsupported() {
 
 void AssimpImporterTest::materialColor() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
@@ -1748,6 +1749,7 @@ void AssimpImporterTest::materialColor() {
 
 void AssimpImporterTest::materialTexture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
@@ -1784,6 +1786,7 @@ void AssimpImporterTest::materialTexture() {
 
 void AssimpImporterTest::materialColorTexture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color-texture.obj")));
 
     {
