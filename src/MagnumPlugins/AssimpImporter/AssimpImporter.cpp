@@ -1737,8 +1737,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 /* Ensure shortest path is always chosen. */
                 if(optimizeQuaternionShortestPath) {
                     Float flip = 1.0f;
-                    for(std::size_t i = 0; i != values.size() - 1; ++i) {
-                        if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
+                    for(std::size_t i = 0; i + 1 < values.size(); ++i) {
+                        if(Math::dot(values[i], values[i + 1]*flip) < 0.0f) flip = -flip;
                         values[i + 1] *= flip;
                     }
                 }
