@@ -458,7 +458,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
     /* For some formats (such as COLLADA) Assimp fails to open the scene if
        there are no nodes, so there this is always non-null. For other formats
-       (such as glTF) Assimp happily provides a null root node, even thought
+       (such as glTF) Assimp happily provides a null root node, even though
        that's not the documented behavior. */
     aiNode* const root = _f->scene->mRootNode;
     if(root) {
@@ -1277,9 +1277,9 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         }
 
                         /* Save only if the name is recognized (and let it
-                            be imported as a custom attribute otherwise),
-                            but increment the texture index counter always
-                            to stay in sync */
+                           be imported as a custom attribute otherwise),
+                           but increment the texture index counter always
+                           to stay in sync */
                         if(attribute != MaterialAttribute{})
                             data = {attribute, textureIndex};
                         ++textureIndex;
