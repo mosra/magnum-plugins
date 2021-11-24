@@ -1403,8 +1403,12 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     else if(property.mDataLength/4 == 4)
                         type = MaterialAttributeType::Vector4i;
                     else {
-                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is integer array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
-                        type = MaterialAttributeType::String;
+                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
+                        /* Using Pointer to indicate this is a buffer. String
+                           would indicate aiString which needs special handling
+                           for the length prefix. This still becomes an owned
+                           String later. */
+                        type = MaterialAttributeType::Pointer;
                     }
                 } else if(property.mType == aiPTI_Float) {
                     if(property.mDataLength/4 == 1)
@@ -1417,27 +1421,56 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         type = MaterialAttributeType::Vector4;
                     else {
                         Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
-                        type = MaterialAttributeType::String;
+                        /* See comment above */
+                        type = MaterialAttributeType::Pointer;
                     }
                 } else if(property.mType == aiPTI_Double) {
+                    /** @todo This shouldn't happen without compiling Assimp
+                        with double support. But then the importer would only
+                        produce garbage because we assume ai_real equals float
+                        everywhere. */
                     Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
-                    type = MaterialAttributeType::String;
-                } else if(property.mType == aiPTI_String || property.mType == aiPTI_Buffer) {
+                    /* See comment above */
+                    type = MaterialAttributeType::Pointer;
+                } else if(property.mType == aiPTI_Buffer) {
+                    if(property.mDataLength == 1) {
+                        /* The glTF importer writes bool properties as buffers
+                           with size 1, when all the other importers write them
+                           as ints. Currently there is no importer that
+                           writes opaque buffer data, so we try to detect this.
+                           Funny library. */
+                        type = MaterialAttributeType::Bool;
+                    } else {
+                        /* See comment about Pointer further above */
+                        type = MaterialAttributeType::Pointer;
+                    }
+                } else if(property.mType == aiPTI_String) {
                     type = MaterialAttributeType::String;
                 } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
 
                 Containers::StringView value;
                 std::size_t valueSize;
                 const void* valuePointer;
-                if(type == MaterialAttributeType::String) {
+                if(type == MaterialAttributeType::Pointer) {
+                    /* Opaque buffer, turn it into an owned String */
+                    type = MaterialAttributeType::String;
                     value = {property.mData, property.mDataLength};
                     /* +2 is null byte + size */
                     valueSize = property.mDataLength + 2;
+                    valuePointer = &value;
+                } else if(type == MaterialAttributeType::String) {
+                    const aiString& str = *reinterpret_cast<aiString*>(property.mData);
+                    value = {str.C_Str(), str.length};
+                    /* +2 is null byte + size */
+                    valueSize = str.length + 2;
                     valuePointer = &value;
                 } else {
                     valueSize = materialAttributeTypeSize(type);
                     valuePointer = property.mData;
                 }
+
+                CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType::Pointer &&
+                                        type != MaterialAttributeType::MutablePointer);
 
                 const Containers::String keyString = customMaterialKey(key, aiTextureType(property.mSemantic));
 
