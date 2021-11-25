@@ -1491,8 +1491,6 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     continue;
                 }
 
-                Debug{} << "raw material" << key << "of type" << type << "imported as" << keyString;
-
                 arrayAppend(attributes, Containers::InPlaceInit, keyString, type, valuePointer);
             }
         }
