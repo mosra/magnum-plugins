@@ -2184,6 +2184,9 @@ void AssimpImporterTest::materialRaw() {
         CORRADE_COMPARE(material->attribute<Vector3>(4), (Vector3{0.1f, 0.2f, 0.3f}));
     }
 
+    if(_assimpVersion < 410)
+        CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
+
     /* glTF covers a few types/sizes not covered by FBX */
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.gltf")));
     {
@@ -2196,13 +2199,10 @@ void AssimpImporterTest::materialRaw() {
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType{});
     {
-        /* While it's weird, this extra layer is very handy to make sure all
-           raw attributes land in layer 0. Only texture attributes can have an
-           index, and hence, a layer. */
-        CORRADE_EXPECT_FAIL("glTF files with non-0 texture coordinate set add an extra diffuse-only material layer.");
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
+            "glTF files with non-0 texture coordinate set add an extra diffuse-only material layer.");
         CORRADE_COMPARE(material->layerCount(), 1);
     }
-    CORRADE_COMPARE(material->layerCount(), 2);
 
     /* Attributes that would normally be recognized */
     CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::DiffuseColor));
@@ -2230,7 +2230,7 @@ void AssimpImporterTest::materialRaw() {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
             "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVTRANSFORM.");
 
-        constexpr Containers::StringView name = _AI_MATKEY_UVTRANSFORM_BASE ".NORMAL"_s;
+        constexpr Containers::StringView name = _AI_MATKEY_UVTRANSFORM_BASE ".NORMALS"_s;
         const bool hasAttribute = material->hasAttribute(name);
         CORRADE_VERIFY(hasAttribute);
 
@@ -2241,19 +2241,12 @@ void AssimpImporterTest::materialRaw() {
             CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
             const auto value = material->attribute<Containers::StringView>(name);
             /* +1 is null byte */
-            CORRADE_COMPARE(value.size(), sizeof(aiUVTransform) + 1);
+            CORRADE_COMPARE(value.size(), sizeof(aiUVTransform));
             const aiUVTransform& transform = *reinterpret_cast<const aiUVTransform*>(value.data());
             const Vector2 scaling{transform.mScaling.x, transform.mScaling.y};
             CORRADE_COMPARE(scaling, (Vector2{0.25f, 0.75f}));
         }
     }
-
-    /* Test that the second layer only contains texture attributes. Those all
-       start with "$tex.":
-       https://github.com/assimp/assimp/blob/889e55969647b9bd9e832d6208b41973156ce46b/include/assimp/material.h#L1051
-       Non-texture attributes always have mIndex set to 0 so shouldn't be here. */
-    for(UnsignedInt i = 0; i != material->attributeCount(1); ++i)
-        CORRADE_VERIFY(material->attributeName(1, i).hasPrefix("$tex."_s));
 }
 
 void AssimpImporterTest::materialRawTextureLayers() {
@@ -2347,7 +2340,10 @@ void AssimpImporterTest::materialRawTextureLayers() {
         }
     }
 
-    /* Test that layers > 0 only contain raw texture attributes */
+    /* Test that layers > 0 only contains texture attributes. Those all start
+       with "$tex.":
+       https://github.com/assimp/assimp/blob/889e55969647b9bd9e832d6208b41973156ce46b/include/assimp/material.h#L1051
+       Non-texture attributes always have mIndex set to 0 so shouldn't be here. */
     for(UnsignedInt l = 1; l != material->layerCount(); ++l)
         for(UnsignedInt i = 0; i != material->attributeCount(l); ++i)
             CORRADE_VERIFY(material->attributeName(l, i).hasPrefix("$tex."_s));

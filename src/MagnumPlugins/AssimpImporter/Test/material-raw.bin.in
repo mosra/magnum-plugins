@@ -1,0 +1,14 @@
+type = '<3f3f3f 2f2f2f'
+input = [
+    # positions
+     1.5, -1.0, -0.5,
+    -0.5,  2.5,  0.75,
+    -2.0,  1.0,  0.3,
+
+    # texture coordinates
+    0.3, 0.0,
+    0.0, 0.5,
+    0.3, 0.3
+]
+
+# kate: hl python
