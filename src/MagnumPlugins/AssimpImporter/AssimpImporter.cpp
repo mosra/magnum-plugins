@@ -1313,6 +1313,13 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         type = MaterialAttributeType::Float;
                     }
 
+                    /** @todo
+                        - MaterialAttribute::DoubleSided - AI_MATKEY_TWOSIDED
+                        - MaterialAttribute::AlphaBlend - AI_MATKEY_GLTF_ALPHAMODE == "BLEND", glTF only
+                        - MaterialAttribute::AlphaMask - AI_MATKEY_GLTF_ALPHAMODE == "MASK" + AI_MATKEY_GLTF_ALPHACUTOFF, glTF only
+                        - MaterialType::Flat - AI_MATKEY_SHADING_MODEL + aiShadingMode_NoShading.
+                          For versions < 5.1.0 this is AI_MATKEY_GLTF_UNLIT for glTF. */
+
                 /* Properties tied to a particular texture */
                 } else {
                     /* Texture index */
@@ -1359,6 +1366,10 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         }
                     }
                 }
+
+                /** @todo PBR support. Assimp 5.1.0 finally has unified support
+                    for PBR attributes, including the fancy glTF extensions:
+                    https://github.com/assimp/assimp/blob/v5.1.0/include/assimp/material.h#L971 */
             }
 
             #undef _str
@@ -1487,18 +1498,14 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
         }
     }
 
-    /** @todo Import flat materials (AI_MATKEY_SHADING_MODEL +
-        aiShadingMode_NoShading). In 5.1.0 this is also exposed for glTF (used
-        to be AI_MATKEY_GLTF_UNLIT). */
-    const MaterialType materialType = forceRaw ? MaterialType{} : MaterialType::Phong;
-
     /* Save offset for the last layer */
     layers.back() = attributes.size();
 
     /* Can't use growable deleters in a plugin, convert back to the default
        deleter */
     arrayShrink(attributes, DefaultInit);
-    /** @todo detect PBR properties and add relevant types accordingly */
+
+    const MaterialType materialType = forceRaw ? MaterialType{} : MaterialType::Phong;
     return MaterialData{materialType, std::move(attributes), std::move(layers), mat};
 }
 
@@ -1535,6 +1542,8 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
         wrappingU = toWrapping(mapMode);
     if(mat->Get(AI_MATKEY_MAPPINGMODE_V(type, 0), mapMode) == AI_SUCCESS)
         wrappingV = toWrapping(mapMode);
+
+    /** @todo AI_MATKEY_GLTF_MAPPINGFILTER_{MIN, MAG} for glTF */
 
     return TextureData{TextureType::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
