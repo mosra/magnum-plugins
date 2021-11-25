@@ -265,6 +265,18 @@ verbosity levels in each instance.
 
 -   Only materials with shading mode `aiShadingMode_Phong` are supported
 -   Two-sided property and alpha mode is not imported
+-   Unrecognized Assimp material attributes are imported with their raw names
+    and types. You can find the attribute names in [assimp/material.h](https://github.com/assimp/assimp/blob/master/include/assimp/material.h#L944).
+    Unknown or raw buffer types are imported as
+    @ref MaterialAttributeType::String. To ignore all unrecognized Assimp
+    materials instead, enable the @cb{.ini} ignoreUnrecognizedMaterialData @ce
+    @ref Trade-AssimpImporter-configuration "configuration option".
+-   To load all material attributes with the raw Assimp names and types, enable
+    the @cb{.ini} forceRawMaterialData @ce
+    @ref Trade-AssimpImporter-configuration "configuration option". You will
+    then get attributes like "$clr.diffuse" instead of
+    @cpp MaterialAttribute::DiffuseColor @ce. @ref MaterialData::types() will
+    always be empty with this option enabled.
 -   Assimp seems to ignore ambient textures in COLLADA files
 -   For some reason, Assimp 4.1 imports STL models with ambient set to
     @cpp 0xffffff_srgbf @ce, which causes all other color information to be
