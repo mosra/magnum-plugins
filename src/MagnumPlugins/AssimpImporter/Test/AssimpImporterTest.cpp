@@ -2176,7 +2176,6 @@ void AssimpImporterTest::materialRaw() {
     } {
         CORRADE_COMPARE(material->attributeName(3), "$raw.AString"_s);
         CORRADE_COMPARE(material->attributeType(3), MaterialAttributeType::String);
-        const auto x = material->attribute<Containers::StringView>(3);
         CORRADE_COMPARE(material->attribute<Containers::StringView>(3), "Ministry of Finance (Turkmenistan)");
     } {
         CORRADE_COMPARE(material->attributeName(4), "$raw.SomeColor"_s);
