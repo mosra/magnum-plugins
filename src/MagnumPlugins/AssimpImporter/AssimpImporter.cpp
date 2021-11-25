@@ -1492,7 +1492,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     continue;
                 }
 
-                arrayAppend(attributes, Containers::InPlaceInit, keyString, type, valuePointer);
+                arrayAppend(attributes, InPlaceInit, keyString, type, valuePointer);
             }
         }
     }
