@@ -119,6 +119,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void materialWhiteAmbientTexture();
     void materialMultipleTextures();
     void materialTextureCoordinateSets();
+    void materialTextureLayers();
 
     void mesh();
     void pointMesh();
@@ -255,6 +256,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::materialWhiteAmbientTexture,
               &AssimpImporterTest::materialMultipleTextures,
               &AssimpImporterTest::materialTextureCoordinateSets,
+              &AssimpImporterTest::materialTextureLayers,
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
@@ -2020,6 +2022,62 @@ void AssimpImporterTest::materialTextureCoordinateSets() {
     CORRADE_COMPARE(phong.normalTextureCoordinates(), 2);
 }
 
+void AssimpImporterTest::materialTextureLayers() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-layers.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    const auto material = importer->material(0);
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->layerCount(), 3);
+
+    /* Layer 0. Material attributes + diffuse texture + ambient texture. */
+    {
+        CORRADE_VERIFY(material->hasAttribute(0, MaterialAttribute::AmbientColor));
+        CORRADE_COMPARE(material->attribute<Vector4>(0, MaterialAttribute::AmbientColor),
+            (Color4{0.1f, 0.2f, 0.3f, 1.0f}));
+
+        CORRADE_VERIFY(material->hasAttribute(0, MaterialAttribute::DiffuseColor));
+        CORRADE_COMPARE(material->attribute<Vector4>(0, MaterialAttribute::DiffuseColor),
+            (Color4{0.7f, 0.6f, 0.5f, 1.0f}));
+
+        CORRADE_VERIFY(material->hasAttribute(0, MaterialAttribute::AmbientTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(0, MaterialAttribute::AmbientTexture), 0);
+
+        CORRADE_VERIFY(material->hasAttribute(0, MaterialAttribute::AmbientTextureCoordinates));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(0, MaterialAttribute::AmbientTextureCoordinates), 0);
+
+        CORRADE_VERIFY(material->hasAttribute(0, MaterialAttribute::DiffuseTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(0, MaterialAttribute::DiffuseTexture), 1);
+
+        CORRADE_VERIFY(material->hasAttribute(0, MaterialAttribute::DiffuseTextureCoordinates));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(0, MaterialAttribute::DiffuseTextureCoordinates), 0);
+
+    /* Layer 1. Diffuse texture. Can't have any material attributes. */
+    } {
+        CORRADE_VERIFY(!material->hasAttribute(1, MaterialAttribute::AmbientColor));
+        CORRADE_VERIFY(!material->hasAttribute(1, MaterialAttribute::DiffuseColor));
+
+        CORRADE_VERIFY(material->hasAttribute(0, MaterialAttribute::DiffuseTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(1, MaterialAttribute::DiffuseTexture), 2);
+
+        CORRADE_VERIFY(material->hasAttribute(1, MaterialAttribute::DiffuseTextureCoordinates));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(1, MaterialAttribute::DiffuseTextureCoordinates), 0);
+
+    /* Layer 2. Diffuse texture. Can't have any material attributes. */
+    } {
+        CORRADE_VERIFY(!material->hasAttribute(2, MaterialAttribute::AmbientColor));
+        CORRADE_VERIFY(!material->hasAttribute(2, MaterialAttribute::DiffuseColor));
+
+        CORRADE_VERIFY(material->hasAttribute(2, MaterialAttribute::DiffuseTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(2, MaterialAttribute::DiffuseTexture), 3);
+
+        CORRADE_VERIFY(material->hasAttribute(2, MaterialAttribute::DiffuseTextureCoordinates));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(2, MaterialAttribute::DiffuseTextureCoordinates), 0);
+    }
+}
 void AssimpImporterTest::mesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
