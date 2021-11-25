@@ -70,6 +70,8 @@ endif()
 # temporary CMakeList.txt created by try_compile:
 # https://github.com/Kitware/CMake/blob/v3.4.0/Source/cmCoreTryCompile.cxx#L313
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/checkAssimpVersionLanguageOverride.cmake "enable_language(C)")
+# For some reason, this also needs C to be enabled in this scope
+enable_language(C)
 
 # Go through all versions of interest and pick the highest one that compiles
 foreach(_version 20210102 20201123 20200225 20191122 20190915 20151031)
