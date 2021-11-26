@@ -2229,6 +2229,11 @@ CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
         CORRADE_COMPARE(value.size(), 1);
         CORRADE_VERIFY(value.front() != 0);
     } {
+        constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".NORMALS"_s;
+        CORRADE_VERIFY(material->hasAttribute(name));
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
+        CORRADE_COMPARE(material->attribute<Containers::StringView>(name), "texture.png"_s);
+    } {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
             "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVWSRC.");
 
@@ -2238,7 +2243,6 @@ CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
         /* Still have to skip the checks to not trigger asserts for missing
            attribute names in attributeType() and attribute() */
         if(hasAttribute) {
-            CORRADE_VERIFY(material->hasAttribute(name));
             CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Int);
             CORRADE_COMPARE(material->attribute<Int>(name), 1);
         }

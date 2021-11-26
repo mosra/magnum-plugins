@@ -1148,6 +1148,33 @@ MaterialAttributeData materialColor(MaterialAttribute attribute, const aiMateria
         return {attribute, Color4{Color3::from(reinterpret_cast<const Float*>(property.mData))}};
     else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
+/* We use aiTextureType values to generate names in customMaterialKey(), but
+   older Assimp versions may not have those defined. Unfortunately Assimp
+   doesn't keep the values stable for us to define our own enum. Instead, this
+   SFINAE magic lets us pass through valid values or fall back to unique,
+   hopefully unused values otherwise. This way we save ourselves from ifdef-ing
+   around specific detected versions. Make sure to double-check any added
+   texture type names since they will invariably compile. */
+#define ASSIMP_OPTIONAL_TEXTURE_TYPE(name)                                    \
+    template<class U> struct AssimpOptionalTextureType_ ## name {             \
+        template<class T> constexpr static U get(T*, decltype(T::aiTextureType_ ## name)* = nullptr) { \
+            return T::aiTextureType_ ## name;                                 \
+        }                                                                     \
+        constexpr static U get(...) {                                         \
+            return U(1000000 + __LINE__);                                     \
+        }                                                                     \
+        constexpr static U Value = get(static_cast<U*>(nullptr));             \
+    };
+
+ASSIMP_OPTIONAL_TEXTURE_TYPE(BASE_COLOR)
+ASSIMP_OPTIONAL_TEXTURE_TYPE(NORMAL_CAMERA)
+ASSIMP_OPTIONAL_TEXTURE_TYPE(EMISSION_COLOR)
+ASSIMP_OPTIONAL_TEXTURE_TYPE(METALNESS)
+ASSIMP_OPTIONAL_TEXTURE_TYPE(DIFFUSE_ROUGHNESS)
+ASSIMP_OPTIONAL_TEXTURE_TYPE(AMBIENT_OCCLUSION)
+ASSIMP_OPTIONAL_TEXTURE_TYPE(SHEEN)
+ASSIMP_OPTIONAL_TEXTURE_TYPE(CLEARCOAT)
+ASSIMP_OPTIONAL_TEXTURE_TYPE(TRANSMISSION)
 
 Containers::String customMaterialKey(Containers::StringView key, const aiTextureType semantic) {
     using namespace Containers::Literals;
@@ -1158,28 +1185,49 @@ Containers::String customMaterialKey(Containers::StringView key, const aiTexture
     if(semantic != aiTextureType_NONE) {
         Containers::StringView keyExtra;
         switch(semantic) {
-            #define _c(type) case aiTextureType_ ## type:       \
-                keyExtra = #type ## _s;                         \
+            /* Texture types present in all assimp versions we can reasonably
+               support. These are available as far back as 3.2. */
+            #define _c(type) case aiTextureType_ ## type: \
+                keyExtra = #type ## _s;                   \
                 break;
+            _c(UNKNOWN)
             _c(AMBIENT)
             _c(DIFFUSE)
-            _c(SPECULAR)
-            _c(EMISSIVE)
-            _c(OPACITY)
-            _c(NORMALS)
-            _c(HEIGHT)
             _c(DISPLACEMENT)
+            _c(EMISSIVE)
+            _c(HEIGHT)
             _c(LIGHTMAP)
+            _c(NORMALS)
+            _c(OPACITY)
             _c(REFLECTION)
-            _c(UNKNOWN)
-            _c(BASE_COLOR)
             _c(SHININESS)
-            _c(NORMAL_CAMERA)
-            _c(EMISSION_COLOR)
-            _c(METALNESS)
-            _c(DIFFUSE_ROUGHNESS)
-            _c(AMBIENT_OCCLUSION)
+            _c(SPECULAR)
             #undef _c
+
+            /* Texture types that may not be available in aiTextureType. Needs
+               SFINAE magic to produce unique, unreachable fallback values. */
+            #define _f(type) case AssimpOptionalTextureType_ ## type <aiTextureType>::Value: \
+                keyExtra = #type ## _s;                                       \
+                break;
+            #ifdef _MSC_VER
+            #pragma warning(push)
+            #pragma warning(disable: 4063) /* not a valid value for switch of enum 'aiTextureType' */
+            #endif
+            /* Added in 5.0.0 */
+            _f(BASE_COLOR)
+            _f(NORMAL_CAMERA)
+            _f(EMISSION_COLOR)
+            _f(METALNESS)
+            _f(DIFFUSE_ROUGHNESS)
+            _f(AMBIENT_OCCLUSION)
+            /* Added in 5.1.0 */
+            _f(SHEEN)
+            _f(CLEARCOAT)
+            _f(TRANSMISSION)
+            #ifdef _MSC_VER
+            #pragma warning(pop)
+            #endif
+            #undef _f
 
             case aiTextureType_NONE:
             case _aiTextureType_Force32Bit:
