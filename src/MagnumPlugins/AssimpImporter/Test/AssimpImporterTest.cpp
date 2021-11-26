@@ -2233,23 +2233,37 @@ void AssimpImporterTest::materialRaw() {
         CORRADE_COMPARE(value.size(), 1);
         CORRADE_VERIFY(value.front() != 0);
     } {
+        constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".NORMALS"_s;
+        CORRADE_VERIFY(material->hasAttribute(name));
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
+        CORRADE_COMPARE(material->attribute<Containers::StringView>(name), "normals.png"_s);
+    } {
+        /* Testing that newer texture types are handled correctly by the SFINAE
+           magic that produces fallback switch values */
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
-            "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVWSRC.");
-
-        constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".NORMALS"_s;
+            "Versions before Assimp 5.1.0 don't import BASE_COLOR textures.");
+        constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".BASE_COLOR"_s;
         const bool hasAttribute = material->hasAttribute(name);
         CORRADE_VERIFY(hasAttribute);
         /* Still have to skip the checks to not trigger asserts for missing
            attribute names in attributeType() and attribute() */
         if(hasAttribute) {
-            CORRADE_VERIFY(material->hasAttribute(name));
+            CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(name), "basecolor.png"_s);
+        }
+    } {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
+            "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVWSRC.");
+        constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".NORMALS"_s;
+        const bool hasAttribute = material->hasAttribute(name);
+        CORRADE_VERIFY(hasAttribute);
+        if(hasAttribute) {
             CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Int);
             CORRADE_COMPARE(material->attribute<Int>(name), 1);
         }
     } {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
             "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVTRANSFORM.");
-
         constexpr Containers::StringView name = _AI_MATKEY_UVTRANSFORM_BASE ".NORMALS"_s;
         const bool hasAttribute = material->hasAttribute(name);
         CORRADE_VERIFY(hasAttribute);
