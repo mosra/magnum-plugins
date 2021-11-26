@@ -2087,8 +2087,8 @@ void AssimpImporterTest::materialTextureLayers() {
     }
 }
 
-template<std::size_t size> constexpr Containers::StringView extractMaterialKey(const char(&data)[size], int, int) {
-    return Containers::Literals::operator"" _s(data, size - 1);
+Containers::StringView extractMaterialKey(const char* data, int, int) {
+    return data;
 }
 
 void AssimpImporterTest::materialRawUnrecognized() {
@@ -2210,19 +2210,19 @@ CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
     /* Raw attributes. Only checking interesting attributes, because this would
        be a nightmare to maintain across multiple Assimp versions. */
     {
-        constexpr Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_DIFFUSE);
+        const Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_DIFFUSE);
         CORRADE_VERIFY(material->hasAttribute(name));
         CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Vector4);
         CORRADE_COMPARE(material->attribute<Vector4>(name), (Color4{0.8f, 0.2f, 0.4f, 0.3f}));
     } {
         /* For some reason Assimp adds an alpha channel to the emissive color */
-        constexpr Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_EMISSIVE);
+        const Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_EMISSIVE);
         CORRADE_VERIFY(material->hasAttribute(name));
         CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Vector4);
         CORRADE_COMPARE(material->attribute<Vector4>(name), (Color4{0.1f, 0.2f, 0.3f}));
     } {
         /* Opaque buffer of size 1 converted to Bool */
-        constexpr Containers::StringView name = extractMaterialKey(AI_MATKEY_TWOSIDED);
+        const Containers::StringView name = extractMaterialKey(AI_MATKEY_TWOSIDED);
         CORRADE_VERIFY(material->hasAttribute(name));
         CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Bool);
         CORRADE_COMPARE(material->attribute<bool>(name), true);
@@ -2269,13 +2269,13 @@ void AssimpImporterTest::materialRawTextureLayers() {
     {
         {
             CORRADE_VERIFY(!material->hasAttribute(0, MaterialAttribute::AmbientColor));
-            constexpr Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_AMBIENT);
+            const Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_AMBIENT);
             CORRADE_VERIFY(material->hasAttribute(0, name));
             CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Vector3);
             CORRADE_COMPARE(material->attribute<Vector3>(0, name), (Color3{0.1f, 0.2f, 0.3f}));
         } {
             CORRADE_VERIFY(!material->hasAttribute(0, MaterialAttribute::DiffuseColor));
-            constexpr Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_DIFFUSE);
+            const Containers::StringView name = extractMaterialKey(AI_MATKEY_COLOR_DIFFUSE);
             CORRADE_VERIFY(material->hasAttribute(0, name));
             CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Vector3);
             CORRADE_COMPARE(material->attribute<Vector3>(0, name), (Color3{0.7f, 0.6f, 0.5f}));
