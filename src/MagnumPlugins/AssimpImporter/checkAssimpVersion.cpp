@@ -82,6 +82,12 @@ int main() {
     ret = static_cast<int>(Assimp::Math::getEpsilon<float>());
     #endif
 
+   /* Support for double types (ai_real, aiPTI_Double):
+      https://github.com/assimp/assimp/commit/fa1d6d8c55484a1ab97b2773585ae76f71ef6fbc */
+    #if CHECK_VERSION >= 20160716
+    ai_real real{};
+    #endif
+
     unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
     ret = static_cast<int>(version);
 
