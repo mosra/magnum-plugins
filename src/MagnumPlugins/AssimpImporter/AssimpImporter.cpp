@@ -1188,9 +1188,9 @@ Containers::String customMaterialKey(Containers::StringView key, const aiTexture
 
         CORRADE_INTERNAL_ASSERT(!keyExtra.isEmpty());
 
-        /** @todo use format() and drop data() + FormatStl include
-            when format() is converted to StringViews */
-        keyString = Utility::formatString("{}.{}", key.data(), keyExtra.data());
+        /** @todo use format() and drop FormatStl include when format() is
+            converted to StringViews */
+        keyString = Utility::formatString("{}.{}", key, keyExtra);
     }
 
     return keyString;
