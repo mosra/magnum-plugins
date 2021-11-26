@@ -1392,11 +1392,9 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                put it there as a custom attribute */
             } else if(unrecognizedAsRaw) {
                 /* Attribute names starting with uppercase letters are reserved
-                   for Magnum. All assimp material keys either start with '$'
-                   or '?'. The only format importing raw material names is FBX
-                   and that prefixes them with "$raw.". A quick search through
-                   the 5.0.1 code confirms that no importer sets attributes
-                   starting uppercase, so an assert should be fine here.
+                   for Magnum. All assimp material keys start with one of $/?/~
+                   so an assert should be fine here:
+                   https://github.com/assimp/assimp/blob/v3.2/include/assimp/material.h#L548
                    Revisit if this breaks for someone. */
                 /** @todo $ conflicts with Magnum's material layer names */
                 CORRADE_ASSERT(!key.isEmpty() && !std::isupper(key.front()),
@@ -1440,8 +1438,10 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 } else if(property.mType == aiPTI_Double) {
                     /** @todo This shouldn't happen without compiling Assimp
                         with double support. But then the importer would only
-                        produce garbage because we assume ai_real equals float
-                        everywhere. Just assert? */
+                        produce garbage because it assumes ai_real equals float
+                        everywhere.
+                        Always assert? Ignore if ASSIMP_DOUBLE_PRECISION is
+                        not defined? */
                     Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
                     /* See comment above */
                     type = MaterialAttributeType::Pointer;
