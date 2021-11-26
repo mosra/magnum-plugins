@@ -1400,7 +1400,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                    Revisit if this breaks for someone. */
                 /** @todo $ conflicts with Magnum's material layer names */
                 CORRADE_ASSERT(!key.isEmpty() && !std::isupper(key.front()),
-                    "Trade::AssimpImporter::material(): uppercase attribute names are reserved", Containers::NullOpt);
+                    "Trade::AssimpImporter::material(): attribute names starting with uppercase are reserved:" << key, {});
 
                 MaterialAttributeType type;
                 if(property.mType == aiPTI_Integer) {
@@ -1416,10 +1416,9 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         type = MaterialAttributeType::Vector4i;
                     else {
                         Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
-                        /* Using Pointer to indicate this is a buffer. String
-                           would indicate aiString which needs special handling
-                           for the length prefix. This still becomes an owned
-                           String later. */
+                        /* Abusing Pointer to indicate this is a buffer.
+                           Together with other similar cases it's processed
+                           below and turned into MaterialAttributeType::String. */
                         type = MaterialAttributeType::Pointer;
                     }
                 } else if(property.mType == aiPTI_Float) {
@@ -1440,7 +1439,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     /** @todo This shouldn't happen without compiling Assimp
                         with double support. But then the importer would only
                         produce garbage because we assume ai_real equals float
-                        everywhere. */
+                        everywhere. Just assert? */
                     Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
                     /* See comment above */
                     type = MaterialAttributeType::Pointer;
@@ -1504,6 +1503,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
        deleter */
     arrayShrink(attributes, DefaultInit);
 
+    /** @todo detect PBR properties and add relevant types accordingly */
     const MaterialType materialType = forceRaw ? MaterialType{} : MaterialType::Phong;
     return MaterialData{materialType, std::move(attributes), std::move(layers), mat};
 }
