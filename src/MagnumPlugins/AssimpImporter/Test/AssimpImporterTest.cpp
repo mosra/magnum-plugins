@@ -2229,10 +2229,19 @@ CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
         CORRADE_COMPARE(value.size(), 1);
         CORRADE_VERIFY(value.front() != 0);
     } {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
+            "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVWSRC.");
+
         constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".NORMALS"_s;
-        CORRADE_VERIFY(material->hasAttribute(name));
-        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Int);
-        CORRADE_COMPARE(material->attribute<Int>(name), 1);
+        const bool hasAttribute = material->hasAttribute(name);
+        CORRADE_VERIFY(hasAttribute);
+        /* Still have to skip the checks to not trigger asserts for missing
+           attribute names in attributeType() and attribute() */
+        if(hasAttribute) {
+            CORRADE_VERIFY(material->hasAttribute(name));
+            CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Int);
+            CORRADE_COMPARE(material->attribute<Int>(name), 1);
+        }
     } {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
             "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVTRANSFORM.");
@@ -2240,9 +2249,6 @@ CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
         constexpr Containers::StringView name = _AI_MATKEY_UVTRANSFORM_BASE ".NORMALS"_s;
         const bool hasAttribute = material->hasAttribute(name);
         CORRADE_VERIFY(hasAttribute);
-
-        /* Still have to skip the checks to not trigger asserts for missing
-           attribute names in attributeType() and attribute() */
         if(hasAttribute) {
             /* Opaque buffer converted to String */
             CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
