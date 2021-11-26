@@ -27,6 +27,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <cctype>
 #include <sstream>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
@@ -1370,7 +1371,7 @@ std::string fixMeshName(const Containers::StringView meshName, const Containers:
     std::string fixed = meshName;
     if(assimpVersion >= 510 && fileName.hasSuffix(".dae"_s)) {
         for(char& c: fixed)
-            if(c != '-' && !std::isalnum(unsigned char(c))) c = '_';
+            if(c != '-' && !std::isalnum(static_cast<unsigned char>(c))) c = '_';
         fixed += "-mesh";
     }
 
