@@ -2102,34 +2102,27 @@ void AssimpImporterTest::materialRawUnrecognized() {
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
     CORRADE_COMPARE(material->layerCount(), 1);
-    CORRADE_COMPARE(material->attributeCount(), 5);
+    CORRADE_COMPARE(material->attributeCount(), 4);
 
     /* Recognized attributes */
     {
         CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::AmbientColor));
-        CORRADE_COMPARE(material->attributeId(MaterialAttribute::AmbientColor), 3);
-        CORRADE_COMPARE(material->attribute<Vector4>(3), (Color4{0.1f, 0.05f, 0.1f, 1.0f}));
+        CORRADE_COMPARE(material->attributeId(MaterialAttribute::AmbientColor), 2);
+        CORRADE_COMPARE(material->attribute<Vector4>(2), (Color4{0.1f, 0.05f, 0.1f, 1.0f}));
     } {
         CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::DiffuseColor));
-        CORRADE_COMPARE(material->attributeId(MaterialAttribute::DiffuseColor), 4);
-        CORRADE_COMPARE(material->attribute<Vector4>(4), (Color4{0.4f, 0.2f, 0.1f, 1.0f}));
+        CORRADE_COMPARE(material->attributeId(MaterialAttribute::DiffuseColor), 3);
+        CORRADE_COMPARE(material->attribute<Vector4>(3), (Color4{0.4f, 0.2f, 0.1f, 1.0f}));
 
     /* Unrecognized attributes */
     } {
         CORRADE_COMPARE(material->attributeName(0), extractMaterialKey(AI_MATKEY_COLOR_TRANSPARENT));
         CORRADE_COMPARE(material->attributeType(0), MaterialAttributeType::Vector3);
-        CORRADE_COMPARE(material->attribute<Vector3>(0), (Vector3{0.8f, 0.4f, 0.6f}));
+        CORRADE_COMPARE(material->attribute<Vector3>(0), (Vector3{0.3f, 0.2f, 0.1f}));
     } {
         CORRADE_COMPARE(material->attributeName(1), extractMaterialKey(AI_MATKEY_OPACITY));
         CORRADE_COMPARE(material->attributeType(1), MaterialAttributeType::Float);
         CORRADE_COMPARE(material->attribute<Float>(1), 0.4f);
-    } {
-        /* The transparency factor is multiplied with the transparent color but
-           still reported separately. We don't get the factors for ambient or
-           diffuse. */
-        CORRADE_COMPARE(material->attributeName(2), extractMaterialKey(AI_MATKEY_TRANSPARENCYFACTOR));
-        CORRADE_COMPARE(material->attributeType(2), MaterialAttributeType::Float);
-        CORRADE_COMPARE(material->attribute<Float>(2), 2.0f);
     }
 }
 
@@ -2167,7 +2160,7 @@ void AssimpImporterTest::materialRaw() {
         CORRADE_COMPARE(material->attributeType(1), MaterialAttributeType::Vector3);
         CORRADE_COMPARE(material->attribute<Vector3>(1), (Color3{0.4f, 0.2f, 0.1f}));
     } {
-        CORRADE_COMPARE(material->attributeName(2), extractMaterialKey(AI_MATKEY_TRANSPARENCYFACTOR));
+        CORRADE_COMPARE(material->attributeName(2), extractMaterialKey(AI_MATKEY_OPACITY));
         CORRADE_COMPARE(material->attributeType(2), MaterialAttributeType::Float);
         CORRADE_COMPARE(material->attribute<Float>(2), 0.25f);
 

@@ -341,8 +341,7 @@ Objects:  {
 			P: "AmbientFactor", "Number", "", "A",0.25
 			P: "DiffuseColor", "Color", "", "A",0.8,0.4,0.2
 			P: "DiffuseFactor", "Number", "", "A",0.5
-			P: "TransparentColor", "Color", "", "A",0.4,0.2,0.3
-			P: "TransparencyFactor", "Number", "", "A",2
+			P: "TransparentColor", "Color", "", "A",0.3,0.2,0.1
 			P: "Opacity", "double", "Number", "",0.4
 		}
 	}
@@ -354,7 +353,7 @@ Objects:  {
 			P: "AmbientColor", "Color", "", "A",0.1,0.05,0.1
 			P: "DiffuseColor", "Color", "", "A",0.8,0.4,0.2
 			P: "DiffuseFactor", "Number", "", "A",0.5
-			P: "TransparencyFactor", "Number", "", "A",0.25
+			P: "Opacity", "double", "Number", "",0.25
 			P: "SomeColor", "Vector3D", "", "",0.1,0.2,0.3
 			P: "SomeString", "KString", "", "","Ministry of Finance (Turkmenistan)"
 		}
