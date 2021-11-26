@@ -61,6 +61,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         animation-patching.bin
         animation-patching.gltf
         camera.dae
+        camera.gltf
         diffuse_texture.png
         embedded-texture.blend
         empty.dae
@@ -100,6 +101,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         skin-multiple-sets.dae
         skin-multiple-sets.bin
         skin-multiple-sets.gltf
+        skin-no-mesh.bin
+        skin-no-mesh.gltf
         skin-shared.gltf
         skin-shared.bin
         texture-ambient.obj

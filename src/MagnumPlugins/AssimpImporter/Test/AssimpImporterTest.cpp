@@ -1484,9 +1484,8 @@ void AssimpImporterTest::skinNoMeshes() {
     if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
-    /* Reusing the TinyGltfImporter test file without meshes */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "skin.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-no-mesh.gltf")));
 
     /* Assimp only lets us access joints for each mesh. No mesh = no joints. */
     CORRADE_COMPARE(importer->meshCount(), 0);
@@ -1611,7 +1610,7 @@ void AssimpImporterTest::cameraOrthographic() {
         CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.gltf")));
     CORRADE_COMPARE(importer->cameraCount(), 4);
 
     /* For some reason glTF camera names are set to the names of the nodes that

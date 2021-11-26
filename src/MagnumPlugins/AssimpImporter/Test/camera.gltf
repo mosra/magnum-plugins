@@ -1,0 +1,57 @@
+{
+    "asset" : {
+        "version" : "2.0"
+    },
+    "note": "Same as camera.gltf from TinyGltfImporter tests, but with nodes referencing cameras so assimp imports them",
+    "cameras" : [
+        {
+            "name" : "Orthographic 4:3",
+            "orthographic" : {
+                "xmag" : 2.0,
+                "ymag" : 1.5,
+                "zfar" : 100.0,
+                "znear" : 0.01
+            },
+            "type" : "orthographic"
+        },
+        {
+            "name" : "Perspective 1:1 75° hFoV",
+            "perspective" : {
+                "aspectRatio" : 1.0,
+                "yfov" : 1.308996938995747,
+                "zfar" : 150.0,
+                "znear" : 0.1
+            },
+            "type" : "perspective"
+        },
+        {
+            "name" : "Perspective 4:3 75° hFoV",
+            "perspective" : {
+                "aspectRatio" : 1.33333333333333,
+                "yfov" : 1.044412773812111,
+                "zfar" : 150.0,
+                "znear" : 0.1
+            },
+            "type" : "perspective"
+        },
+        {
+            "name" : "Perspective 16:9 75° hFoV infinite",
+            "perspective" : {
+                "aspectRatio" : 1.77777777777777,
+                "yfov" : 0.8149313284027269,
+                "znear" : 0.1
+            },
+            "type" : "perspective"
+        }
+    ],
+    "scene": 0,
+    "scenes": [
+        { "nodes": [0, 1, 2, 3] }
+    ],
+    "nodes": [
+        { "camera": 0 },
+        { "camera": 1 },
+        { "camera": 2 },
+        { "camera": 3 }
+    ]
+}
