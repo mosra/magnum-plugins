@@ -2227,6 +2227,11 @@ CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
         CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Bool);
         CORRADE_COMPARE(material->attribute<bool>(name), true);
     } {
+        constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".NORMALS"_s;
+        CORRADE_VERIFY(material->hasAttribute(name));
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Int);
+        CORRADE_COMPARE(material->attribute<Int>(name), 1);
+    } {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510,
             "Versions before Assimp 5.1.0 don't import AI_MATKEY_UVTRANSFORM.");
 
