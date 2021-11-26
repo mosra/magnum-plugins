@@ -19,10 +19,7 @@
             "primitives": [{
                 "attributes": {
                     "POSITION": 0,
-                    "TEXCOORD_0": 1,
-                    "TEXCOORD_1": 1,
-                    "TEXCOORD_2": 1,
-                    "TEXCOORD_3": 1
+                    "TEXCOORD_0": 1
                 },
                 "material": 0
             }]
@@ -69,25 +66,20 @@
             "pbrMetallicRoughness": {
                 "baseColorFactor": [ 0.8, 0.2, 0.4, 0.3 ],
                 "baseColorTexture": {
-                    "index": 0,
-                    "texCoord": 1
+                    "index": 0
                 }
             },
             "emissiveFactor": [ 0.1, 0.2, 0.3 ],
             "doubleSided": true,
             "normalTexture": {
                 "index": 1,
-                "texCoord": 2,
+                "texCoord": 1,
                 "extensions": {
                     "KHR_texture_transform": {
                         "offset": [0.0, 1.0],
-                        "scale": [0.25, 0.75],
-                        "texCoord": 3
+                        "scale": [0.25, 0.75]
                     }
                 }
-            },
-            "emissiveTexture": {
-                "index": 2
             }
         }
     ],
@@ -95,10 +87,6 @@
         {}
     ],
     "textures": [
-        {
-            "sampler": 0,
-            "source": 0
-        },
         {
             "sampler": 0,
             "source": 0
