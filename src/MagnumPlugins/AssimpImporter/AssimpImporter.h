@@ -274,8 +274,8 @@ verbosity levels in each instance.
 -   To load all material attributes with the raw Assimp names and types, enable
     the @cb{.ini} forceRawMaterialData @ce
     @ref Trade-AssimpImporter-configuration "configuration option". You will
-    then get attributes like "$clr.diffuse" instead of
-    @cpp MaterialAttribute::DiffuseColor @ce. @ref MaterialData::types() will
+    then get attributes like `$clr.diffuse` instead of
+    @ref MaterialAttribute::DiffuseColor. @ref MaterialData::types() will
     always be empty with this option enabled.
 -   Assimp seems to ignore ambient textures in COLLADA files
 -   For some reason, Assimp 4.1 imports STL models with ambient set to
