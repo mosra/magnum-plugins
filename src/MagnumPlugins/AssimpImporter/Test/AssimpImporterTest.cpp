@@ -2099,7 +2099,7 @@ void AssimpImporterTest::materialRawUnrecognized() {
 
     CORRADE_COMPARE(importer->materialCount(), 2);
 
-    Containers::Optional<MaterialData> material = importer->material("Mat_1");
+    Containers::Optional<MaterialData> material = importer->material("Standard_Types");
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
     CORRADE_COMPARE(material->layerCount(), 1);
@@ -2119,11 +2119,11 @@ void AssimpImporterTest::materialRawUnrecognized() {
     } {
         CORRADE_COMPARE(material->attributeName(0), extractMaterialKey(AI_MATKEY_COLOR_TRANSPARENT));
         CORRADE_COMPARE(material->attributeType(0), MaterialAttributeType::Vector3);
-        CORRADE_COMPARE(material->attribute<Vector3>(0), (Vector3{0.2f, 0.4f, 0.6f}));
+        CORRADE_COMPARE(material->attribute<Vector3>(0), (Vector3{0.8f, 0.4f, 0.6f}));
     } {
         CORRADE_COMPARE(material->attributeName(1), extractMaterialKey(AI_MATKEY_OPACITY));
         CORRADE_COMPARE(material->attributeType(1), MaterialAttributeType::Float);
-        CORRADE_COMPARE(material->attribute<Float>(1), 0.35f);
+        CORRADE_COMPARE(material->attribute<Float>(1), 0.4f);
     } {
         /* The transparency factor is multiplied with the transparent color but
            still reported separately. We don't get the factors for ambient or
@@ -2143,7 +2143,7 @@ void AssimpImporterTest::materialRaw() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.fbx")));
     CORRADE_COMPARE(importer->materialCount(), 2);
 
-    Containers::Optional<MaterialData> material = importer->material("Mat_2");
+    Containers::Optional<MaterialData> material = importer->material("Custom_Types");
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType{});
     CORRADE_COMPARE(material->layerCount(), 1);
@@ -2175,13 +2175,13 @@ void AssimpImporterTest::materialRaw() {
     /* Raw attributes taken directly from the FBX file, prefixed with "$raw.".
        Seems to be the only importer that supports that. */
     } {
-        CORRADE_COMPARE(material->attributeName(3), "$raw.AString"_s);
-        CORRADE_COMPARE(material->attributeType(3), MaterialAttributeType::String);
-        CORRADE_COMPARE(material->attribute<Containers::StringView>(3), "Ministry of Finance (Turkmenistan)");
+        CORRADE_COMPARE(material->attributeName(3), "$raw.SomeColor"_s);
+        CORRADE_COMPARE(material->attributeType(3), MaterialAttributeType::Vector3);
+        CORRADE_COMPARE(material->attribute<Vector3>(3), (Vector3{0.1f, 0.2f, 0.3f}));
     } {
-        CORRADE_COMPARE(material->attributeName(4), "$raw.SomeColor"_s);
-        CORRADE_COMPARE(material->attributeType(4), MaterialAttributeType::Vector3);
-        CORRADE_COMPARE(material->attribute<Vector3>(4), (Vector3{0.1f, 0.2f, 0.3f}));
+CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
+        CORRADE_COMPARE(material->attributeType(4), MaterialAttributeType::String);
+        CORRADE_COMPARE(material->attribute<Containers::StringView>(4), "Ministry of Finance (Turkmenistan)");
     }
 
     if(_assimpVersion < 410)
