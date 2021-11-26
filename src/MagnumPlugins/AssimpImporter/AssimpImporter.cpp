@@ -1402,7 +1402,6 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 CORRADE_ASSERT(!key.isEmpty() && !std::isupper(key.front()),
                     "Trade::AssimpImporter::material(): attribute names starting with uppercase are reserved:" << key, {});
 
-                MaterialAttributeType type;
                 if(property.mType == aiPTI_Integer) {
                     if(property.mDataLength == 1)
                         type = MaterialAttributeType::Bool;
@@ -1419,6 +1418,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         /* Abusing Pointer to indicate this is a buffer.
                            Together with other similar cases it's processed
                            below and turned into MaterialAttributeType::String. */
+                        /** @todo add MaterialAttributeType::Buffer for opaque
+                            buffer data that can't be viewed as a string */
                         type = MaterialAttributeType::Pointer;
                     }
                 } else if(property.mType == aiPTI_Float) {
@@ -1444,17 +1445,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     /* See comment above */
                     type = MaterialAttributeType::Pointer;
                 } else if(property.mType == aiPTI_Buffer) {
-                    if(property.mDataLength == 1) {
-                        /* The glTF importer writes bool properties as buffers
-                           with size 1, when all the other importers write them
-                           as ints. Currently there is no importer that
-                           writes opaque buffer data, so we try to detect this.
-                           Funny library. */
-                        type = MaterialAttributeType::Bool;
-                    } else {
-                        /* See comment about Pointer further above */
-                        type = MaterialAttributeType::Pointer;
-                    }
+                    /* See comment about Pointer further above */
+                    type = MaterialAttributeType::Pointer;
                 } else if(property.mType == aiPTI_String) {
                     type = MaterialAttributeType::String;
                 } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();

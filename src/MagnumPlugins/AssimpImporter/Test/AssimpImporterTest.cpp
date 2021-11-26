@@ -2221,11 +2221,14 @@ CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
         CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Vector4);
         CORRADE_COMPARE(material->attribute<Vector4>(name), (Color4{0.1f, 0.2f, 0.3f}));
     } {
-        /* Opaque buffer of size 1 converted to Bool */
+        /* The glTF importer writes bool properties as buffers with size 1,
+           when all the other importers write them as ints */
         const Containers::StringView name = extractMaterialKey(AI_MATKEY_TWOSIDED);
         CORRADE_VERIFY(material->hasAttribute(name));
-        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Bool);
-        CORRADE_COMPARE(material->attribute<bool>(name), true);
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
+        const auto value = material->attribute<Containers::StringView>(name);
+        CORRADE_COMPARE(value.size(), 1);
+        CORRADE_VERIFY(value.front() != 0);
     } {
         constexpr Containers::StringView name = _AI_MATKEY_UVWSRC_BASE ".NORMALS"_s;
         CORRADE_VERIFY(material->hasAttribute(name));
