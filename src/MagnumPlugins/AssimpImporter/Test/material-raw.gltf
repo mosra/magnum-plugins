@@ -4,7 +4,10 @@
     },
     "images": [
         {
-            "uri": "texture.png"
+            "uri": "basecolor.png"
+        },
+        {
+            "uri": "normals.png"
         }
     ],
     "nodes": [
@@ -93,7 +96,7 @@
         },
         {
             "sampler": 0,
-            "source": 0
+            "source": 1
         }
     ],
     "extensionsUsed": [
