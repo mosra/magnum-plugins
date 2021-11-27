@@ -2173,21 +2173,24 @@ void AssimpImporterTest::materialRaw() {
         CORRADE_COMPARE(material->attributeName(2), extractMaterialKey(AI_MATKEY_OPACITY));
         CORRADE_COMPARE(material->attributeType(2), MaterialAttributeType::Float);
         CORRADE_COMPARE(material->attribute<Float>(2), 0.25f);
+    }
 
-    /* Raw attributes taken directly from the FBX file, prefixed with "$raw.".
-       Seems to be the only importer that supports that. */
-    } {
-        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
-            "This version of Assimp doesn't import raw FBX material properties.");
-        CORRADE_COMPARE(material->attributeName(3), "$raw.SomeColor"_s);
-        CORRADE_COMPARE(material->attributeType(3), MaterialAttributeType::Vector3);
-        CORRADE_COMPARE(material->attribute<Vector3>(3), (Vector3{0.1f, 0.2f, 0.3f}));
-    } {
-        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
-            "This version of Assimp doesn't import raw FBX material properties.");
-        CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
-        CORRADE_COMPARE(material->attributeType(4), MaterialAttributeType::String);
-        CORRADE_COMPARE(material->attribute<Containers::StringView>(4), "Ministry of Finance (Turkmenistan)");
+    if(_assimpVersion < 500)
+        CORRADE_WARN("This version of Assimp doesn't import raw FBX material properties.");
+    else {
+        /* Raw attributes taken directly from the FBX file, prefixed with "$raw.".
+           Seems to be the only importer that supports that. */
+        {
+            CORRADE_COMPARE(material->attributeName(3), "$raw.SomeColor"_s);
+            CORRADE_COMPARE(material->attributeType(3), MaterialAttributeType::Vector3);
+            CORRADE_COMPARE(material->attribute<Vector3>(3), (Vector3{0.1f, 0.2f, 0.3f}));
+        } {
+            CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
+                "This version of Assimp doesn't import raw FBX material properties.");
+            CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
+            CORRADE_COMPARE(material->attributeType(4), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(4), "Ministry of Finance (Turkmenistan)");
+        }
     }
 
     if(_assimpVersion < 410)
