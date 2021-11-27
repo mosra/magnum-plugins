@@ -1500,6 +1500,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 Containers::StringView value;
                 std::size_t valueSize;
                 const void* valuePointer;
+                aiString tempString;
                 if(type == MaterialAttributeType::Pointer) {
                     /* Typeless buffer, turn it into an owned String */
                     type = MaterialAttributeType::String;
@@ -1508,10 +1509,23 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     valueSize = property.mDataLength + 2;
                     valuePointer = &value;
                 } else if(type == MaterialAttributeType::String) {
+                    /* Prior to version 5.0.0 aiString::length is a size_t but
+                       the material property code (and only that!) pretends
+                       it's a uint32_t, storing the string data at offset 4:
+                       (WARNING: Don't look if you're easily scared, this code
+                       is nightmare material. You were warned!)
+                       https://github.com/assimp/assimp/blob/v4.1.0/code/MaterialSystem.cpp#L526
+                       This incurs a copy but I don't want to commit the same
+                       pointer crimes as assimp. */
+                    #if !ASSIMP_IS_VERSION_5_OR_GREATER
+                    mat->Get(property.mKey.C_Str(), property.mSemantic, property.mIndex, tempString);
+                    const aiString& str = tempString;
+                    #else
                     const aiString& str = *reinterpret_cast<aiString*>(property.mData);
+                    #endif
                     value = {str.C_Str(), str.length};
                     /* +2 is null byte + size */
-                    valueSize = str.length + 2;
+                    valueSize = value.size() + 2;
                     valuePointer = &value;
                 } else {
                     valueSize = materialAttributeTypeSize(type);
