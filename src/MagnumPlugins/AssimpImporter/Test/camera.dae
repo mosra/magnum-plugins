@@ -31,7 +31,7 @@
         <matrix sid="transform">-0.2988363 -0.2988363 0.9063078 0.1 0.6408563 0.6408564 0.4226183 0.2 -0.7071068 0.7071068 -3.09086e-8 0.3 0 0 0 1</matrix>
         <instance_camera url="#Camera-camera"/>
       </node>
-      <node id="Camera-no-aspect" name="Camera_no_aspect_ratio" type="NODE">
+      <node id="Camera-no-aspect" name="Camera-no-aspect" type="NODE">
         <matrix sid="transform">-0.2988363 -0.2988363 0.9063078 0.1 0.6408563 0.6408564 0.4226183 0.2 -0.7071068 0.7071068 -3.09086e-8 0.3 0 0 0 1</matrix>
         <instance_camera url="#Camera-no-aspect"/>
       </node>
