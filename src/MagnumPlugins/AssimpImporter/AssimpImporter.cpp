@@ -1282,13 +1282,13 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
         UnsignedInt textureIndex = _f->textureIndices.at(mat);
 
         for(std::size_t i = 0; i != mat->mNumProperties; ++i) {
-            aiMaterialProperty& property = *mat->mProperties[i];
+            const aiMaterialProperty& property = *mat->mProperties[i];
 
             /* Process only properties from this layer (again, to have them
                consecutive in the attribute array), but properly increase
                texture index even for the skipped properties so we have the
                mapping correct */
-            if(mat->mProperties[i]->mIndex != layer) {
+            if(property.mIndex != layer) {
                 if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} == _AI_MATKEY_TEXTURE_BASE)
                     ++textureIndex;
                 continue;
@@ -1479,7 +1479,6 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         type = MaterialAttributeType::Vector4;
                     else {
                         Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
-                        /* See comment above */
                         type = MaterialAttributeType::Pointer;
                     }
                 #if ASSIMP_HAS_DOUBLES
@@ -1491,11 +1490,9 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         Always assert? Ignore if ASSIMP_DOUBLE_PRECISION is
                         not defined? */
                     Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
-                    /* See comment above */
                     type = MaterialAttributeType::Pointer;
                 #endif
                 } else if(property.mType == aiPTI_Buffer) {
-                    /* See comment about Pointer further above */
                     type = MaterialAttributeType::Pointer;
                 } else if(property.mType == aiPTI_String) {
                     type = MaterialAttributeType::String;
@@ -1511,7 +1508,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 const void* valuePointer;
                 aiString tempString;
                 if(type == MaterialAttributeType::Pointer) {
-                    /* Opaque buffer, turn it into an owned String */
+                    /* Typeless buffer, turn it into an owned String */
                     type = MaterialAttributeType::String;
                     value = {property.mData, property.mDataLength};
                     /* +2 is null byte + size */
