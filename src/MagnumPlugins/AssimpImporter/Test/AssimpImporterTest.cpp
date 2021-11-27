@@ -2030,6 +2030,9 @@ void AssimpImporterTest::materialTextureCoordinateSets() {
 }
 
 void AssimpImporterTest::materialTextureLayers() {
+    if(_assimpVersion < 500)
+        CORRADE_SKIP("This version of assimp doesn't imported layered FBX materials.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
 
@@ -2091,6 +2094,9 @@ Containers::StringView extractMaterialKey(const char* data, int, int) {
 }
 
 void AssimpImporterTest::materialRawUnrecognized() {
+    if(_assimpVersion < 500)
+            CORRADE_SKIP("This version of Assimp doesn't import AI_MATKEY_COLOR_TRANSPARENT from FBX files.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Disabled by default */
     CORRADE_VERIFY(!importer->configuration().value<bool>("ignoreUnrecognizedMaterialData"));
@@ -2139,7 +2145,11 @@ void AssimpImporterTest::materialRaw() {
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType{});
     CORRADE_COMPARE(material->layerCount(), 1);
-    CORRADE_COMPARE(material->attributeCount(), 5);
+    {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
+            "This version of Assimp doesn't import raw FBX material properties.");
+        CORRADE_COMPARE(material->attributeCount(), 5);
+    }
 
     /* Not all types and sizes are tested:
        - no importers currently output int2/3/4/5+ or float2/5+
@@ -2167,11 +2177,15 @@ void AssimpImporterTest::materialRaw() {
     /* Raw attributes taken directly from the FBX file, prefixed with "$raw.".
        Seems to be the only importer that supports that. */
     } {
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
+            "This version of Assimp doesn't import raw FBX material properties.");
         CORRADE_COMPARE(material->attributeName(3), "$raw.SomeColor"_s);
         CORRADE_COMPARE(material->attributeType(3), MaterialAttributeType::Vector3);
         CORRADE_COMPARE(material->attribute<Vector3>(3), (Vector3{0.1f, 0.2f, 0.3f}));
     } {
-CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
+            "This version of Assimp doesn't import raw FBX material properties.");
+        CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
         CORRADE_COMPARE(material->attributeType(4), MaterialAttributeType::String);
         CORRADE_COMPARE(material->attribute<Containers::StringView>(4), "Ministry of Finance (Turkmenistan)");
     }
@@ -2260,6 +2274,9 @@ CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
 }
 
 void AssimpImporterTest::materialRawTextureLayers() {
+    if(_assimpVersion < 500)
+        CORRADE_SKIP("This version of assimp doesn't imported layered FBX materials.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("forceRawMaterialData", true);
 
