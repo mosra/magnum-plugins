@@ -1495,7 +1495,12 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     type = MaterialAttributeType::Pointer;
                 } else if(property.mType == aiPTI_String) {
                     type = MaterialAttributeType::String;
-                } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+                } else {
+                    Warning{} << "Trade::AssimpImporter::material(): property" << key << "has unknown type" << property.mType << Debug::nospace << ", saving as a typeless buffer";
+                    type = MaterialAttributeType::Pointer;
+                }
+
+                CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
 
                 Containers::StringView value;
                 std::size_t valueSize;
