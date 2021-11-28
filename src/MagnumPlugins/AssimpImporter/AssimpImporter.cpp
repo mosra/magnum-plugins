@@ -1452,16 +1452,18 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                 if(property.mType == aiPTI_Integer) {
                     if(property.mDataLength == 1)
                         type = MaterialAttributeType::Bool;
-                    else if(property.mDataLength/4 == 1)
+                    /* Don't compare mDataLength/4 because we can never be sure
+                       the value is actually a multiple of four */
+                    else if(property.mDataLength == 4)
                         type = MaterialAttributeType::Int;
-                    else if(property.mDataLength/4 == 2)
+                    else if(property.mDataLength == 8)
                         type = MaterialAttributeType::Vector2i;
-                    else if(property.mDataLength/4 == 3)
+                    else if(property.mDataLength == 12)
                         type = MaterialAttributeType::Vector3i;
-                    else if(property.mDataLength/4 == 4)
+                    else if(property.mDataLength == 16)
                         type = MaterialAttributeType::Vector4i;
                     else {
-                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
+                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength << "bytes, saving as a typeless buffer";
                         /* Abusing Pointer to indicate this is a buffer.
                            Together with other similar cases it's processed
                            below and turned into MaterialAttributeType::String. */
@@ -1470,16 +1472,18 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         type = MaterialAttributeType::Pointer;
                     }
                 } else if(property.mType == aiPTI_Float) {
-                    if(property.mDataLength/4 == 1)
+                    /* Don't compare mDataLength/4 because we can never be sure
+                       the value is actually a multiple of four */
+                    if(property.mDataLength == 4)
                         type = MaterialAttributeType::Float;
-                    else if(property.mDataLength/4 == 2)
+                    else if(property.mDataLength == 8)
                         type = MaterialAttributeType::Vector2;
-                    else if(property.mDataLength/4 == 3)
+                    else if(property.mDataLength == 12)
                         type = MaterialAttributeType::Vector3;
-                    else if(property.mDataLength/4 == 4)
+                    else if(property.mDataLength == 16)
                         type = MaterialAttributeType::Vector4;
                     else {
-                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
+                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength << "bytes, saving as a typeless buffer";
                         type = MaterialAttributeType::Pointer;
                     }
                 }
