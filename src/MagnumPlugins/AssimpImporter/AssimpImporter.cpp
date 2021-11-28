@@ -1482,8 +1482,9 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength/4 << "items, saving as a typeless buffer";
                         type = MaterialAttributeType::Pointer;
                     }
+                }
                 #if ASSIMP_HAS_DOUBLES
-                } else if(property.mType == aiPTI_Double) {
+                else if(property.mType == aiPTI_Double) {
                     /** @todo This shouldn't happen without compiling Assimp
                         with double support. But then the importer would only
                         produce garbage because it assumes ai_real equals float
@@ -1492,8 +1493,9 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         not defined? */
                     Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
                     type = MaterialAttributeType::Pointer;
+                }
                 #endif
-                } else if(property.mType == aiPTI_Buffer) {
+                else if(property.mType == aiPTI_Buffer) {
                     type = MaterialAttributeType::Pointer;
                 } else if(property.mType == aiPTI_String) {
                     type = MaterialAttributeType::String;
