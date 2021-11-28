@@ -54,7 +54,10 @@ install:
 # assimp, for MSVC 2019, 2017, clang-cl and MinGW
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.1.2-windows-2019-debug.zip && 7z x assimp-5.1.2-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.1.2-windows-2016-debug.zip && 7z x assimp-5.1.2-windows-2016-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
-- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.1.2-windows-mingw.zip && 7z x assimp-5.1.2-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+# Plugin built against 5.1.2 fails to link due to
+#   undefined reference to `__imp___acrt_iob_func'
+# I have NO PATIENCE with this library. NONE. Going back to 5.0.1, then.
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.0.1-windows-mingw.zip && 7z x assimp-5.0.1-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 # libjpeg-turbo, for MSVC 2019, 2017 and clang-cl only; MinGW builds it because
 # FFS
