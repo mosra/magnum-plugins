@@ -457,7 +457,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
     /* For some formats (such as COLLADA) Assimp fails to open the scene if
        there are no nodes, so there this is always non-null. For other formats
-       (such as glTF) Assimp happily provides a null root node, even thought
+       (such as glTF) Assimp happily provides a null root node, even though
        that's not the documented behavior. */
     aiNode* const root = _f->scene->mRootNode;
     if(root) {
@@ -1138,7 +1138,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
     arrayReserve(attributes, mat->mNumProperties);
     Containers::Array<UnsignedInt> layers{maxLayer + 1};
 
-    /* Go through each layer add then for each add all its properties so they
+    /* Go through each layer and then for each add all its properties so they
        are consecutive in the array */
     for(UnsignedInt layer = 0; layer <= maxLayer; ++layer) {
         /* Save offset of this layer */
@@ -1151,13 +1151,13 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
         UnsignedInt textureIndex = _f->textureIndices.at(mat);
 
         for(std::size_t i = 0; i != mat->mNumProperties; ++i) {
-            aiMaterialProperty& property = *mat->mProperties[i];
+            const aiMaterialProperty& property = *mat->mProperties[i];
 
             /* Process only properties from this layer (again, to have them
                consecutive in the attribute array), but properly increase
                texture index even for the skipped properties so we have the
                mapping correct */
-            if(mat->mProperties[i]->mIndex != layer) {
+            if(property.mIndex != layer) {
                 if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} == _AI_MATKEY_TEXTURE_BASE)
                     ++textureIndex;
                 continue;
@@ -1248,9 +1248,9 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         }
 
                         /* Save only if the name is recognized (and let it
-                            be imported as a custom attribute otherwise),
-                            but increment the texture index counter always
-                            to stay in sync */
+                           be imported as a custom attribute otherwise),
+                           but increment the texture index counter always
+                           to stay in sync */
                         if(attribute != MaterialAttribute{})
                             data = {attribute, textureIndex};
                         ++textureIndex;

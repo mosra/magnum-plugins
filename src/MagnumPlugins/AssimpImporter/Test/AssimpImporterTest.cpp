@@ -403,7 +403,6 @@ void AssimpImporterTest::openDataFailed() {
 bool supportsAnimation(const Containers::StringView fileName, unsigned int assimpVersion) {
     /* 5.0.0 supports all of Collada, FBX, glTF */
     if(assimpVersion >= 500) {
-        static_cast<void>(fileName);
         return true;
     } else if(fileName.hasSuffix(".gltf"_s)) {
         return false;
@@ -786,10 +785,10 @@ void AssimpImporterTest::animationGltfSpline() {
         #endif
 
         constexpr Quaternion rotationValues[]{
-            {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
-            {{-0.711568f, 0.391362f, 0.355784f}, 0.462519f},
-            {{0.598059f, 0.182018f, 0.0260025f}, 0.780076f},
-            {{0.711568f, -0.355784f, -0.462519f}, -0.391362f}
+            {{ 0.780076f,  0.0260025f, 0.598059f},  0.182018f},
+            {{ 0.711568f, -0.391362f, -0.355784f}, -0.462519f},
+            {{-0.598059f, -0.182018f, -0.026003f}, -0.780076f},
+            {{-0.711568f,  0.355784f,  0.462519f},  0.391362f}
         };
         CORRADE_COMPARE_AS(rotation.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
     }
@@ -1298,7 +1297,7 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(scaling2.interpolation(), Animation::Interpolation::Linear);
 }
 
-/* The checks are identical to animation support so re-use that. */
+/* The checks are identical to animation support so re-use that */
 bool supportsSkinning(const Containers::StringView fileName, unsigned int assimpVersion) {
     return supportsAnimation(fileName, assimpVersion);
 }
