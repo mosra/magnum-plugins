@@ -86,6 +86,7 @@ int main() {
       https://github.com/assimp/assimp/commit/fa1d6d8c55484a1ab97b2773585ae76f71ef6fbc */
     #if CHECK_VERSION >= 20160716
     ai_real real{};
+    static_cast<void>(real);
     #endif
 
     unsigned int version = aiGetVersionMajor()*100 + aiGetVersionMinor();
