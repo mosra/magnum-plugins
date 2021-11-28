@@ -62,6 +62,7 @@ endif()
 # Newer versions of Assimp add C compile features that end up being propagated
 # to installed CMake targets:
 # https://github.com/assimp/assimp/commit/799384f2b85b8d3ee9c5b9e18bbe532b4dc7c63c
+#
 # This can fail in try_compile because it uses the file extension to determine
 # the language and then doesn't look for a C compiler for the required feature.
 # CMAKE_PROJECT_[PROJECT]_INCLUDE allows us to include a script after any
@@ -69,6 +70,8 @@ endif()
 # enable_language(C). CMAKE_TRY_COMPILE is the name of the project in the
 # temporary CMakeList.txt created by try_compile:
 # https://github.com/Kitware/CMake/blob/v3.4.0/Source/cmCoreTryCompile.cxx#L313
+#
+# TODO: drop this and use a STATIC_LIBRARY when we can rely on CMake 3.6
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/checkAssimpVersionLanguageOverride.cmake "enable_language(C)")
 # For some reason, this also needs C to be enabled in this scope
 enable_language(C)
