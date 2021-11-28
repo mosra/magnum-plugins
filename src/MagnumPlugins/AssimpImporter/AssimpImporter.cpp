@@ -536,6 +536,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         }
     }
 
+    #if ASSIMP_HAS_BROKEN_GLTF_SPLINES
     /* Before https://github.com/assimp/assimp/commit/e3083c21f0a7beae6c37a2265b7919a02cbf83c4
        Assimp incorrectly read spline tangents as values in glTF animation
        tracks. Quick and dirty check to see if we're dealing with a possibly
@@ -543,11 +544,12 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
        files without spline-interpolated animations, but for doOpenState and
        doOpenFile we have no access to the file content to check if the file
        contains "CUBICSPLINE". */
-    if(_f->scene->HasAnimations() && _f->importerIsGltf && ASSIMP_HAS_BROKEN_GLTF_SPLINES) {
+    if(_f->scene->HasAnimations() && _f->importerIsGltf) {
         Warning{} << "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
             "from this file are most likely broken using this version of Assimp. Consult the "
             "importer documentation for more information.";
     }
+    #endif
 
     /* Find meshes with bone data, those are our skins */
     _f->meshSkins.reserve(_f->scene->mNumMeshes);
