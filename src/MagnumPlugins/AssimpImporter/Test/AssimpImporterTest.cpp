@@ -743,8 +743,7 @@ void AssimpImporterTest::animationGltfBrokenSplineWarning() {
 
     #if !ASSIMP_HAS_BROKEN_GLTF_SPLINES
     CORRADE_SKIP("Current version of assimp correctly imports glTF spline-interpolated animations.");
-    #endif
-
+    #else
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     std::ostringstream out;
@@ -756,6 +755,7 @@ void AssimpImporterTest::animationGltfBrokenSplineWarning() {
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
         "from this file are most likely broken using this version of Assimp. Consult the "
         "importer documentation for more information.\n");
+    #endif
 }
 
 void AssimpImporterTest::animationGltfSpline() {
