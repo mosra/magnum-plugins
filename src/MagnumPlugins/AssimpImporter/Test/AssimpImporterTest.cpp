@@ -33,6 +33,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/StringStl.h>
@@ -56,8 +57,6 @@
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
-#include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/SkinData.h>
@@ -365,7 +364,7 @@ void AssimpImporterTest::openFile() {
         CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
         CORRADE_VERIFY(importer->importerState());
         CORRADE_COMPARE(importer->sceneCount(), 1);
-        CORRADE_COMPARE(importer->object3DCount(), 2);
+        CORRADE_COMPARE(importer->objectCount(), 2);
         CORRADE_COMPARE(importer->meshCount(), 0);
         CORRADE_COMPARE(importer->animationCount(), 0);
         CORRADE_COMPARE(importer->skin3DCount(), 0);
@@ -395,7 +394,7 @@ void AssimpImporterTest::openData() {
     auto data = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"));
     CORRADE_VERIFY(importer->openData(data));
     CORRADE_COMPARE(importer->sceneCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 2);
+    CORRADE_COMPARE(importer->objectCount(), 2);
     CORRADE_COMPARE(importer->meshCount(), 0);
     CORRADE_COMPARE(importer->animationCount(), 0);
     CORRADE_COMPARE(importer->skin3DCount(), 0);
@@ -477,11 +476,11 @@ void AssimpImporterTest::animation() {
     };
     Node* nodeMap[3]{};
 
-    const UnsignedInt objectCount = importer->object3DCount();
+    const UnsignedInt objectCount = importer->objectCount();
     CORRADE_COMPARE(objectCount, Containers::arraySize(nodes));
 
     for(UnsignedInt i = 0; i < objectCount; i++) {
-        const std::string name = importer->object3DName(i);
+        const std::string name = importer->objectName(i);
         for(Node& n: nodes) {
             /* Exported Collada files have spaces replaced with underscores,
                so check for the first words only */
@@ -1342,13 +1341,6 @@ bool supportsSkinning(const Containers::StringView fileName, unsigned int assimp
     return supportsAnimation(fileName, assimpVersion);
 }
 
-void calculateTransforms(Containers::ArrayView<Matrix4> transforms, Containers::ArrayView<ObjectData3D> objects, UnsignedInt objectId, const Matrix4& parentTransform = {}) {
-    const Matrix4 transform = parentTransform * objects[objectId].transformation();
-    transforms[objectId] = transform;
-    for(UnsignedInt childId: objects[objectId].children())
-        calculateTransforms(transforms, objects, childId, transform);
-}
-
 /* Since 5.1.0 the Collada importer uses the mesh ID as the name. Imitate the
    Blender(?) exporter that generated the IDs from the name. A bit hacky but
    still better than special-casing every test that loads meshes by name. */
@@ -1381,28 +1373,24 @@ void AssimpImporterTest::skin() {
     CORRADE_COMPARE(importer->skin3DCount(), 2);
     CORRADE_COMPARE(importer->skin3DForName("nonexistent"), -1);
 
-    /* Get global node transforms, needed for testing inverse bind matrices */
-    Containers::Array<ObjectData3D> objects{NoInit, importer->object3DCount()};
-    Containers::Array<Matrix4> globalTransforms{importer->object3DCount()};
-
-    for(UnsignedInt i = 0; i < importer->object3DCount(); ++i) {
-        auto object = importer->object3D(i);
-        CORRADE_VERIFY(object);
-        new (&objects[i]) ObjectData3D{std::move(*object)};
-    }
-
-    const Int sceneId = importer->defaultScene();
-    CORRADE_VERIFY(sceneId != -1);
-    auto scene = importer->scene(sceneId);
+    Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
+
+    /* Get global node transforms, needed for testing inverse bind matrices */
+    Containers::Array<Matrix4> globalTransforms{importer->objectCount() + 1};
+    Containers::Array<Containers::Pair<UnsignedInt, Int>> parents = scene->parentsAsArray();
+    Containers::Array<Containers::Pair<UnsignedInt, Matrix4>> transforms = scene->transformations3DAsArray();
+    for(std::size_t i = 0; i != globalTransforms.size() - 1; ++i) {
+        /* Abuse the fact that a parent is always defined before its children */
+        CORRADE_ITERATION(i);
+        CORRADE_VERIFY(parents[i].second() < Int(i));
+
+        globalTransforms[i + 1] = globalTransforms[parents[i].second() + 1]*transforms[i].second();
+    }
 
     /* Some Blender exporters don't transform skin matrices correctly. Also see
        the comment for ExportedFileData. */
     const Matrix4 correction{data.correction.toMatrix()};
-
-    for(UnsignedInt i: scene->children3D()) {
-        calculateTransforms(globalTransforms, objects, i);
-    }
 
     constexpr Containers::StringView objectNames[]{
         "Mesh_1"_s, "Mesh_2"_s, "Plane"_s
@@ -1431,7 +1419,7 @@ void AssimpImporterTest::skin() {
             auto found = std::find_if(joints.begin(), joints.end(), [&](UnsignedInt joint) {
                     /* Blender's Collada exporter adds an Armature_ prefix to
                        object names */
-                    return Utility::String::endsWith(importer->object3DName(joint), name);
+                    return Utility::String::endsWith(importer->objectName(joint), name);
                 });
             CORRADE_VERIFY(found != joints.end());
         }
@@ -1442,13 +1430,16 @@ void AssimpImporterTest::skin() {
            transform. */
         auto bindMatrices = skin->inverseBindMatrices();
         CORRADE_COMPARE(bindMatrices.size(), joints.size());
-        auto meshObject = importer->object3D(objectNames[i]);
-        CORRADE_VERIFY(meshObject);
-        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), skinIndex);
-        const Matrix4 meshTransform = meshObject->transformation();
+        auto meshObject = importer->objectForName(objectNames[i]);
+        CORRADE_VERIFY(meshObject != -1);
+        CORRADE_VERIFY(scene->meshesMaterialsFor(meshObject));
+        CORRADE_COMPARE_AS(scene->skinsFor(meshObject),
+            Containers::arrayView({UnsignedInt(skinIndex)}),
+            TestSuite::Compare::Container);
+        Containers::Optional<Matrix4> meshTransform = scene->transformation3DFor(meshObject);
+        CORRADE_VERIFY(meshTransform);
         for(UnsignedInt j = 0; j != joints.size(); ++j) {
-            const Matrix4 invertedTransform = globalTransforms[joints[j]].inverted() * meshTransform * correction;
+            const Matrix4 invertedTransform = globalTransforms[joints[j] + 1].inverted() * *meshTransform * correction;
             CORRADE_COMPARE(bindMatrices[j], invertedTransform);
         }
     }
@@ -1458,10 +1449,12 @@ void AssimpImporterTest::skin() {
         const std::string meshName = fixMeshName(objectNames[2], data.suffix, _assimpVersion);
         CORRADE_VERIFY(importer->meshForName(meshName) != -1);
         CORRADE_COMPARE(importer->skin3DForName(meshName), -1);
-        auto meshObject = importer->object3D(objectNames[2]);
-        CORRADE_VERIFY(meshObject);
-        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), -1);
+        auto meshObject = importer->objectForName(objectNames[2]);
+        CORRADE_VERIFY(meshObject != -1);
+        CORRADE_VERIFY(scene->meshesMaterialsFor(meshObject));
+        CORRADE_COMPARE_AS(scene->skinsFor(meshObject),
+            Containers::arrayView<UnsignedInt>({}),
+            TestSuite::Compare::Container);
     }
 }
 
@@ -1486,11 +1479,11 @@ void AssimpImporterTest::skinMergeEmpty() {
     CORRADE_COMPARE(importer->skin3DCount(), 0);
     CORRADE_COMPARE(importer->skin3DForName(""), -1);
 
-    for(UnsignedInt i = 0; i != importer->object3DCount(); ++i) {
-        auto object = importer->object3D(i);
-        if(object->instanceType() == ObjectInstanceType3D::Mesh)
-            CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), -1);
-    }
+    /* No skin references in the scene */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(!scene->hasField(SceneField::Skin));
 }
 
 void AssimpImporterTest::skinMerge() {
@@ -1508,12 +1501,19 @@ void AssimpImporterTest::skinMerge() {
     CORRADE_COMPARE(importer->skin3DName(0), "");
     CORRADE_COMPARE(importer->skin3DForName(""), -1);
 
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
     for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
         CORRADE_ITERATION(meshName);
-        auto meshObject = importer->object3D(meshName);
-        CORRADE_VERIFY(meshObject);
-        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), 0);
+
+        auto meshObject = importer->objectForName(meshName);
+        CORRADE_VERIFY(meshObject != -1);
+        CORRADE_VERIFY(scene->meshesMaterialsFor(meshObject));
+        CORRADE_COMPARE_AS(scene->skinsFor(meshObject),
+            Containers::arrayView({UnsignedInt(0)}),
+            TestSuite::Compare::Container);
     }
 
     auto skin = importer->skin3D(0);
@@ -1544,8 +1544,7 @@ void AssimpImporterTest::skinMerge() {
     for(UnsignedInt i = 0; i != joints.size(); ++i) {
         CORRADE_ITERATION(i);
         CORRADE_COMPARE(joints[i], expectedObjects[mergeOrder[i]]);
-        CORRADE_COMPARE(importer->object3D(joints[i])->instanceType(),
-            ObjectInstanceType3D::Empty);
+        CORRADE_VERIFY(!scene->meshesMaterialsFor(joints[i]));
         CORRADE_COMPARE(inverseBindMatrices[i], expectedBones[mergeOrder[i]]);
     }
 }
@@ -1579,13 +1578,27 @@ void AssimpImporterTest::camera() {
     CORRADE_COMPARE(camera2->far(), 2.0f);
 
     /* Check camera assignment in the scene. The first two objects are dummy
-       nodes to test non-trivial assignment. */
-    CORRADE_COMPARE(importer->object3DCount(), 4);
+       nodes to test non-trivial assignment; however unfortunately the cameras
+       are parsed by Assimp ONLY if referenced from a node so one of the dummy
+       nodes has to reference the other dummy camera. SIGH. */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
 
-    Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-    CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
-    CORRADE_COMPARE(object->instance(), 1);
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->fieldCount(), 4);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Camera));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+        1, 2, 3
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+        0, 1, 2
+    }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::cameraOrthographic() {
@@ -1683,29 +1696,24 @@ void AssimpImporterTest::light() {
 
     /* Check light assignment in the scene. The first object is a dummy node
        to test non-trivial assignment. */
-    CORRADE_COMPARE(importer->object3DCount(), 5);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
 
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(object->instance(), 0);
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(object->instance(), 1);
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(3);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(object->instance(), 2);
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(4);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(object->instance(), 3);
-    }
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->fieldCount(), 4);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Light));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+        1, 2, 3, 4
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+        0, 1, 2, 3
+    }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::lightUnsupported() {
@@ -1763,28 +1771,32 @@ void AssimpImporterTest::cameraLightReferencedByTwoNodes() {
         CORRADE_COMPARE(camera->far(), 123.0f);
     }
 
-    CORRADE_COMPARE(importer->object3DCount(), 4);
-    {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
-        CORRADE_COMPARE(object->instance(), 0);
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(object->instance(), 0);
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
-        CORRADE_COMPARE(object->instance(), 1);
-    } {
-        Containers::Pointer<ObjectData3D> object = importer->object3D(3);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(object->instance(), 1);
-    }
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->fieldCount(), 5);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Camera));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+        0, 2
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+        0, 1
+    }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Light));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+        1, 3
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+        0, 1
+    }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::materialColor() {
@@ -1826,14 +1838,28 @@ void AssimpImporterTest::materialColor() {
 
     /* Check material assignment in the scene. The first two objects are dummy
        nodes to test non-trivial assignment. */
-    CORRADE_COMPARE(importer->object3DCount(), 3);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
 
-    Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-    CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_COMPARE(object->instance(), 0);
-    auto& meshObject = static_cast<MeshObjectData3D&>(*object);
-    CORRADE_COMPARE(meshObject.material(), 1);
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->fieldCount(), 5);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        2
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+        1
+    }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::materialTexture() {
@@ -2529,18 +2555,34 @@ void AssimpImporterTest::mesh() {
     }
 
     /* Check mesh assignment in the scene. The first two objects are dummy
-       nodes to test non-trivial assignment. */
-    CORRADE_COMPARE(importer->object3DCount(), 3);
+       nodes to test non-trivial assignment; however unfortunately the meshes
+       are parsed by Assimp ONLY if referenced from a node so one of the dummy
+       nodes has to reference the other dummy mesh. SIGH. */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
 
-    Containers::Pointer<ObjectData3D> object = importer->object3D(2);
-    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_COMPARE(object->instance(), 1);
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->fieldCount(), 5);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        1, 2
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0, 1
+    }), TestSuite::Compare::Container);
     /* Material assignment tested in materialColor(), skin in skin(). Assimp
        has no concept of an "unassigned material" and it always adds some dummy
        one, so the material is never -1. */
-    auto& meshObject = static_cast<MeshObjectData3D&>(*object);
-    CORRADE_COMPARE(meshObject.material(), 0);
-    CORRADE_COMPARE(meshObject.skin(), -1);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+        0, 0
+    }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::pointMesh() {
@@ -2977,105 +3019,31 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(mesh4->primitive(), MeshPrimitive::Triangles);
     }
 
-    /* Four objects, but two refer a three-primitive mesh and one refers a
-       two-primitive one (and one is meshless) */
-    CORRADE_COMPARE(importer->object3DCount(), 9);
+    /* Four objects, Two refer a three-primitive mesh and one refers a
+       two-primitive one, which is done by having multiple mesh entries for
+       them. One is meshless and is thus skipped in the mesh field. */
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_COMPARE(scene->mappingBound(), 4);
+    CORRADE_COMPARE(scene->fieldCount(), 5);
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0, 0, 0, 2, 2, 2, 3, 3
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        2, 3, 4, 2, 3, 4, 0, 1
+    }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
     {
-        CORRADE_COMPARE(importer->object3DName(0), "Using_the_second_mesh__should_have_4_children");
-        /* Originally the duplicate object IDs followed the original ID but
-           that's not really doable in the compatibility wrapper anymore. Names
-           can still be preserved, tho. */
-        CORRADE_COMPARE(importer->object3DName(4), "Using_the_second_mesh__should_have_4_children");
-        CORRADE_COMPARE(importer->object3DName(5), "Using_the_second_mesh__should_have_4_children");
-        CORRADE_COMPARE(importer->object3DForName("Using_the_second_mesh__should_have_4_children"), 0);
-        auto object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 2);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{3, 4, 5}));
-
-        auto child1 = importer->object3D(4);
-        CORRADE_VERIFY(child1);
-        CORRADE_COMPARE(child1->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child1->instance(), 3);
-        CORRADE_COMPARE(child1->children(), {});
-        CORRADE_COMPARE(child1->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child1->translation(), Vector3{});
-        CORRADE_COMPARE(child1->rotation(), Quaternion{});
-        CORRADE_COMPARE(child1->scaling(), Vector3{1.0f});
-
-        auto child2 = importer->object3D(5);
-        CORRADE_VERIFY(child2);
-        CORRADE_COMPARE(child2->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child2->instance(), 4);
-        CORRADE_COMPARE(child2->children(), {});
-        CORRADE_COMPARE(child2->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child2->translation(), Vector3{});
-        CORRADE_COMPARE(child2->rotation(), Quaternion{});
-        CORRADE_COMPARE(child2->scaling(), Vector3{1.0f});
-    } {
-        CORRADE_COMPARE(importer->object3DName(1), "Just_a_non-mesh_node");
-        CORRADE_COMPARE(importer->object3DForName("Just_a_non-mesh_node"), 1);
-        auto object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->children(), {});
-    } {
-        CORRADE_COMPARE(importer->object3DName(2), "Using_the_second_mesh_again__again_2_children");
-        /* Originally the duplicate object IDs followed the original ID but
-           that's not really doable in the compatibility wrapper anymore. Names
-           can still be preserved, tho. */
-        CORRADE_COMPARE(importer->object3DName(6), "Using_the_second_mesh_again__again_2_children");
-        CORRADE_COMPARE(importer->object3DName(7), "Using_the_second_mesh_again__again_2_children");
-        CORRADE_COMPARE(importer->object3DForName("Using_the_second_mesh_again__again_2_children"), 2);
-        auto object = importer->object3D(2);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 2);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{6, 7}));
-
-        auto child5 = importer->object3D(6);
-        CORRADE_VERIFY(child5);
-        CORRADE_COMPARE(child5->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child5->instance(), 3);
-        CORRADE_COMPARE(child5->children(), {});
-        CORRADE_COMPARE(child5->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child5->translation(), Vector3{});
-        CORRADE_COMPARE(child5->rotation(), Quaternion{});
-        CORRADE_COMPARE(child5->scaling(), Vector3{1.0f});
-
-        auto child6 = importer->object3D(7);
-        CORRADE_VERIFY(child6);
-        CORRADE_COMPARE(child6->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child6->instance(), 4);
-        CORRADE_COMPARE(child6->children(), {});
-        CORRADE_COMPARE(child6->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child6->translation(), Vector3{});
-        CORRADE_COMPARE(child6->rotation(), Quaternion{});
-        CORRADE_COMPARE(child6->scaling(), Vector3{1.0f});
-    } {
-        CORRADE_COMPARE(importer->object3DName(3), "Using_the_fourth_mesh__1_child");
-        /* Originally the duplicate object IDs followed the original ID but
-           that's not really doable in the compatibility wrapper anymore. Names
-           can still be preserved, tho. */
-        CORRADE_COMPARE(importer->object3DName(8), "Using_the_fourth_mesh__1_child");
-        CORRADE_COMPARE(importer->object3DForName("Using_the_fourth_mesh__1_child"), 3);
-        auto object = importer->object3D(3);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 0);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{8}));
-
-        auto child8 = importer->object3D(8);
-        CORRADE_VERIFY(child8);
-        CORRADE_COMPARE(child8->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child8->instance(), 1);
-        CORRADE_COMPARE(child8->children(), {});
-        CORRADE_COMPARE(child8->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child8->translation(), Vector3{});
-        CORRADE_COMPARE(child8->rotation(), Quaternion{});
-        CORRADE_COMPARE(child8->scaling(), Vector3{1.0f});
+        /* If I change the <bind_material> to something that actually
+           references an *existing* material, the mesh count explodes to 8.
+           Too annoyed to investigate further. */
+        CORRADE_EXPECT_FAIL("Can't figure out how to bind the materials to not make the mesh count explode even further.");
+        CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+            1, 2, 0, 1, 2, 0, 3, 1
+        }), TestSuite::Compare::Container);
     }
 }
 
@@ -3103,7 +3071,7 @@ void AssimpImporterTest::emptyGltf() {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510, "Assimp versions before 5.1.0 ignore empty glTF scenes.");
         CORRADE_COMPARE(importer->defaultScene(), 0);
         CORRADE_COMPARE(importer->sceneCount(), 1);
-        CORRADE_COMPARE(importer->object3DCount(), 1);
+        CORRADE_COMPARE(importer->objectCount(), 1);
     }
 
     /* No crazy meshes created for an empty glTF file, unlike with COLLADA
@@ -3117,30 +3085,60 @@ void AssimpImporterTest::scene() {
 
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 2);
-
-    Containers::Optional<SceneData> scene = importer->scene(0);
-    CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D(), {0});
 
     /* Currently only glTF supports scene names */
     CORRADE_COMPARE(importer->sceneName(0), "");
 
-    Containers::Pointer<ObjectData3D> parent = importer->object3D(0);
-    CORRADE_COMPARE(parent->children(), {1});
-    CORRADE_COMPARE(parent->instanceType(), ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(parent->transformation(), Matrix4::scaling({1.0f, 2.0f, 3.0f}));
+    /* Gotta admit this test is quite underwhelming. I hope it won't fire
+       back at some point in the future. */
+    CORRADE_COMPARE(importer->objectCount(), 2);
+    CORRADE_COMPARE(importer->objectName(1), "Child");
+    CORRADE_COMPARE(importer->objectForName("Child"), 1);
+    CORRADE_COMPARE(importer->objectForName("Nonexistent"), -1);
 
-    Containers::Pointer<ObjectData3D> childObject = importer->object3D(1);
-    CORRADE_COMPARE(childObject->transformation(), (Matrix4{
-        {0.813798f, 0.469846f, -0.34202f, 0.0f},
-        {-0.44097f, 0.882564f, 0.163176f, 0.0f},
-        {0.378522f, 0.0180283f, 0.925417f, 0.0f},
-        {1.0f, 2.0f, 3.0f, 1.0f}}));
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->importerState());
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 2);
+    CORRADE_COMPARE(scene->mappingType(), SceneMappingType::UnsignedInt);
+    CORRADE_COMPARE(scene->fieldCount(), 3);
 
-    CORRADE_COMPARE(importer->object3DName(1), "Child");
-    CORRADE_COMPARE(importer->object3DForName("Child"), 1);
-    CORRADE_COMPARE(importer->object3DForName("Nonexistent"), -1);
+    /* Parents */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
+        0, 1
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(scene->fieldType(SceneField::Parent), SceneFieldType::Int);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1, 0
+    }), TestSuite::Compare::Container);
+
+    /* Importer state shares the same object mapping as parents and it's all
+       non-null pointers. */
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_COMPARE_AS(
+        scene->mapping<UnsignedInt>(SceneField::ImporterState),
+        scene->mapping<UnsignedInt>(SceneField::Parent),
+        TestSuite::Compare::Container);
+    for(const void* a: scene->field<const void*>(SceneField::ImporterState)) {
+        CORRADE_VERIFY(a);
+    }
+
+    /* Transformation shares the same object mapping as well */
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+    CORRADE_COMPARE_AS(
+        scene->mapping<UnsignedInt>(SceneField::Transformation),
+        scene->mapping<UnsignedInt>(SceneField::Parent),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE(scene->fieldType(SceneField::Parent), SceneFieldType::Int);
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView({
+        Matrix4::scaling({1.0f, 2.0f, 3.0f}),
+        Matrix4{{0.813798f, 0.469846f, -0.34202f, 0.0f},
+                {-0.44097f, 0.882564f, 0.163176f, 0.0f},
+                {0.378522f, 0.0180283f, 0.925417f, 0.0f},
+                {1.0f, 2.0f, 3.0f, 1.0f}}
+    }), TestSuite::Compare::Container);
 
     /* Camera assignment tested separately in camera(), light assignment in
        light(), mesh in mesh(), material in materialColor() and skin in
@@ -3184,26 +3182,49 @@ void AssimpImporterTest::sceneCollapsedNode() {
 
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 1); /* Just the root node */
-
-    Containers::Optional<SceneData> scene = importer->scene(0);
-    CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D(), {0});
-
-    /* Assimp makes some bogus mesh for this one */
-    Containers::Pointer<ObjectData3D> collapsedNode = importer->object3D(0);
-    CORRADE_COMPARE(collapsedNode->children(), {});
-    CORRADE_COMPARE(collapsedNode->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_COMPARE(collapsedNode->transformation(), Matrix4{});
+    CORRADE_COMPARE(importer->objectCount(), 1);
 
     /* Name of the scene is used for the root object */
     {
         /** @todo Possibly works with other versions (definitely not 3.0) */
         CORRADE_EXPECT_FAIL_IF(_assimpVersion <= 320,
             "Assimp 3.2 and below doesn't use name of the root node for collapsed nodes.");
-        CORRADE_COMPARE(importer->object3DForName("Scene"), 0);
-        CORRADE_COMPARE(importer->object3DName(0), "Scene");
+        CORRADE_COMPARE(importer->objectName(0), "Scene");
+        CORRADE_COMPARE(importer->objectForName("Scene"), 0);
     }
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->mappingBound(), 1);
+    CORRADE_COMPARE(scene->fieldCount(), 5); /* Just the root node */
+
+    /* Field we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+    /* One object contained in the root in an implicit transformation */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView({
+        Matrix4{}
+    }), TestSuite::Compare::Container);
+
+    /* Assimp makes some bogus mesh for this one */
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+        0
+    }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::upDirectionPatching() {
@@ -3219,24 +3240,31 @@ void AssimpImporterTest::upDirectionPatching() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 2);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->mappingBound(), 2);
+
+    Containers::StridedArrayView1D<const Matrix4> transformations = scene->field<Matrix4>(SceneField::Transformation);
+    CORRADE_COMPARE(transformations.size(), 2);
 
     /* First object is directly in the root, second object is a child of the
        first. */
-    Matrix4 object0Transformation, object1Transformation;
-    {
-        Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
-        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(meshObject->instance(), 0);
-        CORRADE_COMPARE(meshObject->children(), std::vector<UnsignedInt>{1});
-        object0Transformation = meshObject->transformation();
-    } {
-        Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(1);
-        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(meshObject->instance(), 0);
-        CORRADE_COMPARE(meshObject->children(), std::vector<UnsignedInt>{});
-        object1Transformation = meshObject->transformation();
-    }
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
+        0, 1
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1, 0
+    }), TestSuite::Compare::Container);
+
+    /* Both have the same mesh assigned */
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0, 1
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0, 0
+    }), TestSuite::Compare::Container);
 
     /* The first mesh should have always the same final positions independently
        of how file's Y/Z-up or PreTransformVertices is set */
@@ -3246,7 +3274,7 @@ void AssimpImporterTest::upDirectionPatching() {
 
         /* Transform the positions with object transform */
         CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
-        MeshTools::transformPointsInPlace(object0Transformation,
+        MeshTools::transformPointsInPlace(transformations[0],
             mesh->mutableAttribute<Vector3>(MeshAttribute::Position));
 
         CORRADE_EXPECT_FAIL_IF(data.expectFail, "Up direction is ignored.");
@@ -3265,7 +3293,7 @@ void AssimpImporterTest::upDirectionPatching() {
            well */
         CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
         MeshTools::transformPointsInPlace(
-            object0Transformation*object1Transformation,
+            transformations[0]*transformations[1],
             mesh->mutableAttribute<Vector3>(MeshAttribute::Position));
 
         CORRADE_EXPECT_FAIL_IF(data.expectFail, "Up direction is ignored.");
@@ -3289,16 +3317,22 @@ void AssimpImporterTest::upDirectionPatchingPreTransformVertices() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 1);
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->mappingBound(), 1);
 
     /* There's only one object, directly in the root, with no transformation */
-    {
-        Containers::Pointer<Trade::ObjectData3D> meshObject = importer->object3D(0);
-        CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(meshObject->instance(), 0);
-        CORRADE_COMPARE(meshObject->children(), std::vector<UnsignedInt>{});
-        CORRADE_COMPARE(meshObject->transformation(), Matrix4{});
-    }
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
+        0
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView({
+        Matrix4{}
+    }), TestSuite::Compare::Container);
 
     /* There's just one mesh, with all vertices combined and already
        transformed. */
@@ -3537,30 +3571,54 @@ void AssimpImporterTest::openState() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->openState(sc);
     CORRADE_VERIFY(importer->isOpened());
-
-    CORRADE_COMPARE(importer->sceneCount(), 1);
-    CORRADE_COMPARE(importer->defaultScene(), 0);
-    CORRADE_COMPARE(importer->object3DCount(), 2);
+    CORRADE_COMPARE(importer->objectCount(), 2);
+    CORRADE_COMPARE(importer->objectName(1), "Child");
+    CORRADE_COMPARE(importer->objectForName("Child"), 1);
+    CORRADE_COMPARE(importer->objectForName("Nonexistent"), -1);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->children3D(), {0});
+    CORRADE_VERIFY(scene->importerState());
+    CORRADE_VERIFY(scene->is3D());
+    CORRADE_COMPARE(scene->mappingBound(), 2);
+    CORRADE_COMPARE(scene->mappingType(), SceneMappingType::UnsignedInt);
+    CORRADE_COMPARE(scene->fieldCount(), 3);
 
-    Containers::Pointer<ObjectData3D> parent = importer->object3D(0);
-    CORRADE_COMPARE(parent->children(), {1});
-    CORRADE_COMPARE(parent->instanceType(), ObjectInstanceType3D::Empty);
-    CORRADE_COMPARE(parent->transformation(), Matrix4::scaling({1.0f, 2.0f, 3.0f}));
+    /* Parents */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
+        0, 1
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(scene->fieldType(SceneField::Parent), SceneFieldType::Int);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1, 0
+    }), TestSuite::Compare::Container);
 
-    Containers::Pointer<ObjectData3D> childObject = importer->object3D(1);
-    CORRADE_COMPARE(childObject->transformation(), (Matrix4{
-        {0.813798f, 0.469846f, -0.34202f, 0.0f},
-        {-0.44097f, 0.882564f, 0.163176f, 0.0f},
-        {0.378522f, 0.0180283f, 0.925417f, 0.0f},
-        {1.0f, 2.0f, 3.0f, 1.0f}}));
+    /* Importer state shares the same object mapping as parents and it's all
+       non-null pointers. */
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_COMPARE_AS(
+        scene->mapping<UnsignedInt>(SceneField::ImporterState),
+        scene->mapping<UnsignedInt>(SceneField::Parent),
+        TestSuite::Compare::Container);
+    for(const void* a: scene->field<const void*>(SceneField::ImporterState)) {
+        CORRADE_VERIFY(a);
+    }
 
-    CORRADE_COMPARE(importer->object3DName(1), "Child");
-    CORRADE_COMPARE(importer->object3DForName("Child"), 1);
-    CORRADE_COMPARE(importer->object3DForName("Nonexistent"), -1);
+    /* Transformation shares the same object mapping as well */
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+    CORRADE_COMPARE_AS(
+        scene->mapping<UnsignedInt>(SceneField::Transformation),
+        scene->mapping<UnsignedInt>(SceneField::Parent),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE(scene->fieldType(SceneField::Parent), SceneFieldType::Int);
+    CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView({
+        Matrix4::scaling({1.0f, 2.0f, 3.0f}),
+        Matrix4{{0.813798f, 0.469846f, -0.34202f, 0.0f},
+                {-0.44097f, 0.882564f, 0.163176f, 0.0f},
+                {0.378522f, 0.0180283f, 0.925417f, 0.0f},
+                {1.0f, 2.0f, 3.0f, 1.0f}}
+    }), TestSuite::Compare::Container);
 
     /* Verify that closing works as well, without double frees or null pointer
        accesses */

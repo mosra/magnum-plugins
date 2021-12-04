@@ -1,28 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <library_effects>
-    <effect id="Material-effect">
+    <effect id="Material1-effect">
       <profile_COMMON>
         <technique sid="common">
-          <lambert>
-            <emission>
-              <color sid="emission">0 0 0 1</color>
-            </emission>
+          <phong>
             <diffuse>
-              <color sid="diffuse">0.8 0.8 0.8 1</color>
+              <color sid="diffuse">0.1 0.1 0.1 1</color>
             </diffuse>
-            <index_of_refraction>
-              <float sid="ior">1.45</float>
-            </index_of_refraction>
-          </lambert>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+    <effect id="Material2-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <phong>
+            <diffuse>
+              <color sid="diffuse">0.2 0.2 0.2 1</color>
+            </diffuse>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+    <effect id="Material3-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <phong>
+            <diffuse>
+              <color sid="diffuse">0.3 0.3 0.3 1</color>
+            </diffuse>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+    <effect id="Material4-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <phong>
+            <diffuse>
+              <color sid="diffuse">0.4 0.4 0.4 1</color>
+            </diffuse>
+          </phong>
         </technique>
       </profile_COMMON>
     </effect>
   </library_effects>
-  <library_images/>
   <library_materials>
-    <material id="Material-material" name="Material">
-      <instance_effect url="#Material-effect"/>
+    <material id="Material1-material" name="Material1">
+      <instance_effect url="#Material1-effect"/>
+    </material>
+    <material id="Material2-material" name="Material2">
+      <instance_effect url="#Material2-effect"/>
+    </material>
+    <material id="Material3-material" name="Material3">
+      <instance_effect url="#Material3-effect"/>
+    </material>
+    <material id="Material4-material" name="Material4">
+      <instance_effect url="#Material4-effect"/>
     </material>
   </library_materials>
   <library_geometries>
@@ -51,16 +86,16 @@
         <vertices id="Multi-primitive_lines__triangles__triangle_strip-mesh-vertices">
           <input semantic="POSITION" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-positions"/>
         </vertices>
-        <lines material="Material-material" count="2">
+        <lines material="Material1-material" count="2">
           <input semantic="VERTEX" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-vertices" />
           <p>0 1 1 2</p>
         </lines>
-        <triangles material="Material-material" count="1">
+        <triangles material="Material2-material" count="1">
           <input semantic="VERTEX" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-vertices" />
           <input semantic="NORMAL" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-normals" />
           <p>0 1 2</p>
         </triangles>
-        <tristrips material="Material-material" count="1">
+        <tristrips material="Material0-material" count="1">
           <input semantic="VERTEX" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-vertices" />
           <input semantic="NORMAL" source="#Multi-primitive_lines__triangles__triangle_strip-mesh-normals" />
           <p>0 1 2</p>
@@ -92,12 +127,12 @@
         <vertices id="Multi-primitive_triangle_fan__line_strip-mesh-vertices">
           <input semantic="POSITION" source="#Multi-primitive_triangle_fan__line_strip-mesh-positions"/>
         </vertices>
-        <trifans material="Material-material" count="1">
+        <trifans material="Material3-material" count="1">
           <input semantic="VERTEX" source="#Multi-primitive_triangle_fan__line_strip-mesh-vertices" />
           <input semantic="NORMAL" source="#Multi-primitive_triangle_fan__line_strip-mesh-normals" />
           <p>0 1 2</p>
         </trifans>
-        <linestrips material="Material-material" count="1">
+        <linestrips material="Material1-material" count="1">
           <input semantic="VERTEX" source="#Multi-primitive_triangle_fan__line_strip-mesh-vertices" />
           <p>0 1</p>
         </linestrips>
@@ -108,14 +143,14 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <matrix sid="transform">1 0 0 0 0 -1.34359e-7 -1 0 0 1 -1.34359e-7 0 0 0 0 1</matrix>
-      <node id="Using_the_second_mesh__should_have_4_children" name="Using the second mesh, should have 4 children" type="NODE">
+      <node id="Using_the_second_mesh" name="Using the second mesh" type="NODE">
         <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
-        <instance_geometry url="#Multi-primitive_lines__triangles__triangle_strip-mesh" name="Using the second mesh, should have 4 children">
+        <instance_geometry url="#Multi-primitive_lines__triangles__triangle_strip-mesh" name="Using the second mesh">
           <bind_material><technique_common><instance_material symbol="Material-material" target="#Material-material" /></technique_common></bind_material>
         </instance_geometry>
-        <node id="Using_the_fourth_mesh__1_child" name="Using the fourth mesh, 1 child" type="NODE">
+        <node id="Using_the_fourth_mesh" name="Using the fourth mesh" type="NODE">
           <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
-          <instance_geometry url="#Multi-primitive_triangle_fan__line_strip-mesh" name="Using the fourth mesh, 1 child">
+          <instance_geometry url="#Multi-primitive_triangle_fan__line_strip-mesh" name="Using the fourth mesh">
             <bind_material><technique_common><instance_material symbol="Material-material" target="#Material-material" /></technique_common></bind_material>
           </instance_geometry>
         </node>
