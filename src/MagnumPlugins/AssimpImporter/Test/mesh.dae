@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
   <library_geometries>
+    <!-- Extra mesh to check mesh / ID assignment isn't trivial -->
+    <geometry id="Other-mesh" name="Other">
+      <mesh>
+        <source id="Other-mesh-positions">
+          <float_array id="Other-mesh-positions-array" count="9">-1 -1 1 -1 1 1 1 -1 1</float_array>
+          <technique_common>
+            <accessor source="#Other-mesh-positions-array" count="3" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Other-mesh-vertices">
+          <input semantic="POSITION" source="#Other-mesh-positions"/>
+        </vertices>
+        <polylist count="1">
+          <input semantic="VERTEX" source="#Other-mesh-vertices" offset="0"/>
+          <vcount>3</vcount>
+          <p>1 0 2</p>
+        </polylist>
+      </mesh>
+    </geometry>
     <geometry id="Cube-mesh" name="Cube">
       <mesh>
         <source id="Cube-mesh-positions">
@@ -71,8 +94,14 @@
   </library_geometries>
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
+      <!-- Extra nodes to check material / ID assignment isn't trivial -->
+      <node/>
+      <!-- Ass imp ignores meshes in the file if they're not referenced by any
+           nodes, so we have to do this -->
+      <node id="Other" name="Other" type="NODE">
+        <instance_geometry url="#Other-mesh" name="Other"/>
+      </node>
       <node id="Cube" name="Cube" type="NODE">
-        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
         <instance_geometry url="#Cube-mesh" name="Cube"/>
       </node>
     </visual_scene>

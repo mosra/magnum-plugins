@@ -41,17 +41,23 @@
   </library_lights>
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
+      <!-- Extra nodes to check camera / ID assignment isn't trivial -->
+      <node/>
+      <!-- Reference the lights in a different order than they were defined in
+           a futile attempt to test non-trivial light assignment. However,
+           Assimp defines the lights in the order they were referenced so it'll
+           still be 0 1 2 3, FFS. -->
+      <node id="Ambient" name="Ambient" type="NODE">
+        <instance_light url="#Ambient-light"/>
+      </node>
       <node id="Spot" name="Spot" type="NODE">
         <instance_light url="#Spot-light"/>
-      </node>
-      <node id="Point" name="Point" type="NODE">
-        <instance_light url="#Point-light"/>
       </node>
       <node id="Sun" name="Sun" type="NODE">
         <instance_light url="#Sun-light"/>
       </node>
-      <node id="Ambient" name="Ambient" type="NODE">
-        <instance_light url="#Ambient-light"/>
+      <node id="Point" name="Point" type="NODE">
+        <instance_light url="#Point-light"/>
       </node>
     </visual_scene>
   </library_visual_scenes>

@@ -1565,15 +1565,17 @@ void AssimpImporterTest::camera() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
 
-    CORRADE_COMPARE(importer->cameraCount(), 2);
+    /* The first camera is a dummy one to test non-trivial camera assignment in
+       the scene */
+    CORRADE_COMPARE(importer->cameraCount(), 3);
 
-    CORRADE_COMPARE(importer->cameraName(0), "Camera");
-    CORRADE_COMPARE(importer->cameraForName("Camera"), 0);
-    CORRADE_COMPARE(importer->cameraName(1), "Camera-no-aspect");
-    CORRADE_COMPARE(importer->cameraForName("Camera-no-aspect"), 1);
+    CORRADE_COMPARE(importer->cameraName(1), "Camera");
+    CORRADE_COMPARE(importer->cameraForName("Camera"), 1);
+    CORRADE_COMPARE(importer->cameraName(2), "Camera-no-aspect");
+    CORRADE_COMPARE(importer->cameraForName("Camera-no-aspect"), 2);
     CORRADE_COMPARE(importer->cameraForName(""), -1);
 
-    Containers::Optional<CameraData> camera1 = importer->camera(0);
+    Containers::Optional<CameraData> camera1 = importer->camera(1);
     CORRADE_VERIFY(camera1);
     CORRADE_COMPARE(camera1->type(), CameraType::Perspective3D);
     CORRADE_COMPARE(camera1->fov(), 49.13434_degf);
@@ -1581,7 +1583,7 @@ void AssimpImporterTest::camera() {
     CORRADE_COMPARE(camera1->near(), 0.123f);
     CORRADE_COMPARE(camera1->far(), 123.0f);
 
-    Containers::Optional<CameraData> camera2 = importer->camera(1);
+    Containers::Optional<CameraData> camera2 = importer->camera(2);
     CORRADE_VERIFY(camera2);
     CORRADE_COMPARE(camera2->type(), CameraType::Perspective3D);
     CORRADE_COMPARE(camera2->fov(), 12.347_degf);
@@ -1590,15 +1592,14 @@ void AssimpImporterTest::camera() {
     CORRADE_COMPARE(camera2->near(), 0.1f);
     CORRADE_COMPARE(camera2->far(), 2.0f);
 
-    CORRADE_COMPARE(importer->object3DCount(), 2);
+    /* Check camera assignment in the scene. The first two objects are dummy
+       nodes to test non-trivial assignment. */
+    CORRADE_COMPARE(importer->object3DCount(), 4);
 
-    Containers::Pointer<ObjectData3D> cameraObject1 = importer->object3D(0);
-    CORRADE_COMPARE(cameraObject1->instanceType(), ObjectInstanceType3D::Camera);
-    CORRADE_COMPARE(cameraObject1->instance(), 0);
-
-    Containers::Pointer<ObjectData3D> cameraObject2 = importer->object3D(1);
-    CORRADE_COMPARE(cameraObject2->instanceType(), ObjectInstanceType3D::Camera);
-    CORRADE_COMPARE(cameraObject2->instance(), 1);
+    Containers::Pointer<ObjectData3D> object = importer->object3D(2);
+    CORRADE_VERIFY(object);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
+    CORRADE_COMPARE(object->instance(), 1);
 }
 
 void AssimpImporterTest::cameraOrthographic() {
@@ -1645,11 +1646,15 @@ void AssimpImporterTest::light() {
        To keep our sanity, we assume 5.1.0 means 5.1.1 and ignore this was
        ever broken. */
 
+    /* The order of lights depends on the order in which they're referenced
+       from nodes, not the order in which they're defined. FFS. */
+
     /* Spot light */
     {
-        CORRADE_COMPARE(importer->lightName(0), "Spot");
-        CORRADE_COMPARE(importer->lightForName("Spot"), 0);
-        auto light = importer->light(0);
+        CORRADE_COMPARE(importer->lightName(1), "Spot");
+        CORRADE_COMPARE(importer->lightForName("Spot"), 1);
+
+        auto light = importer->light(1);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.12f, 0.24f, 0.36f}));
@@ -1663,9 +1668,10 @@ void AssimpImporterTest::light() {
 
     /* Point light */
     } {
-        CORRADE_COMPARE(importer->lightName(1), "Point");
-        CORRADE_COMPARE(importer->lightForName("Point"), 1);
-        auto light = importer->light(1);
+        CORRADE_COMPARE(importer->lightName(3), "Point");
+        CORRADE_COMPARE(importer->lightForName("Point"), 3);
+
+        auto light = importer->light(3);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Point);
         CORRADE_COMPARE(light->color(), (Color3{0.5f, 0.25f, 0.05f}));
@@ -1677,6 +1683,7 @@ void AssimpImporterTest::light() {
     } {
         CORRADE_COMPARE(importer->lightName(2), "Sun");
         CORRADE_COMPARE(importer->lightForName("Sun"), 2);
+
         auto light = importer->light(2);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Directional);
@@ -1687,14 +1694,41 @@ void AssimpImporterTest::light() {
 
     /* Ambient light */
     } {
-        CORRADE_COMPARE(importer->lightName(3), "Ambient");
-        CORRADE_COMPARE(importer->lightForName("Ambient"), 3);
-        auto light = importer->light(3);
+        CORRADE_COMPARE(importer->lightName(0), "Ambient");
+        CORRADE_COMPARE(importer->lightForName("Ambient"), 0);
+
+        auto light = importer->light(0);
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Ambient);
         CORRADE_COMPARE(light->color(), (Color3{0.01f, 0.02f, 0.05f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
+    }
+
+    /* Check light assignment in the scene. The first object is a dummy node
+       to test non-trivial assignment. */
+    CORRADE_COMPARE(importer->object3DCount(), 5);
+
+    {
+        Containers::Pointer<ObjectData3D> object = importer->object3D(1);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
+        CORRADE_COMPARE(object->instance(), 0);
+    } {
+        Containers::Pointer<ObjectData3D> object = importer->object3D(2);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
+        CORRADE_COMPARE(object->instance(), 1);
+    } {
+        Containers::Pointer<ObjectData3D> object = importer->object3D(3);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
+        CORRADE_COMPARE(object->instance(), 2);
+    } {
+        Containers::Pointer<ObjectData3D> object = importer->object3D(4);
+        CORRADE_VERIFY(object);
+        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
+        CORRADE_COMPARE(object->instance(), 3);
     }
 }
 
@@ -1721,8 +1755,11 @@ void AssimpImporterTest::materialColor() {
     importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color.dae")));
 
-    CORRADE_COMPARE(importer->materialCount(), 1);
-    Containers::Optional<MaterialData> material = importer->material(0);
+    /* The first material is a dummy one to test non-trivial material
+       assignment in the scene */
+    CORRADE_COMPARE(importer->materialCount(), 2);
+
+    Containers::Optional<MaterialData> material = importer->material(1);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
     CORRADE_COMPARE(material->layerCount(), 1);
@@ -1740,14 +1777,25 @@ void AssimpImporterTest::materialColor() {
     CORRADE_COMPARE(phong.shininess(), 50.0f);
 
     /* Ancient assimp version add "-material" suffix */
-    if(_assimpVersion < 320) {
-        CORRADE_COMPARE(importer->materialForName("Material-material"), 0);
-        CORRADE_COMPARE(importer->materialName(0), "Material-material");
+    if(_assimpVersion < 302) {
+        CORRADE_COMPARE(importer->materialForName("Material-material"), 1);
+        CORRADE_COMPARE(importer->materialName(1), "Material-material");
     } else {
-        CORRADE_COMPARE(importer->materialForName("Material"), 0);
-        CORRADE_COMPARE(importer->materialName(0), "Material");
+        CORRADE_COMPARE(importer->materialForName("Material"), 1);
+        CORRADE_COMPARE(importer->materialName(1), "Material");
     }
     CORRADE_COMPARE(importer->materialForName("Ghost"), -1);
+
+    /* Check material assignment in the scene. The first two objects are dummy
+       nodes to test non-trivial assignment. */
+    CORRADE_COMPARE(importer->object3DCount(), 3);
+
+    Containers::Pointer<ObjectData3D> object = importer->object3D(2);
+    CORRADE_VERIFY(object);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+    CORRADE_COMPARE(object->instance(), 0);
+    auto& meshObject = static_cast<MeshObjectData3D&>(*object);
+    CORRADE_COMPARE(meshObject.material(), 1);
 }
 
 void AssimpImporterTest::materialTexture() {
@@ -1756,6 +1804,7 @@ void AssimpImporterTest::materialTexture() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
+
     Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
@@ -2387,15 +2436,16 @@ void AssimpImporterTest::mesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
-    CORRADE_COMPARE(importer->meshCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 1);
+    /* The first mesh is a dummy one to test non-trivial mesh assignment in the
+       scene */
+    CORRADE_COMPARE(importer->meshCount(), 2);
 
     const std::string name = fixMeshName("Cube", ".dae", _assimpVersion);
-    CORRADE_COMPARE(importer->meshName(0), name);
-    CORRADE_COMPARE(importer->meshForName(name), 0);
+    CORRADE_COMPARE(importer->meshName(1), name);
+    CORRADE_COMPARE(importer->meshForName(name), 1);
     CORRADE_COMPARE(importer->meshForName("nonexistent"), -1);
 
-    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
@@ -2440,10 +2490,19 @@ void AssimpImporterTest::mesh() {
         }), TestSuite::Compare::Container);
     }
 
-    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
-    CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_COMPARE(meshObject->instance(), 0);
-    CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*meshObject).skin(), -1);
+    /* Check mesh assignment in the scene. The first two objects are dummy
+       nodes to test non-trivial assignment. */
+    CORRADE_COMPARE(importer->object3DCount(), 3);
+
+    Containers::Pointer<ObjectData3D> object = importer->object3D(2);
+    CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
+    CORRADE_COMPARE(object->instance(), 1);
+    /* Material assignment tested in materialColor(), skin in skin(). Assimp
+       has no concept of an "unassigned material" and it always adds some dummy
+       one, so the material is never -1. */
+    auto& meshObject = static_cast<MeshObjectData3D&>(*object);
+    CORRADE_COMPARE(meshObject.material(), 0);
+    CORRADE_COMPARE(meshObject.skin(), -1);
 }
 
 void AssimpImporterTest::pointMesh() {
@@ -2451,7 +2510,6 @@ void AssimpImporterTest::pointMesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "points.obj")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -2467,10 +2525,6 @@ void AssimpImporterTest::pointMesh() {
         Containers::arrayView<Vector3>({
             {0.5f, 2.0f, 3.0f}, {2.0f, 3.0f, 5.0f}, {0.0f, 1.5f, 1.0f}
         }), TestSuite::Compare::Container);
-
-    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
-    CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_COMPARE(meshObject->instance(), 0);
 }
 
 void AssimpImporterTest::lineMesh() {
@@ -2478,7 +2532,6 @@ void AssimpImporterTest::lineMesh() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "line.dae")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -2494,10 +2547,6 @@ void AssimpImporterTest::lineMesh() {
         Containers::arrayView<Vector3>({
             {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f}
         }), TestSuite::Compare::Container);
-
-    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
-    CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_COMPARE(meshObject->instance(), 0);
 }
 
 void AssimpImporterTest::polygonMesh() {
@@ -2507,7 +2556,6 @@ void AssimpImporterTest::polygonMesh() {
     /* Just testing that triangulation doesn't break anything */
 
     CORRADE_COMPARE(importer->meshCount(), 1);
-    CORRADE_COMPARE(importer->object3DCount(), 1);
 
     Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -2524,10 +2572,6 @@ void AssimpImporterTest::polygonMesh() {
             {-1.0f,  1.0f, 0.0f}, { 1.0f,  1.0f, 0.0f},
             { 1.0f, -1.0f, 0.0f}, {-1.0f, -1.0f, 0.0f}
         }), TestSuite::Compare::Container);
-
-    Containers::Pointer<ObjectData3D> meshObject = importer->object3D(0);
-    CORRADE_COMPARE(meshObject->instanceType(), ObjectInstanceType3D::Mesh);
-    CORRADE_COMPARE(meshObject->instance(), 0);
 }
 
 void AssimpImporterTest::meshCustomAttributes() {
@@ -3052,6 +3096,10 @@ void AssimpImporterTest::scene() {
     CORRADE_COMPARE(importer->object3DName(1), "Child");
 
     CORRADE_COMPARE(importer->object3DForName("Ghost"), -1);
+
+    /* Camera assignment tested separately in camera(), light assignment in
+       light(), mesh in mesh(), material in materialColor() and skin in
+       skin() */
 }
 
 void AssimpImporterTest::sceneName() {
@@ -3514,9 +3562,9 @@ void AssimpImporterTest::configurePostprocessFlipUVs() {
     importer->configuration().group("postprocess")->setValue("FlipUVs", true);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
-    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 2);
 
-    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 1);
 
@@ -3543,11 +3591,11 @@ void AssimpImporterTest::fileCallback() {
         }, files);
 
     CORRADE_VERIFY(importer->openFile("not/a/path/mesh.dae"));
-    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 2);
 
     /* Same as in mesh(), testing just the basics, no need to repeat everything
        here */
-    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(1);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
@@ -3705,19 +3753,19 @@ void AssimpImporterTest::openTwice() {
 void AssimpImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
-    CORRADE_COMPARE(importer->cameraCount(), 2);
+    CORRADE_COMPARE(importer->cameraCount(), 3);
 
     /* Verify that everything is working the same way on second use. It's only
        testing a single data type, but better than nothing at all. */
     {
-        Containers::Optional<CameraData> camera = importer->camera(0);
+        Containers::Optional<CameraData> camera = importer->camera(1);
         CORRADE_VERIFY(camera);
         CORRADE_COMPARE(camera->fov(), 49.13434_degf);
         CORRADE_COMPARE(camera->aspectRatio(), 1.77777f);
         CORRADE_COMPARE(camera->near(), 0.123f);
         CORRADE_COMPARE(camera->far(), 123.0f);
     } {
-        Containers::Optional<CameraData> camera = importer->camera(0);
+        Containers::Optional<CameraData> camera = importer->camera(1);
         CORRADE_VERIFY(camera);
         CORRADE_COMPARE(camera->fov(), 49.13434_degf);
         CORRADE_COMPARE(camera->aspectRatio(), 1.77777f);

@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
   <library_cameras>
+    <!-- Extra camera to check camera / ID assignment isn't trivial -->
+    <camera id="Other-camera" name="Other">
+      <optics>
+        <technique_common>
+          <perspective>
+            <xfov>30</xfov>
+          </perspective>
+        </technique_common>
+      </optics>
+    </camera>
     <camera id="Camera-camera" name="Camera">
       <optics>
         <technique_common>
@@ -27,12 +37,17 @@
   </library_cameras>
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
+      <!-- Extra nodes to check camera / ID assignment isn't trivial -->
+      <node/>
+      <!-- Ass imp ignores cameras in the file if they're not referenced by
+           any nodes, so we have to do this -->
+      <node id="Other" name="Other" type="NODE">
+        <instance_camera url="#Other-camera"/>
+      </node>
       <node id="Camera" name="Camera" type="NODE">
-        <matrix sid="transform">-0.2988363 -0.2988363 0.9063078 0.1 0.6408563 0.6408564 0.4226183 0.2 -0.7071068 0.7071068 -3.09086e-8 0.3 0 0 0 1</matrix>
         <instance_camera url="#Camera-camera"/>
       </node>
       <node id="Camera-no-aspect" name="Camera-no-aspect" type="NODE">
-        <matrix sid="transform">-0.2988363 -0.2988363 0.9063078 0.1 0.6408563 0.6408564 0.4226183 0.2 -0.7071068 0.7071068 -3.09086e-8 0.3 0 0 0 1</matrix>
         <instance_camera url="#Camera-no-aspect"/>
       </node>
     </visual_scene>

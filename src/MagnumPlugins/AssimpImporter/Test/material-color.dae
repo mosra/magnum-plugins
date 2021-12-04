@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
   <library_effects>
+    <!-- Extra material to check material / ID assignment isn't trivial -->
+    <effect id="Another-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <phong/>
+        </technique>
+      </profile_COMMON>
+    </effect>
     <effect id="Material-effect">
       <profile_COMMON>
         <technique sid="common">
@@ -30,6 +38,10 @@
     </effect>
   </library_effects>
   <library_materials>
+    <!-- Extra material to check material / ID assignment isn't trivial -->
+    <material id="Another-material" name="Another">
+      <instance_effect url="#Another-effect"/>
+    </material>
     <material id="Material-material" name="Material">
       <instance_effect url="#Material-effect"/>
     </material>
@@ -71,8 +83,12 @@
   </library_geometries>
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
+      <!-- Extra nodes to check material / ID assignment isn't trivial.
+           Interestingly enough, unlike with cameras or meshes, Assimp doesn't
+           ignore materials if they're not referenced by any node. HAHA. -->
+      <node/>
+      <node/>
       <node id="Cube" name="Cube" type="NODE">
-        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
         <instance_geometry url="#Cube-mesh" name="Cube">
           <bind_material>
             <technique_common>
