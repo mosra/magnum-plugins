@@ -1375,6 +1375,8 @@ void AssimpImporterTest::skin() {
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
+    CORRADE_VERIFY(scene->hasField(SceneField::Skin));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Skin), SceneFieldFlag::OrderedMapping);
 
     /* Get global node transforms, needed for testing inverse bind matrices */
     Containers::Array<Matrix4> globalTransforms{importer->objectCount() + 1};
@@ -1593,6 +1595,7 @@ void AssimpImporterTest::camera() {
     CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
 
     CORRADE_VERIFY(scene->hasField(SceneField::Camera));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Camera), SceneFieldFlag::OrderedMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
         1, 2, 3
     }), TestSuite::Compare::Container);
@@ -1708,6 +1711,7 @@ void AssimpImporterTest::light() {
     CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
 
     CORRADE_VERIFY(scene->hasField(SceneField::Light));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Light), SceneFieldFlag::OrderedMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
         1, 2, 3, 4
     }), TestSuite::Compare::Container);
@@ -1851,6 +1855,8 @@ void AssimpImporterTest::materialColor() {
 
     CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
     CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Mesh), SceneFieldFlag::OrderedMapping);
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::MeshMaterial), SceneFieldFlag::OrderedMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
         2
     }), TestSuite::Compare::Container);
@@ -3106,6 +3112,7 @@ void AssimpImporterTest::scene() {
 
     /* Parents */
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Parent), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
         0, 1
     }), TestSuite::Compare::Container);
@@ -3117,6 +3124,7 @@ void AssimpImporterTest::scene() {
     /* Importer state shares the same object mapping as parents and it's all
        non-null pointers. */
     CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::ImporterState), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(
         scene->mapping<UnsignedInt>(SceneField::ImporterState),
         scene->mapping<UnsignedInt>(SceneField::Parent),
@@ -3127,6 +3135,7 @@ void AssimpImporterTest::scene() {
 
     /* Transformation shares the same object mapping as well */
     CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Transformation), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(
         scene->mapping<UnsignedInt>(SceneField::Transformation),
         scene->mapping<UnsignedInt>(SceneField::Parent),
@@ -3586,6 +3595,7 @@ void AssimpImporterTest::openState() {
 
     /* Parents */
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Parent), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
         0, 1
     }), TestSuite::Compare::Container);
@@ -3597,6 +3607,7 @@ void AssimpImporterTest::openState() {
     /* Importer state shares the same object mapping as parents and it's all
        non-null pointers. */
     CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::ImporterState), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(
         scene->mapping<UnsignedInt>(SceneField::ImporterState),
         scene->mapping<UnsignedInt>(SceneField::Parent),
@@ -3607,6 +3618,7 @@ void AssimpImporterTest::openState() {
 
     /* Transformation shares the same object mapping as well */
     CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Transformation), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(
         scene->mapping<UnsignedInt>(SceneField::Transformation),
         scene->mapping<UnsignedInt>(SceneField::Parent),

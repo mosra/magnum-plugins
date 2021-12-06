@@ -759,27 +759,32 @@ Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
        have all fields present, with some being empty, but this gives less
        noise for asset introspection purposes. */
     Containers::Array<SceneFieldData> fields;
+
+    /* Parent, ImporterState and Transformation all share the implicit
+       object mapping */
     arrayAppend(fields, {
         /** @todo once there's a flag to annotate implicit fields, omit the
             parent field if it's all -1s; or alternatively we could also have a
             stride of 0 for this case */
-        SceneFieldData{SceneField::Parent, parentImporterStateTransformationObjects, parents},
-        SceneFieldData{SceneField::ImporterState, parentImporterStateTransformationObjects, importerState},
-        SceneFieldData{SceneField::Transformation, parentImporterStateTransformationObjects, transformations}
+        SceneFieldData{SceneField::Parent, parentImporterStateTransformationObjects, parents, SceneFieldFlag::ImplicitMapping},
+        SceneFieldData{SceneField::ImporterState, parentImporterStateTransformationObjects, importerState, SceneFieldFlag::ImplicitMapping},
+        SceneFieldData{SceneField::Transformation, parentImporterStateTransformationObjects, transformations, SceneFieldFlag::ImplicitMapping}
     });
 
+    /* All other fields have the mapping ordered (they get filed as we iterate
+       through objects) */
     if(meshCount) arrayAppend(fields, {
-        SceneFieldData{SceneField::Mesh, meshMaterialObjects, meshes},
-        SceneFieldData{SceneField::MeshMaterial, meshMaterialObjects, meshMaterials},
+        SceneFieldData{SceneField::Mesh, meshMaterialObjects, meshes, SceneFieldFlag::OrderedMapping},
+        SceneFieldData{SceneField::MeshMaterial, meshMaterialObjects, meshMaterials, SceneFieldFlag::OrderedMapping},
     });
     if(lightCount) arrayAppend(fields, SceneFieldData{
-        SceneField::Light, lightObjects, lights
+        SceneField::Light, lightObjects, lights, SceneFieldFlag::OrderedMapping
     });
     if(cameraCount) arrayAppend(fields, SceneFieldData{
-        SceneField::Camera, cameraObjects, cameras
+        SceneField::Camera, cameraObjects, cameras, SceneFieldFlag::OrderedMapping
     });
     if(skinCount) arrayAppend(fields, SceneFieldData{
-        SceneField::Skin, skinObjects, skins
+        SceneField::Skin, skinObjects, skins, SceneFieldFlag::OrderedMapping
     });
 
     /* Convert back to the default deleter to avoid dangling deleter function

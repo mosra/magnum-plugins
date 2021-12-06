@@ -338,6 +338,7 @@ void OpenGexImporterTest::scene() {
 
     /* Parents. Object mapping is implicit, not in the order of discovery. */
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Parent), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
         0, 1, 2, 3, 4
     }), TestSuite::Compare::Container);
@@ -348,6 +349,7 @@ void OpenGexImporterTest::scene() {
     /* Importer state shares the same object mapping and it's all non-null
        pointers. The scene itself has no importer state. */
     CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::ImporterState), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(
         scene->mapping<UnsignedInt>(SceneField::ImporterState),
         scene->mapping<UnsignedInt>(SceneField::Parent), TestSuite::Compare::Container);
@@ -358,6 +360,7 @@ void OpenGexImporterTest::scene() {
     /* Transformations share the same object mapping as well but are tested in
        sceneTransformation() and others, so it's all identities here. */
     CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Transformation), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(
         scene->mapping<UnsignedInt>(SceneField::Transformation),
         scene->mapping<UnsignedInt>(SceneField::Parent), TestSuite::Compare::Container);
@@ -371,6 +374,7 @@ void OpenGexImporterTest::scene() {
 
     /* Object 1 has a camera */
     CORRADE_VERIFY(scene->hasField(SceneField::Camera));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Camera), SceneFieldFlag::OrderedMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
         1
     }), TestSuite::Compare::Container);
@@ -378,8 +382,9 @@ void OpenGexImporterTest::scene() {
         0
     }), TestSuite::Compare::Container);
 
-    /* Object 2 has a mesh, but no material */
+    /* Object 2 has a mesh, but no material. Materials tested in sceneMesh(). */
     CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Mesh), SceneFieldFlag::OrderedMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
         2
     }), TestSuite::Compare::Container);
@@ -390,6 +395,7 @@ void OpenGexImporterTest::scene() {
 
     /* Object 4 has a light */
     CORRADE_VERIFY(scene->hasField(SceneField::Light));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::Light), SceneFieldFlag::OrderedMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
         4
     }), TestSuite::Compare::Container);
@@ -471,6 +477,8 @@ void OpenGexImporterTest::sceneMesh() {
     CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
         1, 0, 0
     }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE(scene->fieldFlags(SceneField::MeshMaterial), SceneFieldFlag::OrderedMapping);
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
         2, -1, -1
     }), TestSuite::Compare::Container);

@@ -127,7 +127,8 @@ read.
     @ref SceneFieldType::Int), @ref SceneField::ImporterState (of type
     @ref SceneFieldType::Pointer, see @ref Trade-OpenGexImporter-state below)
     and @ref SceneField::Transformation (of type @ref SceneFieldType::Matrix4x4).
-    These three fields share the same object mapping, which is trivial.
+    These three fields share the same object mapping with
+    @ref SceneFieldFlag::ImplicitMapping set.
 -   OpenGEX supports separate TRS components for representing a node
     transformation, however it allows them to be in any order and repeat count.
     Which is, to be mild, an extremely annoying and mostly useless
@@ -138,16 +139,19 @@ read.
 -   If the scene references meshes, a @ref SceneField::Mesh (of type
     @ref SceneFieldType::UnsignedInt) is present. If any of the referenced
     meshes have assigned materials, @ref SceneField::MeshMaterial (of type
-    @ref SceneFieldType::Int) is present as well. Additional material
+    @ref SceneFieldType::Int) is present as well. Both have
+    @ref SceneFieldFlag::OrderedMapping set. Additional material
     references after the first one for given geometry node are ignored, thus a
     single node can only reference either a single mesh at most. See
     @ref Trade-OpenGexImporter-behavior-meshes and
     @ref Trade-OpenGexImporter-behavior-materials for further details.
 -   If the scene references cameras, a @ref SceneField::Camera (of type
-    @ref SceneFieldType::UnsignedInt) is present. See
+    @ref SceneFieldType::UnsignedInt) is present, with
+    @ref SceneFieldFlag::OrderedMapping set. See
     @ref Trade-OpenGexImporter-behavior-cameras for further details.
 -   If the scene references lights, a @ref SceneField::Light (of type
-    @ref SceneFieldType::UnsignedInt) is present. See
+    @ref SceneFieldType::UnsignedInt) is present, with
+    @ref SceneFieldFlag::OrderedMapping set. See
     @ref Trade-OpenGexImporter-behavior-lights for further details.
 -   An OpenGEX node can reference only either a single mesh, or a single
     camera, or a single light at most, the file format doesn't allow nodes with

@@ -222,31 +222,36 @@ verbosity levels in each instance.
     @ref SceneFieldType::Int), @ref SceneField::ImporterState (of type
     @ref SceneFieldType::Pointer, see @ref Trade-AssimpImporter-state below)
     and @ref SceneField::Transformation (of type @ref SceneFieldType::Matrix4x4).
-    These three fields share the same object mapping, which is trivial.
+    These three fields share the same object mapping with
+    @ref SceneFieldFlag::ImplicitMapping set.
 -   Assimp doesn't have a builtin way to represent separate TRS components of
     a transformation, they can only be decomposed from the full matrix
     post-import. For this reason, only the @ref SceneField::Transformation is
     present in the output.
 -   If the scene references meshes, a @ref SceneField::Mesh (of type
     @ref SceneFieldType::UnsignedInt) and a @ref SceneField::MeshMaterial (of
-    type @ref SceneFieldType::Int) is present. Assimp has no concept of an
+    type @ref SceneFieldType::Int) is present, both with
+    @ref SceneFieldFlag::OrderedMapping set. Assimp has no concept of an
     unassigned material, so the material ID is never @cpp -1 @ce. Nodes
     containing multiple meshes or referencing a multi-primitive mesh have
     several @ref SceneField::Mesh (and @ref SceneField::MeshMaterial)
     asignments. See @ref Trade-AssimpImporter-behavior-meshes and
     @ref Trade-AssimpImporter-behavior-materials for further details.
 -   If any mesh referenced by a scene is skinned, a @ref SceneField::Skin (of
-    type @ref SceneFieldType::UnsignedInt) is present. See
+    type @ref SceneFieldType::UnsignedInt) is present, with
+    @ref SceneFieldFlag::OrderedMapping set. See
     @ref Trade-AssimpImporter-behavior-animations for further details.
 -   If the scene references cameras, a @ref SceneField::Camera (of type
-    @ref SceneFieldType::UnsignedInt) is present. Contrary to Assimp's
+    @ref SceneFieldType::UnsignedInt) is present, with
+    @ref SceneFieldFlag::OrderedMapping set. Contrary to Assimp's
     documentation, for certain formats (such as COLLADA), if one camera is
     referenced by multiple nodes, it'll get duplicated instead of the nodes
     sharing the same camera reference. A single node can also only reference
     one camera at most. See @ref Trade-AssimpImporter-behavior-cameras for
     further details.
 -   If the scene references lights, a @ref SceneField::Light (of type
-    @ref SceneFieldType::UnsignedInt) is present. Contrary to Assimp's
+    @ref SceneFieldType::UnsignedInt) is present, with
+    @ref SceneFieldFlag::OrderedMapping set. Contrary to Assimp's
     documentation, for certain formats (such as COLLADA), if one light is
     referenced by multiple nodes, it'll get duplicated instead of the nodes
     sharing the same light reference. A single node can also only reference one
