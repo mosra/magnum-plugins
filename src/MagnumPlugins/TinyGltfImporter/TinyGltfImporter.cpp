@@ -988,6 +988,10 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
     /* Gather all top-level nodes belonging to a scene and recursively populate
        the children ranges. Optimistically assume the glTF has just a single
        scene and reserve for that. */
+    /** @todo once we have BitArrays use the objects array to mark nodes that
+        are present in the scene and then create a new array from those but
+        ordered so we can have OrderedMapping for parents and also all other
+        fields */
     Containers::Array<UnsignedInt> objects;
     arrayReserve(objects, _d->model.nodes.size());
     for(const UnsignedInt i: scene.nodes) {
