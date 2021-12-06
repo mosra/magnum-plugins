@@ -184,7 +184,18 @@ constexpr struct {
 
 /* StridedArrayView slice() and broadcast() is not constexpr so I have to
    supply the strides by hand */
-constexpr SceneFieldData SceneFields2D[]{
+#ifndef CORRADE_MSVC2015_COMPATIBILITY
+/* MSVC 2015 ICEs if both Scene3D and this are marked as constexpr. At first I
+   thought it's due to the float operations and nested function calls in the
+   Scene2D initializer, but that alone works... so I guess it's the combination
+   of that and the fields being referenced here. It however has to be noted
+   that even the SceneFieldData construction test itself doesn't work with
+   constexpr on MSVC 2015. */
+constexpr
+#else
+const
+#endif
+SceneFieldData SceneFields2D[]{
     SceneFieldData{SceneField::Parent,
         Containers::stridedArrayView(Scene2D, &Scene2D->fields[0].meshAndObject, Containers::arraySize(Scene2D->fields), sizeof(Scene2D->fields[0])),
         Containers::stridedArrayView(Containers::arrayView(Scene2D->parent), Containers::arraySize(Scene2D->fields), 0)},
@@ -196,7 +207,18 @@ constexpr SceneFieldData SceneFields2D[]{
 
 /* StridedArrayView slice() and broadcast() is not constexpr so I have to
    supply the strides by hand */
-constexpr SceneFieldData SceneFields3D[]{
+#ifndef CORRADE_MSVC2015_COMPATIBILITY
+/* MSVC 2015 ICEs if both Scene3D and this are marked as constexpr. At first I
+   thought it's due to the float operations and nested function calls in the
+   Scene2D initializer, but that alone works... so I guess it's the combination
+   of that and the fields being referenced here. It however has to be noted
+   that even the SceneFieldData construction test itself doesn't work with
+   constexpr on MSVC 2015. */
+constexpr
+#else
+const
+#endif
+SceneFieldData SceneFields3D[]{
     SceneFieldData{SceneField::Parent,
         Containers::stridedArrayView(Scene3D, &Scene3D->fields[0].meshAndObject, Containers::arraySize(Scene3D->fields), sizeof(Scene3D->fields[0])),
         Containers::stridedArrayView(Containers::arrayView(Scene3D->parent), Containers::arraySize(Scene3D->fields), 0)},
