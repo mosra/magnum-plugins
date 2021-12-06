@@ -187,4 +187,4 @@ Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt leve
 }}
 
 CORRADE_PLUGIN_REGISTER(StlImporter, Magnum::Trade::StlImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.4")

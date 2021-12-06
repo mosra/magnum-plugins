@@ -2822,4 +2822,4 @@ Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id,
 }}
 
 CORRADE_PLUGIN_REGISTER(CgltfImporter, Magnum::Trade::CgltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.4")

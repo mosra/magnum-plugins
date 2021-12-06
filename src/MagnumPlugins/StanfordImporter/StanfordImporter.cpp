@@ -891,4 +891,4 @@ MeshAttribute StanfordImporter::doMeshAttributeForName(const std::string& name) 
 }}
 
 CORRADE_PLUGIN_REGISTER(StanfordImporter, Magnum::Trade::StanfordImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
