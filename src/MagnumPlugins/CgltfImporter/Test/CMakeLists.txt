@@ -191,6 +191,9 @@ corrade_add_test(CgltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-oob-node.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-oob-skin.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-oob-skin-multi-primitive.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-transformation.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-transformation.glb
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/scene-transformation-patching.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/skin-embedded.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/skin-embedded.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/skin-invalid.gltf
@@ -200,9 +203,6 @@ corrade_add_test(CgltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/skin.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/skin.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/skin.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/object-transformation.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/object-transformation.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/object-transformation-patching.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/texture.basis
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/texture.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/texture.glb

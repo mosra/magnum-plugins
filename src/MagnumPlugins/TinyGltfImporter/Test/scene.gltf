@@ -103,6 +103,9 @@
             "name": "Mesh and a skin",
             "mesh": 1,
             "skin": 1
+        },
+        {
+            "name": "Object that's only in the second scene"
         }
     ],
     "skins": [
@@ -125,6 +128,12 @@
                 4,
                 5,
                 6
+            ]
+        },
+        {
+            "name": "Scene without materials and with one extra object",
+            "nodes": [
+                2, 7
             ]
         }
     ]

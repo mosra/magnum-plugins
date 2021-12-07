@@ -2,6 +2,12 @@
     "asset": {
         "version": "2.0"
     },
+    "materials": [
+        {},
+        {},
+        {},
+        {}
+    ],
     "meshes": [
         {
             "name": "Single-primitive points",
@@ -10,7 +16,8 @@
                     "mode": 0,
                     "attributes": {
                         "POSITION": 0
-                    }
+                    },
+                    "material": 3
                 }
             ]
         },
@@ -21,19 +28,22 @@
                     "mode": 1,
                     "attributes": {
                         "POSITION": 0
-                    }
+                    },
+                    "material": 1
                 },
                 {
                     "mode": 4,
                     "attributes": {
                         "POSITION": 0
-                    }
+                    },
+                    "material": 2
                 },
                 {
                     "mode": 5,
                     "attributes": {
                         "POSITION": 0
-                    }
+                    },
+                    "material": 0
                 }
             ]
         },
@@ -61,32 +71,30 @@
                     "mode": 3,
                     "attributes": {
                         "POSITION": 0
-                    }
+                    },
+                    "material": 1
                 }
             ]
         }
     ],
     "nodes": [
         {
-            "name": "Using the second mesh, should have 4 children",
-            "mesh": 1,
-            "children": [
-                4, 1
-            ]
+            "name": "Using the second mesh",
+            "mesh": 1
         },
         {
-            "name": "Using the first mesh, no children",
+            "name": "Using the first mesh",
             "mesh": 0
         },
         {
             "name": "Just a non-mesh node"
         },
         {
-            "name": "Using the second mesh again, again 2 children",
+            "name": "Using the second mesh again",
             "mesh": 1
         },
         {
-            "name": "Using the fourth mesh, 1 child",
+            "name": "Using the fourth mesh",
             "mesh": 3
         }
     ],
@@ -113,7 +121,7 @@
     ],
     "scenes": [
         {
-            "nodes": [0, 2, 3]
+            "nodes": [0, 1, 2, 3, 4]
         }
     ]
 }

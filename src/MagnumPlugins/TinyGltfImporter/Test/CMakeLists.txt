@@ -171,6 +171,9 @@ corrade_add_test(TinyGltfImporterTest
         scene-oob-node.gltf
         scene-oob-skin.gltf
         scene-oob-skin-multi-primitive.gltf
+        scene-transformation.gltf
+        scene-transformation.glb
+        scene-transformation-patching.gltf
         skin-embedded.glb
         skin-embedded.gltf
         skin-invalid.gltf
@@ -180,9 +183,6 @@ corrade_add_test(TinyGltfImporterTest
         skin.gltf
         skin.bin
         skin.glb
-        object-transformation.gltf
-        object-transformation.glb
-        object-transformation-patching.gltf
         texture.basis
         texture.gltf
         texture.glb

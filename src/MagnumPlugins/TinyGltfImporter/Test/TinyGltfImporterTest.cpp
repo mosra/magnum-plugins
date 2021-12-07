@@ -28,6 +28,7 @@
 #include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -48,8 +49,6 @@
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
-#include <Magnum/Trade/ObjectData3D.h>
 #include <Magnum/Trade/FlatMaterialData.h>
 #include <Magnum/Trade/PbrClearCoatMaterialData.h>
 #include <Magnum/Trade/PbrMetallicRoughnessMaterialData.h>
@@ -102,16 +101,14 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void lightMissingSpot();
 
     void scene();
-    void sceneInvalidObject();
-    void sceneInvalidScene();
+    void sceneOutOfBounds();
     void sceneInvalidHierarchy();
     void sceneDefaultNoScenes();
     void sceneDefaultNoDefault();
     void sceneDefaultOutOfBounds();
-
-    void objectTransformation();
-    void objectTransformationQuaternionNormalizationEnabled();
-    void objectTransformationQuaternionNormalizationDisabled();
+    void sceneTransformation();
+    void sceneTransformationQuaternionNormalizationEnabled();
+    void sceneTransformationQuaternionNormalizationDisabled();
 
     void skin();
     void skinInvalid();
@@ -381,24 +378,24 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
-    Int id;
     const char* message;
-} SceneInvalidObjectData[]{
+} SceneOutOfBoundsData[]{
     /* The files have extra dummy nodes to test correct numbering in the
        "in node X" message */
-    {"camera out of bounds", "scene-oob-camera.gltf", 3, "camera index 1 in node 3 out of bounds for 1 cameras"},
-    {"child out of bounds", "scene-oob-child.gltf", 4, "child index 7 in node 4 out of bounds for 7 nodes"},
-    {"light out of bounds", "scene-oob-light.gltf", 3, "light index 2 in node 3 out of bounds for 2 lights"},
-    {"material out of bounds", "scene-oob-material.gltf", 3, "material index 4 in node 3 out of bounds for 4 materials"},
+    {"camera out of bounds", "scene-oob-camera.gltf", "camera index 1 in node 3 out of bounds for 1 cameras"},
+    {"child out of bounds", "scene-oob-child.gltf", "child index 7 in node 4 out of bounds for 7 nodes"},
+    {"light out of bounds", "scene-oob-light.gltf", "light index 2 in node 3 out of bounds for 2 lights"},
+    {"material out of bounds", "scene-oob-material.gltf", "material index 4 in node 3 out of bounds for 4 materials"},
     /* The ID should be 3 because the object gets duplicated in order to be
        single-function but then the scene import fails so this would assert on
        the object not being in range. Thus using 2 instead. */
-    {"material in a multi-primitive mesh out of bounds", "scene-oob-material-multi-primitive.gltf", 2, "material index 5 in node 2 out of bounds for 4 materials"},
-    {"mesh out of bounds", "scene-oob-mesh.gltf", 2, "mesh index 1 in node 2 out of bounds for 1 meshes"},
-    {"skin out of bounds", "scene-oob-skin.gltf", 1, "skin index 3 in node 1 out of bounds for 3 skins"},
+    {"material in a multi-primitive mesh out of bounds", "scene-oob-material-multi-primitive.gltf", "material index 5 in node 2 out of bounds for 4 materials"},
+    {"mesh out of bounds", "scene-oob-mesh.gltf", "mesh index 1 in node 2 out of bounds for 1 meshes"},
+    {"node out of bounds", "scene-oob-node.gltf", "node index 7 out of bounds for 7 nodes"},
+    {"skin out of bounds", "scene-oob-skin.gltf", "skin index 3 in node 1 out of bounds for 3 skins"},
     /* The skin should be checked for both duplicates of the primitive */
-    {"skin for a multi-primitive mesh out of bounds", "scene-oob-skin-multi-primitive.gltf", 2, "skin index 3 in node 2 out of bounds for 3 skins"},
-    {"skin for a multi-primitive mesh out of bounds", "scene-oob-skin-multi-primitive.gltf", 3, "skin index 3 in node 2 out of bounds for 3 skins"}
+    {"skin for a multi-primitive mesh out of bounds", "scene-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"},
+    {"skin for a multi-primitive mesh out of bounds", "scene-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"}
 };
 
 constexpr struct {
@@ -588,10 +585,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::scene},
                       Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&TinyGltfImporterTest::sceneInvalidObject},
-        Containers::arraySize(SceneInvalidObjectData));
-
-    addTests({&TinyGltfImporterTest::sceneInvalidScene});
+    addInstancedTests({&TinyGltfImporterTest::sceneOutOfBounds},
+        Containers::arraySize(SceneOutOfBoundsData));
 
     addInstancedTests({&TinyGltfImporterTest::sceneInvalidHierarchy},
         Containers::arraySize(SceneInvalidHierarchyData));
@@ -600,11 +595,11 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::sceneDefaultNoDefault,
               &TinyGltfImporterTest::sceneDefaultOutOfBounds});
 
-    addInstancedTests({&TinyGltfImporterTest::objectTransformation},
+    addInstancedTests({&TinyGltfImporterTest::sceneTransformation},
                       Containers::arraySize(SingleFileData));
 
-    addTests({&TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled,
-              &TinyGltfImporterTest::objectTransformationQuaternionNormalizationDisabled});
+    addTests({&TinyGltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
+              &TinyGltfImporterTest::sceneTransformationQuaternionNormalizationDisabled});
 
     addInstancedTests({&TinyGltfImporterTest::skin},
         Containers::arraySize(MultiFileData));
@@ -1613,109 +1608,160 @@ void TinyGltfImporterTest::scene() {
 
     /* Explicit default scene */
     CORRADE_COMPARE(importer->defaultScene(), 1);
-    CORRADE_COMPARE(importer->sceneCount(), 2);
+
+    CORRADE_COMPARE(importer->sceneCount(), 3);
     CORRADE_COMPARE(importer->sceneName(1), "Scene");
     CORRADE_COMPARE(importer->sceneForName("Scene"), 1);
     CORRADE_COMPARE(importer->sceneForName("Nonexistent"), -1);
 
-    auto emptyScene = importer->scene(0);
-    CORRADE_VERIFY(emptyScene);
-    CORRADE_VERIFY(emptyScene->importerState());
-    CORRADE_COMPARE(emptyScene->children3D(), std::vector<UnsignedInt>{});
+    CORRADE_COMPARE(importer->objectCount(), 8);
+    CORRADE_COMPARE(importer->objectName(4), "Light");
+    CORRADE_COMPARE(importer->objectForName("Light"), 4);
+    CORRADE_COMPARE(importer->objectForName("Nonexistent"), -1);
 
-    auto scene = importer->scene(1);
-    CORRADE_VERIFY(scene);
-    CORRADE_VERIFY(scene->importerState());
-    CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{2, 4, 5, 6}));
-
-    CORRADE_COMPARE(importer->object3DCount(), 7);
-    CORRADE_COMPARE(importer->object3DName(4), "Light");
-    CORRADE_COMPARE(importer->object3DForName("Light"), 4);
-    CORRADE_COMPARE(importer->object3DForName("Nonexistent"), -1);
-
+    /* Empty scene should have no fields except empty transformation (which
+       distinguishes between 2D and 3D) and empty parent (which is there always
+       to tell which objects belong to the scene), and an empty ImporterState
+       (which is there always as well) */
     {
-        auto object = importer->object3D("Camera");
-        CORRADE_VERIFY(object);
-        CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Camera);
-        CORRADE_COMPARE(object->instance(), 2);
-        CORRADE_VERIFY(object->children().empty());
+        Containers::Optional<SceneData> scene = importer->scene(0);
+        CORRADE_VERIFY(scene);
+        CORRADE_VERIFY(scene->importerState());
+        CORRADE_VERIFY(scene->is3D());
+        CORRADE_COMPARE(scene->fieldCount(), 3);
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_COMPARE(scene->fieldSize(SceneField::Parent), 0);
+        CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+        CORRADE_COMPARE(scene->fieldType(SceneField::Transformation), SceneFieldType::Matrix4x4);
+        CORRADE_COMPARE(scene->fieldSize(SceneField::Transformation), 0);
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+        CORRADE_COMPARE(scene->fieldSize(SceneField::ImporterState), 0);
+
+    /* Testing mainly the hierarchy and light / camera / ... references here.
+       Transformations tested in sceneTransformation() and others. */
     } {
-        auto object = importer->object3D("Empty with one child");
-        CORRADE_VERIFY(object);
-        CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{0}));
+        Containers::Optional<SceneData> scene = importer->scene(1);
+        CORRADE_VERIFY(scene);
+        CORRADE_VERIFY(scene->importerState());
+        CORRADE_COMPARE(scene->mappingType(), SceneMappingType::UnsignedInt);
+        /* There's object 7 but only in scene 2, so this scene should have
+           object count only as a max of all referenced objects  */
+        CORRADE_COMPARE(scene->mappingBound(), 7);
+        CORRADE_COMPARE(scene->fieldCount(), 8);
+
+        /* Parents. Importer state shares the same object mapping and it's all
+           non-null pointers. */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
+            2, 4, 5, 6, /* root */
+            3, 1, /* children of node 5 */
+            0 /* child of node 1 */
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(
+            scene->mapping<UnsignedInt>(SceneField::ImporterState),
+            scene->mapping<UnsignedInt>(SceneField::Parent),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+            -1, -1, -1, -1,
+            5, 5,
+            1
+        }), TestSuite::Compare::Container);
+        for(const void* a: scene->field<const void*>(SceneField::ImporterState)) {
+            CORRADE_VERIFY(a);
+        }
+
+        /* No transformations here (tested separately in sceneTransformation()
+           and others), however an empty field is still present to annotate a
+           3D scene */
+        CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+        CORRADE_COMPARE(scene->fieldType(SceneField::Transformation), SceneFieldType::Matrix4x4);
+        CORRADE_COMPARE(scene->fieldSize(SceneField::Transformation), 0);
+        CORRADE_VERIFY(scene->is3D());
+
+        /* Object 0 has a camera */
+        CORRADE_VERIFY(scene->hasField(SceneField::Camera));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+            0
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Camera), Containers::arrayView<UnsignedInt>({
+            2
+        }), TestSuite::Compare::Container);
+
+        /* Objects 2, 6, 3 (in order they were discovered) have a mesh, only
+           object 3 has a material */
+        CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+            2, 6, 3
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+            1, 1, 0
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+            -1, -1, 1
+        }), TestSuite::Compare::Container);
+
+        /* Object 6 has a skin */
+        CORRADE_VERIFY(scene->hasField(SceneField::Skin));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Skin), Containers::arrayView<UnsignedInt>({
+            6
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Skin), Containers::arrayView<UnsignedInt>({
+            1
+        }), TestSuite::Compare::Container);
+
+        /* Object 4 has a light */
+        CORRADE_VERIFY(scene->hasField(SceneField::Light));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+            4
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
+            1
+        }), TestSuite::Compare::Container);
+
+    /* Another scene, with no material assignments, so there should be no
+       material field. It also references an object that's not in scene 1,
+       so the objectCount should account for it. */
     } {
-        auto object = importer->object3D("Mesh w/o material");
-        CORRADE_VERIFY(object);
-        CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 1);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), -1);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), -1);
-        CORRADE_VERIFY(object->children().empty());
-    } {
-        auto object = importer->object3D("Mesh and a material");
-        CORRADE_VERIFY(object);
-        CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 0);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), 1);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), -1);
-        CORRADE_VERIFY(object->children().empty());
-    } {
-        auto object = importer->object3D("Mesh and a skin");
-        CORRADE_VERIFY(object);
-        CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 1);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).material(), -1);
-        CORRADE_COMPARE(static_cast<MeshObjectData3D&>(*object).skin(), 1);
-        CORRADE_VERIFY(object->children().empty());
-    } {
-        auto object = importer->object3D("Light");
-        CORRADE_VERIFY(object);
-        CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Light);
-        CORRADE_COMPARE(object->instance(), 1);
-        CORRADE_VERIFY(object->children().empty());
-    } {
-        auto object = importer->object3D("Empty with two children");
-        CORRADE_VERIFY(object);
-        CORRADE_VERIFY(object->importerState());
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{3, 1}));
+        Containers::Optional<SceneData> scene = importer->scene(2);
+        CORRADE_VERIFY(scene);
+        CORRADE_VERIFY(scene->importerState());
+        CORRADE_COMPARE(scene->mappingType(), SceneMappingType::UnsignedInt);
+        CORRADE_COMPARE(scene->mappingBound(), 8);
+        CORRADE_COMPARE(scene->fieldCount(), 4);
+
+        /* Parents, importer state, transformation. Assume it behaves like
+           above, no need to test again. */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+        CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+
+        /* Object 2 has a mesh, but since it has no material and there's no
+           other mesh with a material, the material field is not present */
+        CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+            2
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+            1
+        }), TestSuite::Compare::Container);
+        CORRADE_VERIFY(!scene->hasField(SceneField::MeshMaterial));
     }
 }
 
-void TinyGltfImporterTest::sceneInvalidObject() {
-    auto&& data = SceneInvalidObjectData[testCaseInstanceId()];
+void TinyGltfImporterTest::sceneOutOfBounds() {
+    auto&& data = SceneOutOfBoundsData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->object3D(data.id));
-    CORRADE_COMPARE(out.str(), Utility::formatString(
-        "Trade::TinyGltfImporter::scene(): {}\n"
-        "Trade::AbstractImporter::object3D(): object {} not found in any 3D scene hierarchy\n", data.message, data.id));
-}
-
-void TinyGltfImporterTest::sceneInvalidScene() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "scene-oob-node.gltf")));
 
     CORRADE_COMPARE(importer->sceneCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->scene(0));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): node index 7 out of bounds for 7 nodes\n");
+    CORRADE_COMPARE(out.str(), Utility::formatString(
+        "Trade::TinyGltfImporter::scene(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::sceneInvalidHierarchy() {
@@ -1760,152 +1806,271 @@ void TinyGltfImporterTest::sceneDefaultOutOfBounds() {
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of bounds for 0 scenes\n");
 }
 
-void TinyGltfImporterTest::objectTransformation() {
+void TinyGltfImporterTest::sceneTransformation() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "object-transformation" + std::string{data.suffix})));
+        "scene-transformation" + std::string{data.suffix})));
 
-    CORRADE_COMPARE(importer->object3DCount(), 8);
+    CORRADE_COMPARE(importer->sceneCount(), 7);
 
+    /* Scene with all four transformation fields */
     {
-        auto object = importer->object3D("Matrix");
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->flags(), ObjectFlags3D{});
-        CORRADE_COMPARE(object->transformation(),
-            Matrix4::translation({1.5f, -2.5f, 0.3f})*
-            Matrix4::rotationY(45.0_degf)*
-            Matrix4::scaling({0.9f, 0.5f, 2.3f}));
-        CORRADE_COMPARE(object->transformation(), (Matrix4{
-            {0.636397f, 0.0f, -0.636395f, 0.0f},
-            {0.0f, 0.5f, -0.0f, 0.0f},
-            {1.62634f, 0.0f, 1.62635f, 0.0f},
-            {1.5f, -2.5f, 0.3f, 1.0f}
-        }));
+        Containers::Optional<SceneData> scene = importer->scene("Everything");
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(scene->mappingBound(), 7);
+        CORRADE_COMPARE(scene->fieldCount(), 6);
+
+        /* Fields we're not interested in */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+        /* Transformation matrix is populated for all objects that have *some*
+           transformation, the last one has nothing */
+        CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Transformation), Containers::arrayView<UnsignedInt>({
+            0, 1, 2, 3, 4, 5
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView<Matrix4>({
+            {{0.636397f, 0.0f, -0.636395f, 0.0f},
+             {0.0f, 0.5f, -0.0f, 0.0f},
+             {1.62634f, 0.0f, 1.62635f, 0.0f},
+             {1.5f, -2.5f, 0.3f, 1.0f}},
+
+            {{0.636397f, 0.0f, -0.636395f, 0.0f},
+             {0.0f, 0.5f, -0.0f, 0.0f},
+             {1.62634f, 0.0f, 1.62635f, 0.0f},
+             {1.5f, -2.5f, 0.3f, 1.0f}},
+
+            {{0.636397f, 0.0f, -0.636395f, 0.0f},
+             {0.0f, 0.5f, -0.0f, 0.0f},
+             {1.62634f,  0.0f, 1.62635f, 0},
+             {1.5f, -2.5f, 0.3f, 1.0f}},
+
+            Matrix4::translation({1.5f, -2.5f, 0.3f}),
+            Matrix4::rotationY(45.0_degf),
+            Matrix4::scaling({0.9f, 0.5f, 2.3f})
+        }), TestSuite::Compare::Container);
+
+        /* TRS only for some; object mapping of course shared by all */
+        CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+        {
+            CORRADE_EXPECT_FAIL("tinygltf skips parsing TRS if a matrix is set as well.");
+            CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Translation), Containers::arrayView<UnsignedInt>({
+                0, 2, 3, 4, 5
+            }), TestSuite::Compare::Container);
+        }
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Translation), Containers::arrayView<UnsignedInt>({
+            /*0,*/ 2, 3, 4, 5
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Vector3>(SceneField::Translation), Containers::arrayView<Vector3>({
+            /*{1.5f, -2.5f, 0.3f},*/
+            {1.5f, -2.5f, 0.3f},
+            {1.5f, -2.5f, 0.3f},
+            {},
+            {}
+        }), TestSuite::Compare::Container);
+        CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+        CORRADE_COMPARE_AS(scene->field<Quaternion>(SceneField::Rotation), Containers::arrayView<Quaternion>({
+            /*Quaternion::rotation(45.0_degf, Vector3::yAxis()),*/
+            Quaternion::rotation(45.0_degf, Vector3::yAxis()),
+            {},
+            Quaternion::rotation(45.0_degf, Vector3::yAxis()),
+            {}
+        }), TestSuite::Compare::Container);
+        CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+        CORRADE_COMPARE_AS(scene->field<Vector3>(SceneField::Scaling), Containers::arrayView<Vector3>({
+            /*{0.9f, 0.5f, 2.3f},*/
+            {0.9f, 0.5f, 2.3f},
+            Vector3{1.0f},
+            Vector3{1.0f},
+            {0.9f, 0.5f, 2.3f},
+        }), TestSuite::Compare::Container);
+
+    /* Both matrices and TRS (and the implicit transformation) */
     } {
-        auto object = importer->object3D("TRS");
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(object->transformation(),
-            Matrix4::translation({1.5f, -2.5f, 0.3f})*
-            Matrix4::rotationY(45.0_degf)*
-            Matrix4::scaling({0.9f, 0.5f, 2.3f}));
-        CORRADE_COMPARE(object->transformation(), (Matrix4{
-            {0.636397f, 0.0f, -0.636395f, 0.0f},
-            {0.0f, 0.5f, -0.0f, 0.0f},
-            {1.62634f,  0.0f, 1.62635f, 0},
-            {1.5f, -2.5f, 0.3f, 1.0f}
-        }));
+        Containers::Optional<SceneData> scene = importer->scene("Matrix + TRS");
+        CORRADE_VERIFY(scene);
+        {
+            CORRADE_EXPECT_FAIL("tinygltf skips parsing TRS if a matrix is set as well.");
+            CORRADE_COMPARE(scene->fieldCount(), 5);
+        }
+
+        /* Fields we're not interested in */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+        /* Assuming both matrices and TRS represent the same, the matrix is
+           considered redundant and so only TRS is present in the output. Well,
+           you wish it would. */
+        {
+            CORRADE_EXPECT_FAIL("tinygltf skips parsing TRS if a matrix is set as well.");
+            CORRADE_VERIFY(!scene->hasField(SceneField::Transformation));
+            CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+            CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+            CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+        }
+
+    /* Just matrices (and the implicit transformation) */
     } {
-        auto object = importer->object3D("Mesh matrix");
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 0);
-        CORRADE_COMPARE(object->flags(), ObjectFlags3D{});
-        CORRADE_COMPARE(object->transformation(),
-            Matrix4::translation({1.5f, -2.5f, 0.3f})*
-            Matrix4::rotationY(45.0_degf)*
-            Matrix4::scaling({0.9f, 0.5f, 2.3f}));
-        CORRADE_COMPARE(object->transformation(), (Matrix4{
-            {0.636397f, 0.0f, -0.636395f, 0.0f},
-            {0.0f, 0.5f, -0.0f, 0.0f},
-            {1.62634f, 0.0f, 1.62635f, 0.0f},
-            {1.5f, -2.5f, 0.3f, 1.0f}
-        }));
+        Containers::Optional<SceneData> scene = importer->scene("Just matrices");
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(scene->fieldCount(), 3);
+
+        /* Fields we're not interested in */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+        /* Transformation matrix is populated for the first, the second object
+           has nothing */
+        CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Transformation), Containers::arrayView<UnsignedInt>({
+            1
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView<Matrix4>({
+            {{0.636397f, 0.0f, -0.636395f, 0.0f},
+             {0.0f, 0.5f, -0.0f, 0.0f},
+             {1.62634f, 0.0f, 1.62635f, 0.0f},
+             {1.5f, -2.5f, 0.3f, 1.0f}},
+        }), TestSuite::Compare::Container);
+
+    /* Just TRS (and the implicit transformation) */
     } {
-        auto object = importer->object3D("Mesh TRS");
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 0);
-        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(object->transformation(),
-            Matrix4::translation({1.5f, -2.5f, 0.3f})*
-            Matrix4::rotationY(45.0_degf)*
-            Matrix4::scaling({0.9f, 0.5f, 2.3f}));
-        CORRADE_COMPARE(object->transformation(), (Matrix4{
-            {0.636397f, 0.0f, -0.636395f, 0.0f},
-            {0.0f, 0.5f, -0.0f, 0.0f},
-            {1.62634f,  0.0f, 1.62635f, 0},
-            {1.5f, -2.5f, 0.3f, 1.0f}
-        }));
+        Containers::Optional<SceneData> scene = importer->scene("Just TRS");
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(scene->fieldCount(), 5);
+
+        /* Fields we're not interested in */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+        /* The implicit transformation object is not contained in these */
+        CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Translation), Containers::arrayView<UnsignedInt>({
+            2, 3, 4, 5
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Vector3>(SceneField::Translation), Containers::arrayView<Vector3>({
+            {1.5f, -2.5f, 0.3f},
+            {1.5f, -2.5f, 0.3f},
+            {},
+            {}
+        }), TestSuite::Compare::Container);
+        CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+        CORRADE_COMPARE_AS(scene->field<Quaternion>(SceneField::Rotation), Containers::arrayView<Quaternion>({
+            Quaternion::rotation(45.0_degf, Vector3::yAxis()),
+            {},
+            Quaternion::rotation(45.0_degf, Vector3::yAxis()),
+            {}
+        }), TestSuite::Compare::Container);
+        CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+        CORRADE_COMPARE_AS(scene->field<Vector3>(SceneField::Scaling), Containers::arrayView<Vector3>({
+            {0.9f, 0.5f, 2.3f},
+            Vector3{1.0f},
+            Vector3{1.0f},
+            {0.9f, 0.5f, 2.3f},
+        }), TestSuite::Compare::Container);
+
+    /* Just translation (and the implicit transformation) */
     } {
-        auto object = importer->object3D("Translation");
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(object->translation(), (Vector3{1.5f, -2.5f, 0.3f}));
-        CORRADE_COMPARE(object->rotation(), Quaternion{});
-        CORRADE_COMPARE(object->scaling(), Vector3{1.0f});
-        CORRADE_COMPARE(object->transformation(), Matrix4::translation({1.5f, -2.5f, 0.3f}));
+        Containers::Optional<SceneData> scene = importer->scene("Just translation");
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(scene->fieldCount(), 3);
+
+        /* Fields we're not interested in */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+        /* The implicit transformation object is not contained in these */
+        CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Translation), Containers::arrayView<UnsignedInt>({
+            3
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Vector3>(SceneField::Translation), Containers::arrayView<Vector3>({
+            {1.5f, -2.5f, 0.3f}
+        }), TestSuite::Compare::Container);
+
+    /* Just rotation (and the implicit transformation) */
     } {
-        auto object = importer->object3D("Rotation");
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(object->rotation(), Quaternion::rotation(45.0_degf, Vector3::yAxis()));
-        CORRADE_COMPARE(object->scaling(), Vector3{1.0f});
-        CORRADE_COMPARE(object->transformation(), Matrix4::rotationY(45.0_degf));
+        Containers::Optional<SceneData> scene = importer->scene("Just rotation");
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(scene->fieldCount(), 3);
+
+        /* Fields we're not interested in */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+        /* The implicit transformation object is not contained in these */
+        CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Rotation), Containers::arrayView<UnsignedInt>({
+            4
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Quaternion>(SceneField::Rotation), Containers::arrayView<Quaternion>({
+            Quaternion::rotation(45.0_degf, Vector3::yAxis())
+        }), TestSuite::Compare::Container);
+
+    /* Just scaling (and the implicit transformation) */
     } {
-        auto object = importer->object3D("Scaling");
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(object->translation(), Vector3{});
-        CORRADE_COMPARE(object->rotation(), Quaternion{});
-        CORRADE_COMPARE(object->scaling(), (Vector3{0.9f, 0.5f, 2.3f}));
-        CORRADE_COMPARE(object->transformation(), Matrix4::scaling({0.9f, 0.5f, 2.3f}));
-    } {
-        auto object = importer->object3D("Implicit transformation");
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(object->translation(), Vector3{});
-        CORRADE_COMPARE(object->rotation(), Quaternion{});
-        CORRADE_COMPARE(object->scaling(), Vector3{1.0f});
-        CORRADE_COMPARE(object->transformation(), Matrix4{Math::IdentityInit});
+        Containers::Optional<SceneData> scene = importer->scene("Just scaling");
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(scene->fieldCount(), 3);
+
+        /* Fields we're not interested in */
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+        /* The implicit transformation object is not contained in these */
+        CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Scaling), Containers::arrayView<UnsignedInt>({
+            5
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Vector3>(SceneField::Scaling), Containers::arrayView<Vector3>({
+            {0.9f, 0.5f, 2.3f}
+        }), TestSuite::Compare::Container);
     }
 }
 
-void TinyGltfImporterTest::objectTransformationQuaternionNormalizationEnabled() {
+void TinyGltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "object-transformation-patching.gltf")));
+        "scene-transformation-patching.gltf")));
 
-    Containers::Pointer<ObjectData3D> object;
+    Containers::Optional<SceneData> scene;
     std::ostringstream out;
     {
-        Warning warningRedirection{&out};
-        object = importer->object3D("Non-normalized rotation");
+        Warning redirectWarning{&out};
+        scene = importer->scene(0);
     }
-    CORRADE_VERIFY(object);
+    CORRADE_VERIFY(scene);
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
-    CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-    CORRADE_COMPARE(object->rotation(), Quaternion::rotation(45.0_degf, Vector3::yAxis()));
+
+    Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
+    CORRADE_VERIFY(trs);
+    CORRADE_COMPARE(trs->second(), Quaternion::rotation(45.0_degf, Vector3::yAxis()));
 }
 
-void TinyGltfImporterTest::objectTransformationQuaternionNormalizationDisabled() {
+void TinyGltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     /* Explicity disable */
     importer->configuration().setValue("normalizeQuaternions", false);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "object-transformation-patching.gltf")));
+        "scene-transformation-patching.gltf")));
 
-    auto object = importer->object3D("Non-normalized rotation");
-    CORRADE_VERIFY(object);
-    CORRADE_COMPARE(object->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-    CORRADE_COMPARE(object->rotation(), Quaternion::rotation(45.0_degf, Vector3::yAxis())*2.0f);
+    Containers::Optional<SceneData> scene;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        scene = importer->scene(0);
+    }
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(out.str(), "");
+
+    Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
+    CORRADE_VERIFY(trs);
+    CORRADE_COMPARE(trs->second(), Quaternion::rotation(45.0_degf, Vector3::yAxis())*2.0f);
 }
 
 void TinyGltfImporterTest::skin() {
@@ -2441,114 +2606,26 @@ void TinyGltfImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(mesh6->primitive(), MeshPrimitive::LineStrip);
     }
 
-    /* Five objects, but two refer a three-primitive mesh and one refers a
-       two-primitive one */
-    CORRADE_COMPARE(importer->object3DCount(), 10);
-    {
-        CORRADE_COMPARE(importer->object3DName(0), "Using the second mesh, should have 4 children");
-        /* Originally the duplicate object IDs followed the original ID but
-           that's not really doable in the compatibility wrapper anymore. Names
-           can still be preserved, tho. */
-        CORRADE_COMPARE(importer->object3DName(5), "Using the second mesh, should have 4 children");
-        CORRADE_COMPARE(importer->object3DName(6), "Using the second mesh, should have 4 children");
-        CORRADE_COMPARE(importer->object3DForName("Using the second mesh, should have 4 children"), 0);
-        auto object = importer->object3D(0);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 1);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{4, 1, 5, 6}));
-
-        auto child5 = importer->object3D(5);
-        CORRADE_VERIFY(child5);
-        CORRADE_COMPARE(child5->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child5->instance(), 2);
-        CORRADE_COMPARE(child5->children(), {});
-        CORRADE_COMPARE(child5->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child5->translation(), Vector3{});
-        CORRADE_COMPARE(child5->rotation(), Quaternion{});
-        CORRADE_COMPARE(child5->scaling(), Vector3{1.0f});
-
-        auto child6 = importer->object3D(6);
-        CORRADE_VERIFY(child6);
-        CORRADE_COMPARE(child6->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child6->instance(), 3);
-        CORRADE_COMPARE(child6->children(), {});
-        CORRADE_COMPARE(child6->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child6->translation(), Vector3{});
-        CORRADE_COMPARE(child6->rotation(), Quaternion{});
-        CORRADE_COMPARE(child6->scaling(), Vector3{1.0f});
-    } {
-        CORRADE_COMPARE(importer->object3DName(1), "Using the first mesh, no children");
-        CORRADE_COMPARE(importer->object3DForName("Using the first mesh, no children"), 1);
-        auto object = importer->object3D(1);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 0);
-        CORRADE_COMPARE(object->children(), {});
-    } {
-        CORRADE_COMPARE(importer->object3DName(2), "Just a non-mesh node");
-        CORRADE_COMPARE(importer->object3DForName("Just a non-mesh node"), 2);
-        auto object = importer->object3D(2);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Empty);
-        CORRADE_COMPARE(object->instance(), -1);
-        CORRADE_COMPARE(object->children(), {});
-    } {
-        CORRADE_COMPARE(importer->object3DName(3), "Using the second mesh again, again 2 children");
-        /* Originally the duplicate object IDs followed the original ID but
-           that's not really doable in the compatibility wrapper anymore. Names
-           can still be preserved, tho. */
-        CORRADE_COMPARE(importer->object3DName(7), "Using the second mesh again, again 2 children");
-        CORRADE_COMPARE(importer->object3DName(8), "Using the second mesh again, again 2 children");
-        CORRADE_COMPARE(importer->object3DForName("Using the second mesh again, again 2 children"), 3);
-        auto object = importer->object3D(3);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 1);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{7, 8}));
-
-        auto child7 = importer->object3D(7);
-        CORRADE_VERIFY(child7);
-        CORRADE_COMPARE(child7->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child7->instance(), 2);
-        CORRADE_COMPARE(child7->children(), {});
-        CORRADE_COMPARE(child7->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child7->translation(), Vector3{});
-        CORRADE_COMPARE(child7->rotation(), Quaternion{});
-        CORRADE_COMPARE(child7->scaling(), Vector3{1.0f});
-
-        auto child8 = importer->object3D(8);
-        CORRADE_VERIFY(child8);
-        CORRADE_COMPARE(child8->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child8->instance(), 3);
-        CORRADE_COMPARE(child8->children(), {});
-        CORRADE_COMPARE(child8->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child8->translation(), Vector3{});
-        CORRADE_COMPARE(child8->rotation(), Quaternion{});
-        CORRADE_COMPARE(child8->scaling(), Vector3{1.0f});
-    } {
-        CORRADE_COMPARE(importer->object3DName(4), "Using the fourth mesh, 1 child");
-        /* Originally the duplicate object IDs followed the original ID but
-           that's not really doable in the compatibility wrapper anymore. Names
-           can still be preserved, tho. */
-        CORRADE_COMPARE(importer->object3DName(9), "Using the fourth mesh, 1 child");
-        CORRADE_COMPARE(importer->object3DForName("Using the fourth mesh, 1 child"), 4);
-        auto object = importer->object3D(4);
-        CORRADE_VERIFY(object);
-        CORRADE_COMPARE(object->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(object->instance(), 5);
-        CORRADE_COMPARE(object->children(), (std::vector<UnsignedInt>{9}));
-
-        auto child9 = importer->object3D(9);
-        CORRADE_VERIFY(child9);
-        CORRADE_COMPARE(child9->instanceType(), ObjectInstanceType3D::Mesh);
-        CORRADE_COMPARE(child9->instance(), 6);
-        CORRADE_COMPARE(child9->children(), {});
-        CORRADE_COMPARE(child9->flags(), ObjectFlag3D::HasTranslationRotationScaling);
-        CORRADE_COMPARE(child9->translation(), Vector3{});
-        CORRADE_COMPARE(child9->rotation(), Quaternion{});
-        CORRADE_COMPARE(child9->scaling(), Vector3{1.0f});
-    }
+    /* Five objects. Two refer a three-primitive mesh and one refers a
+       two-primitive one, which is done by having multiple mesh entries for
+       them. */
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_COMPARE(scene->mappingBound(), 5);
+    CORRADE_COMPARE(scene->fieldCount(), 5);
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+    CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0, 0, 0, 1, 3, 3, 3, 4, 4
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        1, 2, 3, 0, 1, 2, 3, 5, 6
+    }), TestSuite::Compare::Container);
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+        1, 2, 0, 3, 1, 2, 0, -1, 1
+    }), TestSuite::Compare::Container);
 }
 
 void TinyGltfImporterTest::meshPrimitivesTypes() {
@@ -3997,22 +4074,22 @@ void TinyGltfImporterTest::escapedStrings() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
         "escaped-strings.gltf")));
 
-    CORRADE_COMPARE(importer->object3DCount(), 6);
-    CORRADE_COMPARE(importer->object3DName(0), "");
-    CORRADE_COMPARE(importer->object3DName(1), "UTF-8: Лорем ипсум долор сит амет");
-    CORRADE_COMPARE(importer->object3DName(2), "UTF-8 escaped: Лорем ипсум долор сит амет");
-    CORRADE_COMPARE(importer->object3DName(3), "Special: \"/\\\b\f\r\n\t");
-    CORRADE_COMPARE(importer->object3DName(4), "Everything: říční člun \t\t\n حليب اللوز");
+    CORRADE_COMPARE(importer->objectCount(), 6);
+    CORRADE_COMPARE(importer->objectName(0), "");
+    CORRADE_COMPARE(importer->objectName(1), "UTF-8: Лорем ипсум долор сит амет");
+    CORRADE_COMPARE(importer->objectName(2), "UTF-8 escaped: Лорем ипсум долор сит амет");
+    CORRADE_COMPARE(importer->objectName(3), "Special: \"/\\\b\f\r\n\t");
+    CORRADE_COMPARE(importer->objectName(4), "Everything: říční člun \t\t\n حليب اللوز");
     /* Tinygltf decodes JSON keys (in this case, "name"). Old versions of the
        the spec used to forbid non-ASCII keys or enums:
        https://github.com/KhronosGroup/glTF/tree/fd3ab461a1114fb0250bd76099153d2af50a7a1d/specification/2.0#json-encoding
        Newer spec versions changed this to "ASCII characters [...] SHOULD be
        written without JSON escaping" */
-    CORRADE_COMPARE(importer->object3DName(5), "Key UTF-8 escaped");
+    CORRADE_COMPARE(importer->objectName(5), "Key UTF-8 escaped");
 
     /* Test inverse mapping as well -- it should decode the name before
        comparison. */
-    CORRADE_COMPARE(importer->object3DForName("Everything: říční člun \t\t\n حليب اللوز"), 4);
+    CORRADE_COMPARE(importer->objectForName("Everything: říční člun \t\t\n حليب اللوز"), 4);
 
     /* All user-facing strings are unescaped. URIs are tested in encodedUris(). */
     CORRADE_COMPARE(importer->animationCount(), 1);
