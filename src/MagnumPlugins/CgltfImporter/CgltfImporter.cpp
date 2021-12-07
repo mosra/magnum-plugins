@@ -1321,7 +1321,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
     for(UnsignedInt i = 0; i != scene.nodes_count; ++i) {
         const cgltf_node* node = scene.nodes[i];
         const UnsignedInt nodeId = node - _d->data->nodes;
-        children.push_back(nodeId);
+        children.push_back(_d->nodeSizeOffsets[nodeId]);
     }
 
     return SceneData{{}, std::move(children)};
