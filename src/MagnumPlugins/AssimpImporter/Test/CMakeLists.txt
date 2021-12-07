@@ -87,6 +87,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         material-raw.fbx
         material-raw.gltf
         mesh.dae
+        mesh-multiple-primitives.dae
         mips.dds
         multiple-textures.mtl r.png g.png b.png y.png
         points.obj
