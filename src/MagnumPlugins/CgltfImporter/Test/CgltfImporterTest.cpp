@@ -3814,7 +3814,7 @@ void CgltfImporterTest::materialPhongFallback() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
     /* phongMaterialFallback should be on by default */
-    //importer->configuration().setValue("phongMaterialFallback", true);
+    CORRADE_VERIFY(importer->configuration().value<bool>("phongMaterialFallback"));
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-phong-fallback.gltf")));
