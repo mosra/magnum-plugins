@@ -174,5 +174,10 @@
             "byteLength": 1,
             "uri": "data:application/octet-stream;base64,Ra=="
         }
+    ],
+    "scenes": [
+        {
+            "nodes": [0, 2, 3]
+        }
     ]
 }

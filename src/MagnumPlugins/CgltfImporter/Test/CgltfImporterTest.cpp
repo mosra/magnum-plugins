@@ -2909,6 +2909,14 @@ void CgltfImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(child9->scaling(), Vector3{1.0f});
     }
 
+    /* Verify the scene children get correctly reassigned also */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    {
+        auto scene = importer->scene(0);
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(scene->children3D(), (std::vector<UnsignedInt>{0, 4, 5}));
+    }
+
     /* Animations -- the instance ID should point to the right expanded nodes */
     {
         auto animation = importer->animation("Animation affecting multi-primitive nodes");
