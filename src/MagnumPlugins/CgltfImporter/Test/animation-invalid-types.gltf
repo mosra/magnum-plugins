@@ -69,36 +69,36 @@
             "bufferView": 0,
             "byteOffset": 0,
             "componentType": 5126,
-            "count": 3,
+            "count": 1,
             "type": "SCALAR"
         },
         {
-            "bufferView": 1,
+            "bufferView": 0,
             "byteOffset": 0,
             "componentType": 5126,
-            "count": 3,
+            "count": 1,
             "type": "VEC4"
         },
         {
             "bufferView": 0,
             "byteOffset": 0,
             "componentType": 5121,
-            "count": 3,
+            "count": 1,
             "type": "WAT"
         },
         {
-            "bufferView": 1,
+            "bufferView": 0,
             "byteOffset": 0,
             "componentType": 1234,
-            "count": 3,
+            "count": 1,
             "type": "MAT2"
         },
         {
-            "bufferView": 1,
+            "bufferView": 0,
             "byteOffset": 0,
             "componentType": 5126,
             "normalized": true,
-            "count": 3,
+            "count": 1,
             "type": "VEC3"
         }
     ],
@@ -106,18 +106,14 @@
         {
             "buffer": 0,
             "byteOffset": 0,
-            "byteLength": 36
-        },
-        {
-            "buffer": 0,
-            "byteOffset": 36,
-            "byteLength": 192
+            "byteLength": 16
         }
     ],
     "buffers": [
         {
-            "byteLength": 228,
-            "uri": "animation-patching-fixed.bin"
+            "byteLength": 16,
+            "comment": "base64.b64encode(bytes(16))",
+            "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAA=="
         }
     ],
     "nodes": [

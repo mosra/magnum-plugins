@@ -47,28 +47,28 @@
             "bufferView": 0,
             "byteOffset": 0,
             "componentType": 5126,
-            "count": 9,
+            "count": 1,
             "type": "SCALAR"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 1,
+            "type": "VEC4"
         },
         {
             "bufferView": 1,
             "byteOffset": 0,
             "componentType": 5126,
-            "count": 9,
-            "type": "VEC4"
+            "count": 1,
+            "type": "SCALAR"
         },
         {
             "bufferView": 2,
             "byteOffset": 0,
             "componentType": 5126,
-            "count": 9,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 3,
-            "byteOffset": 0,
-            "componentType": 5126,
-            "count": 9,
+            "count": 1,
             "type": "VEC4"
         }
     ],
@@ -76,35 +76,31 @@
         {
             "buffer": 0,
             "byteOffset": 0,
-            "byteLength": 36
-        },
-        {
-            "buffer": 0,
-            "byteOffset": 36,
-            "byteLength": 192
+            "byteLength": 16
         },
         {
             "buffer": 1,
             "byteOffset": 0,
-            "byteLength": 36
+            "byteLength": 16
         },
         {
             "buffer": 2,
-            "byteOffset": 36,
-            "byteLength": 192
+            "byteOffset": 0,
+            "byteLength": 16
         }
     ],
     "buffers": [
         {
-            "byteLength": 228,
-            "uri": "animation-patching-fixed.bin"
+            "byteLength": 16,
+            "comment": "base64.b64encode(bytes(16))",
+            "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAA=="
         },
         {
-            "byteLength": 228,
+            "byteLength": 16,
             "uri": "/nonexistent1.bin"
         },
         {
-            "byteLength": 228,
+            "byteLength": 16,
             "uri": "/nonexistent2.bin"
         }
     ],
