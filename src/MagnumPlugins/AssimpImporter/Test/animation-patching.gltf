@@ -1,7 +1,7 @@
 {
     "asset": {
         "version": "2.0",
-        "note": "Identical to animation-patching-fixed.gltf in CgltfImporter/Test but with a default scene added, which in turn is based on TinyGltfImporter animation-patching.gltf but with a .bin file without a shared time track. Neither Cgltf nor Assimp 5.1.0 allow differently sized input and output accessors."
+        "note": "Identical to animation-patching.gltf in TinyGltfImporter/Test but with a default scene added."
     },
     "animations": [
         {
@@ -83,7 +83,7 @@
     "buffers": [
         {
             "byteLength": 240,
-            "uri": "animation-patching-fixed.bin"
+            "uri": "animation-patching.bin"
         }
     ],
     "nodes": [

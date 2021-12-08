@@ -35,9 +35,9 @@
             ],
             "samplers": [
                 {
-                    "input": 0,
+                    "input": 2,
                     "interpolation": "LINEAR",
-                    "output": 2
+                    "output": 3
                 }
             ]
         }
@@ -51,15 +51,22 @@
             "type": "SCALAR"
         },
         {
-            "bufferView": 1,
-            "byteOffset": 0,
+            "bufferView": 0,
+            "byteOffset": 36,
             "componentType": 5126,
             "count": 9,
             "type": "VEC4"
         },
         {
-            "bufferView": 1,
-            "byteOffset": 144,
+            "bufferView": 0,
+            "byteOffset": 180,
+            "componentType": 5126,
+            "count": 3,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 0,
+            "byteOffset": 192,
             "componentType": 5126,
             "count": 3,
             "type": "VEC4"
@@ -69,17 +76,12 @@
         {
             "buffer": 0,
             "byteOffset": 0,
-            "byteLength": 36
-        },
-        {
-            "buffer": 0,
-            "byteOffset": 36,
-            "byteLength": 192
+            "byteLength": 240
         }
     ],
     "buffers": [
         {
-            "byteLength": 228,
+            "byteLength": 240,
             "uri": "animation-patching.bin"
         }
     ],

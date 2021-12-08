@@ -61,10 +61,6 @@ corrade_add_test(CgltfImporterTest
     FILES
         animation-buffer-notfound.gltf
         animation-invalid-types.gltf
-        # modified version of animation-patching.* from TinyGltfImporter
-        # without size mismatch between input and output samplers
-        animation-patching-fixed.bin
-        animation-patching-fixed.gltf
         buffer-short-size.glb
         buffer-short-size.gltf
         buffer-short-size-embedded.glb

@@ -58,8 +58,8 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         animation.gltf # Same as in TinyGltfImporterTest, but added a scene
         animation.bin
         animation-no-scene.gltf
-        animation-patching-fixed.bin
-        animation-patching-fixed.gltf
+        animation-patching.bin
+        animation-patching.gltf
         camera.dae
         camera-light-referenced-by-two-nodes.dae
         camera-orthographic.gltf

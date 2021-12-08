@@ -1048,7 +1048,7 @@ void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation-patching-fixed.gltf")));
+        "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
@@ -1097,7 +1097,7 @@ void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
     /* Explicitly disable */
     importer->configuration().setValue("optimizeQuaternionShortestPath", false);
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation-patching-fixed.gltf")));
+        "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
@@ -1167,7 +1167,7 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation-patching-fixed.gltf")));
+        "animation-patching.gltf")));
 
     Containers::Optional<AnimationData> animation;
     std::ostringstream out;
@@ -1203,7 +1203,7 @@ void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
     /* Explicitly disable */
     CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation-patching-fixed.gltf")));
+        "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion normalization patching");
     CORRADE_VERIFY(animation);
