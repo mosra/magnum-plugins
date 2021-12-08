@@ -91,8 +91,10 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/external-data.bin
         # external-data.gl* packed via a resource (but *.bin needed also by
         # buffer-wrong-size.gltf, so added separately as well)
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image.basis
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image.glb
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-embedded.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-embedded.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-buffer.gltf
@@ -186,10 +188,8 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture.basis
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-default-sampler.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-default-sampler.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-empty-sampler.gltf

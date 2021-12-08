@@ -96,8 +96,10 @@ corrade_add_test(CgltfImporterTest
         # buffer-wrong-size.gltf, so added separately as well)
         external-data-order.glb
         external-data-order.gltf
+        image.basis
         image.gltf
         image.glb
+        image.png
         image-basis.gltf
         image-basis.glb
         image-basis-embedded.gltf
@@ -197,10 +199,8 @@ corrade_add_test(CgltfImporterTest
         skin.gltf
         skin.bin
         skin.glb
-        texture.basis
         texture.gltf
         texture.glb
-        texture.png
         texture-default-sampler.gltf
         texture-default-sampler.glb
         texture-empty-sampler.gltf

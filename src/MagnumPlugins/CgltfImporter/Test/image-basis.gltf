@@ -14,11 +14,11 @@
     "images": [
         {
             "mimeType": "image/png",
-            "uri": "texture.png"
+            "uri": "image.png"
         },
         {
             "mimeType": "image/x-basis",
-            "uri": "texture.basis"
+            "uri": "image.basis"
         }
     ],
     "extensionsUsed": [

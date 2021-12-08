@@ -4,11 +4,11 @@
     },
     "images": [
         {
-            "uri": "texture.png"
+            "uri": "image.png"
         },
         {
             "name": "Image",
-            "uri": "texture.png"
+            "uri": "image.png"
         }
     ]
 }
