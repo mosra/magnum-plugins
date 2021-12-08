@@ -3946,13 +3946,18 @@ void CgltfImporterTest::materialOutOfBounds() {
 void CgltfImporterTest::materialInvalidAlphaMode() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    /* Cgltf parses an invalid alpha mode as opaque, without any error */
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-invalid-alpha-mode.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
-    auto material = importer->material(0);
-    CORRADE_VERIFY(material);
+    Containers::Optional<MaterialData> material;
+    {
+        CORRADE_EXPECT_FAIL("Cgltf parses an invalid alpha mode as opaque, without any error.");
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!(material = importer->material(0)));
+        CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): unknown alpha mode WAT\n");
+    }
     CORRADE_COMPARE(material->alphaMode(), MaterialAlphaMode::Opaque);
 }
 
