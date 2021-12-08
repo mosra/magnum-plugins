@@ -87,7 +87,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void animationInvalidBufferNotFound();
     void animationInvalidInterpolation();
     void animationInvalidTypes();
-    void animationMismatchingCount();
+    void animationTrackSizeMismatch();
     void animationMissingTargetNode();
 
     void animationSpline();
@@ -670,7 +670,7 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::animationInvalidTypes},
         Containers::arraySize(AnimationInvalidTypesData));
 
-    addTests({&CgltfImporterTest::animationMismatchingCount,
+    addTests({&CgltfImporterTest::animationTrackSizeMismatch,
               &CgltfImporterTest::animationMissingTargetNode});
 
     addInstancedTests({&CgltfImporterTest::animationSpline},
@@ -1332,18 +1332,16 @@ void CgltfImporterTest::animationInvalidTypes() {
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::animation(): {}\n", data.message));
 }
 
-void CgltfImporterTest::animationMismatchingCount() {
+void CgltfImporterTest::animationTrackSizeMismatch() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    /* Different input/output accessor counts are not allowed. This
-       TinyGltfImporter test file has them, so we repurpose it. */
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
-        "animation-patching.gltf")));
+        "animation-track-size-mismatch.gltf")));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation("Quaternion normalization patching"));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): target track size doesn't match time track size, expected 3 but got 9\n");
+    CORRADE_VERIFY(!importer->animation(0));
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): target track size doesn't match time track size, expected 3 but got 2\n");
 }
 
 void CgltfImporterTest::animationMissingTargetNode() {

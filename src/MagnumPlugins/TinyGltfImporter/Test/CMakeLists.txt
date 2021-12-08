@@ -80,6 +80,7 @@ corrade_add_test(TinyGltfImporterTest
         animation-patching.bin
         animation-patching.gltf
         animation-splines-sharing.gltf
+        animation-track-size-mismatch.gltf
         camera.gltf
         camera.glb
         camera-invalid-type.gltf

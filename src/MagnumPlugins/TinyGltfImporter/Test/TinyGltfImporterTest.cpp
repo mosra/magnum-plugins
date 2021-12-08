@@ -78,6 +78,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void animation();
     void animationInvalid();
+    void animationTrackSizeMismatch();
     void animationMissingTargetNode();
 
     void animationSpline();
@@ -552,7 +553,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::animationInvalid},
         Containers::arraySize(AnimationInvalidData));
 
-    addTests({&TinyGltfImporterTest::animationMissingTargetNode});
+    addTests({&TinyGltfImporterTest::animationTrackSizeMismatch,
+              &TinyGltfImporterTest::animationMissingTargetNode});
 
     addInstancedTests({&TinyGltfImporterTest::animationSpline},
                       Containers::arraySize(MultiFileData));
@@ -972,6 +974,21 @@ void TinyGltfImporterTest::animationInvalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(data.name));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::animation(): {}\n", data.message));
+}
+
+void TinyGltfImporterTest::animationTrackSizeMismatch() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        "animation-track-size-mismatch.gltf")));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    {
+        CORRADE_EXPECT_FAIL("TinyGLTF doesn't complain when track time and target tracks don't have the same size.");
+        CORRADE_VERIFY(!importer->animation(0));
+        CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): target track size doesn't match time track size, expected 3 but got 2\n");
+    }
 }
 
 void TinyGltfImporterTest::animationMissingTargetNode() {

@@ -103,6 +103,7 @@ corrade_add_test(CgltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/animation-patching.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/animation-patching.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/animation-splines-sharing.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/animation-track-size-mismatch.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/camera.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/camera.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test/camera-invalid-type.gltf
