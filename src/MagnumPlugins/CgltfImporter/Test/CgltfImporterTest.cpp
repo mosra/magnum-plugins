@@ -393,7 +393,7 @@ constexpr struct {
     {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf"},
     {"buffer view index out of bounds", "mesh-invalid-bufferview-oob.gltf"},
     {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf"},
-    {"mesh index accessor out of bounds", "mesh-index-accessor-oob.gltf"}
+    {"mesh index accessor out of bounds", "mesh-invalid-index-accessor-oob.gltf"}
 };
 
 constexpr struct {
@@ -864,7 +864,7 @@ void CgltfImporterTest::open() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    auto filename = Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "empty" + std::string{data.suffix});
     CORRADE_VERIFY(importer->openFile(filename));
     CORRADE_VERIFY(importer->isOpened());
@@ -990,7 +990,7 @@ void CgltfImporterTest::openExternalDataNotFound() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    auto filename = Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "buffer-notfound" + std::string{data.suffix});
 
     /* Importing should succeed, buffers are loaded on demand */
@@ -1010,7 +1010,7 @@ void CgltfImporterTest::openExternalDataNoPathNoCallback() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    auto filename = Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    auto filename = Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "buffer-notfound" + std::string{data.suffix});
 
     CORRADE_VERIFY(importer->openData(Utility::Directory::read(filename)));
@@ -1029,7 +1029,7 @@ void CgltfImporterTest::openExternalDataTooLong() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "buffer-wrong-size" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -1058,7 +1058,7 @@ void CgltfImporterTest::openExternalDataNoUri() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "buffer-no-uri" + std::string{data.suffix})));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -1090,7 +1090,7 @@ void CgltfImporterTest::openExternalDataInvalidUri() {
 
 void CgltfImporterTest::requiredExtensions() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "required-extensions.gltf")));
 }
 
@@ -1102,7 +1102,7 @@ void CgltfImporterTest::requiredExtensionsUnsupported() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "required-extensions-unsupported.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
 }
@@ -1114,7 +1114,7 @@ void CgltfImporterTest::requiredExtensionsUnsupportedDisabled() {
     std::ostringstream out;
     Warning redirectError{&out};
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "required-extensions-unsupported.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
 }
@@ -1124,7 +1124,7 @@ void CgltfImporterTest::animation() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->animationCount(), 4);
@@ -1253,7 +1253,7 @@ void CgltfImporterTest::animationOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
 
@@ -1263,7 +1263,7 @@ void CgltfImporterTest::animationInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-invalid.gltf")));
 
     /* Check we didn't forget to test anything. We skip the invalid
@@ -1301,7 +1301,7 @@ void CgltfImporterTest::animationInvalidBufferNotFound() {
 void CgltfImporterTest::animationInvalidInterpolation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-invalid.gltf")));
 
     auto animation = importer->animation("unsupported interpolation type");
@@ -1335,7 +1335,7 @@ void CgltfImporterTest::animationInvalidTypes() {
 void CgltfImporterTest::animationTrackSizeMismatch() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-track-size-mismatch.gltf")));
 
     std::ostringstream out;
@@ -1346,7 +1346,7 @@ void CgltfImporterTest::animationTrackSizeMismatch() {
 
 void CgltfImporterTest::animationMissingTargetNode() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-missing-target-node.gltf")));
     CORRADE_COMPARE(importer->animationCount(), 1);
 
@@ -1384,7 +1384,7 @@ void CgltfImporterTest::animationSpline() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation" + std::string{data.suffix})));
 
     auto animation = importer->animation("TRS animation, splines");
@@ -1469,7 +1469,7 @@ void CgltfImporterTest::animationSpline() {
 
 void CgltfImporterTest::animationSplineSharedWithSameTimeTrack() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-splines-sharing.gltf")));
 
     auto animation = importer->animation("TRS animation, splines, sharing data with the same time track");
@@ -1515,7 +1515,7 @@ void CgltfImporterTest::animationSplineSharedWithSameTimeTrack() {
 
 void CgltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-splines-sharing.gltf")));
 
     std::ostringstream out;
@@ -1528,7 +1528,7 @@ void CgltfImporterTest::animationShortestPathOptimizationEnabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion shortest-path patching");
@@ -1574,7 +1574,7 @@ void CgltfImporterTest::animationShortestPathOptimizationDisabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Explicitly disable */
     importer->configuration().setValue("optimizeQuaternionShortestPath", false);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion shortest-path patching");
@@ -1641,7 +1641,7 @@ void CgltfImporterTest::animationQuaternionNormalizationEnabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-patching.gltf")));
 
     Containers::Optional<AnimationData> animation;
@@ -1668,7 +1668,7 @@ void CgltfImporterTest::animationQuaternionNormalizationDisabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Explicitly disable */
     CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion normalization patching");
@@ -1689,7 +1689,7 @@ void CgltfImporterTest::animationMergeEmpty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "empty.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 0);
@@ -1700,7 +1700,7 @@ void CgltfImporterTest::animationMerge() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "animation.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 1);
@@ -1812,7 +1812,7 @@ void CgltfImporterTest::camera() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "camera" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->cameraCount(), 4);
@@ -1858,7 +1858,7 @@ void CgltfImporterTest::camera() {
 void CgltfImporterTest::cameraInvalidType() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "camera-invalid-type.gltf")));
     CORRADE_COMPARE(importer->cameraCount(), 1);
 
@@ -1874,7 +1874,7 @@ void CgltfImporterTest::light() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "light" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
@@ -1923,7 +1923,7 @@ void CgltfImporterTest::lightInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "light-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
@@ -1940,7 +1940,7 @@ void CgltfImporterTest::lightInvalidColorSize() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "light-invalid-color-size.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
@@ -1948,7 +1948,7 @@ void CgltfImporterTest::lightInvalidColorSize() {
 void CgltfImporterTest::lightMissingType() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "light-missing-type.gltf")));
     CORRADE_COMPARE(importer->lightCount(), 1);
 
@@ -1961,7 +1961,7 @@ void CgltfImporterTest::lightMissingType() {
 void CgltfImporterTest::lightMissingSpot() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "light-missing-spot.gltf")));
     CORRADE_COMPARE(importer->lightCount(), 1);
 
@@ -1986,7 +1986,7 @@ void CgltfImporterTest::scene() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "scene" + std::string{data.suffix})));
 
     /* Explicit default scene */
@@ -2125,7 +2125,7 @@ void CgltfImporterTest::sceneOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
 
@@ -2137,13 +2137,13 @@ void CgltfImporterTest::sceneInvalidHierarchy() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
 }
 
 void CgltfImporterTest::sceneDefaultNoScenes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "empty.gltf")));
 
     /* There is no scene, can't have any default */
@@ -2153,7 +2153,7 @@ void CgltfImporterTest::sceneDefaultNoScenes() {
 
 void CgltfImporterTest::sceneDefaultNoDefault() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "scene-default-none.gltf")));
 
     /* There is at least one scene, it's made default */
@@ -2166,7 +2166,7 @@ void CgltfImporterTest::sceneDefaultOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "scene-default-oob.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, "scene-default-oob.gltf")));
     /* Unfortunately the error is the same here as well as for all cases in
        sceneOutOfBounds() */
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
@@ -2177,7 +2177,7 @@ void CgltfImporterTest::sceneTransformation() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "scene-transformation" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->sceneCount(), 7);
@@ -2395,7 +2395,7 @@ void CgltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "scene-transformation-patching.gltf")));
 
     Containers::Optional<SceneData> scene;
@@ -2416,7 +2416,7 @@ void CgltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Explicity disable */
     importer->configuration().setValue("normalizeQuaternions", false);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "scene-transformation-patching.gltf")));
 
     Containers::Optional<SceneData> scene;
@@ -2438,7 +2438,7 @@ void CgltfImporterTest::skin() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "skin" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->skin3DCount(), 2);
@@ -2478,7 +2478,7 @@ void CgltfImporterTest::skinOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
 
@@ -2488,7 +2488,7 @@ void CgltfImporterTest::skinInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "skin-invalid.gltf")));
 
     std::ostringstream out;
@@ -2535,7 +2535,7 @@ void CgltfImporterTest::skinInvalidTypes() {
 void CgltfImporterTest::skinNoJointsProperty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "skin-no-joints.gltf")));
     CORRADE_COMPARE(importer->skin3DCount(), 1);
 
@@ -2550,7 +2550,7 @@ void CgltfImporterTest::mesh() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->meshCount(), 4);
@@ -2587,7 +2587,7 @@ void CgltfImporterTest::mesh() {
 
 void CgltfImporterTest::meshAttributeless() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh.gltf")));
 
     auto mesh = importer->mesh("Attribute-less mesh");
@@ -2600,7 +2600,7 @@ void CgltfImporterTest::meshAttributeless() {
 
 void CgltfImporterTest::meshIndexed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh.gltf")));
 
     auto mesh = importer->mesh("Indexed mesh");
@@ -2651,7 +2651,7 @@ void CgltfImporterTest::meshIndexed() {
 
 void CgltfImporterTest::meshIndexedAttributeless() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh.gltf")));
 
     auto mesh = importer->mesh("Attribute-less indexed mesh");
@@ -2667,7 +2667,7 @@ void CgltfImporterTest::meshIndexedAttributeless() {
 
 void CgltfImporterTest::meshColors() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh-colors.gltf")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -2703,7 +2703,7 @@ void CgltfImporterTest::meshColors() {
 
 void CgltfImporterTest::meshSkinAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh-skin-attributes.gltf")));
 
     /* The mapping should be available even before the mesh is imported */
@@ -2771,7 +2771,7 @@ void CgltfImporterTest::meshCustomAttributes() {
     {
         std::ostringstream out;
         Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
             "mesh-custom-attributes.gltf")));
         CORRADE_COMPARE(importer->meshCount(), 2);
 
@@ -2852,7 +2852,7 @@ void CgltfImporterTest::meshCustomAttributesNoFileOpened() {
 void CgltfImporterTest::meshDuplicateAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh-duplicate-attributes.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -2879,7 +2879,7 @@ void CgltfImporterTest::meshDuplicateAttributes() {
 void CgltfImporterTest::meshUnorderedAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh-unordered-attributes.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -2929,7 +2929,7 @@ void CgltfImporterTest::meshUnorderedAttributes() {
 
 void CgltfImporterTest::meshMultiplePrimitives() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh-multiple-primitives.gltf")));
 
     /* Four meshes, but one has three primitives and one two. Distinguishing
@@ -3006,7 +3006,7 @@ void CgltfImporterTest::meshPrimitivesTypes() {
     if(data.objectIdAttribute)
         importer->configuration().setValue("objectIdAttribute", data.objectIdAttribute);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh-primitives-types.gltf")));
 
     /* Ensure we didn't forget to test any case */
@@ -3241,7 +3241,7 @@ void CgltfImporterTest::meshOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
 
@@ -3251,7 +3251,7 @@ void CgltfImporterTest::meshInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "mesh-invalid.gltf")));
 
     std::ostringstream out;
@@ -3305,7 +3305,7 @@ void CgltfImporterTest::materialPbrMetallicRoughness() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-metallicroughness.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
     CORRADE_COMPARE(importer->materialName(2), "textures");
@@ -3431,7 +3431,7 @@ void CgltfImporterTest::materialPbrSpecularGlossiness() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-specularglossiness.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
 
@@ -3555,7 +3555,7 @@ void CgltfImporterTest::materialCommon() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-common.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
 
@@ -3667,7 +3667,7 @@ void CgltfImporterTest::materialUnlit() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-unlit.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
@@ -3691,7 +3691,7 @@ void CgltfImporterTest::materialClearCoat() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-clearcoat.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 6);
 
@@ -3816,7 +3816,7 @@ void CgltfImporterTest::materialPhongFallback() {
     /* phongMaterialFallback should be on by default */
     //importer->configuration().setValue("phongMaterialFallback", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-phong-fallback.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 4);
 
@@ -3939,7 +3939,7 @@ void CgltfImporterTest::materialOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
 
@@ -3947,7 +3947,7 @@ void CgltfImporterTest::materialInvalidAlphaMode() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
     /* Cgltf parses an invalid alpha mode as opaque, without any error */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-invalid-alpha-mode.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
@@ -3967,7 +3967,7 @@ void CgltfImporterTest::materialTexCoordFlip() {
     if(data.flipInMaterial)
         importer->configuration().setValue("textureCoordinateYFlipInMaterial", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         data.fileName)));
 
     auto mesh = importer->mesh(data.meshName);
@@ -4003,7 +4003,7 @@ void CgltfImporterTest::texture() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "texture" + std::string{data.suffix})));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
@@ -4056,7 +4056,7 @@ void CgltfImporterTest::textureOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
 
@@ -4065,7 +4065,7 @@ void CgltfImporterTest::textureInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "texture-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
@@ -4082,7 +4082,7 @@ void CgltfImporterTest::textureDefaultSampler() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "texture-default-sampler" + std::string{data.suffix})));
 
     auto texture = importer->texture(0);
@@ -4102,7 +4102,7 @@ void CgltfImporterTest::textureEmptySampler() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "texture-empty-sampler" + std::string{data.suffix})));
 
     auto texture = importer->texture(0);
@@ -4120,7 +4120,7 @@ void CgltfImporterTest::textureEmptySampler() {
 void CgltfImporterTest::textureMissingSource() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "texture-missing-source.gltf")));
     CORRADE_COMPARE(importer->textureCount(), 1);
 
@@ -4136,7 +4136,7 @@ void CgltfImporterTest::textureExtensions() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "texture-extensions.gltf")));
 
     /* Check we didn't forget to test anything */
@@ -4156,7 +4156,7 @@ void CgltfImporterTest::textureExtensionsOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "texture-extensions-invalid-basisu-oob.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
 }
@@ -4167,7 +4167,7 @@ void CgltfImporterTest::textureExtensionsInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "texture-extensions-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
@@ -4194,7 +4194,7 @@ void CgltfImporterTest::imageEmbedded() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     /* Open as data, so we verify opening embedded images from data does not
        cause any problems even when no file callbacks are set */
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "image" + std::string{data.suffix}))));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
@@ -4217,7 +4217,7 @@ void CgltfImporterTest::imageExternal() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "image" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
@@ -4234,7 +4234,7 @@ void CgltfImporterTest::imageExternal() {
 
 void CgltfImporterTest::imageExternalNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "image-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, "image-notfound.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     std::ostringstream out;
@@ -4256,7 +4256,7 @@ void CgltfImporterTest::imageExternalBufferNotFound() {
 
 void CgltfImporterTest::imageExternalNoPathNoCallback() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "image.gltf"))));
+    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, "image.gltf"))));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     std::ostringstream out;
@@ -4288,7 +4288,7 @@ void CgltfImporterTest::imageBasis() {
     _manager.metadata("BasisImporter")->configuration().setValue("format", "Astc4x4RGBA");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "image-basis" + std::string{data.suffix})));
 
     CORRADE_COMPARE(importer->textureCount(), 1);
@@ -4315,7 +4315,7 @@ void CgltfImporterTest::imageMipLevels() {
     _manager.metadata("BasisImporter")->configuration().setValue("format", "RGBA8");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "image-basis.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, "image-basis.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(1), 2);
@@ -4476,7 +4476,7 @@ void CgltfImporterTest::utf8filenames() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "přívodní-šňůra.gltf")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -4499,7 +4499,7 @@ void CgltfImporterTest::utf8filenames() {
 
 void CgltfImporterTest::escapedStrings() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "escaped-strings.gltf")));
 
     CORRADE_COMPARE(importer->objectCount(), 6);
@@ -4583,7 +4583,7 @@ void CgltfImporterTest::encodedUris() {
         }, strings);
 
     /* Prevent the file callback being used for the main glTF content */
-    const auto data = Utility::Directory::read(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    const auto data = Utility::Directory::read(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "encoded-uris.gltf"));
     CORRADE_VERIFY(importer->openData(data));
 
@@ -4609,7 +4609,7 @@ void CgltfImporterTest::encodedUris() {
 void CgltfImporterTest::versionSupported() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR,
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "version-supported.gltf")));
 }
 
@@ -4621,7 +4621,7 @@ void CgltfImporterTest::versionUnsupported() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
 }
 
@@ -4633,7 +4633,7 @@ void CgltfImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf"));
+    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf"));
     CORRADE_VERIFY(data.open(*importer, memory));
     CORRADE_COMPARE(importer->cameraCount(), 4);
 
@@ -4649,15 +4649,15 @@ void CgltfImporterTest::openMemory() {
 void CgltfImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void CgltfImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(TINYGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
     CORRADE_COMPARE(importer->cameraCount(), 4);
 
     /* Verify that everything is working the same way on second use. It's only

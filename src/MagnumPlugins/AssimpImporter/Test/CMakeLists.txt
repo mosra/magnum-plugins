@@ -25,11 +25,11 @@
 #
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
-    set(TINYGLTFIMPORTER_TEST_DIR ".")
     set(ASSIMPIMPORTER_TEST_DIR ".")
+    set(CGLTFIMPORTER_TEST_DIR ".")
 else()
-    set(TINYGLTFIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/TinyGltfImporter/Test)
     set(ASSIMPIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    set(CGLTFIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test)
 endif()
 
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
