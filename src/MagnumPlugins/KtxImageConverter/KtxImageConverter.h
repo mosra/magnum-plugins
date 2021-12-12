@@ -120,7 +120,8 @@ by two, rounded down. Incomplete mip chains are supported.
 @subsection Trade-KtxImageConverter-behavior-supercompression Supercompression
 
 Saving files with [supercompression](https://github.khronos.org/KTX-Specification/#supercompressionSchemes)
-is not supported.
+is not supported. You can however use @ref BasisImageConverter to create
+Basis-supercompressed KTX2 files.
 
 @section Trade-KtxImageConverter-configuration Plugin-specific configuration
 
