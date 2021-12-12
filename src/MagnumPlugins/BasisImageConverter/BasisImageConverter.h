@@ -61,12 +61,8 @@ namespace Magnum { namespace Trade {
 @m_keywords{BasisKtxImageConverter}
 
 Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
-compressed image files (`*.basis` or `*.ktx2`) from images with format
-@ref PixelFormat::R8Unorm, @ref PixelFormat::R8Srgb,
-@ref PixelFormat::RG8Unorm, @ref PixelFormat::RG8Srgb,
-@ref PixelFormat::RGB8Unorm, @ref PixelFormat::RGB8Srgb,
-@ref PixelFormat::RGBA8Unorm or @ref PixelFormat::RGBA8Srgb.
-Use @ref BasisImporter to import images in this format.
+compressed image files (`*.basis` or `*.ktx2`) from 2D images with optional mip
+levels. You can use @ref BasisImporter to import images in this format.
 
 This plugin provides `BasisKtxImageConverter`.
 
@@ -120,6 +116,14 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
 
 @section Trade-BasisImageConverter-behavior Behavior and limitations
+
+@subsection Trade-BasisImageConverter-behavior-formats Supported formats
+
+The @ref PixelFormat::R8Unorm, @relativeref{PixelFormat,R8Srgb},
+@relativeref{PixelFormat,RG8Unorm}, @relativeref{PixelFormat,RG8Srgb},
+@relativeref{PixelFormat,RGB8Unorm}, @relativeref{PixelFormat,RGB8Srgb},
+@relativeref{PixelFormat,RGBA8Unorm} and @relativeref{PixelFormat,RGBA8Srgb}
+formats are supported.
 
 @subsection Trade-BasisImageConverter-behavior-multilevel Multilevel images
 
