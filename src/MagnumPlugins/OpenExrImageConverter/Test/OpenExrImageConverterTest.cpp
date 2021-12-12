@@ -185,17 +185,34 @@ const ImageView3D CubeRg16f{PixelStorage{}.setSkip({0, 0, 1}).setImageHeight(3),
     PixelFormat::RG16F, {2, 2, 6}, CubeRg16fData};
 
 const struct {
+    const char* name;
     const char* compression;
+    Containers::Optional<Int> zipCompressionLevel;
+    Containers::Optional<Float> dwaCompressionLevel;
     std::size_t size;
     std::size_t cubeSize;
 } CompressionData[] {
-    /* Just the lossless ones, I don't feel the need to bother with fuzzy
-       image comparison */
-    {"", 427, 602},
-    {"rle", 427, 602},
-    {"zip", 391, 402},
-    {"zips", 427, 602},
-    {"piz", 395, 426}
+    {"", "", {}, {}, 427, 602},
+    {"RLE", "rle", {}, {}, 427, 602},
+    /* For consistency with versions before 3.1.3 (where it's hardcoded to
+       6 instead of 4 and can't be changed) */
+    {"ZIP level 6", "zip", 6, {}, 391, 402},
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30103
+    {"ZIP level 0", "zip", 0, {}, 395, 426},
+    #endif
+    {"ZIPS", "zips", {}, {}, 427, 602},
+    {"PIZ", "piz", {}, {}, 395, 426},
+    {"DWAA default level", "dwaa", {}, {}, 395, 426},
+    /* Sigh, no difference. Data too weird, probably. On OpenEXR < 3.1.3 it
+       *does* make a difference, but that's only because there's an additional
+       header attribute describing compression level. */
+    {"DWAB level 21.7", "dwab", {}, 21.7f,
+        #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30103
+        395, 426
+        #else
+        429, 460
+        #endif
+    }
 };
 
 const struct {
@@ -358,7 +375,13 @@ void OpenExrImageConverterTest::rgb16f() {
 }
 
 void OpenExrImageConverterTest::rgba32f() {
-    const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Rgba32f);
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
+
+    const auto data = converter->convertToData(Rgba32f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"),
@@ -378,7 +401,13 @@ void OpenExrImageConverterTest::rgba32f() {
 }
 
 void OpenExrImageConverterTest::rg32ui() {
-    const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Rg32ui);
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
+
+    const auto data = converter->convertToData(Rg32ui);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
         Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr"),
@@ -421,6 +450,10 @@ void OpenExrImageConverterTest::envmap2DLatLong() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "latlong");
 
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
+
     /* The width needs to be 2*height, abuse existing data for that */
     const ImageView2D R32ui{PixelFormat::R32UI, {4, 2}, Rg32uiData};
 
@@ -459,6 +492,10 @@ void OpenExrImageConverterTest::envmap2DInvalid() {
 void OpenExrImageConverterTest::envmap3DCubeMap() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "cube");
+
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
 
     const auto data = converter->convertToData(CubeRg16f);
 
@@ -541,6 +578,11 @@ void OpenExrImageConverterTest::customChannels() {
     converter->configuration().setValue("g", "Y");
     converter->configuration().setValue("b", "Z");
     converter->configuration().setValue("a", "handedness");
+
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
+
     const auto data = converter->convertToData(Rgba32f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
@@ -666,6 +708,10 @@ void OpenExrImageConverterTest::customWindows() {
     converter->configuration().setValue("displayWindow", Vector4i{38, 56, 47, 72});
     converter->configuration().setValue("dataOffset", Vector2i{375, 226});
 
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
+
     const auto data = converter->convertToData(Rgb16f);
 
     CORRADE_COMPARE_AS((std::string{data, data.size()}),
@@ -691,6 +737,10 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
     converter->configuration().setValue("envmap", "cube");
     converter->configuration().setValue("displayWindow", Vector4i{38, 56, 47, 72});
     converter->configuration().setValue("dataOffset", Vector2i{375, 226});
+
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
 
     const auto data = converter->convertToData(CubeRg16f);
 
@@ -733,10 +783,15 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
 
 void OpenExrImageConverterTest::compression() {
     auto&& data = CompressionData[testCaseInstanceId()];
-    setTestCaseDescription(data.compression);
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("compression", data.compression);
+
+    if(data.zipCompressionLevel)
+        converter->configuration().setValue("zipCompressionLevel", *data.zipCompressionLevel);
+    if(data.dwaCompressionLevel)
+        converter->configuration().setValue("dwaCompressionLevel", *data.dwaCompressionLevel);
 
     const auto out = converter->convertToData(Rgba32f);
     CORRADE_VERIFY(out);
@@ -759,11 +814,16 @@ void OpenExrImageConverterTest::compression() {
 
 void OpenExrImageConverterTest::compressionCubeMap() {
     auto&& data = CompressionData[testCaseInstanceId()];
-    setTestCaseDescription(data.compression);
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "cube");
     converter->configuration().setValue("compression", data.compression);
+
+    if(data.zipCompressionLevel)
+        converter->configuration().setValue("zipCompressionLevel", *data.zipCompressionLevel);
+    if(data.dwaCompressionLevel)
+        converter->configuration().setValue("dwaCompressionLevel", *data.dwaCompressionLevel);
 
     const auto out = converter->convertToData(CubeRg16f);
     CORRADE_VERIFY(out);
@@ -959,6 +1019,10 @@ void OpenExrImageConverterTest::levelsCubeMap() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "cube");
 
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
+
     const Half data0[]{
          0.0_h,  1.0_h,  2.0_h,  3.0_h,
          4.0_h,  5.0_h,  6.0_h,  7.0_h,
@@ -1066,6 +1130,10 @@ void OpenExrImageConverterTest::levelsCubeMap() {
 void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "cube");
+
+    /* Reset ZIP compression level to 6 for consistency with versions before
+       3.1.3 (on those it's the hardcoded default) */
+    converter->configuration().setValue("zipCompressionLevel", 6);
 
     const Half data0[]{
          0.0_h,  1.0_h,  2.0_h,  3.0_h,

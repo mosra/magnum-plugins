@@ -198,6 +198,23 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
         compression
     };
 
+    /* Compression levels, ZIP only since 3.1.3, DWA is set differently in
+       earlier versions. There's also setDefault{Zip,Dwa}CompressionLevel() but
+       because it's global I won't ever touch it. Also I hope setting DWA/ZIP
+       compression even if it's not actually used won't be a problem. */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30103
+    header.zipCompressionLevel() =
+        configuration.value<Int>("zipCompressionLevel");
+    header.dwaCompressionLevel() =
+        configuration.value<Float>("dwaCompressionLevel");
+    #else
+    /* Add this header attribute only if it's a non-default value and we're
+       actually using the DWA compression -- otherwise it just inflates the
+       header size and has no reason to be there. */
+    if((compression == Imf::DWAA_COMPRESSION || compression == Imf::DWAB_COMPRESSION) && configuration.value<Float>("dwaCompressionLevel") != 45.0f)
+        Imf::addDwaCompressionLevel(header, configuration.value<Float>("dwaCompressionLevel"));
+    #endif
+
     /* Set envmap metadata, if specified. The 2D/3D doConvertToData() already
        guards that latlong is only set for 2D and cubemap only for 3D plus all
        the size restrictions, so we can just assert here. */
