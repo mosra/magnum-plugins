@@ -171,9 +171,9 @@ Calls to the @ref image1DCount() / @ref image2DCount() / @ref image3DCount(),
 @subsection Trade-KtxImporter-behavior-supercompression Supercompression
 
 Importing files with [supercompression](https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html#supercompressionSchemes)
-is not supported. When @ref Trade-KtxImporter-behavior-basis "forwarding Basis
-Universal compressed files", some supercompression schemes like BasisLZ and
-Zstandard can be handled by @ref BasisImporter.
+is not supported. When @ref Trade-KtxImporter-behavior-basis "forwarding Basis Universal compressed files",
+some supercompression schemes like BasisLZ and Zstandard can be handled by
+@ref BasisImporter.
 
 @section Trade-KtxImporter-configuration Plugin-specific configuration
 
