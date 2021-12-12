@@ -1195,6 +1195,10 @@ void OpenExrImageConverterTest::threads() {
     auto&& data = ThreadsData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    #ifdef CORRADE_TARGET_MINGW
+    CORRADE_SKIP("Running this test causes a freeze on exit on MinGW. Or something like that. Needs investigation.");
+    #endif
+
     /* Assuming the tests were run in order, if the autodetected thread count
        is less than 3 then the message about increasing global thread pool size
        won't be printed. Skip the test in that case. */
