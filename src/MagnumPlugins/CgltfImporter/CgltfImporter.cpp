@@ -208,32 +208,23 @@ std::string decodeUri(Containers::StringView uri) {
     return decoded;
 }
 
-struct JsonToken {
-    jsmntype_t type;
-    Containers::StringView str;
-    std::size_t size;
-};
-
-Containers::Array<JsonToken> parseJson(Containers::StringView str) {
+Containers::Array<jsmntok_t> parseJson(Containers::StringView str) {
     jsmn_parser parser{0, 0, 0};
     Int numTokens = jsmn_parse(&parser, str.data(), str.size(), nullptr, 0);
     /* All JSON strings we're parsing come from cgltf and should already have
        passed jsmn parsing */
     CORRADE_INTERNAL_ASSERT(numTokens >= 0);
 
-    Containers::Array<jsmntok_t> jsmnTokens{std::size_t(numTokens)};
+    Containers::Array<jsmntok_t> tokens{std::size_t(numTokens)};
     jsmn_init(&parser);
-    numTokens = jsmn_parse(&parser, str.data(), str.size(), jsmnTokens.data(), numTokens);
-    CORRADE_INTERNAL_ASSERT(std::size_t(numTokens) == jsmnTokens.size());
-
-    Containers::Array<JsonToken> tokens{jsmnTokens.size()};
-    for(Int i = 0; i != numTokens; ++i) {
-        tokens[i].type = jsmnTokens[i].type;
-        tokens[i].str = str.slice(jsmnTokens[i].start, jsmnTokens[i].end);
-        tokens[i].size = jsmnTokens[i].size;
-    }
+    numTokens = jsmn_parse(&parser, str.data(), str.size(), tokens.data(), numTokens);
+    CORRADE_INTERNAL_ASSERT(std::size_t(numTokens) == tokens.size());
 
     return tokens;
+}
+
+Containers::StringView tokenString(Containers::StringView json, const jsmntok_t& token) {
+    return json.slice(token.start, token.end);
 }
 
 }
@@ -2585,11 +2576,17 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
         for(std::size_t i = 0; i != tex.extensions_count && imageId == ~0u; ++i) {
             for(const auto& ext: extensions) {
                 if(tex.extensions[i].name == ext) {
+                    const Containers::StringView json = tex.extensions[i].data;
                     const auto tokens = parseJson(tex.extensions[i].data);
-                    if(tokens.size() == 3 && tokens[0].type == JSMN_OBJECT && tokens[1].type == JSMN_STRING && tokens[1].str == "source" && tokens[2].type == JSMN_PRIMITIVE) {
-                        std::size_t parsed = 0;
-                        const Int source = std::stoi(tokens[2].str, &parsed);
-                        if(parsed != tokens[2].str.size() || source < 0 || UnsignedInt(source) >= _d->data->images_count) {
+                    /* This is checked by cgltf */
+                    CORRADE_INTERNAL_ASSERT(!tokens.empty() && tokens[0].type == JSMN_OBJECT);
+                    /* @todo This assumes there is only one key in the object.
+                       There could be unrelated things in there like "note". */
+                    if(tokens.size() == 3 && tokens[1].type == JSMN_STRING &&
+                       tokenString(json, tokens[1]) == "source" && tokens[2].type == JSMN_PRIMITIVE)
+                    {
+                        const Int source = cgltf_json_to_int(&tokens[2], reinterpret_cast<const uint8_t*>(json.data()));
+                        if(source < 0 || UnsignedInt(source) >= _d->data->images_count) {
                             Error{} << "Trade::CgltfImporter::texture():" << ext << "image" << source << "out of bounds for" << _d->data->images_count << "images";
                             return Containers::NullOpt;
                         }
