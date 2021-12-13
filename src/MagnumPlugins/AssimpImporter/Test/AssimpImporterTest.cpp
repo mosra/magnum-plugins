@@ -2254,7 +2254,13 @@ void AssimpImporterTest::materialRaw() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.fbx")));
     CORRADE_COMPARE(importer->materialCount(), 2);
 
-    Containers::Optional<MaterialData> material = importer->material("Custom_Types");
+    Containers::Optional<MaterialData> material;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        material = importer->material("Custom_Types");
+    }
+
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType{});
     CORRADE_COMPARE(material->layerCount(), 1);
@@ -2288,9 +2294,11 @@ void AssimpImporterTest::materialRaw() {
         CORRADE_COMPARE(material->attribute<Float>(2), 0.25f);
     }
 
-    if(_assimpVersion < 500)
+    if(_assimpVersion < 500) {
         CORRADE_WARN("This version of Assimp doesn't import raw FBX material properties.");
-    else {
+
+        CORRADE_VERIFY(out.str().empty());
+    } else {
         /* Raw attributes taken directly from the FBX file, prefixed with "$raw.".
            Seems to be the only importer that supports that. */
         {
@@ -2298,12 +2306,14 @@ void AssimpImporterTest::materialRaw() {
             CORRADE_COMPARE(material->attributeType(3), MaterialAttributeType::Vector3);
             CORRADE_COMPARE(material->attribute<Vector3>(3), (Vector3{0.1f, 0.2f, 0.3f}));
         } {
-            CORRADE_EXPECT_FAIL_IF(_assimpVersion < 500,
-                "This version of Assimp doesn't import raw FBX material properties.");
             CORRADE_COMPARE(material->attributeName(4), "$raw.SomeString"_s);
             CORRADE_COMPARE(material->attributeType(4), MaterialAttributeType::String);
             CORRADE_COMPARE(material->attribute<Containers::StringView>(4), "Ministry of Finance (Turkmenistan)");
         }
+
+        CORRADE_COMPARE(out.str(),
+            "Trade::AssimpImporter::material(): property $raw.LongNameLongNameLongNameLongNameLongNameLongNameLongName is too large with 67 bytes, skipping\n"
+            "Trade::AssimpImporter::material(): property $raw.LongValue is too large with 70 bytes, skipping\n");
     }
 
     if(_assimpVersion < 410)
