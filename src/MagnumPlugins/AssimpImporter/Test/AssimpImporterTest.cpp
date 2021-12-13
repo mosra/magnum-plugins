@@ -2011,7 +2011,7 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
     CORRADE_COMPARE(importer->textureCount(), 1);
     CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::AmbientTexture));
     /* It shouldn't be complaining about white ambient in this case */
-    CORRADE_COMPARE(out.str(), "");
+    CORRADE_VERIFY(out.str().empty());
 }
 
 void AssimpImporterTest::materialMultipleTextures() {
