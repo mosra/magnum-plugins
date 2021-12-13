@@ -134,6 +134,7 @@ corrade_add_test(CgltfImporterTest
         material-invalid-pbr-specular-oob.gltf
         material-metallicroughness.gltf
         material-phong-fallback.gltf
+        material-raw.gltf
         material-specularglossiness.gltf
         material-texcoord-flip.bin
         material-texcoord-flip.gltf

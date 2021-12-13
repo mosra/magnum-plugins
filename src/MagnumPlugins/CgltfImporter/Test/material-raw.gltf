@@ -1,0 +1,144 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "basecolor.png"
+        },
+        {
+            "uri": "snake.snk"
+        }
+    ],
+    "materials": [
+        {
+            "name": "raw out-of-bounds",
+            "extensions": {
+                "MAGNUM_material_snake": {
+                    "snakeTexture": {
+                        "index": 2
+                    }
+                }
+            }
+        },
+        {
+            "name": "raw",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [ 0.8, 0.2, 0.4, 0.3 ],
+                "baseColorTexture": {
+                    "index": 0
+                }
+            },
+            "doubleSided": true,
+            "extensions": {
+                "MAGNUM_material_snake": {
+                    "note": "should be overwritten by later duplicate extension",
+                    "snakeFactor": 3.3,
+                    "thisWillDisappear": true
+                },
+                "KHR_materials_clearcoat": {
+                    "note": "should be imported as a predefined layer",
+                    "clearcoatFactor": 0.5
+                },
+                "MAGNUM_material_snake": {
+                    "snakeFactor": 6.6,
+                    "snakeTexture": {
+                        "index": 1,
+                        "texCoord": 3,
+                        "snakeCoord": "ignored, not parsed by cgltf",
+                        "scale": 0.2,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.5, -0.5],
+                                "scale": [0.33, 0.44]
+                            }
+                        }
+                    },
+                    "defaultScaleTexture": {
+                        "index": 1,
+                        "scale": 1.0
+                    }
+                },
+                "MAGNUM_material_type_zoo": {
+                    "boolTrue": true,
+                    "boolFalse": false,
+                    "int": -7992835,
+                    "unsignedInt": 109835761,
+                    "float": 4.321,
+                    "string": "Ribbit -- ribbit",
+                    "emptyString": "",
+                    "UppercaseName":  true ,
+                    "vec1": [9.1],
+                    "vec2": [
+                        -9.1  ,
+                        8.2  ],
+                    "vec3": [9, 8, 7.3],
+                    "vec4": [-9, 8, 7.3, -6],
+                    "vec1i": [-9],
+                    "vec2i": [9, -8],
+                    "vec3i": [-9, 8, 7],
+                    "vec4i": [-9, -8, -7, -6],
+                    "vec1ui": [9],
+                    "vec2ui": [9, 8],
+                    "vec3ui": [9, 8, 7],
+                    "vec4ui": [9, 8, 7, 6]
+                },
+                "MAGNUM_material_forbidden_types": {
+                    "null": null,
+                    "emptyArray": [],
+                    "oversizedArray": [9.1, 8.2, 7.3, 6.4, 5.5],
+                    "stringArray": ["one", "two", "", "four"],
+                    "boolArray": [true, false],
+                    "mixedStringArray": ["1", "2", 3, "4"],
+                    "mixedBoolArray": [1, 2, 3, false],
+                    "mixedObjectArray": [1, 2, 3, {"4": "5", "6": "7"}],
+                    "nonTextureObject": {
+                        "these": {"should": "all"},
+                        "be": ["ignored"]
+                    },
+                    "Texture": {
+                        "note": "this should be ignored",
+                        "index": 1
+                    },
+                    "invalidTexture": {
+                        "note": "index is mandatory",
+                        "indeks": 0
+                    },
+                    "anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!!": 0,
+                    "aValueThatWontFit": "1 pound ground turkey, 1 medium-sized onion, 1 cup celery (diced)",
+                    "": "Empty attributes are ignored"
+                },
+                "VENDOR_empty_extension_object": {},
+                "VENDOR_material_thisnameiswaytoolongforalayername!": {
+                    "wow": ["so", "long"]
+                },
+                "": {
+                    "note": "Empty extension names are ignored"
+                }
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 1
+        }
+    ],
+    "extensionsUsed": [
+        "KHR_materials_clearcoat",
+        "MAGNUM_material_snake",
+        "MAGNUM_material_type_zoo",
+        "MAGNUM_material_forbidden_types",
+        "VENDOR_empty_extension_object",
+        "VENDOR_material_thisnameiswaytoolongforalayername!",
+        "",
+        "KHR_texture_transform"
+    ]
+}

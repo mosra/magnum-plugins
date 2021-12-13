@@ -29,14 +29,14 @@
         {
             "name": "unknown extension, no fallback",
             "extensions": {
-                "MGNM_fake_extension": {
+                "MAGNUM_fake_extension": {
                     "source": 2
                 }
             }
         }
     ],
     "extensionsUsed": [
-        "MGNM_fake_extension",
+        "MAGNUM_fake_extension",
         "GOOGLE_texture_basis"
     ]
 }

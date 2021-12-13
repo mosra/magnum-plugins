@@ -150,6 +150,8 @@ struct CgltfImporterTest: TestSuite::Tester {
     void materialUnlit();
     void materialClearCoat();
     void materialPhongFallback();
+    void materialRaw();
+    void materialRawOutOfBounds();
 
     void materialOutOfBounds();
     void materialInvalidAlphaMode();
@@ -769,7 +771,9 @@ CgltfImporterTest::CgltfImporterTest() {
               &CgltfImporterTest::materialCommon,
               &CgltfImporterTest::materialUnlit,
               &CgltfImporterTest::materialClearCoat,
-              &CgltfImporterTest::materialPhongFallback});
+              &CgltfImporterTest::materialPhongFallback,
+              &CgltfImporterTest::materialRaw,
+              &CgltfImporterTest::materialRawOutOfBounds});
 
     addInstancedTests({&CgltfImporterTest::materialOutOfBounds},
         Containers::arraySize(MaterialOutOfBoundsData));
@@ -3929,6 +3933,262 @@ void CgltfImporterTest::materialPhongFallback() {
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 0);
     }
+}
+
+void CgltfImporterTest::materialRaw() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
+        "material-raw.gltf")));
+
+    Containers::Optional<MaterialData> material;
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        material = importer->material("raw");
+    }
+
+    CORRADE_VERIFY(material);
+    /* Standard layer + clear coat + 2 unknown extensions */
+    CORRADE_COMPARE(material->types(), MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat);
+    CORRADE_COMPARE(material->layerCount(), 2 + 2);
+
+    /* Standard layer import still works */
+    {
+        CORRADE_ITERATION("base layer");
+        CORRADE_COMPARE(material->attributeCount(0), 3);
+
+        {
+            constexpr MaterialAttribute name = MaterialAttribute::BaseColor;
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Vector4);
+            CORRADE_COMPARE(material->attribute<Color4>(0, name), (Color4{0.8f, 0.2f, 0.4f, 0.3f}));
+        } {
+            constexpr MaterialAttribute name = MaterialAttribute::BaseColorTexture;
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::UnsignedInt);
+            CORRADE_COMPARE(material->attribute<UnsignedInt>(0, name), 0u);
+        } {
+            constexpr MaterialAttribute name = MaterialAttribute::DoubleSided;
+            CORRADE_VERIFY(material->hasAttribute(0, name));
+            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Bool);
+            CORRADE_COMPARE(material->attribute<bool>(0, name), true);
+        }
+
+    /* Known extension layer import still works */
+    } {
+        constexpr MaterialLayer layer = MaterialLayer::ClearCoat;
+        CORRADE_ITERATION(layer);
+        CORRADE_VERIFY(material->hasLayer(layer));
+        /* +1 for the layer name */
+        CORRADE_COMPARE(material->attributeCount(layer), 2 + 1);
+
+        {
+            constexpr MaterialAttribute name = MaterialAttribute::LayerFactor;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), 0.5f);
+        } {
+            constexpr MaterialAttribute name = MaterialAttribute::Roughness;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), 0.0f);
+        }
+
+    /* Unknown extension with a textureInfo object */
+    } {
+        constexpr Containers::StringView layer = "#MAGNUM_material_snake"_s;
+        CORRADE_ITERATION(layer);
+        CORRADE_VERIFY(material->hasLayer(layer));
+        CORRADE_COMPARE(material->attributeCount(layer), 6 + 1);
+
+        {
+            constexpr Containers::StringView name = "snakeFactor"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), 6.6f);
+        } {
+            constexpr Containers::StringView name = "snakeTexture"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
+            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 1u);
+        } {
+            constexpr Containers::StringView name = "snakeTextureMatrix"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Matrix3x3);
+            CORRADE_COMPARE(material->attribute<Matrix3>(layer, name), (Matrix3{
+                {0.33f, 0.0f,  0.0f},
+                {0.0f,  0.44f, 0.0f},
+                {0.5f,  1.06f, 1.0f}
+            }));
+        } {
+            constexpr Containers::StringView name = "snakeTextureCoordinates"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
+            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 3u);
+        } {
+            constexpr Containers::StringView name = "snakeTextureScale"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), 0.2f);
+        } {
+            constexpr Containers::StringView name = "defaultScaleTexture"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
+            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 1u);
+        }
+
+        /* No defaultScaleTextureScale because scale is 1.0 */
+        CORRADE_VERIFY(!material->hasAttribute(layer, "defaultScaleTextureScale"_s));
+
+    /* Unknown extension with all other supported types */
+    } {
+        constexpr Containers::StringView layer = "#MAGNUM_material_type_zoo"_s;
+        CORRADE_ITERATION(layer);
+        CORRADE_VERIFY(material->hasLayer(layer));
+        CORRADE_COMPARE(material->attributeCount(layer), 20 + 1);
+
+        {
+            constexpr Containers::StringView name = "boolTrue"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
+            CORRADE_COMPARE(material->attribute<bool>(layer, name), true);
+        } {
+            constexpr Containers::StringView name = "boolFalse"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
+            CORRADE_COMPARE(material->attribute<bool>(layer, name), false);
+        } {
+            constexpr Containers::StringView name = "int"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Int);
+            CORRADE_COMPARE(material->attribute<Int>(layer, name), -7992835);
+        } {
+            constexpr Containers::StringView name = "unsignedInt"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
+            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 109835761u);
+        } {
+            constexpr Containers::StringView name = "float"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), 4.321f);
+        } {
+            constexpr Containers::StringView name = "string"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(layer, name), "Ribbit -- ribbit"_s);
+        } {
+            constexpr Containers::StringView name = "emptyString"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(layer, name), ""_s);
+        } {
+            constexpr Containers::StringView name = "uppercaseName"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
+            CORRADE_COMPARE(material->attribute<bool>(layer, name), true);
+        } {
+            constexpr Containers::StringView name = "vec1"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), 9.1f);
+        } {
+            constexpr Containers::StringView name = "vec2"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector2);
+            CORRADE_COMPARE(material->attribute<Vector2>(layer, name), (Vector2{-9.1f, 8.2f}));
+        } {
+            constexpr Containers::StringView name = "vec3"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector3);
+            CORRADE_COMPARE(material->attribute<Vector3>(layer, name), (Vector3{9.0f, 8.0f, 7.3f}));
+        } {
+            constexpr Containers::StringView name = "vec4"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector4);
+            CORRADE_COMPARE(material->attribute<Vector4>(layer, name), (Vector4{-9.0f, 8.0f, 7.3f, -6.0f}));
+        } {
+            constexpr Containers::StringView name = "vec1i"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Int);
+            CORRADE_COMPARE(material->attribute<Int>(layer, name), -9);
+        } {
+            constexpr Containers::StringView name = "vec2i"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector2i);
+            CORRADE_COMPARE(material->attribute<Vector2i>(layer, name), (Vector2i{9, -8}));
+        } {
+            constexpr Containers::StringView name = "vec3i"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector3i);
+            CORRADE_COMPARE(material->attribute<Vector3i>(layer, name), (Vector3i{-9, 8, 7}));
+        } {
+            constexpr Containers::StringView name = "vec4i"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector4i);
+            CORRADE_COMPARE(material->attribute<Vector4i>(layer, name), (Vector4i{-9, -8, -7, -6}));
+        } {
+            constexpr Containers::StringView name = "vec1ui"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
+            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 9u);
+        } {
+            constexpr Containers::StringView name = "vec2ui"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector2ui);
+            CORRADE_COMPARE(material->attribute<Vector2ui>(layer, name), (Vector2ui{9u, 8u}));
+        } {
+            constexpr Containers::StringView name = "vec3ui"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector3ui);
+            CORRADE_COMPARE(material->attribute<Vector3ui>(layer, name), (Vector3ui{9u, 8u, 7u}));
+        } {
+            constexpr Containers::StringView name = "vec4ui"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector4ui);
+            CORRADE_COMPARE(material->attribute<Vector4ui>(layer, name), (Vector4ui{9u, 8u, 7u, 6u}));
+        }
+    }
+
+    /* No layer for MAGNUM_material_forbidden_types because all attributes are
+       invalid types or too large and skipped */
+    CORRADE_VERIFY(!material->hasLayer("#MAGNUM_material_forbidden_types"_s));
+
+    /* But it produces all kinds of warnings */
+    CORRADE_COMPARE(out.str(),
+        "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"
+        "Trade::CgltfImporter::material(): property null has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property emptyArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property oversizedArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property stringArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property boolArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedStringArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedBoolArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedObjectArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property nonTextureObject has non-texture object type, skipping\n"
+        "Trade::CgltfImporter::material(): property Texture has non-texture object type, skipping\n"
+        "Trade::CgltfImporter::material(): property invalidTexture has invalid texture object type, skipping\n"
+        "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
+        "Trade::CgltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
+}
+
+void CgltfImporterTest::materialRawOutOfBounds() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
+        "material-raw.gltf")));
+
+    std::ostringstream out;
+    {
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->material("raw out-of-bounds"));
+    }
+
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): snakeTexture index 2 out of bounds for 2 textures\n");
 }
 
 void CgltfImporterTest::materialOutOfBounds() {
