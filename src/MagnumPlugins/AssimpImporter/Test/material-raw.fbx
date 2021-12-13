@@ -356,6 +356,8 @@ Objects:  {
 			P: "Opacity", "double", "Number", "",0.25
 			P: "SomeColor", "Vector3D", "", "",0.1,0.2,0.3
 			P: "SomeString", "KString", "", "","Ministry of Finance (Turkmenistan)"
+			P: "LongNameLongNameLongNameLongNameLongNameLongNameLongName", "KString", "", "","Test"
+			P: "LongValue", "KString", "", "","LongValueLongValueLongValueLongValueLongValueLongValue"
 		}
 	}
 }
