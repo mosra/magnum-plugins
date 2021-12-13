@@ -259,7 +259,7 @@ Import of morph data is not supported at the moment.
     @ref VertexFormat::Vector2sNormalized (which includes the additional types
     specified by [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)). The
     data are by default Y-flipped on import unless
-    @cb{.conf} textureCoordinateYFlipInMaterial @ce is either explicitly
+    @cb{.ini} textureCoordinateYFlipInMaterial @ce is either explicitly
     enabled, or if the file contains non-normalized integer or normalized
     signed integer texture coordinates (which can't easily be flipped). In that
     case texture coordinate data are kept as-is and materials provide a texture
