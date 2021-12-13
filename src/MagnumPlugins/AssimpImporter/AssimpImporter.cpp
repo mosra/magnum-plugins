@@ -1625,7 +1625,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
 
                 /* +1 is null byte for the key */
                 if(valueSize + keyString.size() + 1 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
-                    Error{} << "Trade::AssimpImporter::material(): property" << keyString << "is too large with" << valueSize << "bytes, skipping";
+                    Warning{} << "Trade::AssimpImporter::material(): property" << keyString <<
+                        "is too large with" << valueSize + keyString.size() << "bytes, skipping";
                     continue;
                 }
 
