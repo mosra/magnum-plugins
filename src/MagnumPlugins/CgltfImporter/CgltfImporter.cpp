@@ -313,7 +313,7 @@ struct CgltfImporter::Document {
        implicitly as we can't perform Y-flip directly on the data. */
     bool textureCoordinateYFlipInMaterial = false;
 
-    void materialTexture(const cgltf_texture_view& texture, Containers::Array<MaterialAttributeData>& attributes, MaterialAttribute attribute, MaterialAttribute matrixAttribute, MaterialAttribute coordinateAttribute) const;
+    void materialTexture(const cgltf_texture_view& texture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute) const;
 
     bool open = false;
 
@@ -2179,7 +2179,7 @@ std::string CgltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->decodeString(_d->data->materials[id].name);
 }
 
-void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture, Containers::Array<MaterialAttributeData>& attributes, const MaterialAttribute attribute, const MaterialAttribute matrixAttribute, const MaterialAttribute coordinateAttribute) const {
+void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute) const {
     CORRADE_INTERNAL_ASSERT(texture.texture);
 
     UnsignedInt texCoord = texture.texcoord;
@@ -2234,7 +2234,7 @@ void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture,
     /* In some cases (when dealing with packed textures), we're parsing &
        adding texture coordinates and matrix multiple times, but adding the
        packed texture ID just once. In other cases the attribute is invalid. */
-    if(attribute != MaterialAttribute{}) {
+    if(!attribute.isEmpty()) {
         const UnsignedInt textureId = texture.texture - data->textures;
         arrayAppend(attributes, InPlaceInit, attribute, textureId);
     }
@@ -2282,27 +2282,27 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             _d->materialTexture(
                 material.pbr_metallic_roughness.base_color_texture,
                 attributes,
-                MaterialAttribute::BaseColorTexture,
-                MaterialAttribute::BaseColorTextureMatrix,
-                MaterialAttribute::BaseColorTextureCoordinates);
+                "BaseColorTexture"_s,
+                "BaseColorTextureMatrix"_s,
+                "BaseColorTextureCoordinates"_s);
         }
 
         if(material.pbr_metallic_roughness.metallic_roughness_texture.texture) {
             _d->materialTexture(
                 material.pbr_metallic_roughness.metallic_roughness_texture,
                 attributes,
-                MaterialAttribute::NoneRoughnessMetallicTexture,
-                MaterialAttribute::MetalnessTextureMatrix,
-                MaterialAttribute::MetalnessTextureCoordinates);
+                "NoneRoughnessMetallicTexture"_s,
+                "MetalnessTextureMatrix"_s,
+                "MetalnessTextureCoordinates"_s);
 
             /* Add the matrix/coordinates attributes also for the roughness
                texture, but skip adding the texture ID again */
             _d->materialTexture(
                 material.pbr_metallic_roughness.metallic_roughness_texture,
                 attributes,
-                MaterialAttribute{},
-                MaterialAttribute::RoughnessTextureMatrix,
-                MaterialAttribute::RoughnessTextureCoordinates);
+                {},
+                "RoughnessTextureMatrix"_s,
+                "RoughnessTextureCoordinates"_s);
         }
 
         /** @todo Support for KHR_materials_specular? This adds an explicit
@@ -2337,27 +2337,27 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             _d->materialTexture(
                 material.pbr_specular_glossiness.diffuse_texture,
                 attributes,
-                MaterialAttribute::DiffuseTexture,
-                MaterialAttribute::DiffuseTextureMatrix,
-                MaterialAttribute::DiffuseTextureCoordinates);
+                "DiffuseTexture"_s,
+                "DiffuseTextureMatrix"_s,
+                "DiffuseTextureCoordinates"_s);
         }
 
         if(material.pbr_specular_glossiness.specular_glossiness_texture.texture) {
            _d->materialTexture(
                 material.pbr_specular_glossiness.specular_glossiness_texture,
                 attributes,
-                MaterialAttribute::SpecularGlossinessTexture,
-                MaterialAttribute::SpecularTextureMatrix,
-                MaterialAttribute::SpecularTextureCoordinates);
+                "SpecularGlossinessTexture"_s,
+                "SpecularTextureMatrix"_s,
+                "SpecularTextureCoordinates"_s);
 
             /* Add the matrix/coordinates attributes also for the glossiness
                texture, but skip adding the texture ID again */
             _d->materialTexture(
                 material.pbr_specular_glossiness.specular_glossiness_texture,
                 attributes,
-                MaterialAttribute{},
-                MaterialAttribute::GlossinessTextureMatrix,
-                MaterialAttribute::GlossinessTextureCoordinates);
+                {},
+                "GlossinessTextureMatrix"_s,
+                "GlossinessTextureCoordinates"_s);
         }
     }
 
@@ -2370,9 +2370,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         _d->materialTexture(
             material.normal_texture,
             attributes,
-            MaterialAttribute::NormalTexture,
-            MaterialAttribute::NormalTextureMatrix,
-            MaterialAttribute::NormalTextureCoordinates);
+            "NormalTexture"_s,
+            "NormalTextureMatrix"_s,
+            "NormalTextureCoordinates"_s);
 
         if(material.normal_texture.scale != 1.0f)
             arrayAppend(attributes, InPlaceInit,
@@ -2385,9 +2385,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         _d->materialTexture(
             material.occlusion_texture,
             attributes,
-            MaterialAttribute::OcclusionTexture,
-            MaterialAttribute::OcclusionTextureMatrix,
-            MaterialAttribute::OcclusionTextureCoordinates);
+            "OcclusionTexture"_s,
+            "OcclusionTextureMatrix"_s,
+            "OcclusionTextureCoordinates"_s);
 
         /* cgltf exposes the strength multiplier as scale */
         if(material.occlusion_texture.scale != 1.0f)
@@ -2406,9 +2406,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         _d->materialTexture(
             material.emissive_texture,
             attributes,
-            MaterialAttribute::EmissiveTexture,
-            MaterialAttribute::EmissiveTextureMatrix,
-            MaterialAttribute::EmissiveTextureCoordinates);
+            "EmissiveTexture"_s,
+            "EmissiveTextureMatrix"_s,
+            "EmissiveTextureCoordinates"_s);
     }
 
     /* Phong material fallback for backwards compatibility */
@@ -2474,9 +2474,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             _d->materialTexture(
                 material.clearcoat.clearcoat_texture,
                 attributes,
-                MaterialAttribute::LayerFactorTexture,
-                MaterialAttribute::LayerFactorTextureMatrix,
-                MaterialAttribute::LayerFactorTextureCoordinates);
+                "LayerFactorTexture"_s,
+                "LayerFactorTextureMatrix"_s,
+                "LayerFactorTextureCoordinates"_s);
         }
 
         arrayAppend(attributes, InPlaceInit,
@@ -2487,9 +2487,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             _d->materialTexture(
                 material.clearcoat.clearcoat_roughness_texture,
                 attributes,
-                MaterialAttribute::RoughnessTexture,
-                MaterialAttribute::RoughnessTextureMatrix,
-                MaterialAttribute::RoughnessTextureCoordinates);
+                "RoughnessTexture"_s,
+                "RoughnessTextureMatrix"_s,
+                "RoughnessTextureCoordinates"_s);
 
             /* The extension description doesn't mention it, but the schema
                says the clearcoat roughness is actually in the G channel:
@@ -2503,9 +2503,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             _d->materialTexture(
                 material.clearcoat.clearcoat_normal_texture,
                 attributes,
-                MaterialAttribute::NormalTexture,
-                MaterialAttribute::NormalTextureMatrix,
-                MaterialAttribute::NormalTextureCoordinates);
+                "NormalTexture"_s,
+                "NormalTextureMatrix"_s,
+                "NormalTextureCoordinates"_s);
 
             if(material.clearcoat.clearcoat_normal_texture.scale != 1.0f)
                 arrayAppend(attributes, InPlaceInit,
