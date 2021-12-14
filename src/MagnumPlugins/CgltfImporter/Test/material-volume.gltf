@@ -1,0 +1,88 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "texture.png"
+        }
+    ],
+    "materials": [
+        {
+            "name": "defaults",
+            "extensions": {
+                "KHR_materials_volume": {}
+            }
+        },
+        {
+            "name": "factors",
+            "extensions": {
+                "KHR_materials_volume": {
+                    "thicknessFactor": 0.67,
+                    "attenuationDistance": 15.3,
+                    "attenuationColor": [0.7, 0.1, 1]
+                }
+            }
+        },
+        {
+            "name": "textures",
+            "extensions": {
+                "KHR_materials_volume": {
+                    "thicknessFactor": 0.7,
+                    "attenuationDistance": 1.12,
+                    "attenuationColor": [0.1, 0.05, 0],
+                    "thicknessTexture": {
+                        "index": 1
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture identity transform",
+            "extensions": {
+                "KHR_materials_volume": {
+                    "thicknessTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {}
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture transform + coordinate set",
+            "extensions": {
+                "KHR_materials_volume": {
+                    "thicknessTexture": {
+                        "index": 1,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.0, 1.0],
+                                "texCoord": 3
+                            }
+                        },
+                        "texCoord": 1
+                    }
+                }
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ],
+    "extensionsUsed": [
+        "KHR_materials_volume",
+        "KHR_texture_transform"
+    ]
+}

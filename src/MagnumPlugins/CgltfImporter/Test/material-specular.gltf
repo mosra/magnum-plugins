@@ -1,0 +1,107 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "texture.png"
+        }
+    ],
+    "materials": [
+        {
+            "name": "defaults",
+            "extensions": {
+                "KHR_materials_specular": {}
+            }
+        },
+        {
+            "name": "factors",
+            "extensions": {
+                "KHR_materials_specular": {
+                    "specularFactor": 0.67,
+                    "specularColorFactor": [0.2, 0.4, 0.6]
+                }
+            }
+        },
+        {
+            "name": "textures",
+            "extensions": {
+                "KHR_materials_specular": {
+                    "specularFactor": 0.7,
+                    "specularTexture": {
+                        "index": 2
+                    },
+                    "specularColorFactor": [0.3, 0.4, 0.5],
+                    "specularColorTexture": {
+                        "index": 1
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture identity transform",
+            "extensions": {
+                "KHR_materials_specular": {
+                    "specularTexture": {
+                        "index": 1,
+                        "extensions": {
+                            "KHR_texture_transform": {}
+                        }
+                    },
+                    "specularColorTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {}
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture transform + coordinate set",
+            "extensions": {
+                "KHR_materials_specular": {
+                    "specularTexture": {
+                        "index": 2,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.0, 1.0],
+                                "texCoord": 4
+                            }
+                        }
+                    },
+                    "specularColorTexture": {
+                        "index": 1,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "scale": [0.5, 0.5]
+                            }
+                        },
+                        "texCoord": 1
+                    }
+                }
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ],
+    "extensionsUsed": [
+        "KHR_materials_specular",
+        "KHR_texture_transform"
+    ]
+}

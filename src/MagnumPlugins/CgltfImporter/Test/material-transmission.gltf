@@ -1,0 +1,84 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "texture.png"
+        }
+    ],
+    "materials": [
+        {
+            "name": "defaults",
+            "extensions": {
+                "KHR_materials_transmission": {}
+            }
+        },
+        {
+            "name": "factors",
+            "extensions": {
+                "KHR_materials_transmission": {
+                    "transmissionFactor": 0.67
+                }
+            }
+        },
+        {
+            "name": "textures",
+            "extensions": {
+                "KHR_materials_transmission": {
+                    "transmissionFactor": 0.7,
+                    "transmissionTexture": {
+                        "index": 1
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture identity transform",
+            "extensions": {
+                "KHR_materials_transmission": {
+                    "transmissionTexture": {
+                        "index": 0,
+                        "extensions": {
+                            "KHR_texture_transform": {}
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "texture transform + coordinate set",
+            "extensions": {
+                "KHR_materials_transmission": {
+                    "transmissionTexture": {
+                        "index": 1,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.0, 1.0],
+                                "texCoord": 3
+                            }
+                        },
+                        "texCoord": 1
+                    }
+                }
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ],
+    "extensionsUsed": [
+        "KHR_materials_transmission",
+        "KHR_texture_transform"
+    ]
+}
