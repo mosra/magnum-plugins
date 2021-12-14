@@ -106,6 +106,17 @@
                     },
                     "anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!!": 0,
                     "aValueThatWontFit": "1 pound ground turkey, 1 medium-sized onion, 1 cup celery (diced)",
+                    "alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATexture": {
+                        "index": 1,
+                        "texCoord": 3,
+                        "scale": 0.2,
+                        "extensions": {
+                            "KHR_texture_transform": {
+                                "offset": [0.5, -0.5],
+                                "scale": [0.33, 0.44]
+                            }
+                        }
+                    },
                     "": "Empty attributes are ignored"
                 },
                 "VENDOR_empty_extension_object": {},

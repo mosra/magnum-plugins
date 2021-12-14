@@ -2189,6 +2189,29 @@ std::string CgltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->decodeString(_d->data->materials[id].name);
 }
 
+namespace {
+
+bool checkMaterialAttributeSize(Containers::StringView name, MaterialAttributeType type, const void* value = nullptr) {
+    std::size_t valueSize;
+    if(type == MaterialAttributeType::String) {
+        CORRADE_INTERNAL_ASSERT(value);
+        /* +2 are null byte and size */
+        valueSize = static_cast<const Containers::StringView*>(value)->size() + 2;
+    } else
+        valueSize = materialAttributeTypeSize(type);
+
+    /* +1 is the key null byte */
+    if(valueSize + name.size() + 1 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
+        Warning{} << "Trade::CgltfImporter::material(): property" << name <<
+            "is too large with" << valueSize + name.size() << "bytes, skipping";
+        return false;
+    }
+
+    return true;
+}
+
+}
+
 void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute) const {
     CORRADE_INTERNAL_ASSERT(texture.texture);
 
@@ -2198,7 +2221,7 @@ void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture,
        unflip them back, apply the transform (which assumes origin at bottom
        left and Y down) and then flip the result again. Sanity of the following
        verified with https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/TextureTransformTest */
-    if(texture.has_transform) {
+    if(texture.has_transform && checkMaterialAttributeSize(matrixAttribute, MaterialAttributeType::Matrix3x3)) {
         Matrix3 matrix;
 
         /* If material needs an Y-flip, the mesh doesn't have the texture
@@ -2230,7 +2253,9 @@ void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture,
 
     /* In case the material had no texture transformation but still needs an
        Y-flip, put it there */
-    if(!texture.has_transform && textureCoordinateYFlipInMaterial) {
+    if(!texture.has_transform && textureCoordinateYFlipInMaterial &&
+       checkMaterialAttributeSize(matrixAttribute, MaterialAttributeType::Matrix3x3))
+    {
         arrayAppend(attributes, InPlaceInit, matrixAttribute,
             Matrix3::translation(Vector2::yAxis(1.0f))*
             Matrix3::scaling(Vector2::yScale(-1.0f)));
@@ -2238,13 +2263,13 @@ void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture,
 
     /* Add texture coordinate set if non-zero. The KHR_texture_transform could
        be modifying it, so do that after */
-    if(texCoord != 0)
+    if(texCoord != 0 && checkMaterialAttributeSize(coordinateAttribute, MaterialAttributeType::UnsignedInt))
         arrayAppend(attributes, InPlaceInit, coordinateAttribute, texCoord);
 
     /* In some cases (when dealing with packed textures), we're parsing &
        adding texture coordinates and matrix multiple times, but adding the
        packed texture ID just once. In other cases the attribute is invalid. */
-    if(!attribute.isEmpty()) {
+    if(!attribute.isEmpty() && checkMaterialAttributeSize(attribute, MaterialAttributeType::UnsignedInt)) {
         const UnsignedInt textureId = texture.texture - data->textures;
         arrayAppend(attributes, InPlaceInit, attribute, textureId);
     }
@@ -2598,7 +2623,6 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             char attributeData[16];
             Containers::StringView attributeView;
             MaterialAttributeType type{};
-            std::size_t valueSize{};
             if(attribute.type == JSMN_OBJECT) {
                 /* Parse glTF textureInfo objects. Any objects without the
                    correct suffix and type are ignored. */
@@ -2628,8 +2652,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                         /* materialTexture() expects a fixed up texture pointer
                            in cgltf_texture_view, normally done by cgltf */
                         textureView.texture = &_d->data->textures[index];
-                        /** @todo Check for too large material data in
-                            materialTexture(). Move the check to a function. */
+
                         Containers::String nameBuffer{NoInit, name.size()*2 + 6 + 11};
                         Utility::formatInto(nameBuffer, "{}Matrix{}Coordinates", name, name);
                         _d->materialTexture(
@@ -2647,8 +2670,10 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                             "strength" and "scale" into the same scale element. */
                         if(textureView.scale != 1.0f) {
                             Utility::formatInto(nameBuffer, "{}Scale", name);
-                            arrayAppend(extensionAttributes, InPlaceInit,
-                                nameBuffer.prefix(name.size() + 5), textureView.scale);
+                            const Containers::StringView scaleName = nameBuffer.prefix(name.size() + 5);
+                            if(checkMaterialAttributeSize(scaleName, MaterialAttributeType::Float))
+                                arrayAppend(extensionAttributes, InPlaceInit,
+                                    scaleName, textureView.scale);
                         }
 
                         i = next;
@@ -2773,7 +2798,6 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     } else
                         CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
-                    valueSize = materialAttributeTypeSize(type);
                     i += attribute.size + 1;
 
                 } else {
@@ -2784,8 +2808,6 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             } else if(attribute.type == JSMN_STRING) {
                 attributeView = value;
                 type = MaterialAttributeType::String;
-                /* +2 is null byte + size */
-                valueSize = value.size() + 2;
                 ++i;
 
             /* JSMN_UNDEFINED, should never happen for valid JSON files */
@@ -2797,14 +2819,11 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             if(type == MaterialAttributeType{})
                 continue;
 
-            CORRADE_INTERNAL_ASSERT(valueSize);
+            const void* valuePointer = type == MaterialAttributeType::String ?
+                static_cast<const void*>(&attributeView) : static_cast<const void*>(attributeData);
 
-            /* +1 is null byte for the key */
-            if(valueSize + name.size() + 1 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
-                Warning{} << "Trade::CgltfImporter::material(): property" << name <<
-                    "is too large with" << valueSize + name.size() << "bytes, skipping";
+            if(!checkMaterialAttributeSize(name, type, valuePointer))
                 continue;
-            }
 
             /** @todo Handle duplicate attributes */
             /* Uppercase attribute names are reserved. This shouldn't really
@@ -2819,8 +2838,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 name = nameLowercase;
             }
 
-            arrayAppend(extensionAttributes, InPlaceInit, name, type,
-                type == MaterialAttributeType::String ? static_cast<const void*>(&attributeView) : static_cast<const void*>(attributeData));
+            arrayAppend(extensionAttributes, InPlaceInit, name, type, valuePointer);
         }
 
         /* Only add a layer if the extension contains any attributes */
