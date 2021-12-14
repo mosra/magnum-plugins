@@ -646,6 +646,12 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
         "KHR_mesh_quantization"_s,
         "KHR_texture_basisu"_s,
         "KHR_texture_transform"_s,
+        /* Parsed by cgltf and imported as custom material data */
+        "KHR_materials_ior"_s,
+        "KHR_materials_sheen"_s,
+        "KHR_materials_specular"_s,
+        "KHR_materials_transmission"_s,
+        "KHR_materials_volume"_s,
         /* Manually parsed */
         "GOOGLE_texture_basis"_s,
         "MSFT_texture_dds"_s
@@ -2317,7 +2323,8 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
         /** @todo Support for KHR_materials_specular? This adds an explicit
             F0 (texture) and a scalar factor (texture) for the entire specular
-            reflection to a metallic/roughness material. */
+            reflection to a metallic/roughness material. Currently imported as
+            a custom layer below. */
     }
 
     /* Specular/glossiness material */
@@ -2524,6 +2531,141 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         }
     }
 
+    /* Import extensions with non-standard layer/attribute types that are
+       already parsed by cgltf and hence don't appear in the extension list
+       anymore. We use the original attribute names as found in the extension
+       specifications. */
+    if(material.has_ior) {
+        arrayAppend(layers, UnsignedInt(attributes.size()));
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_ior"_s);
+
+        arrayAppend(attributes, InPlaceInit, "ior", material.ior.ior);
+    }
+
+    if(material.has_specular) {
+        arrayAppend(layers, UnsignedInt(attributes.size()));
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_specular"_s);
+
+        arrayAppend(attributes, InPlaceInit,
+            "specularFactor"_s,
+            material.specular.specular_factor);
+
+        if(material.specular.specular_texture.texture) {
+            _d->materialTexture(
+                material.specular.specular_texture,
+                attributes,
+                "specularTexture"_s,
+                "specularTextureMatrix"_s,
+                "specularTextureCoordinates"_s);
+
+            /* Specular strength is stored in the alpha channel */
+            arrayAppend(attributes, InPlaceInit,
+                "specularTextureSwizzle"_s,
+                MaterialTextureSwizzle::A);
+        }
+
+        const Vector3 specularColorFactor = Vector3::from(material.specular.specular_color_factor);
+        if(specularColorFactor != Vector3{1.0f})
+            arrayAppend(attributes, InPlaceInit,
+                "specularColorFactor"_s,
+                specularColorFactor);
+
+        if(material.specular.specular_color_texture.texture)
+            _d->materialTexture(
+                material.specular.specular_color_texture,
+                attributes,
+                "specularColorTexture"_s,
+                "specularColorTextureMatrix"_s,
+                "specularColorTextureCoordinates"_s);
+    }
+
+    if(material.has_transmission) {
+        arrayAppend(layers, UnsignedInt(attributes.size()));
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_transmission"_s);
+
+        arrayAppend(attributes, InPlaceInit,
+            "transmissionFactor"_s,
+            material.transmission.transmission_factor);
+
+        if(material.transmission.transmission_texture.texture)
+            _d->materialTexture(
+                material.transmission.transmission_texture,
+                attributes,
+                "transmissionTexture"_s,
+                "transmissionTextureMatrix"_s,
+                "transmissionTextureCoordinates"_s);
+    }
+
+    if(material.has_volume) {
+        arrayAppend(layers, UnsignedInt(attributes.size()));
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_volume"_s);
+
+        arrayAppend(attributes, InPlaceInit,
+            "thicknessFactor"_s,
+            material.volume.thickness_factor);
+
+        if(material.volume.thickness_texture.texture) {
+            _d->materialTexture(
+                material.volume.thickness_texture,
+                attributes,
+                "thicknessTexture"_s,
+                "thicknessTextureMatrix"_s,
+                "thicknessTextureCoordinates"_s);
+
+            /* Thickness is stored in the green channel */
+            arrayAppend(attributes, InPlaceInit,
+                "thicknessTextureSwizzle"_s,
+                MaterialTextureSwizzle::G);
+        }
+
+        /* Default spec value is +infinity, but cgltf uses FLT_MAX */
+        if(material.volume.attenuation_distance != std::numeric_limits<Float>::max())
+            arrayAppend(attributes, InPlaceInit,
+                "attenuationDistance"_s,
+                material.volume.attenuation_distance);
+
+        const Vector3 attenuationColor = Vector3::from(material.volume.attenuation_color);
+        if(attenuationColor != Vector3{1.0f})
+            arrayAppend(attributes, InPlaceInit,
+                "attenuationColor"_s,
+                attenuationColor);
+    }
+
+    if(material.has_sheen) {
+        arrayAppend(layers, UnsignedInt(attributes.size()));
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_sheen"_s);
+
+        const Vector3 sheenColorFactor = Vector3::from(material.sheen.sheen_color_factor);
+        arrayAppend(attributes, InPlaceInit,
+            "sheenColorFactor"_s,
+            sheenColorFactor);
+
+        if(material.sheen.sheen_color_texture.texture)
+            _d->materialTexture(
+                material.sheen.sheen_color_texture,
+                attributes,
+                "sheenColorTexture"_s,
+                "sheenColorTextureMatrix"_s,
+                "sheenColorTextureCoordinates"_s);
+
+        arrayAppend(attributes, InPlaceInit,
+            "sheenRoughnessFactor"_s,
+            material.sheen.sheen_roughness_factor);
+
+        if(material.sheen.sheen_roughness_texture.texture) {
+            _d->materialTexture(
+                material.sheen.sheen_roughness_texture,
+                attributes,
+                "sheenRoughnessTexture"_s,
+                "sheenRoughnessTextureMatrix"_s,
+                "sheenRoughnessTextureCoordinates"_s);
+
+            /* Sheen roughness is stored in the alpha channel */
+            arrayAppend(attributes, InPlaceInit,
+                "sheenRoughnessTextureSwizzle"_s,
+                MaterialTextureSwizzle::A);
+        }
+    }
 
     /* Stable-sort extensions by name so that we can easily find duplicates and
        overwrite lexically preceding extensions. This matches cgltf parsing
