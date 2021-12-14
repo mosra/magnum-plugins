@@ -314,6 +314,31 @@ fail.
     types, and a new layer with clearcoat properties is added
 -   Custom texture coordinate sets as well as [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md)
     properties are imported on all textures.
+-   Unrecognized material extensions are imported as custom layers with a `#`
+    prefix. Extension properties are imported with their raw names and types,
+    the following of which are supported:
+    -   @ref MaterialAttributeType::String, @ref MaterialAttributeType::Bool,
+        @ref MaterialAttributeType::Float, @ref MaterialAttributeType::Int,
+        @ref MaterialAttributeType::UnsignedInt
+    -   arrays as @ref MaterialAttributeType::Vector2/
+        @ref MaterialAttributeType::Vector3/
+        @ref MaterialAttributeType::Vector4,
+        MaterialAttributeType::Vector2i/@ref MaterialAttributeType::Vector3i/
+        @ref MaterialAttributeType::Vector4i, MaterialAttributeType::Vector2ui/
+        @ref MaterialAttributeType::Vector3ui/
+        @ref MaterialAttributeType::Vector4ui.
+        Empty arrays, arrays of size 5 or higher as well as arrays containing
+        anything that isn't a number are ignored.
+    -   [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
+        objects, including all attributes handled for regular textures. Texture
+        attributes are suffixed to the name of the object: e.g. if an extension
+        has a `someTexture` property, the texture index, matrix, coordinate set
+        and scale would be imported as `someTexture`, `someTextureMatrix`,
+        `someTextureCoordinates` and `someTextureScale`. Non-texture object
+        types are ignored.
+    If you handle any of these custom material extensions, it may make sense
+    to enable the @cb{.ini} ignoreRequiredExtensions @ce
+    @ref Trade-CgltfImporter-configuration "configuration option".
 -   If the on-by-default @cb{.ini} phongMaterialFallback @ce
     @ref Trade-CgltfImporter-configuration "configuration option" is
     enabled, the importer provides a Phong fallback for backwards
