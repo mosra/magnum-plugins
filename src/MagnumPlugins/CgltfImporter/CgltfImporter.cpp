@@ -2693,8 +2693,12 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
         const cgltf_extension& extension = material.extensions[e];
 
-        /** @todo Should empty extension names be ignored? jsmn allows them. */
         const Containers::StringView extensionName = extension.name;
+        if(extensionName.isEmpty()) {
+            Warning{} << "Trade::CgltfImporter::material(): extension with an empty name, skipping";
+            continue;
+        }
+
         /* +1 is the key null byte. +3 are the '#' layer prefix, the layer null
            byte and the length. */
         if(" LayerName"_s.size() + 1 + extensionName.size() + 3 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
@@ -2719,8 +2723,11 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             CORRADE_INTERNAL_ASSERT(tokens[i].type == JSMN_STRING && tokens[i].size == 1);
 
             Containers::StringView name = tokenString(json, tokens[i]);
-            /** @todo Should empty attribute names be ignored? jsmn allows
-                them. */
+            if(name.isEmpty()) {
+                Warning{} << "Trade::CgltfImporter::material(): property with an empty name, skipping";
+                i = skipJson(tokens, i + 1);
+                continue;
+            }
 
             ++i;
             const jsmntok_t& attribute = tokens[i];

@@ -58,7 +58,6 @@
                     "coiled": true
                 },
                 "MGNM_material_type_zoo": {
-                    "null": null,
                     "boolTrue": true,
                     "boolFalse": false,
                     "int": -7992835,
@@ -80,7 +79,10 @@
                     "vec1ui": [9],
                     "vec2ui": [9, 8],
                     "vec3ui": [9, 8, 7],
-                    "vec4ui": [9, 8, 7, 6],
+                    "vec4ui": [9, 8, 7, 6]
+                },
+                "MGNM_material_forbidden_types": {
+                    "null": null,
                     "emptyArray": [],
                     "oversizedArray": [9.1, 8.2, 7.3, 6.4, 5.5],
                     "stringArray": ["one", "two", "", "four"],
@@ -102,14 +104,14 @@
                     },
                     "anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!!": 0,
                     "aValueThatWontFit": "1 pound ground turkey, 1 medium-sized onion, 1 cup celery (diced)",
-                    "": "Empty attributes are allowed"
+                    "": "Empty attributes are ignored"
                 },
                 "VENDOR_empty_extension_object": {},
                 "VENDOR_material_thisnameiswaytoolongforalayername!": {
                     "wow": ["so", "long"]
                 },
                 "": {
-                    "note": "Empty extension names are allowed"
+                    "note": "Empty extension names are ignored"
                 }
             }
         }
@@ -131,6 +133,7 @@
         "KHR_materials_clearcoat",
         "MGNM_material_snake",
         "MGNM_material_type_zoo",
+        "MGNM_material_forbidden_types",
         "VENDOR_empty_extension_object",
         "VENDOR_material_thisnameiswaytoolongforalayername!",
         "",

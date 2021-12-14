@@ -3950,9 +3950,9 @@ void CgltfImporterTest::materialRaw() {
     }
 
     CORRADE_VERIFY(material);
-    /* Standard layer + clear coat + 3 unknown extensions */
+    /* Standard layer + clear coat + 2 unknown extensions */
     CORRADE_COMPARE(material->types(), MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat);
-    CORRADE_COMPARE(material->layerCount(), 2 + 3);
+    CORRADE_COMPARE(material->layerCount(), 2 + 2);
 
     /* Standard layer import still works */
     {
@@ -3995,13 +3995,6 @@ void CgltfImporterTest::materialRaw() {
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
             CORRADE_COMPARE(material->attribute<Float>(layer, name), 0.0f);
         }
-
-    /* Extension with an empty name */
-    } {
-        constexpr Containers::StringView layer = "#"_s;
-        CORRADE_ITERATION("empty name");
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 1 + 1);
 
     /* Unknown extension with a textureInfo object */
     } {
@@ -4053,13 +4046,10 @@ void CgltfImporterTest::materialRaw() {
 
     /* Unknown extension with all supported types */
     } {
-        /** @todo Empty attribute names (which become "#") cause weird sorting
-            issues. The attribute is moved before the layer name, causing the
-            layer offset to be wrong. What exactly is happening there? */
         constexpr Containers::StringView layer = "#MGNM_material_type_zoo"_s;
         CORRADE_ITERATION(layer);
         CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 21 + 1);
+        CORRADE_COMPARE(material->attributeCount(layer), 20 + 1);
 
         {
             constexpr Containers::StringView name = "boolTrue"_s;
@@ -4164,7 +4154,11 @@ void CgltfImporterTest::materialRaw() {
         }
     }
 
+    /* No MGNM_material_forbidden_types layer because all attributes are
+       invalid types or too large and skipped */
+
     CORRADE_COMPARE(out.str(),
+        "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): property null has unsupported type, skipping\n"
         "Trade::CgltfImporter::material(): property emptyArray has unsupported type, skipping\n"
         "Trade::CgltfImporter::material(): property oversizedArray has unsupported type, skipping\n"
@@ -4178,6 +4172,7 @@ void CgltfImporterTest::materialRaw() {
         "Trade::CgltfImporter::material(): property invalidTexture has invalid texture object type, skipping\n"
         "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
 }
 
