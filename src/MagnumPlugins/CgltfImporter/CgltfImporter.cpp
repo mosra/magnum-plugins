@@ -2773,6 +2773,10 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     cgltf_texture_view textureView{};
                     const int next = cgltf_parse_json_texture_view(&_d->options, tokens, i,
                         reinterpret_cast<const uint8_t*>(json.data()), &textureView);
+                    /* Free memory allocated by cgltf. We're only interested in
+                       KHR_texture_transform and that's already parsed into
+                       textureView.transform. */
+                    cgltf_free_extensions(_d->data, textureView.extensions, textureView.extensions_count);
 
                     /* cgltf_parse_json_texture_view() casts and saves the
                        index + 1 as cgltf_texture*. 0 indicates there was no
