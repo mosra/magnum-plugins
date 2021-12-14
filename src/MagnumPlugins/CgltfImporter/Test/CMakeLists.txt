@@ -132,14 +132,19 @@ corrade_add_test(CgltfImporterTest
         material-invalid-pbr-diffuse-oob.gltf
         material-invalid-pbr-metallic-roughness-oob.gltf
         material-invalid-pbr-specular-oob.gltf
+        material-ior.gltf
         material-metallicroughness.gltf
         material-phong-fallback.gltf
         material-raw.gltf
+        material-sheen.gltf
+        material-specular.gltf
         material-specularglossiness.gltf
         material-texcoord-flip.bin
         material-texcoord-flip.gltf
         material-texcoord-flip-unnormalized.gltf
+        material-transmission.gltf
         material-unlit.gltf
+        material-volume.gltf
         mesh.gltf
         mesh.bin
         mesh.glb
