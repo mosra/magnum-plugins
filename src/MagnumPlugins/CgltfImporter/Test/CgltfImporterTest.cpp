@@ -4172,6 +4172,10 @@ void CgltfImporterTest::materialRaw() {
         "Trade::CgltfImporter::material(): property invalidTexture has invalid texture object type, skipping\n"
         "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureMatrix is too large with 104 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureCoordinates is too large with 77 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATexture is too large with 66 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureScale is too large with 71 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
 }
