@@ -907,7 +907,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
     /* Calculate total track count. If merging all animations together, this is
        the sum of all clip track counts. */
     std::size_t trackCount = 0;
-    for(const cgltf_animation& animation : animations) {
+    for(const cgltf_animation& animation: animations) {
         for(std::size_t i = 0; i != animation.channels_count; ++i) {
             /* Skip animations without a target node. See comment below. */
             if(animation.channels[i].target_node)
@@ -919,7 +919,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
     bool hadToRenormalize = false;
     std::size_t trackId = 0;
     Containers::Array<Trade::AnimationTrackData> tracks{trackCount};
-    for(const cgltf_animation& animation : animations) {
+    for(const cgltf_animation& animation: animations) {
         for(std::size_t i = 0; i != animation.channels_count; ++i) {
             const cgltf_animation_channel& channel = animation.channels[i];
             const cgltf_animation_sampler& sampler = *channel.sampler;
