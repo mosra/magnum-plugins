@@ -4001,7 +4001,7 @@ void CgltfImporterTest::materialRaw() {
         constexpr Containers::StringView layer = "#MGNM_material_snake"_s;
         CORRADE_ITERATION(layer);
         CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 7 + 1);
+        CORRADE_COMPARE(material->attributeCount(layer), 6 + 1);
 
         {
             constexpr Containers::StringView name = "snakeFactor"_s;
@@ -4033,18 +4033,15 @@ void CgltfImporterTest::materialRaw() {
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
             CORRADE_COMPARE(material->attribute<Float>(layer, name), 0.2f);
         } {
-            constexpr Containers::StringView name = "type"_s;
+            constexpr Containers::StringView name = "defaultScaleTexture"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::String);
-            CORRADE_COMPARE(material->attribute<Containers::StringView>(layer, name), "BASIC"_s);
-        } {
-            constexpr Containers::StringView name = "coiled"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
-            CORRADE_COMPARE(material->attribute<bool>(layer, name), true);
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
+            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 1u);
         }
 
-    /* Unknown extension with all supported types */
+        /* No defaultScaleTextureScale because the scale is 1.0 */
+
+    /* Unknown extension with all other supported types */
     } {
         constexpr Containers::StringView layer = "#MGNM_material_type_zoo"_s;
         CORRADE_ITERATION(layer);

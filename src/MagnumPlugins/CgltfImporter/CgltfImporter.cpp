@@ -2808,10 +2808,11 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                             suffix with "Strength" instead. cgltf parses both
                             "strength" and "scale" into the same scale element. */
                         if(textureView.scale != 1.0f) {
-                            /** @todo Test that this is skipped for 1.0 */
                             Utility::formatInto(nameBuffer, "{}Scale", name);
-                            arrayAppend(extensionAttributes, InPlaceInit,
-                                nameBuffer.prefix(name.size() + 5), textureView.scale);
+                            const Containers::StringView scaleName = nameBuffer.prefix(name.size() + 5);
+                            if(checkMaterialAttributeSize(scaleName, MaterialAttributeType::Float))
+                                arrayAppend(extensionAttributes, InPlaceInit,
+                                    scaleName, textureView.scale);
                         }
 
                         i = next;

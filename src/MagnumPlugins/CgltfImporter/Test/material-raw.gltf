@@ -54,8 +54,10 @@
                             }
                         }
                     },
-                    "type": "BASIC",
-                    "coiled": true
+                    "defaultScaleTexture": {
+                        "index": 1,
+                        "scale": 1.0
+                    }
                 },
                 "MGNM_material_type_zoo": {
                     "boolTrue": true,
