@@ -2590,10 +2590,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         }
 
         const Vector3 specularColorFactor = Vector3::from(material.specular.specular_color_factor);
-        if(specularColorFactor != Vector3{1.0f})
-            arrayAppend(attributes, InPlaceInit,
-                "specularColorFactor"_s,
-                specularColorFactor);
+        arrayAppend(attributes, InPlaceInit,
+            "specularColorFactor"_s,
+            specularColorFactor);
 
         if(material.specular.specular_color_texture.texture)
             _d->materialTexture(
@@ -2643,17 +2642,17 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 MaterialTextureSwizzle::G);
         }
 
-        /* Default spec value is +infinity, but cgltf uses FLT_MAX */
-        if(material.volume.attenuation_distance != std::numeric_limits<Float>::max())
-            arrayAppend(attributes, InPlaceInit,
-                "attenuationDistance"_s,
-                material.volume.attenuation_distance);
+        /* Default spec value is infinity but cgltf uses FLT_MAX, fix it */
+        const Float attenuationDistance = material.volume.attenuation_distance == std::numeric_limits<Float>::max() ?
+            Constants::inf() : material.volume.attenuation_distance;
+        arrayAppend(attributes, InPlaceInit,
+            "attenuationDistance"_s,
+            attenuationDistance);
 
         const Vector3 attenuationColor = Vector3::from(material.volume.attenuation_color);
-        if(attenuationColor != Vector3{1.0f})
-            arrayAppend(attributes, InPlaceInit,
-                "attenuationColor"_s,
-                attenuationColor);
+        arrayAppend(attributes, InPlaceInit,
+            "attenuationColor"_s,
+            attenuationColor);
     }
 
     if(material.has_sheen) {
