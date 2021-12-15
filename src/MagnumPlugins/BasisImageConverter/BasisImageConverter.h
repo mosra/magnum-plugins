@@ -61,8 +61,9 @@ namespace Magnum { namespace Trade {
 @m_keywords{BasisKtxImageConverter}
 
 Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
-compressed image files (`*.basis` or `*.ktx2`) from 2D images with optional mip
-levels. You can use @ref BasisImporter to import images in this format.
+compressed image files (`*.basis` or `*.ktx2`) from 1D, 2D and 3D images with
+optional mip levels. You can use @ref BasisImporter to import images in this
+format.
 
 This plugin provides `BasisKtxImageConverter`.
 
@@ -125,12 +126,30 @@ The @ref PixelFormat::R8Unorm, @relativeref{PixelFormat,R8Srgb},
 @relativeref{PixelFormat,RGBA8Unorm} and @relativeref{PixelFormat,RGBA8Srgb}
 formats are supported.
 
+@subsection Trade-BasisImageConverter-behavior-types Image types
+
+1D images will be saved as 2D images with height 1.
+
+Cube map images can be written but there is currently no way to mark them
+properly in the metadata. Exported files will be 2D array images with faces
+exposed as layers.
+
+3D images will be saved as 2D array images with one layer per depth slice. This
+is necessary because mip levels are always 2-dimensional in Basis compressed
+images. Note that this matches @ref BasisImporter behavior which imports all 3D
+images as 2D array images anyway because of the same Basis limitation.
+
 @subsection Trade-BasisImageConverter-behavior-multilevel Multilevel images
 
 Images can be saved with multiple levels by using the list variants of
 @ref convertToFile() / @ref convertToData(). Largest level is expected to be
-first, with each following level having width and height divided by two,
+first, with each following level having width, height and depth divided by two,
 rounded down. Incomplete mip chains are supported.
+
+Due to the way @ref Trade-BasisImageConverter-behavior-types "non-trivial image types"
+are handled, the level sizes are always expected to match the resulting image
+type. Specifically that means 1D array images and 3D images with multiple
+levels can currently not be exported and produce a level size mismatch error.
 
 To generate mip levels from a single top-level image instead, you can use the
 @cb{.ini} mip_gen @ce @ref Trade-BasisImageConverter-configuration "configuration option".
@@ -218,8 +237,17 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
 
     private:
         MAGNUM_BASISIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
+
+        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
+        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
+
+        template<UnsignedInt dimensions>
+        bool convertLevelsToFile(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Containers::StringView filename);
+
+        MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView1D> imageLevels, const Containers::StringView filename) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView2D> imageLevels, const Containers::StringView filename) override;
+        MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView3D> imageLevels, const Containers::StringView filename) override;
 
         Format _format;
 };
