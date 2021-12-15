@@ -515,9 +515,9 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
         case Implementation::VkFormatSuffix::SINT:
             return {~0u, 1u};
         case Implementation::VkFormatSuffix::UFLOAT:
-            return {Corrade::Utility::bitCast<UnsignedInt>(0.0f), Corrade::Utility::bitCast<UnsignedInt>(1.0f)};
+            return {Utility::bitCast<UnsignedInt>(0.0f), Utility::bitCast<UnsignedInt>(1.0f)};
         case Implementation::VkFormatSuffix::SFLOAT:
-            return {Corrade::Utility::bitCast<UnsignedInt>(-1.0f), Corrade::Utility::bitCast<UnsignedInt>(1.0f)};
+            return {Utility::bitCast<UnsignedInt>(-1.0f), Utility::bitCast<UnsignedInt>(1.0f)};
     }
 
     CORRADE_ASSERT_UNREACHABLE("channelMapping(): invalid format suffix" << UnsignedInt(suffix), {}); /* LCOV_EXCL_LINE */
@@ -717,7 +717,7 @@ constexpr Containers::StringView ValidOrientations[3]{"rl"_s, "du"_s, "io"_s};
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
 template<UnsignedInt dimensions, template<UnsignedInt, typename> class View>
-Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Corrade::Utility::ConfigurationGroup& configuration) {
+Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Utility::ConfigurationGroup& configuration) {
     const auto format = imageLevels.front().format();
     if(isFormatImplementationSpecific(format)) {
         Error{} << "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported";
