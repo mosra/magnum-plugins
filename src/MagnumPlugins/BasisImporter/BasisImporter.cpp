@@ -593,7 +593,7 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
             if(_state->ktx2Transcoder) {
                 const UnsignedInt currentLayer = id + l;
                 if(!_state->ktx2Transcoder->transcode_image_level(level, currentLayer, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, outputRowsInPixels)) {
-                    Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
+                    Error{} << prefix << "transcoding failed";
                     return Containers::NullOpt;
                 }
             } else
@@ -601,7 +601,7 @@ Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const Unsigne
             {
                 const UnsignedInt currentId = id + (l*numFaces + f);
                 if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), currentId, level, dest.data() + offset, outputSizeInBlocksOrPixels, format, flags, rowStride, nullptr, outputRowsInPixels)) {
-                    Error{} << "Trade::BasisImporter::image2D(): transcoding failed";
+                    Error{} << prefix << "transcoding failed";
                     return Containers::NullOpt;
                 }
             }
