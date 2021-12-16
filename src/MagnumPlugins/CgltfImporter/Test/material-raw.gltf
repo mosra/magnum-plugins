@@ -68,11 +68,11 @@
                     "string": "Ribbit -- ribbit",
                     "emptyString": "",
                     "UppercaseName":  true ,
-                    "vec1": [9.1],
+                    "vec1": [9.12e+1],
                     "vec2": [
                         -9.1  ,
                         8.2  ],
-                    "vec3": [9, 8, 7.3],
+                    "vec3": [9, 8E-1, 7.3],
                     "vec4": [-9, 8, 7.3, -6],
                     "vec1i": [-9],
                     "vec2i": [9, -8],

@@ -2854,7 +2854,14 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                         /* Jsmn only checks the first character, which allows
                            some invalid values like nnn. We perform some basic
                            type detection and invalid values result in 0. This
-                           matches cgltf behaviour. */
+                           matches cgltf behaviour.
+                           Technically integers can use exponent notation, too:
+                           https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#json-encoding
+                           But cgltf_json_to_int() doesn't parse them correctly
+                           and they should be incredibly rare in the wild, so
+                           we always interpret them as float. */
+                        /** @todo Override CGLTF_ATOI with a parsing function
+                            that handles integers with exponent notation */
                         constexpr Containers::StringView FloatIndicators = ".eE"_s;
                         MaterialAttributeType type{};
                         if(value == "true"_s || value == "false"_s) {

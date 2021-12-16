@@ -4103,7 +4103,7 @@ void CgltfImporterTest::materialRaw() {
             constexpr Containers::StringView name = "vec1"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), 9.1f);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), 91.2f);
         } {
             constexpr Containers::StringView name = "vec2"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
@@ -4113,7 +4113,7 @@ void CgltfImporterTest::materialRaw() {
             constexpr Containers::StringView name = "vec3"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, name), (Vector3{9.0f, 8.0f, 7.3f}));
+            CORRADE_COMPARE(material->attribute<Vector3>(layer, name), (Vector3{9.0f, 0.8f, 7.3f}));
         } {
             constexpr Containers::StringView name = "vec4"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
