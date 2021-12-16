@@ -30,6 +30,11 @@
             "source": 0,
             "extensions": {
                 "GOOGLE_texture_basis": {
+                    "note": "other attributes should be ignored, and duplicate source attributes handled (last one wins)",
+                    "source": -3,
+                    "jetsam": { "ignore": "me" },
+                    "source": 777,
+                    "flotsam": [1, 2, [3, 4], { "5": "6" }],
                     "source": 1
                 }
             }

@@ -3057,25 +3057,37 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
             - image importers available via manager()->aliasList()?
             - are there even files out there with more than one extension? */
         for(std::size_t i = 0; i != tex.extensions_count && imageId == ~0u; ++i) {
-            for(const auto& ext: extensions) {
-                if(tex.extensions[i].name == ext) {
+            for(std::size_t j = 0; j != Containers::arraySize(extensions) && imageId == ~0u; ++j) {
+                if(tex.extensions[i].name == extensions[j]) {
                     const Containers::StringView json = tex.extensions[i].data;
                     const auto tokens = parseJson(tex.extensions[i].data);
                     /* This is checked by cgltf */
                     CORRADE_INTERNAL_ASSERT(!tokens.empty() && tokens[0].type == JSMN_OBJECT);
-                    /* @todo This assumes there is only one key in the object.
-                       There could be unrelated things in there like "note". */
-                    if(tokens.size() == 3 && tokens[1].type == JSMN_STRING &&
-                       tokenString(json, tokens[1]) == "source" && tokens[2].type == JSMN_PRIMITIVE)
-                    {
-                        const Int source = cgltf_json_to_int(&tokens[2], reinterpret_cast<const uint8_t*>(json.data()));
-                        if(source < 0 || UnsignedInt(source) >= _d->data->images_count) {
-                            Error{} << "Trade::CgltfImporter::texture():" << ext << "image" << source << "out of bounds for" << _d->data->images_count << "images";
+
+                    Containers::Optional<Int> source;
+                    std::size_t t = 1;
+                    while(t + 1 < tokens.size()) {
+                        /* This is checked by jsmn */
+                        CORRADE_INTERNAL_ASSERT(tokens[t].type == JSMN_STRING && tokens[t].size == 1);
+
+                        if(tokenString(json, tokens[t]) == "source" && tokens[t + 1].type == JSMN_PRIMITIVE) {
+                            source = cgltf_json_to_int(&tokens[t + 1], reinterpret_cast<const uint8_t*>(json.data()));
+                            t += 2;
+                        } else
+                            t = skipJson(tokens, t + 1);
+                    }
+
+                    /* Only check the index here because there can be multiple
+                       JSON "source" keys and the last one wins. This matches
+                       cgltf behaviour. */
+                    if(source) {
+                        if(*source < 0 || std::size_t(*source) >= _d->data->images_count) {
+                            Error{} << "Trade::CgltfImporter::texture():" << extensions[j] << "image" <<
+                                *source << "out of bounds for" << _d->data->images_count << "images";
                             return Containers::NullOpt;
                         }
-                        imageId = source;
+                        imageId = *source;
                     }
-                    break;
                 }
             }
         }

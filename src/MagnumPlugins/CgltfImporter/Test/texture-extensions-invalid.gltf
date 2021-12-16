@@ -22,6 +22,8 @@
             "source" : 1,
             "extensions": {
                 "GOOGLE_texture_basis": {
+                    "note": "lexically preceding keys should be overwritten, so parsing should not stop after the first source",
+                    "source": 2,
                     "source": 3
                 }
             }
