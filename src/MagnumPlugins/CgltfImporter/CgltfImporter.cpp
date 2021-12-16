@@ -2895,7 +2895,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                                 /* Only UnsignedInt left, but both types would
                                    be identical. Can't be Bool because we
                                    abort for bool arrays with size > 1. */
-                                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+                                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                             }
                         }
                     }
@@ -2945,7 +2945,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                         data = cgltf_json_to_bool(&tokens[start], reinterpret_cast<const uint8_t*>(json.data()));
 
                     } else
-                        CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+                        CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
                     i += attribute.size + 1;
 
@@ -2961,7 +2961,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
             /* JSMN_UNDEFINED, should never happen for valid JSON files */
             } else
-                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
             /* Ignored and warning printed, or attributes already added
                (texture object). Nothing left to do. */
