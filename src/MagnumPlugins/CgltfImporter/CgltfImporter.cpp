@@ -2781,65 +2781,70 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             if(token.type == JSMN_OBJECT) {
                 /* Parse glTF textureInfo objects. Any objects without the
                    correct suffix and type are ignored. */
-                if(name.size() > 7 && name.hasSuffix("Texture")) {
-                    cgltf_texture_view textureView{};
-                    const bool valid = cgltf_parse_json_texture_view(&_d->options, tokens, tokenIndex,
-                        reinterpret_cast<const uint8_t*>(json.data()), &textureView) >= 0;
-                    /* Free memory allocated by cgltf. We're only interested in
-                       KHR_texture_transform and that's already parsed into
-                       textureView.transform. */
-                    cgltf_free_extensions(_d->data, textureView.extensions, textureView.extensions_count);
-
-                    /* cgltf_parse_json_texture_view() casts and saves the
-                       index + 1 as cgltf_texture*. 0 indicates there was no
-                       index property. It's mandatory, so we check for it. */
-                    if(!valid || !textureView.texture) {
-                        Warning{} << "Trade::CgltfImporter::material(): property" << name << "has invalid texture object type, skipping";
-                    } else {
-                        const std::size_t index = std::size_t(textureView.texture) - 1;
-                        if(index >= _d->data->images_count) {
-                            Error{} << "Trade::CgltfImporter::material():" << name << "index" << index << "out of bounds for" << _d->data->textures_count << "textures";
-                            return Containers::NullOpt;
-                        }
-
-                        /* materialTexture() expects a fixed up texture pointer
-                           in cgltf_texture_view, normally done by cgltf */
-                        textureView.texture = &_d->data->textures[index];
-
-                        Containers::String nameBuffer{NoInit, name.size()*2 + 6 + 11};
-                        Utility::formatInto(nameBuffer, "{}Matrix{}Coordinates", name, name);
-                        _d->materialTexture(
-                            textureView,
-                            extensionAttributes,
-                            name,
-                            nameBuffer.prefix(name.size() + 6),
-                            nameBuffer.suffix(name.size() + 6));
-
-                        /** @todo If there are ever extensions that reference
-                            texture types other than textureInfo and
-                            normalTextureInfo, we might have to be a bit
-                            smarter here, e.g. detect occlusionTextureInfo and
-                            suffix with "Strength" instead. cgltf parses both
-                            "strength" and "scale" into the same scale element. */
-                        if(textureView.scale != 1.0f) {
-                            Utility::formatInto(nameBuffer, "{}Scale", name);
-                            const Containers::StringView scaleName = nameBuffer.prefix(name.size() + 5);
-                            if(checkMaterialAttributeSize(scaleName, MaterialAttributeType::Float))
-                                arrayAppend(extensionAttributes, InPlaceInit,
-                                    scaleName, textureView.scale);
-                        }
-                    }
-
-                } else
+                if(name.size() < 8 || !name.hasSuffix("Texture")) {
                     Warning{} << "Trade::CgltfImporter::material(): property" << name << "has non-texture object type, skipping";
+                    continue;
+                }
+
+                cgltf_texture_view textureView{};
+                const bool valid = cgltf_parse_json_texture_view(&_d->options, tokens, tokenIndex,
+                    reinterpret_cast<const uint8_t*>(json.data()), &textureView) >= 0;
+                /* Free memory allocated by cgltf. We're only interested in
+                   KHR_texture_transform and that's already parsed into
+                   textureView.transform. */
+                cgltf_free_extensions(_d->data, textureView.extensions, textureView.extensions_count);
+
+                /* cgltf_parse_json_texture_view() casts and saves index + 1 as
+                   cgltf_texture*. 0 indicates there was no index property.
+                   It's mandatory, so we check for it. */
+                if(!valid || !textureView.texture) {
+                    Warning{} << "Trade::CgltfImporter::material(): property" << name << "has invalid texture object type, skipping";
+                    continue;
+                }
+
+                const std::size_t index = std::size_t(textureView.texture) - 1;
+                if(index >= _d->data->images_count) {
+                    Error{} << "Trade::CgltfImporter::material():" << name << "index" << index << "out of bounds for" << _d->data->textures_count << "textures";
+                    return Containers::NullOpt;
+                }
+
+                /* materialTexture() expects a fixed up texture pointer in
+                   cgltf_texture_view, normally done by cgltf */
+                textureView.texture = &_d->data->textures[index];
+
+                Containers::String nameBuffer{NoInit, name.size()*2 + 6 + 11};
+                Utility::formatInto(nameBuffer, "{}Matrix{}Coordinates", name, name);
+                _d->materialTexture(
+                    textureView,
+                    extensionAttributes,
+                    name,
+                    nameBuffer.prefix(name.size() + 6),
+                    nameBuffer.suffix(name.size() + 6));
+
+                /** @todo If there are ever extensions that reference texture
+                    types other than textureInfo and normalTextureInfo, we
+                    might have to be a bit smarter here, e.g. detect
+                    occlusionTextureInfo and suffix with "Strength" instead.
+                    cgltf parses both "strength" and "scale" into the same
+                    variable. */
+                if(textureView.scale != 1.0f) {
+                    Utility::formatInto(nameBuffer, "{}Scale", name);
+                    const Containers::StringView scaleName = nameBuffer.prefix(name.size() + 5);
+                    if(checkMaterialAttributeSize(scaleName, MaterialAttributeType::Float))
+                        arrayAppend(extensionAttributes, InPlaceInit,
+                            scaleName, textureView.scale);
+                }
+
+                /* We added all attributes, nothing left to do */
+                continue;
 
             /* A primitive is anything that's not a string, object or array. We
                ignore non-primitive arrays, so we can handle both in one place. */
             } else if(token.type == JSMN_PRIMITIVE || token.type == JSMN_ARRAY) {
-                const std::size_t start = tokenIndex + std::size_t(token.type == JSMN_ARRAY);
+                const UnsignedInt start = tokenIndex + UnsignedInt(token.type == JSMN_ARRAY);
                 /* Primitive token size is 0, but we can't use max() or we'd
                    allow empty arrays */
-                const std::size_t count = token.type == JSMN_PRIMITIVE ? 1 : token.size;
+                const UnsignedInt count = token.type == JSMN_PRIMITIVE ? 1 : token.size;
 
                 /* Using a lambda here to make aborting early easier */
                 auto attributeType = [&]() -> MaterialAttributeType {
@@ -2906,49 +2911,50 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
                 type = attributeType();
 
-                if(type != MaterialAttributeType{}) {
-                    if(type == MaterialAttributeType::Float) {
-                        constexpr MaterialAttributeType vectorType[4] {
-                            MaterialAttributeType::Float, MaterialAttributeType::Vector2,
-                            MaterialAttributeType::Vector3, MaterialAttributeType::Vector4
-                        };
-                        type = vectorType[count - 1];
+                if(type == MaterialAttributeType{}) {
+                    Warning{} << "Trade::CgltfImporter::material(): property" << name << "has unsupported type, skipping";
+                    continue;
+                }
 
-                        Vector4& data = *reinterpret_cast<Vector4*>(attributeData);
-                        for(std::size_t i = 0; i != count; ++i)
-                            data[i] = cgltf_json_to_float(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
+                if(type == MaterialAttributeType::Float) {
+                    constexpr MaterialAttributeType vectorType[4] {
+                        MaterialAttributeType::Float, MaterialAttributeType::Vector2,
+                        MaterialAttributeType::Vector3, MaterialAttributeType::Vector4
+                    };
+                    type = vectorType[count - 1];
 
-                    } else if(type == MaterialAttributeType::Int) {
-                        constexpr MaterialAttributeType vectorType[4] {
-                            MaterialAttributeType::Int, MaterialAttributeType::Vector2i,
-                            MaterialAttributeType::Vector3i, MaterialAttributeType::Vector4i
-                        };
-                        type = vectorType[count - 1];
+                    Vector4& data = *reinterpret_cast<Vector4*>(attributeData);
+                    for(UnsignedInt i = 0; i != count; ++i)
+                        data[i] = cgltf_json_to_float(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
 
-                        Vector4i& data = *reinterpret_cast<Vector4i*>(attributeData);
-                        for(std::size_t i = 0; i != count; ++i)
-                            data[i] = cgltf_json_to_int(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
+                } else if(type == MaterialAttributeType::Int) {
+                    constexpr MaterialAttributeType vectorType[4] {
+                        MaterialAttributeType::Int, MaterialAttributeType::Vector2i,
+                        MaterialAttributeType::Vector3i, MaterialAttributeType::Vector4i
+                    };
+                    type = vectorType[count - 1];
 
-                    } else if(type == MaterialAttributeType::UnsignedInt) {
-                        constexpr MaterialAttributeType vectorType[4] {
-                            MaterialAttributeType::UnsignedInt, MaterialAttributeType::Vector2ui,
-                            MaterialAttributeType::Vector3ui, MaterialAttributeType::Vector4ui
-                        };
-                        type = vectorType[count - 1];
+                    Vector4i& data = *reinterpret_cast<Vector4i*>(attributeData);
+                    for(UnsignedInt i = 0; i != count; ++i)
+                        data[i] = cgltf_json_to_int(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
 
-                        Vector4ui& data = *reinterpret_cast<Vector4ui*>(attributeData);
-                        for(std::size_t i = 0; i != count; ++i)
-                            data[i] = cgltf_json_to_int(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
+                } else if(type == MaterialAttributeType::UnsignedInt) {
+                    constexpr MaterialAttributeType vectorType[4] {
+                        MaterialAttributeType::UnsignedInt, MaterialAttributeType::Vector2ui,
+                        MaterialAttributeType::Vector3ui, MaterialAttributeType::Vector4ui
+                    };
+                    type = vectorType[count - 1];
 
-                    } else if(type == MaterialAttributeType::Bool) {
-                        bool& data = *reinterpret_cast<bool*>(attributeData);
-                        data = cgltf_json_to_bool(&tokens[start], reinterpret_cast<const uint8_t*>(json.data()));
+                    Vector4ui& data = *reinterpret_cast<Vector4ui*>(attributeData);
+                    for(UnsignedInt i = 0; i != count; ++i)
+                        data[i] = cgltf_json_to_int(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
 
-                    } else
-                        CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                } else if(type == MaterialAttributeType::Bool) {
+                    bool& data = *reinterpret_cast<bool*>(attributeData);
+                    data = cgltf_json_to_bool(&tokens[start], reinterpret_cast<const uint8_t*>(json.data()));
 
                 } else
-                    Warning{} << "Trade::CgltfImporter::material(): property" << name << "has unsupported type, skipping";
+                    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
             } else if(token.type == JSMN_STRING) {
                 attributeView = tokenString(json, token);
@@ -2959,14 +2965,10 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
             }
 
-            /* Ignored and warning printed, or attributes already added
-               (texture object). Nothing left to do. */
-            if(type == MaterialAttributeType{})
-                continue;
+            CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
 
             const void* valuePointer = type == MaterialAttributeType::String ?
                 static_cast<const void*>(&attributeView) : static_cast<const void*>(attributeData);
-
             if(!checkMaterialAttributeSize(name, type, valuePointer))
                 continue;
 
