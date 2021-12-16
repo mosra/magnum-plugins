@@ -317,16 +317,15 @@ fail.
 -   Unrecognized material extensions are imported as custom layers with a `#`
     prefix. Extension properties are imported with their raw names and types,
     the following of which are supported:
-    -   @ref MaterialAttributeType::String, @ref MaterialAttributeType::Bool,
-        @ref MaterialAttributeType::Float, @ref MaterialAttributeType::Int,
-        @ref MaterialAttributeType::UnsignedInt
-    -   arrays as @ref MaterialAttributeType::Vector2/
+    -   @ref MaterialAttributeType::String
+    -   @ref MaterialAttributeType::Bool
+    -   All numbers as @ref MaterialAttributeType::Float to avoid inconsistency
+        with different glTF exporters. The only exception are texture indices
+        and coordinate sets inside [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
+        objects.
+    -   Number arrays as @ref MaterialAttributeType::Vector2/
         @ref MaterialAttributeType::Vector3/
-        @ref MaterialAttributeType::Vector4,
-        MaterialAttributeType::Vector2i/@ref MaterialAttributeType::Vector3i/
-        @ref MaterialAttributeType::Vector4i, MaterialAttributeType::Vector2ui/
-        @ref MaterialAttributeType::Vector3ui/
-        @ref MaterialAttributeType::Vector4ui.
+        @ref MaterialAttributeType::Vector4.
         Empty arrays, arrays of size 5 or higher as well as arrays containing
         anything that isn't a number are ignored.
     -   [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
