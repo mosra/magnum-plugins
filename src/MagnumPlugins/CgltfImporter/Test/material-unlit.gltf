@@ -15,9 +15,10 @@
                     "index": 1
                 }
             },
-            "note": "to verify Type::PbrSpecularGlossiness gets removed too",
-            "KHR_materials_pbrSpecularGlossiness": {},
             "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "note": "to verify Type::PbrSpecularGlossiness gets removed too"
+                },
                 "KHR_materials_unlit": {}
             }
         }
@@ -36,6 +37,7 @@
         }
     ],
     "extensionsUsed": [
+        "KHR_materials_pbrSpecularGlossiness",
         "KHR_materials_unlit"
     ]
 }
