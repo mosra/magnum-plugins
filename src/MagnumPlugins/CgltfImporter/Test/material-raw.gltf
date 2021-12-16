@@ -60,6 +60,7 @@
                     }
                 },
                 "MGNM_material_type_zoo": {
+                    "duplicate": "overwritten by later values",
                     "boolTrue": true,
                     "boolFalse": false,
                     "int": -7992835,
@@ -81,7 +82,9 @@
                     "vec1ui": [9],
                     "vec2ui": [9, 8],
                     "vec3ui": [9, 8, 7],
-                    "vec4ui": [9, 8, 7, 6]
+                    "vec4ui": [9, 8, 7, 6],
+                    "duplicate": 0.2,
+                    "duplicate": true
                 },
                 "MGNM_material_forbidden_types": {
                     "null": null,

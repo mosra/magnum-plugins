@@ -4057,7 +4057,7 @@ void CgltfImporterTest::materialRaw() {
         constexpr Containers::StringView layer = "#MGNM_material_type_zoo"_s;
         CORRADE_ITERATION(layer);
         CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 20 + 1);
+        CORRADE_COMPARE(material->attributeCount(layer), 21 + 1);
 
         {
             constexpr Containers::StringView name = "boolTrue"_s;
@@ -4159,6 +4159,11 @@ void CgltfImporterTest::materialRaw() {
             CORRADE_VERIFY(material->hasAttribute(layer, name));
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector4ui);
             CORRADE_COMPARE(material->attribute<Vector4ui>(layer, name), (Vector4ui{9u, 8u, 7u, 6u}));
+        } {
+            constexpr Containers::StringView name = "duplicate"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
+            CORRADE_COMPARE(material->attribute<bool>(layer, name), true);
         }
     }
 
@@ -4166,27 +4171,29 @@ void CgltfImporterTest::materialRaw() {
        invalid types or too large and skipped */
     CORRADE_VERIFY(!material->hasLayer("#MGNM_material_forbidden_types"_s));
 
-    /* But it produces all kinds of warnings */
+    /* But it produces all kinds of warnings. Attributes are sorted by name. */
     CORRADE_COMPARE(out.str(),
         "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"
-        "Trade::CgltfImporter::material(): property null has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property emptyArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property oversizedArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property stringArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property boolArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedStringArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedBoolArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedObjectArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property nonTextureObject has non-texture object type, skipping\n"
+        "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): property Texture has non-texture object type, skipping\n"
-        "Trade::CgltfImporter::material(): property invalidTexture has invalid texture object type, skipping\n"
-        "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
+        /* These are not sorted because they're not JSON attributes, and added
+           in this order by materialTexture() */
         "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureMatrix is too large with 104 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureCoordinates is too large with 77 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATexture is too large with 66 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureScale is too large with 71 bytes, skipping\n"
-        "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
+        "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property boolArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property emptyArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property invalidTexture has invalid texture object type, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedBoolArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedObjectArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedStringArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property nonTextureObject has non-texture object type, skipping\n"
+        "Trade::CgltfImporter::material(): property null has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property oversizedArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property stringArray has unsupported type, skipping\n"
         "Trade::CgltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
 }
 
