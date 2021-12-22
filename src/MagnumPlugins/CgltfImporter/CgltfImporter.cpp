@@ -205,13 +205,34 @@ bool isDataUri(Containers::StringView uri) {
 }
 
 /* Decode percent-encoded characters in URIs:
-   https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 */
+   https://datatracker.ietf.org/doc/html/rfc3986#section-2.1
+   This returns std::string because we only use it with Directory::join(). */
 std::string decodeUri(Containers::StringView uri) {
     std::string decoded = uri;
     const std::size_t decodedSize = cgltf_decode_uri(&decoded[0]);
     decoded.resize(decodedSize);
 
     return decoded;
+}
+
+/* Cgltf's JSON parser jsmn doesn't decode escaped characters so we do it after
+   parsing. If there's nothing to escape, returns an empty Optional. */
+Containers::Optional<Containers::String> decodeString(Containers::StringView str) {
+    /* The input string can be UTF-8 encoded but we can use a byte search here
+       since all multi-byte UTF-8 characters have the high bit set and '\\'
+       doesn't, so this will only match single-byte ASCII characters. */
+    const Containers::StringView escape = str.find('\\');
+    if(escape.isEmpty())
+        return Containers::NullOpt;
+
+    /* Skip any processing until the first escape character */
+    const std::size_t start = escape.data() - str.data();
+
+    Containers::String decoded{str};
+    const std::size_t decodedSize = cgltf_decode_string(decoded.data() + start) + start;
+    CORRADE_INTERNAL_ASSERT(decodedSize < str.size());
+
+    return Containers::String{decoded.prefix(decodedSize)};
 }
 
 Containers::Array<jsmntok_t> parseJson(Containers::StringView str) {
@@ -262,19 +283,17 @@ struct CgltfImporter::Document {
        so the buffer id is used as the index. */
     Containers::Array<Containers::Array<char>> bufferData;
 
-    /* Cgltf's JSON parser jsmn doesn't decode escaped characters so we do it
-       after parsing. If there's nothing to escape, returns a view on the
-       original string. Decoded strings are cached in a map indexed by the
-       input view data pointer. This works because we only call this function
-       with views on strings from cgltf_data.
+    /* Decode and cache strings in a map indexed by the input view data
+       pointer. This works because we only call this function with views on
+       strings from cgltf_data.
 
        Note that parsing inside cgltf happens with unescaped strings, but we
        have no influence on that. In practice, this shouldn't be a problem. Old
        versions of the spec used to explicitly forbid non-ASCII keys/enums:
        https://github.com/KhronosGroup/glTF/tree/fd3ab461a1114fb0250bd76099153d2af50a7a1d/specification/2.0#json-encoding
        Newer spec versions changed this to "ASCII characters [...] SHOULD be
-       written without JSON escaping" */
-    Containers::StringView decodeString(Containers::StringView str);
+       written without JSON escaping". */
+    Containers::StringView decodeCachedString(Containers::StringView str);
 
     std::unordered_map<const char*, const Containers::String> decodedStrings;
 
@@ -379,7 +398,7 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document:
         storage = Containers::Array<char>{static_cast<char*>(decoded), size};
         return Containers::arrayCast<const char>(storage);
     } else if(importer.fileCallback()) {
-        const std::string fullPath = Utility::Directory::join(filePath ? *filePath : "", decodeUri(decodeString(uri)));
+        const std::string fullPath = Utility::Directory::join(filePath ? *filePath : "", decodeUri(decodeCachedString(uri)));
         Containers::Optional<Containers::ArrayView<const char>> view = importer.fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, importer.fileCallbackUserData());
         if(!view) {
             Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening file:" << Containers::StringView{fullPath} << ": file callback failed";
@@ -391,7 +410,7 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document:
             Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): external buffers can be imported only when opening files from the filesystem or if a file callback is present";
             return Containers::NullOpt;
         }
-        const std::string fullPath = Utility::Directory::join(*filePath, decodeUri(decodeString(uri)));
+        const std::string fullPath = Utility::Directory::join(*filePath, decodeUri(decodeCachedString(uri)));
         if(!Utility::Directory::exists(fullPath)) {
             Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening file:" << Containers::StringView{fullPath} << ": file not found";
             return Containers::NullOpt;
@@ -454,32 +473,26 @@ Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::
         {std::ptrdiff_t(accessor->stride), 1}};
 }
 
-Containers::StringView CgltfImporter::Document::decodeString(Containers::StringView str) {
+Containers::StringView CgltfImporter::Document::decodeCachedString(Containers::StringView str) {
     if(str.isEmpty())
         return str;
 
-    /* String has been decoded before */
+    /* StringView constructed from nullptr doesn't have this flag, but it's
+       caught by isEmpty() above */
+    CORRADE_INTERNAL_ASSERT(str.flags() >= Containers::StringViewFlag::NullTerminated);
+
+    /* Return cached value if the string has been decoded before */
     const auto found = decodedStrings.find(str.data());
     if(found != decodedStrings.end())
         return found->second;
 
-    /* The input string can be UTF-8 encoded but we can use a byte search here
-       since all multi-byte UTF-8 characters have the high bit set and '\\'
-       doesn't, so this will only match single-byte ASCII characters. */
-    Containers::StringView escape = str.find('\\');
-    /* No escaped sequence found. If the view is null-terminated (all strings
-       in cgltf_data should be), this stores a non-owning String. */
-    if(escape.isEmpty())
+    Containers::Optional<Containers::String> decoded = decodeString(str);
+    /* Nothing to escape. This creates a non-owning String with a view on the
+       input data. */
+    if(!decoded)
         return decodedStrings.emplace(str.data(), Containers::String::nullTerminatedView(str)).first->second;
 
-    /* Skip any processing until the first escape character */
-    const std::size_t start = escape.data() - str.data();
-
-    Containers::String decoded{str};
-    const std::size_t decodedSize = cgltf_decode_string(decoded.data() + start) + start;
-    CORRADE_INTERNAL_ASSERT(decodedSize < str.size());
-
-    return decodedStrings.emplace(str.data(), Containers::String{decoded.prefix(decodedSize)}).first->second;
+    return decodedStrings.emplace(str.data(), std::move(*decoded)).first->second;
 }
 
 namespace {
@@ -806,7 +819,7 @@ Int CgltfImporter::doAnimationForName(const std::string& name) {
         _d->animationsForName.emplace();
         _d->animationsForName->reserve(_d->data->animations_count);
         for(std::size_t i = 0; i != _d->data->animations_count; ++i)
-            _d->animationsForName->emplace(_d->decodeString(_d->data->animations[i].name), i);
+            _d->animationsForName->emplace(_d->decodeCachedString(_d->data->animations[i].name), i);
     }
 
     const auto found = _d->animationsForName->find(name);
@@ -816,7 +829,7 @@ Int CgltfImporter::doAnimationForName(const std::string& name) {
 std::string CgltfImporter::doAnimationName(UnsignedInt id) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return {};
-    return _d->decodeString(_d->data->animations[id].name);
+    return _d->decodeCachedString(_d->data->animations[id].name);
 }
 
 namespace {
@@ -1167,7 +1180,7 @@ Int CgltfImporter::doCameraForName(const std::string& name) {
         _d->camerasForName.emplace();
         _d->camerasForName->reserve(_d->data->cameras_count);
         for(std::size_t i = 0; i != _d->data->cameras_count; ++i)
-            _d->camerasForName->emplace(_d->decodeString(_d->data->cameras[i].name), i);
+            _d->camerasForName->emplace(_d->decodeCachedString(_d->data->cameras[i].name), i);
     }
 
     const auto found = _d->camerasForName->find(name);
@@ -1175,7 +1188,7 @@ Int CgltfImporter::doCameraForName(const std::string& name) {
 }
 
 std::string CgltfImporter::doCameraName(const UnsignedInt id) {
-    return _d->decodeString(_d->data->cameras[id].name);
+    return _d->decodeCachedString(_d->data->cameras[id].name);
 }
 
 Containers::Optional<CameraData> CgltfImporter::doCamera(UnsignedInt id) {
@@ -1218,7 +1231,7 @@ Int CgltfImporter::doLightForName(const std::string& name) {
         _d->lightsForName.emplace();
         _d->lightsForName->reserve(_d->data->lights_count);
         for(std::size_t i = 0; i != _d->data->lights_count; ++i)
-            _d->lightsForName->emplace(_d->decodeString(_d->data->lights[i].name), i);
+            _d->lightsForName->emplace(_d->decodeCachedString(_d->data->lights[i].name), i);
     }
 
     const auto found = _d->lightsForName->find(name);
@@ -1226,7 +1239,7 @@ Int CgltfImporter::doLightForName(const std::string& name) {
 }
 
 std::string CgltfImporter::doLightName(const UnsignedInt id) {
-    return _d->decodeString(_d->data->lights[id].name);
+    return _d->decodeCachedString(_d->data->lights[id].name);
 }
 
 Containers::Optional<LightData> CgltfImporter::doLight(UnsignedInt id) {
@@ -1306,7 +1319,7 @@ Int CgltfImporter::doSceneForName(const std::string& name) {
         _d->scenesForName.emplace();
         _d->scenesForName->reserve(_d->data->scenes_count);
         for(std::size_t i = 0; i != _d->data->scenes_count; ++i)
-            _d->scenesForName->emplace(_d->decodeString(_d->data->scenes[i].name), i);
+            _d->scenesForName->emplace(_d->decodeCachedString(_d->data->scenes[i].name), i);
     }
 
     const auto found = _d->scenesForName->find(name);
@@ -1314,7 +1327,7 @@ Int CgltfImporter::doSceneForName(const std::string& name) {
 }
 
 std::string CgltfImporter::doSceneName(const UnsignedInt id) {
-    return _d->decodeString(_d->data->scenes[id].name);
+    return _d->decodeCachedString(_d->data->scenes[id].name);
 }
 
 Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
@@ -1612,7 +1625,7 @@ Long CgltfImporter::doObjectForName(const std::string& name) {
         _d->nodesForName.emplace();
         _d->nodesForName->reserve(_d->data->nodes_count);
         for(std::size_t i = 0; i != _d->data->nodes_count; ++i) {
-            _d->nodesForName->emplace(_d->decodeString(_d->data->nodes[i].name), i);
+            _d->nodesForName->emplace(_d->decodeCachedString(_d->data->nodes[i].name), i);
         }
     }
 
@@ -1621,7 +1634,7 @@ Long CgltfImporter::doObjectForName(const std::string& name) {
 }
 
 std::string CgltfImporter::doObjectName(UnsignedLong id) {
-    return _d->decodeString(_d->data->nodes[id].name);
+    return _d->decodeCachedString(_d->data->nodes[id].name);
 }
 
 UnsignedInt CgltfImporter::doSkin3DCount() const {
@@ -1633,7 +1646,7 @@ Int CgltfImporter::doSkin3DForName(const std::string& name) {
         _d->skinsForName.emplace();
         _d->skinsForName->reserve(_d->data->skins_count);
         for(std::size_t i = 0; i != _d->data->skins_count; ++i)
-            _d->skinsForName->emplace(_d->decodeString(_d->data->skins[i].name), i);
+            _d->skinsForName->emplace(_d->decodeCachedString(_d->data->skins[i].name), i);
     }
 
     const auto found = _d->skinsForName->find(name);
@@ -1641,7 +1654,7 @@ Int CgltfImporter::doSkin3DForName(const std::string& name) {
 }
 
 std::string CgltfImporter::doSkin3DName(const UnsignedInt id) {
-    return _d->decodeString(_d->data->skins[id].name);
+    return _d->decodeCachedString(_d->data->skins[id].name);
 }
 
 Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
@@ -1700,7 +1713,7 @@ Int CgltfImporter::doMeshForName(const std::string& name) {
         for(std::size_t i = 0; i != _d->data->meshes_count; ++i) {
             /* The mesh can be duplicated for as many primitives as it has,
                point to the first mesh in the duplicate sequence */
-            _d->meshesForName->emplace(_d->decodeString(_d->data->meshes[i].name), _d->meshSizeOffsets[i]);
+            _d->meshesForName->emplace(_d->decodeCachedString(_d->data->meshes[i].name), _d->meshSizeOffsets[i]);
         }
     }
 
@@ -1710,7 +1723,7 @@ Int CgltfImporter::doMeshForName(const std::string& name) {
 
 std::string CgltfImporter::doMeshName(const UnsignedInt id) {
     /* This returns the same name for all multi-primitive mesh duplicates */
-    return _d->decodeString(_d->data->meshes[_d->meshMap[id].first()].name);
+    return _d->decodeCachedString(_d->data->meshes[_d->meshMap[id].first()].name);
 }
 
 Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, UnsignedInt) {
@@ -2182,7 +2195,7 @@ Int CgltfImporter::doMaterialForName(const std::string& name) {
         _d->materialsForName.emplace();
         _d->materialsForName->reserve(_d->data->materials_count);
         for(std::size_t i = 0; i != _d->data->materials_count; ++i)
-            _d->materialsForName->emplace(_d->decodeString(_d->data->materials[i].name), i);
+            _d->materialsForName->emplace(_d->decodeCachedString(_d->data->materials[i].name), i);
     }
 
     const auto found = _d->materialsForName->find(name);
@@ -2190,7 +2203,7 @@ Int CgltfImporter::doMaterialForName(const std::string& name) {
 }
 
 std::string CgltfImporter::doMaterialName(const UnsignedInt id) {
-    return _d->decodeString(_d->data->materials[id].name);
+    return _d->decodeCachedString(_d->data->materials[id].name);
 }
 
 namespace {
@@ -2782,7 +2795,8 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                alignas prevents unaligned reads for individual floats. For
                strings, MaterialAttributeData expects a pointer to StringView. */
             alignas(4) char attributeData[16];
-            Containers::StringView attributeView;
+            Containers::String attributeString;
+            Containers::StringView attributeStringView;
             MaterialAttributeType type{};
             if(token.type == JSMN_OBJECT) {
                 /* Parse glTF textureInfo objects. Any objects without the
@@ -2919,7 +2933,13 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
             } else if(token.type == JSMN_STRING) {
-                attributeView = tokenString(json, token);
+                const Containers::StringView value = tokenString(json, token);
+                Containers::Optional<Containers::String> decoded = decodeString(value);
+                if(decoded) {
+                    attributeString = std::move(*decoded);
+                    attributeStringView = attributeString;
+                } else
+                    attributeStringView = value;
                 type = MaterialAttributeType::String;
 
             } else {
@@ -2930,7 +2950,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
 
             const void* valuePointer = type == MaterialAttributeType::String ?
-                static_cast<const void*>(&attributeView) : static_cast<const void*>(attributeData);
+                static_cast<const void*>(&attributeStringView) : static_cast<const void*>(attributeData);
             if(!checkMaterialAttributeSize(name, type, valuePointer))
                 continue;
 
@@ -2982,7 +3002,7 @@ Int CgltfImporter::doTextureForName(const std::string& name) {
         _d->texturesForName.emplace();
         _d->texturesForName->reserve(_d->data->textures_count);
         for(std::size_t i = 0; i != _d->data->textures_count; ++i)
-            _d->texturesForName->emplace(_d->decodeString(_d->data->textures[i].name), i);
+            _d->texturesForName->emplace(_d->decodeCachedString(_d->data->textures[i].name), i);
     }
 
     const auto found = _d->texturesForName->find(name);
@@ -2990,7 +3010,7 @@ Int CgltfImporter::doTextureForName(const std::string& name) {
 }
 
 std::string CgltfImporter::doTextureName(const UnsignedInt id) {
-    return _d->decodeString(_d->data->textures[id].name);
+    return _d->decodeCachedString(_d->data->textures[id].name);
 }
 
 Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id) {
@@ -3183,7 +3203,7 @@ Int CgltfImporter::doImage2DForName(const std::string& name) {
         _d->imagesForName.emplace();
         _d->imagesForName->reserve(_d->data->images_count);
         for(std::size_t i = 0; i != _d->data->images_count; ++i)
-            _d->imagesForName->emplace(_d->decodeString(_d->data->images[i].name), i);
+            _d->imagesForName->emplace(_d->decodeCachedString(_d->data->images[i].name), i);
     }
 
     const auto found = _d->imagesForName->find(name);
@@ -3191,7 +3211,7 @@ Int CgltfImporter::doImage2DForName(const std::string& name) {
 }
 
 std::string CgltfImporter::doImage2DName(const UnsignedInt id) {
-    return _d->decodeString(_d->data->images[id].name);
+    return _d->decodeCachedString(_d->data->images[id].name);
 }
 
 AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const function) {
@@ -3250,7 +3270,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
         return nullptr;
     }
 
-    if(!importer.openFile(Utility::Directory::join(_d->filePath ? *_d->filePath : "", decodeUri(_d->decodeString(image.uri)))))
+    if(!importer.openFile(Utility::Directory::join(_d->filePath ? *_d->filePath : "", decodeUri(_d->decodeCachedString(image.uri)))))
         return nullptr;
     return &_d->imageImporter.emplace(std::move(importer));
 }

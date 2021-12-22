@@ -67,6 +67,7 @@
                     "unsignedInt": 109835761,
                     "float": 4.321,
                     "string": "Ribbit -- ribbit",
+                    "encodedString": "\uB9C8\uC774\uD06C \uCCB4\uD06C",
                     "emptyString": "",
                     "UppercaseName":  true ,
                     "vec1": [9.12e+1],

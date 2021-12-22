@@ -4057,7 +4057,7 @@ void CgltfImporterTest::materialRaw() {
         constexpr Containers::StringView layer = "#MAGNUM_material_type_zoo"_s;
         CORRADE_ITERATION(layer);
         CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 13 + 1);
+        CORRADE_COMPARE(material->attributeCount(layer), 14 + 1);
 
         {
             constexpr Containers::StringView name = "boolTrue"_s;
@@ -4089,6 +4089,11 @@ void CgltfImporterTest::materialRaw() {
             CORRADE_VERIFY(material->hasAttribute(layer, name));
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::String);
             CORRADE_COMPARE(material->attribute<Containers::StringView>(layer, name), "Ribbit -- ribbit"_s);
+        } {
+            constexpr Containers::StringView name = "encodedString"_s;
+            CORRADE_VERIFY(material->hasAttribute(layer, name));
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::String);
+            CORRADE_COMPARE(material->attribute<Containers::StringView>(layer, name), "마이크 체크"_s);
         } {
             constexpr Containers::StringView name = "emptyString"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
