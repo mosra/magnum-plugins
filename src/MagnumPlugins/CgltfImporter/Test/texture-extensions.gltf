@@ -85,7 +85,7 @@
             "name": "unknown extension",
             "source": 0,
             "extensions": {
-                "MGNM_fake_extension": {
+                "MAGNUM_fake_extension": {
                     "source": 4
                 }
             }
@@ -94,7 +94,7 @@
             "name": "GOOGLE_texture_basis and unknown",
             "source": 0,
             "extensions": {
-                "MGNM_fake_extension": {
+                "MAGNUM_fake_extension": {
                     "source": 4
                 },
                 "GOOGLE_texture_basis": {
@@ -107,6 +107,6 @@
         "GOOGLE_texture_basis",
         "KHR_texture_basisu",
         "MSFT_texture_dds",
-        "MGNM_fake_extension"
+        "MAGNUM_fake_extension"
     ]
 }

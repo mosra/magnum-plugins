@@ -4008,7 +4008,7 @@ void CgltfImporterTest::materialRaw() {
 
     /* Unknown extension with a textureInfo object */
     } {
-        constexpr Containers::StringView layer = "#MGNM_material_snake"_s;
+        constexpr Containers::StringView layer = "#MAGNUM_material_snake"_s;
         CORRADE_ITERATION(layer);
         CORRADE_VERIFY(material->hasLayer(layer));
         CORRADE_COMPARE(material->attributeCount(layer), 6 + 1);
@@ -4054,7 +4054,7 @@ void CgltfImporterTest::materialRaw() {
 
     /* Unknown extension with all other supported types */
     } {
-        constexpr Containers::StringView layer = "#MGNM_material_type_zoo"_s;
+        constexpr Containers::StringView layer = "#MAGNUM_material_type_zoo"_s;
         CORRADE_ITERATION(layer);
         CORRADE_VERIFY(material->hasLayer(layer));
         CORRADE_COMPARE(material->attributeCount(layer), 21 + 1);
@@ -4167,9 +4167,9 @@ void CgltfImporterTest::materialRaw() {
         }
     }
 
-    /* No layer for MGNM_material_forbidden_types because all attributes are
+    /* No layer for MAGNUM_material_forbidden_types because all attributes are
        invalid types or too large and skipped */
-    CORRADE_VERIFY(!material->hasLayer("#MGNM_material_forbidden_types"_s));
+    CORRADE_VERIFY(!material->hasLayer("#MAGNUM_material_forbidden_types"_s));
 
     /* But it produces all kinds of warnings. Attributes are sorted by name. */
     CORRADE_COMPARE(out.str(),

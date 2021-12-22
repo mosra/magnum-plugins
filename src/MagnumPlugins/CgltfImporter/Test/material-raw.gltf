@@ -14,7 +14,7 @@
         {
             "name": "raw out-of-bounds",
             "extensions": {
-                "MGNM_material_snake": {
+                "MAGNUM_material_snake": {
                     "snakeTexture": {
                         "index": 2
                     }
@@ -31,7 +31,7 @@
             },
             "doubleSided": true,
             "extensions": {
-                "MGNM_material_snake": {
+                "MAGNUM_material_snake": {
                     "note": "should be overwritten by later duplicate extension",
                     "snakeFactor": 3.3,
                     "thisWillDisappear": true
@@ -40,7 +40,7 @@
                     "note": "should be imported as a predefined layer",
                     "clearcoatFactor": 0.5
                 },
-                "MGNM_material_snake": {
+                "MAGNUM_material_snake": {
                     "snakeFactor": 6.6,
                     "snakeTexture": {
                         "index": 1,
@@ -59,7 +59,7 @@
                         "scale": 1.0
                     }
                 },
-                "MGNM_material_type_zoo": {
+                "MAGNUM_material_type_zoo": {
                     "duplicate": "overwritten by later values",
                     "boolTrue": true,
                     "boolFalse": false,
@@ -86,7 +86,7 @@
                     "duplicate": 0.2,
                     "duplicate": true
                 },
-                "MGNM_material_forbidden_types": {
+                "MAGNUM_material_forbidden_types": {
                     "null": null,
                     "emptyArray": [],
                     "oversizedArray": [9.1, 8.2, 7.3, 6.4, 5.5],
@@ -147,9 +147,9 @@
     ],
     "extensionsUsed": [
         "KHR_materials_clearcoat",
-        "MGNM_material_snake",
-        "MGNM_material_type_zoo",
-        "MGNM_material_forbidden_types",
+        "MAGNUM_material_snake",
+        "MAGNUM_material_type_zoo",
+        "MAGNUM_material_forbidden_types",
         "VENDOR_empty_extension_object",
         "VENDOR_material_thisnameiswaytoolongforalayername!",
         "",
