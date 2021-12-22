@@ -84,6 +84,9 @@ namespace {
 #define CGLTF_FREE(ptr) freeNoop(ptr)
 /* If we had a good replacement for ato(i|f|ll) we could set the corresponding
    CGLTF_ATOI etc. here and prevent stdlib.h from being included in cgltf.h */
+/** @todo Override CGLTF_ATOI with a parsing function that handles integers
+    with exponent notation:
+    https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#json-encoding */
 
 #define CGLTF_IMPLEMENTATION
 
@@ -2553,7 +2556,10 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
     /* Import extensions with non-standard layer/attribute types that are
        already parsed by cgltf and hence don't appear in the extension list
        anymore. We use the original attribute names as found in the extension
-       specifications. */
+       specifications. To imitate actual unknown extension import below,
+       all Int and UnsignedInt attributes must be converted to Float.
+       Note that these custom layers will have to be duplicated for backwards
+       compatibility even if they're ever turned into standard layers. */
     if(material.has_ior) {
         arrayAppend(layers, UnsignedInt(attributes.size()));
         arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_ior"_s);
@@ -2769,12 +2775,12 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             ++tokenIndex;
             const jsmntok_t& token = tokens[tokenIndex];
 
-            /* We only need temporary storage for parsing single primitives
-               (bool, Float, Int, UnsignedInt) or Vector2/3/4 of primitives.
-               Arrays of other types/sizes are ignored, so we know the upper
-               limit on the data size. If it's a string, MaterialAttributeData
-               expects a pointer to a StringView. */
-            char attributeData[16];
+            /* We only need temporary storage for parsing primitive (arrays) as
+               bool/Float/Vector[2/3/4]. Other types/sizes are either converted
+               or ignored, so we know the upper limit on the data size. The
+               alignas prevents unaligned reads for individual floats. For
+               strings, MaterialAttributeData expects a pointer to StringView. */
+            char alignas(4) attributeData[16];
             Containers::StringView attributeView;
             MaterialAttributeType type{};
             if(token.type == JSMN_OBJECT) {
@@ -2841,81 +2847,51 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                ignore non-primitive arrays, so we can handle both in one place. */
             } else if(token.type == JSMN_PRIMITIVE || token.type == JSMN_ARRAY) {
                 const UnsignedInt start = tokenIndex + UnsignedInt(token.type == JSMN_ARRAY);
-                /* Primitive token size is 0, but we can't use max() or we'd
-                   allow empty arrays */
+                /* Primitive token size is 0, but we can't use max() because
+                   that would allow empty arrays */
                 const UnsignedInt count = token.type == JSMN_PRIMITIVE ? 1 : token.size;
 
-                /* Using a lambda here to make aborting early easier */
-                auto attributeType = [&]() -> MaterialAttributeType {
-                    /* No use importing arbitrarily-sized arrays of primitives,
-                       those are currently not used in any glTF extension */
-                    if(count < 1 || count > 4) return MaterialAttributeType{};
-
-                    MaterialAttributeType finalType{};
+                /* No use importing arbitrarily-sized arrays of primitives,
+                   those are currently not used in any glTF extension */
+                if(count >= 1 && count <= 4) {
                     /* This still works for non-primitive array members (like
                        objects or nested arrays), because we instantly abort
                        when we find one of those, so we never need more than
                        four tokens */
                     for(const jsmntok_t& element: tokens.slice(start, start + count)) {
-                        if(element.type != JSMN_PRIMITIVE)
-                            return MaterialAttributeType{};
-
-                        const Containers::StringView value = tokenString(json, element);
+                        if(element.type != JSMN_PRIMITIVE) {
+                            type = MaterialAttributeType{};
+                            break;
+                        }
 
                         /* Jsmn only checks the first character, which allows
-                           some invalid values like nnn. We perform some basic
-                           type detection and invalid values result in 0. This
-                           matches cgltf behaviour.
-                           Technically integers can use exponent notation, too:
-                           https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#json-encoding
-                           But cgltf_json_to_int() doesn't parse them correctly
-                           and they should be incredibly rare in the wild, so
-                           we always interpret them as float. */
-                        /** @todo Override CGLTF_ATOI with a parsing function
-                            that handles integers with exponent notation */
-                        constexpr Containers::StringView FloatIndicators = ".eE"_s;
-                        MaterialAttributeType type{};
+                           some invalid values like nnn. We perform basic type
+                           detection and invalid values result in 0. This
+                           matches cgltf behaviour. */
+                        const Containers::StringView value = tokenString(json, element);
                         if(value == "true"_s || value == "false"_s) {
                             /* MaterialAttributeType has no bool vectors, and
                                converting to a number needlessly complicates
                                parsing later. So far there is no glTF extension
                                that uses bool vectors. */
-                            if(count > 1)
-                                return MaterialAttributeType{};
-                            type = MaterialAttributeType::Bool;
-
-                        } else if(std::find_first_of(value.begin(), value.end(), FloatIndicators.begin(), FloatIndicators.end()) != value.end()) {
-                            type = MaterialAttributeType::Float;
-                        } else if(value.hasPrefix("-"_s)) {
-                            type = MaterialAttributeType::Int;
-                        } else if(value != "null"_s) {
-                            type = MaterialAttributeType::UnsignedInt;
-                        } else
-                            return MaterialAttributeType{};
-
-                        if(finalType == MaterialAttributeType{})
-                            finalType = type;
-
-                        /* Upgrade mixed primitive types to a more generic type */
-                        if(finalType != type) {
-                            if(type == MaterialAttributeType::Float || finalType == MaterialAttributeType::Float) {
-                                finalType = MaterialAttributeType::Float;
-                            } else if(type == MaterialAttributeType::Int || finalType == MaterialAttributeType::Int) {
-                                finalType = MaterialAttributeType::Int;
-                            } else {
-                                /* Only UnsignedInt left, but both types would
-                                   be identical. Can't be Bool because we
-                                   abort for bool arrays with size > 1. */
-                                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                            if(count > 1) {
+                                type = MaterialAttributeType{};
+                                break;
                             }
+                            type = MaterialAttributeType::Bool;
+                        } else if(value != "null"_s) {
+                            /* Always interpret numbers as floats because the
+                               type can be ambiguous. E.g. integer attributes
+                               may use exponent notation and decimal points,
+                               making correct type detection depend on glTF
+                               exporter behaviour. */
+                            type = MaterialAttributeType::Float;
+                        } else {
+                            type = MaterialAttributeType{};
+                            break;
                         }
                     }
-
-                    CORRADE_INTERNAL_ASSERT(finalType != MaterialAttributeType{});
-                    return finalType;
-                };
-
-                type = attributeType();
+                }
 
                 if(type == MaterialAttributeType{}) {
                     Warning{} << "Trade::CgltfImporter::material(): property" << name << "has unsupported type, skipping";
@@ -2933,29 +2909,8 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     for(UnsignedInt i = 0; i != count; ++i)
                         data[i] = cgltf_json_to_float(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
 
-                } else if(type == MaterialAttributeType::Int) {
-                    constexpr MaterialAttributeType vectorType[4] {
-                        MaterialAttributeType::Int, MaterialAttributeType::Vector2i,
-                        MaterialAttributeType::Vector3i, MaterialAttributeType::Vector4i
-                    };
-                    type = vectorType[count - 1];
-
-                    Vector4i& data = *reinterpret_cast<Vector4i*>(attributeData);
-                    for(UnsignedInt i = 0; i != count; ++i)
-                        data[i] = cgltf_json_to_int(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
-
-                } else if(type == MaterialAttributeType::UnsignedInt) {
-                    constexpr MaterialAttributeType vectorType[4] {
-                        MaterialAttributeType::UnsignedInt, MaterialAttributeType::Vector2ui,
-                        MaterialAttributeType::Vector3ui, MaterialAttributeType::Vector4ui
-                    };
-                    type = vectorType[count - 1];
-
-                    Vector4ui& data = *reinterpret_cast<Vector4ui*>(attributeData);
-                    for(UnsignedInt i = 0; i != count; ++i)
-                        data[i] = cgltf_json_to_int(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
-
                 } else if(type == MaterialAttributeType::Bool) {
+                    CORRADE_INTERNAL_ASSERT(count == 1);
                     bool& data = *reinterpret_cast<bool*>(attributeData);
                     data = cgltf_json_to_bool(&tokens[start], reinterpret_cast<const uint8_t*>(json.data()));
 

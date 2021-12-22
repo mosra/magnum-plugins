@@ -4057,7 +4057,7 @@ void CgltfImporterTest::materialRaw() {
         constexpr Containers::StringView layer = "#MAGNUM_material_type_zoo"_s;
         CORRADE_ITERATION(layer);
         CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 21 + 1);
+        CORRADE_COMPARE(material->attributeCount(layer), 13 + 1);
 
         {
             constexpr Containers::StringView name = "boolTrue"_s;
@@ -4072,13 +4072,13 @@ void CgltfImporterTest::materialRaw() {
         } {
             constexpr Containers::StringView name = "int"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Int);
-            CORRADE_COMPARE(material->attribute<Int>(layer, name), -7992835);
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), -7992835.0f);
         } {
             constexpr Containers::StringView name = "unsignedInt"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 109835761u);
+            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
+            CORRADE_COMPARE(material->attribute<Float>(layer, name), 109835761.0f);
         } {
             constexpr Containers::StringView name = "float"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
@@ -4108,57 +4108,17 @@ void CgltfImporterTest::materialRaw() {
             constexpr Containers::StringView name = "vec2"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector2);
-            CORRADE_COMPARE(material->attribute<Vector2>(layer, name), (Vector2{-9.1f, 8.2f}));
+            CORRADE_COMPARE(material->attribute<Vector2>(layer, name), (Vector2{9.0f, 8.0f}));
         } {
             constexpr Containers::StringView name = "vec3"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, name), (Vector3{9.0f, 0.8f, 7.3f}));
+            CORRADE_COMPARE(material->attribute<Vector3>(layer, name), (Vector3{9.0f, 0.08f, 7.3141f}));
         } {
             constexpr Containers::StringView name = "vec4"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
             CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector4);
-            CORRADE_COMPARE(material->attribute<Vector4>(layer, name), (Vector4{-9.0f, 8.0f, 7.3f, -6.0f}));
-        } {
-            constexpr Containers::StringView name = "vec1i"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Int);
-            CORRADE_COMPARE(material->attribute<Int>(layer, name), -9);
-        } {
-            constexpr Containers::StringView name = "vec2i"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector2i);
-            CORRADE_COMPARE(material->attribute<Vector2i>(layer, name), (Vector2i{9, -8}));
-        } {
-            constexpr Containers::StringView name = "vec3i"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector3i);
-            CORRADE_COMPARE(material->attribute<Vector3i>(layer, name), (Vector3i{-9, 8, 7}));
-        } {
-            constexpr Containers::StringView name = "vec4i"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector4i);
-            CORRADE_COMPARE(material->attribute<Vector4i>(layer, name), (Vector4i{-9, -8, -7, -6}));
-        } {
-            constexpr Containers::StringView name = "vec1ui"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 9u);
-        } {
-            constexpr Containers::StringView name = "vec2ui"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector2ui);
-            CORRADE_COMPARE(material->attribute<Vector2ui>(layer, name), (Vector2ui{9u, 8u}));
-        } {
-            constexpr Containers::StringView name = "vec3ui"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector3ui);
-            CORRADE_COMPARE(material->attribute<Vector3ui>(layer, name), (Vector3ui{9u, 8u, 7u}));
-        } {
-            constexpr Containers::StringView name = "vec4ui"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector4ui);
-            CORRADE_COMPARE(material->attribute<Vector4ui>(layer, name), (Vector4ui{9u, 8u, 7u, 6u}));
+            CORRADE_COMPARE(material->attribute<Vector4>(layer, name), (Vector4{-9.0f, 8.0f, 7.0f, -6.0f}));
         } {
             constexpr Containers::StringView name = "duplicate"_s;
             CORRADE_VERIFY(material->hasAttribute(layer, name));
