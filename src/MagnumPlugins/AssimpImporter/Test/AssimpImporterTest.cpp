@@ -892,7 +892,7 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
         CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
             " ticks per second is incorrect for glTF, patching to 1000\n"));
     } else
-        CORRADE_VERIFY(out.str().empty());
+        CORRADE_COMPARE(out.str(), "");
 }
 
 void AssimpImporterTest::animationFbxTicksPerSecondPatching() {
@@ -918,7 +918,7 @@ void AssimpImporterTest::animationFbxTicksPerSecondPatching() {
         CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
             " ticks per second is incorrect for FBX, patching to 1000\n"));
     } else
-        CORRADE_VERIFY(out.str().empty());
+        CORRADE_COMPARE(out.str(), "");
 }
 
 void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
@@ -978,7 +978,7 @@ void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
                 "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n",
                 targets[2].channel, targets[2].channel)));
     } else
-        CORRADE_VERIFY(out.str().empty());
+        CORRADE_COMPARE(out.str(), "");
 }
 
 void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
@@ -2011,7 +2011,7 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
     CORRADE_COMPARE(importer->textureCount(), 1);
     CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::AmbientTexture));
     /* It shouldn't be complaining about white ambient in this case */
-    CORRADE_VERIFY(out.str().empty());
+    CORRADE_COMPARE(out.str(), "");
 }
 
 void AssimpImporterTest::materialMultipleTextures() {
@@ -2297,7 +2297,7 @@ void AssimpImporterTest::materialRaw() {
     if(_assimpVersion < 500) {
         CORRADE_WARN("This version of Assimp doesn't import raw FBX material properties.");
 
-        CORRADE_VERIFY(out.str().empty());
+        CORRADE_COMPARE(out.str(), "");
     } else {
         /* Raw attributes taken directly from the FBX file, prefixed with "$raw.".
            Seems to be the only importer that supports that. */
@@ -2745,7 +2745,7 @@ void AssimpImporterTest::meshSkinningAttributes() {
             mesh = importer->mesh(meshName);
         }
         /* No warning about glTF dropping sets of weights */
-        CORRADE_VERIFY(out.str().empty());
+        CORRADE_COMPARE(out.str(), "");
 
         CORRADE_VERIFY(mesh);
         CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
