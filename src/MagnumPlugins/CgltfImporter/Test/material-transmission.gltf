@@ -80,8 +80,5 @@
     "extensionsUsed": [
         "KHR_materials_transmission",
         "KHR_texture_transform"
-    ],
-    "extensionsRequired": [
-        "KHR_materials_transmission"
     ]
 }

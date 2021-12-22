@@ -20,8 +20,5 @@
     ],
     "extensionsUsed": [
         "KHR_materials_ior"
-    ],
-    "extensionsRequired": [
-        "KHR_materials_ior"
     ]
 }

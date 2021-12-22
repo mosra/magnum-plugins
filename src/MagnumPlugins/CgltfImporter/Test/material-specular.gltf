@@ -103,8 +103,5 @@
     "extensionsUsed": [
         "KHR_materials_specular",
         "KHR_texture_transform"
-    ],
-    "extensionsRequired": [
-        "KHR_materials_specular"
     ]
 }

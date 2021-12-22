@@ -646,12 +646,6 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
         "KHR_mesh_quantization"_s,
         "KHR_texture_basisu"_s,
         "KHR_texture_transform"_s,
-        /* Parsed by cgltf and imported as custom material data */
-        "KHR_materials_ior"_s,
-        "KHR_materials_sheen"_s,
-        "KHR_materials_specular"_s,
-        "KHR_materials_transmission"_s,
-        "KHR_materials_volume"_s,
         /* Manually parsed */
         "GOOGLE_texture_basis"_s,
         "MSFT_texture_dds"_s
