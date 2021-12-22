@@ -2575,14 +2575,14 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
        compatibility even if they're ever turned into standard layers. */
     if(material.has_ior) {
         arrayAppend(layers, UnsignedInt(attributes.size()));
-        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_ior"_s);
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "#KHR_materials_ior"_s);
 
         arrayAppend(attributes, InPlaceInit, "ior", material.ior.ior);
     }
 
     if(material.has_specular) {
         arrayAppend(layers, UnsignedInt(attributes.size()));
-        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_specular"_s);
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "#KHR_materials_specular"_s);
 
         arrayAppend(attributes, InPlaceInit,
             "specularFactor"_s,
@@ -2618,7 +2618,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
     if(material.has_transmission) {
         arrayAppend(layers, UnsignedInt(attributes.size()));
-        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_transmission"_s);
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "#KHR_materials_transmission"_s);
 
         arrayAppend(attributes, InPlaceInit,
             "transmissionFactor"_s,
@@ -2635,7 +2635,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
     if(material.has_volume) {
         arrayAppend(layers, UnsignedInt(attributes.size()));
-        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_volume"_s);
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "#KHR_materials_volume"_s);
 
         arrayAppend(attributes, InPlaceInit,
             "thicknessFactor"_s,
@@ -2670,7 +2670,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
     if(material.has_sheen) {
         arrayAppend(layers, UnsignedInt(attributes.size()));
-        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "KHR_materials_sheen"_s);
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "#KHR_materials_sheen"_s);
 
         const Vector3 sheenColorFactor = Vector3::from(material.sheen.sheen_color_factor);
         arrayAppend(attributes, InPlaceInit,

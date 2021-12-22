@@ -4084,7 +4084,7 @@ void CgltfImporterTest::materialRawIor() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-ior.gltf")));
 
-    constexpr Containers::StringView layer = "KHR_materials_ior"_s;
+    constexpr Containers::StringView layer = "#KHR_materials_ior"_s;
 
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
@@ -4118,7 +4118,7 @@ void CgltfImporterTest::materialRawSpecular() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-specular.gltf")));
 
-    constexpr Containers::StringView layer = "KHR_materials_specular"_s;
+    constexpr Containers::StringView layer = "#KHR_materials_specular"_s;
 
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
@@ -4192,7 +4192,7 @@ void CgltfImporterTest::materialRawTransmission() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-transmission.gltf")));
 
-    constexpr Containers::StringView layer = "KHR_materials_transmission"_s;
+    constexpr Containers::StringView layer = "#KHR_materials_transmission"_s;
 
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
@@ -4249,7 +4249,7 @@ void CgltfImporterTest::materialRawVolume() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-volume.gltf")));
 
-    constexpr Containers::StringView layer = "KHR_materials_volume"_s;
+    constexpr Containers::StringView layer = "#KHR_materials_volume"_s;
 
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
@@ -4318,7 +4318,7 @@ void CgltfImporterTest::materialRawSheen() {
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-sheen.gltf")));
 
-    constexpr Containers::StringView layer = "KHR_materials_sheen"_s;
+    constexpr Containers::StringView layer = "#KHR_materials_sheen"_s;
 
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
