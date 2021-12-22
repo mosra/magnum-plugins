@@ -27,6 +27,7 @@
 #include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
@@ -3491,7 +3492,8 @@ void CgltfImporterTest::materialPbrSpecularGlossiness() {
         CORRADE_COMPARE(pbr.diffuseTexture(), 0);
         CORRADE_COMPARE(pbr.specularColor(), (Color4{0.4f, 0.5f, 0.6f, 0.0f}));
         CORRADE_VERIFY(pbr.hasSpecularGlossinessTexture());
-        CORRADE_COMPARE(pbr.specularTexture(), 1);        CORRADE_COMPARE(pbr.glossiness(), 0.9f);
+        CORRADE_COMPARE(pbr.specularTexture(), 1);
+        CORRADE_COMPARE(pbr.glossiness(), 0.9f);
     } {
         const char* name = "identity texture transform";
         auto material = importer->material(name);
@@ -3945,6 +3947,43 @@ void CgltfImporterTest::materialPhongFallback() {
     }
 }
 
+void compareMaterials(const MaterialData& actual, const MaterialData& expected) {
+    CORRADE_COMPARE(actual.types(), expected.types());
+    CORRADE_COMPARE(actual.layerCount(), expected.layerCount());
+
+    for(UnsignedInt layer = 0; layer != expected.layerCount(); ++layer) {
+        CORRADE_ITERATION(expected.layerName(layer));
+        CORRADE_COMPARE(actual.layerName(layer), expected.layerName(layer));
+        CORRADE_COMPARE(actual.attributeCount(layer), expected.attributeCount(layer));
+        for(UnsignedInt i = 0; i != expected.attributeCount(layer); ++i) {
+            const Containers::StringView name = expected.attributeName(layer, i);
+            CORRADE_ITERATION(name);
+            CORRADE_VERIFY(actual.hasAttribute(layer, name));
+            const MaterialAttributeType type = expected.attributeType(layer, name);
+            CORRADE_COMPARE(actual.attributeType(layer, name), type);
+            switch(type) {
+                #define _v(type, valueType) case MaterialAttributeType::type: \
+                    CORRADE_COMPARE(actual.attribute<valueType>(layer, name), expected.attribute<valueType>(layer, name)); \
+                    break;
+                #define _c(type) _v(type, type)
+                _c(UnsignedInt)
+                _c(Float)
+                _c(Vector2)
+                _c(Vector3)
+                _c(Vector4)
+                _c(Matrix3x3)
+                _v(Bool, bool)
+                _v(String, Containers::StringView)
+                _v(TextureSwizzle, MaterialTextureSwizzle)
+                #undef _c
+                #undef _v
+                default:
+                    CORRADE_FAIL_IF(true, "Unexpected attribute type" << type);
+            }
+        }
+    }
+}
+
 void CgltfImporterTest::materialRaw() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     importer->configuration().setValue("phongMaterialFallback", false);
@@ -3957,186 +3996,59 @@ void CgltfImporterTest::materialRaw() {
     {
         Warning redirectWarning{&out};
         material = importer->material("raw");
+        CORRADE_VERIFY(material);
     }
 
-    CORRADE_VERIFY(material);
-    /* Standard layer + clear coat + 2 unknown extensions */
-    CORRADE_COMPARE(material->types(), MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat);
-    CORRADE_COMPARE(material->layerCount(), 2 + 2);
+    const MaterialData expected{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
+        /* Standard layer import still works */
+        {MaterialAttribute::BaseColor, Color4{0.8f, 0.2f, 0.4f, 0.3f}},
+        {MaterialAttribute::BaseColorTexture, 0u},
+        {MaterialAttribute::DoubleSided, true},
 
-    /* Standard layer import still works */
-    {
-        CORRADE_ITERATION("base layer");
-        CORRADE_COMPARE(material->attributeCount(0), 3);
+        /* Known extension layer import still works */
+        {Trade::MaterialAttribute::LayerName, "ClearCoat"_s},
+        {MaterialAttribute::LayerFactor, 0.5f},
+        {MaterialAttribute::Roughness, 0.0f},
 
-        {
-            constexpr MaterialAttribute name = MaterialAttribute::BaseColor;
-            CORRADE_VERIFY(material->hasAttribute(0, name));
-            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Vector4);
-            CORRADE_COMPARE(material->attribute<Color4>(0, name), (Color4{0.8f, 0.2f, 0.4f, 0.3f}));
-        } {
-            constexpr MaterialAttribute name = MaterialAttribute::BaseColorTexture;
-            CORRADE_VERIFY(material->hasAttribute(0, name));
-            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(0, name), 0u);
-        } {
-            constexpr MaterialAttribute name = MaterialAttribute::DoubleSided;
-            CORRADE_VERIFY(material->hasAttribute(0, name));
-            CORRADE_COMPARE(material->attributeType(0, name), MaterialAttributeType::Bool);
-            CORRADE_COMPARE(material->attribute<bool>(0, name), true);
-        }
-
-    /* Known extension layer import still works */
-    } {
-        constexpr MaterialLayer layer = MaterialLayer::ClearCoat;
-        CORRADE_ITERATION(layer);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        /* +1 for the layer name */
-        CORRADE_COMPARE(material->attributeCount(layer), 2 + 1);
-
-        {
-            constexpr MaterialAttribute name = MaterialAttribute::LayerFactor;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), 0.5f);
-        } {
-            constexpr MaterialAttribute name = MaterialAttribute::Roughness;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), 0.0f);
-        }
-
-    /* Unknown extension with a textureInfo object */
-    } {
-        constexpr Containers::StringView layer = "#MAGNUM_material_snake"_s;
-        CORRADE_ITERATION(layer);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 6 + 1);
-
-        {
-            constexpr Containers::StringView name = "snakeFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), 6.6f);
-        } {
-            constexpr Containers::StringView name = "snakeTexture"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 1u);
-        } {
-            constexpr Containers::StringView name = "snakeTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, name), (Matrix3{
-                {0.33f, 0.0f,  0.0f},
-                {0.0f,  0.44f, 0.0f},
-                {0.5f,  1.06f, 1.0f}
-            }));
-        } {
-            constexpr Containers::StringView name = "snakeTextureCoordinates"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 3u);
-        } {
-            constexpr Containers::StringView name = "snakeTextureScale"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), 0.2f);
-        } {
-            constexpr Containers::StringView name = "defaultScaleTexture"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, name), 1u);
-        }
-
+        /* Unknown extension with a textureInfo object */
+        {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_snake"_s},
+        {"snakeFactor"_s, 6.6f},
+        {"snakeTexture"_s, 1u},
+        {"snakeTextureMatrix"_s, Matrix3{
+            {0.33f, 0.0f,  0.0f},
+            {0.0f,  0.44f, 0.0f},
+            {0.5f,  1.06f, 1.0f}
+        }},
+        {"snakeTextureCoordinates"_s, 3u},
+        {"snakeTextureScale"_s, 0.2f},
+        {"defaultScaleTexture"_s, 1u},
         /* No defaultScaleTextureScale because scale is 1.0 */
-        CORRADE_VERIFY(!material->hasAttribute(layer, "defaultScaleTextureScale"_s));
 
-    /* Unknown extension with all other supported types */
-    } {
-        constexpr Containers::StringView layer = "#MAGNUM_material_type_zoo"_s;
-        CORRADE_ITERATION(layer);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 14 + 1);
+        /* Unknown extension with all other supported types */
+        {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_type_zoo"_s},
+        {"boolTrue"_s, true},
+        {"boolFalse"_s, false},
+        {"int"_s, -7992835.0f},
+        {"unsignedInt"_s, 109835761.0f},
+        {"float"_s, 4.321f},
+        {"string"_s, "Ribbit -- ribbit"_s},
+        {"encodedString"_s, "마이크 체크"_s},
+        {"emptyString"_s, ""_s},
+        {"uppercaseName"_s, true},
+        {"vec1"_s, 91.2f},
+        {"vec2"_s, Vector2{9.0f, 8.0f}},
+        {"vec3"_s, Vector3{9.0f, 0.08f, 7.3141f}},
+        {"vec4"_s, Vector4{-9.0f, 8.0f, 7.0f, -6.0f}},
+        {"duplicate"_s, true}
 
-        {
-            constexpr Containers::StringView name = "boolTrue"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
-            CORRADE_COMPARE(material->attribute<bool>(layer, name), true);
-        } {
-            constexpr Containers::StringView name = "boolFalse"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
-            CORRADE_COMPARE(material->attribute<bool>(layer, name), false);
-        } {
-            constexpr Containers::StringView name = "int"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), -7992835.0f);
-        } {
-            constexpr Containers::StringView name = "unsignedInt"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), 109835761.0f);
-        } {
-            constexpr Containers::StringView name = "float"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), 4.321f);
-        } {
-            constexpr Containers::StringView name = "string"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::String);
-            CORRADE_COMPARE(material->attribute<Containers::StringView>(layer, name), "Ribbit -- ribbit"_s);
-        } {
-            constexpr Containers::StringView name = "encodedString"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::String);
-            CORRADE_COMPARE(material->attribute<Containers::StringView>(layer, name), "마이크 체크"_s);
-        } {
-            constexpr Containers::StringView name = "emptyString"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::String);
-            CORRADE_COMPARE(material->attribute<Containers::StringView>(layer, name), ""_s);
-        } {
-            constexpr Containers::StringView name = "uppercaseName"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
-            CORRADE_COMPARE(material->attribute<bool>(layer, name), true);
-        } {
-            constexpr Containers::StringView name = "vec1"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, name), 91.2f);
-        } {
-            constexpr Containers::StringView name = "vec2"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector2);
-            CORRADE_COMPARE(material->attribute<Vector2>(layer, name), (Vector2{9.0f, 8.0f}));
-        } {
-            constexpr Containers::StringView name = "vec3"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, name), (Vector3{9.0f, 0.08f, 7.3141f}));
-        } {
-            constexpr Containers::StringView name = "vec4"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Vector4);
-            CORRADE_COMPARE(material->attribute<Vector4>(layer, name), (Vector4{-9.0f, 8.0f, 7.0f, -6.0f}));
-        } {
-            constexpr Containers::StringView name = "duplicate"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, name));
-            CORRADE_COMPARE(material->attributeType(layer, name), MaterialAttributeType::Bool);
-            CORRADE_COMPARE(material->attribute<bool>(layer, name), true);
-        }
-    }
+        /* No layer for MAGNUM_material_forbidden_types because all attributes
+           have invalid types or are too large, and hence are skipped */
+    }, {3, 6, 13, 28}};
 
-    /* No layer for MAGNUM_material_forbidden_types because all attributes are
-       invalid types or too large and skipped */
-    CORRADE_VERIFY(!material->hasLayer("#MAGNUM_material_forbidden_types"_s));
+    compareMaterials(*material, expected);
 
-    /* But it produces all kinds of warnings. Attributes are sorted by name. */
+    /* MAGNUM_material_forbidden_types produces all kinds of warnings.
+       Attributes are sorted by name. */
     CORRADE_COMPARE(out.str(),
         "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
@@ -4171,41 +4083,28 @@ void CgltfImporterTest::materialRawIor() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-ior.gltf")));
-    CORRADE_COMPARE(importer->materialCount(), 2);
 
-    /* Extension parsed by glTF, but imported as a custom layer */
     constexpr Containers::StringView layer = "#KHR_materials_ior"_s;
 
-    {
-        const char* name = "defaults";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        /* The extra attribute is the layer name */
-        CORRADE_COMPARE(material->attributeCount(layer), 1 + 1);
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"defaults"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                /* IOR is always imported, set to glTF default if missing */
+                {"ior"_s, 1.5f}
+            }, {0, 2}}},
+        {"factors"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"ior"_s, 1.25f}
+            }, {0, 2}}}
+    };
 
-        /* IOR is always imported, set to glTF default if missing */
-        constexpr Containers::StringView attribute = "ior"_s;
-        CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-        CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-        CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 1.5f);
-    } {
-        const char* name = "factors";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 1 + 1);
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
 
-        constexpr Containers::StringView attribute = "ior"_s;
-        CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-        CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-        CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 1.25f);
+    for(const auto& expected: materials) {
+        auto material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
+        CORRADE_VERIFY(material);
+        compareMaterials(*material, expected.second());
     }
 }
 
@@ -4218,150 +4117,68 @@ void CgltfImporterTest::materialRawSpecular() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-specular.gltf")));
-    CORRADE_COMPARE(importer->materialCount(), 5);
 
     constexpr Containers::StringView layer = "#KHR_materials_specular"_s;
 
-    {
-        const char* name = "defaults";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        /* The extra attribute is the layer name */
-        CORRADE_COMPARE(material->attributeCount(layer), 2 + 1);
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"defaults"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                /* Factors are always imported, set to glTF defaults if missing */
+                {"specularFactor"_s, 1.0f},
+                {"specularColorFactor"_s, Vector3{1.0f, 1.0f, 1.0f}},
+            }, {0, 3}}},
+        {"factors"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"specularFactor"_s, 0.67f},
+                {"specularColorFactor"_s, Vector3{0.2f, 0.4f, 0.6f}},
+            }, {0, 3}}},
+        {"textures"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"specularFactor"_s, 0.7f},
+                {"specularColorFactor"_s, Vector3{0.3f, 0.4f, 0.5f}},
+                {"specularTexture"_s, 2u},
+                {"specularTextureSwizzle"_s, MaterialTextureSwizzle::A},
+                {"specularColorTexture"_s, 1u}
+            }, {0, 6}}},
+        {"texture identity transform"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"specularFactor"_s, 1.0f},
+                {"specularColorFactor"_s, Vector3{1.0f, 1.0f, 1.0f}},
+                {"specularTexture"_s, 1u},
+                {"specularTextureMatrix"_s, Matrix3{}},
+                {"specularTextureSwizzle"_s, MaterialTextureSwizzle::A},
+                {"specularColorTexture"_s, 0u},
+                {"specularColorTextureMatrix"_s, Matrix3{}}
+            }, {0, 8}}},
+        {"texture transform + coordinate set"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"specularFactor"_s, 1.0f},
+                {"specularColorFactor"_s, Vector3{1.0f, 1.0f, 1.0f}},
+                {"specularTexture"_s, 2u},
+                {"specularTextureCoordinates"_s, 4u},
+                {"specularTextureMatrix"_s, Matrix3{
+                    {1.0f,  0.0f, 0.0f},
+                    {0.0f,  1.0f, 0.0f},
+                    {0.0f, -1.0f, 1.0f}
+                }},
+                {"specularTextureSwizzle"_s, MaterialTextureSwizzle::A},
+                {"specularColorTexture"_s, 1u},
+                {"specularColorTextureCoordinates"_s, 1u},
+                {"specularColorTextureMatrix"_s, Matrix3{
+                    {0.5f, 0.0f, 0.0f},
+                    {0.0f, 0.5f, 0.0f},
+                    {0.0f, 0.5f, 1.0f}
+                }}
+            }, {0, 10}}}
+    };
 
-        /* Factors are always imported, set to glTF defaults if missing */
-        {
-            constexpr Containers::StringView attribute = "specularFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 1.0f);
-        } {
-            constexpr Containers::StringView attribute = "specularColorFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{1.0f, 1.0f, 1.0f}));
-        }
-    } {
-        const char* name = "factors";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 2 + 1);
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
 
-        {
-            constexpr Containers::StringView attribute = "specularFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.67f);
-        } {
-            constexpr Containers::StringView attribute = "specularColorFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{0.2f, 0.4f, 0.6f}));
-        }
-    } {
-        const char* name = "textures";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
+    for(const auto& expected: materials) {
+        auto material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 5 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "specularFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.7f);
-        } {
-            constexpr Containers::StringView attribute = "specularColorFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{0.3f, 0.4f, 0.5f}));
-        } {
-            constexpr Containers::StringView attribute = "specularTexture"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 2u);
-        } {
-            constexpr Containers::StringView attribute = "specularTextureSwizzle"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::TextureSwizzle);
-            CORRADE_COMPARE(material->attribute<MaterialTextureSwizzle>(layer, attribute), MaterialTextureSwizzle::A);
-        } {
-            constexpr Containers::StringView attribute = "specularColorTexture"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 1u);
-        }
-    } {
-        const char* name = "texture identity transform";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 7 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "specularTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), Matrix3{});
-        } {
-            constexpr Containers::StringView attribute = "specularColorTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), Matrix3{});
-        }
-    } {
-        const char* name = "texture transform + coordinate set";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 9 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "specularTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), (Matrix3{
-                {1.0f, 0.0f, 0.0f},
-                {0.0f, 1.0f, 0.0f},
-                {0.0f, -1.0f, 1.0f}
-            }));
-        } {
-            constexpr Containers::StringView attribute = "specularTextureCoordinates"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 4);
-        } {
-            constexpr Containers::StringView attribute = "specularColorTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), (Matrix3{
-                {0.5f, 0.0f, 0.0f},
-                {0.0f, 0.5f, 0.0f},
-                {0.0f, 0.5f, 1.0f}
-            }));
-        } {
-            constexpr Containers::StringView attribute = "specularColorTextureCoordinates"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 1);
-        }
+        compareMaterials(*material, expected.second());
     }
 }
 
@@ -4374,101 +4191,51 @@ void CgltfImporterTest::materialRawTransmission() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-transmission.gltf")));
-    CORRADE_COMPARE(importer->materialCount(), 5);
 
     constexpr Containers::StringView layer = "#KHR_materials_transmission"_s;
 
-    {
-        const char* name = "defaults";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        /* The extra attribute is the layer name */
-        CORRADE_COMPARE(material->attributeCount(layer), 1 + 1);
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"defaults"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                /* transmissionFactor is always imported, set to glTF default
+                   if missing */
+                {"transmissionFactor"_s, 0.0f}
+            }, {0, 2}}},
+        {"factors"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"transmissionFactor"_s, 0.67f}
+            }, {0, 2}}},
+        {"textures"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"transmissionFactor"_s, 0.7f},
+                {"transmissionTexture"_s, 1u}
+            }, {0, 3}}},
+        {"texture identity transform"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"transmissionFactor"_s, 0.0f},
+                {"transmissionTexture"_s, 0u},
+                {"transmissionTextureMatrix"_s, Matrix3{}}
+            }, {0, 4}}},
+        {"texture transform + coordinate set"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"transmissionFactor"_s, 0.0f},
+                {"transmissionTexture"_s, 1u},
+                {"transmissionTextureCoordinates"_s, 3u},
+                {"transmissionTextureMatrix"_s, Matrix3{
+                    {1.0f,  0.0f, 0.0f},
+                    {0.0f,  1.0f, 0.0f},
+                    {0.0f, -1.0f, 1.0f}
+                }}
+            }, {0, 5}}}
+    };
 
-        /* transmissionFactor is always imported, set to glTF default if
-           missing */
-        constexpr Containers::StringView attribute = "transmissionFactor"_s;
-        CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-        CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-        CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.0f);
-    } {
-        const char* name = "factors";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 1 + 1);
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
 
-        constexpr Containers::StringView attribute = "transmissionFactor"_s;
-        CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-        CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-        CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.67f);
-    } {
-        const char* name = "textures";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
+    for(const auto& expected: materials) {
+        auto material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 2 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "transmissionFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.7f);
-        } {
-            constexpr Containers::StringView attribute = "transmissionTexture"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 1u);
-        }
-    } {
-        const char* name = "texture identity transform";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 3 + 1);
-
-        constexpr Containers::StringView attribute = "transmissionTextureMatrix"_s;
-        CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-        CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-        CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), Matrix3{});
-    } {
-        const char* name = "texture transform + coordinate set";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 4 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "transmissionTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), (Matrix3{
-                {1.0f, 0.0f, 0.0f},
-                {0.0f, 1.0f, 0.0f},
-                {0.0f, -1.0f, 1.0f}
-            }));
-        } {
-            constexpr Containers::StringView attribute = "transmissionTextureCoordinates"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 3);
-        }
+        compareMaterials(*material, expected.second());
     }
 }
 
@@ -4481,139 +4248,63 @@ void CgltfImporterTest::materialRawVolume() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-volume.gltf")));
-    CORRADE_COMPARE(importer->materialCount(), 5);
 
     constexpr Containers::StringView layer = "#KHR_materials_volume"_s;
 
-    {
-        const char* name = "defaults";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        /* The extra attribute is the layer name */
-        CORRADE_COMPARE(material->attributeCount(layer), 3 + 1);
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"defaults"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                /* Factors are always imported, set to glTF defaults if missing */
+                {"thicknessFactor"_s, 0.0f},
+                {"attenuationDistance"_s, Constants::inf()},
+                {"attenuationColor"_s, Vector3{1.0f, 1.0f, 1.0f}}
+            }, {0, 4}}},
+        {"factors"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"thicknessFactor"_s, 0.67f},
+                {"attenuationDistance"_s, 15.3f},
+                {"attenuationColor"_s, Vector3{0.7f, 0.1f, 1.0f}}
+            }, {0, 4}}},
+        {"textures"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"thicknessFactor"_s, 0.7f},
+                {"attenuationDistance"_s, 1.12f},
+                {"attenuationColor"_s, Vector3{0.1f, 0.05f, 0.0f}},
+                {"thicknessTexture"_s, 1u},
+                {"thicknessTextureSwizzle"_s, MaterialTextureSwizzle::G}
+            }, {0, 6}}},
+        {"texture identity transform"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"thicknessFactor"_s, 0.0f},
+                {"attenuationDistance"_s, Constants::inf()},
+                {"attenuationColor"_s, Vector3{1.0f, 1.0f, 1.0f}},
+                {"thicknessTexture"_s, 0u},
+                {"thicknessTextureMatrix"_s, Matrix3{}},
+                {"thicknessTextureSwizzle"_s, MaterialTextureSwizzle::G}
+            }, {0, 7}}},
+        {"texture transform + coordinate set"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"thicknessFactor"_s, 0.0f},
+                {"attenuationDistance"_s, Constants::inf()},
+                {"attenuationColor"_s, Vector3{1.0f, 1.0f, 1.0f}},
+                {"thicknessTexture"_s, 1u},
+                {"thicknessTextureCoordinates"_s, 3u},
+                {"thicknessTextureMatrix"_s, Matrix3{
+                    {1.0f,  0.0f, 0.0f},
+                    {0.0f,  1.0f, 0.0f},
+                    {0.0f, -1.0f, 1.0f}
+                }},
+                {"thicknessTextureSwizzle"_s, MaterialTextureSwizzle::G}
+            }, {0, 8}}}
+    };
 
-        /* Factors are always imported, set to glTF defaults if missing */
-        {
-            constexpr Containers::StringView attribute = "thicknessFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.0f);
-        } {
-            constexpr Containers::StringView attribute = "attenuationDistance"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), Constants::inf());
-        } {
-            constexpr Containers::StringView attribute = "attenuationColor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{1.0f, 1.0f, 1.0f}));
-        }
-    } {
-        const char* name = "factors";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 3 + 1);
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
 
-        {
-            constexpr Containers::StringView attribute = "thicknessFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.67f);
-        } {
-            constexpr Containers::StringView attribute = "attenuationDistance"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 15.3f);
-        } {
-            constexpr Containers::StringView attribute = "attenuationColor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{0.7f, 0.1f, 1.0f}));
-        }
-    } {
-        const char* name = "textures";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
+    for(const auto& expected: materials) {
+        auto material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 5 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "thicknessFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.7f);
-        } {
-            constexpr Containers::StringView attribute = "attenuationDistance"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 1.12f);
-        } {
-            constexpr Containers::StringView attribute = "attenuationColor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{0.1f, 0.05f, 0.0f}));
-        } {
-            constexpr Containers::StringView attribute = "thicknessTexture"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 1u);
-        } {
-            constexpr Containers::StringView attribute = "thicknessTextureSwizzle"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::TextureSwizzle);
-            CORRADE_COMPARE(material->attribute<MaterialTextureSwizzle>(layer, attribute), MaterialTextureSwizzle::G);
-        }
-    } {
-        const char* name = "texture identity transform";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 6 + 1);
-
-        constexpr Containers::StringView attribute = "thicknessTextureMatrix"_s;
-        CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-        CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-        CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), Matrix3{});
-    } {
-        const char* name = "texture transform + coordinate set";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 7 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "thicknessTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), (Matrix3{
-                {1.0f, 0.0f, 0.0f},
-                {0.0f, 1.0f, 0.0f},
-                {0.0f, -1.0f, 1.0f}
-            }));
-        } {
-            constexpr Containers::StringView attribute = "thicknessTextureCoordinates"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 3);
-        }
+        compareMaterials(*material, expected.second());
     }
 }
 
@@ -4626,149 +4317,72 @@ void CgltfImporterTest::materialRawSheen() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
         "material-sheen.gltf")));
-    CORRADE_COMPARE(importer->materialCount(), 5);
 
     constexpr Containers::StringView layer = "#KHR_materials_sheen"_s;
 
-    {
-        const char* name = "defaults";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        /* The extra attribute is the layer name */
-        CORRADE_COMPARE(material->attributeCount(layer), 2 + 1);
-
-        /* Factors are always imported, set to glTF defaults if missing */
-        {
-            constexpr Containers::StringView attribute = "sheenColorFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{0.0f, 0.0f, 0.0f}));
-        } {
-            constexpr Containers::StringView attribute = "sheenRoughnessFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.0f);
-        }
-    } {
-        const char* name = "factors";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 2 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "sheenColorFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{0.2f, 0.4f, 0.6f}));
-        } {
-            constexpr Containers::StringView attribute = "sheenRoughnessFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.67f);
-        }
-    } {
-        const char* name = "textures";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        CORRADE_COMPARE(material->attributeCount(layer), 5 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "sheenColorFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Vector3);
-            CORRADE_COMPARE(material->attribute<Vector3>(layer, attribute), (Vector3{0.3f, 0.4f, 0.5f}));
-        } {
-            constexpr Containers::StringView attribute = "sheenRoughnessFactor"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Float);
-            CORRADE_COMPARE(material->attribute<Float>(layer, attribute), 0.7f);
-        } {
-            constexpr Containers::StringView attribute = "sheenColorTexture"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 1u);
-        } {
-            constexpr Containers::StringView attribute = "sheenRoughnessTexture"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 2u);
-        } {
-            constexpr Containers::StringView attribute = "sheenRoughnessTextureSwizzle"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::TextureSwizzle);
-            CORRADE_COMPARE(material->attribute<MaterialTextureSwizzle>(layer, attribute), MaterialTextureSwizzle::A);
-        }
-    } {
-        const char* name = "texture identity transform";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        {
-            CORRADE_EXPECT_FAIL("sheenRoughnessTextureMatrix attribute is skipped because it's too large.");
-            CORRADE_COMPARE(material->attributeCount(layer), 7 + 1);
-        }
-        CORRADE_COMPARE(material->attributeCount(layer), 6 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "sheenColorTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), Matrix3{});
-        } {
-            CORRADE_VERIFY(!material->hasAttribute(layer, "sheenRoughnessTextureMatrix"_s));
-        }
-    } {
-        const char* name = "texture transform + coordinate set";
-        auto material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType{});
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(layer));
-        {
-            CORRADE_EXPECT_FAIL("sheenRoughnessTextureMatrix attribute is skipped because it's too large.");
-            CORRADE_COMPARE(material->attributeCount(layer), 9 + 1);
-        }
-        CORRADE_COMPARE(material->attributeCount(layer), 8 + 1);
-
-        {
-            constexpr Containers::StringView attribute = "sheenColorTextureMatrix"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::Matrix3x3);
-            CORRADE_COMPARE(material->attribute<Matrix3>(layer, attribute), (Matrix3{
-                {1.0f, 0.0f, 0.0f},
-                {0.0f, 1.0f, 0.0f},
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"defaults"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                /* Factors are always imported, set to glTF defaults if missing */
+                {"sheenColorFactor"_s, Vector3{0.0f, 0.0f, 0.0f}},
+                {"sheenRoughnessFactor"_s, 0.0f}
+            }, {0, 3}}},
+        {"factors"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"sheenColorFactor"_s, Vector3{0.2f, 0.4f, 0.6f}},
+                {"sheenRoughnessFactor"_s, 0.67f}
+            }, {0, 3}}},
+        {"textures"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"sheenColorFactor"_s, Vector3{0.3f, 0.4f, 0.5f}},
+                {"sheenRoughnessFactor"_s, 0.7f},
+                {"sheenColorTexture"_s, 1u},
+                {"sheenRoughnessTexture"_s, 2u},
+                {"sheenRoughnessTextureSwizzle"_s, MaterialTextureSwizzle::A}
+            }, {0, 6}}},
+        {"texture identity transform"_s, MaterialData{MaterialType{}, {
+                {Trade::MaterialAttribute::LayerName, layer},
+                {"sheenColorFactor"_s, Vector3{0.0f, 0.0f, 0.0f}},
+                {"sheenRoughnessFactor"_s, 0.0f},
+                {"sheenColorTexture"_s, 1u},
+                {"sheenColorTextureMatrix"_s, Matrix3x3{}},
+                {"sheenRoughnessTexture"_s, 0u},
+                /* sheenRoughnessTextureMatrix is too large and skipped */
+                {"sheenRoughnessTextureSwizzle"_s, MaterialTextureSwizzle::A}
+            }, {0, 7}}},
+        {"texture transform + coordinate set"_s, MaterialData{MaterialType{}, {
+            {Trade::MaterialAttribute::LayerName, layer},
+            {"sheenColorFactor"_s, Vector3{0.0f, 0.0f, 0.0f}},
+            {"sheenRoughnessFactor"_s, 0.0f},
+            {"sheenColorTexture"_s, 2u},
+            {"sheenColorTextureCoordinates"_s, 4u},
+            {"sheenColorTextureMatrix"_s, Matrix3{
+                {1.0f,  0.0f, 0.0f},
+                {0.0f,  1.0f, 0.0f},
                 {0.0f, -1.0f, 1.0f}
-            }));
-        } {
-            constexpr Containers::StringView attribute = "sheenColorTextureCoordinates"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 4);
-        } {
-            CORRADE_VERIFY(!material->hasAttribute(layer, "sheenRoughnessTextureMatrix"_s));
-        } {
-            constexpr Containers::StringView attribute = "sheenRoughnessTextureCoordinates"_s;
-            CORRADE_VERIFY(material->hasAttribute(layer, attribute));
-            CORRADE_COMPARE(material->attributeType(layer, attribute), MaterialAttributeType::UnsignedInt);
-            CORRADE_COMPARE(material->attribute<UnsignedInt>(layer, attribute), 1);
-        }
+            }},
+            {"sheenRoughnessTexture"_s, 1u},
+            {"sheenRoughnessTextureCoordinates"_s, 1u},
+            /* sheenRoughnessTextureMatrix is too large and skipped */
+            {"sheenRoughnessTextureSwizzle"_s, MaterialTextureSwizzle::A}
+        }, {0, 9}}}
+    };
+
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
+    for(const auto& expected: materials) {
+        auto material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
+        CORRADE_VERIFY(material);
+        compareMaterials(*material, expected.second());
     }
+
+    CORRADE_COMPARE(out.str(),
+        "Trade::CgltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n"
+        "Trade::CgltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n");
 }
 
 void CgltfImporterTest::materialRawOutOfBounds() {
@@ -4778,11 +4392,8 @@ void CgltfImporterTest::materialRawOutOfBounds() {
         "material-raw.gltf")));
 
     std::ostringstream out;
-    {
-        Error redirectError{&out};
-        CORRADE_VERIFY(!importer->material("raw out-of-bounds"));
-    }
-
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->material("raw out-of-bounds"));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): snakeTexture index 2 out of bounds for 2 textures\n");
 }
 
