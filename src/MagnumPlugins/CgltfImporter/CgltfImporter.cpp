@@ -2793,7 +2793,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                or ignored, so we know the upper limit on the data size. The
                alignas prevents unaligned reads for individual floats. For
                strings, MaterialAttributeData expects a pointer to StringView. */
-            char alignas(4) attributeData[16];
+            alignas(4) char attributeData[16];
             Containers::String attributeString;
             Containers::StringView attributeStringView;
             MaterialAttributeType type{};
