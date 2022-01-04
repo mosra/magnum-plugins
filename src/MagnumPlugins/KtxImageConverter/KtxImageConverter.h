@@ -104,18 +104,27 @@ The following formats can be written:
 -   all formats in @ref PixelFormat
 -   all formats in @ref CompressedPixelFormat, except for 3D ASTC formats
 
-@subsection Trade-KtxImageConverter-behavior-cube-array Cube map and array images
+@subsection Trade-KtxImageConverter-behavior-types Image types
 
-Cube map and array images can be written but there is currently no way to mark
-them properly in the metadata. Exported files will be 3D images with cube map
-faces and array layers exposed as depth slices.
+Cube map images can be written but there is currently no way to mark them
+properly in the metadata. Exported files will be 3D images with faces exposed
+as depth slices.
+
+Array images will be written as images with one extra dimension for the array
+layers. For example, a 2x3 2D array image with 4 layers will result in a 3D
+image with size 2x3x4.
 
 @subsection Trade-KtxImageConverter-behavior-multilevel Multilevel images
 
 All image types can be saved with multiple levels by using the list
 variants of @ref convertToFile() / @ref convertToData(). Largest level is
-expected to be first, with each following level having width and height divided
-by two, rounded down. Incomplete mip chains are supported.
+expected to be first, with each following level having width, height and depth
+divided by two, rounded down. Incomplete mip chains are supported.
+
+Due to the way @ref Trade-KtxImageConverter-behavior-types "non-trivial image types"
+are handled, the level sizes are always expected to match the resulting image
+type. This means that array images with multiple levels can currently not be
+exported and produce a level size mismatch error.
 
 @subsection Trade-KtxImageConverter-behavior-supercompression Supercompression
 
