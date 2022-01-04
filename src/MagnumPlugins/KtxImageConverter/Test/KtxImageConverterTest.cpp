@@ -189,6 +189,26 @@ const char* WriterPVRTexTool = "PVRTexLib v5.1.0";
 
 const struct {
     const char* name;
+    const Vector3i size;
+    const char* message;
+} TooManyLevelsData[]{
+    {"1D", {1, 0, 0}, "there can be only 1 levels with base image size Vector(1) but got 2"},
+    {"2D", {1, 1, 0}, "there can be only 1 levels with base image size Vector(1, 1) but got 2"},
+    {"3D", {1, 1, 1}, "there can be only 1 levels with base image size Vector(1, 1, 1) but got 2"}
+};
+
+const struct {
+    const char* name;
+    const Vector3i sizes[2];
+    const char* message;
+} LevelWrongSizeData[]{
+    {"1D", {{4, 0, 0}, {3, 0, 0}}, "expected size Vector(2) for level 1 but got Vector(3)"},
+    {"2D", {{4, 5, 0}, {2, 1, 0}}, "expected size Vector(2, 2) for level 1 but got Vector(2, 1)"},
+    {"3D", {{4, 5, 3}, {2, 2, 2}}, "expected size Vector(2, 2, 1) for level 1 but got Vector(2, 2, 2)"}
+};
+
+const struct {
+    const char* name;
     const char* file;
     const CompressedPixelFormat format;
     const Math::Vector<1, Int> size;
@@ -299,12 +319,15 @@ KtxImageConverterTest::KtxImageConverterTest() {
               &KtxImageConverterTest::dataFormatDescriptor,
               &KtxImageConverterTest::dataFormatDescriptorCompressed,
 
-              &KtxImageConverterTest::pixelStorage,
+              &KtxImageConverterTest::pixelStorage});
 
-              &KtxImageConverterTest::tooManyLevels,
-              &KtxImageConverterTest::levelWrongSize,
+    addInstancedTests({&KtxImageConverterTest::tooManyLevels},
+        Containers::arraySize(TooManyLevelsData));
 
-              &KtxImageConverterTest::convert1D,
+    addInstancedTests({&KtxImageConverterTest::levelWrongSize},
+        Containers::arraySize(LevelWrongSizeData));
+
+    addTests({&KtxImageConverterTest::convert1D,
               &KtxImageConverterTest::convert1DMipmaps});
 
     addInstancedTests({&KtxImageConverterTest::convert1DCompressed},
@@ -580,33 +603,69 @@ void KtxImageConverterTest::pixelStorage() {
 }
 
 void KtxImageConverterTest::tooManyLevels() {
+    auto&& data = TooManyLevelsData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
     const UnsignedByte bytes[4]{};
+    CORRADE_INTERNAL_ASSERT(Math::max(Vector3ui{data.size}, 1u).product()*4u <= Containers::arraySize(bytes));
+
+    const UnsignedInt dimensions = Math::min(Vector3ui{data.size}, 1u).sum();
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData({
-        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes},
-        ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, bytes}
-    }));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): there can be only 1 levels with base image size Vector(1, 1) but got 2\n");
+    if(dimensions == 1) {
+        CORRADE_VERIFY(!converter->convertToData({
+            ImageView1D{PixelFormat::RGBA8Unorm, data.size.x(), bytes},
+            ImageView1D{PixelFormat::RGBA8Unorm, data.size.x(), bytes}
+        }));
+    } else if(dimensions == 2) {
+        CORRADE_VERIFY(!converter->convertToData({
+            ImageView2D{PixelFormat::RGBA8Unorm, data.size.xy(), bytes},
+            ImageView2D{PixelFormat::RGBA8Unorm, data.size.xy(), bytes}
+        }));
+    } else if(dimensions == 3) {
+        CORRADE_VERIFY(!converter->convertToData({
+            ImageView3D{PixelFormat::RGBA8Unorm, data.size, bytes},
+            ImageView3D{PixelFormat::RGBA8Unorm, data.size, bytes}
+        }));
+    }
+
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
 void KtxImageConverterTest::levelWrongSize() {
+    auto&& data = LevelWrongSizeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
-    const UnsignedByte bytes[16]{};
+    const UnsignedByte bytes[256]{};
+    CORRADE_INTERNAL_ASSERT(Math::max(Vector3ui{data.sizes[0]}, 1u).product()*4u <= Containers::arraySize(bytes));
+
+    const UnsignedInt dimensions = Math::min(Vector3ui{data.sizes[0]}, 1u).sum();
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData({
-        ImageView2D{PixelFormat::RGB8Unorm, {2, 2}, bytes},
-        ImageView2D{PixelFormat::RGB8Unorm, {2, 1}, bytes}
-    }));
-    CORRADE_COMPARE(out.str(),
-        "Trade::KtxImageConverter::convertToData(): expected size Vector(1, 1) for level 1 but got Vector(2, 1)\n");
+    if(dimensions == 1) {
+        CORRADE_VERIFY(!converter->convertToData({
+            ImageView1D{PixelFormat::RGBA8Unorm, data.sizes[0].x(), bytes},
+            ImageView1D{PixelFormat::RGBA8Unorm, data.sizes[1].x(), bytes}
+        }));
+    } else if(dimensions == 2) {
+        CORRADE_VERIFY(!converter->convertToData({
+            ImageView2D{PixelFormat::RGBA8Unorm, data.sizes[0].xy(), bytes},
+            ImageView2D{PixelFormat::RGBA8Unorm, data.sizes[1].xy(), bytes}
+        }));
+    } else if(dimensions == 3) {
+        CORRADE_VERIFY(!converter->convertToData({
+            ImageView3D{PixelFormat::RGBA8Unorm, data.sizes[0], bytes},
+            ImageView3D{PixelFormat::RGBA8Unorm, data.sizes[1], bytes}
+        }));
+    }
+
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
 void KtxImageConverterTest::convert1D() {
