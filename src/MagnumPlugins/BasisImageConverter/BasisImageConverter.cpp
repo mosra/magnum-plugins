@@ -80,9 +80,12 @@ Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicIma
     /** @todo Handle different image types (cube/array/volume) once this can be
         queried from images */
     Math::Vector<dimensions, Int> mipMask{1};
-    if(dimensions < 3) {
+    if(dimensions == 1) {
         /* Basis doesn't support 1D images, we treat them as 2D images with
            height 1 */
+        Warning{} << "Trade::BasisImageConverter::convertToData(): exporting 1D image as a 2D image with height 1";
+        params.m_tex_type = basist::basis_texture_type::cBASISTexType2D;
+    } else if(dimensions == 2) {
         params.m_tex_type = basist::basis_texture_type::cBASISTexType2D;
     } else {
         /* Encoding 3D images as KTX2 always produces 2D array images and mip

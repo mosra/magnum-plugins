@@ -503,9 +503,13 @@ void BasisImageConverterTest::convert1D() {
     const ImageView1D originalImage1D = padImageView<1>(ImageView2D(*originalImage));
     const Image1D imageWithSkip = copyImageWithSkip<Color4ub>(originalImage1D, {7});
 
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
     const auto compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
+    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): exporting 1D image as a 2D image with height 1\n");
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
