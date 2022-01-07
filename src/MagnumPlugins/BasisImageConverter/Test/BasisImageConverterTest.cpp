@@ -77,7 +77,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void convert2DArrayOneLayer();
     void convert2DArrayMipmaps();
 
-    void convertToFile();
+    void convertToFile2D();
+    void convertToFile3D();
 
     void threads();
     void ktx();
@@ -214,7 +215,10 @@ BasisImageConverterTest::BasisImageConverterTest() {
 
     addTests({&BasisImageConverterTest::convert2DArrayMipmaps});
 
-    addInstancedTests({&BasisImageConverterTest::convertToFile},
+    /* Just testing that image levels and file type get forwarded to
+       doConvertToData(), anything else is tested in convert*() */
+    addInstancedTests({&BasisImageConverterTest::convertToFile2D,
+                       &BasisImageConverterTest::convertToFile3D},
         Containers::arraySize(ConvertToFileData));
 
     addInstancedTests({&BasisImageConverterTest::threads},
@@ -904,7 +908,7 @@ void BasisImageConverterTest::convert2DArrayMipmaps() {
     }
 }
 
-void BasisImageConverterTest::convertToFile() {
+void BasisImageConverterTest::convertToFile2D() {
     auto&& data = ConvertToFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
@@ -955,6 +959,59 @@ void BasisImageConverterTest::convertToFile() {
        with some random format after */
     if(data.pluginName == "BasisImageConverter"_s) {
         const auto compressedData = converter->convertToData(originalLevels);
+        CORRADE_VERIFY(compressedData);
+        CORRADE_VERIFY(Containers::StringView{Containers::arrayView(compressedData)}.hasPrefix(BasisFileMagic));
+    }
+}
+
+void BasisImageConverterTest::convertToFile3D() {
+    auto&& data = ConvertToFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    const auto originalImage = pngImporter->image2D(0);
+    CORRADE_VERIFY(originalImage);
+
+    const ImageView3D originalImage3D{ImageView2D(*originalImage)};
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
+    std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
+    CORRADE_VERIFY(converter->convertToFile({originalImage3D}, filename));
+
+    /* Verify it's actually the right format */
+    /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
+    CORRADE_VERIFY(Containers::StringView{Containers::ArrayView<const char>(Utility::Directory::read(filename))}.hasPrefix(data.prefix));
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    const bool isKtx = Containers::StringView{data.prefix} == KtxFileMagic;
+    {
+        CORRADE_EXPECT_FAIL_IF(isKtx,
+            "basis_universal exports KTX2 2D array images with a single layer as 2D images.");
+        CORRADE_COMPARE(importer->image3DCount(), 1);
+    }
+
+    if(!isKtx) {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+        CORRADE_VERIFY(image);
+
+        CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0], *originalImage,
+            /* There are moderately significant compression artifacts */
+            (DebugTools::CompareImage{97.25f, 7.914f}));
+    }
+
+    /* The format should get reset again after so convertToData() isn't left
+       with some random format after */
+    if(data.pluginName == "BasisImageConverter"_s) {
+        const auto compressedData = converter->convertToData({originalImage3D});
         CORRADE_VERIFY(compressedData);
         CORRADE_VERIFY(Containers::StringView{Containers::arrayView(compressedData)}.hasPrefix(BasisFileMagic));
     }
