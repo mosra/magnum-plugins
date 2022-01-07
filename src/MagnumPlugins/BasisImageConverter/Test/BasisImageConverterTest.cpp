@@ -886,6 +886,47 @@ void BasisImageConverterTest::convert2DArray() {
         (DebugTools::CompareImage{96.5f, 6.928f}));
 }
 
+void BasisImageConverterTest::convert2DArrayOneLayer() {
+    auto&& data = Convert2DArrayOneLayerData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* For KTX2 files, basis_universal treats 2D array images with one layer
+       as standard 2D images:
+       https://github.com/BinomialLLC/basis_universal/blob/928a0caa3e5db2d4748bce6b23507757f9867d14/encoder/basisu_comp.cpp#L1809 */
+
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    const auto originalImage = pngImporter->image2D(0);
+    CORRADE_VERIFY(originalImage);
+
+    const ImageView3D originalImage3D = padImageView<3>(ImageView2D(*originalImage));
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
+    const auto compressedData = converter->convertToData(originalImage3D);
+    CORRADE_VERIFY(compressedData);
+    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image\n");
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openData(compressedData));
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    {
+        CORRADE_EXPECT_FAIL_IF(data.pluginName == "BasisKtxImageConverter"_s,
+            "basis_universal exports KTX2 2D array images with a single layer as 2D images.");
+        CORRADE_COMPARE(importer->image3DCount(), 1);
+        const auto texture = importer->texture(0);
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
+    }
+}
+
 void BasisImageConverterTest::convert2DArrayMipmaps() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
