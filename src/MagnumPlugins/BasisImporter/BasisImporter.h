@@ -390,8 +390,7 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         struct State;
         Containers::Pointer<State> _state;
 
-        template<UnsignedInt dimensions>
-        Containers::Optional<ImageData<dimensions>> doImage(UnsignedInt id, UnsignedInt level);
+        template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> doImage(UnsignedInt id, UnsignedInt level);
 };
 
 }}

@@ -52,8 +52,7 @@ using namespace Containers::Literals;
 
 namespace {
 
-template<UnsignedInt dimensions>
-Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Utility::ConfigurationGroup& configuration, ImageConverterFlags flags, BasisImageConverter::Format fileFormat) {
+template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Utility::ConfigurationGroup& configuration, ImageConverterFlags flags, BasisImageConverter::Format fileFormat) {
     /* Check input */
     const PixelFormat pixelFormat = imageLevels.front().format();
     bool isSrgb;
@@ -412,8 +411,7 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
     return convertLevelsToData(imageLevels, configuration(), flags(), _format);
 }
 
-template<UnsignedInt dimensions>
-bool BasisImageConverter::convertLevelsToFile(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Containers::StringView filename) {
+template<UnsignedInt dimensions> bool BasisImageConverter::convertLevelsToFile(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Containers::StringView filename) {
     /** @todo once Directory is std::string-free, use splitExtension() */
     const Containers::String normalized = Utility::String::lowercase(filename);
 

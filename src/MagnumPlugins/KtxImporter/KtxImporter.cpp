@@ -806,8 +806,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     _f = std::move(f);
 }
 
-template<UnsignedInt dimensions>
-ImageData<dimensions> KtxImporter::doImage(UnsignedInt id, UnsignedInt level) {
+template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(UnsignedInt id, UnsignedInt level) {
     const File::LevelData& levelData = _f->imageData[id][level];
     const auto size = Math::Vector<dimensions, Int>::pad(levelData.size);
     Containers::Array<char> data{NoInit, levelData.data.size()};
