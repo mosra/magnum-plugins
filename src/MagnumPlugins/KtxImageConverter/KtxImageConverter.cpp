@@ -523,8 +523,7 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
     CORRADE_ASSERT_UNREACHABLE("channelMapping(): invalid format suffix" << UnsignedInt(suffix), {}); /* LCOV_EXCL_LINE */
 }
 
-template<typename Format>
-Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::VkFormatSuffix suffix) {
+template<typename Format> Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::VkFormatSuffix suffix) {
     const auto sampleData = samples(format);
     CORRADE_INTERNAL_ASSERT(!sampleData.second().empty());
 
@@ -668,15 +667,13 @@ UnsignedInt leastCommonMultiple(UnsignedInt a, UnsignedInt b) {
     return product/gcd;
 }
 
-template<UnsignedInt dimensions>
-void copyPixels(const BasicImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
+template<UnsignedInt dimensions> void copyPixels(const BasicImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
     /* Copy the pixels into output, dropping padding (if any) */
     const Containers::StridedArrayView<dimensions + 1, const char> srcPixels = image.pixels();
     Utility::copy(srcPixels, Containers::StridedArrayView<dimensions + 1, char>{pixels, srcPixels.size()});
 }
 
-template<UnsignedInt dimensions>
-void copyPixels(const BasicCompressedImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
+template<UnsignedInt dimensions> void copyPixels(const BasicCompressedImageView<dimensions>& image, Containers::ArrayView<char> pixels) {
     /** @todo Support CompressedPixelStorage::skip */
     CORRADE_ASSERT(image.storage() == CompressedPixelStorage{}, "Trade::KtxImageConverter::convertToData(): non-default compressed storage is not supported", );
     Utility::copy(image.data().prefix(pixels.size()), pixels);
@@ -716,8 +713,7 @@ constexpr Containers::StringView ValidOrientations[3]{"rl"_s, "du"_s, "io"_s};
 /* Using a template template parameter to deduce the image dimensions while
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
-template<UnsignedInt dimensions, template<UnsignedInt, typename> class View>
-Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Utility::ConfigurationGroup& configuration) {
+template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Utility::ConfigurationGroup& configuration) {
     const auto format = imageLevels.front().format();
     if(isFormatImplementationSpecific(format)) {
         Error{} << "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported";

@@ -464,8 +464,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     _state = std::move(state);
 }
 
-template<UnsignedInt dimensions>
-Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const UnsignedInt id, const UnsignedInt level) {
+template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const UnsignedInt id, const UnsignedInt level) {
     static_assert(dimensions >= 2 && dimensions <= 3, "Only 2D and 3D images are supported");
     constexpr const char* prefixes[2]{"Trade::BasisImporter::image2D():", "Trade::BasisImporter::image3D():"};
     constexpr const char* prefix = prefixes[dimensions - 2];

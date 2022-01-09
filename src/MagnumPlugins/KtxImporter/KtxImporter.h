@@ -219,8 +219,7 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
         Containers::Pointer<File> _f;
         Containers::Pointer<AbstractImporter> _basisImporter;
 
-        template<UnsignedInt dimensions>
-        ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
+        template<UnsignedInt dimensions> ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
 };
 
 }}
